@@ -252,6 +252,7 @@ public interface ResourceKeys
     public static final int ERROR_IMAGE_SIZE_MISMATCH_$5             =   233;
     public static final int ERROR_IMAGE_UNDERWAY                     =   234;
     public static final int ERROR_INCOMPATIBLE_COORDINATES_$1        =   235;
+    public static final int ERROR_INDEX_OUT_OF_BOUNDS_$1             =   262;
     public static final int ERROR_INPUT_LENGTH_MISMATCH              =    70;
     public static final int ERROR_LATITUDE_OUT_OF_RANGE_$1           =   236;
     public static final int ERROR_LONGITUDE_OUT_OF_RANGE_360_$1      =   237;
@@ -283,5 +284,7 @@ public interface ResourceKeys
     public static final int ERROR_SERIES_NOT_FOUND_$1                =   252;
     public static final int ERROR_TOO_MANY_IMAGE_FORMATS_$1          =   253;
     public static final int ERROR_UNEXPECTED_UPDATE_$1               =   254;
+    public static final int ERROR_UNKNOW_DATATYPE                    =   260;
+    public static final int ERROR_UNSUPPORTED_DATATYPE_$1            =   261;
     public static final int ERROR_WRONG_SERIES_$1                    =   255;
 }

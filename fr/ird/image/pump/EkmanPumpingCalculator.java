@@ -41,9 +41,8 @@ import org.geotools.ct.TransformException;
  * @author Josep Coca
  * @author Martin Desruisseaux
  */
-public abstract class EkmanPumpingCalculator
-{
-    /** Limits of equator band (°N/S). */ private   static final double equatorBandLimit     =      3;
+abstract class EkmanPumpingCalculator {
+    /** Limits of equator band (°N/S). */ private   static final double equatorBandLimit     =      0;
     /** Air density           (kg/m³). */ protected static final double airDensity           =    1.3;
     /** Water density         (kg/m³). */ protected static final double waterDensity         = 1024.8;
     /** Earth radius              (m). */ private   static final double earthRadius          = 6378137.0;
@@ -57,7 +56,7 @@ public abstract class EkmanPumpingCalculator
      * (<var>latitude</var>,<var>longitude</var>) and cartesien
      * coordinates (<var>x</var>,<var>y</var>).
      */
-    private final MathTransform2D projection=null;
+    private final MathTransform2D projection = null;
 
     /**
      * Temporary point used for internal computation.
@@ -67,8 +66,8 @@ public abstract class EkmanPumpingCalculator
     /**
      * Construct an Ekman pumping calculator.
      */
-    public EkmanPumpingCalculator()
-    {}
+    public EkmanPumpingCalculator() {
+    }
 
     /**
      * Compute Emkan pumping given the wind at 4 surrounding point. Each point has
@@ -110,15 +109,16 @@ public abstract class EkmanPumpingCalculator
                                 double x4, double y4, final double u4, final double v4,
                                 double xo, double yo) throws TransformException
     {
-        if (Math.abs(yo) < equatorBandLimit) return Double.NaN;
+        if (Math.abs(yo) < equatorBandLimit) {
+            return Double.NaN;
+        }
         /*
          * Compute latitude-dependants parameters.
          */
         final double radians_yo = Math.toRadians(yo);
         coriolisParameter = (2*earthAngularVelocity) * Math.sin(radians_yo);
 
-        if (projection!=null)
-        {
+        if (projection != null) {
             /*
              * Method 1: Project coordinate using a map projection (SLOW!)
              */
@@ -218,8 +218,7 @@ public abstract class EkmanPumpingCalculator
      * @param  v wind vectors's <var>v</var> component (m/s).
      * @return Wind stress (N/m²).
      */
-    static double dragCoefficientTimeSpeed(final double u, final double v)
-    {
+    static double dragCoefficientTimeSpeed(final double u, final double v) {
         final double speed = Math.sqrt(u*u + v*v);
         return  (drag_a + drag_b*speed)*speed;
     }

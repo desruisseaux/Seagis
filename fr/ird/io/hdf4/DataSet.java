@@ -41,8 +41,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class DataSet
-{
+public abstract class DataSet {
     /**
      * The default index color model. Will
      * be constructed only if needed.
@@ -85,15 +84,14 @@ public abstract class DataSet
      * @param length The number of elements (for checking purpose).
      * @param scale  The scale factor.
      * @param offset The offset constant.
-     * @param qualityCheck Object to use for checking data quality,
-     *                     or <code>null</code> if none.
+     * @param qualityCheck Object to use for checking data quality, or <code>null</code> if none.
      */
-    DataSet(final String name, final int[] size, final int length, final double scale, final double offset, final QualityCheck qualityCheck)
+    DataSet(final String name, final int[] size, final int length,
+            final double scale, final double offset, final QualityCheck qualityCheck)
     {
         int size0=1,size1=1,size2=1,size3=1,size4=1,size5=1;
         dimension = size.length;
-        switch (dimension)
-        {
+        switch (dimension) {
             default: throw new IllegalArgumentException(dimension+"D array not implemented");
             case 6:  size5 = size[5]; // fall through
             case 5:  size4 = size[4]; // fall through
@@ -113,12 +111,10 @@ public abstract class DataSet
         this.scale        = scale;
         this.offset       = offset;
         this.qualityCheck = qualityCheck;
-        if (getNumElements() != length)
-        {
+        if (getNumElements() != length) {
             throw new IllegalArgumentException();
         }
-        if (qualityCheck!=null && !qualityCheck.sizeEquals(this))
-        {
+        if (qualityCheck!=null && !qualityCheck.sizeEquals(this)) {
             throw new IllegalArgumentException();
         }
     }
@@ -126,23 +122,23 @@ public abstract class DataSet
     /**
      * Returns the matrix dimension.
      */
-    public final int getDimension()
-    {return dimension;}
+    public final int getDimension() {
+        return dimension;
+    }
 
     /**
      * Returns the number of elements in this data set.
      */
-    public final int getNumElements()
-    {return size0*size1*size2*size3*size4*size5;}
+    public final int getNumElements() {
+        return size0*size1*size2*size3*size4*size5;
+    }
 
     /**
      * Returns the number of elements
      * in the specified dimension.
      */
-    public final int getLength(final int dim)
-    {
-        switch (dim)
-        {
+    public final int getLength(final int dim) {
+        switch (dim) {
             case 0:  return size0;
             case 1:  return size1;
             case 2:  return size2;
@@ -157,15 +153,17 @@ public abstract class DataSet
      * Returns the number of line in this data set.
      * This is equivalent to <code>getLength(0)</code>.
      */
-    public final int getRowCount()
-    {return size0;}
+    public final int getRowCount() {
+        return size0;
+    }
 
     /**
      * Returns the number of line in this data set.
      * This is equivalent to <code>getLength(1)</code>.
      */
-    public final int getColumnCount()
-    {return size1;}
+    public final int getColumnCount() {
+        return size1;
+    }
 
     /**
      * Returns the integer value at the specified index.
@@ -175,8 +173,22 @@ public abstract class DataSet
     /**
      * Returns the value at the specified index.
      */
-    public final double get(final int index)
-    {return (qualityCheck==null || qualityCheck.acceptIndex(index)) ? getInteger(index)*scale-offset : Double.NaN;}
+    public final double getFlat(final int index) {
+        return (qualityCheck==null || qualityCheck.acceptIndex(index)) ?
+                getInteger(index)*scale-offset : Double.NaN;
+    }
+
+    /**
+     * Returns the value at the specified row and column.
+     * This method should be invoked only for 1 dimensional
+     * matrix.  For performance raison, this is not checked
+     * except if assertions are enabled.
+     */
+    public final double get(final int index) {
+        assert dimension == 1            : dimension;
+        assert  index>=0 &&  index<size0 : index;
+        return getFlat(index);
+    }
 
     /**
      * Returns the value at the specified row and column.
@@ -184,12 +196,11 @@ public abstract class DataSet
      * matrix.  For performance raison, this is not checked
      * except if assertions are enabled.
      */
-    public final double get(final int row, final int column)
-    {
+    public final double get(final int row, final int column) {
         assert dimension == 2            : dimension;
         assert    row>=0 &&    row<size0 : row;
         assert column>=0 && column<size1 : column;
-        return get(row*size1 + column);
+        return getFlat(row*size1 + column);
     }
 
     /**
@@ -198,13 +209,12 @@ public abstract class DataSet
      * matrix.  For performance raison, this is not checked
      * except if assertions are enabled.
      */
-    public final double get(final int row, final int column, final int plan)
-    {
+    public final double get(final int row, final int column, final int plan) {
         assert dimension == 3            : dimension;
         assert    row>=0 &&    row<size0 : row;
         assert column>=0 && column<size1 : column;
         assert plan  >=0 &&   plan<size2 : plan;
-        return get((row*size1 + column)*size2 + plan);
+        return getFlat((row*size1 + column)*size2 + plan);
     }
 
     /**
@@ -213,14 +223,13 @@ public abstract class DataSet
      * matrix.  For performance raison, this is not checked
      * except if assertions are enabled.
      */
-    public final double get(final int i1, final int i2, final int i3, final int i4)
-    {
+    public final double get(final int i1, final int i2, final int i3, final int i4) {
         assert dimension == 4    : dimension;
         assert i1>=0 && i1<size0 : i1;
         assert i2>=0 && i2<size1 : i2;
         assert i3>=0 && i3<size2 : i3;
         assert i4>=0 && i4<size3 : i4;
-        return get(((i1*size1 + i2)*size2 + i3)*size3 + i4);
+        return getFlat(((i1*size1 + i2)*size2 + i3)*size3 + i4);
     }
 
     /**
@@ -229,15 +238,14 @@ public abstract class DataSet
      * matrix.  For performance raison, this is not checked
      * except if assertions are enabled.
      */
-    public final double get(final int i1, final int i2, final int i3, final int i4, final int i5)
-    {
+    public final double get(final int i1, final int i2, final int i3, final int i4, final int i5) {
         assert dimension == 5    : dimension;
         assert i1>=0 && i1<size0 : i1;
         assert i2>=0 && i2<size1 : i2;
         assert i3>=0 && i3<size2 : i3;
         assert i4>=0 && i4<size3 : i4;
         assert i5>=0 && i5<size4 : i5;
-        return get((((i1*size1 + i2)*size2 + i3)*size3 + i4)*size4 + i5);
+        return getFlat((((i1*size1 + i2)*size2 + i3)*size3 + i4)*size4 + i5);
     }
 
     /**
@@ -246,8 +254,7 @@ public abstract class DataSet
      * matrix.  For performance raison, this is not checked
      * except if assertions are enabled.
      */
-    public final double get(final int i1, final int i2, final int i3, final int i4, final int i5, final int i6)
-    {
+    public final double get(final int i1, final int i2, final int i3, final int i4, final int i5, final int i6) {
         assert dimension == 6    : dimension;
         assert i1>=0 && i1<size0 : i1;
         assert i2>=0 && i2<size1 : i2;
@@ -255,7 +262,16 @@ public abstract class DataSet
         assert i4>=0 && i4<size3 : i4;
         assert i5>=0 && i5<size4 : i5;
         assert i6>=0 && i6<size5 : i6;
-        return get(((((i1*size1 + i2)*size2 + i3)*size3 + i4)*size4 + i5)*size5 + i6);
+        return getFlat(((((i1*size1 + i2)*size2 + i3)*size3 + i4)*size4 + i5)*size5 + i6);
+    }
+
+    /**
+     * Make sure this <code>DataSet</code> has at least 2 dimensions.
+     */
+    private final void ensure2D() {
+        if (dimension < 2) {
+            throw new IllegalStateException("Not a 2D matrix");
+        }
     }
 
     /**
@@ -269,27 +285,23 @@ public abstract class DataSet
      * @param minimum Valeur minimale des données à représenter (inclusivement).
      * @param maximum Valeur maximale des données à représenter (inclusivement).
      */
-    public BufferedImage getImage(final IndexColorModel colors, final double minimum, final double maximum)
-    {
-        if (dimension < 2)
-        {
-            throw new IllegalStateException("Not a 2D matrix");
-        }
-        final int           mapSize = colors.getMapSize();
-        final double          scale = (mapSize-2)/(maximum-minimum);
+    public BufferedImage getImage(final IndexColorModel colors, double minimum, final double maximum) {
+        ensure2D();
+        final int     minPixelValue = 1;
+        final int     maxPixelValue = colors.getMapSize() - 1;
+        final double          scale = (maxPixelValue-minPixelValue)/(maximum-minimum);
         final BufferedImage   image = new BufferedImage(size1, size0, BufferedImage.TYPE_BYTE_INDEXED, colors);
         final WritableRaster raster = image.getRaster();
+        minimum -= minPixelValue/scale;
         int index = getNumElements();
         final int step = index / (size0*size1);
-        for (int y=size0; --y>=0;)
-        {
-            for (int x=size1; --x>=0;)
-            {
+        for (int y=size0; --y>=0;) {
+            for (int x=size1; --x>=0;) {
                 final int    pixel;
-                final double value = (get(index-=step)-minimum)*scale;
-                     if (value <       1) pixel=1;
-                else if (value > mapSize) pixel=mapSize;
-                else pixel=(int)Math.rint(value+1); // Les NaN prendront la valeur 0.
+                final double value = (getFlat(index-=step)-minimum)*scale;
+                     if (value < minPixelValue) pixel=minPixelValue;
+                else if (value > maxPixelValue) pixel=maxPixelValue;
+                else pixel=(int)Math.rint(value); // Les NaN prendront la valeur 0.
                 raster.setSample(x, y, 0, pixel);
             }
         }
@@ -304,15 +316,14 @@ public abstract class DataSet
      *
      * @param colors Table des couleurs à utiliser.
      */
-    public BufferedImage getImage(final IndexColorModel colors)
-    {
+    public BufferedImage getImage(final IndexColorModel colors) {
+        ensure2D();
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         int  index = getNumElements();
         final int step = index / (size0*size1);
-        while ((index-=step) >= 0)
-        {
-            final double value = get(index);
+        while ((index-=step) >= 0) {
+            final double value = getFlat(index);
             if (value > max) max=value;
             if (value < min) min=value;
         }
@@ -324,15 +335,11 @@ public abstract class DataSet
      * de couleurs par défaut. L'index 0 sera utilisée pour les données manquantes,
      * et les autres (jusqu'à <code>colors.getMapSize()</code>) pour les valeurs.
      */
-    public BufferedImage getImage()
-    {
-        synchronized (DataSet.class)
-        {
-            if (defaultColors==null)
-            {
+    public BufferedImage getImage() {
+        synchronized (DataSet.class) {
+            if (defaultColors == null) {
                 final byte[] RGB = new byte[256];
-                for (int i=0; i<RGB.length; i++)
-                {
+                for (int i=0; i<RGB.length; i++) {
                     RGB[i] = (byte) i;
                 }
                 defaultColors = new IndexColorModel(8, RGB.length, RGB, RGB, RGB, 0);
@@ -344,8 +351,7 @@ public abstract class DataSet
     /**
      * Indique si deux objets {@link DataSet} ont les mêmes dimensions.
      */
-    public boolean sizeEquals(final DataSet that)
-    {
+    public boolean sizeEquals(final DataSet that) {
         return this.size0==that.size0 &&
                this.size1==that.size1 &&
                this.size2==that.size2 &&
@@ -358,8 +364,7 @@ public abstract class DataSet
      * Retourne une représentation
      * de cet ensemble de données.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append("[\"");
         buffer.append(name);
@@ -378,11 +383,9 @@ public abstract class DataSet
         double sum  = 0;
         double sum2 = 0;
         int    n    = 0;
-        for (int i=getNumElements(); --i>=0;)
-        {
-            final double value = get(i);
-            if (!Double.isNaN(value))
-            {
+        for (int i=getNumElements(); --i>=0;) {
+            final double value = getFlat(i);
+            if (!Double.isNaN(value)) {
                 if (value > max) max=value;
                 if (value < min) min=value;
                 sum  += value;
@@ -390,8 +393,7 @@ public abstract class DataSet
                 n++;
             }
         }
-        if (n!=0)
-        {
+        if (n!=0) {
             buffer.append("\n  Minimum = "); buffer.append(min);
             buffer.append("\n  Maximum = "); buffer.append(max);
             buffer.append("\n  RMS     = "); buffer.append(Math.sqrt(sum2/n));
@@ -405,42 +407,51 @@ public abstract class DataSet
     /**
      * Implémentation de {@link DataSet} pour les entiers 8-bits signés.
      */
-    static final class Byte extends DataSet
-    {
+    static final class Byte extends DataSet {
         private final byte[] data;
 
-        Byte(final String name, final int[] size, final byte[] data, final double scale, final double offset, final QualityCheck qualityCheck)
-        {super(name, size, data.length, scale, offset, qualityCheck); this.data=data;}
+        Byte(final String name, final int[] size, final byte[] data,
+             final double scale, final double offset, final QualityCheck qualityCheck)
+        {
+            super(name, size, data.length, scale, offset, qualityCheck); this.data=data;
+        }
 
-        protected int getInteger(final int index)
-        {return data[index];}
+        protected int getInteger(final int index) {
+            return data[index];
+        }
     }
 
     /**
      * Implémentation de {@link DataSet} pour les entiers 16-bits signés.
      */
-    static final class Short extends DataSet
-    {
+    static final class Short extends DataSet {
         private final short[] data;
 
-        Short(final String name, final int[] size, final short[] data, final double scale, final double offset, final QualityCheck qualityCheck)
-        {super(name, size, data.length, scale, offset, qualityCheck); this.data=data;}
+        Short(final String name, final int[] size, final short[] data,
+              final double scale, final double offset, final QualityCheck qualityCheck)
+        {
+            super(name, size, data.length, scale, offset, qualityCheck); this.data=data;
+        }
 
-        protected int getInteger(final int index)
-        {return data[index];}
+        protected int getInteger(final int index) {
+            return data[index];
+        }
     }
 
     /**
      * Implémentation de {@link DataSet} pour les entiers 16-bits non-signés.
      */
-    static final class UShort extends DataSet
-    {
+    static final class UShort extends DataSet {
         private final short[] data;
 
-        UShort(final String name, final int[] size, final short[] data, final double scale, final double offset, final QualityCheck qualityCheck)
-        {super(name, size, data.length, scale, offset, qualityCheck); this.data=data;}
+        UShort(final String name, final int[] size, final short[] data,
+               final double scale, final double offset, final QualityCheck qualityCheck)
+        {
+            super(name, size, data.length, scale, offset, qualityCheck); this.data=data;
+        }
 
-        protected int getInteger(final int index)
-        {return data[index] & 0xFFFF;}
+        protected int getInteger(final int index) {
+            return data[index] & 0xFFFF;
+        }
     }
 }

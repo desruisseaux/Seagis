@@ -39,6 +39,8 @@ import java.lang.reflect.Array;
 
 // Divers
 import fr.ird.util.XArray;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -48,8 +50,7 @@ import fr.ird.util.XArray;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Parser
-{
+public class Parser {
     /**
      * Numéro identifiant le fichier ouvert.
      */
@@ -68,12 +69,14 @@ public class Parser
      * @param filepath Nom et chemin du fichier à ouvrir.
      * @throws HDFException si l'ouverture du fichier a échouée.
      */
-    public Parser(final File filepath) throws HDFException
-    {
+    public Parser(final File filepath) throws HDFException {
         /*
          * Open the HDF input file and initiate the SD interface.
          */
         sdID = HDFLibrary.SDstart(filepath.getPath(), HDFConstants.DFACC_RDONLY);
+        if (sdID < 0) {
+            throw new HDFException(Resources.format(ResourceKeys.ERROR_BAD_FILE_$1, filepath.getName()));
+        }
     }
 
     /**
@@ -85,9 +88,11 @@ public class Parser
      * @return Valeur de l'attribut demandé.
      * @throws HDFException si la lecture a échouée.
      */
-    protected final String getString(final String name) throws HDFException
-    {
-        final int index=HDFLibrary.SDfindattr(sdID, name);
+    protected final String getString(final String name) throws HDFException {
+        final int index = HDFLibrary.SDfindattr(sdID, name);
+        if (index < 0) {
+            throw new HDFException(Resources.format(ResourceKeys.ERROR_NO_PARAMETER_$1, name));
+        }
         final String[] names=new String[] {" "};
         final int[] argv=new int[2];
         check(HDFLibrary.SDattrinfo(sdID, index, names, argv));
@@ -104,11 +109,11 @@ public class Parser
      * Retourne la longueur d'un tableau
      * des dimensions spécifiées.
      */
-    private static final int getLength(final int[] size)
-    {
+    private static final int getLength(final int[] size) {
         int length=1;
-        for (int i=size.length; --i>=0;)
+        for (int i=size.length; --i>=0;) {
             length*=size[i];
+        }
         return length;
     }
 
@@ -116,8 +121,7 @@ public class Parser
      * Returns the number of datasets.
      * @throws HDFException if this information can't be fetched.
      */
-    public synchronized int getDataSetCount() throws HDFException
-    {
+    public synchronized int getDataSetCount() throws HDFException {
         final int out[] = new int[2];
         check(HDFLibrary.SDfileinfo(sdID, out));
         return out[0];
@@ -131,46 +135,66 @@ public class Parser
      * @return L'ensemble de données demandé.
      * @throws HDFException si l'information n'a pas pu être obtenue.
      */
-    public synchronized DataSet getDataSet(final int index) throws HDFException
-    {
+    public synchronized DataSet getDataSet(final int index) throws HDFException {
         /*
          * Get the name, datatype and size.
          */
         final int sdsID=HDFLibrary.SDselect(sdID, index);
-        final String[] name = new String[] {" "};
-        final int[]    argv = new int[ 3];
-              int[]    size = new int[16];
-        check(HDFLibrary.SDgetinfo(sdsID, name, size, argv));
-        size = XArray.resize(size, argv[0]);
-        final int length = getLength(size);
-        final int dataType = argv[1];
-        /*
-         * Get scaling and offset factors.
-         */
-        final double calibration[]=new double[4];
-        final int[] nonCalibratedType=new int[1];
-        check(HDFLibrary.SDgetcal(sdsID, calibration, nonCalibratedType));
-        final double scale  = calibration[0];
-        final double offset = calibration[2];
-        /*
-         * Read the data and close the dataset.
-         */
-        final int[]  start = new int[2];
-        final int[] stride = null;
-        final byte[] bytes = new byte[HDFConstants.getTypeSize(dataType)*length];
-        if (bytes.length==0) throw new HDFException("Unknow datatype");
-        check(HDFLibrary.SDreaddata(sdsID, start, stride, size, bytes));
-        check(HDFLibrary.SDendaccess(sdsID));
-        /*
-         * Get the QualityCheck object and return the dataset.
-         */
-        final QualityCheck qualityCheck = getQualityCheck(name[0]);
-        switch (dataType)
-        {
-            case HDFConstants.DFNT_INT8:   return new DataSet.Byte  (name[0], size,                                      bytes , scale, offset, qualityCheck);
-            case HDFConstants.DFNT_INT16:  return new DataSet.Short (name[0], size, HDFNativeData.byteToShort(0, length, bytes), scale, offset, qualityCheck);
-            case HDFConstants.DFNT_UINT16: return new DataSet.UShort(name[0], size, HDFNativeData.byteToShort(0, length, bytes), scale, offset, qualityCheck);
-            default:                       throw new HDFException("Unsupported datatype: "+HDFConstants.getType(dataType));
+        if (sdsID < 0) {
+            throw new HDFException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1,
+                                   new Integer(index)));
+        }
+        try {
+            final String[] name = new String[] {" "};
+            final int[]    argv = new int[ 3];
+                  int[]    size = new int[16];
+            check(HDFLibrary.SDgetinfo(sdsID, name, size, argv));
+            size = XArray.resize(size, argv[0]);
+            final int length = getLength(size);
+            final int dataType = argv[1];
+            /*
+             * Get scaling and offset factors.
+             */
+            final double calibration[]=new double[4];
+            final int[] nonCalibratedType=new int[1];
+            check(HDFLibrary.SDgetcal(sdsID, calibration, nonCalibratedType));
+            final double scale  = calibration[0];
+            final double offset = calibration[2];
+            /*
+             * Read the data and close the dataset.
+             */
+            final int[]  start = new int[2];
+            final int[] stride = null;
+            final byte[] bytes = new byte[HDFConstants.getTypeSize(dataType)*length];
+            if (bytes.length==0) {
+                throw new HDFException(Resources.format(ResourceKeys.ERROR_UNKNOW_DATATYPE));
+            }
+            check(HDFLibrary.SDreaddata(sdsID, start, stride, size, bytes));
+            check(HDFLibrary.SDendaccess(sdsID));
+            /*
+             * Get the QualityCheck object and return the dataset.
+             */
+            final QualityCheck qualityCheck = getQualityCheck(name[0]);
+            switch (dataType) {
+                case HDFConstants.DFNT_INT8: {
+                    return new DataSet.Byte(name[0], size, bytes , scale, offset, qualityCheck);
+                }
+                case HDFConstants.DFNT_INT16: {
+                    return new DataSet.Short(name[0], size, HDFNativeData.byteToShort(0, length, bytes),
+                                             scale, offset, qualityCheck);
+                }
+                case HDFConstants.DFNT_UINT16: {
+                    return new DataSet.UShort(name[0], size, HDFNativeData.byteToShort(0, length, bytes),
+                                              scale, offset, qualityCheck);
+                }
+                default: {
+                    throw new HDFException(Resources.format(ResourceKeys.ERROR_UNSUPPORTED_DATATYPE_$1,
+                                                            HDFConstants.getType(dataType)));
+                }
+            }
+        } catch (HDFException exception) {
+            HDFLibrary.SDendaccess(sdsID);
+            throw exception;
         }
     }
 
@@ -181,8 +205,13 @@ public class Parser
      * @return L'ensemble de données demandé.
      * @throws HDFException si l'information n'a pas pu être obtenue.
      */
-    public synchronized DataSet getDataSet(final String name) throws HDFException
-    {return getDataSet(HDFLibrary.SDnametoindex(sdID, name));}
+    public synchronized DataSet getDataSet(final String name) throws HDFException {
+        final int index = HDFLibrary.SDnametoindex(sdID, name);
+        if (index < 0) {
+            throw new HDFException(Resources.format(ResourceKeys.ERROR_NO_PARAMETER_$1, name));
+        }
+        return getDataSet(index);
+    }
 
     /**
      * Retourne un objet chargé de vérifier la qualité des données. L'implémentation
@@ -196,20 +225,19 @@ public class Parser
      *         n'a pas besoin que l'on vérifie sa qualité.
      * @throws HDFException si l'objet {@link QualityCheck} n'a pas pu être obtenu.
      */
-    protected QualityCheck getQualityCheck(final String dataset) throws HDFException
-    {return null;}
+    protected QualityCheck getQualityCheck(final String dataset) throws HDFException {
+        return null;
+    }
 
     /**
      * Ferme le fichier.
      *
      * @throws HDFException si la fermeture a échouée.
      */
-    public synchronized void close() throws HDFException
-    {
-        if (!closed)
-        {
+    public synchronized void close() throws HDFException {
+        if (!closed) {
             check(HDFLibrary.SDend(sdID));
-            closed=true;
+            closed = true;
         }
     }
 
@@ -219,8 +247,7 @@ public class Parser
      *
      * @throws Throwable si la fermeture du fichier a échouée.
      */
-    protected void finalize() throws Throwable
-    {
+    protected void finalize() throws Throwable {
         close();
         super.finalize();
     }
@@ -229,6 +256,9 @@ public class Parser
      * Vérifie si un appel à une méthode de la bibliothèque {@link HDFLibrary} a réussi.
      * @throws HDFException si <code>result</code> est <code>false</code>.
      */
-    private static void check(final boolean result) throws HDFException
-    {if (!result) throw new HDFException();}
+    private static void check(final boolean result) throws HDFException {
+        if (!result) {
+            throw new HDFException(HDFException.HDFExceptionMessage);
+        }
+    }
 }

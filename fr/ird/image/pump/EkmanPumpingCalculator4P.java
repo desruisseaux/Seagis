@@ -37,13 +37,12 @@ import java.awt.geom.AffineTransform;
  * @author Josep Coca
  * @author Martin Desruisseaux
  */
-public class EkmanPumpingCalculator4P extends EkmanPumpingCalculator
-{
+final class EkmanPumpingCalculator4P extends EkmanPumpingCalculator {
     /**
      * Construct an Ekman pumping calculator.
      */
-    public EkmanPumpingCalculator4P()
-    {}
+    public EkmanPumpingCalculator4P() {
+    }
 
     /**
      * Compute Ekman pumping given the wind at 4 surrounding point. Each point has
@@ -135,13 +134,12 @@ public class EkmanPumpingCalculator4P extends EkmanPumpingCalculator
     /**
      * Test this class.
      */
-    public static void main(final String[]args)
-    {
+    public static void main(final String[] args) {
         final double[] positions=new double[]
-        {2,2,6,2,2,6,6,6};
+        {2,2, 6,2, 2,6, 6,6};
         
         final double[] velocityComponents=new double[]
-        {20,-12,-5,14,2,-10,7,-2};
+        {20,-12, -5,14, 2,-10, 7,-2};
 
         EkmanPumpingCalculator4P calculator=new EkmanPumpingCalculator4P();
         System.out.print("Reference : ");

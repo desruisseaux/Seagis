@@ -152,7 +152,7 @@ public class ImageComparator implements Comparator<ImageEntry> {
         this.tDim             = tDim;
         this.coordinateSystem = cs;
         this.target           = envelope;
-        this.ellipsoid        = CTSUtilities.getHorizontalDatum(cs).getEllipsoid();
+        this.ellipsoid        = CTSUtilities.getEllipsoid(cs);
         this.area             = getArea(target);
     }
 

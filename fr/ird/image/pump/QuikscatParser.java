@@ -41,6 +41,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
+// Divers
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
+
 
 /**
  * Interpréteur d'un fichier HDF QuikScat.
@@ -48,8 +52,7 @@ import java.text.ParseException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class QuikscatParser extends Parser
-{
+final class QuikscatParser extends Parser {
     /**
      * Objet ayant la charge de vérifier la qualité des données.
      * Cet objet sera créé la première fois ou il sera nécessaire.
@@ -69,12 +72,10 @@ final class QuikscatParser extends Parser
      * @param filepath Nom et chemin du fichier à ouvrir.
      * @throws HDFException si l'ouverture du fichier a échouée.
      */
-    public QuikscatParser(final File filepath) throws HDFException
-    {
+    public QuikscatParser(final File filepath) throws HDFException {
         super(filepath);
-        if (!getString("ShortName").equals("QSCATL2B"))
-        {
-            throw new HDFException("The input file is not a QuikSCAT Level 2B file.");
+        if (!getString("ShortName").equals("QSCATL2B")) {
+            throw new HDFException(Resources.format(ResourceKeys.ERROR_BAD_FILE_FORMAT_$1, filepath.getName()));
         }
     }
 
@@ -82,19 +83,14 @@ final class QuikscatParser extends Parser
      * Convertit des chaînes de caractères
      * date et heure en objet {@link Date}.
      */
-    private Date getDate(final String date, final String hour) throws HDFException
-    {
-        if (dateFormat == null)
-        {
+    private Date getDate(final String date, final String hour) throws HDFException {
+        if (dateFormat == null) {
             dateFormat = new SimpleDateFormat("yyyy-DDD HH:mm:ss.SSS", Locale.US);
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
-        try
-        {
+        try {
             return dateFormat.parse(date+' '+hour);
-        }
-        catch (ParseException exception)
-        {
+        } catch (ParseException exception) {
             HDFException e=new HDFException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
@@ -104,16 +100,14 @@ final class QuikscatParser extends Parser
     /**
      * Obtient la date de début.
      */
-    public Date getStartTime() throws HDFException
-    {
+    public Date getStartTime() throws HDFException {
         return getDate(getString("RangeBeginningDate"), getString("RangeBeginningTime"));
     }
 
     /**
      * Obtient la date de fin.
      */
-    public Date getEndTime() throws HDFException
-    {
+    public Date getEndTime() throws HDFException {
         return getDate(getString("RangeEndingDate"), getString("RangeEndingTime"));
     }
 
@@ -122,16 +116,11 @@ final class QuikscatParser extends Parser
      * Cette méthode est automatiquement appelée la première fois
      * ou un objet {@link QualityCheck} est nécessaire.
      */
-    protected QualityCheck getQualityCheck(final String dataset) throws HDFException
-    {
-        if (dataset.startsWith("wind"))
-        {
-            if (qualityCheck==null)
-            {
-                qualityCheck=new QualityCheck(getDataSet("wvc_quality_flag"))
-                {
-                    protected boolean accept(final int flag)
-                    {
+    protected QualityCheck getQualityCheck(final String dataset) throws HDFException {
+        if (dataset.startsWith("wind")) {
+            if (qualityCheck == null) {
+                qualityCheck = new QualityCheck(getDataSet("wvc_quality_flag")) {
+                    protected boolean accept(final int flag) {
                         return 0==(flag & (0x0001 |   // Bit 00: Not enough good sigma0s available for wind retrieval.
                                            0x0002 |   // Bit 01: Poor azimuth diversity among sigma0s for wind retrieval.
                                            0x0080 |   // Bit 07: Some portion of the wind vector cell is over land.

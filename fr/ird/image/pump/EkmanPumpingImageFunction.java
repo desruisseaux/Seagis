@@ -52,9 +52,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
+// Logging
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
 import org.geotools.ct.TransformException;
+import org.geotools.resources.Arguments;
 
 
 /**
@@ -65,8 +71,7 @@ import org.geotools.ct.TransformException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EkmanPumpingImageFunction extends WindImageFunction
-{
+final class EkmanPumpingImageFunction extends WindImageFunction {
     /**
      * Objet ayant la charge de calculer la vorticité
      * à partir des données qu'on lui fournira.
@@ -104,15 +109,17 @@ final class EkmanPumpingImageFunction extends WindImageFunction
     private Date beginningTime;
 
     /**
-     * Construct an image
+     * Construit une fonction qui utilisera les données des fichiers spécifiés.
+     *
+     * @param  files Fichiers de données QuikScat de niveau L1B.
+     * @throws IOException si un ou des fichiers ne peuvent pas être lus.
      */
-    public EkmanPumpingImageFunction(final File file) throws IOException
-    {
-        super(file);
+    public EkmanPumpingImageFunction(final File[] files) throws IOException {
+        super(files);
         setGeographicArea(new Rectangle2D.Double(-180, -maxLatitude, 360, 2*maxLatitude));
         setMinimum       (-5E-6);
         setMaximum       (+5E-6);
-        setColorPalette  ("RedBlue");
+        setColorPalette  ("red-blue");
     }
 
     /**
@@ -130,8 +137,7 @@ final class EkmanPumpingImageFunction extends WindImageFunction
      *         par cette méthode.
      * @throws HDFException si la lecture du fichier a échoué.
      */
-    protected int load(final QuikscatParser parser) throws HDFException
-    {
+    protected int load(final QuikscatParser parser) throws HDFException {
         super.load(parser);
         beginningTime    = parser.getStartTime();
         rowLength        = windSpeed.getColumnCount();
@@ -142,8 +148,7 @@ final class EkmanPumpingImageFunction extends WindImageFunction
     /**
      * Compute Ekman pumping at the specified index.
      */
-    protected double[] compute(final int index, final double[] data)
-    {
+    protected double[] compute(final int index, final double[] data) {
         final int sourceIndex1 = (index/reducedRowLength)*rowLength + (index % reducedRowLength);
         final int sourceIndex2 = sourceIndex1+deltaIndex;
         final int sourceIndex3 = sourceIndex1+rowLength;
@@ -183,26 +188,26 @@ final class EkmanPumpingImageFunction extends WindImageFunction
         double yo = 0.25*(y1 + y2 + y3 + y4);
         double pumping;
 
-        if (Math.abs(yo) >= maxLatitude)
-        {
+        if (Math.abs(yo) >= maxLatitude) {
             pumping = Double.NaN;
-        }
-        else try
-        {
+        } else try {
             pumping = calculator.pumping(x1, y1, a1*Math.sin(d1), a1*Math.cos(d1),
                                          x2, y2, a2*Math.sin(d2), a2*Math.cos(d2),
                                          x3, y3, a3*Math.sin(d3), a3*Math.cos(d3),
                                          x4, y4, a4*Math.sin(d4), a4*Math.cos(d4),
                                          xo, yo);
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             pumping = Double.NaN;
-            exception.printStackTrace();
+            final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
+            record.setSourceClassName("EkmanPumpingImageFunction");
+            record.setSourceMethodName("compute");
+            record.setThrown(exception);
+            Logger.getLogger("fr.ird.operator.image").log(record);
         }
-        if (xo<0) xo += 360;
-        if (data!=null)
-        {
+        if (xo < 0) {
+            xo += 360;
+        }
+        if (data != null) {
             data[0] = xo;
             data[1] = yo;
             data[2] = pumping;
@@ -212,13 +217,55 @@ final class EkmanPumpingImageFunction extends WindImageFunction
     }
 
     /**
-     * Run the program.
+     * Run the program. Optional arguments are:
+     * <ul>
+     *   <li><code>-wind</code>
+     *        Compute the wind instead of Ekman pumping. Note that default values
+     *        for the remainding arguments may change with this option.</li>
+     *   <li><code>-width</code> = <var>[integer]</var></code>
+     *       The image width. Default to 1600</code>.</li>
+     *   <li><code>-height</code> = <var>[integer]</var></code>
+     *       The image height. Default to 640</code>.</li>
+     *   <li><code>-output = <var>[PNG file]</var></code>
+     *       The file were to write the PNG image. If ommited, then
+     *       the image will be displayed to screen.</li>
+     * </ul>
      */
-    public static void main(String[] args) throws IOException
-    {
-        final EkmanPumpingImageFunction function = new EkmanPumpingImageFunction(
-              new File("E:/PELOPS/Images/QuikSCAT/L2B/1999/220/"));
-        final GridCoverage image = function.show("Pompage", 1600, 640);
+    public static void main(String[] args) throws IOException {
+        final Arguments arguments = new Arguments(args);
+        if (args.length == 0) {
+            arguments.out.println("Crée une image représentant le pompage d'Ekman.");
+            arguments.out.println("Arguments optionels:");
+            arguments.out.println("  -wind                 Calcule le vent plutôt que le pompage");
+            arguments.out.println("  -width  = [entier]    Largeur de l'image (1600 par défaut)");
+            arguments.out.println("  -height = [entier]    Hauteur de l'image ( 640 par défaut)");
+            arguments.out.println("  -output = [fichier]   Fichier PNG dans lequel enregistrer");
+            arguments.out.println();
+            arguments.out.println("Les autres arguments sont les noms de répertoires et/ou de fichiers L2B à lire.");
+            return;
+        }
+        if (arguments.getFlag("-wind")) {
+            WindImageFunction.main(arguments.getRemainingArguments(Integer.MAX_VALUE));
+            return;
+        }
+        final String destination = arguments.getOptionalString("-output");
+        final Integer   optWidth = arguments.getOptionalInteger("-width");
+        final Integer  optHeight = arguments.getOptionalInteger("-height");
+        final int width  = (optWidth != null) ? optWidth.intValue() : 1600;
+        final int height = (optWidth != null) ? optWidth.intValue() :  640;
+        args = arguments.getRemainingArguments(Integer.MAX_VALUE);
+        final File[] files = new File[args.length];
+        for (int i=0; i<args.length; i++) {
+            files[i] = new File(args[i]);
+        }
+        final WindImageFunction function = new EkmanPumpingImageFunction(files);
+        final GridCoverage image;
+        if (destination != null) {
+            image = function.getGridCoverage("Pompage d'Ekman", width, height);
+            ImageIO.write(image.geophysics(true).getRenderedImage(), "png", new File(destination));
+        } else {
+            image = function.show("Pompage d'Ekman", width, height);
+        }
         function.dispose();
     }
 }

@@ -31,30 +31,36 @@ import java.awt.Rectangle;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import javax.media.jai.ImageFunction;
 import java.awt.image.ImagingOpException;
-
-// Miscellaneous
-import org.geotools.units.Unit;
 import java.util.Arrays;
 import java.io.IOException;
+import javax.swing.JFrame;
+
+// Logging
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
+// Java Advanced Imaging
+import javax.media.jai.ImageFunction;
 
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
-import org.geotools.cs.HorizontalDatum;
 import org.geotools.cs.CoordinateSystem;
+import org.geotools.cv.SampleDimension;
 import org.geotools.cv.Category;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.SampleDimension;
 import org.geotools.resources.XMath;
 import org.geotools.resources.CTSUtilities;
+import org.geotools.units.Unit;
 
-// Rendering
-import javax.swing.JFrame;
-import fr.ird.util.Utilities;
+// Miscellaneous
 import fr.ird.map.MapPanel;
 import fr.ird.map.layer.GridCoverageLayer;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.util.Utilities;
 
 
 /**
@@ -71,8 +77,7 @@ import fr.ird.map.layer.GridCoverageLayer;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class AbstractImageFunction implements ImageFunction
-{
+public abstract class AbstractImageFunction implements ImageFunction {
     /**
      * The coordinate system, or <code>null</code> for a default
      * cartesien coordinate system.
@@ -97,11 +102,6 @@ public abstract class AbstractImageFunction implements ImageFunction
     private Color[] colors;
 
     /**
-     * The name for values.
-     */
-    private String name = "Values";
-
-    /**
      * The value's unit.
      */
     private Unit unit;
@@ -110,8 +110,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * Construct an {@link ImageFunction}
      * for cartesian coordinate systems.
      */
-    protected AbstractImageFunction()
-    {this(null);}
+    protected AbstractImageFunction() {
+        this(null);
+    }
 
     /**
      * Construct an {@link ImageFunction}.
@@ -119,16 +120,20 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @param cs The coordinate system, or <code>null</code> for a default
      *           cartesien coordinate system..
      */
-    protected AbstractImageFunction(final CoordinateSystem cs)
-    {
+    protected AbstractImageFunction(final CoordinateSystem cs) {
         this.coordinateSystem = cs;
-        try
-        {
+        try {
             colors = Utilities.getPaletteFactory().getColors("Rainbow");
-        }
-        catch (IOException exception)
-        {
-            colors = new Color[] {Color.black, Color.white};
+        } catch (IOException exception) {
+            final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
+            record.setSourceClassName("AbstractImageFunction");
+            record.setSourceMethodName("<init>");
+            record.setThrown(exception);
+            Logger.getLogger("fr.ird.operator.image").log(record);
+            colors = new Color[] {
+                Color.black,
+                Color.white
+            };
         }
     }
 
@@ -137,8 +142,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * This coordinate system is usually set at
      * construction time.
      */
-    public CoordinateSystem getCoordinateSystem()
-    {return coordinateSystem;}
+    public CoordinateSystem getCoordinateSystem() {
+        return coordinateSystem;
+    }
 
     /**
      * Retourne les coordonnées géographique couvertes.
@@ -148,11 +154,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @throws IOException si une lecture des données a été
      *         nécessaire et que cette opération a échouée.
      */
-    public synchronized Rectangle2D getGeographicArea() throws IOException
-    {
-        if (geographicArea == null)
-        {
-            ensureValid();
+    public synchronized Rectangle2D getGeographicArea() throws IOException {
+        if (geographicArea == null) {
+            findExtremas();
         }
         return (geographicArea!=null) ? (Rectangle2D) geographicArea.clone() : new Rectangle2D.Double();
     }
@@ -162,8 +166,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * will reset the default area, which is computed from
      * available data.
      */
-    public synchronized void setGeographicArea(final Rectangle2D area)
-    {geographicArea = (area!=null) ? (Rectangle2D) area.clone() : null;}
+    public synchronized void setGeographicArea(final Rectangle2D area) {
+        geographicArea = (area!=null) ? (Rectangle2D) area.clone() : null;
+    }
 
     /**
      * Retourne la valeur minimale de la plage de valeurs.
@@ -171,11 +176,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @throws IOException si une lecture des données a été
      *         nécessaire et que cette opération a échouée.
      */
-    public synchronized double getMinimum() throws IOException
-    {
-        if (Double.isNaN(minimum))
-        {
-            ensureValid();
+    public synchronized double getMinimum() throws IOException {
+        if (Double.isNaN(minimum)) {
+            findExtremas();
         }
         return minimum;
     }
@@ -185,11 +188,11 @@ public abstract class AbstractImageFunction implements ImageFunction
      * the current maximum, then the maximum will also be set to
      * this value.
      */
-    public synchronized void setMinimum(final double value)
-    {
+    public synchronized void setMinimum(final double value) {
         minimum = value;
-        if (maximum < value)
+        if (maximum < value) {
             maximum = value;
+        }
     }
 
     /**
@@ -198,11 +201,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @throws IOException si une lecture des données a été
      *         nécessaire et que cette opération a échouée.
      */
-    public synchronized double getMaximum() throws IOException
-    {
-        if (Double.isNaN(maximum))
-        {
-            ensureValid();
+    public synchronized double getMaximum() throws IOException {
+        if (Double.isNaN(maximum)) {
+            findExtremas();
         }
         return maximum;
     }
@@ -212,11 +213,11 @@ public abstract class AbstractImageFunction implements ImageFunction
      * the current minimum, then the minimum will also be set
      * to this value.
      */
-    public synchronized void setMaximum(final double value)
-    {
+    public synchronized void setMaximum(final double value) {
         maximum = value;
-        if (minimum > value)
+        if (minimum > value) {
             minimum = value;
+        }
     }
 
     /**
@@ -225,8 +226,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @throws IOException If this information can't
      *         be fetch from the datafile.
      */
-    public synchronized Color[] getColorPalette() throws IOException
-    {return (Color[]) colors.clone();}
+    public synchronized Color[] getColorPalette() throws IOException {
+        return (Color[]) colors.clone();
+    }
 
     /**
      * Set the color palette by name. The name must be one of valid
@@ -235,8 +237,13 @@ public abstract class AbstractImageFunction implements ImageFunction
      *
      * @throws IOException if the color palette can't be read.
      */
-    public synchronized void setColorPalette(final String palette) throws IOException
-    {colors = Utilities.getPaletteFactory().getColors(palette);}
+    public synchronized void setColorPalette(final String palette) throws IOException {
+        final Color[] candidate = Utilities.getPaletteFactory().getColors(palette);
+        if (candidate == null) {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NO_PARAMETER_$1, palette));
+        }
+        colors = candidate;
+    }
 
     /**
      * Returns the value's unit, or <code>null</code> if none.
@@ -244,29 +251,16 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @throws IOException If this information can't
      *         be fetch from the datafile.
      */
-    public Unit getUnit() throws IOException
-    {return unit;}
+    public Unit getUnit() throws IOException {
+        return unit;
+    }
 
     /**
      * Set the value's unit.
      */
-    public void setUnit(final Unit unit)
-    {this.unit = unit;}
-
-    /**
-     * Returns name for values.
-     *
-     * @throws IOException If this information can't
-     *         be fetch from the datafile.
-     */
-    public String getName() throws IOException
-    {return name;}
-
-    /**
-     * Set the name for values.
-     */
-    public void setName(final String name)
-    {this.name = name;}
+    public void setUnit(final Unit unit) {
+        this.unit = unit;
+    }
 
     /**
      * Positionne le curseur au début du flot de données. Lorsque <code>ImageFunction</code>
@@ -349,73 +343,68 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @see #rewind
      * @see #next
      */
-    protected double getWeight(final double distance)
-    {return 1;}
+    protected double getWeight(final double distance) {
+        return 1;
+    }
 
     /**
      * Returns whether or not each value's elements are complex.
      * Default implementation returns <code>false</code>.
      */
-    public boolean isComplex()
-    {return false;}
+    public boolean isComplex() {
+        return false;
+    }
 
     /**
      * Returns the number of elements per value at each position.
      * Default implementation returns 1.
      */
-    public int getNumElements()
-    {return 1;}
+    public int getNumElements() {
+        return 1;
+    }
 
     /**
-     * Calcule automatiquement les valeurs de {@link #geographicArea} et les
-     * minimum et maximum, si ces valeurs n'avaient pas déjà été calculées.
-     * Cette méthode doit obligatoirement être appelée à partir d'une
-     * méthode <code>synchronized</code>.
+     * Trouve les valeurs de {@link #geographicArea} et les minimum et maximum.
+     * Cette méthode doit obligatoirement être appelée à partir d'une méthode
+     * synchronisée.
      *
      * @throws IOException si une lecture des données a été
      *         nécessaire et que cette opération a échouée.
      */
-    private void ensureValid() throws IOException
-    {
+    private void findExtremas() throws IOException {
         assert Thread.holdsLock(this);
-        Rectangle2D            area = geographicArea;
-        final boolean minimum_isNaN = Double.isNaN(minimum);
-        final boolean maximum_isNaN = Double.isNaN(maximum);
-        if (area==null || minimum_isNaN || maximum_isNaN)
-        {
-            rewind();
-            double[] data = null;
-            double xmin = Double.POSITIVE_INFINITY;
-            double xmax = Double.NEGATIVE_INFINITY;
-            double ymin = Double.POSITIVE_INFINITY;
-            double ymax = Double.NEGATIVE_INFINITY;
-            double zmin = Double.POSITIVE_INFINITY;
-            double zmax = Double.NEGATIVE_INFINITY;
-            while ((data=next(data)) != null)
-            {
-                final double x = data[0];
-                final double y = data[1];
-                final double z = data[2];
-                if (x<xmin) xmin=x;
-                if (x>xmax) xmax=x;
-                if (y<ymin) ymin=y;
-                if (y>ymax) ymax=y;
-                if (z>zmax) zmax=z;
-                if (z<zmin) zmin=z;
+        double xmin = Double.POSITIVE_INFINITY;
+        double xmax = Double.NEGATIVE_INFINITY;
+        double ymin = Double.POSITIVE_INFINITY;
+        double ymax = Double.NEGATIVE_INFINITY;
+        double zmin = Double.POSITIVE_INFINITY;
+        double zmax = Double.NEGATIVE_INFINITY;
+        rewind();
+        double[] data = null;
+        while ((data=next(data)) != null) {
+            final double x = data[0];
+            final double y = data[1];
+            final double z = data[2];
+            if (x<xmin) xmin=x;
+            if (x>xmax) xmax=x;
+            if (y<ymin) ymin=y;
+            if (y>ymax) ymax=y;
+            if (z<zmin) zmin=z;
+            if (z>zmax) zmax=z;
+        }
+        // Update internal fields only if they were not set.
+        // It allows to preserve user-defined settings.
+        if (xmin<=xmax && ymin<=ymax) {
+            if (geographicArea == null) {
+                geographicArea = new Rectangle2D.Double(xmin, ymin, xmax-xmin, ymax-ymin);
             }
-            if (xmin<=xmax && ymin<=ymax)
-            {
-                if (area==null) geographicArea = area = new Rectangle2D.Double(xmin, ymin, xmax-xmin, ymax-ymin);
-            }
-            if (zmin<=zmax)
-            {
-                if (minimum_isNaN) minimum=zmin;
-                if (maximum_isNaN) maximum=zmax;
-                if (!(minimum < maximum)) // Le '!' prend en compte NaN.
-                {
-                    minimum = zmin;
-                    maximum = zmax;
-                }
+        }
+        if (zmin <= zmax) {
+            if (Double.isNaN(minimum)) minimum=zmin;
+            if (Double.isNaN(maximum)) maximum=zmax;
+            if (!(minimum < maximum)) { // Le '!' prend en compte NaN.
+                minimum = zmin;
+                maximum = zmax;
             }
         }
     }
@@ -442,14 +431,13 @@ public abstract class AbstractImageFunction implements ImageFunction
     public void getElements(final float startX, final float startY,
                             final float deltaX, final float deltaY,
                             final int   countX, final int    countY, final int element,
-                            final float[] real, final float[]  imag)
+                            final float[] real, final float[] imag)
     {
         final int length = countX*countY;
         final double[] sumValues = new double[length];
         final double[] sumWeight = new double[length];
         compute(startX, startY, deltaX, deltaY, countX, countY, sumValues, sumWeight);
-        for (int i=0; i<length; i++)
-        {
+        for (int i=0; i<length; i++) {
             real[i] = (float) (sumValues[i] / sumWeight[i]);
         }
     }
@@ -482,8 +470,7 @@ public abstract class AbstractImageFunction implements ImageFunction
         Arrays.fill(real, 0, length, 0);
         final double[] sumWeight = new double[length];
         compute(startX, startY, deltaX, deltaY, countX, countY, real, sumWeight);
-        for (int i=0; i<length; i++)
-        {
+        for (int i=0; i<length; i++) {
             real[i] /= sumWeight[i];
         }
     }
@@ -510,57 +497,44 @@ public abstract class AbstractImageFunction implements ImageFunction
                                       final int    countX, final int    countY,
                                       final double[] sumValues, final double[] sumWeight) throws ImagingOpException
     {
-        final HorizontalDatum datum = CTSUtilities.getHorizontalDatum(coordinateSystem);
-        final Ellipsoid ellipsoid = (datum!=null) ? datum.getEllipsoid() : null;
-
-        final int    length = countX*countY;
-        final double scaleX = countX / (deltaX*countX);
-        final double scaleY = countY / (deltaY*countY);
-        try
-        {
+        final int length = countX*countY;
+        final Ellipsoid ellipsoid = CTSUtilities.getEllipsoid(coordinateSystem);
+        try {
             rewind();
             double[] data = null;
-            while ((data=next(data)) != null)
-            {
-                final double value=data[2];
-                if (!Double.isNaN(value))
-                {
-                    double x1 = data[0];
-                    double y1 = data[1];
-                    if (ellipsoid != null) // Correction for out-of-range longitude
-                    {
-                        x1 = ((x1 - startX) % 360) + startX;
+            while ((data=next(data)) != null) {
+                final double z = data[2];
+                if (!Double.isNaN(z)) {
+                    double x = data[0];
+                    double y = data[1];
+                    if (ellipsoid != null) {
+                        // Correction for out-of-range longitude:
+                        // keep longitude in range [startX ... startX+360]
+                        x = ((x - startX) % 360) + startX;
                     }
-                    final double fx = Math.floor((x1-startX)*scaleX);
-                    final double fy = Math.floor((y1-startY)*scaleY);
-                    final int     x = (int) fx;
-                    final int     y = (int) fy;
-                    if (x>=0 && y>=0 && x<countX && y<countY)
-                    {
-                        final double x2 = startX+(fx+0.5)/scaleX;
-                        final double y2 = startY+(fy+0.5)/scaleY;
+                    // Compute the pixel location (px,py) for the measurement at (x,y).
+                    // Location (px,py) is the pixel's upper left corner (not the center).
+                    final int px = (int)Math.floor((x-startX)/deltaX);
+                    final int py = (int)Math.floor((y-startY)/deltaY);
+                    if (px>=0 && py>=0 && px<countX && py<countY) {
+                        final double xr = startX + (px+0.5)*deltaX;
+                        final double yr = startY + (py+0.5)*deltaY;
                         final double distance;
-                        if (ellipsoid != null)
-                        {
-                            distance = ellipsoid.orthodromicDistance(x1, y1, x2, y2);
-                        }
-                        else
-                        {
-                            distance = XMath.hypot(x1-x2, y1-y2);
+                        if (ellipsoid != null) {
+                            distance = ellipsoid.orthodromicDistance(x, y, xr, yr);
+                        } else {
+                            distance = XMath.hypot(x-xr, y-yr);
                         }
                         final double weight = getWeight(distance);
-                        if (!Double.isNaN(weight))
-                        {
-                            final int  index  = x + y*countX;
-                            sumValues[index] += weight*value;
+                        if (!Double.isNaN(weight)) {
+                            final int index   = px + py*countX;
+                            sumValues[index] += weight*z;
                             sumWeight[index] += weight;
                         }
                     }
                 }
             }
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             final ImagingOpException e = new ImagingOpException("Can't compute image");
             e.initCause(exception);
             throw e;
@@ -576,19 +550,17 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @return The grid coverage.
      * @throws IOException if an error occured while reading file.
      */
-    public synchronized GridCoverage getGridCoverage(final String name, final int width, final int height) throws IOException
-    {
+    public synchronized GridCoverage getGridCoverage(final String name, final int width, final int height) throws IOException {
         final double          minimum = getMinimum();
         final double          maximum = getMaximum();
         final double            scale = (maximum-minimum)/255;
         final Rectangle2D coordBounds = getGeographicArea();
         final Rectangle   pixelBounds = new Rectangle(0, 0, width, height);
         final GridGeometry   geometry = new GridGeometry(pixelBounds, coordBounds);
-        final SampleDimension    band = new SampleDimension(new Category[]
-        {
+        final SampleDimension    band = new SampleDimension(new Category[] {
             new Category("Donnée manquante", Color.black, 0),
-            new Category(getName(), getColorPalette(), 1, 256, minimum-scale, scale)
-        }, getUnit());
+            new Category(name, getColorPalette(), 1, 256, scale, minimum-scale)
+        }, getUnit()).geophysics(true);
         return new GridCoverage(name, this, getCoordinateSystem(), geometry,
                                 new SampleDimension[] {band}, null);
     }
@@ -602,8 +574,7 @@ public abstract class AbstractImageFunction implements ImageFunction
      * @return The grid coverage.
      * @throws IOException if an error occured while reading file.
      */
-    public GridCoverage show(final String name, final int width, final int height) throws IOException
-    {
+    public GridCoverage show(final String name, final int width, final int height) throws IOException {
         final GridCoverage coverage = getGridCoverage(name, width, height);
         final MapPanel map = new MapPanel(getCoordinateSystem());
         map.addLayer(new GridCoverageLayer(coverage));
@@ -623,10 +594,8 @@ public abstract class AbstractImageFunction implements ImageFunction
      *
      * @throws IOException If an I/O operation was required and failed.
      */
-    public synchronized void dispose() throws IOException
-    {
+    public synchronized void dispose() throws IOException {
         unit           = null;
-        name           = null;
         colors         = null;
         geographicArea = null;
         minimum = maximum = Double.NaN;

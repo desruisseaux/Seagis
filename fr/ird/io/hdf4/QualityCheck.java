@@ -33,8 +33,7 @@ package fr.ird.io.hdf4;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class QualityCheck
-{
+public abstract class QualityCheck {
     /**
      * Ensembles de données
      */
@@ -45,11 +44,11 @@ public abstract class QualityCheck
      * drapeaux de <code>flags</code> pour vérifier
      * la qualité des données.
      */
-    protected QualityCheck(final DataSet flags)
-    {
-        this.flags=flags;
-        if (flags==null)
+    protected QualityCheck(final DataSet flags) {
+        this.flags = flags;
+        if (flags == null) {
             throw new NullPointerException();
+        }
     }
 
     /**
@@ -60,13 +59,15 @@ public abstract class QualityCheck
     /**
      * Indique si les données à l'index spécifié sont acceptés.
      */
-    final boolean acceptIndex(final int index)
-    {return accept(flags.getInteger(index));}
+    final boolean acceptIndex(final int index) {
+        return accept(flags.getInteger(index));
+    }
 
     /**
      * Indique si les dimensions de <code>this</code> sont
      * compatibles avec celles du {@link DataSet} spécifié.
      */
-    final boolean sizeEquals(final DataSet dataSet)
-    {return flags.sizeEquals(dataSet);}
+    final boolean sizeEquals(final DataSet dataSet) {
+        return flags.sizeEquals(dataSet);
+    }
 }
