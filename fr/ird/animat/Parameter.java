@@ -25,15 +25,9 @@
  */
 package fr.ird.animat;
 
-// Entrés/sorties et logging
+// J2SE dependencies
+import java.io.Serializable;
 import java.awt.geom.Point2D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.LogRecord;
-import java.io.ObjectStreamException;
-
-// JAI dependencies
-import javax.media.jai.EnumeratedParameter;
 
 
 /**
@@ -44,27 +38,31 @@ import javax.media.jai.EnumeratedParameter;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Parameter extends EnumeratedParameter {
+public class Parameter implements Serializable {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -6758126960652251313L;
+    private static final long serialVersionUID = -1934991927931117874L;
 
     /**
      * Le cap des animaux, ainsi que leur position actuelle. Le cap peut être obtenu
      * par un appel à {@link #getValue}, alors que la position peut être obtenue par
      * un appel à {@link #getLocation}.
      */
-    public static final Parameter HEADING = new Parameter("Heading", 0);
+    public static final Parameter HEADING = new Parameter("Heading");
+
+    /**
+     * Le nom de ce paramètre.
+     */
+    private final String name;
 
     /**
      * Construit un nouveau paramètre.
      *
      * @param name  Le nom du paramètre.
-     * @param value La valeur de l'énumération (code réservé à un usage interne).
      */
-    protected Parameter(final String name, final int value) {
-        super(name, value);
+    protected Parameter(final String name) {
+        this.name = name.trim();
     }
 
     /**
@@ -104,37 +102,23 @@ public class Parameter extends EnumeratedParameter {
      * des composantes graphiques de <cite>Swing</cite> tel que des menus déroulants.
      */
     public String toString() {
-        return getName();
+        return name;
     }
 
     /**
-     * Retourne la classe qui contient les déclarations des constantes.
-     * Après chaque lecture binaire d'un objet {@link ConstantParameter},
-     * la méthode {@link #readResolve} remplacera <code>this</code> par la
-     * constante qui porte le nom {@link #getName} dans la classe retournée.
+     * Retourne une valeur de hachage pour cet objet.
      */
-    protected Class getOwner() {
-        return Parameter.class;
+    public int hashCode() {
+        return name.hashCode();
     }
 
     /**
-     * Remplace <code>this</code> par la constante nommée {@link #getName}
-     * dans la classe retournée par {@link #getOwner}. Cette méthode
-     * permet de tester l'égalité de deux constantes avec l'opérateur
-     * <code>==</code> après la lecture.
+     * Compare ce paramètre avec l'objet spécifié.
      */
-    protected Object readResolve() throws ObjectStreamException {
-        final Class owner = getOwner();
-        final String name = getName();
-        try {
-            return owner.getField(name).get(null);
-        } catch (Exception exception) {
-            final LogRecord record = new LogRecord(Level.WARNING, "Unknow constant: "+super.toString());
-            record.setSourceClassName(owner.getName());
-            record.setSourceMethodName("readResolve");
-            record.setThrown(exception);
-            Logger.getLogger("fr.ird.animat").log(record);
-            return this;
+    public boolean equals(final Object object) {
+        if (object!=null && object.getClass().equals(getClass())) {
+            return name.equals(((Parameter) object).name);
         }
+        return false;
     }
 }

@@ -26,7 +26,7 @@
 package fr.ird.seasview.layer;
 
 // Map components
-import fr.ird.map.Isoline;
+import org.geotools.renderer.Isoline;
 import fr.ird.map.io.GEBCOReader;
 
 // Input/output

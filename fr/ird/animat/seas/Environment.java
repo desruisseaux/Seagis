@@ -25,14 +25,17 @@
  */
 package fr.ird.animat.seas;
 
-// Divers
+// Divers J2SE
 import java.util.Map;
+import java.util.Set;
 import java.util.Date;
-import java.awt.Shape;
-import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.sql.SQLException;
 
-// Geotools dependencies
+// OpenGIS
+import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.XDimension2D;
 
@@ -43,19 +46,6 @@ import fr.ird.sql.image.ImageDataBase;
 import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
 
-// Animats
-import fr.ird.animat.Animal;
-
-// Evénements
-import javax.swing.event.EventListenerList;
-import fr.ird.animat.event.EnvironmentChangeEvent;
-import fr.ird.animat.event.EnvironmentChangeListener;
-
-// Evaluateurs
-import fr.ird.operator.coverage.Evaluator;
-import fr.ird.operator.coverage.ParameterValue;
-import fr.ird.operator.coverage.MaximumEvaluator;
-
 
 /**
  * Représentation de l'environnement dans lequel évolueront les animaux.
@@ -63,215 +53,84 @@ import fr.ird.operator.coverage.MaximumEvaluator;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Environment implements fr.ird.animat.Environment
-{
+final class Environment extends fr.ird.animat.Environment {
     /**
-     * Liste des séries, opérations et évaluateurs à utiliser.
+     * La configuration de la simulation.
      */
-    private static final Parameter[] parameters =
-    {
-        new Parameter("SST (synthèse)", null,                "Maximum"),
-        new Parameter("SST (synthèse)", "GradientMagnitude", "Maximum")
-    };
-
-    /**
-     * Liste des objets intéressés à être informés
-     * des changements apportés à cet environnement.
-     */
-    private final EventListenerList listenerList = new EventListenerList();
-
-    /**
-     * Evénement à lancer à chaque fois que la population change.
-     */
-    private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
-
-    /**
-     * Date courante des images.
-     */
-    private final Date time = new Date();
-
-    /**
-     * Nombre de paramètres pris en compte. Ce nombre prend en compte
-     * le nombre de bandes pour chaque objet {@link Coverage3D}.
-     */
-    private final int parameterCount;
+    private final Configuration configuration;
 
     /**
      * Couvertures à utiliser pour chaque paramètres.
      */
-    private final Coverage3D[] coverages;
-
-    /**
-     * Object à utiliser pour évaluer les positions
-     * de certains paramètres.
-     */
-    private final Evaluator evaluator = new MaximumEvaluator();
-
-    /**
-     * Un indicateur général de la qualité des conditions environnementales.
-     * La valeur 1 signifie que les eaux sont des plus transparentes et que
-     * l'animal perçoit son environnement jusqu'à la limite de la capacité
-     * de ses sens. La valeur 0 signifie que les eaux sont très troubles et
-     * que l'animal ne "voit" rien.
-     */
-    private final double condition = 1;
+    private final Map<Parameter,Coverage3D> coverages = new HashMap<Parameter,Coverage3D>();
 
     /**
      * Construit un environnement qui utilisera
      * la base de données d'images spécifiée.
      *
      * @param  database Base de données à utiliser.
-     * @param  resolution Résolution en degrés d'angles.
+     * @param  config La configuration de la simulation.
      * @throws SQLException si une erreur est survenue
      *         lors de l'accès à la base de données.
      */
     public Environment(final ImageDataBase database,
-                       final Date         startTime,
-                       final double resolution)
-        throws SQLException
+                       final Configuration   config)
+            throws SQLException
     {
+        super(config.firstTimeStep);
+        this.configuration = config;
         ImageTable  images = null;
         SeriesTable series = null;
-        int parameterCount = 0;
-        coverages = new Coverage3D[parameters.length];
-        for (int i=0; i<parameters.length; i++)
-        {
-            final Parameter parameter = parameters[i];
-            if (images == null)
-            {
+        for (final Iterator<fr.ird.animat.Parameter> it=config.parameters.iterator(); it.hasNext();) {
+            final Parameter parameter = (Parameter) it.next();
+            if (images == null) {
                 series = database.getSeriesTable();
                 images = database.getImageTable(series.getSeries(parameter.series));
-                images.setPreferredResolution(new XDimension2D.Double(resolution, resolution));
-                images.setTimeRange(startTime, new Date());
-            }
-            else
-            {
+                images.setPreferredResolution(new XDimension2D.Double(config.resolution, config.resolution));
+                images.setTimeRange(config.firstTimeStep.getStartTime(), new Date());
+            } else {
                 images.setSeries(series.getSeries(parameter.series));
             }
             images.setOperation(parameter.operation);
-            coverages[i] = new Coverage3D(images);
-            parameterCount += coverages[i].getNumSampleDimensions();
+            coverages.put(parameter, new Coverage3D(images));
         }
-        if (images != null)
-        {
+        if (images != null) {
             images.close();
             series.close();
         }
-        this.parameterCount = parameterCount;
     }
 
     /**
-     * Retourne la date courante.
+     * Retourne l'ensemble des paramètres compris dans cet environnement.
      */
-    public Date getTime()
-    {
-        return new Date(time.getTime());
+    public Set<fr.ird.animat.Parameter> getParameters() {
+        return configuration.parameters;
     }
 
     /**
-     * Définit la date courante.
+     * Retourne les données d'un paramètre sous forme d'un objet
+     * {@link Coverage}.
      */
-    public synchronized void setTime(final Date newTime)
-    {
-        if (!time.equals(newTime))
-        {
-            time.setTime(newTime.getTime());
-            fireEnvironmentChanged();
-        }
-    }
-
-    /**
-     * Retourne le nombre de paramètres compris
-     * dans cet environnement.
-     */
-    public int getParameterCount()
-    {
-        return parameterCount;
-    }
-
-    /**
-     * Retourne l'image courante.
-     *
-     * @param  parameter Index du paramètre dont on veut l'image.
-     * @return L'image courange, ou <code>null</code> s'il n'y en a pas.
-     */
-    public GridCoverage getGridCoverage(int parameter)
-    {
-        if (parameter >= 0)
-        {
-            for (int i=0; i<parameterCount; i++)
-            {
-                final Coverage3D coverage = coverages[i];
-                final int bandCount = coverage.getNumSampleDimensions();
-                if (parameter < bandCount)
-                {
-                    return coverage.getGridCoverage2D(time);
-                }
-                parameter -= bandCount;
+    public Coverage getCoverage(final fr.ird.animat.Parameter parameter) throws NoSuchElementException {
+        if (parameter instanceof Parameter) {
+            final Parameter param = (Parameter) parameter;
+            final Coverage3D coverage = coverages.get(param);
+            if (coverage != null) {
+                final Date time = getTimeStep().getStartTime();
+                return param.applyEvaluator(coverage.getGridCoverage2D(time));
             }
         }
-        throw new IndexOutOfBoundsException();
+        return super.getCoverage(parameter);
     }
 
     /**
-     * Retourne les valeurs des paramètres que perçoit l'animal spécifié.
-     * Ces valeurs dépendront du rayon de perception de l'animal, tel que
-     * retourné par {@link Animal#getPerceptionArea}.
-     *
-     * @param  animal Animal pour lequel retourner les paramètres de
-     *         l'environnement qui se trouvent dans son rayon de perception.
-     * @return Les paramètres perçus, ou <code>null</code> s'il n'y en a pas.
+     * Libère les ressources utilisées par cet environnement. Toutes
+     * les populations contenues dans cet environnement seront détruites,
+     * et les éventuelles connections avec des bases de données seront
+     * fermées.
      */
-    public ParameterValue[] getParameters(final Animal animal)
-    {
-        int index = 0;
-        final ParameterValue[] values = new ParameterValue[parameterCount];
-        for (int i=0; i<coverages.length; i++)
-        {
-            final GridCoverage gc = coverages[i].getGridCoverage2D(time);
-            if (gc != null)
-            {
-                final Shape area = animal.getPerceptionArea(condition);
-                final ParameterValue[] toCopy = evaluator.evaluate(gc, area);
-                System.arraycopy(toCopy, 0, values, index, toCopy.length);
-                index += toCopy.length;
-            }
-            else
-            {
-                index += coverages[i].getNumSampleDimensions();
-            }
-        }
-        assert index == values.length;
-        return values;
+    public void dispose() {
+        super.dispose();
+        coverages.clear();
     }
-
-    /**
-     * A appeler à chaque fois que l'environnement change.
-     */
-    protected void fireEnvironmentChanged()
-    {
-        final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;)
-        {
-            if (listeners[i] == EnvironmentChangeListener.class)
-            {
-                ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
-            }
-        }
-    }
-
-    /**
-     * Déclare un objet à informer des changements survenant dans cet
-     * environnement. Ces changements surviennent souvent suite à un
-     * appel de {@link #setTime}.
-     */
-    public synchronized void addEnvironmentChangeListener(final EnvironmentChangeListener listener)
-    {listenerList.add(EnvironmentChangeListener.class, listener);}
-
-    /**
-     * Retire un objet à informer des changements survenant dans cet
-     * environnement.
-     */
-    public synchronized void removeEnvironmentChangeListener(final EnvironmentChangeListener listener)
-    {listenerList.remove(EnvironmentChangeListener.class, listener);}
 }

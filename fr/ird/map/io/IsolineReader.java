@@ -23,7 +23,7 @@
 package fr.ird.map.io;
 
 // Maps
-import fr.ird.map.Isoline;
+import org.geotools.renderer.Isoline;
 
 // Input/output
 import java.net.URL;
@@ -45,8 +45,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class IsolineReader
-{
+public abstract class IsolineReader {
     /**
      * The source input, or <code>null</code> if not set.
      */
@@ -60,8 +59,8 @@ public abstract class IsolineReader
     /**
      * Construct a default isoline reader.
      */
-    public IsolineReader()
-    {}
+    public IsolineReader() {
+    }
 
     /**
      * Sets the input source to use. The input source must be
@@ -70,8 +69,7 @@ public abstract class IsolineReader
      * @param  file The input source, or <code>null</code> if none.
      * @throws IOException if the input source can't be set.
      */
-    public void setInput(final File file) throws IOException
-    {
+    public void setInput(final File file) throws IOException {
         this.url  = null;
         this.file = file;
     }
@@ -83,8 +81,7 @@ public abstract class IsolineReader
      * @param  url The input source, or <code>null</code> if none.
      * @throws IOException if the input source can't be set.
      */
-    public void setInput(final URL url) throws IOException
-    {
+    public void setInput(final URL url) throws IOException {
         this.file = null;
         this.url  = url;
     }
@@ -94,10 +91,13 @@ public abstract class IsolineReader
      * <code>null</code> if no input source has
      * been set.
      */
-    final String getFileName()
-    {
-        if (file!=null) return file.getName();
-        if (url !=null) return new File(url.getPath()).getName();
+    final String getFileName() {
+        if (file != null) {
+            return file.getName();
+        }
+        if (url != null) {
+            return new File(url.getPath()).getName();
+        }
         return null;
     }
 
@@ -107,14 +107,11 @@ public abstract class IsolineReader
      *
      * @throws IOException if an error occured while constructing the reader.
      */
-    protected BufferedReader getBufferedReader() throws IOException
-    {
-        if (file!=null)
-        {
+    protected BufferedReader getBufferedReader() throws IOException {
+        if (file != null) {
             return new BufferedReader(new FileReader(file));
         }
-        if (url!=null)
-        {
+        if (url != null) {
             return new BufferedReader(new InputStreamReader(url.openStream()));
         }
         throw new IOException(Resources.format(ResourceKeys.ERROR_NO_INPUT_SET));

@@ -25,22 +25,23 @@
  */
 package fr.ird.animat.event;
 
-// Events
+// J2SE dependencies
 import java.util.EventListener;
 
 
 /**
  * Définit un objet qui écoutera les changements d'une population.
- * Ces changements inclus les espèces qui s'ajoutent ou qui meurent,
- * mais n'incluent pas les changements de positions des animaux.
+ * Ces changements inclus les animaux qui s'ajoutent ou qui meurent,
+ * ainsi que les changements de positions des animaux.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface PopulationChangeListener extends EventListener
-{
+public interface PopulationChangeListener extends EventListener {
     /**
      * Appelée quand une population a changée.
+     *
+     * @param  event L'événement décrivant le changement de population.
      */
-    public abstract void populationChanged(final PopulationChangeEvent event);
+    void populationChanged(final PopulationChangeEvent event);
 }

@@ -37,7 +37,6 @@ import fr.ird.sql.fishery.FisheryDataBase;
 // Input/output
 import java.io.File;
 import java.io.IOException;
-import fr.ird.map.Isoline;
 import fr.ird.map.io.GEBCOReader;
 import fr.ird.map.io.IsolineReader;
 
@@ -50,6 +49,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
 import org.geotools.resources.Geometry;
+import org.geotools.renderer.Isoline;
 
 
 /**

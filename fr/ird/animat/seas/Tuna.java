@@ -38,7 +38,6 @@ import org.geotools.resources.XArray;
 import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
 import fr.ird.animat.Environment;
-import fr.ird.operator.coverage.ParameterValue;
 
 
 /**
@@ -48,8 +47,7 @@ import fr.ird.operator.coverage.ParameterValue;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Tuna extends MobileObject implements Animal
-{
+final class Tuna extends MobileObject implements Animal {
     /**
      * Rayon de perception de l'animal en mètres.
      */
@@ -249,5 +247,37 @@ final class Tuna extends MobileObject implements Animal
                 }
             }
         }
+    }
+
+    /**
+     * Retourne les valeurs des paramètres que perçoit l'animal spécifié.
+     * Ces valeurs dépendront du rayon de perception de l'animal, tel que
+     * retourné par {@link Animal#getPerceptionArea}.
+     *
+     * @param  animal Animal pour lequel retourner les paramètres de
+     *         l'environnement qui se trouvent dans son rayon de perception.
+     * @return Les paramètres perçus, ou <code>null</code> s'il n'y en a pas.
+     */
+    public ParameterValue[] getParameters(final Animal animal)
+    {
+        int index = 0;
+        final ParameterValue[] values = new ParameterValue[parameterCount];
+        for (int i=0; i<coverages.length; i++)
+        {
+            final GridCoverage gc = coverages[i].getGridCoverage2D(time);
+            if (gc != null)
+            {
+                final Shape area = animal.getPerceptionArea(condition);
+                final ParameterValue[] toCopy = evaluator.evaluate(gc, area);
+                System.arraycopy(toCopy, 0, values, index, toCopy.length);
+                index += toCopy.length;
+            }
+            else
+            {
+                index += coverages[i].getNumSampleDimensions();
+            }
+        }
+        assert index == values.length;
+        return values;
     }
 }

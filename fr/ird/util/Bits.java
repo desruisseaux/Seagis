@@ -1,6 +1,6 @@
 /*
  * Remote sensing images: database and visualisation
- * Copyright (C) 2000 Institut de Recherche pour le Développement
+ * Copyright (C) 2002 Institut de Recherche pour le Développement
  *
  *
  *    This library is free software; you can redistribute it and/or
@@ -23,23 +23,33 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.awt.event;
-
-// Evénements
-import java.util.EventListener;
+package fr.ird.util;
 
 
 /**
- * Interface des objets interessés à être informé des changements d'images.
- * En général, ces changements surviendront à l'intérieur d'une fenêtre qui
- * contient {@link fr.ird.map.MapPanel}.
+ * Utilitaires de manipulation de bits.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface ImageChangeListener extends EventListener {
+public final class Bits {
     /**
-     * Préviens qu'une image a changée.
+     * Interdit la création d'instance de cette classe.
      */
-    public abstract void imageChanged(final ImageChangeEvent event);
+    private Bits() {
+    }
+
+    /**
+     * Retourne le nombre de bits ayant la valeur 1.
+     */
+    public static int count(int value) {
+        int count = 0;
+        while (value != 0) {
+            if ((value & 1) != 0) {
+                count++;
+            }
+            value >>>= 1;
+        }
+        return count;
+    }
 }

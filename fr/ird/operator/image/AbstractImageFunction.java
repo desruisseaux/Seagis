@@ -56,8 +56,9 @@ import org.geotools.resources.CTSUtilities;
 import org.geotools.units.Unit;
 
 // Miscellaneous
-import fr.ird.map.MapPanel;
-import fr.ird.map.layer.GridCoverageLayer;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.renderer.j2d.Renderer;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
 import fr.ird.util.Utilities;
@@ -576,8 +577,8 @@ public abstract class AbstractImageFunction implements ImageFunction {
      */
     public GridCoverage show(final String name, final int width, final int height) throws IOException {
         final GridCoverage coverage = getGridCoverage(name, width, height);
-        final MapPanel map = new MapPanel(getCoordinateSystem());
-        map.addLayer(new GridCoverageLayer(coverage));
+        final MapPane map = new MapPane(getCoordinateSystem());
+        map.getRenderer().addLayer(new RenderedGridCoverage(coverage));
         map.setPreferredSize(new Dimension(width, height));
         final JFrame frame = new JFrame(name);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

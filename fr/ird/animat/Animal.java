@@ -26,29 +26,54 @@
 package fr.ird.animat;
 
 // J2SE
+import java.util.Map;
+import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
 
-// SEAS dependencies
-import fr.ird.operator.coverage.ParameterValue;
-
 
 /**
  * Représentation d'un animal. Chaque animal doit appartenir à une espèce,
- * décrite par un objet {@link Species}. Toutes les coordonnées sont
- * exprimées en degrées de longitude et de latitude selon l'ellipsoïde
- * {@link Ellipsoid#WGS84}. Les déplacements d'un animal sont exprimées
- * en mètres. Les directions sont exprimées en degrés géographiques
- * (c'est-à-dire par rapport au nord "vrai").
+ * décrite par un objet {@link Species}, ainsi qu'à une population décrite
+ * par un objet {@link Population}. Le terme "animal" est ici utilisé au
+ * sens large. Un développeur pourrait très bien considérer la totalité
+ * d'un banc de poissons comme une sorte de méga-animal.
+ * <br><br>
+ * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes
+ * et de latitudes selon l'ellipsoïde {@link Ellipsoid#WGS84}.
+ * Les déplacements sont exprimées en milles nautiques, et les directions
+ * en degrés géographiques (c'est-à-dire par rapport au nord "vrai").
+ * Les durées sont exprimées en nombre de jours.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Animal
-{
+public abstract class Animal {
+    /**
+     * La population à laquelle appartient cet animal.
+     */
+    Population population;
+
+    /**
+     * Le chemin suivit par l'animal depuis le début de la simulation. La méthode
+     * {@link #move} agira typiquement sur cet objet en utilisant des méthodes telles
+     * que {@link Path#rotate}, {@link Path#moveForward} ou {@link Path#moveToward}.
+     */
+    protected final Path path;
+
+    /**
+     * Construit un animal à la position initiale spécifiée.
+     *
+     * @param position Position initiale de l'animal.
+     */
+    public Animal(final Point2D position) {
+        path = new Path(position);
+    }
+
     /**
      * Retourne l'espèce à laquelle appartient cet animal.
      *
@@ -57,57 +82,81 @@ public interface Animal
     public abstract Species getSpecies();
 
     /**
-     * Retourne la position de cet animal,
-     * en degrés de longitude et de latitude.
+     * Retourne la population à laquelle appartient cet animal.
+     * Seuls les animaux vivants appartiennent à une population.
+     *
+     * @return La population à laquelle appartient cet animal,
+     *         ou <code>null</code> si l'animal est mort.
      */
-    public abstract Point2D getLocation();
+    public Population getPopulation() {
+        return population;
+    }
 
     /**
-     * Retourne la direction de cet animal, en degrés
-     * géographique par rapport au nord vrai.
+     * Retourne le chemin suivit par l'animal depuis le début
+     * de la simulation jusqu'à maintenant. Les coordonnées
+     * sont exprimées en degrés de longitudes et de latitudes.
      */
-    public abstract double getDirection();
+    public Shape getPath() {
+        return path;
+    }
 
     /**
-     * Retourne la région jusqu'où s'étend la perception de cette
+     * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@link Parameter
+     * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
+     * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
+     * A l'inverse, un animal peut aussi faire quelques observations "internes" (par exemple la
+     * température de ses muscles) qui ne font pas partie des paramètres de son environnement
+     * externe. En général, {@linkplain Parameter#HEADING le cap et la position} de l'animal font
+     * partis des paramètres observés.
+     *
+     * @param  time Date pour laquelle on veut les observations,
+     *         ou <code>null</code> pour les dernières observations
+     *         (c'est-à-dire celle qui ont été faites après le dernier
+     *         déplacement).
+     * @return Les observations de l'animal, ou <code>null</code> si la
+     *         date spécifiée n'est pas pendant la durée de vie de cet animal.
+     *         L'ensemble des clés ne comprend que les {@linkplain Parameter
+     *         paramètres} qui intéressent l'animal. Si un paramètre intéresse
+     *         l'animal mais qu'aucune donnée correspondante n'est disponible
+     *         dans son environnement, alors les observations correspondantes
+     *         seront <code>null</code>.
+     */
+    public abstract Map<Parameter,double[]> getObservations(Date time);
+
+    /**
+     * Retourne la région jusqu'où s'étend la perception de cet
      * animal. Il peut s'agir par exemple d'un cercle centré sur
      * la position de l'animal.
      *
-     * @param condition 1 si les conditions environnementales sont optimales
-     *        (eaux des plus transparentes), ou 0 si les conditions sont des
-     *        plus mauvaises (eaux complètement brouillées).
+     * @param  time La date pour laquelle on veut la région perçue,
+     *         ou <code>null</code> pour la région actuelle.
+     * @param  La région perçue, ou <code>null</code> si la date
+     *         spécifiée n'est pas pendant la durée de vie de cet animal.
      */
-    public Shape getPerceptionArea(final double condition);
+    public abstract Shape getPerceptionArea(Date time);
 
     /**
-     * Retourne les observations de l'animal.
+     * Fait avancer l'animal pendant le laps de temps spécifié. La vitesse à laquelle se
+     * déplacera l'animal (et donc la distance qu'il parcourera) peuvent dépendre de son
+     * état ou des conditions environnementales. Le comportement de l'animal dépendra de
+     * l'implémentation. Il peut par exemple {@linkplain Path#rotate changer de cap}  et
+     * {@linkplain Path#moveForward se déplacer vers ce cap}.  Il peut aussi {@linkplain
+     * Path#moveToward se déplacer vers un certain point}, qu'il peut ne pas atteindre si
+     * le laps de temps n'est pas suffisant.
      *
-     * @return Les observations de l'animal, ou <code>null</code>
-     *         si aucune observation n'a encore été faite à la
-     *         position actuelle de l'animal.
+     * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
+     *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
      */
-    public ParameterValue[] getObservations();
+    public abstract void move(float duration);
 
     /**
-     * Observe l'environnement de l'animal. Cette méthode doit être appelée
-     * avant {@link #move}, sans quoi l'animal ne sera pas comment se déplacer.
-     *
-     * @param environment L'environment à observer.
+     * Tue l'animal. L'animal n'appartiendra plus à aucune population.
      */
-    public void observe(final Environment environment);
-
-    /**
-     * Déplace l'animal en fonction de son environnement. La méthode
-     * {@link #observe} doit avoir d'abord été appelée, sans quoi
-     * aucun déplacement ne sera fait (l'animal ne sachant pas où aller).
-     *
-     * @param maximumDistance Distance maximale (en mètres) que peut
-     *        parcourir l'animal au cours de ce déplacement.
-     */
-    public void move(final double maximumDistance);
-
-    /**
-     * Retourne le chemin suivit par l'animal jusqu'ici.
-     */
-    public Shape getPath();
+    public void kill() {
+        if (population != null) {
+            population.kill(this);
+            population = null;
+        }
+    }
 }

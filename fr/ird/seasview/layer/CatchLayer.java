@@ -26,7 +26,8 @@
 package fr.ird.seasview.layer;
 
 // Map components
-import fr.ird.map.layer.MarkLayer;
+import org.geotools.renderer.j2d.RenderedMarks;
+import org.geotools.ct.TransformException;
 
 // Data bases
 import java.sql.SQLException;
@@ -72,8 +73,7 @@ import javax.media.jai.util.Range;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class CatchLayer extends MarkLayer
-{
+public class CatchLayer extends RenderedMarks {
     /**
      * Connection to the catch table.
      */
@@ -217,15 +217,22 @@ public class CatchLayer extends MarkLayer
      * @param  layer Layer to take data and icons from.
      * @throws SQLException If a SQL query failed.
      */
-    public CatchLayer(final CatchLayer layer) throws SQLException
-    {
-        super(layer.catchTable.getCoordinateSystem());
+    public CatchLayer(final CatchLayer layer) throws SQLException {
+        try {
+            setCoordinateSystem(layer.catchTable.getCoordinateSystem());
+        } catch (TransformException exception) {
+            // PATCH: not really a SQL exception...
+            final SQLException e = new SQLException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
         this.catchTable       = layer.catchTable;
         this.catchs           = layer.catchs;
         this.colors           = layer.colors;
         this.icons            = layer.icons;
         this.markType         = layer.markType;
         this.typicalAmplitude = layer.typicalAmplitude;
+        setTools(new Tools());
     }
 
     /**
@@ -237,9 +244,15 @@ public class CatchLayer extends MarkLayer
      * @param  catchTable Connection to a table containing catchs to display.
      * @throws SQLException If a SQL query failed.
      */
-    public CatchLayer(final CatchTable catchTable) throws SQLException
-    {
-        super(catchTable.getCoordinateSystem());
+    public CatchLayer(final CatchTable catchTable) throws SQLException {
+        try {
+            setCoordinateSystem(catchTable.getCoordinateSystem());
+        } catch (TransformException exception) {
+            // PATCH: not really a SQL exception...
+            final SQLException e = new SQLException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
         this.catchTable  = catchTable;
         this.catchs      = catchTable.getEntries();
         this.icons       = new HashMap<Species,Species.Icon>();
@@ -247,6 +260,7 @@ public class CatchLayer extends MarkLayer
         typicalAmplitude = super.getTypicalAmplitude();
         markType         = POSITIONS_ONLY;
         validate();
+        setTools(new Tools());
     }
 
     /**
@@ -256,8 +270,9 @@ public class CatchLayer extends MarkLayer
      * @param  timeRange the time range for catchs to display.
      * @throws SQLException If a SQL query failed.
      */
-    public void setTimeRange(final Range timeRange) throws SQLException
-    {setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());}
+    public void setTimeRange(final Range timeRange) throws SQLException {
+        setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());
+    }
 
     /**
      * Query the underlying {@link CatchTable} for a new set of catchs to display.
@@ -268,10 +283,8 @@ public class CatchLayer extends MarkLayer
      * @param  startTime Time of the end catch to display.
      * @throws SQLException If a SQL query failed.
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException
-    {
-        synchronized (catchTable)
-        {
+    public void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
+        synchronized (catchTable) {
             catchTable.setTimeRange(startTime, endTime);
             catchs = catchTable.getEntries();
         }
@@ -280,21 +293,17 @@ public class CatchLayer extends MarkLayer
     }
 
     /**
-     * Validate {@link #colors} after new
-     * catch entries have been read.
+     * Validate {@link #colors} after new catch entries have been read.
      */
-    private void validate()
-    {
+    private void validate() {
         hasShape = false;
         colors   = new Color[catchs.size()];
         useFill  = new boolean[colors.length];
         Rectangle2D geographicArea=null;
-        for (int i=0; i<colors.length; i++)
-        {
+        for (int i=0; i<colors.length; i++) {
             final CatchEntry capture = catchs.get(i);
             final Shape        shape;
-            switch (markType)
-            {
+            switch (markType) {
                 case CATCH_AMOUNTS : // fall through
                 case POSITIONS_ONLY: shape=null;               break;
                 case GEAR_COVERAGES: shape=capture.getShape(); break;
@@ -307,25 +316,21 @@ public class CatchLayer extends MarkLayer
              * Expand the bounding box by the
              * catch's geographic extent.
              */
-            if (!useFill[i])
-            {
+            if (!useFill[i]) {
                 hasShape = true;
                 final Rectangle2D bounds = shape.getBounds2D();
                 if (geographicArea==null) geographicArea=bounds;
                 else geographicArea.add(bounds);
-            }
-            else
-            {
+            } else {
                 // The geographic extent for this catch is unknow.
                 // Just expand the bounding box by the coordinate point.
                 final Point2D point = capture.getCoordinate();
-                if (point!=null)
-                {
-                    if (geographicArea==null)
-                    {
+                if (point != null) {
+                    if (geographicArea == null) {
                         geographicArea = new Rectangle2D.Double(point.getX(), point.getY(), 0, 0);
+                    } else {
+                        geographicArea.add(point);
                     }
-                    else geographicArea.add(point);
                 }
             }
         }
@@ -337,13 +342,10 @@ public class CatchLayer extends MarkLayer
      * of created icon, in such a way that change to the icon's color are
      * saved.
      */
-    private Species.Icon getIcon(final Species species)
-    {
-        synchronized (icons)
-        {
+    private Species.Icon getIcon(final Species species) {
+        synchronized (icons) {
             Species.Icon icon = icons.get(species);
-            if (icon==null)
-            {
+            if (icon == null) {
                 icon = species.getIcon();
                 icons.put(species, icon);
             }
@@ -355,10 +357,8 @@ public class CatchLayer extends MarkLayer
      * Returns a typical number for {@link #getAmplitude}.
      * This number is fixed at construction time only.
      */
-    public double getTypicalAmplitude()
-    {
-        switch (markType)
-        {
+    public double getTypicalAmplitude() {
+        switch (markType) {
             case GEAR_COVERAGES: // fall through
             case POSITIONS_ONLY: return 1;
             case CATCH_AMOUNTS : return typicalAmplitude;
@@ -369,16 +369,15 @@ public class CatchLayer extends MarkLayer
     /**
      * Returns the number of catch positions to display.
      */
-    public int getCount()
-    {return catchs.size();}
+    public int getCount() {
+        return catchs.size();
+    }
 
     /**
      * Returns <code>true</code> if a catch is to be displayed.
      */
-    public boolean isVisible(final int index)
-    {
-        switch (markType)
-        {
+    public boolean isVisible(final int index) {
+        switch (markType) {
             case CATCH_AMOUNTS : // fall through
             case POSITIONS_ONLY: return super.isVisible(index);
             case GEAR_COVERAGES: return !(hasShape && useFill[index]);
@@ -393,10 +392,8 @@ public class CatchLayer extends MarkLayer
      * ensure that a plot with twice the catchs will appears as a circle
      * with twice the superficy.
      */
-    public double getAmplitude(final int index)
-    {
-        switch (markType)
-        {
+    public double getAmplitude(final int index) {
+        switch (markType) {
             case GEAR_COVERAGES: // fall through
             case POSITIONS_ONLY: return super.getAmplitude(index);
             case CATCH_AMOUNTS : return Math.sqrt(catchs.get(index).getCatch());
@@ -408,8 +405,9 @@ public class CatchLayer extends MarkLayer
      * Returns a coordinates for a catch. If the catch cover a wide area (for
      * example a longline), the returned coordinate may be some middle point.
      */
-    public Point2D getPosition(final int index)
-    {return catchs.get(index).getCoordinate();}
+    public Point2D getPosition(final int index) {
+        return catchs.get(index).getCoordinate();
+    }
 
     /**
      * Returns the geographic extent for a catch, if there is one. If may be for example
@@ -418,10 +416,8 @@ public class CatchLayer extends MarkLayer
      * extent for the specified catch, or if the geographic extent is not to be displayed,
      * then this method returns <code>null</code>.
      */
-    public Shape getGeographicShape(int index)
-    {
-        switch (markType)
-        {
+    public Shape getGeographicShape(int index) {
+        switch (markType) {
             case CATCH_AMOUNTS : // fall through
             case POSITIONS_ONLY: return super.getGeographicShape(index);
             case GEAR_COVERAGES: return catchs.get(index).getShape();
@@ -439,19 +435,15 @@ public class CatchLayer extends MarkLayer
      *         must copy the returned shape if you want to protect it from
      *         changes.
      */
-    public Shape getMarkShape(final int index)
-    {
-        switch (markType)
-        {
+    public Shape getMarkShape(final int index) {
+        switch (markType) {
             case GEAR_COVERAGES: // fall through
             case POSITIONS_ONLY: return super.getMarkShape(index);
-            case CATCH_AMOUNTS:
-            {
+            case CATCH_AMOUNTS: {
                 final CatchEntry   capture = catchs.get(index);
                 final Set<Species> species = capture.getSpecies();
                 final int            count = species.size();
-                switch (count)
-                {
+                switch (count) {
                     case 0: return null;
                     case 1: return circle;
                 }
@@ -460,15 +452,13 @@ public class CatchLayer extends MarkLayer
                  * of catch amount for at least two species.   Create
                  * necessary objects if they were not already created.
                  */
-                if (circle==null)
-                {
+                if (circle == null) {
                     circle = new Ellipse2D.Float(-0.5f*DEFAULT_WIDTH, -0.5f*DEFAULT_WIDTH, DEFAULT_WIDTH, DEFAULT_WIDTH);
                     arc    = new Arc2D.Float(circle.getBounds2D(), 0, 360, Arc2D.PIE);
                     path   = new GeneralPath();
                 }
                 final double scale = 360.0/capture.getCatch();
-                if (!(scale>0 && scale<Double.POSITIVE_INFINITY))
-                {
+                if (!(scale>0 && scale<Double.POSITIVE_INFINITY)) {
                     return null;
                 }
                 double angleStart = 0;
@@ -476,8 +466,7 @@ public class CatchLayer extends MarkLayer
                 /*
                  * Construct the pie.
                  */
-                for (final Iterator<Species> it=species.iterator(); it.hasNext();)
-                {
+                for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
                     final double angleExtent = scale * capture.getCatch(it.next());
                     arc.setAngleStart (angleStart );
                     arc.setAngleExtent(angleExtent);
@@ -497,47 +486,42 @@ public class CatchLayer extends MarkLayer
      * @param shape    The shape to draw, in pixel coordinates.
      * @param index    The index of the catch to draw.
      */
-    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index)
-    {
-        switch (markType)
-        {
+    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index) {
+        switch (markType) {
             case POSITIONS_ONLY: // fall through
-            case GEAR_COVERAGES:
-            {
+            case GEAR_COVERAGES: {
                 graphics.setColor(colors[index]);
-                if (useFill[index])
-                {
+                if (useFill[index]) {
                     graphics.fill(shape);
                     graphics.setColor(colors[index].darker());
                 }
                 graphics.draw(shape);
                 break;
             }
-            case CATCH_AMOUNTS:
-            {
+            case CATCH_AMOUNTS: {
                 final CatchEntry   capture = catchs.get(index);
                 final Set<Species> species = capture.getSpecies();
                 final int            count = species.size();
-                if (count==1)
-                {
+                if (count == 1) {
                     graphics.setColor(colors[index]);
                     graphics.fill(shape);
-                }
-                else
-                {
+                } else {
                     final ShapeBroker broker=new ShapeBroker(shape);
-                    for (final Iterator<Species> it=species.iterator(); it.hasNext();)
-                    {
+                    for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
                         graphics.setColor(getIcon(it.next()).getColor());
                         graphics.fill(broker);
-                        if (broker.finished()) break;
+                        if (broker.finished()) {
+                            break;
+                        }
                     }
                 }
                 graphics.setColor(Color.black);
                 graphics.draw(shape);
                 break;
             }
-            default: throw new IllegalStateException();
+            default: {
+                throw new IllegalStateException();
+            }
         }
     }
 
@@ -546,10 +530,8 @@ public class CatchLayer extends MarkLayer
      *
      * @param icons A set of icons to use for species.
      */
-    public synchronized void defineIcons(final Species.Icon[] icons)
-    {
-        for (int i=0; i<icons.length; i++)
-        {
+    public void defineIcons(final Species.Icon[] icons) {
+        for (int i=0; i<icons.length; i++) {
             final Species.Icon icon = icons[i];
             this.icons.put(icon.getSpecies(), icon);
         }
@@ -565,49 +547,50 @@ public class CatchLayer extends MarkLayer
      *             {@link #GEAR_COVERAGES} or
      *             {@link #CATCH_AMOUNTS}.
      */
-    public synchronized void setMarkType(final int type)
-    {
-        if (type>=POSITIONS_ONLY && type<=CATCH_AMOUNTS)
-        {
-            if (markType != type)
-            {
+    public void setMarkType(final int type) {
+        if (type>=POSITIONS_ONLY && type<=CATCH_AMOUNTS) {
+            if (markType != type) {
                 this.markType = type;
                 validate();
                 repaint();
-                firePropertyChange("markType", new Integer(markType), new Integer(type));
+                listeners.firePropertyChange("markType", new Integer(markType), new Integer(type));
             }
+        } else {
+            throw new IllegalArgumentException(String.valueOf(type));
         }
-        else throw new IllegalArgumentException(String.valueOf(type));
     }
 
     /**
      * Returns the mark type for catch positions.
      */
-    public int getMarkType()
-    {return markType;}
+    public int getMarkType() {
+        return markType;
+    }
 
     /**
-     * Returns a string representation for the catch at the specified index.
-     * This string will be displayed as a tool tip when the mouse cursor is
-     * over the catch.
+     * The tools for {@link CatchLayer}.
      */
-    public synchronized String getToolTipText(final int index)
-    {
-        if (format==null)
-        {
-            format = NumberFormat.getNumberInstance();
-            buffer = new StringBuffer();
-            dummy  = new FieldPosition(0);
+    private final class Tools extends RenderedMarks.Tools {
+        /**
+         * Returns a string representation for the catch at the specified index.
+         * This string will be displayed as a tool tip when the mouse cursor is
+         * over the catch.
+         */
+        protected String getToolTipText(final int index) {
+            if (format == null) {
+                format = NumberFormat.getNumberInstance();
+                buffer = new StringBuffer();
+                dummy  = new FieldPosition(0);
+            }
+            buffer.setLength(0);
+            final CatchEntry c=catchs.get(index);
+            format.format(c.getCatch(), buffer, dummy);
+            final Unit unit = c.getUnit();
+            if (unit != null) {
+                buffer.append(' ');
+                buffer.append(unit);
+            }
+            return buffer.toString();
         }
-        buffer.setLength(0);
-        final CatchEntry c=catchs.get(index);
-        format.format(c.getCatch(), buffer, dummy);
-        final Unit unit = c.getUnit();
-        if (unit!=null)
-        {
-            buffer.append(' ');
-            buffer.append(unit);
-        }
-        return buffer.toString();
     }
 }

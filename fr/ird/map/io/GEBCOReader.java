@@ -27,7 +27,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Maps
-import fr.ird.map.Isoline;
+import org.geotools.renderer.Isoline;
 
 // Input/output
 import java.io.File;
@@ -73,8 +73,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class GEBCOReader extends IsolineReader
-{
+public class GEBCOReader extends IsolineReader {
     /**
      * Objet à utiliser pour lire
      * les lignes d'un fichier GEBCO.
@@ -91,22 +90,23 @@ public class GEBCOReader extends IsolineReader
      * Construct a default reader using
      * {@link Locale#UK} for number parsing.
      */
-    public GEBCOReader()
-    {this(Locale.UK);}
+    public GEBCOReader() {
+        this(Locale.UK);
+    }
 
     /**
      * Contruct a reader using the specified
      * locale for number parsing.
      */
-    public GEBCOReader(final Locale locale)
-    {this(new LineFormat(locale));}
+    public GEBCOReader(final Locale locale) {
+        this(new LineFormat(locale));
+    }
 
     /**
      * Construct a reader using
      * the specified line format.
      */
-    public GEBCOReader(final LineFormat format)
-    {
+    public GEBCOReader(final LineFormat format) {
         this.format = format;
         this.coordinateSystem = GeographicCoordinateSystem.WGS84;
     }
@@ -121,28 +121,24 @@ public class GEBCOReader extends IsolineReader
      *         is no isoline for the specified altitude.
      * @throws IOException if an error occured during reading.
      */
-    public Isoline read(final double altitude) throws IOException
-    {
-        if (Double.isNaN(altitude)) return null;
+    public Isoline read(final double altitude) throws IOException {
+        if (Double.isNaN(altitude)) {
+            return null;
+        }
         final BufferedReader reader = getBufferedReader();
-        try
-        {
+        try {
             final Isoline[] isolines = read(reader, altitude);
-            switch (isolines.length)
-            {
+            switch (isolines.length) {
                 case 0:  return null;
                 case 1:  return isolines[0];
                 default: throw new AssertionError(isolines.length);
             }
-        }
-        catch (ParseException exception)
-        {
-            final IOException e=new IOException(Resources.format(ResourceKeys.ERROR_BAD_FILE_FORMAT_$1, getFileName()));
+        } catch (ParseException exception) {
+            final IOException e = new IOException(Resources.format(
+                                            ResourceKeys.ERROR_BAD_FILE_FORMAT_$1, getFileName()));
             e.initCause(exception);
             throw e;
-        }
-        finally
-        {
+        } finally {
             reader.close();
         }
     }
@@ -153,16 +149,13 @@ public class GEBCOReader extends IsolineReader
      * @return Isolines An array of all isoline founds.
      * @throws IOException if an error occured during reading.
      */
-    public Isoline[] read() throws IOException
-    {
+    public Isoline[] read() throws IOException {
         final BufferedReader reader = getBufferedReader();
-        try
-        {
+        try {
             return read(reader, Double.NaN);
-        }
-        catch (ParseException exception)
-        {
-            final IOException e=new IOException(Resources.format(ResourceKeys.ERROR_BAD_FILE_FORMAT_$1, getFileName()));
+        } catch (ParseException exception) {
+            final IOException e=new IOException(
+                            Resources.format(ResourceKeys.ERROR_BAD_FILE_FORMAT_$1, getFileName()));
             e.initCause(exception);
             throw e;
         }
@@ -183,13 +176,15 @@ public class GEBCOReader extends IsolineReader
      * @throws IOException if an error occured during reading.
      * @throws ParseException if an error occured during parsing.
      */
-    private Isoline[] read(final BufferedReader reader, final double desiredZ) throws IOException, ParseException
+    private Isoline[] read(final BufferedReader reader, final double desiredZ)
+            throws IOException, ParseException
     {
         final Map<Float,Isoline> isolines = new TreeMap<Float,Isoline>();
         final double[] record = new double[2];
-        String line; while ((line=reader.readLine()) != null)
-        {
-            if ((line=line.trim()).length()==0) continue;
+        String line; while ((line=reader.readLine()) != null) {
+            if ((line=line.trim()).length() == 0) {
+                continue;
+            }
             /*
              * Parse header and get an isobath for the specified altitude.
              * Note: we must invert the altitude sign, since GEBCO files
@@ -198,21 +193,19 @@ public class GEBCOReader extends IsolineReader
             format.setLine(line);
             format.getValues(record);
             final int count = (int)record[1];
-            if (count != record[1])
-            {
-                throw new ParseException(Resources.format(ResourceKeys.ERROR_NOT_AN_INTEGER_$1, new Float(record[1])), 0);
+            if (count != record[1]) {
+                throw new ParseException(Resources.format(
+                                    ResourceKeys.ERROR_NOT_AN_INTEGER_$1, new Float(record[1])), 0);
             }
             /*
              * If the next segment is to be stored in memory,
              * construct a new isoline or get an existing one.
              */
             Isoline isoline = null;
-            if (Double.isNaN(desiredZ) || record[0]==desiredZ)
-            {
+            if (Double.isNaN(desiredZ) || record[0]==desiredZ) {
                 final Float altitude = new Float(-record[0]);
                 isoline = isolines.get(altitude);
-                if (isoline==null)
-                {
+                if (isoline == null) {
                     isoline = new Isoline(altitude.floatValue(), coordinateSystem);
                     isolines.put(altitude, isoline);
                 }
@@ -223,24 +216,27 @@ public class GEBCOReader extends IsolineReader
              */
             final int coordCount = 2*count;
             final float[] points = (isoline!=null) ? new float[coordCount] : null;
-      read: for (int j=0; j<coordCount;)
-            {
-                while ((line=reader.readLine()) != null)
-                {
-                    if ((line=line.trim()).length()==0) continue;
-                    if (points!=null)
-                    {
+      read: for (int j=0; j<coordCount;) {
+                while ((line=reader.readLine()) != null) {
+                    if ((line=line.trim()).length() == 0) {
+                        continue;
+                    }
+                    if (points != null) {
                         format.setLine(line);
                         format.getValues(record);
                         points[j++] = (float)record[1]; // Longitude
                         points[j++] = (float)record[0]; // Latitude
+                    } else {
+                        j+=2;
                     }
-                    else j+=2;
                     continue read;
                 }
-                throw new EOFException(Resources.format(ResourceKeys.ERROR_MISSING_LINES_$1, new Integer(count-j/2)));
+                throw new EOFException(Resources.format(
+                                    ResourceKeys.ERROR_MISSING_LINES_$1, new Integer(count-j/2)));
             }
-            if (isoline!=null) isoline.add(points);
+            if (isoline != null) {
+                isoline.add(points);
+            }
         }
         return isolines.values().toArray(new Isoline[isolines.size()]);
     }

@@ -32,9 +32,9 @@ import fr.ird.sql.image.ImageEntry;
 import java.io.FileNotFoundException;
 
 // Map components
-import fr.ird.map.Layer;
-import fr.ird.map.Isoline;
-import fr.ird.map.layer.IsolineLayer;
+import org.geotools.renderer.Isoline;
+import org.geotools.renderer.j2d.RenderedIsoline;
+import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.seasview.layer.IsolineFactory;
 
 // Graphical user interface
@@ -115,7 +115,7 @@ public final class IsolineLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public RenderedLayer[] configLayers(final RenderedLayer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
         final float[] values;
         synchronized(this)
@@ -128,11 +128,11 @@ public final class IsolineLayerControl extends LayerControl
         }
         IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
 
-        final Isoline[]       isolines = factory.get(values);
-        final IsolineLayer[] isoLayers = new IsolineLayer[isolines.length];
+        final Isoline[]          isolines = factory.get(values);
+        final RenderedIsoline[] isoLayers = new RenderedIsoline[isolines.length];
         for (int i=0; i<isoLayers.length; i++)
         {
-            isoLayers[i] = new IsolineLayer(isolines[i]);
+            isoLayers[i] = new RenderedIsoline(isolines[i]);
             isoLayers[i].setContour(Color.white);  // TODO: Set colors
         }
         return isoLayers;

@@ -115,8 +115,7 @@ public class GradientEvaluator extends Evaluator {
     public double[] evaluate(final Shape area, double[] dest) {
         final RenderedImage         data = coverage.getRenderedImage();
         final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
-        final CoordinateSystem        cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
-        final Ellipsoid        ellipsoid = ((GeographicCoordinateSystem) cs).getHorizontalDatum().getEllipsoid();
+        final Ellipsoid        ellipsoid = CTSUtilities.getEllipsoid(coverage.getCoordinateSystem());
         final Point2D.Double coordinate0 = new Point2D.Double();
         final Point2D.Double coordinate1 = new Point2D.Double();
         final Rectangle2D     areaBounds = area.getBounds2D();

@@ -31,76 +31,88 @@ import java.util.Locale;
 
 
 /**
- * Représentation d'une espèce animale. Chaque objet {@link Animal} devra
- * appartenir à une espèce. Bien que le nom <code>Species</code> suggère qu'il
- * se réfère à la classification des espèces, ce n'est pas nécessairement le
- * cas. On peut aussi utiliser plusieurs objets <code>Species</code> pour
- * représenter des groupes d'individus qui appartiennent à la même espèce
- * animale, mais qui sont de tailles différentes (par exemple les juvéniles
- * versus les adultes).
- *
- * Chaque objet <code>Species</code> est immutable.
+ * Représentation d'une espèce animale. Chaque individu {@link Animal} devra
+ * obligatoirement appartenir à une et une seule espèce. Le terme "espèce"
+ * est ici utilisé au sens large: bien que le nom <code>Species</code>
+ * suggère qu'il se réfère à la classification des espèces, ce n'est pas
+ * obligatoirement le cas. Le programmeur est libre d'utiliser plusieurs
+ * objets <code>Species</code> pour représenter par exemple des groupes
+ * d'individus qui appartiennent à la même espèce animale, mais qui sont
+ * de tailles différentes (par exemple les juvéniles versus les adultes).
+ * <br><br>
+ * Les objets <code>Species</code> sont immutables. En général, il
+ * n'existera qu'une courte liste d'espèces qui seront partagées par
+ * tous les individus {@link Animal}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Species
-{
+public interface Species {
     /**
      * Constante pour la langue latine.
+     * Souvent utilisée pour nommer les espèces.
      *
      * @see Locale#ENGLISH
      * @see Locale#FRENCH
      * @see Locale#SPANISH
      */
-    public static final Locale LATIN = new Locale("la", "");
+    Locale LATIN = new Locale("la", "");
 
     /**
      * Retourne les langues dans lesquelles peuvent
      * être exprimées le nom de cette espèce.
      */
-    public abstract Locale[] getLocales();
+    Locale[] getLocales();
 
     /**
      * Retourne le nom de cette espèce dans la langue spécifiée. Si aucun
      * nom n'est disponible dans cette langue, retourne <code>null</code>.
+     *
+     * @param  locale Langue désirée pour le nom de l'espèce. La valeur <code>null</code>
+     *         est légale. Elle signifie que la chaîne désirée est un code représentant
+     *         l'espèce. Par exemple, le code de la FAO pour l'albacore (<cite>Thunnus
+     *         albacares</cite>, ou <cite>Yellowfin tuna</cite> en anglais) est "YFT".
+     * @return Le nom de l'espèce dans la langue spécifiée, ou <code>null</code> s'il
+     *         n'y en a pas.
      */
-    public abstract String getName(final Locale locale);
+    String getName(final Locale locale);
 
     /**
-     * Retourne le nom de cette espèce. Le nom sera retourné
-     * de préférence dans la langue par défaut du système.
+     * Retourne le nom de cette espèce. Le nom sera retourné de préférence dans la langue
+     * par défaut du système. Si aucun nom n'est définie dans la langue par défaut, alors
+     * cette méthode tentera de retourner un nom dans une autre langue. Le code de l'espèce
+     * (tel que retourné par <code>getName(null)</code>) ne sera retourné qu'en dernier
+     * recours.
      */
-    public abstract String getName();
+    String getName();
 
     /**
      * Construit un nouvel icone représentant cette espèce.
      */
-    public abstract Icon getIcon();
+    Icon getIcon();
 
     /**
-     * Icône représentant cette espèce.   Un icône peut servir à positionner sur
-     * une carte plusieurs individus d'une même espèce, et peut aussi apparaître
-     * devant une étiquette dans les listes déroulantes.
+     * Icône représentant une espèce. Un icône peut servir à positionner
+     * sur une carte plusieurs individus d'une même espèce, et peut aussi
+     * apparaître devant une étiquette dans les listes déroulantes.
      *
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    public static interface Icon extends javax.swing.Icon
-    {
+    public static interface Icon extends javax.swing.Icon {
         /**
          * Retourne l'espèce associée à cet icône.
          */
-        public abstract Species getSpecies();
+        Species getSpecies();
 
         /**
          * Retourne la couleur de cet icône.
          */
-        public abstract Color getColor();
+        Color getColor();
 
         /**
          * Change la couleur de cet icône.
          */
-        public abstract void setColor(Color color);
+        void setColor(Color color);
     }
 }

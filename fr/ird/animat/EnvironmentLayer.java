@@ -25,18 +25,20 @@
  */
 package fr.ird.animat;
 
-// Graphisme
+// J2SE
+import java.util.Date;
 import java.awt.Color;
 import java.awt.Rectangle;
 
-// Cartes
-import fr.ird.map.RepaintManager;
-import fr.ird.map.layer.GridCoverageLayer;
-
 // Geotools dependencies
+import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.cs.GeographicCoordinateSystem;
+
+// Cartes
+import fr.ird.map.RepaintManager;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Animats
 import fr.ird.animat.event.EnvironmentChangeEvent;
@@ -49,17 +51,17 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentChangeListener
-{
+final class EnvironmentLayer extends RenderedGridCoverage implements EnvironmentChangeListener {
     /**
-     * Couleur des valeurs les plus basses.
+     * Palette de couleurs à utiliser pour l'affichage de l'image.
+     * On utilisera une palette en tons de gris plutôt que la palette
+     * par défaut (colorée) de l'image afin de rendre les autres éléments
+     * (positions des thons, trajectoire, etc.) plus facilement visibles.
      */
-    private static final Color LOWER_COLOR = new Color(16,32,64);
-
-    /**
-     * Couleur des valeurs les plus élevées.
-     */
-    private static final Color UPPER_COLOR = new Color(224,240,255);
+    private static final Color[] COLOR_MAP = new Color[] {
+        new Color(16,32,64),
+        new Color(224,240,255)
+    };
     
     /**
      * L'objet à utiliser pour traiter les images.
@@ -67,9 +69,15 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     private final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
 
     /**
-     * L'index du paramètre à afficher.
+     * La date et heure de l'image actuellement affichée,
+     * ou <code>null</code> si aucune image n'est affichée.
      */
-    private int parameter = 0;
+    private Date date;
+
+    /**
+     * Paramètre à afficher.
+     */
+    private Parameter parameter;
 
     /**
      * L'objet à utiliser pour synchroniser les retraçaces.
@@ -78,64 +86,83 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
 
     /**
      * <code>true</code> si on se trouve à l'intérieur de la méthode {@link #environmentChanged}.
+     * Dans ces conditions, on reportera l'appel de {@link Layer#repaint} jusqu'à ce que la mise
+     * à jour de toutes les couches soient terminées. Ce report se fait à l'aide de la classe
+     * {@link RepaintManager}.
      */
-    private boolean processingEvent;
+    private transient boolean processingEvent;
 
     /**
      * Construit une couche pour l'environnement spécifié.
+     *
+     * @param  environment Environnement à afficher.
+     *         Il peut provenir d'une machine distante.
+     * @param  manager Objet à utiliser pour redessiner les cartes.
      */
-    public EnvironmentLayer(final Environment environment, final RepaintManager manager)
+    public EnvironmentLayer(final Environment environment,
+                            final RepaintManager manager)
     {
         super(GeographicCoordinateSystem.WGS84);
         this.manager = manager;
         environment.addEnvironmentChangeListener(this);
-        setCoverage(environment.getGridCoverage(parameter));
+        setCoverage(environment.getCoverage(parameter));
     }
 
     /**
-     * Appelée quand un environnement a changé.
+     * Appelée quand un environnement a changé. Si l'image affichée
+     * a changée, elle sera retracée.
      */
-    public void environmentChanged(final EnvironmentChangeEvent event)
-    {
+    public void environmentChanged(final EnvironmentChangeEvent event) {
         final Environment environment = event.getSource();
-        try
-        {
+        final Date oldDate = date;
+        date = environment.getTimeStep().getStartTime();
+        try {
             processingEvent = true;
-            setCoverage(environment.getGridCoverage(parameter));
-        }
-        finally
-        {
+            setCoverage(environment.getCoverage(parameter));
+        } finally {
             processingEvent = false;
         }
         manager.repaint(this);
+        firePropertyChange("date", oldDate, date);
+    }
+
+    /**
+     * Définit la couverture à afficher.
+     */
+    private void setCoverage(Coverage coverage) {
+        final GridCoverage grid;
+        if (coverage instanceof GridCoverage) {
+            grid = (GridCoverage) coverage;
+        } else {
+            grid = null;
+        }
+        setCoverage(grid);
     }
 
     /**
      * Set the grid coverage. A <code>null</code> value
      * will remove the current grid coverage.
      */
-    public void setCoverage(GridCoverage coverage)
-    {
-        coverage = processor.doOperation("Colormap", coverage,
-                                         "Colors", new Color[] {LOWER_COLOR, UPPER_COLOR});
+    public void setCoverage(GridCoverage coverage) {
+        coverage = processor.doOperation("Colormap", coverage, "Colors", COLOR_MAP);
         super.setCoverage(coverage);
     }
 
     /**
      * Redessine sette composante.
      */
-    public void repaint()
-    {
-        if (!processingEvent)
+    public void repaint() {
+        if (!processingEvent) {
             super.repaint();
+        }
     }
 
     /**
      * Redessine sette composante.
      */
-    protected void repaint(final Rectangle bounds)
-    {
-        if (!processingEvent)
+    protected void repaint(final Rectangle bounds) {
+        if (!processingEvent) {
             super.repaint(bounds);
+        }
     }
 }

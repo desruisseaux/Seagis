@@ -25,21 +25,21 @@
  */
 package fr.ird.animat.event;
 
-// Events
+// J2SE dependencies
 import java.util.EventListener;
 
 
 /**
- * Définit un objet qui écoutera les changements survenant dans un
- * environnement.
+ * Définit un objet qui écoutera les changements survenant dans un environnement.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface EnvironmentChangeListener extends EventListener
-{
+public interface EnvironmentChangeListener extends EventListener {
     /**
      * Appelée quand un environnement a changé.
+     *
+     * @param  event L'événement décrivant le changement d'environnement.
      */
-    public abstract void environmentChanged(final EnvironmentChangeEvent event);
+    void environmentChanged(final EnvironmentChangeEvent event);
 }

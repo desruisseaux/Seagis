@@ -32,9 +32,9 @@ import org.geotools.gc.GridCoverage;
 import fr.ird.sql.image.ImageEntry;
 
 // Map components
-import fr.ird.map.Layer;
-import fr.ird.map.MapPanel;
-import fr.ird.map.layer.GridCoverageLayer;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 import fr.ird.seasview.layer.control.LayerControl;
 
 // Geometry and graphics
@@ -91,8 +91,7 @@ import fr.ird.resources.Resources;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageCanvas extends JPanel
-{
+final class ImageCanvas extends JPanel {
     /**
      * Durée de vie des threads {@link Reader}. Si un laps de temps
      * supérieur à <code>LIFETIME</code> s'est écoulé sans qu'aucune
@@ -128,7 +127,7 @@ final class ImageCanvas extends JPanel
     /**
      * Composante affichant la carte.
      */
-    public final MapPanel mapPanel=new MapPanel();
+    public final MapPane mapPanel = new MapPane();
 
     /**
      * Paneau qui contiendra la carte
@@ -155,8 +154,7 @@ final class ImageCanvas extends JPanel
      * de ce panneau pourra être spécifié par des appels à
      * la méthode {@link #setImage}.
      */
-    public ImageCanvas()
-    {
+    public ImageCanvas() {
         super(new BorderLayout());
         mapPanel.setBackground(Color.black);
         title   .setBackground(Color.black);
@@ -173,10 +171,10 @@ final class ImageCanvas extends JPanel
      * Retourne le paneau {@link MosaicCanvas} dans lequel est insérée
      * cette image, ou <code>null</code> s'il n'y en a pas.
      */
-    private MosaicCanvas getMosaic()
-    {
-        for (Container parent=getParent(); parent!=null; parent=parent.getParent())
+    private MosaicCanvas getMosaic() {
+        for (Container parent=getParent(); parent!=null; parent=parent.getParent()) {
             if (parent instanceof MosaicCanvas) return (MosaicCanvas)parent;
+        }
         return null;
     }
 
@@ -184,35 +182,33 @@ final class ImageCanvas extends JPanel
      * Met à jour le titre de la fenêtre en fonction de
      * l'image présentement affichée.
      */
-    private void updateTitle()
-    {
+    private void updateTitle() {
         final ImageEntry entry = source;
-        if (entry!=null)
-        {
+        if (entry != null) {
             final Range timeRange = entry.getTimeRange();
             StringBuffer   buffer = new StringBuffer(entry.getName());
-            if (timeRange!=null)
-            {
+            if (timeRange != null) {
                 final Date startTime = (Date) timeRange.getMinValue();
                 final Date   endTime = (Date) timeRange.getMaxValue();
-                if (startTime!=null || endTime!=null)
-                {
+                if (startTime!=null || endTime!=null) {
                     long time;
-                    if (startTime!=null)
-                    {
+                    if (startTime != null) {
                         time = startTime.getTime();
-                        if (endTime!=null)
+                        if (endTime != null) {
                             time = (time + endTime.getTime())/2;
+                        }
+                    } else {
+                        time = endTime.getTime();
                     }
-                    else time = endTime.getTime();
                     buffer.append(" (");
                     buffer = dateFormat.format(new Date(time), buffer, new FieldPosition(0));
                     buffer.append(')');
                 }
             }
             title.setText(buffer.toString());
+        } else {
+            title.setText(UNTITLED);
         }
-        else title.setText(UNTITLED);
     }
 
     /**
@@ -222,22 +218,22 @@ final class ImageCanvas extends JPanel
      * dernier cas, le chargement en cours sera annulé et
      * le chargement de la nouvelle image commencera.
      */
-    public synchronized boolean isLoading()
-    {return reader!=null && reader.isLoading();}
+    public synchronized boolean isLoading() {
+        return reader!=null && reader.isLoading();
+    }
 
     /**
      * Ajoute à la liste spécifiée toutes les images
      * {@link GridCoverage} affichées dans ce paneau.
      */
-    final synchronized void getImages(final List<GridCoverage> images)
-    {
-        final Layer[] visualLayers=mapPanel.getLayers();
-        for (int i=0; i<visualLayers.length; i++)
-        {
-            if (visualLayers[i] instanceof GridCoverageLayer)
-            {
-                final GridCoverage image=((GridCoverageLayer) visualLayers[i]).getCoverage();
-                if (image!=null) images.add(image);
+    final synchronized void getImages(final List<GridCoverage> images) {
+        final RenderedLayer[] visualLayers = mapPanel.getRenderer().getLayers();
+        for (int i=0; i<visualLayers.length; i++) {
+            if (visualLayers[i] instanceof RenderedGridCoverage) {
+                final GridCoverage image=((RenderedGridCoverage) visualLayers[i]).getCoverage();
+                if (image != null) {
+                    images.add(image);
+                }
             }
         }
     }
@@ -251,8 +247,9 @@ final class ImageCanvas extends JPanel
      * @param image Image à afficher, ou <code>null</code>
      *              pour ne plus afficher d'image.
      */
-    public void setImage(final GridCoverage image) // NO synchronize here!
-    {setImage((image!=null) ? new Layer[] {new GridCoverageLayer(image)} : null, null, image);}
+    public void setImage(final GridCoverage image) { // NO synchronize here!
+        setImage((image!=null) ? new RenderedLayer[] {new RenderedGridCoverage(image)} : null, null, image);
+    }
 
     /**
      * Spécifie l'image à faire apparaître. Une valeur nulle
@@ -266,22 +263,22 @@ final class ImageCanvas extends JPanel
      * @param image        Image affichée. Cette information n'est utilisée que pour informer les objets
      *                     {@link ImageChangeListener} du changement.
      */
-    private void setImage(final Layer[] visualLayers, final ImageEntry entry, final GridCoverage image) // NO synchronize here!
+    private void setImage(final RenderedLayer[] visualLayers,
+                          final ImageEntry      entry,
+                          final GridCoverage    image) // NO synchronize here!
     {
-        if (!EventQueue.isDispatchThread())
-        {
-            Task.invokeAndWait(new Runnable()
-            {
-                public void run()
-                {setImage(visualLayers, entry, image);}
+        if (!EventQueue.isDispatchThread()) {
+            Task.invokeAndWait(new Runnable() {
+                public void run() {
+                    setImage(visualLayers, entry, image);
+                }
             });
             return;
         }
         // Le code suivant sera exécuté
         // dans le thread de Swing.
         ///////////////////////////////
-        synchronized (getTreeLock())
-        {
+        synchronized (getTreeLock()) {
             this.source = null;
             /*
              * Obtient les coordonnées géographiques de la région qui était
@@ -290,35 +287,36 @@ final class ImageCanvas extends JPanel
              */
             final MosaicCanvas mosaic = getMosaic();
             Rectangle2D visibleArea  = null;
-            if (mosaic!=null)
+            if (mosaic!=null) {
                 visibleArea=mosaic.getVisibleArea();
-            if (visibleArea==null)
-                visibleArea=(mapPanel.getLayerCount()!=0) ? mapPanel.getVisibleArea() : null;
+            }
+            if (visibleArea == null) {
+                visibleArea = (mapPanel.getRenderer().getLayerCount()!=0) ?
+                               mapPanel.getVisibleArea() : null;
+            }
             /*
              * Insère la nouvelle image. Pendant le remplacement de l'image,
              * on désactivera temporairement la synchronisation des images.
              */
             final boolean oldAdjusting = (mosaic!=null) ? mosaic.isAdjusting : false;
-            try
-            {
-                if (mosaic!=null)
-                {
+            try {
+                if (mosaic != null) {
                     mosaic.isAdjusting = true;
                 }
-                mapPanel.removeAllLayers();
-                if (visualLayers!=null)
-                {
-                    for (int i=0; i<visualLayers.length; i++)
-                        mapPanel.addLayer((Layer) visualLayers[i]);
-                    if (visibleArea!=null)
+                mapPanel.getRenderer().removeAllLayers();
+                if (visualLayers != null) {
+                    for (int i=0; i<visualLayers.length; i++) {
+                        mapPanel.getRenderer().addLayer((RenderedLayer) visualLayers[i]);
+                    }
+                    if (visibleArea != null) {
                         mapPanel.setVisibleArea(visibleArea);
+                    }
                 }
                 this.source = entry;
-            }
-            finally
-            {
-                if (mosaic!=null)
+            } finally {
+                if (mosaic != null) {
                     mosaic.isAdjusting = oldAdjusting;
+                }
             }
             updateTitle();
             fireImageChanged(source, image);
@@ -337,19 +335,17 @@ final class ImageCanvas extends JPanel
      * @param progress Objet à informer des progrès de la lecture,
      *                 ou <code>null</code> s'il n'y en a pas.
      */
-    public synchronized void setImage(final ImageEntry entry, final LayerControl[] layers, final IIOReadProgressListener progress)
+    public synchronized void setImage(final ImageEntry     entry,
+                                      final LayerControl[] layers,
+                                      final IIOReadProgressListener progress)
     {
-        if (entry==null)
-        {
+        if (entry == null) {
             setImage((GridCoverage)null);
             return;
         }
-        if (reader!=null)
-        {
-            synchronized (reader)
-            {
-                if (reader.isAlive() && !reader.kill)
-                {
+        if (reader != null) {
+            synchronized (reader) {
+                if (reader.isAlive() && !reader.kill) {
                     reader.setImage(entry, layers, TIMELAG, progress);
                     return;
                 }
@@ -366,41 +362,37 @@ final class ImageCanvas extends JPanel
      * pas les caches internes. Si l'image à relire est encore dans la cache, la
      * cache sera utilisée.
      */
-    final synchronized void reload(final LayerControl[] layers, final StatusBar statusBar)
-    {setImage(source, layers, (source!=null) ? statusBar.getIIOReadProgressListener(source.getName()) : null);}
+    final synchronized void reload(final LayerControl[] layers, final StatusBar statusBar) {
+        setImage(source, layers, (source!=null) ?
+                    statusBar.getIIOReadProgressListener(source.getName()) : null);
+    }
 
     /**
      * Indique si les barres de défilements sont visibles.
      * Par défaut, les barres de défilements ne sont pas
      * visibles.
      */
-    public boolean getScrollBarsVisible()
-    {return scrollPane!=null;}
+    public boolean getScrollBarsVisible() {
+        return scrollPane != null;
+    }
 
     /**
      * Définit si les barres de défilements doivent être visibles.
      * Par défaut, les barres de défilements ne sont pas visibles.
      */
-    public void setScrollBarsVisible(final boolean visible)
-    {
-        synchronized (getTreeLock())
-        {
-            if (visible)
-            {
-                if (scrollPane==null)
-                {
+    public void setScrollBarsVisible(final boolean visible) {
+        synchronized (getTreeLock()) {
+            if (visible) {
+                if (scrollPane == null) {
                     remove(mapPanel);
-                    scrollPane=mapPanel.createScrollPane();
+                    scrollPane = mapPanel.createScrollPane();
                     add(scrollPane, BorderLayout.CENTER);
                     validate();
                 }
-            }
-            else
-            {
-                if (scrollPane!=null)
-                {
+            } else {
+                if (scrollPane != null) {
                     remove(scrollPane);
-                    scrollPane=null;
+                    scrollPane = null;
                     add(mapPanel, BorderLayout.CENTER);
                     validate();
                 }
@@ -414,36 +406,38 @@ final class ImageCanvas extends JPanel
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    public void setPaintingWhileAdjusting(final boolean s)
-    {mapPanel.setPaintingWhileAdjusting(s);}
+    public void setPaintingWhileAdjusting(final boolean s) {
+        mapPanel.setPaintingWhileAdjusting(s);
+    }
 
     /**
      * Inscrit un objet dans la liste des objets intéressés
      * à être informés chaque fois que l'image affichée change.
      */
-    public void addImageChangeListener(final ImageChangeListener listener)
-    {listenerList.add(ImageChangeListener.class, listener);}
+    public void addImageChangeListener(final ImageChangeListener listener) {
+        listenerList.add(ImageChangeListener.class, listener);
+    }
 
     /**
      * Retire un objet de la liste des objets intéressés à
      * être informés chaque fois que l'image affichée change.
      */
-    public void removeImageChangeListener(final ImageChangeListener listener)
-    {listenerList.remove(ImageChangeListener.class, listener);}
+    public void removeImageChangeListener(final ImageChangeListener listener) {
+        listenerList.remove(ImageChangeListener.class, listener);
+    }
 
     /**
      * Préviens tous les objets {@link ImageChangeListener}
      * que l'image affichée vient de changer.
      */
-    protected void fireImageChanged(final ImageEntry entry, final GridCoverage newImage)
-    {
+    protected void fireImageChanged(final ImageEntry entry, final GridCoverage newImage) {
         ImageChangeEvent event=null;
         final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length-2; i>=0; i-=2)
-        {
-            if (listeners[i]==ImageChangeListener.class)
-            {
-                if (event==null) event=new ImageChangeEvent(this, entry, newImage);
+        for (int i=listeners.length-2; i>=0; i-=2) {
+            if (listeners[i] == ImageChangeListener.class) {
+                if (event == null) {
+                    event=new ImageChangeEvent(this, entry, newImage);
+                }
                 ((ImageChangeListener)listeners[i+1]).imageChanged(event);
             }
         }
@@ -454,28 +448,24 @@ final class ImageCanvas extends JPanel
      * lorsque la fenêtre qui contenant ce panneau est détruite. L'implémentation par
      * défaut termine le thread qui lisait des images en arrière plan.
      */
-    protected synchronized void dispose()
-    {
-        if (reader!=null)
-        {
-            synchronized (reader)
-            {
-                reader.kill=true;                     // must be first
+    protected synchronized void dispose() {
+        if (reader != null) {
+            synchronized (reader) {
+                reader.kill = true;                   // must be first
                 reader.setImage(null, null, 0, null); // must call 'reader.notifyAll()'.
-                reader=null;
+                reader = null;
             }
         }
         setImage(null);
-        mapPanel.dispose();
+        mapPanel.getRenderer().dispose();
     }
 
     /**
      * Retourne une chaîne de caractères représentant l'image affichée
      * dans ce paneau. La chaîne retournée sera sur une seule ligne.
      */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append((source!=null) ? (Object)source : (Object)mapPanel);
         buffer.append(']');
@@ -491,8 +481,7 @@ final class ImageCanvas extends JPanel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Reader extends Thread implements IIOReadWarningListener
-    {
+    private final class Reader extends Thread implements IIOReadWarningListener {
         /**
          * Image à lire. Ce champ prend la valeur <code>null</code>
          * lorsque la lecture d'une image est terminée.
@@ -533,8 +522,7 @@ final class ImageCanvas extends JPanel
          * Construit le thread. Le thread ne démarrera pas immédiatement.
          * Il faudra appeller {@link #start} après sa construction.
          */
-        public Reader(final ThreadGroup readers)
-        {
+        public Reader(final ThreadGroup readers) {
             super(readers, UNTITLED);
             setDaemon(true);
             listeners.add(IIOReadWarningListener.class, this);
@@ -547,8 +535,9 @@ final class ImageCanvas extends JPanel
          * dernier cas, le chargement en cours sera annulé et
          * le chargement de la nouvelle image commencera.
          */
-        public synchronized boolean isLoading()
-        {return isAlive() && entry!=null;}
+        public synchronized boolean isLoading() {
+            return isAlive() && entry!=null;
+        }
 
         /**
          * Définit la prochaine image à lire. Cette méthode peut être appelée même pendant
@@ -566,10 +555,12 @@ final class ImageCanvas extends JPanel
          * @param progress Objet à informer des progrès de la lecture,
          *                 ou <code>null</code> s'il n'y en a pas.
          */
-        public synchronized void setImage(final ImageEntry entry, final LayerControl[] layers, final int delay, final IIOReadProgressListener progress)
+        public synchronized void setImage(final ImageEntry     entry,
+                                          final LayerControl[] layers,
+                                          final int            delay,
+                                          final IIOReadProgressListener progress)
         {
-            if (this.entry!=null && !this.entry.equals(entry))
-            {
+            if (this.entry!=null && !this.entry.equals(entry)) {
                 this.entry.abort();
             }
             this.entry    = entry;
@@ -585,10 +576,8 @@ final class ImageCanvas extends JPanel
          * thread sera bloqué lorsqu'il n'y a pas d'image à lire, afin de laisser
          * le CPU aux autres.
          */
-        public void run()
-        {
-            while (!kill)
-            {
+        public void run() {
+            while (!kill) {
                 /*
                  * Fait une copie cohérente de l'état actuel de cet objet.
                  * S'il n'y a aucune image à lire, on bloquera ce thread
@@ -598,20 +587,18 @@ final class ImageCanvas extends JPanel
                 final LayerControl[]          layers;
                 final int                     delay;
                 final IIOReadProgressListener progress;
-                synchronized (this)
-                {
+                synchronized (this) {
                     entry    = this.entry;
                     layers   = this.layers;
                     delay    = this.delay;
                     progress = this.progress;
-                    if (entry==null) try
-                    {
+                    if (entry == null) try {
                         wait(LIFETIME);
-                        if (this.entry==null) kill=true;
+                        if (this.entry == null) {
+                            kill = true;
+                        }
                         continue;
-                    }
-                    catch (InterruptedException exception)
-                    {
+                    } catch (InterruptedException exception) {
                         // Quelqu'un ne veux pas nous laisser
                         // dormir. Retourne donc au travail.
                         continue;
@@ -624,96 +611,73 @@ final class ImageCanvas extends JPanel
                  * d'idée. C'est pourquoi on testera encore (entry==this.entry) après la
                  * lecture.
                  */
-                try
-                {
+                try {
                     sleep(delay);
-                    if (entry.equals(this.entry))
-                    {
+                    if (entry.equals(this.entry)) {
                         setName(Resources.format(ResourceKeys.LOADING_$1, entry.getName()));
-                        final List<Layer> visualLayers = new ArrayList<Layer>();
+                        final List<RenderedLayer> visualLayers = new ArrayList<RenderedLayer>();
                         GridCoverage image = null;
-                        if (layers==null)
-                        {
-                            try
-                            {
+                        if (layers == null) {
+                            try {
                                 // Note: 'progress' may be null.
                                 listeners.add(IIOReadProgressListener.class, progress);
                                 image = entry.getGridCoverage(listeners);
-                            }
-                            finally
-                            {
+                            } finally {
                                 listeners.remove(IIOReadProgressListener.class, progress);
                             }
-                            if (image!=null)
-                            {
-                                visualLayers.add(new GridCoverageLayer(image));
+                            if (image != null) {
+                                visualLayers.add(new RenderedGridCoverage(image));
                             }
-                        }
-                        else
-                        {
+                        } else {
                             /*
                              * Si l'utilisateur a demandé à ajouter des couches,
                              * procède maintenant à la création de ces couches.
                              * Les choix des couches comprennent celle de l'image.
                              */
-                            for (int i=0; i<layers.length; i++)
-                            {
-                                final Layer[] newLayers;
-                                try
-                                {
+                            for (int i=0; i<layers.length; i++) {
+                                final RenderedLayer[] newLayers;
+                                try {
                                     // Note: 'progress' may be null.
                                     listeners.add(IIOReadProgressListener.class, progress);
                                     newLayers = layers[i].configLayers(null, entry, listeners);
-                                }
-                                finally
-                                {
+                                } finally {
                                     listeners.remove(IIOReadProgressListener.class, progress);
                                 }
-                                if (newLayers != null)
-                                {
-                                    for (int j=0; j<newLayers.length; j++)
-                                    {
-                                        final Layer layer = newLayers[j];
-                                        if (layer instanceof GridCoverageLayer)
-                                        {
-                                            final GridCoverageLayer imageLayer = (GridCoverageLayer) layer;
+                                if (newLayers != null) {
+                                    for (int j=0; j<newLayers.length; j++) {
+                                        final RenderedLayer layer = newLayers[j];
+                                        if (layer instanceof RenderedGridCoverage) {
+                                            final RenderedGridCoverage imageLayer = (RenderedGridCoverage) layer;
                                             image = imageLayer.getCoverage();
-                                            imageLayer.prefetch(mapPanel);
+// TODO                                     imageLayer.prefetch(mapPanel);
                                         }
                                         visualLayers.add(layer);
                                     }
                                 }
                             }
                         }
-                        if (entry.equals(this.entry))
-                        {
-                            ImageCanvas.this.setImage(visualLayers.toArray(new Layer[visualLayers.size()]), entry, image);
+                        if (entry.equals(this.entry)) {
+                            ImageCanvas.this.setImage(visualLayers.toArray(
+                                             new RenderedLayer[visualLayers.size()]), entry, image);
                         }
                     }
-                }
-                catch (Exception exception)
-                {
+                } catch (Exception exception) {
                     /*
                      * En cas d'erreur, le message ne sera affichée que si on ne vient
                      * pas de démarrer une nouvelle lecture. Si on a une autre lecture
                      * sur les bras, on laisse tomber le message d'erreur.
                      */
-                    synchronized (this)
-                    {
-                        if (entry.equals(this.entry))
-                        {
+                    synchronized (this) {
+                        if (entry.equals(this.entry)) {
                             ExceptionMonitor.show(ImageCanvas.this, exception);
                         }
                     }
-                }
-                catch (OutOfMemoryError error)
-                {
+                }  catch (OutOfMemoryError error) {
                     /*
                      * Si on a manqué de mémoire, on n'essayera pas de lire une autre image.
                      * On arrête tout de suite même s'il y avait d'autres images dans la queue.
                      */
-                    synchronized (this)
-                    {
+                    synchronized (this) {
                         this.entry    = null;
                         this.layers   = null;
                         this.delay    = 0;
@@ -722,18 +686,14 @@ final class ImageCanvas extends JPanel
                     }
                     System.gc();
                     ExceptionMonitor.show(ImageCanvas.this, error);
-                }
-                finally
-                {
+                } finally {
                     /*
                      * Après la lecture (qu'il y ait eu erreur ou pas), si aucune nouvelle
                      * demande d'image n'est arrivée, on met les champs internes à 0 pour
                      * signifier qu'il n'y a plus rien à lire.
                      */
-                    synchronized (this)
-                    {
-                        if (entry.equals(this.entry))
-                        {
+                    synchronized (this) {
+                        if (entry.equals(this.entry)) {
                             this.entry    = null;
                             this.layers   = null;
                             this.delay    = 0;
@@ -752,13 +712,14 @@ final class ImageCanvas extends JPanel
          * messages d'avertissements. Si aucune fenêtre parente n'a été trouvée, alors cette
          * méthode retourne <code>null</code>.
          */
-        private InternalFrame getInternalFrame()
-        {
+        private InternalFrame getInternalFrame() {
             Component parent=ImageCanvas.this;
-            synchronized (getTreeLock())
-            {
-                while ((parent=parent.getParent()) != null)
-                    if (parent instanceof InternalFrame) break;
+            synchronized (getTreeLock()) {
+                while ((parent=parent.getParent()) != null) {
+                    if (parent instanceof InternalFrame) {
+                        break;
+                    }
+                }
             }
             return (InternalFrame) parent;
         }
@@ -771,14 +732,11 @@ final class ImageCanvas extends JPanel
          * @param source  L'objet {@link ImageReader} qui appelle cette méthode.
          * @param message Le message d'avertissement.
          */
-        public void warningOccurred(final ImageReader source, final String message)
-        {
+        public void warningOccurred(final ImageReader source, final String message) {
             final InternalFrame parent = getInternalFrame();
-            if (parent!=null)
-            {
+            if (parent != null) {
                 final ImageEntry entry = this.entry;
-                if (entry!=null)
-                {
+                if (entry != null) {
                     parent.warning(entry.getName(), message);
                     return;
                 }

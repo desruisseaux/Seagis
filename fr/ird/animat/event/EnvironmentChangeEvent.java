@@ -27,31 +27,38 @@ package fr.ird.animat.event;
 
 // Dependencies
 import java.util.EventObject;
+import fr.ird.animat.Parameter;
+import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
 
 
 /**
- * Un événement signalant qu'un changement est survenu
- * dans l'environnement.
+ * Un événement signalant qu'un changement est survenu dans l'environnement.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class EnvironmentChangeEvent extends EventObject
-{
+public class EnvironmentChangeEvent extends EventObject {
+    /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = 756503959183321278L;
+
     /**
      * Construit un nouvel événement.
      *
-     * @param source La source.
+     * @param source  La source.
+     * @param parameters Paramètres qui ont changés,
+     *        ou <code>null</code> si aucun.
      */
-    public EnvironmentChangeEvent(final Environment source)
-    {
+    public EnvironmentChangeEvent(final Environment source) {
         super(source);
     }
 
     /**
      * Retourne la source.
      */
-    public Environment getSource()
-    {return (Environment) super.getSource();}
+    public Environment getSource() {
+        return (Environment) super.getSource();
+    }
 }

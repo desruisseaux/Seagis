@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import fr.ird.sql.image.ImageEntry;
 
 // Interface utilisateur
-import fr.ird.map.Layer;
+import org.geotools.renderer.j2d.RenderedLayer;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
@@ -69,7 +69,7 @@ import fr.ird.resources.ResourceKeys;
 
 /**
  * Classe de base des objets capable de construire et/ou configurer
- * une couche {@link Layer} pour une image {@link ImageEntry} donnée.
+ * une couche {@link RenderedLayer} pour une image {@link ImageEntry} donnée.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -244,7 +244,7 @@ public abstract class LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public abstract Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
+    public abstract RenderedLayer[] configLayers(final RenderedLayer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
 
     /**
      * Fait apparaître un paneau de configuration pour les couches. Cette méthode est

@@ -34,8 +34,8 @@ import java.sql.SQLException;
 import fr.ird.sql.image.ImageEntry;
 
 // Map components
-import fr.ird.map.Layer;
-import fr.ird.map.layer.GridCoverageLayer;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 import fr.ird.operator.coverage.Operation;
 
 // Graphical user interface
@@ -92,7 +92,7 @@ public final class ImageLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public RenderedLayer[] configLayers(final RenderedLayer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
         GridCoverage coverage = entry.getGridCoverage(listeners);
         if (coverage==null)
@@ -108,9 +108,9 @@ public final class ImageLayerControl extends LayerControl
                     coverage = operation.filter(coverage);
             }
         }
-        final GridCoverageLayer layer = new GridCoverageLayer(coverage);
+        final RenderedGridCoverage layer = new RenderedGridCoverage(coverage);
         layer.setZOrder(Float.NEGATIVE_INFINITY);
-        return new Layer[] {layer};
+        return new RenderedLayer[] {layer};
     }
 
     /**

@@ -28,70 +28,34 @@ package fr.ird.animat.event;
 // Dependencies
 import java.util.EventObject;
 import fr.ird.animat.Population;
+import fr.ird.animat.Animal;
 
 
 /**
- * Un événement signalant qu'une population a changée.
+ * Un événement signalant qu'une population a changé.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class PopulationChangeEvent extends EventObject
-{
+public class PopulationChangeEvent extends EventObject {
     /**
-     * Constante indiquant qu'au moins un animal a été
-     * ajouté à la population.
+     * Numéro de série pour compatibilité entre différentes versions.
      */
-    public static final int ANIMAL_ADDED = +1;
-
-    /**
-     * Constante indiquant qu'au moins un animal a été
-     * retiré de la population.
-     */
-    public static final int ANIMAL_KILLED = -1;
-
-    /**
-     * Constante indiquant qu'au moins un animal a bougé.
-     */
-    public static final int ANIMAL_MOVED = 0;
-
-    /**
-     * Le type de cet événement: {@link #ANIMAL_ADDED},
-     * {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
-     */
-    private final int type;
+    private static final long serialVersionUID = 555996444421587694L;
 
     /**
      * Construit un nouvel événement.
      *
      * @param source La source.
-     * @param type Le type de cet événement: {@link #ANIMAL_ADDED},
-     *             {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
      */
-    public PopulationChangeEvent(final Population source, final int type)
-    {
+    public PopulationChangeEvent(final Population source) {
         super(source);
-        this.type=type;
-        if (type<ANIMAL_KILLED || type>ANIMAL_ADDED)
-        {
-            throw new IllegalArgumentException(String.valueOf(type));
-        }
     }
 
     /**
      * Retourne la source.
      */
-    public Population getSource()
-    {
+    public Population getSource() {
         return (Population) super.getSource();
-    }
-
-    /**
-     * Retourne le type de cet événement: {@link #ANIMAL_ADDED},
-     * {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
-     */
-    public int getType()
-    {
-        return type;
     }
 }

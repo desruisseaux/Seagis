@@ -26,14 +26,15 @@
 package fr.ird.animat;
 
 // J2SE dependencies
-import javax.swing.JComponent;
 import java.awt.Graphics2D;
+import javax.swing.JComponent;
+import java.rmi.RemoteException;
 
 // Other dependencies
-import fr.ird.map.Layer;
-import fr.ird.map.MapPanel;
 import fr.ird.map.RepaintManager;
-import fr.ird.map.layer.GridCoverageLayer;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 
 /**
@@ -43,14 +44,13 @@ import fr.ird.map.layer.GridCoverageLayer;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Viewer
-{
+public final class Viewer {
     /**
      * La carte à afficher. Le système de coordonnées
      * sera un système géographique selon l'ellipsoïde
      * WGS84.
      */
-    private final MapPanel map = new MapPanel();
+    private final MapPane map = new MapPane();
 
     /**
      * La couche de l'environnement à afficher.
@@ -67,26 +67,33 @@ public final class Viewer
      *
      * @param environment L'environemment à afficher.
      * @param population  La population à afficher.
-     * @param lock        Objet sur lequel synchronizer les traçages. La méthode
-     *                    {@link MapPanel#paintComponent(Graphics2D)} sera appelée
-     *                    à l'intérieur d'un block <code>synchronized(lock)</code>.
+     * @param lock Objet sur lequel synchronizer les traçages. La méthode
+     *        {@link MapPane#paintComponent(Graphics2D)} sera appelée
+     *        à l'intérieur d'un block <code>synchronized(lock)</code>.
+     *
+     * @throws RemoteException si au moins une partie de l'exécution
+     *         devait se faire sur un serveur et que cette exécution
+     *         a échoué.
      */
-    public Viewer(final Environment environment, final Population population, final Object lock)
+    public Viewer(final Environment environment,
+                  final Population  population,
+                  final Object      lock)
+        throws RemoteException
     {
         final RepaintManager manager = new RepaintManager(lock);
         this.environment = new EnvironmentLayer(environment, manager);
         this.population  = new  PopulationLayer(population,  manager);
+        this.environment.addPropertyChangeListener(this.population);
         map.setPaintingWhileAdjusting(true);
-        map.addLayer(this.environment);
-        map.addLayer(this.population );
+        map.getRenderer().addLayer(this.environment);
+        map.getRenderer().addLayer(this.population );
     }
 
     /**
      * Retourne la composante visuelle dans laquelle seront
-     * affichées les animaux.
+     * affichées les animaux et leur environnement.
      */
-    public JComponent getView()
-    {
+    public JComponent getView() {
         return map.createScrollPane();
     }
 }

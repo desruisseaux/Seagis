@@ -553,11 +553,13 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
         CoordinateSystem coordinateSystem = parameters.coordinateSystem;
         double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), ImageTableImpl.toJulian(startTime)};
         double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
-        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2])) {
+        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2])) try {
             // No time range specified.
             min = XArray.resize(min, 2);
             max = XArray.resize(max, 2);
             coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
+        } catch (TransformException exception) {
+            throw new IIOException(exception.getLocalizedMessage(), exception);
         }
         GridCoverage coverage = new GridCoverage(filename, image, coordinateSystem,
                                 new Envelope(min, max), bands, null,

@@ -23,7 +23,7 @@
 package fr.ird.map.io;
 
 // Map components
-import fr.ird.map.Isoline;
+import org.geotools.renderer.Isoline;
 import org.geotools.ct.TransformException;
 
 // Collections
@@ -85,8 +85,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author  Martin Desruisseaux
  */
-public abstract class IsolineFactory
-{
+public abstract class IsolineFactory {
     /**
      * The logger for warning and information messages.
      */
@@ -124,8 +123,7 @@ public abstract class IsolineFactory
      *              to this cache file. Subsequent calls will fetch isolines from this
      *              file.
      */
-    public IsolineFactory(final File cache)
-    {
+    public IsolineFactory(final File cache) {
         this.cacheFile = cache;
         this.cacheURL  = null;
     }
@@ -137,21 +135,15 @@ public abstract class IsolineFactory
      *
      * @param cache Path to serialized {@link Isoline}s as an URL.
      */
-    public IsolineFactory(URL cache)
-    {
+    public IsolineFactory(URL cache) {
         File file = null;
-        try
-        {
+        try {
             file  = new File(new URI(cache.toExternalForm()));
             cache = null;
-        }
-        catch (URISyntaxException exception)
-        {
+        } catch (URISyntaxException exception) {
             // Can't convert the URL into an URI.
             // It is probably not a file.
-        }
-        catch (IllegalArgumentException exception)
-        {
+        } catch (IllegalArgumentException exception) {
             // The URI is not a file.
         }
         this.cacheFile = file;
@@ -178,8 +170,9 @@ public abstract class IsolineFactory
      * Returns an entry name for the specified value.
      * Those name will be used for entry in the ZIP file.
      */
-    private static String getName(final float value)
-    {return Float.toString(value).replace('.',',');}
+    private static String getName(final float value) {
+        return Float.toString(value).replace('.',',');
+    }
 
     /**
      * Gets all values currently available.
@@ -188,29 +181,24 @@ public abstract class IsolineFactory
      * @throws IOException if the operation require an I/O
      *         access and this access failed.
      */
-    public synchronized float[] getAvailableValues() throws IOException
-    {
-        if (isolines==null)
-        {
+    public synchronized float[] getAvailableValues() throws IOException {
+        if (isolines == null) {
             /*
              * Open and close the connection in order to construct
              * the memory cache now,  but do not read isoline data
              * since they are not needed at this stage.
              */
             close(open("getAvailableValues"));
-            if (isolines==null)
-            {
+            if (isolines == null) {
                 return new float[0];
             }
         }
         int count = 0;
         final float[] values = new float[isolines.size()];
-        for (final Iterator<Float> it=isolines.keySet().iterator(); it.hasNext();)
-        {
+        for (final Iterator<Float> it=isolines.keySet().iterator(); it.hasNext();) {
             values[count++] = it.next().floatValue();
         }
-        if (count != values.length)
-        {
+        if (count != values.length) {
             // Should not happen
             throw new AssertionError(values.length - count);
         }
@@ -226,8 +214,9 @@ public abstract class IsolineFactory
      *         if there is no isoline for the specified value.
      * @throws IOException if an I/O operation failed.
      */
-    public Isoline get(final float value) throws IOException
-    {return get(new float[]{value})[0];}
+    public Isoline get(final float value) throws IOException {
+        return get(new float[]{value})[0];
+    }
 
     /**
      * Gets isolines for the specified values. This method
@@ -256,14 +245,12 @@ public abstract class IsolineFactory
      *         value.
      * @throws IOException if an I/O operation failed.
      */
-    public synchronized Isoline[] get(final float[] values) throws IOException
-    {
+    public synchronized Isoline[] get(final float[] values) throws IOException {
         final float[]   sortedValues = (float[]) values.clone();
         final Isoline[] sortedResult = new Isoline[values.length];
         Arrays.sort(sortedValues);
         Object input = null;
-        if (isolines==null)
-        {
+        if (isolines == null) {
             /*
              * If this method is invoked for the first time, try
              * to load isolines from the cache.  If isolines are
@@ -271,8 +258,7 @@ public abstract class IsolineFactory
              * their source and serialize them.
              */
             input = open("get");
-            if (isolines==null)
-            {
+            if (isolines==null) {
                 // All elements are null.
                 return sortedResult;
             }
@@ -281,12 +267,10 @@ public abstract class IsolineFactory
          * For each requested isoline, try to fetch
          * the isoline from the memory cache.
          */
-  fill: for (int i=0; i<sortedValues.length; i++)
-        {
+  fill: for (int i=0; i<sortedValues.length; i++) {
             float floatValue = sortedValues[i];
             Float key = new Float(floatValue);
-            if (floatValue==0 && !isolines.containsKey(key))
-            {
+            if (floatValue==0 && !isolines.containsKey(key)) {
                 // Special case for the 0 isoline: +0 and -0 are not equals for
                 // the 'Float' class. If the user asked for the 0 meter isoline,
                 // we may have to look at the -0 meter isoline instead.
@@ -294,19 +278,15 @@ public abstract class IsolineFactory
                 key = new Float(floatValue);
             }
             final Reference reference = isolines.get(key);
-            if (reference!=null)
-            {
+            if (reference != null) {
                 final Isoline iso = (Isoline) reference.get();
-                if (iso!=null)
-                {
+                if (iso != null) {
                     // An isoline has been found in the cache. Put
                     // it in they array (we will clone it later).
                     sortedResult[i] = iso;
                     continue fill;
                 }
-            }
-            else if (!isolines.containsKey(key))
-            {
+            } else if (!isolines.containsKey(key)) {
                 // There is no isoline for the specified key.
                 // Lets the corresponding element to null.
                 continue fill;
@@ -317,36 +297,29 @@ public abstract class IsolineFactory
              * it from the serialized cache.
              */
             final String value = getName(floatValue);
-            if (input==null)
-            {
+            if (input == null) {
                 input = open("get");
             }
-            if (input instanceof ZipFile)
-            {
+            if (input instanceof ZipFile) {
                 /*
                  * Try to read the cache as a file.
                  * This is the most efficient method.
                  */
                 final ZipFile    zip = (ZipFile) input;
                 final ZipEntry entry = zip.getEntry(value);
-                if (entry!=null)
-                {
+                if (entry != null) {
                     sortedResult[i] = load(new BufferedInputStream(zip.getInputStream(entry)), true);
                     continue fill;
                 }
-            }
-            else if (input instanceof ZipInputStream)
-            {
+            } else if (input instanceof ZipInputStream) {
                 /*
                  * Try to read the cache as a stream. Slower,
                  * but more general (work through a network link).
                  */
                 final ZipInputStream zip = (ZipInputStream) input;
                 ZipEntry entry = zip.getNextEntry();
-                while (entry!=null)
-                {
-                    if (entry.getName().equalsIgnoreCase(value))
-                    {
+                while (entry != null) {
+                    if (entry.getName().equalsIgnoreCase(value)) {
                         sortedResult[i] = load(zip, false);
                         zip.closeEntry();
                         continue fill;
@@ -369,18 +342,15 @@ public abstract class IsolineFactory
          * of this cache).
          */
         final Isoline[] result = new Isoline[sortedResult.length];
-        for (int i=0; i<values.length; i++)
-        {
+        for (int i=0; i<values.length; i++) {
             final int index = Arrays.binarySearch(sortedValues, values[i]);
-            if (index < 0)
-            {
+            if (index < 0) {
                 // Should not happen
                 warning("get", ResourceKeys.ERROR_MISSING_ISOLINE_$1, new Float(values[i]));
                 continue;
             }
             final Isoline iso = sortedResult[index];
-            if (iso != null)
-            {
+            if (iso != null) {
                 result[i] = new Cloned(iso);
             }
         }
@@ -396,15 +366,12 @@ public abstract class IsolineFactory
      *         will be ignored.
      * @throws IOException if an error occured while closing the stream.
      */
-    private static void close(final Object input) throws IOException
-    {
-        if (input instanceof ZipFile)
-        {
+    private static void close(final Object input) throws IOException {
+        if (input instanceof ZipFile) {
             ((ZipFile) input).close();
             return;
         }
-        if (input instanceof InputStream)
-        {
+        if (input instanceof InputStream) {
             ((InputStream) input).close();
             return;
         }
@@ -420,17 +387,14 @@ public abstract class IsolineFactory
      * {@link #isolines} hasn't be constructed yet, then this method initialize
      * the memory cache now.
      */
-    private Object open(final String sourceMethodName) throws IOException
-    {
+    private Object open(final String sourceMethodName) throws IOException {
         /*
          * Try to open the cache as a file.
          * This is the most efficient way.
          */
-        if (cacheFile!=null && cacheFile.isFile())
-        {
+        if (cacheFile!=null && cacheFile.isFile()) {
             final ZipFile zip = new ZipFile(cacheFile);
-            if (isolines==null)
-            {
+            if (isolines == null) {
                 loadIndex(zip.getInputStream(zip.getEntry("index")), true);
             }
             return zip;
@@ -440,16 +404,12 @@ public abstract class IsolineFactory
          * a slower but a more general way. It work
          * through network protocol like HTTP.
          */
-        if (cacheURL!=null)
-        {
+        if (cacheURL != null) {
             final ZipInputStream zip = new ZipInputStream(new BufferedInputStream(cacheURL.openStream()));
-            if (isolines==null)
-            {
+            if (isolines == null) {
                 ZipEntry entry = zip.getNextEntry();
-                while (entry!=null)
-                {
-                    if (entry.getName().equalsIgnoreCase("index"))
-                    {
+                while (entry != null) {
+                    if (entry.getName().equalsIgnoreCase("index")) {
                         loadIndex(zip, false);
                         zip.closeEntry();
                         return zip;
@@ -472,23 +432,18 @@ public abstract class IsolineFactory
         final Isoline[] all = readAll();
         isolines = new HashMap<Float,Reference<Isoline>>(all.length + all.length/2);
         final Resources resources = Resources.getResources(null);
-        for (int i=0; i<all.length; i++)
-        {
+        for (int i=0; i<all.length; i++) {
             final Isoline iso = all[i];
             add(iso);
             LogRecord record;
-            try
-            {
+            try {
                 final float factor = iso.compress(0.75f);
                 record = resources.getLogRecord(Level.FINE, ResourceKeys.ISOLINE_DECIMATED_$2,
                                                 new Float(iso.value), new Float(factor));
-            }
-            catch (TransformException exception)
-            {
+            } catch (TransformException exception) {
                 final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
                 final String message = exception.getLocalizedMessage();
-                if (message!=null)
-                {
+                if (message != null) {
                     buffer.append(": ");
                     buffer.append(message);
                 }
@@ -513,17 +468,14 @@ public abstract class IsolineFactory
      *         after reading, or <code>false</code> to lets it open.
      * @throws IOException if an error occured while decoding the isoline.
      */
-    private void loadIndex(final InputStream input, final boolean canClose) throws IOException
-    {
+    private void loadIndex(final InputStream input, final boolean canClose) throws IOException {
         final DataInputStream in = new DataInputStream(input);
         int count = in.readInt();
         isolines = new HashMap<Float,Reference<Isoline>>(count + count/2);
-        while (--count >= 0)
-        {
+        while (--count >= 0) {
             isolines.put(new Float(in.readFloat()), null);
         }
-        if (canClose)
-        {
+        if (canClose) {
             in.close();
         }
     }
@@ -539,12 +491,10 @@ public abstract class IsolineFactory
      * @return The isoline.
      * @throws IOException if an error occured while decoding the isoline.
      */
-    private Isoline load(final InputStream input, final boolean canClose) throws IOException
-    {
+    private Isoline load(final InputStream input, final boolean canClose) throws IOException {
         Isoline isoline = null;
         final ObjectInputStream in = new ObjectInputStream(input);
-        try
-        {
+        try {
             isoline = (Isoline) in.readObject();
             add(isoline);
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
@@ -552,16 +502,13 @@ public abstract class IsolineFactory
             record.setSourceClassName("IsolineFactory");
             record.setSourceMethodName("get");
             logger.log(record);
-        }
-        catch (ClassNotFoundException exception)
-        {
+        } catch (ClassNotFoundException exception) {
             // Should not happen
             InvalidClassException e = new InvalidClassException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
         }
-        if (canClose)
-        {
+        if (canClose) {
             // Release resources used by ObjectInputStream, but it have
             // the side-effect of closing the underlying input stream.
             in.close();
@@ -573,12 +520,10 @@ public abstract class IsolineFactory
      * Add an isoline to the cache. If an other isoline was already in
      * the cache for the same value, a warning message will be logged.
      */
-    private void add(final Isoline isoline)
-    {
+    private void add(final Isoline isoline) {
         final Float key = new Float(isoline.value);
         final Reference oldRef = isolines.put(key, new SoftReference<Isoline>(isoline));
-        if (oldRef!=null && oldRef.get()!=null)
-        {
+        if (oldRef!=null && oldRef.get()!=null) {
             // Should not occurs.
             warning("get", ResourceKeys.ERROR_DUPLICATED_ISOLINE_$1, key);
         }
@@ -591,8 +536,7 @@ public abstract class IsolineFactory
      * @param  isolines The set of isolines to save in the cache.
      * @throws IOException if an error occurs during serialization.
      */
-    private void save(final Isoline[] isolines) throws IOException
-    {
+    private void save(final Isoline[] isolines) throws IOException {
         final ZipOutputStream out = new ZipOutputStream(
                 (cacheFile!=null) ? new FileOutputStream(cacheFile) :
                                     cacheURL.openConnection().getOutputStream());
@@ -607,18 +551,15 @@ public abstract class IsolineFactory
          */
         Arrays.sort(isolines);
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream(4096);
-        if (true)
-        {
+        if (true) {
             final CheckedOutputStream checked = new CheckedOutputStream(buffer, new CRC32());
             final DataOutputStream dataStream = new DataOutputStream(checked);
             dataStream.writeInt(isolines.length);
-            for (int i=0; i<isolines.length; i++)
-            {
+            for (int i=0; i<isolines.length; i++) {
                 dataStream.writeFloat(isolines[i].value);
             }
             dataStream.close();
             final int size = buffer.size();
-
             final ZipEntry entry = new ZipEntry("index");
             entry.setMethod(ZipEntry.STORED);
             entry.setCompressedSize(size);
@@ -631,14 +572,12 @@ public abstract class IsolineFactory
         /*
          * Serialize each isoline to the zip file.
          */
-        for (int i=0; i<isolines.length; i++)
-        {
+        for (int i=0; i<isolines.length; i++) {
             buffer.reset();
             final Isoline isoline = isolines[i];
             final ObjectOutputStream dataStream = new ObjectOutputStream(buffer);
             dataStream.writeObject(isoline);
             dataStream.close();
-
             final ZipEntry entry = new ZipEntry(getName(isoline.value));
             out.putNextEntry(entry);
             buffer.writeTo(out);
@@ -653,8 +592,7 @@ public abstract class IsolineFactory
      * @param resourceKey The resource key for the message.
      * @param value The value to format with the message.
      */
-    private static void warning(final String sourceMethodName, final int resourceKey, final Float value)
-    {
+    private static void warning(final String sourceMethodName, final int resourceKey, final Float value) {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.WARNING, resourceKey, value);
         record.setSourceClassName("IsolineFactory");
         record.setSourceMethodName(sourceMethodName);
@@ -669,8 +607,7 @@ public abstract class IsolineFactory
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static class Cloned extends Isoline
-    {
+    private static class Cloned extends Isoline {
         /**
          * The originating provider.
          */
@@ -679,10 +616,9 @@ public abstract class IsolineFactory
         /**
          * Construct a cloned isoline.
          */
-        public Cloned(final Isoline isoline)
-        {
+        public Cloned(final Isoline isoline) {
             super(isoline);
-            parent=isoline;
+            parent = isoline;
         }
     }
 }

@@ -34,7 +34,7 @@ import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.FisheryDataBase;
 
 // Cartographie
-import fr.ird.map.Layer;
+import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.awt.SpeciesChooser;
 import fr.ird.seasview.layer.CatchLayer;
 
@@ -125,9 +125,9 @@ public final class CatchLayerControl extends LayerControl {
      *         exemple parce qu'aucune espèce n'a été sélectionnée).
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized Layer[] configLayers(final Layer[] layers,
-                                             final ImageEntry entry,
-                                             final EventListenerList listeners)
+    public synchronized RenderedLayer[] configLayers(final RenderedLayer[] layers,
+                                                     final ImageEntry entry,
+                                                     final EventListenerList listeners)
         throws SQLException
     {
         final CatchLayer layer;
@@ -145,7 +145,7 @@ public final class CatchLayerControl extends LayerControl {
             layer.defineIcons(controler.getIcons());
         }
         layer.setMarkType(markType);
-        return new Layer[] {layer};
+        return new RenderedLayer[] {layer};
     }
 
     /**

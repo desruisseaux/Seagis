@@ -29,8 +29,8 @@ package fr.ird.seasview.navigator;
 import org.geotools.gc.GridCoverage;
 
 // Map components
-import fr.ird.map.MapPanel;
-import fr.ird.map.MouseCoordinateFormat;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.renderer.j2d.MouseCoordinateFormat;
 import fr.ird.seasview.layer.control.LayerControl;
 
 // User interface
@@ -84,8 +84,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class MosaicCanvas extends JPanel
-{
+final class MosaicCanvas extends JPanel {
     /**
      * Groupe des threads ayant la charge de lire des images en arrière-plan.
      * Ce groupe contiendra des threads de la classe {@link ImageCanvas.Reader}.
@@ -99,6 +98,11 @@ final class MosaicCanvas extends JPanel
      * est aussi accédé par le paneau {@link ImageTablePanel} parent.
      */
     final StatusBar statusBar;
+
+    /**
+     * Le format à utiliser pour écrire les coordonnées de la souris.
+     */
+    private final MouseCoordinateFormat mouseFormat = new MouseCoordinateFormat();
 
     /**
      * Indique si les barres de défilements sont visible
@@ -141,7 +145,7 @@ final class MosaicCanvas extends JPanel
      * qu'un changement de la taille de la fenêtre ou un
      * changement de zoom.
      */
-    private final Listeners listeners=new Listeners();
+    private final Listeners listeners = new Listeners();
 
     /**
      * Classe des objets ayant la charge de réagir aux événements tels
@@ -152,35 +156,31 @@ final class MosaicCanvas extends JPanel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Listeners extends MouseCoordinateFormat implements ZoomChangeListener, MouseListener, MouseMotionListener, ComponentListener
+    private final class Listeners
+            implements ZoomChangeListener, MouseListener, MouseMotionListener, ComponentListener
     {
         /**
          * Méthode appelée lorsque le zoom d'une des images a changé. Cette
          * méthode applique la même transformation sur les autres images.
          */
-        public void zoomChanged(final ZoomChangeEvent event)
-        {
-            synchronized (getTreeLock())
-            {
+        public void zoomChanged(final ZoomChangeEvent event) {
+            synchronized (getTreeLock()) {
                 updateMouseCoordinate();
-                if (imagesSynchronized && !isAdjusting) try
-                {
-                    isAdjusting=true;
+                if (imagesSynchronized && !isAdjusting) try {
+                    isAdjusting = true;
                     final Object          source=event.getSource();
                     final AffineTransform change=event.getChange();
-                    for (int i=getComponentCount(); --i>=0;)
-                    {
+                    for (int i=getComponentCount(); --i>=0;) {
                         final Component c=getComponent(i);
-                        if (c instanceof ImageCanvas)
-                        {
-                            final MapPanel mapPanel=((ImageCanvas) c).mapPanel;
-                            if (mapPanel!=source) mapPanel.transform(change);
+                        if (c instanceof ImageCanvas) {
+                            final MapPane mapPanel=((ImageCanvas) c).mapPanel;
+                            if (mapPanel!=source) {
+                                mapPanel.transform(change);
+                            }
                         }
                     }
-                }
-                finally
-                {
-                    isAdjusting=false;
+                } finally {
+                    isAdjusting = false;
                 }
             }
         }
@@ -189,10 +189,8 @@ final class MosaicCanvas extends JPanel
          * Met à jour l'affichage des coordonnées de la souris. Cette méthode peut être
          * appelée lorsque la fenêtre change de place où lorsqu'un zoom a été effectué.
          */
-        private void updateMouseCoordinate()
-        {
-            if (statusBar!=null)
-            {
+        private void updateMouseCoordinate() {
+            if (statusBar != null) {
                 // TODO: il faudrait obtenir les coordonnées de la souris et recalculer
                 //       les coordonnées géographiques. Malheureusement, le JDK 1.3 n'a
                 //       pas d'API pour obtenir la position du curseur de la souris...
@@ -205,11 +203,13 @@ final class MosaicCanvas extends JPanel
          * Cette méthode peut modifier la disposition des images de
          * façon à conserver un aspect aussi carré que possible.
          */
-        public void componentResized(final ComponentEvent event)
-        {
-            synchronized (getTreeLock())
-            {
-                if (adjust()) doLayout(); // validate()/invalidate() ont besoin de deux glissements de la souris pour prendre effet...
+        public void componentResized(final ComponentEvent event) {
+            synchronized (getTreeLock()) {
+                if (adjust()) {
+                    doLayout();
+                    // validate()/invalidate() ont besoin de deux
+                    // glissements de la souris pour prendre effet...
+                }
                 updateMouseCoordinate();
             }
         }
@@ -217,7 +217,7 @@ final class MosaicCanvas extends JPanel
         /** Invoked when the component's position changes.      */ public void componentMoved (final ComponentEvent event) {updateMouseCoordinate();}
         /** Invoked when the component has been made visible.   */ public void componentShown (final ComponentEvent event) {}
         /** Invoked when the component has been made invisible. */ public void componentHidden(final ComponentEvent event) {}
-        /** Appelée lors des déplacements de la souris.         */ public void mouseMoved     (final MouseEvent     event) {statusBar.setCoordinate(format(event));}
+        /** Appelée lors des déplacements de la souris.         */ public void mouseMoved     (final MouseEvent     event) {statusBar.setCoordinate(mouseFormat.format(event));}
         /** Appelée lors des glissements de la souris.          */ public void mouseDragged   (final MouseEvent     event) {mouseMoved(event);}
         /** Invoked when the mouse has been clicked.            */ public void mouseClicked   (final MouseEvent     event) {}
         /** Invoked when a mouse button has been pressed.       */ public void mousePressed   (final MouseEvent     event) {mouseMoved(event);}
@@ -242,8 +242,7 @@ final class MosaicCanvas extends JPanel
      * @param readers   Groupe dans lequel placer les threads qui liront des
      *                  images en arrière plan.
      */
-    public MosaicCanvas(final StatusBar statusBar, final ThreadGroup readers)
-    {
+    public MosaicCanvas(final StatusBar statusBar, final ThreadGroup readers) {
         super(new GridLayout(), false);
         this.statusBar = statusBar;
         this.readers   = readers;
@@ -257,8 +256,7 @@ final class MosaicCanvas extends JPanel
      * @param rows    Nombre d'images par ligne.
      * @param columns Nombre d'images par colonne.
      */
-    public void setGridSize(final int rows, final int columns)
-    {
+    public void setGridSize(final int rows, final int columns) {
         final GridLayout layout = (GridLayout) getLayout();
         layout.setRows(rows);
         layout.setColumns(columns);
@@ -270,10 +268,8 @@ final class MosaicCanvas extends JPanel
      * à accomoder le nombre d'images qu'elle contient.
      * @return <code>true</code> si la mosaïque a changée.
      */
-    private boolean adjust()
-    {
-        if (!fixed)
-        {
+    private boolean adjust() {
+        if (!fixed) {
             final int           count = getComponentCount();
             final GridLayout   layout = (GridLayout) getLayout();
             final Resources resources = Resources.getResources(getLocale());
@@ -284,8 +280,7 @@ final class MosaicCanvas extends JPanel
             DataBase.logger.log(resources.getLogRecord(Level.FINER, ResourceKeys.ADJUST_MOSAIC_$3,
                                            new Integer(count), new Integer(ny), new Integer(nx)));
 
-            if (ny!=layout.getRows() && nx!=layout.getColumns())
-            {
+            if (ny!=layout.getRows() && nx!=layout.getColumns()) {
                 layout.setRows   (ny);
                 layout.setColumns(nx);
                 return true;
@@ -295,14 +290,12 @@ final class MosaicCanvas extends JPanel
              * que de laisser un espace vide on placera des instructions
              * pour l'utilisateur.
              */
-            if (count==0)
-            {
+            if (count == 0) {
                 final List<JLabel> labels=new ArrayList<JLabel>();
                 labels.add(new JLabel(InternalFrame.getIcon("application-data/images/Cover.png")));
                 final String message=resources.getString(ResourceKeys.IMAGES_TABLE_INSTRUCTIONS);
                 int lower=0, upper;
-                while ((upper=message.indexOf('\n', lower)) >= lower)
-                {
+                while ((upper=message.indexOf('\n', lower)) >= lower) {
                     labels.add(new JLabel(message.substring(lower, upper)));
                     lower = upper+1;
                 }
@@ -316,8 +309,7 @@ final class MosaicCanvas extends JPanel
                 panel.setBackground(Color.black);
                 panel.setForeground(Color.white);
                 final int length=labels.size();
-                for (int i=0; i<length; i++)
-                {
+                for (int i=0; i<length; i++) {
                     c.gridx=0; c.gridy=i;
                     c.insets.bottom = (i==0) ? 21 : 0;
                     final JLabel label = labels.get(i);
@@ -333,11 +325,9 @@ final class MosaicCanvas extends JPanel
     /**
      * Enregistre {@link #listeners} auprès de <code>mapPanel</code>.
      */
-    private void addListeners(final MapPanel mapPanel)
-    {
+    private void addListeners(final MapPane mapPanel) {
         mapPanel.addZoomChangeListener(listeners);
-        if (statusBar!=null)
-        {
+        if (statusBar!=null) {
             mapPanel.addMouseMotionListener(listeners);
             mapPanel.addMouseListener      (listeners);
         }
@@ -347,8 +337,7 @@ final class MosaicCanvas extends JPanel
     /**
      * Retire {@link #listeners} auprès de <code>mapPanel</code>.
      */
-    private void removeListeners(final MapPanel mapPanel)
-    {
+    private void removeListeners(final MapPane mapPanel) {
         mapPanel.removeZoomChangeListener (listeners);
         mapPanel.removeMouseMotionListener(listeners);
         mapPanel.removeMouseListener      (listeners);
@@ -359,17 +348,16 @@ final class MosaicCanvas extends JPanel
      * Le fait qu'une image soit en cours de lecture n'empêche pas d'ajouter ou
      * de retirer des images de la mosaïque.
      */
-    public boolean isLoading()
-    {
-        synchronized (getTreeLock())
-        {
+    public boolean isLoading() {
+        synchronized (getTreeLock()) {
             final int count=getComponentCount();
-            for (int i=0; i<count; i++)
-            {
+            for (int i=0; i<count; i++) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
-                    if (((ImageCanvas) c).isLoading())
+                if (c instanceof ImageCanvas) {
+                    if (((ImageCanvas) c).isLoading()) {
                         return true;
+                    }
+                }
             }
             return false;
         }
@@ -384,17 +372,13 @@ final class MosaicCanvas extends JPanel
      * Le nombre de lignes et de colonnes sera ajusté de façon à
      * accomoder le nouveau nombre d'images.
      */
-    public void setImageCount(final int count)
-    {
+    public void setImageCount(final int count) {
         final Component[] components = getComponents();
         final ImageCanvas[] images = new ImageCanvas[count];
-        for (int i=0; i<images.length; i++)
-        {
-            if (i<components.length)
-            {
+        for (int i=0; i<images.length; i++) {
+            if (i<components.length) {
                 final Component c = components[i];
-                if (c instanceof ImageCanvas)
-                {
+                if (c instanceof ImageCanvas) {
                     images[i] = (ImageCanvas) c;
                     continue;
                 }
@@ -410,10 +394,8 @@ final class MosaicCanvas extends JPanel
      * lignes et de colonnes sera ajusté de façon à accomoder
      * le nouveau nombre d'images.
      */
-    public void setImages(final ImageCanvas[] images)
-    {
-        synchronized (getTreeLock())
-        {
+    public void setImages(final ImageCanvas[] images) {
+        synchronized (getTreeLock()) {
             ///// WORKAROUND BEGIN (bug #4130347)
             final int  removeCount = getComponentCount()-images.length;
             final Rectangle[] rect = new Rectangle[Math.max(removeCount,0)];
@@ -425,31 +407,35 @@ final class MosaicCanvas extends JPanel
              * Annule l'inscription de 'listeners' auprès
              * des images, puis supprime toutes les images.
              */
-            final Rectangle2D area=getVisibleArea();
-            for (int i=getComponentCount(); --i>=0;)
-            {
+            final Rectangle2D area = getVisibleArea();
+            for (int i=getComponentCount(); --i>=0;) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
+                if (c instanceof ImageCanvas) {
                     removeListeners(((ImageCanvas) c).mapPanel);
+                }
             }
             removeAll();
             /*
              * Ajoute toutes les images
              * qui ont été spécifiées.
              */
-            for (int i=0; i<images.length; i++)
-            {
-                final ImageCanvas image=images[i];
+            for (int i=0; i<images.length; i++) {
+                final ImageCanvas image = images[i];
                 image.setBorder(BorderFactory.createLoweredBevelBorder());
                 image.setScrollBarsVisible(scrollBarsVisible);
                 add(image);
             }
             adjust();
             validate();
-            if (area!=null) setVisibleArea(area);
-            for (int i=0; i<rect.length; i++) repaint(rect[i]); // workaround for bug #4130347
-            for (int i=0; i<images.length; i++)
+            if (area != null) {
+                setVisibleArea(area);
+            }
+            for (int i=0; i<rect.length; i++) {
+                repaint(rect[i]); // workaround for bug #4130347
+            }
+            for (int i=0; i<images.length; i++) {
                 addListeners(images[i].mapPanel);
+            }
         }
     }
 
@@ -457,17 +443,13 @@ final class MosaicCanvas extends JPanel
      * Supprime toutes les images qui se trouvait dans ce paneau.
      * Les ressources utilisées par les images seront libérées.
      */
-    public void removeAllImages()
-    {
-        synchronized (getTreeLock())
-        {
+    public void removeAllImages() {
+        synchronized (getTreeLock()) {
             final Component[] old=getComponents();
             removeAll();
-            for (int i=old.length; --i>=0;)
-            {
-                if (old[i] instanceof ImageCanvas)
-                {
-                    final ImageCanvas image=(ImageCanvas) old[i];
+            for (int i=old.length; --i>=0;) {
+                if (old[i] instanceof ImageCanvas) {
+                    final ImageCanvas image = (ImageCanvas) old[i];
                     removeListeners(image.mapPanel);
                     image.dispose();
                 }
@@ -481,15 +463,14 @@ final class MosaicCanvas extends JPanel
     /**
      * Retourne l'image à l'index spécifié.
      */
-    public ImageCanvas getImage(int index)
-    {
+    public ImageCanvas getImage(int index) {
         final int n = getComponentCount();
-        for (int i=0; i<n; i++)
-        {
+        for (int i=0; i<n; i++) {
             final Component c = getComponent(i);
-            if (c instanceof ImageCanvas)
-            {
-                if (index == 0) return (ImageCanvas) c;
+            if (c instanceof ImageCanvas) {
+                if (index == 0) {
+                    return (ImageCanvas) c;
+                }
                 index--;
             }
         }
@@ -501,17 +482,13 @@ final class MosaicCanvas extends JPanel
      * Le tableau retourné ne sera jamais nul, mais peut avoir
      * une longueur de 0. Il ne contiendra aucun élément nul.
      */
-    public GridCoverage[] getGridCoverages()
-    {
-        synchronized (getTreeLock())
-        {
+    public GridCoverage[] getGridCoverages() {
+        synchronized (getTreeLock()) {
             final int count=getComponentCount();
             final List<GridCoverage> images=new ArrayList<GridCoverage>(count);
-            for (int i=0; i<count; i++)
-            {
+            for (int i=0; i<count; i++) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
-                {
+                if (c instanceof ImageCanvas) {
                     ((ImageCanvas) c).getImages(images);
                 }
             }
@@ -522,12 +499,13 @@ final class MosaicCanvas extends JPanel
     /**
      * Retourne le nombre d'images dans ce paneau.
      */
-    public int getImageCount()
-    {
+    public int getImageCount() {
         int count=0;
-        for (int i=getComponentCount(); --i>=0;)
-            if (getComponent(i) instanceof ImageCanvas)
+        for (int i=getComponentCount(); --i>=0;) {
+            if (getComponent(i) instanceof ImageCanvas) {
                 count++;
+            }
+        }
         return count;
     }
 
@@ -536,25 +514,18 @@ final class MosaicCanvas extends JPanel
      * pas les caches internes. Si l'image à relire est encore dans la cache, la
      * cache sera utilisée.
      */
-    public void reload(final LayerControl[] layers)
-    {
-        synchronized (getTreeLock())
-        {
-            final boolean oldAdjusting=isAdjusting;
-            try
-            {
-                isAdjusting=true;
-                for (int i=getComponentCount(); --i>=0;)
-                {
-                    final Component c=getComponent(i);
-                    if (c instanceof ImageCanvas)
-                    {
+    public void reload(final LayerControl[] layers) {
+        synchronized (getTreeLock()) {
+            final boolean oldAdjusting = isAdjusting;
+            try {
+                isAdjusting = true;
+                for (int i=getComponentCount(); --i>=0;) {
+                    final Component c = getComponent(i);
+                    if (c instanceof ImageCanvas) {
                         ((ImageCanvas) c).reload(layers, statusBar);
                     }
                 }
-            }
-            finally
-            {
+            } finally {
                 isAdjusting = oldAdjusting;
             }
         }
@@ -564,25 +535,18 @@ final class MosaicCanvas extends JPanel
      * Réinitialise les zooms de toutes les
      * images à leurs valeurs par défaut.
      */
-    public void reset()
-    {
-        synchronized (getTreeLock())
-        {
+    public void reset() {
+        synchronized (getTreeLock()) {
             final boolean oldAdjusting=isAdjusting;
-            try
-            {
-                isAdjusting=true;
-                for (int i=getComponentCount(); --i>=0;)
-                {
-                    final Component c=getComponent(i);
-                    if (c instanceof ImageCanvas)
-                    {
+            try {
+                isAdjusting = true;
+                for (int i=getComponentCount(); --i>=0;) {
+                    final Component c = getComponent(i);
+                    if (c instanceof ImageCanvas) {
                         ((ImageCanvas) c).mapPanel.reset();
                     }
                 }
-            }
-            finally
-            {
+            } finally {
                 isAdjusting = oldAdjusting;
             }
         }
@@ -594,23 +558,21 @@ final class MosaicCanvas extends JPanel
      * aucune image n'est affichée,  alors cette
      * méthode retourne <code>null</code>.
      */
-    public Rectangle2D getVisibleArea()
-    {
-        synchronized (getTreeLock())
-        {
-            Rectangle2D area=null;
-            for (int i=getComponentCount(); --i>=0;)
-            {
-                final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
-                {
-                    final MapPanel mapPanel=((ImageCanvas) c).mapPanel;
-                    if (mapPanel.getLayerCount()!=0)
-                    {
+    public Rectangle2D getVisibleArea() {
+        synchronized (getTreeLock()) {
+            Rectangle2D area = null;
+            for (int i=getComponentCount(); --i>=0;) {
+                final Component c = getComponent(i);
+                if (c instanceof ImageCanvas) {
+                    final MapPane mapPanel = ((ImageCanvas) c).mapPanel;
+                    if (mapPanel.getRenderer().getLayerCount() != 0) {
                         final Rectangle2D areaI=mapPanel.getVisibleArea();
                         // TODO: tenir compte du système de coordonnées.
-                        if (area==null) area=areaI;
-                        else area.add(areaI);
+                        if (area == null) {
+                            area = areaI;
+                        } else {
+                            area.add(areaI);
+                        }
                     }
                 }
             }
@@ -621,26 +583,19 @@ final class MosaicCanvas extends JPanel
     /**
      * Modifie la région visible de toute les images.
      */
-    public void setVisibleArea(final Rectangle2D area)
-    {
-        synchronized (getTreeLock())
-        {
-            final boolean oldAdjusting=isAdjusting;
-            try
-            {
-                isAdjusting=true;
-                for (int i=getComponentCount(); --i>=0;)
-                {
+    public void setVisibleArea(final Rectangle2D area) {
+        synchronized (getTreeLock()) {
+            final boolean oldAdjusting = isAdjusting;
+            try {
+                isAdjusting = true;
+                for (int i=getComponentCount(); --i>=0;) {
                     final Component c=getComponent(i);
-                    if (c instanceof ImageCanvas)
-                    {
+                    if (c instanceof ImageCanvas) {
                         // TODO: tenir compte du système de coordonnées.
                         ((ImageCanvas) c).mapPanel.setVisibleArea(area);
                     }
                 }
-            }
-            finally
-            {
+            } finally {
                 isAdjusting = oldAdjusting;
             }
         }
@@ -651,23 +606,22 @@ final class MosaicCanvas extends JPanel
      * visibles ou pas. Par défaut, les barres de défilements ne sont
      * pas visibles.
      */
-    public boolean getScrollBarsVisible()
-    {return scrollBarsVisible;}
+    public boolean getScrollBarsVisible() {
+        return scrollBarsVisible;
+    }
 
     /**
      * Spécifie si les barres de défilements des images doivent être
      * visibles ou pas. Par défaut, les barres de défilements ne sont
      * pas visibles.
      */
-    public void setScrollBarsVisible(final boolean visible)
-    {
-        synchronized (getTreeLock())
-        {
-            for (int i=getComponentCount(); --i>=0;)
-            {
+    public void setScrollBarsVisible(final boolean visible) {
+        synchronized (getTreeLock()) {
+            for (int i=getComponentCount(); --i>=0;) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
+                if (c instanceof ImageCanvas) {
                     ((ImageCanvas) c).setScrollBarsVisible(visible);
+                }
             }
             scrollBarsVisible=visible;
         }
@@ -678,16 +632,18 @@ final class MosaicCanvas extends JPanel
      * que tout zoom ou translation appliqué sur une image d'une mosaïque doit être
      * répliqué sur les autres.
      */
-    public boolean getImagesSynchronized()
-    {return imagesSynchronized;}
+    public boolean getImagesSynchronized() {
+        return imagesSynchronized;
+    }
 
     /**
      * Modifie la synchronisation des images. La valeur <code>true</code>
      * indique que tout zoom ou translation appliqué sur une image d'une
      * mosaïque doit être répliqué sur les autres.
      */
-    public void setImagesSynchronized(final boolean s)
-    {imagesSynchronized=s;}
+    public void setImagesSynchronized(final boolean s) {
+        imagesSynchronized = s;
+    }
 
     /**
      * Spécifie si les cartes doivent être redessinées
@@ -695,15 +651,13 @@ final class MosaicCanvas extends JPanel
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    protected void setPaintingWhileAdjusting(final boolean s)
-    {
-        synchronized (getTreeLock())
-        {
-            for (int i=getComponentCount(); --i>=0;)
-            {
+    protected void setPaintingWhileAdjusting(final boolean s) {
+        synchronized (getTreeLock()) {
+            for (int i=getComponentCount(); --i>=0;) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
+                if (c instanceof ImageCanvas) {
                     ((ImageCanvas) c).setPaintingWhileAdjusting(s);
+                }
             }
         }
         paintingWhileAdjusting=s;
@@ -714,15 +668,13 @@ final class MosaicCanvas extends JPanel
      * Cette méthode appelera {@link ImageCanvas#dispose()}
      * pour chacune des images contenues dans cette mosaïque.
      */
-    protected void dispose()
-    {
-        synchronized (getTreeLock())
-        {
-            for (int i=getComponentCount(); --i>=0;)
-            {
+    protected void dispose() {
+        synchronized (getTreeLock()) {
+            for (int i=getComponentCount(); --i>=0;) {
                 final Component c=getComponent(i);
-                if (c instanceof ImageCanvas)
+                if (c instanceof ImageCanvas) {
                     ((ImageCanvas) c).dispose();
+                }
             }
         }
     }
@@ -731,20 +683,17 @@ final class MosaicCanvas extends JPanel
      * Retourne la liste des images apparaissant dans cette composante.
      * Cette méthode n'est utilisée qu'à des fins de déboguages.
      */
-    public String toString()
-    {
-        synchronized (getTreeLock())
-        {
-            final GridLayout layout=(GridLayout) getLayout();
-            final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
+    public String toString() {
+        synchronized (getTreeLock()) {
+            final GridLayout layout = (GridLayout) getLayout();
+            final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
             buffer.append('[');
             buffer.append(layout.getRows());
             buffer.append('\u00D7'); // Symbole de multiplication
             buffer.append(layout.getColumns());
             buffer.append(']');
             buffer.append('\n');
-            for (int i=getComponentCount(); --i>=0;)
-            {
+            for (int i=getComponentCount(); --i>=0;) {
                 buffer.append(Utilities.spaces(4));
                 buffer.append(getComponent(i));
                 buffer.append('\n');

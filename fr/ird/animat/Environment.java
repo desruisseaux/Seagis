@@ -26,65 +26,216 @@
 package fr.ird.animat;
 
 // Divers
-import java.util.Date;
-import org.geotools.gc.GridCoverage;
-import fr.ird.operator.coverage.ParameterValue;
+import java.util.Set;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.EventListener;
+import java.util.NoSuchElementException;
+
+// Evénements
+import javax.swing.event.EventListenerList;
+import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
+
+// Dépendences avec Geotools et resources
+import org.geotools.cv.Coverage;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
- * Représentation de l'environnement dans lequel évolueront les animaux.
+ * Représentation de l'environnement dans lequel évolueront les animaux. Cet environnement peut
+ * contenir un nombre arbitraire de {@linkplain Population population}, mais ne contient aucun
+ * paramètre. Pour ajouter des paramètre à cet environnement, il est nécessaire de redéfinir les
+ * méthodes suivantes:
+ * <ul>
+ *   <li>{@link #getParameters}</li>
+ *   <li>{@link #getCoverage}</li>
+ * </ul>
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Environment
-{
+public class Environment {
     /**
-     * Retourne la date courante.
+     * Ensemble des populations comprises dans cet environnement.
      */
-    public Date getTime();
+    private final Set<Population> populations = new LinkedHashSet<Population>();
 
     /**
-     * Définit la date courante.
+     * Version immutable de la population, retournée par {@link #getPopulation}.
      */
-    public abstract void setTime(final Date newTime);
+    private final Set<Population> immutablePopulations = Collections.unmodifiableSet(populations);
 
     /**
-     * Retourne le nombre de paramètres
-     * compris dans cet environnement.
+     * Liste des objets intéressés à être informés
+     * des changements apportés à cet environnement.
      */
-    public abstract int getParameterCount();
+    private final EventListenerList listenerList = new EventListenerList();
 
     /**
-     * Retourne l'image courante.
+     * Evénement indiquant qu'un changement est survenu dans l'environnement.
+     */
+    private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
+
+    /**
+     * Pas de temps courant des données.
+     */
+    private TimeStep time;
+
+    /**
+     * Construit un environnement par défaut.
      *
-     * @param  parameter Index du paramètre dont on veut l'image.
-     * @return L'image courange, ou <code>null</code> s'il n'y en a pas.
+     * @param startTime Pas de temps de départ.
      */
-    public abstract GridCoverage getGridCoverage(final int parameter);
+    public Environment(final TimeStep startTime) {
+        if (startTime == null) {
+            throw new NullPointerException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
+                                           "startTime", startTime));
+        }
+        time = startTime;
+    }
 
     /**
-     * Retourne les valeurs des paramètres que perçoit l'animal spécifié.
-     * Ces valeurs dépendront du rayon de perception de l'animal, tel que
-     * retourné par {@link Animal#getPerceptionArea}.
+     * Ajoute une population à cet environment. Si la population appartient déjà à cet
+     * environnement, rien ne sera fait. Sinon, si la population appartenait à un autre
+     * environnement, alors elle sera retirée de son ancien environnement avant d'être
+     * ajouté à celui-ci.
      *
-     * @param  animal Animal pour lequel retourner les paramètres de
-     *         l'environnement qui se trouvent dans son rayon de perception.
-     * @return Les paramètres perçus, ou <code>null</code> s'il n'y en a pas.
+     * @param population La population à ajouter.
+     *
+     * @see #getPopulations
+     * @see Population#kill
      */
-    public ParameterValue[] getParameters(final Animal animal);
+    public void addPopulation(final Population population) {
+        final Environment oldEnvironment = population.environment;
+        if (oldEnvironment != this) {
+            if (oldEnvironment != null) {
+                oldEnvironment.populations.remove(this);
+                population.environment = null;
+                oldEnvironment.fireEnvironmentChanged();
+            }
+            populations.add(population);
+            population.environment = this;
+            fireEnvironmentChanged();
+        }
+    }
+
+    /**
+     * Utilisé par {@link Population#kill} seulement. Cette méthode existe
+     * uniquement parce que l'ensemble {@link #populations} est privé.
+     */
+    final void kill(final Population population) {
+        populations.remove(population);
+    }
+
+    /**
+     * Retourne l'ensemble des populations évoluant dans cet environnement.
+     */
+    public Set<Population> getPopulations() {
+        return immutablePopulations;
+    }
+
+    /**
+     * Retourne l'ensemble des paramètres compris dans cet environnement.
+     * L'implémentation par défaut retourne un ensemble vide.
+     *
+     * @see Animal#getObservations
+     */
+    public Set<Parameter> getParameters() {
+        return Collections.EMPTY_SET;
+    }
+
+    /**
+     * Retourne les données d'un paramètre sous forme d'un objet
+     * {@link Coverage}. L'implémentation par défaut lance toujours
+     * une exception de type {@link NoSuchElementException}.
+     *
+     * @param  parameter Le paramètre désiré.
+     * @return L'objet {@link Coverage} contenant les données.
+     *
+     * @throws NoSuchElementException si le paramètre spécifié n'existe pas
+     *         dans cet environnement.
+     *
+     * @see Animal#getObservations
+     */
+    public Coverage getCoverage(Parameter parameter) throws NoSuchElementException {
+        throw new NoSuchElementException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
+                                         "parameter", parameter));
+    }
+
+    /**
+     * Retourne le pas de temps courant. Tous les paramètres de cet environnement
+     * sont considérés constants pendant toute la durée du pas de temps.
+     */
+    public TimeStep getTimeStep() {
+        return time;
+    }
+
+    /**
+     * Avance l'horloge d'un pas de temps. Cette opération peut provoquer le chargement
+     * de nouvelles données et lancer un événement {@link EnvironmentChangeEvent}.
+     */
+    public void nextTimeStep() {
+        time = time.next();
+        fireEnvironmentChanged();
+    }
 
     /**
      * Déclare un objet à informer des changements survenant dans cet
      * environnement. Ces changements surviennent souvent suite à un
-     * appel de {@link #setTime}.
+     * appel de {@link #nextTimeStep}.
      */
-    public abstract void addEnvironmentChangeListener(final EnvironmentChangeListener listener);
+    public void addEnvironmentChangeListener(final EnvironmentChangeListener listener) {
+        listenerList.add(EnvironmentChangeListener.class, listener);
+    }
 
     /**
-     * Retire un objet à informer des changements survenant dans cet
-     * environnement.
+     * Retire un objet à informer des changements survenant dans cet environnement.
      */
-    public abstract void removeEnvironmentChangeListener(final EnvironmentChangeListener listener);
+    public void removeEnvironmentChangeListener(final EnvironmentChangeListener listener) {
+        listenerList.remove(EnvironmentChangeListener.class, listener);
+    }
+
+    /**
+     * Préviens tous les objets intéressés que des données ont changés.
+     * Cette méthode peut être appelée par les classes dérivées suite à
+     * un chargement de nouvelles données.
+     */
+    protected void fireEnvironmentChanged() {
+        final Object[] listeners = listenerList.getListenerList();
+        for (int i=listeners.length; (i-=2)>=0;) {
+            if (listeners[i] == EnvironmentChangeListener.class) {
+                ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
+            }
+        }
+    }
+
+    /**
+     * Libère les ressources utilisées par cet environnement. Toutes
+     * les populations contenues dans cet environnement seront détruites,
+     * et les éventuelles connections avec des bases de données seront
+     * fermées.
+     */
+    public void dispose() {
+        /*
+         * On ne peut pas utiliser Iterator, parce que les appels
+         * de Population.kill() vont modifier l'ensemble.
+         */
+        final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
+        for (int i=0; i<pop.length; i++) {
+            pop[i].kill();
+        }
+        assert populations.isEmpty() : populations.size();
+        populations.clear(); // Par précaution.
+        /*
+         * Retire tous les 'listeners'.
+         */
+        final Object[] listeners = listenerList.getListenerList();
+        for (int i=listeners.length; (i-=2)>=0;) {
+            listenerList.remove((Class)         listeners[i  ],
+                                (EventListener) listeners[i+1]);
+        }
+        assert listenerList.getListenerCount() == 0;
+    }
 }

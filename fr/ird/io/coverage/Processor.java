@@ -81,13 +81,13 @@ import java.text.NumberFormat;
 import java.util.StringTokenizer;
 
 // Map display
-import fr.ird.map.Layer;
-import fr.ird.map.Isoline;
-import fr.ird.map.MapPanel;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.Isoline;
+import org.geotools.gui.swing.MapPane;
 import fr.ird.map.io.GEBCOReader;
 import fr.ird.map.io.IsolineReader;
-import fr.ird.map.layer.IsolineLayer;
-import fr.ird.map.layer.GridCoverageLayer;
+import org.geotools.renderer.j2d.RenderedIsoline;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Swing components
 import java.awt.EventQueue;
@@ -459,20 +459,20 @@ public class Processor extends Arguments
             frame.setSize(400, 400);
             frame.show();
         }
-        final MapPanel map = new MapPanel(coverage.getCoordinateSystem());
-        final GridCoverageLayer image = new GridCoverageLayer(coverage);
+        final MapPane map = new MapPane(coverage.getCoordinateSystem());
+        final RenderedGridCoverage image = new RenderedGridCoverage(coverage);
         image.setZOrder(Float.NEGATIVE_INFINITY);
-        map.addLayer(image);
-        if (isolines!=null)
+        map.getRenderer().addLayer(image);
+        if (isolines != null)
         {
             for (int i=0; i<isolines.length; i++)
             {
                 final Isoline isoline = isolineFactory.get(isolines[i]);
                 if (isoline!=null)
                 {
-                    final IsolineLayer layer = new IsolineLayer(isoline);
+                    final RenderedIsoline layer = new RenderedIsoline(isoline);
                     layer.setContour(Color.white);
-                    map.addLayer(layer);
+                    map.getRenderer().addLayer(layer);
                 }
             }
         }

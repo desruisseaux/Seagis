@@ -34,13 +34,12 @@ import fr.ird.sql.image.ImageEntry;
 /**
  * Evénements représentant un changement d'image. En général, cet
  * événement est lancé par une composante graphique qui enveloppe
- * {@link net.seas.map.MapPanel}.
+ * {@link fr.ird.map.MapPanel}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ImageChangeEvent extends EventObject
-{
+public class ImageChangeEvent extends EventObject {
     /**
      * Description de l'image qui vient de changer.
      */
@@ -60,8 +59,7 @@ public class ImageChangeEvent extends EventObject
      * @param entry  Description de l'image (peut être nulle).
      * @param image  Nouvelle image (peut être nulle).
      */
-    public ImageChangeEvent(final Object source, final ImageEntry entry, final GridCoverage coverage)
-    {
+    public ImageChangeEvent(final Object source, final ImageEntry entry, final GridCoverage coverage) {
         super(source);
         this.entry    = entry;
         this.coverage = coverage;
@@ -72,14 +70,16 @@ public class ImageChangeEvent extends EventObject
      * entrée n'est pas connue ou qu'il n'y en a pas, alors cette méthode
      * retourne <code>null</code>.
      */
-    public ImageEntry getEntry()
-    {return entry;}
+    public ImageEntry getEntry() {
+        return entry;
+    }
 
     /**
      * Image qui vient de changer, ou
      * <code>null</code> s'il n'y en a
      * pas ou qu'elle n'est pas connue.
      */
-    public GridCoverage getGridCoverage()
-    {return coverage;}
+    public GridCoverage getGridCoverage() {
+        return coverage;
+    }
 }

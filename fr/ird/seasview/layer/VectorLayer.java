@@ -40,7 +40,6 @@ import javax.media.jai.GraphicsJAI;
 // Geometry
 import java.awt.Shape;
 import java.awt.Dimension;
-import fr.ird.awt.geom.Arrow2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 
@@ -50,8 +49,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 // Geotools dependencies
+import org.geotools.renderer.Arrow2D;
 import org.geotools.gc.GridCoverage;
 import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.SampleDimension;
 import org.geotools.pt.AngleFormat;
@@ -60,7 +61,7 @@ import org.geotools.resources.XMath;
 import org.geotools.units.Unit;
 
 // Miscellaneous
-import fr.ird.map.layer.GridMarkLayer;
+import org.geotools.renderer.j2d.RenderedGridMarks;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -74,7 +75,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class VectorLayer extends GridMarkLayer {
+public class VectorLayer extends RenderedGridMarks {
     /**
      * Image représentant les composantes U et V des vecteurs.
      */
@@ -141,6 +142,7 @@ public class VectorLayer extends GridMarkLayer {
      */
     public VectorLayer() {
         super();
+        setTools(new Tools());
     }
 
     /**
@@ -151,7 +153,15 @@ public class VectorLayer extends GridMarkLayer {
      *        des positions (<var>x</var>,<var>y</var>).
      */
     public VectorLayer(final CoordinateSystem coordinateSystem) {
-        super(coordinateSystem);
+        this();
+        try {
+            setCoordinateSystem(coordinateSystem);
+        } catch (TransformException exception) {
+            final IllegalArgumentException e;
+            e = new IllegalArgumentException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
     }
 
     /**
@@ -163,7 +173,7 @@ public class VectorLayer extends GridMarkLayer {
      * @param  bandV Bande de la composante V des vecteurs.
      */
     public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV) {
-        super(coverage.getCoordinateSystem());
+        this(coverage.getCoordinateSystem());
         setData(coverage, bandU, bandV);
     }
 
@@ -174,9 +184,14 @@ public class VectorLayer extends GridMarkLayer {
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public synchronized void setData(GridCoverage coverage, final int bandU, final int bandV) {
+    public void setData(GridCoverage coverage, final int bandU, final int bandV) {
         coverage = coverage.geophysics(true);
-        final CoordinateSystem cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
+        final CoordinateSystem cs;
+        try {
+            cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
+        } catch (TransformException exception) {
+            throw new IllegalStateException(exception.getLocalizedMessage());
+        }
         if (!cs.equals(getCoordinateSystem(), false)) {
             // TODO: Il faudrait ajouter une méthode Layer.setCoordinateSystem
             //       et changer le système de coordonnées ici pour prendre celui
@@ -294,21 +309,26 @@ public class VectorLayer extends GridMarkLayer {
     }
 
     /**
-     * Retourne l'amplitude de la flèche.
+     * Tools for {@link VectorLayer}.
      */
-    protected synchronized String getToolTipText(final int index) {
-        if (angleFormat == null) {
-            buffer = new StringBuffer();
-            angleFormat = new AngleFormat("D.dd°");
-        }
-        double amplitude = getAmplitude(index);
-        double angle     = getDirection(index);
-        angle = 90-Math.toDegrees(angle);
-        angle -= 360*Math.floor(angle/360);
+    private final class Tools extends RenderedGridMarks.Tools {
+        /**
+         * Retourne l'amplitude de la flèche.
+         */
+        protected String getToolTipText(final int index) {
+            if (angleFormat == null) {
+                buffer = new StringBuffer();
+                angleFormat = new AngleFormat("D.dd°");
+            }
+            double amplitude = getAmplitude(index);
+            double angle     = getDirection(index);
+            angle = 90-Math.toDegrees(angle);
+            angle -= 360*Math.floor(angle/360);
 
-        buffer.setLength(0);
-        buffer.append(theme.getLabel(amplitude, (Locale)null));
-        buffer.append("  ");
-        return angleFormat.format(angle, buffer, null).toString();
+            buffer.setLength(0);
+            buffer.append(theme.getLabel(amplitude, (Locale)null));
+            buffer.append("  ");
+            return angleFormat.format(angle, buffer, null).toString();
+        }
     }
 }

@@ -29,6 +29,7 @@ package fr.ird.sql.image;
 import org.geotools.cv.Category;
 import org.geotools.ct.MathTransform1D;
 import org.geotools.ct.MathTransformFactory;
+import org.geotools.cs.FactoryException;
 
 // Base de données
 import java.sql.ResultSet;
@@ -161,11 +162,15 @@ final class CategoryTable extends Table {
                 category = new Category(name, colors, range, c1, c0);
                 if (log) {
                     final MathTransformFactory factory = MathTransformFactory.getDefault();
-                    if (exponential == null) {
+                    if (exponential == null) try {
                         final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
                         param.setParameter("Dimension", 1);
                         param.setParameter("Base", 10.0); // Must be a 'double'
                         exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
+                    } catch (FactoryException exception) {
+                        final SQLException e = new SQLException(exception.getLocalizedMessage());
+                        e.initCause(exception);
+                        throw e;
                     }
                     MathTransform1D tr = category.getSampleToGeophysics();
                     tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);

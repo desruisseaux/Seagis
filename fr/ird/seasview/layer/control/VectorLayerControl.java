@@ -43,13 +43,13 @@ import javax.swing.event.EventListenerList;
 import fr.ird.awt.GridMarkControler;
 
 // Map components
-import fr.ird.map.Layer;
+import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.seasview.layer.VectorLayer;
 
 // Divers
 import java.util.Date;
 import java.util.List;
-import fr.ird.awt.geom.Arrow2D;
+import org.geotools.renderer.Arrow2D;
 
 
 /**
@@ -58,8 +58,7 @@ import fr.ird.awt.geom.Arrow2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class VectorLayerControl extends LayerControl
-{
+public final class VectorLayerControl extends LayerControl {
     /**
      * Données de courants.
      */
@@ -83,8 +82,7 @@ public final class VectorLayerControl extends LayerControl
      * @param bandU Bande de la composante U des courants.
      * @param bandV Bande de la composante V des courants.
      */
-    public VectorLayerControl(final ImageTable table, final int bandU, final int bandV)
-    {
+    public VectorLayerControl(final ImageTable table, final int bandU, final int bandV) {
         super(false);
         this.table = table;
         this.bandU = bandU;
@@ -94,8 +92,7 @@ public final class VectorLayerControl extends LayerControl
     /**
      * Retourne le nom de cette couche.
      */
-    public String getName()
-    {
+    public String getName() {
         return "Courants géostrophiques"; // TODO
         // return table.getSeries().getName();
     }
@@ -117,42 +114,38 @@ public final class VectorLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer[] configLayers(final Layer[] layers, ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
+                                              ImageEntry        entry,
+                                        final EventListenerList listeners)
+        throws SQLException, IOException
     {
-        if (!table.getSeries().equals(entry.getSeries()))
-        {
+        if (!table.getSeries().equals(entry.getSeries())) {
             table.setTimeRange(entry.getTimeRange());
             entry = table.getEntry();
-            if (entry==null) return null;
+            if (entry == null) {
+                return null;
+            }
         }
         final GridCoverage coverage = entry.getGridCoverage(listeners);
         final VectorLayer layer;
-        if (layers!=null && layers.length==1 && layers[0] instanceof VectorLayer)
-        {
+        if (layers!=null && layers.length==1 && layers[0] instanceof VectorLayer) {
             layer = (VectorLayer) layers[0];
             layer.setData(coverage, bandU, bandV);
-        }
-        else
-        {
+        } else {
             layer = new VectorLayer(coverage, bandU, bandV);
         }
-        synchronized(this)
-        {
-            if (controler!=null)
-            {
+        synchronized(this) {
+            if (controler != null) {
                 layer.setColor(controler.getColor());
                 final int decimation = controler.getDecimation();
-                if (decimation!=0)
-                {
+                if (decimation != 0) {
                     layer.setDecimation(decimation, decimation);
-                }
-                else
-                {
+                } else {
                     layer.setAutoDecimation(16,16);
                 }
             }
         }
-        return new Layer[] {layer};
+        return new RenderedLayer[] {layer};
     }
 
     /**
@@ -160,22 +153,18 @@ public final class VectorLayerControl extends LayerControl
      * méthode est responsable d'appeler {@link #fireStateChanged} si l'état
      * de cette couche a changé suite aux interventions de l'utilisateur.
      */
-    protected void showControler(final JComponent owner)
-    {
+    protected void showControler(final JComponent owner) {
         final Color oldColor;
         final Color newColor;
         final int   oldDecimation;
         final int   newDecimation;
-        synchronized(this)
-        {
-            if (controler==null)
-            {
+        synchronized(this) {
+            if (controler == null) {
                 controler = new GridMarkControler(getName());
                 controler.setShape(new Arrow2D(-24, -20, 48, 40));
                 controler.setColor(new Color(0, 153, 255, 128));
             }
-            if (false) // TODO
-            {
+            if (false) {// TODO
                 final RenderedImage sample = null;
                 controler.setBackground(sample);
             }
@@ -183,17 +172,13 @@ public final class VectorLayerControl extends LayerControl
             oldDecimation = controler.getDecimation();
         }
         final boolean changed=controler.showDialog(owner);
-        synchronized(this)
-        {
+        synchronized(this) {
             controler.setBackground((RenderedImage) null);
-            if (changed)
-            {
+            if (changed) {
                 newColor      = controler.getColor();
                 newDecimation = controler.getDecimation();
-                fireStateChanged(new Edit()
-                {
-                    protected void edit(final boolean redo)
-                    {
+                fireStateChanged(new Edit() {
+                    protected void edit(final boolean redo) {
                         controler.setColor     (redo ? newColor      : oldColor);
                         controler.setDecimation(redo ? newDecimation : oldDecimation);
                     }
