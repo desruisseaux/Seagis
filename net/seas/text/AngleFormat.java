@@ -37,6 +37,14 @@ import net.seas.opengis.pt.Angle;
 import net.seas.opengis.pt.Latitude;
 import net.seas.opengis.pt.Longitude;
 
+// Swing (for JSpinner)
+import javax.swing.JSpinner;
+import javax.swing.JFormattedTextField;
+import javax.swing.AbstractSpinnerModel;
+import javax.swing.text.InternationalFormatter;
+import javax.swing.text.DefaultFormatterFactory;
+import java.io.Serializable;
+
 // Miscellaneous
 import net.seas.util.XMath;
 import net.seas.util.XClass;
@@ -1309,4 +1317,273 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      */
     public String toString()
     {return XClass.getShortClassName(this)+'['+toPattern()+']';}
+
+
+
+
+    /**
+     * A <code>SpinnerModel</code> for sequences of angles.
+     * This model work like {@link javax.swing.SpinnerNumberModel}.
+     *
+     * @see JSpinner
+     * @see SpinnerNumberModel
+     *
+     * @version 1.0
+     * @author Adapted from Hans Muller
+     * @author Martin Desruisseaux
+     */
+    public static class SpinnerModel extends AbstractSpinnerModel implements Serializable
+    {
+        /**
+         * The current value.
+         */
+        private Angle value;
+
+        /**
+         * The minimum and maximum values.
+         */
+        private double minimum, maximum;
+
+        /**
+         * The step size.
+         */
+        private double stepSize;
+
+        /**
+         * Constructs a <code>SpinnerModel</code> that represents
+         * a closed sequence of angles  from <code>minimum</code>
+         * to <code>maximum</code>. The <code>nextValue</code> and
+         * <code>previousValue</code> methods compute elements of
+         * the sequence by adding or subtracting <code>stepSize</code>
+         * respectively.
+         *
+         * @param value the current (non <code>null</code>) value of the model
+         * @param minimum the first angle in the sequence.
+         * @param maximum the last angle in the sequence.
+         * @param stepSize the difference between elements of the sequence
+         */
+        public SpinnerModel(final Angle value, final double minimum, final double maximum, final double stepSize)
+        {
+            if (!(minimum <= maximum))
+            {
+                throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤1, "["+new Angle(minimum)+".."+new Angle(maximum)+']'));
+            }
+            this.value    = value;
+            this.minimum  = minimum;
+            this.maximum  = maximum;
+            this.stepSize = stepSize;
+        }
+
+        /**
+         * Changes the lower bound for angles in this sequence.
+         */
+        public void setMinimum(final double minimum)
+        {
+            if (this.minimum != minimum)
+            {
+                this.minimum = minimum;
+                fireStateChanged();
+            }
+        }
+
+        /**
+         * Returns the first angle in this sequence.
+         */
+        public double getMinimum()
+        {return minimum;}
+
+        /**
+         * Changes the upper bound for angles in this sequence.
+         */
+        public void setMaximum(final double maximum)
+        {
+            if (this.maximum != maximum)
+            {
+                this.maximum = maximum;
+                fireStateChanged();
+            }
+        }
+
+        /**
+         * Returns the last angle in the sequence.
+         */
+        public double getMaximum()
+        {return maximum;}
+
+        /**
+         * Changes the size of the value change computed by the
+         * <code>getNextValue</code> and <code>getPreviousValue</code>
+         * methods.
+         */
+        public void setStepSize(final double stepSize)
+        {
+            if (this.stepSize != stepSize)
+            {
+                this.stepSize = stepSize;
+                fireStateChanged();
+            }
+        }
+
+        /**
+         * Returns the size of the value change computed by the
+         * <code>getNextValue</code> and <code>getPreviousValue</code> methods.
+         */
+        public double getStepSize()
+        {return stepSize;}
+
+        /**
+         * Wrap the specified value into an {@link Angle} object.
+         */
+        final Angle toAngle(final double newValue)
+        {
+            if (value instanceof Longitude) return new Longitude(newValue);
+            if (value instanceof  Latitude) return new  Latitude(newValue);
+            return new Angle(newValue);
+        }
+
+        /**
+         * Returns <code>value+factor*stepSize</code>.
+         */
+        private Angle getNextValue(final int factor)
+        {
+            final double newValue = value.degrees() + stepSize*factor;
+            if (!(newValue>=minimum && newValue<=maximum)) return null;
+            return toAngle(newValue);
+        }
+
+        /**
+         * Returns the next angle in the sequence.
+         */
+        public Object getNextValue()
+        {return getNextValue(+1);}
+
+        /**
+         * Returns the previous angle in the sequence.
+         */
+        public Object getPreviousValue()
+        {return getNextValue(-1);}
+
+        /**
+         * Returns the value of the current angle of the sequence.
+         */
+        public Object getValue()
+        {return value;}
+
+        /**
+         * Sets the current value for this sequence.
+         */
+        public void setValue(final Object value)
+        {
+            if (!(value instanceof Angle))
+            {
+                throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤1, value));
+            }
+            if (!XClass.equals(value, this.value))
+            {
+                this.value = (Angle)value;
+                fireStateChanged();
+            }
+        }
+    }
+
+    /**
+     * This subclass of {@link javax.swing.InternationalFormatter} maps the
+     * minimum/maximum properties to a {@link AngleFormat.SpinnerModel}.
+     *
+     * @version 1.0
+     * @author Adapted from Hans Muller
+     * @author Martin Desruisseaux
+     */
+    private static class EditorFormatter extends InternationalFormatter
+    {
+        /**
+         * The spinner model.
+         */
+        private final SpinnerModel model;
+
+        /**
+         * Construct a formatter.
+         */
+        EditorFormatter(final SpinnerModel model, final AngleFormat format)
+        {
+            super(format);
+            this.model = model;
+            setAllowsInvalid(true);
+            setCommitsOnValidEdit(false);
+            setOverwriteMode(false);
+            setValueClass(Angle.class);
+        }
+
+        /**
+         * Sets the minimum value.
+         */
+        public void setMinimum(final Comparable min)
+        {model.setMinimum(((Angle)min).degrees());}
+
+        /**
+         * Gets the minimum value.
+         */
+        public Comparable getMinimum()
+        {return model.toAngle(model.getMinimum());}
+
+        /**
+         * Sets the maximum value.
+         */
+        public void setMaximum(final Comparable max)
+        {model.setMaximum(((Angle)max).degrees());}
+
+        /**
+         * Gets the maximum value.
+         */
+        public Comparable getMaximum()
+        {return model.toAngle(model.getMaximum());}
+    }
+
+    /**
+     * An editor for a {@link javax.swing.JSpinner}. The value of the editor is
+     * displayed with a {@link javax.swing.JFormattedTextField} whose format is
+     * defined by a {@link javax.swing.text.InternationalFormatter} instance
+     * whose minimum and maximum properties are mapped to the {@link SpinnerNumberModel}.
+     *
+     * @version 1.0
+     * @author Adapted from Hans Muller
+     * @author Martin Desruisseaux
+     */
+    public static class SpinnerEditor extends JSpinner.DefaultEditor
+    {
+        /**
+         * Construct an editor for the specified format.
+         */
+        public SpinnerEditor(final JSpinner spinner, final AngleFormat format)
+        {
+            super(spinner);
+            final javax.swing.SpinnerModel genericModel = spinner.getModel();
+            if (!(genericModel instanceof SpinnerModel))
+            {
+                throw new IllegalArgumentException();
+            }
+            final SpinnerModel              model = (SpinnerModel) genericModel;
+            final EditorFormatter       formatter = new EditorFormatter(model, format);
+            final DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
+            final JFormattedTextField       field = getTextField();
+            field.setEditable(true);
+            field.setFormatterFactory(factory);
+            field.setHorizontalAlignment(JFormattedTextField.RIGHT);
+
+            /* TBD - initializing the column width of the text field
+             * is imprecise and doing it here is tricky because
+             * the developer may configure the formatter later.
+             */
+            try
+            {
+                final String maxString = formatter.valueToString(formatter.getMinimum());
+                final String minString = formatter.valueToString(formatter.getMaximum());
+                field.setColumns(Math.max(maxString.length(), minString.length()));
+            }
+            catch (ParseException exception)
+            {
+                // TBD should throw a chained error here
+            }
+        }
+    }
 }

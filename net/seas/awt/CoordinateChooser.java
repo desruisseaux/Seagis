@@ -24,8 +24,8 @@ package net.seas.awt;
 
 // Time
 import java.util.Date;
-import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.Calendar;
 
 // Geometry and coordinates
 import java.awt.Dimension;
@@ -39,29 +39,38 @@ import net.seas.util.XDimension2D;
 import net.seas.util.XRectangle2D;
 
 // User interface (Swing)
+import java.awt.Insets;
 import java.awt.Component;
 import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import javax.swing.JSpinner;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
-import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.ButtonGroup;
 import javax.swing.JRadioButton;
 import javax.swing.BorderFactory;
 import javax.swing.AbstractButton;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerModel;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.AbstractSpinnerModel;
+import javax.swing.JFormattedTextField;
 import net.seas.util.SwingUtilities;
 
 // Events
+import java.util.EventListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 // Parsing and formating
+import java.text.Format;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -69,13 +78,14 @@ import net.seas.text.AngleFormat;
 
 // Miscellaneous
 import java.util.Arrays;
+import java.util.Locale;
 import net.seas.resources.Resources;
 
 
 /**
  * A pane of controls designed to allow a user to select spatio-temporal coordinates.
  * Current implementation use geographic coordinates (longitudes/latitudes) and dates
- * according some locale calendar. Future version may allow the use of some user-specified
+ * according some locale calendar. Future version may allow the use of user-specified
  * coordinate system.
  *
  * <p>&nbsp;</p>
@@ -94,101 +104,38 @@ public class CoordinateChooser extends JPanel
     private static final double DEFAULT_RESOLUTION = 6;
 
     /**
-     * Largeur à donner par défaut aux champs de dates.
-     */
-    private static final int TIME_WIDTH = 10;
-
-    /**
-     * Largeur à donner par défaut aux champs de coordonnées.
-     */
-    private static final int COORD_WIDTH = 8;
-
-    /**
-     * Largeur à donner par défaut aux champs de résolutions.
-     */
-    private static final int RES_WIDTH = 3;
-
-    /**
-     * Formatteur à utiliser pour lire et interpréter
-     * les dates dans les champs de dates.
-     */
-    private final DateFormat dateFormat=DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-
-    /**
-     * Formatteur à utiliser pour lire et interpréter
-     * les angles les champs de coordonnées.
-     */
-    private final AngleFormat angleFormat=new AngleFormat();
-
-    /**
-     * Format à utiliser pour lire et
-     * écrire la résolution désirée.
-     */
-    private final NumberFormat numberFormat=NumberFormat.getNumberInstance();
-
-    /**
-     * Champ dans lequel l'utilisateur entrera la
-     * date de début de la plage de temps qui l'intéresse.
-     */
-    private final JTextField startTimeEd=new JTextField(TIME_WIDTH);
-
-    /**
-     * Champ dans lequel l'utilisateur entrera la
-     * date de fin de la plage de temps qui l'intéresse.
-     */
-    private final JTextField endTimeEd=new JTextField(TIME_WIDTH);
-
-    /**
      * Liste de choix dans laquelle l'utilisateur
      * choisira le fuseau horaire de ses dates.
      */
-    private final JComboBox timezoneEd;
+    private final JComboBox timezone;
 
     /**
-     * Champ dans lequel l'utilisateur entrera la longitude
-     * minimale de la région qui l'intéresse.
+     * Dates de début et de fin de la plage de temps demandée par l'utilisateur.
+     * Ces dates sont gérées par un modèle {@link SpinnerDateModel}.
      */
-    private final JTextField xminEd=new JTextField(COORD_WIDTH);
+    private final JSpinner tmin, tmax;
 
     /**
-     * Champ dans lequel l'utilisateur entrera la longitude
-     * minimale de la région qui l'intéresse.
+     * Longitudes et latitudes minimales et maximales demandées par l'utilisateur.
+     * Ces coordonnées sont gérées par un modèle {@link SpinnerNumberModel}.
      */
-    private final JTextField xmaxEd=new JTextField(COORD_WIDTH);
+    private final JSpinner xmin, xmax, ymin, ymax;
 
     /**
-     * Champ dans lequel l'utilisateur entrera la longitude
-     * minimale de la région qui l'intéresse.
+     * Résolution (en minutes de longitudes et de latitudes) demandée par l'utilisateur.
+     * Ces résolution sont gérées par un modèle {@link SpinnerNumberModel}.
      */
-    private final JTextField yminEd=new JTextField(COORD_WIDTH);
-
-    /**
-     * Champ dans lequel l'utilisateur entrera la longitude
-     * minimale de la région qui l'intéresse.
-     */
-    private final JTextField ymaxEd=new JTextField(COORD_WIDTH);
-
-    /**
-     * Champ dans lequel l'utilisateur entrera la largeur
-     * désirée des pixels, en minutes d'angle.
-     */
-    private final JTextField pixelWidthEd;
-
-    /**
-     * Champ dans lequel l'utilisateur entrera la hauteur
-     * désirée des pixels, en minutes d'angle.
-     */
-    private final JTextField pixelHeightEd;
+    private final JSpinner xres, yres;
 
     /**
      * Bouton radio pour sélectioner la meilleure résolution possible.
      */
-    private final AbstractButton radioBestRes=new JRadioButton(Resources.format(Clé.USE_BEST_RESOLUTION));
+    private final AbstractButton radioBestRes;
 
     /**
      * Bouton radio pour sélectioner la résolution spécifiée.
      */
-    private final AbstractButton radioPrefRes=new JRadioButton(Resources.format(Clé.SET_PREFERRED_RESOLUTION), true);
+    private final AbstractButton radioPrefRes;
 
     /**
      * Composante qui affiche l'arborescence des séries, ou <code>null</code> s'il n'y en a pas.
@@ -198,98 +145,137 @@ public class CoordinateChooser extends JPanel
     private JComponent accessory;
 
     /**
-     * Coordonnées géographiques sélectionnées par l'utilisateur.
+     * Class encompassing various listeners for users selections.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
      */
-    private final Rectangle2D geographicArea=new XRectangle2D();
+    private final class Listeners implements ActionListener, ChangeListener
+    {
+        /**
+         * List of components to toggle.
+         */
+        private final JComponent[] toggle;
 
-    /**
-     * Date de début d'échantillonage sélectionnée par l'utilisateur.
-     */
-    private long startTime;
+        /**
+         * Construct a <code>Listeners</code> object.
+         */
+        public Listeners(final JComponent[] toggle)
+        {this.toggle=toggle;}
 
-    /**
-     * Date de fin d'échantillonage sélectionnée par l'utilisateur.
-     */
-    private long endTime;
+        /**
+         * Invoked when user select a new timezone.
+         */
+        public void actionPerformed(final ActionEvent event)
+        {update(getTimeZone());}
 
-    /**
-     * Résolution préférée des images.
-     */
-    private Dimension2D preferredResolution;
+        /**
+         * Invoked when user change the button radio state
+         * ("use best resolution" / "set resolution").
+         */
+        public void stateChanged(final ChangeEvent event)
+        {setEnabled(radioPrefRes.isSelected());}
+
+        /**
+         * Enable or disable {@link #toggle} components.
+         */
+        final void setEnabled(final boolean state)
+        {
+            for (int i=0; i<toggle.length; i++)
+                toggle[i].setEnabled(state);
+        }
+    }
 
     /**
      * Construct a default coordinate chooser.
      */
     public CoordinateChooser()
+    {this(new Date(0), new Date());}
+
+    /**
+     * Construct a coordinate chooser.
+     *
+     * @param minTime The minimal date allowed.
+     * @param maxTime the maximal date allowed.
+     */
+    public CoordinateChooser(final Date minTime, final Date maxTime)
     {
         super(new GridBagLayout());
+        final Locale locale = Locale.getDefault();
+        final int timeField = Calendar.DAY_OF_YEAR;
+        final Resources resources = Resources.getResources(locale);
 
-        final JSpinner xResSpinner = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 120, 1));
-        final JSpinner yResSpinner = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 120, 1));
+        radioBestRes=new JRadioButton(resources.getString(Clé.USE_BEST_RESOLUTION), true);
+        radioPrefRes=new JRadioButton(resources.getString(Clé.SET_PREFERRED_RESOLUTION));
 
-        final JTextField xResField = ((JSpinner.DefaultEditor)xResSpinner.getEditor()).getTextField();
-        final JTextField yResField = ((JSpinner.DefaultEditor)yResSpinner.getEditor()).getTextField();
+        tmin = new JSpinner(new SpinnerDateModel(minTime, minTime, maxTime, timeField));
+        tmax = new JSpinner(new SpinnerDateModel(maxTime, minTime, maxTime, timeField));
+        xmin = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(-180.0), -180, +180, 1));
+        xmax = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(+180.0), -180, +180, 1));
+        ymin = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude(- 90.0), - 90, + 90, 1));
+        ymax = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude(+ 90.0), - 90, + 90, 1));
+        xres = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 360*60, 1));
+        yres = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 180*60, 1));
 
-        xResField.setColumns(RES_WIDTH);
-        yResField.setColumns(RES_WIDTH);
+        final AngleFormat angleFormat=new AngleFormat();
+        xmin.setEditor(new AngleFormat.SpinnerEditor(xmin, angleFormat));
+        xmax.setEditor(new AngleFormat.SpinnerEditor(xmax, angleFormat));
+        ymin.setEditor(new AngleFormat.SpinnerEditor(ymin, angleFormat));
+        ymax.setEditor(new AngleFormat.SpinnerEditor(ymax, angleFormat));
 
-        pixelWidthEd  = xResField;
-        pixelHeightEd = yResField;
+        setColumns(tmin, 10);
+        setColumns(tmax, 10);
+        setColumns(xmin,  8);
+        setColumns(xmax,  8);
+        setColumns(ymin,  8);
+        setColumns(ymax,  8);
+        setColumns(xres,  3);
+        setColumns(yres,  3);
 
         final String[] timezones=TimeZone.getAvailableIDs();
         Arrays.sort(timezones);
-        timezoneEd=new JComboBox(timezones);
-        timezoneEd.setSelectedItem(dateFormat.getTimeZone().getID());
+        timezone=new JComboBox(timezones);
+        timezone.setSelectedItem(((JSpinner.DateEditor)tmin.getEditor()).getFormat().getTimeZone().getID());
 
-        final String defaultResolution=numberFormat.format(DEFAULT_RESOLUTION);
-        pixelWidthEd .setText(defaultResolution);
-        pixelHeightEd.setText(defaultResolution);
-
-        final JLabel labelSize1=new JLabel(Resources.label(Clé.SIZE_IN_MINUTES));
+        final JLabel labelSize1=new JLabel(resources.getLabel(Clé.SIZE_IN_MINUTES));
         final JLabel labelSize2=new JLabel("\u00D7"  /*Symbole multiplication*/);
         final ButtonGroup group=new ButtonGroup();
         group.add(radioBestRes);
         group.add(radioPrefRes);
-        radioPrefRes.addChangeListener(new ChangeListener()
-        {
-            public void stateChanged(final ChangeEvent event)
-            {
-                final boolean state=radioPrefRes.isSelected();
-                labelSize1   .setEnabled(state);
-                labelSize2   .setEnabled(state);
-                pixelWidthEd .setEnabled(state);
-                pixelHeightEd.setEnabled(state);
-            }
-        });
 
-        final JPanel p1=getPanel(Clé.GEOGRAPHIC_COORDINATES);
-        final JPanel p2=getPanel(Clé.TIME_RANGE            );
-        final JPanel p3=getPanel(Clé.PREFERRED_RESOLUTION  );
+        final Listeners listeners=new Listeners(new JComponent[] {labelSize1, labelSize2, xres, yres});
+        listeners   .setEnabled(false);
+        timezone    .addActionListener(listeners);
+        radioPrefRes.addChangeListener(listeners);
+
+        final JPanel p1=getPanel(resources.getString(Clé.GEOGRAPHIC_COORDINATES));
+        final JPanel p2=getPanel(resources.getString(Clé.TIME_RANGE            ));
+        final JPanel p3=getPanel(resources.getString(Clé.PREFERRED_RESOLUTION  ));
         final GridBagConstraints c=new GridBagConstraints();
 
         c.weightx=1;
-        c.gridx=1; c.gridy=0; p1.add(ymaxEd, c);
-        c.gridx=0; c.gridy=1; p1.add(xminEd, c);
-        c.gridx=2; c.gridy=1; p1.add(xmaxEd, c);
-        c.gridx=1; c.gridy=2; p1.add(yminEd, c);
+        c.gridx=1; c.gridy=0; p1.add(ymax, c);
+        c.gridx=0; c.gridy=1; p1.add(xmin, c);
+        c.gridx=2; c.gridy=1; p1.add(xmax, c);
+        c.gridx=1; c.gridy=2; p1.add(ymin, c);
 
         JLabel label;
         c.gridx=0; c.anchor=c.WEST; c.insets.right=3; c.weightx=0;
-        c.gridy=0; p2.add(label=new JLabel(Resources.label(Clé.START_TIME)), c); label.setLabelFor(  startTimeEd);
-        c.gridy=1; p2.add(label=new JLabel(Resources.label(Clé.END_TIME  )), c); label.setLabelFor(    endTimeEd);
-        c.gridy=2; p2.add(label=new JLabel(Resources.label(Clé.TIME_ZONE )), c); label.setLabelFor(   timezoneEd); c.gridwidth=4;
+        c.gridy=0; p2.add(label=new JLabel(resources.getLabel(Clé.START_TIME)), c); label.setLabelFor(tmin);
+        c.gridy=1; p2.add(label=new JLabel(resources.getLabel(Clé.END_TIME  )), c); label.setLabelFor(tmax);
+        c.gridy=2; p2.add(label=new JLabel(resources.getLabel(Clé.TIME_ZONE )), c); label.setLabelFor(timezone); c.gridwidth=4;
         c.gridy=0; p3.add(radioBestRes,  c);
         c.gridy=1; p3.add(radioPrefRes,  c);
         c.gridy=2; c.gridwidth=1; c.anchor=c.EAST; c.insets.right=c.insets.left=1; c.weightx=1;
-        c.gridx=0; p3.add(labelSize1,    c); labelSize1.setLabelFor(xResSpinner);  c.weightx=0;
-        c.gridx=1; p3.add(xResSpinner,   c);
-        c.gridx=2; p3.add(labelSize2,    c); labelSize2.setLabelFor(yResSpinner);
-        c.gridx=3; p3.add(yResSpinner,   c);
+        c.gridx=0; p3.add(labelSize1, c); labelSize1.setLabelFor(xres);  c.weightx=0;
+        c.gridx=1; p3.add(xres,       c);
+        c.gridx=2; p3.add(labelSize2, c); labelSize2.setLabelFor(yres);
+        c.gridx=3; p3.add(yres,       c);
 
         c.gridx=1; c.fill=c.HORIZONTAL; c.insets.right=c.insets.left=0; c.weightx=1;
-        c.gridy=0; p2.add(startTimeEd, c);
-        c.gridy=1; p2.add(  endTimeEd, c);
-        c.gridy=2; p2.add( timezoneEd, c);
+        c.gridy=0; p2.add(tmin,     c);
+        c.gridy=1; p2.add(tmax,     c);
+        c.gridy=2; p2.add(timezone, c);
 
         c.insets.right=c.insets.left=c.insets.top=c.insets.bottom=3;
         c.gridx=0; c.anchor=c.CENTER; c.fill=c.BOTH; c.weighty=1;
@@ -297,39 +283,80 @@ public class CoordinateChooser extends JPanel
         c.gridy=1; add(p2, c);
         c.gridy=2; add(p3, c);
 
-        setGeographicArea(new Rectangle2D.Float(-180, -90, 360, 180));
-        setTimeRange(new Date(0), new Date());
-        setPreferredResolution(null);
+//      setGeographicArea(new Rectangle2D.Float(-180, -90, 360, 180));
     }
 
     /**
      * Retourne un panneau avec une bordure titrée.
      */
-    private static JPanel getPanel(final int title)
+    private static JPanel getPanel(final String title)
     {
         final JPanel panel=new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createTitledBorder(Resources.format(title)),
+                        BorderFactory.createTitledBorder(title),
                         BorderFactory.createEmptyBorder(6,6,6,6)));
         return panel;
+    }
+
+    /**
+     * Définit la largeur (en nombre de colonnes) d'un champ.
+     */
+    private static void setColumns(final JSpinner spinner, final int width)
+    {
+        final JFormattedTextField field=((JSpinner.DefaultEditor)spinner.getEditor()).getTextField();
+        field.setMargin(new Insets(/*top*/0, /*left*/6, /*bottom*/0, /*right*/3));
+        field.setColumns(width);
+    }
+
+    /**
+     * Returns the value for the specified number,
+     * or NaN if <code>value</code> is not a number.
+     */
+    private static double doubleValue(final JSpinner spinner)
+    {
+        final Object value = spinner.getValue();
+        return (value instanceof Number) ? ((Number)value).doubleValue() : Double.NaN;
+    }
+
+    /**
+     * Returns the value for the specified angle,
+     * or NaN if <code>value</code> is not an angle.
+     */
+    private static double degrees(final JSpinner spinner, final boolean expectLatitude)
+    {
+        final Object value = spinner.getValue();
+        if (value instanceof Angle)
+        {
+            if (expectLatitude ? (value instanceof Longitude) : (value instanceof Latitude))
+            {
+                return Double.NaN;
+            }
+            return ((Angle) value).degrees();
+        }
+        return Double.NaN;
     }
 
     /**
      * Gets the geographic area, in latitude and longitude degrees.
      */
     public Rectangle2D getGeographicArea()
-    {return (Rectangle2D) geographicArea.clone();}
+    {
+        final double xmin = degrees(this.xmin, false);
+        final double ymin = degrees(this.ymin,  true);
+        final double xmax = degrees(this.xmax, false);
+        final double ymax = degrees(this.ymax,  true);
+        return new XRectangle2D.Double(Math.min(xmin, xmax), Math.min(ymin, ymax), Math.abs(xmax-xmin), Math.abs(ymax-ymin));
+    }
 
     /**
      * Sets the geographic area, in latitude and longitude degrees.
      */
     public void setGeographicArea(final Rectangle2D area)
     {
-        xminEd.setText(angleFormat.format(new Longitude(area.getMinX())));
-        xmaxEd.setText(angleFormat.format(new Longitude(area.getMaxX())));
-        yminEd.setText(angleFormat.format(new  Latitude(area.getMinY())));
-        ymaxEd.setText(angleFormat.format(new  Latitude(area.getMaxY())));
-        this.geographicArea.setRect(area);
+        xmin.setValue(new Longitude(area.getMinX()));
+        xmax.setValue(new Longitude(area.getMaxX()));
+        ymin.setValue(new  Latitude(area.getMinY()));
+        ymax.setValue(new  Latitude(area.getMaxY()));
     }
 
     /**
@@ -338,7 +365,13 @@ public class CoordinateChooser extends JPanel
      * be used.
      */
     public Dimension2D getPreferredResolution()
-    {return (preferredResolution!=null) ? (Dimension2D) preferredResolution.clone() : null;}
+    {
+        if (radioPrefRes.isSelected())
+        {
+            return new XDimension2D.Double(doubleValue(xres), doubleValue(yres));
+        }
+        return null;
+    }
 
     /**
      * Sets the preferred resolution. A <code>null</code>
@@ -349,8 +382,8 @@ public class CoordinateChooser extends JPanel
     {
         if (resolution!=null)
         {
-            pixelWidthEd .setText(numberFormat.format(resolution.getWidth ()*60));
-            pixelHeightEd.setText(numberFormat.format(resolution.getHeight()*60));
+            xres.setValue(new Double(resolution.getWidth ()*60));
+            yres.setValue(new Double(resolution.getHeight()*60));
             radioPrefRes.setSelected(true);
         }
         else radioBestRes.setSelected(true);
@@ -360,7 +393,7 @@ public class CoordinateChooser extends JPanel
      * Returns the time zone used for displaying dates.
      */
     public TimeZone getTimeZone()
-    {return dateFormat.getTimeZone();}
+    {return TimeZone.getTimeZone(timezone.getSelectedItem().toString());}
 
     /**
      * Sets the time zone. This method change the control's display.
@@ -368,24 +401,60 @@ public class CoordinateChooser extends JPanel
      * on previous or future call to {@link #setTimeRange}.
      */
     public void setTimeZone(final TimeZone timezone)
+    {this.timezone.setSelectedItem(timezone.getID());}
+
+    /**
+     * Update the time zone in text fields. This method is automatically invoked
+     * by {@link JComboBox} on user's selection. It is also (indirectly) invoked
+     * on {@link #setTimeZone} call.
+     */
+    private void update(final TimeZone timezone)
     {
-        dateFormat.setTimeZone(timezone);
-        timezoneEd.setSelectedItem(timezone.getID());
-        startTimeEd.setText(dateFormat.format(new Date(startTime)));
-          endTimeEd.setText(dateFormat.format(new Date(  endTime)));
+        boolean refresh=true;
+        try
+        {
+            tmin.commitEdit();
+            tmax.commitEdit();
+        }
+        catch (ParseException exception)
+        {
+            refresh=false;
+        }
+        ((JSpinner.DateEditor)tmin.getEditor()).getFormat().setTimeZone(timezone);
+        ((JSpinner.DateEditor)tmax.getEditor()).getFormat().setTimeZone(timezone);
+        if (refresh)
+        {
+            // TODO: If a "JSpinner.reformat()" method was available, we would use it here.
+            fireStateChanged((AbstractSpinnerModel)tmin.getModel());
+            fireStateChanged((AbstractSpinnerModel)tmax.getModel());
+        }
+    }
+
+    /**
+     * Run each ChangeListeners stateChanged()
+     * method for the specified spinner model.
+     */
+    private static void fireStateChanged(final AbstractSpinnerModel model)
+    {
+        final ChangeEvent   changeEvent = new ChangeEvent(model);
+        final EventListener[] listeners = model.getListeners(ChangeListener.class);
+        for (int i=listeners.length; --i>=0;)
+        {
+            ((ChangeListener)listeners[i]).stateChanged(changeEvent);
+        }
     }
 
     /**
      * Returns the start time, or <code>null</code> if there is none.
      */
     public Date getStartTime()
-    {return new Date(startTime);}
+    {return (Date) tmin.getValue();}
 
     /**
      * Returns the end time, or <code>null</code> if there is none.
      */
     public Date getEndTime()
-    {return new Date(endTime);}
+    {return (Date) tmax.getValue();}
 
     /**
      * Sets the time range.
@@ -398,11 +467,8 @@ public class CoordinateChooser extends JPanel
      */
     public void setTimeRange(final Date startTime, final Date endTime)
     {
-        dateFormat.setTimeZone(TimeZone.getTimeZone(timezoneEd.getSelectedItem().toString()));
-        startTimeEd.setText(dateFormat.format(startTime));
-          endTimeEd.setText(dateFormat.format(  endTime));
-        this.startTime = startTime.getTime();
-        this.  endTime =   endTime.getTime();
+        tmin.setValue(startTime);
+        tmax.setValue(  endTime);
     }
 
     /**
@@ -447,44 +513,49 @@ public class CoordinateChooser extends JPanel
     }
 
     /**
-     * Procède à la lecture d'un angle écrit dans
-     * un champ, puis retourne sa valeur en degrés.
+     * Returns the resources.
      */
-    private double parseAngle(final JTextField field, final Class forbid) throws ParseException
+    private Resources getResources()
+    {return Resources.getResources(getLocale());}
+
+    /**
+     * Check if an angle is of expected
+     * type (latitude or longitude).
+     */
+    private void checkAngle(final JSpinner field, final boolean expectLatitude) throws ParseException
     {
-        final Angle angle=angleFormat.parse(field.getText());
-        if (forbid.isAssignableFrom(angle.getClass()))
+        final Object angle=field.getValue();
+        if (expectLatitude ? (angle instanceof Longitude) : (angle instanceof Latitude))
         {
-            throw new ParseException(Resources.format(Clé.BAD_COORDINATE¤1, angle), 0);
+            throw new ParseException(getResources().getString(Clé.BAD_COORDINATE¤1, angle), 0);
         }
-        return angle.degrees();
     }
 
     /**
-     * Prend en compte les valeurs des champs édités par l'utilisateur.
+     * Commits the currently edited values. If commit
+     * fails, focus will be set on the offending field.
      *
-     * @throws ParseException si une coordonnée, une date ou une série n'a
-     *         pas pu être interprétée. Dans ce cas, le focus sera placé sur
-     *         le champ fautif.
+     * @throws ParseException If at least one of currently
+     *         edited value couldn't be commited.
      */
-    private void commitEdit() throws ParseException
+    public void commitEdit() throws ParseException
     {
-        JTextField focus=null;
+        JSpinner focus=null;
         try
         {
-            dateFormat.setTimeZone(TimeZone.getTimeZone(timezoneEd.getSelectedItem().toString()));
-            final double        xmin = parseAngle(focus=xminEd,  Latitude.class);
-            final double        xmax = parseAngle(focus=xmaxEd,  Latitude.class);
-            final double        ymin = parseAngle(focus=yminEd, Longitude.class);
-            final double        ymax = parseAngle(focus=ymaxEd, Longitude.class);
-            final Date         start = dateFormat.parse((focus=  startTimeEd).getText());
-            final Date           end = dateFormat.parse((focus=    endTimeEd).getText());
-            final Number        xres = (pixelWidthEd .isEnabled()) ? numberFormat.parse((focus= pixelWidthEd).getText()) : null;
-            final Number        yres = (pixelHeightEd.isEnabled()) ? numberFormat.parse((focus=pixelHeightEd).getText()) : null;
-            this.          startTime = Math.min(start.getTime(), end.getTime());
-            this.            endTime = Math.max(start.getTime(), end.getTime());
-            this.preferredResolution = (xres!=null && yres!=null) ? new XDimension2D.Double(xres.doubleValue()/60, yres.doubleValue()/60) : null;
-            geographicArea.setRect(Math.min(xmin, xmax), Math.min(ymin, ymax), Math.abs(xmax-xmin), Math.abs(ymax-ymin));
+            (focus=tmin).commitEdit();
+            (focus=tmax).commitEdit();
+            (focus=xmin).commitEdit();
+            (focus=xmax).commitEdit();
+            (focus=ymin).commitEdit();
+            (focus=ymax).commitEdit();
+            (focus=xres).commitEdit();
+            (focus=yres).commitEdit();
+
+            checkAngle(focus=xmin, false);
+            checkAngle(focus=xmax, false);
+            checkAngle(focus=ymin,  true);
+            checkAngle(focus=ymax,  true);
         }
         catch (ParseException exception)
         {
@@ -509,7 +580,7 @@ public class CoordinateChooser extends JPanel
         }
         catch (ParseException exception)
         {
-//          JOptionPane.showInternalMessageDialog(owner, exception.getLocalizedMessage(), Resources.format(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showInternalMessageDialog(owner, exception.getLocalizedMessage(), getResources().getString(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -526,7 +597,7 @@ public class CoordinateChooser extends JPanel
      * @return <code>true</code> si l'utilisateur a cliqué sur "Ok".
      */
     public boolean showDialog(final Component owner)
-    {return showDialog(owner, Resources.format(Clé.COORDINATES_SELECTION));}
+    {return showDialog(owner, getResources().format(Clé.COORDINATES_SELECTION));}
 
     /**
      * Fait apparaître ce panneau dans une boîte de dialogue avec
@@ -554,7 +625,14 @@ public class CoordinateChooser extends JPanel
      */
     public static void main(final String[] args)
     {
-        new CoordinateChooser().showDialog(null);
+        final CoordinateChooser chooser = new CoordinateChooser();
+        if (chooser.showDialog(null))
+        {
+            System.out.println(chooser.getStartTime());
+            System.out.println(chooser.getEndTime());
+            System.out.println(chooser.getGeographicArea());
+            System.out.println(chooser.getPreferredResolution());
+        }
         System.exit(0);
     }
 }
