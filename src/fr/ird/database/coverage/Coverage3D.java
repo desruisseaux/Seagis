@@ -457,11 +457,12 @@ public class Coverage3D extends Coverage {
          */
         if (point != null) try {
             final CoverageEntry  entry = entries[index];
-            CoordinatePoint coordinate = new CoordinatePoint(coordinateSystem.getDimension());
+            final CoordinateSystem  cs = entry.getCoordinateSystem();
+            CoordinatePoint coordinate = new CoordinatePoint(cs.getDimension());
             coordinate.ord[temporalDimension!=0 ? 0 : 1] = point.getX();
             coordinate.ord[temporalDimension>=2 ? 1 : 2] = point.getY();
             coordinate.ord[temporalDimension] = temporalCS.toValue(date);
-            if (!coordinateSystem.equals(entry.getCoordinateSystem(), false)) {
+            if (!coordinateSystem.equals(cs, false)) {
                 // TODO: implémenter la transformation de coordonnées.
                 throw new CannotEvaluateException("Système de coordonnées incompatibles.");
             }
@@ -624,11 +625,10 @@ public class Coverage3D extends Coverage {
                     if (interpolationAllowed) {
                         load(lowerEntry, upperEntry);
                     } else {
-                        int nearest = index;
-                        if (Math.abs(getTime(upperRange)-time) < Math.abs(time-getTime(lowerRange))) {
-                            nearest++;
+                        if (Math.abs(getTime(upperEntry)-time) > Math.abs(time-getTime(lowerEntry))) {
+                            index--;
                         }
-                        load(nearest);
+                        load(index);
                     }
                     return true;
                 }
