@@ -1,0 +1,232 @@
+/*
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2000 Institut de Recherche pour le Développement
+ *
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Library General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Library General Public License for more details (http://www.gnu.org/).
+ *
+ *
+ * Contact: Michel Petit
+ *          Maison de la télédétection
+ *          Institut de Recherche pour le développement
+ *          500 rue Jean-François Breton
+ *          34093 Montpellier
+ *          France
+ *
+ *          mailto:Michel.Petit@mpl.ird.fr
+ */
+package fr.ird.sql.fishery;
+
+// Base de données
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.DriverManager;
+import java.sql.ResultSetMetaData;
+import fr.ird.sql.SQLEditor;
+import fr.ird.sql.DataBase;
+
+// Temps
+import java.util.TimeZone;
+
+// Collections
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+
+// Divers
+import fr.ird.animat.Species;
+import fr.ird.resources.Resources;
+import java.util.prefs.Preferences;
+
+
+/**
+ * Connection avec la base de données de pêches.
+ *
+ * @version 1.0
+ * @author Martin Desruisseaux
+ */
+public class FisheryDataBase extends DataBase
+{
+    /**
+     * Retourne une des préférences du système.  Cette méthode définit les
+     * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
+     * pas défini de préférence pour un paramètre.
+     */
+    private static String getPreference(final String name)
+    {
+        String def=null;
+        if (name!=null)
+        {
+                 if (name.equalsIgnoreCase(DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
+            else if (name.equalsIgnoreCase(SOURCE))   def = "jdbc:odbc:SEAS-Pêches";
+            else if (name.equalsIgnoreCase(TIMEZONE)) def = "Indian/Reunion";
+        }
+        return Table.preferences.get(name, def);
+    }
+
+    /**
+     * Constante représentant la table de pêches des palangriers.
+     */
+    public static final String LONGLINES = Table.LONGLINES;
+
+    /**
+     * Liste des propriétées par défaut. Les valeurs aux index pairs sont les index
+     * des propriétées. Les valeurs aux index impairs sont les valeurs. Par exemple
+     * la propriété "Pêches" donne l'instruction SQL à utiliser pour interroger la
+     * table des pêches.
+     */
+    private static final String[] DEFAULT_PROPERTIES=
+    {
+        Table.SPECIES,    SpeciesTable      .SQL_SELECT,
+        Table.LONGLINES,  LonglineCatchTable.SQL_SELECT
+    };
+
+    /**
+     * Liste des noms descriptifs à donner aux propriétés.
+     * Ces noms sont identifiés par des clés de ressources.
+     * Ces clés doivent apparaîtrent dans le même ordre que
+     * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
+     */
+    private static final int[] PROPERTY_NAMES=
+    {
+        Clé.SQL_SPECIES,
+        Clé.SQL_LONGLINES
+    };
+
+    /**
+     * Retourne l'URL par défaut de la base de données de pêches.
+     * Cet URL sera puisé dans les préférences de l'utilisateur
+     * autant que possible.
+     */
+    private static String getDefaultURL()
+    {
+        Table.logger.log(loadDriver(getPreference(DRIVER)));
+        return getPreference(SOURCE);
+    }
+
+    /**
+     * Ouvre une connection avec une base de données par défaut.
+     * Ce constructeur est surtout utilisé à des fins de test.
+     *
+     * @throws SQLException Si on n'a pas pu se connecter
+     *         à la base de données.
+     */
+    public FisheryDataBase() throws SQLException
+    {super(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));}
+
+    /**
+     * Ouvre une connection avec la base de données de pêches.
+     *
+     * @param  name Protocole et nom de la base de données des pêches.
+     * @param  timezone Fuseau horaire des dates inscrites dans la base
+     *         de données. Cette information est utilisée pour convertir
+     *         en heure GMT les dates écrites dans la base de données.
+     * @throws SQLException Si on n'a pas pu se connecter à la base de données.
+     */
+    public FisheryDataBase(final String name, final TimeZone timezone) throws SQLException
+    {super(name, timezone);}
+
+    /**
+     * Retourne les espèces énumérés dans la base de données.
+     *
+     * @param  table Table dont on veut les espèces. Ce nom devrait
+     *         être une constante telle que {@link #LONGLINES}.
+     * @return Ensemble des espèces trouvées dans la table spécifiée.
+     *
+     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @throws SQLException si l'interrogation de la base de données a échoué.
+     */
+    public Set<Species> getSpecies(String table) throws SQLException
+    {
+        table=table.trim();
+        if (LONGLINES.equalsIgnoreCase(table)) table=Table.LONGLINES;
+        else throw new IllegalArgumentException(table);
+
+        final SpeciesTable   spTable = new SpeciesTable(connection);
+        final Statement    statement = connection.createStatement();
+        final ResultSet       result = statement.executeQuery("SELECT * FROM "+table);
+        final Set<Species>   species = spTable.getSpecies(result.getMetaData());
+        result   .close();
+        statement.close();
+        spTable  .close();
+        return species;
+    }
+
+    /**
+     * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
+     * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
+     *
+     * @param  table Table dont on veut les espèces. Ce nom devrait
+     *         être une constante telle que {@link #LONGLINES}.
+     * @param  species Espèces d'intérêt dans la table.
+     *
+     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @throws SQLException si la table n'a pas pu être construite.
+     */
+    public CatchTable getCatchTable(String table, final Collection<Species> species) throws SQLException
+    {
+        table=table.trim();
+        if (LONGLINES.equalsIgnoreCase(table))
+        {
+            return new LonglineCatchTable(connection, timezone, new LinkedHashSet<Species>(species));
+        }
+        else throw new IllegalArgumentException(table);
+    }
+
+    /**
+     * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
+     * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
+     *
+     * @param  table Table dont on veut les espèces. Ce nom devrait
+     *         être une constante telle que {@link #LONGLINES}.
+     *
+     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @throws SQLException si la table n'a pas pu être construite.
+     */
+    public CatchTable getCatchTable(String table) throws SQLException
+    {
+        table=table.trim();
+        return getCatchTable(table, getSpecies(table));
+    }
+
+    /**
+     * Construit et retourne un objet qui interrogera un paramètre
+     * environmental de la base de données. Lorsque cette table ne
+     * sera plus nécessaire, il faudra appeler {@link EnvironmentTable#close}.
+     */
+    public EnvironmentTable getEnvironmentTable(final String parameter) throws SQLException
+    {return new EnvironmentTableImpl(connection, parameter);}
+
+    /**
+     * Construit et retourne un panneau qui permet à l'utilisateur de modifier
+     * les instructions SQL. Les instructions modifiées seront utilisées pour
+     * interroger les tables de la base de données de pêches.
+     */
+    public static SQLEditor getSQLEditor()
+    {
+        assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
+        final Resources resources = Resources.getResources(null);
+        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(Clé.EDIT_SQL_IMAGES_OR_FISHERIES¤1, new Integer(1)), Table.logger)
+        {
+            public String getProperty(final String name)
+            {return getPreference(name);}
+        };
+        for (int i=0; i<PROPERTY_NAMES.length; i++)
+        {
+            editor.addSQL(resources.getString(PROPERTY_NAMES[i]), DEFAULT_PROPERTIES[(i<<1)+1], DEFAULT_PROPERTIES[i<<1]);
+        }
+        return editor;
+    }
+}
