@@ -119,7 +119,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     /**
      * The desired rendering resolution in points.
      */
-    private int resolution = 2;
+    private int resolution = 6;
 
     /**
      * Construct a layer for the specified isoline.
@@ -128,6 +128,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     {
         super((isoline=isoline.clone()).getCoordinateSystem());
         this.isoline = isoline;
+        setZOrder(isoline.value);
 
         final Rectangle2D  bounds = isoline.getBounds2D();
         final float    resolution = isoline.getResolution();
@@ -196,8 +197,8 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     {return background;}
 
     /**
-     * Sets the rendering resolution in points. A value of 2 means that <code>IsolineLayer</code>
-     * will try to render polygons with line of about 2 points long. Higher values can speed up
+     * Sets the rendering resolution in points. A value of 6 means that <code>IsolineLayer</code>
+     * will try to render polygons with line of about 6 points long. Higher values can speed up
      * rendering and reduce memory footprint at the expense of quality. The actual number of points
      * used for rendering will be dynamically computed from the zoom active at drawing time.
      *
@@ -289,7 +290,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
             final Paint      oldPaint = graphics.getPaint();
             final Stroke    oldStroke = graphics.getStroke();
             final Ellipsoid ellipsoid = isoline.getEllipsoid();
-            double r; // Desired resolution (a lower resolution will lead to faster rendering)
+            double r; // Desired resolution (a higher value will lead to faster rendering)
             if (ellipsoid!=null)
             {
                 final double  x = bounds.getCenterX();

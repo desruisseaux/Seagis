@@ -586,7 +586,7 @@ public abstract class ZoomPane extends JComponent
      * Facteur d'agrandissement à l'intérieur de la loupe.
      * Ce facteur doit être supérieur à 1.
      */
-    private static final double magnifierPower=4;
+    private double magnifierPower=4;
 
     /**
      * Forme géométrique dans laquelle faire l'agrandissement. Les
@@ -1622,11 +1622,20 @@ public abstract class ZoomPane extends JComponent
     {
         if (event.getScrollType()==MouseWheelEvent.WHEEL_UNIT_SCROLL)
         {
-            final int rotation  = event.getUnitsToScroll();
-            final double scale  = 1+(AMOUNT_SCALE-1)*Math.abs(rotation);
-            final Point2D point = new Point2D.Double(event.getX(), event.getY());
-            correctPointForMagnifier(point);
-            transform(UNIFORM_SCALE, (rotation<0) ? scale : 1/scale, point);
+            int rotation  = event.getUnitsToScroll();
+            double scale  = 1+(AMOUNT_SCALE-1)*Math.abs(rotation);
+            Point2D point = new Point2D.Double(event.getX(), event.getY());
+            if (rotation > 0) scale = 1/scale;
+            if (magnifier!=null && magnifier.contains(point))
+            {
+                magnifierPower *= scale;
+                repaintMagnifier();
+            }
+            else
+            {
+                correctPointForMagnifier(point);
+                transform(UNIFORM_SCALE, scale, point);
+            }
             event.consume();
         }
     }

@@ -49,6 +49,10 @@ import javax.swing.event.EventListenerList;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 
+// Journal
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+
 // Divers
 import java.util.Locale;
 import java.io.Serializable;
@@ -87,13 +91,6 @@ public abstract class Layer implements Serializable
      * être en exprimées en coordonnées pixels de l'écran.
      */
     private transient Shape shape;
-
-    /**
-     * Chaîne de caractères indiquant qu'un traçage est en cours.
-     * Cette n'est utilisée que pour le journal et ne sera construite
-     * que la première fois où elle sera nécessaire.
-     */
-    private transient String painting;
 
     /**
      * Système de coordonnées utilisé pour cette couche. Les méthodes {@link #getPreferredArea}
@@ -499,7 +496,7 @@ public abstract class Layer implements Serializable
      * sera un peu plus lent.
      */
     protected void clearCache()
-    {painting=null;}
+    {}
 
     /**
      * Libère les ressources occupées par cette couche. Cette méthode est appelée automatiquement
@@ -507,10 +504,7 @@ public abstract class Layer implements Serializable
      * les ressources plus rapidement que si l'on attend que le ramasse-miettes fasse son travail.
      */
     protected void dispose()
-    {
-        painting = null;
-        shape    = null;
-    }
+    {shape = null;}
 
     /**
      * Ajoute un objet intéressé à être informé chaque fois qu'une propriété de cet
@@ -620,20 +614,20 @@ public abstract class Layer implements Serializable
         {
             if (shape==null || clipBounds==null || shape.intersects(clipBounds))
             {
-                if (true)
-                {
-                    if (painting==null)
-                    {
-                        painting = Resources.format(Clé.PAINTING¤1, getName());
-                    }
-                    Contour.LOGGER.finest(painting);
-                    // Use FINEST level since this event is
-                    // likely to generate a lot of records.
-                }
+                long time = System.currentTimeMillis();
                 final Shape shape=paint(graphics, context);
                 if (!context.isPrinting())
                 {
                     this.shape = shape;
+                }
+                time = System.currentTimeMillis()-time;
+                if (time > 200)
+                {
+                    final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINEST,
+                                             Clé.PAINTING¤2, getName(), new Double(time/1000.0));
+                    record.setSourceClassName(Utilities.getShortClassName(this));
+                    record.setSourceMethodName("paint");
+                    Contour.LOGGER.log(record);
                 }
             }
         }

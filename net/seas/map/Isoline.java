@@ -53,6 +53,11 @@ import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 import net.seas.util.XArray;
 
+// Logging and resources
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import net.seas.resources.Resources;
+
 
 /**
  * An isoline built from a set of polylines.
@@ -449,6 +454,8 @@ public class Isoline extends Contour
         if (clip.intersects(getCachedBounds()))
         {
             if (!sorted) sort();
+            int numPoints = 0;
+            int numDecimated = 0;
             for (int i=polygonCount; --i>=0;)
             {
                 final Polygon polygon = polygons[i];
@@ -456,7 +463,9 @@ public class Isoline extends Contour
                 {
                     if (clip.intersects(polygon.getCachedBounds()))
                     {
-                        polygon.setDrawingDecimation(Math.round(resolution/polygon.getResolution()));
+                        final int n=polygon.setDrawingDecimation(Math.round(resolution/polygon.getResolution()));
+                        numDecimated += n/polygon.getDrawingDecimation();
+                        numPoints    += n;
                         if (renderer!=null)
                         {
                             renderer.drawPolygon(graphics, polygon);
@@ -470,6 +479,18 @@ public class Isoline extends Contour
                         }
                     }
                 }
+            }
+            if (numPoints != 0)
+            {
+                // FINER is the default level for entering, returning, or throwing an exception.
+                final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER,
+                                         Clé.REBUILD_CACHE_ARRAY¤3,
+                                         new Float(value),
+                                         new Integer(numDecimated),
+                                         new Double((double)numDecimated / (double)numPoints));
+                record.setSourceClassName ("Isoline");
+                record.setSourceMethodName("paint");
+                LOGGER.log(record);
             }
         }
     }

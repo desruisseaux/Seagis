@@ -69,12 +69,10 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-// Formatting and logging
+// Formatting
 import java.util.Locale;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 // Miscellaneous
 import net.seas.util.XArray;
@@ -635,7 +633,11 @@ public class Polygon extends Contour
         try
         {
             bounds=Segment.getBounds2D(data, getMathTransform2D(coordinateTransform));
-            if (bounds==null) bounds=new Rectangle2D.Float();
+            if (bounds==null)
+            {
+                assert Segment.getPointCount(data)==0;
+                bounds=new Rectangle2D.Float();
+            }
         }
         catch (TransformException exception)
         {
@@ -1175,15 +1177,6 @@ public class Polygon extends Contour
         assert (array.length & 1) == 0;
         final int pointCount = array.length/2;
         transform.transform(array, 0, array, 0, pointCount);
-        if (pointCount*drawingDecimation>=500) // Log only big arrays
-        {
-            // FINER is the default level for entering, returning, or throwing an exception.
-            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.REBUILD_CACHE_ARRAY¤3,
-                                     getName(null), new Integer(pointCount), new Integer(drawingDecimation));
-            record.setSourceClassName ("Polygon");
-            record.setSourceMethodName("getDrawingArray");
-            LOGGER.log(record);
-        }
         cache = new Cache(array);
         cache.transform = transform;
         cache.lockCount = 1;
@@ -1208,16 +1201,29 @@ public class Polygon extends Contour
      * La valeur 1 signifie qu'aucune décimation n'est faite;  la valeur 2
      * signifie qu'on ne tracera qu'un point sur 2, etc. Cette information
      * n'est utilisée que par les objets {@link PathIterator}.
+     *
+     * @param  decimation Décimation à appliquer.
+     * @return Nombre de points qui seront à recalculer, ou 0 si la cache
+     *         a pu être réutilisée. Cette information n'est fournie qu'à
+     *         des fins de statistiques.
      */
-    final synchronized void setDrawingDecimation(final int decimation)
+    final synchronized int setDrawingDecimation(final int decimation)
     {
         final byte newDecimation = (byte)Math.max(1, Math.min(Byte.MAX_VALUE, decimation));
         if (newDecimation != drawingDecimation)
         {
-            drawingDecimation = newDecimation;
             cache = null;
+            drawingDecimation = newDecimation;
+            return Segment.getPointCount(data);
         }
+        else return 0;
     }
+
+    /**
+     * Returns the drawing decimation.
+     */
+    final int getDrawingDecimation()
+    {return drawingDecimation;}
 
     /**
      * Return the number of points in this polyline.

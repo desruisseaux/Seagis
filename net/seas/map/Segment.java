@@ -748,7 +748,7 @@ final class Segment implements Serializable
                 }
             }
         }
-        if (xmin<xmax && ymin<ymax)
+        if (xmin<=xmax && ymin<=ymax)
         {
             return new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin);
         }
@@ -1037,7 +1037,7 @@ final class Segment implements Serializable
         /*
          * Etape 2: Fusionne ensemble des segments qui peuvent l'être.
          *          Deux segments peuvent être fusionnés ensemble s'ils
-         *          ne sont séparés par aucune bordure, ou s'il sont tout
+         *          ne sont séparés par aucune bordure, ou s'il sont tous
          *          deux des bordures.
          */
         if (scan!=null)
