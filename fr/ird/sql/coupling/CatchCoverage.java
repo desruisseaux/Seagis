@@ -27,7 +27,8 @@ package fr.ird.sql.coupling;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.PointOutsideCoverageException;
 
-// Temps et géométrie
+// Divers
+import java.util.Arrays;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
@@ -39,11 +40,15 @@ import fr.ird.sql.image.Coverage3D;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.fishery.CatchEntry;
 
+// Evaluateurs
+import fr.ird.operator.coverage.Evaluator;
+import fr.ird.operator.coverage.ParameterValue;
+
 
 /**
  * Données environnementales à des positions de pêches. Cette couverture offre
- * une méthode {@link #evaluate(CatchEntry)} qui est capable d'adapter son
- * calcul en fonction de la données de pêche. Par exemple, le calcul pourrait
+ * une méthode {@link #evaluate(CatchEntry,Evaluator)} qui est capable d'adapter
+ * son calcul en fonction de la données de pêche. Par exemple, le calcul pourrait
  * se faire dans une région géographique dont la taille dépend de la longueur
  * de la palangre.
  *
@@ -68,12 +73,6 @@ public class CatchCoverage extends Coverage3D
     private final double semiY = 10.0/60;
 
     /**
-     * Fonction à utiliser pour calculer les valeurs
-     * à l'intérieur d'une région géographique.
-     */
-    private final AreaEvaluator evaluator = new AreaGradient(); //AreaEvaluator.MAIN;
-
-    /**
      * Construit une couverture à partir des données de la table spécifiée.
      *
      * @param  table Table d'où proviennent les données.
@@ -90,14 +89,23 @@ public class CatchCoverage extends Coverage3D
      * à utiliser sont déterminées à partir des coordonnées et de la date de
      * la capture.
      */
-    public synchronized double[] evaluate(final CatchEntry capture)
-    {return evaluate(getShape(capture), getTime(capture));}
-
-    /**
-     * Evalue les valeurs du paramètre géophysique pour une région et date spécifiée.
-     */
-    final double[] evaluate(final Shape area, final Date time)
-    {return evaluate(evaluator, area, time);}
+    public synchronized double[] evaluate(final CatchEntry capture, final Evaluator evaluator)
+    {
+        final GridCoverage coverage = getGridCoverage2D(getTime(capture));
+        if (coverage == null)
+        {
+            final double[] result = new double[getNumSampleDimensions()];
+            Arrays.fill(result, Double.NaN);
+            return result;
+        }
+        final ParameterValue[] values = evaluator.evaluate(coverage, getShape(capture));
+        final double[] result = new double[values.length];
+        for (int i=0; i<values.length; i++)
+        {
+            result[i] = values[i].getValue();
+        }
+        return result;
+    }
 
     /**
      * Retourne la région géographique à prendre en compte pour les calculs relatifs à la
@@ -139,7 +147,9 @@ public class CatchCoverage extends Coverage3D
             final long imageTime = time.getTime();
             dt -= imageTime;
             if (dt>=0)
+            {
                 dt += (DAY-1); // Force round to +infinity
+            }
             time.setTime(imageTime + (dt/DAY)*DAY);
             assert((dt=time.getTime()-capture.getTime().getTime())<DAY && dt>=0) : dt;
         }

@@ -28,13 +28,13 @@ package fr.ird.animat.seas;
 // Interfaces
 import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
+import fr.ird.animat.Environment;
+import fr.ird.operator.coverage.ParameterValue;
 
-// Geometry
+// Géométrie
+import java.awt.Shape;
 import java.awt.geom.Point2D;
-
-// Divers
-import org.geotools.resources.XMath;
-import org.geotools.resources.Utilities;
+import java.awt.geom.Ellipse2D;
 
 
 /**
@@ -43,35 +43,17 @@ import org.geotools.resources.Utilities;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class Tuna extends Point2D implements Animal
+final class Tuna extends MobileObject implements Animal
 {
     /**
-     * L'objet à utiliser pour calculer les déplacements. La version actuelle
-     * utilise le même objet pour tous, mais une version future va peut-être
-     * donner un objet à certaines populations pour une exécution multi-threads.
+     * Rayon de perception de l'animal en mètres.
      */
-    private static final Projector projector = new Projector();
+    private static final double PERCEPTION_RADIUS = 20000;
 
     /**
      * Espèce à laquelle appartient cet animal.
      */
     private final Species species;
-
-    /**
-     * Coordonnées <var>x</var> de cet animal, en degrés de longitude.
-     */
-    private float x;
-
-    /**
-     * Coordonnées <var>y</var> de cet animal, en degrés de latitude.
-     */
-    private float y;
-
-    /**
-     * Direction actuelle de cet animal, en <u>radians arithmétique</u>.
-     * La valeur par défaut est PI/2, ce qui correspond au nord vrai.
-     */
-    private float direction = (float) (Math.PI/2);
 
     /**
      * Construit un animal appartenant à l'espèce spécifié.
@@ -94,121 +76,33 @@ final class Tuna extends Point2D implements Animal
     }
 
     /**
-     * Tourne l'animal d'un certain angle par rapport
-     * à sa direction actuelle.
+     * Retourne la région jusqu'où s'étend la perception de cette
+     * animal. Il peut s'agir par exemple d'un cercle centré sur
+     * la position de l'animal.
      *
-     * @param angle Angle en degrées, dans le sens des
-     *        aiguilles d'une montre.
+     * @param condition 1 si les conditions environnementales sont optimales
+     *        (eaux des plus transparentes), ou 0 si les conditions sont des
+     *        plus mauvaises (eaux complètement brouillées).
      */
-    public void rotate(final double angle)
+    public Shape getPerceptionArea(final double condition)
     {
-        direction -= Math.toRadians(angle);
+        final double radius = condition*PERCEPTION_RADIUS;
+        return relativeToGeographic(new Ellipse2D.Double(-radius, -radius, 2*radius, 2*radius));
     }
 
     /**
-     * Avance l'animal d'une certaine distance.
-     *
-     * @param distance Distance à avancer, en mètres.
+     * Déplace l'animal en fonction de son environnement.
      */
-    public void move(final double distance)
+    public void move(final Environment environment)
     {
-        projector.setCentre(this);
-        projector.x = distance * Math.cos(direction);
-        projector.y = distance * Math.sin(direction);
-        projector.toGeographic();
-        setLocation(projector);
-    }
-
-    /**
-     * Avance l'animal d'une certaine distance dans la direction du point
-     * spécifié. Cet animal peut ne pas atteindre le point si la distance
-     * est trop courte. Si la distance est trop longue, alors l'animal
-     * s'arrêtera à la position du point spécifié. La direction de l'animal
-     * sera modifiée de façon à correspondre à la direction vers le nouveau
-     * point.
-     *
-     * @param distance Distance à parcourir, en mètres. Une valeur négative
-     *                 fera fuir l'animal.
-     * @param point    Point vers lequel avancer, en mètres. Un point identique
-     *                 à <code>this</code> ne fera pas bouger l'animal, quelle
-     *                 que soit la valeur de <code>distance</code>.
-     */
-    public void moveToward(final double distance, final Point2D point)
-    {
-        projector.setCentre(this);
-        projector.setLocation(point);
-        projector.toProjected();
-        double dx = projector.x;
-        double dy = projector.y;
-        double newDirection = Math.atan2(dy, dx);
-        if (!java.lang.Double.isNaN(newDirection))
+        final ParameterValue[] perceptions = environment.getParameters(this);
+        if (perceptions!=null && perceptions.length!=0)
         {
-            direction = (float) newDirection;
+            Point2D pos = getLocation();
+            pos.setLocation(pos.getX()-0.2*(0.5+Math.random()),
+                            pos.getY()-0.2*(0.5+Math.random()));
+            moveToward(5*1852, pos);
+//            moveToward(15*1852, perceptions[0].getLocation());
         }
-        double fc = distance / XMath.hypot(dx, dy);
-        if (!java.lang.Double.isInfinite(fc) && fc<1)
-        {
-            projector.x = dx*fc;
-            projector.y = dy*fc;
-            projector.toGeographic();
-            setLocation(projector);
-        }
-        else
-        {
-            setLocation(point);
-        }
-    }
-
-    /**
-     * Retourne la direction de cet animal, en degrés
-     * géographique par rapport au nord vrai.
-     */
-    public double getDirection()
-    {
-        return 90-Math.toDegrees(direction);
-    }
-
-    /**
-     * Retourne la position de cet animal,
-     * en degrés de longitude et de latitude.
-     */
-    public Point2D getLocation()
-    {
-        return new Point2D.Float(x,y);
-    }
-
-    /**
-     * Retourne la coordonnées <var>x</var> de ce thon en degrés de longitude.
-     */
-    public double getX()
-    {
-        return x;
-    }
-
-    /**
-     * Retourne la coordonnées <var>y</var> de ce thon en degrés de latitude.
-     */
-    public double getY()
-    {
-        return y;
-    }
-
-    /**
-     * Définit la coordonnées <code>x,y</code> de ce thon.
-     */
-    public void setLocation(final double x, final double y)
-    {
-        this.x = (float) x;
-        this.y = (float) y;
-    }
-
-    /**
-     * Retourne une chaîne de caractère représentant
-     * cet animal. Cette information est utile pour
-     * faciliter les déboguages.
-     */
-    public String toString()
-    {
-        return Utilities.getShortClassName(this)+'['+x+", "+y+']';
     }
 }

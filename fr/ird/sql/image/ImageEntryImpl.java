@@ -36,14 +36,16 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
 import org.geotools.cv.Category;
 import org.geotools.cv.CategoryList;
-import org.geotools.gp.Operation;
 import org.geotools.gc.GridRange;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
+import org.geotools.gp.Operation;
 import org.geotools.gp.GridCoverageProcessor;
-import org.geotools.resources.XDimension2D;
+
+import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.XDimension2D;
 
 // Images
 import java.awt.image.RenderedImage;
@@ -558,9 +560,17 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * On construit maintenant l'objet {@link GridCoverage}, on le
          * conserve dans une cache interne puis on le retourne.
          */
-        final double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), ImageTableImpl.toJulian(startTime)};
-        final double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
-        GridCoverage coverage = new GridCoverage(filename, image, parameters.coordinateSystem,
+        CoordinateSystem coordinateSystem = parameters.coordinateSystem;
+        double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), ImageTableImpl.toJulian(startTime)};
+        double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
+        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2]))
+        {
+            // No time range specified.
+            min = XArray.resize(min, 2);
+            max = XArray.resize(max, 2);
+            coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
+        }
+        GridCoverage coverage = new GridCoverage(filename, image, coordinateSystem,
                                 new Envelope(min, max), categoryLists, format.geophysics, null,
                                 Collections.singletonMap(SOURCE_KEY, this));
         /*

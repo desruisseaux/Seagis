@@ -39,6 +39,13 @@ import fr.ird.animat.event.PopulationChangeListener;
 public interface Population extends Set<Animal>
 {
     /**
+     * Déplace tous les animaux de cette population en fonction de leur
+     * environnement. Cette méthode appelle {@link Animal#move(Environment)}
+     * pour chaque animal de cette population.
+     */
+    public abstract void moveAnimals(final Environment environment);
+
+    /**
      * Déclare un objet à informer des changements survenant dans cette
      * population. Ces changements inclus les espèces qui s'ajoutent ou
      * qui meurent, mais n'incluent pas les changements de positions des

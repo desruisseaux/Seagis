@@ -28,6 +28,7 @@ package fr.ird.animat;
 // Divers
 import java.util.Date;
 import org.geotools.gc.GridCoverage;
+import fr.ird.operator.coverage.ParameterValue;
 import fr.ird.animat.event.EnvironmentChangeListener;
 
 
@@ -39,6 +40,11 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  */
 public interface Environment
 {
+    /**
+     * Retourne la date courante.
+     */
+    public Date getTime();
+
     /**
      * Définit la date courante.
      */
@@ -59,8 +65,19 @@ public interface Environment
     public abstract GridCoverage getGridCoverage(final int parameter);
 
     /**
+     * Retourne les valeurs des paramètres que perçoit l'animal spécifié.
+     * Ces valeurs dépendront du rayon de perception de l'animal, tel que
+     * retourné par {@link Animal#getPerceptionArea}.
+     *
+     * @param  animal Animal pour lequel retourner les paramètres de
+     *         l'environnement qui se trouvent dans son rayon de perception.
+     * @return Les paramètres perçus, ou <code>null</code> s'il n'y en a pas.
+     */
+    public ParameterValue[] getParameters(final Animal animal);
+
+    /**
      * Déclare un objet à informer des changements survenant dans cet
-     * environnement. Ces changements suviennent souvent suite à un
+     * environnement. Ces changements surviennent souvent suite à un
      * appel de {@link #setTime}.
      */
     public abstract void addEnvironmentChangeListener(final EnvironmentChangeListener listener);

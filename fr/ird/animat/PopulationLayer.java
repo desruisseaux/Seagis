@@ -26,9 +26,13 @@
 package fr.ird.animat;
 
 // J2SE et JAI
-import java.awt.Shape;
+import java.awt.Paint;
 import java.awt.Color;
+import java.awt.Shape;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.AffineTransform;
 import javax.media.jai.GraphicsJAI;
 
 // Ensembles
@@ -38,10 +42,15 @@ import java.util.HashMap;
 // Composantes cartographiques
 import net.seas.awt.geom.Arrow2D;
 import net.seas.map.layer.MarkLayer;
+import net.seas.map.RenderingContext;
 
 // Animats
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
+
+// Geotools dependencies
+import org.geotools.ct.TransformException;
+import org.geotools.resources.XAffineTransform;
 
 
 /**
@@ -53,14 +62,38 @@ import fr.ird.animat.event.PopulationChangeListener;
 final class PopulationLayer extends MarkLayer implements PopulationChangeListener
 {
     /**
+     * Longueur de la flèche.
+     */
+    private static final int ARROW_LENGTH = 20;
+
+    /**
      * Forme géométrique représentant les animaux.
      */
-    private static final Shape DEFAULT_SHAPE = new Arrow2D(0, -6, 15, 12);
+    private static final Shape DEFAULT_SHAPE = new Arrow2D(0, -8, ARROW_LENGTH, 16);
+
+    /**
+     * Couleur des trajectoires, ou <code>null</code>
+     * pour ne pas les dessiner.
+     */
+    private Color pathColor = Color.yellow;
+
+    /**
+     * Couleur du rayon de perception, ou <code>null</code>
+     * pour ne pas le dessiner.
+     */
+    private Color perceptionColor = new Color(255,255,255,128);
 
     /**
      * Liste des animaux formant cette population.
      */
     private Animal[] animals;
+
+    /**
+     * Coordonnées géographiques de la région couverte
+     * par la population, ou <code>null</code> s'il n'y
+     * en a pas.
+     */
+    private Rectangle2D bounds;
 
     /**
      * Couleurs et symboles des espèces.
@@ -80,7 +113,25 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
      * Remet à jour cette composante pour la population spécifiée.
      */
     private void refresh(final Population population)
-    {animals = (Animal[]) population.toArray();}
+    {
+        animals = (Animal[]) population.toArray();
+        bounds = null;
+        for (int i=0; i<animals.length; i++)
+        {
+            final Rectangle2D animalBounds = animals[i].getPath().getBounds2D();
+            if (animalBounds != null)
+            {
+                if (bounds == null)
+                {
+                    bounds = animalBounds;
+                }
+                else
+                {
+                    bounds.add(animalBounds);
+                }
+            }
+        }
+    }
 
     /**
      * Retourne le nombre d'animaux mémorisées dans cette couche.
@@ -135,10 +186,67 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
         if (icon == null)
         {
             icon = species.getIcon();
+            icon.setColor(Color.red);
             icons.put(species, icon);
         }
         graphics.setColor(icon.getColor());
         graphics.fill(shape);
+    }
+
+    /**
+     * Dessine les trajectoires des animaux, puis les animaux eux-mêmes.
+     */
+    protected synchronized Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
+    {
+        final Paint oldPaint = graphics.getPaint();
+        final Rectangle clip = graphics.getClipBounds();
+        Rectangle2D llBounds = (bounds!=null) ? (Rectangle2D) bounds.clone() : null;
+        if (pathColor != null)
+        {
+            graphics.setColor(pathColor);
+            for (int i=0; i<animals.length; i++)
+            {
+                final Shape shape = animals[i].getPath();
+                if (clip==null || shape.intersects(clip))
+                {
+                    graphics.draw(shape);
+                }
+            }
+        }
+        if (perceptionColor != null)
+        {
+            graphics.setColor(perceptionColor);
+            for (int i=0; i<animals.length; i++)
+            {
+                final Shape shape = animals[i].getPerceptionArea(1);
+                if (clip==null || shape.intersects(clip))
+                {
+                    graphics.fill(shape);
+                }
+                final Rectangle2D perBounds = shape.getBounds2D();
+                if (perBounds != null)
+                {
+                    if (llBounds==null)
+                    {
+                        llBounds = perBounds;
+                    }
+                    else
+                    {
+                        llBounds.add(perBounds);
+                    }
+                }
+            }
+        }
+        graphics.setPaint(oldPaint);
+        final Shape        shape = super.paint(graphics, context);
+        final AffineTransform at = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
+        final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
+        pxBounds.add(shape.getBounds());
+        pxBounds.x      -= ARROW_LENGTH;
+        pxBounds.y      -= ARROW_LENGTH;
+        pxBounds.width  += ARROW_LENGTH*2;
+        pxBounds.height += ARROW_LENGTH*2;
+        return pxBounds;
     }
 
     /**

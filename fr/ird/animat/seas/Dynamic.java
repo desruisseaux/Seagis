@@ -35,15 +35,6 @@ import java.util.Set;
 import java.util.Iterator;
 import java.util.Collection;
 
-// Textes
-import java.text.DateFormat;
-import java.text.ParseException;
-
-// Interface utilisateur
-import javax.swing.JFrame;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowAdapter;
-
 // Pêches
 import fr.ird.animat.Viewer;
 import fr.ird.sql.DataBase;
@@ -62,7 +53,7 @@ import net.seas.util.XArray;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class Dynamic
+final class Dynamic implements Runnable
 {
     /**
      * Liste des espèces d'intérêt pour ce modèle.
@@ -74,9 +65,19 @@ final class Dynamic
     };
 
     /**
+     * Plage de temps dans laquelle rechercher des données de pêches.
+     */
+    private static final long TIME_RANGE = 24*60*60*1000L;
+
+    /**
      * Pas de temps pour le modèle.
      */
-    private static final long TIME_STEP = 24*60*60*1000L;
+    private long timeStep = 24*60*60*1000L;
+
+    /**
+     * Pause a effectuer entre deux pas de temps virtuels.
+     */
+    private long pause = 500;
 
     /**
      * Liste des bases de données à fermer.
@@ -102,6 +103,12 @@ final class Dynamic
      * L'afficheur de cette dynamique.
      */
     private Viewer viewer;
+
+    /**
+     * <code>true</code> tant que le modèle est
+     * en cours d'exécution.
+     */
+    private boolean running;
 
     /**
      * Construit une dynamique avec les bases de données par defaut.
@@ -146,11 +153,62 @@ final class Dynamic
      * seront ajoutées pour chaque espèces à chaque position
      * de pêches.
      */
-    public synchronized void init(final Date time) throws SQLException
+    public synchronized void init(final Date time,
+                                  final long timeStep,
+                                  final long pause) throws SQLException
     {
         environment.setTime(time);
-        catchs.setTimeRange(time, new Date(time.getTime()+TIME_STEP));
+        catchs.setTimeRange(time, new Date(time.getTime()+TIME_RANGE));
         population.addTunas(catchs.getEntries());
+        this.timeStep = timeStep;
+        this.pause    = pause;
+    }
+
+    /**
+     * Exécute la dynamique.
+     */
+    public void run()
+    {
+        running=true;
+        moveAnimals();
+        do
+        {
+            try
+            {
+                nextTimeStep();
+                moveAnimals();
+                Thread.currentThread().sleep(pause);
+            }
+            catch (SQLException exception)
+            {
+                exception.printStackTrace();
+            }
+            catch (InterruptedException exception)
+            {
+                // Someone doesn't want to lets us sleep.
+                // Go back to work.
+            }
+        }
+        while (running);
+    }
+
+    /**
+     * Avance d'un pas de temps.
+     */
+    private synchronized void nextTimeStep() throws SQLException
+    {
+        final Date time = environment.getTime();
+        time.setTime(time.getTime()+timeStep);
+        environment.setTime(time);
+        catchs.setTimeRange(time, new Date(time.getTime()+TIME_RANGE));
+    }
+
+    /**
+     * Déplace les animaux en fonction de leur environnements.
+     */
+    private void moveAnimals()
+    {
+        population.moveAnimals(environment);
     }
 
     /**
@@ -171,65 +229,12 @@ final class Dynamic
      */
     public synchronized void close() throws SQLException
     {
+        running=false;
         catchs.close();
         if (toClose!=null)
         {
             for (int i=0; i<toClose.length; i++)
                 toClose[i].close();
         }
-    }
-
-    /**
-     * Lance la modélisation.
-     */
-    public static void main(String[] args) throws SQLException
-    {
-        if (false && args.length==0)
-        {
-            // Temporary patch for testing purpose
-            args = new String[] {"01/09/1997"};
-        }
-        Date time = null;
-        if (args.length!=0)
-        {
-            final DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-            try
-            {
-                time = df.parse(args[0]);
-            }
-            catch (ParseException exception)
-            {
-                System.out.println(exception.getLocalizedMessage());
-                System.out.print("Exemple: ");
-                System.out.print(df.format(new Date()));
-                return;
-            }
-        }
-
-        // Initialise l'objet qui contrôlera
-        // la dynamique des populations.
-        final Dynamic dynamic = new Dynamic();
-        if (time!=null)
-        {
-            dynamic.init(time);
-        }
-
-        // Construit la fenêtre. La fermeture de cette
-        // fenêtre fermera aussi les connections JDBC.
-        final JFrame frame = new JFrame("Simulation");
-        frame.addWindowListener(new WindowAdapter()
-        {
-            public void windowClosing(WindowEvent e) {
-                try {
-                    dynamic.close();
-                    System.exit(0);
-                } catch (SQLException exception) {
-                    exception.printStackTrace();
-                }
-            }
-        });
-        frame.getContentPane().add(dynamic.getViewer().getView());
-        frame.pack();
-        frame.show();
     }
 }

@@ -26,7 +26,9 @@
 package fr.ird.animat.seas;
 
 // Divers
+import java.awt.Shape;
 import java.util.Date;
+import java.awt.geom.Point2D;
 import java.sql.SQLException;
 
 // Geotools dependencies
@@ -37,10 +39,18 @@ import fr.ird.sql.image.Coverage3D;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageDataBase;
 
+// Animats
+import fr.ird.animat.Animal;
+
 // Evénements
 import javax.swing.event.EventListenerList;
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
+
+// Evaluateurs
+import fr.ird.operator.coverage.Evaluator;
+import fr.ird.operator.coverage.ParameterValue;
+import fr.ird.operator.coverage.MaximumEvaluator;
 
 
 /**
@@ -73,6 +83,21 @@ final class Environment implements fr.ird.animat.Environment
     private final Date time = new Date();
 
     /**
+     * Object à utiliser pour évaluer les positions
+     * de certains paramètres.
+     */
+    private final Evaluator evaluator = new MaximumEvaluator();
+
+    /**
+     * Un indicateur général de la qualité des conditions environnementales.
+     * La valeur 1 signifie que les eaux sont des plus transparentes et que
+     * l'animal perçoit son environnement jusqu'à la limite de la capacité
+     * de ses sens. La valeur 0 signifie que les eaux sont très troubles et
+     * que l'animal ne "voit" rien.
+     */
+    private final double condition = 1;
+
+    /**
      * Construit un environnement qui utilisera
      * la base de données d'images spécifiée.
      *
@@ -87,9 +112,17 @@ final class Environment implements fr.ird.animat.Environment
     }
 
     /**
+     * Retourne la date courante.
+     */
+    public Date getTime()
+    {
+        return new Date(time.getTime());
+    }
+
+    /**
      * Définit la date courante.
      */
-    public void setTime(final Date newTime)
+    public synchronized void setTime(final Date newTime)
     {
         if (!time.equals(newTime))
         {
@@ -119,6 +152,26 @@ final class Environment implements fr.ird.animat.Environment
     }
 
     /**
+     * Retourne les valeurs des paramètres que perçoit l'animal spécifié.
+     * Ces valeurs dépendront du rayon de perception de l'animal, tel que
+     * retourné par {@link Animal#getPerceptionArea}.
+     *
+     * @param  animal Animal pour lequel retourner les paramètres de
+     *         l'environnement qui se trouvent dans son rayon de perception.
+     * @return Les paramètres perçus, ou <code>null</code> s'il n'y en a pas.
+     */
+    public ParameterValue[] getParameters(final Animal animal)
+    {
+        final GridCoverage gc = coverage.getGridCoverage2D(time);
+        if (gc!=null)
+        {
+            final Shape area = animal.getPerceptionArea(condition);
+            return evaluator.evaluate(gc, area);
+        }
+        return null;
+    }
+
+    /**
      * A appeler à chaque fois que l'environnement change.
      */
     protected void fireEnvironmentChanged()
@@ -135,16 +188,16 @@ final class Environment implements fr.ird.animat.Environment
 
     /**
      * Déclare un objet à informer des changements survenant dans cet
-     * environnement. Ces changements suviennent souvent suite à un
+     * environnement. Ces changements surviennent souvent suite à un
      * appel de {@link #setTime}.
      */
-    public void addEnvironmentChangeListener(final EnvironmentChangeListener listener)
+    public synchronized void addEnvironmentChangeListener(final EnvironmentChangeListener listener)
     {listenerList.add(EnvironmentChangeListener.class, listener);}
 
     /**
      * Retire un objet à informer des changements survenant dans cet
      * environnement.
      */
-    public void removeEnvironmentChangeListener(final EnvironmentChangeListener listener)
+    public synchronized void removeEnvironmentChangeListener(final EnvironmentChangeListener listener)
     {listenerList.remove(EnvironmentChangeListener.class, listener);}
 }

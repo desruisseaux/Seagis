@@ -39,18 +39,59 @@ import fr.ird.animat.Population;
 public class PopulationChangeEvent extends EventObject
 {
     /**
+     * Constante indiquant qu'au moins un animal a été
+     * ajouté à la population.
+     */
+    public static final int ANIMAL_ADDED = +1;
+
+    /**
+     * Constante indiquant qu'au moins un animal a été
+     * retiré de la population.
+     */
+    public static final int ANIMAL_KILLED = -1;
+
+    /**
+     * Constante indiquant qu'au moins un animal a bougé.
+     */
+    public static final int ANIMAL_MOVED = 0;
+
+    /**
+     * Le type de cet événement: {@link #ANIMAL_ADDED},
+     * {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
+     */
+    private final int type;
+
+    /**
      * Construit un nouvel événement.
      *
      * @param source La source.
+     * @param type Le type de cet événement: {@link #ANIMAL_ADDED},
+     *             {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
      */
-    public PopulationChangeEvent(final Population source)
+    public PopulationChangeEvent(final Population source, final int type)
     {
         super(source);
+        this.type=type;
+        if (type<ANIMAL_KILLED || type>ANIMAL_ADDED)
+        {
+            throw new IllegalArgumentException(String.valueOf(type));
+        }
     }
 
     /**
      * Retourne la source.
      */
     public Population getSource()
-    {return (Population) super.getSource();}
+    {
+        return (Population) super.getSource();
+    }
+
+    /**
+     * Retourne le type de cet événement: {@link #ANIMAL_ADDED},
+     * {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
+     */
+    public int getType()
+    {
+        return type;
+    }
 }

@@ -25,6 +25,9 @@
  */
 package fr.ird.animat;
 
+// Graphisme
+import java.awt.Color;
+
 // Cartes
 import net.seas.map.layer.GridCoverageLayer;
 
@@ -46,6 +49,16 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  */
 final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentChangeListener
 {
+    /**
+     * Couleur des valeurs les plus basses.
+     */
+    private static final Color LOWER_COLOR = new Color(16,32,64);
+
+    /**
+     * Couleur des valeurs les plus élevées.
+     */
+    private static final Color UPPER_COLOR = new Color(224,240,255);
+
     /**
      * L'objet à utiliser pour traiter les images.
      */
@@ -81,7 +94,9 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
      */
     public void setCoverage(GridCoverage coverage)
     {
-        coverage = processor.doOperation("Colormap", coverage);
+        coverage = processor.doOperation("Colormap",   coverage,
+                                         "lowerColor", LOWER_COLOR,
+                                         "upperColor", UPPER_COLOR);
         super.setCoverage(coverage);
     }
 }

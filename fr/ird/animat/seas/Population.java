@@ -64,11 +64,6 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     private final EventListenerList listenerList = new EventListenerList();
 
     /**
-     * Evénement à lancer à chaque fois que la population change.
-     */
-    private final PopulationChangeEvent event = new PopulationChangeEvent(this);
-
-    /**
      * Nombre d'entrées valides dans la liste {@link #animals}.
      */
     private int count = 0;
@@ -76,7 +71,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     /**
      * Retire tous les animaux de cette population.
      */
-    public void clear()
+    public synchronized void clear()
     {
         Arrays.fill(animals, 0, count, null);
         count = 0;
@@ -85,19 +80,19 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     /**
      * Retourne le nombre d'animaux dans cette population.
      */
-    public int size()
+    public synchronized int size()
     {return count;}
 
     /**
      * Retourne un itérateur sur les animaux de cette population.
      */
-    public Iterator<Animal> iterator()
+    public synchronized Iterator<Animal> iterator()
     {return new Iter();}
 
     /**
      * Retourne la liste des animaux sous forme de tableau.
      */
-    public Animal[] toArray()
+    public synchronized Animal[] toArray()
     {
         final Animal[] copy = new Animal[count];
         System.arraycopy(animals, 0, copy, 0, count);
@@ -105,10 +100,24 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     }
 
     /**
+     * Déplace tous les animaux de cette population en fonction de leur
+     * environnement. Cette méthode appelle {@link Animal#move(Environment)}
+     * pour chaque animal de cette population.
+     */
+    public synchronized void moveAnimals(final fr.ird.animat.Environment environment)
+    {
+        for (int i=0; i<count; i++)
+        {
+            animals[i].move(environment);
+        }
+        firePopulationChanged(PopulationChangeEvent.ANIMAL_MOVED);
+    }
+
+    /**
      * Ajoute un thon pour chaque espèce à chacune des positions
      * de pêche spécifiées.
      */
-    public void addTunas(final Collection<CatchEntry> entries)
+    public synchronized void addTunas(final Collection<CatchEntry> entries)
     {
         final int oldCount = count;
         for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();)
@@ -117,7 +126,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
         }
         if (oldCount != count)
         {
-            firePopulationChanged();
+            firePopulationChanged(PopulationChangeEvent.ANIMAL_ADDED);
         }
     }
 
@@ -127,7 +136,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
      * Cette responsabilité est laissée à l'appelant (afin d'éviter de lancer
      * trop d'événements).
      */
-    private void addTunas(final CatchEntry entry)
+    private synchronized void addTunas(final CatchEntry entry)
     {
         final int oldCount = count;
         final Point2D coord = entry.getCoordinate();
@@ -146,14 +155,22 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
 
     /**
      * A appeler à chaque fois que la population change.
+     *
+     * @param type Le type de cet événement: {@link #ANIMAL_ADDED},
+     *             {@link #ANIMAL_KILLED} ou {@link #ANIMAL_MOVED}.
      */
-    protected void firePopulationChanged()
+    protected void firePopulationChanged(final int type)
     {
+        PopulationChangeEvent event = null;
         final Object[] listeners = listenerList.getListenerList();
         for (int i=listeners.length; (i-=2)>=0;)
         {
             if (listeners[i] == PopulationChangeListener.class)
             {
+                if (event==null)
+                {
+                    event = new PopulationChangeEvent(this, type);
+                }
                 ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
             }
         }
@@ -165,18 +182,22 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
      * qui meurent, mais n'incluent pas les changements de positions des
      * animaux.
      */
-    public void addPopulationChangeListener(PopulationChangeListener listener)
+    public synchronized void addPopulationChangeListener(PopulationChangeListener listener)
     {listenerList.add(PopulationChangeListener.class, listener);}
 
     /**
      * Retire un objet à informer des changements survenant dans cette
      * population.
      */
-    public void removePopulationChangeListener(final PopulationChangeListener listener)
+    public synchronized void removePopulationChangeListener(final PopulationChangeListener listener)
     {listenerList.remove(PopulationChangeListener.class, listener);}
 
     /**
-     * Un itérateur balayant les animaux de cette population.
+     * Un itérateur balayant les animaux de cette population. Cet itérateur
+     * n'est pas synchronisée. Ca ne causera pas de problème même si Swing
+     * affiche les populations dans un Thread séparé parce que l'implémentation
+     * de {@link fr.ird.animat.PopulationLayer} n'utilise pas cet itérateur.
+     * Elle utilise plutôt {@link Population#toArray}, qui est synchronisée.
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -213,7 +234,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
             {
                 animals = XArray.remove(animals, --index, 1);
                 animals[--count] = null;
-                firePopulationChanged();
+                firePopulationChanged(PopulationChangeEvent.ANIMAL_KILLED);
             }
             else
             {

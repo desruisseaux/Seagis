@@ -320,8 +320,15 @@ public class ColorRamp extends JComponent
          */
         final int  lower = category.lower;
         final int  upper = category.upper;
-        final double min = category.toValue(lower);
-        final double max = category.toValue(upper);
+        double min = category.toValue(lower);
+        double max = category.toValue(upper);
+        if (min > max)
+        {
+            // This case occurs typically when displaying a color ramp for
+            // sea bathymetry, for which floor level are negative numbers.
+            min = -min;
+            max = -max;
+        }
         if (!(min <= max))
         {
             throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2, "category", category));

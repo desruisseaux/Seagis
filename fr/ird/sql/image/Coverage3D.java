@@ -74,7 +74,6 @@ import java.util.Date;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import fr.ird.sql.coupling.AreaEvaluator;
 
 
 /**
@@ -253,6 +252,14 @@ public class Coverage3D extends Coverage
      */
     public Envelope getEnvelope()
     {return (Envelope) envelope.clone();}
+
+    /**
+     * Returns the number of {@link SampleDimension} in this coverage.
+     */
+    public int getNumSampleDimensions()
+    {
+        return categories.length;
+    }
 
     /**
      * Retrieve sample dimension information for the coverage.
@@ -537,65 +544,19 @@ public class Coverage3D extends Coverage
             // No interpolation needed.
             return lower;
         }
+        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
+        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+
         final long timeMillis = time.getTime();
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+
         // TODO: Interpolate here: lower + ratio*(upper-lower)
         //       Cache the result; it may be reused often.
-        // NOTE: When interpolation will be done, it should be
-        //       used in 'evaluate(AreaEvaluator...)' implementation.
-        return (ratio < 0.5) ? lower : upper;
-    }
 
-    /**
-     * Returns a sequence of double values for a given geographic area in the coverage.
-     * A value for each sample dimension is included in the sequence. The first argument
-     * ({@link AreaEvaluator}) specify how to perform the computation for each grid coverage.
-     * For example, {@link AreaEvaluator#MAIN} compute the average value of pixels inside the
-     * area.
-     *
-     * @param  evaluator The computation to perform on the area.
-     * @param  area  The geographic area to evaluate.
-     * @param  time  The date where to evaluate.
-     * @return The values.
-     * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
-     */
-    public synchronized double[] evaluate(final AreaEvaluator evaluator, final Shape area, final Date time) throws PointOutsideCoverageException
-    {
-        if (!seek(time))
-        {
-            // Missing data
-            final double[] dest=new double[categories.length];
-            Arrays.fill(dest, 0, categories.length, Double.NaN);
-            return dest;
-        }
-        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
-        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
-        try
-        {
-            if (lower==upper)
-            {
-                return evaluator.evaluate(lower, area);
-            }
-            final double[]   last = evaluator.evaluate(upper, area);
-            final double[]   dest = evaluator.evaluate(lower, area);
-            final long timeMillis = time.getTime();
-            assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
-            final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
-            for (int i=0; i<last.length; i++)
-            {
-                dest[i] += ratio*(last[i]-dest[i]);
-            }
-            return dest;
-        }
-        catch (TransformException exception)
-        {
-            final Rectangle2D bounds = area.getBounds2D();
-            final Point2D point = new Point2D.Double(bounds.getCenterX(), bounds.getCenterY());
-            PointOutsideCoverageException e = new PointOutsideCoverageException(point);
-            e.initCause(exception);
-            throw e;
-        }
+        // GridCoverage result = lower + ratio*(upper-lower)
+
+        return (ratio < 0.5) ? lower : upper;
     }
 
     /**

@@ -60,6 +60,11 @@ import java.util.Date;
 import javax.media.jai.util.Range;
 import org.geotools.resources.Utilities;
 
+// Evaluateurs
+import fr.ird.operator.coverage.Evaluator;
+import fr.ird.operator.coverage.AverageEvaluator;
+import fr.ird.operator.coverage.GradientEvaluator;
+
 
 /**
  * Classe ayant la charge de remplir la table  "Environnement"  de la base de données "Pêches" à
@@ -120,6 +125,12 @@ public final class EnvironmentTableFiller
     private static final String OPERATION = null; // "GradientMagnitude";
 
     /**
+     * Fonction à utiliser pour calculer les valeurs
+     * à l'intérieur d'une région géographique.
+     */
+    private final Evaluator evaluator = null; // new GradientEvaluator();
+
+    /**
      * Connection vers la base de données d'images.
      */
     private final ImageDataBase images;
@@ -166,8 +177,11 @@ public final class EnvironmentTableFiller
         final CatchCoverage coverage = new CatchCoverage(images);
         images.close();
 
-        if (true)  computePointData(catchs, coverage, update);
-        if (false) computeAreaData (catchs, coverage, update);
+        computePointData(catchs, coverage, update);
+        if (evaluator != null)
+        {
+            computeAreaData(catchs, coverage, update);
+        }
 
         for (int i=0; i<update.length; i++)
         {
@@ -200,7 +214,7 @@ public final class EnvironmentTableFiller
                 final double[] values;
                 try
                 {
-                    values = coverage.evaluate(area, time);
+                    values = coverage.evaluate(capture, evaluator);
                 }
                 catch (PointOutsideCoverageException exception)
                 {
