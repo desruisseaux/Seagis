@@ -197,7 +197,7 @@ public class SampleDistribution extends RenderedMarks {
             context.setCoordinateSystem(context.textCS);
             graphics.setColor(Color.BLACK);
             graphics.setFont(font.deriveFont(Font.BOLD, 20));
-            graphics.drawString(legend, WIDTH-100, HEIGHT);
+            graphics.drawString(legend, WIDTH-100, HEIGHT-20);
             context.setCoordinateSystem(context.mapCS);
         }
     }
