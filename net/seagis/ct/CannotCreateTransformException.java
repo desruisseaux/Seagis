@@ -33,6 +33,7 @@ import net.seagis.cs.Datum;
 import net.seagis.cs.CoordinateSystem;
 
 // Resources
+import net.seagis.resources.Utilities;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
@@ -69,5 +70,11 @@ public class CannotCreateTransformException extends TransformException
      * path has been found between the specified coordinate system.
      */
     public CannotCreateTransformException(final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
-    {this(Resources.format(ResourceKeys.ERROR_NO_TRANSFORMATION_PATH_$2, sourceCS.getName(null), targetCS.getName(null)));}
+    {this(Resources.format(ResourceKeys.ERROR_NO_TRANSFORMATION_PATH_$2, getName(sourceCS), getName(targetCS)));}
+
+    /**
+     * Gets a display name for the specified coordinate system.
+     */
+    private static String getName(final CoordinateSystem cs)
+    {return Utilities.getShortClassName(cs)+'('+cs.getName(null)+')';}
 }

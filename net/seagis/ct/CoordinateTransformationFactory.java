@@ -215,7 +215,22 @@ public class CoordinateTransformationFactory
             final CoordinateSystem tailCS = source.getTailCS();
             if (targetCS instanceof CompoundCoordinateSystem)
             {
-                // TODO: implement CompoundCoordinateSystem cases
+                final CompoundCoordinateSystem target = (CompoundCoordinateSystem) targetCS;
+                final CoordinateSystem headTargetCS = target.getHeadCS();
+                final CoordinateSystem tailTargetCS = target.getTailCS();
+                if (tailCS.equivalents(tailTargetCS))
+                {
+                    final CoordinateTransformation tr = createFromCoordinateSystems(headCS, headTargetCS);
+                    final MathTransform transform = factory.createPassThroughTransform(0, tr.getMathTransform(), tailCS.getDimension());
+                    return createFromMathTransform(sourceCS, targetCS, tr.getTransformType(), transform);
+                }
+                if (headCS.equivalents(headTargetCS))
+                {
+                    final CoordinateTransformation tr = createFromCoordinateSystems(tailCS, tailTargetCS);
+                    final MathTransform transform = factory.createPassThroughTransform(headCS.getDimension(), tr.getMathTransform(), 0);
+                    return createFromMathTransform(sourceCS, targetCS, tr.getTransformType(), transform);
+                }
+                // TODO: implement others CompoundCoordinateSystem cases
                 throw new CannotCreateTransformException(sourceCS, targetCS);
             }
             if (targetCS instanceof GeocentricCoordinateSystem)
