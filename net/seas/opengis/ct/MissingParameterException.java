@@ -22,17 +22,14 @@
  */
 package net.seas.opengis.ct;
 
-// OpenGIS (SEAS) dependencies
-import net.seas.opengis.cs.Parameter;
-
 // Miscellaneous
 import net.seas.resources.Resources;
 
 
 /**
- * Thrown when a {@link Parameter} was missing. For example, this exception may
- * be thrown when a map projection was requested but the "semi_major" parameter
- * was not specified.
+ * Thrown when a parameter was missing. For example, this exception may
+ * be thrown when a map projection was requested but the "semi_major"
+ * parameter was not specified.
  *
  * @version 1.0
  * @author Martin Desruisseaux

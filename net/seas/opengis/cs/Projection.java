@@ -26,16 +26,21 @@ package net.seas.opengis.cs;
 import org.opengis.cs.CS_Projection;
 import org.opengis.cs.CS_ProjectionParameter;
 
+// Parameters
+import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListImpl;
+import javax.media.jai.ParameterListDescriptor;
+import net.seas.opengis.ct.MathTransformProvider;
+import net.seas.opengis.ct.MissingParameterException;
+
 // Miscellaneous
 import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
-import javax.units.Unit;
-
 import net.seas.util.XClass;
 import net.seas.util.XArray;
-import net.seas.opengis.ct.MissingParameterException;
+import javax.units.Unit;
 
 
 /**
@@ -52,7 +57,7 @@ public class Projection extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = -7116072094430367096L; // TODO
+    //private static final long serialVersionUID = 4927842302789136497L; // TODO
 
     /**
      * Classification string for projection (e.g. "Transverse_Mercator").
@@ -62,10 +67,22 @@ public class Projection extends Info
     /**
      * Parameters to use for projection, in metres or degrees.
      */
-    private final Parameter[] parameters;
+    private final ParameterList parameters;
 
     /**
-     * Creates a projection.
+     * Convenience constructor for a projection using the WGS84 ellipsoid.
+     *
+     * @param name           Name to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
+     *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                       will be set according.
+     */
+    public Projection(final String name, final String classification, final Point2D centre)
+    {this(name, classification, Ellipsoid.WGS84, centre);}
+
+    /**
+     * Convenience constructor for a projection using the specified ellipsoid.
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
@@ -76,27 +93,39 @@ public class Projection extends Info
      *                       will be set according.
      */
     public Projection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
-    {this(name, classification, getParameters(ellipsoid, centre));}
+    {
+        super(name);
+        ensureNonNull("classification", classification);
+        this.classification = classification;
+        parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
+        if (ellipsoid!=null)
+        {
+            final Unit axisUnit = ellipsoid.getAxisUnit();
+            parameters.setParameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
+            parameters.setParameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
+        }
+        if (centre!=null)
+        {
+            parameters.setParameter("central_meridian",   centre.getX());
+            parameters.setParameter("latitude_of_origin", centre.getY());
+        }
+    }
 
     /**
-     * Creates a projection.
+     * Creates a projection. The set of parameters (<code>parameters</code>) may be
+     * queried with {@link net.seas.opengis.ct.MathTransformFactory#getParameterList}.
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    public Projection(final String name, final String classification, final Parameter[] parameters)
+    public Projection(final String name, final String classification, final ParameterList parameters)
     {
         super(name);
         ensureNonNull("classification", classification);
         ensureNonNull("parameters",     parameters);
         this.classification = classification;
-        this.parameters = (Parameter[]) parameters.clone();
-        for (int i=0; i<this.parameters.length; i++)
-        {
-            ensureNonNull("parameters", this.parameters, i);
-            this.parameters[i] = this.parameters[i].clone();
-        }
+        this.parameters = clone(parameters);
     }
 
     /**
@@ -106,7 +135,7 @@ public class Projection extends Info
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    Projection(final Map<String,Object> properties, final String classification, final Parameter[] parameters)
+    Projection(final Map<String,Object> properties, final String classification, final ParameterList parameters)
     {
         super(properties);
         this.classification = classification;
@@ -115,24 +144,20 @@ public class Projection extends Info
     }
 
     /**
-     * Transform an ellipsoid and point argument into a parameters array.
+     * Returns a clone of a parameter list.
      */
-    private static Parameter[] getParameters(final Ellipsoid ellipsoid, final Point2D centre)
+    private static ParameterList clone(final ParameterList list)
     {
-        int n=0;
-        final Parameter[] param = new Parameter[4];
-        if (ellipsoid!=null)
+        if (list==null) return null;
+        final ParameterListDescriptor descriptor = list.getParameterListDescriptor();
+        final ParameterList copy = new ParameterListImpl(descriptor);
+        final String[] names = descriptor.getParamNames();
+        if (names!=null) for (int i=0; i<names.length; i++)
         {
-            final Unit axisUnit = ellipsoid.getAxisUnit();
-            param[n++] = new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
-            param[n++] = new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
+            final String name = names[i];
+            copy.setParameter(name, list.getObjectParameter(name));
         }
-        if (centre!=null)
-        {
-            param[n++] = new Parameter("central_meridian",   centre.getX());
-            param[n++] = new Parameter("latitude_of_origin", centre.getY());
-        }
-        return XArray.resize(param, n);
+        return copy;
     }
 
     /**
@@ -142,29 +167,10 @@ public class Projection extends Info
     {return classification;}
 
     /**
-     * Gets number of parameters of the projection.
-     */
-    public int getNumParameters()
-    {return parameters.length;}
-
-    /**
-     * Gets an indexed parameter of the projection.
-     *
-     * @param index Zero based index of parameter to fetch.
-     */
-    public Parameter getParameter(final int index)
-    {return parameters[index].clone();}
-
-    /**
      * Returns all parameters.
      */
-    public Parameter[] getParameters()
-    {
-        final Parameter[] param = new Parameter[getNumParameters()];
-        for (int i=0; i<param.length; i++)
-            param[i] = getParameter(i);
-        return param;
-    }
+    public ParameterList getParameters()
+    {return clone(parameters);}
 
     /**
      * Convenience method for fetching a parameter value.
@@ -176,7 +182,7 @@ public class Projection extends Info
      * @throws MissingParameterException if parameter <code>name</code> is not found.
      */
     public double getValue(final String name) throws MissingParameterException
-    {return Parameter.getValue(parameters, name);}
+    {return getValue(parameters, name, Double.NaN, true);}
 
     /**
      * Convenience method for fetching a parameter value.
@@ -190,16 +196,61 @@ public class Projection extends Info
      *         if the parameter <code>name</code> is not found.
      */
     public double getValue(final String name, final double defaultValue)
-    {return Parameter.getValue(parameters, name, defaultValue);}
+    {return getValue(parameters, name, defaultValue, false);}
+
+    /**
+     * Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and
+     * trailing blanks.
+     *
+     * @param  parameters User-suplied parameters.
+     * @param  name Parameter to look for.
+     * @param  defaultValue Default value to return if
+     *         parameter <code>name</code> is not found.
+     * @param  required <code>true</code> if the parameter is required (in which case
+     *         <code>defaultValue</code> is ignored), or <code>false</code> otherwise.
+     * @return The parameter value, or <code>defaultValue</code> if the parameter is
+     *         not found and <code>required</code> is <code>false</code>.
+     * @throws MissingParameterException if <code>required</code> is <code>true</code>
+     *         and parameter <code>name</code> is not found.
+     */
+    private static double getValue(final ParameterList parameters, final String name, final double defaultValue, final boolean required) throws MissingParameterException
+    {
+        RuntimeException cause=null;
+        if (parameters!=null)
+        {
+            final Object value;
+            try
+            {
+                value = parameters.getObjectParameter(name.trim());
+                if (value instanceof Number)
+                    return ((Number) value).doubleValue();
+            }
+            catch (IllegalArgumentException exception)
+            {
+                // There is no parameter with the specified name.
+                cause = exception;
+            }
+            catch (IllegalStateException exception)
+            {
+                // the parameter value is still NO_PARAMETER_DEFAULT
+                cause = exception;
+            }
+        }
+        if (!required) return defaultValue;
+        final MissingParameterException exception = new MissingParameterException(null, name);
+        if (cause!=null) exception.initCause(cause);
+        throw exception;
+    }
 
     /**
      * Returns a hash value for this projection.
      */
     public int hashCode()
     {
-        int code = classification.hashCode();
-        for (int i=0; i<parameters.length; i++)
-            code = code*37 + parameters[i].hashCode();
+        int code = 45896321;
+        if (classification!=null) code = code*37 + classification.hashCode();
+        if (parameters    !=null) code = code*37 + parameters.hashCode();
         return code;
     }
 
@@ -213,7 +264,7 @@ public class Projection extends Info
         {
             final Projection that = (Projection) object;
             return XClass.equals(this.classification, that.classification) &&
-                   Arrays.equals(this.parameters,     that.parameters);
+                   XClass.equals(this.parameters,     that.parameters);
         }
         return false;
     }
@@ -253,6 +304,12 @@ public class Projection extends Info
     private final class Export extends Info.Export implements CS_Projection
     {
         /**
+         * The set of parameters. This array is constructed
+         * only the first time it is needed.
+         */
+        private transient CS_ProjectionParameter[] parameters;
+
+        /**
          * Construct a remote object.
          */
         protected Export(final Object adapters)
@@ -262,18 +319,36 @@ public class Projection extends Info
          * Gets number of parameters of the projection.
          */
         public int getNumParameters() throws RemoteException
-        {return Projection.this.getNumParameters();}
+        {
+            final CS_ProjectionParameter[] parameters = getParameters();
+            return (parameters!=null) ? parameters.length : 0;
+        }
 
         /**
          * Gets an indexed parameter of the projection.
          */
         public CS_ProjectionParameter getParameter(final int index) throws RemoteException
-        {return adapters.export(Projection.this.getParameter(index));}
+        {
+            final CS_ProjectionParameter[] parameters = getParameters();
+            return (CS_ProjectionParameter) parameters[index].clone();
+        }
 
         /**
          * Gets the projection classification name (e.g. 'Transverse_Mercator').
          */
         public String getClassName() throws RemoteException
         {return Projection.this.getClassName();}
+
+        /**
+         * Returns the set of parameters.
+         */
+        private synchronized CS_ProjectionParameter[] getParameters()
+        {
+            if (parameters==null)
+            {
+                parameters = adapters.export(Projection.this.getParameters());
+            }
+            return parameters;
+        }
     }
 }

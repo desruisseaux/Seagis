@@ -59,8 +59,15 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.HashMap;
 
+// Parameters
+import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListImpl;
+import javax.media.jai.ParameterListDescriptor;
+import javax.media.jai.ParameterListDescriptorImpl;
+
 // Miscellaneous
 import javax.units.Unit;
+import net.seas.util.XArray;
 import net.seas.resources.Resources;
 
 
@@ -160,11 +167,34 @@ public class Adapters
     {return (projection!=null) ? (CS_Projection)projection.cachedOpenGIS(this) : null;}
 
     /**
-     * Construct an OpenGIS structure from a named parameter.
-     * Changes to the returned structure will not affect the original parameter.
+     * Construct an array of OpenGIS structure from a parameters list.
      */
-    public CS_ProjectionParameter export(final Parameter parameter)
-    {return (parameter!=null) ? new CS_ProjectionParameter(parameter.name, parameter.value) : null;}
+    public CS_ProjectionParameter[] export(final ParameterList parameters)
+    {
+        if (parameters==null) return null;
+        final String[] names = parameters.getParameterListDescriptor().getParamNames();
+        final CS_ProjectionParameter[] param = new CS_ProjectionParameter[names!=null ? names.length : 0];
+        int count=0;
+        for (int i=0; i<param.length; i++)
+        {
+            final String name = names[i];
+            final Object value;
+            try
+            {
+                value = parameters.getObjectParameter(name);
+            }
+            catch (IllegalStateException exception)
+            {
+                // No value and no default. Ignore...
+                continue;
+            }
+            if (value instanceof Number)
+            {
+                param[count++] = new CS_ProjectionParameter(name, ((Number)value).doubleValue());
+            }
+        }
+        return XArray.resize(param, count);
+    }
 
     /**
      * Returns an OpenGIS interface for a prime meridien.
@@ -422,12 +452,12 @@ public class Adapters
         {
             return (Projection) ((Info.Export)projection).unwrap();
         }
-        final Parameter[] parameters = new Parameter[projection.getNumParameters()];
+        final CS_ProjectionParameter[] parameters = new CS_ProjectionParameter[projection.getNumParameters()];
         for (int i=0; i<parameters.length; i++)
         {
-            parameters[i] = wrap(projection.getParameter(i));
+            parameters[i] = projection.getParameter(i);
         }
-        return new Projection(map(projection), projection.getClassName(), parameters);
+        return new Projection(map(projection), projection.getClassName(), wrap(parameters));
     }
 
     /**
@@ -555,21 +585,32 @@ public class Adapters
     }
 
     /**
-     * Returns a parameter for an OpenGIS structure.
+     * Returns a parameter list for an array of OpenGIS structures.
      */
-    public Parameter wrap(final CS_ProjectionParameter parameter)
-    {return (parameter!=null) ? new Parameter(parameter.name, parameter.value) : null;}
-
-    /**
-     * Returns a parameter array for an OpenGIS structure array.
-     */
-    final Parameter[] wrap(final CS_ProjectionParameter[] parameters)
+    public ParameterList wrap(final CS_ProjectionParameter[] parameters)
     {
         if (parameters==null) return null;
-        final Parameter[] p=new Parameter[parameters.length];
+        int count=0;
+        String[] paramNames   = new String[parameters.length];
+        Class [] paramClasses = new Class [parameters.length];
         for (int i=0; i<parameters.length; i++)
-            p[i] = wrap(parameters[i]);
-        return p;
+        {
+            final CS_ProjectionParameter param = parameters[i];
+            if (param!=null)
+            {
+                paramNames  [count] = param.name;
+                paramClasses[count] = Double.class;
+                count++;
+            }
+        }
+        paramNames   = XArray.resize(paramNames,   count);
+        paramClasses = XArray.resize(paramClasses, count);
+        final ParameterList list = new ParameterListImpl(new ParameterListDescriptorImpl(null, paramNames, paramClasses, null, null));
+        for (int i=0; i<paramNames.length; i++)
+        {
+            list.setParameter(paramNames[i], parameters[i].value);
+        }
+        return list;
     }
 
     /**

@@ -28,7 +28,6 @@ package net.seas.opengis.ct;
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Parameter;
 import net.seas.opengis.pt.Latitude;
 
 // Miscellaneous
@@ -149,7 +148,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected TransverseMercatorProjection(final Parameter[] parameters) throws MissingParameterException
+    protected TransverseMercatorProjection(final Projection parameters) throws MissingParameterException
     {this(parameters, false);} // Default to UTM.
 
     /**
@@ -159,7 +158,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @param  modified <code>true</code> for MTM, <code>false</code> for UTM.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected TransverseMercatorProjection(final Parameter[] parameters, final boolean modified) throws MissingParameterException
+    protected TransverseMercatorProjection(final Projection parameters, final boolean modified) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
@@ -470,7 +469,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransformProvider
+    static final class Provider extends MapProjection.Provider
     {
         /**
          * <code>true</code> for Modified Mercator Projection (MTM), or
@@ -494,21 +493,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Parameter[] parameters)
+        public MathTransform create(final Projection parameters)
         {return new TransverseMercatorProjection(parameters, modified);}
-
-        /**
-         * Returns the default parameters.
-         */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", SEMI_MAJOR),
-                new Parameter("semi_minor", SEMI_MINOR),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0)
-            };
-        }
     }
 }

@@ -66,7 +66,7 @@ public abstract class CoordinateTransform extends MathTransform
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = -5428884291871647867L; // TODO
+    private static final long serialVersionUID = -6765195667756471802L;
 
     /**
      * Construct a coordinate transformation.

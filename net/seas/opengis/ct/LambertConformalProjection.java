@@ -28,7 +28,6 @@ package net.seas.opengis.ct;
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Parameter;
 import net.seas.opengis.pt.Latitude;
 
 // Miscellaneous
@@ -65,15 +64,15 @@ final class LambertConformalProjection extends ConicProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected LambertConformalProjection(final Parameter[] parameters) throws MissingParameterException
+    protected LambertConformalProjection(final Projection parameters) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        final double defaultLatitude =       Parameter.getValue(parameters, "latitude_of_origin", 0);
-        final double phi1= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel1", defaultLatitude), true);
-        final double phi2= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel2", defaultLatitude), true);
+        final double defaultLatitude =       parameters.getValue("latitude_of_origin", 0);
+        final double phi1= latitudeToRadians(parameters.getValue("standard_parallel1", defaultLatitude), true);
+        final double phi2= latitudeToRadians(parameters.getValue("standard_parallel2", defaultLatitude), true);
 
         //////////////////////////
         //  Compute constants   //
@@ -260,34 +259,22 @@ final class LambertConformalProjection extends ConicProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransformProvider
+    static final class Provider extends MapProjection.Provider
     {
         /**
-         * Construct a new registration.
+         * Construct a new provider.
          */
         public Provider()
-        {super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);}
+        {
+            super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);
+            put("standard_parallel1",  0, LATITUDE_RANGE);
+            put("standard_parallel2",  0, LATITUDE_RANGE);
+        }
 
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Parameter[] parameters)
+        public MathTransform create(final Projection parameters)
         {return new LambertConformalProjection(parameters);}
-
-        /**
-         * Returns the default parameters.
-         */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", SEMI_MAJOR),
-                new Parameter("semi_minor", SEMI_MINOR),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0),
-                new Parameter("standard_parallel1",  0),
-                new Parameter("standard_parallel2",  0)
-            };
-        }
     }
 }

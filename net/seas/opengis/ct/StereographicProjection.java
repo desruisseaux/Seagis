@@ -28,7 +28,6 @@ package net.seas.opengis.ct;
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Parameter;
 import net.seas.opengis.pt.Latitude;
 
 // Miscellaneous
@@ -95,7 +94,7 @@ final class StereographicProjection extends PlanarProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected StereographicProjection(final Parameter[] parameters) throws MissingParameterException
+    protected StereographicProjection(final Projection parameters) throws MissingParameterException
     {this(parameters, true, true);}
 
     /**
@@ -107,14 +106,14 @@ final class StereographicProjection extends PlanarProjection
      *               can be selected automatically.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    private StereographicProjection(final Parameter[] parameters, final boolean polar, final boolean auto) throws MissingParameterException
+    private StereographicProjection(final Projection parameters, final boolean polar, final boolean auto) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        final double defaultLatitude = Parameter.getValue(parameters, "latitude_of_origin", polar ? 90 : 0);
-        final double latitudeTrueScale = Math.abs(latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale", defaultLatitude), true));
+        final double defaultLatitude = parameters.getValue("latitude_of_origin", polar ? 90 : 0);
+        final double latitudeTrueScale = Math.abs(latitudeToRadians(parameters.getValue("latitude_true_scale", defaultLatitude), true));
 
         //////////////////////////
         //  Compute constants   //
@@ -542,7 +541,7 @@ choice: switch (mode)
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransformProvider
+    static final class Provider extends MapProjection.Provider
     {
         /**
          * <code>true</code> for polar stereographic, or
@@ -558,13 +557,14 @@ choice: switch (mode)
         private final boolean auto;
 
         /**
-         * Construct a new registration. The type (polar, oblique
+         * Construct a new provider. The type (polar, oblique
          * or equatorial) will be choosen automatically according
          * the latitude or origin.
          */
         public Provider()
         {
             super("Stereographic", Clé.STEREOGRAPHIC);
+            put("latitude_true_scale", 90, LATITUDE_RANGE);
             polar = true;
             auto  = true;
         }
@@ -579,6 +579,7 @@ choice: switch (mode)
         public Provider(final boolean polar)
         {
             super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
+            put("latitude_true_scale", polar ? 90 : 0, LATITUDE_RANGE);
             this.polar = polar;
             this.auto  = false;
         }
@@ -586,23 +587,7 @@ choice: switch (mode)
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Parameter[] parameters)
+        public MathTransform create(final Projection parameters)
         {return new StereographicProjection(parameters, polar, auto);}
-
-        /**
-         * Returns the default parameters.
-         */
-        public Parameter[] getDefaultParameters()
-        {
-            final double defaultLatitude = polar ? 90 : 0;
-            return new Parameter[]
-            {
-                new Parameter("semi_major", SEMI_MAJOR),
-                new Parameter("semi_minor", SEMI_MINOR),
-                new Parameter("latitude_of_origin",   0),
-                new Parameter("central_meridian",    defaultLatitude),
-                new Parameter("latitude_true_scale", defaultLatitude)
-            };
-        }
     }
 }

@@ -49,7 +49,7 @@ public abstract class DatumType extends EnumeratedParameter
     /**
      * <code>serialVersionUID</code> for interoperability with previous versions.
      */
-    //private static final long serialVersionUID = 2123402922368772495L; // TODO
+    private static final long serialVersionUID = -3231606206426977300L;
 
     /**
      * These datums, such as ED50, NAD27 and NAD83, have been designed to

@@ -34,8 +34,12 @@ import net.seas.opengis.pt.Latitude;
 import net.seas.opengis.pt.Longitude;
 import net.seas.opengis.pt.CoordinatePoint;
 
-// Miscellaneous
+// Collections
 import java.util.Map;
+import java.util.Set;
+import java.util.Collections;
+
+// Miscellaneous
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -207,23 +211,16 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
-     * Gets the number of available conversions to WGS84 coordinates.
-     */
-    public int getNumConversionToWGS84()
-    {return 0;}
-
-    /**
-     * Gets details on a conversion to WGS84.
-     * Some geographic coordinate systems provide several transformations
-     * into WGS84, which are designed to provide good accuracy in different
-     * areas of interest.  The first conversion (with index=0) should
-     * provide acceptable accuracy over the largest possible area of
-     * interest.
+     * Gets details on conversions to WGS84. Some geographic coordinate systems
+     * provide several transformations into WGS84, which are designed to provide
+     * good accuracy in different areas of interest.  The first conversion should
+     * provide acceptable accuracy over the largest possible area of interest.
      *
-     * @param index Zero based index of conversion to fetch.
+     * @return A set of conversions info to WGS84. The default
+     *         implementation returns an empty set.
      */
-    public WGS84ConversionInfo getWGS84ConversionInfo(final int index)
-    {throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(index)));}
+    public Set<WGS84ConversionInfo> getWGS84ConversionInfos()
+    {return WGS84ConversionInfo.EMPTY_SET;}
 
     /**
      * Compares the specified object with
@@ -269,6 +266,12 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private final class Export extends HorizontalCoordinateSystem.Export implements CS_GeographicCoordinateSystem
     {
         /**
+         * Conversions infos. This array is constructed
+         * only the first time it is requested.
+         */
+        private transient WGS84ConversionInfo[] infos;
+
+        /**
          * Construct a remote object.
          */
         protected Export(final Object adapters)
@@ -290,12 +293,31 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          * Gets the number of available conversions to WGS84 coordinates.
          */
         public int getNumConversionToWGS84() throws RemoteException
-        {return GeographicCoordinateSystem.this.getNumConversionToWGS84();}
+        {
+            final WGS84ConversionInfo[] infos = getWGS84ConversionInfos();
+            return (infos!=null) ? infos.length : 0;
+        }
 
         /**
          * Gets details on a conversion to WGS84.
          */
         public CS_WGS84ConversionInfo getWGS84ConversionInfo(final int index) throws RemoteException
-        {return adapters.export(GeographicCoordinateSystem.this.getWGS84ConversionInfo(index));}
+        {
+            final WGS84ConversionInfo[] infos = getWGS84ConversionInfos();
+            return (infos!=null) ? adapters.export(infos[index]) : null;
+        }
+
+        /**
+         * Returns the set of conversions infos.
+         */
+        private synchronized WGS84ConversionInfo[] getWGS84ConversionInfos()
+        {
+            if (infos==null)
+            {
+                final Set<WGS84ConversionInfo> set = GeographicCoordinateSystem.this.getWGS84ConversionInfos();
+                if (set!=null) infos = set.toArray(new WGS84ConversionInfo[set.size()]);
+            }
+            return infos;
+        }
     }
 }

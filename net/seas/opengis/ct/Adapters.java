@@ -30,11 +30,15 @@ import org.opengis.ct.CT_MathTransform;
 import org.opengis.ct.CT_MathTransformFactory;
 import org.opengis.ct.CT_CoordinateTransformation;
 
-// OpenGIS (SEAGIS) dependencies
-import net.seas.opengis.cs.Parameter;
+// Parameters
+import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListImpl;
+import javax.media.jai.ParameterListDescriptor;
+import javax.media.jai.ParameterListDescriptorImpl;
 
-// Remote Method Invocation
+// Miscellaneous
 import java.rmi.RemoteException;
+import net.seas.util.XArray;
 
 
 /**
@@ -93,11 +97,34 @@ public class Adapters
     {return (factory!=null) ? (CT_MathTransformFactory)factory.toOpenGIS(this) : null;}
 
     /**
-     * Construct an OpenGIS structure from a named parameter.
-     * Changes to the returned structure will not affect the original parameter.
+     * Construct an array of OpenGIS structure from a parameter list.
      */
-    public CT_Parameter export(final Parameter parameter)
-    {return (parameter!=null) ? new CT_Parameter(parameter.name, parameter.value) : null;}
+    public CT_Parameter[] export(final ParameterList parameters)
+    {
+        if (parameters==null) return null;
+        final String[] names = parameters.getParameterListDescriptor().getParamNames();
+        final CT_Parameter[] param = new CT_Parameter[names!=null ? names.length : 0];
+        int count=0;
+        for (int i=0; i<param.length; i++)
+        {
+            final String name = names[i];
+            final Object value;
+            try
+            {
+                value = parameters.getObjectParameter(name);
+            }
+            catch (IllegalStateException exception)
+            {
+                // No value and no default. Ignore...
+                continue;
+            }
+            if (value instanceof Number)
+            {
+                param[count++] = new CT_Parameter(name, ((Number)value).doubleValue());
+            }
+        }
+        return XArray.resize(param, count);
+    }
 
     /**
      * Construct an OpenGIS enum from a transform type.
@@ -141,23 +168,33 @@ public class Adapters
     }
 
     /**
-     * Returns a parameter array for an OpenGIS structure array.
+     * Returns a parameter list for an array of OpenGIS structure.
      */
-    final Parameter[] wrap(final CT_Parameter[] parameters)
+    public ParameterList wrap(final CT_Parameter[] parameters)
     {
         if (parameters==null) return null;
-        final Parameter[] p=new Parameter[parameters.length];
+        int count=0;
+        String[] paramNames   = new String[parameters.length];
+        Class [] paramClasses = new Class [parameters.length];
         for (int i=0; i<parameters.length; i++)
-            p[i] = wrap(parameters[i]);
-        return p;
+        {
+            final CT_Parameter param = parameters[i];
+            if (param!=null)
+            {
+                paramNames  [count] = param.name;
+                paramClasses[count] = Double.class;
+                count++;
+            }
+        }
+        paramNames   = XArray.resize(paramNames,   count);
+        paramClasses = XArray.resize(paramClasses, count);
+        final ParameterList list = new ParameterListImpl(new ParameterListDescriptorImpl(null, paramNames, paramClasses, null, null));
+        for (int i=0; i<paramNames.length; i++)
+        {
+            list.setParameter(paramNames[i], parameters[i].value);
+        }
+        return list;
     }
-
-    /**
-     * Construct a named parameter from an OpenGIS structure.
-     * Changes to the returned parameter will not affect the original structure.
-     */
-    public Parameter wrap(final CT_Parameter parameter)
-    {return (parameter!=null) ? new Parameter(parameter.name, parameter.value) : null;}
 
     /**
      * Construct a transform type from an OpenGIS enum.

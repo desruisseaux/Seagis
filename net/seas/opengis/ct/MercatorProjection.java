@@ -28,7 +28,6 @@ package net.seas.opengis.ct;
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Parameter;
 import net.seas.opengis.pt.Latitude;
 
 // Miscellaneous
@@ -69,13 +68,13 @@ final class MercatorProjection extends CylindricalProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected MercatorProjection(final Parameter[] parameters) throws MissingParameterException
+    protected MercatorProjection(final Projection parameters) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        centralLatitude = latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), false);
+        centralLatitude = latitudeToRadians(parameters.getValue("latitude_of_origin", 0), false);
         final double latitudeTrueScale = Math.abs(centralLatitude);
 
         //////////////////////////
@@ -213,10 +212,10 @@ final class MercatorProjection extends CylindricalProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransformProvider
+    static final class Provider extends MapProjection.Provider
     {
         /**
-         * Construct a new registration.
+         * Construct a new provider.
          */
         public Provider()
         {super("Mercator_1SP", Clé.CYLINDRICAL_MERCATOR);}
@@ -224,21 +223,7 @@ final class MercatorProjection extends CylindricalProjection
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Parameter[] parameters)
+        public MathTransform create(final Projection parameters)
         {return new MercatorProjection(parameters);}
-
-        /**
-         * Returns the default parameters.
-         */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", SEMI_MAJOR),
-                new Parameter("semi_minor", SEMI_MINOR),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0)
-            };
-        }
     }
 }

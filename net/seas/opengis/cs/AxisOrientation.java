@@ -48,7 +48,7 @@ public final class AxisOrientation extends EnumeratedParameter
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = 6962768641608234346L; // TODO
+    private static final long serialVersionUID = 535984769497144121L;
 
     /**
      * Unknown or unspecified axis orientation.

@@ -27,7 +27,6 @@ package net.seas.opengis.ct;
 
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
-import net.seas.opengis.cs.Parameter;
 
 
 /**
@@ -53,6 +52,6 @@ abstract class CylindricalProjection extends MapProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected CylindricalProjection(final Parameter[] parameters) throws MissingParameterException
+    protected CylindricalProjection(final Projection parameters) throws MissingParameterException
     {super(parameters);}
 }

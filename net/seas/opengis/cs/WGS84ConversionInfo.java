@@ -26,6 +26,12 @@ package net.seas.opengis.cs;
 import java.io.Serializable;
 import net.seas.util.XClass;
 
+// Collections
+import java.util.Set;
+import java.util.Iterator;
+import java.util.AbstractSet;
+import java.util.NoSuchElementException;
+
 
 /**
  * Parameters for a geographic transformation into WGS84.
@@ -45,6 +51,11 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      * Serial number for interoperability with different versions.
      */
     private static final long serialVersionUID = -7104458538855128443L;
+
+    /**
+     * An empty, immutable, set of <code>WGS84ConversionInfo</code>.
+     */
+    public static final Set<WGS84ConversionInfo> EMPTY_SET = new EmptySet();
 
     /** Bursa Wolf shift in meters. */
     public double dx;
@@ -154,5 +165,28 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
         buffer.append(ppm);
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Class representing an empty set of {@link WGS84ConversionInfo}.
+     * This class may be removed if Java provide some factory methods
+     * for getting an empty set of a specific type.
+     */
+    private static final class EmptySet extends AbstractSet<WGS84ConversionInfo> implements Iterator<WGS84ConversionInfo>
+    {
+        public int size()
+        {return 0;}
+
+        public Iterator<WGS84ConversionInfo> iterator()
+        {return this;}
+
+        public boolean hasNext()
+        {return false;}
+
+        public WGS84ConversionInfo next()
+        {throw new NoSuchElementException();}
+
+        public void remove()
+        {throw new UnsupportedOperationException();}
     }
 }

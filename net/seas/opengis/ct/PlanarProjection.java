@@ -27,7 +27,6 @@ package net.seas.opengis.ct;
 
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
-import net.seas.opengis.cs.Parameter;
 
 
 /**
@@ -50,6 +49,6 @@ abstract class PlanarProjection extends MapProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected PlanarProjection(final Parameter[] parameters) throws MissingParameterException
+    protected PlanarProjection(final Projection parameters) throws MissingParameterException
     {super(parameters);}
 }

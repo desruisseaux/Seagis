@@ -30,15 +30,14 @@ import org.opengis.ct.CT_MathTransformFactory;
 
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
-import net.seas.opengis.cs.Parameter;
 
 // Miscellaneous
 import javax.units.Unit;
 import java.util.Locale;
 import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;
+import javax.media.jai.ParameterList;
 import java.util.NoSuchElementException;
-import java.rmi.RemoteException;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
@@ -115,16 +114,10 @@ public class MathTransformFactory
     private final MathTransformProvider[] providers;
 
     /**
-     * Create a default factory.
-     */
-    public MathTransformFactory()
-    {providers = new MathTransformProvider[0];}
-
-    /**
      * Construct a factory using the specified providers.
      */
-    private MathTransformFactory(final MathTransformProvider[] providers)
-    {this.providers = providers;}
+    public MathTransformFactory(final MathTransformProvider[] providers)
+    {this.providers = (MathTransformProvider[]) providers.clone();}
 
     /**
      * Creates an affine transform from a matrix.
@@ -165,7 +158,7 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no transform for the specified classification.
      * @throws MissingParameterException if a parameter was required but not found.
      */
-    public MathTransform createParameterizedTransform(final String classification, final Parameter[] parameters) throws NoSuchElementException, MissingParameterException
+    public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
     {return getProvider(classification).create(parameters);}
 
     /**
@@ -177,12 +170,7 @@ public class MathTransformFactory
      * @throws MissingParameterException if a parameter was required but not found.
      */
     public MathTransform createParameterizedTransform(final Projection projection) throws NoSuchElementException, MissingParameterException
-    {
-        final Parameter[] parameters = new Parameter[projection.getNumParameters()];
-        for (int i=0; i<parameters.length; i++)
-            parameters[i] = projection.getParameter(i);
-        return createParameterizedTransform(projection.getClassName(), parameters);
-    }
+    {return createParameterizedTransform(projection.getClassName(), projection.getParameters());}
 
     /**
      * Returns the classification names of every available transforms.
@@ -192,7 +180,7 @@ public class MathTransformFactory
     {
         final String[] names = new String[providers.length];
         for (int i=0; i<names.length; i++)
-            names[i] = providers[i].classification;
+            names[i] = providers[i].getClassName();
         return names;
     }
 
@@ -213,9 +201,9 @@ public class MathTransformFactory
     {return getProvider(classification).getName(locale);}
 
     /**
-     * Get the default parameters from a classification name. The
+     * Get the parameter list from a classification name. The
      * client may change any of those parameters and submit them
-     * to {@link #createParameterizedTransform(String,Parameter[])}.
+     * to {@link #createParameterizedTransform(String,ParameterList)}.
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
@@ -224,8 +212,8 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no transform for the
      *         specified classification.
      */
-    public Parameter[] getDefaultParameters(final String classification) throws NoSuchElementException
-    {return getProvider(classification).getDefaultParameters();}
+    public ParameterList getParameterList(final String classification) throws NoSuchElementException
+    {return getProvider(classification).getParameterList();}
 
     /**
      * Returns the provider for the specified classification.
@@ -241,7 +229,7 @@ public class MathTransformFactory
     {
         classification = classification.trim();
         for (int i=0; i<providers.length; i++)
-            if (classification.equalsIgnoreCase(providers[i].classification))
+            if (classification.equalsIgnoreCase(providers[i].getClassName().trim()))
                 return providers[i];
         throw new NoSuchElementException(Resources.format(Clé.NO_TRANSFORM_FOR_CLASSIFICATION¤1, classification));
     }

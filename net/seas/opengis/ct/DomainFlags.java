@@ -50,7 +50,7 @@ public final class DomainFlags extends EnumeratedParameter
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = 5585150830410796130L; // TODO
+    private static final long serialVersionUID = 579583745178828392L;
 
     /**
      * Domain flags by value. Used to

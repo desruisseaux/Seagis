@@ -50,6 +50,7 @@ import org.opengis.cs.CS_WGS84ConversionInfo;
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.WeakHashSet;
+import javax.media.jai.ParameterList;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
@@ -199,7 +200,7 @@ public class CoordinateSystemFactory
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    public Projection createProjection(final String name, final String classification, final Parameter[] parameters)
+    public Projection createProjection(final String name, final String classification, final ParameterList parameters)
     {return (Projection) pool.intern(new Projection(name, classification, parameters));}
 
     /**

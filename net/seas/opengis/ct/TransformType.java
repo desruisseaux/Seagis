@@ -45,7 +45,7 @@ public final class TransformType extends EnumeratedParameter
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = -1187157188547650512L; // TODO
+    private static final long serialVersionUID = -4024711027359151152L;
 
     /**
      * Unknown or unspecified type of transform.

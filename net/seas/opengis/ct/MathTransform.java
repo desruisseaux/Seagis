@@ -81,7 +81,7 @@ public abstract class MathTransform extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -8343162886432673368L;
 
     /**
      * OpenGIS object returned by {@link #cachedOpenGIS}.

@@ -51,7 +51,7 @@ final class CoordinateTransformProxy extends CoordinateTransform
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = -5428884291871647867L; // TODO
+    private static final long serialVersionUID = -7130168630676058705L;
 
     /**
      * The transform type.

@@ -34,7 +34,6 @@ import net.seas.opengis.cs.ProjectedCoordinateSystem;
 import net.seas.opengis.cs.GeographicCoordinateSystem;
 import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Parameter;
 
 // Geometry
 import java.awt.Shape;
@@ -47,6 +46,7 @@ import net.seas.util.XMath;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.text.CoordinateFormat;
+import javax.media.jai.ParameterList;
 
 
 /**
@@ -194,13 +194,13 @@ abstract class MapProjection extends CoordinateTransform
      *         </ul>
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected MapProjection(final Parameter[] parameters) throws MissingParameterException
+    protected MapProjection(final Projection parameters) throws MissingParameterException
     {
-        super("MapProjection");
-        this.a                =                    Parameter.getValue(parameters, "semi_major");
-        this.b                =                    Parameter.getValue(parameters, "semi_minor");
-        this.centralLongitude = longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true);
-        this.centralLatitude  =  latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true);
+        super(parameters.getClassName());
+        this.a                =                    parameters.getValue("semi_major");
+        this.b                =                    parameters.getValue("semi_minor");
+        this.centralLongitude = longitudeToRadians(parameters.getValue("central_meridian",   0), true);
+        this.centralLatitude  =  latitudeToRadians(parameters.getValue("latitude_of_origin", 0), true);
         this.isSpherical      = (a==b);
         this.es = 1.0 - (b*b)/(a*a);
         this.e  = Math.sqrt(es);
@@ -798,5 +798,35 @@ abstract class MapProjection extends CoordinateTransform
 
         public void transform(final float[] source, final int srcOffset, final float[] dest, final int dstOffset, final int length) throws TransformException
         {MapProjection.this.inverseTransform(source, srcOffset, dest, dstOffset, length);}
+    }
+
+    /**
+     * Informations about a {@link MapProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static abstract class Provider extends MathTransformProvider
+    {
+        /**
+         * Construct a new provider.
+         *
+         * @param classification The classification name.
+         * @param nameKey Resources key for a human readable name.
+         *        This is used for {@link #getName} implementation.
+         */
+        protected Provider(final String classname, final int nameKey)
+        {super("Mercator_1SP", nameKey, DEFAULT_PROJECTION_DESCRIPTOR);}
+
+        /**
+         * Create a new map projection for a parameter list.
+         */
+        public final MathTransform create(final ParameterList parameters)
+        {return create(new Projection("Generated", getClassName(), parameters));}
+
+        /**
+         * Create a new map projection.
+         */
+        public abstract MathTransform create(final Projection parameters);
     }
 }
