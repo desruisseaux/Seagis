@@ -380,7 +380,7 @@ public class Coverage3D extends Coverage {
      */
     public Range getTimeRange() {
         return new Range(Date.class, temporalCS.toDate(envelope.getMinimum(temporalDimension)),
-                                     temporalCS.toDate(envelope.getMinimum(temporalDimension)));
+                                     temporalCS.toDate(envelope.getMaximum(temporalDimension)));
     }
 
     /**
@@ -679,10 +679,9 @@ public class Coverage3D extends Coverage {
             final GridCoverageProcessor processor = getGridCoverageProcessor();
             final Operation operation = processor.getOperation("Combine");
             final ParameterList param = operation.getParameterList();
-            param.setParameter("source0",  lower);
-            param.setParameter("source1",  upper);
-            param.setParameter("weights0", new double[]{1-ratio});
-            param.setParameter("weights1", new double[]{  ratio});
+            param.setParameter("source0", lower);
+            param.setParameter("source1", upper);
+            param.setParameter("matrix", new double[][]{{1-ratio, ratio}});
             interpolated = processor.doOperation(operation, param);
             timeInterpolated = timeMillis; // Set only if previous line has been successfull.
             return interpolated;

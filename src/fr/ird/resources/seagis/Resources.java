@@ -43,10 +43,12 @@ public class Resources extends ResourceBundle {
      * in user language.
      */
     public Resources() {
-        super(// Set 'true' in front of language to use as default.
-              false ? Resources_fr.FILEPATH :
-               true ? Resources_en.FILEPATH :
-               null);
+        super(Resources_fr.FILEPATH);
+        
+//      super(// Set 'true' in front of language to use as default.
+//            false ? Resources_fr.FILEPATH :
+//             true ? Resources_en.FILEPATH :
+//             null);
     }
 
     /**

@@ -113,6 +113,5 @@ public interface OperationEntry extends Entry {
             return object!=null && object.getClass().equals(getClass()) &&
                    parent.equals(((Proxy)object).parent);
         }
-
     }
 }
