@@ -574,6 +574,10 @@ final class ImageEntryImpl implements ImageEntry, Serializable
                                 new Envelope(min, max), bands, null,
                                 Collections.singletonMap(SOURCE_KEY, this));
         /*
+         * Retourne toujours la version "géophysique" de l'image.
+         */
+        coverage = coverage.geophysics(true);
+        /*
          * Si l'utilisateur a spécifié une operation à appliquer
          * sur les images, applique cette opération maintenant.
          */

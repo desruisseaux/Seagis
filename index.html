@@ -64,7 +64,7 @@ incorporated into the Communicator code base?</A>).</FONT></P>
 <H2><A NAME="Requirements">Requirements</A></H2>
 <P ALIGN="justify">The SEAGIS download requires the following software:</P>
 <UL>
-    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.3 or later</A> (1.4 recommended).</LI>
+    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.4 or later</A>.</LI>
     <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging 1.1</A> or later.</LI>
     <LI>The <CODE>vecmath</CODE> package from <A HREF="http://java.sun.com/products/java-media/3D/">Java3D</A>.<BR>
         In our understanding of <A HREF="http://jcp.org/jsr/detail/148.jsp">JSR-148 (3D Media Utilities)</A>,
@@ -96,6 +96,11 @@ web site</A>, in that most methods are declared to throw <code>RemoteException</
 This detail seems to have been forgotten in the original OpenGIS's interfaces,
 but we don't know if and when it will be fixed.</P>
 
+<P ALIGN="justify"><STRONG>Note that Seagis's development has moved to
+<A HREF="http://www.geotools.org">Geotools 2</A>.</STRONG> The current
+Seagis download is just a snapshot of CTS, GCS, GUI and Resources modules
+from Geotools 2.</P>
+
 
 <TABLE ALIGN="center" BORDER="3" CELLPADDING="6" BGCOLOR="F4F8FF" WIDTH="90%">
   <TR ALIGN="center">
@@ -107,23 +112,64 @@ but we don't know if and when it will be fixed.</P>
   <TR ALIGN="center" BGCOLOR="#B9DCFF">
     <TD nowrap>SEAGIS implementation</TD>
     <TD nowrap><A HREF="javadoc/seagis">Browse JavaDoc</A></TD>
-    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/seagis/net/seagis">Browse CVS</A></TD>
-    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=92642">Download sources and binaries</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/geotools/geotools2/geotools-src/">Browse CVS</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=103123">Download sources and binaries</A></TD>
   </TR>
   <TR ALIGN="center">
     <TD nowrap>Experimental package</TD>
     <TD nowrap><A HREF="javadoc/seas">Browse JavaDoc</A></TD>
     <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/experimental">Browse CVS</A></TD>
-    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=92720">Download sources and binaries</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=103126">Download sources and binaries</A></TD>
   </TR>
 </TABLE>
 
-<P ALIGN="justify">Current version is alpha-0.5.2. Changes since last version include mostly bug fixes,
-and an improved "GradientMagnitude" operation for <CODE>GridCoverageProcessor</CODE>. <strong>This is
-the last release in the <code>net.seagis.*</code> package namespace.</strong>. This project is being
-merged with <A HREF="http://geotools.sourceforge.net">Geotools 2</A>. The next release (0.6) will use
-<code>org.geotools.*</code> package name. Please note that Geotools 2 is not the currently downloadable
-Geotools library. Geotools 2 is a new version redesigned from the ground and still in active development.</P>
+<P ALIGN="justify">Current version is alpha-0.6. Changes since last version include
+the following:</P>
+
+<UL>
+  <LI>Orthodromic distance computation has been improved. The old
+      implementation used an approximation for spherical earth. New
+      implementation use an ellipsoidal model. This a port from Fortran
+      to Java of the code found at
+
+      ftp://ftp.ngs.noaa.gov/pub/pcsoft/for_inv.3d/source/inverse.for.</LI>
+
+  <LI>Special optimizations has been added for MathTransform in 1D case,
+      since the new API in GCS depends heavily on it.</LI>
+
+  <LI>A "Logarithmic" transform has been added. This is needed by GCS, since
+      SeaWiFS images (ocean color) from eosdata.gsfc.nasa.gov use a
+      logarithmic transform.</LI>
+
+  <LI>A first draft of EPSG factory (for Coordinate Systems).</LI>
+
+  <LI>The helper class <CODE>CategoryList</CODE> is no longer public.
+      Its functionalities has been moved into <CODE>SampleDimension</CODE>.</LI>
+
+  <LI>According OpenGIS specification, the <CODE>SampleDimension</CODE> class
+      has two attributes ("scale" and "offset") which allow transforming sample
+      values (usually integers) into geophysics values (for example height
+      in meters) using a linear relation (<CODE>height = offset + scale*sample</CODE>).
+      This is not enough in some cases; for example SeaWiFS images use a
+      logarithmic transformation. In the old GCS API, using a non-linear
+      relation required subclassing Category class and overriding <CODE>toSample</CODE>
+      and <CODE>toGeophysics</CODE> methods. In the new API, methods <CODE>toSample</CODE> and
+      <CODE>toGeophysics</CODE> don't exist anymore. The user can construct categories
+      with arbitrary <CODE>MathTransform1D</CODE> objects instead.</LI>
+
+  <LI>In the old API, some methods expected a boolean argument (e.g.
+      <CODE>Category.getRange(boolean)</CODE>, <CODE>GridCoverage.getRenderedImage(boolean)</CODE>).
+      In the new API, the boolean argument don't exists anymore. A single
+      method, <CODE>geophysics(boolean)</CODE>, returns a "geophysics" view of an object
+      instead. This solution simplify the API (remove the boolean argument
+      from many methods) and is more general.</LI>
+
+  <LI>Methods like <CODE>toGeophysics(RenderedImage, ...)</CODE> has been removed.
+      Instead, a "<CODE>GC_SampleTranscoding</CODE>" operation has been registered
+      through the normal JAI operations registry. This operation is used
+      internally for transcoding an image from sample values to geophysics
+      values (e.g. height in meters) and conversely.</LI>
+</UL>
 
 <P>&nbsp;</P>
 <HR>

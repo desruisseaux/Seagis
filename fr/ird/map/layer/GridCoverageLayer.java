@@ -175,7 +175,7 @@ public class GridCoverageLayer extends Layer
         CoordinateSystem sourceCS;
         if (projectedCoverage==null)
         {
-            projectedCoverage = coverage;
+            projectedCoverage = coverage.geophysics(false);
         }
         sourceCS = projectedCoverage.getCoordinateSystem();
         sourceCS = CTSUtilities.getCoordinateSystem2D(sourceCS);
@@ -183,7 +183,8 @@ public class GridCoverageLayer extends Layer
         if (!sourceCS.equivalents(targetCS))
         {
             final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
-            projectedCoverage = processor.doOperation("Resample", coverage, "CoordinateSystem", targetCS);
+            projectedCoverage = processor.doOperation("Resample", coverage.geophysics(false),
+                                                      "CoordinateSystem", targetCS);
         }
         return projectedCoverage;
     }
@@ -201,7 +202,7 @@ public class GridCoverageLayer extends Layer
         if (area!=null && !area.isEmpty())
         {
             final GridCoverage coverage = getCoverage(mapPanel.getCoordinateSystem());
-            if (coverage!=null)
+            if (coverage != null)
             {
                 coverage.prefetch(area);
             }
@@ -220,7 +221,7 @@ public class GridCoverageLayer extends Layer
     protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
         final GridCoverage coverage = getCoverage(context.getViewCoordinateSystem());
-        if (coverage!=null)
+        if (coverage != null)
         {
             final MathTransform2D mathTransform = coverage.getGridGeometry().getGridToCoordinateSystem2D();
             if (!(mathTransform instanceof AffineTransform)) {
@@ -248,7 +249,7 @@ public class GridCoverageLayer extends Layer
      */
     protected synchronized boolean getLabel(final GeoMouseEvent event, final StringBuffer toAppendTo)
     {
-        if (coverage==null)
+        if (coverage == null)
         {
             return false;
         }

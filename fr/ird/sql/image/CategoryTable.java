@@ -134,8 +134,8 @@ final class CategoryTable extends Table
             final String    name = result.getString (NAME).intern();
             final int      lower = result.getInt    (LOWER);
             final int      upper = result.getInt    (UPPER);
-            final float       c0 = result.getFloat  (C0); isQuantifiable &= !result.wasNull();
-            final float       c1 = result.getFloat  (C1); isQuantifiable &= !result.wasNull();
+            final double      c0 = result.getDouble (C0); isQuantifiable &= !result.wasNull();
+            final double      c1 = result.getDouble (C1); isQuantifiable &= !result.wasNull();
             final boolean    log = result.getBoolean(LOG);
             final String colorID = result.getString (COLORS);
             /*
@@ -168,7 +168,7 @@ final class CategoryTable extends Table
             }
             else
             {
-                category = new Category(name, colors, range, c0, c1);
+                category = new Category(name, colors, range, c1, c0);
                 if (log)
                 {
                     final MathTransformFactory factory = MathTransformFactory.getDefault();
