@@ -64,6 +64,7 @@ import org.geotools.ct.TransformException;
 import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.GeoMouseEvent;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis
 import fr.ird.animat.Species;
@@ -209,6 +210,7 @@ public class SampleLayer extends RenderedMarks {
      * Construct an initially empty layer.
      */
     public SampleLayer() {
+        super(GeographicCoordinateSystem.WGS84);
         this.samples = (List)Collections.EMPTY_LIST;
         this.icons   = new HashMap<Species,Species.Icon>();
     }
@@ -229,14 +231,7 @@ public class SampleLayer extends RenderedMarks {
      * @param  cs The layer coordinate system.
      */
     public SampleLayer(final SampleLayer layer, final CoordinateSystem cs) {
-        try {
-            setCoordinateSystem(cs);
-        } catch (TransformException exception) {
-            // Should not happen, since we don't have any data yet.
-            IllegalStateException e = new IllegalStateException(exception.getLocalizedMessage());
-            e.initCause(exception);
-            throw e;
-        }
+        super(cs);
         this.samples          = layer.samples;
         this.colors           = layer.colors;
         this.icons            = layer.icons;

@@ -58,6 +58,7 @@ import java.util.logging.LogRecord;
 
 // Geotools dependencies
 import org.geotools.ct.TransformException;
+import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.renderer.j2d.MarkIterator;
@@ -175,6 +176,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * @param  manager Objet à utiliser pour redessiner les cartes.
      */
     public PopulationLayer(final Population population) throws RemoteException {
+        super(GeographicCoordinateSystem.WGS84);
         this.population = population;
         refresh(population);
         listener = new Listener();

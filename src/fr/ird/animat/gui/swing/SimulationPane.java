@@ -105,8 +105,8 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
         mapPane.setPaintingWhileAdjusting(true);
         environmentLayer = new EnvironmentLayer(environment);
         final Renderer renderer = mapPane.getRenderer();
-        renderer.addLayer(new RenderedMapScale());
         renderer.addLayer(environmentLayer);
+        renderer.addLayer(new RenderedMapScale());
         /*
          * Ajoute toutes les populations.
          */

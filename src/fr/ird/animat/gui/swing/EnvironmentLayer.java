@@ -154,6 +154,11 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
      */
     public EnvironmentLayer(final Environment environment) throws RemoteException {
         super(null);
+        try {
+            setCoordinateSystem(GeographicCoordinateSystem.WGS84);
+        } catch (TransformException exception) {
+            throw new AssertionError(exception); // Should not happen
+        }
         this.environment = environment;
         final Iterator<+Parameter> parameters = environment.getParameters().iterator();
         if (parameters.hasNext()) {
