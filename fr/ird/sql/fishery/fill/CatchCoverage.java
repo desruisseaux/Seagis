@@ -21,7 +21,7 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package fr.ird.sql.coupling;
+package fr.ird.sql.fishery.fill;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
@@ -55,8 +55,7 @@ import fr.ird.operator.coverage.ParameterValue;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class CatchCoverage extends Coverage3D
-{
+final class CatchCoverage extends Coverage3D {
     /**
      * La durée d'une journée, en nombre de millisecondes.
      */
@@ -78,8 +77,7 @@ public class CatchCoverage extends Coverage3D
      * @param  table Table d'où proviennent les données.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CatchCoverage(final ImageTable table) throws SQLException
-    {
+    public CatchCoverage(final ImageTable table) throws SQLException {
         super(table);
     }
 
@@ -89,19 +87,16 @@ public class CatchCoverage extends Coverage3D
      * à utiliser sont déterminées à partir des coordonnées et de la date de
      * la capture.
      */
-    public synchronized double[] evaluate(final CatchEntry capture, final Evaluator evaluator)
-    {
+    public synchronized double[] evaluate(final CatchEntry capture, final Evaluator evaluator) {
         final GridCoverage coverage = getGridCoverage2D(getTime(capture));
-        if (coverage == null)
-        {
+        if (coverage == null) {
             final double[] result = new double[getNumSampleDimensions()];
             Arrays.fill(result, Double.NaN);
             return result;
         }
         final ParameterValue[] values = evaluator.evaluate(coverage, getShape(capture));
         final double[] result = new double[values.length];
-        for (int i=0; i<values.length; i++)
-        {
+        for (int i=0; i<values.length; i++) {
             final ParameterValue value = values[i];
             result[i] = (value!=null) ? value.getValue() : Double.NaN;
         }
@@ -118,8 +113,7 @@ public class CatchCoverage extends Coverage3D
      * @param  capture Capture pour laquelle évaluer les paramètres environnementaux.
      * @return Région géographique à prendre en compte pour cette capture.
      */
-    protected Shape getShape(final CatchEntry capture)
-    {
+    protected Shape getShape(final CatchEntry capture) {
         final Point2D coord = capture.getCoordinate();
         return new Ellipse2D.Double(coord.getX()-semiX, coord.getY()-semiY, 2*semiX, 2*semiY);
     }
@@ -131,11 +125,9 @@ public class CatchCoverage extends Coverage3D
      * façon à coller à celle des données satellitaires disponibles (et éviter ainsi des
      * interpolations si une image est disponible le jour de la pêche).
      */
-    protected Date getTime(final CatchEntry capture)
-    {
+    protected Date getTime(final CatchEntry capture) {
         final Date time = capture.getTime();
-        if (true)
-        {
+        if (true) {
             /*
              * Change l'heure à laquelle on interpollera de façon à être celle de l'image
              * la plus proche, tout en restant dans les 24 heures qui suivent la pêche.
@@ -147,8 +139,7 @@ public class CatchCoverage extends Coverage3D
             snap(null, time);
             final long imageTime = time.getTime();
             dt -= imageTime;
-            if (dt>=0)
-            {
+            if (dt >= 0) {
                 dt += (DAY-1); // Force round to +infinity
             }
             time.setTime(imageTime + (dt/DAY)*DAY);

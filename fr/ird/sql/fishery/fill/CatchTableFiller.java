@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.sql.coupling;
+package fr.ird.sql.fishery.fill;
 
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
@@ -60,8 +60,7 @@ import org.geotools.resources.Geometry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class CatchTableFiller
-{
+public final class CatchTableFiller {
     /**
      * Connexion avec la base de données des pêches.
      */
@@ -73,14 +72,14 @@ public final class CatchTableFiller
      */
     private final Ellipsoid ellipsoid = Ellipsoid.WGS84;
 
-
     /**
      * Construit un objet <code>CatchTableFiller</code> par défaut.
      *
      * @throws SQLException si la connection avec la base de données a échouée.
      */
-    public CatchTableFiller() throws SQLException
-    {database = new FisheryDataBase();}
+    public CatchTableFiller() throws SQLException {
+        database = new FisheryDataBase();
+    }
 
     /**
      * Calcule la distance orthodromique entre le début et la fin de la ligne de pêche.
@@ -92,20 +91,16 @@ public final class CatchTableFiller
      * @throws SQLException si une erreur est survenue
      *         lors d'un accès à la base de données.
      */
-    public void computeAnchorDistances(final String columnName) throws SQLException
-    {
+    public void computeAnchorDistances(final String columnName) throws SQLException {
         final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
         final int               count = catchs.size();
-        for (int i=0; i<count; i++)
-        {
+        for (int i=0; i<count; i++) {
             final CatchEntry capture = catchs.get(i);
             final Line2D        line = (Line2D) capture.getShape();
-            if (line!=null)
-            {
+            if (line != null) {
                 final double distance = ellipsoid.orthodromicDistance(line.getX1(), line.getY1(), line.getX2(), line.getY2());
-                if (!Double.isInfinite(distance) && !Double.isNaN(distance))
-                {
+                if (!Double.isInfinite(distance) && !Double.isNaN(distance)) {
                     table.setValue(capture, columnName, (float)(distance/1000)); // TODO: units
                 }
             }
@@ -125,32 +120,26 @@ public final class CatchTableFiller
      * @throws SQLException si une erreur est survenue
      *         lors d'un accès à la base de données.
      */
-    public void computeInterCatchDistances(final long maxTimeLag, final String columnName) throws SQLException
-    {
+    public void computeInterCatchDistances(final long maxTimeLag, final String columnName) throws SQLException {
         final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
 
         // TODO: Classer par date de début.
         final int count = catchs.size();
-        for (int i=0; i<count; i++)
-        {
+        for (int i=0; i<count; i++) {
             final CatchEntry capture = catchs.get(i);
             final long          time = capture.getTime().getTime();
             final Point2D      coord = capture.getCoordinate();
             double  smallestDistance = Double.POSITIVE_INFINITY;
             int scanDirection = -1;
-            do // Run this loop exactly 2 times.
-            {
-                for (int j=i; (j+=scanDirection)>=0 && j<count;)
-                {
+            do { // Run this loop exactly 2 times.
+                for (int j=i; (j+=scanDirection)>=0 && j<count;) {
                     final CatchEntry candidate = catchs.get(j);
-                    if (Math.abs(time - candidate.getTime().getTime()) > maxTimeLag)
-                    {
+                    if (Math.abs(time - candidate.getTime().getTime()) > maxTimeLag) {
                         break;
                     }
                     final double distance = ellipsoid.orthodromicDistance(coord, candidate.getCoordinate());
-                    if (distance < smallestDistance)
-                    {
+                    if (distance < smallestDistance) {
                         smallestDistance = distance;
                     }
                 }
@@ -159,8 +148,7 @@ public final class CatchTableFiller
             /*
              * Ecrit le résultat dans la base de données.
              */
-            if (!Double.isInfinite(smallestDistance) && !Double.isNaN(smallestDistance))
-            {
+            if (!Double.isInfinite(smallestDistance) && !Double.isNaN(smallestDistance)) {
                 table.setValue(capture, columnName, (float)(smallestDistance/1000)); // TODO: units
             }
         }
@@ -178,18 +166,15 @@ public final class CatchTableFiller
      * @throws SQLException si une erreur est survenue
      *         lors d'un accès à la base de données.
      */
-    public void computeCoastDistances(final Shape coast, final String columnName) throws SQLException
-    {
+    public void computeCoastDistances(final Shape coast, final String columnName) throws SQLException {
         final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
         final int               count = catchs.size();
-        for (int i=0; i<count; i++)
-        {
+        for (int i=0; i<count; i++) {
             final CatchEntry capture = catchs.get(i);
             final Point2D coordinate = capture.getCoordinate();
             final double    distance = computeCoastDistances(coast, coordinate.getX(), coordinate.getY());
-            if (!Double.isInfinite(distance) && !Double.isNaN(distance))
-            {
+            if (!Double.isInfinite(distance) && !Double.isNaN(distance)) {
                 table.setValue(capture, columnName, (float)(distance/1000)); // TODO: units
             }
         }
@@ -206,8 +191,7 @@ public final class CatchTableFiller
      * @param  y Coordonnée <var>y</var> du point dont on veut la distance à la côte.
      * @return Distance la plus courte.
      */
-    private double computeCoastDistances(final Shape coast, final double px, final double py)
-    {
+    private double computeCoastDistances(final Shape coast, final double px, final double py) {
         final double[]    coords = new double[6];
         final Rectangle2D bounds = coast.getBounds2D();
         final PathIterator  iter = coast.getPathIterator(null, 0.001*(bounds.getWidth()+bounds.getHeight()));
@@ -218,24 +202,19 @@ public final class CatchTableFiller
         double y1=Double.NaN;
         double x2=Double.NaN;
         double y2=Double.NaN;
-        for (; !iter.isDone(); iter.next())
-        {
-            switch (iter.currentSegment(coords))
-            {
-                case PathIterator.SEG_MOVETO:
-                {
+        for (; !iter.isDone(); iter.next()) {
+            switch (iter.currentSegment(coords)) {
+                case PathIterator.SEG_MOVETO: {
                     x2 = x0 = coords[0];
                     y2 = y0 = coords[1];
                     continue;
                 }
-                case PathIterator.SEG_LINETO:
-                {
+                case PathIterator.SEG_LINETO: {
                     x1=x2; x2=coords[0];
                     y1=y2; y2=coords[0];
                     break;
                 }
-                case PathIterator.SEG_CLOSE:
-                {
+                case PathIterator.SEG_CLOSE: {
                     x1=x2; x2=x0;
                     y1=y2; y2=y0;
                     break;
@@ -247,7 +226,9 @@ public final class CatchTableFiller
             // still okay if <code>coast</code> is build of many small segments.
             final Point2D point = Geometry.nearestColinearPoint(x1, y1, x2, y2, px, py);
             final double distance = ellipsoid.orthodromicDistance(point.getX(), point.getY(), px, py);
-            if (distance<smallestDistance) smallestDistance=distance;
+            if (distance<smallestDistance) {
+                smallestDistance=distance;
+            }
         }
         return Double.isInfinite(smallestDistance) ? Double.NaN : smallestDistance;
     }
@@ -258,8 +239,9 @@ public final class CatchTableFiller
      * @throws SQLException si un problème est survenu
      *         lors de la fermeture des connections.
      */
-    public void close() throws SQLException
-    {database.close();}
+    public void close() throws SQLException {
+        database.close();
+    }
 
     /**
      * Lance le calcul des distances les plus courtes
@@ -270,8 +252,7 @@ public final class CatchTableFiller
      * @throws IOException si une erreur est survenue lors
      *         de la lecture de la bathymétrie.
      */
-    public static void main(final String[] args) throws SQLException, IOException
-    {
+    public static void main(final String[] args) throws SQLException, IOException {
         final GEBCOReader reader = new GEBCOReader();
         reader.setInput(new File("compilerData/Océan Indien.asc"));
         final Isoline           coast = reader.read(0);

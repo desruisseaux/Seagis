@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.sql.coupling;
+package fr.ird.sql.fishery.fill;
 
 // Géométrie
 import java.awt.geom.Line2D;

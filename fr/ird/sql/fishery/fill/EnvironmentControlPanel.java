@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.sql.coupling;
+package fr.ird.sql.fishery.fill;
 
 // J2SE
 import java.awt.*;

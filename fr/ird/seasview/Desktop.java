@@ -28,8 +28,8 @@ package fr.ird.seasview;
 // Base de données
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.coupling.EnvironmentTableFiller;
-import fr.ird.sql.coupling.EnvironmentControlPanel;
+import fr.ird.sql.fishery.fill.EnvironmentTableFiller;
+import fr.ird.sql.fishery.fill.EnvironmentControlPanel;
 import java.sql.SQLException;
 
 // Interface utilisateur
