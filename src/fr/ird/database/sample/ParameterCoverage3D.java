@@ -27,16 +27,22 @@ package fr.ird.database.sample;
 
 // J2SE
 import java.util.Map;
+import java.util.Set;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.Collection;
 import java.util.Collections;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.DateFormat;
+import java.io.IOException;
 import java.awt.Color;
 
 // JAI
+import javax.media.jai.JAI;
 import javax.media.jai.ParameterList;
 
 // Geotools
@@ -48,15 +54,20 @@ import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
-import org.geotools.gp.CannotReprojectException;
+import org.geotools.gc.GridCoverage;
 import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gp.CannotReprojectException;
+import org.geotools.gui.swing.FrameFactory;
+import org.geotools.resources.MonolineFormatter;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.Arguments;
 import org.geotools.util.NumberRange;
 
 // Seagis
 import fr.ird.database.DataBase;
 import fr.ird.database.Coverage3D;
 import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.resources.seagis.ResourceKeys;
@@ -208,7 +219,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *
      * @see #dispose
      */
-    private DataBase database;
+    private CoverageDataBase database;
 
     /**
      * La table des images, ou <code>null</code> si cet objet <code>ParameterCoverage3D</code>
@@ -253,6 +264,14 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     private SampleDimension sampleDimension;
 
     /**
+     * L'envelope de cette couverture. Ne sera calculée que la première fois où elle
+     * sera demandée.
+     *
+     * @see #getEnvelope
+     */
+    private Envelope envelope;
+
+    /**
      * Le processeur à utiliser pour appliquer des opérations sur des images.
      */
     private final GridCoverageProcessor processor =
@@ -277,7 +296,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * @throws SQLException si la connexion à la base de données a échouée.
      */
     private ParameterCoverage3D(final CoverageDataBase database) throws SQLException {
-        this(database.getCoverageTable(), null);
+        this(database.getCoverageTable());
         coverageTable.setOperation("NodataFilter");
         this.database = database;
     }
@@ -291,7 +310,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *         l'utilisateur de fermer cette table lorsque cet objet ne sera plus utilisé.
      * @throws SQLException si la connexion à la base de données a échouée.
      */
-    public ParameterCoverage3D(final CoverageTable coverages)throws SQLException {
+    public ParameterCoverage3D(final CoverageTable coverages) throws SQLException {
         this(coverages, coverages.getCoordinateSystem());
     }
 
@@ -379,6 +398,45 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     }
 
     /**
+     * Retourne l'ensemble des paramètres disponibles. Cette méthode n'est disponible que si
+     * cet objet <code>ParameterCoverage3D</code> a été contruit avec le constructeur sans
+     * argument. Elle utilisera un objet {@link SampleDataBase} temporaire.
+     */
+    final Set<+ParameterEntry> getParameters() throws SQLException {
+        final SampleDataBase database = new fr.ird.database.sample.sql.SampleDataBase();
+        final SeriesTable    series   = this.database.getSeriesTable();
+        try {
+            return database.getParameters(series);
+        } finally {
+            series.close();
+            database.close();
+        }
+    }
+
+    /**
+     * Spécifie le paramètre à produire. Des couvertures spatiales seront produites à partir
+     * des {@linplain ParameterEntry#getComponents composantes} de ce paramètre, s'il y en a.
+     * Cette méthode n'est disponible que si cet objet <code>ParameterCoverage3D</code> a été
+     * contruit avec le constructeur sans argument.
+     *
+     * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
+     * @throws SQLException si la connexion à la base de données a échouée.
+     */
+    private void setParameter(final String parameter) throws SQLException {
+        if (parameter == null) {
+            setParameter((ParameterEntry) null);
+            return;
+        }
+        for (final ParameterEntry param : getParameters()) {
+            if (parameter.equalsIgnoreCase(param.getName())) {
+                setParameter(param);
+                return;
+            }
+        }
+        throw new IllegalArgumentException(parameter);
+    }
+
+    /**
      * Spécifie le paramètre à produire. Des couvertures spatiales seront produites à partir
      * des {@linplain ParameterEntry#getComponents composantes} de ce paramètre, s'il y en a.
      *
@@ -393,6 +451,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         coverages       = EMPTY_MAP;
         target          = null;
         components      = null;
+        envelope        = null;
         sampleDimension = null;
         maxNumBands     = 0;
         if (parameter == null) {
@@ -528,19 +587,46 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * paramètre à calculer.
      */
     public synchronized Envelope getEnvelope() {
-        Envelope envelope = null;
-        for (final Coverage3D coverage : coverages.values()) {
-            final Envelope next = coverage.getEnvelope();
-            if (envelope == null) {
-                envelope = next;
+        if (envelope == null) {
+            if (components != null) {
+                final SeriesKey key = new SeriesKey();
+                for (final ParameterEntry.Component component : components) {
+                    final ParameterEntry source = component.getSource();
+                    if (source.isIdentity()) {
+                        continue;
+                    }
+                    Envelope toIntersect = null;
+                    key.operation  = component.getOperation();
+                    key.timeOffset = component.getRelativePosition().getTypicalTimeOffset();
+                    for (int i=0; ((key.series=source.getSeries(i))!=null); i++) {
+                        final Envelope toAdd = coverages.get(key).getEnvelope();
+                        if (toIntersect == null) {
+                            toIntersect = toAdd;
+                        } else {
+                            toIntersect.add(toAdd);
+                        }
+                    }
+                    if (envelope == null) {
+                        envelope = toIntersect;
+                    } else {
+                        envelope.intersect(toIntersect);
+                    }
+                }
             } else {
-                envelope.intersect(next);
+                for (final Coverage3D coverage : coverages.values()) {
+                    final Envelope toIntersect = coverage.getEnvelope();
+                    if (envelope == null) {
+                        envelope = toIntersect;
+                    } else {
+                        envelope.intersect(toIntersect);
+                    }
+                }
+            }
+            if (envelope == null) {
+                envelope = super.getEnvelope();
             }
         }
-        if (envelope == null) {
-            envelope = super.getEnvelope();
-        }
-        return envelope;
+        return (Envelope) envelope.clone();
     }
 
     /**
@@ -833,7 +919,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      */
     public synchronized void dispose() {
         try {
-            setParameter(null);
+            setParameter((ParameterEntry)null);
             if (database != null) {
                 coverageTable.close(); // A fermer seulement si 'database' est non-nul.
                 database.close();
@@ -847,5 +933,61 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         coverageTable = null;
         database      = null;
         super.dispose();
+    }
+
+    /**
+     * Lance la création d'une image de potentiel de pêche à partir de la ligne de commande.
+     * Les arguments sont:
+     *
+     * <ul>
+     *   <li><code>-parameter=<var>P</var></code> où <var>P</var> est un des paramètre énuméré
+     *       dans la table &quot;Paramètre&quot; de la base de données des échantillons (par
+     *       exemple &quot;PP1&quot;).</li>
+     *   <li><code>-date=<var>date</var> est la date (en heure universelle) de l'image à générer.
+     *       Par exemple &quot;18/08/1999&quot;.</li>
+     *   <li><code>-file=<var>file</var> est un nom de fichier optionel dans lequel enregistrer
+     *        le résultat.</li>
+     * </ul>
+     *
+     * @param  args Les paramètres transmis sur la ligne de commande.
+     * @throws ParseException si le format de la date n'est pas légal.
+     * @throws SQLException si une connexion à la base de données a échouée.
+     * @throws IOException si l'image ne peut pas être enregistrée.
+     */
+    public static void main(final String[] args) throws ParseException, SQLException, IOException {
+        MonolineFormatter.init("org.geotools");
+        MonolineFormatter.init("fr.ird");
+        final Arguments arguments = new Arguments(args);
+        final String     filename = arguments.getOptionalString("-file");
+        final String    parameter = arguments.getRequiredString("-parameter");
+        final DateFormat   format = DateFormat.getDateInstance(DateFormat.SHORT, arguments.locale);
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        final Date date = format.parse(arguments.getRequiredString("-date"));
+        arguments.getRemainingArguments(0);
+        /*
+         * Procède à la création de l'image, à son enregistrement puis à son affichage.
+         */
+        final double offset = -2;
+        final double scale  = 1.0/64;
+        final GridCoverage coverage;
+        JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
+        final ParameterCoverage3D coverage3D = new ParameterCoverage3D();
+        try {
+            coverage3D.setParameter(parameter);
+            coverage3D.setOutputRange(new NumberRange(1*scale+offset, 255*scale+offset));
+            coverage = coverage3D.getGridCoverage2D(date);
+            if (filename != null) {
+                fr.ird.resources.Utilities.save(coverage.geophysics(false).getRenderedImage(), filename);
+            } else {
+                // Force le calul immédiat, avant que ne soit
+                // fermée la connexion à la base de données.
+                coverage.getRenderedImage().getData();
+            }
+            FrameFactory.show(coverage);
+        } finally {
+            // Ferme la base de données seulement après la création de l'image,
+            // sans quoi le calcul de l'image échouera sans message d'erreur.
+            coverage3D.dispose();
+        }
     }
 }

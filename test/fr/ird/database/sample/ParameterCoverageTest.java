@@ -65,11 +65,6 @@ import fr.ird.database.coverage.*;
  */
 public class ParameterCoverageTest extends TestCase {
     /**
-     * La base de données d'images.
-     */
-    private CoverageDataBase database;
-
-    /**
      * La couverture à tester.
      */
     private ParameterCoverage3D coverage;
@@ -98,11 +93,8 @@ public class ParameterCoverageTest extends TestCase {
     protected void setUp() throws SQLException {
         JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
-        database   = new fr.ird.database.coverage.sql.CoverageDataBase();
-        coverage   = new ParameterCoverage3D(database.getCoverageTable());
-        SampleDataBase samples = new fr.ird.database.sample.sql.SampleDataBase();
-        parameters = samples.getParameters(database.getSeriesTable());
-        samples.close();
+        coverage   = new ParameterCoverage3D();
+        parameters = coverage.getParameters();
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
@@ -111,7 +103,6 @@ public class ParameterCoverageTest extends TestCase {
      */
     protected void tearDown() throws SQLException {
         coverage.dispose();
-        database.close();
     }
 
     /**

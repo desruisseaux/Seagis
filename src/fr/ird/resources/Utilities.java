@@ -25,10 +25,19 @@
  */
 package fr.ird.resources;
 
-// Miscellaneous
+// J2SE dependencies
 import java.io.File;
 import java.util.Locale;
+import java.util.Iterator;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.awt.image.RenderedImage;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.IIOException;
+import javax.imageio.ImageWriter;
+import javax.imageio.ImageIO;
+
+// Geotools dependencies
 import org.geotools.io.image.PaletteFactory;
 
 
@@ -64,5 +73,42 @@ public final class Utilities {
             /* locale         */ Locale.US);
         }
         return factory;
+    }
+
+    /**
+     * Save an image in a file of the given name. The file format will be infered from
+     * the filename extension. If no extension were provided, default to PNG.
+     *
+     * @param  image The image to save.
+     * @param  filename The destination filename.
+     * @throws IOException if an error occured during I/O.
+     */
+    public static void save(final RenderedImage image, String filename) throws IOException {
+        int dot = filename.lastIndexOf('.');
+        String extension;
+        if (dot >= 0) {
+            extension = filename.substring(dot+1);
+        } else {
+            dot = filename.length();
+            extension = "png";
+            filename += ".png";
+        }
+        while (true) {
+            final Iterator it = ImageIO.getImageWritersBySuffix(extension);
+            if (it!=null && it.hasNext()) {
+                final ImageWriter writer = (ImageWriter) it.next();
+                final ImageOutputStream output = ImageIO.createImageOutputStream(new File(filename));
+                writer.setOutput(output);
+                writer.write(image);
+                writer.dispose();
+                output.close();
+                return;
+            }
+            if (extension.equalsIgnoreCase("png")) {
+                throw new IIOException("Can't find an encoder");
+            }
+            extension = "png";
+            filename  = filename.substring(0, dot) + ".png";
+        }
     }
 }
