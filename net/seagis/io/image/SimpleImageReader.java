@@ -87,6 +87,27 @@ import net.seagis.resources.gcs.ResourceKeys;
 public abstract class SimpleImageReader extends ImageReader
 {
     /**
+     * Tells if we should use {@link javax.media.jai.ComponentSampleModelJAI}
+     * instead of the more standard {@link java.awt.image.ComponentSampleModel}.
+     * There is two problems with model provided with J2SE 1.4:
+     *
+     * <ul>
+     *   <li>As of J2SE 1.4.0, {@link ImageTypeSpecifier#createBanded}
+     *       doesn't accept {@link DataBuffer#TYPE_FLOAT} and
+     *       {@link DataBuffer#TYPE_DOUBLE} argument.</li>
+     *   <li>As of JAI 1.1, operators don't accept Java2D's
+     *       {@link java.awt.image.DataBufferFloat} and
+     *       {@link java.awt.image.DataBufferDouble}.
+     *       They require JAI's DataBuffer instead.</li>
+     * </ul>
+     *
+     * This flag is set to <code>true</code> for J2SE 1.4.
+     * It may be turned to <code>false</code> with future
+     * J2SE and JAI versions.
+     */
+    static final boolean USE_JAI_MODEL = true;
+
+    /**
      * The stream position when {@link #setInput} is invoked.
      */
     private long streamOrigin;
@@ -252,21 +273,15 @@ public abstract class SimpleImageReader extends ImageReader
         for (int i=numBands; --i>=0;) bankIndices[i]=i;
         final ColorSpace colorSpace = getColorSpace(imageIndex, 0, numBands);
         
-        if (true)
+        if (USE_JAI_MODEL)
         {
-            /*
-             * Note: We should use ImageTypeSpecifier.createBanded(...) instead.
-             *       Unfortunatly, there is two problems with 'createBanded(...)':
-             *
-             *    1) As of JDK 1.4-beta2, 'createBanded' don't accept TYPE_FLOAT and TYPE_DOUBLE.
-             *       See source code for 'ImageTypeSpecifier.createComponentCM(...)'.
-             *    2) As of JAI 1.1, operators don't accept Java2D's DataBufferFloat and
-             *       DataBufferDouble. They require JAI's DataBuffer instead.
-             */
             final ColorModel cm = new ComponentColorModel(colorSpace, null, false, false, Transparency.OPAQUE, dataType);
             return new ImageTypeSpecifier(cm, new ComponentSampleModelJAI(dataType, 1, 1, 1, 1, bankIndices, bandOffsets));
         }
-        return ImageTypeSpecifier.createBanded(colorSpace, bankIndices, bandOffsets, dataType, false, false);
+        else
+        {
+            return ImageTypeSpecifier.createBanded(colorSpace, bankIndices, bandOffsets, dataType, false, false);
+        }
     }
 
     /**

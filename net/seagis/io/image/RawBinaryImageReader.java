@@ -30,6 +30,7 @@ package net.seagis.io.image;
 
 // Input/output
 import java.io.IOException;
+import java.io.EOFException;
 import javax.imageio.ImageReader;
 import javax.imageio.IIOException;
 import javax.imageio.stream.ImageInputStream;
@@ -337,21 +338,12 @@ public class RawBinaryImageReader extends SimpleImageReader
         final int[] destinationBands;
         final int sourceXSubsampling;
         final int sourceYSubsampling;
-        final int subsamplingXOffset;
-        final int subsamplingYOffset;
-        final int destinationXOffset;
-        final int destinationYOffset;
         if (param != null)
         {
             sourceBands        = param.getSourceBands();
             destinationBands   = param.getDestinationBands();
-            final Point offset = param.getDestinationOffset();
             sourceXSubsampling = param.getSourceXSubsampling();
             sourceYSubsampling = param.getSourceYSubsampling();
-            subsamplingXOffset = param.getSubsamplingXOffset();
-            subsamplingYOffset = param.getSubsamplingYOffset();
-            destinationXOffset = offset.x;
-            destinationYOffset = offset.y;
         }
         else
         {
@@ -359,64 +351,67 @@ public class RawBinaryImageReader extends SimpleImageReader
             destinationBands   = null;
             sourceXSubsampling = 1;
             sourceYSubsampling = 1;
-            subsamplingXOffset = 0;
-            subsamplingYOffset = 0;
-            destinationXOffset = 0;
-            destinationYOffset = 0;
         }
         /*
          * Get the stream model and the destination image.
          */
+        final ImageInputStream  input = (ImageInputStream) getInput();
         final SampleModel streamModel = getStreamSampleModel(imageIndex, param);
         final int         streamWidth = streamModel.getWidth();
         final int        streamHeight = streamModel.getHeight();
-        final int         numSrcBands = streamModel.getNumBands();
+        final int      streamDataType = streamModel.getDataType();
+        final int  streamWidthInBytes = streamWidth * DataBuffer.getDataTypeSize(streamDataType) / 8;
         final BufferedImage     image = getDestination(imageIndex, param, sourceBands, destinationBands, streamModel, streamWidth, streamHeight);
         final SampleModel  imageModel = image.getSampleModel();
         final int         numDstBands = imageModel.getNumBands();
+        final int         numSrcBands = streamModel.getNumBands();
         checkReadParamBandSettings(param, numSrcBands, numDstBands);
         processImageStarted(imageIndex);
         /*
          * Compute region and check for possible optimization.
          */
-        final Rectangle srcRegion = new Rectangle();
-        final Rectangle dstRegion = new Rectangle();
-        computeRegions(param, streamWidth, streamHeight, image, srcRegion, dstRegion);
-        final int      dstXMin = dstRegion.x;
-        final int      dstYMin = dstRegion.y;
-        final int      dstXMax = dstRegion.width  + dstXMin;
-        final int      dstYMax = dstRegion.height + dstYMin;
-        final boolean isDirect = sourceXSubsampling==1 && sourceYSubsampling==1          &&
-                                 subsamplingXOffset==0 && subsamplingYOffset==0          &&
-                                 destinationXOffset==0 && destinationYOffset==0          &&
-                                 srcRegion.x       ==0 && srcRegion.width ==streamWidth  &&
-                                 srcRegion.y       ==0 && srcRegion.height==streamHeight &&
+        final int srcXMin, srcYMin, srcXMax, srcYMax;
+        final int dstXMin, dstYMin, dstXMax, dstYMax;
+        if (true)
+        {
+            final Rectangle srcRegion = new Rectangle();
+            final Rectangle dstRegion = new Rectangle();
+            computeRegions(param, streamWidth, streamHeight, image, srcRegion, dstRegion);
+            srcXMin = srcRegion.x;    srcXMax = srcXMin + srcRegion.width;
+            srcYMin = srcRegion.y;    srcYMax = srcYMin + srcRegion.height;
+            dstXMin = dstRegion.x;    dstXMax = dstXMin + dstRegion.width;
+            dstYMin = dstRegion.y;    dstYMax = dstYMin + dstRegion.height;
+        }
+        final boolean isDirect = sourceXSubsampling==1 && sourceYSubsampling==1 &&
+                                 srcXMin           ==0 && srcXMax==streamWidth  &&
+                                 srcYMin           ==0 && srcYMax==streamHeight &&
+                                 dstXMin           ==0 && dstXMax==streamWidth  &&
+                                 dstYMin           ==0 && dstYMax==streamHeight &&
                                  imageModel.equals(streamModel);
         /*
          * Initialize a temporary raster. The temporary raster will hold
          * about 4 lines and use the stream's data model. Data will be
-         * copied (by block of 4 lines) into the destination raster.
+         * copied (by block of 8 lines) into the destination raster.
          */
-        final ImageInputStream   input = (ImageInputStream) getInput();
         final WritableRaster dstRaster = image.getRaster();
-        final WritableRaster srcRaster = isDirect ? dstRaster : WritableRaster.createWritableRaster(streamModel.createCompatibleSampleModel(streamWidth, Math.min(4, streamHeight)), null);
-        final double      userPadValue = (param instanceof RawBinaryImageReadParam) ? ((RawBinaryImageReadParam) param).getPadValue() : Double.NaN;
+        final WritableRaster srcRaster = isDirect ? dstRaster : WritableRaster.createWritableRaster(streamModel.createCompatibleSampleModel(streamWidth, Math.min(8, streamHeight)), null);
         final DataBuffer        buffer = srcRaster.getDataBuffer();
         final int         bufferHeight = srcRaster.getHeight();
-        final int             dataType = buffer.getDataType();
         final int               length = buffer.getSize();
         final int[]            offsets = buffer.getOffsets();
         final double[]         minimum = new double[numSrcBands];
         final double[]         maximum = new double[numSrcBands];
+        final double      userPadValue = (param instanceof RawBinaryImageReadParam) ? ((RawBinaryImageReadParam) param).getPadValue() : Double.NaN;
         Arrays.fill(minimum, Double.POSITIVE_INFINITY);
         Arrays.fill(maximum, Double.NEGATIVE_INFINITY);
         /*
-         * Read all banks sequentially. Most sample models use only one bank (which doesn't mean
-         * that their image have only one band).  The main exception is BandedSampleModem, which
-         * use one separated bank for each band.
+         * Read all banks sequentially.  Most sample models use only one bank
+         * (which doesn't mean that their image have only one band). The main
+         * exception is BandedSampleModel, which use one separated bank for
+         * each band.
          */
         final long startStreamPosition  = input.getStreamPosition();
-        final long expectedStreamLength = (long)length * offsets.length * (DataBuffer.getDataTypeSize(dataType)/8);
+        final long expectedStreamLength = streamWidthInBytes * streamHeight * offsets.length;
         for (int bank=0; bank<offsets.length; bank++)
         {
             /*
@@ -447,15 +442,34 @@ public class RawBinaryImageReader extends SimpleImageReader
                 throw new IIOException("Unknow SampleModel");
             }
             /*
+             * Skip non-desired lines.  Previous data will be discarted from
+             * the cache. Failing to skip all bytes will be considered as an
+             * error.
+             */
+            if (!isDirect)
+            {
+                long toSkip = srcYMin;
+                if (bank!=0)
+                {
+                    // Remainding lines from the previous pass
+                    toSkip += (streamHeight - srcYMax);
+                }
+                toSkip *= streamWidthInBytes;
+                if (input.skipBytes(toSkip) != toSkip)
+                {
+                    throw new EOFException("No bank #"+(bank+1));
+                }
+                input.flushBefore(input.getStreamPosition());
+            }
+            /*
              * Continue reading...
              */
             final int offset = offsets[bank];
-            for (int sy=0; sy<streamHeight; sy+=bufferHeight)
+            for (int sy=srcYMin; sy<srcYMax; sy+=bufferHeight)
             {
-                final int validHeight = Math.min(streamHeight-sy, bufferHeight);
-                final int validLength = (int) (((long)length*validHeight) / bufferHeight);
-                assert (((long)length*validLength) % bufferHeight)==0;
-                switch (dataType)
+                final int validHeight = Math.min(srcYMax-sy, bufferHeight);
+                final int validLength = streamWidth * validHeight;
+                switch (streamDataType)
                 {
                     case DataBuffer.TYPE_BYTE:   input.readFully(((DataBufferByte)   buffer).getData(bank), offset, validLength); break;
                     case DataBuffer.TYPE_USHORT: input.readFully(((DataBufferUShort) buffer).getData(bank), offset, validLength); break;
@@ -463,7 +477,7 @@ public class RawBinaryImageReader extends SimpleImageReader
                     case DataBuffer.TYPE_INT:    input.readFully(((DataBufferInt)    buffer).getData(bank), offset, validLength); break;
                     case DataBuffer.TYPE_FLOAT:  input.readFully(((DataBufferFloat)  buffer).getData(bank), offset, validLength); break;
                     case DataBuffer.TYPE_DOUBLE: input.readFully(((DataBufferDouble) buffer).getData(bank), offset, validLength); break;
-                    default: throw new IOException(Resources.format(ResourceKeys.ERROR_UNSUPPORTED_DATA_TYPE));
+                    default: throw new IIOException(Resources.format(ResourceKeys.ERROR_UNSUPPORTED_DATA_TYPE));
                 }
                 /*
                  * Update progress.
@@ -476,48 +490,78 @@ public class RawBinaryImageReader extends SimpleImageReader
                     processReadAborted();
                     return image;
                 }
-                /*
-                 * Update statistics and replace pad values.
-                 */
-                for (int srcBand=lowerSrcBand; srcBand<upperSrcBand; srcBand++)
+                if (isDirect)
                 {
-                    final int stop = offset+validLength;
-                    for (int i=offset; i<stop; i++)
+                    /*
+                     * Update statistics and replace pad values. If we are not
+                     * writing directly into the image,   then this processing
+                     * will be performed during the copy process instead. This
+                     * is necessary because we can't always push back NaN into
+                     * the temporary buffer (e.g. the buffer may be TYPE_SHORT).
+                     */
+                    for (int srcBand=lowerSrcBand; srcBand<upperSrcBand; srcBand++)
                     {
-                        double value = buffer.getElemDouble(srcBand, i);
-                        if (value==userPadValue) value=Double.NaN;
-                        value = transform(value);
-                        if (!Double.isNaN(value))
+                        final int stop = offset+validLength;
+                        for (int i=offset; i<stop; i++)
                         {
-                            if (value<minimum[srcBand]) minimum[srcBand]=value;
-                            if (value>maximum[srcBand]) maximum[srcBand]=value;
+                            double value = buffer.getElemDouble(srcBand, i);
+                            if (value==userPadValue) value=Double.NaN;
+                            value = transform(value);
+                            if (!Double.isNaN(value))
+                            {
+                                if (value<minimum[srcBand]) minimum[srcBand]=value;
+                                if (value>maximum[srcBand]) maximum[srcBand]=value;
+                            }
+                            buffer.setElemDouble(srcBand, i, value);
                         }
-                        else buffer.setElemDouble(srcBand, i, Double.NaN);
                     }
                 }
-                /*
-                 * Copy pixel data.
-                 */
-                if (!isDirect)
+                else
                 {
-                    final int lowerY = Math.max(dstYMin, (            sy-subsamplingYOffset)/sourceYSubsampling+destinationYOffset);
-                    final int upperY = Math.min(dstYMax, (validHeight+sy-subsamplingYOffset)/sourceYSubsampling+destinationYOffset);
+                    /*
+                     * Copy pixel data. This is needed only if the reading use a
+                     * temporary buffer because: 1) user want to cast the memory
+                     * image to a different type or 2) a subsampling is applied.
+                     *
+                     * Indices of available source rows: [sy ... sy+validHeight]
+                     * Corresponding destination rows:  [dstYStart ... dstYStop]
+                     *
+                     *        dstYStart  is rounded up if necessary
+                     *        dstYStop   is rounded down if necessary
+                     *
+                     * Indice computation use 'srcYMin' and 'dstYMin', which take
+                     * care of 'destinationYOffset' and 'subsamplingYOffset'.
+                     */
+                    final int dstYStart = dstYMin + (sy-srcYMin + sourceYSubsampling-1)/sourceYSubsampling;
+                    final int dstYStop  = dstYMin + (sy-srcYMin + validHeight)/sourceYSubsampling;
+                    assert dstYStart<=dstYStop && dstYStart>=dstYMin && dstYStop<=dstYMax;
                     for (int srcBand=lowerSrcBand; srcBand<upperSrcBand; srcBand++)
                     {
                         final int dstBand = sourceToDestBand(sourceBands, destinationBands, srcBand);
                         if (dstBand >= 0)
                         {
                             assert destToSourceBand(sourceBands, destinationBands, dstBand)==srcBand;
-                            int srcY = srcRegion.y + (lowerY-dstYMin)*sourceYSubsampling;
-                            for (int y=lowerY; y<upperY; y++)
+                            // The 'srcY' value computed on the next line will be
+                            // at least equals to 'sy', or greater if 'dstYStart'
+                            // has been rounded up.
+                            int srcY = srcYMin + (dstYStart-dstYMin)*sourceYSubsampling;
+                            srcY -= sy; // The 'srcRaster' contains only an image portion.
+                            for (int dstY=dstYStart; dstY<dstYStop; dstY++)
                             {
-                                assert (srcY < srcRegion.y+srcRegion.height);
-                                int srcX = srcRegion.x;
-                                for (int x=dstXMin; x<dstXMax; x++)
+                                assert srcY>=0 && srcY<validHeight;
+                                int srcX = srcXMin;
+                                for (int dstX=dstXMin; dstX<dstXMax; dstX++)
                                 {
-                                    assert (srcX < srcRegion.x+srcRegion.width);
-                                    final double value = srcRaster.getSampleDouble(srcX, srcY, srcBand);
-                                    dstRaster.setSample(x, y, dstBand, value);
+                                    assert srcX < srcXMax;
+                                    double value = srcRaster.getSampleDouble(srcX, srcY, srcBand);
+                                    if (value==userPadValue) value=Double.NaN;
+                                    value = transform(value);
+                                    if (!Double.isNaN(value))
+                                    {
+                                        if (value<minimum[srcBand]) minimum[srcBand]=value;
+                                        if (value>maximum[srcBand]) maximum[srcBand]=value;
+                                    }
+                                    dstRaster.setSample(dstX, dstY, dstBand, value);
                                     srcX += sourceXSubsampling;
                                 }
                                 srcY += sourceYSubsampling;
@@ -539,7 +583,7 @@ public class RawBinaryImageReader extends SimpleImageReader
             if (min < max)
             {
                 final Range range;
-                switch (dataType)
+                switch (streamDataType)
                 {
                     case DataBuffer.TYPE_BYTE:   // fall through (since TYPE_BYTE is unsigned, we need to use a wider type).
                     case DataBuffer.TYPE_SHORT:  range=new Range(  Short.class, new Short  ( (short)min), new Short  ( (short)max)); break;
@@ -555,7 +599,7 @@ public class RawBinaryImageReader extends SimpleImageReader
         /*
          * Replace the color space.
          */
-        if (dataType!=DataBuffer.TYPE_BYTE)
+        if (streamDataType != DataBuffer.TYPE_BYTE)
         {
             ColorModel finalColorModel = image.getColorModel();
             if (finalColorModel instanceof ComponentColorModel)
@@ -576,6 +620,7 @@ public class RawBinaryImageReader extends SimpleImageReader
         }
         return image;
     }
+
     /**
      * Returns the {@link BufferedImage} to which decoded pixel data should
      * be written. The image is determined by inspecting the supplied {@link

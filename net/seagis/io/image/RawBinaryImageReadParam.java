@@ -41,6 +41,7 @@ import java.awt.image.ComponentSampleModel;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
+import javax.media.jai.ComponentSampleModelJAI;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageReadParam;
 import javax.media.jai.PlanarImage;
@@ -178,23 +179,59 @@ public class RawBinaryImageReadParam extends ImageReadParam
         {
             return null;
         }
-        if (model==null)
-        {
-            final int[] offsets = new int[numBands];
-            final int[] banks   = new int[numBands];
-            for (int i=0; i<banks.length; i++)
-            {
-                banks[i] = i;
-            }
-            return ImageTypeSpecifier.createBanded(getColorSpace(numBands), banks, offsets,
-                                                   targetDataType, false, false);
-        }
-        if (numBands != model.getNumBands())
-        {
-            throw new IllegalArgumentException("Number of bands mismatch");
-        }
-        final SampleModel sampleModel = getStreamSampleModel(model, model, size, targetDataType);
+        final SampleModel sampleModel;
         final ColorModel   colorModel;
+        final ColorSpace   colorSpace = getColorSpace(numBands);
+        if (model!=null)
+        {
+            /*
+             * Case 1: we know the sample model for data in the
+             *         underlying stream.  We will use the same
+             *         model for the memory image, just changing
+             *         the data type.
+             */
+            if (numBands != model.getNumBands())
+            {
+                throw new IllegalArgumentException("Number of bands mismatch");
+            }
+            sampleModel = getStreamSampleModel(model, model, size, targetDataType);
+        }
+        else
+        {
+            /*
+             * Case 2: We have to create a sample model from scratch.  We
+             *         will use a banded sample model with some arbitrary
+             *         color space  (which may be changed after the image
+             *         reading is completed).
+             */
+            final int width, height;
+            if (size!=null)
+            {
+                width  = size.width;
+                height = size.height;
+            }
+            else
+            {
+                width = height = 1;
+            }
+            final int[] bankIndices = new int[numBands];
+            final int[] bandOffsets = new int[numBands];
+            for (int i=numBands; --i>=0;) bankIndices[i]=i;
+            if (SimpleImageReader.USE_JAI_MODEL)
+            {
+                sampleModel = new ComponentSampleModelJAI(targetDataType, width, height,
+                                                          1, width, bankIndices, bandOffsets);
+            }
+            else
+            {
+                return ImageTypeSpecifier.createBanded(colorSpace, bankIndices, bandOffsets,
+                                                       targetDataType, false, false);
+            }
+        }
+        /*
+         * Construct a color model likely to matches the
+         * sample model, and then finish the type specifier.
+         */
         if (sampleModel instanceof ComponentSampleModel)
         {
             // This is the most common case.
@@ -365,6 +402,10 @@ public class RawBinaryImageReadParam extends ImageReadParam
                 else if (model instanceof PixelInterleavedSampleModel)
                 {
                     model = new PixelInterleavedSampleModel(dataType, width, height, pixelStride, scanlineStride, bandOffsets);
+                }
+                else if (model instanceof ComponentSampleModelJAI)
+                {
+                    model = new ComponentSampleModelJAI(dataType, width, height, pixelStride, scanlineStride, bankIndices, bandOffsets);
                 }
                 else
                 {
