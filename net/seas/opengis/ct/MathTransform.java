@@ -32,6 +32,7 @@ import org.opengis.ct.CT_DomainFlags;
 import net.seas.opengis.cs.Info;
 import net.seas.opengis.pt.ConvexHull;
 import net.seas.opengis.pt.CoordinatePoint;
+import net.seas.opengis.pt.MismatchedDimensionException;
 
 // Geometry
 import java.awt.Shape;
@@ -139,14 +140,22 @@ public abstract class MathTransform extends Info
      *         and storing the result in <code>ptDst</code>, or a newly
      *         created point if <code>ptDst</code> was null or its dimension
      *         was not suitable.
+     * @throws MismatchedDimensionException if <code>ptSrc</code>
+     *         doesn't have the expected dimension.
      * @throws TransformException if the point can't be transformed.
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
     {
-        ptSrc.ensureDimensionMatch(getDimSource());
-        if (ptDst==null || ptDst.getDimension()!=getDimTarget())
+        final int  pointDim = ptSrc.getDimension();
+        final int sourceDim = getDimSource();
+        final int targetDim = getDimTarget();
+        if (pointDim != sourceDim)
         {
-            ptDst = new CoordinatePoint(getDimTarget());
+            throw new MismatchedDimensionException(pointDim, sourceDim);
+        }
+        if (ptDst==null || ptDst.getDimension()!=targetDim)
+        {
+            ptDst = new CoordinatePoint(targetDim);
         }
         transform(ptSrc.ord, 0, ptDst.ord, 0, 1);
         return ptDst;

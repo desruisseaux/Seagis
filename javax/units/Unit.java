@@ -16,12 +16,17 @@ import java.io.Serializable;
 public final class Unit implements Serializable
 {
     /**
-     * Base unit of metre.
+     * Base unit of time.
+     */
+    public static final Unit SECOND = new Unit("s");
+
+    /**
+     * Base unit of length.
      */
     public static final Unit METRE = new Unit("m");
 
     /**
-     * Unit of degree.
+     * Unit of angle.
      */
     public static final Unit DEGREE = new Unit("°");
 

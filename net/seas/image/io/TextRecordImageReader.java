@@ -116,7 +116,7 @@ public class TextRecordImageReader extends TextImageReader
      * Petit facteur de tolérance servant à tenir
      * compte des erreurs d'arrondissement.
      */
-    private static final float EPS = 1E-6f;
+    private static final float EPS = 1E-5f;
 
     /**
      * Intervalle (en nombre d'octets) entre les rapports de progrès.
@@ -220,6 +220,12 @@ public class TextRecordImageReader extends TextImageReader
     }
 
     /**
+     * Returns the grid tolerance (epsilon) value.
+     */
+    private float getGridTolerance()
+    {return (originatingProvider instanceof Spi) ? ((Spi)originatingProvider).gridTolerance : EPS;}
+
+    /**
      * Retourne le numéro de colonne des <var>x</var>, compté à partir de 0.
      * L'implémentation par défaut retourne le numéro de colonne qui avait été
      * spécifié dans l'objet {@link Spi} qui a créé ce décodeur. Les classes
@@ -298,7 +304,7 @@ public class TextRecordImageReader extends TextImageReader
      * @throws IOException If an error occurs reading the width information from the input source.
      */
     public int getWidth(final int imageIndex) throws IOException
-    {return getRecords(imageIndex).getPointCount(getColumnX(imageIndex), EPS);}
+    {return getRecords(imageIndex).getPointCount(getColumnX(imageIndex), getGridTolerance());}
 
     /**
      * Returns the height in pixels of the given image within the input source.
@@ -308,7 +314,7 @@ public class TextRecordImageReader extends TextImageReader
      * @throws IOException If an error occurs reading the height information from the input source.
      */
     public int getHeight(final int imageIndex) throws IOException
-    {return getRecords(imageIndex).getPointCount(getColumnY(imageIndex), EPS);}
+    {return getRecords(imageIndex).getPointCount(getColumnY(imageIndex), getGridTolerance());}
 
     /**
      * Retourne les coordonnées logiques couvertes par l'image.
@@ -321,6 +327,7 @@ public class TextRecordImageReader extends TextImageReader
      */
     public Rectangle2D getLogicalBounds(final int imageIndex) throws IOException
     {
+        final float    tolerance = getGridTolerance();
         final RecordList records = getRecords(imageIndex);
         final int xColumn        = getColumnX(imageIndex);
         final int yColumn        = getColumnY(imageIndex);
@@ -328,8 +335,8 @@ public class TextRecordImageReader extends TextImageReader
         final double ymin        = records.getMinimum(yColumn);
         final double width       = records.getMaximum(xColumn)-xmin;
         final double height      = records.getMaximum(yColumn)-ymin;
-        final double dx          = width /(records.getPointCount(xColumn, EPS)-1);
-        final double dy          = height/(records.getPointCount(yColumn, EPS)-1);
+        final double dx          = width /(records.getPointCount(xColumn, tolerance)-1);
+        final double dy          = height/(records.getPointCount(yColumn, tolerance)-1);
         return new Rectangle2D.Double(xmin-0.5*dx, ymin-0.5*dy, width+dx, height+dy);
     }
 
@@ -547,11 +554,12 @@ public class TextRecordImageReader extends TextImageReader
      */
     public BufferedImage read(final int imageIndex, final ImageReadParam param) throws IOException
     {
+        final float        tolerance = getGridTolerance();
         final int            xColumn = getColumnX(imageIndex);
         final int            yColumn = getColumnY(imageIndex);
         final RecordList     records = getRecords(imageIndex);
-        final int              width = records.getPointCount(xColumn, EPS);
-        final int             height = records.getPointCount(yColumn, EPS);
+        final int              width = records.getPointCount(xColumn, tolerance);
+        final int             height = records.getPointCount(yColumn, tolerance);
         final int        numSrcBands = records.getColumnCount() - (xColumn==yColumn ? 1 : 2);
         /*
          * Extract user's parameters
@@ -649,11 +657,11 @@ public class TextRecordImageReader extends TextImageReader
              * tiendrons compte du "subsampling".
              */
             final double fx = (data[i+xColumn]-xmin)*scaleX; // (fx,fy) may be NaN: Use
-            final double fy = (ymax-data[i+yColumn])*scaleY; // "!abs(...)<=EPS" below.
+            final double fy = (ymax-data[i+yColumn])*scaleY; // "!(abs(...)<=tolerance)".
             int           x = (int)Math.round(fx); // This conversion is not the same than
             int           y = (int)Math.round(fy); // getTransform(), but it should be ok.
-            if (!(Math.abs(x-fx)<=EPS)) {fireBadCoordinate(data[i+xColumn]); continue;}
-            if (!(Math.abs(y-fy)<=EPS)) {fireBadCoordinate(data[i+yColumn]); continue;}
+            if (!(Math.abs(x-fx)<=tolerance)) {fireBadCoordinate(data[i+xColumn]); continue;}
+            if (!(Math.abs(y-fy)<=tolerance)) {fireBadCoordinate(data[i+yColumn]); continue;}
             if (x>=sourceXMin && x<sourceXMax && y>=sourceYMin && y<sourceYMax)
             {
                 x -= subsamplingXOffset;
@@ -793,6 +801,20 @@ public class TextRecordImageReader extends TextImageReader
          * @see TextRecordImageReader#parseLine
          */
         final int yColumn;
+
+        /**
+         * A tolerance factor during decoding, between 0 and 1. During decoding,
+         * the image reader compute cell's width and height   (i.e. the smallest
+         * non-null difference between ordinates in a given column: <var>x</var>
+         * for cell's width and <var>y</var> for cell's height). Then, it checks
+         * if every coordinate points fall on a grid having this cell's size. If
+         * a point depart from more than <code>gridTolerance<code> percent of
+         * cell's width or height, an exception is thrown.
+         * <br><br>
+         * <code>gridTolerance</code> should be a small number like <code>1E-5f</code>
+         * or <code>1E-3f</code>. The later is more tolerant than the former.
+         */
+        protected float gridTolerance = EPS;
 
         /**
          * Construct a new SPI with name "gridded records" and MIME type "text/x-grid".

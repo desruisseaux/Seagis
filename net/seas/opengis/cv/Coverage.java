@@ -22,7 +22,8 @@
  */
 package net.seas.opengis.cv;
 
-// Coordinate systems
+// OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.pt.Matrix;
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
@@ -42,6 +43,7 @@ import javax.media.jai.PropertySource;
 import javax.media.jai.PropertySourceImpl;
 
 // Miscellaneous
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import net.seas.resources.Resources;
@@ -332,7 +334,7 @@ public abstract class Coverage implements PropertySource
         {return (float)envelope.getY();}
 
         /**
-         * Creates a rendered omage with width <code>width</code>
+         * Creates a rendered image with width <code>width</code>
          * and height <code>height</code> in pixels.
          *
          * @param  width  The width of rendered image in pixels, or 0.
@@ -356,15 +358,35 @@ public abstract class Coverage implements PropertySource
             {
                 height = (int)Math.round(width * (coverageHeight/coverageWidth));
             }
-            CoordinateSystem  cs = getCoordinateSystem();
-            AxisOrientation  aoX = cs.getAxis(0).orientation;
-            AxisOrientation  aoY = cs.getAxis(1).orientation;
-            // TODO: take axis orientation in account
-            double scaleX =  width/coverageWidth;
-            double scaleY = height/coverageHeight;
-            double transX = -scaleX * envelope.getX();
-            double transY = -scaleY * envelope.getY();
-            return createRendering(new RenderContext(new AffineTransform(scaleX, 0, 0, scaleY, transX, transY), hints));
+            return createRendering(new RenderContext(getTransform(new Rectangle(0,0,width,height)), hints));
+        }
+
+        /**
+         * Returns an affine transform that maps the coverage envelope
+         * to the specified destination rectangle.
+         */
+        protected AffineTransform getTransform(final Rectangle2D destination)
+        {
+            final Matrix matrix;
+            final Envelope srcEnvelope = getEnvelope();
+            final Envelope dstEnvelope = new Envelope(destination);
+            final CoordinateSystem  cs = getCoordinateSystem();
+            if (cs!=null)
+            {
+                final AxisOrientation[] axis = new AxisOrientation[]
+                {
+                    cs.getAxis(0).orientation,
+                    cs.getAxis(1).orientation
+                };
+                final AxisOrientation[] normalizedAxis = axis;
+                // TODO: sort normalizedAxis. Don't forget the second dimension (usually Y).
+                matrix = Matrix.createAffineTransform(srcEnvelope, axis, dstEnvelope, normalizedAxis);
+            }
+            else
+            {
+                matrix = Matrix.createAffineTransform(srcEnvelope, dstEnvelope);
+            }
+            return matrix.toAffineTransform2D();
         }
     }
 }

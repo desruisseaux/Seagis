@@ -143,8 +143,8 @@ public class CoordinateTransformFactory
             throw new UnsupportedOperationException("Not implemented");
         }
         if (sourceCS.getPrimeMeridian().getLongitude() != 0                  ||
-            !Unit.DEGREE            .equals(sourceCS.getAngularUnit())       ||
-            !Unit.METRE             .equals(targetCS.getLinearUnit())        ||
+            !Unit.DEGREE            .equals(sourceCS.getUnits(0))            ||
+            !Unit.METRE             .equals(targetCS.getUnits(0))            ||
             !AxisOrientation.EAST   .equals(sourceCS.getAxis(0).orientation) ||
             !AxisOrientation.EAST   .equals(targetCS.getAxis(0).orientation) ||
             !AxisOrientation.NORTH  .equals(sourceCS.getAxis(1).orientation) ||
