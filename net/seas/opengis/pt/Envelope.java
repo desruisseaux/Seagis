@@ -102,15 +102,23 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * Construct two-dimensional envelope defined by a {@link Rectangle2D}.
+     * Construct a envelope defined by two positions.
+     *
+     * @param  minCP Minimum ordinate values.
+     * @param  maxCP Maximum ordinate values.
+     * @throws MismatchedDimensionException if the two positions don't have the same dimension.
+     * @throws IllegalArgumentException if an ordinate value in the minimum point is not
+     *         less than or equal to the corresponding ordinate value in the maximum point.
      */
-    public Envelope(final Rectangle2D rect)
+    public Envelope(final double[] minCP, final double[] maxCP) throws MismatchedDimensionException
     {
-        ord = new double[]
+        if (minCP.length != maxCP.length)
         {
-            rect.getMinX(), rect.getMinY(),
-            rect.getMaxX(), rect.getMaxY()
-        };
+            throw new MismatchedDimensionException(minCP.length, maxCP.length);
+        }
+        ord = new double[minCP.length + maxCP.length];
+        System.arraycopy(minCP, 0, ord, 0,            minCP.length);
+        System.arraycopy(maxCP, 0, ord, minCP.length, maxCP.length);
         checkCoherence();
     }
 
@@ -127,23 +135,15 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     {this(minCP.ord, maxCP.ord);}
 
     /**
-     * Construct a envelope defined by two positions.
-     *
-     * @param  minCP Minimum ordinate values.
-     * @param  maxCP Maximum ordinate values.
-     * @throws MismatchedDimensionException if the two positions don't have the same dimension.
-     * @throws IllegalArgumentException if an ordinate value in the minimum point is not
-     *         less than or equal to the corresponding ordinate value in the maximum point.
+     * Construct two-dimensional envelope defined by a {@link Rectangle2D}.
      */
-    Envelope(final double[] minCP, final double[] maxCP) throws MismatchedDimensionException
+    public Envelope(final Rectangle2D rect)
     {
-        if (minCP.length != maxCP.length)
+        ord = new double[]
         {
-            throw new MismatchedDimensionException(minCP.length, maxCP.length);
-        }
-        ord = new double[minCP.length + maxCP.length];
-        System.arraycopy(minCP, 0, ord, 0,            minCP.length);
-        System.arraycopy(maxCP, 0, ord, minCP.length, maxCP.length);
+            rect.getMinX(), rect.getMinY(),
+            rect.getMaxX(), rect.getMaxY()
+        };
         checkCoherence();
     }
 

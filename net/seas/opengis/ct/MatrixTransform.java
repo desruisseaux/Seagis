@@ -46,7 +46,7 @@ final class MatrixTransform extends MathTransform implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = -7260613547208966035L; // TODO
+    private static final long serialVersionUID = 238010876451036214L;
 
     /**
      * The matrix.

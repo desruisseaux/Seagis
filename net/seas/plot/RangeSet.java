@@ -57,7 +57,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -5429867506081578080L;
 
     /**
      * Tableau de correspondances  entre  les type primitifs

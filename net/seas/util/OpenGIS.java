@@ -32,6 +32,9 @@ import net.seas.opengis.pt.*;
 
 // Miscellaneous
 import javax.units.Unit;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import net.seas.text.AngleFormat;
 
 
 /**
@@ -168,5 +171,97 @@ public final class OpenGIS
         }
         while (true);
         return transformed;
+    }
+
+    /**
+     * Transform an envelope. The transformation is only approximative.
+     * Invoking this method is equivalent to invoking the following:
+     * <br>
+     * <pre>transform(transform, new Envelope(source)).toRectangle2D()</pre>
+     *
+     * @param  transform The transform to use. Source and target dimension must be 2.
+     * @param  source The rectangle to transform (may be <code>null</code>).
+     * @param  dest  The destination rectangle (may be <code>source</code>).
+     *         If <code>null</code>, a new rectangle will be created and returned.
+     * @return <code>dest</code>, or a new rectangle if <code>dest</code> was non-null
+     *         and <code>source</code> was null.
+     * @throws TransformException if a transform failed.
+     */
+    public static Rectangle2D transform(final MathTransform transform, final Rectangle2D source, final Rectangle2D dest) throws TransformException
+    {
+        if (source==null)
+        {
+            return null;
+        }
+        double xmin=Double.POSITIVE_INFINITY;
+        double ymin=Double.POSITIVE_INFINITY;
+        double xmax=Double.NEGATIVE_INFINITY;
+        double ymax=Double.NEGATIVE_INFINITY;
+        final Point2D.Double point=new Point2D.Double();
+        for (int i=0; i<8; i++)
+        {
+            /*
+             *   (0)----(5)----(1)
+             *    |             |
+             *   (4)           (7)
+             *    |             |
+             *   (2)----(6)----(3)
+             */
+            point.x = (i&1)==0 ? source.getMinX() : source.getMaxX();
+            point.y = (i&2)==0 ? source.getMinY() : source.getMaxY();
+            switch (i)
+            {
+                case 5: // fallthrough
+                case 6: point.x=source.getCenterX(); break;
+                case 7: // fallthrough
+                case 4: point.y=source.getCenterY(); break;
+            }
+            transform.transform(point, point);
+            if (point.x<xmin) xmin=point.x;
+            if (point.x>xmax) xmax=point.x;
+            if (point.y<ymin) ymin=point.y;
+            if (point.y>ymax) ymax=point.y;
+        }
+        if (dest!=null)
+        {
+            dest.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
+            return dest;
+        }
+        return new Rectangle2D.Double(xmin, ymin, xmax-xmin, ymax-ymin);
+    }
+
+    /**
+     * Retourne une chaîne de caractères représentant la région géographique spécifiée. La
+     * chaîne retournée sera de la forme "45°00.00'N-50°00.00'N 30°00.00'E-40°00.00'E". Si
+     * une projection cartographique est nécessaire pour obtenir cette représentation, elle
+     * sera faite automatiquement. Cette chaîne sert surtout à des fins de déboguage et sa
+     * forme peut varier.
+     */
+    public static String toWGS84String(final CoordinateSystem cs, Rectangle2D bounds)
+    {
+        StringBuffer buffer=new StringBuffer();
+        try
+        {
+            if (!GeographicCoordinateSystem.WGS84.equivalents(cs))
+            {
+                bounds = transform(CoordinateTransformFactory.DEFAULT.createFromCoordinateSystems(cs, GeographicCoordinateSystem.WGS84), bounds, null);
+            }
+            final AngleFormat fmt=new AngleFormat("DD°MM.m'");
+            buffer=fmt.format(new  Latitude(bounds.getMinY()), buffer, null); buffer.append('-');
+            buffer=fmt.format(new  Latitude(bounds.getMaxY()), buffer, null); buffer.append(' ');
+            buffer=fmt.format(new Longitude(bounds.getMinX()), buffer, null); buffer.append('-');
+            buffer=fmt.format(new Longitude(bounds.getMaxX()), buffer, null);
+        }
+        catch (TransformException exception)
+        {
+            buffer.append(XClass.getShortClassName(exception));
+            final String message=exception.getLocalizedMessage();
+            if (message!=null)
+            {
+                buffer.append(": ");
+                buffer.append(message);
+            }
+        }
+        return buffer.toString();
     }
 }
