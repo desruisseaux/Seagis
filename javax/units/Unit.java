@@ -21,6 +21,11 @@ import java.io.Serializable;
 public final class Unit implements Serializable
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -897653548520920138L;
+
+    /**
      * Pool of units.
      */
     private static final Map pool=new HashMap();
@@ -49,6 +54,16 @@ public final class Unit implements Serializable
      * Unit of time.
      */
     public static final Unit DAY = new Unit("day", 24*60*60, SECOND);
+
+    /**
+     * Unit of mass.
+     */
+    public static final Unit KILOGRAM = new Unit("kg");
+
+    /**
+     * Unit of mass.
+     */
+    public static final Unit TON = new Unit("ton", 1000, KILOGRAM);
 
     /**
      * The unit's symbol.
