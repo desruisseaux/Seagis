@@ -39,7 +39,7 @@ import java.awt.geom.NoninvertibleTransformException;
 
 // Java Advanced Imaging et divers
 import java.util.Arrays;
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 import java.awt.image.RenderedImage;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
