@@ -301,10 +301,10 @@ public interface CoverageTable extends Table {
      * @param  coverage L'image à ajouter. Cette image doit avoir au moins trois dimensions,
      *         la troisième dimension étant la date de l'image sur l'axe du temps.
      * @param  Le nom de l'image, sans son chemin ni son extension.
-     * @return <code>true</code> si l'image a été ajoutée à la base de données, ou <code>false</code>
+     * @return Le numéro ID de l'image si elle a été ajoutée à la base de données, ou <code>null</code>
      *         si une image avec le même nom existait déjà pour la série courante. Dans ce dernier cas,
      *         la base de données ne sera pas modifiée et un message d'avertissement sera écrit.
      * @throws SQLException si l'opération a échouée ou si la table est en lecture seule.
      */
-    public boolean addGridCoverage(final GridCoverage coverage, final String filename) throws SQLException;
+    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws SQLException;
 }
