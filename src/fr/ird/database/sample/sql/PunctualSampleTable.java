@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleEntry;
 import fr.ird.database.sample.CruiseEntry;
@@ -109,7 +111,7 @@ final class PunctualSampleTable extends SampleTable {
      */
     protected PunctualSampleTable(final Connection   connection,
                                   final TimeZone     timezone,
-                                  final Set<Species> species) throws SQLException
+                                  final Set<Species> species) throws RemoteException
     {
         super(connection, SQL_SELECT, timezone, species);
     }
@@ -117,28 +119,36 @@ final class PunctualSampleTable extends SampleTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
-        statement.setDouble(ARG_XMIN, rect.getMinX());
-        statement.setDouble(ARG_XMAX, rect.getMaxX());
-        statement.setDouble(ARG_YMIN, rect.getMinY());
-        statement.setDouble(ARG_YMAX, rect.getMaxY());
-        geographicArea.setRect(rect);
-        packed = false;
+    public synchronized void setGeographicArea(final Rectangle2D rect) throws RemoteException {
+        try {
+            statement.setDouble(ARG_XMIN, rect.getMinX());
+            statement.setDouble(ARG_XMAX, rect.getMaxX());
+            statement.setDouble(ARG_YMIN, rect.getMinY());
+            statement.setDouble(ARG_YMAX, rect.getMaxY());
+            geographicArea.setRect(rect);
+            packed = false;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
-        final long startTimeMillis = startTime.getTime();
-        final long   endTimeMillis =   endTime.getTime();
-        final Timestamp time=new Timestamp(startTimeMillis);
-        statement.setTimestamp(ARG_START_TIME, time, calendar);
-        this.startTime = startTimeMillis;
-        time.setTime(endTimeMillis);
-        statement.setTimestamp(ARG_END_TIME, time, calendar);
-        this.endTime = endTimeMillis;
-        packed = false;
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws RemoteException {
+        try {
+            final long startTimeMillis = startTime.getTime();
+            final long   endTimeMillis =   endTime.getTime();
+            final Timestamp time=new Timestamp(startTimeMillis);
+            statement.setTimestamp(ARG_START_TIME, time, calendar);
+            this.startTime = startTimeMillis;
+            time.setTime(endTimeMillis);
+            statement.setTimestamp(ARG_END_TIME, time, calendar);
+            this.endTime = endTimeMillis;
+            packed = false;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -187,13 +197,17 @@ final class PunctualSampleTable extends SampleTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized Collection<SampleEntry> getEntries() throws SQLException {
-        final ResultSet             result = statement.executeQuery();
-        final Collection<SampleEntry> list = new ArrayList<SampleEntry>();
-        while (result.next()) {
-            list.add(new PunctualSampleEntry(this, result));
-        }
-        result.close();
-        return list;
+    public synchronized Collection<SampleEntry> getEntries() throws RemoteException {
+        try {
+            final ResultSet             result = statement.executeQuery();
+            final Collection<SampleEntry> list = new ArrayList<SampleEntry>();
+            while (result.next()) {
+                list.add(new PunctualSampleEntry(this, result));
+            }
+            result.close();
+            return list;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 }

@@ -37,8 +37,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.awt.Color;
+import java.rmi.RemoteException;
+
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
@@ -100,8 +103,13 @@ final class SpeciesTable extends Table {
      * @param  connection Connection avec la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    protected SpeciesTable(final Connection connection) throws SQLException {
-        super(connection.prepareStatement(SQL_SELECT));
+    protected SpeciesTable(final Connection connection) throws RemoteException {
+        super(null);
+        /*try {
+            super(connection.prepareStatement(SQL_SELECT));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }*/
     }
 
     /**

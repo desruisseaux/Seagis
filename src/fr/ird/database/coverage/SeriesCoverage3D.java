@@ -37,7 +37,8 @@ import java.util.Comparator;
 import java.util.Collections;
 
 // Requêtes SQL et entrés/sorties
-import java.sql.SQLException;
+import java.rmi.RemoteException;
+import fr.ird.database.CatalogException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import javax.imageio.ImageReader;
@@ -227,10 +228,10 @@ public class SeriesCoverage3D extends Coverage3D {
      * aucun effet sur cet objet.
      *
      * @param  table Table d'où proviennent les données.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table) throws SQLException, TransformException {
+    public SeriesCoverage3D(final CoverageTable table) throws RemoteException, TransformException {
         this(table, table.getCoordinateSystem());
     }
 
@@ -241,11 +242,11 @@ public class SeriesCoverage3D extends Coverage3D {
      * @param  table Table d'où proviennent les données.
      * @param  cs Le système de coordonnées à utiliser pour cet obet {@link Coverage}.
      *         Ce système de coordonnées doit obligatoirement comprendre un axe temporel.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
     public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
-            throws SQLException, TransformException
+            throws RemoteException, TransformException
     {
         super(table.getSeries().getName(), cs);
         /*
@@ -257,7 +258,7 @@ public class SeriesCoverage3D extends Coverage3D {
         this.bands   = (entries.length!=0) ? entries[0].getSampleDimensions() : new SampleDimension[0];
         for (int i=1; i<entries.length; i++) {
             if (!Arrays.equals(bands, entries[i].getSampleDimensions())) {
-                throw new SQLException(Resources.format(ResourceKeys.ERROR_CATEGORIES_MITMATCH));
+                throw new CatalogException(Resources.format(ResourceKeys.ERROR_CATEGORIES_MITMATCH));
             }
         }
         Arrays.sort(entries, COMPARATOR);

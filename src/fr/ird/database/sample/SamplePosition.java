@@ -29,7 +29,7 @@ package fr.ird.database.sample;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.Collection;
-import java.sql.SQLException;
+//import java.sql.SQLException;
 
 
 /**

@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Calendar;
@@ -39,6 +40,8 @@ import java.awt.geom.Rectangle2D;
 // JAI
 import javax.media.jai.util.Range;
 
+// SEAGIS.
+import fr.ird.database.CatalogException;
 
 /**
  * Interrogation de la table des couvertures géographiques.
@@ -79,27 +82,31 @@ final class GridGeometryTable extends Table {
     /**
      * Construit une table utilisant la connexion spécifiée.
      */
-    public GridGeometryTable(final Connection connection, final TimeZone timezone) throws SQLException {
-        final Statement statement = connection.createStatement();
-        final ResultSet result = statement.executeQuery(configuration.get(Configuration.KEY_GRID_GEOMETRIES));
-        if (result.next()) {
-            boolean wasNull=false;
-            final Calendar      calendar = new GregorianCalendar(timezone);
-            final Calendar localCalendar = new GregorianCalendar();
-            final Date         startTime = getTimestamp(1, result, calendar, localCalendar); wasNull |= (startTime==null);
-            final Date           endTime = getTimestamp(2, result, calendar, localCalendar); wasNull |= (  endTime==null);
-            xmin=result.getFloat(3); wasNull |= result.wasNull();
-            ymin=result.getFloat(4); wasNull |= result.wasNull();
-            xmax=result.getFloat(5); wasNull |= result.wasNull();
-            ymax=result.getFloat(6); wasNull |= result.wasNull();
-            if (!wasNull) {
-                this.startTime = startTime.getTime();
-                this.  endTime =   endTime.getTime();
-                this.isValid   = true;
+    public GridGeometryTable(final Connection connection, final TimeZone timezone) throws RemoteException {
+        try {
+            final Statement statement = connection.createStatement();
+            final ResultSet result = statement.executeQuery(configuration.get(Configuration.KEY_GRID_GEOMETRIES));
+            if (result.next()) {
+                boolean wasNull=false;
+                final Calendar      calendar = new GregorianCalendar(timezone);
+                final Calendar localCalendar = new GregorianCalendar();
+                final Date         startTime = getTimestamp(1, result, calendar, localCalendar); wasNull |= (startTime==null);
+                final Date           endTime = getTimestamp(2, result, calendar, localCalendar); wasNull |= (  endTime==null);
+                xmin=result.getFloat(3); wasNull |= result.wasNull();
+                ymin=result.getFloat(4); wasNull |= result.wasNull();
+                xmax=result.getFloat(5); wasNull |= result.wasNull();
+                ymax=result.getFloat(6); wasNull |= result.wasNull();
+                if (!wasNull) {
+                    this.startTime = startTime.getTime();
+                    this.  endTime =   endTime.getTime();
+                    this.isValid   = true;
+                }
             }
-        }
-        result.close();
-        statement.close();
+            result.close();
+            statement.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -130,6 +137,6 @@ final class GridGeometryTable extends Table {
     /**
      * Libère les ressources utilisées par cette table.
      */
-    public void close() throws SQLException {
+    public void close() throws RemoteException {
     }
 }

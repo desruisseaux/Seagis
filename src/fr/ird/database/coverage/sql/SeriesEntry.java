@@ -27,6 +27,7 @@ package fr.ird.database.coverage.sql;
 
 // J2SE dependencies
 import java.util.Arrays;
+import java.rmi.RemoteException;
 
 
 /**
@@ -59,7 +60,7 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
                           final String name,
                           final int    ID,
                           final String remarks,
-                          final double period)
+                          final double period) throws RemoteException 
     {
         super(table, name, ID, remarks);
         this.period = period;
@@ -68,7 +69,7 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
     /**
      * {@inheritDoc}
      */
-    public double getPeriod() {
+    public double getPeriod() throws RemoteException {
         return period;
     }
 

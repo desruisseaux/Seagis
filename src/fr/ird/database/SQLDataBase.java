@@ -30,6 +30,8 @@ import java.sql.Driver;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.rmi.server.RemoteObject;
+import java.rmi.RemoteException;
 
 // Divers
 import java.util.TimeZone;
@@ -46,7 +48,7 @@ import fr.ird.resources.seagis.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class SQLDataBase implements DataBase {
+public abstract class SQLDataBase extends java.rmi.server.UnicastRemoteObject implements DataBase {
     /**
      * Le nom de la classe du dernier pilote chargé.
      * En général, une application ne chargera qu'un seul pilote.
@@ -78,12 +80,16 @@ public abstract class SQLDataBase implements DataBase {
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
      *         en heure GMT les dates apparaissant dans la base de données.
-     * @throws SQLException Si on n'a pas pu se connecter à la base de données.
+     * @throws RemoteException Si on n'a pas pu se connecter au catalogue.
      */
-    protected SQLDataBase(final String url, final TimeZone timezone) throws SQLException {
-        this.connection = DriverManager.getConnection(url);
-        this.timezone   = timezone;
-        this.source     = url;
+    protected SQLDataBase(final String url, final TimeZone timezone) throws RemoteException {
+        try {
+            this.connection = DriverManager.getConnection(url);
+            this.timezone   = timezone;
+            this.source     = url;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -99,15 +105,19 @@ public abstract class SQLDataBase implements DataBase {
      */
     protected SQLDataBase(final String url,  final TimeZone timezone,
                           final String user, final String   password)
-            throws SQLException
+            throws RemoteException
     {
-        if (user.trim().length() != 0 && password.trim().length() != 0) {
-            this.connection = DriverManager.getConnection(url, user, password);
-        } else {
-            this.connection = DriverManager.getConnection(url);
+        try {
+            if (user.trim().length() != 0 && password.trim().length() != 0) {
+                this.connection = DriverManager.getConnection(url, user, password);
+            } else {
+                this.connection = DriverManager.getConnection(url);
+            }
+            this.timezone   = timezone;
+            this.source     = url;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        this.timezone   = timezone;
-        this.source     = url;
     }
 
     /**
@@ -116,7 +126,7 @@ public abstract class SQLDataBase implements DataBase {
      * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
-    public String getProperty(final String name) {
+    public String getProperty(final String name) throws RemoteException {
         if (name != null) {
             if (name.equalsIgnoreCase(SOURCE))   return source;
             if (name.equalsIgnoreCase(TIMEZONE)) return timezone.getID();
@@ -128,18 +138,22 @@ public abstract class SQLDataBase implements DataBase {
      * Retourne le fuseau horaire des dates
      * exprimées dans cette base de données.
      */
-    public TimeZone getTimeZone() {
+    public TimeZone getTimeZone() throws RemoteException {
         return (TimeZone) timezone.clone();
     }
 
     /**
      * Ferme la connection avec la base de données.
      *
-     * @throws SQLException si un problème est survenu
+     * @throws RemoteException si un problème est survenu
      *         lors de la fermeture de la connection.
      */
-    public synchronized void close() throws SQLException {
-        connection.close();
+    public synchronized void close() throws RemoteException {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     // PAS DE 'finalize'!!! Des connections sont peut-être encore utilisées par

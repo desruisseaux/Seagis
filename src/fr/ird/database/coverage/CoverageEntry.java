@@ -29,6 +29,7 @@ package fr.ird.database.coverage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 import javax.swing.event.EventListenerList;
@@ -221,10 +222,10 @@ public interface CoverageEntry extends Entry {
 
         /** Image enveloppée par ce proxy. */ protected final CoverageEntry entry;
         /** Construit un proxy.            */ protected Proxy(final CoverageEntry entry) {this.entry=entry; if (entry==null) throw new NullPointerException();}
-        /** Redirige vers {@link #entry}.  */ public int               getID()               {return entry.getID();}
+        /** Redirige vers {@link #entry}.  */ public int               getID() throws RemoteException {return entry.getID();}
         /** Redirige vers {@link #entry}.  */ public SeriesEntry       getSeries()           {return entry.getSeries();}
-        /** Redirige vers {@link #entry}.  */ public String            getName()             {return entry.getName();}
-        /** Redirige vers {@link #entry}.  */ public String            getRemarks()          {return entry.getRemarks();}
+        /** Redirige vers {@link #entry}.  */ public String            getName() throws RemoteException  {return entry.getName();}
+        /** Redirige vers {@link #entry}.  */ public String            getRemarks() throws RemoteException {return entry.getRemarks();}
         /** Redirige vers {@link #entry}.  */ public File              getFile()             {return entry.getFile();}
         /** Redirige vers {@link #entry}.  */ public GridGeometry      getGridGeometry()     {return entry.getGridGeometry();}
         /** Redirige vers {@link #entry}.  */ public CoordinateSystem  getCoordinateSystem() {return entry.getCoordinateSystem();}

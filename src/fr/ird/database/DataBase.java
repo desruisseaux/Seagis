@@ -28,8 +28,8 @@ package fr.ird.database;
 // J2SE
 import java.util.TimeZone;
 import java.util.logging.Level;
-import java.sql.SQLException;
-
+import java.rmi.RemoteException;
+import java.rmi.Remote;
 
 /**
  * Interface de base des connections vers une base de données.
@@ -37,7 +37,7 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface DataBase {
+public interface DataBase extends Remote {
     /**
      * Le niveau pour enregistrer les instruction SELECT dans le {@linkplain Logger journal}.
      *
@@ -87,7 +87,7 @@ public interface DataBase {
      * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
-    public abstract String getProperty(final String name);
+    public abstract String getProperty(final String name) throws RemoteException;
 
     /**
      * Retourne une des propriétée de la base de données. La clé <code>name</code>
@@ -100,13 +100,13 @@ public interface DataBase {
     /**
      * Retourne le fuseau horaire des dates exprimées dans cette base de données.
      */
-    public abstract TimeZone getTimeZone();
+    public abstract TimeZone getTimeZone() throws RemoteException;
 
     /**
      * Ferme la connection et libère les ressources utilisées par cette base de données.
      * Appelez cette méthode lorsque vous n'aurez plus besoin de consulter cette base.
      *
-     * @throws SQLException si un problème est survenu lors de la disposition des ressources.
+     * @throws RemoteException si un problème est survenu lors de la disposition des ressources.
      */
-    public abstract void close() throws SQLException;
+    public abstract void close() throws RemoteException;
 }

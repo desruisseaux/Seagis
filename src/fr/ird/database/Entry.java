@@ -25,6 +25,9 @@
  */
 package fr.ird.database;
 
+// J2SE.
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
  * Interface de base des entrées dans la base de données.
@@ -34,18 +37,18 @@ package fr.ird.database;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Entry {
+public interface Entry extends Remote {
     /**
      * Retourne un numéro unique identifiant cette entrée.
      */
-    public abstract int getID();
+    public abstract int getID() throws RemoteException;
 
     /**
      * Retourne le nom de cette entrée. Ce nom peut être arbitraire.
      * Dans le cas d'une image (par exemple), il s'agira le plus souvent
      * du nom du fichier de l'image.
      */
-    public abstract String getName();
+    public abstract String getName() throws RemoteException;
 
     /**
      * Retourne des remarques s'appliquant à cette entrée,
@@ -53,5 +56,5 @@ public interface Entry {
      * sont souvent une chaîne descriptives qui peuvent être
      * affichées comme "tooltip text".
      */
-    public abstract String getRemarks();
+    public abstract String getRemarks() throws RemoteException;
 }

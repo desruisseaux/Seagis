@@ -29,6 +29,7 @@ package fr.ird.database.coverage.sql;
 import java.util.Date;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.units.Unit;
@@ -39,7 +40,6 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.ProjectedCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
-
 
 /**
  * Table des systèmes de coordonnées utilisés par les images.
@@ -129,7 +129,7 @@ final class CoordinateSystemTable extends Table {
     /**
      * Construit une table.
      */
-    public CoordinateSystemTable(final Connection connection) throws SQLException {
+    public CoordinateSystemTable(final Connection connection) throws RemoteException {
         // TODO
     }
 
@@ -170,9 +170,9 @@ final class CoordinateSystemTable extends Table {
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
      *
-     * @throws SQLException si un problème est survenu
+     * @throws RemoteException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public void close() throws SQLException {
+    public void close() throws RemoteException {        
     }
 }

@@ -26,6 +26,7 @@
 package fr.ird.database.gui.swing;
 
 // Interface utilisateur
+import java.rmi.RemoteException;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Component;
@@ -430,9 +431,11 @@ public final class CoverageExportChooser extends JPanel {
             final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
             for (int i=0; i<entries.length; i++) {
                 final CoverageEntry entry = entries[i];
-                progress.setDescription(Resources.format(ResourceKeys.EXPORTING_$1, entry.getName()));
-                progress.progress((i*100f)/entries.length);
+                String name = "";
                 try {
+                    name = entry.getName();
+                    progress.setDescription(Resources.format(ResourceKeys.EXPORTING_$1, name));
+                    progress.progress((i*100f)/entries.length);
                     GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
                     CoordinateSystem sourceCS = image.getCoordinateSystem();
                     CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
@@ -457,7 +460,7 @@ public final class CoverageExportChooser extends JPanel {
                     if (message == null) {
                         message = Utilities.getShortClassName(exception);
                     }
-                    progress.warningOccurred(entry.getName(), null, message);
+                    progress.warningOccurred(name, null, message);
                 }
                 writer.reset();
             }
@@ -470,10 +473,15 @@ public final class CoverageExportChooser extends JPanel {
          * est survenu pendant la lecture d'une image.
          */
         public void warningOccurred(final ImageReader source, final String warning) {
+            String name = "";
+            
             final ProgressListener progress = this.progress;
             if (progress != null) {
                 final CoverageEntry entry=current;
-                progress.warningOccurred((entry!=null) ? entry.getName() : null, null, warning);
+                try {
+                    entry.getName();
+                } catch (Exception e) {}            
+                progress.warningOccurred((entry!=null) ? name : null, null, warning);
             }
         }
 

@@ -31,6 +31,7 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
 
 // Geometry
 import java.awt.Dimension;
@@ -63,6 +64,7 @@ import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.Utilities;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.Entry;
 import fr.ird.database.IllegalRecordException;
 import fr.ird.database.coverage.CoverageDataBase;
@@ -168,7 +170,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
      * @throws SQLException if the table can't be constructed.
      */
     public WritableGridCoverageTable(final Connection connection, final TimeZone timezone)
-            throws SQLException
+            throws RemoteException
     {
         super(connection, timezone);
     }
@@ -176,7 +178,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
     /**
      * Retourne la sous-séries à utiliser.
      */
-    private Entry getSubSeries() throws SQLException {
+    private Entry getSubSeries() throws RemoteException {
         final fr.ird.database.coverage.SeriesEntry candidate = getSeries();
         if (candidate instanceof SeriesEntry) {
             final Entry[] subseries = ((SeriesEntry) candidate).subseries;
@@ -245,71 +247,75 @@ final class WritableGridCoverageTable extends GridCoverageTable {
      * @throws SQLException if the operation failed.
      */
     public synchronized Integer addGridCoverage(final GridCoverage coverage, final String filename)
-            throws SQLException
+            throws RemoteException
     {
-        final CoordinateSystem cs = coverage.getCoordinateSystem();
-        final TemporalCoordinateSystem timeCS = CTSUtilities.getTemporalCS(cs);
-        if (!TemporalDatum.UTC.equals(timeCS.getTemporalDatum())) {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
+        try {
+            final CoordinateSystem cs = coverage.getCoordinateSystem();
+            final TemporalCoordinateSystem timeCS = CTSUtilities.getTemporalCS(cs);
+            if (!TemporalDatum.UTC.equals(timeCS.getTemporalDatum())) {
+                throw new CatalogException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
+            }
+            /*
+             * Gets the envelope, image size, area, start time and end time.
+             * TODO: We should check for 2D-only coverage! In this case, there
+             *       is no temporal axis (timeCS==null) and no start/end time.
+             */
+            final Envelope envelope = coverage.getEnvelope();
+            final GridRange   range = coverage.getGridGeometry().getGridRange();
+            final Rectangle2D  area = envelope.getSubEnvelope(0,2).toRectangle2D();
+            final Dimension    size = new Dimension(range.getLength(0), range.getLength(1));
+            final Date    startTime = timeCS.toDate(envelope.getMinimum(2));
+            final Date      endTime = timeCS.toDate(envelope.getMaximum(2));
+            final int          csID = getCoordinateSystemTable().getID(cs);
+            final int        areaID = addGridGeometry(area, size, csID);
+            /*
+             * Check if the image already exist. If there is already an image
+             * with the same name for the same group, log an information message
+             * and return from this method.
+             */
+            if (selectImage == null) {
+                selectImage = getConnection().prepareStatement(SELECT_COVERAGE);
+            }
+            selectImage.setInt(1, getSeries().getID());
+            selectImage.setString(2, filename);
+            Integer ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
+            if (ID != null) {
+                log(Resources.getResources(null).getLogRecord(Level.WARNING,
+                    ResourceKeys.ERROR_COVERAGE_ALREADY_EXIST_$1, filename));
+                return null;
+            }
+            /*
+             * The image is not already present. Insert the image,
+             * and log an information message with the SQL statement.
+             */
+            // if (insertImage == null) {
+            //     insertImage = getConnection().createStatement();
+            // }
+
+            if (insertImage == null) {
+                insertImage = getConnection().prepareStatement(INSERT_GRID_COVERAGES);
+            }
+            insertImage.setInt(1, getSubSeries().getID());
+            insertImage.setString(2, filename);        
+            if (dateFormat == null) {
+                dateFormat = new SimpleDateFormat("#MM/dd/yyyy HH:mm:ss#", Locale.US);
+                dateFormat.setTimeZone(timezone);
+            }
+            final Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+            calendar.clear();
+            insertImage.setDate(3, new java.sql.Date(startTime.getTime()), calendar);//startTime, null);//calendar);        
+            calendar.clear();        
+            insertImage.setDate(4, new java.sql.Date(endTime.getTime()), calendar);        
+            insertImage.setInt(5, areaID);
+            if (insertImage.executeUpdate() == 1) {
+                ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
+                log(new LogRecord(CoverageDataBase.SQL_UPDATE, INSERT_GRID_COVERAGES));
+                return ID;
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        /*
-         * Gets the envelope, image size, area, start time and end time.
-         * TODO: We should check for 2D-only coverage! In this case, there
-         *       is no temporal axis (timeCS==null) and no start/end time.
-         */
-        final Envelope envelope = coverage.getEnvelope();
-        final GridRange   range = coverage.getGridGeometry().getGridRange();
-        final Rectangle2D  area = envelope.getSubEnvelope(0,2).toRectangle2D();
-        final Dimension    size = new Dimension(range.getLength(0), range.getLength(1));
-        final Date    startTime = timeCS.toDate(envelope.getMinimum(2));
-        final Date      endTime = timeCS.toDate(envelope.getMaximum(2));
-        final int          csID = getCoordinateSystemTable().getID(cs);
-        final int        areaID = addGridGeometry(area, size, csID);
-        /*
-         * Check if the image already exist. If there is already an image
-         * with the same name for the same group, log an information message
-         * and return from this method.
-         */
-        if (selectImage == null) {
-            selectImage = getConnection().prepareStatement(SELECT_COVERAGE);
-        }
-        selectImage.setInt(1, getSeries().getID());
-        selectImage.setString(2, filename);
-        Integer ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
-        if (ID != null) {
-            log(Resources.getResources(null).getLogRecord(Level.WARNING,
-                ResourceKeys.ERROR_COVERAGE_ALREADY_EXIST_$1, filename));
-            return null;
-        }
-        /*
-         * The image is not already present. Insert the image,
-         * and log an information message with the SQL statement.
-         */
-        // if (insertImage == null) {
-        //     insertImage = getConnection().createStatement();
-        // }
-         
-        if (insertImage == null) {
-            insertImage = getConnection().prepareStatement(INSERT_GRID_COVERAGES);
-        }
-        insertImage.setInt(1, getSubSeries().getID());
-        insertImage.setString(2, filename);        
-        if (dateFormat == null) {
-            dateFormat = new SimpleDateFormat("#MM/dd/yyyy HH:mm:ss#", Locale.US);
-            dateFormat.setTimeZone(timezone);
-        }
-        final Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        insertImage.setDate(3, new java.sql.Date(startTime.getTime()), calendar);//startTime, null);//calendar);        
-        calendar.clear();        
-        insertImage.setDate(4, new java.sql.Date(endTime.getTime()), calendar);        
-        insertImage.setInt(5, areaID);
-        if (insertImage.executeUpdate() == 1) {
-            ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
-            log(new LogRecord(CoverageDataBase.SQL_UPDATE, ""));
-            return ID;
-        }
-                                                            
+        
         // if (insertImage.executeUpdate(sqlInsertCoverage(null, filename, startTime, endTime, areaID)) == 1) {
         //     ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
         //     log(new LogRecord(CoverageDataBase.SQL_UPDATE,
@@ -317,7 +323,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
         //     return ID;
         // }
         // Should not happen.
-        throw new SQLException("Error while updating "+GRID_COVERAGES);
+        throw new CatalogException("Error while updating "+GRID_COVERAGES);
     }
 
     /**
@@ -374,7 +380,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
         insertArea.setInt(7, csID);        
         if (insertArea.executeUpdate() == 1) {
             ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_GEOMETRY_$1);
-            log(new LogRecord(CoverageDataBase.SQL_UPDATE, ""));
+            log(new LogRecord(CoverageDataBase.SQL_UPDATE, INSERT_GRID_GEOMETRIES));
             if (ID != null) {
                 return ID.intValue();
             }
@@ -449,26 +455,30 @@ final class WritableGridCoverageTable extends GridCoverageTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
-        if (insertImage != null) {
-            insertImage.close();
-            insertImage = null;
-        }
-        if (insertArea != null) {
-            insertArea.close();
-            insertArea = null;
-        }
-        if (selectImage != null) {
-            selectImage.close();
-            selectImage = null;
-        }
-        if (selectArea != null) {
-            selectArea.close();
-            selectArea = null;
-        }
-        if (seriesTable != null) {
-            seriesTable.close();
-            seriesTable = null;
+    public synchronized void close() throws RemoteException {
+        try {
+            if (insertImage != null) {
+                insertImage.close();
+                insertImage = null;
+            }
+            if (insertArea != null) {
+                insertArea.close();
+                insertArea = null;
+            }
+            if (selectImage != null) {
+                selectImage.close();
+                selectImage = null;
+            }
+            if (selectArea != null) {
+                selectArea.close();
+                selectArea = null;
+            }
+            if (seriesTable != null) {
+                seriesTable.close();
+                seriesTable = null;
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 }

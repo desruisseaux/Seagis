@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Collection;
 import java.util.Collections;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // JAI dependencies
 import javax.media.jai.util.Range;
@@ -44,6 +45,7 @@ import org.geotools.resources.Utilities;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis dependencies
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.CruiseEntry;
 import fr.ird.database.sample.SampleEntry;
 import fr.ird.database.sample.SampleTable;
@@ -70,7 +72,7 @@ public class SampleTableLayer extends SampleLayer {
      * @param  sampleTable Connection to a table containing samples to display.
      * @throws SQLException If a SQL query failed.
      */
-    public SampleTableLayer(final SampleTable sampleTable) throws SQLException {
+    public SampleTableLayer(final SampleTable sampleTable) throws RemoteException {
         this.sampleTable = sampleTable;
         if (sampleTable != null) {
             try {
@@ -93,7 +95,7 @@ public class SampleTableLayer extends SampleLayer {
      * @param  layer Layer to take data and icons from.
      * @throws SQLException If a SQL query failed.
      */
-    public SampleTableLayer(final SampleTableLayer layer) throws SQLException {
+    public SampleTableLayer(final SampleTableLayer layer) throws RemoteException {
         super(layer, (layer.sampleTable!=null) ? layer.sampleTable.getCoordinateSystem()
                                                : GeographicCoordinateSystem.WGS84);
         this.sampleTable = layer.sampleTable;
@@ -102,7 +104,9 @@ public class SampleTableLayer extends SampleLayer {
     /**
      * Remove all entries for which {@link #accept} returned <code>false</code>.
      */
-    private Collection<SampleEntry> filter(final Collection<SampleEntry> entries) {
+    private Collection<SampleEntry> filter(final Collection<SampleEntry> entries) 
+        throws RemoteException
+    {
         for (final Iterator<SampleEntry> it=entries.iterator(); it.hasNext();) {
             if (!accept(it.next())) {
                 it.remove();
@@ -114,7 +118,7 @@ public class SampleTableLayer extends SampleLayer {
     /**
      * Returns <code>true</code> if the given sample should appears in this layer.
      */
-    protected boolean accept(final SampleEntry sample) {
+    protected boolean accept(final SampleEntry sample) throws RemoteException {
         // Exclude the entries created by the random generator.
         final CruiseEntry cruise = sample.getCruise();
         return cruise==null || cruise.getID() != 0;
@@ -127,7 +131,7 @@ public class SampleTableLayer extends SampleLayer {
      * @param  timeRange the time range for samples to display.
      * @throws SQLException If a SQL query failed.
      */
-    public void setTimeRange(final Range timeRange) throws SQLException {
+    public void setTimeRange(final Range timeRange) throws RemoteException {
         setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());
     }
 
@@ -140,9 +144,9 @@ public class SampleTableLayer extends SampleLayer {
      * @param  startTime Time of the end sample to display.
      * @throws SQLException If a SQL query failed.
      */
-    public void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
+    public void setTimeRange(final Date startTime, final Date endTime) throws RemoteException {
         if (sampleTable == null) {
-            throw new SQLException("Aucune table des captures n'a été spécifiée.");
+            throw new CatalogException("Aucune table des captures n'a été spécifiée.");
         }
         final Collection<SampleEntry> samples;
         synchronized (sampleTable) {

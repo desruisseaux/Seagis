@@ -35,11 +35,12 @@ import java.util.TimeZone;
 import java.util.Collection;
 import java.util.Collections;
 import java.awt.geom.Point2D;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.DateFormat;
 import java.io.IOException;
 import java.awt.Color;
+import java.rmi.RemoteException;
+import java.sql.SQLException;
 
 // JAI
 import javax.media.jai.JAI;
@@ -66,6 +67,7 @@ import org.geotools.resources.Arguments;
 import org.geotools.util.NumberRange;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.DataBase;
 import fr.ird.database.Coverage3D;
 import fr.ird.database.coverage.SeriesEntry;
@@ -190,26 +192,30 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
          * Retourne le nom de la série et son opération, ainsi que l'écart de temps en jours.
          */
         public String toString() {
-            final StringBuffer buffer = new StringBuffer();
-            if (operation != null) {
-                buffer.append(operation.getName());
-                buffer.append('[');
-            }
-            buffer.append(series.getName());
-            if (timeOffset != 0) {
-                buffer.append(' ');
-                if (timeOffset >= 0) {
-                    buffer.append('+');
-                } else if (Float.isNaN(timeOffset)) {
-                    buffer.append("-?");
+            try {
+                final StringBuffer buffer = new StringBuffer();
+                if (operation != null) {
+                    buffer.append(operation.getName());
+                    buffer.append('[');
                 }
-                buffer.append(timeOffset);
-                buffer.append(" jours");
+                buffer.append(series.getName());
+                if (timeOffset != 0) {
+                    buffer.append(' ');
+                    if (timeOffset >= 0) {
+                        buffer.append('+');
+                    } else if (Float.isNaN(timeOffset)) {
+                        buffer.append("-?");
+                    }
+                    buffer.append(timeOffset);
+                    buffer.append(" jours");
+                }
+                if (operation != null) {
+                    buffer.append(']');
+                }
+                return buffer.toString();
+            } catch (RemoteException e) {
+                throw new IllegalArgumentException(e);
             }
-            if (operation != null) {
-                buffer.append(']');
-            }
-            return buffer.toString();
         }
     }
 
@@ -283,21 +289,39 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * Construit un objet <code>ParameterCoverage3D</code> qui utilisera les
      * connections par défaut. La méthode {@link #dispose} fermera ces connections.
      *
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
-    public ParameterCoverage3D() throws SQLException {
-        this(new fr.ird.database.coverage.sql.CoverageDataBase());
+    public ParameterCoverage3D() throws RemoteException {
+        this(getCoverageDataBase());
     }
 
+    /**
+     * Retourne un CoverageDatabase.
+     */
+    private static final fr.ird.database.coverage.sql.CoverageDataBase getCoverageDataBase() 
+        throws RemoteException 
+    {
+        return new fr.ird.database.coverage.sql.CoverageDataBase();
+    }
+    
+    /**
+     * Retourne un SampleDatabase.
+     */
+    private static final fr.ird.database.sample.sql.SampleDataBase getSampleDataBase() 
+        throws RemoteException 
+    {
+        return new fr.ird.database.sample.sql.SampleDataBase();
+    }
+    
     /**
      * Construit un objet <code>ParameterCoverage3D</code> qui utilisera la base de données
      * spécifiée. La méthode {@link #dispose} fermera les connections. Note: ce constructeur
      * sera insérée directement dans le code du constructeur précédent si Sun donnait suite au
      * RFE ##4093999 ("Relax constraint on placement of this()/super() call in constructors").
      *
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
-    private ParameterCoverage3D(final CoverageDataBase database) throws SQLException {
+    private ParameterCoverage3D(final CoverageDataBase database) throws RemoteException {
         this(database.getCoverageTable());
         coverageTable.setOperation("NodataFilter");
         this.database = database;
@@ -310,9 +334,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *
      * @param  coverages La table des images à utiliser. Il sera de la responsabilité de
      *         l'utilisateur de fermer cette table lorsque cet objet ne sera plus utilisé.
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
-    public ParameterCoverage3D(final CoverageTable coverages) throws SQLException {
+    public ParameterCoverage3D(final CoverageTable coverages) throws RemoteException {
         this(coverages, coverages.getCoordinateSystem());
     }
 
@@ -331,11 +355,11 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *         spécifiée n'appartient pas à cet objet <code>ParameterCoverage3D</code>).
      * @param  cs Le système de coordonnées à utiliser pour cet obet {@link Coverage}.
      *         Ce système de coordonnées doit obligatoirement comprendre un axe temporel.
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
     public ParameterCoverage3D(final CoverageTable coverages,
                                final CoordinateSystem cs)
-            throws SQLException
+            throws RemoteException
     {
         super("ParameterCoverage3D", cs);
         coverageTable = coverages;
@@ -355,7 +379,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      */
     protected Coverage3D createCoverage3D(final ParameterEntry parameter,
                                           final CoverageTable  table)
-            throws SQLException
+            throws RemoteException
     {
         try {
             return new SeriesCoverage3D(table, getCoordinateSystem());
@@ -404,8 +428,8 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * cet objet <code>ParameterCoverage3D</code> a été contruit avec le constructeur sans
      * argument. Elle utilisera un objet {@link SampleDataBase} temporaire.
      */
-    final Set<? extends ParameterEntry> getParameters() throws SQLException {
-        final SampleDataBase database = new fr.ird.database.sample.sql.SampleDataBase();
+    final Set<? extends ParameterEntry> getParameters() throws RemoteException {
+        final SampleDataBase database = getSampleDataBase();
         final SeriesTable    series   = this.database.getSeriesTable();
         try {
             return database.getParameters(series);
@@ -422,9 +446,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * <code>ParameterCoverage3D</code> a été contruit avec le constructeur sans argument.
      *
      * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
-    final void setParameter(final String parameter) throws SQLException {
+    final void setParameter(final String parameter) throws RemoteException {
         if (parameter == null) {
             setParameter((ParameterEntry) null);
             return;
@@ -444,9 +468,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * en a un.
      *
      * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
-     * @throws SQLException si la connexion à la base de données a échouée.
+     * @throws RemoteException si la connexion au catalogue a échoué.
      */
-    public synchronized void setParameter(final ParameterEntry parameter) throws SQLException {
+    public synchronized void setParameter(final ParameterEntry parameter) throws RemoteException {
         if (Utilities.equals(parameter, target)) {
             return;
         }
@@ -954,7 +978,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                 coverageTable.close(); // A fermer seulement si 'database' est non-nul.
                 database.close();
             }
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             // Des connexions n'ont pas pu être fermées. Mais puisque de toute façon
             // on ne va plus utiliser cet objet, ce n'est pas grave.
             Utilities.unexpectedException("fr.ird.database.sample", "ParameterCoverage3D",
@@ -990,7 +1014,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * @param  args Les paramètres transmis sur la ligne de commande.
      *
      * @throws ParseException si le format de la date n'est pas légal.
-     * @throws SQLException si une connexion à la base de données a échouée.
+     * @throws RemoteException si une connexion à la base de données a échouée.
      * @throws IOException si l'image ne peut pas être enregistrée.
      * @throws ClassNotFoundException si la classe spécifiée dans l'argument
      *         <code>-generator</code> n'a pas été trouvée.
@@ -1002,7 +1026,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *         <code>-generator</code> n'a pas de constructeur public sans argument.
      */
     public static void main(final String[] args)
-            throws ParseException, SQLException, IOException,
+            throws ParseException, RemoteException, IOException,
                    ClassNotFoundException, ClassCastException,
                    InstantiationException, IllegalAccessException
     {

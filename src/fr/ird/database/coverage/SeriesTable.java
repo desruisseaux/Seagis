@@ -27,7 +27,7 @@ package fr.ird.database.coverage;
 
 // J2SE
 import java.util.Set;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import javax.swing.tree.TreeModel;
 
 // Geotools
@@ -72,10 +72,10 @@ public interface SeriesTable extends Table {
      * @param  ID Numéro identifiant la série recherchée.
      * @return La série identifiée par le numéro ID, ou <code>null</code>
      *         si aucune série de ce numéro n'a été trouvée.
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même ID.
      */
-    public abstract SeriesEntry getEntry(final int ID) throws SQLException;
+    public abstract SeriesEntry getEntry(final int ID) throws RemoteException;
 
     /**
      * Retourne une référence vers un enregistrement de la table des séries.
@@ -83,18 +83,18 @@ public interface SeriesTable extends Table {
      * @param  name Nom de la série recherchée.
      * @return Une série qui porte le nom <code>name</code>, ou <code>null</code>
      *         si aucune série de ce nom n'a été trouvée.
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même nom.
      */
-    public abstract SeriesEntry getEntry(final String name) throws SQLException;
+    public abstract SeriesEntry getEntry(final String name) throws RemoteException;
 
     /**
      * Retourne l'ensemble des séries présentes dans la base de données.
      * Cette méthode ne retournera que les séries marquées "visibles".
      *
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échouée.
      */
-    public abstract Set<SeriesEntry> getEntries() throws SQLException;
+    public abstract Set<SeriesEntry> getEntries() throws RemoteException;
 
     /**
      * Retourne une arborescence qui pourra être affichée dans une composante {@link javax.swing.JTree}.
@@ -106,16 +106,16 @@ public interface SeriesTable extends Table {
      * @param  leafType Un des arguments {@link #SERIES_LEAF}, {@link #SUBSERIES_LEAF} ou
      *         {@link #CATEGORY_LEAF}.
      * @return Arborescence des séries de la base de données.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échouée.
      */
-    public abstract TreeModel getTree(final int leafType) throws SQLException;
+    public abstract TreeModel getTree(final int leafType) throws RemoteException;
 
     /**
      * Retourne le format d'une série.
      *
      * @param  series La série pour laquelle on veut le format.
      * @return Le format utilisé par la série spécifiée, ou <code>null</code> si aucun.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échouée.
      */
-    public FormatEntry getFormat(final SeriesEntry series) throws SQLException;
+    public FormatEntry getFormat(final SeriesEntry series) throws RemoteException;
 }

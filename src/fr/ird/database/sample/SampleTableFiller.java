@@ -39,6 +39,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.cs.Ellipsoid;
@@ -47,6 +48,7 @@ import org.geotools.resources.Arguments;
 import org.geotools.resources.geometry.ShapeUtilities;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.Table;
 import fr.ird.database.sample.sql.SampleDataBase;
 
@@ -85,9 +87,9 @@ public class SampleTableFiller implements Table {
      * Construit un objet <code>SampleTableFiller</code> puisant les données
      * dans la base de données par défaut.
      *
-     * @throws SQLException si la connection avec la base de données a échouée.
+     * @throws RemoteException si la connection avec le catalogue a échoué.
      */
-    public SampleTableFiller() throws SQLException {
+    public SampleTableFiller() throws RemoteException {
         database = new SampleDataBase();
         table    = database.getSampleTable();
         canClose = true;
@@ -98,9 +100,9 @@ public class SampleTableFiller implements Table {
      * spécifiée. Cette table ne sera <strong>pas</strong> fermée par la méthode {@link #close},
      * puisqu'elle n'appartient pas à cet objet.
      *
-     * @throws SQLException si la connection avec la base de données a échouée.
+     * @throws RemoteException si la connection avec le catalogue a échoué.
      */
-    public SampleTableFiller(final SampleTable table) throws SQLException {
+    public SampleTableFiller(final SampleTable table) throws RemoteException {
         this.table = table;
     }
 
@@ -111,9 +113,9 @@ public class SampleTableFiller implements Table {
      * on suppose que <code>getShape()</code> contient les positions précises de cette ligne.
      *
      * @param  columnName Nom de la colonne dans laquelle écrire les longueurs.
-     * @throws SQLException si une erreur est survenue lors d'un accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors d'un accès au catalogue.
      */
-    public void computePathLength(final String columnName) throws SQLException {
+    public void computePathLength(final String columnName) throws RemoteException {
         for (final SampleEntry sample : table.getEntries()) {
             final Shape shape = sample.getShape();
             if (shape != null) {
@@ -156,11 +158,11 @@ public class SampleTableFiller implements Table {
      *         sont pris le même jour. Cet écart doit être exprimé en nombre de millisecondes.
      * @param  columnName Nom de la colonne dans laquelle écrire les distances les plus courtes
      *         qui auront été trouvées.
-     * @throws SQLException si une erreur est survenue lors d'un accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors d'un accès au catalogue.
      */
     public void computeInterSampleDistances(final long maxTimeLag,
                                             final String columnName)
-            throws SQLException
+            throws RemoteException
     {
         final Collection<SampleEntry> list = table.getEntries();
         final SampleEntry[] samples = list.toArray(new SampleEntry[list.size()]);
@@ -206,9 +208,9 @@ public class SampleTableFiller implements Table {
      * position de la journée précédente.
      *
      * @param  columnName Nom de la colonne dans laquelle écrire les vitesses.
-     * @throws SQLException si une erreur est survenue lors d'un accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors d'un accès au catalogue.
      */
-    public void computeSpeed(final String columnName) throws SQLException {
+    public void computeSpeed(final String columnName) throws RemoteException {
         final Map<CruiseEntry,SampleEntry> positions = new HashMap<CruiseEntry,SampleEntry>();
         for (final SampleEntry sample : table.getEntries()) {
             final CruiseEntry cruise = sample.getCruise();
@@ -240,10 +242,10 @@ public class SampleTableFiller implements Table {
      * @param  coast Forme géométrique représentant la côte.
      * @param  columnName Nom de la colonne dans laquelle écrire les
      *         distances les plus courtes qui auront été trouvées.
-     * @throws SQLException si une erreur est survenue
-     *         lors d'un accès à la base de données.
+     * @throws RemoteException si une erreur est survenue
+     *         lors d'un accès au catalogue.
      */
-    public void computeCoastDistances(final Shape coast, final String columnName) throws SQLException {
+    public void computeCoastDistances(final Shape coast, final String columnName) throws RemoteException {
         for (final SampleEntry sample : table.getEntries()) {
             final Point2D coordinate = sample.getCoordinate();
             final double distance = computeCoastDistances(coast, coordinate.getX(), coordinate.getY());
@@ -309,7 +311,7 @@ public class SampleTableFiller implements Table {
      * Libère les ressources utilisées par cet objet. Cette méthode ne ferme <strong>pas</strong>
      * la table spécifiée au constructeur, puisqu'elle n'appartient pas à cet objet.
      */
-    public void close() throws SQLException {
+    public void close() throws RemoteException {
         if (canClose) {
             table.close();
             canClose = false;
@@ -324,7 +326,7 @@ public class SampleTableFiller implements Table {
     /**
      * Lance le calcul des distances les plus courtes entre les données de pêches.
      */
-    public static void main(final String[] args) throws SQLException {
+    public static void main(final String[] args) throws RemoteException {
         final Arguments arguments = new Arguments(args);
         SampleTableFiller worker = null;
         try {

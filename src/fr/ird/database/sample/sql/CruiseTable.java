@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Seagis
 import fr.ird.database.sample.CruiseEntry;
@@ -59,7 +60,7 @@ final class CruiseTable extends Table {
      * @param  connection Connexion vers la base de données.
      * @throws SQLException si cette table n'a pas pu construire sa requête SQL.
      */
-    protected CruiseTable(final Connection connection) throws SQLException {
+    protected CruiseTable(final Connection connection) throws RemoteException {
         // Pour l'instant, on ignore la connexion. Elle sera prise en compte dans une version
         // future si on ajoute réellement une table des campagnes dans la base des données.
         super(null);
@@ -68,7 +69,7 @@ final class CruiseTable extends Table {
     /**
      * Retourne une campagne pour le numéro ID spécifié.
      */
-    public CruiseEntry getEntry(final int ID) throws SQLException {
+    public CruiseEntry getEntry(final int ID) throws RemoteException {
         if (last!=null && last.getID()==ID) {
             return last;
         }

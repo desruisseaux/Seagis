@@ -29,6 +29,7 @@ package fr.ird.database.coverage.sql;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 import java.io.IOException;
 import java.io.File;
 
@@ -50,9 +51,11 @@ import javax.media.jai.util.Range;
 
 // Geotools
 import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
 import fr.ird.database.SQLDataBase;
+import fr.ird.database.CatalogException;
 import fr.ird.database.gui.swing.SQLEditor;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
@@ -118,7 +121,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * Cet URL sera puisé dans les préférences de l'utilisateur
      * autant que possible.
      */
-    private static String getDefaultURL() {
+    private static String getDefaultURL() {                
         final String driver = Table.configuration.get(Configuration.KEY_DRIVER);
         LOGGER.log(loadDriver(driver));
         return Table.configuration.get(Configuration.KEY_SOURCE);
@@ -132,7 +135,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public CoverageDataBase() throws SQLException {
+    public CoverageDataBase() throws RemoteException {
         super(getDefaultURL(), TimeZone.getTimeZone(Table.configuration.get(Configuration.KEY_TIME_ZONE)),
              Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
@@ -147,7 +150,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public CoverageDataBase(final String url, final TimeZone timezone) throws SQLException {
+    public CoverageDataBase(final String url, final TimeZone timezone) throws RemoteException {
         super(url, timezone, Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
 
@@ -163,7 +166,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public CoverageDataBase(final String url, final TimeZone timezone, final String user, final String password) throws SQLException
+    public CoverageDataBase(final String url, final TimeZone timezone, final String user, final String password) throws RemoteException
     {
         super(url, timezone, user, password);
     }
@@ -172,7 +175,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * Vérifie que la région est valide, en puisant les
      * données dans la base de données si nécessaire.
      */
-    private void ensureGeometryValid() throws SQLException {
+    private void ensureGeometryValid() throws RemoteException {
         if (geometry == null) {
             geometry = new GridGeometryTable(connection, timezone);
         }
@@ -182,39 +185,47 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * {@inheritDoc}
      *
      * @return {@inheritDoc}
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogé.
      */
-    public synchronized Rectangle2D getGeographicArea() throws SQLException {
-        ensureGeometryValid();
-        return geometry.getGeographicArea();
+    public synchronized Rectangle2D getGeographicArea() throws RemoteException {
+        try {
+            ensureGeometryValid();
+            return new XRectangle2D(geometry.getGeographicArea());
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
      * {@inheritDoc}
      *
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      */
-    public synchronized Range getTimeRange() throws SQLException {
-        ensureGeometryValid();
-        return geometry.getTimeRange();
+    public synchronized Range getTimeRange() throws RemoteException {
+        try {
+            ensureGeometryValid();
+            return geometry.getTimeRange();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      *
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public fr.ird.database.coverage.SeriesTable getSeriesTable() throws SQLException {
+    public fr.ird.database.coverage.SeriesTable getSeriesTable() throws RemoteException {
         return new SeriesTable(connection);
     }
 
     /**
      * {@inheritDoc}
      *
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
     public synchronized CoverageTable getCoverageTable()
-            throws SQLException
+            throws RemoteException
     {
         if (series == null) {
             double minPeriod = Double.POSITIVE_INFINITY;
@@ -238,10 +249,10 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * {@inheritDoc}
      *
      * @param  series {@inheritDoc}
-     * @throws SQLException si la référence n'est pas valide ou table n'a pas pu être construite.
+     * @throws RemoteException si la référence n'est pas valide ou table n'a pas pu être construite.
      */
     public synchronized CoverageTable getCoverageTable(final fr.ird.database.coverage.SeriesEntry series)
-            throws SQLException
+            throws RemoteException
     {
         Rectangle2D geographicArea = getGeographicArea();
         Range            timeRange = getTimeRange();
@@ -270,16 +281,17 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * {@inheritDoc}
      *
      * @param  series {@inheritDoc}
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public CoverageTable getCoverageTable(final String series) throws SQLException {
-        final fr.ird.database.coverage.SeriesTable table = getSeriesTable();
+    public CoverageTable getCoverageTable(final String series) throws RemoteException {
+        final fr.ird.database.coverage.SeriesTable table = getSeriesTable();       
         final fr.ird.database.coverage.SeriesEntry entry = table.getEntry(series);
+        
         table.close();
         if (entry != null) {
             return getCoverageTable(entry);
         } else {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
+            throw new CatalogException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
         }
     }
 
@@ -287,16 +299,16 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * {@inheritDoc}
      *
      * @param  series {@inheritDoc}
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public CoverageTable getCoverageTable(final int seriesID) throws SQLException {
+    public CoverageTable getCoverageTable(final int seriesID) throws RemoteException {
         final fr.ird.database.coverage.SeriesTable table = getSeriesTable();
         final fr.ird.database.coverage.SeriesEntry entry = table.getEntry(seriesID);
         table.close();
         if (entry != null) {
             return getCoverageTable(entry);
         } else {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1,
+            throw new CatalogException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1,
                                                     new Integer(seriesID)));
         }
     }
@@ -511,9 +523,9 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
     /**
      * {@inheritDoc}
      *
-     * @throws SQLException si un problème est survenu lors de la disposition des ressources.
+     * @throws RemoteException si un problème est survenu lors de la disposition des ressources.
      */
-    public void close() throws SQLException {
+    public void close() throws RemoteException {
         if (geometry != null) {
             geometry.close();
         }
@@ -554,9 +566,9 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * caractères étendus. La page de code en cours peut être obtenu en tappant
      * <code>chcp</code> sur la ligne de commande.
      *
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      */
-    public static void main(final String[] args) throws SQLException {
+    public static void main(final String[] args) throws RemoteException {
         org.geotools.resources.MonolineFormatter.init("fr.ird");
         final Main console = new Main(args);
         if (console.config) {

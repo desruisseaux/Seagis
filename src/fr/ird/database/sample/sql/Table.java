@@ -29,8 +29,12 @@ package fr.ird.database.sample.sql;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.util.prefs.Preferences;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.SampleDataBase;
 
 
@@ -40,7 +44,7 @@ import fr.ird.database.sample.SampleDataBase;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class Table implements fr.ird.database.Table {
+abstract class Table extends UnicastRemoteObject implements fr.ird.database.Table {
     /** Nom de table. */ static final String ENVIRONMENTS  = "Environnements";
     /** Nom de table. */ static final String LINEAR_MODELS = "Modèles linéaires";
     /** Nom de table. */ static final String DISTRIBUTIONS = "Distributions";
@@ -76,7 +80,7 @@ abstract class Table implements fr.ird.database.Table {
      * @param statement Interrogation à soumettre à la base de données, ou <code>null</code> si
      *        aucune.
      */
-    protected Table(final PreparedStatement statement) {
+    protected Table(final PreparedStatement statement) throws RemoteException {
         this.statement = statement;
     }
 
@@ -160,10 +164,14 @@ abstract class Table implements fr.ird.database.Table {
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException {
-        if (statement != null) {
-            statement.close();
-            statement = null;
+    public synchronized void close() throws RemoteException {
+        try {
+            if (statement != null) {
+                statement.close();
+                statement = null;
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 }

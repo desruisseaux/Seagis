@@ -27,11 +27,12 @@ package fr.ird.database.sample;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
-import java.sql.SQLException;
+//import java.sql.SQLException;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.Arrays;
 import java.util.Date;
+import java.rmi.RemoteException;
 
 // OpenGIS
 import org.opengis.referencing.operation.TransformException;
@@ -105,10 +106,10 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
      * Construit une couverture à partir des données de la table spécifiée.
      *
      * @param  table Table d'où proviennent les données.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table) throws SQLException, TransformException {
+    public SeriesCoverage3D(final CoverageTable table) throws RemoteException, TransformException {
         this(table, table.getCoordinateSystem());
     }
 
@@ -118,11 +119,11 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
      * @param  table Table d'où proviennent les données.
      * @param  cs Le système de coordonnées à utiliser pour cet obet {@link Coverage}.
      *         Ce système de coordonnées doit obligatoirement comprendre un axe temporel.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
     public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
-            throws SQLException, TransformException
+            throws RemoteException, TransformException
     {
         super(table, cs);
         isDefaultImplementation = SeriesCoverage3D.class.equals(getClass());

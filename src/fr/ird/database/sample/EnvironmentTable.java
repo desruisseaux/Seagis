@@ -28,7 +28,7 @@ package fr.ird.database.sample;
 // SQL database
 import javax.sql.RowSet;
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // J2SE dependencies
 import java.util.Set;
@@ -64,27 +64,27 @@ public interface EnvironmentTable extends Table {
      * de l'échantillons. Les colonnes suivantes contiennent les échantillons par espèces.
      *
      * @param table Le nom de la table des échantillons, ou <code>null</code> si aucune.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract void setSampleTable(final String table) throws SQLException;
+    public abstract void setSampleTable(final String table) throws RemoteException;
 
     /**
      * Retourne le nom d'une table des échantillons à joindre avec les paramètres environnementaux
      * retournés par {@link #getRowSet}, ou <code>null</code> si aucune.
      *
      * @return Le nom de la table des échantillons, ou <code>null</code> si aucune.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract String getSampleTable() throws SQLException;
+    public abstract String getSampleTable() throws RemoteException;
 
     /**
      * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
      * environnementaux sont représentés par des noms courts tels que "CHL" ou "SST".
      *
      * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract Set<ParameterEntry> getAvailableParameters() throws SQLException;
+    public abstract Set<ParameterEntry> getAvailableParameters() throws RemoteException;
 
     /**
      * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
@@ -93,9 +93,9 @@ public interface EnvironmentTable extends Table {
      * par l'opérateur de Sobel, respectivement.
      *
      * @return L'ensemble des opérations disponibles dans la base de données.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract Set<OperationEntry> getAvailableOperations() throws SQLException;
+    public abstract Set<OperationEntry> getAvailableOperations() throws RemoteException;
 
     /**
      * Retourne la liste des positions relatives disponibles. Ces positions comprennent
@@ -103,9 +103,9 @@ public interface EnvironmentTable extends Table {
      * d'obtenir les valeurs environnementales.
      *
      * @return L'ensemble des positions relatives disponibles dans la base de données.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract Set<RelativePositionEntry> getAvailablePositions() throws SQLException;
+    public abstract Set<RelativePositionEntry> getAvailablePositions() throws RemoteException;
 
     /**
      * Ajoute un paramètre à la sélection. Chaque objet <code>EnvironmentTable</code> nouvellement
@@ -128,12 +128,12 @@ public interface EnvironmentTable extends Table {
      *         enregistrements pour lesquels au moins un paramètre environnemental est manquant
      *         seront omis.
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
     public abstract void addParameter(final ParameterEntry        parameter,
                                       final OperationEntry        operation,
                                       final RelativePositionEntry position,
-                                      final boolean nullIncluded) throws SQLException;
+                                      final boolean nullIncluded) throws RemoteException;
 
     /**
      * Ajoute un paramètre à la sélection en ne le désignant que par son nom.
@@ -144,12 +144,12 @@ public interface EnvironmentTable extends Table {
      * @param  nullIncluded Indique si {@link #getRowSet} est autorisée à retourner des valeurs
      *         nulles.
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
     public abstract void addParameter(final String  parameter,
                                       final String  operation,
                                       final String  position,
-                                      final boolean nullIncluded) throws SQLException;
+                                      final boolean nullIncluded) throws RemoteException;
 
     /**
      * Retire un paramètres de la sélection. Cette méthode permet de retirer une
@@ -161,11 +161,11 @@ public interface EnvironmentTable extends Table {
      * @param  operation Opération (exemple "valeur" ou "sobel").
      * @param  parameter Paramètre (exemple "SST" ou "EKP").
      * @param  position Position spatio-temporelle relative où l'on voulait les valeurs.
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
     public abstract void removeParameter(final ParameterEntry       parameter,
                                          final OperationEntry       operation,
-                                         final RelativePositionEntry position) throws SQLException;
+                                         final RelativePositionEntry position) throws RemoteException;
 
     /**
      * Retire un paramètre à la sélection en ne le désignant que par son nom.
@@ -173,11 +173,11 @@ public interface EnvironmentTable extends Table {
      * @param  parameter Paramètre (exemple "SST" ou "EKP").
      * @param  operation Opération (exemple "valeur" ou "sobel").
      * @param  position Position spatio-temporelle relative où l'on voulait les valeurs.
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
     public abstract void removeParameter(final String parameter,
                                          final String operation,
-                                         final String position) throws SQLException;
+                                         final String position) throws RemoteException;
 
     /**
      * Retourne le nombre de paramètres dans cette table correspondant aux critères spécifiés.
@@ -204,9 +204,9 @@ public interface EnvironmentTable extends Table {
      * d'un objet {@link RowSet}.
      *
      * @return Les noms de colonnes.
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract String[] getColumnLabels() throws SQLException;
+    public abstract String[] getColumnLabels() throws RemoteException;
 
     /**
      * Retourne un itérateur qui baleyera l'ensemble des données sélectionnées. La première
@@ -227,9 +227,9 @@ public interface EnvironmentTable extends Table {
      *         qu'on voudra probablement continuer à l'utiliser pour informer des progrès
      *         de la lecture du {@link RowSet}.
      * @return Les données environnementales pour les captures.
-     * @throws SQLException si l'interrogation de la base de données a échoué.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      */
-    public abstract RowSet getRowSet(final ProgressListener progress) throws SQLException;
+    public abstract RowSet getRowSet(final ProgressListener progress) throws RemoteException;
 
     /**
      * Affiche les enregistrements vers le flot spécifié.
@@ -238,10 +238,10 @@ public interface EnvironmentTable extends Table {
      * @param  out Flot de sortie.
      * @param  max Nombre maximal d'enregistrements à écrire.
      * @return Nombre d'enregistrement écrits.
-     * @throws SQLException si l'interrogation de la base de données a échoué.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws IOException si une erreur est survenue lors de l'écriture.
      */
-    public abstract int print(final Writer out, int max) throws SQLException, IOException;
+    public abstract int print(final Writer out, int max) throws RemoteException;/*, IOException;*/
 
     /**
      * Copie toutes les données de {@link #getRowSet} vers une table du nom
@@ -257,7 +257,7 @@ public interface EnvironmentTable extends Table {
      */
     public abstract int copyToTable(final Connection     connection,
                                     final String          tableName,
-                                    final ProgressListener progress) throws SQLException;
+                                    final ProgressListener progress) throws RemoteException;
 
     /**
      * Définit la valeur des paramètres environnementaux pour un échantillons. Le nombre
@@ -278,17 +278,17 @@ public interface EnvironmentTable extends Table {
      * @param  value Les valeurs des paramètres environnementaux.
      *         Les valeurs <code>NaN</code> seront ignorées (c'est-à-dire que les
      *         valeurs déjà présentes dans la base de données ne seront pas écrasées).
-     * @throws SQLException si un problème est survenu lors de la mise à jour.
+     * @throws RemoteException si un problème est survenu lors de la mise à jour.
      */
     public abstract void set(final SampleEntry           sample,
                              final RelativePositionEntry position,
-                             final double[]              values) throws SQLException;
+                             final double[]              values) throws RemoteException;
 
     /**
      * Oublie tous les paramètres qui ont été déclarés avec
      * {@link #addParameter(ParameterEntry,OperationEntry,RelativePositionEntry) addParameter(...)}.
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract void clear() throws SQLException;
+    public abstract void clear() throws RemoteException;
 }

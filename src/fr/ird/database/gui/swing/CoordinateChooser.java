@@ -43,6 +43,7 @@ import javax.swing.BorderFactory;
 import java.util.Date;
 import java.sql.SQLException;
 import javax.media.jai.util.Range;
+import java.rmi.RemoteException;
 
 // Arborescence
 import javax.swing.tree.TreePath;
@@ -56,6 +57,7 @@ import org.geotools.gui.swing.tree.TreeNode;
 import org.geotools.gui.swing.tree.Trees;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.SeriesTable;
@@ -105,19 +107,19 @@ public class CoordinateChooser extends org.geotools.gui.swing.CoordinateChooser 
      *         Aucune référence ne sera retenue après la construction.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CoordinateChooser(final CoverageDataBase database) throws SQLException {
+    public CoordinateChooser(final CoverageDataBase database) throws RemoteException {
         this(database, database.getTimeRange());
     }
 
     /**
      * Constructeur privé.
      */
-    private CoordinateChooser(final CoverageDataBase database, final Range timeRange) throws SQLException {
+    private CoordinateChooser(final CoverageDataBase database, final Range timeRange) throws RemoteException {
         super((Date)timeRange.getMinValue(), (Date)timeRange.getMaxValue());
-        setGeographicArea(database.getGeographicArea());
+        setGeographicArea((java.awt.geom.Rectangle2D)database.getGeographicArea());
         setPreferredResolution(new XDimension2D.Double(DEFAULT_RESOLUTION, DEFAULT_RESOLUTION));
         setPreferredResolution(null); // Disable after setting it to default value.
-
+                        
         treeModel = database.getSeriesTable().getTree(SeriesTable.SERIES_LEAF);
         final JTree tree = new JTree(treeModel);
         tree.setExpandsSelectedPaths(true);

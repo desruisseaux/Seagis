@@ -29,7 +29,10 @@ package fr.ird.database.sample.sql;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
+// Seagis.
+import fr.ird.database.CatalogException;
 
 /**
  * Table des positions spatio-temporelles relatives aux positions des données de pêches.
@@ -65,7 +68,7 @@ final class RelativePositionTable
      *         Une des constantes {@link #LIST}, {@link #BY_ID} ou {@link #BY_NAME}.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    protected RelativePositionTable(final Connection connection, final int type) throws SQLException {
+    protected RelativePositionTable(final Connection connection, final int type) throws RemoteException {
         super(connection, type);
     }
 
@@ -86,10 +89,14 @@ final class RelativePositionTable
     /**
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected RelativePositionEntry createEntry(final ResultSet results) throws SQLException {
-        return new RelativePositionEntry(results.getInt    (ID),
-                                         results.getString (NAME),
-                              Math.round(results.getDouble (TIME_LAG)*DAY),
-                                         results.getBoolean(DEFAULT));
+    protected RelativePositionEntry createEntry(final ResultSet results) throws RemoteException {
+        try {
+            return new RelativePositionEntry(results.getInt    (ID),
+                                             results.getString (NAME),
+                                  Math.round(results.getDouble (TIME_LAG)*DAY),
+                                             results.getBoolean(DEFAULT));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 }

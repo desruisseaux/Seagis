@@ -30,8 +30,10 @@ import java.util.List;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.IllegalRecordException;
@@ -102,7 +104,7 @@ final class ParameterTable
      */
     protected ParameterTable(final Connection connection, final int type,
                              final SeriesTable seriesTable)
-            throws SQLException
+            throws RemoteException
     {
         super(connection, type);
         this.seriesTable = seriesTable;
@@ -115,11 +117,22 @@ final class ParameterTable
      * de sorte que ce dernier peut fort bien choisir de réutiliser une table déjà existante plutôt
      * que de créer une nouvelle instance de <code>ParameterTable</code>.
      */
-    ParameterTable(final DescriptorTable descriptors, final int type) throws SQLException {
-        this(descriptors.getConnection(), type, null);
+    ParameterTable(final DescriptorTable descriptors, final int type) throws RemoteException {
+        this(getConnection(descriptors), type, null);
         linearModels = new LinearModelTable(descriptors);
     }
 
+    /**
+     * Retourne la connection.
+     */
+    private static final Connection getConnection(final DescriptorTable descriptors) throws RemoteException {
+        try {
+            return descriptors.getConnection();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
+    }
+    
     /**
      * {@inheritDoc}
      */
@@ -151,31 +164,35 @@ final class ParameterTable
      * @see #completeEntry(ParameterEntry)
      * @see #getIncompleteEntry(int)
      */
-    private void completeEntry(final ParameterEntry entry, final ResultSet results) throws SQLException {
-        assert entry.name == null : entry.name;
-        entry.name = results.getString(NAME);
-        for (int column=SERIES0; column<=SERIES1; column++) {
-            final SeriesEntry series;
-            final int id = results.getInt(column);
-            if (results.wasNull()) {
-                series = null;
-            } else if (seriesTable != null) {
-                series = seriesTable.getEntry(id);
-            } else {
-                series = new SeriesEntry() {
-                    public int    getID()      {return id;}
-                    public String getName()    {return "Sans nom #"+id;}
-                    public String getRemarks() {return null;}
-                    public double getPeriod()  {return Double.NaN;}
-                };
+    private void completeEntry(final ParameterEntry entry, final ResultSet results) throws RemoteException {
+        try {
+            assert entry.name == null : entry.name;
+            entry.name = results.getString(NAME);
+            for (int column=SERIES0; column<=SERIES1; column++) {
+                final SeriesEntry series;
+                final int id = results.getInt(column);
+                if (results.wasNull()) {
+                    series = null;
+                } else if (seriesTable != null) {
+                    series = seriesTable.getEntry(id);
+                } else {
+                    series = new SeriesEntry() {
+                        public int    getID()      {return id;}
+                        public String getName()    {return "Sans nom #"+id;}
+                        public String getRemarks() {return null;}
+                        public double getPeriod()  {return Double.NaN;}
+                    };
+                }
+                switch (column) {
+                    case SERIES0: entry.series0 = series; break;
+                    case SERIES1: entry.series1 = series; break;
+                    default: throw new AssertionError(column);
+                }
             }
-            switch (column) {
-                case SERIES0: entry.series0 = series; break;
-                case SERIES1: entry.series1 = series; break;
-                default: throw new AssertionError(column);
-            }
+            entry.band = results.getInt(BAND);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        entry.band = results.getInt(BAND);
     }
 
     /**
@@ -189,37 +206,41 @@ final class ParameterTable
      * @param entry L'entré à compléter.
      * @throws Si l'interrogation de <code>results</code> a échoué.
      */
-    final void completeEntry(final ParameterEntry entry) throws SQLException {
-        assert Thread.holdsLock(this);
-        final Integer key = new Integer(entry.getID());
-        if (entry.name != null) {
-            assert pool.get(key) == entry;
-        } else try {
-            setType(BY_ID);
-            statement.setInt(1, entry.getID());
-            final ResultSet results = statement.executeQuery();
-            if (!results.next()) {
-                results.close();
-                final String table = getTableName();
-                throw new NoSuchRecordException(table, Resources.format(
-                          ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
-            }
-            completeEntry(entry, results);
-            while (results.next()) {
-                if (!entry.equals(createEntry(results))) {
+    final void completeEntry(final ParameterEntry entry) throws RemoteException {
+        try {
+            assert Thread.holdsLock(this);
+            final Integer key = new Integer(entry.getID());
+            if (entry.name != null) {
+                assert pool.get(key) == entry;
+            } else try {
+                setType(BY_ID);
+                statement.setInt(1, entry.getID());
+                final ResultSet results = statement.executeQuery();
+                if (!results.next()) {
                     results.close();
-                    throw new IllegalRecordException(getTableName(),
-                              Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, key));
+                    final String table = getTableName();
+                    throw new NoSuchRecordException(table, Resources.format(
+                              ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
                 }
+                completeEntry(entry, results);
+                while (results.next()) {
+                    if (!entry.equals(createEntry(results))) {
+                        results.close();
+                        throw new IllegalRecordException(getTableName(),
+                                  Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, key));
+                    }
+                }
+                results.close();
+                postCreateEntry(entry);
+            } catch (SQLException exception) {
+                pool.remove(key);
+                throw exception;
+            } catch (RuntimeException exception) {
+                pool.remove(key);
+                throw exception;
             }
-            results.close();
-            postCreateEntry(entry);
-        } catch (SQLException exception) {
-            pool.remove(key);
-            throw exception;
-        } catch (RuntimeException exception) {
-            pool.remove(key);
-            throw exception;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
@@ -253,10 +274,14 @@ final class ParameterTable
      * @return Le paramètre portant le numéro ID spécifié.
      * @throws SQLException si la construction du paramètre a échoué.
      */
-    protected ParameterEntry createEntry(final ResultSet results) throws SQLException {
-        final ParameterEntry entry = new ParameterEntry(results.getInt(ID));
-        completeEntry(entry, results);
-        return entry;
+    protected ParameterEntry createEntry(final ResultSet results) throws RemoteException {
+        try {
+            final ParameterEntry entry = new ParameterEntry(results.getInt(ID));
+            completeEntry(entry, results);
+            return entry;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }                                    
     }
 
     /**
@@ -270,7 +295,7 @@ final class ParameterTable
      * @param  entry L'entré à initialiser.
      * @throws SQLException si l'initialisation a échouée.
      */
-    protected void postCreateEntry(final ParameterEntry entry) throws SQLException {
+    protected void postCreateEntry(final ParameterEntry entry) throws RemoteException {
         if (entry.linearModel == null) {
             entry.linearModel = getLinearModelTable().getTerms(entry);
         }
@@ -281,7 +306,7 @@ final class ParameterTable
      *
      * @task TODO: try to get ride of this workaround if possible.
      */
-    void _postCreateEntry(final fr.ird.database.sample.ParameterEntry entry) throws SQLException {
+    void _postCreateEntry(final fr.ird.database.sample.ParameterEntry entry) throws RemoteException {
         postCreateEntry((ParameterEntry) entry);
     }
 
@@ -294,7 +319,7 @@ final class ParameterTable
      * @return La table des modèles linéaires.
      * @throws SQLException si la table n'a pas pu être obtenue.
      */
-    protected synchronized LinearModelTable getLinearModelTable() throws SQLException {
+    protected synchronized LinearModelTable getLinearModelTable() throws RemoteException {
         if (linearModels == null) {
             linearModels = new LinearModelTable(new DescriptorTable(this));
         }
@@ -316,7 +341,7 @@ final class ParameterTable
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
+    public synchronized void close() throws RemoteException {
         if (linearModels != null) {
             final Table table = linearModels;
             linearModels = null; // Set to null first to avoid never-ending loop.

@@ -30,6 +30,8 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 // Entrés/sorties
 import java.net.URL;
@@ -59,6 +61,7 @@ import org.geotools.util.NumberRange;
 
 // Seagis
 import fr.ird.resources.Utilities;
+import fr.ird.database.CatalogException;
 import fr.ird.database.IllegalRecordException;
 
 
@@ -111,10 +114,14 @@ final class CategoryTable extends Table {
      * Construit une table en utilisant la connection spécifiée.
      *
      * @param connection Connection vers une base de données d'images.
-     * @throws SQLException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
+     * @throws CatalogException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected CategoryTable(final Connection connection) throws SQLException {
-        statement = connection.prepareStatement(SQL_SELECT);
+    protected CategoryTable(final Connection connection) throws RemoteException {
+        try {
+            statement = connection.prepareStatement(SQL_SELECT);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -122,65 +129,69 @@ final class CategoryTable extends Table {
      *
      * @param  bandID Identificateur de la bande pour lequel on veut les catégories.
      * @return Les catégories de la bande demandée.
-     * @throws SQLException si l'interrogation de la table "Categories" a échoué.
+     * @throws CatalogException si l'interrogation de la table "Categories" a échoué.
      */
-    public synchronized Category[] getCategories(final int bandID) throws SQLException {
-        statement.setInt(ARG_ID, bandID);
-        final List<Category> categories = new ArrayList<Category>();
-        final ResultSet result = statement.executeQuery();
-        while (result.next()) {
-            boolean isQuantifiable = true;
-            final String    name = result.getString (NAME).intern();
-            final int      lower = result.getInt    (LOWER);
-            final int      upper = result.getInt    (UPPER);
-            final double      c0 = result.getDouble (C0); isQuantifiable &= !result.wasNull();
-            final double      c1 = result.getDouble (C1); isQuantifiable &= !result.wasNull();
-            final boolean    log = result.getBoolean(LOG);
-            final String colorID = result.getString (COLORS);
-            /*
-             * Procède maintenant au décodage du champ "colors". Ce champ contient
-             * une chaîne de caractère qui indique soit le code RGB d'une couleur
-             * uniforme, ou soit l'adresse URL d'une palette de couleurs.
-             */
-            Color[] colors = null;
-            if (colorID != null) try {
-                colors = decode(colorID);
-            } catch (IOException exception) {
-                throw new IllegalRecordException(CATEGORIES, exception);
-            } catch (ParseException exception) {
-                throw new IllegalRecordException(CATEGORIES, exception);
-            }
-            /*
-             * Construit une catégorie correspondant à
-             * l'enregistrement qui vient d'être lu.
-             */
-            Category category;
-            final NumberRange range = new NumberRange(lower, upper);
-            if (!isQuantifiable) {
-                category = new Category(name, colors, range, (MathTransform1D)null);
-            } else {
-                category = new Category(name, colors, range, c1, c0);
-                if (log) {
-                    final MathTransformFactory factory = MathTransformFactory.getDefault();
-                    if (exponential == null) try {
-                        final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
-                        param.setParameter("Dimension", 1);
-                        param.setParameter("Base", 10.0); // Must be a 'double'
-                        exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
-                    } catch (FactoryException exception) {
-                        final SQLException e = new SQLException(exception.getLocalizedMessage());
-                        e.initCause(exception);
-                        throw e;
-                    }
-                    MathTransform1D tr = category.getSampleToGeophysics();
-                    tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);
-                    category = new Category(name, colors, range, tr);
+    public synchronized Category[] getCategories(final int bandID) throws RemoteException {
+        try {
+            statement.setInt(ARG_ID, bandID);
+            final List<Category> categories = new ArrayList<Category>();
+            final ResultSet result = statement.executeQuery();
+            while (result.next()) {
+                boolean isQuantifiable = true;
+                final String    name = result.getString (NAME).intern();
+                final int      lower = result.getInt    (LOWER);
+                final int      upper = result.getInt    (UPPER);
+                final double      c0 = result.getDouble (C0); isQuantifiable &= !result.wasNull();
+                final double      c1 = result.getDouble (C1); isQuantifiable &= !result.wasNull();
+                final boolean    log = result.getBoolean(LOG);
+                final String colorID = result.getString (COLORS);
+                /*
+                 * Procède maintenant au décodage du champ "colors". Ce champ contient
+                 * une chaîne de caractère qui indique soit le code RGB d'une couleur
+                 * uniforme, ou soit l'adresse URL d'une palette de couleurs.
+                 */
+                Color[] colors = null;
+                if (colorID != null) try {
+                    colors = decode(colorID);
+                } catch (IOException exception) {
+                    throw new IllegalRecordException(CATEGORIES, exception);
+                } catch (ParseException exception) {
+                    throw new IllegalRecordException(CATEGORIES, exception);
                 }
+                /*
+                 * Construit une catégorie correspondant à
+                 * l'enregistrement qui vient d'être lu.
+                 */
+                Category category;
+                final NumberRange range = new NumberRange(lower, upper);
+                if (!isQuantifiable) {
+                    category = new Category(name, colors, range, (MathTransform1D)null);
+                } else {
+                    category = new Category(name, colors, range, c1, c0);
+                    if (log) {
+                        final MathTransformFactory factory = MathTransformFactory.getDefault();
+                        if (exponential == null) try {
+                            final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
+                            param.setParameter("Dimension", 1);
+                            param.setParameter("Base", 10.0); // Must be a 'double'
+                            exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
+                        } catch (FactoryException exception) {
+                            final CatalogException e = new CatalogException(exception.getLocalizedMessage());
+                            e.initCause(exception);
+                            throw e;
+                        }
+                        MathTransform1D tr = category.getSampleToGeophysics();
+                        tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);
+                        category = new Category(name, colors, range, tr);
+                    }
+                }
+                categories.add(category);
             }
-            categories.add(category);
+            result.close();
+            return categories.toArray(new Category[categories.size()]);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        result.close();
-        return categories.toArray(new Category[categories.size()]);
     }
 
     /**
@@ -232,10 +243,14 @@ final class CategoryTable extends Table {
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
      *
-     * @throws SQLException si un problème est survenu
+     * @throws CatalogException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException {
-        statement.close();
+    public synchronized void close() throws CatalogException {
+        try {
+            statement.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 }

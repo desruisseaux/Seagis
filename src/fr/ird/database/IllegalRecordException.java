@@ -26,7 +26,7 @@
 package fr.ird.database;
 
 // Divers
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
@@ -39,7 +39,7 @@ import fr.ird.resources.seagis.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class IllegalRecordException extends SQLException {
+public class IllegalRecordException extends RemoteException {
     /**
      * Nom de la table qui contient l'enregistrement invalide.
      */

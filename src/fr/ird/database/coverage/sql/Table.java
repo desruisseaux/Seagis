@@ -33,12 +33,15 @@ import java.util.prefs.Preferences;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 // Geotools
 import org.geotools.util.WeakHashSet;
 import org.geotools.resources.Utilities;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.database.coverage.CoverageDataBase;
 
@@ -49,11 +52,11 @@ import fr.ird.database.coverage.CoverageDataBase;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class Table implements fr.ird.database.Table {
+abstract class Table extends java.rmi.server.UnicastRemoteObject implements fr.ird.database.Table {
     /**
      * Construit une table.
      */
-    protected Table() {
+    protected Table() throws RemoteException {
     }
 
     /**
@@ -162,28 +165,32 @@ abstract class Table implements fr.ird.database.Table {
      * @param  calendar Calendrier de la base de données.
      * @param  localCalendar calendrier local.
      * @return Date en heure UTC.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws CatalogException si l'interrogation du catalogue a échoué.
      */
     static Date getTimestamp(final int field, final ResultSet result,
                              final Calendar calendar, final Calendar localCalendar)
-        throws SQLException
+        throws RemoteException
     {
-        // NOTE: on ne peut pas utiliser result.getTimestamp(field,localCalendar)
-        //       parce que la "correction" de Sun pour le bug #4380653 a en fait
-        //       empiré le problème!!!!
-        final Date date = result.getTimestamp(field);
-        if (date == null) {
-            return null;
-        }
-        localCalendar.setTime(date);
-        calendar.     setTime(date);
-        calendar.set(Calendar.ERA,         localCalendar.get(Calendar.ERA        ));
-        calendar.set(Calendar.YEAR,        localCalendar.get(Calendar.YEAR       ));
-        calendar.set(Calendar.DAY_OF_YEAR, localCalendar.get(Calendar.DAY_OF_YEAR));
-        calendar.set(Calendar.HOUR_OF_DAY, localCalendar.get(Calendar.HOUR_OF_DAY));
-        calendar.set(Calendar.MINUTE,      localCalendar.get(Calendar.MINUTE     ));
-        calendar.set(Calendar.SECOND,      localCalendar.get(Calendar.SECOND     ));
-        calendar.set(Calendar.MILLISECOND, localCalendar.get(Calendar.MILLISECOND));
-        return calendar.getTime();
+        try {
+            // NOTE: on ne peut pas utiliser result.getTimestamp(field,localCalendar)
+            //       parce que la "correction" de Sun pour le bug #4380653 a en fait
+            //       empiré le problème!!!!
+            final Date date = result.getTimestamp(field);
+            if (date == null) {
+                return null;
+            }
+            localCalendar.setTime(date);
+            calendar.     setTime(date);
+            calendar.set(Calendar.ERA,         localCalendar.get(Calendar.ERA        ));
+            calendar.set(Calendar.YEAR,        localCalendar.get(Calendar.YEAR       ));
+            calendar.set(Calendar.DAY_OF_YEAR, localCalendar.get(Calendar.DAY_OF_YEAR));
+            calendar.set(Calendar.HOUR_OF_DAY, localCalendar.get(Calendar.HOUR_OF_DAY));
+            calendar.set(Calendar.MINUTE,      localCalendar.get(Calendar.MINUTE     ));
+            calendar.set(Calendar.SECOND,      localCalendar.get(Calendar.SECOND     ));
+            calendar.set(Calendar.MILLISECOND, localCalendar.get(Calendar.MILLISECOND));
+            return calendar.getTime();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
     }   
 }

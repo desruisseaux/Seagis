@@ -39,7 +39,7 @@ import java.rmi.RemoteException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ServerException extends SQLException {
+public class ServerException extends RemoteException {
     /**
      * Construit une nouvelle exception avec le message et la cause spécifiés.
      *

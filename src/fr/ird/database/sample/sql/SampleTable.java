@@ -54,6 +54,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleDataBase;
 import fr.ird.database.ServerException;
@@ -173,9 +174,10 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     protected SampleTable(final Connection connection,
                           final String      statement,
                           final TimeZone     timezone,
-                          final Set<Species>  species) throws SQLException
-    {
-        super(connection.prepareStatement(completeQuery(statement, species)));
+                          final Set<Species>  species) throws RemoteException
+    {        
+        // super(connection.prepareStatement(completeQuery(statement, species)));
+        super(prepareStatement(connection, statement, species));
         this.sqlSelect = statement;
         this.species   = new SpeciesSet(species);
         this.calendar  = new GregorianCalendar(timezone);
@@ -186,12 +188,32 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     }
 
     /**
+     * Initialise la connection.
+     *
+     * @param  connection Connection vers une base de données de pêches.
+     * @param  statement Interrogation à soumettre à la base de données.
+     * @param  species Ensemble des espèces demandées.
+     * @throws SQLException si <code>SampleTable</code> n'a pas pu construire sa requête SQL.
+     */
+    private static PreparedStatement prepareStatement(final  Connection   connection, 
+                                                      final      String   statement, 
+                                                      final Set<Species>  species) 
+        throws RemoteException 
+    {
+        try {
+            return connection.prepareStatement(completeQuery(statement, species));        
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
+    }
+    
+    /**
      * Complète la requète SQL en ajoutant les noms de colonnes des espèces
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
      * Une condition basée sur les captures est aussi ajoutée.
      */
     private static String completeQuery(String query, final Set<Species> species)
-            throws SQLException
+            throws RemoteException
     {
         final String[] columns = new String[species.size()];
         int index=0;
@@ -246,31 +268,39 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * Retourne une campagne d'échantillonage pour le numéro ID spécifié.
      */
-    final CruiseEntry getCruise(final int ID) throws SQLException {
-        assert Thread.holdsLock(this);
-        if (cruises == null) {
-            cruises = new CruiseTable(statement.getConnection());
+    final CruiseEntry getCruise(final int ID) throws RemoteException {
+        try {
+            assert Thread.holdsLock(this);
+            if (cruises == null) {
+                cruises = new CruiseTable(statement.getConnection());
+            }
+            return cruises.getEntry(ID);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        return cruises.getEntry(ID);
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException {
-        if (!species.equals(newSpecies)) {
-            final Rectangle2D      area = getGeographicArea();
-            final Range       timeRange = getTimeRange();
-            final Range      valueRange = getValueRange();
-            final Connection connection = statement.getConnection();
-            statement.close();
-            statement = null; // Au cas où l'instruction suivante échourait.
-            statement = connection.prepareStatement(completeQuery(sqlSelect, newSpecies));
-            this.species = new SpeciesSet(newSpecies);
-            setValueRange(valueRange);
-            setTimeRange(timeRange);
-            setGeographicArea(area);
-        }
+    public final synchronized void setSpecies(final Set<Species> newSpecies) throws RemoteException {
+        try {
+            if (!species.equals(newSpecies)) {
+                final Rectangle2D      area = getGeographicArea();
+                final Range       timeRange = getTimeRange();
+                final Range      valueRange = getValueRange();
+                final Connection connection = statement.getConnection();
+                statement.close();
+                statement = null; // Au cas où l'instruction suivante échourait.
+                statement = connection.prepareStatement(completeQuery(sqlSelect, newSpecies));
+                this.species = new SpeciesSet(newSpecies);
+                setValueRange(valueRange);
+                setTimeRange(timeRange);
+                setGeographicArea(area);
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -315,12 +345,16 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * {@inheritDoc}
      */
-    public final synchronized Rectangle2D getGeographicArea() throws SQLException {
-        if (!packed) {
-            packEnvelope();
-            packed = true;
-        }
-        return (Rectangle2D) geographicArea.clone();
+    public final synchronized Rectangle2D getGeographicArea() throws RemoteException {
+        try {
+            if (!packed) {
+                packEnvelope();
+                packed = true;
+            }
+            return (Rectangle2D) geographicArea.clone();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -335,18 +369,22 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * {@inheritDoc}
      */
-    public final synchronized Range getTimeRange() throws SQLException {
-        if (!packed) {
-            packEnvelope();
-            packed = true;
-        }
-        return new Range(Date.class, new Date(startTime), new Date(endTime));
+    public final synchronized Range getTimeRange() throws RemoteException {
+        try {
+            if (!packed) {
+                packEnvelope();
+                packed = true;
+            }
+            return new Range(Date.class, new Date(startTime), new Date(endTime));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      */
-    public final void setTimeRange(final Range timeRange) throws SQLException {
+    public final void setTimeRange(final Range timeRange) throws RemoteException {
         Date min = (Date)timeRange.getMinValue();
         Date max = (Date)timeRange.getMaxValue();
         if (min==null || max==null) {
@@ -364,14 +402,14 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * {@inheritDoc}
      */
-    public Range getValueRange() throws SQLException {
+    public Range getValueRange() throws RemoteException {
         return catchRange;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setValueRange(final Range catchRange) throws SQLException {
+    public final synchronized void setValueRange(final Range catchRange) throws RemoteException {
         if (!catchRange.isMinIncluded() || !catchRange.isMaxIncluded()) {
             throw new UnsupportedOperationException("Les intervalles ouverts ne sont pas encore supportés");
         }
@@ -385,15 +423,19 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setValueRange(double minimum, double maximum) throws SQLException {
-        if (!(minimum>=0 && minimum<=maximum)) {
-            throw new IllegalArgumentException();
-        }
-        if (!Double.isInfinite(maximum)) {
-            throw new UnsupportedOperationException("Les limites supérieures ne sont pas encore impléméntées.");
-        }
-        setMinimumValue(minimum);
-        catchRange = new Range(Double.class, new Double(minimum), null);
+    public final synchronized void setValueRange(double minimum, double maximum) throws RemoteException {
+        try {
+            if (!(minimum>=0 && minimum<=maximum)) {
+                throw new IllegalArgumentException();
+            }
+            if (!Double.isInfinite(maximum)) {
+                throw new UnsupportedOperationException("Les limites supérieures ne sont pas encore impléméntées.");
+            }
+            setMinimumValue(minimum);
+            catchRange = new Range(Double.class, new Double(minimum), null);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -405,7 +447,7 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
      * {@inheritDoc}
      */
     public final void setValue(final SampleEntry sample, final String columnName, final float value)
-        throws SQLException
+        throws RemoteException
     {
         setValue(sample, columnName, new Float(value));
     }
@@ -414,7 +456,7 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
      * {@inheritDoc}
      */
     public final void setValue(final SampleEntry sample, final String columnName, final boolean value)
-        throws SQLException
+        throws RemoteException
     {
         // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules.
         setValue(sample, columnName, (value ? Boolean.TRUE : Boolean.FALSE));
@@ -433,41 +475,49 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     private synchronized void setValue(final SampleEntry sample,
                                        final String   columnName,
                                        final Object   value)
-        throws SQLException
+        throws RemoteException
     {
-        if (!columnName.equals(lastColumnUpdated)) {
-            if (update != null) {
-                update.close();
-                update = null;
-                lastColumnUpdated = null;
+        try {
+            if (!columnName.equals(lastColumnUpdated)) {
+                if (update != null) {
+                    update.close();
+                    update = null;
+                    lastColumnUpdated = null;
+                }
+                String query = replaceQuestionMark(SQL_UPDATE, columnName);
+                update = statement.getConnection().prepareStatement(query);
+                lastColumnUpdated = columnName;
             }
-            String query = replaceQuestionMark(SQL_UPDATE, columnName);
-            update = statement.getConnection().prepareStatement(query);
-            lastColumnUpdated = columnName;
-        }
-        update.setObject(ARG_VALUE, value);
-        update.setInt(ARG_ID, sample.getID());
-        switch (update.executeUpdate()) {
-            case 1: {
-                break;
+            update.setObject(ARG_VALUE, value);
+            update.setInt(ARG_ID, sample.getID());
+            switch (update.executeUpdate()) {
+                case 1: {
+                    break;
+                }
+                case 0: {
+                    throw new SQLWarning(Resources.format(ResourceKeys.ERROR_SAMPLE_NOT_FOUND_$1, sample));
+                }
+                default: {
+                    throw new SQLWarning(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, sample));
+                }
             }
-            case 0: {
-                throw new SQLWarning(Resources.format(ResourceKeys.ERROR_SAMPLE_NOT_FOUND_$1, sample));
-            }
-            default: {
-                throw new SQLWarning(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, sample));
-            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void close() throws SQLException {
-        if (update != null) {
-            update.close();
-            lastColumnUpdated = null;
-        }
-        super.close();
+    public final synchronized void close() throws RemoteException {
+        try {
+            if (update != null) {
+                update.close();
+                lastColumnUpdated = null;
+            }
+            super.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 }

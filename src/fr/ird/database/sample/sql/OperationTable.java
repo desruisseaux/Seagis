@@ -29,7 +29,10 @@ package fr.ird.database.sample.sql;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
+// Seagis.
+import fr.ird.database.CatalogException;
 
 /**
  * Interrogation de la table "Opérations".
@@ -62,7 +65,7 @@ final class OperationTable
      *         Une des constantes {@link #LIST}, {@link #BY_ID} ou {@link #BY_NAME}.
      * @throws SQLException si <code>OperationTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected OperationTable(final Connection connection, final int type) throws SQLException {
+    protected OperationTable(final Connection connection, final int type) throws RemoteException {
         super(connection, type);
     }
 
@@ -83,12 +86,16 @@ final class OperationTable
     /**
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected OperationEntry createEntry(final ResultSet results) throws SQLException {
-        return new OperationEntry(results.getInt   (ID),
-                                  results.getString(COLUMN),
-                                  results.getString(PREFIX),
-                                  results.getString(OPERATION),
-                                  results.getString(NAME),
-                                  results.getString(REMARKS));
+    protected OperationEntry createEntry(final ResultSet results) throws RemoteException {
+        try {
+            return new OperationEntry(results.getInt   (ID),
+                                      results.getString(COLUMN),
+                                      results.getString(PREFIX),
+                                      results.getString(OPERATION),
+                                      results.getString(NAME),
+                                      results.getString(REMARKS));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 }

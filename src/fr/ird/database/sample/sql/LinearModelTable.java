@@ -31,8 +31,12 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.sql.SQLException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.rmi.RemoteException;
 
+// Seagis.
+import fr.ird.database.CatalogException;
 
 /**
  * Connexion vers la table des modèles linéaires.
@@ -64,11 +68,22 @@ final class LinearModelTable extends Table {
      * @param  descriptors La table des descripteurs du paysage océanique.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    protected LinearModelTable(final DescriptorTable descriptors) throws SQLException {
-        super(descriptors.getConnection().prepareStatement(SQL_SELECT));
+    protected LinearModelTable(final DescriptorTable descriptors) throws RemoteException {
+        super(getPreparedStatement(descriptors));
         this.descriptors = descriptors;
     }
 
+    /**
+     * Retourne un PreparedStatement.
+     */
+    private static final PreparedStatement getPreparedStatement(final DescriptorTable descriptors) throws RemoteException {
+	try {
+            return descriptors.getConnection().prepareStatement(SQL_SELECT);
+        } catch (SQLException e) {
+		throw new CatalogException(e);
+        }
+    }
+    
     /**
      * Retourne la table des descripteurs.
      */
@@ -84,56 +99,60 @@ final class LinearModelTable extends Table {
      * @return Les termes du modèle linéaire, ou <code>null</code> s'il n'y en a pas.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized List<LinearModelTerm> getTerms(final ParameterEntry target) throws SQLException {
-        ArrayList<LinearModelTerm> terms = null;
-        statement.setInt(TARGET_ARG, target.getID());
-        final ResultSet results = statement.executeQuery();
-        while (results.next()) {
-            final String source1     = results.getString(SOURCE1);
-            final String source2     = results.getString(SOURCE2);
-            final double coefficient = results.getDouble(COEFFICIENT);
+    public synchronized List<LinearModelTerm> getTerms(final ParameterEntry target) throws RemoteException {
+        try {
+            ArrayList<LinearModelTerm> terms = null;
+            statement.setInt(TARGET_ARG, target.getID());
+            final ResultSet results = statement.executeQuery();
+            while (results.next()) {
+                final String source1     = results.getString(SOURCE1);
+                final String source2     = results.getString(SOURCE2);
+                final double coefficient = results.getDouble(COEFFICIENT);
+                /*
+                 * Construit les descripteurs, mais sans interroger la table 'ParameterTable'
+                 * maintenant. Ca ne devrait être fait qu'à la fin de la bouche (une fois la
+                 * requête terminée), afin d'éviter des appels récursifs qui créent plusieurs
+                 * ResultSet pour le même Statement.
+                 */
+                final DescriptorEntry descriptor1 = descriptors.getEntry(source1);
+                final DescriptorEntry descriptor2 = descriptors.getEntry(source2);
+                final DescriptorEntry[] term;
+                if (descriptor1.isIdentity()) {
+                    term = new DescriptorEntry[] {descriptor2};
+                } else if (descriptor2.isIdentity()) {
+                    term = new DescriptorEntry[] {descriptor1};
+                } else {
+                    term = new DescriptorEntry[] {descriptor1, descriptor2};
+                }
+                if (terms == null) {
+                    terms = new ArrayList<LinearModelTerm>();
+                }
+                terms.add(new LinearModelTerm(target, term, coefficient));
+            }
+            results.close();
             /*
-             * Construit les descripteurs, mais sans interroger la table 'ParameterTable'
-             * maintenant. Ca ne devrait être fait qu'à la fin de la bouche (une fois la
-             * requête terminée), afin d'éviter des appels récursifs qui créent plusieurs
-             * ResultSet pour le même Statement.
+             * Maintenant que toutes les requêtes sont fermées, complète les ParameterEntry
+             * dont on n'avait lu que les numéros ID.
              */
-            final DescriptorEntry descriptor1 = descriptors.getEntry(source1);
-            final DescriptorEntry descriptor2 = descriptors.getEntry(source2);
-            final DescriptorEntry[] term;
-            if (descriptor1.isIdentity()) {
-                term = new DescriptorEntry[] {descriptor2};
-            } else if (descriptor2.isIdentity()) {
-                term = new DescriptorEntry[] {descriptor1};
-            } else {
-                term = new DescriptorEntry[] {descriptor1, descriptor2};
-            }
-            if (terms == null) {
-                terms = new ArrayList<LinearModelTerm>();
-            }
-            terms.add(new LinearModelTerm(target, term, coefficient));
-        }
-        results.close();
-        /*
-         * Maintenant que toutes les requêtes sont fermées, complète les ParameterEntry
-         * dont on n'avait lu que les numéros ID.
-         */
-        if (terms != null) {
-            terms.trimToSize();
-            final ParameterTable parameters = descriptors.getParameterTable(ParameterTable.BY_ID);
-            for (final LinearModelTerm term : terms) {
-                for (final DescriptorEntry descriptor : term.descriptors) {
-                    parameters.completeEntry(descriptor.parameter);
+            if (terms != null) {
+                terms.trimToSize();
+                final ParameterTable parameters = descriptors.getParameterTable(ParameterTable.BY_ID);
+                for (final LinearModelTerm term : terms) {
+                    for (final DescriptorEntry descriptor : term.descriptors) {
+                        parameters.completeEntry(descriptor.parameter);
+                    }
                 }
             }
+            return terms;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        return terms;
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
+    public synchronized void close() throws RemoteException {
         if (descriptors != null) {
             final Table table = descriptors;
             descriptors = null; // Set to null first to avoid never-ending loop.

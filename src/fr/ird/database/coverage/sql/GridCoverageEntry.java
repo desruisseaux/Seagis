@@ -29,6 +29,7 @@ package fr.ird.database.coverage.sql;
 import java.sql.ResultSet;
 import java.sql.SQLWarning;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Entrés/sorties
 import java.io.File;
@@ -90,6 +91,7 @@ import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.database.coverage.CoverageEntry;
 
@@ -232,36 +234,40 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      *
      * @param  table  Table d'où proviennent les enregistrements.
      * @param  result Prochain enregistrement à lire.
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    GridCoverageEntry(final GridCoverageTable table, final ResultSet result) throws SQLException {
-        final int    seriesID;
-        final int    formatID;
-        final int    csID;
-        final String pathname;
-        final Date   startTime;
-        final Date     endTime;
-        ID         = result.getInt      (GridCoverageTable.ID);
-        seriesID   = result.getInt      (GridCoverageTable.SERIES);
-        pathname   = result.getString   (GridCoverageTable.PATHNAME).intern();
-        filename   = result.getString   (GridCoverageTable.FILENAME);
-        startTime  = table .getTimestamp(GridCoverageTable.START_TIME, result);
-        endTime    = table .getTimestamp(GridCoverageTable.END_TIME,   result);
-        xmin       = result.getFloat    (GridCoverageTable.XMIN);
-        xmax       = result.getFloat    (GridCoverageTable.XMAX);
-        ymin       = result.getFloat    (GridCoverageTable.YMIN);
-        ymax       = result.getFloat    (GridCoverageTable.YMAX);
-        width      = result.getShort    (GridCoverageTable.WIDTH);
-        height     = result.getShort    (GridCoverageTable.HEIGHT);
-        csID       = result.getInt      (GridCoverageTable.COORDINATE_SYSTEM);
-        formatID   = result.getInt      (GridCoverageTable.FORMAT);
-        parameters = table .getParameters(seriesID, formatID, csID, pathname);
-        // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
-        // NOTE: Les coordonnées xmin, xmax, ymin et ymax ne sont PAS exprimées selon le système de
-        //       coordonnées de l'image, mais plutôt selon le système de coordonnées de la table
-        //       d'images. La transformation sera effectuée par 'getEnvelope()'.
-        this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
-        this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
+    GridCoverageEntry(final GridCoverageTable table, final ResultSet result) throws RemoteException {
+        try {
+            final int    seriesID;
+            final int    formatID;
+            final int    csID;
+            final String pathname;
+            final Date   startTime;
+            final Date     endTime;
+            ID         = result.getInt      (GridCoverageTable.ID);
+            seriesID   = result.getInt      (GridCoverageTable.SERIES);
+            pathname   = result.getString   (GridCoverageTable.PATHNAME).intern();
+            filename   = result.getString   (GridCoverageTable.FILENAME);
+            startTime  = table .getTimestamp(GridCoverageTable.START_TIME, result);
+            endTime    = table .getTimestamp(GridCoverageTable.END_TIME,   result);
+            xmin       = result.getFloat    (GridCoverageTable.XMIN);
+            xmax       = result.getFloat    (GridCoverageTable.XMAX);
+            ymin       = result.getFloat    (GridCoverageTable.YMIN);
+            ymax       = result.getFloat    (GridCoverageTable.YMAX);
+            width      = result.getShort    (GridCoverageTable.WIDTH);
+            height     = result.getShort    (GridCoverageTable.HEIGHT);
+            csID       = result.getInt      (GridCoverageTable.COORDINATE_SYSTEM);
+            formatID   = result.getInt      (GridCoverageTable.FORMAT);
+            parameters = table .getParameters(seriesID, formatID, csID, pathname);
+            // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
+            // NOTE: Les coordonnées xmin, xmax, ymin et ymax ne sont PAS exprimées selon le système de
+            //       coordonnées de l'image, mais plutôt selon le système de coordonnées de la table
+            //       d'images. La transformation sera effectuée par 'getEnvelope()'.
+            this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
+            this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**

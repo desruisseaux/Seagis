@@ -27,6 +27,7 @@ package fr.ird.database.coverage;
 
 // J2SE
 import java.util.Comparator;
+import java.rmi.RemoteException;
 
 // OpenGIS
 import org.opengis.referencing.operation.TransformException;
@@ -126,7 +127,33 @@ public class CoverageComparator implements Comparator<CoverageEntry> {
      * @param table Table qui a produit les images qui seront à comparer.
      */
     public CoverageComparator(final CoverageTable table) {
-        this(table.getCoordinateSystem(), table.getEnvelope());
+        this(getCoordinateSystem(table), getEnvelope(table));
+    }
+
+    /**
+     * Retourne le système de coordonnée.
+     *
+     * @param table Table qui a produit les images qui seront à comparer.
+     */
+    private static final CoordinateSystem getCoordinateSystem(final CoverageTable table) {
+        try {
+            return table.getCoordinateSystem();
+        } catch (RemoteException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+    
+    /**
+     * Retourne l'enveloppe.
+     *
+     * @param table Table qui a produit les images qui seront à comparer.
+     */
+    private static final Envelope getEnvelope(final CoverageTable table) {
+        try {
+            return table.getEnvelope();
+        } catch (RemoteException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**

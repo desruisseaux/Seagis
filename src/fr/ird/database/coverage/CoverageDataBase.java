@@ -26,14 +26,14 @@
 package fr.ird.database.coverage;
 
 // J2SE et JAI
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import java.util.logging.Logger;
-import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
+import java.awt.geom.Rectangle2D;
 
 // Seagis
 import fr.ird.database.DataBase;
-
+import org.geotools.resources.geometry.XRectangle2D;
 
 /**
  * Connection avec la base de données d'images.
@@ -58,18 +58,18 @@ public interface CoverageDataBase extends DataBase {
      * @return Coordonnées géographiques (en degrés de longitude et de latitude)
      *         couverte par les images, où <code>null</code> si la base de données
      *         ne contient pas d'images.
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      */
-    public abstract Rectangle2D getGeographicArea() throws SQLException;
+    public abstract Rectangle2D getGeographicArea() throws RemoteException;
 
     /**
      * Retourne la plage de dates couvertes par les images de
      * la base de données. Cette plage sera délimitée par des
      * objets {@link Date}.
      *
-     * @throws SQLException si la base de données n'a pas pu être interrogée.
+     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      */
-    public abstract Range getTimeRange() throws SQLException;
+    public abstract Range getTimeRange() throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table
@@ -78,9 +78,9 @@ public interface CoverageDataBase extends DataBase {
      * {@link SeriesTable#close}.
      *
      * @return La plage de temps de la base de données.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si le catalogue n'a pas pu être construite.
      */
-    public abstract SeriesTable getSeriesTable() throws SQLException;
+    public abstract SeriesTable getSeriesTable() throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table "GridCoverages" de
@@ -89,9 +89,9 @@ public interface CoverageDataBase extends DataBase {
      * pour spécifier une autre série. Lorsque cette table n'est plus nécessaire,
      * il faudra appeler {@link CoverageTable#close}.
      *
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si le catalogue n'a pas pu être construite.
      */
-    public abstract CoverageTable getCoverageTable() throws SQLException;
+    public abstract CoverageTable getCoverageTable() throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table
@@ -100,9 +100,9 @@ public interface CoverageDataBase extends DataBase {
      * {@link CoverageTable#close}.
      *
      * @param  series Référence vers la série d'images.
-     * @throws SQLException si la référence n'est pas valide ou table n'a pas pu être construite.
+     * @throws RemoteException si la référence n'est pas valide ou table n'a pas pu être construite.
      */
-    public abstract CoverageTable getCoverageTable(final SeriesEntry series) throws SQLException;
+    public abstract CoverageTable getCoverageTable(final SeriesEntry series) throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table
@@ -111,9 +111,9 @@ public interface CoverageDataBase extends DataBase {
      * {@link CoverageTable#close}.
      *
      * @param  series Nom de la série d'images.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract CoverageTable getCoverageTable(final String series) throws SQLException;
+    public abstract CoverageTable getCoverageTable(final String series) throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table
@@ -122,7 +122,7 @@ public interface CoverageDataBase extends DataBase {
      * {@link CoverageTable#close}.
      *
      * @param  series Numéro de la série d'images.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract CoverageTable getCoverageTable(final int seriesID) throws SQLException;
+    public abstract CoverageTable getCoverageTable(final int seriesID) throws RemoteException;
 }

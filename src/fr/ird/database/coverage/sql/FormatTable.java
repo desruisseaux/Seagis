@@ -31,8 +31,10 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
@@ -84,8 +86,12 @@ final class FormatTable extends Table {
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>FormatTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected FormatTable(final Connection connection) throws SQLException {
-        statement = connection.prepareStatement(SQL_SELECT);
+    protected FormatTable(final Connection connection) throws RemoteException {
+        try {
+            statement = connection.prepareStatement(SQL_SELECT);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -93,10 +99,10 @@ final class FormatTable extends Table {
      *
      * @param  ID Numéro ID du format.
      * @return L'entré correspondant au format spécifié.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de
-     *                      données, ou si le format spécifié n'a pas été trouvé.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue, 
+     *                                      ou si le format spécifié n'a pas été trouvé.
      */
-    public FormatEntry getEntry(final int ID) throws SQLException {
+    public FormatEntry getEntry(final int ID) throws RemoteException {
         return getEntry(new Integer(ID));
     }
 
@@ -105,42 +111,47 @@ final class FormatTable extends Table {
      *
      * @param  key Numéro ID du format.
      * @return L'entré correspondant au format spécifié.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de
-     *                      données, ou si le format spécifié n'a pas été trouvé.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue, 
+     *                                      ou si le format spécifié n'a pas été trouvé.
      */
-    final synchronized FormatEntry getEntry(final Integer key) throws SQLException {
-        statement.setInt(ARG_ID, key.intValue());
-        ResultSet result = statement.executeQuery();
-        if (!result.next()) {
-            result.close();
-            throw new IllegalRecordException(FORMATS,
-                    Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
-        }
-        final int      formatID  = result.getInt    (ID);
-        final String       name  = result.getString (NAME);
-        final String   mimeType  = result.getString (MIME);
-        final String   extension = result.getString (EXTENSION);
-        final boolean geophysics = result.getBoolean(GEOPHYSICS);
-        while (result.next()) {
-            if (formatID  !=     result.getInt    (ID)         ||
-              !      name.equals(result.getString (NAME))      ||
-              !  mimeType.equals(result.getString (MIME))      ||
-              ! extension.equals(result.getString (EXTENSION)) ||
-               geophysics !=     result.getBoolean(GEOPHYSICS))
-            {
+    final synchronized FormatEntry getEntry(final Integer key) throws RemoteException 
+    {
+        try {
+            statement.setInt(ARG_ID, key.intValue());
+            ResultSet result = statement.executeQuery();
+            if (!result.next()) {
                 result.close();
                 throw new IllegalRecordException(FORMATS,
-                        Resources.format(ResourceKeys.ERROR_TOO_MANY_IMAGE_FORMATS_$1, key));
+                        Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
             }
+            final int      formatID  = result.getInt    (ID);
+            final String       name  = result.getString (NAME);
+            final String   mimeType  = result.getString (MIME);
+            final String   extension = result.getString (EXTENSION);
+            final boolean geophysics = result.getBoolean(GEOPHYSICS);
+            while (result.next()) {
+                if (formatID  !=     result.getInt    (ID)         ||
+                  !      name.equals(result.getString (NAME))      ||
+                  !  mimeType.equals(result.getString (MIME))      ||
+                  ! extension.equals(result.getString (EXTENSION)) ||
+                   geophysics !=     result.getBoolean(GEOPHYSICS))
+                {
+                    result.close();
+                    throw new IllegalRecordException(FORMATS,
+                            Resources.format(ResourceKeys.ERROR_TOO_MANY_IMAGE_FORMATS_$1, key));
+                }
+            }
+            result.close();
+            if (bands == null) {
+                bands = new SampleDimensionTable(statement.getConnection());
+            }
+            final FormatEntry entry = new FormatEntry(formatID, name, mimeType, extension,
+                                                  geophysics, bands.getSampleDimensions(formatID));
+            CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
+            return entry;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        result.close();
-        if (bands == null) {
-            bands = new SampleDimensionTable(statement.getConnection());
-        }
-        final FormatEntry entry = new FormatEntry(formatID, name, mimeType, extension,
-                                              geophysics, bands.getSampleDimensions(formatID));
-        CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
-        return entry;
     }
 
     /**
@@ -148,15 +159,19 @@ final class FormatTable extends Table {
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
      *
-     * @throws SQLException si un problème est survenu
+     * @throws RemoteException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException {
-        if (bands != null) {
-            bands.close();
-            bands = null;
-        }
-        statement.close();
-        CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CLOSE_FORMAT_TABLE));
+    public synchronized void close() throws RemoteException {
+        try {
+            if (bands != null) {
+                bands.close();
+                bands = null;
+            }
+            statement.close();
+            CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CLOSE_FORMAT_TABLE));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 }

@@ -48,7 +48,7 @@ import java.util.Collections;
 
 // Tables et évenements
 import java.awt.EventQueue;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.UndoableEditEvent;
@@ -270,9 +270,9 @@ public class CoverageTableModel extends AbstractTableModel {
      * par {@link CoverageTable#getSeries}.
      *
      * @param  table Table dans laquelle puiser la liste des images.
-     * @throws SQLException si l'interrogation de la table a échouée.
+     * @throws RemoteException si l'interrogation de la table a échouée.
      */
-    public CoverageTableModel(final CoverageTable table) throws SQLException {
+    public CoverageTableModel(final CoverageTable table) throws RemoteException {
         this(table.getSeries());
         final List<CoverageEntry> entryList = table.getEntries();
         entries = entryList.toArray(new CoverageEntry[entryList.size()]);
@@ -300,9 +300,9 @@ public class CoverageTableModel extends AbstractTableModel {
      * peut être appelée de n'importe quel thread (pas nécessairement celui de <i>Swing</i>).
      *
      * @param  table Table dans laquelle puiser la liste des images.
-     * @throws SQLException si l'interrogation de la table a échouée.
+     * @throws RemoteException si l'interrogation de la table a échouée.
      */
-    public void setEntries(final CoverageTable table) throws SQLException {
+    public void setEntries(final CoverageTable table) throws RemoteException {
         final List<CoverageEntry> entryList;
         synchronized (table) {
             entryList = table.getEntries();
@@ -395,10 +395,10 @@ public class CoverageTableModel extends AbstractTableModel {
      *
      * @return Les entrées de toutes les images de cette table. Ce tableau peut
      *         avoir une longueur de 0, mais ne sera jamais <code>null</code>.
-     * @throws SQLException si une interrogation de la base de données était
+     * @throws RemoteException si une interrogation de la base de données était
      *         nécessaire et a échoué.
      */
-    public synchronized CoverageEntry[] getEntries() throws SQLException {
+    public synchronized CoverageEntry[] getEntries() throws RemoteException {
         final CoverageEntry[] entries = this.entries;
         final CoverageEntry[] out = new CoverageEntry[(entries!=null) ? entries.length : 0];
         for (int i=out.length; --i>=0;) {
@@ -429,7 +429,7 @@ public class CoverageTableModel extends AbstractTableModel {
      * {@link CoverageEntry#getID}. Cette méthode peut retourner un tableau
      * de longueur 0, mais ne retourne jamais <code>null</code>.
      */
-    public synchronized int[] getEntryIDs() {
+    public synchronized int[] getEntryIDs() throws RemoteException {
         final CoverageEntry[] entries = this.entries;
         final int[] IDs = new int[(entries!=null) ? entries.length : 0];
         for (int i=0; i<IDs.length; i++) {
@@ -445,7 +445,7 @@ public class CoverageTableModel extends AbstractTableModel {
      * peut retourner un tableau de longueur 0, mais ne retourne jamais
      * <code>null</code>.
      */
-    public synchronized int[] getEntryIDs(int[] rows) {
+    public synchronized int[] getEntryIDs(int[] rows) throws RemoteException {
         final CoverageEntry[] entries = this.entries;
         final int[] IDs = new int[rows.length];
         for (int i=0; i<IDs.length; i++) {
@@ -465,7 +465,7 @@ public class CoverageTableModel extends AbstractTableModel {
      *         la même longueur que <code>IDs</code>. Les images qui n'ont pas
      *         été trouvées dans la table auront l'index -1.
      */
-    public synchronized int[] indexOf(final int[] IDs) {
+    public synchronized int[] indexOf(final int[] IDs) throws RemoteException {
         final CoverageEntry[] entries = this.entries;
         final int[] sortedIDs  = (int[]) IDs.clone();
         final int[] sortedRows = new int[IDs.length];
@@ -604,7 +604,7 @@ public class CoverageTableModel extends AbstractTableModel {
      * @param  rows Ligne à copier.
      * @return Objet transférable contenant les lignes copiées.
      */
-    public synchronized Transferable copy(final int[] rows) {
+    public synchronized Transferable copy(final int[] rows) throws RemoteException {
         if (fieldPosition == null) {
             fieldPosition = new FieldPosition(0);
         }
@@ -678,33 +678,37 @@ public class CoverageTableModel extends AbstractTableModel {
      * @return Valeur de la cellule aux index spécifiés.
      */
     public synchronized Object getValueAt(final int row, final int column) {
-        CoverageEntry entry = entries[row];
-        if (!(entry instanceof ProxyEntry)) {
-            entries[row] = entry = new ProxyEntry(entry);
-        }
-        switch (column) {
-            default:   return null;
-            case NAME: return entry.getName();
-            case DATE: return entry.getTimeRange().getMaxValue();
-            case DURATION: {
-                if (buffer        == null) buffer        = new StringBuffer ( );
-                if (fieldPosition == null) fieldPosition = new FieldPosition(0);
-                buffer.setLength(0);
-                final Range range = entry.getTimeRange();
-                final Date time   = (Date) range.getMaxValue();
-                final Date start  = (Date) range.getMinValue();
-                if (time!=null && start!=null) {
-                    final long millis = time.getTime()-start.getTime();
-                    final long days   = millis/(24L*60*60*1000);
-                    time.setTime(millis);
-                    numberFormat.format(days, buffer, fieldPosition);
-                    buffer.append(' ');
-                    buffer.append((days>1) ? DAYS : DAY);
-                    buffer.append(' ');
-                    timeFormat.format(time, buffer, fieldPosition);
-                }
-                return buffer.toString();
+        try {
+            CoverageEntry entry = entries[row];
+            if (!(entry instanceof ProxyEntry)) {
+                entries[row] = entry = new ProxyEntry(entry);
             }
+            switch (column) {
+                default:   return null;
+                case NAME: return entry.getName();
+                case DATE: return entry.getTimeRange().getMaxValue();
+                case DURATION: {
+                    if (buffer        == null) buffer        = new StringBuffer ( );
+                    if (fieldPosition == null) fieldPosition = new FieldPosition(0);
+                    buffer.setLength(0);
+                    final Range range = entry.getTimeRange();
+                    final Date time   = (Date) range.getMaxValue();
+                    final Date start  = (Date) range.getMinValue();
+                    if (time!=null && start!=null) {
+                        final long millis = time.getTime()-start.getTime();
+                        final long days   = millis/(24L*60*60*1000);
+                        time.setTime(millis);
+                        numberFormat.format(days, buffer, fieldPosition);
+                        buffer.append(' ');
+                        buffer.append((days>1) ? DAYS : DAY);
+                        buffer.append(' ');
+                        timeFormat.format(time, buffer, fieldPosition);
+                    }
+                    return buffer.toString();
+                }
+            }
+        } catch (RemoteException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 

@@ -26,7 +26,8 @@
 package fr.ird.database;
 
 // Base de données
-import java.sql.SQLException;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 
 /**
@@ -35,14 +36,14 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Table {
+public interface Table extends Remote {
     /**
      * Libère les ressources utilisées par cette table.
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
      *
-     * @throws SQLException si un problème est survenu
+     * @throws RemoteException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public abstract void close() throws SQLException;
+    public abstract void close() throws RemoteException;
 }

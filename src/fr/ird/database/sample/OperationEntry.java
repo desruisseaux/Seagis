@@ -27,6 +27,7 @@ package fr.ird.database.sample;
 
 // J2SE et JAI
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import javax.media.jai.ParameterList;
 
 // Geotools
@@ -100,13 +101,13 @@ public interface OperationEntry extends Entry {
             this.parent = parent;
         }
 
-        /** Délègue l'appel au parent. */ public int    getID       ()            {return parent.getID();}
-        /** Délègue l'appel au parent. */ public String getName     ()            {return parent.getName();}
+        /** Délègue l'appel au parent. */ public int    getID       () throws RemoteException {return parent.getID();}
+        /** Délègue l'appel au parent. */ public String getName     () throws RemoteException {return parent.getName();}
         /** Délègue l'appel au parent. */ public String getPrefix   ()            {return parent.getPrefix();}
         /** Délègue l'appel au parent. */ public String getColumn   ()            {return parent.getColumn();}
         /** Délègue l'appel au parent. */ public String getProcessorOperation()   {return parent.getProcessorOperation();}
         /** Délègue l'appel au parent. */ public Object getParameter(String name) {return parent.getParameter(name);}
-        /** Délègue l'appel au parent. */ public String getRemarks  ()            {return parent.getRemarks();}
+        /** Délègue l'appel au parent. */ public String getRemarks  () throws RemoteException {return parent.getRemarks();}
         /** Délègue l'appel au parent. */ public String toString    ()            {return parent.toString();}
         /** Délègue l'appel au parent. */ public int    hashCode    ()            {return parent.hashCode();}
 

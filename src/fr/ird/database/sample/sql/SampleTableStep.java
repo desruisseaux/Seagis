@@ -31,7 +31,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.ResultSetMetaData;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
 
+// Seagis.
+import fr.ird.database.CatalogException;
 
 /**
  * La première étape dans la construction d'une table des paramètres environnementaux.
@@ -75,11 +78,22 @@ final class SampleTableStep extends Table {
      * @param  table Nom de la table ou de la requête des captures à utiliser.
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public SampleTableStep(final Connection connection, final String table) throws SQLException {
-        super(connection.prepareStatement(replaceQuestionMark(SQL_SELECT, table)));
+    public SampleTableStep(final Connection connection, final String table) throws RemoteException {
+        super(getPreparedStatement(connection, table));
         this.table = table;
     }
 
+    /**
+     * Retourne un PreparedStatement.
+     */
+    private static final PreparedStatement getPreparedStatement(final Connection connection, final String table) throws RemoteException {
+        try {
+            return connection.prepareStatement(replaceQuestionMark(SQL_SELECT, table));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
+    }
+    
     /**
      * Retourne les noms de toutes les colonnes de la table.
      * Cette méthode ne retourne jamais <code>null</code>.
@@ -120,12 +134,16 @@ final class SampleTableStep extends Table {
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
-        columns = null;
-        if (result != null) {
-            result.close();
-            result = null;
+    public synchronized void close() throws RemoteException {
+        try {
+            columns = null;
+            if (result != null) {
+                result.close();
+                result = null;
+            }
+            super.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        super.close();
     }
 }

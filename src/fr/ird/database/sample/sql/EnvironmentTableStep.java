@@ -34,11 +34,14 @@ import java.util.logging.LogRecord;
 import java.util.logging.Level;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 // Geotools
 import org.geotools.resources.Utilities;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.SampleDataBase;
 import fr.ird.database.sample.ParameterEntry;
 import fr.ird.database.sample.OperationEntry;
@@ -101,7 +104,7 @@ final class EnvironmentTableStep extends Table {
      */
     public EnvironmentTableStep(final ParameterEntry parameter,
                                 RelativePositionEntry position,
-                                final boolean     nullIncluded)
+                                final boolean     nullIncluded) throws RemoteException
     {
         super(null);
         if (position == null) {
@@ -153,7 +156,7 @@ final class EnvironmentTableStep extends Table {
      * @param  column Colonne à ajouter.
      * @throws SQLException si l'opération a échouée.
      */
-    public synchronized void addColumn(final OperationEntry column) throws SQLException {
+    public synchronized void addColumn(final OperationEntry column) throws RemoteException {
         if (columns == null) {
             columns = new LinkedHashSet<OperationEntry>();
         }
@@ -169,7 +172,7 @@ final class EnvironmentTableStep extends Table {
      * @param  column Colonne à retirer.
      * @throws SQLException si l'opération a échouée.
      */
-    public synchronized void removeColumn(final OperationEntry column) throws SQLException {
+    public synchronized void removeColumn(final OperationEntry column) throws RemoteException {
         if (columns != null) {
             if (columns.remove(column)) {
                 super.close();
@@ -211,37 +214,41 @@ final class EnvironmentTableStep extends Table {
      * @return Ensemble des valeurs environnementales pour ce paramètre.
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public synchronized ResultSet getResultSet(final Connection connection) throws SQLException {
-        if (statement == null) {
-            //
-            // Complète la requète SQL en ajoutant les noms de
-            // colonnes ainsi que les clauses "IS NOT NULL".
-            //
-            final String[] columns = getColumns(false);
-            String query = completeSelect(configuration.get(Configuration.KEY_ENVIRONMENTS), columns);
-            if (!nullIncluded) {
-                int index = indexOfWord(query, "ORDER");
-                if (index >= 0) {
-                    final StringBuffer buffer = new StringBuffer(query.substring(0, index));
-                    for (int i=0; i<columns.length; i++) {
-                        buffer.append("AND ");
-                        buffer.append('(');
-                        buffer.append(columns[i]);
-                        buffer.append(" IS NOT NULL) ");
+    public synchronized ResultSet getResultSet(final Connection connection) throws RemoteException {
+        try {
+            if (statement == null) {
+                //
+                // Complète la requète SQL en ajoutant les noms de
+                // colonnes ainsi que les clauses "IS NOT NULL".
+                //
+                final String[] columns = getColumns(false);
+                String query = completeSelect(configuration.get(Configuration.KEY_ENVIRONMENTS), columns);
+                if (!nullIncluded) {
+                    int index = indexOfWord(query, "ORDER");
+                    if (index >= 0) {
+                        final StringBuffer buffer = new StringBuffer(query.substring(0, index));
+                        for (int i=0; i<columns.length; i++) {
+                            buffer.append("AND ");
+                            buffer.append('(');
+                            buffer.append(columns[i]);
+                            buffer.append(" IS NOT NULL) ");
+                        }
+                        buffer.append(query.substring(index));
+                        query = buffer.toString();
                     }
-                    buffer.append(query.substring(index));
-                    query = buffer.toString();
                 }
+                final LogRecord record = new LogRecord(SampleDataBase.SQL_SELECT, query);
+                record.setSourceClassName ("EnvironmentTable");
+                record.setSourceMethodName("getRowSet");
+                SampleDataBase.LOGGER.log(record);
+                statement = connection.prepareStatement(query);
             }
-            final LogRecord record = new LogRecord(SampleDataBase.SQL_SELECT, query);
-            record.setSourceClassName ("EnvironmentTable");
-            record.setSourceMethodName("getRowSet");
-            SampleDataBase.LOGGER.log(record);
-            statement = connection.prepareStatement(query);
+            statement.setInt(ARG_PARAMETER, parameter.getID());
+            statement.setInt(ARG_POSITION,  position.getID());
+            return statement.executeQuery();
+        } catch(SQLException e) {
+            throw new CatalogException(e);
         }
-        statement.setInt(ARG_PARAMETER, parameter.getID());
-        statement.setInt(ARG_POSITION,  position.getID());
-        return statement.executeQuery();
     }
 
     /**
@@ -250,7 +257,7 @@ final class EnvironmentTableStep extends Table {
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException {
+    public synchronized void close() throws RemoteException {
         columns = null;
         super.close();
     }

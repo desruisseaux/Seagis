@@ -43,6 +43,7 @@ import java.util.Arrays;
 // Divers
 import java.util.Date;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
@@ -59,6 +60,7 @@ import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.Utilities;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.Table;
 import fr.ird.database.IllegalRecordException;
 import fr.ird.database.coverage.SeriesTable;
@@ -185,24 +187,41 @@ public class EnvironmentTableFiller implements Table {
      * des paramètres par défaut qui peuvent être préalablement configurés en exécutant
      * {@link SQLControler} à partir de la ligne de commande.
      *
-     * @throws SQLException si la connexion a échouée.
+     * @throws RemoteException si la connexion a échouée.
      */
-    public EnvironmentTableFiller() throws SQLException {
-        this(new fr.ird.database.coverage.sql.CoverageDataBase(),
-             new fr.ird.database.sample.sql.SampleDataBase());
+    public EnvironmentTableFiller() throws RemoteException {
+        this(getCoverageDataBase(), getSampleDataBase());
         canClose = true;
     }
 
+    /**
+     * Retourne un CoverageDatabase.
+     */
+    private static final fr.ird.database.coverage.sql.CoverageDataBase getCoverageDataBase() 
+        throws RemoteException 
+    {
+        return new fr.ird.database.coverage.sql.CoverageDataBase();
+    }
+  
+    /**
+     * Retourne un SampleDatabase.
+     */
+    private static final fr.ird.database.sample.sql.SampleDataBase getSampleDataBase() 
+        throws RemoteException 
+    {
+        return new fr.ird.database.sample.sql.SampleDataBase();
+    }
+        
     /**
      * Construit un objet utilisant les connections specifiées.
      *
      * @param  coverages Connexion vers la base de données d'images.
      * @param  samples Connexion vers la base de données des d'échantillons.
-     * @throws SQLException si la connexion a échouée.
+     * @throws RemoteException si la connexion a échouée.
      */
     public EnvironmentTableFiller(final CoverageDataBase coverages,
                                   final SampleDataBase   samples)
-        throws SQLException
+        throws RemoteException
     {
         this.coverages   = coverages;
         this.samples     = samples;
@@ -289,11 +308,11 @@ public class EnvironmentTableFiller implements Table {
      * la méthode {@link #close} de cet objet <code>EnvironmentTableFiller</code>.
      *
      * @return La table des images environnementales.
-     * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'accès au catalogue.
      *
      * @task TODO: Envelopper dans un proxy qui ignore les appels de setSeries(...) et close().
      */
-    public synchronized CoverageTable getCoverageTable() throws SQLException {
+    public synchronized CoverageTable getCoverageTable() throws RemoteException {
         if (coverageTable == null) {
             coverageTable = coverages.getCoverageTable();
         }
@@ -310,11 +329,11 @@ public class EnvironmentTableFiller implements Table {
      * la méthode {@link #close} de cet objet <code>EnvironmentTableFiller</code>.
      *
      * @return La table des échantillons.
-     * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'accès au catalogue.
      *
      * @task TODO: Envelopper dans un proxy qui ignore les appels de close().
      */
-    public synchronized SampleTable getSampleTable() throws SQLException {
+    public synchronized SampleTable getSampleTable() throws RemoteException {
         if (sampleTable == null) {
             sampleTable = samples.getSampleTable();
         }
@@ -340,11 +359,11 @@ public class EnvironmentTableFiller implements Table {
     /**
      * Lance le remplissage de la table "Environnement".
      *
-     * @throws SQLException si un problème est survenu lors des accès à la base de données.
+     * @throws RemoteException si un problème est survenu lors des accès au catalogue.
      * @throws TransformException si une transformation de coordonnées était nécessaire et
      *         a échouée.
      */
-    public void run() throws SQLException, TransformException {
+    public void run() throws RemoteException, TransformException {
         SampleDataBase.LOGGER.info("Prépare le remplissage de la table d'environnement.");
         final Collection<SampleEntry>          sampleEntries = getSampleTable().getEntries();
         final CoverageTable                    coverageTable = getCoverageTable();
@@ -439,9 +458,9 @@ public class EnvironmentTableFiller implements Table {
     /**
      * Ferme les connections avec les bases de données.
      *
-     * @throws SQLException si un problème est survenu lors de la fermeture des connections.
+     * @throws RemoteException si un problème est survenu lors de la fermeture des connections.
      */
-    public void close() throws SQLException {
+    public void close() throws RemoteException {
         if (sampleTable != null) {
             sampleTable.close();
             sampleTable = null;

@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.Handler;
 import javax.media.jai.KernelJAI;
+import java.rmi.RemoteException;
 import javax.media.jai.util.CaselessStringKey;
 
 // geotools
@@ -155,7 +156,7 @@ public class EnvironmentSamplingChooser extends JPanel {
      *
      * @throws SQLException si un problème est survenu lors d'un accès à une base de données.
      */
-    public EnvironmentSamplingChooser() throws SQLException {
+    public EnvironmentSamplingChooser() throws RemoteException {
         this(new EnvironmentTableFiller());
         closeOnDispose = true;
     }
@@ -167,7 +168,7 @@ public class EnvironmentSamplingChooser extends JPanel {
      * @param  filler Objet à utiliser pour remplir la table des paramètres environnementaux.
      * @throws SQLException si un problème est survenu lors d'un accès à une base de données.
      */
-    public EnvironmentSamplingChooser(final EnvironmentTableFiller filler) throws SQLException {
+    public EnvironmentSamplingChooser(final EnvironmentTableFiller filler) throws RemoteException {
         super(new BorderLayout());
         this.filler = filler;
         series      = new DisjointLists();
@@ -330,7 +331,7 @@ public class EnvironmentSamplingChooser extends JPanel {
     /**
      * Libère les ressources utilisées par cet objet.
      */
-    public void dispose() throws SQLException {
+    public void dispose() throws RemoteException {
         if (closeOnDispose) {
             filler.close();
             closeOnDispose = false;
@@ -350,7 +351,7 @@ public class EnvironmentSamplingChooser extends JPanel {
      *
      * @throws SQLException si un problème est survenu lors d'un accès à une base de données.
      */
-    public static void main(final String[] args) throws SQLException {
+    public static void main(final String[] args) throws RemoteException {
         MonolineFormatter.init("fr.ird");
         final EnvironmentSamplingChooser panel = new EnvironmentSamplingChooser();
         panel.showDialog(null);

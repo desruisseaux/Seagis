@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleEntry;
 
@@ -106,7 +108,7 @@ final class LinearSampleTable extends SampleTable {
     protected LinearSampleTable(final Connection   connection,
                                 final TimeZone     timezone,
                                 final Set<Species> species)
-            throws SQLException
+            throws RemoteException
     {
         super(connection, SQL_SELECT, timezone, species);
     }
@@ -114,7 +116,7 @@ final class LinearSampleTable extends SampleTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
+    public synchronized void setGeographicArea(final Rectangle2D rect) throws RemoteException {
         // Il est difficile de construire une requête en SQL standard
         // qui vérifiera si la palangre intercepte un rectangle. On
         // vérifiera plutôt à l'intérieur de {@link #getEntries}.
@@ -125,16 +127,20 @@ final class LinearSampleTable extends SampleTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
-        final long startTimeMillis = startTime.getTime();
-        final long   endTimeMillis =   endTime.getTime();
-        final Timestamp time=new Timestamp(startTimeMillis);
-        statement.setTimestamp(ARG_START_TIME, time, calendar);
-        this.startTime = startTimeMillis;
-        time.setTime(endTimeMillis);
-        statement.setTimestamp(ARG_END_TIME, time, calendar);
-        this.endTime = endTimeMillis;
-        packed = false;
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws RemoteException {
+        try {
+            final long startTimeMillis = startTime.getTime();
+            final long   endTimeMillis =   endTime.getTime();
+            final Timestamp time=new Timestamp(startTimeMillis);
+            statement.setTimestamp(ARG_START_TIME, time, calendar);
+            this.startTime = startTimeMillis;
+            time.setTime(endTimeMillis);
+            statement.setTimestamp(ARG_END_TIME, time, calendar);
+            this.endTime = endTimeMillis;
+            packed = false;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -189,16 +195,20 @@ final class LinearSampleTable extends SampleTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized Collection<SampleEntry> getEntries() throws SQLException {
-        final ResultSet             result = statement.executeQuery();
-        final Collection<SampleEntry> list = new ArrayList<SampleEntry>();
-        while (result.next()) {
-            final SampleEntry entry = new LinearSampleEntry(this, result);
-            if (entry.intersects(geographicArea)) {
-                list.add(entry);
+    public synchronized Collection<SampleEntry> getEntries() throws RemoteException {
+        try {
+            final ResultSet             result = statement.executeQuery();
+            final Collection<SampleEntry> list = new ArrayList<SampleEntry>();
+            while (result.next()) {
+                final SampleEntry entry = new LinearSampleEntry(this, result);
+                if (entry.intersects(geographicArea)) {
+                    list.add(entry);
+                }
             }
+            result.close();
+            return list;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        result.close();
-        return list;
     }
 }

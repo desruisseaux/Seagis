@@ -46,6 +46,7 @@ import javax.swing.BorderFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.rmi.RemoteException;
 
 // Utilities
 import java.util.Set;
@@ -58,6 +59,7 @@ import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Seagis dependencies
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.ParameterEntry;
 import fr.ird.database.sample.OperationEntry;
 import fr.ird.database.sample.EnvironmentTable;
@@ -139,7 +141,7 @@ public class SampleRowSetChooser extends JPanel {
      * @param  environment La table d'environnement.
      * @throws SQLException si une interrogation de la base de données a échouée.
      */
-    public SampleRowSetChooser(final EnvironmentTable environment) throws SQLException {
+    public SampleRowSetChooser(final EnvironmentTable environment) throws RemoteException {
         super(new BorderLayout(0,3));
         this.environment = environment;
         /*
@@ -197,7 +199,7 @@ public class SampleRowSetChooser extends JPanel {
      * @return Le nombre de paramètres qui seront écrit dans la table de destination.
      * @throws SQLException si la base de données n'a pas pu être configurée.
      */
-    private int configTable() throws SQLException {
+    private int configTable() throws RemoteException {
         final String   sampleTable = this.sampleTable.getText().trim();
         final Object[]  parameters = this.parameters .getSelectedValues();
         final Object[]  operations = this.operations .getSelectedValues();
@@ -225,32 +227,36 @@ public class SampleRowSetChooser extends JPanel {
      * @param  owner La fenêtre parente, or <code>null</code>.
      * @throws SQLException si une interrogation de la base de données a échouée.
      */
-    public void showAndStart(final Component owner) throws SQLException {
-        while (SwingUtilities.showOptionDialog(owner, this, "Extraction de paramètres environnementaux")) {
-            final String table    = this.table   .getText().trim();
-            final String database = this.database.getText().trim();
-            if (table.length()==0 || database.length()==0) {
-                SwingUtilities.showMessageDialog(owner,
-                        "Une table et une base de données de destination doivent être spécifiées.",
-                        "Paramètres incorrects", JOptionPane.ERROR_MESSAGE);
-                continue;
+    public void showAndStart(final Component owner) throws RemoteException {
+        try {
+            while (SwingUtilities.showOptionDialog(owner, this, "Extraction de paramètres environnementaux")) {
+                final String table    = this.table   .getText().trim();
+                final String database = this.database.getText().trim();
+                if (table.length()==0 || database.length()==0) {
+                    SwingUtilities.showMessageDialog(owner,
+                            "Une table et une base de données de destination doivent être spécifiées.",
+                            "Paramètres incorrects", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                if (configTable() == 0) {
+                    SwingUtilities.showMessageDialog(owner,
+                            "Des paramètres, opérations et interval de temps doivent être sélectionnés.",
+                            "Paramètres incorrects", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                PREFERENCES.put(KEY_DATABASE, database);
+                final Connection   connection = DriverManager.getConnection(database);
+                final ProgressWindow progress = new ProgressWindow(owner);
+                try {
+                    environment.copyToTable(connection, table, progress);
+                } finally {
+                    progress.dispose();
+                    connection.close();
+                }
+                break;
             }
-            if (configTable() == 0) {
-                SwingUtilities.showMessageDialog(owner,
-                        "Des paramètres, opérations et interval de temps doivent être sélectionnés.",
-                        "Paramètres incorrects", JOptionPane.ERROR_MESSAGE);
-                continue;
-            }
-            PREFERENCES.put(KEY_DATABASE, database);
-            final Connection   connection = DriverManager.getConnection(database);
-            final ProgressWindow progress = new ProgressWindow(owner);
-            try {
-                environment.copyToTable(connection, table, progress);
-            } finally {
-                progress.dispose();
-                connection.close();
-            }
-            break;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
@@ -265,7 +271,7 @@ public class SampleRowSetChooser extends JPanel {
             final SampleRowSetChooser panel = new SampleRowSetChooser(database.getEnvironmentTable(null));
             panel.showAndStart(null);
             database.close();
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             ExceptionMonitor.show(null, exception);
         }
         System.exit(0);

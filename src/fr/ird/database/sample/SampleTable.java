@@ -26,10 +26,11 @@
 package fr.ird.database.sample;
 
 // J2SE et JAI
+import java.rmi.RemoteException;
 import java.util.Set;
 import java.util.Date;
 import java.util.Collection;
-import java.sql.SQLException;
+//import java.sql.SQLException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 
@@ -53,9 +54,9 @@ public interface SampleTable extends Table {
     /**
      * Retourne l'ensemble des espèces comprises dans la requête de cette table.
      *
-     * @throws SQLException si un accès à la base de données était nécessaire et a échoué.
+     * @throws RemoeteException si un accès au catalogue était nécessaire et a échoué.
      */
-    public abstract Set<Species> getSpecies() throws SQLException;
+    public abstract Set<Species> getSpecies() throws RemoteException;
 
     /**
      * Spécifie l'ensemble des espèces à prendre en compte lors des interrogations de
@@ -65,17 +66,17 @@ public interface SampleTable extends Table {
      * n'apparait pas dans l'ensemble <code>species</code>.
      *
      * @param species Ensemble des espèces à prendre en compte.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public void setSpecies(final Set<Species> species) throws SQLException;
+    public void setSpecies(final Set<Species> species) throws RemoteException;
 
     /**
      * Retourne le système de coordonnées utilisées
      * pour les positions de pêches dans cette table.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract CoordinateSystem getCoordinateSystem() throws SQLException;
+    public abstract CoordinateSystem getCoordinateSystem() throws RemoteException;
 
     /**
      * Retourne les coordonnées géographiques de la région des échantillons. Cette région
@@ -83,9 +84,9 @@ public interface SampleTable extends Table {
      * de la méthode {@link #setGeographicArea}.  Elle peut toutefois être plus petite
      * de façon à n'englober que les échantillons présents dans la base de données.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract Rectangle2D getGeographicArea() throws SQLException;
+    public abstract Rectangle2D getGeographicArea() throws RemoteException;
 
     /**
      * Définit les coordonnées géographiques de la région dans laquelle on veut rechercher des
@@ -94,9 +95,9 @@ public interface SampleTable extends Table {
      * pris en compte lors du prochain appel de {@link #getEntries}.
      *
      * @param  geographicArea Coordonnées géographiques de la région, en degrés de longitude et de latitude.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setGeographicArea(final Rectangle2D geographicArea) throws SQLException;
+    public abstract void setGeographicArea(final Rectangle2D geographicArea) throws RemoteException;
 
     /**
      * Retourne la plage de dates des échantillons. Cette plage de dates ne sera pas plus grande que
@@ -105,9 +106,9 @@ public interface SampleTable extends Table {
      * présentes dans la base de données.
      *
      * @param  La plage de dates des données de pêches. Cette plage sera constituée d'objets {@link Date}.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract Range getTimeRange() throws SQLException;
+    public abstract Range getTimeRange() throws RemoteException;
 
     /**
      * Définit la plage de dates dans laquelle on veut rechercher des données des échantillons.
@@ -116,9 +117,9 @@ public interface SampleTable extends Table {
      *
      * @param  timeRange Plage de dates dans laquelle rechercher des données.
      *         Cette plage doit être constituée d'objets {@link Date}.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setTimeRange(final Range timeRange) throws SQLException;
+    public abstract void setTimeRange(final Range timeRange) throws RemoteException;
 
     /**
      * Définit la plage de dates dans laquelle on veut rechercher des données des échantillons.
@@ -127,23 +128,23 @@ public interface SampleTable extends Table {
      *
      * @param  startTime Date de début (inclusive) de la période d'intérêt.
      * @param  startTime Date de fin   (inclusive) de la période d'intérêt.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setTimeRange(final Date startTime, final Date endTime) throws SQLException;
+    public abstract void setTimeRange(final Date startTime, final Date endTime) throws RemoteException;
 
     /**
      * Retourne la plage de valeurs des échantillons d'intérêt.
      * Il peut s'agit par exemple de la quantité de poissons pêchés
      * en tonnes ou en nombre d'individus.
      */
-    public abstract Range getValueRange() throws SQLException;
+    public abstract Range getValueRange() throws RemoteException;
 
     /**
      * Définit la plage de valeurs d'échantillons d'intérêt. Seules les échantillons dont la valeur
      * (le tonnage ou le nombre d'individus, dépendament du type de pêche) est compris dans cette
      * plage seront retenus.
      */
-    public abstract void setValueRange(final Range valueRange) throws SQLException;
+    public abstract void setValueRange(final Range valueRange) throws RemoteException;
 
     /**
      * Définit la plage de valeurs des échantillons d'intérêt. Cette méthode est équivalente
@@ -152,7 +153,7 @@ public interface SampleTable extends Table {
      * @param minimum Valeur minimale, inclusif.
      * @param maximum Valeur maximale, inclusif.
      */
-    public abstract void setValueRange(double minimum, final double maximum) throws SQLException;
+    public abstract void setValueRange(double minimum, final double maximum) throws RemoteException;
 
     /**
      * Retourne la liste des échantillons connus dans la région et dans la plage de
@@ -160,9 +161,9 @@ public interface SampleTable extends Table {
      * des différentes méthodes <code>set...</code> de cette classe. Cette méthode
      * ne retourne jamais <code>null</code>, mais peut retourner un ensemble vide.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract Collection<SampleEntry> getEntries() throws SQLException;
+    public abstract Collection<SampleEntry> getEntries() throws RemoteException;
 
     /**
      * Définie une valeur réelle pour un échantillon spécifié. Cette méthode peut être utilisée
@@ -173,10 +174,10 @@ public interface SampleTable extends Table {
      * @param columnName Nom de la colonne à mettre à jour.
      * @param value      Valeur à inscrire dans la base de données à la ligne de l'échantillon
      *                   <code>sample</code>, colonne <code>columnName</code>.
-     * @throws SQLException si l'échantillon spécifié n'existe pas, ou si la mise à jour
-     *                   de la base de données a échouée pour une autre raison.
+     * @throws RemoteException si l'échantillon spécifié n'existe pas, ou si la mise à jour
+     *                   du catalogue a échoué pour une autre raison.
      */
-    public abstract void setValue(final SampleEntry sample, final String columnName, final float value) throws SQLException;
+    public abstract void setValue(final SampleEntry sample, final String columnName, final float value) throws RemoteException;
 
     /**
      * Définie une valeur booléenne pour un échantillon spécifié. Cette méthode peut être utilisée
@@ -187,8 +188,8 @@ public interface SampleTable extends Table {
      * @param columnName Nom de la colonne à mettre à jour.
      * @param value      Valeur à inscrire dans la base de données à la ligne de l'échantillon
      *                   <code>sample</code>, colonne <code>columnName</code>.
-     * @throws SQLException si l'échantillon spécifié n'existe pas, ou si la mise à jour
-     *                   de la base de données a échouée pour une autre raison.
+     * @throws RemoteException si l'échantillon spécifié n'existe pas, ou si la mise à jour
+     *                   du catalogue a échoué pour une autre raison.
      */
-    public abstract void setValue(final SampleEntry sample, final String columnName, final boolean value) throws SQLException;
+    public abstract void setValue(final SampleEntry sample, final String columnName, final boolean value) throws RemoteException;
 }

@@ -28,6 +28,7 @@ package fr.ird.database.sample.sql;
 // Base de données
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -45,6 +46,7 @@ import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis
 import fr.ird.animat.Species;
+import fr.ird.database.CatalogException;
 
 
 /**
@@ -87,20 +89,46 @@ final class PunctualSampleEntry extends SampleEntry {
      * @param  result Résultat de la requête SQL.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public PunctualSampleEntry(final PunctualSampleTable table, final ResultSet result) throws SQLException {
-        super(result.getInt(PunctualSampleTable.ID),
-              table.getCruise(result.getInt(PunctualSampleTable.CRUISE)),
-              result.getInt(PunctualSampleTable.CALEES)!=0 ? table.species.species : EMPTY);
+    public PunctualSampleEntry(final PunctualSampleTable table, final ResultSet result) throws RemoteException {        
+        super(getInt(result, PunctualSampleTable.ID),
+              getCruise(table, result),
+              getInt(result, PunctualSampleTable.CALEES)!=0 ? table.species.species : EMPTY);
 
-        date = table.getTimestamp(PunctualSampleTable.DATE, result).getTime();
-        x    = getFloat(result,   PunctualSampleTable.LONGITUDE);
-        y    = getFloat(result,   PunctualSampleTable.LATITUDE );
+        try {
+            date = table.getTimestamp(PunctualSampleTable.DATE, result).getTime();
+            x    = getFloat(result,   PunctualSampleTable.LONGITUDE);
+            y    = getFloat(result,   PunctualSampleTable.LATITUDE );
 
-        for (int i=0; i<amount.length; i++) {
-            amount[i] = getFloat(result, PunctualSampleTable.SAMPLE_VALUE + i);
+            for (int i=0; i<amount.length; i++) {
+                amount[i] = getFloat(result, PunctualSampleTable.SAMPLE_VALUE + i);
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
+    /**
+     * Retourne table.getCruise().
+     */
+    private static final fr.ird.database.sample.CruiseEntry getCruise(final PunctualSampleTable table, final ResultSet result) throws RemoteException{
+        try {
+            return table.getCruise(result.getInt(PunctualSampleTable.CRUISE));
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
+    }
+    
+    /**
+     * Retourne result.getInt().
+     */
+    private static final int getInt(final ResultSet result, final int index) throws RemoteException {        
+        try {
+            return result.getInt(index);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
+    }
+    
     /**
      * Retourne le nombre réel de la colonne spécifié, ou
      * <code>NaN</code> si ce nombre réel n'est pas spécifié.

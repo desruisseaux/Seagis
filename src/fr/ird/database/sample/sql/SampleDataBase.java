@@ -32,6 +32,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.ResultSetMetaData;
+import java.rmi.RemoteException;
 
 // Collections et divers
 import java.util.Set;
@@ -48,6 +49,7 @@ import org.geotools.resources.Arguments;
 import org.geotools.gui.headless.ProgressPrinter;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.animat.Species;
 import fr.ird.database.SQLDataBase;
 import fr.ird.database.coverage.SeriesTable;
@@ -151,7 +153,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      *
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    public SampleDataBase() throws SQLException {
+    public SampleDataBase() throws RemoteException {
         // this(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));
         super(getDefaultURL(), 
               TimeZone.getTimeZone(Configuration.getInstance().get(Configuration.KEY_TIME_ZONE)),
@@ -167,7 +169,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      *         en heure GMT les dates écrites dans la base de données.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    public SampleDataBase(final String name, final TimeZone timezone) throws SQLException {
+    public SampleDataBase(final String name, final TimeZone timezone) throws RemoteException {
         super(name, timezone, Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
 
@@ -219,10 +221,10 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
     private synchronized int getSampleTableType() throws SQLException {
-        /*if (sampleTableType == 0) {
+        if (sampleTableType == 0) {
             int type = sampleTableType;
-            final Statement statement = connection.createStatement();
-            for (int i=0; i<DEFAULT_PROPERTIES.length; i+=2) {
+            final Statement statement = connection.createStatement();            
+            /*for (int i=0; i<DEFAULT_PROPERTIES.length; i+=2) {
                 final String key = DEFAULT_PROPERTIES[i];
                 if (!key.endsWith('.'+Table.SAMPLES)) {
                     continue;
@@ -236,39 +238,74 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
                 } catch (SQLException exception) {
                     continue;
                 }
-            }
+            }*/
+            
+            final Configuration.Key[] keyArray = {Table.configuration.KEY_DESCRIPTORS,
+                                                  Table.configuration.KEY_PARAMETERS,
+                                                  Table.configuration.KEY_LINEAR_MODELS,
+                                                  Table.configuration.KEY_ENVIRONMENTS_UPDATE,
+                                                  Table.configuration.KEY_ENVIRONMENTS_INSERT,
+                                                  Table.configuration.KEY_OPERATIONS,
+                                                  Table.configuration.KEY_LINEAR_SAMPLE,
+                                                  Table.configuration.KEY_ENVIRONMENTS,
+                                                  Table.configuration.KEY_POSITIONS,
+                                                  Table.configuration.KEY_SAMPLES_UPDATE,
+                                                  Table.configuration.KEY_SPECIES,
+                                                  Table.configuration.KEY_PUNCTUAL_SAMPLE};
+                                  
+            for (int i=0 ; i<keyArray.length ; i++) {
+                final String key = keyArray[i].name;
+
+                if (!key.endsWith('.'+Table.SAMPLES)) {
+                    continue;
+                }
+                type++;
+                final String query = cutAfterFrom(Table.configuration.get(keyArray[i]), true);
+                try {
+                    statement.executeQuery(query).close();
+                    sampleTableType = type;
+                    break;
+                } catch (SQLException exception) {
+                    continue;
+                }
+                
+            }  
+            
+            
             statement.close();
         }
-        return sampleTableType;*/
-        return 0;
+        return sampleTableType;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Set<Species> getSpecies() throws SQLException {
-        /*final String key, def;
-        switch (getSampleTableType()) {
-            case  1: key="Punctual."+Table.SAMPLES; def= PunctualSampleTable.SQL_SELECT; break;
-            case  2: key=  "Linear."+Table.SAMPLES; def= LinearSampleTable.SQL_SELECT;   break;
-            default: throw new SQLException("Type de table inconnu.");
+    public Set<Species> getSpecies() throws RemoteException {
+        try {
+            final String key, def;
+            switch (getSampleTableType()) {
+                case  1: key="Punctual."+Table.SAMPLES; def= PunctualSampleTable.SQL_SELECT; break;
+                case  2: key=  "Linear."+Table.SAMPLES; def= LinearSampleTable.SQL_SELECT;   break;
+                default: throw new SQLException("Type de table inconnu.");
+            }
+            final String         query = "SELECT * "+cutAfterFrom(Table.preferences.get(key, def), false);
+            final SpeciesTable spTable = new SpeciesTable(connection);
+            final Statement  statement = connection.createStatement();
+            final ResultSet     result = statement.executeQuery(query);
+            final Set<Species> species = spTable.getSpecies(result.getMetaData());
+            result   .close();
+            statement.close();
+            spTable  .close();
+            return species;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        final String         query = "SELECT * "+cutAfterFrom(Table.preferences.get(key, def), false);
-        final SpeciesTable spTable = new SpeciesTable(connection);
-        final Statement  statement = connection.createStatement();
-        final ResultSet     result = statement.executeQuery(query);
-        final Set<Species> species = spTable.getSpecies(result.getMetaData());
-        result   .close();
-        statement.close();
-        spTable  .close();
-        return species;*/
-        return null;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Set<ParameterEntry> getParameters(final SeriesTable series) throws SQLException {
+    public Set<ParameterEntry> getParameters(final SeriesTable series) throws RemoteException {
         final ParameterTable table = new ParameterTable(connection, ParameterTable.LIST, series);
         final Set<ParameterEntry> set = table.list();
         table.close();
@@ -278,7 +315,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     /**
      * {@inheritDoc}
      */
-    public Set<OperationEntry> getOperations() throws SQLException {
+    public Set<OperationEntry> getOperations() throws RemoteException {
         final OperationTable table = new OperationTable(connection, OperationTable.LIST);
         final Set<OperationEntry> set = table.list();
         table.close();
@@ -288,7 +325,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     /**
      * {@inheritDoc}
      */
-    public Set<RelativePositionEntry> getRelativePositions() throws SQLException {
+    public Set<RelativePositionEntry> getRelativePositions() throws RemoteException {
         final RelativePositionTable table = new RelativePositionTable(connection, RelativePositionTable.LIST);
         final Set<RelativePositionEntry> set = table.list();
         table.close();
@@ -299,40 +336,48 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * {@inheritDoc}
      */
     public fr.ird.database.sample.SampleTable getSampleTable(final Collection<Species> species)
-            throws SQLException
+            throws RemoteException
     {
-        final Set<Species> speciesSet = (species instanceof Set) ?
-              (Set<Species>) species : new LinkedHashSet<Species>(species);
-        switch (getSampleTableType()) {
-            case  1: return new PunctualSampleTable(connection, timezone, speciesSet);
-            case  2: return new   LinearSampleTable(connection, timezone, speciesSet);
-            default: throw new SQLException("Type de table inconnu.");
-        }
+        try {
+            final Set<Species> speciesSet = (species instanceof Set) ?
+                  (Set<Species>) species : new LinkedHashSet<Species>(species);
+            switch (getSampleTableType()) {
+                case  1: return new PunctualSampleTable(connection, timezone, speciesSet);
+                case  2: return new   LinearSampleTable(connection, timezone, speciesSet);
+                default: throw new SQLException("Type de table inconnu.");
+            }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      */
     public fr.ird.database.sample.SampleTable getSampleTable(final String[] species)
-            throws SQLException
+            throws RemoteException
     {
-        final List<Species> list = new ArrayList<Species>(species.length);
-        final SpeciesTable spSQL = new SpeciesTable(connection);
-        for (int i=0; i<species.length; i++) {
-            final Species sp = spSQL.getSpecies(species[i], i);
-            if (sp!=null) {
-                list.add(sp);
+        try {
+            final List<Species> list = new ArrayList<Species>(species.length);
+            final SpeciesTable spSQL = new SpeciesTable(connection);
+            for (int i=0; i<species.length; i++) {
+                final Species sp = spSQL.getSpecies(species[i], i);
+                if (sp!=null) {
+                    list.add(sp);
+                }
             }
-        }
-        spSQL.close();
-        return getSampleTable(list);
+            spSQL.close();
+            return getSampleTable(list);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      */
     public fr.ird.database.sample.SampleTable getSampleTable(final String species)
-            throws SQLException
+            throws RemoteException
     {
         return getSampleTable(new String[]{species});
     }
@@ -341,7 +386,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * {@inheritDoc}
      */
     public fr.ird.database.sample.SampleTable getSampleTable()
-            throws SQLException
+            throws RemoteException
     {
         return getSampleTable(getSpecies());
     }
@@ -350,7 +395,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * {@inheritDoc}
      */
     public fr.ird.database.sample.EnvironmentTable getEnvironmentTable(final SeriesTable series)
-            throws SQLException
+            throws RemoteException
     {
         return new EnvironmentTable(connection, series);
     }
@@ -460,7 +505,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public static void main(final String[] args) throws SQLException {
+    public static void main(final String[] args) throws RemoteException {
         org.geotools.resources.MonolineFormatter.init("fr.ird");
         final Arguments  console = new Arguments(args);
         final boolean     config = console.getFlag("-config");

@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
 
 // Géométrie
 import java.awt.Rectangle;
@@ -77,9 +78,11 @@ import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
+import fr.ird.database.coverage.GridCoverageRange;
 import fr.ird.database.coverage.CoverageComparator;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.CoverageTable;
@@ -302,12 +305,16 @@ class GridCoverageTable extends Table implements CoverageTable {
      *                    base de données.
      * @throws SQLException si <code>GridCoverageTable</code> n'a pas pu construire sa requête SQL.
      */
-    GridCoverageTable(final Connection connection, final TimeZone timezone) throws SQLException {
-        statement = connection.prepareStatement(SQL_SELECT);
-        this.timezone   = timezone;
-        this.calendar   = new GregorianCalendar(timezone);
-        this.dateFormat = DateFormat.getDateInstance(DateFormat.LONG);
-        this.dateFormat.setCalendar(calendar);
+    GridCoverageTable(final Connection connection, final TimeZone timezone) throws RemoteException {
+        try {
+            statement = connection.prepareStatement(SQL_SELECT);
+            this.timezone   = timezone;
+            this.calendar   = new GregorianCalendar(timezone);
+            this.dateFormat = DateFormat.getDateInstance(DateFormat.LONG);
+            this.dateFormat.setCalendar(calendar);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -321,31 +328,35 @@ class GridCoverageTable extends Table implements CoverageTable {
      * {@inheritDoc}
      */
     public final synchronized void setSeries(final fr.ird.database.coverage.SeriesEntry series)
-            throws SQLException
+            throws RemoteException
     {
-        if (!series.equals(this.series)) {
-            final boolean toLog = (this.series!=null);
-            parameters = null;
-            statement.setInt(ARG_SERIES, series.getID());
-            this.series = series;
-            if (toLog) {
-                // Don't log if this object is configured by CoverageDataBase.
-                log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
+        try {
+            if (!series.equals(this.series)) {
+                final boolean toLog = (this.series!=null);
+                parameters = null;
+                statement.setInt(ARG_SERIES, series.getID());
+                this.series = series;
+                if (toLog) {
+                    // Don't log if this object is configured by CoverageDataBase.
+                    log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
+                }
             }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public final CoordinateSystem getCoordinateSystem() {
+    public final CoordinateSystem getCoordinateSystem() throws RemoteException {
         return CoordinateSystemTable.WGS84;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized Envelope getEnvelope() {
+    public final synchronized Envelope getEnvelope() throws RemoteException {
         final Envelope envelope = new Envelope(3);
         envelope.setRange(0, geographicArea.getMinX(), geographicArea.getMaxX());
         envelope.setRange(1, geographicArea.getMinY(), geographicArea.getMaxY());
@@ -357,7 +368,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setEnvelope(final Envelope envelope) throws SQLException {
+    public final synchronized void setEnvelope(final Envelope envelope) throws RemoteException {
         // No coordinate transformation needed for this implementation.
         setGeographicArea(new Rectangle2D.Double(envelope.getMinimum(0), envelope.getMinimum(1),
                                                  envelope.getLength (0), envelope.getLength (1)));
@@ -368,14 +379,14 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final synchronized Range getTimeRange() {
+    public final synchronized Range getTimeRange() throws RemoteException {
         return new Range(Date.class, new Date(startTime), new Date(endTime));
     }
 
     /**
      * {@inheritDoc}
      */
-    public final void setTimeRange(final Range range) throws SQLException {
+    public final void setTimeRange(final Range range) throws RemoteException {
         Date startTime = (Date) range.getMinValue();
         Date   endTime = (Date) range.getMaxValue();
         if (!range.isMinIncluded()) {
@@ -391,67 +402,75 @@ class GridCoverageTable extends Table implements CoverageTable {
      * {@inheritDoc}
      */
     public final synchronized void setTimeRange(final Date startTime, final Date endTime)
-            throws SQLException
+            throws RemoteException
     {
-        final long newStartTime = startTime.getTime();
-        final long newEndTime   =   endTime.getTime();
-        if (newStartTime!=this.startTime || newEndTime!=this.endTime) {
-            parameters = null;
-            final Timestamp time=new Timestamp(newStartTime);
-            statement.setTimestamp(ARG_START_TIME, time, calendar);
-            time.setTime(newEndTime);
-            statement.setTimestamp(ARG_END_TIME, time, calendar);
-            this.startTime = newStartTime;
-            this.endTime   = newEndTime;
+        try {
+            final long newStartTime = startTime.getTime();
+            final long newEndTime   =   endTime.getTime();
+            if (newStartTime!=this.startTime || newEndTime!=this.endTime) {
+                parameters = null;
+                final Timestamp time=new Timestamp(newStartTime);
+                statement.setTimestamp(ARG_START_TIME, time, calendar);
+                time.setTime(newEndTime);
+                statement.setTimestamp(ARG_END_TIME, time, calendar);
+                this.startTime = newStartTime;
+                this.endTime   = newEndTime;
 
-            if (series != null) {
-                // Don't log if this object is configured by CoverageDataBase.
-                final String startText = dateFormat.format(startTime);
-                final String   endText = dateFormat.format(  endTime);
-                log("setTimeRange", Level.CONFIG, ResourceKeys.SET_TIME_RANGE_$3,
-                                    new String[]{startText, endText, series.getName()});
+                if (series != null) {
+                    // Don't log if this object is configured by CoverageDataBase.
+                    final String startText = dateFormat.format(startTime);
+                    final String   endText = dateFormat.format(  endTime);
+                    log("setTimeRange", Level.CONFIG, ResourceKeys.SET_TIME_RANGE_$3,
+                                        new String[]{startText, endText, series.getName()});
+                }
             }
-        }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized Rectangle2D getGeographicArea() {
-        return (Rectangle2D) geographicArea.clone();
+    public final synchronized Rectangle2D getGeographicArea() throws RemoteException {
+        return new XRectangle2D((Rectangle2D) geographicArea.clone());
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
-        if (!rect.equals(geographicArea)) {
-            parameters = null;
-            statement.setDouble(ARG_XMIN, rect.getMinX());
-            statement.setDouble(ARG_XMAX, rect.getMaxX());
-            statement.setDouble(ARG_YMIN, rect.getMinY());
-            statement.setDouble(ARG_YMAX, rect.getMaxY());
-            geographicArea = new XRectangle2D(rect);
+    public final synchronized void setGeographicArea(final Rectangle2D rect) throws RemoteException {
+        try {
+            if (!rect.equals(geographicArea)) {
+                parameters = null;
+                statement.setDouble(ARG_XMIN, rect.getMinX());
+                statement.setDouble(ARG_XMAX, rect.getMaxX());
+                statement.setDouble(ARG_YMIN, rect.getMinY());
+                statement.setDouble(ARG_YMAX, rect.getMaxY());
+                geographicArea = new XRectangle2D(rect);
 
-            if (series != null) {
-                // Don't log if this object is configured by CoverageDataBase.
-                log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$2,
-                                         new String[] {getStringArea(), series.getName()});
+                if (series != null) {
+                    // Don't log if this object is configured by CoverageDataBase.
+                    log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$2,
+                                             new String[] {getStringArea(), series.getName()});
+                }
             }
-        }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized Dimension2D getPreferredResolution() {
+    public final synchronized Dimension2D getPreferredResolution() throws RemoteException {
         return (resolution!=null) ? (Dimension2D)resolution.clone() : null;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setPreferredResolution(final Dimension2D pixelSize) {
+    public final synchronized void setPreferredResolution(final Dimension2D pixelSize) throws RemoteException {
         if (!Utilities.equals(resolution, pixelSize)) {
             parameters = null;
             final int clé;
@@ -476,14 +495,14 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final Operation getOperation() {
+    public final Operation getOperation() throws RemoteException {
         return operation;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized ParameterList setOperation(final Operation operation) {
+    public final synchronized ParameterList setOperation(final Operation operation) throws RemoteException {
         this.parameters = null;
         this.operation=operation;
         final int clé;
@@ -504,14 +523,14 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final ParameterList setOperation(final String operation) throws OperationNotFoundException {
+    public final ParameterList setOperation(final String operation) throws RemoteException, OperationNotFoundException {
         return setOperation(operation!=null ? GridCoverageEntry.PROCESSOR.getOperation(operation) : null);
     }
 
     /**
      * {@inheritDoc}
      */
-    public final List<CoverageEntry> getEntries() throws SQLException {
+    public final List<CoverageEntry> getEntries() throws RemoteException {
         /*
          * On construit un tableau de l'interface ET NON de l'implémentation
          * parce que certains utilisateurs (par exemple CoverageTableModel)
@@ -519,14 +538,13 @@ class GridCoverageTable extends Table implements CoverageTable {
          * ça ne lance un {@link java.lang.ArrayStoreException}.
          */
         final List<CoverageEntry> entries = new ArrayList<CoverageEntry>();
-        getRanges(null, null, null, entries);
-        return entries;
+        return getRanges(null, null, null, entries).entryList;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final CoverageEntry getEntry() throws SQLException {
+    public final CoverageEntry getEntry() throws RemoteException {
         CoverageEntry best = null;
         final CoverageComparator comparator = new CoverageComparator(this);
         for (final CoverageEntry entry : getEntries()) {
@@ -542,186 +560,207 @@ class GridCoverageTable extends Table implements CoverageTable {
      *
      * @task TODO: Move hard-coded SQL statements into some configuration file.
      */
-    public final synchronized CoverageEntry getEntry(final int ID) throws SQLException {
-        if (imageByID == null) {
-            // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
-            //                             " WHERE "+GRID_COVERAGES+".ID=?";
-            imageByID = statement.getConnection().prepareStatement(SQL_SELECT_ID1);
-        }
-        imageByID.setInt(1, ID);
-        return getEntry(imageByID);
+    public final synchronized CoverageEntry getEntry(final int ID) throws RemoteException {
+        try {
+            if (imageByID == null) {
+                // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+                //                             " WHERE "+GRID_COVERAGES+".ID=?";
+                imageByID = statement.getConnection().prepareStatement(SQL_SELECT_ID1);
+            }
+            imageByID.setInt(1, ID);
+            return getEntry(imageByID);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
-
+        
     /**
      * {@inheritDoc}
      *
      * @task TODO: Move hard-coded SQL statements into some configuration file.
      */
-    public final synchronized CoverageEntry getEntry(final String name) throws SQLException {
-        if (imageByName == null) {
-            // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
-            //                      " WHERE (visible=TRUE) AND (series=?) AND (filename LIKE ?)";
-            imageByName = statement.getConnection().prepareStatement(SQL_SELECT_ID2);
-        }
-        imageByName.setInt(1, series.getID());
-        imageByName.setString(2, name);
-        return getEntry(imageByName);
+    public final synchronized CoverageEntry getEntry(final String name) throws RemoteException {
+        try {
+            if (imageByName == null) {
+                // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+                //                      " WHERE (visible=TRUE) AND (series=?) AND (filename LIKE ?)";
+                imageByName = statement.getConnection().prepareStatement(SQL_SELECT_ID2);
+            }
+            imageByName.setInt(1, series.getID());
+            imageByName.setString(2, name);
+            return getEntry(imageByName);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * Retourne l'image correspondant à la requête spécifiée. Il ne
      * doit y avoir qu'une image correspondant à cette requête.
      */
-    private CoverageEntry getEntry(final PreparedStatement query) throws SQLException {
-        assert Thread.holdsLock(this);
-        GridCoverageEntry entry = null;
-        final ResultSet result = query.executeQuery();
-        if (result.next()) {
-            entry = new GridCoverageEntry(this, result).canonicalize();
-            while (result.next()) {
-                final GridCoverageEntry check = new GridCoverageEntry(this, result);
-                if (!entry.equals(check)) {
-                    throw new IllegalRecordException(GRID_COVERAGES, Resources.format(
-                            ResourceKeys.ERROR_DUPLICATED_COVERAGE_$2, entry.getName(), check.getName()));
+    private CoverageEntry getEntry(final PreparedStatement query) throws RemoteException {
+        try {
+            assert Thread.holdsLock(this);
+            GridCoverageEntry entry = null;
+            final ResultSet result = query.executeQuery();
+            if (result.next()) {
+                entry = new GridCoverageEntry(this, result).canonicalize();
+                while (result.next()) {
+                    final GridCoverageEntry check = new GridCoverageEntry(this, result);
+                    if (!entry.equals(check)) {
+                        throw new IllegalRecordException(GRID_COVERAGES, Resources.format(
+                                ResourceKeys.ERROR_DUPLICATED_COVERAGE_$2, entry.getName(), check.getName()));
+                    }
                 }
             }
+            result.close();
+            return entry;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        result.close();
-        return entry;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final void getRanges(final RangeSet x, final RangeSet y, final RangeSet t)
-            throws SQLException
+    public final GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t)
+            throws RemoteException
     {
-        getRanges(x, y, t, null);
+        return getRanges(x, y, t, null);
     }
 
     /**
      * {@inheritDoc}
      */
-    public final synchronized void getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
+    public final synchronized GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
                                              final List<CoverageEntry> entryList)
-            throws SQLException
+            throws RemoteException
     {
-        GridCoverageEntry newEntry = null;
-        long           lastEndTime = Long.MIN_VALUE;
-        final int       startIndex = (entryList!=null) ? entryList.size() : 0;
-        final ResultSet     result = statement.executeQuery();
-  loop: while (result.next()) {
-            /*
-             * Add the new entry to the list.  If many entries have the same
-             * spatio-temporal coordinates but different resolution, then an
-             * entry with a resolution close to the requested resolution will
-             * be selected.
-             */
-            if (entryList != null) {
-                newEntry = new GridCoverageEntry(this, result);
-                for (int i=entryList.size(); --i>=0;) {
-                    final GridCoverageEntry olderEntry = (GridCoverageEntry) entryList.get(i);
-                    if (!olderEntry.compare(newEntry)) {
-                        // Entry not equals according the "ORDER BY" clause.
-                        break;
-                    }
-                    final GridCoverageEntry lowestResolution = olderEntry.getLowestResolution(newEntry);
-                    if (lowestResolution != null) {
-                        // Two entries has the same spatio-temporal coordinates.
-                        if (lowestResolution.hasEnoughResolution(resolution)) {
-                            // The entry with the lowest resolution is enough.
-                            entryList.set(i, lowestResolution);
-                        } else if (lowestResolution == olderEntry) {
-                            // No entry has enough resolution;
-                            // keep the one with the finest resolution.
-                            entryList.set(i, newEntry);
+        try {
+            GridCoverageEntry newEntry = null;
+            long           lastEndTime = Long.MIN_VALUE;
+            final int       startIndex = (entryList!=null) ? entryList.size() : 0;
+            final ResultSet     result = statement.executeQuery();
+      loop: while (result.next()) {
+                /*
+                 * Add the new entry to the list.  If many entries have the same
+                 * spatio-temporal coordinates but different resolution, then an
+                 * entry with a resolution close to the requested resolution will
+                 * be selected.
+                 */
+                if (entryList != null) {
+                    newEntry = new GridCoverageEntry(this, result);
+                    for (int i=entryList.size(); --i>=0;) {
+                        final GridCoverageEntry olderEntry = (GridCoverageEntry) entryList.get(i);
+                        if (!olderEntry.compare(newEntry)) {
+                            // Entry not equals according the "ORDER BY" clause.
+                            break;
                         }
-                        continue loop;
+                        final GridCoverageEntry lowestResolution = olderEntry.getLowestResolution(newEntry);
+                        if (lowestResolution != null) {
+                            // Two entries has the same spatio-temporal coordinates.
+                            if (lowestResolution.hasEnoughResolution(resolution)) {
+                                // The entry with the lowest resolution is enough.
+                                entryList.set(i, lowestResolution);
+                            } else if (lowestResolution == olderEntry) {
+                                // No entry has enough resolution;
+                                // keep the one with the finest resolution.
+                                entryList.set(i, newEntry);
+                            }
+                            continue loop;
+                        }
+                    }
+                    entryList.add(newEntry);
+                }
+                /*
+                 * Compute ranges if it has been requested.  If we have previously
+                 * constructed an GridCoverageEntry, fetch the data from this entry
+                 * since some JDBC driver doesn't allow to get data from the same
+                 * column twice. Furthermore, this is faster... The "continue loop"
+                 * statement above may have hidden some rows, but since those rows
+                 * have the same spatio-temporal coordinates than one visible row,
+                 * it should not have any effect except improving performance.
+                 */
+                if (t != null) {
+                    final long period = Math.round(series.getPeriod()*CoordinateSystemTable.DAY);
+                    final Date startTime;
+                    final Date   endTime;
+                    if (newEntry != null) {
+                        startTime = newEntry.getStartTime();
+                          endTime = newEntry.getEndTime();
+                    } else {
+                        startTime = getTimestamp(START_TIME, result);
+                          endTime = getTimestamp(  END_TIME, result);
+                    }
+                    if (startTime!=null && endTime!=null) {
+                        final long lgEndTime = endTime.getTime();
+                        final long checkTime = lgEndTime-period;
+                        if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime()) {
+                            // Il arrive parfois que des images soient prises à toutes les 24 heures,
+                            // mais pendant 12 heures seulement. On veut éviter que de telles images
+                            // apparaissent tout le temps entrecoupées d'images manquantes.
+                            startTime.setTime(checkTime);
+                        }
+                        lastEndTime = lgEndTime;
+                        t.add(startTime, endTime);
                     }
                 }
-                entryList.add(newEntry);
-            }
-            /*
-             * Compute ranges if it has been requested.  If we have previously
-             * constructed an GridCoverageEntry, fetch the data from this entry
-             * since some JDBC driver doesn't allow to get data from the same
-             * column twice. Furthermore, this is faster... The "continue loop"
-             * statement above may have hidden some rows, but since those rows
-             * have the same spatio-temporal coordinates than one visible row,
-             * it should not have any effect except improving performance.
-             */
-            if (t != null) {
-                final long period = Math.round(series.getPeriod()*CoordinateSystemTable.DAY);
-                final Date startTime;
-                final Date   endTime;
-                if (newEntry != null) {
-                    startTime = newEntry.getStartTime();
-                      endTime = newEntry.getEndTime();
-                } else {
-                    startTime = getTimestamp(START_TIME, result);
-                      endTime = getTimestamp(  END_TIME, result);
-                }
-                if (startTime!=null && endTime!=null) {
-                    final long lgEndTime = endTime.getTime();
-                    final long checkTime = lgEndTime-period;
-                    if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime()) {
-                        // Il arrive parfois que des images soient prises à toutes les 24 heures,
-                        // mais pendant 12 heures seulement. On veut éviter que de telles images
-                        // apparaissent tout le temps entrecoupées d'images manquantes.
-                        startTime.setTime(checkTime);
+                if (x != null) {
+                    final float xmin;
+                    final float xmax;
+                    if (newEntry!=null) {
+                        xmin = newEntry.xmin;
+                        xmax = newEntry.xmax;
+                    } else {
+                        xmin = result.getFloat(XMIN);
+                        xmax = result.getFloat(XMAX);
                     }
-                    lastEndTime = lgEndTime;
-                    t.add(startTime, endTime);
+                    x.add(xmin, xmax);
+                }
+                if (y != null) {
+                    final float ymin;
+                    final float ymax;
+                    if (newEntry != null) {
+                        ymin = newEntry.ymin;
+                        ymax = newEntry.ymax;
+                    } else {
+                        ymin = result.getFloat(YMIN);
+                        ymax = result.getFloat(YMAX);
+                    }
+                    y.add(ymin, ymax);
                 }
             }
-            if (x != null) {
-                final float xmin;
-                final float xmax;
-                if (newEntry!=null) {
-                    xmin = newEntry.xmin;
-                    xmax = newEntry.xmax;
-                } else {
-                    xmin = result.getFloat(XMIN);
-                    xmax = result.getFloat(XMAX);
-                }
-                x.add(xmin, xmax);
+            result.close();
+            if (entryList != null) {
+                final List<CoverageEntry> newEntries;
+                newEntries = entryList.subList(startIndex, entryList.size());
+                final int size = newEntries.size();
+                GridCoverageEntry.canonicalize(newEntries.toArray(new CoverageEntry[size]));
+                log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1, new Integer(size));
             }
-            if (y != null) {
-                final float ymin;
-                final float ymax;
-                if (newEntry != null) {
-                    ymin = newEntry.ymin;
-                    ymax = newEntry.ymax;
-                } else {
-                    ymin = result.getFloat(YMIN);
-                    ymax = result.getFloat(YMAX);
-                }
-                y.add(ymin, ymax);
-            }
-        }
-        result.close();
-        if (entryList != null) {
-            final List<CoverageEntry> newEntries;
-            newEntries = entryList.subList(startIndex, entryList.size());
-            final int size = newEntries.size();
-            GridCoverageEntry.canonicalize(newEntries.toArray(new CoverageEntry[size]));
-            log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1, new Integer(size));
-        }
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }     
+        return new GridCoverageRange(x, y, t, entryList);
     }
 
     /**
      * Procède à l'extraction d'une date en tenant compte du fuseau horaire.
      */
-    final Date getTimestamp(final int field, final ResultSet result) throws SQLException {
-        assert Thread.holdsLock(this);
-        if (false) {
-            // Cette ligne aurait suffit si ce n'était du bug #4380653...
-            return result.getTimestamp(field, calendar);
-        } else {
-            if (localCalendar == null) {
-                localCalendar=new GregorianCalendar();
+    final Date getTimestamp(final int field, final ResultSet result) throws RemoteException {
+        try {
+            assert Thread.holdsLock(this);
+            if (false) {
+                // Cette ligne aurait suffit si ce n'était du bug #4380653...
+                return result.getTimestamp(field, calendar);
+            } else {
+                if (localCalendar == null) {
+                    localCalendar=new GregorianCalendar();
+                }
+                return getTimestamp(field, result, calendar, localCalendar);
             }
-            return getTimestamp(field, result, calendar, localCalendar);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
     }
 
@@ -731,29 +770,33 @@ class GridCoverageTable extends Table implements CoverageTable {
      * ne retourne jamais nul.
      *
      * @param  formatID Numéro identifiant le format voulu.
-     * @throws SQLException si le format spécifié n'a pas été trouvé.
+     * @throws RemoteException si le format spécifié n'a pas été trouvé.
      */
-    private FormatEntry getFormat(final int formatID) throws SQLException {
-        assert Thread.holdsLock(this);
-        final Integer ID   = new Integer(formatID);
-        FormatEntry format = formats.get(ID);
-        if (format == null) {
-            if (formatTable == null) {
-                formatTable = new FormatTable(statement.getConnection());
+    private FormatEntry getFormat(final int formatID) throws RemoteException {
+        try {
+            assert Thread.holdsLock(this);
+            final Integer ID   = new Integer(formatID);
+            FormatEntry format = formats.get(ID);
+            if (format == null) {
+                if (formatTable == null) {
+                    formatTable = new FormatTable(statement.getConnection());
+                }
+                format = formatTable.getEntry(ID);
+                formats.put(ID, format);
+            } else if (formatTable != null) {
+                /*
+                 * Si on a demandé un format qui avait déjà été lu auparavant,
+                 * il y a de bonnes chances pour qu'on n'ai plus besoin de la
+                 * table des formats. On va donc la fermer pour économiser des
+                 * ressources. On la réouvrira plus tard si c'est nécessaire.
+                 */
+                formatTable.close();
+                formatTable = null;
             }
-            format = formatTable.getEntry(ID);
-            formats.put(ID, format);
-        } else if (formatTable != null) {
-            /*
-             * Si on a demandé un format qui avait déjà été lu auparavant,
-             * il y a de bonnes chances pour qu'on n'ai plus besoin de la
-             * table des formats. On va donc la fermer pour économiser des
-             * ressources. On la réouvrira plus tard si c'est nécessaire.
-             */
-            formatTable.close();
-            formatTable = null;
+            return format;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        return format;
     }
 
     /**
@@ -770,57 +813,65 @@ class GridCoverageTable extends Table implements CoverageTable {
      * @param  pathname Chemin relatif des images.
      *
      * @return Un objet incluant les paramètres demandées ainsi que ceux de la table.
-     * @throws SQLException si les paramètres n'ont pas pu être obtenus.
+     * @throws RemoteException si les paramètres n'ont pas pu être obtenus.
      */
     final synchronized Parameters getParameters(final int    seriesID,
                                                 final int    formatID,
                                                 final int    csID,
                                                 final String pathname)
-        throws SQLException
+        throws RemoteException
     {
-        if (seriesID != series.getID()) {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
-        }
-        /*
-         * Si les paramètres spécifiés sont identiques à ceux qui avaient été
-         * spécifiés la dernière fois, retourne le dernier bloc de paramètres.
-         */
-        if (parameters != null &&
-            parameters.format.getID() == formatID &&
-            Utilities.equals(parameters.pathname, pathname))
-        {
-            if (formatTable != null) {
-                /*
-                 * Si on a demandé un format qui avait déjà été lu auparavant,
-                 * il y a de bonnes chances pour qu'on n'ai plus besoin de la
-                 * table des formats. On va donc la fermer pour économiser des
-                 * ressources. On la réouvrira plus tard si c'est nécessaire.
-                 */
-                formatTable.close();
-                formatTable = null;
+        try {
+            if (seriesID != series.getID()) {
+                throw new CatalogException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
             }
+            /*
+             * Si les paramètres spécifiés sont identiques à ceux qui avaient été
+             * spécifiés la dernière fois, retourne le dernier bloc de paramètres.
+             */
+            if (parameters != null &&
+                parameters.format.getID() == formatID &&
+                Utilities.equals(parameters.pathname, pathname))
+            {
+                if (formatTable != null) {
+                    /*
+                     * Si on a demandé un format qui avait déjà été lu auparavant,
+                     * il y a de bonnes chances pour qu'on n'ai plus besoin de la
+                     * table des formats. On va donc la fermer pour économiser des
+                     * ressources. On la réouvrira plus tard si c'est nécessaire.
+                     */
+                    formatTable.close();
+                    formatTable = null;
+                }
+                return parameters;
+            }
+            /*
+             * Construit un nouveau bloc de paramètres et projète les
+             * coordonnées vers le système de coordonnées de l'image.
+             */
+            parameters = new Parameters(series, getFormat(formatID), pathname, operation, opParam,
+                                        getCoordinateSystem(),
+                                        getCoordinateSystemTable().getCoordinateSystem(csID),
+                                        geographicArea, resolution, dateFormat);
+            parameters = (Parameters)POOL.canonicalize(parameters);
             return parameters;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        /*
-         * Construit un nouveau bloc de paramètres et projète les
-         * coordonnées vers le système de coordonnées de l'image.
-         */
-        parameters = new Parameters(series, getFormat(formatID), pathname, operation, opParam,
-                                    getCoordinateSystem(),
-                                    getCoordinateSystemTable().getCoordinateSystem(csID),
-                                    geographicArea, resolution, dateFormat);
-        parameters = (Parameters)POOL.canonicalize(parameters);
-        return parameters;
     }
 
     /**
      * Retourne la table des systèmes de coordonnées.
      */
-    final CoordinateSystemTable getCoordinateSystemTable() throws SQLException {
-        if (coordinateSystemTable == null) {
-            coordinateSystemTable = new CoordinateSystemTable(getConnection());
+    final CoordinateSystemTable getCoordinateSystemTable() throws RemoteException {
+        try {
+            if (coordinateSystemTable == null) {
+                coordinateSystemTable = new CoordinateSystemTable(getConnection());
+            }
+            return coordinateSystemTable;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        return coordinateSystemTable;
     }
 
     /**
@@ -833,39 +884,47 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
-        if (imageByID != null) {
-            imageByID.close();
-            imageByID = null;
+    public synchronized void close() throws RemoteException {        
+        try {
+            if (imageByID != null) {
+                imageByID.close();
+                imageByID = null;
+            }
+            if (formatTable != null) {
+                formatTable.close();
+                formatTable = null;
+            }
+            if (coordinateSystemTable != null) {
+                coordinateSystemTable.close();
+                coordinateSystemTable = null;
+            }
+            statement.close();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        if (formatTable != null) {
-            formatTable.close();
-            formatTable = null;
-        }
-        if (coordinateSystemTable != null) {
-            coordinateSystemTable.close();
-            coordinateSystemTable = null;
-        }
-        statement.close();
     }
 
     /**
      * Retourne une chaîne de caractères décrivant cette table.
      */
     public final String toString() {
-        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
-        buffer.append("[\"");
-        buffer.append(series.getName());
-        buffer.append("\": ");
-        buffer.append(getStringArea());
-        buffer.append(']');
-        return buffer.toString();
+        try {
+            final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
+            buffer.append("[\"");
+            buffer.append(series.getName());
+            buffer.append("\": ");
+            buffer.append(getStringArea());
+            buffer.append(']');
+            return buffer.toString();
+        } catch (RemoteException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**
      * Retourne les coordonnées demandées sous forme de chaîne de caractères.
      */
-    private String getStringArea() {
+    private String getStringArea() throws RemoteException {
         return CTSUtilities.toWGS84String(getCoordinateSystem(), geographicArea);
     }
 
@@ -884,7 +943,7 @@ class GridCoverageTable extends Table implements CoverageTable {
      * Ajoute une entrée dans la table "<code>GridCoverages</code>".
      * Cette méthode sera redéfinie dans {@link WritableGridCoverageTable}.
      */
-    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws SQLException {
-        throw new SQLException("Table en lecture seule.");
+    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws RemoteException {
+        throw new CatalogException("Table en lecture seule.");
     }
 }

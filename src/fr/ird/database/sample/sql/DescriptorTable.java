@@ -30,8 +30,10 @@ import java.util.Set;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesTable;
 
 
@@ -112,10 +114,21 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @param  La connexion vers la base de données.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    protected DescriptorTable(final Connection connection) throws SQLException {
-        super(connection.prepareStatement(SQL_SELECT));
+    protected DescriptorTable(final Connection connection) throws RemoteException {
+        super(getPreparedStatement(connection));
     }
 
+    /**
+     * Retourne un PreparedStatement.
+     */
+    private static final java.sql.PreparedStatement getPreparedStatement(final Connection connection) throws RemoteException {
+        try {
+            return connection.prepareStatement(SQL_SELECT);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
+    }
+    
     /**
      * Construit une nouvelle connexion vers la table des descripteurs. <strong>Ce constructeur est
      * strictement réservé à {@link ParameterTable}</strong>. Des liens étroits existent entre
@@ -127,7 +140,7 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      *         sera fermée par {@link #close}.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    DescriptorTable(final ParameterTable parameters) throws SQLException {
+    DescriptorTable(final ParameterTable parameters) throws RemoteException {
         super(null);
         this.parameters = parameters;
     }
@@ -188,34 +201,38 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @return Le descripteur du paysage océanique.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    protected DescriptorEntry createEntry(final ResultSet results) throws SQLException {
-        final String name       = results.getString (NAME);
-        final int position      = results.getInt    (POSITION);
-        final int parameter     = results.getInt    (PARAMETER);
-        final int operation     = results.getInt    (OPERATION);
-        final int distribution  = results.getInt    (DISTRIBUTION);
-        final double  scale     = results.getDouble (SCALE);
-        final double  offset    = results.getDouble (OFFSET);
-        final boolean logarithm = results.getBoolean(LOGARITHM);
-        final RelativePositionEntry positionEntry  = getPositionTable (BY_ID).getEntry(position );
-        final OperationEntry        operationEntry = getOperationTable(BY_ID).getEntry(operation);
-        final ParameterEntry        parameterEntry = getParameterTable(BY_ID).getIncompleteEntry(parameter);
-        final DescriptorEntry       entry;
-        if (!logarithm) {
-            if (scale==1 && offset==0) {
-                entry = new DescriptorEntry(name, parameterEntry, positionEntry, operationEntry,
-                                            distribution);
+    protected DescriptorEntry createEntry(final ResultSet results) throws RemoteException {
+        try {
+            final String name       = results.getString (NAME);
+            final int position      = results.getInt    (POSITION);
+            final int parameter     = results.getInt    (PARAMETER);
+            final int operation     = results.getInt    (OPERATION);
+            final int distribution  = results.getInt    (DISTRIBUTION);
+            final double  scale     = results.getDouble (SCALE);
+            final double  offset    = results.getDouble (OFFSET);
+            final boolean logarithm = results.getBoolean(LOGARITHM);
+            final RelativePositionEntry positionEntry  = getPositionTable (BY_ID).getEntry(position );
+            final OperationEntry        operationEntry = getOperationTable(BY_ID).getEntry(operation);
+            final ParameterEntry        parameterEntry = getParameterTable(BY_ID).getIncompleteEntry(parameter);
+            final DescriptorEntry       entry;
+            if (!logarithm) {
+                if (scale==1 && offset==0) {
+                    entry = new DescriptorEntry(name, parameterEntry, positionEntry, operationEntry,
+                                                distribution);
+                } else {
+                    entry = new DescriptorEntry.Scaled(name, parameterEntry, positionEntry, operationEntry,
+                                                       distribution, scale, offset);
+                }
+                assert 1E-6 >= Math.abs(entry.normalize(0) - (offset)) : offset;
+                assert 1E-6 >= Math.abs(entry.normalize(1) - (offset + scale));
             } else {
-                entry = new DescriptorEntry.Scaled(name, parameterEntry, positionEntry, operationEntry,
-                                                   distribution, scale, offset);
+                entry = new DescriptorEntry.LogScaled(name, parameterEntry, positionEntry, operationEntry,
+                                                      distribution, scale, offset);
             }
-            assert 1E-6 >= Math.abs(entry.normalize(0) - (offset)) : offset;
-            assert 1E-6 >= Math.abs(entry.normalize(1) - (offset + scale));
-        } else {
-            entry = new DescriptorEntry.LogScaled(name, parameterEntry, positionEntry, operationEntry,
-                                                  distribution, scale, offset);
+            return entry;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        return entry;
     }
 
     /**
@@ -252,10 +269,11 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @return La table des paramètres.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public synchronized ParameterTable getParameterTable(final int type) throws SQLException {
+    public synchronized ParameterTable getParameterTable(final int type) throws RemoteException {
         if (parameters == null) {
             parameters = new ParameterTable(this, type!=0 ? type : BY_ID);
         }
+
         assert type==0 || parameters.getLinearModelTable().getDescriptorTable() == this;
         return parameters;
     }
@@ -269,9 +287,13 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @return La table des opérations.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public synchronized OperationTable getOperationTable(final int type) throws SQLException {
+    public synchronized OperationTable getOperationTable(final int type) throws RemoteException {
         if (operations == null) {
-            operations = new OperationTable(getConnection(), type);
+            try {
+                operations = new OperationTable(getConnection(), type);
+            } catch (SQLException e) {
+                throw new CatalogException(e);
+            }
         }
         return operations;
     }
@@ -285,9 +307,13 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @return La table des positions relatives.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public synchronized RelativePositionTable getPositionTable(final int type) throws SQLException {
+    public synchronized RelativePositionTable getPositionTable(final int type) throws RemoteException {
         if (positions == null) {
-            positions = new RelativePositionTable(getConnection(), type);
+            try {
+                positions = new RelativePositionTable(getConnection(), type);
+            } catch (SQLException e) {
+                throw new CatalogException(e);
+            }
         }
         return positions;
     }
@@ -295,7 +321,7 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
+    public synchronized void close() throws RemoteException {
         if (positions != null) {
             positions.close();
             positions = null;

@@ -27,6 +27,8 @@ package fr.ird.database.coverage.sql;
 
 // J2SE
 import java.io.Serializable;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 
 /**
@@ -54,7 +56,7 @@ import java.io.Serializable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class Entry implements fr.ird.database.Entry, Serializable {
+class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.database.Entry, Serializable {
     /**
      * Numéro de séries pour compatibilités entre différentes versions.
      */
@@ -97,7 +99,7 @@ class Entry implements fr.ird.database.Entry, Serializable {
      * @param ID      Numéro de référence. Ce numéro provient du champ "ID" de la table <code>table</code>.
      * @param remarks Remarques s'appliquant à cette références.
      */
-    protected Entry(final String table, final String name, final int ID, final String remarks) {
+    protected Entry(final String table, final String name, final int ID, final String remarks) throws RemoteException {
         this.table   = table.trim();
         this.name    = name.trim();
         this.remarks = remarks; // May be null
@@ -107,7 +109,7 @@ class Entry implements fr.ird.database.Entry, Serializable {
     /**
      * Retourne un numéro unique identifiant cette série.
      */
-    public int getID() {
+    public int getID() throws RemoteException {
         return ID;
     }
 
@@ -115,14 +117,14 @@ class Entry implements fr.ird.database.Entry, Serializable {
      * Retourne le nom de l'enregistrement référencé,
      * c'est-à-dire le champ {@link #name}.
      */
-    public String getName() {
+    public String getName() throws RemoteException {
         return name;
     }
 
     /**
      * {@inheritDoc}
      */
-    public String getRemarks() {
+    public String getRemarks() throws RemoteException {
         return remarks;
     }
 

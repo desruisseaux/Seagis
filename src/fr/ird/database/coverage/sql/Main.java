@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.rmi.RemoteException;
 
 // Modèles (table et arborescence)
 import javax.swing.tree.TreeModel;
@@ -57,6 +58,7 @@ import org.geotools.gui.swing.tree.Trees;
 import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageTableModel;
 import fr.ird.database.coverage.CoverageDataBase;
@@ -179,14 +181,18 @@ final class Main extends Arguments {
      * de données  ainsi que le bon fonctionnement de l'implémentation
      * de {@link SeriesTable}.
      */
-    private void series(final int leafType) throws SQLException {
-        final Connection connection = getConnection();
-        final SeriesTable series = new SeriesTable(connection);
-        final TreeModel    model = series.getTree(leafType);
-        series.close();
-        out.println();
-        out.println(Trees.toString(model));
-        out.flush();
+    private void series(final int leafType) throws RemoteException {
+        try {
+            final Connection connection = getConnection();
+            final SeriesTable series = new SeriesTable(connection);
+            final TreeModel    model = series.getTree(leafType);
+            series.close();
+            out.println();
+            out.println(Trees.toString(model));
+            out.flush();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }
     }
 
     /**
@@ -194,84 +200,96 @@ final class Main extends Arguments {
      * Cette méthode sert à vérifier le contenu de la base de données, ainsi
      * que le bon fonctionnement des classes d'interrogation.
      */
-    private void formats() throws SQLException {
-        final Connection connection = getConnection();
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.FORMATS));
-        final String        query = "SELECT ID FROM "+Table.FORMATS;
-        final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(query);
-        final FormatTable formats = new FormatTable(connection);
-        while (resultSet.next()) {
-            final Integer ID=new Integer(resultSet.getInt(1));
-            root.add(formats.getEntry(ID).getTree(locale));
+    private void formats() throws RemoteException {
+        try {
+            final Connection connection = getConnection();
+            final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.FORMATS));
+            final String        query = "SELECT ID FROM "+Table.FORMATS;
+            final Statement statement = connection.createStatement();
+            final ResultSet resultSet = statement.executeQuery(query);
+            final FormatTable formats = new FormatTable(connection);
+            while (resultSet.next()) {
+                final Integer ID=new Integer(resultSet.getInt(1));
+                root.add(formats.getEntry(ID).getTree(locale));
+            }
+            resultSet.close();
+            statement.close();
+            formats  .close();
+            out.println();
+            out.println(Trees.toString(new DefaultTreeModel(root)));
+            out.flush();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        resultSet.close();
-        statement.close();
-        formats  .close();
-        out.println();
-        out.println(Trees.toString(new DefaultTreeModel(root)));
-        out.flush();
     }
 
     /**
      * Affiche dans une fenêtre <i>Swing</i>
      * le contenu de toute la base de données.
      */
-    private void browse() throws SQLException {
-        final Connection    connection = getConnection();
-        final SeriesTable  seriesTable = new SeriesTable(connection);
-        final TreeModel      treeModel = seriesTable.getTree(SeriesTable.CATEGORY_LEAF);
+    private void browse() throws RemoteException {
+        try {
+            final Connection    connection = getConnection();
+            final SeriesTable  seriesTable = new SeriesTable(connection);
+            final TreeModel      treeModel = seriesTable.getTree(SeriesTable.CATEGORY_LEAF);
 
-        final JComponent    treePane = new JScrollPane(new JTree(treeModel));
-        final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
-        final JSplitPane   splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, treePane, tabbedPane);
+            final JComponent    treePane = new JScrollPane(new JTree(treeModel));
+            final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+            final JSplitPane   splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, treePane, tabbedPane);
 
-        final TableCellRenderer renderer = new CoverageTableModel.CellRenderer();
-        final CoverageTable   imageTable = new GridCoverageTable(connection,
-                            TimeZone.getTimeZone(Table.getPreference(CoverageDataBase.TIMEZONE)));
+            final TableCellRenderer renderer = new CoverageTableModel.CellRenderer();
+            final CoverageTable   imageTable = new GridCoverageTable(connection,
+                                TimeZone.getTimeZone(Table.getPreference(CoverageDataBase.TIMEZONE)));
 
-        imageTable.setGeographicArea(new Rectangle(-180, -90, 360, 180));
-        imageTable.setTimeRange(new Date(0), new Date());
-        for (final fr.ird.database.coverage.SeriesEntry currentSeries : seriesTable.getEntries()) {
-            imageTable.setSeries(currentSeries);
-            final JTable table = new JTable(new CoverageTableModel(imageTable));
-            table.setDefaultRenderer(String.class, renderer);
-            table.setDefaultRenderer(  Date.class, renderer);
-            tabbedPane.addTab(currentSeries.getName(), new JScrollPane(table));
-        }
-        imageTable .close();
-        seriesTable.close();
+            imageTable.setGeographicArea(new Rectangle(-180, -90, 360, 180));
+            imageTable.setTimeRange(new Date(0), new Date());
+            for (final fr.ird.database.coverage.SeriesEntry currentSeries : seriesTable.getEntries()) {
+                imageTable.setSeries(currentSeries);
+                final JTable table = new JTable(new CoverageTableModel(imageTable));
+                table.setDefaultRenderer(String.class, renderer);
+                table.setDefaultRenderer(  Date.class, renderer);
+                tabbedPane.addTab(currentSeries.getName(), new JScrollPane(table));
+            }
+            imageTable .close();
+            seriesTable.close();
 
-        final JFrame frame = new JFrame(Resources.format(ResourceKeys.DATABASE));
-        frame.setContentPane(splitPane);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.show();
+            final JFrame frame = new JFrame(Resources.format(ResourceKeys.DATABASE));
+            frame.setContentPane(splitPane);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.show();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * Exécute tout.
      */
-    public void run() throws SQLException {
-        final boolean   formats = getFlag("-formats");
-        final boolean subseries = getFlag("-subseries");
-        final boolean    series = getFlag("-series") || subseries;
-        final boolean    browse = getFlag("-browse");
-        final boolean      help = getFlag("-help") || (!series && !formats && !config && !browse);
+    public void run() throws RemoteException {
+        try {
+            final boolean   formats = getFlag("-formats");
+            final boolean subseries = getFlag("-subseries");
+            final boolean    series = getFlag("-series") || subseries;
+            final boolean    browse = getFlag("-browse");
+            final boolean      help = getFlag("-help") || (!series && !formats && !config && !browse);
 
-        getRemainingArguments(0);
-        if (formats && series) series(SeriesTable.CATEGORY_LEAF);
-        else if (subseries) series(SeriesTable.SUBSERIES_LEAF);
-        else if (series)  series(SeriesTable.SERIES_LEAF);
-        else if (formats) formats();
-        if (browse)       browse();
-        if (help)         help();
+            getRemainingArguments(0);
+            if (formats && series) series(SeriesTable.CATEGORY_LEAF);
+            else if (subseries) series(SeriesTable.SUBSERIES_LEAF);
+            else if (series)  series(SeriesTable.SERIES_LEAF);
+            else if (formats) formats();
+            if (browse)       browse();
+            if (help)         help();
 
-        if (connection!=null) {
-            connection.close();
-            connection = null;
-        }
-        out.flush();
+            if (connection!=null) {
+                connection.close();
+                connection = null;
+            }
+            out.flush();
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
@@ -279,7 +297,7 @@ final class Main extends Arguments {
      * de données. Cette méthode sert à vérifier le contenu de la base
      * de données ainsi que le bon fonctionnement de cette classe.
      */
-    public static void main(final String[] args) throws SQLException {
+    public static void main(final String[] args) throws RemoteException {
         org.geotools.resources.MonolineFormatter.init("fr.ird");
         new Main(args).run();
     }

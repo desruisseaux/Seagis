@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Date;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 
@@ -62,7 +62,7 @@ public interface CoverageTable extends Table {
     /**
      * Retourne la référence vers la séries d'images.
      */
-    public abstract SeriesEntry getSeries();
+    public abstract SeriesEntry getSeries() throws RemoteException;
 
     /**
      * Définit la série dont on veut les images.
@@ -70,12 +70,12 @@ public interface CoverageTable extends Table {
      * @param  series       Réference vers la série d'images. Cette référence
      *                      est construite à partir du champ ID dans la table
      *                      "Series" de la base de données.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la
+     * @throws RemoteException si une erreur est survenu lors de l'accès à la
      *                      base de données, ou si <code>series</code> ne
      *                      se réfère pas à un enregistrement de la table
      *                      des séries.
      */
-    public abstract void setSeries(final SeriesEntry series) throws SQLException;
+    public abstract void setSeries(final SeriesEntry series) throws RemoteException;
 
     /**
      * Retourne le système de coordonnées utilisé pour les coordonnées spatio-temporelles de
@@ -87,13 +87,13 @@ public interface CoverageTable extends Table {
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
      */
-    public abstract CoordinateSystem getCoordinateSystem();
+    public abstract CoordinateSystem getCoordinateSystem() throws RemoteException;
 
     /**
      * Retourne les coordonnées spatio-temporelles de la région d'intérêt. Le système
      * de coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
      */
-    public abstract Envelope getEnvelope();
+    public abstract Envelope getEnvelope() throws RemoteException;
 
     /**
      * Définit les coordonnées spatio-temporelles de la région d'intérêt. Le système de
@@ -101,16 +101,16 @@ public interface CoverageTable extends Table {
      * cette méthode équivaut à effectuer les transformations nécessaires des coordonnées
      * et à appeler {@link #setTimeRange} et {@link #setGeographicArea}.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setEnvelope(final Envelope envelope) throws SQLException;
+    public abstract void setEnvelope(final Envelope envelope) throws RemoteException;
 
     /**
      * Retourne la période de temps d'intérêt.  Cette plage sera délimitée par des objets
      * {@link Date}. Appeler cette méthode équivant à n'extraire que la partie temporelle
      * de {@link #getEnvelope} et à transformer les coordonnées si nécessaire.
      */
-    public abstract Range getTimeRange();
+    public abstract Range getTimeRange() throws RemoteException;
 
     /**
      * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
@@ -118,9 +118,9 @@ public interface CoverageTable extends Table {
      * (voir {@link #getEnvelope}).
      *
      * @param  range Période d'intérêt dans laquelle rechercher des images.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setTimeRange(final Range range) throws SQLException;
+    public abstract void setTimeRange(final Range range) throws RemoteException;
 
     /**
      * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
@@ -129,9 +129,9 @@ public interface CoverageTable extends Table {
      *
      * @param  startTime Date du  début de la plage de temps, inclusive.
      * @param  endTime   Date de la fin de la plage de temps, inclusive.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setTimeRange(final Date startTime, final Date endTime) throws SQLException;
+    public abstract void setTimeRange(final Date startTime, final Date endTime) throws RemoteException;
 
     /**
      * Retourne les coordonnées géographiques de la région d'intérêt.
@@ -140,7 +140,7 @@ public interface CoverageTable extends Table {
      * que la partie horizontale de  {@link #getEnvelope}  et à transformer les
      * coordonnées si nécessaire.
      */
-    public abstract Rectangle2D getGeographicArea();
+    public abstract Rectangle2D getGeographicArea() throws RemoteException;
 
     /**
      * Définit les coordonnées géographiques de la région d'intérêt   (dans laquelle rechercher des
@@ -149,9 +149,9 @@ public interface CoverageTable extends Table {
      * {@link #setEnvelope}).
      *
      * @param  rect Coordonnées géographiques de la région, selon l'ellipsoïde WGS 1984.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void setGeographicArea(final Rectangle2D rect) throws SQLException;
+    public abstract void setGeographicArea(final Rectangle2D rect) throws RemoteException;
 
     /**
      * Retourne la dimension désirée des pixels de l'images.
@@ -159,7 +159,7 @@ public interface CoverageTable extends Table {
      * @return Résolution préférée, ou <code>null</code> si la lecture
      *         doit se faire avec la meilleure résolution disponible.
      */
-    public abstract Dimension2D getPreferredResolution();
+    public abstract Dimension2D getPreferredResolution() throws RemoteException;
 
     /**
      * Définit la dimension désirée des pixels de l'images.  Cette information n'est
@@ -169,9 +169,9 @@ public interface CoverageTable extends Table {
      *
      * @param  pixelSize Taille préférée des pixels. Les unités sont les mêmes
      *         que celles de {@link #setGeographicArea}.
-     * @throws SQLException si un accès à la base de données était nécessaire et a échouée.
+     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
      */
-    public abstract void setPreferredResolution(final Dimension2D pixelSize) throws SQLException;
+    public abstract void setPreferredResolution(final Dimension2D pixelSize) throws RemoteException;
 
     /**
      * Retourne l'opération appliquée sur les images lues. L'opération retournée
@@ -179,7 +179,7 @@ public interface CoverageTable extends Table {
      * (c'est-à-dire si les images retournées représentent les données originales),
      * alors cette méthode retourne <code>null</code>.
      */
-    public abstract Operation getOperation();
+    public abstract Operation getOperation() throws RemoteException;
 
     /**
      * Définit l'opération à appliquer sur les images lues. Si des paramètres doivent
@@ -198,9 +198,9 @@ public interface CoverageTable extends Table {
      * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
      *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
-     * @throws SQLException si un accès à la base de données était nécessaire et a échouée.
+     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
      */
-    public abstract ParameterList setOperation(final Operation operation) throws SQLException;
+    public abstract ParameterList setOperation(final Operation operation) throws RemoteException;
 
     /**
      * Définit l'opération à appliquer sur les images lues. Cette méthode est équivalente à
@@ -211,10 +211,10 @@ public interface CoverageTable extends Table {
      * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
      *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
-     * @throws SQLException si un accès à la base de données était nécessaire et a échouée.
+     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
      */
-    public abstract ParameterList setOperation(final String operation) throws SQLException, OperationNotFoundException;
+    public abstract ParameterList setOperation(final String operation) throws RemoteException, OperationNotFoundException;
 
     /**
      * Retourne la liste des images disponibles dans la plage de coordonnées
@@ -223,9 +223,9 @@ public interface CoverageTable extends Table {
      * cette classe.
      *
      * @return Liste d'images qui interceptent la plage de temps et la région géographique d'intérêt.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract List<CoverageEntry> getEntries() throws SQLException;
+    public abstract List<CoverageEntry> getEntries() throws RemoteException;
 
     /**
      * Retourne une des images disponibles dans la plage de coordonnées spatio-temporelles
@@ -236,9 +236,9 @@ public interface CoverageTable extends Table {
      *
      * @return Une image choisie arbitrairement dans la région et la plage de date
      *         sélectionnées, ou <code>null</code> s'il n'y a pas d'image dans ces plages.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract CoverageEntry getEntry() throws SQLException;
+    public abstract CoverageEntry getEntry() throws RemoteException;
 
     /**
      * Retourne l'image correspondant au numéro ID spécifié. L'argument <code>ID</code>
@@ -250,9 +250,9 @@ public interface CoverageTable extends Table {
      *
      * @param  ID Numéro identifiant l'image désirée.
      * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract CoverageEntry getEntry(final int ID) throws SQLException;
+    public abstract CoverageEntry getEntry(final int ID) throws RemoteException;
 
     /**
      * Retourne l'image nommée. L'argument <code>name</code> correspond au nom {@link CoverageEntry#getName}
@@ -262,9 +262,9 @@ public interface CoverageTable extends Table {
      *
      * @param  name Nom de l'image désirée.
      * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract CoverageEntry getEntry(final String name) throws SQLException;
+    public abstract CoverageEntry getEntry(final String name) throws RemoteException;
 
     /**
      * Obtient les plages de temps et de coordonnées couvertes par les images de cette table.
@@ -272,10 +272,11 @@ public interface CoverageTable extends Table {
      * @param x Objet dans lequel ajouter les plages de longitudes, ou <code>null</code> pour ne pas extraire ces plages.
      * @param y Objet dans lequel ajouter les plages de latitudes,  ou <code>null</code> pour ne pas extraire ces plages.
      * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
+     * @return Un objet contenant l'ensemble des plages modifiées.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public abstract void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException;
+    public abstract GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws RemoteException;
 
     /**
      * Obtient les plages de temps et de coordonnées des images, ainsi que la
@@ -288,11 +289,12 @@ public interface CoverageTable extends Table {
      * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
      * @param entryList Liste dans laquelle ajouter les images qui auront été
      *        lues, ou <code>null</code> pour ne pas construire cette liste.
+     * @return Un objet contenant l'ensemble des plages ansi que la liste des entrées modifiées.
      *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    public void getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
-                          final List<CoverageEntry> entryList) throws SQLException;
+    public GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
+                                    final List<CoverageEntry> entryList) throws RemoteException;
 
     /**
      * Ajoute une entrée dans la table "<code>GridCoverages</code>". La méthode
@@ -304,7 +306,7 @@ public interface CoverageTable extends Table {
      * @return Le numéro ID de l'image si elle a été ajoutée à la base de données, ou <code>null</code>
      *         si une image avec le même nom existait déjà pour la série courante. Dans ce dernier cas,
      *         la base de données ne sera pas modifiée et un message d'avertissement sera écrit.
-     * @throws SQLException si l'opération a échouée ou si la table est en lecture seule.
+     * @throws RemoteException si l'opération a échouée ou si la table est en lecture seule.
      */
-    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws SQLException;
+    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws RemoteException;
 }

@@ -26,9 +26,10 @@
 package fr.ird.database.sample;
 
 // J2SE
+import java.rmi.RemoteException;
 import java.util.Set;
 import java.util.Collection;
-import java.sql.SQLException;
+//import java.sql.SQLException;
 import java.util.logging.Logger;
 
 // Seagis
@@ -56,9 +57,9 @@ public interface SampleDataBase extends DataBase {
      * Retourne les espèces énumérés dans la base de données.
      *
      * @return Ensemble des espèces répertoriées dans la base de données.
-     * @throws SQLException si l'interrogation de la base de données a échoué.
+     * @throws RemoteException si l'interrogation du catalogue a échoué.
      */
-    public abstract Set<Species> getSpecies() throws SQLException;
+    public abstract Set<Species> getSpecies() throws RemoteException;
 
     /**
      * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
@@ -71,9 +72,9 @@ public interface SampleDataBase extends DataBase {
      *         contiendront que les numéros ID des séries, sans les autres informations tels que
      *         leur noms.
      * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract Set<ParameterEntry> getParameters(SeriesTable series) throws SQLException;
+    public abstract Set<ParameterEntry> getParameters(SeriesTable series) throws RemoteException;
 
     /**
      * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
@@ -83,14 +84,14 @@ public interface SampleDataBase extends DataBase {
      * en argument à la méthode {@link #getEnvironmentTable}.
      *
      * @return L'ensemble des opérations disponibles dans la base de données.
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws RemoteException si l'accès au catalogue a échoué.
      */
-    public abstract Set<OperationEntry> getOperations() throws SQLException;
+    public abstract Set<OperationEntry> getOperations() throws RemoteException;
 
     /**
      * Retourne la liste des opérations relatives disponibles.
      */
-    public abstract Set<RelativePositionEntry> getRelativePositions() throws SQLException;
+    public abstract Set<RelativePositionEntry> getRelativePositions() throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table des échantillons de la base de données.
@@ -98,9 +99,9 @@ public interface SampleDataBase extends DataBase {
      *
      * @param  species Espèces d'intérêt dans la table.
      * @return La table des échantillons pour les espèces demandées.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract SampleTable getSampleTable(final Collection<Species> species) throws SQLException;
+    public abstract SampleTable getSampleTable(final Collection<Species> species) throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table des échantillons de la base de données.
@@ -108,9 +109,9 @@ public interface SampleDataBase extends DataBase {
      *
      * @param  species Code des espèces d'intérêt dans la table (par exemple "SWO").
      * @return La table des échantillons pour les espèces demandées.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract SampleTable getSampleTable(final String[] species) throws SQLException;
+    public abstract SampleTable getSampleTable(final String[] species) throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table des échantillons de la base de données.
@@ -118,18 +119,18 @@ public interface SampleDataBase extends DataBase {
      *
      * @param  species Espèces d'intérêt dans la table (par exemple "SWO").
      * @return La table des échantillons pour l'espèce demandée.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract SampleTable getSampleTable(final String species) throws SQLException;
+    public abstract SampleTable getSampleTable(final String species) throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table des échantillons de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link SampleTable#close}.
      *
      * @return La table des échantillons pour toute les espèces répertoriées.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract SampleTable getSampleTable() throws SQLException;
+    public abstract SampleTable getSampleTable() throws RemoteException;
 
     /**
      * Construit et retourne un objet qui interrogera la table des paramètres environnementaux.
@@ -144,7 +145,7 @@ public interface SampleDataBase extends DataBase {
      *         fermée par {@link EnvironmentTable#close}, puisqu'elle n'appartient pas à l'objet
      *         <code>EnvironmentTable</code>.
      * @return La table des paramètres environnementaux pour toute les captures.
-     * @throws SQLException si la table n'a pas pu être construite.
+     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public abstract EnvironmentTable getEnvironmentTable(SeriesTable series) throws SQLException;
+    public abstract EnvironmentTable getEnvironmentTable(SeriesTable series) throws RemoteException;
 }

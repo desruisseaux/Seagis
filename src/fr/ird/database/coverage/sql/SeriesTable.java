@@ -37,6 +37,7 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.rmi.RemoteException;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.DefaultTreeModel;
 
@@ -47,6 +48,7 @@ import org.geotools.gui.swing.tree.MutableTreeNode;
 import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
@@ -60,7 +62,7 @@ import fr.ird.database.IllegalRecordException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SeriesTable extends Table implements fr.ird.database.coverage.SeriesTable {
+final class SeriesTable extends Table implements fr.ird.database.coverage.SeriesTable, java.io.Serializable {
     /**
      * Argument pour {@link #getEntry}.
      */
@@ -143,7 +145,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * Représente une branche de l'arborescence. Cette
      * classe interne est utilisée par {@link #getTree}.
      */
-    private static final class Branch {
+    private static final class Branch implements java.io.Serializable {
         /** Nom de la table.                */ final String table;
         /** Colonne du champ ID.            */ final int    ID;
         /** Colonne du champ 'name'.        */ final int    name;
@@ -207,30 +209,38 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>SeriesTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected SeriesTable(final Connection connection) throws SQLException {
+    protected SeriesTable(final Connection connection) throws RemoteException {
         this.connection = connection;
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized SeriesEntry getEntry(final int ID) throws SQLException {
-        if (selectByID == null) {
-            selectByID = connection.prepareStatement(SQL_SELECT_BY_ID);
+    public synchronized SeriesEntry getEntry(final int ID) throws RemoteException {
+        try {
+            if (selectByID == null) {
+                selectByID = connection.prepareStatement(SQL_SELECT_BY_ID);
+            }
+            selectByID.setInt(ARG_ID, ID);
+            return getEntry(selectByID);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        selectByID.setInt(ARG_ID, ID);
-        return getEntry(selectByID);
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized SeriesEntry getEntry(final String name) throws SQLException {
-        if (selectByName == null) {
-            selectByName = connection.prepareStatement(SQL_SELECT);
-        }
-        selectByName.setString(ARG_NAME, name);
-        return getEntry(selectByName);
+    public synchronized SeriesEntry getEntry(final String name) throws RemoteException {
+        try {
+            if (selectByName == null) {
+                selectByName = connection.prepareStatement(SQL_SELECT);
+            }
+            selectByName.setString(ARG_NAME, name);
+            return getEntry(selectByName);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
     }
 
     /**
@@ -239,197 +249,217 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même nom ou même ID.
      */
-    private SeriesEntry getEntry(final PreparedStatement statement) throws SQLException {
-        final ResultSet resultSet = statement.executeQuery();
-        SeriesEntry entry = null;
-        while (resultSet.next()) {
-            int    ID      = resultSet.getInt   (1);
-            String name    = resultSet.getString(2);
-            String remarks = resultSet.getString(3);
-            double  period = resultSet.getDouble(4); if (resultSet.wasNull()) period=Double.NaN;
-            final SeriesEntry candidate = new SeriesEntry(SERIES, name, ID, remarks, period);
-            if (true) {
-                /*
-                 * Recherche les sous-séries (note: si ce bloc est retiré,
-                 * alors la méthode peut être statique).
-                 */
-                if (selectSubSeries == null) {
-                    System.out.println(SQL_SELECT_SUBSERIES);
-                    selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
+    private SeriesEntry getEntry(final PreparedStatement statement) throws RemoteException {
+        try {
+            final ResultSet resultSet = statement.executeQuery();
+            SeriesEntry entry = null;
+            while (resultSet.next()) {
+                int    ID      = resultSet.getInt   (1);
+                String name    = resultSet.getString(2);
+                String remarks = resultSet.getString(3);
+                double  period = resultSet.getDouble(4); if (resultSet.wasNull()) period=Double.NaN;
+                final SeriesEntry candidate = new SeriesEntry(SERIES, name, ID, remarks, period);
+                if (true) {
+                    /*
+                     * Recherche les sous-séries (note: si ce bloc est retiré,
+                     * alors la méthode peut être statique).
+                     */
+                    if (selectSubSeries == null) {
+                        System.out.println(SQL_SELECT_SUBSERIES);
+                        selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
+                    }
+                    selectSubSeries.setInt(1, ID);
+                    final List<Entry> subseries = new ArrayList<Entry>();
+                    final ResultSet subResults = selectSubSeries.executeQuery();
+                    while (subResults.next()) {
+                        ID      = subResults.getInt   (1);
+                        name    = subResults.getString(2);
+                        remarks = subResults.getString(3);
+                        subseries.add(new Entry(SUBSERIES, name, ID, remarks));
+                    }
+                    subResults.close();
+                    candidate.subseries = subseries.toArray(new Entry[subseries.size()]);
                 }
-                selectSubSeries.setInt(1, ID);
-                final List<Entry> subseries = new ArrayList<Entry>();
-                final ResultSet subResults = selectSubSeries.executeQuery();
-                while (subResults.next()) {
-                    ID      = subResults.getInt   (1);
-                    name    = subResults.getString(2);
-                    remarks = subResults.getString(3);
-                    subseries.add(new Entry(SUBSERIES, name, ID, remarks));
+                if (entry == null) {
+                    entry = candidate;
+                } else if (!entry.equals(candidate)) {
+                    throw new IllegalRecordException(SERIES, Resources.format(
+                                ResourceKeys.ERROR_DUPLICATED_SERIES_$1, candidate.getName()));
                 }
-                subResults.close();
-                candidate.subseries = subseries.toArray(new Entry[subseries.size()]);
             }
-            if (entry == null) {
-                entry = candidate;
-            } else if (!entry.equals(candidate)) {
-                throw new IllegalRecordException(SERIES, Resources.format(
-                            ResourceKeys.ERROR_DUPLICATED_SERIES_$1, candidate.getName()));
-            }
+            resultSet.close();
+            return entry;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
         }
-        resultSet.close();
-        return entry;
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized Set<fr.ird.database.coverage.SeriesEntry> getEntries() throws SQLException {
-        final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(SQL_TREE);
-        final Set<fr.ird.database.coverage.SeriesEntry> set;
-        set = new LinkedHashSet<fr.ird.database.coverage.SeriesEntry>();
-        while (resultSet.next()) {
-            int            ID = resultSet.getInt   (SERIES_ID);
-            String       name = resultSet.getString(SERIES_NAME);
-            String    remarks = resultSet.getString(SERIES_REMARKS);
-            double     period = resultSet.getDouble(PERIOD); if (resultSet.wasNull()) period=Double.NaN;
-            final SeriesEntry entry = new SeriesEntry(SERIES, name, ID, remarks, period);
-            set.add(entry);
-        }
-        resultSet.close();
-        statement.close();
-        return set;
+    public synchronized Set<fr.ird.database.coverage.SeriesEntry> getEntries() throws RemoteException {
+        try {
+            final Statement statement = connection.createStatement();
+            final ResultSet resultSet = statement.executeQuery(SQL_TREE);
+            final Set<fr.ird.database.coverage.SeriesEntry> set;
+            set = new LinkedHashSet<fr.ird.database.coverage.SeriesEntry>();
+            while (resultSet.next()) {
+                int            ID = resultSet.getInt   (SERIES_ID);
+                String       name = resultSet.getString(SERIES_NAME);
+                String    remarks = resultSet.getString(SERIES_REMARKS);
+                double     period = resultSet.getDouble(PERIOD); if (resultSet.wasNull()) period=Double.NaN;
+                final SeriesEntry entry = new SeriesEntry(SERIES, name, ID, remarks, period);
+                set.add(entry);
+            }
+            resultSet.close();
+            statement.close();
+            return set;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized TreeModel getTree(final int leafType) throws SQLException {
-        final Locale       locale = null;
-        final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(SQL_TREE);
-        final int     branchCount = Math.min(TREE_STRUCTURE.length, leafType);
-        final int[]           ids = new int   [branchCount];
-        final String[]      names = new String[branchCount];
-        final String[]    remarks = new String[branchCount];
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(
-                Resources.getResources(locale).getString(ResourceKeys.SERIES));
-        /*
-         * Balaye la liste de tous les groupes, et place ces groupes
-         * dans une arborescence au fur et à mesure qu'ils sont trouvés.
-         */
-        while (resultSet.next()) {
+    public synchronized TreeModel getTree(final int leafType) throws RemoteException {
+        try {
+            final Locale       locale = null;
+            final Statement statement = connection.createStatement();
+            final ResultSet resultSet = statement.executeQuery(SQL_TREE);
+            final int     branchCount = Math.min(TREE_STRUCTURE.length, leafType);
+            final int[]           ids = new int   [branchCount];
+            final String[]      names = new String[branchCount];
+            final String[]    remarks = new String[branchCount];
+            final DefaultMutableTreeNode root = new DefaultMutableTreeNode(
+                    Resources.getResources(locale).getString(ResourceKeys.SERIES));
             /*
-             * Mémorise les numéro ID et les noms de toutes les entrées
-             * trouvées dans l'enregistrement courant.  Ca comprend les
-             * noms et ID des groupes, séries, opérations et paramètres.
+             * Balaye la liste de tous les groupes, et place ces groupes
+             * dans une arborescence au fur et à mesure qu'ils sont trouvés.
              */
-            for (int i=branchCount; --i>=0;) {
-                final Branch branch = TREE_STRUCTURE[i];
-                ids    [i] = resultSet.getInt   (branch.ID     );
-                names  [i] = resultSet.getString(branch.name   );
-                remarks[i] = resultSet.getString(branch.remarks);
-            }
-            final int format = resultSet.getInt(FORMAT);
-            double period = resultSet.getDouble(PERIOD);
-            if (resultSet.wasNull()) {
-                period = Double.NaN;
-            }
-            DefaultMutableTreeNode branch=root;
-      scan: for (int i=0; i<branchCount; i++) {
+            while (resultSet.next()) {
                 /*
-                 * Vérifie s'il existe déjà une branche pour le paramètre,
-                 * opération où la série de l'enregistrement courant.  Si
-                 * une de ces branches n'existe pas, elle sera créée au
-                 * passage.
+                 * Mémorise les numéro ID et les noms de toutes les entrées
+                 * trouvées dans l'enregistrement courant.  Ca comprend les
+                 * noms et ID des groupes, séries, opérations et paramètres.
                  */
-                final int ID=ids[i];
-                for (int j=branch.getChildCount(); --j>=0;) {
-                    final DefaultMutableTreeNode node = (DefaultMutableTreeNode) branch.getChildAt(j);
-                    final Entry reference = (Entry) node.getUserObject();
-                    if (reference.ID == ID) {
-                        branch=node;
-                        continue scan;
-                    }
+                for (int i=branchCount; --i>=0;) {
+                    final Branch branch = TREE_STRUCTURE[i];
+                    ids    [i] = resultSet.getInt   (branch.ID     );
+                    names  [i] = resultSet.getString(branch.name   );
+                    remarks[i] = resultSet.getString(branch.remarks);
                 }
-                final String tableName = TREE_STRUCTURE[i].table;
-                final Entry ref;
-                if (tableName == SERIES) {
-                    ref = new SeriesEntry(tableName, names[i], ID, remarks[i], period);
-                } else {
-                    ref = new Entry(tableName, names[i], ID, remarks[i]);
+                final int format = resultSet.getInt(FORMAT);
+                double period = resultSet.getDouble(PERIOD);
+                if (resultSet.wasNull()) {
+                    period = Double.NaN;
                 }
-                /*
-                 * Construit le noeud. Si les catégories  ont
-                 * été demandées, elles seront ajoutées après
-                 * le dernier noeud qui est du ressort de cet
-                 * objet <code>SeriesTable</code>.
-                 */
-                final boolean hasMoreBranchs = i<(branchCount-1);
-                final DefaultMutableTreeNode node;
-                switch (leafType) {
-                    case SERIES_LEAF: // Fall through
-                    case SUBSERIES_LEAF: {
-                        node = new DefaultMutableTreeNode(ref, hasMoreBranchs);
-                        break;
-                    }
-                    case CATEGORY_LEAF: {
-                        node = new DefaultMutableTreeNode(ref, true);
-                        if (!hasMoreBranchs) {
-                            if (formats == null) {
-                                formats = new FormatTable(connection);
-                            }
-                            node.add(formats.getEntry(format).getTree(locale));
+                DefaultMutableTreeNode branch=root;
+          scan: for (int i=0; i<branchCount; i++) {
+                    /*
+                     * Vérifie s'il existe déjà une branche pour le paramètre,
+                     * opération où la série de l'enregistrement courant.  Si
+                     * une de ces branches n'existe pas, elle sera créée au
+                     * passage.
+                     */
+                    final int ID=ids[i];
+                    for (int j=branch.getChildCount(); --j>=0;) {
+                        final DefaultMutableTreeNode node = (DefaultMutableTreeNode) branch.getChildAt(j);
+                        final Entry reference = (Entry) node.getUserObject();
+                        if (reference.ID == ID) {
+                            branch=node;
+                            continue scan;
                         }
-                        break;
                     }
-                    default: throw new IllegalArgumentException(String.valueOf(leafType));
+                    final String tableName = TREE_STRUCTURE[i].table;
+                    final Entry ref;
+                    if (tableName == SERIES) {
+                        ref = new SeriesEntry(tableName, names[i], ID, remarks[i], period);
+                    } else {
+                        ref = new Entry(tableName, names[i], ID, remarks[i]);
+                    }
+                    /*
+                     * Construit le noeud. Si les catégories  ont
+                     * été demandées, elles seront ajoutées après
+                     * le dernier noeud qui est du ressort de cet
+                     * objet <code>SeriesTable</code>.
+                     */
+                    final boolean hasMoreBranchs = i<(branchCount-1);
+                    final DefaultMutableTreeNode node;
+                    switch (leafType) {
+                        case SERIES_LEAF: // Fall through
+                        case SUBSERIES_LEAF: {
+                            node = new fr.ird.database.gui.swing.EntryTreeNode(ref, hasMoreBranchs);
+                            break;
+                        }
+                        case CATEGORY_LEAF: {
+                            node = new fr.ird.database.gui.swing.EntryTreeNode(ref, true);
+                            if (!hasMoreBranchs) {
+                                if (formats == null) {
+                                    formats = new FormatTable(connection);
+                                }
+                                node.add(formats.getEntry(format).getTree(locale));
+                            }
+                            break;
+                        }
+                        default: throw new IllegalArgumentException(String.valueOf(leafType));
+                    }
+                    branch.add(node);                    
+                    branch = node;
                 }
-                branch.add(node);
-                branch = node;
             }
-        }
-        resultSet.close();
-        statement.close();
-        return new DefaultTreeModel(root, true);
+            resultSet.close();
+            statement.close();
+            return new DefaultTreeModel(root, true);
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }        
     }
 
     /**
      * {@inheritDoc}
      */
     public synchronized FormatEntry getFormat(final fr.ird.database.coverage.SeriesEntry series)
-            throws SQLException
+            throws RemoteException
     {
-        if (selectSubSeries == null) {
-            selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
-        }
-        selectSubSeries.setInt(1, series.getID());
-        final ResultSet results = selectSubSeries.executeQuery();
-        FormatEntry result = null;
-        while (results.next()) {
-            final FormatEntry candidate;
-            final int formatID = results.getInt(4);
-            if (formats == null) {
-                formats = new FormatTable(connection);
+        try {
+            if (selectSubSeries == null) {
+                selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
             }
-            candidate = formats.getEntry(formatID);
-            if (result == null) {
-                result = candidate;
-            } else if (!result.equals(candidate)) {
-                throw new IllegalRecordException(SUBSERIES,
-                          Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, series.getName()));
+            selectSubSeries.setInt(1, series.getID());
+            final ResultSet results = selectSubSeries.executeQuery();
+            FormatEntry result = null;
+            while (results.next()) {
+                final FormatEntry candidate;
+                final int formatID = results.getInt(4);
+                if (formats == null) {
+                    formats = new FormatTable(connection);
+                }
+                candidate = formats.getEntry(formatID);
+                if (result == null) {
+                    result = candidate;
+                } else if (!result.equals(candidate)) {
+                    throw new IllegalRecordException(SUBSERIES,
+                              Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, series.getName()));
+                }
             }
-        }
-        return result;
+            return result;
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
-        if (selectByName    != null) {selectByName   .close(); selectByName    = null;}
-        if (selectByID      != null) {selectByID     .close(); selectByID      = null;}
-        if (selectSubSeries != null) {selectSubSeries.close(); selectSubSeries = null;}
-        if (formats         != null) {formats        .close(); formats         = null;}
+    public synchronized void close() throws RemoteException {
+        try {
+            if (selectByName    != null) {selectByName   .close(); selectByName    = null;}
+            if (selectByID      != null) {selectByID     .close(); selectByID      = null;}
+            if (selectSubSeries != null) {selectSubSeries.close(); selectSubSeries = null;}
+            if (formats         != null) {formats        .close(); formats         = null;}
+        } catch (SQLException e) {
+            throw new CatalogException(e);
+        }            
     }
 }
