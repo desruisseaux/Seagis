@@ -86,4 +86,14 @@ public class TemporalDatum extends Datum
      */
     public DatumType/*.Temporal*/ getDatumType()
     {return (DatumType.Temporal) super.getDatumType();}
+
+    /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        return "TEMPORAL_DATUM";
+    }
 }

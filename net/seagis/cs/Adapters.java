@@ -307,7 +307,7 @@ public class Adapters
         }
         if (unit.canConvert(Unit.DEGREE))
         {
-            return new Info(unit.toString()).new AngularUnit(this, unit.convert(Math.PI/180, Unit.DEGREE));
+            return new Info(unit.toString()).new AngularUnit(this, Math.toRadians(unit.convert(1, Unit.DEGREE)));
         }
         throw new UnsupportedOperationException("Not implemented");
     }

@@ -341,40 +341,16 @@ public class Ellipsoid extends Info
     }
 
     /**
-     * Add more information inside the "[...]" part of {@link #toString}.
-     * Output is implementation dependent, but may look like:
-     * <pre>
-     * Ellipsoid["WGS 1984", semiMajorAxis=6378137.0, inverseFlattening=298.257223563];
-     * </pre>
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
      */
-    final void addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer)
     {
-        super.addString(buffer);
-        final Unit         unit = getAxisUnit();
-        final String unitSymbol = (unit!=null) ? unit.toString() : "";
-        buffer.append(", semiMajorAxis=");
-        buffer.append(getSemiMajorAxis());
-        if (unitSymbol.length()!=0)
-        {
-            buffer.append(' ');
-            buffer.append(unitSymbol);
-        }
         buffer.append(", ");
-        if (isIvfDefinitive())
-        {
-            buffer.append("inverseFlattening=");
-            buffer.append(getInverseFlattening());
-        }
-        else
-        {
-            buffer.append("semiMinorAxis=");
-            buffer.append(getSemiMinorAxis());
-            if (unitSymbol.length()!=0)
-            {
-                buffer.append(' ');
-                buffer.append(unitSymbol);
-            }
-        }
+        buffer.append(semiMajorAxis);
+        buffer.append(", ");
+        buffer.append(Double.isInfinite(inverseFlattening) ? 0 : inverseFlattening);
+        return "SPHEROID";
     }
 
     /**

@@ -215,6 +215,26 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(datum);
+        buffer.append(", ");
+        buffer.append(meridian);
+        buffer.append(", ");
+        addUnit(buffer, unit);
+        for (int i=0; i<axis.length; i++)
+        {
+            buffer.append(", ");
+            buffer.append(axis[i]);
+        }
+        return "GEOCCS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this local coordinate
      * system. The returned object is suitable for RMI use.
      *

@@ -171,17 +171,19 @@ public class AxisInfo implements Serializable
     }
 
     /**
-     * Returns a string représentation of this axis.
+     * Returns the Well Know Text (WKT) for this axis.
+     * The WKT is part of OpenGIS's specification and
+     * looks like <code>AXIS["name",NORTH]</code>.
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
-        buffer.append("[\"");
+        final StringBuffer buffer=new StringBuffer("AXIS[\"");
         buffer.append(name);
+        buffer.append('"');
         if (orientation!=null)
         {
-            buffer.append("\",");
-            buffer.append(orientation.getName(null));
+            buffer.append(',');
+            buffer.append(orientation.getName());
         }
         buffer.append(']');
         return buffer.toString();

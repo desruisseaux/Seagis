@@ -208,6 +208,21 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(datum);
+        buffer.append(", ");
+        addUnit(buffer, unit);
+        buffer.append(", ");
+        buffer.append(axis);
+        return "VERT_CS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this vertical coordinate
      * system. The returned object is suitable for RMI use.
      *

@@ -288,16 +288,12 @@ public class Projection extends Info
     }
 
     /**
-     * Add more information inside the "[...]" part of {@link #toString}.
-     * The default implementation add nothing. Subclasses will override
-     * this method in order to complete string representation.
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
      */
-    final void addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer)
     {
-        super.addString(buffer);
-        buffer.append(", ");
-        buffer.append(getParameters().getParameterListDescriptor().getNumParameters());
-        buffer.append(" parameters");
+        return "PROJECTION";
     }
 
     /**

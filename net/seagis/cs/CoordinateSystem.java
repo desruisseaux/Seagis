@@ -207,7 +207,7 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
         final Envelope envelope = new Envelope(dimension);
         for (int i=dimension; --i>=0;)
         {
-            envelope.setRange(dimension, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            envelope.setRange(i, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         }
         return envelope;
     }
@@ -235,41 +235,6 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
     {
         if (object==this) return true; // Slight optimization
         return super.equals(object) && equivalents((CoordinateSystem)object);
-    }
-
-    /**
-     * Returns a string representation of this info.
-     * @param the source (usually <code>this</code>).
-     */
-    final String toString(final Object source)
-    {
-        final StringBuffer  buffer = new StringBuffer(super.toString(source));
-        final String lineSeparator = System.getProperty("line.separator", "\r");
-        final int        dimension = getDimension();
-        for (int i=0; i<dimension; i++)
-        {
-            buffer.append(lineSeparator);
-            buffer.append("    [");
-            buffer.append(i);
-            buffer.append("]:");
-            buffer.append(getAxis(i));
-        }
-        buffer.append(lineSeparator);
-        return buffer.toString();
-    }
-
-    /**
-     * Add more information inside the "[...]" part of {@link #toString}.
-     */
-    void addString(final StringBuffer buffer)
-    {
-        super.addString(buffer);
-        final Datum datum = getDatum();
-        if (datum!=null)
-        {
-            buffer.append(", ");
-            buffer.append(datum);
-        }
     }
 
     /**

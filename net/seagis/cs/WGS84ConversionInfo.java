@@ -146,22 +146,20 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
     }
 
     /**
-     * Returns a string représentation of this object.
-     * The returned string is implementation dependent.
-     * It is usually provided for debugging purposes only.
+     * Returns the Well Know Text (WKT) for this object.
+     * The WKT is part of OpenGIS's specification and
+     * looks like <code>TOWGS84[dx, dy, dz, ex, ey, ez, ppm]</code>.
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
-        buffer.append('[');
+        final StringBuffer buffer=new StringBuffer("TOWGS84[\"");
         buffer.append(areaOfUse);
-        buffer.append(": shift=(");
         buffer.append(dx); buffer.append(", ");
         buffer.append(dy); buffer.append(", ");
-        buffer.append(dz); buffer.append("), rotation=(");
+        buffer.append(dz); buffer.append(", ");
         buffer.append(ex); buffer.append(", ");
         buffer.append(ey); buffer.append(", ");
-        buffer.append(ez); buffer.append("), ppm=");
+        buffer.append(ez); buffer.append(", ");
         buffer.append(ppm);
         buffer.append(']');
         return buffer.toString();

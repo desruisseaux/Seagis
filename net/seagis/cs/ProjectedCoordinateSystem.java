@@ -201,6 +201,25 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(gcs);
+        buffer.append(", ");
+        buffer.append(projection);
+        buffer.append(", ");
+        addUnit(buffer, unit);
+        buffer.append(", ");
+        buffer.append(getAxis(0));
+        buffer.append(", ");
+        buffer.append(getAxis(1));
+        return "PROJCS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this projected coordinate
      * system. The returned object is suitable for RMI use.
      *

@@ -207,4 +207,19 @@ public class TemporalCoordinateSystem extends CoordinateSystem
         }
         return false;
     }
+
+    /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(datum);
+        buffer.append(", ");
+        addUnit(buffer, unit);
+        buffer.append(", ");
+        buffer.append(axis);
+        return "TEMPORAL_CS";
+    }
 }

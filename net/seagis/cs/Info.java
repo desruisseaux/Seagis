@@ -260,22 +260,27 @@ public class Info implements Serializable
     }
 
     /**
-     * Returns a string representation of this info.
+     * Returns a <em>Well Know Text</em> (WKT) for this info.
+     * "Well know text" are part of OpenGIS's specification.
      */
     public String toString()
-    {return toString(this);}
-
-    /**
-     * Returns a string representation of this info.
-     * @param the source (usually <code>this</code>).
-     */
-    String toString(final Object source)
     {
-        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(source));
+        final StringBuffer buffer = new StringBuffer(40);
         buffer.append("[\"");
         buffer.append(getName(null));
         buffer.append('"');
-        addString(buffer);
+        buffer.insert(0, addString(buffer));
+        if (properties!=null)
+        {
+            final Object authority = properties.get("authority");
+            if (authority!=null)
+            {
+                buffer.append(", AUTHORITY[");
+                buffer.append(authority);
+                // TODO: Add code (as is AUTHORITY["EPSG","8901"])
+                buffer.append("\"]");
+            }
+        }
         buffer.append(']');
         return buffer.toString();
     }
@@ -284,9 +289,39 @@ public class Info implements Serializable
      * Add more information inside the "[...]" part of {@link #toString}.
      * The default implementation add nothing. Subclasses will override
      * this method in order to complete string representation.
+     *
+     * @param  The buffer to add string to.
+     * @return The WKT code name (e.g. "GEOGCS").
      */
-    void addString(final StringBuffer buffer)
-    {}
+    String addString(final StringBuffer buffer)
+    {return Utilities.getShortClassName(this);}
+
+    /**
+     * Add a unit in WKT form.
+     */
+    final void addUnit(final StringBuffer buffer, final Unit unit)
+    {
+        if (unit!=null)
+        {
+            buffer.append("UNIT[");
+            if (Unit.METRE.canConvert(unit))
+            {
+                buffer.append("\"metre\",");
+                buffer.append(Unit.METRE.convert(1, unit));
+            }
+            else if (Unit.DEGREE.canConvert(unit))
+            {
+                buffer.append("\"degree\",");
+                buffer.append(Unit.DEGREE.convert(1, unit));
+            }
+            else if (Unit.SECOND.canConvert(unit))
+            {
+                buffer.append("\"second\",");
+                buffer.append(Unit.SECOND.convert(1, unit));
+            }
+            buffer.append(']');
+        }
+    }
 
     /**
      * Returns an OpenGIS interface for this info.
@@ -464,7 +499,7 @@ public class Info implements Serializable
          * Gets a Well-Known text representation of this object.
          */
         public String getWKT() throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {return Info.this.toString();}
 
         /**
          * Gets an XML representation of this object.
@@ -476,7 +511,7 @@ public class Info implements Serializable
          * Returns a string representation of this info.
          */
         public String toString()
-        {return Info.this.toString(this);}
+        {return Info.this.toString();}
     }
 
     /**
@@ -497,6 +532,10 @@ public class Info implements Serializable
         /** Returns the number of meters per linear unit. */
         public double getMetersPerUnit() throws RemoteException
         {return scale;}
+
+        /** Returns a Well Know Text for this unit */
+        public String toString()
+        {return "UNIT[\"metre\","+scale+']';}
     }
 
     /**
@@ -517,5 +556,9 @@ public class Info implements Serializable
         /** Returns the number of radians per angular unit. */
         public double getRadiansPerUnit() throws RemoteException
         {return scale;}
+
+        /** Returns a Well Know Text for this unit */
+        public String toString()
+        {return "UNIT[\"radian\","+scale+']';}
     }
 }

@@ -161,14 +161,14 @@ public class PrimeMeridian extends Info
     }
 
     /**
-     * Add more information inside the "[...]" part of {@link #toString}.
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
      */
-    final void addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer)
     {
-        super.addString(buffer);
-        buffer.append('=');
-        buffer.append(longitude);
-        buffer.append(unit);
+        buffer.append(", ");
+        buffer.append(Unit.DEGREE.convert(longitude, unit));
+        return "PRIMEM";
     }
 
     /**

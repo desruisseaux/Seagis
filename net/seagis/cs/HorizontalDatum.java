@@ -154,6 +154,23 @@ public class HorizontalDatum extends Datum
     {return (parameters!=null) ? (WGS84ConversionInfo)parameters.clone() : null;}
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        buffer.append(", ");
+        buffer.append(ellipsoid);
+        if (parameters!=null)
+        {
+            buffer.append(", ");
+            buffer.append(parameters);
+        }
+        return "DATUM";
+    }
+
+    /**
      * Compares the specified object
      * with this datum for equality.
      */

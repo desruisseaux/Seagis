@@ -249,6 +249,19 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(head);
+        buffer.append(", ");
+        buffer.append(tail);
+        return "COMPD_CS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this compound coordinate
      * system. The returned object is suitable for RMI use.
      *

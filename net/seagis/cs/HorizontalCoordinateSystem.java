@@ -178,6 +178,21 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(datum);
+        buffer.append(", ");
+        buffer.append(axis0);
+        buffer.append(", ");
+        buffer.append(axis1);
+        return "HORZ_CS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this horizontal coordinate
      * system. The returned object is suitable for RMI use.
      *

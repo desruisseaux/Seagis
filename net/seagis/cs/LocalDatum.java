@@ -93,6 +93,16 @@ public class LocalDatum extends Datum
     {return (DatumType.Local) super.getDatumType();}
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        return "LOCAL_DATUM";
+    }
+
+    /**
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
      *

@@ -134,17 +134,14 @@ public class Datum extends Info
     }
 
     /**
-     * Add more information inside the "[...]" part of {@link #toString}.
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
      */
-    void addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer)
     {
-        super.addString(buffer);
-        final DatumType type = getDatumType();
-        if (type!=null)
-        {
-            buffer.append(", ");
-            buffer.append(type.getName(null));
-        }
+        buffer.append(", ");
+        buffer.append(type.getName());
+        return "DATUM";
     }
 
     /**

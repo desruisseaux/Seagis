@@ -207,6 +207,24 @@ public class LocalCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Fill the part inside "[...]".
+     * Used for formatting Well Know Text (WKT).
+     */
+    String addString(final StringBuffer buffer)
+    {
+        buffer.append(", ");
+        buffer.append(datum);
+        buffer.append(", ");
+        addUnit(buffer, getUnits());
+        for (int i=0; i<axes.length; i++)
+        {
+            buffer.append(", ");
+            buffer.append(axes[i]);
+        }
+        return "LOCAL_CS";
+    }
+
+    /**
      * Returns an OpenGIS interface for this local coordinate
      * system. The returned object is suitable for RMI use.
      *
