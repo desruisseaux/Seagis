@@ -196,9 +196,10 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         final CoordinatePoint subPoint = new CoordinatePoint(transDim);
         System.arraycopy(point.ord, firstAffectedOrdinate, subPoint.ord, 0, transDim);
         final Matrix subMatrix = transform.derivative(subPoint);
-        final int     nRows = subMatrix.getNumRows();
-        final int     nCols = subMatrix.getNumColumns();
-        final Matrix matrix = new Matrix(nSkipped+nRows, nSkipped+nCols);
+        final int    numRow = subMatrix.getNumRow();
+        final int    numCol = subMatrix.getNumCol();
+        final Matrix matrix = new Matrix(nSkipped+numRow, nSkipped+numCol);
+        matrix.setZero();
 
         //  Set UL part to 1:   [ 1  0             ]
         //                      [ 0  1             ]
@@ -206,28 +207,23 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         //                      [                  ]
         //                      [                  ]
         for (int j=0; j<firstAffectedOrdinate; j++)
-        {
-            matrix.set(j,j,1);
-        }
+            matrix.setElement(j,j,1);
 
         //  Set central part:   [ 1  0  0  0  0  0 ]
         //                      [ 0  1  0  0  0  0 ]
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [                  ]
-        subMatrix.copySubMatrix(0,0,nRows,nCols,firstAffectedOrdinate,firstAffectedOrdinate, matrix);
+        subMatrix.copySubMatrix(0,0,numRow,numCol,firstAffectedOrdinate,firstAffectedOrdinate, matrix);
 
         //  Set LR part to 1:   [ 1  0  0  0  0  0 ]
         //                      [ 0  1  0  0  0  0 ]
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [ 0  0  0  0  0  1 ]
-        final int offset = nCols-nRows;
+        final int offset = numCol-numRow;
         for (int j=pointDim-numTrailingOrdinates; j<pointDim; j++)
-        {
-            matrix.set(j, j,        0);
-            matrix.set(j, j+offset, 1);
-        }
+            matrix.setElement(j, j+offset, 1);
 
         return matrix;
     }

@@ -50,7 +50,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.IllegalPathStateException;
-//import javax.vecmath.SingularMatrixException;
+import javax.vecmath.SingularMatrixException;
 
 // Resources
 import java.util.Locale;
@@ -462,7 +462,7 @@ public abstract class AbstractMathTransform implements MathTransform
 
     /**
      * Invert the specified matrix in place. If the matrix can't be inverted
-     * because of a {@link RuntimeException}, then the exception is
+     * because of a {@link SingularMatrixException}, then the exception is
      * wrapped into a {@link NoninvertibleTransformException}.
      */
     private static Matrix invert(final Matrix matrix) throws NoninvertibleTransformException
@@ -472,9 +472,9 @@ public abstract class AbstractMathTransform implements MathTransform
             matrix.invert();
             return matrix;
         }
-        catch (RuntimeException exception)
+        catch (SingularMatrixException exception)
         {
-            NoninvertibleTransformException e = new NoninvertibleTransformException(exception.getLocalizedMessage());
+            NoninvertibleTransformException e = new NoninvertibleTransformException(Resources.format(ResourceKeys.ERROR_NONINVERTIBLE_TRANSFORM));
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/

@@ -111,10 +111,10 @@ final class AffineTransform2D extends XAffineTransform implements MathTransform2
     public Matrix derivative(final Point2D point)
     {
         final Matrix matrix = new Matrix(2);
-        matrix.set(0,0, getScaleX());
-        matrix.set(1,1, getScaleY());
-        matrix.set(0,1, getShearX());
-        matrix.set(1,0, getShearY());
+        matrix.setElement(0,0, getScaleX());
+        matrix.setElement(1,1, getScaleY());
+        matrix.setElement(0,1, getShearX());
+        matrix.setElement(1,0, getShearY());
         return matrix;
     }
 

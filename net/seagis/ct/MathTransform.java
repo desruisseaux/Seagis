@@ -218,7 +218,9 @@ public interface MathTransform
      *         transform accept null value since they produces identical derivative no
      *         matter the coordinate value. But most map projection will requires a non-null
      *         value.
-     * @return The derivative at the specified point (never <code>null</code>).
+     * @return The derivative at the specified point (never <code>null</code>). This method
+     *         never returns an internal object: changing the matrix will not change the state
+     *         of this math transform.
      * @throws NullPointerException if the derivative dependents on coordinate and <code>point</code> is <code>null</code>.
      * @throws MismatchedDimensionException if <code>point</code> doesn't have the expected dimension.
      * @throws TransformException if the derivative can't be evaluated at the specified point.

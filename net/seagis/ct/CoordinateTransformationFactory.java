@@ -55,7 +55,7 @@ import net.seagis.resources.Utilities;
 import javax.units.Unit;
 import java.util.Arrays;
 import java.awt.geom.AffineTransform;
-//import javax.vecmath.SingularMatrixException;
+import javax.vecmath.SingularMatrixException;
 
 
 /**
@@ -300,8 +300,12 @@ public class CoordinateTransformationFactory
             // Get the affine transform, add the epoch
             // shift and returns the resulting transform.
             final Matrix matrix = swapAndScaleAxis(sourceCS, targetCS);
-            final int translationColumn = matrix.getNumColumns()-1;
-            matrix.set(0, translationColumn, matrix.get(0, translationColumn)+epochShift);
+            final int translationColumn = matrix.getNumCol()-1;
+            if (translationColumn >= 0) // Paranoiac check: should be always 1.
+            {
+                final double translation = matrix.getElement(0, translationColumn);
+                matrix.setElement(0, translationColumn, translation+epochShift);
+            }
             final MathTransform transform = factory.createAffineTransform(matrix);
             return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
         }
@@ -356,10 +360,10 @@ public class CoordinateTransformationFactory
                     final Unit              unit = targetCS.getUnits(i);
                     final double sourceLongitude = sourceCS.getPrimeMeridian().getLongitude(unit);
                     final double targetLongitude = targetCS.getPrimeMeridian().getLongitude(unit);
-                    final int lastMatrixColumn = matrix.getNumColumns()-1;
+                    final int lastMatrixColumn = matrix.getNumCol()-1;
                     double rotate = targetLongitude - sourceLongitude;
                     if (AxisOrientation.WEST.equals(orientation)) rotate = -rotate;
-                    matrix.set(i, lastMatrixColumn, matrix.get(i, lastMatrixColumn)-rotate);
+                    matrix.setElement(i, lastMatrixColumn, matrix.getElement(i, lastMatrixColumn)-rotate);
                 }
             }
             // TODO: We should ensure that longitude is in range [-180..+180°].
@@ -498,11 +502,11 @@ public class CoordinateTransformationFactory
         if (sourceCnv!=null && targetCnv!=null) try
         {
             targetCnv.invert();
-            final Matrix matrix = targetCnv.multiply(sourceCnv);
-            final MathTransform transform = factory.createAffineTransform(matrix);
+            targetCnv.mul(sourceCnv);
+            final MathTransform transform = factory.createAffineTransform(targetCnv);
             return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
         }
-        catch (RuntimeException exception)
+        catch (SingularMatrixException exception)
         {
             final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
@@ -526,9 +530,7 @@ public class CoordinateTransformationFactory
         }
         if (Ellipsoid.WGS84.equals(datum.getEllipsoid()))
         {
-            final Matrix matrix = new Matrix(3);
-            for (int i=0; i<3; i++) matrix.set(i,i,1);
-            return matrix;
+            return new Matrix(4); // Identity matrix
         }
         return null;
     }
@@ -618,9 +620,9 @@ public class CoordinateTransformationFactory
 
         // Convert units (Optimized case where the conversion
         // can be applied right into the AffineTransform).
-        final int dimension = matrix.getNumRows()-1;
+        final int dimension = matrix.getNumRow()-1;
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert dimension == matrix.getNumColumns()-1;
+        assert dimension == matrix.getNumCol()-1;
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
         for (int i=0; i<dimension; i++)
         {
@@ -629,8 +631,8 @@ public class CoordinateTransformationFactory
             final Unit targetUnit = targetCS.getUnits(i);
             final double offset = targetUnit.convert(0, sourceUnit);
             final double scale  = targetUnit.convert(1, sourceUnit)-offset;
-            matrix.set(i,i,         scale*matrix.get(i,i));
-            matrix.set(i,dimension, scale*matrix.get(i,dimension)+offset);
+            matrix.setElement(i,i,         scale*matrix.getElement(i,i));
+            matrix.setElement(i,dimension, scale*matrix.getElement(i,dimension)+offset);
         }
         return matrix;
     }

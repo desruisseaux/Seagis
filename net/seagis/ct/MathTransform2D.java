@@ -94,7 +94,9 @@ public interface MathTransform2D extends MathTransform
      *         transform accept null value since they produces identical derivative no
      *         matter the coordinate value. But most map projection will requires a non-null
      *         value.
-     * @return The derivative at the specified point as a 2&times;2 matrix.
+     * @return The derivative at the specified point as a 2&times;2 matrix.  This method
+     *         never returns an internal object: changing the matrix will not change the
+     *         state of this math transform.
      * @throws NullPointerException if the derivative dependents on coordinate and <code>point</code> is <code>null</code>.
      * @throws TransformException if the derivative can't be evaluated at the specified point.
      */

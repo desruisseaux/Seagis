@@ -116,6 +116,7 @@ final class ConcatenedTransformDirect2D extends ConcatenedTransformDirect implem
     {
         final Matrix matrix1 = transform1.derivative(point);
         final Matrix matrix2 = transform2.derivative(transform1.transform(point, null));
-        return matrix2.multiply(matrix1);
+        matrix2.mul(matrix1);
+        return matrix2;
     }
 }

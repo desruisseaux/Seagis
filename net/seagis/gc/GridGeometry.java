@@ -177,7 +177,7 @@ public class GridGeometry implements Dimensioned, Serializable
          * This is done by adding 0.5 to grid coordinates.
          */
         final Matrix matrix = new Matrix(dimension+1);
-        matrix.set(dimension, dimension, 1);
+        matrix.setElement(dimension, dimension, 1);
         for (int i=0; i<dimension; i++)
         {
             double scale = userRange.getLength(i) / gridRange.getLength(i);
@@ -192,8 +192,8 @@ public class GridGeometry implements Dimensioned, Serializable
                 trans = userRange.getMaximum(i);
             }
             trans -= scale * (gridRange.getLower(i)-0.5);
-            matrix.set(i, i,         scale);
-            matrix.set(i, dimension, trans);
+            matrix.setElement(i, i,         scale);
+            matrix.setElement(i, dimension, trans);
             /*
              * Keep two-dimensional components for the AffineTransform.
              */
@@ -402,13 +402,13 @@ public class GridGeometry implements Dimensioned, Serializable
             Utilities.unexpectedException("net.seagis.gcs", "MathTransform", "derivative", exception);
             return null;
         }
-        final int numCols = matrix.getNumColumns();
-        final boolean[] inverse = new boolean[matrix.getNumRows()];
+        final int numCol = matrix.getNumCol();
+        final boolean[] inverse = new boolean[matrix.getNumRow()];
         for (int j=0; j<inverse.length; j++)
         {
-            for (int i=0; i<numCols; i++)
+            for (int i=0; i<numCol; i++)
             {
-                final double value = matrix.get(j,i);
+                final double value = matrix.getElement(j,i);
                 if (i==j)
                 {
                     inverse[j] = (value < 0);

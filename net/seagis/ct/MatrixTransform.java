@@ -32,12 +32,16 @@ package net.seagis.ct;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 
-// Miscellaneous
-import java.io.Serializable;
+// Matrix
 import net.seagis.pt.Matrix;
+import javax.vecmath.GMatrix;
+import javax.vecmath.SingularMatrixException;
+
+// Miscellaneous
+import java.util.Arrays;
+import java.io.Serializable;
 import net.seagis.pt.CoordinatePoint;
 import javax.media.jai.ParameterList;
-//import javax.vecmath.SingularMatrixException;
 
 // Resources
 import net.seagis.resources.Utilities;
@@ -47,7 +51,7 @@ import net.seagis.resources.XAffineTransform;
 
 
 /**
- * Transforms multi-dimensional coordinate points using an {@link Matrix}.
+ * Transforms multi-dimensional coordinate points using a {@link Matrix}.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -58,30 +62,190 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 784363941978607191L;
+    private static final long serialVersionUID = -2104496465933824935L;
 
     /**
-     * The matrix.
+     * the number of rows.
      */
-    private final Matrix matrix;
+    private final int numRow;
+
+    /**
+     * the number of columns.
+     */
+    private final int numCol;
+
+    /**
+     * Elements of the matrix. Column indice vary fastest.
+     */
+    private final double[] elt;
 
     /**
      * Construct a transform.
      */
-    protected MatrixTransform(final Matrix matrix)
-    {this.matrix = (Matrix) matrix.clone();}
+    protected MatrixTransform(final GMatrix matrix)
+    {
+        numRow = matrix.getNumRow();
+        numCol = matrix.getNumCol();
+        elt = new double[numRow*numCol];
+        int index = 0;
+        for (int j=0; j<numRow; j++)
+            for (int i=0; i<numCol; i++)
+                elt[index++] = matrix.getElement(j,i);
+    }
 
     /**
-     * Transforms a list of coordinate point ordinal values.
+     * Transforms an array of floating point coordinates by this matrix. Point coordinates
+     * must have a dimension equals to <code>{@link Matrix#getNumCol}-1</code>. For example,
+     * for square matrix of size 4&times;4, coordinate points are three-dimensional and
+     * stored in the arrays starting at the specified offset (<code>srcOff</code>) in the order
+     * <code>[x<sub>0</sub>, y<sub>0</sub>, z<sub>0</sub>,
+     *        x<sub>1</sub>, y<sub>1</sub>, z<sub>1</sub>...,
+     *        x<sub>n</sub>, y<sub>n</sub>, z<sub>n</sub>]</code>.
+     *
+     * The transformed points <code>(x',y',z')</code> are computed as below
+     * (note that this computation is similar to {@link PerspectiveTransform}):
+     *
+     * <blockquote><pre>
+     * [ u ]     [ m<sub>00</sub>  m<sub>01</sub>  m<sub>02</sub>  m<sub>03</sub> ] [ x ]
+     * [ v ]  =  [ m<sub>10</sub>  m<sub>11</sub>  m<sub>12</sub>  m<sub>13</sub> ] [ y ]
+     * [ w ]     [ m<sub>20</sub>  m<sub>21</sub>  m<sub>22</sub>  m<sub>23</sub> ] [ z ]
+     * [ t ]     [ m<sub>30</sub>  m<sub>31</sub>  m<sub>32</sub>  m<sub>33</sub> ] [ 1 ]
+     *
+     *   x' = u/t
+     *   y' = v/t
+     *   y' = w/t
+     * </pre></blockquote>
+     *
+     * @param srcPts The array containing the source point coordinates.
+     * @param srcOff The offset to the first point to be transformed in the source array.
+     * @param dstPts The array into which the transformed point coordinates are returned.
+     * @param dstOff The offset to the location of the first transformed point that is stored
+     *               in the destination array. The source and destination array sections can
+     *               be overlaps.
+     * @param numPts The number of points to be transformed
      */
-    public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts)
-    {matrix.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
+    public void transform(float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
+    {
+        final int  inputDimension = numCol-1; // The last ordinate will be assumed equals to 1.
+        final int outputDimension = numRow-1;
+        final double[]     buffer = new double[numRow];
+        if (srcPts==dstPts)
+        {
+            // We are going to write in the source array. Checks if
+            // source and destination sections are going to clash.
+            final int upperSrc = srcOff + numPts*inputDimension;
+            if (upperSrc > dstOff)
+            {
+                if (inputDimension >= outputDimension ? dstOff > srcOff :
+                              dstOff + numPts*outputDimension > upperSrc)
+                {
+                    // If source overlaps destination, then the easiest workaround is
+                    // to copy source data. This is not the most efficient however...
+                    srcPts = new float[numPts*inputDimension];
+                    System.arraycopy(dstPts, srcOff, srcPts, 0, srcPts.length);
+                    srcOff = 0;
+                }
+            }
+        }
+        while (--numPts>=0)
+        {
+            int mix=0;
+            for (int j=0; j<numRow; j++)
+            {
+                double sum=elt[mix + inputDimension];
+                for (int i=0; i<inputDimension; i++)
+                {
+                    sum += srcPts[srcOff+i]*elt[mix++];
+                }
+                buffer[j] = sum;
+                mix++;
+            }
+            final double w = buffer[outputDimension];
+            for (int j=0; j<outputDimension; j++)
+            {
+                // 'w' is equals to 1 if the transform is affine.
+                dstPts[dstOff++] = (float) (buffer[j]/w);
+            }
+            srcOff += inputDimension;
+        }
+    }
 
     /**
-     * Transforms a list of coordinate point ordinal values.
+     * Transforms an array of floating point coordinates by this matrix. Point coordinates
+     * must have a dimension equals to <code>{@link Matrix#getNumCol}-1</code>. For example,
+     * for square matrix of size 4&times;4, coordinate points are three-dimensional and
+     * stored in the arrays starting at the specified offset (<code>srcOff</code>) in the order
+     * <code>[x<sub>0</sub>, y<sub>0</sub>, z<sub>0</sub>,
+     *        x<sub>1</sub>, y<sub>1</sub>, z<sub>1</sub>...,
+     *        x<sub>n</sub>, y<sub>n</sub>, z<sub>n</sub>]</code>.
+     *
+     * The transformed points <code>(x',y',z')</code> are computed as below
+     * (note that this computation is similar to {@link PerspectiveTransform}):
+     *
+     * <blockquote><pre>
+     * [ u ]     [ m<sub>00</sub>  m<sub>01</sub>  m<sub>02</sub>  m<sub>03</sub> ] [ x ]
+     * [ v ]  =  [ m<sub>10</sub>  m<sub>11</sub>  m<sub>12</sub>  m<sub>13</sub> ] [ y ]
+     * [ w ]     [ m<sub>20</sub>  m<sub>21</sub>  m<sub>22</sub>  m<sub>23</sub> ] [ z ]
+     * [ t ]     [ m<sub>30</sub>  m<sub>31</sub>  m<sub>32</sub>  m<sub>33</sub> ] [ 1 ]
+     *
+     *   x' = u/t
+     *   y' = v/t
+     *   y' = w/t
+     * </pre></blockquote>
+     *
+     * @param srcPts The array containing the source point coordinates.
+     * @param srcOff The offset to the first point to be transformed in the source array.
+     * @param dstPts The array into which the transformed point coordinates are returned.
+     * @param dstOff The offset to the location of the first transformed point that is stored
+     *               in the destination array. The source and destination array sections can
+     *               be overlaps.
+     * @param numPts The number of points to be transformed
      */
-    public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts)
-    {matrix.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
+    public void transform(double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    {
+        final int  inputDimension = numCol-1; // The last ordinate will be assumed equals to 1.
+        final int outputDimension = numRow-1;
+        final double[]     buffer = new double[numRow];
+        if (srcPts==dstPts)
+        {
+            // We are going to write in the source array. Checks if
+            // source and destination sections are going to clash.
+            final int upperSrc = srcOff + numPts*inputDimension;
+            if (upperSrc > dstOff)
+            {
+                if (inputDimension >= outputDimension ? dstOff > srcOff :
+                              dstOff + numPts*outputDimension > upperSrc)
+                {
+                    // If source overlaps destination, then the easiest workaround is
+                    // to copy source data. This is not the most efficient however...
+                    srcPts = new double[numPts*inputDimension];
+                    System.arraycopy(dstPts, srcOff, srcPts, 0, srcPts.length);
+                    srcOff = 0;
+                }
+            }
+        }
+        while (--numPts>=0)
+        {
+            int mix=0;
+            for (int j=0; j<numRow; j++)
+            {
+                double sum=elt[mix + inputDimension];
+                for (int i=0; i<inputDimension; i++)
+                {
+                    sum += srcPts[srcOff+i]*elt[mix++];
+                }
+                buffer[j] = sum;
+                mix++;
+            }
+            final double w = buffer[outputDimension];
+            for (int j=0; j<outputDimension; j++)
+            {
+                // 'w' is equals to 1 if the transform is affine.
+                dstPts[dstOff++] = buffer[j]/w;
+            }
+            srcOff += inputDimension;
+        }
+    }
 
     /**
      * Gets the derivative of this transform at a point.
@@ -98,36 +262,44 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
      */
     public Matrix derivative(final CoordinatePoint point)
     {
-        final int rows = matrix.getNumRows()-1;
-        final int cols = matrix.getNumColumns()-1;
-        final Matrix deriv = new Matrix(rows, cols);
-        matrix.copySubMatrix(0,0,rows,cols,0,0,deriv);
-        return deriv;
+        final Matrix matrix = getMatrix();
+        matrix.setSize(numRow-1, numCol-1);
+        return matrix;
     }
 
     /**
-     * Returns the matrix.
+     * Returns a copy of the matrix.
      */
     public Matrix getMatrix()
-    {return (Matrix) matrix.clone();}
+    {return new Matrix(numRow, numCol, elt);}
 
     /**
      * Gets the dimension of input points.
      */
     public int getDimSource()
-    {return matrix.getNumColumns()-1;}
+    {return numCol-1;}
 
     /**
      * Gets the dimension of output points.
      */
     public int getDimTarget()
-    {return matrix.getNumRows()-1;}
+    {return numRow-1;}
 
     /**
      * Tests whether this transform does not move any points.
      */
     public boolean isIdentity()
-    {return matrix.isIdentity();}
+    {
+        if (numRow != numCol)
+            return false;
+
+        int index=0;
+        for (int j=0; j<numRow; j++)
+            for (int i=0; i<numCol; i++)
+                if (elt[index++] != (i==j ? 1 : 0))
+                    return false;
+        return true;
+    }
 
     /**
      * Creates the inverse transform of this object.
@@ -135,27 +307,36 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     public MathTransform inverse() throws NoninvertibleTransformException
     {
         if (isIdentity()) return this;
-        final MatrixTransform inverse = new MatrixTransform(matrix);
+        final Matrix matrix = getMatrix();
         try
         {
-            inverse.matrix.invert();
+            matrix.invert();
         }
-        catch (RuntimeException exception)
+        catch (SingularMatrixException exception)
         {
-            NoninvertibleTransformException e = new NoninvertibleTransformException(exception.getLocalizedMessage());
+            NoninvertibleTransformException e = new NoninvertibleTransformException(Resources.format(ResourceKeys.ERROR_NONINVERTIBLE_TRANSFORM));
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
             throw e;
         }
-        return inverse;
+        return new MatrixTransform(matrix);
     }
 
     /**
      * Returns a hash value for this transform.
+     * This value need not remain consistent between
+     * different implementations of the same class.
      */
     public int hashCode()
-    {return matrix.hashCode();}
+    {
+        long code=2563217;
+        for (int i=elt.length; --i>=0;)
+        {
+            code = code*37 + Double.doubleToLongBits(elt[i]);
+        }
+        return (int)(code >>> 32) ^ (int)code;
+    }
 
     /**
      * Compares the specified object with
@@ -167,7 +348,9 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
         if (super.equals(object))
         {
             final MatrixTransform that = (MatrixTransform) object;
-            return Utilities.equals(this.matrix, that.matrix);
+            return this.numRow == that.numRow &&
+                   this.numCol == that.numCol &&
+                   Arrays.equals(this.elt, that.elt);
         }
         return false;
     }
@@ -176,7 +359,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
      * Returns the WKT for this math transform.
      */
     public String toString()
-    {return toString(matrix);}
+    {return toString(getMatrix());}
 
     /**
      * Returns the WKT for an affine transform
@@ -184,8 +367,8 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
      */
     static String toString(final Matrix matrix)
     {
-        final int numRow = matrix.getNumRows();
-        final int numCol = matrix.getNumColumns();
+        final int numRow = matrix.getNumRow();
+        final int numCol = matrix.getNumCol();
         final StringBuffer buffer = new StringBuffer("PARAM_MT[\"Affine\"");
         final StringBuffer eltBuf = new StringBuffer("elt_");
         addParameter(buffer, "Num_row", numRow);
@@ -194,7 +377,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
         {
             for (int i=0; i<numCol; i++)
             {
-                final double value = matrix.get(j,i);
+                final double value = matrix.getElement(j,i);
                 if (value != (i==j ? 1 : 0))
                 {
                     eltBuf.setLength(4);
@@ -261,11 +444,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
         {
             final int numRow = parameters.getIntParameter("Num_row");
             final int numCol = parameters.getIntParameter("Num_col");
-            final Matrix matrix = new Matrix(numRow, numCol);
-            for (int i=Math.min(numRow, numCol); --i>=0;)
-            {
-                matrix.set(i,i,1);
-            }
+            final Matrix  matrix = new Matrix(numRow, numCol);
             final String[] names = parameters.getParameterListDescriptor().getParamNames();
             if (names!=null)
             {
@@ -277,7 +456,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
                         final int separator = name.lastIndexOf('_');
                         final int row = Integer.parseInt(name.substring(4, separator));
                         final int col = Integer.parseInt(name.substring(separator+1));
-                        matrix.set(row, col, parameters.getDoubleParameter(name));
+                        matrix.setElement(row, col, parameters.getDoubleParameter(name));
                     }
                 }
             }

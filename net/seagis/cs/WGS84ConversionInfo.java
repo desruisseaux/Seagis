@@ -105,14 +105,13 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      */
     public Matrix getAffineTransform()
     {
-        final double    S = 1 + ppm/1000000;
-        final double[] R3 = new double[4]; R3[3]=1;
-        return new Matrix(new double[][]
+        final double S = 1 + ppm/1E+6;
+        return new Matrix(4,4, new double[]
         {
-            {     S,  -ez*S,  +ey*S,  dx },
-            { +ez*S,      S,  -ex*S,  dy },
-            { -ey*S,  +ex*S,      S,  dz },
-            R3
+                 S,  -ez*S,  +ey*S,  dx,
+             +ez*S,      S,  -ex*S,  dy,
+             -ey*S,  +ex*S,      S,  dz,
+                 0,      0,      0,   1
         });
     }
 

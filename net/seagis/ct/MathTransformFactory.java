@@ -49,6 +49,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;
 import javax.media.jai.ParameterList;
 import java.util.NoSuchElementException;
+import javax.vecmath.GMatrix;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
@@ -165,13 +166,10 @@ public class MathTransformFactory
      * @param  dimension The source and target dimension.
      * @return The identity transform.
      */
-    public MathTransform createIdentityTransform(int dimension)
+    public MathTransform createIdentityTransform(final int dimension)
     {
-        dimension++; // Affine transform has one more row/column than dimension.
-        final Matrix matrix = new Matrix(dimension);
-        for (int i=0; i<dimension; i++)
-            matrix.set(i, i, 1.0);
-        return createAffineTransform(matrix);
+        // Affine transform has one more row/column than dimension.
+        return createAffineTransform(new Matrix(dimension+1));
     }
 
     /**
@@ -197,7 +195,7 @@ public class MathTransformFactory
          * If the user is requesting a 2D transform, delegate to the
          * highly optimized java.awt.geom.AffineTransform class.
          */
-        if (matrix.getNumRows()==3 && matrix.isAffine()) // Affine transform are square.
+        if (matrix.getNumRow()==3 && matrix.isAffine()) // Affine transform are square.
         {
             return createAffineTransform(matrix.toAffineTransform2D());
         }
@@ -268,7 +266,8 @@ public class MathTransformFactory
                 // May not be really affine, but work anyway...
                 // This call will detect and optimize the special
                 // case where an 'AffineTransform' can be used.
-                return createAffineTransform(matrix2.multiply(matrix1));
+                matrix2.mul(matrix1);
+                return createAffineTransform(matrix2);
             }
         }
         /*
@@ -434,11 +433,12 @@ public class MathTransformFactory
         // General case: use a matrix.
         final int dimOutput = upper-lower;
         final Matrix matrix = new Matrix(dimOutput+1, dimTarget+1);
+        matrix.setZero();
         for (int i=lower; i<upper; i++)
         {
-            matrix.set(i-lower, i, 1);
+            matrix.setElement(i-lower, i, 1);
         }
-        matrix.set(dimOutput, dimTarget, 1); // Affine transform has one more row/column than dimension.
+        matrix.setElement(dimOutput, dimTarget, 1); // Affine transform has one more row/column than dimension.
         return createConcatenatedTransform(transform, createAffineTransform(matrix));
     }
 
