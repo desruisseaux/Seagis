@@ -73,7 +73,7 @@ public class Canarias_RAW extends RawBinaryImageReader.Spi
             if (value>=99.0) return NODATA;
             if (value<=0.01) return NODATA;
             // Note: Can't apply the following patch on SeaWifs images.
-//            if (value>=25.5) return Double.NaN; // TODO: temporary patch.
+            if (value>=25.5) return NODATA; // TODO: temporary patch.
             return value;
         }
     }
