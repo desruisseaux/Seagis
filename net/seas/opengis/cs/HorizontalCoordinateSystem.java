@@ -142,14 +142,21 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Compares the specified object with
-     * this coordinate system for equality.
+     * Returns  <code>true</code> if this coordinate system is equivalents to
+     * the specified coordinate system. Two coordinate systems are considered
+     * equivalent if the {@link net.seas.opengis.ct.CoordinateTransform} from
+     * <code>this</code> to  <code>cs</code>  would be the identity transform.
+     * The default implementation compare datum, units and axis, but ignore
+     * name, alias and other meta-data informations.
+     *
+     * @param  cs The coordinate system (may be <code>null</code>).
+     * @return <code>true</code> if both coordinate systems are equivalent.
      */
-    public boolean equals(final Object object)
+    public boolean equivalents(final CoordinateSystem cs)
     {
-        if (super.equals(object))
+        if (super.equivalents(cs))
         {
-            final HorizontalCoordinateSystem that = (HorizontalCoordinateSystem) object;
+            final HorizontalCoordinateSystem that = (HorizontalCoordinateSystem) cs;
             return XClass.equals(this.datum, that.datum) &&
                    XClass.equals(this.axis0, that.axis0) &&
                    XClass.equals(this.axis1, that.axis1);

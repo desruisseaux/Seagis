@@ -200,6 +200,26 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Returns  <code>true</code> if this coordinate system is equivalents to
+     * the specified coordinate system. Two coordinate systems are considered
+     * equivalent if the {@link net.seas.opengis.ct.CoordinateTransform} from
+     * <code>this</code> to  <code>cs</code>  would be the identity transform.
+     *
+     * @param  cs The coordinate system (may be <code>null</code>).
+     * @return <code>true</code> if both coordinate systems are equivalent.
+     */
+    public boolean equivalents(final CoordinateSystem cs)
+    {
+        if (super.equivalents(cs))
+        {
+            final CompoundCoordinateSystem that = (CompoundCoordinateSystem) cs;
+            return head.equivalents(that.head) &&
+                   tail.equivalents(that.tail);
+        }
+        return false;
+    }
+
+    /**
      * Compares the specified object with
      * this coordinate system for equality.
      */

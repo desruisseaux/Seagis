@@ -192,6 +192,28 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
     {return new Envelope(getDimension());}
 
     /**
+     * Returns  <code>true</code> if this coordinate system is equivalents to
+     * the specified coordinate system. Two coordinate systems are considered
+     * equivalent if the {@link net.seas.opengis.ct.CoordinateTransform} from
+     * <code>this</code> to  <code>cs</code>  would be the identity transform.
+     * The <code>equivalents</code> method is less strict than <code>equals</code>
+     * in that it doesn't compare names, alias, authority codes or others similar
+     * informations.
+     *
+     * @param  cs The coordinate system (may be <code>null</code>).
+     * @return <code>true</code> if both coordinate systems are equivalent.
+     */
+    public boolean equivalents(final CoordinateSystem cs)
+    {return (cs!=null) && cs.getClass().equals(getClass());}
+
+    /**
+     * Compares the specified object with
+     * this coordinate system for equality.
+     */
+    public boolean equals(final Object object)
+    {return super.equals(object) && equivalents((CoordinateSystem)object);}
+
+    /**
      * Returns a string representation of this info.
      * @param the source (usually <code>this</code>).
      */
