@@ -116,16 +116,19 @@ final class ThematicImage extends ImageAdapter
     protected void computeRect(final PlanarImage[] sources, final WritableRaster dest, final Rectangle destRect)
     {
         final RectIter iterator = RectIterFactory.create(sources[0], destRect);
-        int band=0; do
+        int band=0;
+        if (!iterator.finishedBands()) do
         {
             final CategoryList categories = this.categories[band];
             final Category blank = categories.getBlank();
             Category category = blank;
+            int y=destRect.y;
             iterator.startLines();
-            int y=destRect.y; do
+            if (!iterator.finishedLines()) do
             {
+                int x=destRect.x;
                 iterator.startPixels();
-                int x=destRect.x; do
+                if (!iterator.finishedPixels()) do
                 {
                     final double value=iterator.getSampleDouble();
                     category = categories.getEncoder(value, category);
@@ -135,19 +138,19 @@ final class ThematicImage extends ImageAdapter
                 }
                 while (!iterator.nextPixelDone());
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-                assert (x == destRect.x + destRect.width);
+                assert (x == destRect.x + destRect.width) : x;
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
                 y++;
             }
             while (!iterator.nextLineDone());
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            assert (y == destRect.y + destRect.height);
+            assert (y == destRect.y + destRect.height) : y;
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
             band++;
         }
         while (!iterator.nextBandDone());
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert (band == categories.length);
+        assert (band == categories.length) : band;
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 }

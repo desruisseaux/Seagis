@@ -48,6 +48,7 @@ import javax.media.jai.ParameterListDescriptorImpl;
 import javax.media.jai.InterpolationNearest;
 
 // OpenGIS (SEAGIS-GCS) dependencies
+import net.seagis.cv.Category;
 import net.seagis.gc.GridCoverage;
 import net.seagis.gc.GridGeometry;
 import net.seagis.cv.CategoryList;
@@ -197,7 +198,7 @@ final class Resampler extends GridCoverage
         // the indexed image for the specified source coverage and interpolation
         // type.
         boolean geophysics = true;
-        if (interpolation instanceof InterpolationNearest)
+        if (interpolation instanceof InterpolationNearest || isLinear(sourceCoverage))
         {
             final List sources = sourceCoverage.getRenderedImage(true).getSources();
             if (sources!=null)
@@ -244,6 +245,39 @@ final class Resampler extends GridCoverage
             categories[i] = samplesDim[i].getCategoryList();
         }
         return categories;
+    }
+
+    /**
+     * Check if the mapping between pixel values and geophysics value
+     * is a linear relation for all bands in the specified coverage.
+     */
+    private static boolean isLinear(final GridCoverage sourceCoverage)
+    {
+        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
+        for (int i=samplesDim.length; --i>=0;)
+        {
+            final CategoryList categories = samplesDim[i].getCategoryList();
+            if (categories==null)
+            {
+                // If there is no categories,  we assume that there is
+                // no classification. It should be okay to interpolate
+                // pixel values.
+                continue;
+            }
+            if (categories.size()==1)
+            {
+                final Category category = categories.get(0);
+                if (category.isQuantitative() && category.getClass().equals(Category.class))
+                {
+                    // If there is categories,  we require that there is only
+                    // one category and this category must be translatable in
+                    // numbers using a linear relation.
+                    continue;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     /**

@@ -56,6 +56,11 @@ import javax.media.jai.util.CaselessStringKey;
 import java.io.Writer;
 import java.io.IOException;
 
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+// Logging
+import java.util.logging.Logger;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
 // Miscellaneous
 import java.util.Arrays;
 import net.seagis.resources.gcs.Resources;
@@ -95,6 +100,9 @@ public class GridCoverageProcessor
                 cache.setMemoryCapacity(targetCapacity);
             }
         }
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        Logger.getLogger("net.seagis.gcs").config(JAI.getBuildVersion());
+------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
     /**
