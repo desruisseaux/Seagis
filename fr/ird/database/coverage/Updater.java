@@ -39,16 +39,16 @@ public class Updater {
     /**
      * Connection to database 'image'.
      */
-    private final CoverageDataBase dataBase;      
+    //private final CoverageDataBase dataBase;      
     
     /** 
      * Constructor.
      */
-    public Updater() throws SQLException {
+    /*public Updater() throws SQLException {
         dataBase = new CoverageDataBase();            
 
         reOrderWriters();
-    }
+    }*/
 
     
     //////////////////////////////////////////////////////////////////////////////////////
@@ -59,13 +59,19 @@ public class Updater {
     /** 
      * Tries to reorder Image Readers in The IIORegistry. 
      */
-    private void reOrderWriters() { 
+    private static void reOrderWritersReadersPNG() { 
         final IIORegistry registry = IIORegistry.getDefaultInstance();        
         final Object GoodWriter = registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageWriterSpi.class),
                      BadWriter  = registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);                 
         
         if((GoodWriter != null) && (BadWriter != null))  
             registry.setOrdering(ImageWriterSpi.class, GoodWriter, BadWriter);            
+        
+        final Object GoodReader = registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageReaderSpi.class),
+                     BadReader  = registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi.class);                 
+        
+        if((GoodReader != null) && (BadReader != null))  
+            registry.setOrdering(ImageReaderSpi.class, GoodReader, BadReader);                    
     }        
     
     /**
@@ -75,11 +81,13 @@ public class Updater {
      * @param name  Name of the target image without extension and path.
      * @param serie Name of target serie.
      */
-    public void insertToDataBase(final File   file,    final String name, 
-                                 final String serie,   final Date   startTime, 
-                                 final Date   endTime, final Rectangle2D area) 
+    public static void insertToDataBase(final CoverageDataBase dataBase,
+                                        final File   file,    final String name, 
+                                        final String serie,   final Date   startTime, 
+                                        final Date   endTime, final Rectangle2D area) 
          throws SQLException, IOException
     {
+        reOrderWritersReadersPNG();
         final CoverageTable     table    = dataBase.getCoverageTable(serie);
         final CoordinateSystem  cs       = table.getCoordinateSystem();
         final Color[]           colors   = fr.ird.resources.Utilities.getPaletteFactory().getColors("grayscale");
@@ -99,7 +107,7 @@ public class Updater {
         final Envelope envelopeT = buildTemporalEnvelope(CTSUtilities.getTemporalCS(cs), envelope, startTime, endTime);
 
         // 3. read Image.
-        final RenderedImage image = ImageIO.read(file);
+        RenderedImage image = ImageIO.read(file);
 
         // 4. create GridCoverage.
         final GridCoverage grid = new GridCoverage(name, image, cs, envelopeT, sample, null, null);
@@ -132,6 +140,7 @@ public class Updater {
         }
         final String format = tgt.getName().substring(index+1);                        
         ImageIO.write(image, format, tgt);
+        image  = null;
         //System.out.println("Insertion in database realized.");
     }   
     
