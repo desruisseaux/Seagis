@@ -50,11 +50,13 @@ import net.seas.opengis.cv.PointOutsideCoverageException;
 import java.sql.SQLException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import javax.imageio.ImageReader;
 
 // Evénements
 import javax.swing.event.EventListenerList;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
+import net.seas.image.io.IIOReadProgressAdapter;
 
 // Journal
 import java.util.logging.Level;
@@ -117,6 +119,11 @@ public class Coverage3D extends Coverage
      * des progrès de la lecture des images.
      */
     private final EventListenerList listeners = new EventListenerList();
+
+    /**
+     * Internal listener for logging image loading.
+     */
+    private transient Listeners readListener;
 
     /**
      * Données dont la date de début est inférieure ou égale à la date demandée.
@@ -348,15 +355,20 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Enregistre un évènements dans le journal.
+     * Prépare un enregistrement pour le journal.
      */
-    private static void log(final int clé, final Object[] parameters)
+    private void log(final int clé, final Object[] parameters)
     {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, clé);
         record.setSourceClassName("Coverage3D");
         record.setSourceMethodName("evaluate");
         record.setParameters(parameters);
-        Table.logger.log(record);
+        if (readListener==null)
+        {
+            readListener = new Listeners();
+            addIIOReadProgressListener(readListener);
+        }
+        readListener.record = record;
     }
 
     /**
@@ -736,6 +748,35 @@ public class Coverage3D extends Coverage
      */
     public void removeIIOReadProgressListener(final IIOReadProgressListener listener)
     {listeners.remove(IIOReadProgressListener.class, listener);}
+
+    /**
+     * Objet ayant la charge de suivre le chargement d'une image. Cet objet sert
+     * surtout à enregistrer dans le journal un enregistrement indiquant que la
+     * lecture d'une image a commencé.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private static final class Listeners extends IIOReadProgressAdapter
+    {
+        /**
+         * The record to log.
+         */
+        public LogRecord record;
+
+        /**
+         * Reports that an image read operation is beginning.
+         */
+        public void imageStarted(ImageReader source, int imageIndex)
+        {
+            if (record!=null)
+            {
+                Table.logger.log(record);
+                source.removeIIOReadProgressListener(this);
+                record=null;
+            }
+        }
+    }
 
 
 
