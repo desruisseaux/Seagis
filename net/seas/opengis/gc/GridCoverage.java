@@ -488,15 +488,20 @@ public class GridCoverage extends Coverage
     public int[] evaluate(final Point2D coord, final int[] dest) throws PointOutsideCoverageException
     {
         final Point2D pixel = inverseTransform(coord);
-        final int x = (int)Math.floor(pixel.getX());
-        final int y = (int)Math.floor(pixel.getY());
-        final int xmin = image.getMinX();
-        final int ymin = image.getMinY();
-        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        final double fx = pixel.getX();
+        final double fy = pixel.getY();
+        if (!Double.isNaN(fx) && !Double.isNaN(fy))
         {
-            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            final int x = (int)Math.floor(fx);
+            final int y = (int)Math.floor(fy);
+            final int xmin = image.getMinX();
+            final int ymin = image.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            {
+                return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            }
         }
-        else throw new PointOutsideCoverageException(coord);
+        throw new PointOutsideCoverageException(coord);
     }
 
     /**
@@ -510,15 +515,20 @@ public class GridCoverage extends Coverage
     public float[] evaluate(final Point2D coord, final float[] dest) throws PointOutsideCoverageException
     {
         final Point2D pixel = inverseTransform(coord);
-        final int x = (int)Math.floor(pixel.getX());
-        final int y = (int)Math.floor(pixel.getY());
-        final int xmin = image.getMinX();
-        final int ymin = image.getMinY();
-        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        final double fx = pixel.getX();
+        final double fy = pixel.getY();
+        if (!Double.isNaN(fx) && !Double.isNaN(fy))
         {
-            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            final int x = (int)Math.floor(fx);
+            final int y = (int)Math.floor(fy);
+            final int xmin = image.getMinX();
+            final int ymin = image.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            {
+                return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            }
         }
-        else throw new PointOutsideCoverageException(coord);
+        throw new PointOutsideCoverageException(coord);
     }
 
     /**
@@ -532,15 +542,20 @@ public class GridCoverage extends Coverage
     public double[] evaluate(final Point2D coord, final double[] dest) throws PointOutsideCoverageException
     {
         final Point2D pixel = inverseTransform(coord);
-        final int x = (int)Math.floor(pixel.getX());
-        final int y = (int)Math.floor(pixel.getY());
-        final int xmin = image.getMinX();
-        final int ymin = image.getMinY();
-        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        final double fx = pixel.getX();
+        final double fy = pixel.getY();
+        if (!Double.isNaN(fx) && !Double.isNaN(fy))
         {
-            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            final int x = (int)Math.floor(fx);
+            final int y = (int)Math.floor(fy);
+            final int xmin = image.getMinX();
+            final int ymin = image.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            {
+                return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+            }
         }
-        else throw new PointOutsideCoverageException(coord);
+        throw new PointOutsideCoverageException(coord);
     }
 
     /**

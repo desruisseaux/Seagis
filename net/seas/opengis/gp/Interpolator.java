@@ -33,6 +33,11 @@ import javax.media.jai.Interpolation;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
+// Parameters
+import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListDescriptor;
+import javax.media.jai.ParameterListDescriptorImpl;
+
 // Geometry
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -52,7 +57,7 @@ import net.seas.util.Version;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class Interpolator extends GridCoverage
+final class Interpolator extends GridCoverage
 {
     /**
      * Affine transform from "real world" coordinates to grid coordinates.
@@ -192,11 +197,18 @@ public final class Interpolator extends GridCoverage
      * @return An array containing values.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public double[] evaluate(final Point2D coord, final double[] dest) throws PointOutsideCoverageException
+    public double[] evaluate(final Point2D coord, double[] dest) throws PointOutsideCoverageException
     {
-        final Point2D   pixel = toGrid.transform(coord, null);
-        final double[] result = interpolate(pixel.getX(), pixel.getY(), dest, 0, data.getNumBands());
-        return (result!=null) ? result : super.evaluate(coord, dest);
+        dest = super.evaluate(coord, dest);
+        final Point2D pixel = toGrid.transform(coord, null);
+        final double x = pixel.getX();
+        final double y = pixel.getY();
+        if (!Double.isNaN(x) && !Double.isNaN(y))
+        {
+            interpolate(x, y, dest, 0, data.getNumBands());
+            if (false) throw new PointOutsideCoverageException(coord); // TODO
+        }
+        return dest;
     }
 
     /**
@@ -207,8 +219,9 @@ public final class Interpolator extends GridCoverage
      * @param dest   The destination array, or null.
      * @param band   The first band's index to interpolate.
      * @param bandUp The last band's index+1 to interpolate.
+     * @return <code>false</code> if point is outside grid coverage.
      */
-    private double[] interpolate(final double x, final double y, double[] dest, int band, final int bandUp)
+    private boolean interpolate(final double x, final double y, double[] dest, int band, final int bandUp)
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
@@ -216,7 +229,11 @@ public final class Interpolator extends GridCoverage
         int iy = (int)y0;
         if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
         {
-            return (fallback!=null) ? fallback.interpolate(x, y, dest, band, bandUp) : null;
+            if (fallback!=null)
+            {
+                return fallback.interpolate(x, y, dest, band, bandUp);
+            }
+            else return false;
         }
         /*
          * Create buffers, if not already created.
@@ -252,16 +269,105 @@ public final class Interpolator extends GridCoverage
                 }
             }
             final double value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
-            if (Double.isNaN(value) && fallback!=null)
+            if (Double.isNaN(value))
             {
-                if (fallback.interpolate(x, y, dest, band, band+1)!=null)
+                if (fallback!=null)
                 {
-                    // Fall back succeed. 'continue' in order to avoid overwriting the value...
+                    fallback.interpolate(x, y, dest, band, band+1);
                     continue;
                 }
+                continue; // TODO: if (fallbackAllowed)
             }
             dest[band] = value;
         }
-        return dest;
+        return true;
+    }
+
+    /**
+     * The operation.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Operation extends net.seas.opengis.gp.Operation
+    {
+        /**
+         * List of valid names. Note: the "Optimal" type is not
+         * implemented because currently not provided by JAI.
+         */
+        private static final String[] NAMES=
+        {
+            "NearestNeighbor",
+            "Bilinear",
+            "Bicubic"
+        };
+
+        /**
+         * Interpolation types (provided by Java
+         * Advanced Imaging) for {@link #NAMES}.
+         */
+        private static final int[] TYPES=
+        {
+            Interpolation.INTERP_NEAREST,
+            Interpolation.INTERP_BILINEAR,
+            Interpolation.INTERP_BICUBIC
+        };
+
+        /**
+         * Construct an operation.
+         */
+        public Operation()
+        {
+            super("Interpolate", new ParameterListDescriptorImpl(
+                  null,         // the object to be reflected upon for enumerated values.
+                  new String[]  // the names of each parameter.
+                  {
+                      "Source",
+                      "Type"
+                  },
+                  new Class[]   // the class of each parameter.
+                  {
+                      GridCoverage.class,
+                      Object.class
+                  },
+                  new Object[] // The default values for each parameter.
+                  {
+                      ParameterListDescriptor.NO_PARAMETER_DEFAULT,
+                      NAMES[0] // "NearestNeighbor"
+                  },
+                  null // Defines the valid values for each parameter.
+            ));
+        }
+
+        /**
+         * Apply a process operation to a grid coverage. This method
+         * is invoked by {@link GridCoverageProcessor}.
+         *
+         * @param  parameters List of name value pairs for the parameters required for the operation.
+         * @return The result as a grid coverage.
+         */
+        protected GridCoverage doOperation(final ParameterList parameters)
+        {
+            final GridCoverage   source = (GridCoverage)parameters.getObjectParameter("Source");
+            final Object           type =               parameters.getObjectParameter("Type"  );
+            Interpolation interpolation = null;
+            if (type instanceof Interpolation)
+            {
+                interpolation = (Interpolation) type;
+            }
+            else
+            {
+                final String name=type.toString();
+                for (int i=0; i<NAMES.length; i++)
+                    if (NAMES[i].equalsIgnoreCase(name))
+                        interpolation = Interpolation.getInstance(TYPES[i]);
+            }
+            if (interpolation!=null)
+            {
+                throw new IllegalArgumentException(String.valueOf(type));
+            }
+            // TODO: fallback, nearest neighbor...
+            return new Interpolator(source, interpolation, null);
+        }
     }
 }
