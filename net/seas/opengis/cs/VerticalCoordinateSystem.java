@@ -129,8 +129,9 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Gets units for dimension within coordinate system. A vertical
-     * coordinate system have only one axis, always at index 0.
+     * Gets units for dimension within coordinate system.
+     * A vertical coordinate system have only one axis,
+     * always at index 0.
      *
      * @param dimension Must be 0.
      */
@@ -142,17 +143,11 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Gets the units used along the vertical axis. This convenience
-     * is equivalent to <code>{@link #getUnits getUnits}(0)</code>.
+     * Gets the units used along the vertical axis.
+     * This convenience is equivalent to <code>{@link #getUnits getUnits}(0)</code>.
      */
     public Unit getVerticalUnit()
     {return unit;}
-
-    /**
-     * Gets default envelope for this coordinate system.
-     */
-    public Envelope getDefaultEnvelope()
-    {return new Envelope(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);}
 
     /**
      * Compares the specified object with

@@ -49,9 +49,9 @@ public class CoordinateTransformFactory
     public static final CoordinateTransformFactory DEFAULT = new CoordinateTransformFactory(MathTransformFactory.DEFAULT);
 
     /**
-     * The math transform factory to use.
+     * The underlying math transform factory.
      */
-    private MathTransformFactory factory;
+    private final MathTransformFactory factory;
 
     /**
      * Construct a coordinate transformation factory.
@@ -62,10 +62,16 @@ public class CoordinateTransformFactory
     {this.factory = factory;}
 
     /**
+     * <FONT COLOR="#FF6633">Returns the underlying math transform factory.</FONT>
+     */
+    public MathTransformFactory getMathTransformFactory()
+    {return factory;}
+
+    /**
      * Creates a transformation between two coordinate systems.
-     * This method will examine the coordinate systems in order to
-     * construct a transformation between them. This method may fail if no
-     * path between the coordinate systems is found.
+     * This method will examine the coordinate systems in order to construct a
+     * transformation between them. This method may fail if no path between the
+     * coordinate systems is found.
      *
      * @param sourceCS Input coordinate system.
      * @param targetCS Output coordinate system.
@@ -100,8 +106,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * Creates a transformation between two geographic coordinate systems. This
-     * method is automatically invoked by <code>createFromCoordinateSystems</code>.
+     * <FONT COLOR="#FF6633">Creates a transformation between two geographic coordinate systems.
+     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
      */
     protected CoordinateTransform create(final GeographicCoordinateSystem sourceCS, final GeographicCoordinateSystem targetCS)
     {
@@ -113,8 +119,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * Creates a transformation between two projected coordinate systems. This
-     * method is automatically invoked by <code>createFromCoordinateSystems</code>.
+     * <FONT COLOR="#FF6633">Creates a transformation between two projected coordinate systems.
+     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
      */
     protected CoordinateTransform create(final ProjectedCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS)
     {
@@ -126,8 +132,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * Creates a transformation between a geographic and a projected coordinate systems.
-     * This  method is automatically invoked by <code>createFromCoordinateSystems</code>.
+     * <FONT COLOR="#FF6633">Creates a transformation between a geographic and a projected coordinate systems.
+     * This  method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
      */
     protected CoordinateTransform create(final GeographicCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS)
     {
@@ -147,7 +153,7 @@ public class CoordinateTransformFactory
             throw new UnsupportedOperationException("Not implemented");
         }
         final Projection   projection = targetCS.getProjection();
-        final MathTransform transform = factory.createParameterizedTransform(projection.getClassName(), projection.getParameters());
+        final MathTransform transform = getMathTransformFactory().createParameterizedTransform(projection.getClassName(), projection.getParameters());
         if (transform instanceof MapProjection)
         {
             final MapProjection proj = (MapProjection) transform;

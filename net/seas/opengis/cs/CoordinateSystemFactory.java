@@ -99,8 +99,9 @@ public class CoordinateSystemFactory
     {}
 
     /**
-     * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
-     * or <var>longitude</var>/<var>latitude</var>.
+     * Creates a geographic coordinate system, which could be
+     * <var>latitude</var>/<var>longiude</var> or
+     * <var>longitude</var>/<var>latitude</var>.
      *
      * @param name      Name to give new object.
      * @param unit      Angular units for created coordinate system.
@@ -147,11 +148,11 @@ public class CoordinateSystemFactory
     {return (CompoundCoordinateSystem) pool.intern(new CompoundCoordinateSystem(name, head, tail));}
 
     /**
-     * Creates a local coordinate system. The dimension of the local coordinate
-     * system is determined by the size of the axis array.  All the axes will
-     * have the same units.  If you want to make a coordinate system with mixed
-     * units, then you can make a compound coordinate system from different local
-     * coordinate systems.
+     * Creates a local coordinate system.
+     * The dimension of the local coordinate system is determined by the size
+     * of the axis array. All the axes will have the same units. If you want
+     * to make a coordinate system with mixed units, then you can make a
+     * compound coordinate system from different local coordinate systems.
      *
      * @param name  Name to give new object.
      * @param datum Local datum to use in created CS.
@@ -204,8 +205,8 @@ public class CoordinateSystemFactory
     {return (Projection) pool.intern(new Projection(name, classification, parameters));}
 
     /**
-     * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters. Since this
-     * method contains a set of Bursa-Wolf parameters, the created datum will always
+     * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
+     * Since this method contains a set of Bursa-Wolf parameters, the created datum will always
      * have a relationship to WGS84. If you wish to create a horizontal datum that
      * has no relationship with WGS84, then you can either specify
      * {@link DatumType.Horizontal#OTHER} as the horizontalDatumType,
@@ -220,8 +221,8 @@ public class CoordinateSystemFactory
     {return (HorizontalDatum) pool.intern(new HorizontalDatum(name, type, ellipsoid, toWGS84));}
 
     /**
-     * Creates horizontal datum from an ellipsoid. The datum
-     * type will be {@link DatumType.Horizontal#OTHER}.
+     * <FONT COLOR="#FF6633">Creates horizontal datum from an ellipsoid.
+     * The datum type will be {@link DatumType.Horizontal#OTHER}.</FONT>
      *
      * @param name      Name to give new object.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.

@@ -26,6 +26,7 @@ package net.seas.opengis.gp;
 import net.seas.opengis.gc.GridCoverage;
 
 // Miscellaneous
+import java.util.Set;
 import javax.media.jai.ParameterList;
 
 
@@ -50,17 +51,10 @@ public abstract class GridCoverageProcessor
     {}
 
     /**
-     * Returns the number of operations supported by this grid coverage processor.
-     */
-    public abstract int getNumOperations();
-
-    /**
-     * Retrieve a grid processing operation information. The operation information
+     * Retrieve grid processing operation informations. The operation information
      * will contain the name of the operation as well as a list of its parameters.
-     *
-     * @param index The operation index, from 0 inclusive to {@link #getNumOperations()} exclusive.
      */
-    public abstract Operation getOperation(int index);
+    public abstract Set<Operation> getOperations();
 
     /**
      * Apply a process operation to a grid coverage.

@@ -36,7 +36,8 @@ import net.seas.resources.Resources;
 
 
 /**
- * Enumeration class specifing the mapping of a band to a color model component.
+ * Enumeration class specifing the
+ * mapping of a band to a color model component.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -49,7 +50,7 @@ public final class ColorInterpretation extends EnumeratedParameter
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 5421054715413352607L;
 
     /** Band is not associated with a color model component. */
     public static final ColorInterpretation UNDEFINED       = new ColorInterpretation("UNDEFINED",       0, Clé.UNDEFINED);
@@ -61,15 +62,15 @@ public final class ColorInterpretation extends EnumeratedParameter
     public static final ColorInterpretation PALETTE_INDEX   = new ColorInterpretation("PALETTE_INDEX",   2, Clé.PALETTE);
 
     /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present.*/
+        Alpha band may or may not be present. */
     public static final ColorInterpretation RED_BAND        = new ColorInterpretation("RED_BAND",        3, Clé.RED);
 
     /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present.*/
+        Alpha band may or may not be present. */
     public static final ColorInterpretation GREEN_BAND      = new ColorInterpretation("GREEN_BAND",      4, Clé.GREEN);
 
     /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present.*/
+        Alpha band may or may not be present. */
     public static final ColorInterpretation BLUE_BAND       = new ColorInterpretation("BLUE_BAND",       5, Clé.BLUE);
 
     /** Bands correspond to RGB color model components. */
@@ -126,8 +127,9 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * Return the enum for the specified value. This method is provided for
-     * compatibility with {@link org.opengis.cv.CV_ColorInterpretation}.
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * This method is provided for compatibility with
+     * {@link org.opengis.cv.CV_ColorInterpretation}.</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -140,7 +142,7 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * Return the enum for the specified color model and band number.
+     * <FONT COLOR="#FF6633">Return the enum for the specified color model and band number.</FONT>
      *
      * @param  model The color model.
      * @param  band  The band to query.
@@ -205,9 +207,9 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * Returns this enum's name in the specified locale. If no name
-     * is available for the specified locale, a default one will be
-     * used.
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
+     * If no name is available for the specified locale, a default one will be
+     * used.</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.

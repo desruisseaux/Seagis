@@ -173,9 +173,8 @@ public class Projection extends Info
     {return clone(parameters);}
 
     /**
-     * Convenience method for fetching a parameter value.
-     * Search is case-insensitive and ignore leading and
-     * trailing blanks.
+     * <FONT COLOR="#FF6633">Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and trailing blanks.</FONT>
      *
      * @param  name Parameter to look for.
      * @return The parameter value.
@@ -185,9 +184,8 @@ public class Projection extends Info
     {return getValue(parameters, name, Double.NaN, true);}
 
     /**
-     * Convenience method for fetching a parameter value.
-     * Search is case-insensitive and ignore leading and
-     * trailing blanks.
+     * <FONT COLOR="#FF6633">Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and trailing blanks.</FONT>
      *
      * @param  name Parameter to look for.
      * @param  defaultValue Default value to return if

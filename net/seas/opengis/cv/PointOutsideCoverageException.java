@@ -24,7 +24,7 @@ package net.seas.opengis.cv;
 
 
 /**
- * Throws when a <code>Coverage.evaluate(...)</code>
+ * Throws when a <code>Coverage.evaluate</code>
  * method is invoked with a point outside coverage.
  */
 public class PointOutsideCoverageException extends RuntimeException

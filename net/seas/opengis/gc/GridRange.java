@@ -149,14 +149,14 @@ public final class GridRange implements Serializable
     }
 
     /**
-     * Returns the number of dimensions.
+     * <FONT COLOR="#FF6633">Returns the number of dimensions.</FONT>
      */
     public int getDimension()
     {return index.length/2;}
 
     /**
-     * Returns the valid minimum inclusive grid
-     * coordinate along the specified dimension.
+     * <FONT COLOR="#FF6633">Returns the valid minimum inclusive grid
+     * coordinate along the specified dimension.</FONT>
      */
     public int getLower(final int dimension)
     {
@@ -165,8 +165,8 @@ public final class GridRange implements Serializable
     }
 
     /**
-     * Returns the valid maximum exclusive grid
-     * coordinate along the specified dimension.
+     * <FONT COLOR="#FF6633">Returns the valid maximum exclusive grid
+     * coordinate along the specified dimension.</FONT>
      */
     public int getUpper(final int dimension)
     {

@@ -144,9 +144,9 @@ public class MathTransformFactory
     {return transform1.concatenate(transform2);}
 
     /**
-     * Creates a transform from a classification name and parameters. The
-     * client must ensure that all the linear parameters are expressed in
-     * meters, and all the angular parameters are expressed in degrees.
+     * Creates a transform from a classification name and parameters.
+     * The client must ensure that all the linear parameters are expressed
+     * in meters, and all the angular parameters are expressed in degrees.
      * Also, they must supply "semi_major" and "semi_minor" parameters
      * for cartographic projection transforms.
      *
@@ -162,7 +162,7 @@ public class MathTransformFactory
     {return getProvider(classification).create(parameters);}
 
     /**
-     * Convenience method for creating a transform from a projection.
+     * <FONT COLOR="#FF6633">Convenience method for creating a transform from a projection.</FONT>
      *
      * @param  projection The projection.
      * @return The parameterized transform.
@@ -173,8 +173,8 @@ public class MathTransformFactory
     {return createParameterizedTransform(projection.getClassName(), projection.getParameters());}
 
     /**
-     * Returns the classification names of every available transforms.
-     * The returned array may have a zero length, but will never be null.
+     * <FONT COLOR="#FF6633">Returns the classification names of every available transforms.
+     * The returned array may have a zero length, but will never be null.</FONT>
      */
     public String[] getAvailableTransforms()
     {
@@ -187,9 +187,9 @@ public class MathTransformFactory
     }
 
     /**
-     * Returns a human readable name localized for the specified locale.
-     * If no name is available for the specified locale, this method may
-     * returns a name in an arbitrary locale.
+     * <FONT COLOR="#FF6633">Returns a human readable name localized for the specified locale.
+     * If no name is available for the specified locale, this
+     * method may returns a name in an arbitrary locale.</FONT>
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
@@ -203,9 +203,9 @@ public class MathTransformFactory
     {return getProvider(classification).getName(locale);}
 
     /**
-     * Get the parameter list from a classification name. The
-     * client may change any of those parameters and submit them
-     * to {@link #createParameterizedTransform(String,ParameterList)}.
+     * <FONT COLOR="#FF6633">Get the parameter list from a classification name.
+     * The client may change any of those parameters and submit them to
+     * {@link #createParameterizedTransform(String,ParameterList)}.</FONT>
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces

@@ -178,7 +178,8 @@ public class Info implements Serializable
     {return (properties!=null) ? (String)properties.get("abbreviation") : null;}
 
     /**
-     * Gets the provider-supplied remarks, or <code>null</code> if there is none.
+     * Gets the provider-supplied remarks,
+     * or <code>null</code> if there is none.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */

@@ -99,8 +99,9 @@ public final class TransformType extends EnumeratedParameter
     }
 
     /**
-     * Return the enum for the specified value. This method is provided
-     * for compatibility with {@link org.opengis.ct.CT_TransformType}.
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * This method is provided for compatibility with
+     * {@link org.opengis.ct.CT_TransformType}.</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -113,9 +114,9 @@ public final class TransformType extends EnumeratedParameter
     }
 
     /**
-     * Returns this enum's name in the specified locale. If no name
-     * is available for the specified locale, a default one will be
-     * used.
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
+     * If no name is available for the specified locale, a default one will be
+     * used.</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the current default locale.
      * @return Enum's name in the specified locale.

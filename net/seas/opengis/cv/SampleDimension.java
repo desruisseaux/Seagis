@@ -28,8 +28,8 @@ import javax.units.Unit;
 
 
 /**
- * Describes the data values for a coverage. For
- * a grid coverage a sample dimension is a band.
+ * Describes the data values for a coverage.
+ * For a grid coverage a sample dimension is a band.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -46,8 +46,13 @@ public abstract class SampleDimension
     {}
 
     /**
-     * Get the sample dimension title or description. This string
-     * may be <code>null</code> if no description is present.
+     * Get the sample dimension name.
+     */
+    public abstract String getName();
+
+    /**
+     * Get the sample dimension title or description.
+     * This string may be <code>null</code> if no description is present.
      *
      * @param  locale The locale, or <code>null</code> for the default one.
      * @return The localized description. If no description was available
@@ -59,8 +64,8 @@ public abstract class SampleDimension
     //       palette are backed by IndexColorModel, which support only RGB.
 
     /**
-     * Returns the color interpretation of the sample dimension. A sample
-     * dimension can be an index into a color palette or be a color model
+     * Returns the color interpretation of the sample dimension.
+     * A sample dimension can be an index into a color palette or be a color model
      * component. If the sample dimension is not assigned a color interpretation
      * the value is {@link ColorInterpretation#UNDEFINED}.
      */

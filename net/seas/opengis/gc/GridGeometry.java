@@ -46,7 +46,7 @@ public class GridGeometry implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 398116590319460364L;
 
     /**
      * The valid coordinate range of a grid coverage. The lowest
@@ -72,6 +72,9 @@ public class GridGeometry implements Serializable
      * Construct a new grid geometry.
      *
      * @param range The valid coordinate range of a grid coverage.
+     * @param transform The math transform which allows for the transformations
+     *        from grid coordinates (pixel's <em>center</em>) to real world earth
+     *        coordinates.
      */
     public GridGeometry(final GridRange range, final MathTransform transform)
     {
@@ -84,6 +87,9 @@ public class GridGeometry implements Serializable
      * Construct a new grid geometry.
      *
      * @param range The valid coordinate range of a grid coverage.
+     * @param transform The affine transform which allows for the transformations
+     *        from grid coordinates (pixel's <em>upper left</em> corner) to real
+     *        world earth coordinates.
      */
     public GridGeometry(final GridRange range, final AffineTransform transform)
     {
@@ -101,8 +107,8 @@ public class GridGeometry implements Serializable
     {return range;}
 
     /**
-     * Returns the math transform which allows for the transformations from grid
-     * coordinates to real world earth coordinates. The transform is often an
+     * Returns the math transform which allows for the transformations
+     * from grid coordinates to real world earth coordinates. The transform is often an
      * affine transformation. The coordinate system of the real world coordinates
      * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
      * math transform is available, this method returns <code>null</code>.
@@ -129,13 +135,13 @@ public class GridGeometry implements Serializable
     }
 
     /**
-     * Returns the affine transform which allows for the transformations from grid
-     * coordinates to real world earth coordinates.    The returned affine follows
+     * <FONT COLOR="#FF6633">Returns the affine transform which allows for the transformations
+     * from grid coordinates to real world earth coordinates. The returned affine follows
      * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>
      * convention, i.e. its convert the pixel's <em>upper left corner</em> coordinates
      * (<var>i</var>,<var>j</var>) into real world earth coordinates (<var>x</var>,<var>y</var>).
      * In contrast, {link #gridToCoordinateSystem()} contert the pixel's <em>center</em>
-     * coordinates into real world earth coordinates.
+     * coordinates into real world earth coordinates.</FONT>
      */
     public AffineTransform gridToCoordinateJAI()
     {return (transformJAI!=null) ? (AffineTransform) transformJAI.clone() : null;}

@@ -22,9 +22,6 @@
  */
 package net.seas.opengis.gc;
 
-// Coordinate systems
-import net.seas.opengis.cs.CoordinateSystem;
-
 // Input/output
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +29,8 @@ import javax.imageio.IIOException;
 
 
 /**
- * Support for creation of grid coverages from persistent formats
- * as well as exporting a grid coverage to a persistent formats.
+ * Support for creation of grid coverages from persistent
+ * formats as well as exporting a grid coverage to a persistent formats.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -48,6 +45,21 @@ public abstract class GridCoverageExchange
      */
     public GridCoverageExchange()
     {}
+
+    /**
+     * Create a new {@link GridCoverage} from a grid coverage file.
+     * This method is meant to allow implementations to create a {@link GridCoverage}
+     * from any file format.
+     *
+     * @param  name File name (including path) from which to create a grid coverage.
+     *         This file name can be any valid file name within the underlying operating
+     *         system of the server or a valid string, such as a URL which specifics
+     *         a grid coverage.
+     * @return The grid coverage.
+     * @throws IOException if an error occurs during reading.
+     * @throws IIOException if a grid coverage can't be create from the specified name.
+     */
+    public abstract GridCoverage createFromName(final String name) throws IOException;
 
     /**
      * Export a grid coverage to a persistent file format.
@@ -73,13 +85,4 @@ public abstract class GridCoverageExchange
      *         coverage.
      */
     public abstract void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException;
-
-    /**
-     * Create a new coverage with a different coordinate reference system.
-     *
-     * @param  gridCoverage Source grid coverage.
-     * @param  coordsys Coordinate system of the new grid coverage.
-     * @return The new grid coverage.
-     */
-    public abstract GridCoverage move(final GridCoverage gridCoverage, final CoordinateSystem coordsys);
 }

@@ -27,6 +27,9 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
 
+// Collections
+import java.util.List;
+
 
 /**
  * Base class of all coverage type.
@@ -44,8 +47,8 @@ public abstract class Coverage
     {}
 
     /**
-     * Returns the coordinate system. This specifies the coordinate system used
-     * when accessing a coverage or grid coverage with the “evaluate” methods.
+     * Returns the coordinate system. This specifies the coordinate
+     * system used when accessing a coverage or grid coverage with the “evaluate” methods.
      * It is also the coordinate system of the coordinates used with the math
      * transform {@link net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
      * gridToCoordinateSystem()}. This coordinate system is usually different than
@@ -63,39 +66,33 @@ public abstract class Coverage
     public abstract CoordinateSystem getCoordinateSystem();
 
     /**
-     * Returns The bounding box for the coverage domain in coordinate system
-     * coordinates. May be null if this coverage has no associated coordinate
-     * system.
+     * Returns The bounding box for the coverage domain in coordinate
+     * system coordinates. May be null if this coverage has no associated
+     * coordinate system.
      */
     public abstract Envelope getEnvelope();
 
     /**
-     * The names of each dimension in the coverage. Typically these
-     * names are “x”, “y”, “z” and “t”. Grid coverages are typically
-     * 2D (x, y) while other coverages may be 3D (x, y, z) or 4D
-     * (x, y, z, t). The number of dimensions of the coverage is the
-     * number of entries in the list of dimension names.
+     * The names of each dimension in the coverage. Typically
+     * these names are “x”, “y”, “z” and “t”. Grid coverages are typically 2D (x,y)
+     * while other coverages may be 3D (x,y,z) or 4D (x,y,z,t). The number of
+     * dimensions of the coverage is the number of entries in the list of dimension
+     * names.
      */
     public abstract String[] getDimensionNames();
 
     /**
-     * The number of sample dimensions in the coverage.
-     * For grid coverages, a sample dimension is a band.
-     */
-    public abstract int getNumSampleDimensions();
-
-    /**
-     * Retrieve sample dimension information for the coverage. For a grid coverage,
-     * a sample dimension is a band. The sample dimension information include such
-     * things as description, data type of the value (bit, byte, integer...), the no
-     * data values, minimum and maximum values and a color table if one is associated
+     * Retrieve sample dimension information for the coverage.
+     * For a grid coverage, a sample dimension is a band. The sample dimension information
+     * include such things as description, data type of the value (bit, byte, integer...),
+     * the no data values, minimum and maximum values and a color table if one is associated
      * with the dimension. A coverage must have at least one sample dimension.
      */
-    public abstract SampleDimension getSampleDimension(int index) throws IndexOutOfBoundsException;
+    public abstract List<SampleDimension> getSampleDimensions() throws IndexOutOfBoundsException;
 
     /**
-     * Return a sequence of boolean values for a given point in the coverage. A value
-     * for each sample dimension is included in the sequence. The default interpolation
+     * Return a sequence of boolean values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid
      * coverage coordinate system.
@@ -103,7 +100,7 @@ public abstract class Coverage
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
-     *               {@link #getNumSampleDimensions()} long.
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
@@ -119,7 +116,7 @@ public abstract class Coverage
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
-     *               {@link #getNumSampleDimensions()} long.
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
@@ -135,15 +132,15 @@ public abstract class Coverage
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
-     *               {@link #getNumSampleDimensions()} long.
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
     public abstract int[] evaluate(CoordinatePoint coord, int[] dest) throws PointOutsideCoverageException;
 
     /**
-     * Return an sequence of double values for a given point in the coverage. A value
-     * for each sample dimension is included in the sequence. The default interpolation
+     * Return an sequence of double values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid coverage
      * coordinate system.
@@ -151,7 +148,7 @@ public abstract class Coverage
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
-     *               {@link #getNumSampleDimensions()} long.
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */

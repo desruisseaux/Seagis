@@ -52,8 +52,8 @@ public abstract class DatumType extends EnumeratedParameter
     private static final long serialVersionUID = -3231606206426977300L;
 
     /**
-     * These datums, such as ED50, NAD27 and NAD83, have been designed to
-     * support horizontal positions on the ellipsoid as opposed to positions
+     * These datums, such as ED50, NAD27 and NAD83, have been designed
+     * to support horizontal positions on the ellipsoid as opposed to positions
      * in 3-D space.  These datums were designed mainly to support a horizontal
      * component of a position in a domain of limited extent, such as a country,
      * a region or a continent.
@@ -61,8 +61,8 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Horizontal CLASSIC = new Horizontal("CLASSIC", 1001, Clé.CLASSIC);
 
     /**
-     * A geocentric datum is a "satellite age" modern geodetic datum mainly of
-     * global extent, such as WGS84 (used in GPS), PZ90 (used in GLONASS) and
+     * A geocentric datum is a "satellite age" modern geodetic datum
+     * mainly of global extent, such as WGS84 (used in GPS), PZ90 (used in GLONASS) and
      * ITRF. These datums were designed to support both a horizontal
      * component of position and a vertical component of position (through
      * ellipsoidal heights).  The regional realizations of ITRF, such as
@@ -71,8 +71,8 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Horizontal GEOCENTRIC = new Horizontal("GEOCENTRIC", 1002, Clé.GEOCENTRIC);
 
     /**
-     * A vertical datum for orthometric heights that are measured along the
-     * plumb line.
+     * A vertical datum for orthometric heights
+     * that are measured along the plumb line.
      */
     public static final Vertical ORTHOMETRIC = new Vertical("ORTHOMETRIC", 2001, Clé.ORTHOMETRIC);
 
@@ -83,12 +83,12 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Vertical ELLIPSOIDAL = new Vertical("ELLIPSOIDAL", 2002, Clé.ELLIPSOIDAL);
 
     /**
-     * The vertical datum of altitudes or heights in the atmosphere. These
-     * are approximations of orthometric heights obtained with the help of
-     * a barometer or a barometric altimeter.  These values are usually
-     * expressed in one of the following units: meters, feet, millibars
-     * (used to measure pressure levels),  or theta value (units used to
-     * measure geopotential height).
+     * The vertical datum of altitudes or heights in the atmosphere.
+     * These are approximations of orthometric heights obtained with
+     * the help of a barometer or a barometric altimeter. These values
+     * are usually expressed in one of the following units: meters, feet,
+     * millibars (used to measure pressure levels), or theta value (units
+     * used to measure geopotential height).
      */
     public static final Vertical ALTITUDE_BAROMETRIC = new Vertical("ALTITUDE_BAROMETRIC", 2003, Clé.BAROMETRIC_ALTITUDE);
 
@@ -98,9 +98,9 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Vertical NORMAL = new Vertical("NORMAL", 2004, Clé.NORMAL);
 
     /**
-     * A vertical datum of geoid model derived heights, also called
-     * GPS-derived heights. These heights are approximations of
-     * orthometric heights (<var>H</var>), constructed from the
+     * A vertical datum of geoid model derived heights,
+     * also called GPS-derived heights. These heights are approximations
+     * of orthometric heights (<var>H</var>), constructed from the
      * ellipsoidal heights (<var>h</var>) by the use of the given
      * geoid undulation model (<var>N</var>) through the equation:
      * <var>H</var>=<var>h</var>-<var>N</var>.
@@ -154,8 +154,9 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * Return the enum for the specified value. Current version don't allow
-     * new enum definition (it will be fixed in a future version).
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * Current version don't allow new enum definition (it will be
+     * fixed in a future version).</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -184,16 +185,16 @@ public abstract class DatumType extends EnumeratedParameter
     abstract int getTypeKey();
 
     /**
-     * Return the type name in the specified locale.
-     * Type may be "Horizontal", "Vertical" ou "Local".
+     * <FONT COLOR="#FF6633">Return the type name in the specified locale.
+     * Type may be "Horizontal", "Vertical" ou "Local".</FONT>
      */
     public String getType(final Locale locale)
     {return Resources.getResources(locale).getString(getTypeKey());}
 
     /**
-     * Returns this enum's name in the specified locale. If no name
-     * is available for the specified locale, a default one will be
-     * used.
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
+     * If no name is available for the specified locale, a default one will be
+     * used.</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.
@@ -213,7 +214,7 @@ public abstract class DatumType extends EnumeratedParameter
     {return getEnum(getValue());}
 
     /**
-     * Horizontal datum type.
+     * <FONT COLOR="#FF6633">Horizontal datum type.</FONT>
      *
      * @version 1.00
      * @author Martin Desruisseaux
@@ -254,7 +255,7 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * Vertical datum type.
+     * <FONT COLOR="#FF6633">Vertical datum type.</FONT>
      *
      * @version 1.00
      * @author Martin Desruisseaux
@@ -293,7 +294,7 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * Local datum type.
+     * <FONT COLOR="#FF6633">Local datum type.</FONT>
      *
      * @version 1.00
      * @author Martin Desruisseaux

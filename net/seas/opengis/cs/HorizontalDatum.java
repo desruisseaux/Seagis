@@ -50,7 +50,7 @@ public class HorizontalDatum extends Datum
     private static final long serialVersionUID = 3506060221517273330L;
 
     /**
-     * The default WGS 1984 datum.
+     * <FONT COLOR="#FF6633">The default WGS 1984 datum.</FONT>
      */
     public static final HorizontalDatum WGS84 = new HorizontalDatum("WGS84", DatumType.GEOCENTRIC, Ellipsoid.WGS84, null);
 

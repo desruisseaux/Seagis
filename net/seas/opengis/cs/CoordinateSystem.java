@@ -100,8 +100,8 @@ public abstract class CoordinateSystem extends Info
     public abstract AxisInfo getAxis(int dimension);
 
     /**
-     * Gets units for dimension within coordinate system. Each
-     * dimension in the coordinate system has corresponding units.
+     * Gets units for dimension within coordinate system.
+     * Each dimension in the coordinate system has corresponding units.
      *
      * @param dimension Zero based index of axis.
      */

@@ -158,13 +158,11 @@ final class ConcatenedTransform extends MathTransform
      * Creates a transform by concatenating <code>this</code>
      * with the specified transform.
      */
-    protected MathTransform concatenate(final MathTransform transform)
+    protected MathTransform concatenate(MathTransform transform)
     {
-        if (transform instanceof ConcatenedTransform)
-        {
-            // TODO: How to detect if "transform.concatenate(transform1)" would be more efficient?
-            return new ConcatenedTransform(transform1, transform2.concatenate(transform));
-        }
-        else return super.concatenate(transform);
+        // TODO: How to detect if "transform.concatenate(transform1)" would be more efficient?
+        transform = transform2.concatenate(transform);
+        if (transform.equals(transform2)) return this;
+        return new ConcatenedTransform(transform1, transform);
     }
 }

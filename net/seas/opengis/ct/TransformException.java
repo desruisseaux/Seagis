@@ -24,7 +24,7 @@ package net.seas.opengis.ct;
 
 
 /**
- * Thrown by {@link MathTransform} when a transformation failed.
+ * <FONT COLOR="#FF6633">Thrown by {@link MathTransform} when a transformation failed.</FONT>
  *
  * @version 1.0
  * @author André Gosselin

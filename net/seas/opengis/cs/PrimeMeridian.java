@@ -50,7 +50,7 @@ public class PrimeMeridian extends Info
     private static final long serialVersionUID = -963498800353363758L;
 
     /**
-     * The Greenwich meridian, with angular measures in degrees.
+     * <FONT COLOR="#FF6633">The Greenwich meridian, with angular measures in degrees.</FONT>
      */
     public static final PrimeMeridian GREENWICH = new PrimeMeridian("Greenwich", Unit.DEGREE, 0);
 

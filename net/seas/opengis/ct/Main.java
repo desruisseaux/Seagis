@@ -45,6 +45,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 // Miscellaneous
+import java.util.Locale;
 import java.awt.geom.Point2D;
 import net.seas.util.XClass;
 import net.seas.util.XString;
@@ -68,6 +69,13 @@ final class Main extends Console
     private final MathTransformFactory factory;
 
     /**
+     * Locale for meta-information (e.g. column titles). It doesn't
+     * need to be the same locale than table contents. May be null
+     * for the default locale.
+     */
+    private final Locale metaLocale;
+
+    /**
      * Construct a console.
      *
      * @param args Command line arguments.
@@ -76,6 +84,7 @@ final class Main extends Console
     {
         super(args);
         this.factory = MathTransformFactory.DEFAULT;
+        this.metaLocale = locale;
     }
 
     /**
@@ -142,7 +151,7 @@ final class Main extends Console
      */
     public void availableTransforms()
     {
-        final Resources resources = Resources.getResources(null);
+        final Resources resources = Resources.getResources(metaLocale);
         final String[] transforms = factory.getAvailableTransforms();
         final TableWriter   table = new TableWriter(out, "  \u2502  ");
 
@@ -158,7 +167,7 @@ final class Main extends Console
         table.setAlignment(TableWriter.ALIGN_CENTER);
         table.write(resources.getString(Clé.CLASSIFICATION_NAME));
         table.nextColumn();
-        table.write(resources.getString(Clé.LOCALIZED_NAME¤1, locale.getDisplayLanguage()));
+        table.write(resources.getString(Clé.LOCALIZED_NAME¤1, locale.getDisplayLanguage(metaLocale)));
         
         ////////////////////////////////
         ///   Write transforms list  ///
@@ -224,17 +233,18 @@ final class Main extends Console
         ////////////////////////////
         ///   Setup projection   ///
         ////////////////////////////
-        final Projection   projection = new Projection("Main", "Mercator_1SP", center);
+        final Ellipsoid     ellipsoid = Ellipsoid.WGS84;
+        final Projection   projection = new Projection("Main", "Mercator_1SP", ellipsoid, center);
         final MathTransform transform = factory.createParameterizedTransform(projection);
         final NumberFormat  outFormat = NumberFormat.getNumberInstance(locale);
         final CoordinateFormat format = new CoordinateFormat("D°MM.m'", locale);
         final TableWriter       table = new TableWriter(out, "  \u2502  ");
-        final Resources     resources = Resources.getResources(null);
+        final Resources     resources = Resources.getResources(metaLocale);
         outFormat.setMinimumFractionDigits(3);
         outFormat.setMaximumFractionDigits(3);
         out.println();
         out.print(' ');
-        out.println(resources.format(Clé.PROJECTION¤1, transform.getName(null)));
+        out.println(resources.getString(Clé.PROJECTION¤1, transform.getName(metaLocale)));
 
         //////////////////////////////
         ///   Write column titles  ///
@@ -245,23 +255,52 @@ final class Main extends Console
         table.write(resources.getString(Clé.GEOGRAPHIC_COORDINATE));
         table.nextColumn();
         table.write(resources.getString(Clé.PROJECTED_COORDINATE));
+        table.nextColumn();
+        table.write("ortho. (km)");
+        table.nextColumn();
+        table.write("carte. (km)");
         table.writeHorizontalSeparator();
-        table.setAlignment(TableWriter.ALIGN_LEFT);
 
         //////////////////////////////
         ///   Project all points   ///
         //////////////////////////////
+        Point2D lastGeographic = null;
+        Point2D lastProjected  = null;
         for (final Iterator<Point2D> it=points.iterator(); it.hasNext();)
         {
             final Point2D geographic = it.next();
             final Point2D projected  = transform.transform(geographic, null);
+
+            // Write geographic coordinates
+            table.setAlignment(TableWriter.ALIGN_LEFT);
             table.write(format.format(new CoordinatePoint(geographic)));
             table.nextColumn();
+
+            // Write projected coordinates
             final String xLength = outFormat.format(projected.getX()/1000); // Convert m --> km
             final String yLength = outFormat.format(projected.getY()/1000); // Convert m --> km
             table.write(XString.spaces(10-xLength.length())); table.write(xLength);
             table.write(XString.spaces(12-yLength.length())); table.write(yLength);
+            table.nextColumn();
+            table.setAlignment(TableWriter.ALIGN_RIGHT);
+
+            // Write orthodromic distance with previous point
+            if (lastGeographic!=null)
+            {
+                table.write(outFormat.format(ellipsoid.orthodromicDistance(lastGeographic, geographic)/1000));
+            }
+            table.nextColumn();
+
+            // Write cartesian distance with previous point
+            if (lastProjected!=null)
+            {
+                table.write(outFormat.format(lastProjected.distance(projected)/1000));
+            }
             table.nextLine();
+
+            // Continue loop...
+            lastGeographic = geographic;
+            lastProjected  = projected;
         }
         table.writeHorizontalSeparator();
         table.flush();

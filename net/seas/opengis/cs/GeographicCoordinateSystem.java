@@ -47,9 +47,9 @@ import java.rmi.RemoteException;
 
 
 /**
- * A coordinate system based on latitude and longitude. Some geographic
- * coordinate systems are <var>latitude</var>/<var>longiude</var>,  and
- * some are <var>longitude</var>/<var>latitude</var>.  You can find out
+ * A coordinate system based on latitude and longitude.
+ * Some geographic coordinate systems are <var>latitude</var>/<var>longiude</var>,
+ * and some are <var>longitude</var>/<var>latitude</var>. You can find out
  * which this is by examining the axes. You should also check the angular
  * units, since not all geographic coordinate systems use degrees.
  *
@@ -77,10 +77,10 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private static final AxisInfo NORTH = new AxisInfo.Localized("Latitude", Clé.LATITUDE, AxisOrientation.NORTH);
 
     /**
-     * A geographic coordinate system using WGS84 datum. This coordinate system use
-     * <var>longitude</var>/<var>latitude</var> ordinates with longitude values
-     * increasing north and latitude values increasing east. Angular units are degrees
-     * and prime meridian is Greenwich.
+     * <FONT COLOR="#FF6633">A geographic coordinate system using WGS84 datum.</FONT>
+     * This coordinate system use <var>longitude</var>/<var>latitude</var> ordinates
+     * with longitude values increasing north and latitude values increasing east.
+     * Angular units are degrees and prime meridian is Greenwich.
      */
     public static final GeographicCoordinateSystem WGS84 = new GeographicCoordinateSystem("WGS84", HorizontalDatum.WGS84);
 
@@ -211,9 +211,9 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
-     * Gets details on conversions to WGS84. Some geographic coordinate systems
+     * Gets details on conversions to WGS84.  Some geographic coordinate systems
      * provide several transformations into WGS84, which are designed to provide
-     * good accuracy in different areas of interest.  The first conversion should
+     * good accuracy in different areas of interest. The first conversion should
      * provide acceptable accuracy over the largest possible area of interest.
      *
      * @return A set of conversions info to WGS84. The default

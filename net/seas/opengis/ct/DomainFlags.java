@@ -105,8 +105,9 @@ public final class DomainFlags extends EnumeratedParameter
     {super(name, value);}
 
     /**
-     * Return the enum for the specified value. This method is provided
-     * for compatibility with {@link org.opengis.ct.CT_DomainFlags}.
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * This method is provided for compatibility with
+     * {@link org.opengis.ct.CT_DomainFlags}.</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -119,9 +120,9 @@ public final class DomainFlags extends EnumeratedParameter
     }
 
     /**
-     * Returns enum's names in the specified locale. For example if this
-     * enum has value "3", then <code>getNames</code> returns an array
-     * of two elements: "Inside" and "Outside".
+     * <FONT COLOR="#FF6633">Returns enum's names in the specified locale.
+     * For example if this enum has value "3", then <code>getNames</code>
+     * returns an array of two elements: "Inside" and "Outside".</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the current default locale.
      * @return Enum's names in the specified locale (never <code>null</code>).
@@ -147,8 +148,8 @@ public final class DomainFlags extends EnumeratedParameter
     }
 
     /**
-     * Returns a combination of two domain flags. This is equivalent
-     * to <code>getEnum(this.{@link #value} | flags.value)</code>.
+     * <FONT COLOR="#FF6633">Returns a combination of two domain flags.
+     * This is equivalent to <code>getEnum(this.{@link #value}&nbsp;|&nbsp;flags.value)</code>.</FONT>
      */
     public DomainFlags or(final DomainFlags flags)
     {return getEnum(getValue() | flags.getValue());}

@@ -26,8 +26,8 @@ package net.seas.opengis.gc;
 import net.seas.opengis.cv.Coverage;
 
 /**
- * Basic access to grid data values. Each band in
- * an image is represented as a sample dimension.
+ * Basic access to grid data values.
+ * Each band in an image is represented as a sample dimension.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -57,8 +57,8 @@ public abstract class GridCoverage extends Coverage
     public abstract GridGeometry getGridGeometry();
 
     /**
-     * Return a sequence of strongly typed values for a block. A value for
-     * each sample dimension will be returned. The return value is an
+     * Return a sequence of strongly typed values for a block.
+     * A value for each sample dimension will be returned. The return value is an
      * <CODE>N+1</CODE> dimensional array, with dimensions. For 2 dimensional
      * grid coverages, this array will be accessed as (sample dimension, column,
      * row). The index values will be based from 0. The indices in the returned

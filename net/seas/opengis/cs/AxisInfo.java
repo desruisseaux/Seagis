@@ -30,8 +30,8 @@ import net.seas.resources.Resources;
 
 
 /**
- * Details of axis. This is used to label
- * axes, and indicate the orientation.
+ * Details of axis. This is used to label axes,
+ * and indicate the orientation.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -47,9 +47,10 @@ public class AxisInfo implements Serializable
     private static final long serialVersionUID = 2949229234384551980L;
 
     /**
-     * Human readable name for axis. Possible values are
-     * <code>X</code>, <code>Y</code>, <code>Long</code>,
-     * <code>Lat</code> or any other short string.
+     * Human readable name for axis.
+     * Possible values are <code>X</code>, <code>Y</code>,
+     * <code>Long</code>, <code>Lat</code> or any other
+     * short string.
      */
     public final String name;
 
@@ -72,8 +73,8 @@ public class AxisInfo implements Serializable
     }
 
     /**
-     * Returns the localized name of this axis. The
-     * default implementation returns {@link #name}.
+     * <FONT COLOR="#FF6633">Returns the localized name of this axis.
+     * The default implementation returns {@link #name}.</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return The localized string.

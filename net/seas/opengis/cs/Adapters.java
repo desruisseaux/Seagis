@@ -72,10 +72,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * Provide methods for interoperability with
- * <code>org.opengis.cs</code> package.  All
- * methods accept null argument. All OpenGIS
- * objects are suitable for RMI use.
+ * <FONT COLOR="#FF6633">Provide methods for interoperability with
+ * <code>org.opengis.cs</code> package. All methods accept null
+ * argument. All OpenGIS objects are suitable for RMI use.</FONT>
  *
  * @version 1.0
  * @author Martin Desruisseaux

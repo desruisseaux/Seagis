@@ -36,9 +36,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * An angle in degrees. An angle is the amount of rotation needed to bring one line
- * or plane into coincidence with another, generally measured in degrees, sexagesimal
- * degrees or grads.
+ * <FONT COLOR="#FF6633">An angle in degrees. An angle is the amount of rotation needed
+ * to bring one line or plane into coincidence with another, generally measured in degrees,
+ * sexagesimal degrees or grads.</FONT>
  *
  * @version 1.0
  * @author Martin Desruisseaux

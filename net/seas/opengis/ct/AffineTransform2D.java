@@ -31,6 +31,7 @@ import net.seas.opengis.pt.ConvexHull;
 // Miscellaneous
 import java.io.Serializable;
 import net.seas.util.XClass;
+import net.seas.util.XAffineTransform;
 
 
 /**
@@ -150,10 +151,13 @@ final class AffineTransform2D extends MathTransform implements Serializable
      */
     protected MathTransform concatenate(final MathTransform that)
     {
+        if (this.isIdentity()) return that.getMathTransform();
+        if (that.isIdentity()) return this.getMathTransform();
         if (that instanceof AffineTransform2D)
         {
             final AffineTransform product = new AffineTransform(((AffineTransform2D) that).transform);
             product.concatenate(this.transform);
+            XAffineTransform.round(product);
             return new AffineTransform2D(product);
         }
         return super.concatenate(that);

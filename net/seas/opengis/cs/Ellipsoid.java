@@ -38,10 +38,10 @@ import net.seas.resources.Resources;
 
 
 /**
- * The figure formed by the rotation of an ellipse about an axis. In this context,
- * the axis of rotation is always the minor axis. It is named geodetic ellipsoid
- * if the parameters are derived by the measurement of the shape and the size of
- * the Earth to approximate the geoid as close as possible.
+ * The figure formed by the rotation of an ellipse about an axis.
+ * In this context, the axis of rotation is always the minor axis. It is named geodetic
+ * ellipsoid if the parameters are derived by the measurement of the shape and the size
+ * of the Earth to approximate the geoid as close as possible.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -214,13 +214,13 @@ public class Ellipsoid extends Info
     }
 
     /**
-     * Returns the value of the inverse of the flattening constant. Flattening is a
-     * value used to indicate how closely an ellipsoid approaches a spherical shape.
-     * The inverse flattening is related to the equatorial/polar radius
-     * (<var>r<sub>e</sub></var> and <var>r<sub>p</sub></var> respectively) by the
-     * formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>. For
-     * perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
-     * (which is the correct value).
+     * Returns the value of the inverse of the flattening constant.
+     * Flattening is a value used to indicate how closely an ellipsoid approaches a
+     * spherical shape. The inverse flattening is related to the equatorial/polar
+     * radius (<var>r<sub>e</sub></var> and <var>r<sub>p</sub></var> respectively)
+     * by the formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>.
+     * For perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
+     * (which is the correct value).</FONT>
      */
     public double getInverseFlattening()
     {return inverseFlattening;}

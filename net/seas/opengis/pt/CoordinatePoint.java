@@ -31,9 +31,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * A position defined by a list of numbers. The ordinate values are
- * indexed from <code>0</code> to <code>(numDim-1)</code>, where
- * <code>numDim</code> is the dimension of the coordinate system
+ * A position defined by a list of numbers. The ordinate
+ * values are indexed from <code>0</code> to <code>(numDim-1)</code>,
+ * where <code>numDim</code> is the dimension of the coordinate system
  * the coordinate point belongs in.
  *
  * @version 1.00
@@ -94,22 +94,22 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {this(point.getX(), point.getY());}
 
     /**
-     * Returns the ordinate value along the specified dimension.
-     * This is equivalent to <code>{@link #ord}[dimension]</code>.
+     * <FONT COLOR="#FF6633">Returns the ordinate value along the specified dimension.
+     * This is equivalent to <code>{@link #ord}[dimension]</code>.</FONT>
      */
     public final double getOrdinate(final int dimension)
     {return ord[dimension];}
 
     /**
-     * The number of ordinates of a <code>CoordinatePoint</code>.
-     * This is equivalent to <code>{@link #ord}.length</code>.
+     * <FONT COLOR="#FF6633">The number of ordinates of a <code>CoordinatePoint</code>.
+     * This is equivalent to <code>{@link #ord}.length</code>.</FONT>
      */
     public final int getDimension()
     {return ord.length;}
 
     /**
-     * Convenience method for checking the point's dimension validity.
-     * This method is usually call for argument checking.
+     * <FONT COLOR="#FF6633">Convenience method for checking the point's dimension validity.
+     * This method is usually call for argument checking.</FONT>
      *
      * @param  expectedDimension Expected dimension for this point.
      * @throws IllegalArgumentException if this point doesn't have the expected dimension.
@@ -125,9 +125,9 @@ public final class CoordinatePoint implements Cloneable, Serializable
     }
 
     /**
-     * Returns a {@link Point2D} with the same coordinate as this
-     * <code>CoordinatePoint</code>. This is a convenience method
-     * for interoperability with Java2D.
+     * <FONT COLOR="#FF6633">Returns a {@link Point2D} with the same coordinate
+     * as this <code>CoordinatePoint</code>. This is a convenience method for
+     * interoperability with Java2D.</FONT>
      *
      * @throws IllegalStateException if this coordinate point is not two-dimensional.
      */

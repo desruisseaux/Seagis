@@ -39,10 +39,10 @@ import java.rmi.RemoteException;
 
 
 /**
- * An aggregate of two coordinate systems. One of these is usually a
- * two dimensional coordinate system such as a geographic or a projected
- * coordinate system with a horizontal datum. The other is one-dimensional
- * coordinate system with a vertical datum.
+ * An aggregate of two coordinate systems.
+ * One of these is usually a two dimensional coordinate system such as a
+ * geographic or a projected coordinate system with a horizontal datum.
+ * The other is one-dimensional coordinate system with a vertical datum.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -139,8 +139,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Gets units for dimension within coordinate system. Each
-     * dimension in the coordinate system has corresponding units.
+     * Gets units for dimension within coordinate system.
+     * Each dimension in the coordinate system has corresponding units.
      */
     public Unit getUnits(final int dimension)
     {

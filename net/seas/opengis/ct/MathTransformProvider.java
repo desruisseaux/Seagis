@@ -44,8 +44,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * Base class for {@link MathTransform} providers. Instance of this class
- * allow the creation of transform objects from a classification name.
+ * <FONT COLOR="#FF6633">Base class for {@link MathTransform} providers.
+ * Instance of this class allow the creation of transform objects from a
+ * classification name.</FONT>
  * <br><br>
  * <strong>Note: this class is not part of OpenGIS specification and
  * may change in a future version. Do not rely on it.</strong>

@@ -57,8 +57,8 @@ public final class AxisOrientation extends EnumeratedParameter
     public static final AxisOrientation OTHER = new AxisOrientation("OTHER", 0, Clé.OTHER);
 
     /**
-     * Increasing ordinates values go North. This is usually
-     * used for Grid Y coordinates and Latitude.
+     * Increasing ordinates values go North.
+     * This is usually used for Grid Y coordinates and Latitude.
      */
     public static final AxisOrientation NORTH = new AxisOrientation("NORTH", 1, Clé.NORTH);
 
@@ -116,8 +116,9 @@ public final class AxisOrientation extends EnumeratedParameter
     }
 
     /**
-     * Return the enum for the specified value. This method is provided for
-     * compatibility with {@link org.opengis.cs.CS_AxisOrientationEnum}.
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * This method is provided for compatibility with
+     * {@link org.opengis.cs.CS_AxisOrientationEnum}.</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -130,9 +131,9 @@ public final class AxisOrientation extends EnumeratedParameter
     }
 
     /**
-     * Returns this enum's name in the specified locale. If no name
-     * is available for the specified locale, a default one will be
-     * used.
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
+     * If no name is available for the specified locale, a default one will be
+     * used.</FONT>
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.

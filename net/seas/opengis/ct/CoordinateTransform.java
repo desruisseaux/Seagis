@@ -42,10 +42,10 @@ import net.seas.util.XClass;
 
 
 /**
- * Describes a coordinate transformation. This service class transforms a coordinate point
- * position between two different coordinate reference systems. A coordinate transformation
- * interface establishes an association between a source and a target coordinate reference
- * system, and provides operations for transforming coordinates in the source coordinate
+ * Describes a coordinate transformation. This service class transforms
+ * a coordinate point position between two different coordinate reference systems. A coordinate
+ * transformation interface establishes an association between a source and a target coordinate
+ * reference system, and provides operations for transforming coordinates in the source coordinate
  * reference system to coordinates in the target coordinate reference system. These coordinate
  * systems can be ground or image coordinates. In general mathematics, "transformation" is the
  * general term for mappings between coordinate systems (see tensor analysis).
@@ -78,8 +78,7 @@ public abstract class CoordinateTransform extends MathTransform
 
     /**
      * Gets the semantic type of transform.
-     * For example, a datum transformation
-     * or a coordinate conversion.
+     * For example, a datum transformation or a coordinate conversion.
      */
     public abstract TransformType getTransformType();
 

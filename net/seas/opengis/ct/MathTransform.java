@@ -61,12 +61,14 @@ import javax.media.jai.PerspectiveTransform;
 
 
 /**
- * Transforms multi-dimensional coordinate points.   This class transforms coordinate value
- * for a point given in the source coordinate system to coordinate value for the same point
- * in the target coordinate system. In an ISO conversion, the transformation is accurate to
- * within the limitations of the computer making the calculations. In an ISO transformation,
- * where some of the operational parameters are derived from observations, the transformation
- * is accurate to within the limitations of those observations.
+ * Transforms multi-dimensional coordinate points. This class transforms
+ * coordinate value for a point given in the source coordinate system to
+ * coordinate value for the same point in the target coordinate system.
+ * In an ISO conversion, the transformation is accurate to within the
+ * limitations of the computer making the calculations. In an ISO
+ * transformation, where some of the operational parameters are derived
+ * from observations, the transformation is accurate to within the
+ * limitations of those observations.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -105,11 +107,10 @@ public abstract class MathTransform extends Info
 
     /**
      * Gets flags classifying domain points within a convex hull.
-     * Conceptually, each of the (usually infinite) points inside
-     * the convex hull is tested against the source domain.  The
-     * flags of all these tests are then combined.  In practice,
-     * implementations of different transforms will use different
-     * short-cuts to avoid doing an infinite number of tests.
+     * Conceptually, each of the (usually infinite) points inside the convex hull is
+     * tested against the source domain. The flags of all these tests are then combined.
+     * In practice, implementations of different transforms will use different short-cuts
+     * to avoid doing an infinite number of tests.
      * <br><br>
      * Convex hull are not yet implemented in the <code>net.seas.opengis</code>
      * package. Consequently, the default implementation for this method always
@@ -423,12 +424,12 @@ public abstract class MathTransform extends Info
     }
 
     /**
-     * Creates the inverse transform of this object. The target of the inverse transform is
-     * the source of the original. The source of the inverse transform is the target of the
-     * original. Using the original transform followed by the inverse's transform will result
-     * in an identity map on the source coordinate space, when allowances for error are made.
-     * This method may fail if the transform is not one to one. However, all cartographic
-     * projections should succeed.
+     * Creates the inverse transform of this object. The target of the inverse transform
+     * is the source of the original. The source of the inverse transform is the target
+     * of the original. Using the original transform followed by the inverse's transform
+     * will result in an identity map on the source coordinate space, when allowances for
+     * error are made. This method may fail if the transform is not one to one. However,
+     * all cartographic projections should succeed.
      * <br><br>
      * The default implementation returns <code>this</code> if this transform is an identity
      * transform, and throws a {@link NoninvertibleTransformException} otherwise. Subclasses

@@ -32,12 +32,14 @@ import net.seas.resources.Resources;
 
 
 /**
- * A box defined by two positions. The two positions must have the same dimension.
- * Each of the ordinate values in the minimum point must be less than or equal
- * to the corresponding ordinate value in the maximum point.  Please note that
- * these two points may be outside the valid domain of their coordinate system.
- * (Of course the points and envelope do not explicitly reference a coordinate
- * system, but their implicit coordinate system is defined by their context.)
+ * A box defined by two positions. The two positions must have the
+ * same dimension. Each of the ordinate values in the minimum point
+ * must be less than or equal to the corresponding ordinate value
+ * in the maximum point. Please note that these two points may be
+ * outside the valid domain of their coordinate system. (Of course
+ * the points and envelope do not explicitly reference a coordinate
+ * system, but their implicit coordinate system is defined by their
+ * context.)
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -151,12 +153,12 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Adds a point to this envelope. The resulting envelope is the smallest
-     * envelope that contains both the original envelope and the specified point.
-     * After adding a point, a call to {@link #contains} with the added point as
-     * an argument will return <code>true</code>, except if one of the point's
-     * ordinates was {@link Double#NaN} (in which case the corresponding ordinate
-     * have been ignored).
+     * <FONT COLOR="#FF6633">Adds a point to this envelope. The resulting envelope
+     * is the smallest envelope that contains both the original envelope and the
+     * specified point. After adding a point, a call to {@link #contains} with the
+     * added point as an argument will return <code>true</code>, except if one of
+     * the point's ordinates was {@link Double#NaN} (in which case the corresponding
+     * ordinate have been ignored).</FONT>
      *
      * @param  point The point to add.
      * @throws IllegalArgumentException if the point doesn't have the expected dimension.
@@ -174,7 +176,7 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Tests if a specified coordinate is inside the boundary of this envelope.
+     * <FONT COLOR="#FF6633">Tests if a specified coordinate is inside the boundary of this envelope.</FONT>
      *
      * @param  point The point to text.
      * @return <code>true</code> if the specified coordinates are inside the boundary
@@ -196,14 +198,14 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Returns the number of dimensions.
+     * <FONT COLOR="#FF6633">Returns the number of dimensions.</FONT>
      */
     public int getDimension()
     {return ord.length/2;}
 
     /**
-     * Returns the minimal ordinate along
-     * the specified dimension.
+     * <FONT COLOR="#FF6633">Returns the minimal ordinate along
+     * the specified dimension.</FONT>
      */
     public double getMinimum(final int dimension)
     {
@@ -212,8 +214,8 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Returns the maximal ordinate along
-     * the specified dimension.
+     * <FONT COLOR="#FF6633">Returns the maximal ordinate along
+     * the specified dimension.</FONT>
      */
     public double getMaximum(final int dimension)
     {
@@ -222,8 +224,8 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Returns the center ordinate along
-     * the specified dimension.
+     * <FONT COLOR="#FF6633">Returns the center ordinate along
+     * the specified dimension.</FONT>
      */
     public double getCenter(final int dimension)
     {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}

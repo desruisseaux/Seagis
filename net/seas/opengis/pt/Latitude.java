@@ -24,9 +24,9 @@ package net.seas.opengis.pt;
 
 
 /**
- * A latitude angle. Positive latitudes are
- * North, while negative latitudes are South.
- * This class has no direct OpenGIS equivalent.
+ * <FONT COLOR="#FF6633">A latitude angle. Positive latitudes are
+ * North, while negative latitudes are South. This class has no
+ * direct OpenGIS equivalent.</FONT>
  *
  * @version 1.0
  * @author Martin Desruisseaux

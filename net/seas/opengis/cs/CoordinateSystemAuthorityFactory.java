@@ -28,8 +28,9 @@ import java.util.NoSuchElementException;
 
 /**
  * Creates spatial reference objects using codes.
- * The codes are maintained by an external authority. A commonly used
- * authority is EPSG, which is also used in the GeoTIFF standard.
+ * The codes are maintained by an external authority.
+ * A commonly used authority is EPSG, which is also
+ * used in the GeoTIFF standard.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
