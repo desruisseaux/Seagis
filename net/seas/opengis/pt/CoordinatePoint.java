@@ -39,7 +39,7 @@ import net.seas.resources.Resources;
 
 /**
  * A position defined by a list of numbers. The ordinate values are
- * indexed from <code>0<code> to <code>(numDim-1)</code>, where
+ * indexed from <code>0</code> to <code>(numDim-1)</code>, where
  * <code>numDim</code> is the dimension of the coordinate system
  * the coordinate point belongs in.
  *
@@ -110,7 +110,7 @@ public final class CoordinatePoint implements Cloneable, Serializable
      * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
      * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
      * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
-     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var> et, au besoin
+     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
      * les inverser.
      *
      * @param  x Longitude (de préférence).
@@ -118,21 +118,37 @@ public final class CoordinatePoint implements Cloneable, Serializable
      * @throws IllegalArgumentException Si les arguments sont tout deux des latitudes ou des longitudes.
      */
     public CoordinatePoint(final Angle x, final Angle y) throws IllegalArgumentException
-    {this(x,y,null);}
+    {this(x, y, null, 2);}
 
     /**
      * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
      * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
      * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
-     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var> et, au besoin
+     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
      * les inverser.
      *
      * @param  x Longitude (de préférence).
      * @param  y Latitude (de préférence).
-     * @param  z Altitude (habituellement en mètres), ou <code>null</code> si elle n'est pas connue.
+     * @param  z Altitude (habituellement en mètres).
      * @throws IllegalArgumentException Si les deux premiers arguments sont tout deux des latitudes ou des longitudes.
      */
-    public CoordinatePoint(Angle x, Angle y, final Number z) throws IllegalArgumentException
+    public CoordinatePoint(final Angle x, final Angle y, final Number z) throws IllegalArgumentException
+    {this(x,y,z,3);}
+
+    /**
+     * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
+     * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
+     * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
+     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
+     * les inverser.
+     *
+     * @param  x Longitude (de préférence).
+     * @param  y Latitude (de préférence).
+     * @param  z Altitude (habituellement en mètres).
+     * @param  dim Nombre de dimensions: 2 ou 3. L'argument <code>z</code> sera ignoré si <code>dim</code> est 2.
+     * @throws IllegalArgumentException Si les deux premiers arguments sont tout deux des latitudes ou des longitudes.
+     */
+    private CoordinatePoint(Angle x, Angle y, final Number z, final int dim) throws IllegalArgumentException
     {
         final boolean normal  = (x instanceof Longitude) || (y instanceof Latitude );
         final boolean inverse = (x instanceof Latitude ) || (y instanceof Longitude);
@@ -142,25 +158,17 @@ public final class CoordinatePoint implements Cloneable, Serializable
         }
         if (inverse)
         {
-            final Angle t=x;
-            x=y; y=t;
+            Angle t;
+            t=x;
+            x=y;
+            y=t;
         }
-        if (z!=null)
+        ord = new double[dim];
+        ord[0] = x.degrees();
+        ord[1] = y.degrees();
+        if (dim>2)
         {
-            ord = new double[]
-            {
-                x.degrees(),
-                y.degrees(),
-                z.doubleValue()
-            };
-        }
-        else
-        {
-            ord = new double[]
-            {
-                x.degrees(),
-                y.degrees()
-            };
+            ord[2] = z.doubleValue();
         }
     }
 
