@@ -272,7 +272,7 @@ public abstract class TextImageReader extends SimpleImageReader
      *         si cette position n'a pas pu être obtenue.
      * @throws IOException si l'opération a échouée.
      */
-    protected static long getStreamPosition(final Reader reader) throws IOException
+    static long getStreamPosition(final Reader reader) throws IOException
     {return (reader instanceof LineReader) ? ((LineReader) reader).getPosition() : -1;}
 
     /**
@@ -284,7 +284,7 @@ public abstract class TextImageReader extends SimpleImageReader
      * @param message Un message optionel à placer après la position, ou
      *        <code>null</code> s'il n'y en a pas.
      */
-    protected final String getPositionString(final String message)
+    protected String getPositionString(final String message)
     {
         final String file;
         final Object input = getInput();

@@ -55,6 +55,7 @@ import java.util.Collections;
 // Miscellaneous
 import javax.media.jai.util.Range;
 import net.seas.resources.Resources;
+import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -82,6 +83,11 @@ import net.seas.resources.Resources;
 public abstract class SimpleImageReader extends ImageReader
 {
     /**
+     * The stream position when {@link #setInput} is invoked.
+     */
+    private long streamOrigin;
+
+    /**
      * Construct a new image reader.
      *
      * @param provider the {@link ImageReaderSpi} that is
@@ -89,6 +95,29 @@ public abstract class SimpleImageReader extends ImageReader
      */
     protected SimpleImageReader(final ImageReaderSpi provider)
     {super(provider);}
+
+    /**
+     * Sets the input source to use. If <code>input</code> is <code>null</code>,
+     * any currently set input source will be removed.
+     *
+     * @param input           The input object to use for future decoding.
+     * @param seekForwardOnly If true, images and metadata may only be read
+     *                        in ascending order from this input source.
+     * @param ignoreMetadata  If true, metadata may be ignored during reads.
+     */
+    public void setInput(final Object input, final boolean seekForwardOnly, final boolean ignoreMetadata)
+    {
+        super.setInput(input, seekForwardOnly, ignoreMetadata);
+        if (input instanceof ImageInputStream) try
+        {
+            streamOrigin = ((ImageInputStream) input).getStreamPosition();
+        }
+        catch (IOException exception)
+        {
+            streamOrigin = 0;
+            ExceptionMonitor.unexpectedException("net.seas.image.io", "SimpleImageReader", "setInput", exception);
+        }
+    }
 
     /**
      * Vérifie si l'index de l'image est dans la plage des valeurs
@@ -206,7 +235,7 @@ public abstract class SimpleImageReader extends ImageReader
         final int[] bankIndices = new int[numBands];
         final int[] bandOffsets = new int[numBands];
         for (int i=numBands; --i>=0;) bankIndices[i]=i;
-        final ColorSpace colorSpace = getColorSpace(imageIndex, 0);
+        final ColorSpace colorSpace = getColorSpace(imageIndex, 0, numBands);
         
         if (true)
         {
@@ -261,23 +290,28 @@ public abstract class SimpleImageReader extends ImageReader
      *
      * @param  imageIndex The image index.
      * @param  bandIndex  The band index.
+     * @param  numBands   The number of bands.
      * @return A default color space scaled to fit data.
      * @throws IOException if an input operation failed.
      */
-    protected ColorSpace getColorSpace(final int imageIndex, final int bandIndex) throws IOException
+    final ColorSpace getColorSpace(final int imageIndex, final int bandIndex, final int numBands) throws IOException
     {
-        final Range range = getExpectedRange(imageIndex, bandIndex);
-        if (range!=null && Number.class.isAssignableFrom(range.getElementClass()))
+        final int dataType = getRawDataType(imageIndex);
+        if (dataType!=DataBuffer.TYPE_BYTE)
         {
-            final Number minimum = (Number) range.getMinValue();
-            final Number maximum = (Number) range.getMaxValue();
-            if (minimum!=null && maximum!=null)
+            final Range range = getExpectedRange(imageIndex, bandIndex);
+            if (range!=null && Number.class.isAssignableFrom(range.getElementClass()))
             {
-                final float minValue = minimum.floatValue();
-                final float maxValue = maximum.floatValue();
-                if (minValue<maxValue && !Float.isInfinite(minValue) && !Float.isInfinite(maxValue))
+                final Number minimum = (Number) range.getMinValue();
+                final Number maximum = (Number) range.getMaxValue();
+                if (minimum!=null && maximum!=null)
                 {
-                    return new ScaledColorSpace(minValue, maxValue);
+                    final float minValue = minimum.floatValue();
+                    final float maxValue = maximum.floatValue();
+                    if (minValue<maxValue && !Float.isInfinite(minValue) && !Float.isInfinite(maxValue))
+                    {
+                        return new ScaledColorSpace(numBands, minValue, maxValue);
+                    }
                 }
             }
         }
@@ -297,7 +331,9 @@ public abstract class SimpleImageReader extends ImageReader
         final Object input=getInput();
         if (input instanceof ImageInputStream)
         {
-            return ((ImageInputStream) input).length();
+            long length = ((ImageInputStream) input).length();
+            if (length>=0) length -= streamOrigin;
+            return length;
         }
         if (input instanceof File)
         {

@@ -22,16 +22,14 @@
  */
 package net.seas.image.io;
 
-// Couleurs
+// Miscellaneous
+import net.seas.util.XClass;
 import java.awt.color.ColorSpace;
 
 
 /**
- * Espace de couleurs pour les images dont les valeurs de pixels se situent entre deux
- * nombre réels. Cette classe enveloppe un autre espace de couleurs {@link ColorSpace},
- * mais transformera toutes les valeurs de pixels pour que la plage spécifiée au
- * constructeur soit représentable dans la plage de valeurs du {@link ColorSpace}
- * enveloppé.
+ * Espace de couleurs pour les images dont les valeurs
+ * de pixels se situent entre deux nombre réels.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -39,9 +37,14 @@ import java.awt.color.ColorSpace;
 final class ScaledColorSpace extends ColorSpace
 {
     /**
-     * Espace de couleur enveloppé.
+     * Minimal normalized RGB value.
      */
-    private final ColorSpace proxy;
+    private static final float MIN_VALUE = 0f;
+
+    /**
+     * Maximal normalized RGB value.
+     */
+    private static final float MAX_VALUE = 1f;
 
     /**
      * Facteur par lequel multiplier les pixels.
@@ -55,102 +58,81 @@ final class ScaledColorSpace extends ColorSpace
     private final float offset;
 
     /**
-     * Tableau temporaire pour les conversions.
-     */
-    private final float[] array;
-
-    /**
      * Construit un modèle de couleurs.
      *
+     * @param numComponents Nombre de composante (seule la première sera prise en compte).
      * @param minimum Valeur minimale des nombres réels à décoder.
      * @param maximum Valeur maximale des nombres réels à décoder.
      */
-    public ScaledColorSpace(final float minimum, final float maximum)
-    {this(ColorSpace.getInstance(CS_GRAY), minimum, maximum);}
-
-    /**
-     * Construit un modèle de couleurs.
-     *
-     * @param colors  Un espace de couleurs de type gris.
-     * @param minimum Valeur minimale des nombres réels à décoder.
-     * @param maximum Valeur maximale des nombres réels à décoder.
-     */
-    private ScaledColorSpace(final ColorSpace colors, final float minimum, final float maximum)
+    public ScaledColorSpace(final int numComponents, final float minimum, final float maximum)
     {
-        super(TYPE_GRAY, colors.getNumComponents());
-        final float proxyMin =  colors.getMinValue(0);
-        final float proxyMax =  colors.getMaxValue(0);
-        this.proxy   = colors;
-        this.scale   = (proxyMax-proxyMin)/(maximum-minimum);
-        this.offset  = minimum + proxyMin/scale;
-        this.array   = new float[getNumComponents()];
+        super(TYPE_GRAY, numComponents);
+        scale  = (maximum-minimum)/(MAX_VALUE-MIN_VALUE);
+        offset = minimum - MIN_VALUE*scale;
     }
 
     /**
-     * Convertit les valeurs du tableau spécifié en valeurs
-     * valides pour le modèle de couleur {@link #proxy}.
+     * Retourne une couleur RGB en tons de
+     * gris pour le nombre réel spécifié.
      */
-    private float[] convert(final float[] input)
+    public float[] toRGB(final float[] values)
     {
-        for (int i=array.length; --i>=0;)
+        float value = (values[0]-offset)/scale;
+        if (Float.isNaN(value)) value=MIN_VALUE;
+        return new float[] {value, value, value};
+    }
+    
+    /**
+     * Retourne une valeur réelle pour
+     * le ton de gris spécifié.
+     */
+    public float[] fromRGB(final float[] RGB)
+    {
+        final float[] values = new float[getNumComponents()];
+        values[0] = (RGB[0]+RGB[1]+RGB[2])/3*scale + offset;
+        return values;
+    }
+    
+    /**
+     * Convertit les valeurs en couleurs dans l'espace CIEXYZ.
+     */
+    public float[] toCIEXYZ(final float[] values)
+    {
+        float value = (values[0]-offset)/scale;
+        if (Float.isNaN(value)) value=MIN_VALUE;
+        return new float[]
         {
-            float value = input[i]*scale + offset;
-            if (Float.isNaN(value)) value= offset;
-            array[i] = value;
-        }
-        return array;
+            value*0.9642f,
+            value*1.0000f,
+            value*0.8249f
+        };
     }
-
+    
     /**
-     * Effectue une conversion inverse à partir
-     * des valeurs retournées par {@link #proxy}.
+     * Convertit les couleurs de l'espace CIEXYZ en valeurs.
      */
-    private float[] inverseConvert(final float[] output)
+    public float[] fromCIEXYZ(final float[] RGB)
     {
-        for (int i=output.length; --i>=0;)
-            output[i] = (output[i]-offset)/scale;
-        return output;
+        final float[] values = new float[getNumComponents()];
+        values[0] = (RGB[0]/0.9642f + RGB[1] + RGB[2]/0.8249f)/3*scale + offset;
+        return values;
     }
-
-    /**
-     * Normalise les valeurs de couleurs spécifiées,
-     * puis convertit les valeurs dans l'espace RGB.
-     */
-    public float[] toRGB(final float[] colorvalue)
-    {return proxy.toRGB(convert(colorvalue));}
-    
-    /**
-     * Convertit les valeurs de couleurs à partir de l'espace RGB,
-     * puis étend les valeurs normalisées sur la plage de valeurs
-     * de cet espace de couleurs.
-     */
-    public float[] fromRGB(final float[] rgbvalue)
-    {return inverseConvert(proxy.fromRGB(rgbvalue));}
-    
-    /**
-     * Normalise les valeurs de couleurs spécifiées,
-     * puis convertit les valeurs dans l'espace CIEXYZ.
-     */
-    public float[] toCIEXYZ(final float[] colorvalue)
-    {return proxy.toCIEXYZ(convert(colorvalue));}
-    
-    /**
-     * Convertit les valeurs de couleurs à partir de l'espace CIEXYZ,
-     * puis étend les valeurs normalisées sur la plage de valeurs
-     * de cet espace de couleurs.
-     */
-    public float[] fromCIEXYZ(float[] colorvalue)
-    {return inverseConvert(proxy.fromCIEXYZ(colorvalue));}
 
     /**
      * Retourne la valeur minimale autorisée.
      */
     public float getMinValue(final int component)
-    {return (proxy.getMinValue(component)-offset)/scale;}
+    {return MIN_VALUE*scale + offset;}
 
     /**
      * Retourne la valeur maximale autorisée.
      */
     public float getMaxValue(final int component)
-    {return (proxy.getMaxValue(component)-offset)/scale;}
+    {return MAX_VALUE*scale + offset;}
+
+    /**
+     * Returns a string representation of this color model.
+     */
+    public String toString()
+    {return XClass.getShortClassName(this)+'['+getMinValue(0)+", "+getMaxValue(0)+']';}
 }

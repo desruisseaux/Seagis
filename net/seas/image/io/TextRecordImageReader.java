@@ -195,10 +195,7 @@ public class TextRecordImageReader extends TextImageReader
      *        qui a construit ce décodeur.
      */
     public TextRecordImageReader(final ImageReaderSpi provider)
-    {
-        super(provider);
-        clear();
-    }
+    {super(provider, DataBuffer.TYPE_FLOAT);}
 
     /**
      * Construit un décodeur d'images.
@@ -768,28 +765,29 @@ public class TextRecordImageReader extends TextImageReader
         final int yColumn;
 
         /**
-         * Construit un descripteur. Ce constructeur suppose que les <var>x</var>
-         * et les <var>y</var> se trouvent dans les colonnes 0 et 1 respectivement.
-         * Les autres paramètres sont initialisés comme dans le constructeur de la
-         * classe parente.
+         * Construct a new SPI with name "gridded records" and MIME type "text/x-grid".
+         */
+        public Spi()
+        {this("gridded records", "text/x-grid");}
+
+        /**
+         * Construct a new SPI for {@link TextRecordImageReader}. <var>x</var> and
+         * <var>y</var> columns are assumed to be in column #0 and 1 respectively.
+         * Others parameters are initialized as in superclass constructor.
          *
-         * @param name Nom de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #names}.
-         * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #MIMETypes}.
+         * @param name Format name, or <code>null</code> to let {@link #names} unset.
+         * @param mime MIME type, or <code>null</code> to let {@link #MIMETypes} unset.
          */
         public Spi(final String name, final String mime)
         {this(name, mime, 0, 1);}
 
         /**
-         * Construit un descripteur.
+         * Construct a new SPI for {@link TextRecordImageReader}.
          *
-         * @param name Nom de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #names}.
-         * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #MIMETypes}.
-         * @param xColumn Numéro de colonne des <var>x</var> (à partir de 0).
-         * @param yColumn Numéro de colonne des <var>y</var> (à partir de 0).
+         * @param name Format name, or <code>null</code> to let {@link #names} unset.
+         * @param mime MIME type, or <code>null</code> to let {@link #MIMETypes} unset.
+         * @param xColumn 0-based column number for <var>x</var> values.
+         * @param yColumn 0-based column number for <var>y</var> values.
          */
         public Spi(final String name, final String mime, final int xColumn, final int yColumn)
         {
@@ -802,10 +800,12 @@ public class TextRecordImageReader extends TextImageReader
         }
 
         /**
-         * Retourne une chaîne de caractère
-         * donnant une description de ce décodeur.
+         * Returns a brief, human-readable description of this service provider
+         * and its associated implementation. The resulting string should be
+         * localized for the supplied locale, if possible.
          *
-         * @param locale Langue dans laquelle retourner la description.
+         * @param  locale A Locale for which the return value should be localized.
+         * @return A String containing a description of this service provider.
          */
         public String getDescription(final Locale locale)
         {return Resources.getResources(locale).getString(Clé.GRID_READER_DESCRIPTION);}
@@ -837,14 +837,14 @@ public class TextRecordImageReader extends TextImageReader
         }
 
         /**
-         * Retourne un nouveau décodeur {@link TextRecordImageReader}.
+         * Returns an instance of the ImageReader implementation associated
+         * with this service provider.
          *
-         * @param  extension Paramètres optionels, ou <code>null</code> pour
-         *         utiliser les paramètres par défaut.
-         * @return Un nouveau décodeur {@link TextRecordImageReader}.
-         * @throws IIOException si la création du décodeur a échoué.
+         * @param  extension An optional extension object, which may be null.
+         * @return An image reader instance.
+         * @throws IOException if the attempt to instantiate the reader fails.
          */
-        public ImageReader createReaderInstance(final Object extension) throws IIOException
+        public ImageReader createReaderInstance(final Object extension) throws IOException
         {return new TextRecordImageReader(this);}
     }
 }

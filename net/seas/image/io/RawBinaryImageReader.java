@@ -147,12 +147,20 @@ public class RawBinaryImageReader extends SimpleImageReader
     }
 
     /**
-     * Efface les information qui étaient conservées
-     * en mémoire pour l'image à l'index spécifié.
+     * Efface les information qui étaient conservées en mémoire.
      */
-    private void clear(final int imageIndex)
+    private void clear()
     {
         ranges = null;
+    }
+
+    /**
+     * Restores the image reader to its initial state.
+     */
+    public void reset()
+    {
+        clear();
+        super.reset();
     }
 
     /**
@@ -160,7 +168,7 @@ public class RawBinaryImageReader extends SimpleImageReader
      */
     public void setInput(final Object input, final boolean seekForwardOnly, final boolean ignoreMetadata)
     {
-        clear(0);
+        clear();
         super.setInput(input, seekForwardOnly, ignoreMetadata);
     }
 
@@ -186,18 +194,21 @@ public class RawBinaryImageReader extends SimpleImageReader
     {
         // Search for the source band which is to be
         // written into the first destination band.
+        int numBands=getNumBands(imageIndex);
         int firstVisibleSourceBand=0;
         if (destinationBands!=null)
         {
+            numBands = destinationBands.length;
             for (int i=1; i<destinationBands.length; i++)
                 if (destinationBands[i] < destinationBands[firstVisibleSourceBand])
                     firstVisibleSourceBand = i;
         }
         if (sourceBands!=null)
         {
+            numBands = sourceBands.length;
             firstVisibleSourceBand = sourceBands[firstVisibleSourceBand];
         }
-        return getColorSpace(imageIndex, firstVisibleSourceBand);
+        return getColorSpace(imageIndex, firstVisibleSourceBand, numBands);
     }
 
     /**
@@ -250,7 +261,7 @@ public class RawBinaryImageReader extends SimpleImageReader
      * The default implementation query {@link RawBinaryImageReadParam#getStreamSampleModel()}
      * if the supplied parameters is an instance of {@link RawBinaryImageReadParam}. Default
      * values are provided through the following methods: {@link #getNumBands}, {@link #getRawDataType},
-     * {@link #getRawImageType}, {@link #getColorSpace} and {@link #getExpectedRange}.
+     * {@link #getRawImageType} and {@link #getExpectedRange}.
      *
      * @param  imageIndex  The index of the image to be retrieved.
      * @param  param       Parameters used to control the reading process, or null.
@@ -315,10 +326,10 @@ public class RawBinaryImageReader extends SimpleImageReader
      */
     public BufferedImage read(final int imageIndex, final ImageReadParam param) throws IOException
     {
-        clear(imageIndex);
         /*
          * Extract user's parameters.
          */
+        checkImageIndex(imageIndex);
         final int[]      sourceBands;
         final int[] destinationBands;
         final int sourceXSubsampling;
@@ -534,20 +545,23 @@ public class RawBinaryImageReader extends SimpleImageReader
         /*
          * Replace the color space.
          */
-        ColorModel finalColorModel = image.getColorModel();
-        if (finalColorModel instanceof ComponentColorModel)
+        if (dataType!=DataBuffer.TYPE_BYTE)
         {
-            final ColorSpace oldColorSpace = finalColorModel.getColorSpace();
-            final ColorSpace newColorSpace = getColorSpace(imageIndex, sourceBands, destinationBands);
-            if (!oldColorSpace.equals(newColorSpace))
+            ColorModel finalColorModel = image.getColorModel();
+            if (finalColorModel instanceof ComponentColorModel)
             {
-                final int[]                   bits = finalColorModel.getComponentSize();
-                final boolean             hasAlpha = finalColorModel.hasAlpha();
-                final boolean isAlphaPremultiplied = finalColorModel.isAlphaPremultiplied();
-                final int             transparency = finalColorModel.getTransparency();
-                final int            transfertType = finalColorModel.getTransferType();
-                finalColorModel = new ComponentColorModel(newColorSpace, bits, hasAlpha, isAlphaPremultiplied, transparency, transfertType);
-                return new BufferedImage(finalColorModel, image.getRaster(), image.isAlphaPremultiplied(), null);
+                final ColorSpace oldColorSpace = finalColorModel.getColorSpace();
+                final ColorSpace newColorSpace = getColorSpace(imageIndex, sourceBands, destinationBands);
+                if (!oldColorSpace.equals(newColorSpace))
+                {
+                    final int[]                   bits = finalColorModel.getComponentSize();
+                    final boolean             hasAlpha = finalColorModel.hasAlpha();
+                    final boolean isAlphaPremultiplied = finalColorModel.isAlphaPremultiplied();
+                    final int             transparency = finalColorModel.getTransparency();
+                    final int            transfertType = finalColorModel.getTransferType();
+                    finalColorModel = new ComponentColorModel(newColorSpace, bits, hasAlpha, isAlphaPremultiplied, transparency, transfertType);
+                    return new BufferedImage(finalColorModel, image.getRaster(), image.isAlphaPremultiplied(), null);
+                }
             }
         }
         return image;
@@ -675,7 +689,7 @@ public class RawBinaryImageReader extends SimpleImageReader
         {this("raw", "image/raw");}
 
         /**
-         * Construct a new SPI for {@link SimpleImageReader}. This
+         * Construct a new SPI for {@link RawBinaryImageReader}. This
          * constructor initialize the following fields to default
          * values:
          *
@@ -739,6 +753,10 @@ public class RawBinaryImageReader extends SimpleImageReader
          * <ul>
          *   <li>{@link Dimension} for specifying the image size.</li>
          * </ul>
+         *
+         * @param  extension An optional extension object, which may be null.
+         * @return An image reader instance.
+         * @throws IOException if the attempt to instantiate the reader fails.
          */
         public ImageReader createReaderInstance(final Object extension) throws IOException
         {

@@ -250,7 +250,9 @@ final class RecordList
          * Elimine les doublons. Lorsque des doublons seront trouvés, ils iront de
          * <code>lower</code> à <code>upper</code> <strong>inclusivement</strong>.
          */
-        for (int upper=count,lower=count; lower>=1; lower--)
+        int upper = count-1;
+        int lower = count;
+        while (--lower>=1)
         {
             if (array[upper] != array[lower-1])
             {
@@ -264,6 +266,13 @@ final class RecordList
                 upper = lower-1;
             }
         }
+        if (upper!=lower)
+        {
+            System.arraycopy(array, upper, array, lower, count-upper);
+            final int oldCount = count;
+            count -= (upper-lower);
+            Arrays.fill(array, count, oldCount, Float.NaN); // Par prudence.
+        }
         /*
          * Recherche le plus petit interval entre deux points. Vérifie ensuite que
          * l'interval entre tous les points est un multiple entier de cet interval
@@ -273,6 +282,7 @@ final class RecordList
         for (int i=1; i<count; i++)
         {
             final float d=array[i]-array[i-1];
+            assert(d>0);
             if (d<delta) delta=d;
         }
         for (int i=1; i<count; i++)
