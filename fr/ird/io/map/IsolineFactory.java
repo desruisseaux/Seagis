@@ -486,7 +486,8 @@ public abstract class IsolineFactory {
         double    compression = 0;
         Statistics resolution = null;
         for (int i=0; i<all.length; i++) {
-            final GeometryCollection isoline = all[i];
+            GeometryCollection isoline = all[i];
+            isoline = (GeometryCollection) isoline.clone();
             final Statistics res = isoline.getResolution();
             if (resolution == null) {
                 resolution = res;
@@ -497,6 +498,7 @@ public abstract class IsolineFactory {
             // TODO: provides some API for controling compression.
             compression += count * isoline.compress(CompressionLevel.RELATIVE_AS_BYTES);
             pointCount  += count;
+            all[i] = isoline;
         }
         compression /= pointCount;
         final LogRecord record;
