@@ -43,7 +43,8 @@ import org.geotools.renderer.geom.GeometryCollection;
 
 // Seagis
 import fr.ird.seasview.DataBase;
-import fr.ird.seasview.layer.IsolineFactory;
+import fr.ird.io.map.GEBCOFactory;
+import fr.ird.io.map.IsolineFactory;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.resources.experimental.Resources;
 import fr.ird.resources.experimental.ResourceKeys;
@@ -63,8 +64,8 @@ public final class IsolineLayerControl extends LayerControl {
     static {
         try {
             FACTORIES = new IsolineFactory[] {
-                new IsolineFactory(DataBase.MEDITERRANEAN_VERSION ? "Méditerranée"
-                                                                  : "Océan_Indien")
+                new GEBCOFactory(DataBase.MEDITERRANEAN_VERSION ? "Méditerranée"
+                                                                : "Océan_Indien")
             };
         } catch (FileNotFoundException exception) {
             throw new ExceptionInInitializerError(exception);

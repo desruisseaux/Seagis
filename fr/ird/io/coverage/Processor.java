@@ -99,8 +99,9 @@ import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.io.map.GEBCOReader;
+import fr.ird.io.map.GEBCOFactory;
 import fr.ird.io.map.IsolineReader;
-import fr.ird.seasview.layer.IsolineFactory;
+import fr.ird.io.map.IsolineFactory;
 
 
 /**
@@ -231,7 +232,7 @@ public class Processor extends Arguments {
             bathy            = getOptionalString("-bathy");
             destination      = getOptionalString("-destination");
             interpolation    = getOptionalString("-interpolation");
-            isolineFactory   = new IsolineFactory("Méditerranée");
+            isolineFactory   = new GEBCOFactory ("Méditerranée");
             this.destination = (destination!=null) ? new File(destination) : null;
             getRemainingArguments(0);
             if (sources == null) {

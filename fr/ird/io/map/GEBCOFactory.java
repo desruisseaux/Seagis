@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.seasview.layer;
+package fr.ird.io.map;
 
 // Input/output
 import java.net.URL;
@@ -36,17 +36,16 @@ import java.net.URISyntaxException;
 import org.geotools.ct.TransformException;
 import org.geotools.renderer.geom.GeometryCollection;
 
-// Seagis
-import fr.ird.io.map.GEBCOReader;
-
 
 /**
- * An isoline factory.
+ * An isoline factory backed by the GEBCO reader. This factory expect ASCII files
+ * to be in the &quot;<code>application-data/maps/gebco/&quot; directory and
+ * serialized files in the &quot;<code>application-data/maps/serialized/&quot; directory.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class IsolineFactory extends fr.ird.io.map.IsolineFactory {
+public class GEBCOFactory extends IsolineFactory {
     /**
      * The source directory for isolines data.
      */
@@ -78,7 +77,7 @@ public final class IsolineFactory extends fr.ird.io.map.IsolineFactory {
      * @param  name The source name (not including directory or file extension).
      * @throws FileNotFoundException if the resources has not been found.
      */
-    public IsolineFactory(final String name) throws FileNotFoundException {
+    public GEBCOFactory(final String name) throws FileNotFoundException {
         super(toCacheURL(name));
         this.name = name;
     }
