@@ -13,7 +13,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
  */
-package fr.ird.database;
+package fr.ird.database.sql;
 
 // Base de données
 import java.sql.Driver;
@@ -37,6 +37,9 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Seagis dependencies
+import fr.ird.database.DataBase;
+import fr.ird.database.ConfigurationKey;
+import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
@@ -47,7 +50,7 @@ import fr.ird.resources.seagis.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class SQLDataBase extends UnicastRemoteObject implements DataBase {
+public abstract class AbstractDataBase extends UnicastRemoteObject implements DataBase {
     /**
      * Le nom de la classe du dernier pilote chargé.
      * En général, une application ne chargera qu'un seul pilote.
@@ -60,7 +63,7 @@ public abstract class SQLDataBase extends UnicastRemoteObject implements DataBas
     private final String source;
 
     /**
-     * Connection vers la base de données. Cette connection
+     * Connexion vers la base de données. Cette connection
      * est établie au moment de la construction de cet objet.
      */
     protected final Connection connection;
@@ -89,56 +92,53 @@ public abstract class SQLDataBase extends UnicastRemoteObject implements DataBas
     private boolean modified;
 
     /**
-     * Ouvre une connection vers une base de données.
+     * Ouvre une connection vers une base de données. Chacun des arguments à ce
+     * constructeur peut être nul, auquel cas une valeur par défaut sera utilisée.
      *
-     * @param  url Protocole et nom de la base de données.
-     * @param  propertyFile Fichier contenant les propriétés de connection à la base,
-     *         ou <code>null</code> si aucun.
+     * @param  propertyFile Fichier contenant les propriétés de connection à la base.
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
      *         en heure GMT les dates apparaissant dans la base de données.
-     * @throws IOException si le fichier de configuration existe mais n'a pas pu être ouvert.
-     * @throws SQLException Si on n'a pas pu se connecter au catalogue.
-     */
-    protected SQLDataBase(final String url,
-                          final File propertyFile,
-                          final TimeZone timezone) throws IOException, SQLException
-    {
-        this(url, propertyFile, timezone, null, null);
-    }
-
-    /**
-     * Ouvre une connection vers une base de données.
-     *
-     * @param  url Protocole et nom de la base de données.
-     * @param  propertyFile Fichier contenant les propriétés de connection à la base,
-     *         ou <code>null</code> si aucun.
-     * @param  timezone Fuseau horaire des dates inscrites dans la base
-     *         de données. Cette information est utilisée pour convertir
-     *         en heure GMT les dates apparaissant dans la base de données.
+     * @param  source Protocole et nom de la base de données.
      * @param  user Nom d'utilisateur de la base de données.
      * @param  password Mot de passe.
      * @throws IOException si le fichier de configuration existe mais n'a pas pu être ouvert.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    protected SQLDataBase(final String        url,
-                          final File propertyFile,
-                          final TimeZone timezone,
-                          final String       user,
-                          final String   password) throws IOException, SQLException
+    protected AbstractDataBase(File propertyFile, TimeZone timezone, String source, String user, String password) throws IOException, SQLException
     {
-        if (user!=null && user.trim().length()!=0) {
-            this.connection = DriverManager.getConnection(url, user, password);
-        } else {
-            this.connection = DriverManager.getConnection(url);
-        }
-        this.timezone     = timezone;
-        this.source       = url;
-        this.propertyFile = propertyFile;
+        /*
+         * Procède d'abord à la lecture du fichier de configuration,  afin de permettre
+         * à la méthode 'getProperty' de fonctionner. Cette dernière sera utilisée dans
+         * les lignes suivantes, et risque aussi d'être surchargée.
+         */
         if (propertyFile!=null && propertyFile.exists()) {
             final InputStream in = new BufferedInputStream(new FileInputStream(propertyFile));
             properties.loadFromXML(in);
             in.close();
+        }
+        this.propertyFile = propertyFile;
+        if (timezone == null) {
+            final String ID = getProperty(TIMEZONE);
+            if (ID != null) {
+                timezone = TimeZone.getTimeZone(ID);
+            }
+        }
+        this.timezone = timezone;
+        if (source == null) {
+            source = getProperty(SOURCE);
+        }
+        this.source = source;
+        if (user == null) {
+            user = getProperty(USER);
+        }
+        if (password == null) {
+            password = getProperty(PASSWORD);
+        }
+        if (user!=null && user.trim().length()!=0) {
+            this.connection = DriverManager.getConnection(source, user, password);
+        } else {
+            this.connection = DriverManager.getConnection(source);
         }
     }
 
@@ -146,7 +146,7 @@ public abstract class SQLDataBase extends UnicastRemoteObject implements DataBas
      * Retourne le fuseau horaire des dates
      * exprimées dans cette base de données.
      */
-    public TimeZone getTimeZone() throws RemoteException {
+    public TimeZone getTimeZone() {
         return (TimeZone) timezone.clone();
     }
 
@@ -156,24 +156,35 @@ public abstract class SQLDataBase extends UnicastRemoteObject implements DataBas
      * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
-    public String getProperty(final Key key) throws RemoteException {
-        if (key != null) {
-            if (key.name.equalsIgnoreCase(SOURCE  .name)) return source;
-            if (key.name.equalsIgnoreCase(TIMEZONE.name)) return timezone.getID();
-            return properties.getProperty(key.name, key.defaultValue);
+    public String getProperty(final ConfigurationKey key) {
+        String value = properties.getProperty(key.name, key.defaultValue);
+        if (value == null) {
+            if (key.equals(SOURCE)) {
+                return source;
+            }
+            if (key.equals(TIMEZONE)) {
+                return timezone.getID();
+            }
         }
-        return null;
+        return value;
     }
 
     /**
      * Affecte une nouvelle valeur sous la clé spécifiée.
      *
      * @param key   La clé.
-     * @param value Nouvelle valeur.
+     * @param value Nouvelle valeur, ou <code>null</code> pour rétablir la propriété
+     *              à sa valeur par défaut.
      */
-    public synchronized void setProperty(final Key key, final String value) {
-        if (!value.equals(properties.setProperty(key.name, value))) {
-            modified = true;
+    public synchronized void setProperty(final ConfigurationKey key, final String value) {
+        if (value != null) {
+            if (!value.equals(properties.setProperty(key.name, value))) {
+                modified = true;
+            }
+        } else {
+            if (properties.remove(key.name) != null) {
+                modified = true;
+            }
         }
     }
 

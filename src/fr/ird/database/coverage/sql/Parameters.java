@@ -12,56 +12,25 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
-// Coordonnées spatio-temporelles
+// J2SE and JAI dependencies
 import java.util.Date;
-import java.util.TimeZone;
 import java.text.DateFormat;
+import java.io.Serializable;
+import java.io.ObjectStreamException;
 import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
-
-// Entrés/sorties
-import java.io.File;
-import java.io.Serializable;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
-
-// Divers
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import javax.media.jai.ParameterList;
 
-// OpenGIS
-import org.opengis.referencing.operation.TransformException;
-
-// Geotools
-import org.geotools.pt.Envelope;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.CompoundCoordinateSystem;
-import org.geotools.cs.TemporalCoordinateSystem;
-import org.geotools.cs.HorizontalCoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.ct.MathTransform2D;
+// Geotools dependencies
 import org.geotools.gp.Operation;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.HorizontalCoordinateSystem;
 import org.geotools.resources.Utilities;
-import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.geometry.XDimension2D;
 
-// Seagis
-import fr.ird.resources.seagis.Resources;
-import fr.ird.resources.seagis.ResourceKeys;
+// Seagis dependencies
 import fr.ird.database.coverage.SeriesEntry;
 
 
@@ -223,7 +192,7 @@ final class Parameters implements Serializable {
      * Retourne un code représentant ce bloc de paramètres.
      */
     public int hashCode() {
-        int code = 367891234;
+        int code = (int)serialVersionUID;
         if (geographicArea != null) code += geographicArea.hashCode();
         if (resolution     != null) code +=     resolution.hashCode();
         return code;

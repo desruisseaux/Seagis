@@ -21,19 +21,18 @@ import java.rmi.RemoteException;
 
 
 /**
- * Interface de base des tables dans la base de données.
+ * Base interface for tables in an observation database. <code>Table</code> objects
+ * are produced by various methods in {@link DataBase} sub-interfaces. Each
+ * <code>Table</code> can in turn produces {@link Entry} objects.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Table extends Remote {
     /**
-     * Libère les ressources utilisées par cette table.
-     * Appelez cette méthode lorsque vous n'aurez plus
-     * besoin de consulter cette table.
+     * Release any resources used by this table.
      *
-     * @throws RemoteException si un problème est survenu
-     *         lors de la disposition des ressources.
+     * @throws RemoteException if a problem occured while releasing the resources.
      */
     public abstract void close() throws RemoteException;
 }

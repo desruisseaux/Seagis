@@ -22,30 +22,24 @@ import java.rmi.ServerException;
 
 
 /**
- * Exception levée lorsqu'une exception autre que les exceptions standard héritant
- * de la classe {@link RemoteException} est levée lors de l'accés à une ressource.
- *
- * Par exemple, si une connection est réalisée sur un serveur et qu'une exception
- * du type {@link SQLException} est levée lors de l'execution d'une requête, alors
- * elle sera enveloppée dans une <code>CatalogException</code>.
+ * Base class for exceptions that occur while querying a {@link DataBase} or a related object.
+ * This exception usually occurs on the server side and is forwarded to the client. It may
+ * contains an {@link SQLException} as its cause.
  *
  * @version $Id$
  * @author Remi Eve
  */
 public class CatalogException extends ServerException {
     /** 
-     * Construit une exception enveloppant l'erreur spécifiée.
-     *
-     * @param cause La cause de l'exception.
+     * Constructs an exception from the specified cause.
+     * The cause is often a {@link SQLException}.
      */
     public CatalogException(final Exception cause) {
         super(cause.getLocalizedMessage(), cause);
     }
     
-    /** 
-     * Construit une exception avec le message spécifié.
-     *
-     * @param message Message de l'exception.
+    /**
+     * Constructs an exception with the specified message.
      */
     public CatalogException(final String message) {
         super(message);

@@ -5,10 +5,11 @@
     <TITLE>package fr.ird.database.coverage</TITLE>
   </HEAD>
   <BODY>
-    Interrogation de la base de données d'images. L'interface
-    {@link fr.ird.database.coverage.CoverageDataBase} contient la connection vers
-    la base de données. Les autres interfaces telles que {@link fr.ird.database.coverage.SeriesTable}
-    et {@link fr.ird.database.coverage.CoverageTable} interrogent une table en
-    particulier de cette base de données.
+    Provides interfaces for accessing {@linkplain org.geotools.gc.GridCoverage grid coverages}
+    in a database. The {@link fr.ird.database.coverage.CoverageDataBase} is the starting point,
+    usually a connection to a database through JDBC. This object can constructs different views
+    of tables, especially {@link fr.ird.database.coverage.SeriesTable} and
+    {@link fr.ird.database.coverage.CoverageTable}. Those views can in turn constructs entries
+    as a result of queries, especially {@link fr.ird.database.coverage.CoverageEntry}.
   </BODY>
 </HTML>

@@ -1,14 +1,30 @@
+/*
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2004 Institut de Recherche pour le Développement
+ *
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Library General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Library General Public License for more details (http://www.gnu.org/).
+ */
 package fr.ird.database.coverage.sql;
 
-// Seagis.
-import fr.ird.resources.seagis.ResourceKeys;
-
-// J2SE.
+// J2SE dependencies.
 import java.net.URL;
 import java.io.File;
 import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+
+// Seagis.
+import fr.ird.resources.seagis.ResourceKeys;
+
 
 /**
  * Cette classe permet d'obtenir les valeurs de configuration de la connexion  
@@ -16,7 +32,7 @@ import java.io.FileOutputStream;
  *
  * @author Remi Eve
  */
-public class Configuration extends fr.ird.database.Configuration {       
+final class Configuration extends fr.ird.database.Configuration {       
     /**
      * Définition des clés accessibles.
      */

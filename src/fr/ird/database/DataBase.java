@@ -16,24 +16,20 @@
 package fr.ird.database;
 
 // J2SE dependencies
-import java.util.Map;
-import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.Serializable;
 import java.io.IOException;
-import java.io.ObjectStreamException;
-import java.io.InvalidObjectException;
 import java.rmi.RemoteException;
 import java.rmi.Remote;
 
-// GeoAPI dependencies
-import org.opengis.util.InternationalString;
-
 
 /**
- * Interface de base des connections vers une base de données.
+ * Base interface for connections to a database. An application usually has a single
+ * <code>DataBase</code> object, which is the starting point for working with the
+ * <code>fr.ird.database</code> package. Each <code>DataBase</code> object provides
+ * various methods for fetching many {@link Table} objects. Each <code>Table</code>
+ * object can in turn produces many {@link Entry} objects.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -41,121 +37,61 @@ import org.opengis.util.InternationalString;
  */
 public interface DataBase extends Remote {
     /**
-     * Le niveau pour enregistrer les instruction SELECT dans le {@linkplain Logger journal}.
+     * Key for fetching the JDBC driver for a connection to a SQL database.
      *
-     * @see fr.ird.database.coverage.CoverageDataBase#LOGGER
-     * @see fr.ird.database.sample.SampleDataBase#LOGGER
+     * @see #getProperty
      */
-    public static final Level SQL_SELECT = SQLLevel.SQL_SELECT;
+    public static final ConfigurationKey DRIVER = new ConfigurationKey("Driver", null, "sun.jdbc.odbc.JdbcOdbcDriver");
 
     /**
-     * Le niveau pour enregistrer les instruction UPDATE dans le {@linkplain Logger journal}.
+     * Key for fetching the URL of a SQL database.
      *
-     * @see fr.ird.database.coverage.CoverageDataBase#LOGGER
-     * @see fr.ird.database.sample.SampleDataBase#LOGGER
+     * @see #getProperty
      */
-    public static final Level SQL_UPDATE = SQLLevel.SQL_UPDATE;
+    public static final ConfigurationKey SOURCE = new ConfigurationKey("Sources", null, "jdbc:odbc:SEAGIS");
 
     /**
-     * Clé de la propriétée représentant le pilote JDBC
-     * à utiliser pour se connecter à la base de données.
-     * Cette clé peut être utilisée avec {@link #getProperty}.
+     * Key for fetching the user name during a connection to a database.
+     *
+     * @see #getProperty
      */
-    public static final Key DRIVER = new Key("Driver", null, null);
+    public static final ConfigurationKey USER = new ConfigurationKey("User", null, null);
 
     /**
-     * Clé de la propriétée représentant la source des données.
-     * Cette clé peut être utilisée avec {@link #getProperty}.
+     * Key for fetching the user name during a connection to a database.
+     * <strong>WARNING:</strong> This information is not encrypted.
+     *
+     * @see #getProperty
      */
-    public static final Key SOURCE = new Key("Sources", null, null);
+    public static final ConfigurationKey PASSWORD = new ConfigurationKey("Password", null, null);
 
     /**
-     * Clé de la propriétée représentant le fuseau horaire de
-     * la base de données. Cette clé peut être utilisée avec
-     * {@link #getProperty}.
+     * Key for fetching the default timezone for dates in the database.
+     *
+     * @see #getProperty
      */
-    public static final Key TIMEZONE = new Key("TimeZone", null, null);
+    public static final ConfigurationKey TIMEZONE = new ConfigurationKey("TimeZone", null, "UTC");
 
     /**
-     * Retourne une des propriétée de la base de données. La clé <code>name</code>
-     * est habituellement une des constantes {@link #DRIVER}, {@link #SOURCE} ou
-     * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
-     * demandée n'est pas définie.
+     * Returns a property from the database. The <code>key</code> argument is a key like
+     * {@link #DRIVER}, {@link #SOURCE} or {@link #TIMEZONE}. This method returns
+     * <code>null</code> if the property is undefined and has no default value.
+     *
+     * @throws RemoteException if a problem occured while querying the backing store.
      */
-    public abstract String getProperty(final Key name) throws RemoteException;
+    public abstract String getProperty(final ConfigurationKey key) throws RemoteException;
 
     /**
-     * Retourne le fuseau horaire des dates exprimées dans cette base de données.
+     * Returns the timezone for dates in the database.
+     *
+     * @throws RemoteException if a problem occured while querying the backing store.
      */
     public abstract TimeZone getTimeZone() throws RemoteException;
 
     /**
-     * Ferme la connection et libère les ressources utilisées par cette base de données.
-     * Appelez cette méthode lorsque vous n'aurez plus besoin de consulter cette base.
+     * Close the connection and release any resources used by this object.
      *
-     * @throws RemoteException si un problème est survenu lors de la disposition des ressources.
+     * @throws RemoteException if a problem occured while disposing ressources.
      */
     public abstract void close() throws IOException;
-
-    /**
-     * Une propriétés à utiliser lors de la connection à une base de données.
-     */
-    public static final class Key implements Serializable {
-        /**
-         * Pour compatibilité entre différentes versions.
-         */
-        private static final long serialVersionUID = 4719725873634041733L;
-
-        /**
-         * Ensemble des clés déjà créés.
-         */
-        private static final Map<String,Key> POOL = new HashMap<String,Key>();
-
-        /**
-         * Nom de la propriété.
-         */
-        final String name;
-        
-        /**
-         * Valeur par defaut de la propriété, si celle ci n'est pas définie.
-         */
-        final transient String defaultValue;
-        
-        /**
-         * Description de la propriété.
-         */
-        final transient InternationalString description;
-    
-        /**
-         * Construit une nouvelle clé.
-         *
-         * @param name          Nom de la propriété.
-         * @param description   Description de la propriété.
-         * @param defaultValue  Valeur par defaut de la propriété, si celle ci n'est pas définie.
-         */
-        public Key(final String name, final InternationalString description, final String defaultValue) {
-            this.name         = name;
-            this.defaultValue = defaultValue;
-            this.description  = description;
-            synchronized (POOL) {
-                if (!equals(POOL.put(name, this))) {
-                    throw new IllegalStateException("Doublon dans les noms de clés.");
-                }
-            }
-        }
-
-        /**
-         * Retourne l'instance à utiliser après une lecture binaire
-         * (habituellement à des fins de RMI).
-         */
-        protected Object readResolve() throws ObjectStreamException {
-            synchronized (POOL) {
-                final Object r = POOL.get(name);
-                if (r != null) {
-                    return r;
-                }
-            }
-            throw new InvalidObjectException("Clé inconnue: "+name);
-        }
-    }    
 }

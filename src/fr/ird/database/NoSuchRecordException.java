@@ -21,7 +21,7 @@ import fr.ird.resources.seagis.ResourceKeys;
 
 
 /**
- * Exception signalant qu'un enregistrement était requis mais n'a pas été trouvé.
+ * Raised when a record was required but not found in a {@linkplain Table table}.
  *
  * @version $Id$
  * @author Martin Desruisseaux

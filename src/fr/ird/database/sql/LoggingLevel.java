@@ -13,36 +13,40 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
  */
-package fr.ird.database;
+package fr.ird.database.sql;
 
 // Logging
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
- * Niveau pour enregistrer des instructions SQL dans le journal des événements.
+ * Logging level for SQL instructions related to {@link fr.ird.database.DataBase} operations.
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see fr.ird.database.coverage.CoverageDataBase#LOGGER
+ * @see fr.ird.database.sample.SampleDataBase#LOGGER
  */
-final class SQLLevel extends Level {
+public final class LoggingLevel extends Level {
     /**
-     * Le niveau pour enregistrer les instruction SELECT dans le {@linkplain Logger journal}.
+     * {@linkplain Logger Logging} level for SELECT instructions.
      */
-    public static final Level SQL_SELECT = new SQLLevel("SQL SELECT", FINE.intValue()+50);
+    public static final Level SELECT = new LoggingLevel("SQL SELECT", FINE.intValue()+50);
 
     /**
-     * Le niveau pour enregistrer les instruction UPDATE dans le {@linkplain Logger journal}.
+     * {@linkplain Logger Logging} level for UPDATE instructions.
      */
-    public static final Level SQL_UPDATE = new SQLLevel("SQL UPDATE", INFO.intValue()-50);
+    public static final Level UPDATE = new LoggingLevel("SQL UPDATE", INFO.intValue()-50);
 
     /**
-     * Construit un nouveau niveau.
+     * Construct a new logging level.
      *
-     * @param name  Le nom du niveau, par exemple "SQL_UPDATE".
-     * @param value Valeur entière pour le niveau.
+     * @param name  The logging level, e.g. "SQL_UPDATE".
+     * @param value The level value.
      */
-    private SQLLevel(final String name, final int value) {
+    private LoggingLevel(final String name, final int value) {
         super(name, value);
     }
 }

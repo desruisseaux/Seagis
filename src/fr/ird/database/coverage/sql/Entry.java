@@ -12,41 +12,28 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
-// J2SE
+// J2SE dependencies
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
 
 
 /**
- * Référence vers un paramètre, une opération, une série ou un groupe de la base de données d'images.
- * Les références sont représentées par des numéros {@link #ID} qui apparaisent dans plusieurs tables
- * de la base de données. Par exemple chaque enregistrement de la table "Series" (donc chaque série)
- * est identifié par un numéro ID unique. Pour sélectionner un enregistrement, il faut connaître à
- * la fois la table où l'enregistrement apparaît et son numéro ID. Une telle sélection peut être
- * faite avec l'instruction SQL suivante:
+ * Référence vers un phénomène, une procédure, une série ou un groupe de la base de données d'images.
+ * Les références sont représentées par leurs identifiant {@link #ID}, souvent un nom comme objet
+ * {@link String} ou un numéro comme objet {@link Integer}. Par exemple chaque enregistrement de
+ * la table <code>"Series"</code> est identifié par un nom unique. Pour sélectionner un enregistrement,
+ * il faut connaître à la fois la table où l'enregistrement apparaît et le nom de l'enregistrement.
+ * Par exemple si on recherche la série <code>"SST Monde"</code>, alors l'instruction SQL peut être:
  *
  * <blockquote><pre>
- * "SELECT * FROM "+{@link #table}+" WHERE "+{@link #table}+".ID="+{@link #ID}
- * </pre></blockquote>
- *
- * Par exemple si on recherche la série #5, alors l'instruction SQL sera:
- *
- * <blockquote><pre>
- * SELECT * FROM Series WHERE Series.ID=5
+ * SELECT * FROM Series WHERE Series.name='SST Monde';
  * </pre></blockquote>
  *
  * Des objets <code>Entry</code> sont contenus dans l'arborescence
@@ -56,7 +43,7 @@ import java.rmi.server.RemoteObject;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.database.Entry, Serializable {
+class Entry extends UnicastRemoteObject implements fr.ird.database.Entry, Serializable {
     /**
      * Numéro de séries pour compatibilités entre différentes versions.
      */
@@ -68,11 +55,11 @@ class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.databa
     public final String table;
 
     /**
-     * Nom de la référence. Ce nom provient du champ "name" de la table {@link #table}. Ce
-     * nom pourrait servir à identifier l'enregistrement référencé, mais on utilisera plutôt
-     * {@link #ID} à cette fin.
+     * Nom ou numéro ID de la référence. Il peut s'agir d'un objet {@link String} provenant du
+     * champ "name" de la table {@link #table}, ou un objet {@link Integer} provenant du champ
+     * "ID" ou "oid" de la même table.
      */
-    public final String name;
+    public final Comparable identifier;
 
     /**
      * Remarques s'appliquant à cette entrée.
@@ -80,51 +67,35 @@ class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.databa
     public final String remarks;
 
     /**
-     * Numéro de référence. Ce numéro provient du champ "ID" de la table {@link #table}.
-     * Il sert à obtenir l'enregistrement référencé avec une instruction SQL comme suit:
-     *
-     * <blockquote><pre>
-     * "SELECT * FROM "+{@link #table}+" WHERE "+{@link #table}+".ID="+{@link #ID}
-     * </pre></blockquote>
-     */
-    public final int ID;
-
-    /**
      * Construit une réference vers un enregistrement de la base de données d'image.
      * L'enregistrement référencé peut être un format, un groupe, une série, un paramètre,
      * une opération, etc.
      *
-     * @param table   Nom de la table qui contient l'enregistrement référencé.
-     * @param name    Nom de la référence. Ce nom provient du champ "name" de la table <code>table</code>.
-     * @param ID      Numéro de référence. Ce numéro provient du champ "ID" de la table <code>table</code>.
-     * @param remarks Remarques s'appliquant à cette références.
+     * @param table      Nom de la table qui contient l'enregistrement référencé.
+     * @param identifier Nom ou numéro de référence.
+     * @param remarks    Remarques s'appliquant à cette références.
      */
-    protected Entry(final String table, final String name, final int ID, final String remarks) throws RemoteException {
-        this.table   = table.trim();
-        this.name    = name.trim();
-        this.remarks = remarks; // May be null
-        this.ID      = ID;
-    }
-
-    /**
-     * Retourne un numéro unique identifiant cette série.
-     */
-    public int getID() throws RemoteException {
-        return ID;
-    }
-
-    /**
-     * Retourne le nom de l'enregistrement référencé,
-     * c'est-à-dire le champ {@link #name}.
-     */
-    public String getName() throws RemoteException {
-        return name;
+    protected Entry(final String     table,
+                    final Comparable identifier,
+                    final String     remarks)
+            throws RemoteException
+    {
+        this.table      = table.trim();
+        this.identifier = identifier;
+        this.remarks    = remarks; // May be null
     }
 
     /**
      * {@inheritDoc}
      */
-    public String getRemarks() throws RemoteException {
+    public final String getName() {
+        return identifier.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public final String getRemarks() {
         return remarks;
     }
 
@@ -133,15 +104,15 @@ class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.databa
      * méthode est appelée par {@link javax.swing.JTree} pour construire les noms
      * des noeuds dans l'arborescence.
      */
-    public String toString() {
-        return name;
+    public final String toString() {
+        return getName();
     }
 
     /**
-     * Retourne le numéro de référence, c'est-à-dire le code {@link #getID}.
+     * Returns a hash code value.
      */
     public int hashCode() {
-        return ID;
+        return (int)serialVersionUID ^ identifier.hashCode();
     }
 
     /**
@@ -150,9 +121,9 @@ class Entry extends java.rmi.server.UnicastRemoteObject implements fr.ird.databa
     public boolean equals(final Object object) {
         if (object!=null && object.getClass().equals(getClass())) {
             final Entry that = (Entry) object;
-            return this.ID       ==  that.ID    &&
-                   this.name .equals(that.name) &&
-                   this.table.equals(that.table);
+            return Utilities.equals(this.identifier, that.identifier) &&
+                   Utilities.equals(this.table,      that.table     ) &&
+                   Utilities.equals(this.remarks,    that.remarks   );
         }
         return false;
     }

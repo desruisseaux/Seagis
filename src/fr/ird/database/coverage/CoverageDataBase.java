@@ -15,30 +15,39 @@
  */
 package fr.ird.database.coverage;
 
-// J2SE et JAI
+// J2SE and JAI dependencies
 import java.rmi.RemoteException;
 import java.util.logging.Logger;
 import javax.media.jai.util.Range;
 import java.awt.geom.Rectangle2D;
 
-// Seagis
-import fr.ird.database.DataBase;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 import org.geotools.resources.geometry.XRectangle2D;
 
+// Seagis
+import fr.ird.database.DataBase;
+import fr.ird.database.ConfigurationKey;
+
+
 /**
- * Connection avec la base de données d'images.
+ * A connection to a database managing {@linkplain GridCoverage grid coverage} informations.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface CoverageDataBase extends DataBase {
     /**
-     * Journal des évènements.
+     * Key for fetching the home directory of grid coverage files.
      *
-     * @see #SQL_SELECT
-     * @see #SQL_UPDATE
+     * @see #getProperty
      */
-    public static final Logger LOGGER = Logger.getLogger("fr.ird.database");
+    public static final ConfigurationKey DIRECTORY = new ConfigurationKey("Directory", null, "/home/data/");
+
+    /**
+     * The logger for events relative to this object.
+     */
+    public static final Logger LOGGER = Logger.getLogger("fr.ird.database.coverage");
 
     /**
      * Retourne les coordonnées géographiques couvertes par les images de la base
@@ -104,15 +113,4 @@ public interface CoverageDataBase extends DataBase {
      * @throws RemoteException si la table n'a pas pu être construite.
      */
     public abstract CoverageTable getCoverageTable(final String series) throws RemoteException;
-
-    /**
-     * Construit et retourne un objet qui interrogera la table
-     * "GridCoverages" de la base de données d'images.  Lorsque cette
-     * table n'est plus nécessaire, il faudra appeler
-     * {@link CoverageTable#close}.
-     *
-     * @param  series Numéro de la série d'images.
-     * @throws RemoteException si la table n'a pas pu être construite.
-     */
-    public abstract CoverageTable getCoverageTable(final int seriesID) throws RemoteException;
 }

@@ -89,7 +89,7 @@ import fr.ird.resources.seagis.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class SeriesCoverage3D extends Coverage3D {
+public class GridCoverage3D extends Coverage3D {
     /**
      * <code>true</code> pour exécuter {@link System#gc} avant tout chargement d'images. Il
      * s'agit d'une tentative de réduction des erreurs de type {@link OutOfMemoryError}.  A
@@ -215,14 +215,14 @@ public class SeriesCoverage3D extends Coverage3D {
      * Construit une couverture à partir des données de la table spécifiée.
      * Les entrées {@link CoverageEntry} seront mémorisées immediatement.
      * Toute modification faite à la table après la construction de cet objet
-     * <code>SeriesCoverage3D</code> (incluant la fermeture de la table) n'auront
+     * <code>GridCoverage3D</code> (incluant la fermeture de la table) n'auront
      * aucun effet sur cet objet.
      *
      * @param  table Table d'où proviennent les données.
      * @throws RemoteException si l'interrogation du catalogue a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table) throws RemoteException, TransformException {
+    public GridCoverage3D(final CoverageTable table) throws RemoteException, TransformException {
         this(table, table.getCoordinateSystem());
     }
 
@@ -236,8 +236,7 @@ public class SeriesCoverage3D extends Coverage3D {
      * @throws RemoteException si l'interrogation du catalogue a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
-            throws RemoteException, TransformException
+    public GridCoverage3D(final CoverageTable table, final CoordinateSystem cs) throws RemoteException, TransformException
     {
         super(table.getSeries().getName(), cs);
         /*
@@ -293,7 +292,7 @@ public class SeriesCoverage3D extends Coverage3D {
     /**
      * Construit une couverture utilisant les mêmes paramètres que la couverture spécifiée.
      */
-    protected SeriesCoverage3D(final SeriesCoverage3D source) {
+    protected GridCoverage3D(final GridCoverage3D source) {
         super(source);
         entries              = source.entries;
         bands                = source.bands;
@@ -995,7 +994,7 @@ public class SeriesCoverage3D extends Coverage3D {
     private void log(final int clé, final Object[] parameters) {
         final Locale locale = null;
         final LogRecord record = Resources.getResources(locale).getLogRecord(Level.INFO, clé);
-        record.setSourceClassName("SeriesCoverage3D");
+        record.setSourceClassName("GridCoverage3D");
         record.setSourceMethodName("evaluate");
         record.setParameters(parameters);
         if (readListener == null) {

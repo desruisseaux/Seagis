@@ -21,9 +21,8 @@ import fr.ird.resources.seagis.ResourceKeys;
 
 
 /**
- * Exception signalant qu'un enregistrement d'une des tables n'est pas valide.
- * Cette erreur peut survenir par exemple si les données contenues dans l'enregistrement
- * ne sont pas cohérentes.
+ * Raised when information found in a {@linkplain Table table} or an
+ * {@linkplain Entry entry} are inconsistent.
  *
  * @version $Id$
  * @author Martin Desruisseaux
