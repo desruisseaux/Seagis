@@ -37,6 +37,7 @@ import java.awt.geom.Dimension2D;
 import java.awt.geom.AffineTransform;
 import net.seas.util.XAffineTransform;
 import net.seas.util.XDimension2D;
+import net.seas.util.XClass;
 
 // Miscellaneous
 import java.io.Serializable;
@@ -80,13 +81,13 @@ public class GridGeometry implements Dimensioned, Serializable
     private final AffineTransform gridToCoordinateJAI;
 
     /**
-     * The math transform. If <code>null</code>, will be computed
-     * from <code>gridToCoordinateJAI</code> when requested.
+     * The math transform. If <code>null</code>, will be constructed
+     * from <code>gridToCoordinateJAI</code> upon request.
      */
     private MathTransform gridToCoordinateSystem;
 
     /**
-     * Construct a new grid geometry.
+     * Construct a new grid geometry from a math transform.
      *
      * @param gridRange The valid coordinate range of a grid coverage.
      * @param gridToCoordinateSystem The math transform which allows for the transformations
@@ -97,6 +98,18 @@ public class GridGeometry implements Dimensioned, Serializable
         this.gridRange              = gridRange;
         this.gridToCoordinateSystem = gridToCoordinateSystem;
         this.gridToCoordinateJAI    = null;
+
+        final int dimRange  = gridRange.getDimension();
+        final int dimSource = gridToCoordinateSystem.getDimSource();
+        final int dimTarget = gridToCoordinateSystem.getDimTarget();
+        if (dimRange != dimSource)
+        {
+            throw new MismatchedDimensionException(dimRange, dimSource);
+        }
+        if (dimRange != dimTarget)
+        {
+            throw new MismatchedDimensionException(dimRange, dimTarget);
+        }
     }
 
     /**
@@ -178,7 +191,7 @@ public class GridGeometry implements Dimensioned, Serializable
         this.gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(matrix);
         this.gridToCoordinateJAI    = new AffineTransform(scaleX, 0, 0, scaleY, transX, transY);
     }
-
+    
     /**
      * Construct a new two-dimensional grid geometry. A math transform will
      * be computed automatically with an inverted <var>y</var> axis (i.e.
@@ -220,7 +233,7 @@ public class GridGeometry implements Dimensioned, Serializable
         this.gridRange           = gridRange;
         this.gridToCoordinateJAI = gridToCoordinateJAI; // Cloned by caller
     }
-    
+
     /**
      * Returns the number of dimensions.
      */
@@ -237,8 +250,8 @@ public class GridGeometry implements Dimensioned, Serializable
     {return gridRange;}
 
     /**
-     * Returns the math transform which allows for the transformations
-     * from grid coordinates to real world earth coordinates. The transform is often an
+     * Returns the math transform which allows  for the transformations from grid
+     * coordinates to real world earth coordinates.     The transform is often an
      * affine transformation. The coordinate system of the real world coordinates
      * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
      * math transform is available, this method returns <code>null</code>.
@@ -272,4 +285,44 @@ public class GridGeometry implements Dimensioned, Serializable
      */
     final AffineTransform getGridToCoordinateJAI()
     {return gridToCoordinateJAI;} // No clone for performance raisons.
+
+    /**
+     * Returns a hash value for this grid geometry.
+     * This value need not remain consistent between
+     * different implementations of the same class.
+     */
+    public int hashCode()
+    {return gridToCoordinateSystem.hashCode()*37 + gridRange.hashCode();}
+
+    /**
+     * Compares the specified object with
+     * this grid geometry for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object instanceof GridGeometry)
+        {
+            final GridGeometry that = (GridGeometry) object;
+            return XClass.equals(this.gridRange,              that.gridRange             ) &&
+                   XClass.equals(this.gridToCoordinateSystem, that.gridToCoordinateSystem) &&
+                   XClass.equals(this.gridToCoordinateJAI,    that.gridToCoordinateJAI   );
+        }
+        else return false;
+    }
+
+    /**
+     * Returns a string représentation of this grid range.
+     * The returned string is implementation dependent. It
+     * is usually provided for debugging purposes.
+     */
+    public String toString()
+    {
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        buffer.append(gridRange);
+        buffer.append(", ");
+        buffer.append(gridToCoordinateSystem);
+        buffer.append(']');
+        return buffer.toString();
+    }
 }

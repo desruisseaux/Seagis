@@ -324,7 +324,22 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
-     * Returns true if this matrix is an identity matrix.
+     * Returns <code>true</code> if this matrix is an affine transform.
+     * A transform is affine if the last row contains only zeros, except
+     * in the last column which contains 1.
+     */
+    public boolean isAffine()
+    {
+        final int dimension=size-1;
+        int index = dimension*size;
+        for (int i=0; i<=dimension; i++)
+            if (elt[index++] != (i==dimension ? 1 : 0))
+                return false;
+        return true;
+    }
+
+    /**
+     * Returns <code>true</code> if this matrix is an identity matrix.
      */
     public boolean isIdentity()
     {
