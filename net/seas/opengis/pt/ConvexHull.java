@@ -51,23 +51,21 @@ import net.seas.util.XClass;
 public final class ConvexHull implements Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO: compute serialver
+    //private static final long serialVersionUID = ?;
 
     /**
      * Construct the simpliest convex hull: a single point.
      */
     public ConvexHull(final CoordinatePoint point)
-    {
-    }
+    {throw new UnsupportedOperationException("Not implemented");}
 
     /**
      * Construct a convex hull defined by an envelope.
      */
     public ConvexHull(final Envelope envelope)
-    {
-    }
+    {throw new UnsupportedOperationException("Not implemented");}
 
     /**
      * Returns a hash value for this convex hull.

@@ -39,9 +39,9 @@ import net.seas.util.XClass;
 public final class Parameter implements Cloneable, Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -1928332240210223059L;
 
     /**
      * The parameter name.

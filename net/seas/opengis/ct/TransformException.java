@@ -33,9 +33,9 @@ package net.seas.opengis.ct;
 public class TransformException extends Exception
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 688199915603567723L;
 
     /**
      * Constructs a new exception with no detail message.
