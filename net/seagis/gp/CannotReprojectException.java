@@ -47,16 +47,31 @@ public class CannotReprojectException extends RuntimeException
     private static final long serialVersionUID = -8145425848361056027L;
 
     /**
-     * Creates new <code>CannotReprojectException</code> without detail message.
+     * Creates a new <code>CannotReprojectException</code> without detail message.
      */
     public CannotReprojectException()
     {}
 
     /**
-     * Constructs an <code>CannotReprojectException</code> with the specified detail message.
+     * Constructs a <code>CannotReprojectException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */
-    public CannotReprojectException(final String msg)
-    {super(msg);}
+    public CannotReprojectException(final String message)
+    {super(message);}
+
+    /**
+     * Constructs a new exception with the specified detail message and cause.
+     *
+     * @param msg the detail message.
+     * @param cause The cause of this exception.
+     */
+    public CannotReprojectException(final String message, final Throwable cause)
+    {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        super(message, cause);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        super(message);
+//----- END OF JDK 1.3 FALLBACK -------
+    }
 }

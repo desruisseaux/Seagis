@@ -101,67 +101,30 @@ import net.seagis.resources.gcs.ResourceKeys;
 final class Resampler extends GridCoverage
 {
     /**
-     * Construct a new grid coverage performing
-     * the specified coordinate transformation.
+     * Construct a new grid coverage for the resampler operation.
      *
-     * @param  sourceCoverage     The original grid coverage.
-     * @param  transformation     The transformation to apply. <code>sourceCS</code> <strong>must</strong>
-     *                            be equals to the source grid coverage coordinate system.
-     * @param  targetGridGeometry The target grid geometry, or <code>null</code> for default.
-     * @param  interpolation      The interpolation to use.
-     * @param  geophysics         Tells if the projection should be applied on the geophysics image or the
-     *                            indexed image for the specified source coverage and interpolation type.
-     * @param  factory            The factory to use for constructing math transforms.
-     * @throws TransformException if a transformation failed.
+     * @param source       The source for this grid coverage.
+     * @param image        The image.
+     * @param cs           The coordinate system.
+     * @param envelope     The grid coverage cordinates. The two first dimensions describe
+     *                     the image location along <var>x</var> and <var>y</var> axis. The
+     *                     other dimensions are optional and may be used to locate the image
+     *                     on a vertical axis or on the time axis.
+     * @param categories   Category lists which allows for the transformation from pixel
+     *                     values to real world geophysics value.
+     * @param isGeophysics <code>true</code> if pixel's values are already geophysics values, or
+     *                     <code>false</code> if transformation described in <code>categories</code>
+     *                     must be applied first.
      */
-    private Resampler(final GridCoverage             sourceCoverage,
-                      final CoordinateTransformation transformation,
-                      final GridGeometry         targetGridGeometry,
-                      final Interpolation             interpolation,
-                      final boolean                      geophysics,
-                      final MathTransformFactory            factory) throws TransformException
+    private Resampler(final GridCoverage       source,
+                      final RenderedImage       image,
+                      final CoordinateSystem       cs,
+                      final Envelope         envelope,
+                      final CategoryList[] categories,
+                      final boolean      isGeophysics)
     {
-        super(sourceCoverage.getName(null),
-              getRenderedImage(sourceCoverage, geophysics), transformation.getTargetCS(),
-              OpenGIS.transform(transformation.getMathTransform(), sourceCoverage.getEnvelope()),
-              getCategories(sourceCoverage), geophysics, new GridCoverage[] {sourceCoverage}, null);
-
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert sourceCoverage.getCoordinateSystem().equivalents(transformation.getSourceCS());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-
-        if (targetGridGeometry!=null)
-        {
-            // TODO
-            throw new CannotReprojectException("'GridGeometry' parameter not yet implemented");
-        }
-
-        MathTransform transform = transformation.getMathTransform();
-        if (!(transform instanceof MathTransform2D))
-        {
-            // TODO: Generalize to cases where 'sourceToTarget'
-            // doesn't map two-dimensional coordinate systems.
-            throw new CannotReprojectException("Only 2D transforms are currently implemented");
-        }
-        final RenderedOp      operation = (RenderedOp) getRenderedImage(geophysics);
-        final RenderedImage sourceImage = operation.getSourceImage(0);
-        final Warp                 warp = new WarpTransform(sourceCoverage.getGridGeometry(), (MathTransform2D) transform, gridGeometry, factory);
-        final ParameterBlock      param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
-        operation.setParameterBlock(param); // Must be invoked before setOperationName.
-        operation.setOperationName("Warp");
-        // We had to set the operation's parameters last  because the construction of
-        // 'WarpTransform' requires the geometry of this grid coverage. The trick was
-        // to initialize this 'Resampler' with a null operation, and change the
-        // operation here.
-
-        final RenderingHints hints = operation.getRenderingHints();
-        hints.add(Images.getRenderingHints(operation));
-        operation.setRenderingHints(hints);
-
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert sourceImage == sourceCoverage.getRenderedImage(geophysics);
-        assert operation.getBounds().equals(PlanarImage.wrapRenderedImage(sourceImage).getBounds());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+        super(source.getName(null), image, cs, envelope, categories, isGeophysics,
+                                               new GridCoverage[] {source}, null);
     }
 
     /**
@@ -173,14 +136,23 @@ final class Resampler extends GridCoverage
      * @param  interpolation The interpolation to use.
      * @param  factory The transformation factory to use.
      * @return The new grid coverage, or <code>sourceCoverage</code> if no resampling was needed.
-     * @throws CannotReprojectException if the grid coverage can't be reprojected.
+     * @throws TransformException if the grid coverage can't be reprojected.
      */
-    private static GridCoverage reproject(final GridCoverage             sourceCoverage,
-                                          final CoordinateSystem               targetCS,
-                                          final GridGeometry         targetGridGeometry,
-                                          final Interpolation             interpolation,
-                                          final CoordinateTransformationFactory factory) throws CannotReprojectException
+    public static GridCoverage reproject(final GridCoverage             sourceCoverage,
+                                         final CoordinateSystem               targetCS,
+                                         final GridGeometry         targetGridGeometry,
+                                         final Interpolation             interpolation,
+                                         final CoordinateTransformationFactory factory) throws TransformException
     {
+        if (targetGridGeometry!=null)
+        {
+            // TODO: Implement the "GridGeometry" argument.
+            throw new CannotReprojectException("'GridGeometry' parameter not yet implemented");
+        }
+        /*
+         * Perform a first argument check. The
+         * most trivial cases are handled now.
+         */
         final CoordinateSystem sourceCS = sourceCoverage.getCoordinateSystem();
         if (sourceCS==targetCS && targetGridGeometry==null) // May be both null.
         {
@@ -194,11 +166,36 @@ final class Resampler extends GridCoverage
         {
             return sourceCoverage;
         }
-        // Tells if the projection should be applied on the geophysics image  or
-        // the indexed image for the specified source coverage and interpolation
-        // type.
+        /*
+         * Gets the category lists from the source coverage. We will
+         * use exactly the same categories for the transformed coverage.
+         */
+        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
+        final CategoryList[]    categories = new CategoryList[samplesDim.length];
+        for (int i=0; i<categories.length; i++)
+        {
+            categories[i] = samplesDim[i].getCategoryList();
+        }
+        /*
+         * The projection are usually applied on floating-point values, in order
+         * to gets maximal precision and to handle correctly the special case of
+         * NaN values. However, we can apply the projection on integer values if
+         * one of the following conditions is meet:
+         *
+         *    1) The interpolation type is "nearest neighbor". Since this
+         *       is not really an interpolation, the "NaN" issue vanish.
+         *    2) The coverage have at most one category, and this category is
+         *       quantifiable. In this case, the image should not contains
+         *       any NaN value since there is no category for handling NaN.
+         *
+         * If one of those conditions apply, then we will check if the indexed image
+         * is the "source" image  (i.e. the floating-point image is derived from the
+         * indexed image, and not the converse). If the indexed image is the source,
+         * then we will project this image as an optimization instead of the floating
+         * point (also called "geophysics") image.
+         */
         boolean geophysics = true;
-        if (interpolation instanceof InterpolationNearest || isLinear(sourceCoverage))
+        if (interpolation instanceof InterpolationNearest || areLinears(categories))
         {
             final List sources = sourceCoverage.getRenderedImage(true).getSources();
             if (sources!=null)
@@ -207,69 +204,108 @@ final class Resampler extends GridCoverage
                 if (sources.contains(indexed)) geophysics = false;
             }       
         }
+        /*
+         * Gets the target image as a {@link RenderedOp}.  The source image is
+         * initially wrapped into in a "Null" operation. Later, we will change
+         * this "Null" operation into a "Warp" operation.  We can't use "Warp"
+         * now because we will know the envelope only after creating the GridCoverage.
+         * Note: RenderingHints contain mostly indications about tiles layout.
+         */
+        final PlanarImage sourceImage = PlanarImage.wrapRenderedImage(sourceCoverage.getRenderedImage(geophysics));
+        final RenderedOp  targetImage = JAI.create("Null", sourceImage, Images.getRenderingHints(sourceImage));
+        final GridCoverage targetCoverage;
+        /*
+         * Gets the math transform.  According our own GridCoverage
+         * specification, only the two first ordinates apply to the
+         * image. Other ordinates are discarted.  The caller should
+         * have make sure that there is no dependency   between the
+         * two first ordinates and the other.
+         *
+         * Once the math transform is know, we compute the target
+         * envelope and the warp transform.
+         */
+        final MathTransformFactory     mathFactory = factory.getMathTransformFactory();
+        final CoordinateTransformation transformation;
+        final MathTransform            transform;
+        final MathTransform2D          transform2D;
         try
         {
-            final CoordinateTransformation transformation = factory.createFromCoordinateSystems(sourceCS, targetCS);
-            return new Resampler(sourceCoverage, transformation, targetGridGeometry, interpolation, geophysics, factory.getMathTransformFactory());
+            transformation = factory.createFromCoordinateSystems(sourceCS, targetCS);
+            transform      = transformation.getMathTransform();
+            transform2D    = (MathTransform2D) mathFactory.createSubMathTransform(0, 2, transform);
         }
-        catch (TransformException exception)
+        catch (ClassCastException exception)
         {
-            CannotReprojectException e = new CannotReprojectException(Resources.format(ResourceKeys.ERROR_CANT_REPROJECT_$1, sourceCoverage.getName(null)));
+            // This catch clause is here in case the (MathTransform2D) cast failed.
+            // It should not happen, except maybe with some implementation outside
+            // the SEAGIS package. Even in the later case, it should be unusual.
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_TRANSFORM2D_AVAILABLE), exception);
+        }
+        /*
+         * Gets the source and target envelope. It is difficult to check if the first
+         * two dimensions are really independent from other dimensions.   However, if
+         * we get the same 2-dimensional envelope no matter if we took in account the
+         * extra dimensions or not, then we will assume that projecting the image with
+         * a MathTransform2D is safe enough.
+         */
+        final Envelope sourceEnvelope   = sourceCoverage.getEnvelope();
+        final Envelope sourceEnvelope2D = sourceEnvelope.getSubEnvelope(0,2);
+        final Envelope targetEnvelope   = OpenGIS.transform(transform,   sourceEnvelope);
+        final Envelope targetEnvelope2D = OpenGIS.transform(transform2D, sourceEnvelope2D);
+        if (!targetEnvelope.getSubEnvelope(0,2).equals(targetEnvelope2D))
+        {
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_TRANSFORM2D_AVAILABLE));
+        }
+        // TODO: We should do here a special optimization for the case transform2D.isIdentity().
+        //       Note that the grid geometry may be different if the 'targetGridGeometry!=null'.
+        /*
+         * Construct the target grid coverage, and then construct the warp transform.  We
+         * had to set the warp transform last because the construction of 'WarpTransform'
+         * requires the geometry of the target grid coverage. The trick was to initialize
+         * the target image with a null operation, and change the operation here.
+         */
+        targetCoverage  = new Resampler(sourceCoverage, targetImage, targetCS, targetEnvelope, categories, geophysics);
+        final Warp warp = new WarpTransform(sourceCoverage.getGridGeometry(), transform2D,
+                                            targetCoverage.getGridGeometry(), mathFactory);
+        final ParameterBlock param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
+        targetImage.setParameterBlock(param); // Must be invoked before setOperationName.
+        targetImage.setOperationName("Warp");
+
+        final RenderingHints hints = targetImage.getRenderingHints();
+        hints.add(Images.getRenderingHints(targetImage));
+        targetImage.setRenderingHints(hints);
+
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            e.initCause(exception);
+        assert sourceCoverage.getCoordinateSystem().equivalents(transformation.getSourceCS());
+        assert targetCoverage.getCoordinateSystem().equivalents(transformation.getTargetCS());
+        assert targetGridGeometry!=null || targetImage.getBounds().equals(sourceImage.getBounds());
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
-            throw e;
-        }
-    }
 
-    /**
-     * Returns a grid coverage rendered image as a {@link RenderedOp}. This method wrap
-     * <code>GridCoverage.getRenderedImage(geophysics)</code> in a "Null" operation.
-     */
-    private static RenderedOp getRenderedImage(final GridCoverage sourceCoverage, final boolean geophysics)
-    {
-        final RenderedImage image=sourceCoverage.getRenderedImage(geophysics);
-        return JAI.create("Null", image, Images.getRenderingHints(image));
-    }
-
-    /**
-     * Gets the source coverage category lists. The same
-     * categories will be used for the transformed image.
-     */
-    private static CategoryList[] getCategories(final GridCoverage sourceCoverage)
-    {
-        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
-        final CategoryList[]    categories = new CategoryList[samplesDim.length];
-        for (int i=0; i<categories.length; i++)
-        {
-            categories[i] = samplesDim[i].getCategoryList();
-        }
-        return categories;
+        return targetCoverage;
     }
 
     /**
      * Check if the mapping between pixel values and geophysics value
-     * is a linear relation for all bands in the specified coverage.
+     * is a linear relation for all bands in the specified categories.
      */
-    private static boolean isLinear(final GridCoverage sourceCoverage)
+    private static boolean areLinears(final CategoryList[] categories)
     {
-        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
-        for (int i=samplesDim.length; --i>=0;)
+        for (int i=categories.length; --i>=0;)
         {
-            final CategoryList categories = samplesDim[i].getCategoryList();
-            if (categories==null)
+            final CategoryList list = categories[i];
+            if (list==null)
             {
                 // If there is no categories,  we assume that there is
                 // no classification. It should be okay to interpolate
                 // pixel values.
                 continue;
             }
-            if (categories.size()==1)
+            if (list.size()==1)
             {
-                final Category category = categories.get(0);
+                final Category category = list.get(0);
                 if (category.isQuantitative() && category.getClass().equals(Category.class))
                 {
-                    // If there is categories,  we require that there is only
+                    // If there are categories, we require that there is only
                     // one category and this category must be translatable in
                     // numbers using a linear relation.
                     continue;
@@ -352,7 +388,15 @@ final class Resampler extends GridCoverage
             final Interpolation  interp = toInterpolation   (parameters.getObjectParameter("InterpolationType"));
             final CoordinateSystem   cs = (CoordinateSystem) parameters.getObjectParameter("CoordinateSystem");
             final GridGeometry gridGeom = (GridGeometry)     parameters.getObjectParameter("GridGeometry");
-            return reproject(source, (cs!=null) ? cs : source.getCoordinateSystem(), gridGeom, interp, factory);
+            try
+            {
+                return reproject(source, (cs!=null) ? cs : source.getCoordinateSystem(), gridGeom, interp, factory);
+            }
+            catch (TransformException exception)
+            {
+                throw new CannotReprojectException(Resources.format(ResourceKeys.ERROR_CANT_REPROJECT_$1,
+                                                                       source.getName(null)), exception);
+            }
         }
     }
 }
