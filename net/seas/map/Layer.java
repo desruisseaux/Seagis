@@ -44,12 +44,21 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.EventListenerList;
 
+// Journal
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
 // Interface utilisateur
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 
-// Entrés/sorties et divers
+// Divers
+import java.util.Locale;
 import java.io.Serializable;
+import net.seas.util.XClass;
+import net.seas.util.Version;
+import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 
 
@@ -84,6 +93,13 @@ public abstract class Layer implements Serializable
      * être en exprimées en coordonnées pixels de l'écran.
      */
     private transient Shape shape;
+
+    /**
+     * Chaîne de caractères indiquant qu'un traçage est en cours.
+     * Cette n'est utilisée que pour le journal et ne sera construite
+     * que la première fois où elle sera nécessaire.
+     */
+    private transient String painting;
 
     /**
      * Système de coordonnées utilisé pour cette couche. Les méthodes {@link #getPreferredArea}
@@ -151,6 +167,13 @@ public abstract class Layer implements Serializable
      */
     public Layer(final CoordinateSystem coordinateSystem)
     {this.coordinateSystem=coordinateSystem;}
+
+    /**
+     * Retourne le nom de cette couche. L'implémentation par
+     * défaut retourne le nom de la classe avec son ordre Z.
+     */
+    public String getName()
+    {return XClass.getShortClassName(this)+'['+getZOrder()+']';}
 
     /**
      * Retourne le système de coordonnées de cette couche. Les coordonnées géographiques
@@ -449,13 +472,13 @@ public abstract class Layer implements Serializable
     /**
      * Efface les données qui avaient été conservées dans une cache interne. L'appel
      * de cette méthode permettra de libérer un peu de mémoire à d'autres fins. Elle
-     * sera appelée lorsque qu'on aura déterminé que la couche <code>this</code>
-     * ne sera plus affichée un certain temps.  Cette méthode ne doit pas changer le
-     * paramétrage de cette couche; son seul impact sera que le prochain traçage
+     * sera appelée lorsque qu'on aura déterminé que la couche <code>this</code>  ne
+     * sera plus affichée avant un certain temps.  Cette méthode ne doit pas changer
+     * le paramétrage de cette couche;  son seul impact sera que le prochain traçage
      * sera un peu plus lent.
      */
     protected void clearCache()
-    {}
+    {painting=null;}
 
     /**
      * Libère les ressources occupées par cette couche. Cette méthode est appelée automatiquement
@@ -463,7 +486,10 @@ public abstract class Layer implements Serializable
      * les ressources plus rapidement que si l'on attend que le ramasse-miettes fasse son travail.
      */
     protected void dispose()
-    {}
+    {
+        painting = null;
+        shape    = null;
+    }
 
     /**
      * Ajoute un objet intéressé à être informé chaque fois qu'une propriété de cet
@@ -564,6 +590,14 @@ public abstract class Layer implements Serializable
         {
             if (shape==null || clipBounds==null || shape.intersects(clipBounds))
             {
+                if (Version.MINOR>=4)
+                {
+                    if (painting==null)
+                    {
+                        painting = Resources.format(Clé.PAINTING¤1, getName());
+                    }
+                    Contour.logger.fine(painting);
+                }
                 final Shape shape=paint(graphics, context);
                 if (!context.isPrinting())
                 {

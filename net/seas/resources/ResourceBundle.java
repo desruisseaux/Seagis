@@ -543,6 +543,19 @@ public class ResourceBundle extends java.util.ResourceBundle
     {return getLogRecord(level, key, new Object[]{arg0, arg1});}
 
     /**
+     * Get a localized log record.
+     *
+     * @param  level The log record level.
+     * @param  key   The resource key.
+     * @param  arg0  The first parameter.
+     * @param  arg1  The second parameter.
+     * @param  arg2  The third parameter.
+     * @return The log record.
+     */
+    public LogRecord getLogRecord(final Level level, final int key, final Object arg0, final Object arg1, final Object arg2)
+    {return getLogRecord(level, key, new Object[]{arg0, arg1, arg2});}
+
+    /**
      * Returns a string representation of this object.
      */
     public synchronized String toString()

@@ -41,7 +41,7 @@ final class PathIterator implements java.awt.geom.PathIterator
      * Itérateur balayant les objets
      * {@link Polygon} à tracer.
      */
-    private final Iterator polygons;
+    private final Iterator<Polygon> polygons;
 
     /**
      * Le polygone en cours de traçage.
@@ -93,13 +93,13 @@ final class PathIterator implements java.awt.geom.PathIterator
      * @param polygons Itérateur balayant une liste d'objets {@link Polygons}.
      * @param transform Transformation affine facultative (peut être nulle).
      */
-    public PathIterator(final Iterator polygons, final AffineTransform transform)
+    public PathIterator(final Iterator<Polygon> polygons, final AffineTransform transform)
     {
         this.polygons  = polygons;
         this.transform = transform;
         while (polygons.hasNext())
         {
-            polygon = (Polygon) polygons.next();
+            polygon = polygons.next();
             array   = polygon.getDrawingArray(transform);
             if (array!=null && array.length!=0) break;
             polygon.releaseDrawingArray(array);
@@ -132,7 +132,7 @@ final class PathIterator implements java.awt.geom.PathIterator
                 {
                     while (polygons.hasNext())
                     {
-                        polygon = (Polygon) polygons.next();
+                        polygon = polygons.next();
                         array   = polygon.getDrawingArray(transform);
                         if (array!=null && array.length!=0) return;
                         polygon.releaseDrawingArray(array);

@@ -40,6 +40,7 @@ import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import net.seas.util.XAffineTransform;
 import net.seas.util.XDimension2D;
 
 // Graphics
@@ -69,6 +70,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 // Miscellaneous
+import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 
@@ -267,7 +269,7 @@ public class MapPanel extends ZoomPane
     private void setArea(final Rectangle2D newArea)
     {
         final Rectangle2D oldArea=this.area;
-        if (oldArea!=newArea && (oldArea==null || !oldArea.equals(newArea)))
+        if (!XClass.equals(oldArea, newArea))
         {
             this.area=newArea;
             firePropertyChange("area", oldArea, newArea);
@@ -844,9 +846,18 @@ public class MapPanel extends ZoomPane
     protected void paintComponent(final Graphics2D graph)
     {
         sortLayers();
-        if (stroke==null)
+        if (stroke==null) try
         {
-            stroke=new BasicStroke((float) (4*getPreferredPixelSize().getHeight()));
+            Dimension2D s = getPreferredPixelSize();
+            Point2D point = new Point2D.Double(s.getWidth(), s.getHeight());
+            point=XAffineTransform.inverseDeltaTransform(zoom, point, point);
+            double t; t=Math.sqrt((t=point.getX())*t + (t=point.getY())*t);
+            stroke=new BasicStroke((float) (4*t));
+        }
+        catch (NoninvertibleTransformException exception)
+        {
+            ExceptionMonitor.unexpectedException("net.seas.map", "MapPanel", "paintComponent", exception);
+            return;
         }
         final Layer[]          layers = this.layers;
         final GraphicsJAI    graphics = GraphicsJAI.createGraphicsJAI(graph, this);
@@ -862,8 +873,8 @@ public class MapPanel extends ZoomPane
             handleException("MapPanel", "paintComponent", exception);
             return;
         }
-        graphics.transform(zoom);
         graphics.setStroke(stroke);
+        graphics.transform(zoom);
         /*
          * Dessine les couches en commençant par
          * celles qui ont un <var>z</var> le plus bas.
@@ -930,6 +941,7 @@ public class MapPanel extends ZoomPane
      */
     private void zoomChanged(final ZoomChangeEvent event)
     {
+        stroke = null;
         AffineTransform modifier;
         try
         {
@@ -945,7 +957,9 @@ public class MapPanel extends ZoomPane
             modifier = null;
         }
         for (int i=layerCount; --i>=0;)
+        {
             layers[i].zoomChanged(modifier);
+        }
     }
 
     /**

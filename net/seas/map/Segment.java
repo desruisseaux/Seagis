@@ -451,7 +451,7 @@ final class Segment implements Serializable
             if (points[j]==null) points[j]=new Point2D.Float(it.nextX(), it.nextY());
             else points[j].setLocation(it.nextX(), it.nextY());
         }
-        assert(getFirstPoint(scan, null).equals(points[0]));
+        assert(XClass.equals(getFirstPoint(scan, null), points[0]));
     }
 
     /**
@@ -522,7 +522,7 @@ final class Segment implements Serializable
             else points[j].setLocation(it.nextX(), it.nextY());
         }
         assert(!it.hasNext());
-        assert(getLastPoint(scan, null).equals(points[points.length-1]));
+        assert(XClass.equals(getLastPoint(scan, null), points[points.length-1]));
     }
 
     /**
@@ -1139,10 +1139,7 @@ final class Segment implements Serializable
             {
                 final PointArray array1 = poly1.getArray(arrayID);
                 final PointArray array2 = poly2.getArray(arrayID);
-                if (array1!=array2)
-                {
-                    if (array1==null || !array1.equals(array2)) return false;
-                }
+                if (!XClass.equals(array1, array2)) return false;
             }
             poly1 = poly1.next;
             poly2 = poly2.next;

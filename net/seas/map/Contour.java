@@ -41,9 +41,13 @@ import net.seas.opengis.pt.Latitude;
 import net.seas.opengis.pt.Longitude;
 import net.seas.text.AngleFormat;
 
+// Logging
+import java.util.logging.Logger;
+
 // Miscellaneous
-import net.seas.util.XClass;
 import java.io.Serializable;
+import net.seas.util.XClass;
+import net.seas.util.Version;
 
 
 /**
@@ -60,6 +64,11 @@ public abstract class Contour implements Shape, Cloneable, Serializable
      * Objet à utiliser pour fabriquer des transformations.
      */
     static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.DEFAULT;
+
+    /**
+     * The logger for map operations.
+     */
+    static final Logger logger = Logger.getLogger("net.seas.map");
 
     /**
      * Nom de ce contour.   Il s'agit en général d'un nom géographique, par exemple
@@ -230,13 +239,6 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {return (name!=null) ? name.hashCode() : 0;}
 
     /**
-     * Indique si les deux objets spécifiés sont égaux.
-     * Les deux arguments peuvent être nuls.
-     */
-    static boolean equals(final Object o1, final Object o2)
-    {return o1==o2 || (o1!=null && o1.equals(o2));}
-
-    /**
      * Indique si ce contour est identique à l'objet spécifié. Cette méthode retourne <code>true</code>
      * si <code>object</code> est de la même classe que <code>this</code> et si les deux contours ont le
      * même nom. Les classes dérivées devront redéfinir cette méthode pour vérifier aussi les coordonnées
@@ -246,7 +248,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {
         if (object!=null && object.getClass().equals(getClass()))
         {
-            return equals(getName(), ((Contour) object).getName());
+            return XClass.equals(getName(), ((Contour) object).getName());
         }
         else return false;
     }
@@ -264,7 +266,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
         {
             // Should never happen, since we are cloneable.
             InternalError e=new InternalError(exception.getLocalizedMessage());
-            e.initCause(exception);
+            if (Version.MINOR>=4) e.initCause(exception);
             throw e;
         }
     }

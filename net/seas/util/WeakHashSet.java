@@ -196,7 +196,13 @@ public class WeakHashSet<Element>
     private synchronized void remove(final WeakElement<Element> toRemove)
     {
         if (Version.MINOR>=4)
-            assert(count==count());
+        {
+            assert(count==count()) : count;
+            // Note: With JDK 1.4beta2, this assertion fails under heavy use of WeakHashSet.
+            //       The strange thing is that  it seems to fail after an exception occured
+            //       in Sun's Java2D code. Is it a synchronization problem in WeakHashSet?
+            //       Is it a bug in the Virtual Machine?
+        }
         final int i=toRemove.index;
         // L'index 'i' peut ne pas être valide si la référence
         // 'toRemove' est un "cadavre" abandonné par 'rehash'.
@@ -225,6 +231,7 @@ public class WeakHashSet<Element>
                 e=e.next;
             }
         }
+        if (Version.MINOR>=4) assert(count==count());
         // Si on atteint ce point, c'est que la référence n'a pas été trouvée.
         // Ca peut arriver si l'élément a déjà été supprimé par {@link #rehash}.
     }
@@ -239,8 +246,8 @@ public class WeakHashSet<Element>
     private void rehash(final boolean augmentation)
     {
         final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
-        if (Version.MINOR>=4) assert(capacity>=MIN_CAPACITY);
-        if (augmentation ? capacity<table.length : capacity>table.length)
+        if (Version.MINOR>=4) assert(capacity>=MIN_CAPACITY) : capacity;
+        if (augmentation ? capacity<=table.length : capacity>=table.length)
         {
             return;
         }
@@ -266,6 +273,7 @@ public class WeakHashSet<Element>
         }
         if (Version.MINOR>=4)
         {
+            // FINER is the default level for entering, returning, or throwing an exception.
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
             record.setSourceClassName("WeakHashSet");
             record.setSourceMethodName(augmentation ? "intern" : "remove");
@@ -307,6 +315,7 @@ public class WeakHashSet<Element>
                     count--;
                     if (prev!=null) prev.next=e.next;
                     else table[index]=e.next;
+                    if (Version.MINOR>=4) assert(count==count());
                 }
                 else if (equals(obj, e_obj)) return e_obj;
             }

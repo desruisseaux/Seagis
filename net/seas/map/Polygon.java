@@ -35,9 +35,10 @@ import net.seas.opengis.ct.TransformException;
 import net.seas.opengis.ct.MathTransform;
 import net.seas.util.OpenGIS;
 
-// Geometry
+// Geometry and graphics
 import java.awt.Shape;
 import java.awt.Rectangle;
+import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -67,16 +68,19 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-// Formatting
+// Formatting and logging
 import java.text.NumberFormat;
 import java.text.FieldPosition;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 
 // Miscellaneous
 import net.seas.util.XMath;
 import net.seas.util.XArray;
 import net.seas.util.XClass;
 import net.seas.util.XString;
+import net.seas.util.Version;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
@@ -557,13 +561,15 @@ public class Polygon extends Contour
      * @return Un rectangle englobant tous les points de ce polyligne.
      *         Ce rectangle peut être vide, mais ne sera jamais nul.
      */
-    private Rectangle2D getCachedBounds()
+    final Rectangle2D getCachedBounds()
     {
         if (bounds==null)
         {
             bounds = getBounds(data, coordinateTransform);
             if (isIdentity(coordinateTransform))
+            {
                 dataBounds = bounds; // Avoid computing the same rectangle two times
+            }
         }
         return bounds;
     }
@@ -581,8 +587,8 @@ public class Polygon extends Contour
      */
     private Rectangle2D getCachedBounds(final CoordinateSystem coordinateSystem) throws TransformException
     {
-        if (equals(getSourceCS(),         coordinateSystem)) return getDataBounds();
-        if (equals(getCoordinateSystem(), coordinateSystem)) return getCachedBounds();
+        if (XClass.equals(getSourceCS(),         coordinateSystem)) return getDataBounds();
+        if (XClass.equals(getCoordinateSystem(), coordinateSystem)) return getCachedBounds();
         Rectangle2D bounds=Segment.getBounds2D(data, coordinateTransform);
         if (bounds==null) bounds=new Rectangle2D.Float();
         return bounds;
@@ -1058,7 +1064,13 @@ public class Polygon extends Contour
      * ce polyligne, soit {@link #getCoordinateSystem()}.
      */
     public PathIterator getPathIterator(final AffineTransform transform)
-    {return new net.seas.map.PathIterator(this, transform);}
+    {
+        return new net.seas.map.PathIterator(this, transform);
+        // Only polygons internal to Isoline have drawingDecimation!=1.
+        // Consequently, public polygons never apply decimation, while
+        // Isoline's polgyons may apply a decimation for faster rendering
+        // when painting through the 'Isobath.paint(...)' method.
+    }
 
     /**
      * Retourne un itérateur balayant les coordonnées de ce contour.
@@ -1116,7 +1128,10 @@ public class Polygon extends Contour
                 else
                 {
                     // Should be uncommon. Doesn't hurt, but may be a memory issue for big polyline.
-                    Logger.getLogger("net.seas.map").fine("Excessive memory usage");
+                    if (Version.MINOR>=4)
+                    {
+                        logger.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
+                    }
                     array=null; // {@link #toArray} will allocate a new array.
                 }
             }
@@ -1126,7 +1141,18 @@ public class Polygon extends Contour
          * La projection cartographique sera appliquée par {@link #toArray}.
          */
         array=toArray(array, drawingDecimation);
-        transform.transform(array, 0, array, 0, array.length/2);
+        assert((array.length & 1) == 0);
+        final int pointCount = array.length/2;
+        transform.transform(array, 0, array, 0, pointCount);
+        if (Version.MINOR>=4 && pointCount>=500) // Log only big arrays
+        {
+            // FINER is the default level for entering, returning, or throwing an exception.
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.REBUILD_CACHE_ARRAY¤3,
+                                     getName(), new Integer(pointCount), new Integer(drawingDecimation));
+            record.setSourceClassName ("Polygon");
+            record.setSourceMethodName("getDrawingArray");
+            logger.log(record);
+        }
         cache = new Cache(array);
         cache.transform = transform;
         cache.lockCount=1;
@@ -1257,7 +1283,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getFirstPoints", exception);
         }
-        assert(points.length==0 || getFirstPoint(null).equals(points[0]));
+        assert(points.length==0 || XClass.equals(getFirstPoint(null), points[0]));
     }
 
     /**
@@ -1283,7 +1309,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getLastPoints", exception);
         }
-        assert(points.length==0 || getLastPoint(null).equals(points[points.length-1]));
+        assert(points.length==0 || XClass.equals(getLastPoint(null), points[points.length-1]));
     }
 
     /**
@@ -1360,7 +1386,7 @@ public class Polygon extends Contour
     public synchronized void append(final Polygon toAppend) throws TransformException
     {
         if (toAppend==null) return;
-        if (!equals(getSourceCS(), toAppend.getSourceCS()))
+        if (!XClass.equals(getSourceCS(), toAppend.getSourceCS()))
         {
             throw new UnsupportedOperationException(); // TODO.
         }
@@ -1646,9 +1672,9 @@ public class Polygon extends Contour
         if (super.equals(object))
         {
             final Polygon that = (Polygon) object;
-            return        this.interiorSign    ==   that.interiorSign         &&
-                   equals(this.coordinateTransform, that.coordinateTransform) &&
-                   Segment.equals(this.data,        that.data);
+            return           this.interiorSign    ==   that.interiorSign         &&
+               XClass.equals(this.coordinateTransform, that.coordinateTransform) &&
+              Segment.equals(this.data,                that.data);
         }
         else return false;
     }
@@ -1695,7 +1721,7 @@ public class Polygon extends Contour
     {
         Segment.unexpectedException("Polygon", method, exception);
         final IllegalPathStateException e=new IllegalPathStateException(exception.getLocalizedMessage());
-        e.initCause(exception);
+        if (Version.MINOR>=4) e.initCause(exception);
         throw e;
     }
 
@@ -1797,85 +1823,28 @@ public class Polygon extends Contour
         while (hasNext);
     }
 
-    /**
-     * Vérifie le bon fonctionnement de cette classe. Cette méthode dessinera
-     * une carte imaginaire dans un cadre et placera des points un peu partout.
-     * Les points jaunes sont sensés être à l'intérieur de l'île et les points
-     * gris à l'extérieur.
-     * <br><br>
-     * Argument: (optionel) Résolution (en degrés) du cercle à tracer. La valeur
-     *           par défaut est 20. Une valeur plus élevée se traduira par une île
-     *           plus grossière, tandis qu'une valeur plus faible se traduira par
-     *           une île plus finement tracée.
-     */
-    public static void main(final String[] args)
-    {
-        try
-        {
-            final int firstPointCount = 4;
-            final int  lastPointCount = 4;
-            /*
-             * Créé une carte imaginaire. La carte ressemblera à un cercle,
-             * mais des pertubations aléatoires seront ajoutées de façon à
-             * rendre l'île un peu plus irrégulière. L'île créée se trouvera
-             * mémorisée dans un objet <code>GeneralPath</code>, une classe
-             * standard du Java qui servira de témoin puisqu'elle est sensée
-             * bien fonctionner.
-             */
-            final PrintWriter  out = new PrintWriter(new OutputStreamWriter(System.out, "850"));
-            final GeneralPath path = new GeneralPath();
-            final double    radius = 150;
-            int angleStep=20;
-            if (args.length>1)
-            {
-                angleStep=Integer.parseInt(args[1]);
-                if (angleStep==0) angleStep=20;
-            }
-            final double delta=(1-Math.cos(angleStep))*radius;
-            for (int i=0; i<360; i+=Math.abs(angleStep))
-            {
-                final double theta=Math.toRadians(i);
-                double x=250 - radius*Math.cos(theta)+delta*(Math.random()-0.5);
-                double y=250 - radius*Math.sin(theta)+delta*(Math.random()-0.5);
-                if (i==0) path.moveTo((float) x, (float) y);
-                else      path.lineTo((float) x, (float) y);
-            }
-            path.closePath();
-            /*
-             * Donne quelques informations sur l'île. Les
-             * principales méthodes publiques seront testées.
-             */
-            final Polygon                polyline = getInstances(path, null)[0];
-            final Collection<Point2D>    pointSet = polyline.getPoints();
-            final Point2D[]                 first = new Point2D.Float[firstPointCount];
-            final Point2D[]                  last = new Point2D.Float[ lastPointCount];
-            final Point2D[]                 extrm = new Point2D.Float[pointSet.size()];
-            final Collection<Point2D> subPointSet = new ArrayList<Point2D>();
-            for (int i=0; i<first.length; i++) subPointSet.add(null);
-            subPointSet.addAll(polyline.subpoly(first.length, extrm.length-last.length).getPoints());
-            polyline.getFirstPoints(first);
-            polyline.getLastPoints (last);
-            System.arraycopy(first, 0, extrm, 0,                       first.length);
-            System.arraycopy(last,  0, extrm, extrm.length-last.length, last.length);
 
-            out.println(polyline.toString());
-            out.println();
-            print(new String[]              {"Iterator", "First/Last", "SubPoly"},
-                  new Collection<Point2D>[] {pointSet, Arrays.asList(extrm), subPointSet}, out);
-            /*
-             * Fait apparaître le polyligne dans une fenêtre. Cette fenêtre
-             * offira quelques menus qui permettront à l'utilisateur de
-             * vérifier si des points sont à l'intérieur ou a l'extérieur
-             * du polyligne.
-             */
-            out.println(100*polyline.compress(0));
-//          fr.ird.awt.ShapePanel.show(path);
-//          fr.ird.awt.ShapePanel.show(polyline);
-            out.flush();
-        }
-        catch (Exception exception)
-        {
-            exception.printStackTrace();
-        }
+
+
+    /**
+     * This interface defines the method required by any object that
+     * would like to be a renderer for polygons in an {@link Isoline}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    public static interface Renderer
+    {
+        /**
+         * Draw or fill a polygon. The rendering is usually done with <code>graphics.draw(polygon)</code>
+         * or <code>graphics.fill(polygon)</code>. This method may change the paint and stroke attributes
+         * of <code>graphics</code> before to perform the rendering. However, it should not make any change
+         * to <code>polygon</code> since this method may be invoked with arguments internal to some objects,
+         * for performance raisons.
+         *
+         * @param graphics The graphics context.
+         * @param polygon  The polygon to draw. This object should not be changed.
+         */
+        public abstract void drawPolygon(final Graphics2D graphics, final Polygon polygon);
     }
 }

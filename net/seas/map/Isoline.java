@@ -26,7 +26,7 @@ package net.seas.map;
 import net.seas.opengis.cs.CoordinateSystem;
 import net.seas.opengis.ct.TransformException;
 
-// Geometry
+// Geometry and graphics
 import java.awt.Shape;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -34,17 +34,25 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 
+// Graphics
+import java.awt.Graphics2D;
+
 // Collections
 import java.util.Set;
 import java.util.List;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.AbstractSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.NoSuchElementException;
 import net.seas.util.XArray;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.util.Version;
 
 
 /**
@@ -123,6 +131,7 @@ public class Isoline extends Contour
     {
         bounds = null;
         final CoordinateSystem oldCoordinateSystem = this.coordinateSystem;
+        if (XClass.equals(oldCoordinateSystem, coordinateSystem)) return;
         int i=polygonCount;
         try
         {
@@ -377,12 +386,57 @@ public class Isoline extends Contour
     }
 
     /**
+     * Trace cette isoligne dans le graphique spécifié. Cette méthode
+     * est à peu près équivalente à <code>graphics.draw(this)</code>
+     * ou <code>graphics.fill(this)</code>, mais peut être plus rapide
+     * en raison de l'utilisation de caches internes.
+     *
+     * @param  graphics Graphiques dans lequel dessiner cet isoligne.
+     * @param  resolution Résolution approximative désirée à l'affichage,
+     *         selon les unités de {@link #getCoordinateSystem}. Une
+     *         résolution plus grossière (un nombre plus élevé) peut
+     *         rendre le traçage plus rapide au détriment de la qualité.
+     * @param  renderer An optional renderer for polygons,
+     *         or <code>null</code> for the default rendering.
+     */
+    public synchronized void paint(final Graphics2D graphics, final float resolution, final Polygon.Renderer renderer)
+    {
+        final Shape clip = graphics.getClip();
+        if (clip.intersects(getCachedBounds()))
+        {
+            if (!sorted) sort();
+            for (int i=polygonCount; --i>=0;)
+            {
+                final Polygon polygon = polygons[i];
+                synchronized (polygon)
+                {
+                    if (clip.intersects(polygon.getCachedBounds()))
+                    {
+                        polygon.setDrawingDecimation(Math.round(resolution/polygon.getResolution()));
+                        if (renderer!=null)
+                        {
+                            renderer.drawPolygon(graphics, polygon);
+                        }
+                        else
+                        {
+                            if (polygon.isClosed())
+                                graphics.fill(polygon);
+                            else
+                                graphics.draw(polygon);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Retourne un itérateur balayant les coordonnées de cet isoligne.
      * Les points seront exprimés selon le système de coordonnées de
      * cet isoligne, soit {@link #getCoordinateSystem()}.
      */
-    public PathIterator getPathIterator(final AffineTransform transform)
-    {return new net.seas.map.PathIterator(getPolygons().iterator(), transform);}
+    public synchronized PathIterator getPathIterator(final AffineTransform transform)
+    {return new net.seas.map.PathIterator(getPolygonList(true).iterator(), transform);}
 
     /**
      * Retourne un itérateur balayant les coordonnées de cet isoligne.
@@ -426,17 +480,86 @@ public class Isoline extends Contour
      * &nbsp;}
      * </pre></blockquote>
      */
-    public synchronized Collection<Polygon> getPolygons()
+    public synchronized Set<Polygon> getPolygons()
+    {
+        if (Version.MINOR>=4)
+            return new LinkedHashSet<Polygon>(getPolygonList(false));
+        else
+            return new HashSet<Polygon>(getPolygonList(false));
+    }
+
+    /**
+     * Returns the set of polygons as a list. This method is faster than
+     * {@link #getPolygons} and is optimized for {@link #getPathIterator}.
+     *
+     * @param  reverse <code>true</code> for reversing order (i.e. returning
+     *         big continents first, and small lakes or islands last). This
+     *         reverse order is appropriate for drawing, while the "normal"
+     *         order is more appropriate for searching a polygon.
+     * @return The set of polygons. This set will be ordered if possible.
+     */
+    private List<Polygon> getPolygonList(final boolean reverse)
     {
         if (!sorted) sort();
-        final List<Polygon> array = new ArrayList<Polygon>(polygonCount);
+        final List<Polygon> list = new ArrayList<Polygon>(polygonCount);
         for (int i=polygonCount; --i>=0;)
         {
             final Polygon polygon = polygons[i].clone();
             polygon.setDrawingDecimation(1);
-            array.set(i, polygon);
+            list.add(polygon);
         }
-        return array;
+        if (!reverse)
+        {
+            // Elements was inserted in reverse order.
+            // (remind: this method is optimized for getPathIterator)
+            Collections.reverse(list);
+        }
+        return list;
+    }
+
+    /**
+     * Returns the set of polygons containing the specified point.
+     *
+     * @param  point A coordinate expressed according {@link #getCoordinateSystem}.
+     * @return The set of polygons under the specified point.
+     */
+    public synchronized Set<Polygon> getPolygons(final Point2D point)
+    {
+        if (getCachedBounds().contains(point))
+        {
+            if (!sorted) sort();
+            final Polygon[] copy = new Polygon[polygonCount];
+            System.arraycopy(polygons, 0, copy, 0, polygonCount);
+            return new FilteredSet(copy, point, null, null);
+        }
+        return new FilteredSet(new Polygon[0], point, null, null);
+        // TODO: On devrait retourner Collections.EMPTY_SET,
+        //       mais ça provoque une erreur de compilation.
+    }
+
+    /**
+     * Returns the set of polygons containing or intersecting the specified shape.
+     *
+     * @param  shape A shape with coordinates expressed according {@link #getCoordinateSystem}.
+     * @param  intersects <code>false</code> to search for polygons containing <code>shape</code>,
+     *         or <code>true</code> to search for polygons intercepting <code>shape</code>.
+     * @return The set of polygons containing or intersecting the specified shape.
+     */
+    public synchronized Set<Polygon> getPolygons(final Shape shape, final boolean intersects)
+    {
+        if (shape.intersects(getCachedBounds()))
+        {
+            if (!sorted) sort();
+            final Polygon[] copy = new Polygon[polygonCount];
+            System.arraycopy(polygons, 0, copy, 0, polygonCount);
+            if (intersects)
+                return new FilteredSet(copy, null, null, shape);
+            else
+                return new FilteredSet(copy, null, shape, null);
+        }
+        return new FilteredSet(new Polygon[0], null, shape, null);
+        // TODO: On devrait retourner Collections.EMPTY_SET,
+        //       mais ça provoque une erreur de compilation.
     }
 
     /**
@@ -659,12 +782,9 @@ public class Isoline extends Contour
             final Isoline that = (Isoline) object;
             if (this.polygonCount == that.polygonCount)
             {
-                final Set<Polygon> set = new HashSet<Polygon>(polygonCount*2);
-                for (int i=polygonCount; --i>=0;)
-                {
-                    set.add(polygons[i]);
-                }
-                return set.containsAll(that.getPolygons());
+                // Compare ignoring order. Note: we don't call any synchronized
+                // methods on 'that' in order to avoid dead lock.
+                return getPolygons().containsAll(that.getPolygonList(true));
             }
         }
         return false;
@@ -677,12 +797,9 @@ public class Isoline extends Contour
     {
         final Isoline isoline=(Isoline) super.clone();
         isoline.polygons=new Polygon[polygonCount];
-        if (isoline.polygons.length!=0)
+        for (int i=isoline.polygons.length; --i>=0;)
         {
-            for (int i=isoline.polygons.length; --i>=0;)
-            {
-                isoline.polygons[i] = isoline.polygons[i].clone();
-            }
+            isoline.polygons[i] = polygons[i].clone();
         }
         return isoline;
     }
@@ -709,5 +826,138 @@ public class Isoline extends Contour
     private void sort()
     {
         // TODO
+    }
+
+
+
+
+    /**
+     * The set of polygons under a point. The check of inclusion
+     * or intersection will be performed only when needed.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private static final class FilteredSet extends AbstractSet<Polygon>
+    {
+        /**
+         * The polygons to check. This array must be a copy of
+         * {@link Isoline#polygons}. It will be changed during
+         * iteration: polygons that do not obey to condition
+         * will be set to <code>null</code>.
+         */
+        final Polygon[] polygons;
+
+        /**
+         * The point to check for inclusion, or <code>null</code> if none.
+         */
+        private final Point2D point;
+
+        /**
+         * The shape to check for inclusion, or <code>null</code> if none.
+         */
+        private final Shape contains;
+
+        /**
+         * The shape to check for intersection, or <code>null</code> if none.
+         */
+        private final Shape intersects;
+
+        /**
+         * Index of the next polygon to check. All polygons
+         * before this index are considered valid.
+         */
+        private int upper;
+
+        /**
+         * Construct a filtered set.
+         *
+         * @param polygons The polygon array. This array <strong>must be a copy</strong>
+         *                 of {@link Isoline#polygons}. It must not be the original!
+         */
+        public FilteredSet(final Polygon[] polygons, final Point2D point, final Shape contains, final Shape intersects)
+        {
+            this.polygons   = polygons;
+            this.point      = point;
+            this.contains   = contains;
+            this.intersects = intersects;
+        }
+
+        /**
+         * Returns the index of the next valid polygon starting at of after the specified
+         * index. If there is no polygon left, returns a number greater than or equals to
+         * <code>polygons.length</code>. This method should be invoked with increasing
+         * value of <code>from</code> only (values in random order are not supported).
+         */
+        final int next(int from)
+        {
+            while (from < polygons.length)
+            {
+                Polygon polygon = polygons[from];
+                if (polygon!=null)
+                {
+                    if (from >= upper)
+                    {
+                        // This polygon has not been
+                        // checked yet for validity.
+                        upper = from+1;
+                        if ((     point!=null && !polygon.contains  (point   )) ||
+                            (  contains!=null && !polygon.contains  (contains)) ||
+                            (intersects!=null && !polygon.intersects(intersects)))
+                        {
+                            polygons[from] = null;
+                            continue;
+                        }
+                        polygon = polygon.clone();
+                        polygon.setDrawingDecimation(1);
+                        polygons[from] = polygon;
+                    }
+                    break;
+                }
+            }
+            return from;
+        }
+        
+        /**
+         * Returns the number of elements in this collection.
+         */
+        public int size()
+        {
+            int count=0;
+            for (int i=next(0); i<polygons.length; i=next(i+1)) count++;
+            return count;
+        }
+
+        /**
+         * Returns an iterator over the elements in this collection.
+         */
+        public Iterator<Polygon> iterator()
+        {
+            return new Iterator<Polygon>()
+            {
+                /** Index of the next valid polygon. */
+                private int index = FilteredSet.this.next(0);
+
+                /** Check if there is more polygons. */
+                public boolean hasNext()
+                {return index<polygons.length;}
+
+                /** Returns the next polygon. */
+                public Polygon next()
+                {
+                    if (index<polygons.length)
+                    {
+                        final Polygon next = polygons[index];
+                        index = FilteredSet.this.next(index+1);
+                        return next;
+                    }
+                    else throw new NoSuchElementException();
+                }
+
+                /** Unsupported operation. */
+                public void remove()
+                {throw new UnsupportedOperationException();}
+            };
+        }
     }
 }
