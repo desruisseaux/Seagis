@@ -56,8 +56,7 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class LonglineCatchTable extends AbstractCatchTable
-{
+final class LonglineCatchTable extends AbstractCatchTable {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des pêches.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
@@ -72,9 +71,10 @@ final class LonglineCatchTable extends AbstractCatchTable
                                 /*[06] END_LATITUDE    */ LONGLINES+".y2, "          +
                                 /*[07] EFFORT_UNIT     */ LONGLINES+".nb_hameçons\n" +
 
-                    "FROM "+LONGLINES+" "+
+                    "FROM "+LONGLINES+"\n"+
                     "WHERE valid=TRUE "+
                       "AND (date>=? AND date<=?) "+
+                      "AND (total>=?) "+
                     "ORDER BY date";
 
     // IMPORTANT: Les données DOIVENT être classées en ordre croissant de date
@@ -92,6 +92,7 @@ final class LonglineCatchTable extends AbstractCatchTable
 
     /** Numéro d'argument. */ private static final int ARG_START_TIME  =  1;
     /** Numéro d'argument. */ private static final int ARG_END_TIME    =  2;
+    /** Numéro d'argument. */ private static final int ARG_TOTAL       =  3;
 
     /**
      * Construit un objet en utilisant la connection spécifiée.
@@ -103,7 +104,9 @@ final class LonglineCatchTable extends AbstractCatchTable
      * @param  species Espèces à inclure dans l'interrogation de la base de données.
      * @throws SQLException si <code>CatchTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected LonglineCatchTable(final Connection connection, final TimeZone timezone, final Set<Species> species) throws SQLException
+    protected LonglineCatchTable(final Connection   connection,
+                                 final TimeZone     timezone,
+                                 final Set<Species> species) throws SQLException
     {
         super(connection, LONGLINES, preferences.get(LONGLINES, SQL_SELECT), timezone, species);
     }
@@ -117,8 +120,7 @@ final class LonglineCatchTable extends AbstractCatchTable
      * @param  rect Coordonnées géographiques de la région, en degrés de longitude et de latitude.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException
-    {
+    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
         // Il est difficile de construire une requête en SQL standard
         // qui vérifiera si la palangre intercepte un rectangle. On
         // vérifiera plutôt à l'intérieur de {@link #getEntries}.
@@ -133,8 +135,7 @@ final class LonglineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException
-    {
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
         final long startTimeMillis = startTime.getTime();
         final long   endTimeMillis =   endTime.getTime();
         final Timestamp time=new Timestamp(startTimeMillis);
@@ -154,8 +155,7 @@ final class LonglineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    protected void packEnvelope() throws SQLException
-    {
+    protected void packEnvelope() throws SQLException {
         // TODO:
         // Faire "String CatchTable.getMinMaxQuery(String query)" (qui coupe avant "ORDER BY").
         // Faire "static LonglineCatchTable.setGeographicArea(PreparedStatement statement, Rectangle2D area)"
@@ -168,8 +168,7 @@ final class LonglineCatchTable extends AbstractCatchTable
         double ymax = geographicArea.getMaxY();
         long   tmin = startTime;
         long   tmax =   endTime;
-        while (result.next())
-        {
+        while (result.next()) {
             double x1=result.getDouble(START_LONGITUDE); if (result.wasNull()) x1=Double.NaN;
             double y1=result.getDouble(START_LATITUDE ); if (result.wasNull()) y1=Double.NaN;
             double x2=result.getDouble(  END_LONGITUDE); if (result.wasNull()) x2=x1;
@@ -187,15 +186,21 @@ final class LonglineCatchTable extends AbstractCatchTable
             if ( t>tmax) tmax=t;
         }
         result.close();
-        if (tmin<tmax)
-        {
+        if (tmin<tmax) {
             startTime = tmin;
               endTime = tmax;
         }
-        if (xmin<=xmax && ymin<=ymax)
-        {
+        if (xmin<=xmax && ymin<=ymax) {
             geographicArea.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
         }
+    }
+
+    /**
+     * Définit les captures minimales exigées pour prendre en compte les captures.
+     * Cette méthode est appelée par les implémentations de {@link #setTimeRange}.
+     */
+    final void setMinimumCatch(final double minimum) throws SQLException {
+        statement.setDouble(ARG_TOTAL, minimum);
     }
 
     /**
@@ -207,12 +212,10 @@ final class LonglineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized List<CatchEntry> getEntries() throws SQLException
-    {
+    public synchronized List<CatchEntry> getEntries() throws SQLException {
         final ResultSet      result = statement.executeQuery();
         final List<CatchEntry> list = new ArrayList<CatchEntry>();
-        while (result.next())
-        {
+        while (result.next()) {
             final CatchEntry entry = new LonglineCatchEntry(this, result);
             if (entry.intersects(geographicArea)) list.add(entry);
         }

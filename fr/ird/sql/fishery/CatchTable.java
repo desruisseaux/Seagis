@@ -128,9 +128,34 @@ public interface CatchTable extends Table
      * Toutes les pêches qui interceptent cette plage de temps seront prises en compte
      * lors du prochain appel de {@link #getEntries}.
      *
+     * @param  startTime Date de début (inclusive) de la période d'intérêt.
+     * @param  startTime Date de fin   (inclusive) de la période d'intérêt.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
     public abstract void setTimeRange(final Date startTime, final Date endTime) throws SQLException;
+
+    /**
+     * Retourne la plage de valeurs de captures d'intérêt. Il peut s'agit de captures
+     * en tonnées ou en nombre d'individus, dépendament du type de pêche.
+     */
+    public abstract Range getCatchRange() throws SQLException;
+
+    /**
+     * Définit la plage de valeurs de captures d'intérêt. Seules les captures dont le tonnage
+     * (ou le nombre d'individus, dépendament du type de pêche) est compris dans cette plage
+     * seront retenues.
+     */
+    public abstract void setCatchRange(final Range catchRange) throws SQLException;
+
+    /**
+     * Définit la plage de valeurs de captures d'intérêt. Cette méthode est équivalente
+     * à {@link #setCatchRange(Range)}. La valeur <code>maximum</code> peut être {@link
+     * Double#POSITIVE_INFINITY}.
+     *
+     * @param minimum Capture minimale, inclusif. Ce nombre doit être positif.
+     * @param maximum Capture maximale, inclusif. Peut être {@link Double#POSITIVE_INFINITY}.
+     */
+    public abstract void setCatchRange(double minimum, final double maximum) throws SQLException;
 
     /**
      * Retourne la liste des captures connues dans la région et dans la plage de

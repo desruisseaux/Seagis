@@ -192,7 +192,7 @@ public class Processor extends Arguments
                 args = new String[]
                 {
                     "-group=365245516",
-                    "-sources=D:/Pouponnière/Méditerranée/SST_new/sst020807.txt"
+                    "-sources=D:/Pouponnière/Méditerranée/Température/sst020807.txt"
                 };
             }
             if (false) // Debug code for Chlorophylle-a
@@ -200,7 +200,7 @@ public class Processor extends Arguments
                 args = new String[]
                 {
                     "-group=2041402270",
-                    "-sources=D:/Pouponnière/Méditérranee/CHLORO_traitées/md_chl011007.txt"
+                    "-sources=D:/Pouponnière/Méditerranée/Chlorophylle/chl_020703.txt"
                 };
             }
         }
@@ -579,7 +579,6 @@ public class Processor extends Arguments
     private void handleException(final Exception exception, final String methodName)
     {
         exception.printStackTrace(out);
-        out.flush();
 
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
         final String message = exception.getLocalizedMessage();
@@ -593,6 +592,13 @@ public class Processor extends Arguments
         record.setSourceMethodName(methodName);
         record.setThrown          (exception);
         silentLog(record);
+        if (exchange != null)
+        {
+            out.println();
+            out.println("Dernières informations:");
+            out.println(exchange.getLastProperties());
+        }
+        out.flush();
     }
 
     /**

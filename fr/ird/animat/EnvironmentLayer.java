@@ -116,9 +116,8 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
      */
     public void setCoverage(GridCoverage coverage)
     {
-        coverage = processor.doOperation("Colormap",   coverage,
-                                         "lowerColor", LOWER_COLOR,
-                                         "upperColor", UPPER_COLOR);
+        coverage = processor.doOperation("Colormap", coverage,
+                                         "Colors", new Color[] {LOWER_COLOR, UPPER_COLOR});
         super.setCoverage(coverage);
     }
 

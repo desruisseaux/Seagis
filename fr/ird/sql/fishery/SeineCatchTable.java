@@ -70,11 +70,12 @@ final class SeineCatchTable extends AbstractCatchTable
                                 /*[04] LONGITUDE */ SEINES+".x, "       +
                                 /*[05] LATITUDE  */ SEINES+".y "        +
 
-                    "FROM "+SEINES+" "+
+                    "FROM "+SEINES+"\n"+
                     "WHERE "+
                          " (date>=? AND date<=?) "+
                       "AND (x>=? AND x<=?) "+
-                      "AND (y>=? AND y<=?)\n"+
+                      "AND (y>=? AND y<=?) "+
+                      "AND (total>=?) "+
                     "ORDER BY date";
 
     // IMPORTANT: Les données DOIVENT être classées en ordre croissant de date
@@ -94,6 +95,7 @@ final class SeineCatchTable extends AbstractCatchTable
     /** Numéro d'argument. */ private static final int ARG_XMAX        =  4;
     /** Numéro d'argument. */ private static final int ARG_YMIN        =  5;
     /** Numéro d'argument. */ private static final int ARG_YMAX        =  6;
+    /** Numéro d'argument. */ private static final int ARG_TOTAL       =  7;
 
     /**
      * Construit un objet en utilisant la connection spécifiée.
@@ -193,6 +195,14 @@ final class SeineCatchTable extends AbstractCatchTable
         {
             geographicArea.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
         }
+    }
+
+    /**
+     * Définit les captures minimales exigées pour prendre en compte les captures.
+     * Cette méthode est appelée par les implémentations de {@link #setTimeRange}.
+     */
+    final void setMinimumCatch(final double minimum) throws SQLException {
+        statement.setDouble(ARG_TOTAL, minimum);
     }
 
     /**

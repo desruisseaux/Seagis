@@ -88,20 +88,6 @@ final class LocalizationGridN1B extends LocalizationGrid
     {
         return new Date(time[numRow]);
     }
-
-    /**
-     * Indique si les éléments du tableau spécifié sont en ordre croissant.
-     *
-     * @param array Tableau de nombres à vérifier.
-     * @return vrai si les éléments du tableau sont en ordre croissant.
-     */    
-    private static boolean isSorted(final long[] array)
-    {
-        for (int i=1; i<array.length; i++)
-            if (array[i] < array[i-1])
-                return false;
-        return true;
-    }
     
     /**
      * Corrige les latitudes et longitudes des points de contrôle de la grille

@@ -42,48 +42,73 @@ import java.util.NoSuchElementException;
 final class Satellite
 {
     /**
-     * Les noms des satellites.
+     * Descriptions des satellites. Chaque élément de ce tableau décrit un satellite portant
+     * le numéro de cet index. Par exemple <code>SATELLITES[12]</code> donne une description
+     * du satellite NOAA 12. Les éléments de ce tableau seront créés par {@link #get(int)} au
+     * fur et à mesure que des satellites seront demandées.
      */
-    private final static String[] NAMES = new String[18];
-    static
-    {
-        NAMES[ 0] = "TIROS N";
-        NAMES[ 2] = "NOAA B";
-        NAMES[ 6] = "NOAA 6";
-        NAMES[ 7] = "NOAA 7";
-        NAMES[ 8] = "NOAA 8";
-        NAMES[ 9] = "NOAA 9";
-        NAMES[10] = "NOAA 10";
-        NAMES[11] = "NOAA 11";
-        NAMES[12] = "NOAA 12";
-        NAMES[13] = "NOAA 13";
-        NAMES[14] = "NOAA 14";
-        NAMES[15] = "NOAA 15";
-        NAMES[16] = "NOAA 16";
-        NAMES[17] = "NOAA M";
-    }
+    private final static Satellite[] SATELLITES = new Satellite[18];
 
     /**
-     * Liste des satellites déjà construit. Cette liste sera remplie par
-     * {@link #get(int)} au fur et à mesure que des satellites seront demandées.
+     * Numéro identifiant ce satellite.
      */
-    private static final Satellite[] satellites = new Satellite[NAMES.length];
+    private int id;
 
     /**
-     * Numéro identifiant ce satellite. Le nom du satellite
-     * pourra être obtenus avec <code>NAMES[id]</code>.
+     * Code sur 2 lettres du satellite.
      */
-    private final int id;
+    private final String code;
 
     /**
-     * Construit un nouveau satellite portant le numéro spécifié.
+     * Nom long du satellite.
+     */
+    private final String name;
+
+    /**
+     * Construit un nouveau satellite portant le nom spécifié.
      * Ce constructeur privé n'est appelé que par {@link #get(int)}
      * pour construire un nouveau satellite la première fois où il
      * est demandé.
      */
-    private Satellite(final int id)
+    private Satellite(final String code, final String name)
     {
-        this.id = id;
+        this.code = code;
+        this.name = name;
+    }
+
+    /**
+     * Retourne un satellite pour le numéro spécifié. Si aucun satellite n'est
+     * définie pour le numéro, alors cette méthode retourne <code>null</code>.
+     */
+    private static synchronized Satellite getInternal(final int id)
+    {
+        Satellite sat = SATELLITES[id];
+        if (sat == null)
+        {
+            switch (id)
+            {
+                case  0: sat=new Satellite("TN", "TIROS N"); break;
+                case  2: sat=new Satellite("NB", "NOAA B" ); break;
+                case  6: sat=new Satellite("NA", "NOAA 6" ); break;
+                case  7: sat=new Satellite("NC", "NOAA 7" ); break;
+                case  8: sat=new Satellite("NE", "NOAA 8" ); break;
+                case  9: sat=new Satellite("NF", "NOAA 9" ); break;
+                case 10: sat=new Satellite("NG", "NOAA 10"); break;
+                case 11: sat=new Satellite("NH", "NOAA 11"); break;
+                case 12: sat=new Satellite("ND", "NOAA 12"); break;
+                case 13: sat=new Satellite("NI", "NOAA 13"); break;
+                case 14: sat=new Satellite("NJ", "NOAA 14"); break;
+                case 15: sat=new Satellite("NK", "NOAA 15"); break;
+                case 16: sat=new Satellite("NL", "NOAA 16"); break;
+                case 17: sat=new Satellite("NM", "NOAA M" ); break;
+            }
+            if (sat != null)
+            {
+                sat.id = id;
+                SATELLITES[id] = sat;
+            }
+        }
+        return sat;
     }
 
     /**
@@ -93,31 +118,32 @@ final class Satellite
      * @return Le satellite du numéro spécifié.
      * @throws NoSuchElementException si le numéro spécifié ne correspond pas à un satellite connu.
      */
-    public static synchronized Satellite get(final int id) throws NoSuchElementException
+    public static Satellite get(final int id) throws NoSuchElementException
     {
-        if (id<0 || id>=NAMES.length || NAMES[id]==null)
+        if (id>=0 && id<SATELLITES.length)
         {
-            throw new NoSuchElementException("Numéro de satellite inconnu: "+id);
+            final Satellite sat = getInternal(id);
+            if (sat != null)
+            {
+                return sat;
+            }
         }
-        if (satellites[id] == null)
-        {
-             satellites[id] = new Satellite(id);
-        }
-        return satellites[id];
+        throw new NoSuchElementException("Numéro de satellite inconnu: "+id);
     }
 
     /**
      * Retourne un satellite pour le nom spécifié. Le nom peut être
-     * une chaîne de caractères telle que "NOAA 16".
+     * une chaîne de caractères telle que "NOAA 16" or "NL".
      */
     public static Satellite get(String name) throws NoSuchElementException
     {
         name = name.trim().toUpperCase();
-        for (int i=0; i<NAMES.length; i++)
+        for (int i=0; i<SATELLITES.length; i++)
         {
-            if (name.equals(NAMES[i]))
+            final Satellite sat = getInternal(i);
+            if (sat!=null && (name.equals(sat.name) || name.equals(sat.code)))
             {
-                return get(i);
+                return sat;
             }
         }
         throw new NoSuchElementException("Nom de satellite inconnu: "+name);
@@ -129,14 +155,6 @@ final class Satellite
     public int getID()
     {
         return id;
-    }
-
-    /**
-     * Retourne le nom de ce satellite.
-     */
-    public String getName()
-    {
-        return NAMES[id];
     }
 
     /**
@@ -152,5 +170,40 @@ final class Satellite
         }
         buffer.append(id);
         return buffer.toString();
+    }
+
+    /**
+     * Indique si ce satellite est NOAA 15, 16 ou M. Ces satellites
+     * ont un format de données différent des satellites précédents.
+     */
+    final boolean isKLM()
+    {
+        return id >= 15;
+    }
+
+    /**
+     * Retourne le nom de ce satellite.
+     */
+    public String toString()
+    {
+        return name;
+    }
+
+    /**
+     * Retourne un code "hash value" pour ce satellite.
+     */
+    public int hashCode()
+    {
+        return id;
+    }
+
+    /**
+     * Indique si ce satellite est identique à l'objet spécifié.
+     * L'implémentation par défaut ne vérifie que les numéros ID,
+     * qui sont sensé être unique pour chaque satellite.
+     */
+    public boolean equals(final Object other)
+    {
+        return (other instanceof Satellite) && ((Satellite) other).id == id;
     }
 }

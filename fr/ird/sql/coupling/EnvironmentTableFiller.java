@@ -36,12 +36,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
 
 // Divers
 import java.util.Date;
 import java.sql.SQLException;
+
+// JAI
+import javax.media.jai.ParameterList;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
@@ -111,6 +115,13 @@ public final class EnvironmentTableFiller {
     };
 
     /**
+     * Jours où extraire des données, avant, pendant et après le jour de la pêche.
+     * Il ne s'agit que d'une liste de jours à utiliser par défaut (si l'utilisateur
+     * n'a pas modifié la sélection). Cette liste doit être classée en ordre croissant.
+     */
+    private static final int[] DAYS_TO_EVALUATE = {-30, -25, -20, -15, -10, -5, 0, 5};
+
+    /**
      * Liste des opérations par défaut et des noms de colonnes dans lesquelles
      * mémoriser le résultat.
      *
@@ -146,6 +157,22 @@ public final class EnvironmentTableFiller {
      * Opération à appliquer sur les données.
      */
     private Operation operation = DEFAULT_OPERATIONS[0];
+
+    /**
+     * Une liste optionnelle d'arguments.
+     */
+    private final Map<String,Object> arguments = new HashMap<String,Object>();
+
+    /**
+     * La colonne de destination dans la base de données.
+     * Il s'agit habituellement de {@link Operation#column}.
+     */
+    private String column = operation.column;
+
+    /**
+     * Jours où extraire des données, avant, pendant et après le jour de la pêche.
+     */
+    private int[] daysToEvaluate = DAYS_TO_EVALUATE;
 
     /**
      * Connection vers la base de données d'images.
@@ -200,6 +227,9 @@ public final class EnvironmentTableFiller {
         if (geographicArea != null) {
             table.setGeographicArea(geographicArea);
         }
+        if (true) {
+            table.setCatchRange(250, Double.POSITIVE_INFINITY);
+        }
         final List<CatchEntry> list = table.getEntries();
         final CatchEntry[] catchs = list.toArray(new CatchEntry[list.size()]);
         table.close();
@@ -231,9 +261,23 @@ public final class EnvironmentTableFiller {
     /**
      * Spécifie une opération à appliquer sur les images, ainsi que
      * la colonne dans laquelle mémoriser le résultat.
+     *
+     * @param operation L'opération à appliquer
+     * @param column Le nom de la colonne de destination dans la base
+     *        de données, ou <code>null</code> pour le nom par défaut.
+     * @param arguments Une liste optionnelle d'arguments (peut être nulle).
+     *        Seul les noms d'arguments attendu par l'opération seront pris
+     *        en compte. Les autres arguments seront ignorés.
      */
-    final void setOperation(final Operation operation) {
+    final void setOperation(final Operation operation, final String column,
+                            final Map<String,Object> arguments)
+    {
         this.operation = operation;
+        this.column = (column!=null) ? column : operation.column;
+        this.arguments.clear();
+        if (arguments != null) {
+            this.arguments.putAll(arguments);
+        }
     }
 
     /**
@@ -241,6 +285,22 @@ public final class EnvironmentTableFiller {
      */
     final Operation[] getAvailableOperations() {
         return (Operation[]) DEFAULT_OPERATIONS.clone();
+    }
+
+    /**
+     * Retourne les jours où extraire des données,
+     * avant, pendant et après le jour de la pêche.
+     */
+    final int[] getDaysToEvaluate() {
+        return (int[]) daysToEvaluate.clone();
+    }
+
+    /**
+     * Définie les jours où extraire des données,
+     * avant, pendant et après le jour de la pêche.
+     */
+    final void setDaysToEvaluate(final int[] days) {
+        daysToEvaluate = (int[]) days.clone();
     }
 
     /**
@@ -252,7 +312,16 @@ public final class EnvironmentTableFiller {
     public void run() throws SQLException {
         final CatchEntry[]   catchs = getCatchs();
         final ImageTable imageTable = images.getImageTable();
-        imageTable.setOperation(operation.name);
+        final ParameterList  params = imageTable.setOperation(operation.name);
+        if (true) {
+            final String[] names = params.getParameterListDescriptor().getParamNames();
+            for (int i=0; i<names.length; i++) {
+                final Object value = arguments.get(names[i]);
+                if (value != null) {
+                    params.setParameter(names[i], value);
+                }
+            }
+        }
 
         // Calcule les données environnementales pour une série à la fois.
         for (final Iterator<Map.Entry<SeriesEntry,String[]>> it=series.entrySet().iterator(); it.hasNext();) {
@@ -260,11 +329,11 @@ public final class EnvironmentTableFiller {
             imageTable.setSeries(series.getKey());
             final CatchCoverage    coverage = new CatchCoverage(imageTable);
             coverage.setInterpolationAllowed(true);
-            final Task[]              tasks = Task.getTasks(catchs, coverage);
+            final Task[]              tasks = Task.getTasks(catchs, coverage, daysToEvaluate);
             final String[]       parameters = series.getValue();
             final EnvironmentTable[] update = new EnvironmentTable[TEST_ONLY ? 0 : parameters.length];
             for (int i=0; i<update.length; i++) {
-                update[i] = pêches.getEnvironmentTable(parameters[i], operation.column);
+                update[i] = pêches.getEnvironmentTable(parameters[i], column);
             }
             operation.compute(tasks, coverage, update);
             for (int i=0; i<update.length; i++) {

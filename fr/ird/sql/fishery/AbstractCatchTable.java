@@ -68,8 +68,12 @@ import javax.media.jai.util.Range;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class AbstractCatchTable extends Table implements CatchTable
-{
+abstract class AbstractCatchTable extends Table implements CatchTable {
+    /**
+     * Tonnage minimal et maximal des captures à prendre en compte.
+     */
+    private static final Range DEFAULT_CATCH_RANGE = new Range(Double.class, new Double(0), null);
+
     /**
      * The SQL instruction to use for query fishery data. The "SELECT" clause
      * in this instruction <strong>do not</strong> include species. Species
@@ -118,6 +122,11 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     protected long startTime, endTime;
 
     /**
+     * Plage de capture à prendre en compte.
+     */
+    protected Range catchRange;
+
+    /**
      * Indique si la méthode {@link #packEnvelope} a été appelée. Ce
      * champ <strong>doit</strong> être remis à <code>false</code> par les
      * méthodes <code>setTimeRange</code> and <code>setGeographicArea</code>.
@@ -145,7 +154,11 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @param  species Ensemble des espèces demandées.
      * @throws SQLException si <code>FisheryTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected AbstractCatchTable(final Connection connection, final String table, final String statement, final TimeZone timezone, final Set<Species> species) throws SQLException
+    protected AbstractCatchTable(final Connection   connection,
+                                 final String       table,
+                                 final String       statement,
+                                 final TimeZone     timezone,
+                                 final Set<Species> species) throws SQLException
     {
         super(connection.prepareStatement(completeQuery(statement, table, species)));
         this.table     = table;
@@ -155,24 +168,23 @@ abstract class AbstractCatchTable extends Table implements CatchTable
 
         setTimeRange(new Date(0), new Date());
         setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
+        setCatchRange(DEFAULT_CATCH_RANGE);
     }
 
     /**
      * Complète la requète SQL en ajouter les noms de colonnes des espèces
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
+     * Une colonne "total" est aussi ajoutée.
      */
     private static String completeQuery(String query, final String table, final Set<Species> species)
     {
         int index = query.toUpperCase().indexOf("FROM");
-        if (index>=0)
-        {
+        if (index >= 0) {
             while (index>=1 && Character.isWhitespace(query.charAt(index-1))) index--;
-            final StringBuffer buffer=new StringBuffer(query.substring(0, index));
-            for (final Iterator<Species> it=species.iterator(); it.hasNext();)
-            {
+            final StringBuffer buffer = new StringBuffer(query.substring(0, index));
+            for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
                 final String name = it.next().getName(null);
-                if (name!=null)
-                {
+                if (name != null) {
                     buffer.append(", ");
                     buffer.append(table);
                     buffer.append('.');
@@ -180,7 +192,32 @@ abstract class AbstractCatchTable extends Table implements CatchTable
                 }
             }
             buffer.append(query.substring(index));
-            query=buffer.toString();
+            query = buffer.toString();
+        }
+        final String total = "total";
+        index = query.toLowerCase().indexOf(total);
+        if (index>0 && index+1<query.length() &&
+            !Character.isUnicodeIdentifierPart(query.charAt(index-1)) &&
+            !Character.isUnicodeIdentifierPart(query.charAt(index+total.length())))
+        {
+            final StringBuffer buffer = new StringBuffer(query.substring(0, index));
+            boolean additional = false;
+            buffer.append('(');
+            for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
+                final String name = it.next().getName(null);
+                if (name != null) {
+                    if (additional) {
+                        buffer.append('+');
+                    }
+                    buffer.append('[');
+                    buffer.append(name);
+                    buffer.append(']');
+                    additional = true;
+                }
+            }
+            buffer.append(')');
+            buffer.append(query.substring(index+total.length()));
+            query = buffer.toString();
         }
         return query;
     }
@@ -195,10 +232,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @param species Ensemble des espèces à prendre en compte.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public final synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException
-    {
-        if (!species.equals(newSpecies))
-        {
+    public final synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException {
+        if (!species.equals(newSpecies)) {
             final Rectangle2D area = getGeographicArea();
             final Range  timeRange = getTimeRange();
             final Connection connection = statement.getConnection();
@@ -215,31 +250,25 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * Procède à l'extraction d'une date
      * en tenant compte du fuseau horaire.
      */
-    final Date getTimestamp(final int field, final ResultSet result) throws SQLException
-    {
-        if (false)
-        {
+    final Date getTimestamp(final int field, final ResultSet result) throws SQLException {
+        if (false) {
             // Cette ligne aurait suffit si ce n'était du bug #4380653...
             return result.getTimestamp(field, calendar);
-        }
-        else
-        {
-            if (localCalendar==null)
+        } else {
+            if (localCalendar==null) {
                 localCalendar=new GregorianCalendar();
-            Date date;
-            try
-            {
-                date=result.getTimestamp(field, localCalendar);
             }
-            catch (SQLException exception)
-            {
-                if (Utilities.getShortClassName(exception).startsWith("NotImplemented"))
-                {
+            Date date;
+            try {
+                date=result.getTimestamp(field, localCalendar);
+            } catch (SQLException exception) {
+                if (Utilities.getShortClassName(exception).startsWith("NotImplemented")) {
                     // Workaround for a bug in MySQL's JDBC:
                     // org.gjt.mm.mysql.jdbc2.NotImplemented
                     date=result.getTimestamp(field);
+                } else {
+                    throw exception;
                 }
-                else throw exception;
             }
             localCalendar.setTime(date);
             calendar.     setTime(date);
@@ -258,15 +287,17 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * Retourne l'ensemble des espèces comprises dans la requête
      * de cette table. L'ensemble retourné est immutable.
      */
-    public final Set<Species> getSpecies()
-    {return species;}
+    public final Set<Species> getSpecies() {
+        return species;
+    }
 
     /**
      * Retourne le système de coordonnées utilisées
      * pour les positions de pêches dans cette table.
      */
-    public final CoordinateSystem getCoordinateSystem()
-    {return GeographicCoordinateSystem.WGS84;}
+    public final CoordinateSystem getCoordinateSystem() {
+        return GeographicCoordinateSystem.WGS84;
+    }
 
     /**
      * Retourne les coordonnées géographiques de la région des captures.  Cette région
@@ -276,33 +307,12 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public final synchronized Rectangle2D getGeographicArea() throws SQLException
-    {
-        if (!packed)
-        {
+    public final synchronized Rectangle2D getGeographicArea() throws SQLException {
+        if (!packed) {
             packEnvelope();
             packed = true;
         }
         return (Rectangle2D) geographicArea.clone();
-    }
-
-    /**
-     * Retourne la plage de dates des pêches. Cette plage de dates ne sera pas plus grande que
-     * la plage de dates spécifiée lors du dernier appel de la méthode {@link #setTimeRange}.
-     * Elle peut toutefois être plus petite de façon à n'englober que les données de pêches
-     * présentes dans la base de données.
-     *
-     * @param  La plage de dates des données de pêches. Cette plage sera constituée d'objets {@link Date}.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
-     */
-    public final synchronized Range getTimeRange() throws SQLException
-    {
-        if (!packed)
-        {
-            packEnvelope();
-            packed = true;
-        }
-        return new Range(Date.class, new Date(startTime), new Date(endTime));
     }
 
     /**
@@ -316,6 +326,23 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     protected abstract void packEnvelope() throws SQLException;
 
     /**
+     * Retourne la plage de dates des pêches. Cette plage de dates ne sera pas plus grande que
+     * la plage de dates spécifiée lors du dernier appel de la méthode {@link #setTimeRange}.
+     * Elle peut toutefois être plus petite de façon à n'englober que les données de pêches
+     * présentes dans la base de données.
+     *
+     * @param  La plage de dates des données de pêches. Cette plage sera constituée d'objets {@link Date}.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public final synchronized Range getTimeRange() throws SQLException {
+        if (!packed) {
+            packEnvelope();
+            packed = true;
+        }
+        return new Range(Date.class, new Date(startTime), new Date(endTime));
+    }
+
+    /**
      * Définit la plage de dates dans laquelle on veut rechercher des données de pêches.
      * Toutes les pêches qui interceptent cette plage de temps seront prises en compte
      * lors du prochain appel de {@link #getEntries}.
@@ -324,8 +351,66 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      *         Cette plage doit être constituée d'objets {@link Date}.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public final void setTimeRange(final Range timeRange) throws SQLException
-    {setTimeRange((Date)timeRange.getMinValue(), (Date)timeRange.getMaxValue());}
+    public final void setTimeRange(final Range timeRange) throws SQLException {
+        Date min = (Date)timeRange.getMinValue();
+        Date max = (Date)timeRange.getMaxValue();
+        if (min==null || max==null) {
+            throw new UnsupportedOperationException("Les intervalles ouverts ne sont pas encore supportés");
+        }
+        if (!timeRange.isMinIncluded()) {
+            min = new Date(min.getTime()+1);
+        }
+        if (!timeRange.isMaxIncluded()) {
+            max = new Date(max.getTime()-1);
+        }
+        setTimeRange(min, max);
+    }
+
+    /**
+     * Retourne la plage de valeurs de captures d'intérêt. Il peut s'agit de captures
+     * en tonnées ou en nombre d'individus, dépendament du type de pêche.
+     */
+    public Range getCatchRange() throws SQLException {
+        return catchRange;
+    }
+
+    /**
+     * Définit la plage de valeurs de captures d'intérêt.
+     */
+    public final synchronized void setCatchRange(final Range catchRange) throws SQLException {
+        if (!catchRange.isMinIncluded() || !catchRange.isMaxIncluded()) {
+            throw new UnsupportedOperationException("Les intervalles ouverts ne sont pas encore supportés");
+        }
+        final Number min = (Number)catchRange.getMinValue();
+        final Number max = (Number)catchRange.getMaxValue();
+        setCatchRange((min!=null) ? min.doubleValue() : Double.NEGATIVE_INFINITY,
+                      (max!=null) ? max.doubleValue() : Double.POSITIVE_INFINITY);
+        this.catchRange = catchRange;
+    }
+
+    /**
+     * Définit la plage de valeurs de captures d'intérêt. Cette méthode est équivalente
+     * à {@link #setCatchRange(Range)}. La valeur <code>maximum</code> peut être {@link
+     * Double#POSITIVE_INFINITY}.
+     *
+     * @param minimum Capture minimale, inclusif. Ce nombre doit être positif.
+     * @param maximum Capture maximale, inclusif. Peut être {@link Double#POSITIVE_INFINITY}.
+     */
+    public final synchronized void setCatchRange(double minimum, double maximum) throws SQLException {
+        if (!(minimum>=0 && minimum<=maximum)) {
+            throw new IllegalArgumentException();
+        }
+        if (!Double.isInfinite(maximum)) {
+            throw new UnsupportedOperationException("Les limites supérieures ne sont pas encore impléméntées.");
+        }
+        setMinimumCatch(minimum);
+        catchRange = new Range(Double.class, new Double(minimum), null);
+    }
+
+    /**
+     * Définit les captures minimales exigées pour prendre en compte les captures.
+     */
+    abstract void setMinimumCatch(final double minimum) throws SQLException;
 
     /**
      * Définie une valeur réelle pour une capture données.  Cette méthode peut être utilisée
@@ -339,7 +424,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
      *         de la base de données a échouée pour une autre raison.
      */
-    public final void setValue(final CatchEntry capture, final String columnName, final float value) throws SQLException
+    public final void setValue(final CatchEntry capture, final String columnName, final float value)
+        throws SQLException
     {
         setValue(capture, "UPDATE "+table+" SET "+columnName+"="+value+" WHERE ID="+capture.getID());
     }
@@ -356,7 +442,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
      *         de la base de données a échouée pour une autre raison.
      */
-    public final void setValue(final CatchEntry capture, final String columnName, final boolean value) throws SQLException
+    public final void setValue(final CatchEntry capture, final String columnName, final boolean value)
+        throws SQLException
     {
         // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
         setValue(capture, "UPDATE "+table+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID());
@@ -369,14 +456,11 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @param  sql Requête à exécuter.
      * @throws Si la mise à jour de la base de données a échouée.
      */
-    private synchronized void setValue(final CatchEntry capture, final String sql) throws SQLException
-    {
-        if (update==null)
-        {
+    private synchronized void setValue(final CatchEntry capture, final String sql) throws SQLException {
+        if (update == null) {
             update = statement.getConnection().createStatement();
         }
-        if (update.executeUpdate(sql)==0)
-        {
+        if (update.executeUpdate(sql) == 0) {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
         }
         final LogRecord record = new LogRecord(DataBase.SQL_UPDATE, sql);
@@ -393,9 +477,10 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public final synchronized void close() throws SQLException
-    {
-        if (update!=null) update.close();
+    public final synchronized void close() throws SQLException {
+        if (update!=null) {
+            update.close();
+        }
         super.close();
     }
 }

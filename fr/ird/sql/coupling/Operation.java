@@ -38,6 +38,9 @@ import java.util.logging.LogRecord;
 import java.util.Date;
 import java.sql.SQLException;
 
+// JAI
+import javax.media.jai.ParameterList;
+
 // Geotools dependencies
 import org.geotools.gp.GridCoverageProcessor; // For javadoc
 import org.geotools.cv.PointOutsideCoverageException;
@@ -104,6 +107,14 @@ class Operation {
      */
     public String toString() {
         return description;
+    }
+
+    /**
+     * Setup the parameters for this operation. This method is automatically
+     * invoked when {@link EnvironmentTableFiller} is about to apply this
+     * operation.
+     */
+    protected void setup(final ParameterList parameters) {
     }
 
     /**

@@ -49,12 +49,6 @@ final class Task implements Comparable<Task> {
     private static final long DAY = 24*60*60*1000L;
 
     /**
-     * Jours où extraire des données, avant,
-     * pendant et après le jour de la pêche.
-     */
-    private static final int[] DAYS_TO_EVALUATE = {-30, -25, -20, -15, -10, -5, 0, 5};
-
-    /**
      * La capture à évaluer.
      */
     public final CatchEntry capture;
@@ -91,11 +85,15 @@ final class Task implements Comparable<Task> {
      *
      * @param catchs Liste des captures dont on voudra les paramètres environnementaux.
      * @param coverage L'objet qui servira (plus tard) à calculer les paramètres.
+     * @param daysToEvaluate Jours où extraire des données, avant, pendant et après le
+     *        jour de la pêche.
      */
-    public static Task[] getTasks(final CatchEntry[] catchs, final CatchCoverage coverage) {
-        final Task[] tasks = new Task[catchs.length * DAYS_TO_EVALUATE.length];
-        for (int i=0,t=0; t<DAYS_TO_EVALUATE.length; t++) {
-            final long timeOffset = DAY*DAYS_TO_EVALUATE[t];
+    public static Task[] getTasks(final CatchEntry[] catchs, final CatchCoverage coverage,
+                                  final int[] daysToEvaluate)
+    {
+        final Task[] tasks = new Task[catchs.length * daysToEvaluate.length];
+        for (int i=0,t=0; t<daysToEvaluate.length; t++) {
+            final long timeOffset = DAY*daysToEvaluate[t];
             for (int j=0; j<catchs.length; j++) {
                 final CatchEntry capture = catchs[j];
                 final Date time = coverage.getTime(capture);
