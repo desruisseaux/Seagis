@@ -79,17 +79,17 @@ import net.seagis.resources.Utilities;
 
 
 /**
- * Panneau contenant une mosaïque d'images {@link ImagePanel}.
+ * Panneau contenant une mosaïque d'images {@link ImageCanvas}.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class MosaicPanel extends JPanel
+final class MosaicCanvas extends JPanel
 {
     /**
      * Groupe des threads ayant la charge de lire des images en arrière-plan.
-     * Ce groupe contiendra des threads de la classe {@link ImagePanel.Reader}.
-     * Ce champ est accédé par {@link ImagePanel} lorsqu'il construit des threads.
+     * Ce groupe contiendra des threads de la classe {@link ImageCanvas.Reader}.
+     * Ce champ est accédé par {@link ImageCanvas} lorsqu'il construit des threads.
      */
     final ThreadGroup readers;
 
@@ -171,9 +171,9 @@ final class MosaicPanel extends JPanel
                     for (int i=getComponentCount(); --i>=0;)
                     {
                         final Component c=getComponent(i);
-                        if (c instanceof ImagePanel)
+                        if (c instanceof ImageCanvas)
                         {
-                            final MapPanel mapPanel=((ImagePanel) c).mapPanel;
+                            final MapPanel mapPanel=((ImageCanvas) c).mapPanel;
                             if (mapPanel!=source) mapPanel.transform(change);
                         }
                     }
@@ -242,7 +242,7 @@ final class MosaicPanel extends JPanel
      * @param readers   Groupe dans lequel placer les threads qui liront des
      *                  images en arrière plan.
      */
-    public MosaicPanel(final StatusBar statusBar, final ThreadGroup readers)
+    public MosaicCanvas(final StatusBar statusBar, final ThreadGroup readers)
     {
         super(new GridLayout(), false);
         this.statusBar = statusBar;
@@ -367,12 +367,41 @@ final class MosaicPanel extends JPanel
             for (int i=0; i<count; i++)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
-                    if (((ImagePanel) c).isLoading())
+                if (c instanceof ImageCanvas)
+                    if (((ImageCanvas) c).isLoading())
                         return true;
             }
             return false;
         }
+    }
+
+    /**
+     * Change le nombre d'images présentes dans cette mosaïque.
+     * Si cette methode est appelée pour augmenter le nombre
+     * d'images, alors de nouvelles images vides seront créees
+     * et ajoutées. Si cette méthode est appellée pour diminuer
+     * le nombre d'images, alors les images en trop seront oubliées.
+     * Le nombre de lignes et de colonnes sera ajusté de façon à
+     * accomoder le nouveau nombre d'images.
+     */
+    public void setImageCount(final int count)
+    {
+        final Component[] components = getComponents();
+        final ImageCanvas[] images = new ImageCanvas[count];
+        for (int i=0; i<images.length; i++)
+        {
+            if (i<components.length)
+            {
+                final Component c = components[i];
+                if (c instanceof ImageCanvas)
+                {
+                    images[i] = (ImageCanvas) c;
+                    continue;
+                }
+            }
+            images[i] = new ImageCanvas();
+        }
+        setImages(images);
     }
 
     /**
@@ -381,7 +410,7 @@ final class MosaicPanel extends JPanel
      * lignes et de colonnes sera ajusté de façon à accomoder
      * le nouveau nombre d'images.
      */
-    public void setImages(final ImagePanel[] images)
+    public void setImages(final ImageCanvas[] images)
     {
         synchronized (getTreeLock())
         {
@@ -400,8 +429,8 @@ final class MosaicPanel extends JPanel
             for (int i=getComponentCount(); --i>=0;)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
-                    removeListeners(((ImagePanel) c).mapPanel);
+                if (c instanceof ImageCanvas)
+                    removeListeners(((ImageCanvas) c).mapPanel);
             }
             removeAll();
             /*
@@ -410,7 +439,7 @@ final class MosaicPanel extends JPanel
              */
             for (int i=0; i<images.length; i++)
             {
-                final ImagePanel image=images[i];
+                final ImageCanvas image=images[i];
                 image.setBorder(BorderFactory.createLoweredBevelBorder());
                 image.setScrollBarsVisible(scrollBarsVisible);
                 add(image);
@@ -436,9 +465,9 @@ final class MosaicPanel extends JPanel
             removeAll();
             for (int i=old.length; --i>=0;)
             {
-                if (old[i] instanceof ImagePanel)
+                if (old[i] instanceof ImageCanvas)
                 {
-                    final ImagePanel image=(ImagePanel) old[i];
+                    final ImageCanvas image=(ImageCanvas) old[i];
                     removeListeners(image.mapPanel);
                     image.dispose();
                 }
@@ -452,8 +481,20 @@ final class MosaicPanel extends JPanel
     /**
      * Retourne l'image à l'index spécifié.
      */
-    public ImagePanel getImage(final int index)
-    {return (ImagePanel) getComponent(index);}
+    public ImageCanvas getImage(int index)
+    {
+        final int n = getComponentCount();
+        for (int i=0; i<n; i++)
+        {
+            final Component c = getComponent(i);
+            if (c instanceof ImageCanvas)
+            {
+                if (index == 0) return (ImageCanvas) c;
+                index--;
+            }
+        }
+        return null;
+    }
 
     /**
      * Retourne toutes les images apparaissant dans la mosaïque.
@@ -469,9 +510,9 @@ final class MosaicPanel extends JPanel
             for (int i=0; i<count; i++)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
+                if (c instanceof ImageCanvas)
                 {
-                    ((ImagePanel) c).getImages(images);
+                    ((ImageCanvas) c).getImages(images);
                 }
             }
             return images.toArray(new GridCoverage[images.size()]);
@@ -485,7 +526,7 @@ final class MosaicPanel extends JPanel
     {
         int count=0;
         for (int i=getComponentCount(); --i>=0;)
-            if (getComponent(i) instanceof ImagePanel)
+            if (getComponent(i) instanceof ImageCanvas)
                 count++;
         return count;
     }
@@ -506,9 +547,9 @@ final class MosaicPanel extends JPanel
                 for (int i=getComponentCount(); --i>=0;)
                 {
                     final Component c=getComponent(i);
-                    if (c instanceof ImagePanel)
+                    if (c instanceof ImageCanvas)
                     {
-                        ((ImagePanel) c).reload(layers, statusBar);
+                        ((ImageCanvas) c).reload(layers, statusBar);
                     }
                 }
             }
@@ -534,9 +575,9 @@ final class MosaicPanel extends JPanel
                 for (int i=getComponentCount(); --i>=0;)
                 {
                     final Component c=getComponent(i);
-                    if (c instanceof ImagePanel)
+                    if (c instanceof ImageCanvas)
                     {
-                        ((ImagePanel) c).mapPanel.reset();
+                        ((ImageCanvas) c).mapPanel.reset();
                     }
                 }
             }
@@ -561,9 +602,9 @@ final class MosaicPanel extends JPanel
             for (int i=getComponentCount(); --i>=0;)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
+                if (c instanceof ImageCanvas)
                 {
-                    final MapPanel mapPanel=((ImagePanel) c).mapPanel;
+                    final MapPanel mapPanel=((ImageCanvas) c).mapPanel;
                     if (mapPanel.getLayerCount()!=0)
                     {
                         final Rectangle2D areaI=mapPanel.getVisibleArea();
@@ -591,10 +632,10 @@ final class MosaicPanel extends JPanel
                 for (int i=getComponentCount(); --i>=0;)
                 {
                     final Component c=getComponent(i);
-                    if (c instanceof ImagePanel)
+                    if (c instanceof ImageCanvas)
                     {
                         // TODO: tenir compte du système de coordonnées.
-                        ((ImagePanel) c).mapPanel.setVisibleArea(area);
+                        ((ImageCanvas) c).mapPanel.setVisibleArea(area);
                     }
                 }
             }
@@ -625,8 +666,8 @@ final class MosaicPanel extends JPanel
             for (int i=getComponentCount(); --i>=0;)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
-                    ((ImagePanel) c).setScrollBarsVisible(visible);
+                if (c instanceof ImageCanvas)
+                    ((ImageCanvas) c).setScrollBarsVisible(visible);
             }
             scrollBarsVisible=visible;
         }
@@ -661,8 +702,8 @@ final class MosaicPanel extends JPanel
             for (int i=getComponentCount(); --i>=0;)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
-                    ((ImagePanel) c).setPaintingWhileAdjusting(s);
+                if (c instanceof ImageCanvas)
+                    ((ImageCanvas) c).setPaintingWhileAdjusting(s);
             }
         }
         paintingWhileAdjusting=s;
@@ -670,7 +711,7 @@ final class MosaicPanel extends JPanel
 
     /**
      * Libère les ressources utilisées par cette composante.
-     * Cette méthode appelera {@link ImagePanel#dispose()}
+     * Cette méthode appelera {@link ImageCanvas#dispose()}
      * pour chacune des images contenues dans cette mosaïque.
      */
     protected void dispose()
@@ -680,8 +721,8 @@ final class MosaicPanel extends JPanel
             for (int i=getComponentCount(); --i>=0;)
             {
                 final Component c=getComponent(i);
-                if (c instanceof ImagePanel)
-                    ((ImagePanel) c).dispose();
+                if (c instanceof ImageCanvas)
+                    ((ImageCanvas) c).dispose();
             }
         }
     }
