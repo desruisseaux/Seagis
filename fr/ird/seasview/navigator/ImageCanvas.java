@@ -50,7 +50,6 @@ import javax.swing.JLabel;
 import javax.swing.JComponent;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
-import fr.ird.awt.StatusBar;
 
 // Main framework
 import fr.ird.seasview.Task;
@@ -75,6 +74,7 @@ import java.text.FieldPosition;
 import javax.media.jai.util.Range;
 
 // Geotools dependencies
+import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 

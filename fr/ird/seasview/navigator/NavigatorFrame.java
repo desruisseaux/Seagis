@@ -37,7 +37,6 @@ import java.awt.Container;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
-import fr.ird.awt.StatusBar;
 import fr.ird.awt.ImageTableModel;
 import fr.ird.awt.CoordinateChooserDB;
 import fr.ird.awt.progress.Progress;
@@ -65,6 +64,7 @@ import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
+import org.geotools.gui.swing.StatusBar;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 

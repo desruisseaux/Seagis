@@ -54,7 +54,6 @@ import javax.swing.JScrollPane;
 import fr.ird.seasview.InternalFrame;
 import fr.ird.awt.ImageTableModel;
 import fr.ird.awt.ExportChooser;
-import fr.ird.awt.StatusBar;
 import fr.ird.awt.ColorRamp;
 
 // Models and events
@@ -89,6 +88,7 @@ import java.util.TimeZone;
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import org.geotools.gui.swing.StatusBar;
 
 
 /**

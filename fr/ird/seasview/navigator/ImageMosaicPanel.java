@@ -37,7 +37,6 @@ import org.geotools.gc.GridCoverage;
 
 // Map components
 import fr.ird.seasview.layer.control.LayerControl;
-import fr.ird.awt.StatusBar;
 
 // User interface
 import java.awt.Component;
@@ -71,6 +70,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 
 // Geotools dependencies
+import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 

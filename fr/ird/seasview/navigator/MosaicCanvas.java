@@ -44,13 +44,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.BorderFactory;
-import fr.ird.awt.StatusBar;
 import fr.ird.seasview.InternalFrame;
 
 // Events
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import org.geotools.gui.swing.event.ZoomChangeEvent;
@@ -76,6 +74,7 @@ import fr.ird.seasview.DataBase;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.StatusBar;
 
 
 /**
@@ -157,7 +156,7 @@ final class MosaicCanvas extends JPanel {
      * @author Martin Desruisseaux
      */
     private final class Listeners
-            implements ZoomChangeListener, MouseListener, MouseMotionListener, ComponentListener
+            implements ZoomChangeListener, MouseListener, ComponentListener
     {
         /**
          * Méthode appelée lorsque le zoom d'une des images a changé. Cette
@@ -217,11 +216,9 @@ final class MosaicCanvas extends JPanel {
         /** Invoked when the component's position changes.      */ public void componentMoved (final ComponentEvent event) {updateMouseCoordinate();}
         /** Invoked when the component has been made visible.   */ public void componentShown (final ComponentEvent event) {}
         /** Invoked when the component has been made invisible. */ public void componentHidden(final ComponentEvent event) {}
-        /** Appelée lors des déplacements de la souris.         */ public void mouseMoved     (final MouseEvent     event) {statusBar.setCoordinate(mouseFormat.format(event));}
-        /** Appelée lors des glissements de la souris.          */ public void mouseDragged   (final MouseEvent     event) {mouseMoved(event);}
         /** Invoked when the mouse has been clicked.            */ public void mouseClicked   (final MouseEvent     event) {}
-        /** Invoked when a mouse button has been pressed.       */ public void mousePressed   (final MouseEvent     event) {mouseMoved(event);}
-        /** Invoked when a mouse button has been released.      */ public void mouseReleased  (final MouseEvent     event) {mouseMoved(event);}
+        /** Invoked when a mouse button has been pressed.       */ public void mousePressed   (final MouseEvent     event) {statusBar.mouseMoved(event);}
+        /** Invoked when a mouse button has been released.      */ public void mouseReleased  (final MouseEvent     event) {statusBar.mouseMoved(event);}
         /** Invoked when the mouse enters a component.          */ public void mouseEntered   (final MouseEvent     event) {}
         /** Invoked when the mouse exits a component.           */ public void mouseExited    (final MouseEvent     event) {statusBar.setCoordinate(null);}
     }
@@ -328,7 +325,7 @@ final class MosaicCanvas extends JPanel {
     private void addListeners(final MapPane mapPanel) {
         mapPanel.addZoomChangeListener(listeners);
         if (statusBar!=null) {
-            mapPanel.addMouseMotionListener(listeners);
+            mapPanel.addMouseMotionListener(statusBar);
             mapPanel.addMouseListener      (listeners);
         }
         mapPanel.setPaintingWhileAdjusting(paintingWhileAdjusting);
@@ -339,7 +336,7 @@ final class MosaicCanvas extends JPanel {
      */
     private void removeListeners(final MapPane mapPanel) {
         mapPanel.removeZoomChangeListener (listeners);
-        mapPanel.removeMouseMotionListener(listeners);
+        mapPanel.removeMouseMotionListener(statusBar);
         mapPanel.removeMouseListener      (listeners);
     }
 

@@ -48,7 +48,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.ClipboardOwner;
 
 // Map components
-import fr.ird.awt.StatusBar;
 import fr.ird.seasview.InternalFrame;
 import fr.ird.seasview.layer.control.LayerControl;
 
@@ -56,6 +55,7 @@ import fr.ird.seasview.layer.control.LayerControl;
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import org.geotools.gui.swing.StatusBar;
 
 
 /**
