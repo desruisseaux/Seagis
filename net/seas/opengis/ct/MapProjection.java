@@ -39,6 +39,7 @@ import net.seas.awt.geom.Geometry;
 
 // Miscellaneous
 import java.util.Locale;
+import net.seas.util.XMath;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.text.CoordinateFormat;
@@ -57,6 +58,15 @@ import net.seas.text.CoordinateFormat;
  */
 abstract class MapProjection extends MathTransform
 {
+    /**
+     * Erreur maximale (en mètres) tolérées lorsque l'on fait une
+     * transformation directe suivit d'une transformation inverse
+     * (ou vis-versa). Si les "assertions" sont activées et qu'une
+     * erreur supérieure est détectée, une exception
+     * {@link AssertionError} sera lancée.
+     */
+    static final double MAX_ERROR = 1;
+
     /**
      * Marge de tolérance pour les comparaisons de nombre réels.
      */
@@ -235,6 +245,61 @@ abstract class MapProjection extends MathTransform
     static TransformException badLatitudeException(final double y)
     {return new TransformException(Resources.format(Clé.LATITUDE_OUT_OF_RANGE¤1, new Latitude(y)));}
 
+    /**
+     * Returns the distance between two points. Point (<var>x</var>,<var>y</var>) will be
+     * transformed before to compute distance to <code>ptSrc</code>.   The transformation
+     * will use {@link #transform(Point2D,Point2D)} if <code>inverse</code> is false,  or
+     * {@link #inverseTransform(Point2D,Point2D)} if <code>inverse</code> is true.
+     *
+     * @param  ptSrc Source point. Must be in metres if <code>inverse</code> is false, or
+     *         in degrees if <code>inverse</code> is true. This point will not be overwritten.
+     * @param  x,y Ordinates of the resulting point. The (<var>x</var>,<var>y</var>)
+     *         point must be in degrees if <code>inverse</code> is false, or in metres if
+     *         <code>inverse</code> is true (this is the opposite of <code>ptSrc</code>).
+     * @param  inverse <code>true</code> if an inverse transformation must be applied
+     *         on (<var>x</var>,<var>y</var>) instead of a direct transformation.
+     * @return The distance in metres.
+     * @throws TransformException if a transformation failed.
+     */
+    final double distance(final Point2D ptSrc, final double x, final double y, final boolean inverse) throws TransformException
+    {
+        Point2D ptDst;
+        if (ptSrc instanceof CheckPoint)
+        {
+            // Avoid never-ending loop.
+            ptDst = ptSrc;
+        }
+        else
+        {
+            ptDst = new CheckPoint(x,y);
+            ptDst = (inverse) ? inverseTransform(ptDst, ptDst) : transform(ptDst, ptDst);
+        }
+        if (!inverse)
+        {
+            // Compute cartesian distance in metres.
+            return ptSrc.distance(ptDst);
+        }
+        else
+        {
+            // Compute orthodromic distance (spherical model) in metres.
+            final double y1 = Math.toRadians(ptSrc.getY());
+            final double y2 = Math.toRadians(ptDst.getY());
+            final double dx = Math.toRadians(Math.abs(ptDst.getX()-ptSrc.getX()) % 360);
+            return Math.acos(Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx))*a;
+        }
+    }
+
+    /**
+     * Check point for private use by {@link #distance}. This class is necessary in order to
+     * avoid never-ending loop in <code>assert</code> statements (when an <code>assert</code>
+     * statement calls <code>transform</code>, which calls <code>inverseTransform</code>, which
+     * calls <code>transform</code>, etc.).
+     */
+    private static final class CheckPoint extends Point2D.Double
+    {
+        public CheckPoint(final double x, final double y)
+        {super(x,y);}
+    }
 
 
 
