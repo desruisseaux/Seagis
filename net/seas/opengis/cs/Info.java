@@ -23,8 +23,13 @@
 package net.seas.opengis.cs;
 
 // Miscellaneous
+import java.io.Serializable;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+
+// For JavaDOC only.
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 
 /**
@@ -54,18 +59,34 @@ import net.seas.resources.Resources;
  *
  * @see org.opengis.cs.CS_Info
  */
-public abstract class Info
+public abstract class Info implements Serializable
 {
     /**
-     * Create an empty object.
+     * Serial number for interoperability with different versions.
      */
-    protected Info()
-    {}
+    private static final long serialVersionUID = 2470505154745218555L;
+
+    /**
+     * This object name.
+     */
+    private final String name;
+
+    /**
+     * Create an object with the specified name.
+     *
+     * @param name This object name.
+     */
+    protected Info(final String name)
+    {
+        this.name=name;
+        ensureNonNull("name", name);
+    }
 
     /**
      * Gets the name of this object.
      */
-    public abstract String getName();
+    public String getName()
+    {return name;}
 
     /**
      * Gets the authority name, or <code>null</code> if unspecified.

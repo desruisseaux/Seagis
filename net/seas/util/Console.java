@@ -43,7 +43,7 @@ import net.seas.resources.Resources;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public abstract class Console
+public class Console
 {
     /**
      * Command-line arguments. Elements are set to
@@ -54,12 +54,12 @@ public abstract class Console
     /**
      * Console output stream.
      */
-    protected final PrintWriter out;
+    public final PrintWriter out;
 
     /**
      * The locale.
      */
-    protected final Locale locale;
+    public final Locale locale;
 
     /**
      * Construct a console.
@@ -67,7 +67,7 @@ public abstract class Console
      * @param args Command line arguments. Arguments "-encoding" and "-locale" will be
      *             handle and set to <code>null</code>. Other arguments will be ignored.
      */
-    protected Console(final String[] args)
+    public Console(final String[] args)
     {
         this.arguments  = (String[]) args.clone();
         this.locale     = getLocale(getParameter("-locale"));
@@ -75,7 +75,7 @@ public abstract class Console
         boolean prefEnc = false;
         if (encoding==null)
         {
-            encoding = Preferences.userNodeForPackage(this).get("Console encoding", null);
+            encoding = Preferences.userRoot().node("net/seas/util").get("Console encoding", null);
             prefEnc  = true;
         }
         if (encoding!=null) try
@@ -83,7 +83,7 @@ public abstract class Console
             out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
             if (!prefEnc)
             {
-                Preferences.userNodeForPackage(this).put("Console encoding", encoding);
+                Preferences.userRoot().node("net/seas/util").put("Console encoding", encoding);
             }
         }
         catch (UnsupportedEncodingException exception)
@@ -133,7 +133,7 @@ public abstract class Console
      * @throws IllegalArgumentException if the parameter <code>name</code> exists
      *         but doesn't define any value.
      */
-    protected final String getParameter(final String parameter) throws IllegalArgumentException
+    public final String getParameter(final String parameter) throws IllegalArgumentException
     {
         for (int i=0; i<arguments.length; i++)
         {
@@ -179,7 +179,7 @@ public abstract class Console
      * for the same flag will returns <code>false</code> (unless the same flag
      * appears many times on the command line).
      */
-    protected final boolean getFlag(final String flag)
+    public final boolean getFlag(final String flag)
     {
         for (int i=0; i<arguments.length; i++)
         {
@@ -198,11 +198,9 @@ public abstract class Console
     }
 
     /**
-     * Run the commands. The default implementation just check if there is
-     * some unprocessed command. Subclasses should override this method and
-     * class <code>super.run()</code> after they have processed their arguments.
+     * Check if there is some unprocessed command.
      */
-    protected void run()
+    public void checkRemainingArguments()
     {
         for (int i=0; i<arguments.length; i++)
             if (arguments[i] != null)

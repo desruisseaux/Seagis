@@ -106,8 +106,7 @@ final class Compiler implements FileFilter, Comparator<String>
 
     /**
      * Nom du fichier source (sans l'extension ".java") dans lequel
-     * <code>Compiler</code> écrira les déclarations des clés à l'aide
-     * de constantes.
+     * <code>Compiler</code> écrira les constantes des clés.
      */
     private static final String sourceFilename = "Clé";
 
@@ -359,6 +358,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
             try
             {
                 final Field[] fields = Class.forName(classname).getFields();
+                System.out.println("Chargement de "+classname);
                 Field.setAccessible(fields, true);
                 for (int i=fields.length; --i>=0;)
                 {
@@ -544,6 +544,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
      */
     private static void warning(final File file, final String key, final String message)
     {
+        System.out.flush();
         System.err.print("ERREUR ");
         if (file!=null)
         {
@@ -564,6 +565,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
         System.err.println();
         System.err.println(message);
         System.err.println();
+        System.err.flush();
     }
 
     /**

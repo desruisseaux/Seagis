@@ -81,15 +81,15 @@ public class MathTransformFactory
     /**
      * List of registered math transforms.
      */
-    private final MathTransform.Registration[] REGISTERED = new MathTransform.Registration[]
+    private final MathTransform.Provider[] REGISTERED = new MathTransform.Provider[]
     {
-        new           MercatorProjection.Registration(),
-        new   LambertConformalProjection.Registration(),
-        new      StereographicProjection.Registration(),      // Automatic
-        new      StereographicProjection.Registration(true),  // Polar
-        new      StereographicProjection.Registration(false), // Oblique
-        new TransverseMercatorProjection.Registration(false), // Universal
-        new TransverseMercatorProjection.Registration(true)   // Modified
+        new           MercatorProjection.Provider(),
+        new   LambertConformalProjection.Provider(),
+        new      StereographicProjection.Provider(),      // Automatic
+        new      StereographicProjection.Provider(true),  // Polar
+        new      StereographicProjection.Provider(false), // Oblique
+        new TransverseMercatorProjection.Provider(false), // Universal
+        new TransverseMercatorProjection.Provider(true)   // Modified
     };
 
     /**
@@ -232,7 +232,7 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no registration
      *         for the specified classification.
      */
-    private MathTransform.Registration getRegistration(String classification) throws NoSuchElementException
+    private MathTransform.Provider getRegistration(String classification) throws NoSuchElementException
     {
         classification = classification.trim();
         for (int i=0; i<REGISTERED.length; i++)

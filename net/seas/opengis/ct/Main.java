@@ -67,7 +67,7 @@ final class Main extends Console
     protected void run()
     {
         final boolean list = getFlag("-list");
-        super.run();
+        checkRemainingArguments();
         if (list) availableTransforms();
     }
 
@@ -126,6 +126,13 @@ final class Main extends Console
 
     /**
      * Parse command line and run the application.
+     * Command-line arguments may be:
+     *
+     * <blockquote><pre>
+     *  <b>-list</b> <i></i>           List available transforms
+     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
+     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+     * </pre></blockquote>
      */
     public static void main(final String[] args)
     {
@@ -135,20 +142,13 @@ final class Main extends Console
                                "-list                 List available transforms\n"+
                                "-locale <name>        Locale to be used    (example: \"fr_CA\")\n"+
                                "-encoding <name>      Output encoding name (example: \"cp850\")");
-            return;
         }
-        try
+        else try
         {
             new Main(args).run();
         }
         catch (IllegalArgumentException exception)
         {
-            System.err.println(exception.getLocalizedMessage());
-        }
-        catch (RuntimeException exception)
-        {
-            System.err.print(XClass.getShortClassName(exception));
-            System.err.print(": ");
             System.err.println(exception.getLocalizedMessage());
         }
     }

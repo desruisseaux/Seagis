@@ -33,7 +33,7 @@ import net.seas.util.XClass;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
- * @see org.opengis.cs.CS_Datum
+ * @see org.opengis.cs.CS_HorizontalDatum
  */
 public class HorizontalDatum extends Datum
 {

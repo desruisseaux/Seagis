@@ -528,14 +528,13 @@ public abstract class MathTransform
 
 
     /**
-     * Base class for registration of {@link MathTransform} object. Instance of
-     * this class allow the creation of transform objects from a classification
-     * name.
+     * Base class {@link MathTransform} providers. Instance of this class
+     * allow the creation of transform objects from a classification name.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static abstract class Registration
+    static abstract class Provider
     {
         /**
          * The classification name. This name do
@@ -556,7 +555,7 @@ public abstract class MathTransform
          * @param nameKey Resources key for a human readable name.
          *        This is used for {@link #getName} implementation.
          */
-        protected Registration(final String classification, final int nameKey)
+        protected Provider(final String classification, final int nameKey)
         {
             this.classification = classification.trim();
             this.nameKey        = nameKey;

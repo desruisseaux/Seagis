@@ -44,17 +44,12 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cs.CS_Datum
  */
-public class Datum extends Info implements Serializable
+public class Datum extends Info
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 8521658677671362662L;
-
-    /**
-     * The datum name.
-     */
-    private final String name;
+    private static final long serialVersionUID = -2517981790443397612L;
 
     /**
      * The datum type.
@@ -70,17 +65,10 @@ public class Datum extends Info implements Serializable
      */
     protected Datum(final String name, final DatumType type)
     {
-        this.name = name;
+        super(name);
         this.type = type;
-        ensureNonNull("name", name);
         ensureNonNull("type", type);
     }
-
-    /**
-     * Returns this datum name.
-     */
-    public String getName()
-    {return name;}
 
     /**
      * Gets the type of the datum as an enumerated code.

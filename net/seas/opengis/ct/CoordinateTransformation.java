@@ -60,17 +60,17 @@ import net.seas.util.XClass;
 public abstract class CoordinateTransformation extends Info
 {
     /**
-     * Construct a coordinate transformation.
+     * Serial number for interoperability with different versions.
      */
-    protected CoordinateTransformation()
-    {}
+    //private static final long serialVersionUID = ?;
 
     /**
-     * Returns a human readable name localized for the specified locale.
-     * The default implementation just returns {@link #getName()}.
+     * Construct a coordinate transformation.
+     *
+     * @param name The coordinate transform name.
      */
-    public String getName(final Locale locale)
-    {return getName();}
+    protected CoordinateTransformation(final String name)
+    {super(name);}
 
     /**
      * Human readable description of domain in source coordinate system.

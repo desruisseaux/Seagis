@@ -81,7 +81,32 @@ public final class Envelope implements Cloneable, Serializable
     {ord = (double[]) envelope.ord.clone();}
 
     /**
-     * Construct a box defined by two positions.
+     * Construct one-dimensional envelope defined by a range of values.
+     *
+     * @param min The minimal value.
+     * @param max The maximal value.
+     */
+    public Envelope(final double min, final double max)
+    {
+        ord = new double[] {min, max};
+        checkCoherence();
+    }
+
+    /**
+     * Construct two-dimensional envelope defined by a {@link Rectangle2D}.
+     */
+    public Envelope(final Rectangle2D rect)
+    {
+        ord = new double[]
+        {
+            rect.getMinX(), rect.getMinY(),
+            rect.getMaxX(), rect.getMaxY()
+        };
+        checkCoherence();
+    }
+
+    /**
+     * Construct a envelope defined by two positions.
      *
      * @param  minCP Point containing minimum ordinate values.
      * @param  maxCP Point containing maximum ordinate values.
@@ -95,19 +120,6 @@ public final class Envelope implements Cloneable, Serializable
         ord = new double[minCP.ord.length + maxCP.ord.length];
         System.arraycopy(minCP.ord, 0, ord, 0,                minCP.ord.length);
         System.arraycopy(maxCP.ord, 0, ord, minCP.ord.length, maxCP.ord.length);
-        checkCoherence();
-    }
-
-    /**
-     * Construct a box defined by a {@link Rectangle2D}.
-     */
-    public Envelope(final Rectangle2D rect)
-    {
-        ord = new double[]
-        {
-            rect.getMinX(), rect.getMinY(),
-            rect.getMaxX(), rect.getMaxY()
-        };
         checkCoherence();
     }
 

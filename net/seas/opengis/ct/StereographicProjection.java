@@ -541,7 +541,7 @@ choice: switch (mode)
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Registration extends MathTransform.Registration
+    static final class Provider extends MathTransform.Provider
     {
         /**
          * <code>true</code> for polar stereographic, or
@@ -561,7 +561,7 @@ choice: switch (mode)
          * or equatorial) will be choosen automatically according
          * the latitude or origin.
          */
-        public Registration()
+        public Provider()
         {
             super("Stereographic", Clé.STEREOGRAPHIC);
             polar = true;
@@ -575,7 +575,7 @@ choice: switch (mode)
          *              <code>false</code> for equatorial and oblique
          *              stereographic.
          */
-        public Registration(final boolean polar)
+        public Provider(final boolean polar)
         {
             super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
             this.polar = polar;

@@ -469,7 +469,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Registration extends MathTransform.Registration
+    static final class Provider extends MathTransform.Provider
     {
         /**
          * <code>true</code> for Modified Mercator Projection (MTM), or
@@ -483,7 +483,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
          * @param modified <code>true</code> for Modified Mercator Projection (MTM),
          *       or <code>false</code> for Universal Mercator Projection (UTM).
          */
-        public Registration(final boolean modified)
+        public Provider(final boolean modified)
         {
             super(modified ? "Modified_Transverse_Mercator" : "Transverse_Mercator",
                   modified ? Clé.MTM                        : Clé.UTM);

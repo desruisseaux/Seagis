@@ -24,14 +24,9 @@ package net.seas.opengis.cs;
 
 // Miscellaneous
 import javax.units.Unit;
-import java.io.Serializable;
-import net.seas.util.XClass;
 import net.seas.util.XMath;
+import net.seas.util.XClass;
 import net.seas.resources.Resources;
-
-// For JavaDOC only.
-import java.rmi.Remote;
-import java.rmi.RemoteException;
 
 
 /**
@@ -46,24 +41,46 @@ import java.rmi.RemoteException;
  *
  * @see org.opengis.cs.CS_Ellipsoid
  */
-public abstract class Ellipsoid extends Info implements Serializable
+public class Ellipsoid extends Info
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -3922121355438611749L;
+    private static final long serialVersionUID = -5674009719911850463L;
 
     /**
      * WGS 1984 ellipsoid. This ellipsoid is used in GPS system
      * and is the default for most <code>net.seas</code> packages.
      */
-    public static final Ellipsoid WGS84 = new FlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE);
+    public static final Ellipsoid WGS84 = createFlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE);
 
     /**
-     * Name of this ellipsoid.
-     * @see #getName
+     * The equatorial radius.
+     * @see #getSemiMajorAxis
      */
-    private final String name;
+    private final double semiMajorAxis;
+
+    /**
+     * The polar radius.
+     * @see #getSemiMinorAxis
+     */
+    private final double semiMinorAxis;
+
+    /**
+     * The inverse of the flattening value, or
+     * {@link Double#POSITIVE_INFINITY} if the
+     * ellipsoid is a sphere.
+     *
+     * @see #getInverseFlattening
+     */
+    private final double inverseFlattening;
+
+    /**
+     * Is the Inverse Flattening definitive for this ellipsoid?
+     *
+     * @see #isIvfDefinitive
+     */
+    private final boolean ivfDefinitive;
 
     /**
      * The units of the semi-major
@@ -72,20 +89,62 @@ public abstract class Ellipsoid extends Info implements Serializable
     private final Unit unit;
 
     /**
-     * Construct a new ellipsoid.
+     * Construct a new sphere using the specified radius.
      *
-     * @param name Name of this ellipsoid.
-     * @param unit The units of the semi-major and semi-minor axis values.
+     * @param name   Name of this sphere.
+     * @param radius The equatorial and polar radius.
+     * @param unit   The units of the semi-major and semi-minor axis values.
      */
-    protected Ellipsoid(final String name, final Unit unit)
+    public Ellipsoid(final String name, final double radius, final Unit unit)
+    {this(name, check("radius", radius), radius, Double.POSITIVE_INFINITY, false, unit);}
+
+    /**
+     * Construct a new ellipsoid using the specified axis length.
+     *
+     * @param name          Name of this ellipsoid.
+     * @param semiMajorAxis The equatorial radius.
+     * @param semiMinorAxis The polar radius.
+     * @param unit          The units of the semi-major and semi-minor axis values.
+     */
+    public Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
+    {this(name, semiMajorAxis, semiMinorAxis, semiMajorAxis/(semiMajorAxis-semiMinorAxis), false, unit);}
+
+    /**
+     * Construct a new ellipsoid using the specified axis length.
+     *
+     * @param name              Name of this ellipsoid.
+     * @param semiMajorAxis     The equatorial radius.
+     * @param semiMinorAxis     The polar radius.
+     * @param inverseFlattening The inverse of the flattening value.
+     * @param ivfDefinitive     Is the Inverse Flattening definitive for this ellipsoid?
+     * @param unit              The units of the semi-major and semi-minor axis values.
+     */
+    private Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final double inverseFlattening, final boolean ivfDefinitive, final Unit unit)
     {
-        this.name = name;
+        super(name);
         this.unit = unit;
-        ensureNonNull("name", name);
-        ensureNonNull("unit", unit);
+        this.semiMajorAxis     = check("semiMajorAxis",     semiMajorAxis);
+        this.semiMinorAxis     = check("semiMinorAxis",     semiMinorAxis);
+        this.inverseFlattening = check("inverseFlattening", inverseFlattening);
+        this.ivfDefinitive     = ivfDefinitive;
+        ensureNonNull ("unit", unit);
         if (!Unit.METRE.canConvert(unit))
+        {
             throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤2, "unit", unit));
+        }
     }
+
+    /**
+     * Construct a new ellipsoid using the specified axis length
+     * and inverse flattening value.
+     *
+     * @param name              Name of this ellipsoid.
+     * @param semiMajorAxis     The equatorial radius.
+     * @param inverseFlattening The inverse flattening value.
+     * @param unit              The units of the semi-major and semi-minor axis values.
+     */
+    static Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
+    {return new Ellipsoid(name, semiMajorAxis, semiMajorAxis*(1-1/inverseFlattening), inverseFlattening, true, unit);}
 
     /**
      * Check the argument validity. Argument
@@ -94,51 +153,28 @@ public abstract class Ellipsoid extends Info implements Serializable
      *
      * @param  name  Argument name.
      * @param  value Argument value.
+     * @return <code>value</code>.
      * @throws IllegalArgumentException if <code>value</code> is not greater than 0.
      */
-    static void check(final String name, final double value) throws IllegalArgumentException
+    private static double check(final String name, final double value) throws IllegalArgumentException
     {
-        if (!(value>0)) // Use '!' in order to catch 'NaN' values.
-            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤2, name, new Double(value)));
+        if (value>0) return value;
+        throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤2, name, new Double(value)));
     }
-
-    /**
-     * Get the name of this ellipsoid.
-     */
-    public String getName()
-    {return name;}
 
     /**
      * Gets the equatorial radius.
      * The returned length is expressed in this object's axis units.
      */
-    public abstract double getSemiMajorAxis();
+    public double getSemiMajorAxis()
+    {return semiMajorAxis;}
 
     /**
      * Gets the polar radius.
      * The returned length is expressed in this object's axis units.
      */
-    public abstract double getSemiMinorAxis();
-
-    /**
-     * Returns the value of the inverse of the flattening constant. Flattening is a
-     * value used to indicate how closely an ellipsoid approaches a spherical shape.
-     * The inverse flattening is related to the equatorial/polar radius
-     * (<var>r<sub>e</sub></var> and <var>r<sub>p</sub></var> respectively) by the
-     * formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>. For
-     * perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
-     * (which is the correct value).
-     */
-    public abstract double getInverseFlattening();
-
-    /**
-     * Is the Inverse Flattening definitive for this ellipsoid?
-     * Some ellipsoids use the IVF as the defining value, and calculate the
-     * polar radius whenever asked. Other ellipsoids use the polar radius to
-     * calculate the IVF whenever asked. This distinction can be important to
-     * avoid floating-point rounding errors.
-     */
-    public abstract boolean isIvfDefinitive();
+    public double getSemiMinorAxis()
+    {return semiMinorAxis;}
 
     /**
      * The ratio of the distance between the center and a focus of the ellipse
@@ -150,6 +186,28 @@ public abstract class Ellipsoid extends Info implements Serializable
         final double f=1-getSemiMinorAxis()/getSemiMajorAxis();
         return Math.sqrt(2*f - f*f);
     }
+
+    /**
+     * Returns the value of the inverse of the flattening constant. Flattening is a
+     * value used to indicate how closely an ellipsoid approaches a spherical shape.
+     * The inverse flattening is related to the equatorial/polar radius
+     * (<var>r<sub>e</sub></var> and <var>r<sub>p</sub></var> respectively) by the
+     * formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>. For
+     * perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
+     * (which is the correct value).
+     */
+    public double getInverseFlattening()
+    {return inverseFlattening;}
+
+    /**
+     * Is the Inverse Flattening definitive for this ellipsoid?
+     * Some ellipsoids use the IVF as the defining value, and calculate the
+     * polar radius whenever asked. Other ellipsoids use the polar radius to
+     * calculate the IVF whenever asked. This distinction can be important to
+     * avoid floating-point rounding errors.
+     */
+    public boolean isIvfDefinitive()
+    {return ivfDefinitive;}
 
     /**
      * Retourne une <em>estimation</em> de la distance orthodromique séparant les deux coordonnées
@@ -293,216 +351,4 @@ public abstract class Ellipsoid extends Info implements Serializable
         buffer.append(']');
         return buffer.toString();
     }
-}
-
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-
-/**
- * An ellipsoid whith equal semi-major and semi-minor radius.
- *
- * @version 1.00
- * @author Martin Desruisseaux
- */
-final class Sphere extends Ellipsoid
-{
-    /**
-     * Serial number for interoperability with different versions.
-     */
-    private static final long serialVersionUID = 7792371296908591235L;
-
-    /**
-     * The sphere's radius.
-     * @see #getSemiMajorAxis
-     * @see #getSemiMinorAxis
-     */
-    private final double radius;
-
-    /**
-     * Construct a new ellipsoid using the specified radius.
-     *
-     * @param name   Name of this ellipsoid.
-     * @param radius The equatorial and polar radius.
-     * @param unit   The units of the semi-major and semi-minor axis values.
-     */
-    protected Sphere(final String name, final double radius, final Unit unit)
-    {
-        super(name, unit);
-        this.radius = radius;
-        check("radius", radius);
-    }
-
-    /**
-     * Gets the equatorial radius.
-     */
-    public double getSemiMajorAxis()
-    {return radius;}
-
-    /**
-     * Gets the polar radius.
-     */
-    public double getSemiMinorAxis()
-    {return radius;}
-
-    /**
-     * Returns the value of the inverse of the flattening constant.
-     */
-    public double getInverseFlattening()
-    {return Double.POSITIVE_INFINITY;}
-
-    /**
-     * Is the Inverse Flattening definitive for this ellipsoid?
-     */
-    public boolean isIvfDefinitive()
-    {return false;}
-}
-
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-
-/**
- * An ellipsoid whith different semi-major and semi-minor radius.
- *
- * @version 1.00
- * @author Martin Desruisseaux
- */
-final class Spheroid extends Ellipsoid
-{
-    /**
-     * Serial number for interoperability with different versions.
-     */
-    private static final long serialVersionUID = -1211202019386203401L;
-
-    /**
-     * The equatorial radius.
-     * @see #getSemiMajorAxis
-     */
-    private final double semiMajorAxis;
-
-    /**
-     * The polar radius.
-     * @see #getSemiMinorAxis
-     */
-    private final double semiMinorAxis;
-
-    /**
-     * Construct a new ellipsoid using the specified axis length.
-     *
-     * @param name          Name of this ellipsoid.
-     * @param semiMajorAxis The equatorial radius.
-     * @param semiMinorAxis The polar radius.
-     * @param unit          The units of the semi-major and semi-minor axis values.
-     */
-    protected Spheroid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
-    {
-        super(name, unit);
-        this.semiMajorAxis = Math.max(semiMajorAxis, semiMinorAxis);
-        this.semiMinorAxis = Math.min(semiMinorAxis, semiMajorAxis);
-        check("semiMajorAxis", semiMajorAxis);
-        check("semiMinorAxis", semiMinorAxis);
-    }
-
-    /**
-     * Gets the equatorial radius.
-     */
-    public double getSemiMajorAxis()
-    {return semiMajorAxis;}
-
-    /**
-     * Gets the polar radius.
-     */
-    public double getSemiMinorAxis()
-    {return semiMinorAxis;}
-
-    /**
-     * Returns the value of the inverse of the flattening constant.
-     */
-    public double getInverseFlattening()
-    {return semiMajorAxis/(semiMajorAxis-semiMinorAxis);}
-
-    /**
-     * Is the Inverse Flattening definitive for this ellipsoid?
-     */
-    public boolean isIvfDefinitive()
-    {return false;}
-}
-
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-
-/**
- * An ellipsoid whith semi-major radius and inverse flattening.
- *
- * @version 1.00
- * @author Martin Desruisseaux
- */
-final class FlattenedSphere extends Ellipsoid
-{
-    /**
-     * Serial number for interoperability with different versions.
-     */
-    private static final long serialVersionUID = -886902001843075297L;
-
-    /**
-     * The equatorial radius.
-     * @see #getSemiMajorAxis
-     */
-    private final double semiMajorAxis;
-
-    /**
-     * The inverse of the flattening value, or
-     * {@link Double#POSITIVE_INFINITY} if the
-     * ellipsoid is a sphere.
-     *
-     * @see #getInverseFlattening
-     */
-    private final double inverseFlattening;
-
-    /**
-     * Construct a new ellipsoid using the specified axis length
-     * and inverse flattening value.
-     *
-     * @param name              Name of this ellipsoid.
-     * @param semiMajorAxis     The equatorial radius.
-     * @param inverseFlattening The inverse flattening value.
-     * @param unit              The units of the semi-major and semi-minor axis values.
-     */
-    protected FlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
-    {
-        super(name, unit);
-        this.semiMajorAxis     = semiMajorAxis;
-        this.inverseFlattening = inverseFlattening;
-        check("semiMajorAxis",     semiMajorAxis);
-        check("inverseFlattening", inverseFlattening);
-    }
-
-    /**
-     * Gets the equatorial radius.
-     */
-    public double getSemiMajorAxis()
-    {return semiMajorAxis;}
-
-    /**
-     * Gets the polar radius.
-     */
-    public double getSemiMinorAxis()
-    {return semiMajorAxis*(1-1/inverseFlattening);}
-
-    /**
-     * Returns the value of the inverse of the flattening constant.
-     */
-    public double getInverseFlattening()
-    {return inverseFlattening;}
-
-    /**
-     * Is the Inverse Flattening definitive for this ellipsoid?
-     */
-    public boolean isIvfDefinitive()
-    {return true;}
 }

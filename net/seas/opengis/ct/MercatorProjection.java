@@ -212,12 +212,12 @@ final class MercatorProjection extends CylindricalProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Registration extends MathTransform.Registration
+    static final class Provider extends MathTransform.Provider
     {
         /**
          * Construct a new registration.
          */
-        public Registration()
+        public Provider()
         {super("Mercator_1SP", Clé.CYLINDRICAL_MERCATOR);}
 
         /**

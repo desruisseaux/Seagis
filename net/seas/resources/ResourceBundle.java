@@ -32,8 +32,11 @@ import java.util.MissingResourceException;
 // Formats
 import java.text.Format;
 import java.text.MessageFormat;
+import net.seas.util.XString;
+import net.seas.util.XClass;
 
 // Entrés/sorties
+import java.io.Writer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.DataInputStream;
@@ -43,6 +46,7 @@ import java.io.FileNotFoundException;
 // Journal
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 
 
 /**
@@ -101,6 +105,47 @@ public class ResourceBundle extends java.util.ResourceBundle
     {this.filename = filename;}
 
     /**
+     * List resources to the specified stream.
+     *
+     * @param out   The destination stream.
+     * @param lower The beginning index (inclusive).
+     * @param upper The ending index (exclusive), or
+     *              {@link Integer#MAX_VALUE} for all resources.
+     * @throws IOException if an output operation failed.
+     */
+    public final synchronized void list(final Writer out) throws IOException
+    {
+        ensureLoaded(null);
+        list(out, 0, values.length);
+    }
+
+    /**
+     * List resources to the specified stream.
+     *
+     * @param out   The destination stream.
+     * @param lower The beginning index (inclusive).
+     * @param upper The ending index (exclusive).
+     * @throws IOException if an output operation failed.
+     */
+    private void list(final Writer out, int lower, int upper) throws IOException
+    {
+        final String lineSeparator=System.getProperty("line.separator", "\n");
+        for (int i=lower; i<upper; i++)
+        {
+            String value = values[i];
+            if (value==null) continue;
+            int indexCR=value.indexOf('\r'); if (indexCR<0) indexCR=value.length();
+            int indexLF=value.indexOf('\n'); if (indexLF<0) indexLF=value.length();
+            final String number = String.valueOf(i);
+            out.write(XString.spaces(5-number.length()));
+            out.write(number);
+            out.write(":\t");
+            out.write(value.substring(0, Math.min(indexCR,indexLF)));
+            out.write(lineSeparator);
+        }
+    }
+
+    /**
      * Vérifie que les ressources ont bien été chargées. Si ce
      * n'est pas le cas, procède immédiatement à leur chargement.
      *
@@ -109,7 +154,20 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     private void ensureLoaded(final String key) throws MissingResourceException
     {
-        if (values==null) try
+        if (values!=null)
+        {
+            return;
+        }
+        /*
+         * Prepare a log record. We will wait for succesfull loading before to post this
+         * record. If loading fail, the record will be changed into an error record.
+         */
+        final Logger    logger = Logger.getLogger("net.seas");
+        final LogRecord record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
+        record.setSourceClassName (ResourceBundle.class.getName());
+        record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");
+
+        try
         {
             final InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
             if (in==null) throw new FileNotFoundException(filename);
@@ -122,14 +180,18 @@ public class ResourceBundle extends java.util.ResourceBundle
                     values[i]=null;
             }
             input.close();
-            Logger.getLogger("net.seas").logp(Level.CONFIG,
-                                              ResourceBundle.class.getName(),
-                                              (key!=null) ? "getObject" : "getKeys",
-                                              "Loaded resources for {0}.",
-                                              new String[]{getLocale().getDisplayName(Locale.UK)});
+            String language = getLocale().getDisplayName(Locale.UK);
+            if (language==null || language.length()==0) language="<default>";
+            record.setParameters(new String[]{language});
+            logger.log(record);
         }
         catch (IOException exception)
         {
+            record.setLevel  (Level.WARNING);
+            record.setMessage(exception.getLocalizedMessage());
+            record.setThrown (exception);
+            logger.log(record);
+
             final MissingResourceException error = new MissingResourceException(exception.getLocalizedMessage(), getClass().getName(), key);
             error.initCause(exception);
             throw error;
@@ -429,4 +491,22 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     public final String getTrailing(final int key) throws MissingResourceException
     {return getString(key)+"...";}
+
+    /**
+     * Returns a string representation of this object.
+     */
+    public synchronized String toString()
+    {
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        if (values!=null)
+        {
+            int count=0;
+            for (int i=0; i<values.length; i++)
+                if (values[i]!=null) count++;
+            buffer.append(count);
+        }
+        buffer.append(']');
+        return buffer.toString();
+    }
 }

@@ -25,6 +25,8 @@ package net.seas.resources;
 // Miscellaneous
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.io.IOException;
+import net.seas.util.Console;
 
 
 /**
@@ -174,4 +176,34 @@ public class Resources extends ResourceBundle
      */
     public static String trailing(final int key)
     {return getResources(null).getTrailing(key);}
+
+    /**
+     * List resources to the command line. This facility is provided
+     * mainly for debugging purpose. Optional command-line arguments
+     * are:
+     *
+     * <blockquote><pre>
+     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
+     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+     * </pre></blockquote>
+     */
+    public static void main(final String[] args)
+    {
+        try
+        {
+            final Console console = new Console(args);
+            console.checkRemainingArguments();
+            getResources(console.locale).list(console.out);
+            console.out.flush();
+        }
+        catch (IllegalArgumentException exception)
+        {
+            System.err.println(exception.getLocalizedMessage());
+        }
+        catch (IOException exception)
+        {
+            // Should not happen
+            exception.printStackTrace();
+        }
+    }
 }

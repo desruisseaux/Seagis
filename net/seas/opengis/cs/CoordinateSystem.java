@@ -58,15 +58,17 @@ import net.seas.util.XClass;
 public abstract class CoordinateSystem extends Info
 {
     /**
-     * Construct a coordinate system.
+     * Serial number for interoperability with different versions.
      */
-    protected CoordinateSystem()
-    {}
+    private static final long serialVersionUID = -8188440674216625687L;
 
     /**
-     * Returns <code>true</code> if this coordinate system is cartesian.
+     * Construct a coordinate system.
+     *
+     * @param name The coordinate system name.
      */
-    public abstract boolean isCartesian();
+    protected CoordinateSystem(final String name)
+    {super(name);}
 
     /**
      * Dimension of the coordinate system.
@@ -100,31 +102,4 @@ public abstract class CoordinateSystem extends Info
      * of the Earth.
      */
     public abstract Envelope getDefaultEnvelope();
-
-    /**
-     * Compares the specified object with
-     * this coordinate system for equality.
-     */
-    public boolean equals(final Object object)
-    {return (object instanceof CoordinateSystem) && equals((CoordinateSystem)object);}
-
-    /**
-     * Compares the specified object with
-     * this coordinate system for equality.
-     */
-    final boolean equals(final CoordinateSystem that)
-    {
-        if (super.equals(that) && isCartesian()==that.isCartesian())
-        {
-            final int dimension = getDimension();
-            if (dimension==that.getDimension() && XClass.equals(this.getDefaultEnvelope(), that.getDefaultEnvelope()))
-            {
-                for (int i=0; i<dimension; i++)
-                    if (!(XClass.equals(this.getAxis (i), that.getAxis (i)) &&
-                          XClass.equals(this.getUnits(i), that.getUnits(i)))) return false;
-                return true;
-            }
-        }
-        return false;
-    }
 }

@@ -38,6 +38,19 @@ import net.seas.opengis.ct.MissingParameterException;
 public abstract class Projection extends Info
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    //private static final long serialVersionUID = ?; // TODO: compute
+
+    /**
+     * Construct a new projection.
+     *
+     * @param name The projection name.
+     */
+    protected Projection(final String name)
+    {super(name);}
+
+    /**
      * Gets the projection classification name (e.g. "Transverse_Mercator").
      */
     public abstract String getClassName();

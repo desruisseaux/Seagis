@@ -259,12 +259,12 @@ final class LambertConformalProjection extends ConicProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Registration extends MathTransform.Registration
+    static final class Provider extends MathTransform.Provider
     {
         /**
          * Construct a new registration.
          */
-        public Registration()
+        public Provider()
         {super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);}
 
         /**
