@@ -49,8 +49,8 @@ import javax.swing.BoundedRangeModel;
 import java.lang.reflect.InvocationTargetException;
 
 // Divers
-import net.seas.resources.ResourceKeys;
-import net.seas.resources.Resources;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
 
 // Geotools dependencies
 import org.geotools.resources.Utilities;
@@ -393,7 +393,7 @@ public class WindowProgress extends Progress
      * Signale qu'une erreur inatendue est survenue.
      */
     private static void unexpectedException(final String method, final Exception exception)
-    {Utilities.unexpectedException("net.seas.awt", "WindowProgress", method, exception);}
+    {Utilities.unexpectedException("fr.ird.awt", "WindowProgress", method, exception);}
 
     /**
      * Modifie l'état d'une des composantes de la boîte des progrès.

@@ -47,9 +47,9 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 
 // Divers
-import net.seas.resources.Resources;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
-import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -203,7 +203,7 @@ public class MailProgress extends Progress
             warning.setSourceClassName(getClass().getName());
             warning.setSourceMethodName(method);
             warning.setThrown(exception);
-            Logger.getLogger("net.seas.awt").log(warning);
+            Logger.getLogger("fr.ird.awt").log(warning);
         }
     }
 

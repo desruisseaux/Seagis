@@ -36,9 +36,9 @@ import java.text.NumberFormat;
 import java.text.BreakIterator;
 
 // Divers
-import net.seas.util.Console;
-import net.seas.resources.Resources;
-import net.seas.resources.ResourceKeys;
+import fr.ird.util.Console;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
 
 
