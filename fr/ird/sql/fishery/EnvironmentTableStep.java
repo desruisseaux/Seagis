@@ -82,6 +82,14 @@ final class EnvironmentTableStep extends Table {
     final int timeLag;
 
     /**
+     * Indique si les valeurs nulles sont autorisées.
+     * La valeur par défaut est <code>false</code>, ce qui indique que tous les
+     * enregistrement pour lesquelles au moins un paramètre environnemental est
+     * manquant seront omis.
+     */
+    final boolean nullIncluded;
+
+    /**
      * Colonnes utilisées lors de la construction de {@link #statement}.
      * Si de nouvelles colonnes sont ajoutées, alors {@link #statement}
      * devra être fermé et reconstruit.
@@ -91,11 +99,16 @@ final class EnvironmentTableStep extends Table {
     /**
      * Mémorise les codes d'un paramètre ainsi que de sa position spatio-temporelle.
      */
-    public EnvironmentTableStep(final int parameter, final int position, final int timeLag) {
+    public EnvironmentTableStep(final int     parameter,
+                                final int     position,
+                                final int     timeLag,
+                                final boolean nullIncluded)
+    {
         super(null);
-        this.parameter = parameter;
-        this.position  = position;
-        this.timeLag   = timeLag;
+        this.parameter    = parameter;
+        this.position     = position;
+        this.timeLag      = timeLag;
+        this.nullIncluded = nullIncluded;
         if (!(position>=EnvironmentTable.START_POINT && position<=EnvironmentTable.END_POINT)) {
             throw new IllegalArgumentException(String.valueOf(position));
         }
@@ -120,9 +133,10 @@ final class EnvironmentTableStep extends Table {
     public boolean equals(final Object object) {
         if (object instanceof EnvironmentTableStep) {
             final EnvironmentTableStep that = (EnvironmentTableStep) object;
-            return this.parameter == that.parameter &&
-                   this.position  == that.position  &&
-                   this.timeLag   == that.timeLag;
+            return this.parameter    == that.parameter &&
+                   this.position     == that.position  &&
+                   this.timeLag      == that.timeLag   &&
+                   this.nullIncluded == that.nullIncluded;
         }
         return false;
     }
@@ -192,17 +206,19 @@ final class EnvironmentTableStep extends Table {
             //
             final String[] columns = getColumns();
             String query = completeSelect(preferences.get(ENVIRONMENTS, SQL_SELECT), columns);
-            int index = indexOfWord(query, "ORDER");
-            if (index >= 0) {
-                final StringBuffer buffer = new StringBuffer(query.substring(0, index));
-                for (int i=0; i<columns.length; i++) {
-                    buffer.append("AND ");
-                    buffer.append('(');
-                    buffer.append(columns[i]);
-                    buffer.append(" IS NOT NULL) ");
+            if (!nullIncluded) {
+                int index = indexOfWord(query, "ORDER");
+                if (index >= 0) {
+                    final StringBuffer buffer = new StringBuffer(query.substring(0, index));
+                    for (int i=0; i<columns.length; i++) {
+                        buffer.append("AND ");
+                        buffer.append('(');
+                        buffer.append(columns[i]);
+                        buffer.append(" IS NOT NULL) ");
+                    }
+                    buffer.append(query.substring(index));
+                    query = buffer.toString();
                 }
-                buffer.append(query.substring(index));
-                query = buffer.toString();
             }
             final LogRecord record = new LogRecord(DataBase.SQL_SELECT, query);
             record.setSourceClassName ("EnvironmentTable");

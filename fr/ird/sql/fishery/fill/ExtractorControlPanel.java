@@ -35,6 +35,7 @@ import java.awt.GridBagConstraints;
 import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
@@ -101,6 +102,11 @@ public class ExtractorControlPanel extends JPanel {
     private final JList operations;
 
     /**
+     * Indique si les valeurs nulles doivent être incluses dans la requête.
+     */
+    private final JCheckBox nullIncluded = new JCheckBox("Inclure les valeurs nulles");
+
+    /**
      * Table des captures à joindre.
      */
     private final JTextField catchTable = new JTextField(PREFERENCES.get(KEY_CATCHTABLE, ""));
@@ -151,14 +157,17 @@ public class ExtractorControlPanel extends JPanel {
         panel.add(new JScrollPane(operations));
         add(panel, BorderLayout.CENTER);
 
-        final JComponent fields = new JPanel(new BorderLayout(6,12));
+        final JComponent fields = new JPanel(new BorderLayout());
         final JLabel catchLabel = new JLabel("Joindre les captures:");
-        catchLabel.setBorder(BorderFactory.createEmptyBorder(0,18,0,0));
-        fields.add(catchLabel, BorderLayout.WEST);
-        fields.add(catchTable, BorderLayout.CENTER);
+        catchLabel.setBorder(BorderFactory.createEmptyBorder(0,18,0,12));
+        fields.add(nullIncluded, BorderLayout.NORTH);
+        fields.add(catchLabel,   BorderLayout.WEST);
+        fields.add(catchTable,   BorderLayout.CENTER);
 
         panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Destination"));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createEmptyBorder(12,0,0,0),
+                        BorderFactory.createTitledBorder("Destination")));
         final GridBagConstraints c = new GridBagConstraints();
         c.fill=c.HORIZONTAL; c.gridx=0; c.insets.left=12;
         c.gridy=0; panel.add(new JLabel("Table:"), c);
@@ -192,15 +201,17 @@ public class ExtractorControlPanel extends JPanel {
      * @throws SQLException si la base de données n'a pas pu être configurée.
      */
     private int configTable() throws SQLException {
-        final String   catchTable = this.catchTable.getText().trim();
-        final Object[] parameters = this.parameters.getSelectedValues();
-        final Object[] operations = this.operations.getSelectedValues();
-        final Object[] timeOffset = this.timeOffset.getSelectedValues();
+        final String    catchTable = this.catchTable.getText().trim();
+        final Object[]  parameters = this.parameters.getSelectedValues();
+        final Object[]  operations = this.operations.getSelectedValues();
+        final Object[]  timeOffset = this.timeOffset.getSelectedValues();
+        final boolean nullIncluded = this.nullIncluded.isSelected();
         for (int i=0; i<operations.length; i++) {
             for (int j=0; j<parameters.length; j++) {
                 for (int k=0; k<timeOffset.length; k++) {
                     environment.addParameter(operations[i].toString(), parameters[j].toString(),
-                                   EnvironmentTable.CENTER, ((Number)timeOffset[k]).intValue());
+                                   EnvironmentTable.CENTER, ((Number)timeOffset[k]).intValue(),
+                                   nullIncluded);
                 }
             }
         }

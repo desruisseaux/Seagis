@@ -27,6 +27,7 @@ package fr.ird.sql.fishery;
 
 // Requêtes SQL
 import java.sql.Types;
+import java.sql.Timestamp;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
@@ -114,6 +115,12 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      */
     private final Map<EnvironmentTableStep, EnvironmentTableStep> parameters =
                   new LinkedHashMap<EnvironmentTableStep, EnvironmentTableStep>();
+
+    /**
+     * Indique si les valeurs nulles sont permises pour chaque colonne de {@link #getRowSet}.
+     * Ce tableau est calculé en même temps que les étiquettes par {@link #getColumnLabels}.
+     */
+    private transient boolean[] nullIncluded;
 
     /**
      * Table des paramètres et des opérations. Cette table est construite
@@ -231,7 +238,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     public void addParameter(final String operation,
                              final String parameter) throws SQLException
     {
-        addParameter(operation, parameter, CENTER, 0);
+        addParameter(operation, parameter, CENTER, 0, false);
     }
 
     /**
@@ -249,25 +256,48 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      *         {@link #CENTER} et {@link #END_POINT}.
      * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
      *         en nombre de jours.
+     * @param  nullIncluded Indique si {@link #getRowSet} est autorisée à retourner des valeurs
+     *         nulles. La valeur par défaut est <code>false</code>, ce qui indique que tous les
+     *         enregistrements pour lesquels au moins un paramètre environnemental est manquant
+     *         seront omis.
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized void addParameter(final String operation,
-                                          final String parameter,
-                                          final int    position,
-                                          final int    timeLag) throws SQLException
+    public synchronized void addParameter(final String  operation,
+                                          final String  parameter,
+                                          final int     position,
+                                          final int     timeLag,
+                                          final boolean nullIncluded) throws SQLException
     {
+        this.nullIncluded = null;
         if (parameterTable == null) {
             parameterTable = new ParameterTable(connection, ParameterTable.PARAMETER_BY_NAME);
         }
-        final int           paramID = parameterTable.getParameterID(parameter);
-        EnvironmentTableStep search = new EnvironmentTableStep(paramID, position, timeLag);
+        final int paramID = parameterTable.getParameterID(parameter);
+        remove(operation, new EnvironmentTableStep(paramID, position, timeLag, !nullIncluded));
+        EnvironmentTableStep search = new EnvironmentTableStep(paramID, position, timeLag, nullIncluded);
         EnvironmentTableStep step   = parameters.get(search);
         if (step == null) {
             step = search;
             parameters.put(step, step);
         }
         step.addColumn(operation);
+    }
+
+    /**
+     * Retire une opération de l'objet <code>step</code> spécifié.
+     *
+     * @throws SQLException si l'accès à la base de données a échoué.
+     */
+    private void remove(final String operation, EnvironmentTableStep step) throws SQLException {
+        step = parameters.get(step);
+        if (step != null) {
+            step.removeColumn(operation);
+            if (step.isEmpty()) {
+                step.close();
+                parameters.remove(step);
+            }
+        }
     }
 
     /**
@@ -286,19 +316,14 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                                              final int    position,
                                              final int    timeLag) throws SQLException
     {
+        this.nullIncluded = null;
         if (parameterTable == null) {
             parameterTable = new ParameterTable(connection, ParameterTable.PARAMETER_BY_NAME);
         }
         final int paramID = parameterTable.getParameterID(parameter);
-        EnvironmentTableStep step = new EnvironmentTableStep(paramID, position, timeLag);
-        step = parameters.get(step);
-        if (step != null) {
-            step.removeColumn(operation);
-            if (step.isEmpty()) {
-                step.close();
-                parameters.remove(step);
-            }
-        }
+        boolean nullIncluded=false; do {
+            remove(operation, new EnvironmentTableStep(paramID, position, timeLag, nullIncluded));
+        }  while ((nullIncluded = !nullIncluded) == true);
     }
 
     /**
@@ -310,18 +335,21 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * @return Les noms de colonnes.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized String[] getColumnLabels() throws SQLException {
+    public final synchronized String[] getColumnLabels() throws SQLException {
         if (parameterTable == null) {
             parameterTable = new ParameterTable(connection, ParameterTable.OPERATION_BY_NAME);
         }
-        final List<String> titles = new ArrayList<String>();
-        final StringBuffer buffer = new StringBuffer();
+        final List<String>  titles = new ArrayList<String>();
+        final List<Boolean> hasNul = new ArrayList<Boolean>();
+        final StringBuffer  buffer = new StringBuffer();
         titles.add("capture");
+        hasNul.add(Boolean.FALSE);
         if (catchTableStep != null) {
             final String[] columns = catchTableStep.getColumns();
             // Skip the first column, which should be the ID.
             for (int i=1; i<columns.length; i++) {
                 titles.add(columns[i]);
+                hasNul.add(Boolean.FALSE);
             }
         }
         for (final EnvironmentTableStep step : parameters.values()) {
@@ -340,8 +368,13 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 final String prefix = parameterTable.getOperationPrefix(columns[i]);
                 buffer.replace(0, prefixLength, prefix);
                 titles.add(buffer.toString());
+                hasNul.add(Boolean.valueOf(step.nullIncluded));
                 prefixLength = prefix.length();
             }
+        }
+        nullIncluded = new boolean[hasNul.size()];
+        for (int i=0; i<nullIncluded.length; i++) {
+            nullIncluded[i] = hasNul.get(i).booleanValue();
         }
         return (String[])titles.toArray(new String[titles.size()]);
     }
@@ -371,19 +404,21 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             progress.started();
         }
         int i = (catchTableStep!=null) ? 1 : 0;
-        final ResultSet[]   results = new ResultSet[parameters.size() + i];
-        final Connection connection = this.connection;
+        final ResultSet[]    results = new ResultSet[parameters.size() + i];
+        final boolean[] nullIncluded = new boolean[results.length];
+        final Connection  connection = this.connection;
         if (catchTableStep != null) {
             results[0] = catchTableStep.getResultSet();
         }
         for (final EnvironmentTableStep step : parameters.values()) {
-            results[i++] = step.getResultSet(connection);
+            results[i] = step.getResultSet(connection);
+            nullIncluded[i++] = step.nullIncluded;
             if (progress != null) {
                 progress.progress((100f/results.length) * i);
             }
         }
         assert i == results.length;
-        return new EnvironmentRowSet(results, getColumnLabels());
+        return new EnvironmentRowSet(results, getColumnLabels(), nullIncluded);
     }
 
     /**
@@ -441,14 +476,21 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             for (int i=0; i<width.length; i++) {
                 final String value;
                 if (i==0) {
-                    value = String.valueOf(result.getInt(i+1));
+                    final int x=result.getInt(i+1);
+                    value = result.wasNull() ? "" :  String.valueOf(x);
                 } else if (!isDate[i]) {
-                    value = format.format(result.getDouble(i+1));
+                    final double x = result.getDouble(i+1);
+                    value = result.wasNull() ? "" : format.format(x);
                 } else {
-                    if (dateFormat == null) {
-                        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+                    final Date x=result.getDate(i+1);
+                    if (!result.wasNull()) {
+                        if (dateFormat == null) {
+                            dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+                        }
+                        value = dateFormat.format(x);
+                    } else {
+                        value = "";
                     }
-                    value = dateFormat.format(result.getDate(i+1));
                 }
                 out.write(Utilities.spaces(width[i]-value.length()));
                 out.write(value);
@@ -501,12 +543,14 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 buffer.append(meta.getColumnName(i+1));
                 buffer.append("\" ");
                 if (i==0) {
+                    // TODO: Ce champ devrait probablement être une clé primaire...
                     buffer.append("INTEGER");
                 } else {
                     switch (meta.getColumnType(i+1)) {
                         case Types.DATE: // Fall through
                         case Types.TIME: // Fall through
                         case Types.TIMESTAMP: {
+                            // TODO: On aimerait déclarer que ce champ doit être indexé (avec doublons)...
                             isDate[i] = true;
                             buffer.append("TIMESTAMP");
                             break;
@@ -524,7 +568,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                         }
                     }
                 }
-                buffer.append(" NOT NULL");
+                if (!nullIncluded[i] || meta.isNullable(i+1)==ResultSetMetaData.columnNoNulls) {
+                    buffer.append(" NOT NULL");
+                }
             }
             buffer.append(')');
             final String sqlCreate = buffer.toString();
@@ -567,7 +613,12 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 if (isDate[i-1]) {
                     dest.updateTimestamp(i, source.getTimestamp(i));
                 } else {
-                    dest.updateFloat(i, source.getFloat(i));
+                    final float x = source.getFloat(i);
+                    if (!source.wasNull()) {
+                        dest.updateFloat(i, x);
+                    } else {
+                        dest.updateNull(i);
+                    }
                 }
             }
             dest.insertRow();
@@ -726,6 +777,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             step.close();
         }
         parameters.clear();
+        nullIncluded = null;
     }
 
     /**

@@ -50,6 +50,9 @@ import org.geotools.resources.Utilities;
  * a result of {@link EnvironmentTable#getRowSet} invocation. This is a connected
  * {@link RowSet} made of the juxtaposition of many {@link EnvironmentTableStep}
  * objects.
+ * <br><br>
+ * <strong>NOTE: {@link Integer#MIN_VALUE} and {@link Integer#MAX_VALUE} are reserved
+ *         ID and should not be used in the catch table primary key.</strong>
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -64,7 +67,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Un événements indiquant que cet objet <code>RowSet</code> a changé.
      * Ne sera construit que la première fois où il sera nécessaire.
      */
-    private RowSetEvent event;
+    private transient RowSetEvent event;
 
     /**
      * Les objets {@link ResultSet} sous-jacents. La première colonne de chacune
@@ -75,22 +78,35 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
     private final ResultSet[] results;
 
     /**
-     * Objet {@link ResultSet} à utiliser pour un numéro de colonne donnée.
-     * Pour une colonne numérotée <var>n</var>, le {@link ResultSet} a utiliser
-     * est <code>resultMap[n-2]</code>.
+     * Index de l'objet {@link ResultSet} à utiliser pour un numéro de colonne donnée.
+     * Pour une colonne numérotée <var>n</var>, le {@link ResultSet} a utiliser est
+     * <code>results[resultMap[n-2]]</code>.
      */
-    private final ResultSet[] resultMap;
+    private final int[] resultMap;
 
     /**
-     * Index de la colonne dans {@link #resultMap} à utiliser pour un numéro de
-     * colonne donnée. Ce tableau s'utilise de pair avec {@link #resultMap}.
+     * Index de la colonne dans <code>results[resultMap[n-2]]</code> à utiliser pour un numéro
+     * de colonne <var>n</var>. Ce tableau s'utilise de pair avec {@link #resultMap}.
      */
     private final int[] columnMap;
 
     /**
-     * Titre des colonnes.
+     * Titre des colonnes. Les index vont de 0 inclusivement à <code>resultMap.length</code>
+     * exclusivement.
      */
     private final String[] columnLabels;
+
+    /**
+     * Indique si les valeurs <code>null</code> sont autorisées. Les index vont
+     * de 0 inclusivement à <code>results.length</code> exclusivement.
+     */
+    private final boolean[] nullIncluded;
+
+    /**
+     * Les numéros ID courrant pour chacun des {@link ResultSet}s présents dans le
+     * tableau {@link #results}.
+     */
+    private final int[] IDs;
 
     /**
      * L'identifiant de la capture pour la ligne courante.
@@ -100,23 +116,35 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
     /**
      * Le dernier {@link ResultSet} utilisé.
      */
-    private ResultSet last;
+    private transient ResultSet last;
 
     /**
      * Construit un objet <code>EnvironmentRowSet</code>.
      *
      * @param  results Les objets <code>results</code>.
-     * @param  labels Les titres des colonnes.
+     * @param  labels  Les titres des colonnes.
+     * @param  nullIncluded Indique si les valeurs nulles sont autorisées pour chacun des
+     *         objets {@link ResultSet}. Ce tableau doit avoir la même longueur que
+     *         <code>results.length</code>.
      * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
      */
-    EnvironmentRowSet(final ResultSet[] results, final String[] labels) throws SQLException {
-        columnLabels = labels;
-        this.results = results;
+    EnvironmentRowSet(final ResultSet[] results, final String[] labels, final boolean[] nullIncluded)
+            throws SQLException
+    {
+        this.columnLabels = labels;
+        this.results      = results;
+        this.nullIncluded = nullIncluded;
+        this.IDs          = new int[results.length];
+        Arrays.fill(IDs, ID);
+        /*
+         * Compte le nombre de colonnes, et vérifie que ce nombre correspond
+         * bien à la longueur du tableau 'labels' moins la colonne ID.
+         */
         int count = 0;
         final int[] columnCount = new int[results.length];
         for (int i=0; i<results.length; i++) {
             final int c = results[i].getMetaData().getColumnCount()-1;
-            if (c<0) {
+            if (c < 0) {
                 throw new IllegalArgumentException();
             }
             columnCount[i] = c;
@@ -125,12 +153,19 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (count != labels.length-1) {
             throw new IllegalArgumentException();
         }
-        resultMap = new ResultSet[count];
-        columnMap = new int      [count];
+        if (nullIncluded.length != results.length) {
+            throw new IllegalArgumentException();
+        }
+        /*
+         * Construit les tables de correspondances pour convertir un numéro de colonne
+         * de cet objet ResultSet vers un numéro de colonne d'un des objets ResultSet fils.
+         */
+        resultMap = new int[count];
+        columnMap = new int[count];
         for (int i=results.length; --i>=0;) {
             int c = columnCount[i];
-            Arrays.fill(resultMap, count-c, count, results[i]);
-            while (--c>=0) {
+            Arrays.fill(resultMap, count-c, count, i);
+            while (--c >= 0) {
                 columnMap[--count] = c+2;
             }
         }
@@ -143,30 +178,32 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Moves the cursor down one row from its current position.
      */
     public boolean next() throws SQLException {
-        int alreadyMoved = -1;
-        for (int i=0; i<results.length; i++) {
-            if (i == alreadyMoved) {
-                continue;
-            }
-            final ResultSet result = results[i];
-            int candidate;
-            do {
-                if (!result.next()) {
-                    return false;
+search: while (ID != Integer.MAX_VALUE) {
+            int min = Integer.MAX_VALUE;
+            for (int i=0; i<results.length; i++) {
+                if (IDs[i] == ID) {
+                    final ResultSet result = results[i];
+                    IDs[i] = result.next() ? result.getInt(1) : Integer.MAX_VALUE;
                 }
-                candidate = result.getInt(1);
+                if (IDs[i] < min) {
+                    min = IDs[i];
+                }
             }
-            while (candidate < ID);
-            if (candidate > ID) {
-                ID = candidate;
-                alreadyMoved = i;
-                i = -1; // Redo all previous ResultSet.
+            if (min <= ID) {
+                throw new SQLException("Les enregistrements ne sont pas ordonnés.");
             }
+            ID = min;
+            for (int i=0; i<nullIncluded.length; i++) {
+                if (!nullIncluded[i] && IDs[i]!=ID) {
+                    continue search;
+                }
+            }
+            break;
         }
-        //
-        // Préviens tous les objets intéressés que
-        // cet objet a avancé d'un enregistrement.
-        //
+        /*
+         * Préviens tous les objets intéressés que
+         * cet objet a avancé d'un enregistrement.
+         */
         if (listenerList != null) {
             final Object[] listeners = listenerList.getListenerList();
             for (int i=listeners.length; (i-=2)>=0;) {
@@ -178,7 +215,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
                 }
             }
         }
-        return true;
+        return ID != Integer.MAX_VALUE;
     }
 
     /**
@@ -207,7 +244,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      */
     public boolean wasNull() throws SQLException {
         if (last == null) {
-            throw new SQLException();
+            return true;
         }
         if (last == this) {
             return false;
@@ -226,7 +263,25 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
             return 0;
         }
         if (--columnIndex>=0 && columnIndex<resultMap.length) {
-            last = resultMap[columnIndex];
+            final int index = resultMap[columnIndex];
+            last = (IDs[index] == ID) ? results[index] : null;
+            return columnMap[columnIndex];
+        }
+        throw new SQLException("Numéro de colonne invalide.");
+    }
+
+    /**
+     * Convertit un numéro de colonne global en numéro de colonne dans le {@link ResultSet}
+     * à utiliser. Le <code>ResultSet</code> à utilisé sera mémorisé dans la variable
+     * {@link #last}.
+     */
+    private int toResultSetMetaData(int columnIndex) throws SQLException {
+        if (--columnIndex == 0) {
+            last = this;
+            return 0;
+        }
+        if (--columnIndex>=0 && columnIndex<resultMap.length) {
+            last = results[resultMap[columnIndex]];
             return columnMap[columnIndex];
         }
         throw new SQLException("Numéro de colonne invalide.");
@@ -241,6 +296,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return new Integer(ID);
         }
+        if (last==null) return null;
         return last.getObject(columnIndex);
     }
 
@@ -249,6 +305,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return new Integer(ID);
         }
+        if (last==null) return null;
         return last.getObject(columnIndex, map);
     }
 
@@ -257,6 +314,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return String.valueOf(ID);
         }
+        if (last==null) return null;
         return last.getString(columnIndex);
     }
 
@@ -265,6 +323,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return ID != 0;
         }
+        if (last==null) return false;
         return last.getBoolean(columnIndex);
     }
 
@@ -273,6 +332,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return (byte) ID;
         }
+        if (last==null) return 0;
         return last.getByte(columnIndex);
     }
 
@@ -281,6 +341,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return (short) ID;
         }
+        if (last==null) return 0;
         return last.getShort(columnIndex);
     }
 
@@ -289,6 +350,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return ID;
         }
+        if (last==null) return 0;
         return last.getInt(columnIndex);
     }
 
@@ -297,6 +359,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return ID;
         }
+        if (last==null) return 0;
         return last.getLong(columnIndex);
     }
 
@@ -305,6 +368,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return ID;
         }
+        if (last==null) return 0;
         return last.getFloat(columnIndex);
     }
 
@@ -313,6 +377,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return ID;
         }
+        if (last==null) return 0;
         return last.getDouble(columnIndex);
     }
 
@@ -321,6 +386,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return new BigDecimal(ID);
         }
+        if (last==null) return null;
         return last.getBigDecimal(columnIndex);
     }
 
@@ -330,6 +396,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             return new BigDecimal(ID);
         }
+        if (last==null) return null;
         return last.getBigDecimal(columnIndex, scale);
     }
 
@@ -338,6 +405,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getBytes(columnIndex);
     }
 
@@ -346,6 +414,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getDate(columnIndex);
     }
 
@@ -354,6 +423,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getDate(columnIndex, cal);
     }
 
@@ -362,6 +432,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getTime(columnIndex);
     }
 
@@ -370,6 +441,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getTime(columnIndex, cal);
     }
 
@@ -378,6 +450,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getTimestamp(columnIndex);
     }
 
@@ -386,6 +459,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getTimestamp(columnIndex, cal);
     }
 
@@ -394,6 +468,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getAsciiStream(columnIndex);
     }
 
@@ -403,6 +478,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getUnicodeStream(columnIndex);
     }
 
@@ -411,6 +487,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getBinaryStream(columnIndex);
     }
 
@@ -419,6 +496,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getCharacterStream(columnIndex);
     }
 
@@ -427,6 +505,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getURL(columnIndex);
     }
 
@@ -435,6 +514,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getRef(columnIndex);
     }
 
@@ -443,6 +523,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getBlob(columnIndex);
     }
 
@@ -451,6 +532,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getClob(columnIndex);
     }
 
@@ -459,6 +541,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
         if (columnIndex == 0) {
             throw unsupportedOperation();
         }
+        if (last==null) return null;
         return last.getArray(columnIndex);
     }
 
@@ -1533,7 +1616,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Get the designated column's table's schema.
      */
     public String getSchemaName(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return null;
         }
@@ -1544,7 +1627,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Gets the designated column's table name.
      */
     public String getTableName(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return null;
         }
@@ -1555,7 +1638,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Gets the designated column's table's catalog name.
      */
     public String getCatalogName(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return null;
         }
@@ -1566,7 +1649,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Retrieves the designated column's SQL type.
      */
     public int getColumnType(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return Types.INTEGER;
         }
@@ -1577,7 +1660,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Retrieves the designated column's database-specific type name.
      */
     public String getColumnTypeName(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return "int";
         }
@@ -1590,7 +1673,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * is called to retrieve a value from the column.
      */
     public String getColumnClassName(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return Integer.class.getName();
         }
@@ -1601,7 +1684,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates the nullability of values in the designated column.
      */
     public int isNullable(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return columnNoNulls;
         }
@@ -1612,7 +1695,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether the designated column can be used in a where clause.
      */
     public boolean isSearchable(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1623,7 +1706,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether a write on the designated column will definitely succeed.
      */
     public boolean isDefinitelyWritable(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1634,7 +1717,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether it is possible for a write on the designated column to succeed.
      */
     public boolean isWritable(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1645,7 +1728,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether the designated column is definitely not writable.
      */
     public boolean isReadOnly(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return true;
         }
@@ -1656,7 +1739,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether the designated column is automatically numbered, thus read-only.
      */
     public boolean isAutoIncrement(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1667,7 +1750,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether a column's case matters.
      */
     public boolean isCaseSensitive(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1678,7 +1761,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether the designated column is a cash value.
      */
     public boolean isCurrency(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return false;
         }
@@ -1689,7 +1772,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates whether values in the designated column are signed numbers.
      */
     public boolean isSigned(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return true;
         }
@@ -1700,7 +1783,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Get the designated column's number of decimal digits.
      */
     public int getPrecision(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return 10;
         }
@@ -1711,7 +1794,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Gets the designated column's number of digits to right of the decimal point.
      */
     public int getScale(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return 0;
         }
@@ -1722,7 +1805,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
      * Indicates the designated column's normal maximum width in characters.
      */
     public int getColumnDisplaySize(int column) throws SQLException {
-        column = toResultSet(column);
+        column = toResultSetMetaData(column);
         if (column == 0) {
             return 10;
         }

@@ -117,7 +117,7 @@ public interface EnvironmentTable extends Table {
      * Ajoute un paramètre à la sélection. Le paramètre sera mesuré aux coordonnées
      * spatio-temporelles exacte de la capture.  Cette méthode est équivalente à un
      * appel de <code>{@linkplain #addParameter(String,String,int,int) addParameter}(operation,
-     * parameter, {@linkplain #CENTER}, 0)</code>.
+     * parameter, {@linkplain #CENTER}, 0, false)</code>.
      *
      * @param  operation Opération (exemple "valeur" ou "sobel"). Ces opérations
      *         correspondent à des noms des colonnes de la table "Environnement".
@@ -151,13 +151,18 @@ public interface EnvironmentTable extends Table {
      *         {@link #CENTER} et {@link #END_POINT}.
      * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
      *         en nombre de jours.
+     * @param  nullIncluded Indique si {@link #getRowSet} est autorisée à retourner des valeurs
+     *         nulles. La valeur par défaut est <code>false</code>, ce qui indique que tous les
+     *         enregistrements pour lesquels au moins un paramètre environnemental est manquant
+     *         seront omis.
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public abstract void addParameter(final String operation,
-                                      final String parameter,
-                                      final int    position,
-                                      final int    timeLag) throws SQLException;
+    public abstract void addParameter(final String  operation,
+                                      final String  parameter,
+                                      final int     position,
+                                      final int     timeLag,
+                                      final boolean nullIncluded) throws SQLException;
 
     /**
      * Retire un ensemble de paramètres de la sélection. Cette méthode permet de retirer une

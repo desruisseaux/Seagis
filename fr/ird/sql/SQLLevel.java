@@ -40,7 +40,7 @@ final class SQLLevel extends Level {
     /**
      * The level for logging SELECT instructions.
      */
-    public static final Level SQL_SELECT = new SQLLevel("SQL SELECT", FINE.intValue()-50);
+    public static final Level SQL_SELECT = new SQLLevel("SQL SELECT", FINE.intValue()+50);
 
     /**
      * The level for logging UPDATE instructions.
