@@ -27,6 +27,7 @@ import java.io.Serializable;
 import net.seas.util.XClass;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import net.seas.resources.Resources;
 
 
 /**
@@ -71,7 +72,7 @@ public final class Envelope implements Cloneable, Serializable
     private static void checkDimension(final CoordinatePoint P1, final CoordinatePoint P2) throws IllegalArgumentException
     {
         if (P1.ord.length != P2.ord.length)
-            throw new IllegalArgumentException("The two points don't have the same dimension."); // TODO: localize.
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION));
     }
 
     /**
@@ -89,7 +90,7 @@ public final class Envelope implements Cloneable, Serializable
         checkDimension(minCP, maxCP);
         for (int i=0; i<minCP.ord.length; i++)
             if (!(minCP.ord[i] <= maxCP.ord[i])) // Use '!' in order to catch 'NaN'.
-                throw new IllegalArgumentException("Bad ordinate at dimension "+(i+1)+'.'); // TODO: localize.
+                throw new IllegalArgumentException(Resources.format(Clé.BAD_ORDINATE¤1, new Integer(i+1)));
     }
 
     /**
