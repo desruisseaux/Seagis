@@ -92,9 +92,9 @@ public class TemporalDatum extends Datum
      * Fill the part inside "[...]".
      * Used for formatting Well Know Text (WKT).
      */
-    String addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer, Object context)
     {
-        super.addString(buffer);
+        super.addString(buffer, context);
         return "TEMPORAL_DATUM";
     }
 }

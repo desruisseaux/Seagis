@@ -212,7 +212,7 @@ public class TemporalCoordinateSystem extends CoordinateSystem
      * Fill the part inside "[...]".
      * Used for formatting Well Know Text (WKT).
      */
-    String addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer, Object context)
     {
         buffer.append(", ");
         buffer.append(datum);

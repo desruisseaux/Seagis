@@ -275,11 +275,22 @@ public class Info implements Serializable
      */
     public String toString()
     {
+        return toString(null);
+    }
+
+    /**
+     * Returns a <em>Well Know Text</em> (WKT) for this info.
+     *
+     * @param context The contextual unit. Most subclasses will
+     *        ignore this argument, except {@link PrimeMeridian}.
+     */
+    final String toString(final Object context)
+    {
         final StringBuffer buffer = new StringBuffer(40);
         buffer.append("[\"");
         buffer.append(getName(null));
         buffer.append('"');
-        buffer.insert(0, addString(buffer));
+        buffer.insert(0, addString(buffer, context));
         if (properties!=null)
         {
             final Object authority = properties.get("authority");
@@ -287,7 +298,7 @@ public class Info implements Serializable
             {
                 buffer.append(", AUTHORITY[");
                 buffer.append(authority);
-                // TODO: Add code (as is AUTHORITY["EPSG","8901"])
+                // TODO: Add code (as in AUTHORITY["EPSG","8901"])
                 buffer.append("\"]");
             }
         }
@@ -300,10 +311,12 @@ public class Info implements Serializable
      * The default implementation add nothing. Subclasses will override
      * this method in order to complete string representation.
      *
-     * @param  The buffer to add string to.
+     * @param  buffer The buffer to add string to.
+     * @param  context The contextual unit. Most subclasses will
+     *         ignore this argument, except {@link PrimeMeridian}.
      * @return The WKT code name (e.g. "GEOGCS").
      */
-    String addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer, Object context)
     {return Utilities.getShortClassName(this);}
 
     /**

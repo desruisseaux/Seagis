@@ -253,12 +253,12 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * Fill the part inside "[...]".
      * Used for formatting Well Know Text (WKT).
      */
-    String addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer, Object context)
     {
         buffer.append(", ");
         buffer.append(getDatum());
         buffer.append(", ");
-        buffer.append(meridian);
+        buffer.append(meridian.toString(unit));
         buffer.append(", ");
         addUnit(buffer, unit);
         buffer.append(", ");

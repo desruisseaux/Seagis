@@ -165,10 +165,18 @@ public class PrimeMeridian extends Info
      * Fill the part inside "[...]".
      * Used for formatting Well Know Text (WKT).
      */
-    String addString(final StringBuffer buffer)
+    String addString(final StringBuffer buffer, Object context)
     {
+        Unit display = Unit.DEGREE;
+        if (context instanceof Unit)
+        {
+            // If the PrimeMeridian is written inside a "GEOGCS",
+            // then OpenGIS say that it most be written into the
+            // unit of the enclosing geographic coordinate system.
+            display = (Unit) context;
+        }
         buffer.append(", ");
-        buffer.append(Unit.DEGREE.convert(longitude, unit));
+        buffer.append(display.convert(longitude, unit));
         return "PRIMEM";
     }
 
