@@ -87,7 +87,7 @@ public final class CoordinatePoint implements Cloneable, Serializable
 
     /**
      * Construct a coordinate from
-     * the specified {@link Point2D].
+     * the specified {@link Point2D}.
      */
     public CoordinatePoint(final Point2D point)
     {this(point.getX(), point.getY());}
