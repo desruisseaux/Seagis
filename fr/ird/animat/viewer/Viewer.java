@@ -26,13 +26,17 @@
 package fr.ird.animat.viewer;
 
 // J2SE dependencies
+import java.awt.BorderLayout;
 import java.awt.Graphics2D;
+import javax.swing.JPanel;
 import javax.swing.JComponent;
 import java.rmi.RemoteException;
 
 // Geotools dependencies
 import org.geotools.gui.swing.MapPane;
+import org.geotools.gui.swing.StatusBar;
 import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Animats
@@ -56,6 +60,12 @@ public final class Viewer {
     private final MapPane map = new MapPane();
 
     /**
+     * La barre d'état. Elle contiendra entre autres les coordonnées
+     * géographiques pointées par la souris.
+     */
+    private final StatusBar status = new StatusBar(map);
+
+    /**
      * La couche de l'environnement à afficher.
      */
     private final EnvironmentLayer environment;
@@ -77,6 +87,7 @@ public final class Viewer {
         map.setPaintingWhileAdjusting(true);
         map.getRenderer().addLayer(this.environment);
         map.getRenderer().addLayer(this.population );
+        map.getRenderer().addLayer(new RenderedMapScale());
     }
 
     /**
@@ -84,6 +95,12 @@ public final class Viewer {
      * affichées les animaux et leur environnement.
      */
     public JComponent getView() {
-        return map.createScrollPane();
+        final JPanel panel   = new JPanel(new BorderLayout());
+        final JPanel mapPane = new JPanel(new BorderLayout());
+        mapPane.add(map.createScrollPane(), BorderLayout.CENTER);
+        mapPane.add(environment.colors,     BorderLayout.SOUTH );
+        panel.add(mapPane, BorderLayout.CENTER);
+        panel.add(status,  BorderLayout.SOUTH );
+        return panel;
     }
 }

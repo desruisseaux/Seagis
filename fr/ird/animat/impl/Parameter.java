@@ -29,6 +29,12 @@ package fr.ird.animat.impl;
 import java.io.Serializable;
 import java.awt.geom.Point2D;
 
+// Geotools dependencies
+import org.geotools.cv.Coverage;
+
+// Animat dependencies
+import fr.ird.animat.Observation;
+
 
 /**
  * Un paramètre observé par les {@linkplain Animal animaux}. La classe <code>Parameter</code>
@@ -40,16 +46,16 @@ import java.awt.geom.Point2D;
  */
 public class Parameter implements fr.ird.animat.Parameter, Serializable {
     /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = -1934991927931117874L;
+
+    /**
      * Le cap des animaux, ainsi que leur position actuelle. Le cap peut être obtenu
      * par un appel à {@link #getValue}, alors que la position peut être obtenue par
      * un appel à {@link #getLocation}.
      */
     public static final Parameter HEADING = new Parameter("Heading");
-
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = -1934991927931117874L;
 
     /**
      * Le nom de ce paramètre.
@@ -76,26 +82,32 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne la valeur de l'observation spécifiée. L'implémentation par défaut
-     * retourne <code>data[0]</code> à la condition que <code>data</code> ne soit
-     * pas nul et aie une longueur d'au moins 1.
+     * Retourne la {@link Observation#getValue valeur d'une observation}. L'implémentation
+     * par défaut retourne <code>data[0]</code> à la condition que <code>data</code> ne soit
+     * pas nul et aie une longueur d'au moins <code>1</code>.
      *
-     * @param  data Les observations.
-     * @return La valeur de l'observation, ou {@link Float#NaN}.
+     * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
+     *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
+     *         {@link Coverage#evaluate(CoordinatePoint, float[]) evaluate}.
+     * @return La valeur de l'observation, ou {@link Float#NaN} si aucune valeur n'est disponible.
      */
-    public float getValue(final float[] data) {
+    protected float getValue(final float[] data) {
         return (data!=null && data.length!=0) ? data[0] : Float.NaN;
     }
 
     /**
-     * Retourne la position de l'observation spécifiée. L'implémentation par défaut retourne
-     * (<code>data[1]</code>,<code>data[2]</code>) à la condition que <code>data</code> ne
-     * soit pas nul et aie une longueur d'au moins 3.
+     * Retourne la {@linkplain Observation#getLocation position d'une observation}.
+     * L'implémentation par défaut retourne (<code>data[1]</code>,<code>data[2]</code>)
+     * à la condition que <code>data</code> ne soit pas nul et aie une longueur d'au
+     * moins <code>3</code>.
      *
-     * @param  data Les observations.
-     * @return La position de l'observation, ou <code>null</code>.
+     * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
+     *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
+     *         {@link Coverage#evaluate(CoordinatePoint, float[]) evaluate}.
+     * @return La position de l'observation, ou <code>null</code> si aucune position n'est
+     *         disposible ou si cette information ne s'applique pas à ce paramètre.
      */
-    public Point2D getLocation(final float[] data) {
+    protected Point2D getLocation(final float[] data) {
         if (data!=null && data.length>=3) {
             final float x = data[1];
             final float y = data[2];
@@ -104,6 +116,16 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
             }
         }
         return null;
+    }
+
+    /**
+     * Indique si les observations de ce paramètre se font à des positions bien précises.
+     * Si cette méthode retourne <code>false</code>, alors cela signifie que la méthode
+     * {@link #getLocation} ne retournera jamais une position non-nulle. L'implémentation
+     * par défaut retourne toujours <code>true</code>.
+     */
+    protected boolean isLocalized() {
+        return true;
     }
 
     /**

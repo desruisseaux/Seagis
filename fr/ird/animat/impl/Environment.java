@@ -286,6 +286,7 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
                                     (EventListener) listeners[i+1]);
             }
             assert listenerList.getListenerCount() == 0;
+            queue.dispose();
         }
     }
 }

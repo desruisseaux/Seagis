@@ -48,6 +48,7 @@ import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
+import org.geotools.gui.swing.ColorBar;
 
 // Animats
 import fr.ird.animat.Parameter;
@@ -95,6 +96,11 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      * Paramètre à afficher.
      */
     private Parameter parameter;
+
+    /**
+     * La barre de couleurs à afficher en dessous de la carte.
+     */
+    final ColorBar colors = new ColorBar();
 
     /**
      * Construit une couche pour l'environnement spécifié.
@@ -150,5 +156,6 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     public void setGridCoverage(GridCoverage coverage) throws TransformException {
         coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
         super.setGridCoverage(coverage);
+        colors.setColors(coverage);
     }
 }

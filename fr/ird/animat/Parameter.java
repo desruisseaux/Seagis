@@ -28,17 +28,26 @@ package fr.ird.animat;
 // J2SE dependencies
 import java.awt.geom.Point2D;
 
+// OpenGIS dependencies
+import org.opengis.cv.CV_Coverage;
+
 
 /**
- * Un paramètre observé par les {@linkplain Animal animaux}. La classe <code>Parameter</code>
- * ne contient pas les valeurs des observations,  mais donnent plutôt des indications sur ces
+ * Un paramètre observé par les {@linkplain Animal animaux}. L'interface <code>Parameter</code>
+ * ne contient pas les valeurs des observations, mais donnent plutôt des indications sur ces
  * {@linkplain Observation observations}, un peu comme des noms de colonnes dans un tableau.
+ *
+ * Les observations sont généralement extraites à partir d'une {@linkplain CV_Coverage couverture}
+ * de données pour ce paramètre, couverture elle-même issue de l'{@linkplain Environment environnement}
+ * des animaux.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  *
- * @see Environment#getParameters
  * @see Animal#getObservations
+ * @see Animal#getParameters
+ * @see Environment#getParameters
+ * @see Environment#getCoverage
  */
 public interface Parameter {
     /**

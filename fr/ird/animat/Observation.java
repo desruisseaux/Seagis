@@ -43,6 +43,11 @@ import java.awt.geom.Point2D;
  */
 public interface Observation {
     /**
+     * Retourne l'animal qui a fait cette observation.
+     */
+    Animal getAnimal();
+
+    /**
      * Retourne le paramètre observé.
      */
     Parameter getParameter();

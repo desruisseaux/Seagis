@@ -104,14 +104,12 @@ final class PopulationLayer extends RenderedMarks
     private static final Stroke PATH_STROKE = new BasicStroke(1/60f);
 
     /**
-     * Couleur des trajectoires, ou <code>null</code>
-     * pour ne pas les dessiner.
+     * Couleur des trajectoires, ou <code>null</code> pour ne pas les dessiner.
      */
     private Color pathColor = Color.yellow;
 
     /**
-     * Couleur du rayon de perception, ou <code>null</code>
-     * pour ne pas le dessiner.
+     * Couleur du rayon de perception, ou <code>null</code> pour ne pas le dessiner.
      */
     private Color perceptionColor = new Color(255,255,255,128);
 
@@ -282,9 +280,14 @@ final class PopulationLayer extends RenderedMarks
     }
 
     /**
-     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
+     * Appelée automatiquement par l'itérateur lorsque l'exécution d'une méthode RMI a échouée.
      */
-    private static void failed(final RemoteException exception) {
+    private static void failed(final String method, final RemoteException exception) {
+        final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
+        record.setSourceClassName("PopulationLayer.MarkIterator");
+        record.setSourceMethodName(method);
+        record.setThrown(exception);
+        Logger.getLogger("fr.ird.animat.viewer").log(record);
     }
 
     /**
@@ -330,7 +333,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 update();
             } catch (RemoteException exception) {
-                failed(exception);
+                failed("setIteratorPosition", exception);
                 observations = null;
                 heading = null;
             }
@@ -345,7 +348,7 @@ final class PopulationLayer extends RenderedMarks
                     update();
                     return true;
                 } catch (RemoteException exception) {
-                    failed(exception);
+                    failed("next", exception);
                 }
             }
             observations = null;
@@ -412,7 +415,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 species = animals[index].getSpecies();
             } catch (RemoteException exception) {
-                failed(exception);
+                failed("paint", exception);
                 return;
             }
             Species.Icon icon = icons.get(species);

@@ -94,6 +94,18 @@ public interface Animal extends Remote {
     Shape getPath() throws RemoteException;
 
     /**
+     * Retourne les paramètres intéressant l'animal au pas de temps courant. Ces paramètres sont
+     * souvent les mêmes durant toute la durée de vie de l'animal. Toutefois, les changements en
+     * cours de route sont autorisés. Pour connaître les paramètres observés par l'animal durant
+     * un pas de temps passé, on peut utiliser {@link #getObservations}.
+     *
+     * @return Les paramètres intéressant l'animal pendant le pas de temps courant.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Set<Parameter> getParameters() throws RemoteException;
+
+    /**
      * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@linkplain Parameter
      * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
      * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
