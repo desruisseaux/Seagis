@@ -258,7 +258,7 @@ public final class SpeciesChooser extends JPanel {
     /**
      * Construit une boîte de dialogue avec les espèces de la base de données spécifiée.
      */
-    public SpeciesChooser(final SampleDataBase database) throws SQLException {
+    public SpeciesChooser(final SampleDataBase database) throws RemoteException {
         this();
         if (database != null) try {
             final Collection<Species> sp = database.getSpecies();

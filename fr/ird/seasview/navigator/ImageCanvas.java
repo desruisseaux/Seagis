@@ -47,6 +47,7 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.swing.event.EventListenerList;
 
 // Miscellaneous
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
@@ -194,7 +195,11 @@ final class ImageCanvas extends JPanel {
         final CoverageEntry entry = source;
         if (entry != null) {
             final Range timeRange = entry.getTimeRange();
-            StringBuffer   buffer = new StringBuffer(entry.getName());
+            String name = "";
+            try {
+                name = entry.getName();
+            } catch (RemoteException e) {}
+            StringBuffer   buffer = new StringBuffer(name);
             if (timeRange != null) {
                 final Date startTime = (Date) timeRange.getMinValue();
                 final Date   endTime = (Date) timeRange.getMaxValue();
@@ -384,8 +389,12 @@ final class ImageCanvas extends JPanel {
      * cache sera utilisée.
      */
     final synchronized void reload(final LayerControl[] layers, final StatusBar statusBar) {
+        String name = "";
+        try {
+            name = source.getName();
+        } catch (RemoteException e) {}
         setImage(source, layers, (source!=null) ?
-                    statusBar.getIIOReadProgressListener(source.getName()) : null);
+                    statusBar.getIIOReadProgressListener(name) : null);
     }
 
     /**
@@ -767,7 +776,11 @@ final class ImageCanvas extends JPanel {
             if (parent != null) {
                 final CoverageEntry entry = this.entry;
                 if (entry != null) {
-                    parent.warning(entry.getName(), message);
+                    String name = "";
+                    try {
+                        name = entry.getName();
+                    } catch (RemoteException e) {}
+                    parent.warning(name, message);
                     return;
                 }
             }

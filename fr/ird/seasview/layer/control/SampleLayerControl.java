@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import javax.swing.event.EventListenerList;
 import javax.swing.JComponent;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 import java.io.IOException;
 import java.awt.Color;
 
@@ -45,6 +46,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
 import fr.ird.animat.Species;
 import fr.ird.awt.SpeciesChooser;
 import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.SampleTable;
 import fr.ird.database.sample.SampleDataBase;
 import fr.ird.database.gui.map.SampleLayer;
@@ -94,7 +96,7 @@ public final class SampleLayerControl extends LayerControl {
      * @param  database Connexion vers la base de données des pêches.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public SampleLayerControl(final SampleDataBase database) throws SQLException {
+    public SampleLayerControl(final SampleDataBase database) throws RemoteException {
         super(false);
         this.database = database;
     }
@@ -122,7 +124,7 @@ public final class SampleLayerControl extends LayerControl {
     public synchronized RenderedLayer[] configLayers(final RenderedLayer[]   layers,
                                                      final CoverageEntry     entry,
                                                      final EventListenerList listeners)
-        throws SQLException
+        throws RemoteException
     {
         final SampleTableLayer layer;
         if (layers!=null && layers.length==1 && layers[0] instanceof SampleTableLayer) {
@@ -181,14 +183,14 @@ public final class SampleLayerControl extends LayerControl {
                             try {
                                 sampleTable.setSpecies(redo ? newSpecies  : oldSpecies);
                                 markType =             redo ? newMarkType : oldMarkType;
-                            } catch (SQLException exception) {
+                            } catch (RemoteException exception) {
                                 ExceptionMonitor.show(owner, exception);
                             }
                         }
                     });
                 }
             }
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             ExceptionMonitor.show(owner, exception);
         }
     }
@@ -198,7 +200,7 @@ public final class SampleLayerControl extends LayerControl {
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized void dispose() throws SQLException {
+    public synchronized void dispose() throws RemoteException {
         if (sampleTable != null) {
             sampleTable.close();
             sampleTable = null;

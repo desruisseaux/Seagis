@@ -27,6 +27,7 @@ package fr.ird.seasview.navigator;
 
 // Database
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // User interface
 import java.awt.Component;
@@ -66,11 +67,13 @@ import org.geotools.gui.swing.ExceptionMonitor;
 // Seagis
 import fr.ird.awt.RangeBars;
 import fr.ird.seasview.DataBase;
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.SeriesEntry;
-import fr.ird.seasview.layer.control.LayerControl;
 import fr.ird.resources.experimental.Resources;
+import fr.ird.database.coverage.GridCoverageRange;
+import fr.ird.seasview.layer.control.LayerControl;
 import fr.ird.resources.experimental.ResourceKeys;
 
 
@@ -179,7 +182,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public Map<SeriesEntry,List<CoverageEntry>> refresh(final CoverageTable table) throws SQLException {
+    public Map<SeriesEntry,List<CoverageEntry>> refresh(final CoverageTable table) throws RemoteException {
         final Map<SeriesEntry,List<CoverageEntry>> entries;
         entries = new HashMap<SeriesEntry,List<CoverageEntry>>();
         SwingUtilities.invokeAndWait(new Runnable() {
@@ -191,7 +194,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
         });
         synchronized (table) {
             for (final SeriesEntry series : this.series) {
-                table.setSeries(series);
+                table.setSeries(series);                
                 entries.put(series, addSeriesImpl(table));
             }
         }
@@ -211,7 +214,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public List<CoverageEntry> addSeries(final CoverageTable table) throws SQLException {
+    public List<CoverageEntry> addSeries(final CoverageTable table) throws RemoteException {
         final List<CoverageEntry> entries = addSeriesImpl(table);
         // Fixe une fois pour toute le nombre de
         // lignes et de colonnes de la mosaïque.
@@ -231,17 +234,26 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    private List<CoverageEntry> addSeriesImpl(final CoverageTable table) throws SQLException {
+    private List<CoverageEntry> addSeriesImpl(final CoverageTable table) throws RemoteException {
+        
         final SeriesEntry       newSeries;
-        final RangeSet             ranges = new RangeSet(Date.class);
-        final List<CoverageEntry> entries = new ArrayList<CoverageEntry>();
+        final GridCoverageRange gcRange;
+        final RangeSet          ranges;
+        List<CoverageEntry> entries = new ArrayList<CoverageEntry>();
+
         synchronized (table) {
             newSeries = table.getSeries();
-            table.getRanges(null, null, ranges, entries);
+            gcRange   = table.getRanges(null, null, new RangeSet(Date.class), entries);
+            entries   = gcRange.entryList;
+            ranges    = gcRange.t;
         }
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                rangeBars.setRanges(newSeries.getName(), ranges);
+                String name = "";
+                try {
+                    name = newSeries.getName();
+                } catch(RemoteException e) {}                
+                rangeBars.setRanges(name, ranges);
                 series.add(newSeries);
             }
         });
@@ -329,7 +341,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
                     } finally {
                         table.setTimeRange(oldRange);
                     }
-                } catch (SQLException exception) {
+                } catch (RemoteException exception) {
                     ExceptionMonitor.show(this, exception);
                 }
             }

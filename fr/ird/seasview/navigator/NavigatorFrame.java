@@ -43,14 +43,17 @@ import java.util.Map;
 import java.util.List;
 import java.util.TimeZone;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.util.ProgressListener;
 import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.gui.swing.StatusBar;
+import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.CoverageTable;
@@ -69,7 +72,7 @@ import fr.ird.seasview.layer.control.LayerControl;
 
 /**
  * Fenêtre affichant une table des images disponibles, ainsi qu'une vue de ces
- * images.   L'utilisateur pourra choisir une ou plusieurs images de son choix
+ * images. L'utilisateur pourra choisir une ou plusieurs images de son choix
  * dans la table, et changer de séries d'images à l'aide des onglets dans le
  * bas de la fenêtre.
  *
@@ -124,7 +127,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      */
     public NavigatorFrame(final DataBase          database,
                           final CoordinateChooser chooser,
-                          final JComponent        owner) throws SQLException
+                          final JComponent        owner) throws RemoteException
     {
         super(Resources.format(ResourceKeys.IMAGES_LIST));
         final SeriesEntry[] series;
@@ -136,7 +139,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
             series = new SeriesEntry[0];
         }
         table = database.getCoverageTable(series.length!=0 ? series[0] : null);
-        configureTable();
+        
+        configureTable();        
 
         final Container panel=getContentPane();
         panel.setLayout(new BorderLayout());
@@ -148,8 +152,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         final LayerControl[] ctrl = database.getLayerControls();
         final ImageMosaicPanel mosaic = new ImageMosaicPanel(table, statusBar, readers, ctrl);
         tabs.addTab(Resources.format(ResourceKeys.MOSAIC), /*icon, */ mosaic);
-
         addSeries(database, series, owner);
+            
         setFrameIcon(getIcon("org/javalobby/icons/20x20/Sheet.gif"));
     }
 
@@ -187,7 +191,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Construit le paneau {@link CoordinateChooser}
      * si ce paneau n'existait pas déjà.
      */
-    private void buildChooser() throws SQLException {
+    private void buildChooser() throws RemoteException {
         if (chooser == null) {
             chooser = new CoordinateChooser(getDataBase().getCoverageDataBase());
             chooser.setSeriesVisible(false);
@@ -201,11 +205,11 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
-    private void configureTable() throws SQLException {
+    private void configureTable() throws RemoteException {
         if (chooser != null) {
             synchronized (table) {
                 table.setTimeRange          (chooser.getStartTime(), chooser.getEndTime());
-                table.setGeographicArea     (chooser.getGeographicArea());
+                table.setGeographicArea     (new XRectangle2D(chooser.getGeographicArea()));
                 table.setPreferredResolution(chooser.getPreferredResolution());
             }
         }
@@ -224,7 +228,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *         pour plus de sécurité.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    private void refresh(final Component[] tabs) throws SQLException {
+    private void refresh(final Component[] tabs) throws RemoteException {
         // Note: si 'refresh' est appelée en même temps que 'addSeries'
         //       (dans deux threads séparés), toutes les tables seront
         //       remises à jour ('refresh') avant que 'addSeries' ne
@@ -265,7 +269,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      */
     private void addSeries(final DataBase database,
                            final SeriesEntry[] series,
-                           final JComponent owner) throws SQLException
+                           final JComponent owner) throws RemoteException
     {
         final ProgressWindow progress = new ProgressWindow(owner);
         progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
@@ -282,7 +286,8 @@ loop:       for (int j=0; j<series.length; j++) {
                             continue loop;
                         }
                     }
-                }
+                }                                
+                
                 final String              name   = série.getName();
                 final ImageMosaicPanel    mosaic = getMosaicPanel();
                 final ImageTablePanel     panel;
@@ -291,9 +296,9 @@ loop:       for (int j=0; j<series.length; j++) {
                 synchronized (table) {
                     table.setSeries(série);
                     if (mosaic != null) {
-                        model = new CoverageTableModel(série);
+                        model = new CoverageTableModel(série);                                                
                         model.setEntries(mosaic.addSeries(table));
-                    } else {
+                    } else {                                               
                         model = new CoverageTableModel(table);
                     }
                 }
@@ -319,7 +324,7 @@ loop:       for (int j=0; j<series.length; j++) {
      */
     private ImageTablePanel createPanel(final CoverageTableModel model,
                                         final DataBase        database)
-            throws SQLException
+            throws RemoteException
     {
         final ThreadGroup readers = database.getThreadGroup();
         final LayerControl[] ctrl = database.getLayerControls();
@@ -369,7 +374,7 @@ loop:       for (int j=0; j<series.length; j++) {
         tabs.removeTabAt(index);
         if (tab instanceof ImagePanel) try {
             ((ImagePanel) tab).dispose();
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             ExceptionMonitor.show(this, exception);
         }
     }
@@ -404,7 +409,7 @@ loop:       for (int j=0; j<series.length; j++) {
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException {
+    protected Task process(final int clé) throws RemoteException {
         final Component c=tabs.getSelectedComponent();
         if (c instanceof ImagePanel) {
             if (((ImagePanel) c).process(clé)) {
@@ -428,7 +433,7 @@ loop:       for (int j=0; j<series.length; j++) {
                     configureTable();
                     final DataBase database = getDataBase();
                     task = new Task(resources.getString(ResourceKeys.ADD_SERIES)) {
-                        protected void run() throws SQLException {
+                        protected void run() throws RemoteException {
                             addSeries(database, series, NavigatorFrame.this);
                         }
                     };
@@ -451,7 +456,7 @@ loop:       for (int j=0; j<series.length; j++) {
                     configureTable();
                     final Component[] tabs=this.tabs.getComponents();
                     task = new Task(resources.getString(ResourceKeys.CHANGE_COORDINATES)) {
-                        protected void run() throws SQLException {
+                        protected void run() throws RemoteException {
                             refresh(tabs);
                         }
                     };
@@ -548,13 +553,13 @@ loop:       for (int j=0; j<series.length; j++) {
      * la fenêtre est fermée.
      */
     public void dispose() {
-        SQLException exception=null;
+        RemoteException exception=null;
         final Component[] tabs=this.tabs.getComponents();
         for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
             if (c instanceof ImagePanel) try {
                 ((ImagePanel) c).dispose();
-            } catch (SQLException e) {
+            } catch (RemoteException e) {
                 if (e != null) {
                     e=exception;
                 }
@@ -562,7 +567,7 @@ loop:       for (int j=0; j<series.length; j++) {
         }
         try {
             table.close();
-        } catch (SQLException e) {
+        } catch (RemoteException e) {
             exception = e;
         }
         if (exception != null) {
@@ -610,7 +615,7 @@ loop:       for (int j=0; j<series.length; j++) {
         /**
          * Reconstruit une fenêtre.
          */
-        protected void run() throws SQLException {
+        protected void run() throws RemoteException {
             final DataBase    database = getDataBase();
             final NavigatorFrame frame = new NavigatorFrame(database, null, null);
             for (int i=0; i<models.length; i++) {

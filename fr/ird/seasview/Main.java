@@ -27,6 +27,7 @@ package fr.ird.seasview;
 
 // Bases de données et images
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 
@@ -548,10 +549,10 @@ public final class Main {
          */
         DataBase.out = arguments.out;
         ControlPanel control = null;
-        do try {
+        do try {                     
             setup(new DataBase());
             return;
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             ExceptionMonitor.show(null, exception);
             if (control==null) {
                 control = new ControlPanel();

@@ -28,6 +28,7 @@ package fr.ird.seasview.navigator;
 // Database
 import java.util.TimeZone;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Graphical user inferface
 import javax.swing.Icon;
@@ -221,7 +222,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * @throws SQLException si un accès à une base de
      *         données était nécessaire et a échoué.
      */
-    public final void dispose() throws SQLException {
+    public final void dispose() throws RemoteException {
         mosaic.dispose();
         if (layers != null) {
             for (int i=layers.length; --i>=0;) {
@@ -256,7 +257,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected boolean process(final int clé) throws SQLException {
+    protected boolean process(final int clé) throws RemoteException {
         switch (clé) {
             default: return false;
 

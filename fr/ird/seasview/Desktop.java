@@ -64,7 +64,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.gui.swing.About;
@@ -72,6 +72,7 @@ import org.geotools.io.DefaultFileFilter;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Base de données
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageEntry;
@@ -463,7 +464,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             //       Il faudrait en particulier vérifier s'il n'y a pas un
             //       thread en cours d'exécution en arrière-plan.
             database.close();
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             ExceptionMonitor.show(this, exception);
             // Continue to close the application.
         }
@@ -500,7 +501,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
      * @throws SQLException si une interrogation de la base
      *         de données était nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException {
+    protected Task process(final int clé) throws RemoteException {
         final Resources resources = Resources.getResources(getLocale());
         Task task=null;
         switch (clé) {
@@ -517,7 +518,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             ////////////////////////////////////////////
             case ResourceKeys.IMAGES_SERIES: {
                 task=new Task(resources.getString(ResourceKeys.NEW_IMAGES_SERIES)) {
-                    protected void run() throws SQLException {
+                    protected void run() throws RemoteException {
                         final DataBase database = getDataBase();
                         final CoordinateChooser chooser = new CoordinateChooser(database.getCoverageDataBase());
                         chooser.setMultiSeriesAllowed(true);
@@ -599,7 +600,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             //////////////////////////////////////////////
             case ResourceKeys.IMAGES_CATALOG: {
                 task = new Task(resources.getString(ResourceKeys.IMAGES_CATALOG)) {
-                    protected void run() throws SQLException {
+                    protected void run() throws RemoteException {
                         addFrame(new CatalogFrame(getDataBase(), Desktop.this));
                     }
                 };
@@ -611,7 +612,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             /////////////////////////////////////////////
             case ResourceKeys.FISHERIES_ENVIRONMENT: {
                 task = new Task(resources.getString(ResourceKeys.FISHERIES_ENVIRONMENT)) {
-                    protected void run() throws SQLException {
+                    protected void run() throws RemoteException {
                         final DataBase database = getDataBase();
                         final EnvironmentSamplingChooser panel = new EnvironmentSamplingChooser(
                               new EnvironmentTableFiller(database.getCoverageDataBase(),
@@ -628,7 +629,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             ////////////////////////////////////////////////////////////
             case ResourceKeys.EXTRACT_ENVIRONMENT: {
                 task = new Task(resources.getString(ResourceKeys.EXTRACT_ENVIRONMENT)) {
-                    protected void run() throws SQLException {
+                    protected void run() throws RemoteException {
                         final DataBase database = getDataBase();
                         final SeriesTable series = database.getCoverageDataBase().getSeriesTable();
                         final EnvironmentTable table = database.getSampleDataBase().getEnvironmentTable(series);

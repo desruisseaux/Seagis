@@ -30,9 +30,9 @@ import java.util.Date;
 import java.awt.Color;
 import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
-import java.sql.SQLException;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.gui.swing.ProgressWindow;
@@ -121,7 +121,7 @@ public final class IsolineLayerControl extends LayerControl {
     public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
                                         final CoverageEntry     entry,
                                         final EventListenerList listeners)
-        throws SQLException, IOException
+        throws RemoteException , IOException
     {
         final float[] values;
         synchronized (this) {

@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Collection;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.util.RangeSet;
@@ -54,7 +55,9 @@ import org.geotools.gui.swing.ExceptionMonitor;
 
 // Seagis
 import fr.ird.awt.RangeBars;
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesTable;
+import fr.ird.database.coverage.GridCoverageRange;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
@@ -106,10 +109,10 @@ public class CatalogFrame extends InternalFrame {
      * @param  owner Composante propriétaire (pour l'affichage d'une boîte des progrès).
      * @throws SQLException If access to the database failed.
      */
-    public CatalogFrame(final DataBase databases, final Component owner) throws SQLException {
+    public CatalogFrame(final DataBase databases, final Component owner) throws RemoteException {
         super(Resources.format(ResourceKeys.IMAGES_CATALOG));
         final SeriesTable series;
-
+        
         database = databases.getCoverageDataBase();
         series   = database.getSeriesTable();
         tree     = series.getTree(SeriesTable.CATEGORY_LEAF);
@@ -149,9 +152,9 @@ public class CatalogFrame extends InternalFrame {
                 final String name = entry.getName();
                 progress.setDescription(name);
                 progress.progress(factor*index++);
-                final CoverageTable images = database.getCoverageTable(entry);
-                final RangeSet  timeRanges = new RangeSet(Date.class);
-                images.getRanges(null, null, timeRanges);
+                final CoverageTable images = database.getCoverageTable(entry);                
+                final GridCoverageRange gcRange = images.getRanges(null, null, new RangeSet(Date.class));
+                final RangeSet  timeRanges = gcRange.t;
                 images.close();
                 if (!timeRanges.isEmpty()) {
                     times.setRanges(name, timeRanges);
@@ -160,7 +163,7 @@ public class CatalogFrame extends InternalFrame {
             progress.complete();
             series.close();
             progress.dispose();
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             progress.exceptionOccurred(exception);
             progress.complete();
         }

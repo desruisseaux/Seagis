@@ -27,14 +27,18 @@ package fr.ird.seasview;
 
 // J2SE
 import java.util.List;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
+import java.rmi.RMISecurityManager;
 import java.io.PrintWriter;
 
 // Seagis
+import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
@@ -59,6 +63,24 @@ import fr.ird.resources.experimental.ResourceKeys;
  * @author Martin Desruisseaux
  */
 public final class DataBase {
+    private static final String hostAdress;
+    private static final int hostPort = 3233;
+    private static final java.rmi.registry.Registry registry;
+
+    static {
+        try {
+           /* if (System.getSecurityManager() == null) {
+                System.setSecurityManager(new RMISecurityManager());
+            }*/
+            
+            hostAdress = java.net.InetAddress.getLocalHost().getHostAddress();
+            registry = java.rmi.registry.LocateRegistry.getRegistry(hostAdress, (new Integer(hostPort)).intValue());    
+            
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+    
     /**
      * <code>true</code> pour compiler la version "Méditerranée" de l'application, or
      * <code>false</code> pour compiler la version "Océan Indien". Ce drapeau n'est
@@ -151,8 +173,8 @@ public final class DataBase {
      *
      * @throws SQLException si les connections avec les bases de données ont échouées.
      */
-    public DataBase() throws SQLException {
-        this(null, null);
+    public DataBase() throws RemoteException {        
+        this(null, null);        
     }
 
     /**
@@ -167,10 +189,9 @@ public final class DataBase {
      * @throws SQLException si les connections avec les bases de données ont échouées.
      */
     public DataBase(final String images,    final TimeZone imagesTZ,
-                    final String fisheries, final TimeZone fisheriesTZ) throws SQLException
+                    final String fisheries, final TimeZone fisheriesTZ) throws RemoteException
     {
-        this(new fr.ird.database.coverage.sql.CoverageDataBase(images, imagesTZ),
-             new fr.ird.database.sample.sql.SampleDataBase(fisheries, fisheriesTZ));
+        this(getCoverageDataBase(images, imagesTZ), getSampleDataBase(fisheries, fisheriesTZ));
     }
 
     /**
@@ -184,13 +205,63 @@ public final class DataBase {
     /**
      * Retourne la base de données d'images.
      *
+     * @param images      Nom de la base de données d'images.   Ce sera typiquement <code>"PELOPS-Images"</code>.
+     * @param imagesTZ    Fuseau horaire par défaut des dates dans les bases de données d'images.
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized CoverageDataBase getCoverageDataBase() throws SQLException {
-        if (images == null) {
-            images = new fr.ird.database.coverage.sql.CoverageDataBase();
+    public static synchronized CoverageDataBase getCoverageDataBase(final String images, final TimeZone imagesTZ) 
+        throws RemoteException 
+    {
+        return new fr.ird.database.coverage.sql.CoverageDataBase(images, imagesTZ);
+    }
+
+    /**
+     * Retourne la base de données d'images.
+     *
+     * @throws SQLException si les accès à la base de données ont échoués.
+     */
+    public synchronized CoverageDataBase getCoverageDataBase() throws RemoteException {
+        try {
+            if (images == null) {
+                // Creation et initialisation du contexte.
+		final Properties properties = new Properties();
+		properties.put(javax.naming.Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.rmi.registry.RegistryContextFactory");
+		properties.put(javax.naming.Context.PROVIDER_URL, "rmi://localhost:3233");
+
+                javax.naming.Context ctx = new javax.naming.InitialContext((java.util.Hashtable)properties);
+               
+                images = (CoverageDataBase) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("CoverageDatabase"), CoverageDataBase.class);               
+                //images = (CoverageDataBase)registry.lookup("CoverageDatabase");                            
+                System.out.println("1");
+                System.out.println(images.getGeographicArea());
+                System.out.println("1.1");
+                images.getCoverageTable();
+                System.out.println("2");
+                java.util.Iterator it = images.getCoverageTable().getEntries().iterator();
+                System.out.println("3");
+                while (it.hasNext()) {
+                    System.out.println("->>" + it.next());
+                }
+                // images = new fr.ird.database.coverage.sql.CoverageDataBase();
+                
+            }
+            return images;        
+        } catch (javax.naming.NamingException e) {
+            throw new CatalogException(e);
         }
-        return images;
+    }
+
+    /**
+     * Retourne la base de données des pêches.
+     *
+     * @param fisheries   Nom de la base de données des pêches. Ce sera typiquement <code>"PELOPS-Pêches"</code>.
+     * @param fisheriesTZ Fuseau horaire par défaut des dates dans les bases de données de pêches.
+     * @throws SQLException si les accès à la base de données ont échoués.
+     */
+    protected static synchronized SampleDataBase getSampleDataBase(final String fisheries, final TimeZone fisheriesTZ) 
+        throws RemoteException 
+    {            
+        return new fr.ird.database.sample.sql.SampleDataBase(fisheries, fisheriesTZ);
     }
 
     /**
@@ -198,9 +269,14 @@ public final class DataBase {
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    protected synchronized SampleDataBase getSampleDataBase() throws SQLException {
-        if (fisheries == null) {
-            fisheries = new fr.ird.database.sample.sql.SampleDataBase();
+    protected synchronized SampleDataBase getSampleDataBase() throws RemoteException {
+       if (fisheries == null) {
+           try {
+               fisheries = (SampleDataBase)registry.lookup("SampleDatabase");                                                       
+               // fisheries = new fr.ird.database.sample.sql.SampleDataBase();
+            } catch (java.rmi.NotBoundException e) {
+                throw new CatalogException(e);
+            }
         }
         return fisheries;
     }
@@ -211,7 +287,7 @@ public final class DataBase {
      * @param  series La série voulue, ou <code>null</code> pour une série par défaut.
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public CoverageTable getCoverageTable(final SeriesEntry series) throws SQLException {
+    public CoverageTable getCoverageTable(final SeriesEntry series) throws RemoteException {
         final CoverageDataBase images = getCoverageDataBase();
         return (series!=null) ? images.getCoverageTable(series) : images.getCoverageTable();
     }
@@ -222,7 +298,7 @@ public final class DataBase {
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized LayerControl[] getLayerControls() throws SQLException {
+    public synchronized LayerControl[] getLayerControls() throws RemoteException {
         final CoverageDataBase   images = getCoverageDataBase();
         final List<LayerControl> layers = new ArrayList<LayerControl>(3);
         final CoverageTable    currents = images.getCoverageTable(getGeostrophicCurrentTable());
@@ -241,7 +317,7 @@ public final class DataBase {
      * @throws SQLException si un problème est survenu
      *         lors de la fermeture d'une connection.
      */
-    public synchronized void close() throws SQLException {
+    public synchronized void close() throws RemoteException {
         if (images != null) {
             images.close();
             images = null;

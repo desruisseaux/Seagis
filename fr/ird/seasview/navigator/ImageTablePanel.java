@@ -68,6 +68,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.TimeZone;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.gc.GridCoverage;
@@ -171,7 +172,6 @@ final class ImageTablePanel extends ImagePanel {
         this.table     = table;
         this.workers   = readers.getParent();
         this.tableView = new JTable(table);
-
         final ListSelectionModel selection = tableView.getSelectionModel();
         final JComponent       tableScroll = new JScrollPane(tableView);
         final JSplitPane         controler = (JSplitPane) getLeftComponent();
@@ -235,7 +235,7 @@ final class ImageTablePanel extends ImagePanel {
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected boolean process(final int clé) throws SQLException {
+    protected boolean process(final int clé) throws RemoteException {
         switch (clé) {
             default: return super.process(clé);
 
@@ -378,8 +378,12 @@ final class ImageTablePanel extends ImagePanel {
                         panel.addCoverageChangeListener(listeners);
                     }
                     images[i]=panel;
+                    String name = "";
+                    try {
+                        entry.getName();
+                    } catch (RemoteException e) {}
                     panel.setImage(entry, selectedLayers,
-                                   mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
+                                   mosaic.statusBar.getIIOReadProgressListener(name));
                 }
             }
             /*
@@ -460,7 +464,7 @@ final class ImageTablePanel extends ImagePanel {
      * @param  table Table dans laquelle puiser la liste des images.
      * @throws SQLException si l'interrogation de la table a échouée.
      */
-    public void setEntries(final CoverageTable table) throws SQLException {
+    public void setEntries(final CoverageTable table) throws RemoteException {
         this.table.setEntries(table);
     }
 
@@ -531,7 +535,7 @@ final class ImageTablePanel extends ImagePanel {
                 CoverageEntry[] entries = getSelectedEntries();
                 if (entries.length>MAX_IMAGES) {
                     entries = XArray.resize(entries, MAX_IMAGES);
-                }
+                }                
                 imageSelected(entries);
             }
             updateStatusBar();

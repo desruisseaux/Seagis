@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.TimeZone;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Seagis
 import fr.ird.resources.experimental.Resources;
@@ -105,7 +106,7 @@ public class InternalFrame extends JInternalFrame {
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException {
+    protected Task process(final int clé) throws RemoteException {
         switch (clé) {
             default: {
                 throw new IllegalArgumentException(String.valueOf(clé));

@@ -28,6 +28,7 @@ package fr.ird.seasview.layer.control;
 // Bases de données et images
 import java.io.IOException;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Interface utilisateur
 import java.awt.Container;
@@ -312,7 +313,7 @@ public abstract class LayerControl {
      *
      * @throws SQLException si un accès à la base de données était nécessaire et a échoué.
      */
-    public void dispose() throws SQLException {
+    public void dispose() throws RemoteException {
     }
 
     /**
