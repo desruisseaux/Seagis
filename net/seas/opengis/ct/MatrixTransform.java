@@ -25,7 +25,7 @@ package net.seas.opengis.ct;
 // Geometry
 import java.awt.Shape;
 import java.awt.geom.Point2D;
-import java.awt.geom.AffineTransform;
+import net.seas.opengis.pt.Matrix;
 import net.seas.opengis.pt.ConvexHull;
 
 // Miscellaneous
@@ -35,96 +35,68 @@ import net.seas.util.XAffineTransform;
 
 
 /**
- * Transforms two-dimensional coordinate points using an {@link AffineTransform}.
+ * Transforms multi-dimensional coordinate points using an {@link Matrix}.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-final class AffineTransform2D extends MathTransform implements Serializable
+final class MatrixTransform extends MathTransform implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -7260613547208966035L;
+    //private static final long serialVersionUID = -7260613547208966035L; // TODO
 
     /**
-     * The affine transform.
+     * The matrix.
      */
-    private final AffineTransform transform;
+    private final Matrix matrix;
 
     /**
-     * Construct an affine transform.
+     * Construct a transform.
      */
-    protected AffineTransform2D(final AffineTransform transform)
+    protected MatrixTransform(final Matrix matrix)
     {
-        super("AffineTransform2D");
-        this.transform = (AffineTransform) transform.clone();
+        super("MatrixTransform");
+        this.matrix = matrix.clone();
     }
-
-    /**
-     * Transforms the specified <code>ptSrc</code>
-     * and stores the result in <code>ptDst</code>.
-     */
-    public Point2D transform(final Point2D ptSrc, final Point2D ptDst)
-    {return transform.transform(ptSrc, ptDst);}
 
     /**
      * Transforms a list of coordinate point ordinal values.
      */
     public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts)
-    {transform.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
+    {matrix.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
 
     /**
      * Transforms a list of coordinate point ordinal values.
      */
     public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts)
-    {transform.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
-
-    /**
-     * Transform the specified shape.
-     */
-    public Shape transform(final Shape shape)
-    {return isIdentity() ? shape : transform.createTransformedShape(shape);}
-
-    /**
-     * Creates the inverse transform of this object.
-     */
-    public MathTransform inverse() throws NoninvertibleTransformException
-    {
-        try
-        {
-            return new AffineTransform2D(transform.createInverse());
-        }
-        catch (java.awt.geom.NoninvertibleTransformException exception)
-        {
-            throw new NoninvertibleTransformException(exception.getLocalizedMessage(), exception);
-        }
-    }
+    {matrix.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
 
     /**
      * Gets the dimension of input points.
      */
     public int getDimSource()
-    {return 2;}
+    {return matrix.getSize()-1;}
 
     /**
      * Gets the dimension of output points.
      */
     public int getDimTarget()
-    {return 2;}
+    {return matrix.getSize()-1;}
 
     /**
      * Tests whether this transform does not move any points.
      */
     public boolean isIdentity()
-    {return transform.isIdentity();}
+    {return matrix.isIdentity();}
 
     /**
      * Returns a hash value for this transform.
      */
     public int hashCode()
-    {return transform.hashCode();}
+    {return matrix.hashCode();}
 
     /**
      * Compares the specified object with
@@ -134,8 +106,8 @@ final class AffineTransform2D extends MathTransform implements Serializable
     {
         if (super.equals(object))
         {
-            final AffineTransform2D that = (AffineTransform2D) object;
-            return XClass.equals(this.transform, that.transform);
+            final MatrixTransform that = (MatrixTransform) object;
+            return XClass.equals(this.matrix, that.matrix);
         }
         return false;
     }
@@ -148,12 +120,11 @@ final class AffineTransform2D extends MathTransform implements Serializable
     {
         if (this.isIdentity()) return that.getMathTransform();
         if (that.isIdentity()) return this.getMathTransform();
-        if (that instanceof AffineTransform2D)
+
+        if (that instanceof MatrixTransform)
         {
-            final AffineTransform product = new AffineTransform(((AffineTransform2D) that).transform);
-            product.concatenate(this.transform);
-            XAffineTransform.round(product);
-            return new AffineTransform2D(product);
+            Matrix product = ((MatrixTransform)that).matrix.multiply(this.matrix);
+            return new MatrixTransform(product);
         }
         return super.concatenate(that);
     }

@@ -23,8 +23,12 @@
 package net.seas.opengis.gc;
 
 // OpenGIS (SEAGIS) dependencies
+import net.seas.opengis.pt.Matrix;
+import net.seas.opengis.pt.Envelope;
+import net.seas.opengis.pt.Dimensioned;
 import net.seas.opengis.ct.MathTransform;
 import net.seas.opengis.ct.MathTransformFactory;
+import net.seas.opengis.pt.MismatchedDimensionException;
 
 // Geometry
 import java.awt.Rectangle;
@@ -46,7 +50,7 @@ import java.io.Serializable;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public class GridGeometry implements Serializable
+public class GridGeometry implements Dimensioned, Serializable
 {
     /**
      * Serial number for interoperability with different versions.
@@ -96,10 +100,90 @@ public class GridGeometry implements Serializable
     }
 
     /**
-     * Construct a new two-dimensional grid geometry. A map transform will
+     * Construct a new grid geometry. An affine transform will be computed automatically
+     * from the specified envelope.  The <code>inverse</code> argument tells whatever or
+     * not an axis should be inversed. Callers will typically set <code>inverse[1]</code>
+     * to <code>true</code> in order to inverse the <var>y</var> axis.
+     *
+     * @param gridRange The valid coordinate range of a grid coverage.
+     * @param userRange The corresponding coordinate range in user coordinate.
+     *                  This rectangle must contains entirely all pixels, i.e.
+     *                  the rectangle's upper left corner must coincide with
+     *                  the upper left corner of the first pixel and the rectangle's
+     *                  lower right corner must coincide with the lower right corner
+     *                  of the last pixel.
+     * @param inverse   Tells whatever or not inverse axis. A <code>null</code> value
+     *                  inverse no axis.
+     */
+    public GridGeometry(final GridRange gridRange, final Envelope userRange, final boolean[] inverse)
+    {
+        this.gridRange = gridRange;
+        /*
+         * Check arguments validity.
+         * Dimensions must match.
+         */
+        final int dimension = gridRange.getDimension();
+        if (userRange.getDimension() != dimension)
+        {
+            throw new MismatchedDimensionException(gridRange, userRange);
+        }
+        if (inverse!=null && inverse.length!=dimension)
+        {
+            throw new MismatchedDimensionException(dimension, inverse.length);
+        }
+        /*
+         * Prepare elements for the 2D sub-transform.
+         * Those elements will be set during the matrix
+         * setup below.
+         */
+        double scaleX = 1;
+        double scaleY = 1;
+        double transX = 0;
+        double transY = 0;
+        /*
+         * Setup the multi-dimensional affine transform for use with OpenGIS.
+         * According OpenGIS's specification, transform must map pixel center.
+         * This is done by adding 0.5 to grid coordinates.
+         */
+        final Matrix matrix = new Matrix(dimension+1);
+        matrix.set(dimension, dimension, 1);
+        for (int i=0; i<dimension; i++)
+        {
+            double scale = userRange.getLength(i) / gridRange.getLength(i);
+            double trans;
+            if (inverse==null || inverse[i])
+            {
+                trans = userRange.getMinimum(i);
+            }
+            else
+            {
+                scale = -scale;
+                trans = userRange.getMaximum(i);
+            }
+            trans -= scale*gridRange.getLower(i);
+            matrix.set(i, i,         scale);
+            matrix.set(i, dimension, trans - 0.5*scale);
+            /*
+             * Keep two-dimensional components for the AffineTransform. According
+             * Java Advanced Imaging specification, transforms must map upper left
+             * pixel's corner. This is why we do NOT add 0.5 in the translation
+             * term below.
+             */
+            switch (i)
+            {
+                case 0: scaleX=scale; transX=trans; break;
+                case 1: scaleY=scale; transY=trans; break;
+            }
+        }
+        this.gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(matrix);
+        this.gridToCoordinateJAI    = new AffineTransform(scaleX, 0, 0, scaleY, transX, transY);
+    }
+
+    /**
+     * Construct a new two-dimensional grid geometry. A math transform will
      * be computed automatically with an inverted <var>y</var> axis (i.e.
      * <code>gridRange</code> and <code>userRange</code> are assumed to
-     * have axis in opposite direction).
+     * have <var>y</var> axis in opposite direction).
      *
      * @param gridRange The valid coordinate range of a grid coverage.
      *                  Increasing <var>x</var> values goes right and
@@ -136,6 +220,12 @@ public class GridGeometry implements Serializable
         this.gridRange           = gridRange;
         this.gridToCoordinateJAI = gridToCoordinateJAI; // Cloned by caller
     }
+    
+    /**
+     * Returns the number of dimensions.
+     */
+    public int getDimension()
+    {return gridRange.getDimension();}
 
     /**
      * Returns the valid coordinate range of a grid coverage.

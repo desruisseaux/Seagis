@@ -137,7 +137,7 @@ public class MathTransformFactory
      *
      * @see org.opengis.ct.CT_MathTransformFactory#createAffineTransform
      */
-    final MathTransform createAffineTransform(final Matrix matrix)
+    public MathTransform createAffineTransform(final Matrix matrix)
     {
         /*
          * If the user is requesting a 2D transform, delegate to the
@@ -148,9 +148,9 @@ public class MathTransformFactory
             return createAffineTransform(matrix.toAffineTransform2D());
         }
         /*
-         * General case (not yet implemented).
+         * General case (slower).
          */
-        throw new UnsupportedOperationException("Not implemented");
+        return new MatrixTransform(matrix);
     }
 
     /**

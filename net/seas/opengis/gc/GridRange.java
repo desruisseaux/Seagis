@@ -24,12 +24,15 @@ package net.seas.opengis.gc;
 
 // Miscellaneous
 import java.util.Arrays;
-import java.awt.Rectangle;
 import java.io.Serializable;
+
+import java.awt.Rectangle;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
-import java.awt.image.RenderedImage;
-import java.awt.image.Raster;
+import net.seas.opengis.pt.Dimensioned;
 
 
 /**
@@ -39,7 +42,7 @@ import java.awt.image.Raster;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public final class GridRange implements Serializable
+public final class GridRange implements Dimensioned, Serializable
 {
     /**
      * Serial number for interoperability with different versions.

@@ -324,6 +324,127 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
+     * Returns true if this matrix is an identity matrix.
+     */
+    public boolean isIdentity()
+    {
+        int index=0;
+        for (int j=0; j<size; j++)
+            for (int i=0; i<size; i++)
+                if (elt[index++] != (i==j ? 1 : 0))
+                    return false;
+        return true;
+    }
+
+    /**
+     * Returns a new matrix that is the product
+     * of this matrix by the specified matrix.
+     */
+    public Matrix multiply(final Matrix matrix)
+    {
+        if (size!=matrix.size)
+        {
+            throw new IllegalArgumentException();
+        }
+        int index0 = 0;
+        final Matrix dest = new Matrix(size);
+        for (int j=0; j<size; j++)
+        {
+            for (int i=0; i<size; i++)
+            {
+                int index1 = j*size;
+                int index2 = i;
+                double sum = 0;
+                for (int k=0; k<size; k++)
+                {
+                    sum    += elt[index1++] * matrix.elt[index2];
+                    index2 += size;
+                }
+                dest.elt[index0++] = sum;
+            }
+        }
+        return dest;
+    }
+
+    /**
+     * Transforms an array of floating point coordinates by this matrix.
+     * The two coordinate array sections can be exactly the same or can
+     * be overlapping sections of the same array without affecting the
+     * validity of the results.
+     *
+     * @param srcPts The array containing the source point coordinates.
+     * @param srcOff The offset to the first point to be transformed in the source array.
+     * @param dstPts The array into which the transformed point coordinates are returned.
+     * @param dstOff The offset to the location of the first transformed point that is stored in the destination array.
+     * @param numPts The number of points to be transformed
+     */
+    public void transform(float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
+    {
+        if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
+        {
+            // If source overlaps destination  (taking in account the 'size' elements of
+            // 'srcPts' that need to be read many times), then the easiest workaround is
+            // to copy source data. This is not the most efficient however...
+            srcPts = new float[numPts*size];
+            System.arraycopy(dstPts, srcOff, srcPts, 0, numPts*size);
+            srcOff = 0;
+        }
+        while (--numPts>=0)
+        {
+            int row=0;
+            for (int j=0; j<size; j++)
+            {
+                double sum=0;
+                for (int i=0; i<size; i++)
+                {
+                    sum += srcPts[srcOff+i]*elt[row++];
+                }
+                dstPts[dstOff++] = (float)sum;
+            }
+            srcOff += size;
+        }
+    }
+
+    /**
+     * Transforms an array of floating point coordinates by this matrix.
+     * The two coordinate array sections can be exactly the same or can
+     * be overlapping sections of the same array without affecting the
+     * validity of the results.
+     *
+     * @param srcPts The array containing the source point coordinates.
+     * @param srcOff The offset to the first point to be transformed in the source array.
+     * @param dstPts The array into which the transformed point coordinates are returned.
+     * @param dstOff The offset to the location of the first transformed point that is stored in the destination array.
+     * @param numPts The number of points to be transformed
+     */
+    public void transform(double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    {
+        if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
+        {
+            // If source overlaps destination  (taking in account the 'size' elements of
+            // 'srcPts' that need to be read many times), then the easiest workaround is
+            // to copy source data. This is not the most efficient however...
+            srcPts = new double[numPts*size];
+            System.arraycopy(dstPts, srcOff, srcPts, 0, numPts*size);
+            srcOff = 0;
+        }
+        while (--numPts>=0)
+        {
+            int row=0;
+            for (int j=0; j<size; j++)
+            {
+                double sum=0;
+                for (int i=0; i<size; i++)
+                {
+                    sum += srcPts[srcOff+i]*elt[row++];
+                }
+                dstPts[dstOff++] = sum;
+            }
+            srcOff += size;
+        }
+    }
+
+    /**
      * Returns an affine transform for this matrix.
      * This is a convenience method for interoperability with Java2D.
      *
@@ -375,7 +496,7 @@ public final class Matrix implements Cloneable, Serializable
     /**
      * Returns a copy of this matrix.
      */
-    public Object clone()
+    public Matrix clone()
     {
         final Matrix copy = new Matrix(size);
         System.arraycopy(elt, 0, copy.elt, 0, elt.length);
