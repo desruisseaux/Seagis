@@ -30,14 +30,20 @@ package net.seagis.io.image;
 
 // Miscellaneous
 import java.awt.Dimension;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.image.DataBuffer;
+import java.awt.image.ColorModel;
 import java.awt.image.SampleModel;
 import java.awt.image.BandedSampleModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageReadParam;
+import javax.media.jai.PlanarImage;
 
 
 /**
@@ -66,6 +72,13 @@ public class RawBinaryImageReadParam extends ImageReadParam
      * The expected data type, or {@link DataBuffer#TYPE_UNDEFINED} if unknow.
      */
     private int dataType = DataBuffer.TYPE_UNDEFINED;
+
+    /**
+     * The target data type, or {@link DataBuffer#TYPE_UNDEFINED} if not
+     * defined. In the later case, the target data type will be the same
+     * than the raw one.
+     */
+    private int targetDataType = DataBuffer.TYPE_UNDEFINED;
 
     /**
      * The pad value, or {@link Double#NaN} if there is none.
@@ -99,6 +112,22 @@ public class RawBinaryImageReadParam extends ImageReadParam
     {return (size!=null) ? (Dimension) size.clone() : null;}
 
     /**
+     * Check the validity of the specified data type.
+     *
+     * @param  dataType The data type to check.
+     * @throws IllegalArgumentException if <code>dataType</code> is not one of
+     *         the valid enums of {@link DataBuffer}.
+     */
+    private static void checkDataType(final int dataType) throws IllegalArgumentException
+    {
+        if ((dataType<DataBuffer.TYPE_BYTE || dataType>DataBuffer.TYPE_DOUBLE) &&
+             dataType!=DataBuffer.TYPE_UNDEFINED)
+        {
+            throw new IllegalArgumentException(String.valueOf(dataType));
+        }
+    }
+
+    /**
      * Specify the data type in input stream. Setting data type to
      * {@link DataBuffer#TYPE_UNDEFINED} reset the default value, which
      * is reader dependent.
@@ -110,11 +139,8 @@ public class RawBinaryImageReadParam extends ImageReadParam
      */
     public void setStreamDataType(final int dataType)
     {
-        if ((dataType>=DataBuffer.TYPE_BYTE && dataType<=DataBuffer.TYPE_DOUBLE) || dataType==DataBuffer.TYPE_UNDEFINED)
-        {
-            this.dataType = dataType;
-        }
-        else throw new IllegalArgumentException(String.valueOf(dataType));
+        checkDataType(dataType);
+        this.dataType = dataType;
     }
 
     /**
@@ -124,6 +150,108 @@ public class RawBinaryImageReadParam extends ImageReadParam
      */
     public int getStreamDataType()
     {return dataType;}
+
+    /**
+     * Sets the desired image type for the destination image, using one of
+     * {@link DataBuffer} enumeration constant. This setting will override
+     * any previous setting made with {@link #setDestinationType(ImageTypeSpecifier)}
+     * or this <code>setDestinationType(int)</code> method.
+     *
+     * @param dataType The data type. This should be a constant from {@link DataBuffer}.
+     *        Common types are {@link DataBuffer#TYPE_INT}, {@link DataBuffer#TYPE_FLOAT}
+     *        and {@link DataBuffer#TYPE_DOUBLE}.
+     */
+    public void setDestinationType(final int destType)
+    {
+        checkDataType(destType);
+        targetDataType = destType;
+        setDestinationType(getDestinationType(model!=null ? model.getNumBands() : 1));
+    }
+
+    /**
+     * Create a destination type with the specified number of bands.
+     * If no such destination type is available, returns <code>null</code>.
+     */
+    final ImageTypeSpecifier getDestinationType(final int numBands)
+    {
+        if (targetDataType == DataBuffer.TYPE_UNDEFINED)
+        {
+            return null;
+        }
+        if (model==null)
+        {
+            final int[] offsets = new int[numBands];
+            final int[] banks   = new int[numBands];
+            for (int i=0; i<banks.length; i++)
+            {
+                banks[i] = i;
+            }
+            return ImageTypeSpecifier.createBanded(getColorSpace(numBands), banks, offsets,
+                                                   targetDataType, false, false);
+        }
+        if (numBands != model.getNumBands())
+        {
+            throw new IllegalArgumentException("Number of bands mismatch");
+        }
+        final SampleModel sampleModel = getStreamSampleModel(model, model, size, targetDataType);
+        final ColorModel   colorModel;
+        if (sampleModel instanceof ComponentSampleModel)
+        {
+            // This is the most common case.
+            colorModel = new ComponentColorModel(getColorSpace(numBands),
+                                                 false, false, Transparency.OPAQUE,
+                                                 sampleModel.getDataType());
+        }
+        else
+        {
+            // Fallback to JAI helper method if we have a less common case.
+            colorModel = PlanarImage.createColorModel(sampleModel);
+        }
+        return new ImageTypeSpecifier(colorModel, sampleModel);
+    }
+
+    /**
+     * Returns a default color space for the destination sample model.
+     * If no destination image has been specified, then a gray scale
+     * color space will be constructed for values ranging from 0 to 1.
+     */
+    private ColorSpace getColorSpace(int numBands)
+    {
+        if (destination!=null)
+        {
+            return destination.getColorModel().getColorSpace();
+        }
+        /*
+         * Overrides the number of source bands if this
+         * parameter block contains enough informations.
+         */
+        if (sourceBands!=null)
+        {
+            numBands = sourceBands.length;
+        }
+        else if (model!=null)
+        {
+            numBands = model.getNumBands();
+        }
+        /*
+         * Checks the number of destination bands. If 'destinationBands' is
+         * null,  then all bands are going to be used.   If it is non-null,
+         * then the destination image may have more bands than what we are
+         * going to use. This problem still an open question... As a patch,
+         * current implementation search for the greatest band number.
+         */
+        if (destinationBands!=null)
+        {
+            for (int i=0; i<destinationBands.length; i++)
+                if (destinationBands[i] >= numBands)
+                    numBands = destinationBands[i]+1;
+        }
+        if (numBands==1)
+        {
+            return ColorSpace.getInstance(ColorSpace.CS_GRAY);
+        }
+        return new ScaledColorSpace(numBands, 0, 1);
+    }
 
     /**
      * Set the pad value.
@@ -187,10 +315,27 @@ public class RawBinaryImageReadParam extends ImageReadParam
      *         or <code>null</code> if unknow.
      */
     final SampleModel getStreamSampleModel(final SampleModel defaultSampleModel)
+    {return getStreamSampleModel(defaultSampleModel, model, size, dataType);}
+
+    /**
+     * Returns a sample model indicating the data layout in the input stream.
+     * The {@link SampleModel}'s width and height should matches the image
+     * size in the input stream.
+     *
+     * @param  defaultSampleModel A default sample model, or <code>null</code>
+     *         if there is no default. If this <code>RawBinaryImageReadParam</code>
+     *         contains unspecified sample model, image size or data type, values
+     *         from <code>defaultSampleModel</code> will be used.
+     * @param  model The sample model in the underlying stream, or <code>null</code>.
+     * @param  size The image size in the underlying stream, or <code>null</code>.
+     * @param  dataType the data type.
+     * @return A sample model indicating the data layout in the input stream,
+     *         or <code>null</code> if unknow.
+     */
+    private static SampleModel getStreamSampleModel(final SampleModel defaultSampleModel,
+                                                    SampleModel model, Dimension size,
+                                                    int dataType)
     {
-        SampleModel model = this.model;
-        Dimension    size = this.size;
-        int      dataType = this.dataType;
         if (defaultSampleModel!=null)
         {
             if (model==null) model = defaultSampleModel;

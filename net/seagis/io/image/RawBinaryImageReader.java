@@ -30,6 +30,7 @@ package net.seagis.io.image;
 
 // Input/output
 import java.io.IOException;
+import javax.imageio.ImageReader;
 import javax.imageio.IIOException;
 import javax.imageio.stream.ImageInputStream;
 
@@ -180,52 +181,29 @@ public class RawBinaryImageReader extends SimpleImageReader
     }
 
     /**
-     * Returns a default color space.
+     * Returns the image's width.
+     *
+     * @throws IOException if an I/O error occured.
+     * @throws IIOException if the image size is unknow.
      */
-    private ColorSpace getColorSpace(final int imageIndex, final int[] sourceBands, final int[] destinationBands) throws IOException
+    public int getWidth(final int imageIndex) throws IOException
     {
-        // Search for the source band which is to be
-        // written into the first destination band.
-        int numBands=getNumBands(imageIndex);
-        int firstVisibleSourceBand=0;
-        if (destinationBands!=null)
-        {
-            numBands = destinationBands.length;
-            for (int i=1; i<destinationBands.length; i++)
-                if (destinationBands[i] < destinationBands[firstVisibleSourceBand])
-                    firstVisibleSourceBand = i;
-        }
-        if (sourceBands!=null)
-        {
-            numBands = sourceBands.length;
-            firstVisibleSourceBand = sourceBands[firstVisibleSourceBand];
-        }
-        return getColorSpace(imageIndex, firstVisibleSourceBand, numBands);
+        checkImageIndex(imageIndex);
+        if (imageSize!=null) return imageSize.width;
+        throw new IIOException(Resources.format(ResourceKeys.ERROR_UNSPECIFIED_IMAGE_SIZE));
     }
 
     /**
-     * Retourne quelques types d'images qui pourront contenir les données.
-     * Le premier type retourné sera celui qui se rapprochera le plus du
-     * type des données à lire.
+     * Returns the image's height.
      *
-     * @param  imageIndex Index de l'image dont on veut les types.
-     * @return Itérateur balayant les types de l'image.
-     * @throws IndexOutOfBoundsException si <code>imageIndex</code> est invalide.
-     * @throws IllegalStateException si aucune source n'a été spécifiée avec {@link #setInput}.
-     * @throws IIOException si l'opération a échoué pour une autre raison.
+     * @throws IOException if an I/O error occured.
+     * @throws IIOException if the image size is unknow.
      */
-    private Iterator getImageTypes(final int imageIndex, final ColorSpace colorSpace, final SampleModel sampleModel) throws IOException
+    public int getHeight(final int imageIndex) throws IOException
     {
-        final List list = new ArrayList();
-        for (final Iterator it=getImageTypes(imageIndex); it.hasNext();)
-        {
-            list.add((ImageTypeSpecifier) it.next());
-        }
-        // Add an image type closely matching
-        // the stream image data type.
-        final ColorModel colorModel = new ComponentColorModel(colorSpace, false, false, Transparency.OPAQUE, sampleModel.getDataType());
-        list.add(0, new ImageTypeSpecifier(colorModel, sampleModel));
-        return list.iterator();
+        checkImageIndex(imageIndex);
+        if (imageSize!=null) return imageSize.height;
+        throw new IIOException(Resources.format(ResourceKeys.ERROR_UNSPECIFIED_IMAGE_SIZE));
     }
 
     /**
@@ -247,6 +225,33 @@ public class RawBinaryImageReader extends SimpleImageReader
         }
         else return super.getRawDataType(imageIndex);
     }
+
+    /**
+     * Returns the expected range of values for a band.
+     *
+     * @param  imageIndex The image index.
+     * @param  bandIndex The band index. Valid index goes from <code>0</code> inclusive
+     *         to <code>getNumBands(imageIndex)</code> exclusive. Index are independent
+     *         of any {@link ImageReadParam#setSourceBands} setting.
+     * @return The expected range of values.
+     * @throws IOException If an error occurs reading the data information from the input source.
+     */
+    public Range getExpectedRange(final int imageIndex, final int bandIndex) throws IOException
+    {
+        checkBandIndex(imageIndex, bandIndex);
+        return (ranges!=null) ? ranges[bandIndex] : null;
+    }
+
+    /**
+     * Transform a value. This method is invoked automatically for every pixel
+     * value during reading, in order to give subclasses a chance to perform
+     * some data conversion on the fly. The default implementation compare
+     * <code>value</code> to the pad value (as specified in {@link Spi#padValue})
+     * and returns {@link Double#NaN} if both values are equals. Otherwise,
+     * <code>value</code> is returned unchanged.
+     */
+    protected double transform(final double value)
+    {return value==padValue ? Double.NaN : value;}
 
     /**
      * Returns the stream sample model (the sample model used to encode pixel into the stream).
@@ -296,8 +301,13 @@ public class RawBinaryImageReader extends SimpleImageReader
          * into the stream). Modify the sample model according user's parameters,
          * if parameters was specified.
          */
-        SampleModel streamModel = getRawImageType(imageIndex).getSampleModel().createCompatibleSampleModel(streamImageSize.width, streamImageSize.height);
-        if (rawParam!=null) streamModel = rawParam.getStreamSampleModel(streamModel);
+        SampleModel streamModel = getRawImageType(imageIndex).getSampleModel();
+        streamModel = streamModel.createCompatibleSampleModel(streamImageSize.width,
+                                                              streamImageSize.height);
+        if (rawParam!=null)
+        {
+            streamModel = rawParam.getStreamSampleModel(streamModel);
+        }
         return streamModel;
     }
 
@@ -357,13 +367,13 @@ public class RawBinaryImageReader extends SimpleImageReader
         /*
          * Get the stream model and the destination image.
          */
-        final SampleModel   streamModel = getStreamSampleModel(imageIndex, param);
-        final int           streamWidth = streamModel.getWidth();
-        final int          streamHeight = streamModel.getHeight();
-        final int           numSrcBands = streamModel.getNumBands();
-        final BufferedImage       image = getDestination(param, getImageTypes(imageIndex, getColorSpace(imageIndex, sourceBands, destinationBands), streamModel), streamWidth, streamHeight);
-        final SampleModel    imageModel = image.getSampleModel();
-        final int           numDstBands = imageModel.getNumBands();
+        final SampleModel streamModel = getStreamSampleModel(imageIndex, param);
+        final int         streamWidth = streamModel.getWidth();
+        final int        streamHeight = streamModel.getHeight();
+        final int         numSrcBands = streamModel.getNumBands();
+        final BufferedImage     image = getDestination(imageIndex, param, sourceBands, destinationBands, streamModel, streamWidth, streamHeight);
+        final SampleModel  imageModel = image.getSampleModel();
+        final int         numDstBands = imageModel.getNumBands();
         checkReadParamBandSettings(param, numSrcBands, numDstBands);
         processImageStarted(imageIndex);
         /*
@@ -566,59 +576,143 @@ public class RawBinaryImageReader extends SimpleImageReader
         }
         return image;
     }
-
     /**
-     * Returns the image's width.
+     * Returns the {@link BufferedImage} to which decoded pixel data should
+     * be written. The image is determined by inspecting the supplied {@link
+     * ImageReadParam} if it is non-null, as in the {@link ImageReader#getDestination
+     * ImageReader.getDestination(...)} method. If the parameter is an instance
+     * of {@link RawBinaryImageReadParam}, then this method will use its size
+     * and data type information for constructing the image.
      *
-     * @throws IOException if an I/O error occured.
-     * @throws IIOException if the image size is unknow.
+     * @param  imageIndex The index of the image to be read.
+     * @param  param an <code>ImageReadParam</code> to be used to get
+     *         the destination image or image type, or <code>null</code>.
+     * @return The <code>BufferedImage</code> to which decoded pixel
+     *         data should be written.
+     *
+     * @throws IndexOutOfBoundsException if <code>imageIndex</code>
+     *         is out of bounds.
+     * @throws IllegalStateException if no source has been set with
+     *         {@link #setInput}.
+     * @throws IOException if an error occur while fetching informations
+     *         from the stream.
+     * @throws IIOException if the {@link ImageTypeSpecifier} specified by
+     *         <code>param</code> does not match any of the legal ones.
      */
-    public int getWidth(final int imageIndex) throws IOException
+    protected final BufferedImage getDestination(final int imageIndex,
+                                                 final ImageReadParam param) throws IOException
     {
-        checkImageIndex(imageIndex);
-        if (imageSize!=null) return imageSize.width;
-        throw new IIOException(Resources.format(ResourceKeys.ERROR_UNSPECIFIED_IMAGE_SIZE));
+        final SampleModel model = getStreamSampleModel(imageIndex, param);
+        return getDestination(imageIndex, param,
+                              param.getSourceBands(),
+                              param.getDestinationBands(),
+                              model, model.getWidth(), model.getHeight());
     }
 
     /**
-     * Returns the image's height.
+     * Returns the {@link BufferedImage} to which decoded pixel data should
+     * be written. The image is determined by inspecting the supplied {@link
+     * ImageReadParam} if it is non-null, as in the {@link ImageReader#getDestination
+     * ImageReader.getDestination(...)} method. If the parameter is an instance
+     * of {@link RawBinaryImageReadParam}, then this method will use its size
+     * and data type information for constructing the image.
      *
-     * @throws IOException if an I/O error occured.
-     * @throws IIOException if the image size is unknow.
+     * @param  imageIndex The index of the image to be read.
+     * @param  param an <code>ImageReadParam</code> to be used to get
+     *         the destination image or image type, or <code>null</code>.
+     * @param  sourceBands Copy of {@link ImageReadParam#sourceBands}, given
+     *         in order to reduce redundant computation.
+     * @param  destinationBands Copy of {@link ImageReadParam#destinationBands},
+     *         given in order to reduce redundant computation.
+     * @param  streamModel The {@link #getStreamSampleModel} value, given in
+     *         order to reduce redundant computation.
+     * @param  streamWidth the true width of the image or tile begin decoded.
+     * @param  streamHeight the true width of the image or tile being decoded.
+     * @return The <code>BufferedImage</code> to which decoded pixel
+     *         data should be written.
+     *
+     * @throws IIOException if the {@link ImageTypeSpecifier} specified by
+     *         <code>param</code> does not match any of the legal ones.
+     * @throws IOException if an error occur while fetching informations from
+     *         the stream.
+     * @throws IllegalArgumentException if the resulting image would
+     *         have a width or height less than 1.
+     * @throws IllegalArgumentException if the product of <code>width</code> and
+     *         <code>height</code> is greater than {@link Integer#MAX_VALUE}.
+     * @throws IndexOutOfBoundsException if <code>imageIndex</code> is out of
+     *         bounds.
+     * @throws IllegalStateException if no source has been set with
+     *         {@link #setInput}.
      */
-    public int getHeight(final int imageIndex) throws IOException
+    private BufferedImage getDestination(final int          imageIndex,
+                                         final ImageReadParam    param,
+                                         final int[]       sourceBands,
+                                         final int[]  destinationBands,
+                                         final SampleModel streamModel,
+                                         final int         streamWidth,
+                                         final int        streamHeight) throws IOException
     {
-        checkImageIndex(imageIndex);
-        if (imageSize!=null) return imageSize.height;
-        throw new IIOException(Resources.format(ResourceKeys.ERROR_UNSPECIFIED_IMAGE_SIZE));
+        final List imageTypeList = new ArrayList();
+        for (final Iterator it=getImageTypes(imageIndex); it.hasNext();)
+        {
+            imageTypeList.add(it.next());
+        }
+        /*
+         * Add an image type closely matching
+         * the stream image data type.
+         */
+        final ColorSpace colorSpace = getColorSpace(imageIndex, sourceBands, destinationBands);
+        final ColorModel colorModel = new ComponentColorModel(colorSpace, false, false,
+                                          Transparency.OPAQUE, streamModel.getDataType());
+        imageTypeList.add(0, new ImageTypeSpecifier(colorModel, streamModel));
+        /*
+         * Add an image type matching the target
+         * data type, if one is specified.
+         */
+        if (param instanceof RawBinaryImageReadParam)
+        {
+            final int numBands = colorSpace.getNumComponents();
+            final RawBinaryImageReadParam rawParam = (RawBinaryImageReadParam) param;
+            final ImageTypeSpecifier userType = rawParam.getDestinationType(numBands);
+            if (userType!=null)
+            {
+                imageTypeList.add(0, userType);
+            }
+        }
+        return getDestination(param, imageTypeList.iterator(), streamWidth, streamHeight);
     }
 
     /**
-     * Returns the expected range of values for a band.
+     * Returns a default color space.
      *
-     * @param  imageIndex The image index.
-     * @param  bandIndex The band index. Valid index goes from <code>0</code> inclusive
-     *         to <code>getNumBands(imageIndex)</code> exclusive. Index are independent
-     *         of any {@link ImageReadParam#setSourceBands} setting.
-     * @return The expected range of values.
-     * @throws IOException If an error occurs reading the data information from the input source.
+     * @param  imageIndex The index of the image to be read.
+     * @param  sourceBands The source bands as given by {@link ImageReadParam#sourceBands}.
+     *         This array will not be modified.
+     * @param  destinationBands The destination bands as given by {@link
+     *         ImageReadParam#destinationBands}. This array will not be modified.
+     * @throws IOException if an error occur while fetching informations from
+     *         the image.
      */
-    public Range getExpectedRange(final int imageIndex, final int bandIndex) throws IOException
+    private ColorSpace getColorSpace(final int imageIndex, final int[] sourceBands, final int[] destinationBands) throws IOException
     {
-        checkBandIndex(imageIndex, bandIndex);
-        return (ranges!=null) ? ranges[bandIndex] : null;
+        // Search for the source band which is to be
+        // written into the first destination band.
+        int numBands=getNumBands(imageIndex);
+        int firstVisibleSourceBand=0;
+        if (destinationBands!=null)
+        {
+            numBands = destinationBands.length;
+            for (int i=1; i<destinationBands.length; i++)
+                if (destinationBands[i] < destinationBands[firstVisibleSourceBand])
+                    firstVisibleSourceBand = i;
+        }
+        if (sourceBands!=null)
+        {
+            numBands = sourceBands.length;
+            firstVisibleSourceBand = sourceBands[firstVisibleSourceBand];
+        }
+        return getColorSpace(imageIndex, firstVisibleSourceBand, numBands);
     }
-
-    /**
-     * Transform a value. This method is invoked automatically for every pixel
-     * value during reading, in order to give subclasses a chance to perform
-     * some data conversion on the fly. The default implementation compare
-     * <code>value</code> to the pad value (as specified in {@link Spi#padValue})
-     * and returns {@link Double#NaN} if both values are equals. Otherwise,
-     * <code>value</code> is returned unchanged.
-     */
-    protected double transform(final double value)
-    {return value==padValue ? Double.NaN : value;}
 
     /**
      * Service provider interface (SPI) for {@link RawBinaryImageReader}s.
