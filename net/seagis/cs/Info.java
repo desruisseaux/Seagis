@@ -33,6 +33,7 @@ package net.seagis.cs;
 
 // OpenGIS dependencies
 import org.opengis.cs.CS_Info;
+import org.opengis.cs.CS_Unit;
 import org.opengis.cs.CS_LinearUnit;
 import org.opengis.cs.CS_AngularUnit;
 
@@ -312,21 +313,26 @@ public class Info implements Serializable
     {
         if (unit!=null)
         {
-            buffer.append("UNIT[");
+            buffer.append("UNIT[\"");
+            buffer.append(unit.getLocalizedName());
+            buffer.append('"');
+            Unit base=null;
             if (Unit.METRE.canConvert(unit))
             {
-                buffer.append("\"metre\",");
-                buffer.append(Unit.METRE.convert(1, unit));
+                base = Unit.METRE;
             }
-            else if (Unit.DEGREE.canConvert(unit))
+            else if (Unit.RADIAN.canConvert(unit))
             {
-                buffer.append("\"degree\",");
-                buffer.append(Unit.DEGREE.convert(1, unit));
+                base = Unit.RADIAN;
             }
             else if (Unit.SECOND.canConvert(unit))
             {
-                buffer.append("\"second\",");
-                buffer.append(Unit.SECOND.convert(1, unit));
+                base = Unit.SECOND;
+            }
+            if (unit!=null)
+            {
+                buffer.append(',');
+                buffer.append(base.convert(1, unit));
             }
             buffer.append(']');
         }
@@ -538,50 +544,57 @@ public class Info implements Serializable
     }
 
     /**
-     * OpenGIS linear unit.
+     * OpenGIS abstract unit.
      */
-    final class LinearUnit extends Export implements CS_LinearUnit
+    class AbstractUnit extends Export implements CS_Unit
     {
-        /** Number of meters per linear unit. */
-        private final double scale;
+        /**
+         * Number of meters per linear unit or
+         *          radians per angular unit.
+         */
+        final double scale;
 
-        /** Construct a linear unit. */
-        public LinearUnit(final Adapters adapters, final double metersPerUnit)
+        /**
+         * Construct an abstract unit.
+         */
+        public AbstractUnit(final Adapters adapters, final double scale)
         {
             super(adapters);
-            scale = metersPerUnit;
+            this.scale = scale;
         }
+
+        /**
+         * Returns a Well Know Text for this unit.
+         */
+        public final String toString()
+        {return "UNIT[\""+name+"\","+scale+']';}
+    }
+
+    /**
+     * OpenGIS linear unit.
+     */
+    final class LinearUnit extends AbstractUnit implements CS_LinearUnit
+    {
+        /** Construct a linear unit. */
+        public LinearUnit(final Adapters adapters, final double metersPerUnit)
+        {super(adapters, metersPerUnit);}
 
         /** Returns the number of meters per linear unit. */
         public double getMetersPerUnit() throws RemoteException
         {return scale;}
-
-        /** Returns a Well Know Text for this unit */
-        public String toString()
-        {return "UNIT[\"metre\","+scale+']';}
     }
 
     /**
      * OpenGIS angular unit.
      */
-    final class AngularUnit extends Export implements CS_AngularUnit
+    final class AngularUnit extends AbstractUnit implements CS_AngularUnit
     {
-        /** Number of radians per linear unit. */
-        private final double scale;
-
         /** Construct an angular unit. */
         public AngularUnit(final Adapters adapters, final double radiansPerUnit)
-        {
-            super(adapters);
-            scale = radiansPerUnit;
-        }
+        {super(adapters, radiansPerUnit);}
         
         /** Returns the number of radians per angular unit. */
         public double getRadiansPerUnit() throws RemoteException
         {return scale;}
-
-        /** Returns a Well Know Text for this unit */
-        public String toString()
-        {return "UNIT[\"radian\","+scale+']';}
     }
 }

@@ -309,7 +309,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
         {super(adapters);}
 
         /**
-         * Returns the AngularUnit.
+         * Returns the angular unit.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
         {return (CS_AngularUnit) adapters.export(GeographicCoordinateSystem.this.getUnits());}

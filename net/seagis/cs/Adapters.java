@@ -300,16 +300,20 @@ public class Adapters
      */
     public CS_Unit export(final Unit unit)
     {
-        if (unit==null) return null;
+        if (unit==null)
+        {
+            return null;
+        }
+        final Info info = new Info(unit.getLocalizedName());
         if (unit.canConvert(Unit.METRE))
         {
-            return new Info(unit.toString()).new LinearUnit(this, unit.convert(1, Unit.METRE));
+            return info.new LinearUnit(this, unit.convert(1, Unit.METRE));
         }
-        if (unit.canConvert(Unit.DEGREE))
+        if (unit.canConvert(Unit.RADIAN))
         {
-            return new Info(unit.toString()).new AngularUnit(this, Math.toRadians(unit.convert(1, Unit.DEGREE)));
+            return info.new AngularUnit(this, unit.convert(1, Unit.RADIAN));
         }
-        throw new UnsupportedOperationException("Only linear and angular units are currently implemented");
+        return info.new AbstractUnit(this, Double.NaN);
     }
 
     /**

@@ -421,7 +421,7 @@ public class Ellipsoid extends Info
         {return Ellipsoid.this.isIvfDefinitive();}
 
         /**
-         * Returns the LinearUnit.
+         * Returns the linear unit.
          */
         public CS_LinearUnit getAxisUnit() throws RemoteException
         {return (CS_LinearUnit) adapters.export(Ellipsoid.this.getAxisUnit());}
