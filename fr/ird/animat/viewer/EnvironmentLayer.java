@@ -62,6 +62,7 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.gui.swing.ColorBar;
 
 // Animats
+import fr.ird.animat.Clock;
 import fr.ird.animat.Parameter;
 import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
@@ -119,7 +120,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
     /**
      * L'environnement dessiné par cette couche.
      */
-    private final Environment environment;
+    protected final Environment environment;
 
     /**
      * Les noms des couvertures du pas de temps courant.
@@ -321,23 +322,35 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
             if (parameter != null) {
                 if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
                     coverage = adapters.wrap(event.getSource().getCoverage(parameter));
-                    refreshCoverageNames();
                 }
             }
             EventQueue.invokeLater(this);
         }
 
         /**
-         * Procède au traitement des événements. Cette méthode sera exécutée dans le thread
-         * de Swing.
+         * Retourne le prochain événement qui se trouvait dans la queue,
+         * ou <code>null</code> s'il n'y en a pas.
          */
-        public synchronized void run() {
-            while (!events.isEmpty()) {
-                if (coverage != null) {
-                    setCoverage(coverage);
-                    coverage = null;
-                }
-                final EnvironmentChangeEvent event = events.removeFirst();
+        private synchronized EnvironmentChangeEvent next() {
+            if (events.isEmpty()) {
+                return null;
+            }
+            if (coverage != null) {
+                setCoverage(coverage);
+                coverage = null;
+            }
+            return events.removeFirst();
+        }
+
+        /**
+         * Procède au traitement des événements. Cette méthode sera exécutée dans le thread
+         * de Swing. Elle ne doit pas être synchronisée sur <code>this</code> afin d'éviter
+         * des "dead-locks" au moment d'appeller une méthode qui se synchroniserait sur
+         * <code>Environment.getTreeLock()</code>.
+         */
+        public void run() {
+            EnvironmentChangeEvent event;
+            while ((event=next()) != null) {
                 if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
                     final Date oldDate = date;
                     date = event.getEnvironmentDate();
@@ -359,6 +372,11 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
                         listeners.firePropertyChange("population", null, it.next());
                     }
                 }
+            }
+            try {
+                refreshCoverageNames();
+            } catch (RemoteException exception) {
+                failed("EnvironmentLayer", "environmentChanged", exception);
             }
         }
     }

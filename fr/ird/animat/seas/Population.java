@@ -27,12 +27,14 @@ package fr.ird.animat.seas;
 
 // J2SE
 import java.util.Set;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Collection;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
 import java.sql.SQLException;
+import javax.media.jai.util.Range;
 
 // Animats
 import fr.ird.animat.Species;
@@ -50,6 +52,13 @@ import fr.ird.sql.fishery.FisheryDataBase;
  */
 final class Population extends fr.ird.animat.impl.Population {
     /**
+     * La résolution temporelle des données de pêches. En général, on n'a que la date de la
+     * pêche et peu ou aucune indication sur l'heure.  On considèrera donc que la précision
+     * est de 24 heures.
+     */
+    private static final int TIME_RESOLUTION = 24*60*60*1000;
+
+    /**
      * Construit une population qui contiendra initialement les thons aux positions
      * de pêches du pas de temps courant.
      *
@@ -58,6 +67,14 @@ final class Population extends fr.ird.animat.impl.Population {
      */
     protected Population(final Environment environment) throws RemoteException {
         super(environment);
+        Range timeRange = environment.getClock().getTimeRange();
+        Date  startTime = (Date) timeRange.getMinValue();
+        Date    endTime = (Date) timeRange.getMaxValue();
+        if (endTime.getTime() - startTime.getTime() < TIME_RESOLUTION) {
+            endTime   = new Date(startTime.getTime() + TIME_RESOLUTION);
+            timeRange = new Range(Date.class, startTime,  timeRange.isMinIncluded(),
+                                                endTime, !timeRange.isMinIncluded());
+        }
         final Collection<CatchEntry> entries;
         try {
             /*
@@ -72,7 +89,7 @@ final class Population extends fr.ird.animat.impl.Population {
             final FisheryDataBase database = new FisheryDataBase();
             final Collection<String> species = environment.configuration.species;
             final CatchTable catchs = database.getCatchTable(species.toArray(new String[species.size()]));
-            catchs.setTimeRange(environment.getClock().getTimeRange());
+            catchs.setTimeRange(timeRange);
             entries = catchs.getEntries();
             catchs.close();
             database.close();

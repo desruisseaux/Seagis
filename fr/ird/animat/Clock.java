@@ -27,6 +27,7 @@ package fr.ird.animat;
 
 // J2SE dependencies
 import java.util.Date;
+import java.util.TimeZone;
 import java.awt.geom.Point2D;
 
 // JAI dependencies
@@ -84,6 +85,12 @@ public interface Clock {
      * Retourne la plage de temps du pas de temps courant.
      */
     Range getTimeRange();
+
+    /**
+     * Retourne le fuseau horaire recommandé pour l'affichage des dates.
+     * Ce fuseau horaire dépend de la région géographique de la simulation.
+     */
+    TimeZone getTimeZone();
 
     /**
      * Retourne l'angle d'élévation du soleil, en degrés par rapport à l'horizon.

@@ -101,6 +101,17 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     private int port = -1;
 
     /**
+     * Rapport sur l'état actuel de la simulation. Un nouvel objet {@link Raport}
+     * est créé à chaque nouveau pas de temps.
+     */
+    private Report report = new Report();
+
+    /**
+     * Rapport sur l'état de la simulation depuis le lancement de la simulation.
+     */
+    private final Report fullReport = new Report();
+
+    /**
      * Construit un environnement par défaut.
      *
      * @param clock Horloge de la simulation. Toute la simulation
@@ -152,7 +163,7 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * par défaut appelle {@link #getCoverage(Parameter)}.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     * @return La couverture spatiale des données pour le paramètre spécifié, ou <code>null</code>
      *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
      *         s'il y a des trous dans la couverture temporelle des données.
      *
@@ -203,6 +214,48 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     }
 
     /**
+     * Retourne un rapport sur l'état de la simulation. Ce rapport comprend le nombre total
+     * d'animaux, le nombre de tentatives d'observations en dehors de la couverture spatiale
+     * des données, le pourcentage de données manquantes, etc.
+     *
+     * @param  full <code>true</code> pour obtenir un rapport s'appliquant depuis le début de
+     *         la simulation, ou <code>false</code> pour un rapport ne s'appliquant qu'au dernier
+     *         pas de temps.
+     * @return Un rapport sur l'état de la simulation.
+     */
+    public Report getReport(final boolean full) {
+        synchronized (getTreeLock()) {
+            if (full) {
+                return fullReport;
+            }
+            if (report.numAnimals == 0) {
+                int numAnimals = 0;
+                for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
+                    numAnimals = ((Population) it.next()).getAnimals().size();
+                }
+                report.numAnimals = numAnimals;
+            }
+            return report;
+        }
+    }
+
+    /**
+     * Retourne le rapport courrant. Utilisé uniquement par {@link Animal#observe}, qui mettra
+     * à jour le compte des données manquantes.
+     */
+    final Report getReport() {
+        return report;
+    }
+
+    /**
+     * Incrémente le compte des animaux créés depuis le début de la simulation.
+     * Utilisé à des fins de statistiques seulement.
+     */
+    final void incAnimalCount() {
+        fullReport.numAnimals++;
+    }
+
+    /**
      * Retourne l'horloge de la simulation. Pendant chaque pas de temps de la simulation,
      * les conditions suivantes sont remplies:
      * <ul>
@@ -226,6 +279,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      */
     public boolean nextTimeStep() {
         synchronized (getTreeLock()) {
+            fullReport.add(report);
+            report = new Report();
             clock.nextTimeStep();
             for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
                 ((Population) it.next()).observe();

@@ -56,7 +56,7 @@ public final class Viewer extends JTabbedPane {
      * simulation. Pour afficher une simulation, appelez {@link #addSimulation}.
      */
     public Viewer() {
-        super(BOTTOM);
+        super(TOP);
         final LoggingPanel logging = new LoggingPanel("fr.ird");
         final Handler handler = logging.getHandler();
         Logger.getLogger("org.geotools").addHandler(handler);

@@ -143,15 +143,17 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
     protected Animal(final Species species, final Population population, final Point2D position)
             throws RemoteException
     {
+        final Environment environment = population.getEnvironment();
         this.population = population;
         this.species    = species;
-        this.clock      = population.getEnvironment().getClock().getNewClock();
+        this.clock      = environment.getClock().getNewClock();
         this.path       = new Path(position);
         final int port  = getRMIPort();
         if (port >= 0) {
             export(port);
         }
         population.animals.add(this);
+        environment.incAnimalCount();
         population.firePopulationChanged(this, true);
     }
 
@@ -342,19 +344,37 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
                 observations = XArray.resize(observations,
                                              offset + Math.min(offset, reducedLength*1024));
             }
+            final Report report = environment.getReport();
             for (int i=0; i<parameters.length; i++) {
                 final Parameter parameter = parameters[i];
+                final float weight = parameter.getWeight(this);
                 if (i != species.headingIndex) {
                     final int length = parameter.getNumSampleDimensions();
                     samples = parameter.evaluate(this, coord, perceptionArea, samples);
                     System.arraycopy(samples, 0, observations, offset, length);
                     offset += length;
+                    if (hasNaN(samples, length)) {
+                        report.sumMissingData += weight;
+                    }
                 } else {
                     path.setPointCount(step+1);
                 }
+                report.sumWeight += weight;
             }
             assert offset == (step+1) * reducedLength;
         }
+    }
+
+    /**
+     * Indique si le tableau spécifié contient au moins une valeur NaN.
+     */
+    private static boolean hasNaN(final float[] samples, int n) {
+        while (--n >= 0) {
+            if (Float.isNaN(samples[n])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

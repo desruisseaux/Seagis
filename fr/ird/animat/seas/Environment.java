@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.IdentityHashMap;
 import java.util.NoSuchElementException;
@@ -44,6 +45,7 @@ import javax.media.jai.util.Range;
 import org.opengis.cv.CV_Coverage;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
+import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.XDimension2D;
 import fr.ird.util.XArray;
 
@@ -70,9 +72,10 @@ final class Environment extends fr.ird.animat.impl.Environment {
     final Configuration configuration;
 
     /**
-     * Données à utiliser pour chaque paramètres.
+     * Données à utiliser pour chaque paramètres. Ces données seront classées dans le
+     * même ordre que les ont été déclarés dans {@link Configuration}.
      */
-    private final Map<Parameter,Entry> coverages = new HashMap<Parameter,Entry>();
+    private final Map<Parameter,Entry> coverages = new TreeMap<Parameter,Entry>();
 
     /**
      * Informations sur les données pour un paramètre. L'objet {@link Coverage3D} permet d'obtenir une
@@ -246,7 +249,7 @@ final class Environment extends fr.ird.animat.impl.Environment {
      * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     * @return La couverture spatiale des données pour le paramètre spécifié, ou <code>null</code>
      *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
      *         s'il y a des trous dans la couverture temporelle des données.
      *
@@ -254,8 +257,8 @@ final class Environment extends fr.ird.animat.impl.Environment {
      */
     public Coverage getCoverage(final fr.ird.animat.impl.Parameter parameter) throws NoSuchElementException {
         synchronized (getTreeLock()) {
-            if (parameter instanceof Parameter) {
-                final Parameter param = (Parameter) parameter;
+            final Parameter param = Parameter.getImplementation(parameter);
+            if (param != null) {
                 final Entry entry = coverages.get(param);
                 if (entry != null) {
                     /*
@@ -272,7 +275,12 @@ final class Environment extends fr.ird.animat.impl.Environment {
                      */
                     final Date time = getClock().getTime();
                     time.setTime(time.getTime() + param.timelag);
-                    final GridCoverage gridCoverage = entry.coverage3D.getGridCoverage2D(time);
+                    GridCoverage gridCoverage;
+                    try {
+                        gridCoverage = entry.coverage3D.getGridCoverage2D(time);
+                    } catch (PointOutsideCoverageException exception) {
+                        gridCoverage = null;
+                    }
                     if (gridCoverage != entry.gridCoverage) {
                         entry.gridCoverage = gridCoverage;
                         entry.coverage = param.applyEvaluator(gridCoverage);
@@ -298,7 +306,13 @@ final class Environment extends fr.ird.animat.impl.Environment {
             for (final Iterator<Entry> it=coverages.values().iterator(); it.hasNext();) {
                 final Entry entry = it.next();
                 if (entry.isValid) {
-                    names[count++] = entry.coverage.getName(null);
+                    final String name;
+                    if (entry.coverage != null) {
+                        name = entry.coverage.getName(null);
+                    } else {
+                        name = "(aucune données)";
+                    }
+                    names[count++] = name;
                 }
             }
             return XArray.resize(names, count);

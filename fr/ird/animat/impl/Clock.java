@@ -27,6 +27,7 @@ package fr.ird.animat.impl;
 
 // J2SE dependencies
 import java.util.Date;
+import java.util.TimeZone;
 import java.io.Serializable;
 import java.awt.geom.Point2D;
 import java.text.DateFormat;
@@ -73,12 +74,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
      *
      * @param  startTime Date de début (inclusive) du premier pas de temps.
      * @param  endTime   Date de fin   (exclusive) du premier pas de temps.
+     * @param  timezone  Le fuseau horaire recommandé pour l'affichage des dates.
      * @throws IllegalArgumentException Si la date de fin précède la date de début.
      */
-    public static Clock createClock(final Date startTime, final Date endTime)
+    public static Clock createClock(final Date startTime, final Date endTime, final TimeZone timezone)
             throws IllegalArgumentException
     {
-        return new Default(startTime, endTime);
+        return new Default(startTime, endTime, timezone);
     }
 
     /**
@@ -157,6 +159,12 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
     protected abstract float getStepDuration();
 
     /**
+     * Retourne le fuseau horaire recommandé pour l'affichage des dates.
+     * Ce fuseau horaire dépend de la région géographique de la simulation.
+     */
+    public abstract TimeZone getTimeZone();
+
+    /**
      * Retourne l'élévation du soleil, en degrés par rapport à l'horizon.
      * L'élévation est calculée par rapport à la position spécifiée et la
      * date du milieu du pas de temps courant.
@@ -186,6 +194,7 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
         final NumberFormat nmbFmt = NumberFormat.getNumberInstance();
         final DateFormat   format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
+        format.setTimeZone(getTimeZone());
         buffer.append('[');
         format.format(getTime(), buffer, new FieldPosition(0));
         buffer.append(", ");
@@ -260,6 +269,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
         }
 
         /**
+         * Retourne le fuseau horaire recommandé pour l'affichage des dates.
+         */
+        public TimeZone getTimeZone() {
+            return Clock.this.getTimeZone();
+        }
+
+        /**
          * Retourne la durée du pas de temps courant, en nombre de jours.
          */
         protected float getStepDuration() {
@@ -328,6 +344,11 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
         private final SunRelativePosition calculator = new SunRelativePosition();
 
         /**
+         * Le fuseau horaire recommandé pour l'affichage des dates.
+         */
+        private final TimeZone timezone;
+
+        /**
          * Date de début du pas, en nombre de millisecondes écoulées depuis le
          * 1er janvier 1970 00:00 UTC. Il s'agit de la date <code>startTime</code>
          * initiale spécifiée lors de la construction de cette horloge.
@@ -357,9 +378,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          *
          * @param  startTime Date de début (inclusive) du premier pas de temps.
          * @param  endTime   Date de fin   (exclusive) du premier pas de temps.
+         * @param  timezone  Le fuseau horaire recommandé pour l'affichage des dates.
          * @throws IllegalArgumentException Si la date de fin précède la date de début.
          */
-        public Default(final Date startTime, final Date endTime) throws IllegalArgumentException {
+        public Default(final Date startTime, final Date endTime, final TimeZone timezone)
+                throws IllegalArgumentException
+        {
+            this.timezone = timezone;
             time = initialTime = startTime.getTime();
             duration = endTime.getTime() - time;
             if (duration < 0) {
@@ -418,6 +443,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          */
         public Range getTimeRange() {
             return new Range(Date.class, new Date(time), true, new Date(time+duration), false);
+        }
+
+        /**
+         * Retourne le fuseau horaire recommandé pour l'affichage des dates.
+         */
+        public TimeZone getTimeZone() {
+            return timezone;
         }
 
         /**

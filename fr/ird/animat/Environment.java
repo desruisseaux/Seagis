@@ -93,7 +93,7 @@ public interface Environment extends Remote {
      * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     * @return La couverture spatiale des données pour le paramètre spécifié, ou <code>null</code>
      *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
      *         s'il y a des trous dans la couverture temporelle des données.
      *
@@ -114,6 +114,20 @@ public interface Environment extends Remote {
      *         et que cette exécution a échouée.
      */
     String[] getCoverageNames() throws RemoteException;
+
+    /**
+     * Retourne un rapport sur l'état de la simulation. Ce rapport comprend le nombre total
+     * d'animaux, le nombre de tentatives d'observations en dehors de la couverture spatiale
+     * des données, le pourcentage de données manquantes, etc.
+     *
+     * @param  full <code>true</code> pour obtenir un rapport s'appliquant depuis le début de
+     *         la simulation, ou <code>false</code> pour un rapport ne s'appliquant qu'au dernier
+     *         pas de temps.
+     * @return Un rapport sur l'état de la simulation.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Report getReport(boolean full) throws RemoteException;
 
     /**
      * Retourne l'horloge de la simulation. Cet horloge tient à jour la date et heure (virtuelle)

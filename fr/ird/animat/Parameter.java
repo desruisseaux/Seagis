@@ -62,4 +62,15 @@ public interface Parameter extends Remote {
      *         et que cette exécution a échouée.
      */
     String getName() throws RemoteException;
+
+    /**
+     * Retourne le poids de ce paramètre dans le choix de la trajectoire de l'{@linkplain Animal
+     * animal} spécifié.
+     *
+     * @param  L'animal pour lequel on veut le poids de ce paramètre.
+     * @return Un poids égal ou supérieur à 0.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    float getWeight(Animal animal) throws RemoteException;
 }

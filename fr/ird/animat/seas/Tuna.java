@@ -93,10 +93,10 @@ final class Tuna extends Animal {
         final Map<Parameter,Observation> observations = getObservations(null);
         for (final Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
             final Map.Entry<Parameter,Observation> entry = it.next();
-            final fr.ird.animat.seas.Parameter parameter = (fr.ird.animat.seas.Parameter) entry.getKey();
+            final fr.ird.animat.impl.Parameter parameter = (fr.ird.animat.impl.Parameter) entry.getKey();
             final Point2D position = entry.getValue().location();
             if (position != null) {
-                final double weight = parameter.weight;
+                final double weight = parameter.getWeight(this);
                 x += position.getX()*weight;
                 y += position.getY()*weight;
                 sum += weight;

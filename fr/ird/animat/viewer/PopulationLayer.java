@@ -105,9 +105,14 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     private static final Stroke PATH_STROKE = new BasicStroke(1/60f);
 
     /**
+     * Couleurs cycliques à utiliser pour chaque nouvelle population.
+     */
+    private static final Color[] COLORS = {Color.YELLOW, Color.RED, Color.CYAN};
+
+    /**
      * Couleur des trajectoires, ou <code>null</code> pour ne pas les dessiner.
      */
-    private Color pathColor = Color.yellow;
+    private Color pathColor = Color.YELLOW;
 
     /**
      * Couleur du rayon de perception, ou <code>null</code> pour ne pas le dessiner.
@@ -198,6 +203,14 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
             run();
             super.dispose();
         }
+    }
+
+    /**
+     * Définit la couleur des chemins. Un jeu de couleurs cycliques sera utilisé.
+     */
+    public void setColor(final int n) {
+        pathColor = COLORS[n % COLORS.length];
+        repaint();
     }
 
     /**

@@ -30,6 +30,8 @@ import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RectangularShape;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,7 +61,7 @@ import fr.ird.operator.coverage.GradientEvaluator;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Parameter extends fr.ird.animat.impl.Parameter {
+final class Parameter extends fr.ird.animat.impl.Parameter implements Comparable {
     /**
      * La région à prospecter par défaut autour de l'animal.   Cette région est un argument
      * obligatoire pour le constructeur de {@link Evaluator}, mais ne sera généralement pas
@@ -75,9 +77,28 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
     private static final GridCoverageProcessor PROCESSOR = GridCoverageProcessor.getDefault();
 
     /**
+     * Ensemble de paramètres déjà créés. Les clés et les valeurs sont identiques. Cet ensemble
+     * est utilisé afin d'obtenir l'implémentation sous-jacente d'un "RMI stub". C'est nécessaire
+     * lorsqu'un paramètre est envoyé vers le client, puis le client le renvoie vers le serveur.
+     * Le serveur reçoit le "stub", alors qu'il pourrait disposer de l'implémentation elle-même.
+     */
+    private static final Map<fr.ird.animat.Parameter,Parameter> POOL = new HashMap<fr.ird.animat.Parameter,Parameter>();
+
+    /**
+     * La prochaine valeur à donner à {@link #rank}.
+     */
+    private static int nextRank = 0;
+
+    /**
+     * Un rang utilisé pour le classement des paramètres.
+     * @see #compareTo
+     */
+    private final int rank;
+
+    /**
      * Le poids à donner à ce paramètre.
      */
-    final float weight;
+    private final float weight;
 
     /**
      * Décalage (en millisecondes) entre l'instant présent de la simulation et le paramètre
@@ -185,11 +206,85 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
             this.evaluatorArgs = null;
         }
         numSampleDimensions = getNumSampleDimensions(evaluator);
+        synchronized (Parameter.class) {
+            this.rank = nextRank++;
+            POOL.put(this,this);
+        }
+    }
+
+    /**
+     * Retourne l'implémentation du paramètre spécifié, ou <code>null</code>
+     * s'il n'y en a pas.
+     */
+    static Parameter getImplementation(final fr.ird.animat.Parameter parameter) {
+        if (parameter instanceof Parameter) {
+            return (Parameter) parameter;
+        }
+        synchronized (Parameter.class) {
+            return POOL.get(parameter);
+        }
+    }
+    
+    /**
+     * Compare cet objet avec l'objet spécifié pour l'ordre. Cette comparaison est utilisée
+     * pour classer les objets dans l'ordre dans lesquels ils ont été créés.
+     */
+    public int compareTo(final Object object) {
+        final Parameter that = (Parameter) object;
+        if (this.rank < that.rank) return -1;
+        if (this.rank > that.rank) return +1;
+        assert equals(object);
+        return 0;
+    }
+
+    /**
+     * Retourne le nom de ce paramètre construit à partir des noms de séries,
+     * d'opération et d'évaluateur.
+     */
+    private static String toString(final String series, final String operation, final String evaluator) {
+        final StringBuffer buffer = new StringBuffer();
+        if (evaluator != null) {
+            buffer.append(evaluator);
+            buffer.append(" de \"");
+        }
+        if (operation != null) {
+            buffer.append(operation);
+            buffer.append('[');
+        }
+        buffer.append(series);
+        if (operation != null) {
+            buffer.append(']');
+        }
+        if (evaluator != null) {
+            buffer.append('"');
+        }
+        return buffer.toString();
+    }
+
+    /**
+     * Retourne le poids de ce paramètre dans le choix de la trajectoire de l'{@linkplain Animal
+     * animal} spécifié.
+     *
+     * @param  L'animal pour lequel on veut le poids de ce paramètre.
+     * @return Un poids égal ou supérieur à 0.
+     */
+    public float getWeight(final fr.ird.animat.Animal animal) {
+        return weight;
     }
 
     /**
      * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
-     * {@link #evaluate evaluate(...)}. Ce nombre sera généralement de 1 ou 3.
+     * <code>environment.{@link Environment#getCoverage getCoverage}(this)</code>.
+     * Ce nombre sera généralement de 1 ou 3.
+     */
+    protected int getNumSampleDimensions() {
+        return numSampleDimensions;
+    }
+
+    /**
+     * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
+     * <code>environment.{@link Environment#getCoverage getCoverage}(this)</code>.
+     * Ce nombre sera généralement de 1 ou 3.
      */
     private static byte getNumSampleDimensions(final String evaluator) {
         if (evaluator != null) {
@@ -213,6 +308,9 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      *         s'il n'y a pas d'évaluateur.
      */
     final Coverage applyEvaluator(GridCoverage coverage) {
+        if (coverage == null) {
+            return coverage;
+        }
         if (operation != null) {
             coverage = PROCESSOR.doOperation(operation, coverage);
         }
@@ -238,68 +336,5 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
             }
         }
         return coverage;
-    }
-
-    /**
-     * Retourne la valeur de ce paramètre pour l'animal spécifié. Le tableau retourné peut avoir
-     * une longueur de 1 ou 3. Les informations qu'il contient devront obligatoirement être dans
-     * l'ordre suivant:
-     * <ul>
-     *   <li>La valeur du paramètre</li>
-     *   <li>La longitude à laquelle cette valeur a été mesurée.</li>
-     *   <li>La latitude à laquelle cette valeur a été mesurée.</li>
-     * </ul>
-     * Les deux derniers éléments peuvent être absents s'ils ne s'appliquent pas. Le nombre
-     * d'éléments valides que contiendra le tableau est spécifié par {@link #getNumSampleDimensions}.
-     *
-     * @param animal L'animal pour lequel obtenir la valeur de ce paramètre.
-     * @param coord  La position de cet animal, en degrés de longitude et de latitude.
-     * @param perceptionArea La région jusqu'où s'étend la perception de cet animal.
-     * @param dest Le tableau dans lequel mémoriser les valeurs de ce paramètre, ou <code>null</code>.
-     * @return Le tableau <code>dest</code>, ou un nouveau tableau si <code>dest</code> était nul.
-     */
-    protected float[] evaluate(final Animal         animal,
-                               final CoordinatePoint coord,
-                               final Shape  perceptionArea,
-                               final float[]          dest)
-    {
-        final Coverage coverage = animal.getPopulation().getEnvironment().getCoverage(this);
-        if (coverage instanceof Evaluator) {
-            return ((Evaluator) coverage).evaluate(perceptionArea, dest);
-        } else {
-            return coverage.evaluate(coord, dest);
-        }
-    }
-
-    /**
-     * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
-     * {@link #evaluate evaluate(...)}. Ce nombre sera généralement de 1 ou 3.
-     */
-    protected int getNumSampleDimensions() {
-        return numSampleDimensions;
-    }
-
-    /**
-     * Retourne le nom de ce paramètre construit à partir des noms de séries,
-     * d'opération et d'évaluateur.
-     */
-    private static String toString(final String series, final String operation, final String evaluator) {
-        final StringBuffer buffer = new StringBuffer();
-        if (evaluator != null) {
-            buffer.append(evaluator);
-            buffer.append(" de \"");
-        }
-        if (operation != null) {
-            buffer.append(operation);
-            buffer.append('[');
-        }
-        buffer.append(series);
-        if (operation != null) {
-            buffer.append(']');
-        }
-        if (evaluator != null) {
-            buffer.append('"');
-        }
-        return buffer.toString();
     }
 }

@@ -49,6 +49,7 @@ import java.util.NoSuchElementException;
 // Dates
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -65,6 +66,11 @@ import fr.ird.animat.Parameter;
  * @version $Id$
  */
 final class Configuration {
+    /**
+     * Le fuseau horaire pour l'affichage de dates.
+     */
+    public final TimeZone timezone;
+
     /**
      * Le premier pas de temps de la simulation.
      */
@@ -134,6 +140,10 @@ final class Configuration {
         reader.close();
         try {
             ////
+            ////    FUSEAU HORAIRE
+            ////
+            timezone = TimeZone.getTimeZone(getProperty(properties, "TIME_ZONE"));
+            ////
             ////    PAS DE TEMPS
             ////
             final long timeStep = Math.round((24.0*60*60*1000)*
@@ -142,8 +152,9 @@ final class Configuration {
             ////    DATE DE DEPART
             ////
             final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.FRANCE);
+            dateFormat.setTimeZone(timezone);
             final Date startTime = dateFormat.parse(getProperty(properties, "START_TIME"));
-            firstTimeStep = Clock.createClock(startTime, new Date(startTime.getTime() + timeStep));
+            firstTimeStep = Clock.createClock(startTime, new Date(startTime.getTime() + timeStep), timezone);
             ////
             ////    PAUSE ENTRE CHAQUE PAS DE TEMPS
             ////
