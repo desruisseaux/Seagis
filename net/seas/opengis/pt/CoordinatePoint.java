@@ -26,14 +26,7 @@ package net.seas.opengis.pt;
 import java.util.Arrays;
 import java.io.Serializable;
 import java.awt.geom.Point2D;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.text.ParseException;
-import java.text.Format;
-
 import net.seas.util.XClass;
-import net.seas.text.AngleFormat;
-import net.seas.text.CoordinateFormat;
 import net.seas.resources.Resources;
 
 
@@ -52,16 +45,9 @@ import net.seas.resources.Resources;
 public final class CoordinatePoint implements Cloneable, Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -6497488719261361913L;
-
-    /**
-     * A shared instance of {@link CoordinateFormat}. The referenced
-     * type should be {@link Format} in order to avoid class loading
-     * before necessary.
-     */
-    private static Reference format;
+    private static final long serialVersionUID = 8733694401519122222L;
 
     /**
      * The ordinates of the coordinate point.
@@ -80,7 +66,7 @@ public final class CoordinatePoint implements Cloneable, Serializable
 
     /**
      * Construct a coordinate with the specified ordinates.
-     * The <code>ord</code> will be copied.
+     * The <code>ord</code> array will be copied.
      */
     public CoordinatePoint(final double[] ord)
     {this.ord = (double[]) ord.clone();}
@@ -107,97 +93,6 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {this(point.getX(), point.getY());}
 
     /**
-     * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
-     * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
-     * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
-     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
-     * les inverser.
-     *
-     * @param  x Longitude (de préférence).
-     * @param  y Latitude  (de préférence).
-     * @throws IllegalArgumentException Si les arguments sont tout deux des latitudes ou des longitudes.
-     */
-    public CoordinatePoint(final Angle x, final Angle y) throws IllegalArgumentException
-    {this(x, y, null, 2);}
-
-    /**
-     * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
-     * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
-     * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
-     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
-     * les inverser.
-     *
-     * @param  x Longitude (de préférence).
-     * @param  y Latitude (de préférence).
-     * @param  z Altitude (habituellement en mètres).
-     * @throws IllegalArgumentException Si les deux premiers arguments sont tout deux des latitudes ou des longitudes.
-     */
-    public CoordinatePoint(final Angle x, final Angle y, final Number z) throws IllegalArgumentException
-    {this(x,y,z,3);}
-
-    /**
-     * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
-     * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
-     * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
-     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
-     * les inverser.
-     *
-     * @param  x Longitude (de préférence).
-     * @param  y Latitude (de préférence).
-     * @param  z Altitude (habituellement en mètres).
-     * @param  dim Nombre de dimensions: 2 ou 3. L'argument <code>z</code> sera ignoré si <code>dim</code> est 2.
-     * @throws IllegalArgumentException Si les deux premiers arguments sont tout deux des latitudes ou des longitudes.
-     */
-    private CoordinatePoint(Angle x, Angle y, final Number z, final int dim) throws IllegalArgumentException
-    {
-        final boolean normal  = (x instanceof Longitude) || (y instanceof Latitude );
-        final boolean inverse = (x instanceof Latitude ) || (y instanceof Longitude);
-        if (normal && inverse)
-        {
-            throw new IllegalArgumentException(Resources.format(Clé.NON_ORTHOGONAL_ANGLES¤1, new Integer((x instanceof Longitude) ? 0 : 1)));
-        }
-        if (inverse)
-        {
-            Angle t;
-            t=x;
-            x=y;
-            y=t;
-        }
-        ord = new double[dim];
-        ord[0] = x.degrees();
-        ord[1] = y.degrees();
-        if (dim>2)
-        {
-            ord[2] = z.doubleValue();
-        }
-    }
-
-    /**
-     * Constructs a newly allocated <code>CoordinatePoint</code> object that
-     * represents the geographic coordinate represented by the string. The
-     * string should contains longitude and latitude in either fractional
-     * degrees (e.g. 45.5°) or degrees with minutes and seconds (e.g. 45°30').
-     * Hemispheres (N, S, E, W) are optional.
-     *
-     * @param  string A string to be converted to an <code>CoordinatePoint</code>.
-     * @throws NumberFormatException if the string does not contain a parsable coordinate.
-     */
-    public CoordinatePoint(final String string) throws NumberFormatException
-    {
-        try
-        {
-            final CoordinatePoint coord=((CoordinateFormat)getFormat()).parse(string);
-            this.ord = coord.ord;
-        }
-        catch (ParseException exception)
-        {
-            NumberFormatException e=new NumberFormatException(exception.getLocalizedMessage());
-            e.initCause(exception);
-            throw e;
-        }
-    }
-
-    /**
      * The number of ordinates of a <code>CoordinatePoint</code>.
      * This is equivalent to <code>{@link #ord ord}.length</code>.
      */
@@ -205,28 +100,11 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {return ord.length;}
 
     /**
-     * Return the first ordinate (usually longitude or <var>x</var>).
-     * If this coordinate point doesn't have enough dimension, returns
-     * {@link Double#NaN}.
+     * Returns the ordinate value along the specified dimension.
+     * This is equivalent to <code>{@link #ord ord}[dimension]</code>.
      */
-    public final double getX()
-    {return (ord.length>0) ? ord[0] : Double.NaN;}
-
-    /**
-     * Return the second ordinate (usually latitude or <var>y</var>).
-     * If this coordinate point doesn't have enough dimension, returns
-     * {@link Double#NaN}.
-     */
-    public final double getY()
-    {return (ord.length>1) ? ord[1] : Double.NaN;}
-
-    /**
-     * Return the third ordinate (usually altitude or <var>z</var>).
-     * If this coordinate point doesn't have enough dimension, returns
-     * {@link Double#NaN}.
-     */
-    public final double getZ()
-    {return (ord.length>2) ? ord[2] : Double.NaN;}
+    public final double getOrdinate(final int dimension)
+    {return ord[dimension];}
 
     /**
      * Returns a hash value for this coordinate.
@@ -234,6 +112,12 @@ public final class CoordinatePoint implements Cloneable, Serializable
      * different implementations of the same class.
      */
     public int hashCode()
+    {return hashCode(ord);}
+
+    /**
+     * Returns a hash value for the specified ordinates.
+     */
+    static int hashCode(final double[] ord)
     {
         long code=0;
         if (ord!=null)
@@ -262,28 +146,31 @@ public final class CoordinatePoint implements Cloneable, Serializable
      * Returns a deep copy of this coordinate.
      */
     public CoordinatePoint clone()
-    {return new CoordinatePoint((double[]) ord.clone());}
+    {return new CoordinatePoint(ord);}
 
     /**
      * Returns a string representation of this coordinate.
+     * The returned string is implementation dependent.
+     * It is usually provided for debugging purposes.
      */
     public String toString()
-    {return getFormat().format(this);}
+    {return toString(this, ord);}
 
     /**
-     * Returns a shared instance of {@link CoordinateFormat}.
-     * The return type is {@link Format} in order to avoid
-     * class loading before necessary.
+     * Returns a string representation of an object.
+     * The returned string is implementation dependent.
+     * It is usually provided for debugging purposes.
      */
-    private static synchronized Format getFormat()
+    static String toString(final Object owner, final double[] ord)
     {
-        if (format!=null)
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(owner));
+        buffer.append('[');
+        for (int i=0; i<ord.length; i++)
         {
-            final Format coordFormat = (Format) format.get();
-            if (coordFormat!=null) return coordFormat;
+            if (i!=0) buffer.append(", ");
+            buffer.append(ord[i]);
         }
-        final Format newFormat = new CoordinateFormat((AngleFormat)Angle.getFormat());
-        format = new SoftReference(newFormat);
-        return newFormat;
+        buffer.append(']');
+        return buffer.toString();
     }
 }

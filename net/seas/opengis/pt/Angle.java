@@ -23,6 +23,7 @@
 package net.seas.opengis.pt;
 
 // Miscellaneous
+import java.util.Locale;
 import java.text.Format;
 import java.io.Serializable;
 import java.text.ParseException;
@@ -50,12 +51,10 @@ public class Angle implements Comparable<Angle>, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 2473166122834488544L;
 
     /**
-     * A shared instance of {@link AngleFormat}. The referenced
-     * type should be {@link Format} in order to avoid class
-     * loading before necessary.
+     * A shared instance of {@link AngleFormat}.
      */
     private static Reference format;
 
@@ -98,7 +97,7 @@ public class Angle implements Comparable<Angle>, Serializable
     {
         try
         {
-            final Angle theta = ((AngleFormat)getFormat()).parse(string);
+            final Angle theta = ((AngleFormat)getAngleFormat()).parse(string);
             if (getClass().isAssignableFrom(theta.getClass()))
             {
                 this.theta = theta.theta;
@@ -159,21 +158,21 @@ public class Angle implements Comparable<Angle>, Serializable
      * Returns a string representation of this <code>Angle</code> object.
      */
     public String toString()
-    {return getFormat().format(this, new StringBuffer(), null).toString();}
+    {return getAngleFormat().format(this, new StringBuffer(), null).toString();}
 
     /**
      * Returns a shared instance of {@link AngleFormat}.
      * The return type is {@link Format} in order to
      * avoid class loading before necessary.
      */
-    static synchronized Format getFormat()
+    private static synchronized Format getAngleFormat()
     {
         if (format!=null)
         {
             final Format angleFormat = (Format) format.get();
             if (angleFormat!=null) return angleFormat;
         }
-        final Format newFormat = new AngleFormat();
+        final Format newFormat = new AngleFormat("D°MM.m'", Locale.US);
         format = new SoftReference(newFormat);
         return newFormat;
     }
