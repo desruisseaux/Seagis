@@ -351,13 +351,13 @@ public class CoordinateFormat extends Format
     {
         synchronized (angleFormat)
         {
-            toAppendTo=format(coord.getX(), coord.getY(), toAppendTo, pos);
+            toAppendTo=format(coord.getOrdinate(0), coord.getOrdinate(1), toAppendTo, pos);
             if (dimension!=2)
             {
                 Number z=null;
                 if (coord.getDimension()>=3)
                 {
-                    z = new Double(coord.getZ());
+                    z = new Double(coord.getOrdinate(2));
                 }
                 else if (dimension==3)
                 {
@@ -470,7 +470,7 @@ public class CoordinateFormat extends Format
                 if (z!=null)
                 {
                     pos.setErrorIndex(-1); // Clear error index.
-                    return new CoordinatePoint(x,y,z);
+                    return create(x,y,z, 3);
                 }
                 else
                 {
@@ -486,7 +486,7 @@ public class CoordinateFormat extends Format
                         pos.setIndex(pz);
                         pos.setErrorIndex(-1); // Clear error index.
                     }
-                    return new CoordinatePoint(x,y);
+                    return create(x,y,null, 2);
                 }
             }
             catch (IllegalArgumentException exception)
@@ -588,6 +588,42 @@ public class CoordinateFormat extends Format
      */
     public Object parseObject(final String source) throws ParseException
     {return parse(source);}
+
+    /**
+     * Construit une coordonnée qui représente la position spécifiée. Les arguments <var>x</var> et <var>y</var>
+     * représentent normalement la longitude et la latitude respectivement. Toutefois, si au moins un de ces deux
+     * arguments est de la classe {@link Latitude} ou {@link Longitude}, alors ce constructeur utilisera cette
+     * information suplémentaire pour vérifier l'ordre des arguments <var>x</var> et <var>y</var>, et au besoin
+     * les inverser.
+     *
+     * @param  x Longitude (de préférence).
+     * @param  y Latitude (de préférence).
+     * @param  z Altitude (habituellement en mètres).
+     * @param  dim Nombre de dimensions: 2 ou 3. L'argument <code>z</code> sera ignoré si <code>dim</code> est 2.
+     * @throws IllegalArgumentException Si les deux premiers arguments sont tout deux des latitudes ou des longitudes.
+     */
+    private static CoordinatePoint create(Angle x, Angle y, final Number z, final int dimension) throws IllegalArgumentException
+    {
+        final boolean normal  = (x instanceof Longitude) || (y instanceof Latitude );
+        final boolean inverse = (x instanceof Latitude ) || (y instanceof Longitude);
+        if (normal && inverse)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.NON_ORTHOGONAL_ANGLES¤1, new Integer((x instanceof Longitude) ? 0 : 1)));
+        }
+        if (inverse)
+        {
+            Angle t;
+            t=x;
+            x=y;
+            y=t;
+        }
+        switch (dimension)
+        {
+            case 2:  return new CoordinatePoint(x.degrees(), y.degrees());
+            case 3:  return new CoordinatePoint(x.degrees(), y.degrees(), z.doubleValue());
+            default: throw  new IllegalArgumentException(String.valueOf(dimension));
+        }
+    }
     
     /**
      * Renvoie un code "hash
