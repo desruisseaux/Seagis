@@ -93,8 +93,8 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
 
     /**
      * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
-     * que {@link #getCatchAmount(Species)} retourne une valeur différente
-     * de zéro pour chacune de ces espèces.
+     * que {@link #getCatch(Species)} retourne une valeur différente de
+     * zéro pour chacune de ces espèces.
      */
     public final Set<Species> getSpecies()
     {
@@ -105,7 +105,7 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
     /**
      * Retourne la quantité de poissons pêchés pour une expèce donnée.
      */
-    public final float getCatchAmount(final Species species)
+    public final float getCatch(final Species species)
     {
         final Species[] array=this.species;
         for (int i=0; i<array.length; i++)
@@ -116,12 +116,11 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
 
     /**
      * Retourne la quantité totale de poissons pêchés, toutes espèces confondues.
-     * La quantité retournée par cette méthode doit être la somme des quantitées
-     * <code>{@link #getCatchAmount getCatchAmount}(i)</code>   où  <var>i</var>
-     * varie de 0 inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code>
-     * exclusivement.
+     * La quantité retournée par cette méthode est la somme des quantitées
+     * <code>{@link #getCatch getCatch}(i)</code> où <var>i</var> varie de 0
+     * inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code> exclusivement.
      */
-    public final float getCatchAmount()
+    public final float getCatch()
     {
         double total=0;
         for (int i=amount.length; --i>=0;)

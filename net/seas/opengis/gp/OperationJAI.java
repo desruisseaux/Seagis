@@ -233,7 +233,6 @@ public class OperationJAI extends Operation
                 throw new IllegalArgumentException(Resources.format(Clé.ENVELOPE_MISMATCH));
         }
         RenderedImage data = JAI.create(descriptor.getName(), parameters);
-        data = doExtraOperation(source, data);
         return new GridCoverage(source.getName(null), // The grid coverage name
                                 data,                 // The underlying data
                                 cs,                   // The coordinate system.
@@ -243,13 +242,4 @@ public class OperationJAI extends Operation
                                 sources,              // The source grid coverages.
                                 null);                // Properties
     }
-
-    /**
-     * Apply extra operation on the resulting image. This method is invoked
-     * after the JAI operation has been applied, in order to give to subclasses
-     * a chance to perform some additional work. The default implementation just
-     * returns <code>image</code> without processing.
-     */
-    RenderedImage doExtraOperation(final GridCoverage source, final RenderedImage image)
-    {return image;}
 }

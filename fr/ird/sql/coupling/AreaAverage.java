@@ -111,7 +111,7 @@ class AreaAverage implements AreaEvaluator
         final RenderedImage        data = coverage.getRenderedImage(true);
         final AffineTransform transform = coverage.getGridGeometry().getAffineTransform2D();
         final Point2D.Double coordinate = new Point2D.Double();
-        final Rectangle2D    areaBounds = area.getBounds();
+        final Rectangle2D    areaBounds = area.getBounds2D();
         final Rectangle          bounds = getBounds(areaBounds, transform, data);
         final int[]               count = new int[data.getSampleModel().getNumBands()];
         final double[]              sum = new double[count.length];

@@ -82,24 +82,23 @@ public interface CatchEntry extends Entry
 
     /**
      * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
-     * que {@link #getCatchAmount(Species)} retourne une valeur différente
-     * de zéro pour chacune de ces espèces.
+     * que {@link #getCatch(Species)} retourne une valeur différente de
+     * zéro pour chacune de ces espèces.
      */
     public abstract Set<Species> getSpecies();
 
     /**
      * Retourne la quantité de poissons pêchés pour une expèce donnée.
      */
-    public abstract float getCatchAmount(final Species species);
+    public abstract float getCatch(final Species species);
 
     /**
      * Retourne la quantité totale de poissons pêchés, toutes espèces confondues.
-     * La quantité retournée par cette méthode doit être la somme des quantitées
-     * <code>{@link #getCatchAmount getCatchAmount}(i)</code>   où  <var>i</var>
-     * varie de 0 inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code>
-     * exclusivement.
+     * La quantité retournée par cette méthode est la somme des quantitées
+     * <code>{@link #getCatch getCatch}(i)</code> où <var>i</var> varie de 0
+     * inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code> exclusivement.
      */
-    public abstract float getCatchAmount();
+    public abstract float getCatch();
 
     /**
      * Retourne les unités des captures. Ca peut être par exemple des kilogrammes

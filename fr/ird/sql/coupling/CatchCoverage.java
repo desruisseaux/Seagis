@@ -60,18 +60,18 @@ public class CatchCoverage extends Coverage3D
     /**
      * The semi axis length along <var>x</var> axis.
      */
-    private final double semiX = 10;
+    private final double semiX = 10.0/60;
 
     /**
      * The semi axis length along <var>y</var> axis.
      */
-    private final double semiY = 10;
+    private final double semiY = 10.0/60;
 
     /**
      * Fonction à utiliser pour calculer les valeurs
      * à l'intérieur d'une région géographique.
      */
-    private final AreaEvaluator evaluator = AreaEvaluator.MAIN;
+    private final AreaEvaluator evaluator = new AreaGradient(); //AreaEvaluator.MAIN;
 
     /**
      * Construit une couverture à partir des données de la table spécifiée.
