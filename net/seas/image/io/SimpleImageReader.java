@@ -22,7 +22,7 @@
  */
 package net.seas.image.io;
 
-// Entrés/sorties
+// Input/output
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.IIOException;
@@ -35,33 +35,44 @@ import java.awt.color.ColorSpace;
 import java.awt.image.DataBuffer;
 import java.awt.image.ColorModel;
 import java.awt.image.SampleModel;
+import java.awt.image.BandedSampleModel;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.metadata.IIOMetadata;
 
-// Collections et divers
+// Collections
 import java.util.List;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collections;
+
+// Miscellaneous
 import net.seas.resources.Resources;
 
 
 /**
- * Classe de base des décodeurs d'images simples. Ces images peuvent être des fichiers de données brutes ou
- * des matrices de données écrites dans un fichier ASCII par exemple.  En général, ces formats n'ont pas de
- * méta-données et ne contiennent pas d'indication sur la palette de couleurs à utiliser. Par défaut, elles
- * seront affichées en tons de gris.   Mais leur affichage peut être très lent,  surtout si les images sont
- * du type {@link DataBuffer#TYPE_FLOAT}. Les utilisateurs sont fortement encouragés à utiliser les opérateurs
- * de <i>Java Advanced Imaging</i> après la lecture pour transformer en entiers les bandes qui les intéressent
- * et afficher les images avec le modèle de couleurs de leur choix. Le méthode {@link net.seas.image.ThemeMapper#toThematic}
- * peut aussi être utilisée à cette fin.
+ * Base class for simple image decoders. "Simple" images are usually flat binary
+ * or ASCII files with no meta-data and no color information. There pixel values
+ * may be floating point values instead of integers.  Such formats are of common
+ * use in remote sensing.
+ * <br><br>
+ * This base class makes it easier to construct images from floating point values.
+ * It provides default implementations for most {@link ImageReader} methods. Decoded
+ * data can be stored as float values. Since <code>SimpleImageReader</code> does not
+ * expect to know anything about image's color, it uses a grayscale color space scaled
+ * to fit the range of values. Because displaying such an image can be very slow, users
+ * who want to display image are strongly encouraged to change data type and color space
+ * with <a href="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</a>
+ * operators after reading.
  *
  * @version 1.0
  * @author Martin Desruisseaux
+ *
+ * @see TextRecordImageReader
+ * @see MatrixImageReader
  */
 public abstract class SimpleImageReader extends ImageReader
 {
@@ -148,25 +159,33 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne les valeurs minimale et maximale mémorisées dans une bande de l'image.
+     * Retourne la valeur minimale mémorisée dans une bande de l'image.
      *
      * @param  imageIndex Index de l'image dont on veut connaître la valeur minimale.
      * @param  band Bande pour laquelle on veut la valeur minimale. Les numéros de
      *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
      *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
-     * @return Un tableau de longueur 2 qui contiendra les valeurs minimales et
-     *         maximales trouvées dans la bande spécifiée. Ce tableau peut être
-     *         de longueur 1 si les minimum et maximum sont identiques, ou 0 si
-     *         ces valeurs n'ont pas pu être déterminées.
+     * @return Valeur minimale trouvée dans l'image et la bande spécifiée.
      * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
      */
-    public abstract double[] getExtremums(final int imageIndex, final int band) throws IOException;
+    public abstract double getMinimum(final int imageIndex, final int band) throws IOException;
+
+    /**
+     * Retourne la valeur maximale mémorisée dans une bande de l'image.
+     *
+     * @param  imageIndex Index de l'image dont on veut connaître la valeur maximale.
+     * @param  band Bande pour laquelle on veut la valeur maximale. Les numéros de
+     *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
+     *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
+     * @return Valeur maximale trouvée dans l'image et la bande spécifiée.
+     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     */
+    public abstract double getMaximum(final int imageIndex, final int band) throws IOException;
 
     /**
      * Retourne le format le plus près du format interne de l'image. L'implémentation par
      * défaut spécifie un format ({@link BandedSampleModel}) qui mémorise chaque canal de
-     * l'image dans un tableau séparé (à moins que d'autres modèles aient été spécifiés à
-     * {@link #layout}).
+     * l'image dans un tableau séparé.
      *
      * @param  imageIndex Index de l'image.
      * @return Type de l'image (ne sera jamais <code>null</code>).
@@ -178,14 +197,21 @@ public abstract class SimpleImageReader extends ImageReader
         final int[] bankIndices = new int[numBands];
         final int[] bandOffsets = new int[numBands];
         for (int i=numBands; --i>=0;) bankIndices[i]=i;
-        double[] extremums=null;
+
+        ColorSpace space = null;
+        double   minimum = Double.NaN;
+        double   maximum = Double.NaN;
         for (int band=0; band<numBands; band++)
         {
-            extremums = getExtremums(imageIndex, band);
-            if (extremums!=null && extremums.length!=0) break;
+            minimum = getMinimum(imageIndex, band);
+            maximum = getMaximum(imageIndex, band);
+            if (minimum < maximum)
+            {
+                space = new ScaledColorSpace((float)minimum, (float)maximum);
+                break;
+            }
         }
-        final ColorSpace space = (extremums==null || extremums.length==0) ? ColorSpace.getInstance(ColorSpace.CS_GRAY) :
-                                 new ScaledColorSpace((float)extremums[0], (float)extremums[extremums.length-1]);
+        if (space==null) space=ColorSpace.getInstance(ColorSpace.CS_GRAY);
         return ImageTypeSpecifier.createBanded(space, bankIndices, bandOffsets, rawImageType, false, false);
     }
 

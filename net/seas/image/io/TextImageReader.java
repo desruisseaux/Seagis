@@ -22,12 +22,8 @@
  */
 package net.seas.image.io;
 
-// Entrés/sorties
-import java.net.URL;
+// Input/output
 import java.io.File;
-import java.io.IOException;
-import java.net.URLConnection;
-
 import java.io.Reader;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -35,9 +31,14 @@ import java.io.FileInputStream;
 import java.io.LineNumberReader;
 import java.io.InputStreamReader;
 import java.io.InputStream;
+import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
 
-// Divers
+// Network
+import java.net.URL;
+import java.net.URLConnection;
+
+// Miscellaneous
 import java.util.Locale;
 import java.nio.charset.Charset;
 import java.awt.image.DataBuffer;
@@ -47,7 +48,18 @@ import net.seas.resources.Resources;
 
 
 /**
- * Classe de base des décodeurs d'images dont les données sont écrites sous forme de texte.
+ * Base class for text image decoders. "Text images" are usually ASCII files
+ * containing pixel values (often geophysical values, like sea level anomalies).
+ * This base class provides a convenient way to get {@link BufferedReader} for
+ * reading lines.
+ * <br><br>
+ * <code>TextImageReader</code> accepts many input types, including {@link File},
+ * {@link URL}, {@link Reader}, {@link InputStream} and {@link ImageInputStream}.
+ * The {@link Spi} provider automatically advises those input types. The above
+ * cited <code>Spi</code> provided also provides a convenient way to control the
+ * character encoding, with its {@link Spi#charset charset} field. Developer can
+ * gain yet more control on character encoding by overriding the {@link #getCharset}
+ * method.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -246,7 +258,15 @@ public abstract class TextImageReader extends SimpleImageReader
 
 
     /**
-     * Classe de base des descripteurs de décodeurs {@link TextImageReader}.
+     * Service provider interface (SPI) for {@link TextImageReader}s. This
+     * SPI provides a convenient way to control the {@link TextImageReader}
+     * character encoding: the {@link #charset} field. For example, many
+     * <code>Spi</code> subclasses will put the following line in their
+     * constructor:
+     *
+     * <blockquote><pre>
+     * {@link #charset} = Charset.forName("ISO-LATIN-1"); // ISO Latin Alphabet No. 1 (ISO-8859-1)
+     * </pre></blockquote>
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -254,7 +274,7 @@ public abstract class TextImageReader extends SimpleImageReader
     public static abstract class Spi extends ImageReaderSpi
     {
         /**
-         * Liste des types d'entrés acceptés.
+         * List of legal input types for {@link TextImageReader}.
          */
         private static final Class[] INPUT_TYPES = new Class[]
         {
@@ -267,7 +287,7 @@ public abstract class TextImageReader extends SimpleImageReader
         };
 
         /**
-         * Liste des extensions standards acceptés.
+         * Default list of file's extensions.
          */
         private static final String[] EXTENSIONS = new String[] {".txt",".TXT",".asc",".ASC",".dat",".DAT"};
 
@@ -282,30 +302,29 @@ public abstract class TextImageReader extends SimpleImageReader
         protected Charset charset;
 
         /**
-         * Construit un descripteur. Ce constructeur
-         * initialisera les champs suivants:
+         * Construct a new SPI for {@link TextImageReader}. This
+         * constructor initialize the following fields to default
+         * values:
          *
          * <ul>
-         *   <li>Nom du format d'image ({@link #names names}):
-         *       Un tableau de longueur 1 contenant l'argument <code>name</code>.
+         *   <li>Image format names ({@link #names names}):
+         *       An array of lenght 1 containing the <code>name</code> argument.
          *
-         *   <li>Type MIME ({@link #MIMETypes MIMETypes}):
-         *       Un tableau de longueur 1 contenant l'argument <code>mime</code>.
+         *   <li>MIME type ({@link #MIMETypes MIMETypes}):
+         *       An array of length 1 containing the <code>mime</code> argument.
          *
-         *   <li>Extensions des fichiers ({@link #suffixes suffixes}):
+         *   <li>File suffixes ({@link #suffixes suffixes}):
          *       "<code>.txt</code>", "<code>.asc</code>" et "<code>.dat</code>".</li>
          *
-         *   <li>Type d'entrés ({@link #inputTypes inputTypes}):
-         *       {@link File, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
+         *   <li>Input types ({@link #inputTypes inputTypes}):
+         *       {@link File}, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
          * </ul>
          *
-         * Les autres champs devront être initialisés
-         * par les constructeurs des classes dérivées.
+         * Others fields should be set by subclasses
+         * (usually in their constructors).
          *
-         * @param name Nom de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #names names}.
-         * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #MIMETypes MIMETypes}.
+         * @param name Format name, or <code>null</code> to let {@link #names names} unset.
+         * @param mime MIME type, or <code>null</code> to let {@link #MIMETypes MIMETypes} unset.
          */
         public Spi(final String name, final String mime)
         {
