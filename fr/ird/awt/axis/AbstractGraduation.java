@@ -42,7 +42,7 @@ import fr.ird.resources.Resources;
 /**
  * Base class for graduation.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class AbstractGraduation implements Graduation, Serializable

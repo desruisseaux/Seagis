@@ -40,7 +40,7 @@ import org.geotools.cs.GeographicCoordinateSystem;
  * Composante affichant une carte représentant la position des
  * animaux dans leur environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class Viewer

@@ -58,7 +58,7 @@ import fr.ird.resources.ResourceKeys;
  *   <li>Décimer la densité des marques en fonction du zoom.</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  *
  * @see fr.ird.map.layer.GridMarkControler

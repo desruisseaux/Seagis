@@ -38,7 +38,7 @@ import org.geotools.gc.GridCoverage;
  * Typically, this interface add new rows to the database but doesn't modify existing
  * one. It doesn't change table's structure neither.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface TableFiller

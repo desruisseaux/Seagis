@@ -99,7 +99,7 @@ import fr.ird.resources.gui.ResourceKeys;
  *       en fonction de (<var>dx</var>,<var>dt</var>) et de la latitude.</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class SemiVariance

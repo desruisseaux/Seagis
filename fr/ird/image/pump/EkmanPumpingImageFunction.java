@@ -62,7 +62,7 @@ import org.geotools.ct.TransformException;
  * calculé à partir des données de vent mesuré par le satellite
  * QuikScat. Cette classe utilise les fichiers de données de niveau L2B.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class EkmanPumpingImageFunction extends WindImageFunction

@@ -96,7 +96,7 @@ import org.geotools.resources.SwingUtilities;
  * <p align="center"><img src="doc-files/CoordinateChooser.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class CoordinateChooser extends JPanel
@@ -144,7 +144,7 @@ public class CoordinateChooser extends JPanel
     /**
      * Class encompassing various listeners for users selections.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Listeners implements ActionListener, ChangeListener

@@ -69,7 +69,7 @@ import org.geotools.resources.SwingUtilities;
  * exemple de spécifier le répertoire racine des images ainsi que de modifier
  * les instructions SQL utilisées pour interroger les tables d'images et de pêches.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ControlPanel extends JPanel

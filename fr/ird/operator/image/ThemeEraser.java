@@ -51,7 +51,7 @@ import java.io.IOException;
  * La décision d'incorporer à certaines images une grille de latitudes et de
  * longitudes est une décision malheureuse qui nuit à l'affichage et aux zooms.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ThemeEraser
@@ -189,7 +189,7 @@ public class ThemeEraser
      *       pixels qui l'entourent.<li>
      * </ul>
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Operation extends AreaOpImage

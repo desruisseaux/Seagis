@@ -35,7 +35,7 @@ import fr.ird.sql.Entry;
  * Mais elle est pratique pour distinguer les séries des autres types
  * d'entrés.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface SeriesEntry extends Entry

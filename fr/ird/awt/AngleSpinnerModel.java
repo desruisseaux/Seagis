@@ -52,7 +52,7 @@ import org.geotools.resources.Utilities;
  * @see JSpinner
  * @see SpinnerNumberModel
  *
- * @version 1.0
+ * @version $Id$
  * @author Adapted from Hans Muller
  * @author Martin Desruisseaux
  */
@@ -222,7 +222,7 @@ public class AngleSpinnerModel extends AbstractSpinnerModel implements Serializa
      * This subclass of {@link javax.swing.InternationalFormatter} maps the
      * minimum/maximum properties to a {@link AngleSpinnerModel}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Adapted from Hans Muller
      * @author Martin Desruisseaux
      */
@@ -304,7 +304,7 @@ public class AngleSpinnerModel extends AbstractSpinnerModel implements Serializa
      * whose minimum and maximum properties are mapped to the
      * {@link SpinnerNumberModel}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Adapted from Hans Muller
      * @author Martin Desruisseaux
      */

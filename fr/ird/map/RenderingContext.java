@@ -64,7 +64,7 @@ import fr.ird.resources.ResourceKeys;
  *       <td>pour passer des 1/72 de pouce vers des unités qui dépendent du périphérique.</td></tr>
  * </table></blockquote>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  *
  * @see Layer#paint

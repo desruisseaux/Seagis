@@ -34,7 +34,7 @@ import fr.ird.animat.Environment;
  * Un événement signalant qu'un changement est survenu
  * dans l'environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class EnvironmentChangeEvent extends EventObject

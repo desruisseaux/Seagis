@@ -34,7 +34,7 @@ import fr.ird.resources.ResourceKeys;
  * que ce soit. L'implémentation par défaut est imutable. Toutefois, certaines
  * classes dérivées (notamment {@link DynamicArray}) ne le seront pas forcément.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class DefaultArray extends PointArray

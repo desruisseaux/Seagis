@@ -49,7 +49,7 @@ import fr.ird.animat.Species;
  * Données d'une capture à la palangre. Un objet <code>LonglineCatchEntry</code>
  * correspond à une entrée de la table "Captures" de la base de données "Palangres".
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class LonglineCatchEntry extends AbstractCatchEntry

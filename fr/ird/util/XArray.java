@@ -28,7 +28,7 @@ package fr.ird.util;
  * leveraging generic type safety. This temporary wrapper will
  * be removed when generic type will be available in JDK 1.5.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class XArray

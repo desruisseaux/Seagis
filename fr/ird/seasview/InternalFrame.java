@@ -48,7 +48,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Classe de base des fenêtres internes de l'application. Ces
  * fenêtres seront placées dans un objet {@link Desktop}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class InternalFrame extends JInternalFrame

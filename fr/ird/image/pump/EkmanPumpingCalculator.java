@@ -37,7 +37,7 @@ import org.geotools.ct.TransformException;
 /**
  * Base class for Ekman pumping computation.
  *
- * @version 1.0
+ * @version $Id$
  * @author Josep Coca
  * @author Martin Desruisseaux
  */

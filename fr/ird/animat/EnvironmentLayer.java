@@ -44,7 +44,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
 /**
  * Couche représentant une image sur une carte.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentChangeListener

@@ -40,7 +40,7 @@ import java.util.List;
  *
  * @see ImageDataBase#getSeriesTable
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface SeriesTable extends Table

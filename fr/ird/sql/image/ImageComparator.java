@@ -71,7 +71,7 @@ import java.util.Comparator;
  *      image sera choisie.</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ImageComparator implements Comparator<ImageEntry>
@@ -259,7 +259,7 @@ public class ImageComparator implements Comparator<ImageEntry>
      * par {@link ImageComparator#compare}) afin de déterminer laquelle des deux
      * images correspond le mieux à ce que l'utilisateur a demandé.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     protected class Evaluator

@@ -24,7 +24,7 @@ import fr.ird.util.XArray;
 /**
  * Base class for algorithms for training a neural network.
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

@@ -33,7 +33,7 @@ import org.geotools.units.Unit;
 /**
  * A graduation using numbers on a logarithmic axis.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class LogarithmicNumberGraduation extends NumberGraduation

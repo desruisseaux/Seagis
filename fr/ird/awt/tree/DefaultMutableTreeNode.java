@@ -26,7 +26,7 @@ package fr.ird.awt.tree;
 /**
  * General-purpose node in a tree data structure.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class DefaultMutableTreeNode extends javax.swing.tree.DefaultMutableTreeNode implements MutableTreeNode

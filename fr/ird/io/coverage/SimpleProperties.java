@@ -51,7 +51,7 @@ import java.awt.image.RasterFormatException;
  * Codec for simple text header. Used for chlorophylle-a
  * images in RAW binary files from the Canarias station.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class SimpleProperties extends AbstractProperties

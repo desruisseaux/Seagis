@@ -50,7 +50,7 @@ import java.util.HashMap;
 /**
  * A graphics representation of a network.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class NetworkPane extends ZoomPane

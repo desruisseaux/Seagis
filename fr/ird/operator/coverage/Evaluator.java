@@ -35,7 +35,7 @@ import org.geotools.gc.GridCoverage;
  * valeurs de pixels trouvées à l'intérieur de la région géographique
  * spécifiée.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Evaluator

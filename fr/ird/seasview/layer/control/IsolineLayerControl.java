@@ -54,7 +54,7 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Couche contenant une bathymétrie.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class IsolineLayerControl extends LayerControl

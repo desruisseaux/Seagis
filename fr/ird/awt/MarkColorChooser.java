@@ -55,7 +55,7 @@ import fr.ird.awt.geom.Arrow2D;
  * section "aperçu" contiendra une image satellitaire (facultative)  avec
  * une forme géométrique par dessus.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class MarkColorChooser extends JColorChooser

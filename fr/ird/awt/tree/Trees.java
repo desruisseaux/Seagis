@@ -37,7 +37,7 @@ import fr.ird.util.XArray;
 /**
  * Convenience static methods for trees operations.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class Trees

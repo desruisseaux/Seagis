@@ -29,7 +29,7 @@ package fr.ird.map.array;
  * L'implémentation par défaut de cette classe est imutable. Toutefois, certaines
  * classes dérivées (notamment {@link DynamicArray}) ne le seront pas forcément.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class SubArray extends DefaultArray

@@ -33,7 +33,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * Simple formatter adding a new-line after each record.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class InterlineFormatter extends SimpleFormatter

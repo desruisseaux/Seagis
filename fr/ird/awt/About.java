@@ -86,7 +86,7 @@ import org.geotools.resources.SwingUtilities;
  * (using the <code>"yyyy-MM-dd HH:mm:ss"</code> pattern) the package was compiled. If presents,
  * this date will be localized according user's locale and appended to the version number.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class About extends JPanel
@@ -314,7 +314,7 @@ public class About extends JPanel
      * Modèle représentant la liste des processus actif dans un {@link ThreadGroup}.
      * Cette liste se mettre automatiquement à jour de façon périodique.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class ThreadList extends AbstractListModel implements Runnable

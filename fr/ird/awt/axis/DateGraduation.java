@@ -42,7 +42,7 @@ import org.geotools.resources.Utilities;
 /**
  * A graduation using dates on a linear axis.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class DateGraduation extends AbstractGraduation

@@ -83,7 +83,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Window displaying a graph of available data. The upper half
  * will display a chart of time.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class CatalogFrame extends InternalFrame

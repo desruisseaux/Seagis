@@ -109,7 +109,7 @@ import org.geotools.io.DefaultFileFilter;
  * appliquer une projection cartographique inverse, les convertir en PNG et
  * ajouter les entrés correspondantes dans la base de données.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Processor extends Console

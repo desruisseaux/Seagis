@@ -31,7 +31,7 @@ package fr.ird.sql;
  * Une entrée peut représenter une série d'images ou une
  * image individuelle par exemple.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Entry

@@ -106,7 +106,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * <p align="center"><img src="doc-files/RangeBars.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class RangeBars extends ZoomPane
@@ -1567,7 +1567,7 @@ public class RangeBars extends ZoomPane
      * La méthode <code>fireStateChanged(boolean)</code> sera appellée automatiquement
      * chaque fois que l'utilisateur fait glisser la visière.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class SwingModel extends DefaultBoundedRangeModel implements LogicalBoundedRangeModel

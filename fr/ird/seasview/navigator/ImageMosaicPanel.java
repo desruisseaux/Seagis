@@ -85,7 +85,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * la fenêtre permettra de sélectionner la date pour laquelle on souhaite voir les
  * images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageMosaicPanel extends ImagePanel //implements ChangeListener

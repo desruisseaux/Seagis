@@ -55,7 +55,7 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Source de données utilisées par l'ensemble de l'application.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class DataBase

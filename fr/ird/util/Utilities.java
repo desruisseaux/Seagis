@@ -35,7 +35,7 @@ import org.geotools.io.image.PaletteFactory;
 /**
  * A set of utilities related to images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class Utilities

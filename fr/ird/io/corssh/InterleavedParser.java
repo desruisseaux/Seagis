@@ -42,7 +42,7 @@ import org.geotools.resources.Utilities;
  * Les flots spécifiés peuvent être d'autres objets {@link InterleavedParser},
  * ce qui permet de faire une chaîne de plus de deux flots de données.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class InterleavedParser extends Parser implements Serializable

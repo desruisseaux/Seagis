@@ -42,7 +42,7 @@ import fr.ird.resources.gui.Resources;
 /**
  * Connexion vers une base de données.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class DataBase

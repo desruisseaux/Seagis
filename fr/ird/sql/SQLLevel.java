@@ -33,7 +33,7 @@ import java.util.logging.Level;
  * Level for SQL instructions. This is used
  * for logging some SQL queries and updates.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class SQLLevel extends Level

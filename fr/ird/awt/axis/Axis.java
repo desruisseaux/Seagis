@@ -75,7 +75,7 @@ import org.geotools.resources.XAffineTransform;
  * be used for mapping logical coordinates to pixels coordinates for an arbitrary
  * pair of <code>Axis</code> objects, which doesn't need to be perpendicular.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Axis extends Line2D implements Cloneable, Serializable
@@ -721,7 +721,7 @@ public class Axis extends Line2D implements Cloneable, Serializable
      * method, using the iterator after a change in the underlying {@link Axis}
      * may thrown a {@link ConcurrentModificationException}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     public class TickIterator implements fr.ird.awt.axis.TickIterator
@@ -1162,7 +1162,7 @@ public class Axis extends Line2D implements Cloneable, Serializable
      * itérateur ne retourne que des droites et jamais de courbes, il ne prend
      * pas d'argument <code>flatness</code>.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private class TickPathIterator extends TickIterator implements java.awt.geom.PathIterator
@@ -1379,7 +1379,7 @@ public class Axis extends Line2D implements Cloneable, Serializable
      * Itérateur balayant l'axe et ses barres de graduations pour leur traçage.
      * Cet itérateur balaye aussi les étiquettes de graduations.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class PathIterator extends TickPathIterator

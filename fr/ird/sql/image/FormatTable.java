@@ -40,7 +40,7 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Connection vers une table des formats d'images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class FormatTable extends Table

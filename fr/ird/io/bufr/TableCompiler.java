@@ -54,7 +54,7 @@ import org.geotools.resources.Utilities;
  * un format binaire.</strong>
  *
  * @author Martin Desruisseaux
- * @version 1.0
+ * @version $Id$
  */
 final class TableCompiler
 {

@@ -48,7 +48,7 @@ import java.io.PrintWriter;
  * Il choisit les intervalles de graduation en supposant qu'on utilise
  * un calendrier grégorien.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class DateIterator implements TickIterator

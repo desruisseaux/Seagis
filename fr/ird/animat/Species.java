@@ -41,7 +41,7 @@ import java.util.Locale;
  *
  * Chaque objet <code>Species</code> est immutable.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Species
@@ -83,7 +83,7 @@ public interface Species
      * une carte plusieurs individus d'une même espèce, et peut aussi apparaître
      * devant une étiquette dans les listes déroulantes.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     public static interface Icon extends javax.swing.Icon

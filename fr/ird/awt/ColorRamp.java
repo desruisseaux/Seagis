@@ -78,7 +78,7 @@ import org.geotools.resources.Utilities;
  * <code>ColorRamp</code> object is usually painted together with a remote sensing image,
  * for example a {@link fr.ird.map.MapPanel} object.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ColorRamp extends JComponent
@@ -731,7 +731,7 @@ public class ColorRamp extends JComponent
      * de calculer l'espace qu'elle occupe. Cette classe peut aussi réagir
      * à certains événements.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class UI extends ComponentUI implements PropertyChangeListener

@@ -35,7 +35,7 @@ import fr.ird.sql.Table;
  * Interface interrogeant ou modifiant un paramètre
  * de la base de données d'environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface EnvironmentTable extends Table

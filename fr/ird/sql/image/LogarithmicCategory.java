@@ -42,7 +42,7 @@ import org.geotools.resources.XMath;
  * Par design, les objets <code>Category</code> sont immutables (s'ils ne l'étaient pas, ça
  * introduirait de difficiles problèmes de synchronisation avec {@link IndexedThemeMapper}).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class LogarithmicCategory extends Category

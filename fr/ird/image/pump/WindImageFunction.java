@@ -51,7 +51,7 @@ import org.geotools.cs.GeographicCoordinateSystem;
  * du vent mesuré par le satellite QuikScat. Cette classe
  * utilise les fichiers de données de niveau L2B.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class WindImageFunction extends AbstractImageFunction

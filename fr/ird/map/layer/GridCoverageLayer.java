@@ -53,7 +53,7 @@ import javax.media.jai.GraphicsJAI;
  * Many layers may share the same grid coverage (for example in
  * order to display the coverage in many {@link MapPanel}).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class GridCoverageLayer extends Layer

@@ -79,7 +79,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * enregistrement de la base de données de formats d'images. Ces informations sont
  * retournées par la méthode {@link FormatTable#getEntry}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class FormatEntryImpl implements FormatEntry, Serializable
@@ -584,7 +584,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * {@link #toString} pour retourner une chaîne adaptée
      * plutôt que <code>{@link #getUserObject}.toString()</code>.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class TreeNode extends DefaultMutableTreeNode

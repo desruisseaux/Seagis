@@ -48,7 +48,7 @@ import javax.media.jai.util.Range;
  * de la zone de pêche), tandis que {@link #getShape} retourne une forme qui représente
  * la région de la capture (par exemple la ligne d'une pêche à la palangre).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface CatchEntry extends Entry

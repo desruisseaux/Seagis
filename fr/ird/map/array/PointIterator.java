@@ -35,7 +35,7 @@ import java.awt.geom.Point2D;
  * cet ordre: {@link #nextX} d'abord, suivit de {@link #nextY}. Tout manquement à cette règle (par
  * exemple appeller {@link #nextX} deux fois de suite) peut produire des résultats erronées.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class PointIterator implements Iterator<Point2D>, Cloneable

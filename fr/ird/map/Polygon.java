@@ -91,7 +91,7 @@ import fr.ird.resources.Resources;
  * the polygon may be an island in the middle of a sea), or a depression (for example
  * a lake in the middle of a continent).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Polygon extends Contour
@@ -1892,7 +1892,7 @@ public class Polygon extends Contour
      * This interface defines the method required by any object that
      * would like to be a renderer for polygons in an {@link Isoline}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     public static interface Renderer

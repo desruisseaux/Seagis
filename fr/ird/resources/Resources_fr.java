@@ -26,7 +26,7 @@ package fr.ird.resources;
 /**
  * French language resource.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Resources_fr extends Resources

@@ -83,7 +83,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * <p align="center"><img src="doc-files/ExportChooser.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class ExportChooser extends JPanel
@@ -256,7 +256,7 @@ public final class ExportChooser extends JPanel
      * une copie de tous les paramètres pertinents de {@link ExportChooser}, tels qu'ils étaient au moment
      * de la construction. Par la suite, aucune référence vers {@link ExportChooser} n'est conservée.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Worker implements Runnable, IIOReadWarningListener

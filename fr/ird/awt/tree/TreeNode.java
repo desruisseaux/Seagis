@@ -26,7 +26,7 @@ package fr.ird.awt.tree;
  * Defines the requirements for an object that can be used as a
  * tree node in a {@link javax.swing.JTree}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface TreeNode extends javax.swing.tree.TreeNode

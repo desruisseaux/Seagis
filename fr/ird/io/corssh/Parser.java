@@ -119,7 +119,7 @@ import org.geotools.resources.Utilities;
  * </TR></TABLE>
  * </TD></TR></TABLE></CENTER>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Parser

@@ -57,7 +57,7 @@ import org.geotools.resources.Geometry;
  * donnée le même jour. Ces distances seront copiées dans la base
  * de données.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class CatchTableFiller

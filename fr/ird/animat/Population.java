@@ -33,7 +33,7 @@ import fr.ird.animat.event.PopulationChangeListener;
 /**
  * Une population d'animaux.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Population extends Set<Animal>

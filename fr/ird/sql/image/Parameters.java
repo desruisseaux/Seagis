@@ -74,7 +74,7 @@ import org.geotools.resources.XDimension2D;
  * les champs publiques, même si ces objets sont en principe mutables ({@link Rectangle2D},
  * {@link Dimension2D}...).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Parameters implements Serializable

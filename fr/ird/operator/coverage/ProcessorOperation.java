@@ -37,7 +37,7 @@ import javax.media.jai.ParameterList;
 /**
  * Une opération effectuée par un {@link GridCoverageProcessor}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ProcessorOperation extends Operation

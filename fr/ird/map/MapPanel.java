@@ -99,7 +99,7 @@ import org.geotools.gui.swing.event.ZoomChangeListener;
  * to zoom, translate and rotate around the map (Remind: <code>MapPanel</code> has
  * no scrollbar. To display scrollbars, use {@link #createScrollPane}).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class MapPanel extends ZoomPane

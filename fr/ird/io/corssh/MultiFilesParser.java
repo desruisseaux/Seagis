@@ -57,7 +57,7 @@ import org.geotools.resources.Utilities;
  * Ensemble de fichiers CORSSH. Cet ensemble sera considéré comme un flot
  * continu de données, comme s'il s'agissait d'un seul fichier CORSSH.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class MultiFilesParser extends Parser implements Serializable
@@ -372,7 +372,7 @@ final class MultiFilesParser extends Parser implements Serializable
      * Cette classe est utile pour classer des fichiers CORSSH par ordre chronologique.
      * Le critère de comparaison sera la date du <em>dernier</em> enregistrement.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class DatedFile implements Comparable, Serializable

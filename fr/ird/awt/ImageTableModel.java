@@ -144,7 +144,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * méthode a changée le contenu de la table, <i>Swing</i> en sera informé dans
  * son propre thread même si les méthodes ont été appelées d'un autre thread.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ImageTableModel extends AbstractTableModel
@@ -860,7 +860,7 @@ public class ImageTableModel extends AbstractTableModel
      * qui intercepte les appels pour mettre à jour des variables internes indiquant si une image a été
      * vue ou si sa lecture a échouée.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class ProxyEntry extends ImageEntry.Proxy
@@ -937,7 +937,7 @@ public class ImageTableModel extends AbstractTableModel
      * Lorsqu'un nouvel objet {@link ProxyEntry} est créé, il peut appeler la méthode statique
      * {@link #add} pour s'ajouter lui-même à la liste des images dont on vérifiera l'existence.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final static class FileChecker extends Thread
@@ -1016,7 +1016,7 @@ public class ImageTableModel extends AbstractTableModel
      * leur couleur habituelle (noir). Elle peut toutefois utiliser des couleurs
      * différentes si l'image a été vue (bleu) ou si elle est manquante (rouge).
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     public static class CellRenderer extends DefaultTableCellRenderer

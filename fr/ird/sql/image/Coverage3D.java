@@ -82,7 +82,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * des valeurs à des positions et des dates arbitraires. Les valeurs sont interpollées à
  * la fois dans l'espace et dans le temps.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Coverage3D extends Coverage
@@ -802,7 +802,7 @@ public class Coverage3D extends Coverage
      * surtout à enregistrer dans le journal un enregistrement indiquant que la
      * lecture d'une image a commencé.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Listeners extends IIOReadProgressAdapter

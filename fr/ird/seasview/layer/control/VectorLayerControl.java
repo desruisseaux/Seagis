@@ -55,7 +55,7 @@ import fr.ird.awt.geom.Arrow2D;
 /**
  * Controleur des couches des vecteurs de courants.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class VectorLayerControl extends LayerControl

@@ -75,7 +75,7 @@ import fr.ird.operator.coverage.GradientEvaluator;
  * pas de données ou que la donnée est manquante (par exemple sous un nuage), alors
  * <code>EnvironmentTableFiller</code> <strong>laisse inchangée</strong> la cellule correspondante.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class EnvironmentTableFiller

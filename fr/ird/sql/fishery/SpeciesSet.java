@@ -39,7 +39,7 @@ import fr.ird.animat.Species;
  * Ensemble des espèces. Cet ensemble enveloppe un tableau
  * <code>Species[]</code> qu'on supposera sans doublons.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class SpeciesSet extends AbstractSet<Species>
@@ -86,7 +86,7 @@ class SpeciesSet extends AbstractSet<Species>
      * must be immutable. This iterator does not support the
      * remove operation.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Iterator implements java.util.Iterator<Species>

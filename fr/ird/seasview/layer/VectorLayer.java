@@ -73,8 +73,8 @@ import fr.ird.resources.gui.ResourceKeys;
  * moins deux bandes. Une bande peut représenter la composante U d'un vecteur,
  * tandis que l'autre représente la composante V.
  *
+ * @version $Id$
  * @author Martin Desruisseaux
- * @version 1.0
  */
 public class VectorLayer extends GridMarkLayer
 {

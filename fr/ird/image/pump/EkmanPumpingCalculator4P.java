@@ -33,7 +33,7 @@ import java.awt.geom.AffineTransform;
 /**
  * Ekman pumping computation using 4 points.
  *
- * @version 1.0
+ * @version $Id$
  * @author Josep Coca
  * @author Martin Desruisseaux
  */

@@ -75,7 +75,7 @@ import org.geotools.gui.swing.ZoomPane;
  * effectuer la conversion. A part cette méthode, aucune autre méthode de la classe
  * <code>Layer</code> n'a d'information sur le système de coordonnées de l'affichage.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Layer implements Serializable

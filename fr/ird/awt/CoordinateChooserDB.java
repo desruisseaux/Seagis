@@ -69,7 +69,7 @@ import org.geotools.resources.SwingUtilities;
  * Ces informations peuvent servir à configurer une table {@link fr.ird.sql.image.ImageTable}
  * en fonction des choix de l'utilisateur.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class CoordinateChooserDB extends CoordinateChooser

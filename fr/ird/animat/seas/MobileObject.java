@@ -45,7 +45,7 @@ import org.geotools.resources.Utilities;
  * Représentation d'un objet mobile. Un objet mobile peut être par
  * exemple un animal.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class MobileObject implements Shape
@@ -123,7 +123,7 @@ class MobileObject implements Shape
                     (float) Math.toRadians(position.getY()));
         // Note: si on veut ajuster la direction, il faudrait
         //       le faire ici (et non dans la méthode privée
-        //       ci-dessous).
+        //       ci-dessus).
     }
 
     /**

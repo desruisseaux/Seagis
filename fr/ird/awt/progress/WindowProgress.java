@@ -71,7 +71,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * plan et d'appeller les méthodes de cette classe sans se soucier des problèmes de synchronisation. En général,
  * faire l'opération en arrière plan est recommandé afin de faciliter le rafraichissement de l'écran.</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class WindowProgress extends Progress
@@ -445,7 +445,7 @@ public class WindowProgress extends Progress
      * tandis qu'une valeur négative signifie que l'on interroge l'état de la comosante
      * (dans ce cas, il faudra extrait l'état du champ {@link #text}).
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private class Caller implements Runnable

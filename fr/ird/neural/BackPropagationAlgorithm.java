@@ -23,7 +23,7 @@ package fr.ird.neural;
  * sluggishness, but it is also simple and easy to understand.
  * That is why it is included here.
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

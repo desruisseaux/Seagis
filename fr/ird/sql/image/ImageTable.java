@@ -56,7 +56,7 @@ import javax.media.jai.ParameterList;
  *
  * @see ImageDataBase#getImageTable
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface ImageTable extends Table

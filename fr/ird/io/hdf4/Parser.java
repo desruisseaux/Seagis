@@ -45,7 +45,7 @@ import fr.ird.util.XArray;
  * Interpréteur d'un fichier HDF. Cette classe utilise du code natif (via la bibliothèque
  * <code>ncsa.hdf.hdflib</code>) pour extraire une image d'un fichier HDF.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Parser

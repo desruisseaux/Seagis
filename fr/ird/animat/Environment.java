@@ -35,7 +35,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
 /**
  * Représentation de l'environnement dans lequel évolueront les animaux.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Environment

@@ -44,7 +44,7 @@ import java.awt.event.MouseEvent;
  * température sur une image satellitaire de température). Cette classe est optimisée pour être appelée
  * souvent, par exemple à l'intérieur d'une méthode {@link java.awt.event.MouseMotionListener#mouseMoved}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class MouseCoordinateFormat

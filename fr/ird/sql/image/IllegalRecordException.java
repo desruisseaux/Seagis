@@ -35,7 +35,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Exception signalant qu'un enregistrement d'une des tables de la base
  * de données d'images n'est pas valide.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class IllegalRecordException extends SQLException

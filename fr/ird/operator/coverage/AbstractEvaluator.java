@@ -40,7 +40,7 @@ import org.geotools.resources.XAffineTransform;
 /**
  * Implémentation de base pour {@link Evaluator}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class AbstractEvaluator implements Evaluator

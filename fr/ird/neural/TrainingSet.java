@@ -38,7 +38,7 @@ package fr.ird.neural;
  * }
  * </pre></blockquote>
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

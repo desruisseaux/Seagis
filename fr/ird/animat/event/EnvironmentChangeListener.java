@@ -33,7 +33,7 @@ import java.util.EventListener;
  * Définit un objet qui écoutera les changements survenant dans un
  * environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface EnvironmentChangeListener extends EventListener

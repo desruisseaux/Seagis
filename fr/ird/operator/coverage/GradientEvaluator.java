@@ -49,7 +49,7 @@ import javax.media.jai.iterator.RectIterFactory;
  * Une fonction estimant le gradient
  * dans une région géographique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class GradientEvaluator extends AbstractEvaluator implements Evaluator

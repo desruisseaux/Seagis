@@ -199,7 +199,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
      * de {@link fr.ird.animat.PopulationLayer} n'utilise pas cet itérateur.
      * Elle utilise plutôt {@link Population#toArray}, qui est synchronisée.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Iter implements Iterator<Animal>

@@ -46,7 +46,7 @@ import javax.media.jai.iterator.RectIterFactory;
  * Une fonction calculant la valeur moyenne
  * des pixels dans une région géographique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class AverageEvaluator extends AbstractEvaluator implements Evaluator

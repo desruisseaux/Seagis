@@ -36,7 +36,7 @@ import org.geotools.resources.XMath;
  * Cet itérateur retourne les positions des graduations à partir de la valeur minimale
  * jusqu'à la valeur maximale.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class LogarithmicNumberIterator extends NumberIterator

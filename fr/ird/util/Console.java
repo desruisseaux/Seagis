@@ -45,7 +45,7 @@ import org.geotools.resources.Utilities;
 /**
  * Abstract class for console application.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Console

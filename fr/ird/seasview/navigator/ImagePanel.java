@@ -62,7 +62,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Classe de base pour les classes qui afficheront des mosaïques
  * d'images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class ImagePanel extends JSplitPane implements ComponentListener, ChangeListener, ClipboardOwner

@@ -65,7 +65,7 @@ import java.text.ParseException;
  * from -1000 to 3000. Outside of this range, results will be given, but the
  * potential for error is higher.
  *
- * @version 1.0
+ * @version $Id$
  * @author Remi Eve
  * @author Martin Desruisseaux
  */

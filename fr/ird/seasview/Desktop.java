@@ -94,7 +94,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * etc...), tandis qu'une autre fenêtre peut contenir les résultats des couplages
  * entres les images et les données de pêches par exemple.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Desktop extends JDesktopPane implements PropertyChangeListener

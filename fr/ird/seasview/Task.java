@@ -44,7 +44,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * lors d'une lecture dans une autre session Java. Cette classe peut ainsi servir
  * à expédier le contenu d'une fenêtre via le réseau avec les RMI.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Task implements Serializable

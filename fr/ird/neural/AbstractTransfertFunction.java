@@ -24,7 +24,7 @@ import java.io.Serializable;
  * Base class for transfert functions.
  * This base class support serialization.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class AbstractTransfertFunction implements TransfertFunction, Serializable

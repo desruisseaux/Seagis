@@ -32,7 +32,7 @@ import fr.ird.resources.ResourceKeys;
  * Tableaux de points compressés. Les objets
  * de cette classe sont immutables.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class CompressedArray extends PointArray

@@ -49,7 +49,7 @@ import org.geotools.resources.Utilities;
  * Cette classe ne définit pas de champs; elle ne définit que des constantes et des
  * méthodes statiques utilisées par la plupart des classes.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class Table implements fr.ird.sql.Table

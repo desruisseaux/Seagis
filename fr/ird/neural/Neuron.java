@@ -25,7 +25,7 @@ import org.geotools.resources.Utilities;
 /**
  * An artificial neuron.
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

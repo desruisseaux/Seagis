@@ -67,7 +67,7 @@ import org.geotools.units.Unit;
 /**
  * Implementation of {@link TableFiller}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class TableFillerImpl extends Table implements TableFiller

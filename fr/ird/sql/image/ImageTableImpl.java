@@ -94,7 +94,7 @@ import javax.media.jai.util.Range;
  *
  * @see ImageDataBase#getImageTable
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageTableImpl extends Table implements ImageTable

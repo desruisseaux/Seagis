@@ -51,7 +51,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * {@link InternalFrame} qui a le focus. Cette dernière fonctionalité est
  * gérée par {@link Desktop}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Action extends AbstractAction

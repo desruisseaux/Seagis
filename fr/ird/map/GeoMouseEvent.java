@@ -53,7 +53,7 @@ import org.geotools.resources.CTSUtilities;
  * &nbsp;}
  * </pre></blockquote>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class GeoMouseEvent extends MouseEvent

@@ -70,7 +70,7 @@ import fr.ird.resources.ResourceKeys;
  * be reprojected). Futhermore, contours can compress and share their data
  * in order to reduce memory footprint.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Contour implements Shape, Cloneable, Serializable

@@ -67,7 +67,7 @@ import fr.ird.resources.ResourceKeys;
  * <p align="center"><img src="doc-files/TimeZoneChooser.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class TimeZoneChooser extends JPanel

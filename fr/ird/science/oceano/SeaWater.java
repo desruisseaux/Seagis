@@ -34,7 +34,7 @@ package fr.ird.science.oceano;
  *   <li>Pressure: decibars (1 dbar = 10 kPa).
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Bernard Pelchat
  * @author Martin Desruisseux
  */

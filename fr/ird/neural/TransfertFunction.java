@@ -22,7 +22,7 @@ package fr.ird.neural;
  * function used to transition neuron output from "on" to "off" depending on the value
  * input to it.
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

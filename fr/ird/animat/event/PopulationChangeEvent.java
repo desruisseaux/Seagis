@@ -33,7 +33,7 @@ import fr.ird.animat.Population;
 /**
  * Un événement signalant qu'une population a changée.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class PopulationChangeEvent extends EventObject

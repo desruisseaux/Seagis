@@ -95,7 +95,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * <p align="center"><img src="doc-files/SpeciesChooser.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class SpeciesChooser extends JPanel

@@ -65,7 +65,7 @@ import javax.media.jai.util.Range;
  * and time range. This base class is suitable both for longline and seine
  * fisheries.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class AbstractCatchTable extends Table implements CatchTable

@@ -44,7 +44,7 @@ import fr.ird.operator.coverage.ParameterValue;
  * en mètres. Les directions sont exprimées en degrés géographiques
  * (c'est-à-dire par rapport au nord "vrai").
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Animal

@@ -51,7 +51,7 @@ import java.util.logging.Logger;
 /**
  * Abstract class for codec for text headers.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class AbstractProperties extends PropertyParser

@@ -57,7 +57,7 @@ import org.geotools.gui.swing.ZoomPane;
 /**
  * A widget displaying two axis and an arbitrary amount of data series.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Plot2D extends ZoomPane

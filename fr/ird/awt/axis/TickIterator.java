@@ -39,7 +39,7 @@ import java.util.Locale;
  * may use a slightly variable increment between differents months, since
  * all months doesn't have the same number of days.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface TickIterator

@@ -62,7 +62,7 @@ import org.geotools.resources.XMath;
  * used for isobaths. Each isobath (e.g. sea-level, 50 meters, 100 meters...)
  * require a different instance of <code>IsolineLayer</code>.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class IsolineLayer extends Layer implements Polygon.Renderer

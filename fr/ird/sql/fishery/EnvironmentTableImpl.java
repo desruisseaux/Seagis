@@ -40,7 +40,7 @@ import javax.media.jai.util.Range;
  * Implémentation de la table interrogeant ou modifiant
  * un paramètre de la base de données d'environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class EnvironmentTableImpl extends Table implements EnvironmentTable

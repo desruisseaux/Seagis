@@ -33,7 +33,7 @@ import org.geotools.resources.ResourceBundle;
  * never been created directly. Use the factory method {@link #getResources}
  * or use static methods instead.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Resources extends ResourceBundle

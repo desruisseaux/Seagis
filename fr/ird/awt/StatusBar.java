@@ -55,7 +55,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * d'état pourra contenir un message d'intérêt général ainsi qu'une barre
  * des progrès.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class StatusBar extends JComponent
@@ -175,7 +175,7 @@ public final class StatusBar extends JComponent
      * Classe chargée de réagir
      * au progrès de la lecture.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class ProgressListener implements IIOReadProgressListener, Runnable

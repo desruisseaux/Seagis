@@ -49,7 +49,7 @@ import fr.ird.animat.Species;
  * Données d'une capture à la palangre. Un objet <code>SeineCatchEntry</code>
  * correspond à une entrée de la table "Captures" de la base de données "Sennes".
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class SeineCatchEntry extends AbstractCatchEntry

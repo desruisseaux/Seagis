@@ -56,7 +56,7 @@ import org.geotools.resources.Utilities;
  * Informe l'utilisateur des progrès d'une opération en envoyant
  * des courriers électroniques à intervalles régulier.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class MailProgress extends Progress

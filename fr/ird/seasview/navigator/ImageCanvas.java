@@ -88,7 +88,7 @@ import fr.ird.resources.gui.Resources;
  * Panneau affichant une image. En plus de l'image, d'autres informations
  * peuvent être affichées comme par exemple l'échelle de couleurs.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageCanvas extends JPanel
@@ -488,7 +488,7 @@ final class ImageCanvas extends JPanel
      * {@link #setImage}. Pour tuer ce thread, affectez la valeur <code>true</code>
      * au drapeau {@link #kill}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Reader extends Thread implements IIOReadWarningListener

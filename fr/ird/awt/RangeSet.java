@@ -49,7 +49,7 @@ import org.geotools.resources.ClassChanger;
  * <br><br>
  * This class is thread safe.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class RangeSet extends AbstractSet<Range> implements Serializable// TODO: implements SortedSet
@@ -492,7 +492,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
     /**
      * An iterator for iterating through ranges in a {@link RangeSet}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Iterator implements java.util.Iterator<Range>

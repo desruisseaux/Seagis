@@ -70,7 +70,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * pourront être éditées. Enfin, on peut appeler la méthode {@link #showDialog} pour faire
  * apparaître un éditeur des instructions spécifiées.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class SQLEditor extends JPanel
@@ -127,7 +127,7 @@ public class SQLEditor extends JPanel
      * Modèle pour l'affichage de la liste des
      * noms descriptifs des instructions SQL.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Model extends AbstractListModel implements ListSelectionListener, ActionListener

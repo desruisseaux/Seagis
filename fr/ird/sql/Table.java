@@ -32,7 +32,7 @@ import java.sql.SQLException;
 /**
  * Interface de base des tables dans la base de données.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Table

@@ -81,7 +81,7 @@ import org.geotools.resources.Utilities;
 /**
  * Panneau contenant une mosaïque d'images {@link ImageCanvas}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class MosaicCanvas extends JPanel
@@ -149,7 +149,7 @@ final class MosaicCanvas extends JPanel
      * zoom. Cette classe se chargera aussi de surveiller les mouvements
      * de la souris pour afficher les coordonnées géographiques pointées.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Listeners extends MouseCoordinateFormat implements ZoomChangeListener, MouseListener, MouseMotionListener, ComponentListener

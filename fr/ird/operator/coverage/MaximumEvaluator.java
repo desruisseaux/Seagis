@@ -47,7 +47,7 @@ import javax.media.jai.iterator.RectIterFactory;
  * Une fonction déterminant la position de la valeur maximale
  * dans une région géographique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class MaximumEvaluator extends AbstractEvaluator

@@ -48,7 +48,7 @@ import org.geotools.resources.XArray;
  * columns contains the visible/invisible state, and the
  * last one contains the color.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class IsolineTableModel extends AbstractTableModel

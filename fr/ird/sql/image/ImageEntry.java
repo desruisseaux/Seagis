@@ -52,7 +52,7 @@ import javax.swing.event.EventListenerList;
  * Les objets <code>ImageEntry</code> sont imutables et sécuritaires dans un
  * environnement multi-threads.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface ImageEntry extends Entry
@@ -187,7 +187,7 @@ public interface ImageEntry extends Entry
      * lors de la construction. Les classes dérivées vont typiquement redéfinir quelques méthodes
      * afin d'ajouter ou de modifier certaines fonctionalitées.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     public static class Proxy implements ImageEntry, Serializable

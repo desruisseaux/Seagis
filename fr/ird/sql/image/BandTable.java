@@ -48,8 +48,8 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Connection vers une table des bandes.
  *
+ * @version $Id$
  * @author Martin Desruisseaux
- * @version 1.0
  */
 final class BandTable extends Table
 {

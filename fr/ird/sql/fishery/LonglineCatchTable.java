@@ -53,7 +53,7 @@ import fr.ird.animat.Species;
  * la palangre qu'elle contient. Ces pêches pourront être sélectionnées dans
  * une certaine région géographique et à certaines dates.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class LonglineCatchTable extends AbstractCatchTable

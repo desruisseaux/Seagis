@@ -43,7 +43,7 @@ import java.beans.PropertyChangeListener;
  * For example a graduation for dates is handled in a different way than a
  * graduation for numbers.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Graduation

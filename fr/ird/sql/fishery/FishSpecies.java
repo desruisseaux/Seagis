@@ -46,7 +46,7 @@ import javax.vecmath.MismatchedSizeException;
  * pour représenter des groupes d'individus qui appartiennent à la même espèce animale, mais qui
  * sont de tailles différentes (par exemple les juvéniles versus les adultes).
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class FishSpecies implements Species
@@ -180,7 +180,7 @@ final class FishSpecies implements Species
     /**
      * Icone de l'espèce.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Icon extends ImageIcon implements Species.Icon

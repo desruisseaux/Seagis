@@ -33,7 +33,7 @@ import java.awt.RenderingHints;
 /**
  * Rendering hints for tick's graduation.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class RenderingHintKey extends RenderingHints.Key

@@ -29,7 +29,7 @@ package fr.ird.util;
  * d'échantillonnage entre des données ou déterminer si ces données
  * sont en ordre croissant ou décroissant.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class DeltaStatistics extends Statistics

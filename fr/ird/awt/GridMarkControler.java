@@ -63,7 +63,7 @@ import org.geotools.resources.SwingUtilities;
  * Boite de dialogue proposant à l'utilisateur d'ajuster la densité des marques sur une grille.
  * Cet objet sert typiquement à paramétrer un objet {@link fr.ird.map.layer.GridMarkLayer}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class GridMarkControler extends JPanel

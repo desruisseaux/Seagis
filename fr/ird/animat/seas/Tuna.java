@@ -45,7 +45,7 @@ import fr.ird.operator.coverage.ParameterValue;
  * Représentation d'un animal "thon". En plus d'être mobile,
  * cet animal est attentif aux signaux de son environnement.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Tuna extends MobileObject implements Animal

@@ -50,7 +50,7 @@ import fr.ird.util.XArray;
 /**
  * Représentation d'une population d'animaux et de sa dynamique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Dynamic implements Runnable

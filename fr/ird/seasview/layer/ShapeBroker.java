@@ -47,7 +47,7 @@ import java.awt.geom.IllegalPathStateException;
  *       of <code>getPathIterator(...)</code> is invoked each time. If one of ours
  *       assumptions is false, {@link IllegalPathStateException} will be thrown.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ShapeBroker implements Shape, PathIterator

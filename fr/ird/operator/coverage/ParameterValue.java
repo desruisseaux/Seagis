@@ -34,7 +34,7 @@ import org.geotools.resources.Utilities;
  * peut aussi mémoriser la coordonnées du pixel évalué, si la l'évaluation
  * s'est portée sur un seul pixel.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class ParameterValue

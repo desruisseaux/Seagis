@@ -69,7 +69,7 @@ import org.geotools.resources.Utilities;
  *       pas être prise en compte.</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class Buffer implements Serializable

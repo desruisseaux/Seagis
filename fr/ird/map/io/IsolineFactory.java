@@ -82,7 +82,7 @@ import org.geotools.resources.Utilities;
  * data in memory. Additionally, <code>IsolineFactory</code> can
  * save isolines in a serialized form for faster loading.
  *
- * @version 1.0
+ * @version $Id$
  * @author  Martin Desruisseaux
  */
 public abstract class IsolineFactory
@@ -666,7 +666,7 @@ public abstract class IsolineFactory
      * originating isoline, in order to prevent garbage collection
      * (which would defect the purpose of {@link IsolineFactory}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static class Cloned extends Isoline

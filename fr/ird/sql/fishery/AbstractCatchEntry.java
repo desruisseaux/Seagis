@@ -48,7 +48,7 @@ import fr.ird.animat.Species;
 /**
  * Classe de base des captures.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry

@@ -59,7 +59,7 @@ import org.geotools.resources.XAffineTransform;
 /**
  * Couche représentant une population sur une carte.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaus
  */
 final class PopulationLayer extends MarkLayer implements PopulationChangeListener

@@ -50,7 +50,7 @@ import org.geotools.resources.Utilities;
 /**
  * Filtre des fichiers en fonction du type d'images désiré.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageFileFilter extends FileFilter

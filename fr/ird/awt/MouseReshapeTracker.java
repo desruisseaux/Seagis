@@ -131,7 +131,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * }
  * </pre></blockquote>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 class MouseReshapeTracker extends MouseInputAdapter implements Shape
@@ -1472,7 +1472,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * la visière bouge, le texte sera mis à jour. Si c'est au contraire le texte qui
      * est édité manuellement, la visière sera repositionnée en conséquence.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Control implements PropertyChangeListener

@@ -52,7 +52,7 @@ import fr.ird.operator.coverage.ParameterValue;
  * se faire dans une région géographique dont la taille dépend de la longueur
  * de la palangre.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class CatchCoverage extends Coverage3D

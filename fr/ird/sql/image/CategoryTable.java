@@ -61,7 +61,7 @@ import java.text.ParseException;
  * Connection vers une table des catégories.
  *
  * @author Martin Desruisseaux
- * @version 1.0
+ * @version $Id$
  */
 final class CategoryTable extends Table
 {

@@ -43,7 +43,7 @@ import javax.swing.BoundedRangeModel;
  * et les autres types de nombres. Ces conversions se font par les méthodes
  * {@link #toInteger} et {@link #toLogical}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface LogicalBoundedRangeModel extends BoundedRangeModel

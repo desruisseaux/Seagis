@@ -74,7 +74,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * dans la table, et changer de séries d'images à l'aide des onglets dans le
  * bas de la fenêtre.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class NavigatorFrame extends InternalFrame implements ChangeListener
@@ -625,7 +625,7 @@ loop:       for (int j=0; j<series.length; j++)
      * Elles peuvent ensuite être relues et reconstruire une copie de la fenêtre
      * par un appel à {@link #run()}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Serializer extends Task

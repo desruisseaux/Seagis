@@ -39,7 +39,7 @@ import org.geotools.resources.Utilities;
  * A graduation using numbers on a linear axis. This
  * is the default graduation used in most charts.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class NumberGraduation extends AbstractGraduation

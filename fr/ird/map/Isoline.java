@@ -69,7 +69,7 @@ import fr.ird.resources.ResourceKeys;
  * for <code>Isoline</code> is convenient for sorting isolines in increasing
  * order of altitude.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class Isoline extends Contour implements Comparable<Isoline>
@@ -952,7 +952,7 @@ public class Isoline extends Contour implements Comparable<Isoline>
      * The set of polygons under a point. The check of inclusion
      * or intersection will be performed only when needed.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class FilteredSet extends AbstractSet<Polygon>

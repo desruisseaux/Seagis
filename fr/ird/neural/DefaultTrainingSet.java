@@ -41,7 +41,7 @@ import org.geotools.resources.Utilities;
 /**
  * A default training set backed by an array.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class DefaultTrainingSet implements TrainingSet, Serializable

@@ -38,7 +38,7 @@ import org.geotools.resources.Utilities;
  * A set of data from an HDF file. <code>DataSet</code>
  * are constructed by {@link Parser#getDataSet}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class DataSet

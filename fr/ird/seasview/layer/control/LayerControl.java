@@ -71,7 +71,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Classe de base des objets capable de construire et/ou configurer
  * une couche {@link Layer} pour une image {@link ImageEntry} donnée.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class LayerControl
@@ -99,7 +99,7 @@ public abstract class LayerControl
      * synchronisation afin de ne pas bloquer <i>Swing</i> pendant le chargement
      * d'une image par exemple.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Listeners implements ActionListener
@@ -324,7 +324,7 @@ public abstract class LayerControl
      * Classe de base des éditions qui peuvent être annulées.
      * Les classes n'ont que {@link #edit} à redéfinir.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     protected abstract class Edit extends AbstractUndoableEdit

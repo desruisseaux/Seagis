@@ -31,7 +31,7 @@ import java.awt.Shape;
 /**
  * An interface for series.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Series

@@ -32,7 +32,7 @@ package fr.ird.util;
  *       the {@link java.util.Set} interface. It may be done
  *       if a future version if it seem worth.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class WeakHashSet<Element>

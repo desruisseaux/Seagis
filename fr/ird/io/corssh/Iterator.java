@@ -51,7 +51,7 @@ import java.util.ConcurrentModificationException;
  * cette interface peuvent lancer une exception {@link ConcurrentModificationException} si
  * la source des données ({@link Buffer}) a changée depuis la création de l'itérateur.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Iterator

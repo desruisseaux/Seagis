@@ -37,7 +37,7 @@ import java.util.prefs.Preferences;
 /**
  * Classe de base des tables de la base de données de pêches.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 abstract class Table implements fr.ird.sql.Table

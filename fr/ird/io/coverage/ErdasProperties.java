@@ -39,7 +39,7 @@ import java.awt.image.RasterFormatException;
  * for Sea Surface Temperature images in RAW binary files
  * from the Canarias station.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ErdasProperties extends AbstractProperties

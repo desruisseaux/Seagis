@@ -42,7 +42,7 @@ import java.awt.geom.Rectangle2D;
  * This class may be removed when we will have
  * a more general one for ploting data.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class HistoryPane extends ZoomPane

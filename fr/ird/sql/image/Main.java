@@ -85,7 +85,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * caractères étendus. La page de code en cours peut être obtenu en tappant
  * <code>chcp</code> sur la ligne de commande.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Main extends Console

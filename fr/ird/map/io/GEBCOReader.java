@@ -70,7 +70,7 @@ import fr.ird.resources.ResourceKeys;
  * &nbsp; 50.2220  -63.9920
  * </pre></blockquote>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class GEBCOReader extends IsolineReader

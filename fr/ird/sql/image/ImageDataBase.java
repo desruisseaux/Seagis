@@ -63,7 +63,7 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Connection avec la base de données d'images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class ImageDataBase extends DataBase

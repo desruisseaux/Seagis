@@ -85,7 +85,7 @@ import org.geotools.units.Unit;
  *   <li>{@link #paint(GraphicsJAI, Shape, int)}</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class MarkLayer extends Layer

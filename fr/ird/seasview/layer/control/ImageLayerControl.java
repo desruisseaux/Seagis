@@ -55,7 +55,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * Couche contenant une image. Certaines opérations pourront être
  * appliquées sur les images, comme par exemple une convolution.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class ImageLayerControl extends LayerControl

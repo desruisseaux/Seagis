@@ -26,7 +26,7 @@ import fr.ird.resources.ResourceKeys;
 /**
  * Basic Feed Forward type network.
  *
- * @version 1.0
+ * @version $Id$
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */

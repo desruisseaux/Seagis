@@ -31,7 +31,7 @@ import fr.ird.util.XArray;
  * Enveloppe un tableau <code>float[]</code> dans
  * lequel des données pourront être ajoutés.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class DynamicArray extends SubArray

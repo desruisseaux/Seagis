@@ -26,7 +26,7 @@ package fr.ird.map.array;
 /**
  * Itérateur balayant les données d'un tableau {@link DefaultArray}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class DefaultIterator extends PointIterator

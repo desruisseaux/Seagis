@@ -49,7 +49,7 @@ import org.geotools.resources.Utilities;
  * Cette classe peut aussi écrire des avertissements, ce qui est utile entre autre lors de la lecture d'un
  * fichier de données durant laquelle on veut signaler les erreurs mais sans arrêter la lecture pour autant.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class PrintProgress extends Progress

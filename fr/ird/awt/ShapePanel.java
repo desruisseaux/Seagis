@@ -73,7 +73,7 @@ import java.awt.event.ActionEvent;
  * du système d'axe sera en bas à gauche de l'écran (plutôt qu'en haut), comme le
  * veut la convention géométrique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class ShapePanel extends JPanel

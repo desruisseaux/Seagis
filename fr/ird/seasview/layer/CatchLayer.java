@@ -69,7 +69,7 @@ import javax.media.jai.util.Range;
  * geographic extent of each catch (as returned by {@link EntryCatch#getShape}) using
  * the dominant species's color.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class CatchLayer extends MarkLayer

@@ -42,7 +42,7 @@ import fr.ird.resources.ResourceKeys;
 /**
  * Base class for bathymetry readers.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class IsolineReader

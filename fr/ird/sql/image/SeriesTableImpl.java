@@ -60,7 +60,7 @@ import fr.ird.resources.gui.ResourceKeys;
  *
  * @see ImageDataBase#getSeriesTable
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class SeriesTableImpl extends Table implements SeriesTable
@@ -475,7 +475,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * {@link SeriesTable#getTree} et peuvent être obtenus par des appels à {@link fr.ird.awt.tree.TreeNode#getUserObject}.
      * La façon préférée d'obtenir des objets de cette classe est par la méthode {@link ImageDataBase#getReference(int)}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static class Reference implements Entry, Serializable
@@ -587,7 +587,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * d'une série.
      *
      * @author Martin Desruisseaux
-     * @version 1.0
+     * @version $Id$
      */
     private static final class SeriesReference extends Reference implements SeriesEntry
     {

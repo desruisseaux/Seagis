@@ -30,7 +30,7 @@ package fr.ird.io.hdf4;
  * Classe ayant la charge d'effectuer un test de qualité d'une donnée.
  * Ce test est fait en vérifiant les bits d'un drapeau de qualité.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class QualityCheck

@@ -61,7 +61,7 @@ import org.geotools.resources.Utilities;
  * reportés dans une fenêtre de <i>Swing</i>.  Exécuter un long calcul dans un thread séparé est en général
  * une pratique recommandée.</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Progress

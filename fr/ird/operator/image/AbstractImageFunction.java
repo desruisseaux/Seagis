@@ -68,7 +68,7 @@ import fr.ird.map.layer.GridCoverageLayer;
  *   <li>{@link #getWeight} (optional)</li>
  * </ul>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class AbstractImageFunction implements ImageFunction

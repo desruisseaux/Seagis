@@ -35,7 +35,7 @@ import javax.vecmath.MismatchedSizeException;
 /**
  * Default implementation for a series.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class DefaultSeries implements Series

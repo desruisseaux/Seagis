@@ -62,7 +62,7 @@ import fr.ird.resources.gui.ResourceKeys;
 /**
  * Contrôleur d'une couche {@link CatchLayer}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class CatchLayerControl extends LayerControl

@@ -70,7 +70,7 @@ import fr.ird.resources.ResourceKeys;
  * <p align="center"><img src="doc-files/KernelEditor.png"></p>
  * <p>&nbsp;</p>
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class KernelEditor extends JComponent
@@ -308,7 +308,7 @@ public class KernelEditor extends JComponent
      * currently selected kernel. This object is also a listener for various
      * events (like changing the size of the table).
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Model extends AbstractTableModel implements ComboBoxModel, ChangeListener, ItemListener

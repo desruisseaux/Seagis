@@ -49,7 +49,7 @@ import java.util.Locale;
  * Ajoute le code nécessaire au décodage des images
  * fournit par la station des îles Canaries.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange

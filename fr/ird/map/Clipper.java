@@ -41,7 +41,7 @@ import java.awt.geom.Rectangle2D;
  * pourra ensuite effectuer les clips à répétitions sur une séries de
  * polygones.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Clipper

@@ -27,7 +27,7 @@ package fr.ird.awt.tree;
  * It may changes by adding or removing child nodes, or by changing
  * the contents of a user object stored in the node.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface MutableTreeNode extends javax.swing.tree.MutableTreeNode, TreeNode

@@ -83,7 +83,7 @@ import org.geotools.resources.Geometry;
  * Par convention, toutes les méthodes statiques de cette classe peuvent agir
  * sur une chaîne d'objets {@link Segment} plutôt que sur une seule instance.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class Segment implements Serializable
@@ -1264,7 +1264,7 @@ final class Segment implements Serializable
     /**
      * Ensemble de points d'un polyligne ou d'un polygone.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     static final class Collection extends AbstractCollection<Point2D>
@@ -1307,7 +1307,7 @@ final class Segment implements Serializable
     /**
      * Iterateur balayant les coordonnées d'un polyligne ou d'un polygone.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     static final class Iterator implements java.util.Iterator<Point2D>

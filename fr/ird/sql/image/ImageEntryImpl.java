@@ -94,7 +94,7 @@ import javax.media.jai.util.CaselessStringKey;
  * Les objets <code>ImageEntry</code> sont imutables et sécuritaires dans un
  * environnement multi-threads.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageEntryImpl implements ImageEntry, Serializable

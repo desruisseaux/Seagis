@@ -56,7 +56,7 @@ import org.geotools.resources.SwingUtilities;
  * A control panel for configuring an image. This control panel
  * allows to select an operation, a convolution kernel, etc.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageControlPanel extends JPanel

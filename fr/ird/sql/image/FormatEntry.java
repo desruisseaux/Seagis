@@ -35,7 +35,7 @@ import org.geotools.resources.Utilities;
  * Information sur un format. Un objet <code>FormatEntry</code> correspond à un
  * enregistrement de la base de données de formats d'images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface FormatEntry extends Entry

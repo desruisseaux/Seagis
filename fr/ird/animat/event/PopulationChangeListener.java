@@ -34,7 +34,7 @@ import java.util.EventListener;
  * Ces changements inclus les espèces qui s'ajoutent ou qui meurent,
  * mais n'incluent pas les changements de positions des animaux.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface PopulationChangeListener extends EventListener

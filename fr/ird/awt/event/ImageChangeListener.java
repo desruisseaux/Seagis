@@ -34,7 +34,7 @@ import java.util.EventListener;
  * En général, ces changements surviendront à l'intérieur d'une fenêtre qui
  * contient {@link net.seas.map.MapPanel}.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface ImageChangeListener extends EventListener

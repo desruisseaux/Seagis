@@ -50,7 +50,7 @@ import java.util.logging.LogRecord;
  * ou à appliquer une convolution. Certaines opérations peuvent changer les unités du
  * paramètre géophysique.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Operation
@@ -196,7 +196,7 @@ public abstract class Operation
      * order to allows the source {@link GridCoverage} to be garbage-collected
      * as well as the transformed {@link GridCoverage}.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private static final class Cleaner extends Thread
@@ -239,7 +239,7 @@ public abstract class Operation
      * sera aussitôt retirée de l'ensemble {@link Operation#filtered} de
      * façon à permettre au ramasse miettes de réclamer ce dernier aussi.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Entry extends WeakReference<GridCoverage>

@@ -96,7 +96,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * images.  L'utilisateur pourra choisir une ou plusieurs images de son choix
  * dans la table, et configurer les couches à superposer sur ces images.
  *
- * @version 1.0
+ * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ImageTablePanel extends ImagePanel
@@ -524,7 +524,7 @@ final class ImageTablePanel extends ImagePanel
      * changements de la sélection de l'utilisateur ainsi qu'aux changements
      * de la visibilité du panneau.
      *
-     * @version 1.0
+     * @version $Id$
      * @author Martin Desruisseaux
      */
     private final class Listener implements TableModelListener, ListSelectionListener, ImageChangeListener

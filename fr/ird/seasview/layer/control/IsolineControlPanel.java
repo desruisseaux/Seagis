@@ -48,7 +48,7 @@ import org.geotools.resources.SwingUtilities;
  * Control panel for selecting isolines.
  *
  * @author Martin Desruisseaux
- * @version 1.0
+ * @version $Id$
  */
 final class IsolineControlPanel extends JPanel
 {
