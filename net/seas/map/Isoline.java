@@ -197,11 +197,19 @@ public class Isoline extends Contour
     {
         if (bounds==null)
         {
-            bounds=new Rectangle2D.Float();
             for (int i=polygonCount; --i>=0;)
             {
-                final Rectangle2D polygonBounds=polygons[i].getBounds2D();
-                if (!polygonBounds.isEmpty()) bounds.add(polygonBounds);
+                final Polygon polygon = polygons[i];
+                if (!polygon.isEmpty())
+                {
+                    final Rectangle2D polygonBounds=polygon.getBounds2D();
+                    if (bounds==null) bounds=polygonBounds;
+                    else bounds.add(polygonBounds);
+                }
+            }
+            if (bounds==null)
+            {
+                bounds = new Rectangle2D.Float();
             }
         }
         return bounds;

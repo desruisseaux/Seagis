@@ -83,7 +83,7 @@ public class Console
         boolean prefEnc = false;
         if (Version.MINOR>=4 && encoding==null)
         {
-            encoding = Preferences.userRoot().node("net/seas/util").get(ENCODING, null);
+            encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
             prefEnc  = true;
         }
         if (encoding!=null) try
@@ -91,7 +91,7 @@ public class Console
             out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
             if (Version.MINOR>=4 && !prefEnc)
             {
-                Preferences.userRoot().node("net/seas/util").put(ENCODING, encoding);
+                Preferences.userNodeForPackage(Console.class).put(ENCODING, encoding);
             }
         }
         catch (UnsupportedEncodingException exception)
@@ -243,7 +243,7 @@ public class Console
     {
         if (Version.MINOR>=4) try
         {
-            final String encoding = Preferences.userRoot().node("net/seas/util").get(ENCODING, null);
+            final String encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
             if (encoding!=null) return new OutputStreamWriter(out, encoding);
         }
         catch (UnsupportedEncodingException exception)

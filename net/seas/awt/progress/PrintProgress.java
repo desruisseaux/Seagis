@@ -37,9 +37,9 @@ import java.text.BreakIterator;
 
 // Divers
 import net.seas.util.XString;
+import net.seas.util.Console;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
-import java.util.prefs.Preferences;
 
 
 /**
@@ -132,7 +132,7 @@ public class PrintProgress extends Progress
      * La longueur par défaut des lignes sera de 80 caractères.
      */
     public PrintProgress()
-    {this(wrap(System.out));}
+    {this(new PrintWriter(Console.getWriter(System.out)));}
 
     /**
      * Construit un objet qui écrira sur le périphérique de
@@ -157,30 +157,6 @@ public class PrintProgress extends Progress
         this.maxLength=maxLength;
         final String lineSeparator=System.getProperty("line.separator");
         CR_supported=(lineSeparator!=null && lineSeparator.equals("\r\n"));
-    }
-
-    /**
-     * Wrap an PrintStream in a PrintWriter. Encoding will
-     * be selected from user preferences.
-     */
-    private static PrintWriter wrap(final PrintStream out)
-    {
-        final String encoding = Preferences.userRoot().node("net/seas/util").get("Console encoding", null);
-        try
-        {
-            return new PrintWriter((encoding!=null) ? new OutputStreamWriter(out, encoding) : new OutputStreamWriter(out));
-        }
-        catch (UnsupportedEncodingException exception)
-        {
-            if (Version.MINOR>=4)
-            {
-                UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
-                e.initCause(exception);
-                throw e;
-            }
-            else throw new IllegalArgumentException(exception.getLocalizedMessage());
-            // IllegalArgumentException is the first 1.2 parent of UnsupportedCharsetException.
-        }
     }
 
     /**

@@ -28,13 +28,15 @@ import net.seas.opengis.ct.TransformException;
 import net.seas.opengis.ct.CoordinateTransform;
 import net.seas.opengis.ct.CoordinateTransformFactory;
 import net.seas.opengis.ct.CannotCreateTransformException;
+import net.seas.opengis.ct.NoninvertibleTransformException;
 
 // Events
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-// Geometry
+// Miscellaneous
 import java.awt.geom.Point2D;
+import net.seas.util.Version;
 
 
 /**
@@ -62,28 +64,21 @@ public final class GeoMouseEvent extends MouseEvent
     private final MapPanel mapPanel;
 
     /**
-     * Transformation de coordonnées convertissant les coordonnées cartographiques d'un
-     * système quelconque vers le système de coordonnées logiques de l'affichage. Le système
-     * <code>projection.getTargetCS()</code> <u>doit</u> correspondre au système de coordonnées
-     * affiché à l'écran. Le système <code>projection.getSourceCS()</code> peut être arbitraire,
-     * mais il est conseillé (pour des raisons de performances) qu'il soit le système ayant le
-     * plus de chance d'être demandé par {@link #getCoordinate}.
+     * The transform most likely to be used by this event. This transform must be equals
+     * to <code>MapPanel.commonestTransform.inverse()</code>, or be <code>null</code> if
+     * not yet computed. The <code>getSourceCS()</code> MUST be the map panel's coordinate
+     * system (i.e. the coordinate system used for rendering). The <code>getTargetCS()</code>
+     * is arbitrary, but performance will be better if it is set to the commonest coordinate
+     * system used by layers.
      */
-    private CoordinateTransform projection;
+    private CoordinateTransform inverseTransform;
 
     /**
-     * Coordonnées <code>x</code> projetée dans le système
-     * <code>projection.getSourceCS()</code>. Ce champ n'est
-     * valide que si {@link #projected} est <code>true</code>.
+     * Coordonnées <var>x</var> et <var>y</var> projetées dans le système
+     * <code>inverseTransform.getTargetCS()</code>.  Ces champs ne sont
+     * valides que si {@link #projected} est <code>true</code>.
      */
-    private transient double px;
-
-    /**
-     * Coordonnées <code>y</code> projetée dans le système
-     * <code>projection.getSourceCS()</code>. Ce champ n'est
-     * valide que si {@link #projected} est <code>true</code>.
-     */
-    private transient double py;
+    private transient double px, py;
 
     /**
      * Indique si les coordonnées {@link #px} et {@link #py}
@@ -109,7 +104,8 @@ public final class GeoMouseEvent extends MouseEvent
               event.getX(),            // the horizontal x coordinate for the mouse location
               event.getY(),            // the vertical y coordinate for the mouse location
               event.getClickCount(),   // the number of mouse clicks associated with event
-              event.isPopupTrigger()); // a boolean, true if this event is a trigger for a popup-menu
+              event.isPopupTrigger(),  // a boolean, true if this event is a trigger for a popup-menu
+              event.getButton());      // which of the mouse buttons has changed state (JDK 1.4 only).
         this.mapPanel = mapPanel;
     }
 
@@ -163,22 +159,20 @@ public final class GeoMouseEvent extends MouseEvent
     {
         try
         {
-            if (projection==null)
+            if (inverseTransform==null)
             {
-                projection=mapPanel.getCommonestTransform();
+                inverseTransform = (CoordinateTransform) mapPanel.getCommonestTransform().inverse();
             }
             /*
              * Si le système de coordonnées spécifié n'est pas
              * celui que l'on attendait, calcule à la volé les
              * coordonnées.
              */
-            if (!system.equivalents(projection.getSourceCS()))
+            if (!system.equivalents(inverseTransform.getTargetCS()))
             {
                 dest=getVisualCoordinate(dest);
-                if (dest!=null)
-                {
-                    return Contour.TRANSFORMS.createFromCoordinateSystems(projection.getTargetCS(), system).transform(dest, dest);
-                }
+                if (dest==null) return null;
+                return Contour.TRANSFORMS.createFromCoordinateSystems(mapPanel.getCoordinateSystem(), system).transform(dest, dest);
             }
             /*
              * Si le système de coordonnées est bien celui que l'on attendait
@@ -201,13 +195,10 @@ public final class GeoMouseEvent extends MouseEvent
             dest=getVisualCoordinate(dest);
             if (dest!=null)
             {
-                dest=projection.inverse().transform(dest, dest);
-                if (dest instanceof Point2D.Double)
-                {
-                    px=dest.getX();
-                    py=dest.getY();
-                    projected=true;
-                }
+                dest=inverseTransform.transform(dest, dest);
+                px=dest.getX();
+                py=dest.getY();
+                projected=true;
             }
             return dest;
         }
@@ -231,20 +222,29 @@ public final class GeoMouseEvent extends MouseEvent
      */
     final CoordinateTransform getTransformToTarget(final CoordinateTransform cached) throws CannotCreateTransformException
     {
-        if (projection==null)
+        final CoordinateSystem sourceCS = mapPanel.getCoordinateSystem();
+        if (sourceCS.equivalents(cached.getSourceCS())) return cached;
+        final CoordinateSystem targetCS = cached.getTargetCS();
+        try
         {
-            projection=mapPanel.getCommonestTransform();
+            if (inverseTransform==null)
+            {
+                inverseTransform = (CoordinateTransform) mapPanel.getCommonestTransform().inverse();
+            }
+            if (Version.MINOR>=4)
+            {
+                assert(sourceCS.equivalents(inverseTransform.getSourceCS()));
+            }
+            if (targetCS.equivalents(inverseTransform.getTargetCS()))
+            {
+                return inverseTransform;
+            }
         }
-        final CoordinateSystem source=projection.getSourceCS();
-        if (cached.getSourceCS().equivalents(source))
+        catch (NoninvertibleTransformException exception)
         {
-            return cached;
+            // This method is actually invoked by MouseCoordinateFormat only.
+            mapPanel.handleException("MouseCoordinateFormat", "format", exception);
         }
-        final CoordinateSystem destination=cached.getTargetCS();
-        if (projection.getTargetCS().equivalents(destination))
-        {
-            return projection;
-        }
-        return Contour.TRANSFORMS.createFromCoordinateSystems(source, destination);
+        return Contour.TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
     }
 }

@@ -40,6 +40,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import net.seas.util.XAffineTransform;
+import net.seas.util.XDimension2D;
 
 // Graphics
 import java.awt.Paint;
@@ -48,6 +49,9 @@ import java.awt.Stroke;
 import java.awt.Graphics2D;
 import javax.swing.UIManager;
 import javax.media.jai.GraphicsJAI;
+
+// Miscellaneous
+import net.seas.util.XMath;
 
 
 /**
@@ -61,24 +65,39 @@ import javax.media.jai.GraphicsJAI;
 public class IsolineLayer extends Layer implements Polygon.Renderer
 {
     /**
+     * Default color for fills.
+     */
+    private static final Color FILL_COLOR = new Color(59,107,92);
+
+    /**
+     * The "preferred line tickness" relative to the isoline's resolution.
+     * A value of 1 means that isoline might be drawn with a line as tick
+     * as the isoline's resolution. A value of 0.25 means that isoline might
+     * be drawn with a line of tickness equals to 1/4 of the isoline's resolution.
+     */
+    private static final double TICKNESS = 0.25;
+
+    /**
      * The isoline data.
      */
     protected final Isoline isoline;
 
     /**
-     * Paint for contour lines.
+     * Paint for contour lines. Default to
+     * panel's foreground (usually black).
      */
-    private Paint contour = UIManager.getColor("panel.foreground");
+    private Paint contour = UIManager.getColor("Panel.foreground");
 
     /**
-     * Paint for filling holes.
+     * Paint for filling holes. Default to
+     * panel's background (usually gray).
      */
-    private Paint background = UIManager.getColor("panel.background");
+    private Paint background = UIManager.getColor("Panel.background");
 
     /**
      * Paint for filling elevations.
      */
-    private Paint fill = UIManager.getColor("panel.foreground");
+    private Paint fill = FILL_COLOR;
 
     /**
      * The desired rendering resolution in points.
@@ -91,8 +110,28 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     public IsolineLayer(Isoline isoline)
     {
         super((isoline=isoline.clone()).getCoordinateSystem());
-        setPreferredArea(isoline.getBounds2D());
         this.isoline = isoline;
+
+        final Rectangle2D  bounds = isoline.getBounds2D();
+        final float    resolution = isoline.getResolution();
+        final Ellipsoid ellipsoid = isoline.getEllipsoid();
+        final double dx,dy;
+        if (ellipsoid!=null)
+        {
+            // Transforms the resolution into a pixel size in the middle of 'bounds'.
+            // Note: 'r' is the inverse of **apparent** ellipsoid's radius at latitude 'y'.
+            //       For the inverse of "real" radius, we would have to swap sin and cos.
+            final double   y = Math.toRadians(bounds.getCenterY());
+            final double sin = Math.sin(y);
+            final double cos = Math.cos(y);
+            final double   r = XMath.hypot(sin/ellipsoid.getSemiMajorAxis(),
+                                           cos/ellipsoid.getSemiMinorAxis());
+            dy = Math.toDegrees(resolution*r);
+            dx = dy*cos;
+        }
+        else dx = dy = resolution;
+        setPreferredPixelSize(new XDimension2D.Double(TICKNESS*dx , TICKNESS*dy));
+        setPreferredArea(bounds);
     }
 
     /**

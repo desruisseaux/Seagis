@@ -573,6 +573,7 @@ public abstract class Layer implements Serializable
             {
                 final Rectangle2D bounds=shape.getBounds2D();
                 this.shape=XAffineTransform.transform(modifier, bounds, bounds);
+System.out.println(shape);
             }
             else this.shape=null;
         }
@@ -591,7 +592,7 @@ public abstract class Layer implements Serializable
     {
         if (visible)
         {
-            if (shape==null || clipBounds==null || shape.intersects(clipBounds))
+//TODO      if (shape==null || clipBounds==null || shape.intersects(clipBounds))
             {
                 if (Version.MINOR>=4)
                 {
@@ -633,7 +634,7 @@ public abstract class Layer implements Serializable
     /**
      * Indique si la région géographique <code>big</code> contient entièrement la sous-région <code>small</code>
      * spécifiée. Un cas particuluer survient si un ou plusieurs bords de <code>small</code> coïncide avec
-     * les bords correspondants de <code>big</code>. L'argument <code>edge</code> indique si on considérer
+     * les bords correspondants de <code>big</code>. L'argument <code>edge</code> indique si on considère
      * qu'il y a inclusion ou pas dans ces circonstances.
      *
      * @param big   Région géographique dont on veut vérifier s'il contient une sous-région.
@@ -692,7 +693,7 @@ public abstract class Layer implements Serializable
             /*
              * Une sous-région a été supprimée ("newSubArea" est nulle). Si la sous-région supprimée ne
              * touchait pas au bord de "area",  alors sa suppression ne peut pas avoir diminuée "area":
-             * on retournera alors AREA. Si au contraire "oldSubArea" touchait au bord de "area", alors
+             * on retournera alors area. Si au contraire "oldSubArea" touchait au bord de "area", alors
              * on ne sait pas si la suppression de "oldSubArea" a diminué "area".  Il faudra recalculer
              * "area" à partir de zéro, ce que l'on indique en retournant NULL.
              */
@@ -704,8 +705,8 @@ public abstract class Layer implements Serializable
         {
             /*
              * Une sous-région a changée ("oldSubArea" est devenu "newSubArea"). Si on détecte que ce
-             * changement PEUT diminuer la superficie totale de "area", il faudra recalculer "area"
-             * à partir de zéro pour en être sur. On retourne donc NULL. Si au contraire la superficie
+             * changement PEUT diminuer la superficie totale de "area", il faudra recalculer "area" à
+             * partir de zéro pour en être sur. On retourne donc NULL.  Si au contraire la superficie
              * totale de "area" ne peut pas avoir diminuée, elle peut avoir augmentée. Ce calcul sera
              * fait à la fin de cette méthode, qui poursuit son cours.
              */

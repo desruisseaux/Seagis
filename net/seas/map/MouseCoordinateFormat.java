@@ -120,7 +120,7 @@ public class MouseCoordinateFormat
      * Retourne une chaîne de caractères représentant les coordonnées pointées par le curseur
      * de la souris.  Les coordonnées seront écrites selon le système de coordonnées spécifié
      * au constructeur. Si une des couches peut ajouter une valeur à la coordonnée (par exemple
-     * une couche qui représente une image satellitaire de température) et que l'écrite des
+     * une couche qui représente une image satellitaire de température) et que l'écriture des
      * valeurs est autorisée (voir {@link #isValueVisible}), alors la valeur sera écrite après
      * les coordonnées. Ces valeurs sont obtenues par des appels à {@link Layer#getLabel}.
      *
@@ -134,7 +134,7 @@ public class MouseCoordinateFormat
         if ((source instanceof MapPanel) && (event instanceof GeoMouseEvent))
         {
             final MapPanel mapPanel = (MapPanel) source;
-            if (mapPanel.getLayerCountFast()!=0)
+            if (mapPanel.hasLayers())
             {
                 final GeoMouseEvent geoEvent = (GeoMouseEvent) event;
                 Point2D point=geoEvent.getVisualCoordinate(this.point);

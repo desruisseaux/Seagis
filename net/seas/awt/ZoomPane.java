@@ -977,17 +977,18 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Retourne la dimension par défaut de cette composante. Cette dimension sera
-     * retournée par {@link #getPreferredSize} si aucune dimension préférée n'a
-     * été explicitement spécifiée.
+     * Returns the default size for this component.  This is the size
+     * returned by {@link #getPreferredSize} if no preferred size has
+     * been explicitly set.
      */
     protected Dimension getDefaultSize()
     {return getViewSize();}
 
     /**
-     * Retourne la dimension logique préférée des pixels lors d'un zoom rapproché. L'implémentation par
-     * défaut retourne une valeur calculée à partir de {@link #getArea}. Les classes dérivées peuvent
-     * redéfinir cette méthode pour retourner une valeur mieux adaptée à la résolution de leurs données.
+     * Returns the preferred pixel size for a close zoom. For image rendering, the
+     * preferred pixel size is the image's pixel size in logical units.  For other
+     * kind of rendering, this "pixel" size should be some raisonable resolution.
+     * The default implementation compute a default value from {@link #getArea}.
      */
     protected Dimension2D getPreferredPixelSize()
     {
@@ -1001,10 +1002,9 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Applique une transformation sur le zoom. La transformation <code>change</code>
-     * doit être dans l'espace des coordonnées logiques, par exemple en mètres ou en
-     * degrés de longitudes et de latitudes. A quelques détails près, l'implémentation
-     * par défaut revient à écrire le code suivant:
+     * Change the zoom by applying and affine transform. The <code>change</code>
+     * transform must express a change if logical units, for example a translation
+     * in meters. This method is conceptually similar to the following code:
      *
      * <pre>
      * {@link #zoom}.{@link AffineTransform#concatenate(AffineTransform) concatenate}(change);
@@ -1012,14 +1012,11 @@ public abstract class ZoomPane extends JComponent
      * {@link #repaint() repaint}({@link #getZoomableBounds getZoomableBounds}(null));
      * </pre>
      *
-     * @param  change Changement à apporter au zoom, dans l'espace des coordonnées logiques.
-     *         Si <code>change</code> est la transformation identitée, alors rien ne sera fait.
-     * @throws UnsupportedOperationException si la matrice <code>change</code> contient une
-     *         opération non-supportée, par exemple si elle contient une rotation alors que
-     *         l'implémentation de <code>transform(AffineTransform)</code> ne supporte pas
-     *         les rotations. L'implémentation par défaut ne lance jamais cette exception.
+     * @param  change The zoom change, as an affine transform in logical coordinates.
+     *         If <code>change</code> is the identity transform, then this method do
+     *         nothing.
      */
-    public void transform(final AffineTransform change) throws UnsupportedOperationException
+    public void transform(final AffineTransform change)
     {
         if (!change.isIdentity())
         {

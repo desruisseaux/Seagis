@@ -71,6 +71,7 @@ import java.util.Comparator;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.util.XArray;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
@@ -414,7 +415,7 @@ public class MapPanel extends ZoomPane
         }
         catch (TransformException exception)
         {
-            handleException("MapPanel", "addLayer", exception);
+            handleException("MapPanel", "changeArea", exception);
             computeArea();
             return;
         }
@@ -427,15 +428,17 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Ajoute une couche à la liste des couches à dessiner. Une couches peut être par
-     * exemple une station ou une échelle. Une station pourra être un simple point, un
-     * vecteur de courant ou une ellipse de marée (voir {@link net.seas.map.layer.MarkLayer}
-     * et ses classes dérivées).
+     * Add a new layer to this map. A <code>MapPanel</code> do not draw anything as
+     * long as at least one layer hasn't be added.  A {@link Layer} can be anything
+     * like an isobath, a remote sensing image, city locations, map scale, etc. The
+     * drawing order (relative to other layers) is determined by the {@link Layer#getZOrder}
+     * property. A {@link Layer} object can be added to only one <code>MapPanel</code> object.
      *
-     * @param  layer Composante à ajouter à la liste des couches à tracer.
-     *         Rien ne sera fait si cette couche apparaissait déjà dans la liste.
-     * @throws IllegalArgumentException si la couche spécifiée ne peut pas être ajoutée
-     *         (par exemple si elle appartenait déjà à un autre objet {@link MapPanel}).
+     * @param  layer Layer to add to this <code>MapPanel</code>. This method call
+     *         will be ignored if <code>layer</code> has already been added to this
+     *         <code>MapPanel</code>.
+     * @throws IllegalArgumentException If <code>layer</code> has already been added
+     *         to an other <code>MapPanel</code>.
      *
      * @see #getLayers
      * @see #removeLayer
@@ -472,7 +475,6 @@ public class MapPanel extends ZoomPane
             layer.setVisible(true);
             changeArea(null, layer.getPreferredArea(), layer.getCoordinateSystem());
             layer.addPropertyChangeListener(listeners);
-
             commonestTransform = null;
             stroke             = null;
         }
@@ -484,12 +486,15 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Retire une couche de la liste des couches à dessiner.
+     * Remove a layer from this <code>MapPanel</code>. Note that if you
+     * just want to temporarily hide à layer, it is more efficient to
+     * invoke {@link Layer#setVisible}.
      *
-     * @param  layer Composante à retirer. Rien ne sera fait si
-     *         cette couche avait déjà été retirée.
-     * @throws IllegalArgumentException si la couche appartenait à
-     *         un autre objet {@link MapPanel} que <code>this</code>.
+     * @param  layer The layer to remove. This method call will be ignored
+     *         if <code>layer</code> has already been removed from this
+     *         <code>MapPanel</code>.
+     * @throws IllegalArgumentException If <code>layer</code> is owned by
+     *         an other <code>MapPanel</code> that <code>this</code>.
      *
      * @see #addLayer
      * @see #getLayers
@@ -507,15 +512,17 @@ public class MapPanel extends ZoomPane
                 throw new IllegalArgumentException(Resources.format(Clé.MAPPANEL_NOT_OWNER));
             }
             repaint(); // Must be invoked first
+            layer.removePropertyChangeListener(listeners);
+            final CoordinateSystem layerCS = layer.getCoordinateSystem();
+            final Rectangle2D    layerArea = layer.getPreferredArea();
+            layer.setVisible(false);
+            layer.clearCache();
+            layer.mapPanel = null;
             /*
              * Retire cette couche de la liste {@link #layers}. On recherchera
              * toutes les occurences de cette couche, même si en principe elle ne
              * devrait apparaître qu'une et une seule fois.
              */
-            layer.removePropertyChangeListener(listeners);
-            layer.setVisible(false);
-            layer.clearCache();
-            layer.mapPanel=null;
             for (int i=layerCount; --i>=0;)
             {
                 final Layer scan=layers[i];
@@ -525,22 +532,21 @@ public class MapPanel extends ZoomPane
                     layers[layerCount]=null;
                 }
             }
-            changeArea(layer.getPreferredArea(), null, layer.getCoordinateSystem());
-
+            changeArea(layerArea, null, layerCS);
             commonestTransform = null;
             stroke             = null;
         }
     }
 
     /**
-     * Retire toutes les couches de cette carte.
+     * Remove all layers from this <code>MapPanel</code>.
      */
     public synchronized void removeAllLayers()
     {
-        repaint();
-        for (int i=layerCount; --i>=0;)
+        repaint(); // Must be invoked first
+        while (--layerCount>=0)
         {
-            final Layer layer=layers[i];
+            final Layer layer=layers[layerCount];
             synchronized (layer)
             {
                 layer.removePropertyChangeListener(listeners);
@@ -548,21 +554,21 @@ public class MapPanel extends ZoomPane
                 layer.clearCache();
                 layer.mapPanel=null;
             }
-            layers[i]=null;
+            layers[layerCount]=null;
         }
-        layerCount=0;
         commonestTransform = null;
         stroke             = null;
         setArea(null);
     }
 
     /**
-     * Renvoie les couches à dessiner sur cette carte (stations ou échelles par
-     * exemple). Les couches seront classées comme suit: la première couche
-     * à dessiner apparaîtra à l'index 0, la seconde couche à dessiner apparaîtra
-     * à l'index 1 et ainsi de suite. Cet ordre sera déterminé à partir de l'ordre Z
-     * retourné par {@link Layer#getZOrder}. S'il n'y a aucune couche à
-     * dessiner, le tableau retourné sera de longueur 0, mais ne sera jamais nul.
+     * Returns all registered layers. The returned array is sorted in increasing
+     * z-order (as returned by {@link Layer#getZOrder}): element at index 0
+     * contains to first layer to drawn.
+     *
+     * @return The sorted array of layers. May have a 0 length, but will never
+     *         be <code>null</code>. Change to this array, will not affect this
+     *         <code>MapPanel</code>.
      *
      * @see #addLayer(Layer)
      * @see #removeLayer(Layer)
@@ -580,18 +586,17 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Retourne le nombre de couches
-     * à dessiner sur cette carte.
+     * Returns the number of layers in this map panel.
      */
     public synchronized int getLayerCount()
     {return layerCount;}
 
     /**
-     * Version non-synchronisée de
-     * {@link #getLayerCount}.
+     * Check if there is at least one registered layer.
+     * Used internally by {@link MouseCoordinateFormat}.
      */
-    final int getLayerCountFast()
-    {return layerCount;}
+    final boolean hasLayers()
+    {return layerCount!=0;}
 
     /**
      * Procède au classement immédiat des
@@ -599,29 +604,21 @@ public class MapPanel extends ZoomPane
      */
     private void sortLayers()
     {
-        if (layers!=null)
+        if (!layerSorted && layers!=null)
         {
-            final Layer[]    oldArray=layers;
-            final int length=oldArray.length;
-            if (length!=layerCount)
-            {
-                layers=new Layer[layerCount];
-                System.arraycopy(oldArray, 0, layers, 0, layerCount);
-            }
-            if (!layerSorted)
-            {
-                Arrays.sort(layers, COMPARATOR);
-                layerSorted=true;
-            }
+            layers = XArray.resize(layers, layerCount);
+            Arrays.sort(layers, COMPARATOR);
+            layerSorted=true;
         }
     }
 
     /**
-     * Défini le texte à afficher par défaut lorsque le curseur de la souris
-     * traine sur la carte. Le texte <code>tooltip</code> sera affiché si
-     * aucune couche {@link Layer} n'a pris proposé de texte.
-     * La valeur <code>null</code> implique qu'aucun texte ne sera affiché
-     * dans ce cas.
+     * Registers the default text to display in a tool tip. The text displays
+     * when the cursor lingers over the component and no layer has proposed a
+     * tool tip (i.e. {@link Layer#getToolTipText} returned <code>null</code>
+     * for all registered layers).
+     *
+     * @param tooltip The default tooltip, or <code>null</code> if none.
      */
     public void setToolTipText(final String tooptip)
     {
@@ -633,16 +630,15 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Retourne un texte a afficher lorsque le curseur de la souris traîne sur la
-     * carte. L'implémentation par défaut vérifie si le curseur se trouve sur un
-     * des éléments ajoutés à la carte (typiquement une des stations) et appelle
-     * sa méthode {@link Layer#getToolTipText}. Cette méthode n'a normalement
-     * pas besoin d'être utilisée directement. Elle est utilisé automatiquement par
-     * <i>Swing</i>.
+     * Returns the string to be used as the tooltip for a given mouse event.
+     * This method invokes {@link Layer#getToolTipText} for some registered
+     * layers in decreasing z-order, until one is found that returns a non-null
+     * string. If no layer has a tool tip for this event, then the tooltip
+     * string that has been set with {@link #setToolTipText} is returned.
      *
-     * @param  event Position de la souris.
-     * @return Le texte à afficher, ou <code>null</code> s'il n'y a rien
-     *         à afficher pour la position <code>event</code> de la souris.
+     * @param  event The mouse event.
+     * @return The tool tip text, or <code>null</code> if there
+     *         is no tool tip for this location.
      */
     public String getToolTipText(final MouseEvent event)
     {
@@ -664,13 +660,13 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Méthode appelée automatiquement lorsque l'utilisateur a cliqué sur le bouton droit de
-     * la souris. Cette méthode vérifie si le clic s'est fait sur une couche et appelle
-     * {@link Layer#getPopupMenu} si c'est le cas. Si aucune couche ne propose de
-     * menu, alors cette méthode appele {@link #getDefaultPopupMenu}.
+     * Returns the popup menu to be used for a given mouse event. This method invokes
+     * {@link Layer#getPopupMenu} for some registered layers in decreasing z-order,
+     * until one is found that returns a non-null menu. If no layer has a popup menu
+     * for this event, then this method returns {@link #getDefaultPopupMenu}.
      *
-     * @param event Evénement de la souris contenant entre autre les coordonnées pointées.
-     * @return Le menu contextuel, ou <code>null</code> pour ne pas faire apparaître de menu.
+     * @param  event The mouse event.
+     * @return The popup menu for this event, or <code>null</code> if there is none.
      */
     protected JPopupMenu getPopupMenu(final MouseEvent event)
     {
@@ -692,19 +688,17 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Retourne le menu par défaut à faire apparaître lorsque l'utilisateur a cliqué
-     * sur le bouton droit de la souris et qu'aucune couche n'a proposé de menu.
-     * L'implémentation par défaut retourne un menu contextuel dans lequel figure des
-     * options de navigations.
+     * Returns a default popup menu for the given mouse event. This method
+     * is invoked when no layers proposed a popup menu for this event. The
+     * default implementation returns a menu with navigation options.
      */
     protected JPopupMenu getDefaultPopupMenu(final GeoMouseEvent event)
     {return super.getPopupMenu(event);}
 
     /**
-     * Méthode appellée chaque fois que le bouton de la souris a été cliqué. L'implémentation par
-     * défaut appele les méthodes {@link Layer#mouseClicked} de toutes les couches (en commençant
-     * par celles qui apparaissent par dessus les autres) jusqu'à ce que l'une des couches appelle
-     * {@link MouseEvent#consume}.
+     * Invoked when user clicked on this <code>MapPanel</code>. The default
+     * implementation invokes {@link Layer#mouseClicked} for some layers in
+     * decreasing z-order until one consume the event (with {@link MouseEvent#consume}).
      */
     protected void mouseClicked(final MouseEvent event)
     {
@@ -745,7 +739,6 @@ public class MapPanel extends ZoomPane
     {
         // On appele pas 'sortLayer' de façon systèmétique afin de gagner un peu en performance.
         // Cette méthode peut être appelée très souvent (à chaque déplacement de la souris).
-        if (!layerSorted) sortLayers();
         final int          x = event.getX();
         final int          y = event.getY();
         final Layer[] layers = this.layers;
@@ -762,19 +755,17 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Effectue le traitement d'un évènement de la souris. Cette méthode convertie
-     * l'événemenent {@link MouseEvent} en événement {@link GeoMouseEvent}, puis le
-     * transmets à <code>super.processMouseEvent(MouseEvent)</code> pour distribution
-     * auprès des objets intéréssés.
+     * Processes mouse events occurring on this component. This method
+     * wrap the <code>MouseEvent</code> into a <code>GeoMouseEvent</code>
+     * and pass it to any registered <code>MouseListener</code> objects.
      */
     protected void processMouseEvent(final MouseEvent event)
     {super.processMouseEvent(new GeoMouseEvent(event, this));}
 
     /**
-     * Effectue le traitement d'un mouvement de la souris. Cette méthode convertie
-     * l'événemenent {@link MouseEvent} en événement {@link GeoMouseEvent}, puis le
-     * transmets à <code>super.processMouseEvent(MouseEvent)</code> pour distribution
-     * auprès des objets intéréssés.
+     * Processes mouse motion events occurring on this component. This method
+     * wrap the <code>MouseEvent</code> into a <code>GeoMouseEvent</code>
+     * and pass it to any registered <code>MouseMotionListener</code> objects.
      */
     protected void processMouseMotionEvent(final MouseEvent event)
     {super.processMouseMotionEvent(new GeoMouseEvent(event, this));}
@@ -840,6 +831,14 @@ public class MapPanel extends ZoomPane
         else return super.getPreferredPixelSize();
     }
 
+    /**
+     * Returns the default size for this component.  This is the size
+     * returned by {@link #getPreferredSize} if no preferred size has
+     * been explicitly set.
+     */
+    protected Dimension getDefaultSize()
+    {return new Dimension(512,512);}
+
     /*
      * Retourne les coordonnées projetées de la région visible à l'écran. Ces coordonnées
      * sont exprimées en mètres, ou un degrés si aucune projection cartographique n'a été
@@ -867,33 +866,23 @@ public class MapPanel extends ZoomPane
 //  }
 
     /**
-     * Dessine la carte avec toutes ces couches visibles. Les couches
-     * auront été ajoutées à la carte avec {@link #addLayer}. Les zooms
-     * sont automatiquement pris en compte.
+     * Paint this <code>MapLayer</code> and all visible
+     * layers it contains. Zoom are taken in account.
      *
-     * @param graph Graphique à utiliser pour dessiner la carte.
+     * @param graph The graphics context.
      */
     protected void paintComponent(final Graphics2D graph)
     {
         sortLayers();
-        if (stroke==null) try
+        if (stroke==null)
         {
             Dimension2D s = getPreferredPixelSize();
-            Point2D point = new Point2D.Double(s.getWidth(), s.getHeight());
-            point=XAffineTransform.inverseDeltaTransform(zoom, point, point);
-            double t; t=Math.sqrt((t=point.getX())*t + (t=point.getY())*t);
-            stroke=new BasicStroke((float) (4*t));
-
-            stroke = new BasicStroke(0); // TODO
+            double t; t=Math.sqrt((t=s.getWidth())*t + (t=s.getHeight())*t);
+            stroke=new BasicStroke((float)t);
         }
-        catch (NoninvertibleTransformException exception)
-        {
-            ExceptionMonitor.unexpectedException("net.seas.map", "MapPanel", "paintComponent", exception);
-            return;
-        }
-        final Layer[]          layers = this.layers;
-        final GraphicsJAI    graphics = GraphicsJAI.createGraphicsJAI(graph, this);
-        final Rectangle    clipBounds = graphics.getClipBounds();
+        final Layer[]       layers = this.layers;
+        final GraphicsJAI graphics = GraphicsJAI.createGraphicsJAI(graph, this);
+        final Rectangle clipBounds = graphics.getClipBounds();
         final MapPaintContext context;
         try
         {
@@ -929,9 +918,9 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Dessine la loupe, s'il y en a une.
+     * Paint this magnifier, if presents.
      *
-     * @param graphics Graphique à utiliser pour dessiner la loupe.
+     * @param graph The graphics context.
      */
     protected void paintMagnifier(final Graphics2D graphics)
     {
@@ -947,11 +936,12 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Imprime la carte avec toutes ces couches visibles. Les couches auront été ajoutés
-     * à la carte avec {@link #addLayer}. Les zooms sont automatiquement pris en compte
-     * de la même façon que lors du dernier traçage à l'écran.
+     * Print this <code>MapLayer</code> and all visible
+     * layers it contains. Zoom are taken in account in
+     * the same way than the {@link #paintComponent(Graphics2D}}
+     * method.
      *
-     * @param graphics Graphique à utiliser pour dessiner la carte.
+     * @param graph The graphics context.
      */
     protected void printComponent(final Graphics2D graphics)
     {
@@ -973,7 +963,6 @@ public class MapPanel extends ZoomPane
      */
     private void zoomChanged(final ZoomChangeEvent event)
     {
-        stroke = null;
         AffineTransform modifier;
         try
         {
@@ -1000,9 +989,16 @@ public class MapPanel extends ZoomPane
      */
     final Point2D inverseTransform(final Point2D point)
     {
-        try {return zoom.inverseTransform(point, point);}
+        try
+        {
+            return zoom.inverseTransform(point, point);
+        }
         catch (NoninvertibleTransformException exception)
-        {exception.printStackTrace(); return null;}
+        {
+            // This method is actually invoked by GeoMouseEvent only.
+            ExceptionMonitor.unexpectedException("net.seas.map", "GeoMouseEvent", "getVisualCoordinate", exception);
+            return null;
+        }
     }
 
     /**
