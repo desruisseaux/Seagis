@@ -283,10 +283,8 @@ public class Coverage3D extends Coverage {
      * (if no image was available at the specified date, the closest one is selected).
      * The <code>date</code> argument is then set to this date. Then, this method locate
      * the pixel under the <code>point</code> coordinate on this image. The <code>point</code>
-     * argument is then set to this pixel center.
-     * <br><br>
-     * Calling any <code>evaluate</code> method with snapped coordinates will
-     * returns non-interpolated value.
+     * argument is then set to this pixel center. Consequently, calling any <code>evaluate</code>
+     * method with snapped coordinates will returns non-interpolated values.
      *
      * @param point The point to snap (may be null).
      * @param date  The date to snap (can not be null, since we need to
@@ -329,7 +327,8 @@ public class Coverage3D extends Coverage {
         if (point != null) try {
             // TODO: Next line assume we are using the default table implementation.
             assert coordinateSystem.equals(entries[index].getCoordinateSystem(), false);
-            CoordinatePoint    coordinate = new CoordinatePoint(point.getX(), point.getY(), ImageTableImpl.toJulian(date.getTime()));
+            CoordinatePoint coordinate = new CoordinatePoint(point.getX(), point.getY(),
+                                             CoordinateSystemTable.toJulian(date.getTime()));
             final GridGeometry   geometry = entries[index].getGridGeometry();
             final GridRange         range = geometry.getGridRange();
             final MathTransform transform = geometry.getGridToCoordinateSystem();
@@ -697,11 +696,11 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public int[] evaluate(final CoordinatePoint coord, int[] dest) throws CannotEvaluateException
-    {
+    public int[] evaluate(final CoordinatePoint coord, int[] dest) throws CannotEvaluateException {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.
-        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]),
+                        CoordinateSystemTable.toDate(coord.ord[2]), dest);
     }
 
     /**
@@ -720,11 +719,11 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws CannotEvaluateException
-    {
+    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws CannotEvaluateException {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.
-        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]),
+                        CoordinateSystemTable.toDate(coord.ord[2]), dest);
     }
 
     /**
@@ -743,11 +742,11 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws CannotEvaluateException
-    {
+    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws CannotEvaluateException {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.
-        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]),
+                        CoordinateSystemTable.toDate(coord.ord[2]), dest);
     }
 
     /**

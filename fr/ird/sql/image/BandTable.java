@@ -114,7 +114,13 @@ final class BandTable extends Table {
             /*
              * Obtient les unités de cette bande.
              */
-            final Unit unit = (units!=null) ? Unit.get(units).rename(units, null) : null;
+            Unit unit = null;
+            if (units != null) {
+                unit = Unit.get(units);
+                if (unit != null) {
+                    unit = unit.rename(units, null);
+                }
+            }
             /*
              * Obtient les thèmes de cette bande.
              */

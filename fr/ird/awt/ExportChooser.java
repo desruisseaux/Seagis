@@ -61,6 +61,7 @@ import java.util.LinkedHashSet;
 
 // Geotools dependencies
 import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.GridCoverageProcessor;
@@ -68,6 +69,7 @@ import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.util.ProgressListener;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.SwingUtilities;
 
 // Divers
@@ -400,24 +402,36 @@ public final class ExportChooser extends JPanel {
         public void run() {
             final EventListenerList listeners = new EventListenerList();
             listeners.add(IIOReadWarningListener.class, this);
-
             progress.started();
-            final CoordinateSystem cs = GeographicCoordinateSystem.WGS84;
             final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
             for (int i=0; i<entries.length; i++) {
                 final ImageEntry entry = entries[i];
                 progress.setDescription(Resources.format(ResourceKeys.EXPORTING_$1, entry.getName()));
-                progress.progress(((float)(i*100))/entries.length);
+                progress.progress((i*100f)/entries.length);
                 try {
                     GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
-                    image = processor.doOperation("Resample", image, "CoordinateSystem", cs);
-                    final ImageOutputStream output=ImageIO.createImageOutputStream(getDestinationFile(i));
+                    CoordinateSystem sourceCS = image.getCoordinateSystem();
+                    CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
+                    final int sourceDim = sourceCS.getDimension();
+                    final int targetDim = targetCS.getDimension();
+                    if (sourceDim > targetDim) {
+                        final CoordinateSystem tailCS = CTSUtilities.getSubCoordinateSystem(
+                                                        sourceCS, targetDim, sourceDim);
+                        if (tailCS != null) {
+                            targetCS = new CompoundCoordinateSystem(
+                                           targetCS.getName(null), targetCS, tailCS);
+                        }
+                    }
+                    image = processor.doOperation("Resample", image, "CoordinateSystem", targetCS);
+                    final ImageOutputStream output = ImageIO.createImageOutputStream(getDestinationFile(i));
                     writer.setOutput(output);
                     writer.write(image.getRenderedImage());
                     output.close();
                 } catch (Exception exception) {
-                    String message=exception.getLocalizedMessage();
-                    if (message==null) message=Utilities.getShortClassName(exception);
+                    String message = exception.getLocalizedMessage();
+                    if (message == null) {
+                        message = Utilities.getShortClassName(exception);
+                    }
                     progress.warningOccurred(entry.getName(), null, message);
                 }
                 writer.reset();

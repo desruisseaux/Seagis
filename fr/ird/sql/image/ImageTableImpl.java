@@ -37,10 +37,6 @@ import java.sql.PreparedStatement;
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.CompoundCoordinateSystem;
-import org.geotools.cs.TemporalCoordinateSystem;
-import org.geotools.cs.HorizontalCoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.ct.TransformException;
 
 // Geotools dependencies (GCS)
 import org.geotools.gp.Operation;
@@ -110,7 +106,6 @@ final class ImageTableImpl extends Table implements ImageTable {
                                 /*[04] FILENAME   */ IMAGES+".filename, "    +
                                 /*[05] START_TIME */ IMAGES+".start_time, "  +
                                 /*[06] END_TIME   */ IMAGES+".end_time, "    +
-                                /*[07] ELLIPSOID  */  AREAS+".ellipsoid, "   +
                                 /*[08] XMIN       */  AREAS+".xmin, "        +
                                 /*[09] XMAX       */  AREAS+".xmax, "        +
                                 /*[10] YMIN       */  AREAS+".ymin, "        +
@@ -135,14 +130,13 @@ final class ImageTableImpl extends Table implements ImageTable {
     /** Numéro de colonne. */ static final int FILENAME   =  4;
     /** Numéro de colonne. */ static final int START_TIME =  5;
     /** Numéro de colonne. */ static final int END_TIME   =  6;
-    /** Numéro de colonne. */ static final int ELLIPSOID  =  7;
-    /** Numéro de colonne. */ static final int XMIN       =  8;
-    /** Numéro de colonne. */ static final int XMAX       =  9;
-    /** Numéro de colonne. */ static final int YMIN       = 10;
-    /** Numéro de colonne. */ static final int YMAX       = 11;
-    /** Numéro de colonne. */ static final int WIDTH      = 12;
-    /** Numéro de colonne. */ static final int HEIGHT     = 13;
-    /** Numéro de colonne. */ static final int FORMAT     = 14;
+    /** Numéro de colonne. */ static final int XMIN       =  7;
+    /** Numéro de colonne. */ static final int XMAX       =  8;
+    /** Numéro de colonne. */ static final int YMIN       =  9;
+    /** Numéro de colonne. */ static final int YMAX       = 10;
+    /** Numéro de colonne. */ static final int WIDTH      = 11;
+    /** Numéro de colonne. */ static final int HEIGHT     = 12;
+    /** Numéro de colonne. */ static final int FORMAT     = 13;
 
     /** Numéro d'argument. */ private static final int ARG_XMIN       = 1;
     /** Numéro d'argument. */ private static final int ARG_XMAX       = 2;
@@ -153,44 +147,9 @@ final class ImageTableImpl extends Table implements ImageTable {
     /** Numéro d'argument. */ private static final int ARG_SERIES     = 7;
 
     /**
-     * Nombre de millisecondes entre le 01/01/1970 00:00 UTC et le 01/01/1950 00:00 UTC.
-     * Le 1er janvier 1970 est l'epoch du Java, tandis que le 1er janvier 1950 est celui
-     * de la Nasa (son jour julier "0"). La constante <code>EPOCH</code> sert à faire les
-     * conversions d'un système à l'autre.
-     */
-    private static final long EPOCH = -631152000000L; // Pour 1958, utiliser -378691200000L;
-
-    /**
      * Nombre de millisecondes dans une journée.
      */
-    private static final double DAY = 24*60*60*1000;
-
-    /**
-     * Convertit un jour julien en date.
-     */
-    static Date toDate(final double t) {
-        return new Date(Math.round(t*DAY)+EPOCH);
-    }
-
-    /**
-     * Convertit une date en nombre de jours écoulés depuis le 1er janvier 1950.
-     * Les valeurs <code>[MIN/MAX]_VALUE</code> sont converties en infinies.
-     */
-    static double toJulian(final long time) {
-        if (time==Long.MIN_VALUE) return Double.NEGATIVE_INFINITY;
-        if (time==Long.MAX_VALUE) return Double.POSITIVE_INFINITY;
-        return (time-EPOCH)/DAY;
-    }
-
-    /**
-     * Système de coordonnées par défaut.  Les coordonnées sont dans l'ordre
-     * la longitude et la latitude (selon l'ellipsoïde WGS 1984)  et la date
-     * en jours julien depuis le 1er janvier 1950 à 00:00 UTC.
-     */
-    private static final CompoundCoordinateSystem coordinateSystem =
-                         new CompoundCoordinateSystem("SEAS",
-                             GeographicCoordinateSystem.WGS84,
-                             new TemporalCoordinateSystem("Aviso", new Date(EPOCH)));
+    private static final double DAY = CoordinateSystemTable.DAY;
 
     /**
      * Réference vers la série d'images. Cette référence
@@ -267,6 +226,12 @@ final class ImageTableImpl extends Table implements ImageTable {
     private final DateFormat dateFormat;
 
     /**
+     * Table des systèmes de coordonnées. Ne sera construit que la première fois où elle
+     * sera nécessaire.
+     */
+    private transient CoordinateSystemTable coordinateSystemTable;
+
+    /**
      * Table des formats. Cette table ne sera construite que la première fois
      * où elle sera nécessaire.  Elle sera ensuite fermée chaque fois qu'elle
      * n'est plus utilisée pour économiser des ressources.
@@ -277,7 +242,7 @@ final class ImageTableImpl extends Table implements ImageTable {
      * Ensemble des formats déjà lue. Autant que possible,
      * on réutilisera les formats qui ont déjà été créés.
      */
-    private final Map<Integer,FormatEntryImpl> formats=new HashMap<Integer,FormatEntryImpl>();
+    private final Map<Integer,FormatEntryImpl> formats = new HashMap<Integer,FormatEntryImpl>();
 
     /**
      * Requète SQL faisant le lien avec la base de données.
@@ -346,7 +311,7 @@ final class ImageTableImpl extends Table implements ImageTable {
         if (!series.equals(this.series)) {
             parameters = null;
             statement.setInt(ARG_SERIES, series.getID());
-            this.series=series;
+            this.series = series;
             log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
         }
     }
@@ -362,7 +327,7 @@ final class ImageTableImpl extends Table implements ImageTable {
      * </ul>
      */
     public final CoordinateSystem getCoordinateSystem() {
-        return coordinateSystem;
+        return CoordinateSystemTable.WGS84;
     }
 
     /**
@@ -373,7 +338,8 @@ final class ImageTableImpl extends Table implements ImageTable {
         final Envelope envelope = new Envelope(3);
         envelope.setRange(0, geographicArea.getMinX(), geographicArea.getMaxX());
         envelope.setRange(1, geographicArea.getMinY(), geographicArea.getMaxY());
-        envelope.setRange(2, toJulian(startTime),      toJulian(endTime));
+        envelope.setRange(2, CoordinateSystemTable.toJulian(startTime),
+                             CoordinateSystemTable.toJulian(endTime));
         return envelope;
     }
 
@@ -389,7 +355,8 @@ final class ImageTableImpl extends Table implements ImageTable {
         // No coordinate transformation needed for this implementation.
         setGeographicArea(new Rectangle2D.Double(envelope.getMinimum(0), envelope.getMinimum(1),
                                                  envelope.getLength (0), envelope.getLength (1)));
-        setTimeRange(toDate(envelope.getMinimum(2)), toDate(envelope.getMaximum(2)));
+        setTimeRange(CoordinateSystemTable.toDate(envelope.getMinimum(2)),
+                     CoordinateSystemTable.toDate(envelope.getMaximum(2)));
     }
 
     /**
@@ -588,7 +555,7 @@ final class ImageTableImpl extends Table implements ImageTable {
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
      */
     public ParameterList setOperation(final String operation) throws OperationNotFoundException {
-        return setOperation(operation!=null ? Parameters.PROCESSOR.getOperation(operation) : null);
+        return setOperation(operation!=null ? ImageEntryImpl.PROCESSOR.getOperation(operation) : null);
     }
 
     /**
@@ -751,7 +718,7 @@ final class ImageTableImpl extends Table implements ImageTable {
                     final ImageEntryImpl lowestResolution = olderEntry.getLowestResolution(newEntry);
                     if (lowestResolution != null) {
                         // Two entries has the same spatio-temporal coordinates.
-                        if (lowestResolution.hasEnoughResolution(resolution, coordinateSystem)) {
+                        if (lowestResolution.hasEnoughResolution(resolution)) {
                             // The entry with the lowest resolution is enough.
                             entryList.set(i, lowestResolution);
                         } else if (lowestResolution == olderEntry) {
@@ -848,6 +815,10 @@ final class ImageTableImpl extends Table implements ImageTable {
             formatTable.close();
             formatTable = null;
         }
+        if (coordinateSystemTable != null) {
+            coordinateSystemTable.close();
+            coordinateSystemTable = null;
+        }
         statement.close();
     }
 
@@ -855,7 +826,7 @@ final class ImageTableImpl extends Table implements ImageTable {
      * Retourne une chaîne de caractères décrivant cette table.
      */
     public String toString() {
-        final StringBuffer buffer=new StringBuffer("ImageTable[\"");
+        final StringBuffer buffer = new StringBuffer("ImageTable[\"");
         buffer.append(series.getName());
         buffer.append("\": ");
         buffer.append(getStringArea());
@@ -864,11 +835,10 @@ final class ImageTableImpl extends Table implements ImageTable {
     }
 
     /**
-     * Retourne les coordonnées demandées sous
-     * forme de chaîne de caractères.
+     * Retourne les coordonnées demandées sous forme de chaîne de caractères.
      */
     private String getStringArea() {
-        return CTSUtilities.toWGS84String(coordinateSystem.getHeadCS(), geographicArea);
+        return CTSUtilities.toWGS84String(getCoordinateSystem(), geographicArea);
     }
 
     /**
@@ -941,32 +911,26 @@ final class ImageTableImpl extends Table implements ImageTable {
      *                  par cette table.
      * @param  formatID Numéro ID du format des images.
      * @param  pathname Chemin relatif des images.
-     * @param  cs       Système de coordonnées horizontale dans lequel exprimer
-     *                  les coordonnées retournées, ou <code>null</code> pour
-     *                  utiliser le système par défaut de la table.
      *
      * @return Un objet incluant les paramètres demandées ainsi que ceux de la table.
      * @throws SQLException si les paramètres n'ont pas pu être obtenus.
      */
-    final synchronized Parameters getParameters(final int seriesID, final int formatID,
-                                                final String pathname,
-                                                HorizontalCoordinateSystem cs)
+    final synchronized Parameters getParameters(final int seriesID,
+                                                final int formatID,
+                                                final String pathname)
         throws SQLException
     {
         if (seriesID != series.getID()) {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
         }
-        if (cs == null) {
-            cs = (HorizontalCoordinateSystem) coordinateSystem.getHeadCS();
-        }
         /*
          * Si les paramètres spécifiés sont identiques à ceux qui avaient été
          * spécifiés la dernière fois, retourne le dernier bloc de paramètres.
          */
-        final boolean invalidate = (parameters==null) ||
-                                   (parameters.format.getID()!=formatID) ||
-                                   !Utilities.equals(parameters.pathname, pathname);
-        if (!invalidate && cs.equals(parameters.coordinateSystem.getHeadCS(), false)) {
+        if (parameters != null &&
+            parameters.format.getID() == formatID &&
+            Utilities.equals(parameters.pathname, pathname))
+        {
             if (formatTable != null) {
                 /*
                  * Si on a demandé un format qui avait déjà été lu auparavant,
@@ -981,20 +945,15 @@ final class ImageTableImpl extends Table implements ImageTable {
         }
         /*
          * Construit un nouveau bloc de paramètres et projète les
-         * coordonnées vers le système de coordonnées spécifié.
+         * coordonnées vers le système de coordonnées de l'image.
          */
-        if (invalidate || !coordinateSystem.equals(parameters.coordinateSystem, false)) {
-            parameters = (Parameters)pool.intern(new Parameters(series, getFormat(formatID), pathname, operation, opParam,
-                                                                coordinateSystem, geographicArea, resolution, dateFormat));
+        if (coordinateSystemTable == null) {
+            coordinateSystemTable = new CoordinateSystemTable(/* connection */);
         }
-        try {
-            parameters = parameters.createTransformed(cs);
-        } catch (TransformException exception) {
-            final SQLException e = new SQLException(Resources.format(
-                    ResourceKeys.ERROR_INCOMPATIBLE_COORDINATES_$1, getStringArea()));
-            e.initCause(exception);
-            throw e;
-        }
+        parameters = new Parameters(series, getFormat(formatID), pathname, operation, opParam,
+                                    getCoordinateSystem(), coordinateSystemTable.getCoordinateSystem(series),
+                                    geographicArea, resolution, dateFormat);
+        parameters = (Parameters)pool.intern(parameters);
         return parameters;
     }
 }

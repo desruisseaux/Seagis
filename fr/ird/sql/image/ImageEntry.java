@@ -73,8 +73,7 @@ public interface ImageEntry extends Entry
     public static final String SOURCE_KEY = "fr.ird.sql.image.ImageEntry";
 
     /**
-     * Retourne la série à laquelle
-     * appartient cette image.
+     * Retourne la série à laquelle appartient cette image.
      */
     public abstract SeriesEntry getSeries();
 
@@ -92,6 +91,12 @@ public interface ImageEntry extends Entry
      * transformation à utiliser pour passer des coordonnées pixels   vers les
      * coordonnées du système {@link #getCoordinateSystem}. Cette dernière sera
      * le plus souvent une transformation affine.
+     * <br><br>
+     * Notez que la géométrie retournée par cette méthode ne prend pas en compte un éventuel
+     * "clip" spécifié par {@link ImageTable#setGeographicArea}. Il s'agit de la géométrie
+     * de l'image telle qu'elle est déclarée dans la base de données, indépendamment de la
+     * façon dont elle sera lue. L'image qui sera retournée par {@link #getGridCoverage}
+     * peut avoir une géométrie différente si un clip et/ou une décimation ont été appliqués.
      */
     public abstract GridGeometry getGridGeometry();
 
@@ -104,18 +109,25 @@ public interface ImageEntry extends Entry
      *   <li>Les latitudes,  en degrés selon l'ellipsoïde WGS 1984.</li>
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
+     *
+     * Notez que ce système de coordonnées peut ne pas être le même qui celui qui sert
+     * à interroger la base de données d'images ({@link ImageTable#getCoordinateSystem}).
      */
     public abstract CoordinateSystem getCoordinateSystem();
 
     /**
      * Retourne les coordonnées spatio-temporelles de l'image. Le système de
      * coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
+     * Notez que l'envelope retournée ne comprend pas le "clip" spécifiée à la
+     * table d'image (voir {@link ImageTable#setGeographicArea}). La couverture
+     * retournée par {@link #getGridCoverage} peut donc avoir une envelope plus
+     * petite que celle retournée par cette méthode.
      */
     public abstract Envelope getEnvelope();
 
     /**
      * Retourne la plage de temps couverte par l'image.   Cette plage sera délimitée
-     * par des objets {@link Date}.  Appeler cette méthode équivant à n'extraire que
+     * par des objets {@link Date}.  Appeler cette méthode équivaut à n'extraire que
      * la partie temporelle de {@link #getEnvelope} et à transformer les coordonnées
      * si nécessaire.
      */
@@ -140,22 +152,27 @@ public interface ImageEntry extends Entry
     public abstract SampleDimension[] getSampleDimensions();
 
     /**
-     * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
-     * encore été réclamée par le ramasse-miette,   alors l'image existante sera retournée sans qu'une nouvelle lecture
-     * du fichier ne soit nécessaire. Si au contraire l'image n'était pas déjà en mémoire, alors un décodage du fichier
-     * sera nécessaire. Toutefois, cette méthode ne décodera pas nécessairement l'ensemble de l'image. Par défaut, elle
-     * ne décode que la région qui avait été indiquée à {@link ImageTable#setEnvelope} et sous-échantillonne à la
-     * résolution qui avait été indiquée à {@link ImageTable#setPreferredResolution} (<strong>note:</strong> cette région
-     * et ce sous-échantillonage sont ceux qui étaient actifs au moment où {@link ImageTable#getEntries} a été appelée;
-     * les changement subséquents des paramètres de {@link ImageTable} n'ont pas d'effets sur les <code>ImageEntry</code>
-     * déjà créés).
+     * Retourne l'image correspondant à cette entrée. Si l'image avait déjà été lue précédemment
+     * et qu'elle n'a pas encore été réclamée par le ramasse-miette, alors l'image existante sera
+     * retournée sans qu'une nouvelle lecture du fichier ne soit nécessaire. Si au contraire l'image
+     * n'était pas déjà en mémoire, alors un décodage du fichier sera nécessaire. Toutefois, cette
+     * méthode ne décodera pas nécessairement l'ensemble de l'image. Par défaut, elle ne décode que
+     * la région qui avait été indiquée à {@link ImageTable#setEnvelope} et sous-échantillonne à la
+     * résolution qui avait été indiquée à {@link ImageTable#setPreferredResolution}
+     * (<strong>note:</strong> cette région et ce sous-échantillonage sont ceux qui étaient actifs
+     * au moment où {@link ImageTable#getEntries} a été appelée; les changement subséquents des
+     * paramètres de {@link ImageTable} n'ont pas d'effets sur les <code>ImageEntry</code> déjà
+     * créés).
      *
-     * @param  listenerList Liste des objets à informer des progrès de la lecture ainsi que des éventuels avertissements,
-     *         ou <code>null</code> s'il n'y en a pas. Cette méthode prend en compte tous les objets qui ont été inscrits
-     *         sous la classe {@link IIOReadWarningListener} ou {@link IIOReadProgressListener}, et ignore tous les autres.
-     *         Cette méthode s'engage à ne pas modifier l'objet {@link EventListenerList} donné; il est donc sécuritaire de
-     *         passer directement la liste {@link javax.swing.JComponent#listenerList} d'une interface utilisateur, même
-     *         dans un environnement multi-threads. Un objet {@link EventListenerList} peut aussi être construit comme suit:
+     * @param  listenerList Liste des objets à informer des progrès de la lecture ainsi que des
+     *         éventuels avertissements, ou <code>null</code> s'il n'y en a pas.  Cette méthode
+     *         prend en compte tous les objets qui ont été inscrits sous la classe
+     *         {@link IIOReadWarningListener} ou {@link IIOReadProgressListener}, et ignore tous
+     *         les autres. Cette méthode s'engage à ne pas modifier l'objet {@link EventListenerList}
+     *         donné; il est donc sécuritaire de passer directement la liste
+     *         {@link javax.swing.JComponent#listenerList} d'une interface utilisateur, même dans
+     *         un environnement multi-threads. Un objet {@link EventListenerList} peut aussi être
+     *         construit comme suit:
      *         <blockquote><pre>
      *         {@link IIOReadProgressListener} progressListener = ...
      *         {@link IIOReadWarningListener}   warningListener = ...
@@ -164,10 +181,13 @@ public interface ImageEntry extends Entry
      *         listenerList.add(IIOReadWarningListener.class,   warningListener);
      *         </pre></blockquote>
      *
-     * @return Image lue, ou <code>null</code> si l'image n'intercepte pas la région géographique ou la plage de temps
-     *         qui avaient été spécifiées à {@link ImageTable}, ou si l'utilisateur a interrompu la lecture.
-     * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties est survenue.
-     * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est pas valide.
+     * @return Image lue, ou <code>null</code> si l'image n'intercepte pas la région géographique
+     *         ou la plage de temps qui avaient été spécifiées à {@link ImageTable}, ou si
+     *         l'utilisateur a interrompu la lecture.
+     * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties
+     *         est survenue.
+     * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est
+     *         pas valide.
      */
     public abstract GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException;
 

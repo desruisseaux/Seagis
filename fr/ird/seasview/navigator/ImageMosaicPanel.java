@@ -292,6 +292,15 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      */
     private void slidderChanged(final BoundedRangeModel model) {
         if (!model.getValueIsAdjusting()) {
+            if (javax.swing.SwingUtilities.getWindowAncestor(this) == null) {
+                /*
+                 * Ne charge pas d'image si la composante n'apparaît pas encore dans une
+                 * fenêtre. Ca nous évite de gaspiller de la mémoire et du CPU à charger
+                 * une image que l'utilisateur n'a même pas encore demandée, lorsque cette
+                 * méthode est appelée pendant la construction de l'interface utilisateur.
+                 */
+                return;
+            }
             final Date startTime=new Date(Math.round(rangeBars.getMinSelectedValue()));
             final Date   endTime=new Date(Math.round(rangeBars.getMaxSelectedValue()));
             synchronized (table) {

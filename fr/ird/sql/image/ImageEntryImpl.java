@@ -30,23 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLWarning;
 import java.sql.SQLException;
 
-// Geotools dependencies
-import org.geotools.pt.Envelope;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
-import org.geotools.cv.Category;
-import org.geotools.cv.SampleDimension;
-import org.geotools.gc.GridRange;
-import org.geotools.gc.GridGeometry;
-import org.geotools.gc.GridCoverage;
-import org.geotools.gp.Operation;
-import org.geotools.gp.GridCoverageProcessor;
-
-import org.geotools.resources.XArray;
-import org.geotools.resources.Utilities;
-import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.XDimension2D;
-
 // Images
 import java.awt.image.RenderedImage;
 
@@ -85,6 +68,25 @@ import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;
 
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformationFactory;
+import org.geotools.cv.Category;
+import org.geotools.cv.SampleDimension;
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridGeometry;
+import org.geotools.gc.GridCoverage;
+import org.geotools.gp.Operation;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.resources.XArray;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XRectangle2D;
+
 
 /**
  * Information sur une image. Un objet <code>ImageEntry</code> correspond à
@@ -109,7 +111,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * l'instruction "ORDER BY" dans la réquête SQL de {@link ImageTableImpl}).
      */
     boolean compare(final ImageEntryImpl other) {
-        return endTime==other.endTime;
+        return endTime == other.endTime;
     }
 
     /**
@@ -127,6 +129,19 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
         "Bilinear",
         "NearestNeighbor"
     };
+
+    /**
+     * Objet à utiliser par défaut pour construire des transformations de coordonnées.
+     */
+    private static final CoordinateTransformationFactory TRANSFORMS =
+                         CoordinateTransformationFactory.getDefault();
+
+    /**
+     * L'objet à utiliser pour appliquer
+     * des opérations sur les images lues.
+     */
+    static final GridCoverageProcessor PROCESSOR =
+                 GridCoverageProcessor.getDefault();
 
     /**
      * Ensemble des entrés qui ont déjà été retournées par {@link #intern()}
@@ -196,7 +211,6 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
         final int    seriesID;
         final int    formatID;
         final String pathname;
-        final String ellipsoid; // TODO: pas encore utilisé.
         final Date   startTime;
         final Date     endTime;
         ID         = result.getInt      (ImageTableImpl.ID);
@@ -205,7 +219,6 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
         filename   = result.getString   (ImageTableImpl.FILENAME);
         startTime  = table .getTimestamp(ImageTableImpl.START_TIME, result);
         endTime    = table .getTimestamp(ImageTableImpl.END_TIME,   result);
-        ellipsoid  = result.getString   (ImageTableImpl.ELLIPSOID);
         xmin       = result.getFloat    (ImageTableImpl.XMIN);
         xmax       = result.getFloat    (ImageTableImpl.XMAX);
         ymin       = result.getFloat    (ImageTableImpl.YMIN);
@@ -213,25 +226,25 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
         width      = result.getShort    (ImageTableImpl.WIDTH);
         height     = result.getShort    (ImageTableImpl.HEIGHT);
         formatID   = result.getInt      (ImageTableImpl.FORMAT);
-        parameters = table .getParameters(seriesID, formatID, pathname, null);
-        // TODO: le dernier argument (null) devrait être le système de coordonnées.
+        parameters = table .getParameters(seriesID, formatID, pathname);
         // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
+        // NOTE: Les coordonnées xmin, xmax, ymin et ymax ne sont PAS exprimées selon le système de
+        //       coordonnées de l'image, mais plutôt selon le système de coordonnées de la table
+        //       d'images. La transformation sera effectuée par 'getEnvelope()'.
         this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
         this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
     }
 
     /**
-     * Retourne le numéro identifiant cette image dans la
-     * base de données. Dans une même base de données,
-     * chaque image porte un numéro unique.
+     * Retourne le numéro identifiant cette image dans la base de données.
+     * Dans une même base de données, chaque image porte un numéro unique.
      */
     public int getID() {
         return ID;
     }
 
     /**
-     * Retourne la série à laquelle
-     * appartient cette image.
+     * Retourne la série à laquelle appartient cette image.
      */
     public SeriesEntry getSeries() {
         return parameters.series;
@@ -255,8 +268,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
     }
 
     /**
-     * Retourne le nom complet du fichier
-     * de l'image avec son chemin complet.
+     * Retourne le nom du fichier de l'image avec son chemin complet.
      */
     public File getFile() {
         final File file = new File(parameters.pathname, filename+'.'+parameters.format.extension);
@@ -275,6 +287,12 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * transformation à utiliser pour passer des coordonnées pixels   vers les
      * coordonnées du système {@link #getCoordinateSystem}. Cette dernière sera
      * le plus souvent une transformation affine.
+     * <br><br>
+     * Notez que la géométrie retournée par cette méthode ne prend pas en compte un éventuel
+     * "clip" spécifié par {@link ImageTable#setGeographicArea}. Il s'agit de la géométrie
+     * de l'image telle qu'elle est déclarée dans la base de données, indépendamment de la
+     * façon dont elle sera lue. L'image qui sera retournée par {@link #getGridCoverage}
+     * peut avoir une géométrie différente si un clip et/ou une décimation ont été appliqués.
      */
     public GridGeometry getGridGeometry() {
         final GridRange gridRange = new GridRange(new int[3], new int[]{width,height,1});
@@ -290,19 +308,51 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      *   <li>Les latitudes,  en degrés selon l'ellipsoïde WGS 1984.</li>
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
+     *
+     * Notez que ce système de coordonnées peut ne pas être le même qui celui qui sert
+     * à interroger la base de données d'images ({@link ImageTable#getCoordinateSystem}).
      */
     public CoordinateSystem getCoordinateSystem() {
-        return parameters.coordinateSystem;
+        return parameters.imageCS;
     }
 
     /**
      * Retourne les coordonnées spatio-temporelles de l'image. Le système de
      * coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
+     * Notez que l'envelope retournée ne comprend pas le "clip" spécifiée à la
+     * table d'image (voir {@link ImageTable#setGeographicArea}). La couverture
+     * retournée par {@link #getGridCoverage} peut donc avoir une envelope plus
+     * petite que celle retournée par cette méthode.
      */
     public Envelope getEnvelope() {
-        final double[] min = new double[] {xmin, ymin, ImageTableImpl.toJulian(startTime)};
-        final double[] max = new double[] {xmax, ymax, ImageTableImpl.toJulian(  endTime)};
-        return new Envelope(min, max);
+        try {
+            final Rectangle2D area = tableToCoverageCS(new XRectangle2D(xmin, ymin, xmax-xmin, ymax-ymin));
+            final double[] min = new double[] {area.getMinX(), area.getMinY(), CoordinateSystemTable.toJulian(startTime)};
+            final double[] max = new double[] {area.getMaxX(), area.getMaxY(), CoordinateSystemTable.toJulian(  endTime)};
+            return new Envelope(min, max);
+        } catch (TransformException exception) {
+            // Should not happen if the coordinate in the database are valids.
+            final IllegalStateException e = new IllegalStateException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
+    }
+
+    /**
+     * Projète la table spécifiée du système de coordonnées de la table vers le système
+     * de coordonnées de l'image.
+     */
+    private Rectangle2D tableToCoverageCS(Rectangle2D area) throws TransformException {
+        CoordinateSystem sourceCS = parameters.tableCS;
+        CoordinateSystem targetCS = parameters.imageCS;
+        if (sourceCS != targetCS) {
+            sourceCS = CTSUtilities.getCoordinateSystem2D(sourceCS);
+            targetCS = CTSUtilities.getCoordinateSystem2D(targetCS);
+            area = CTSUtilities.transform((MathTransform2D)
+                   TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS).getMathTransform(),
+                   area, area);
+        }
+        return area;
     }
 
     /**
@@ -313,13 +363,12 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * coordonnées si nécessaire.
      */
     public Rectangle2D getGeographicArea() {
-        // No transformation needed for current implementation.
         return new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin);
     }
 
     /**
      * Retourne la plage de temps couverte par l'image.   Cette plage sera délimitée
-     * par des objets {@link Date}.  Appeler cette méthode équivant à n'extraire que
+     * par des objets {@link Date}.  Appeler cette méthode équivaut à n'extraire que
      * la partie temporelle de {@link #getEnvelope} et à transformer les coordonnées
      * si nécessaire.
      */
@@ -352,40 +401,57 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      *         La longueur de ce tableau sera égale au nombre de bandes.
      */
     public SampleDimension[] getSampleDimensions() {
-        return parameters.format.getSampleDimensions(null);
+        return parameters.format.getSampleDimensions();
     }
 
     /**
-     * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
-     * encore été réclamée par le ramasse-miette,   alors l'image existante sera retournée sans qu'une nouvelle lecture
-     * du fichier ne soit nécessaire. Si au contraire l'image n'était pas déjà en mémoire, alors un décodage du fichier
-     * sera nécessaire. Toutefois, cette méthode ne décodera pas nécessairement l'ensemble de l'image. Par défaut, elle
-     * ne décode que la région qui avait été indiquée à {@link ImageTable#setEnvelope} et sous-échantillonne à la
-     * résolution qui avait été indiquée à {@link ImageTable#setPreferredResolution} (<strong>note:</strong> cette région
-     * et ce sous-échantillonage sont ceux qui étaient actifs au moment où {@link ImageTable#getEntries} a été appelée;
-     * les changement subséquents des paramètres de {@link ImageTable} n'ont pas d'effets sur les <code>ImageEntry</code>
-     * déjà créés).
+     * Retourne l'image correspondant à cette entrée. Si l'image avait déjà été lue précédemment
+     * et qu'elle n'a pas encore été réclamée par le ramasse-miette, alors l'image existante sera
+     * retournée sans qu'une nouvelle lecture du fichier ne soit nécessaire. Si au contraire l'image
+     * n'était pas déjà en mémoire, alors un décodage du fichier sera nécessaire. Toutefois, cette
+     * méthode ne décodera pas nécessairement l'ensemble de l'image. Par défaut, elle ne décode que
+     * la région qui avait été indiquée à {@link ImageTable#setEnvelope} et sous-échantillonne à la
+     * résolution qui avait été indiquée à {@link ImageTable#setPreferredResolution}
+     * (<strong>note:</strong> cette région et ce sous-échantillonage sont ceux qui étaient actifs
+     * au moment où {@link ImageTable#getEntries} a été appelée; les changement subséquents des
+     * paramètres de {@link ImageTable} n'ont pas d'effets sur les <code>ImageEntry</code> déjà
+     * créés).
      *
-     * @param  listenerList Liste des objets à informer des progrès de la lecture ainsi que des éventuels avertissements,
-     *         ou <code>null</code> s'il n'y en a pas. Cette méthode prend en compte tous les objets qui ont été inscrits
-     *         sous la classe {@link IIOReadWarningListener} ou {@link IIOReadProgressListener}, et ignore tous les autres.
-     *         Cette méthode s'engage à ne pas modifier l'objet {@link EventListenerList} donné; il est donc sécuritaire de
-     *         passer directement la liste {@link javax.swing.JComponent#listenerList} d'une interface utilisateur, même
-     *         dans un environnement multi-threads. Un objet {@link EventListenerList} peut aussi être construit comme suit:
-     *         <blockquote><pre>
-     *         {@link IIOReadProgressListener} progressListener = ...
-     *         {@link IIOReadWarningListener}   warningListener = ...
-     *         {@link EventListenerList}  listenerList = new EventListenerList();
-     *         listenerList.add(IIOReadProgressListener.class, progressListener);
-     *         listenerList.add(IIOReadWarningListener.class,   warningListener);
-     *         </pre></blockquote>
+     * @param  listenerList Liste des objets à informer des progrès de la lecture ainsi que des
+     *         éventuels avertissements, ou <code>null</code> s'il n'y en a pas.  Cette méthode
+     *         prend en compte tous les objets qui ont été inscrits sous la classe
+     *         {@link IIOReadWarningListener} ou {@link IIOReadProgressListener}, et ignore tous
+     *         les autres. Cette méthode s'engage à ne pas modifier l'objet {@link EventListenerList}
+     *         donné.
      *
-     * @return Image lue, ou <code>null</code> si l'image n'intercepte pas la région géographique ou la plage de temps
-     *         qui avaient été spécifiées à {@link ImageTable}, ou si l'utilisateur a interrompu la lecture.
-     * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties est survenue.
-     * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est pas valide.
+     * @return Image lue, ou <code>null</code> si l'image n'intercepte pas la région géographique
+     *         ou la plage de temps qui avaient été spécifiées à {@link ImageTable}, ou si
+     *         l'utilisateur a interrompu la lecture.
+     * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties
+     *         est survenue.
+     * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est
+     *         pas valide.
      */
-    public synchronized GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
+    public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
+        try {
+            return getGridCoverage(0, listenerList);
+        } catch (TransformException exception) {
+            throw new IIOException(exception.getLocalizedMessage(), exception);
+        }
+    }
+
+    /**
+     * Procède à la lecture d'une image à l'index spécifié.
+     *
+     * @param imageIndex Index de l'image à lire.
+     *        NOTE: si on permet d'obtenir des images à différents index, il faudra en
+     *              tenir compte dans {@link #gridCoverage} et {@link #renderedImage}.
+     * @param listenerList Liste des objets à informer des progrès de la lecture.
+     */
+    private synchronized GridCoverage getGridCoverage(final int imageIndex,
+                                                      final EventListenerList listenerList)
+            throws IOException, TransformException
+    {
         /*
          * NOTE SUR LES SYNCHRONISATIONS: Cette méthode est synchronisée à plusieurs niveau:
          *
@@ -407,43 +473,44 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          *     synchronisation est gérée en interne par <code>FormatEntryImpl</code>.
          */
 
-        // TODO: si on permet d'obtenir des images à différents index, il
-        //  faudra en tenir compte dans 'gridCoverage' et 'renderedImage'.
-        final int imageIndex = 0;
         /*
          * Vérifie d'abord si l'image demandée se trouve déjà en mémoire. Si
          * oui, elle sera retournée et la méthode se termine immédiatement.
          */
-        if (gridCoverage!=null) {
+        if (gridCoverage != null) {
             final GridCoverage image = gridCoverage.get();
-            if (image!=null) {
+            if (image != null) {
                 return image;
             }
         }
-        gridCoverage=null;
+        gridCoverage = null;
         /*
-         * Obtient les coordonnées géographiques et la résolution désirées.
-         * La classe <code>Parameters</code> a déjà projeté ces coordonnées
-         * selon le système de l'image, si c'était nécessaire.
+         * Obtient les coordonnées géographiques et la résolution désirées. Notez que ces
+         * rectangles ne sont pas encore exprimées dans le système de coordonnées de l'image.
+         * Cette projection sera effectuée par 'tableToCoverageCS(...)' seulement après avoir
+         * pris en compte le clip. Ca nous évite d'avoir à projeter le clip, ce qui aurait été
+         * problématique avec les projections qui n'ont pas un domaine de validité suffisament
+         * grand (par exemple jusqu'aux pôles).
          */
         final Rectangle2D clipArea   = parameters.geographicArea;
         final Dimension2D resolution = parameters.resolution;
         /*
-         * Procède à la lecture de l'image correspondant à cette entrée.   Si l'image n'intercepte pas le rectangle
-         * <code>clipArea</code> spécifié ou si l'utilisateur a interrompu la lecture, alors cette méthode retourne
-         * <code>null</code>. Les coordonnées de la région couverte par l'image retournée peuvent ne pas être
-         * identiques aux coordonnées spécifiées. La méthode {@link GridCoverage#getEnvelope} permettra de
-         * connaître les coordonnées exactes.
+         * Procède à la lecture de l'image correspondant à cette entrée. Si l'image n'intercepte
+         * pas le rectangle <code>clipArea</code> spécifié ou si l'utilisateur a interrompu la
+         * lecture, alors cette méthode retourne <code>null</code>. Les coordonnées de la région
+         * couverte par l'image retournée peuvent ne pas être identiques aux coordonnées spécifiées.
+         * La méthode {@link GridCoverage#getEnvelope} permettra de connaître les coordonnées exactes.
          *
-         * @param  clipArea Coordonnées géographiques de la région désirée, ou <code>null</code> pour prendre
-         *         l'image au complet. Les coordonnées doivent être exprimées selon le système de coordonnées
-         *         de l'image, tel que retourné par {@link #getCoordinateSystem}. Ce n'est pas nécessairement
-         *         le même système de coordonnées que {@link ImageTable}, quoique ce soit souvent le cas.
-         * @param  resolution Dimension logique désirée des pixels de l'image, ou <code>null</code> pour
-         *         demander la meilleure résolution possible. Les dimensions doivent être exprimées selon
-         *         le système de coordonnées de l'image, tel que retourné par {@link #getCoordinateSystem}.
-         *         Cette information n'est qu'approximative; Il n'est pas garantie que la lecture produira
-         *         effectivement une image de la résolution demandée.
+         * @param  clipArea Coordonnées géographiques de la région désirée, ou <code>null</code>
+         *         pour prendre l'image au complet. Les coordonnées doivent être exprimées selon
+         *         le système de coordonnées de la table d'images, tel que retourné par {@link
+         *         ImageTable#getCoordinateSystem}. Ce n'est pas nécessairement le même système
+         *         de coordonnées que celui de l'image à lire.
+         * @param  resolution Dimension logique désirée des pixels de l'image, ou <code>null</code>
+         *         pour demander la meilleure résolution possible. Les dimensions doivent être
+         *         exprimées selon le même système de coordonnées que <code>area</code>. Cette
+         *         information n'est qu'approximative; Il n'est pas garantie que la lecture
+         *         produira effectivement une image de la résolution demandée.
          */
         Rectangle2D clipLogical = new Rectangle2D.Double(xmin, ymin, xmax-xmin, ymax-ymin);
         Rectangle   clipPixel   = null;
@@ -459,27 +526,37 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
             xSubsampling = 1;
             ySubsampling = 1;
         }
-        if (clipArea != null) {
+        if (clipArea == null) {
+            clipLogical = tableToCoverageCS(clipLogical);
+        } else {
             /*
-             * Vérifie si le rectangle demandé (clipArea) intercepte la région géographique couverte par l'image.
-             * On utilise un code spécial plutôt que de faire appel à {@link Rectangle2D#intersects} parce qu'on
-             * veut accepter les cas où le rectangle demandé se résume à une ligne ou un point.
+             * Vérifie si le rectangle demandé (clipArea) intercepte la région géographique
+             * couverte par l'image. On utilise un code spécial plutôt que de faire appel à
+             * {@link Rectangle2D#intersects} parce qu'on veut accepter les cas où le rectangle
+             * demandé se résume à une ligne ou un point.
              */
-            if (clipArea.getWidth()<0 || clipArea.getHeight()<0 || clipLogical.isEmpty()) return null;
-            if (clipArea.getMaxX()<clipLogical.getMinX() ||
-                clipArea.getMinX()>clipLogical.getMaxX() ||
-                clipArea.getMaxY()<clipLogical.getMinY() ||
-                clipArea.getMinY()>clipLogical.getMaxY()) return null;
+            if (clipArea.getWidth()<0 || clipArea.getHeight()<0 || clipLogical.isEmpty()) {
+                return null;
+            }
+            if (clipArea.getMaxX() < clipLogical.getMinX() ||
+                clipArea.getMinX() > clipLogical.getMaxX() ||
+                clipArea.getMaxY() < clipLogical.getMinY() ||
+                clipArea.getMinY() > clipLogical.getMaxY())
+            {
+                return null;
+            }
+            final Rectangle2D fullArea = tableToCoverageCS((Rectangle2D)clipLogical.clone());
             Rectangle2D.intersect(clipLogical, clipArea, clipLogical);
+            clipLogical = tableToCoverageCS(clipLogical);
             /*
              * Conversion [coordonnées logiques] --> [coordonnées pixels].
              */
-            final double scaleX =  width/(xmax-xmin);
-            final double scaleY = height/(ymax-ymin);
-            clipPixel=new Rectangle((int)Math.floor(scaleX*(clipLogical.getMinX()-xmin)+EPS),
-                                    (int)Math.floor(scaleY*(ymax-clipLogical.getMaxY())+EPS),
-                                    (int)Math.ceil (scaleX*clipLogical.getWidth()      -EPS),
-                                    (int)Math.ceil (scaleY*clipLogical.getHeight()     -EPS));
+            final double scaleX =  width/fullArea.getWidth();
+            final double scaleY = height/fullArea.getHeight();
+            clipPixel = new Rectangle((int)Math.floor(scaleX*(clipLogical.getMinX()-fullArea.getMinX())+EPS),
+                                      (int)Math.floor(scaleY*(fullArea.getMaxY()-clipLogical.getMaxY())+EPS),
+                                      (int)Math.ceil (scaleX*clipLogical.getWidth() -EPS),
+                                      (int)Math.ceil (scaleY*clipLogical.getHeight()-EPS));
             if (clipPixel.width < MIN_SIZE) {
                 clipPixel.x    -= (MIN_SIZE-clipPixel.width)/2;
                 clipPixel.width = MIN_SIZE;
@@ -504,27 +581,29 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
              */
             clipPixel.width  = (clipPixel.width /xSubsampling) * xSubsampling;
             clipPixel.height = (clipPixel.height/ySubsampling) * ySubsampling;
-            if (clipPixel.isEmpty()) return null;
+            if (clipPixel.isEmpty()) {
+                return null;
+            }
             /*
              * Conversion [coordonnées pixels] --> [coordonnées logiques].
              *
              * 'clipLogical' ne devrait pas beaucoup changer (mais parfois un peu).
              */
-            clipLogical.setRect(xmin + clipPixel.getMinX()  /scaleX,
-                                ymax - clipPixel.getMaxY()  /scaleY,
-                                       clipPixel.getWidth() /scaleX,
-                                       clipPixel.getHeight()/scaleY);
+            clipLogical.setRect(fullArea.getMinX() + clipPixel.getMinX()  /scaleX,
+                                fullArea.getMaxY() - clipPixel.getMaxY()  /scaleY,
+                                                     clipPixel.getWidth() /scaleX,
+                                                     clipPixel.getHeight()/scaleY);
         }
         /*
          * Avant d'effectuer la lecture, vérifie si l'image est déjà en mémoire. Une image
          * {@link RenderedImage} peut être en mémoire même si {@link GridCoverage} ne l'est
          * plus si, par exemple, l'image est entrée dans une chaîne d'opérations de JAI.
          */
-        RenderedImage image=null;
-        if (renderedImage!=null) {
+        RenderedImage image = null;
+        if (renderedImage != null) {
             image = renderedImage.get();
             if (image == null) {
-                renderedImage=null;
+                renderedImage = null;
             }
         }
         /*
@@ -559,18 +638,16 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          * On construit maintenant l'objet {@link GridCoverage}, on le
          * conserve dans une cache interne puis on le retourne.
          */
-        CoordinateSystem coordinateSystem = parameters.coordinateSystem;
-        double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), ImageTableImpl.toJulian(startTime)};
-        double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
-        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2])) try {
+        CoordinateSystem imageCS = parameters.imageCS;
+        double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), CoordinateSystemTable.toJulian(startTime)};
+        double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), CoordinateSystemTable.toJulian(  endTime)};
+        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2])) {
             // No time range specified.
             min = XArray.resize(min, 2);
             max = XArray.resize(max, 2);
-            coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
-        } catch (TransformException exception) {
-            throw new IIOException(exception.getLocalizedMessage(), exception);
+            imageCS = CTSUtilities.getCoordinateSystem2D(imageCS);
         }
-        GridCoverage coverage = new GridCoverage(filename, image, coordinateSystem,
+        GridCoverage coverage = new GridCoverage(filename, image, imageCS,
                                 new Envelope(min, max), bands, null,
                                 Collections.singletonMap(SOURCE_KEY, this));
         /*
@@ -581,14 +658,13 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          * Si l'utilisateur a spécifié une operation à appliquer
          * sur les images, applique cette opération maintenant.
          */
-        GridCoverageProcessor processor = parameters.PROCESSOR;
-        Operation             operation = parameters.operation;
-        boolean       interpolationDone = false;
+        Operation operation = parameters.operation;
+        boolean interpolationDone = false;
         if (operation != null) {
             synchronized (operation) {
                 try {
                     ParameterList param = parameters.parameters.setParameter("Source", coverage);
-                    coverage = processor.doOperation(operation, param);
+                    coverage = PROCESSOR.doOperation(operation, param);
                 } finally {
                     parameters.parameters.setParameter("Source", null);
                 }
@@ -602,7 +678,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          * résultat dans une cache et retourne le résultat.
          */
         if (!interpolationDone) {
-            coverage  = processor.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
+            coverage  = PROCESSOR.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
         }
         renderedImage = new WeakReference<RenderedImage>(image);
         gridCoverage  = new SoftReference<GridCoverage>(coverage);
@@ -622,7 +698,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * Retourne une chaîne de caractères représentant cette entrée.
      */
     public String toString() {
-        final StringBuffer buffer=new StringBuffer(40);
+        final StringBuffer buffer = new StringBuffer(40);
         buffer.append("ImageEntry"); // Pour ne pas avoir le "Impl" à la fin...
         buffer.append('[');
         buffer.append(getName());
@@ -632,7 +708,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
             buffer.append(')');
         }
         buffer.append(' ');
-        buffer.append(CTSUtilities.toWGS84String(parameters.coordinateSystem.getHeadCS(), getGeographicArea()));
+        buffer.append(CTSUtilities.toWGS84String(parameters.tableCS, getGeographicArea()));
         buffer.append(']');
         return buffer.toString();
     }
@@ -677,7 +753,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
                Float.floatToIntBits(this.xmax) == Float.floatToIntBits(that.xmax) &&
                Float.floatToIntBits(this.ymin) == Float.floatToIntBits(that.ymin) &&
                Float.floatToIntBits(this.ymax) == Float.floatToIntBits(that.ymax) &&
-               parameters.coordinateSystem.equals(that.parameters.coordinateSystem, false);
+               parameters.tableCS.equals(that.parameters.tableCS, false);
     }
 
     /**
@@ -746,24 +822,18 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
     /**
      * Indique si cette image a au moins la résolution spécifiée.
      *
-     * @param  resolution   Résolution désirée, exprimée selon le système de coordonnées
-     *                      spécifié. La conversion vers le système de coordonnées de
-     *                      l'image sera faite automatiquement.
-     * @param  sourceCS     Système de coordonnées de <code>resolution</code>.
+     * @param  resolution Résolution désirée, exprimée selon le système de coordonnées
+     *                    de la table d'images.
      * @return <code>true</code> si la résolution de cette image est égale ou supérieure à la
      *         résolution demandée. Cette méthode retourne <code>false</code> si <code>resolution</code>
-     *         était nul ou si une projection cartographique a échouée.
+     *         était nul.
      */
-    final boolean hasEnoughResolution(final Dimension2D resolution, final CoordinateSystem sourceCS) {
+    final boolean hasEnoughResolution(final Dimension2D resolution) {
         if (resolution != null) {
             double  width  = resolution.getWidth();
             double  height = resolution.getHeight();
             final float dx = (xmax-xmin);
             final float dy = (ymax-ymin);
-            final CoordinateSystem targetCS = getCoordinateSystem();
-            if (!sourceCS.equals(targetCS, false)) {
-                throw new UnsupportedOperationException(); // Not implemented
-            }
             if ((1+EPS)*width  >= dx/this.width &&
                 (1+EPS)*height >= dy/this.height)
             {

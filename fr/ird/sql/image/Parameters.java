@@ -25,24 +25,6 @@
  */
 package fr.ird.sql.image;
 
-// Geotools dependencies
-import org.geotools.pt.Envelope;
-
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.CompoundCoordinateSystem;
-import org.geotools.cs.TemporalCoordinateSystem;
-import org.geotools.cs.HorizontalCoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
-
-// Geotools dependencies
-import org.geotools.ct.MathTransform2D;
-import org.geotools.ct.TransformException;
-import org.geotools.ct.CoordinateTransformationFactory;
-
-// Geotools dependencies
-import org.geotools.gp.Operation;
-import org.geotools.gp.GridCoverageProcessor;
-
 // Coordonnées spatio-temporelles
 import java.util.Date;
 import java.util.TimeZone;
@@ -63,8 +45,18 @@ import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
 
-import org.geotools.resources.CTSUtilities;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
+import org.geotools.cs.HorizontalCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.gp.Operation;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XDimension2D;
 
 
@@ -82,17 +74,6 @@ final class Parameters implements Serializable {
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
     private static final long serialVersionUID = 6418640591318515042L;
-
-    /**
-     * Objet à utiliser par défaut pour construire des transformations de coordonnées.
-     */
-    public static final CoordinateTransformationFactory TRANSFORMS = CoordinateTransformationFactory.getDefault();
-
-    /**
-     * L'objet à utiliser pour appliquer
-     * des opérations sur les images lues.
-     */
-    public static final GridCoverageProcessor PROCESSOR = GridCoverageProcessor.getDefault();
 
     /**
      * Réference vers la série d'images. Cette référence
@@ -124,17 +105,23 @@ final class Parameters implements Serializable {
     public final String pathname;
 
     /**
-     * Système de coordonnées utilisé. Le système de coordonnées de tête ("head")
+     * Système de coordonnées de la table. Le système de coordonnées de tête ("head")
      * doit obligatoirement être un objet {@link HorizontalCoordinateSystem}.  La
      * seconde partie ("tail") sera ignorée;   il s'agira typiquement de l'axe du
      * temps ou de la profondeur.
      */
-    public final CompoundCoordinateSystem coordinateSystem;
+    public final CoordinateSystem tableCS;
+
+    /**
+     * Système de coordonnées de l'image. Ce sera habituellement (mais pas obligatoirement)
+     * le même que {@link #tableCS}.
+     */
+    public final CoordinateSystem imageCS;
 
     /**
      * Coordonnées horizontales de la région d'intéret.  Ces coordonnées
      * sont exprimées selon la partie horizontale ("head") du système de
-     * coordonnées {@link #coordinateSystem}.
+     * coordonnées {@link #tableCS}.
      */
     public final Rectangle2D geographicArea;
 
@@ -163,69 +150,39 @@ final class Parameters implements Serializable {
      * @param operation Opération à appliquer sur les images, ou <code>null</code>.
      * @param parameters Paramètres à appliquer sur l'opération, ou <code>null</code>
      *        s'il n'y a pas d'opération.
-     * @param coordinateSystem Système de coordonnées utilisé.  Le système de
-     *        coordonnées de tête ("head") doit obligatoirement être un objet
-     *        {@link HorizontalCoordinateSystem}.
-     * @param geographicArea Coordonnées horizontales de la région d'intéret.
+     * @param tableCS Système de coordonnées de la table. Le système de
+     *        coordonnées de tête ("head") doit obligatoirement être un
+     *        objet {@link HorizontalCoordinateSystem}.
+     * @param imageCS Système de coordonnées de l'image. Ce sera habituellement
+     *        (mais pas obligatoirement) le même que {@link #tableCS}.
+     * @param geographicArea Coordonnées horizontales de la région d'intéret,
+     *        dans le système de coordonnées <code>tableCS</code>.
      * @param resolution Dimension logique approximative désirée des pixels,
      *        ou <code>null</code> pour la meilleure résolution disponible.
+     *        Doit être exprimé dans le système de coordonnées <code>tableCS</code>.
      * @param dateFormat Formatteur à utiliser pour écrire des dates pour l'utilisateur.
      */
-    public Parameters(final SeriesEntry              series,
-                      final FormatEntryImpl          format,
-                      final String                   pathname,
-                      final Operation                operation,
-                      final ParameterList            parameters,
-                      final CompoundCoordinateSystem coordinateSystem,
-                      final Rectangle2D              geographicArea,
-                      final Dimension2D              resolution,
-                      final DateFormat               dateFormat)
+    public Parameters(final SeriesEntry      series,
+                      final FormatEntryImpl  format,
+                      final String           pathname,
+                      final Operation        operation,
+                      final ParameterList    parameters,
+                      final CoordinateSystem tableCS,
+                      final CoordinateSystem imageCS,
+                      final Rectangle2D      geographicArea,
+                      final Dimension2D      resolution,
+                      final DateFormat       dateFormat)
     {
-        this.series           = series;
-        this.format           = format;
-        this.pathname         = pathname;
-        this.operation        = operation;
-        this.parameters       = parameters;
-        this.coordinateSystem = coordinateSystem;
-        this.geographicArea   = geographicArea;
-        this.resolution       = resolution;
-        this.dateFormat       = dateFormat;
-    }
-
-    /**
-     * Retourne un bloc de paramètres avec les mêmes coordonnées géographiques
-     * que celui-ci, mais qui utilisera un système de coordonnées horizontales
-     * différent.
-     */
-    public Parameters createTransformed(final HorizontalCoordinateSystem cs) throws TransformException {
-        final CoordinateSystem headCS = coordinateSystem.getHeadCS();
-        if (!headCS.equals(cs, false)) {
-            final MathTransform2D transform = (MathTransform2D) TRANSFORMS.createFromCoordinateSystems(headCS, cs).getMathTransform();
-            final Rectangle2D newGeographicArea = CTSUtilities.transform(transform, geographicArea, null);
-            final Dimension2D newResolution;
-
-            if (resolution != null) {
-                final double width  = resolution.getWidth();
-                final double height = resolution.getHeight();
-                Rectangle2D   pixel = new Rectangle2D.Double(geographicArea.getCenterX()-0.5*width,
-                                                             geographicArea.getCenterY()-0.5*height,
-                                                             width, height);
-                pixel = CTSUtilities.transform(transform, pixel, pixel);
-                newResolution = new XDimension2D.Double(pixel.getWidth(), pixel.getHeight());
-            } else {
-                newResolution=null;
-            }
-
-            final CompoundCoordinateSystem ccs = new CompoundCoordinateSystem(coordinateSystem.getName(null), cs, coordinateSystem.getTailCS());
-            final Parameters parameters = new Parameters(series, format, pathname,
-                                                         operation, this.parameters,
-                                                         ccs, newGeographicArea, newResolution,
-                                                         dateFormat);
-
-            Table.logger.fine(Resources.format(ResourceKeys.TRANSFORMATION_TO_CS_$1, cs.getName(null)));
-            return (Parameters) Table.pool.intern(parameters);
-        }
-        return this;
+        this.series         = series;
+        this.format         = format;
+        this.pathname       = pathname;
+        this.operation      = operation;
+        this.parameters     = parameters;
+        this.tableCS        = tableCS;
+        this.imageCS        = imageCS;
+        this.geographicArea = geographicArea;
+        this.resolution     = resolution;
+        this.dateFormat     = dateFormat;
     }
 
     /**
@@ -234,15 +191,16 @@ final class Parameters implements Serializable {
     public boolean equals(final Object o) {
         if (o instanceof Parameters) {
             final Parameters that = (Parameters) o;
-            return Utilities.equals(this.series          , that.series          ) &&
-                   Utilities.equals(this.format          , that.format          ) &&
-                   Utilities.equals(this.pathname        , that.pathname        ) &&
-                   Utilities.equals(this.operation       , that.operation       ) &&
-                   Utilities.equals(this.parameters      , that.parameters      ) &&
-                   Utilities.equals(this.coordinateSystem, that.coordinateSystem) &&
-                   Utilities.equals(this.geographicArea  , that.geographicArea  ) &&
-                   Utilities.equals(this.resolution      , that.resolution      ) &&
-                   Utilities.equals(this.dateFormat      , that.dateFormat      );
+            return Utilities.equals(this.series         , that.series          ) &&
+                   Utilities.equals(this.format         , that.format          ) &&
+                   Utilities.equals(this.pathname       , that.pathname        ) &&
+                   Utilities.equals(this.operation      , that.operation       ) &&
+                   Utilities.equals(this.parameters     , that.parameters      ) &&
+                   Utilities.equals(this.tableCS        , that.tableCS         ) &&
+                   Utilities.equals(this.imageCS        , that.imageCS         ) &&
+                   Utilities.equals(this.geographicArea , that.geographicArea  ) &&
+                   Utilities.equals(this.resolution     , that.resolution      ) &&
+                   Utilities.equals(this.dateFormat     , that.dateFormat      );
         }
         return false;
     }
