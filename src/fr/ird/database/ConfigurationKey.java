@@ -28,8 +28,7 @@ import org.opengis.util.InternationalString;
 
 /**
  * A key for an aspect of a {@link DataBase} configuration. For example it may be
- * the {@linkplain SQLDataBase#DRIVER JDBC driver} to use for a connection to a SQL
- * database.
+ * the JDBC driver to use for a connection to a SQL database.
  *
  * @version $Id$
  * @author Remi Eve

@@ -24,6 +24,7 @@ import javax.swing.tree.TreeModel;
 import org.geotools.gui.swing.tree.TreeNode;
 
 // Seagis dependencies
+import fr.ird.database.Entry;
 import fr.ird.database.Table;
 import fr.ird.database.IllegalRecordException;
 

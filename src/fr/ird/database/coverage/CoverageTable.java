@@ -265,8 +265,8 @@ public interface CoverageTable extends Table {
      * si {@link CoverageRanges#t} est <code>null</code>, alors la plage de temps ne sera pas
      * examinée.
      *
-     * @param  L'objet dans lequel ajouter les plages de cette séries. Pour chaque champs nul
-     *         dans cet objet, les informations correspondantes ne seront pas interroger.
+     * @param  ranges L'objet dans lequel ajouter les plages de cette séries. Pour chaque champs
+     *         nul dans cet objet, les informations correspondantes ne seront pas interroger.
      * @return Un objet contenant les plages demandées ansi que la liste des entrées. Il ne
      *         s'agira pas nécessairement du même objet que celui qui a été spécifié en argument;
      *         ça dépendra si cette méthode est appelée localement ou sur une machine distante.
@@ -280,7 +280,7 @@ public interface CoverageTable extends Table {
      *
      * @param  coverage L'image à ajouter. Cette image doit avoir au moins trois dimensions,
      *         la troisième dimension étant la date de l'image sur l'axe du temps.
-     * @param  Le nom de l'image, sans son chemin ni son extension.
+     * @param  filename Le nom de l'image, sans son chemin ni son extension.
      * @return <code>true</code> si l'image a été ajoutée à la base de données, ou <code>false</code>
      *         si une image avec le même nom existait déjà pour la série courante. Dans ce dernier cas,
      *         la base de données ne sera pas modifiée et un message d'avertissement sera écrit.

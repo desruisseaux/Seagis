@@ -16,6 +16,7 @@
 package fr.ird.database.coverage;
 
 // J2SE et JAI
+import java.util.Date;
 import java.net.URL;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +25,8 @@ import java.rmi.RemoteException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 import javax.swing.event.EventListenerList;
+import javax.imageio.event.IIOReadWarningListener;
+import javax.imageio.event.IIOReadProgressListener;
 
 // Geotools
 import org.geotools.pt.Envelope;

@@ -11,15 +11,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
- *
- * Contacts:
- *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
- *             Institut de Recherche pour le Développement
- *             mailto:seasnet@teledetection.fr
- *
- *     CANADA: Observatoire du Saint-Laurent
- *             Institut Maurice-Lamontagne
- *             mailto:osl@osl.gc.ca
  */
 package fr.ird.operator.coverage;
 
@@ -40,6 +31,7 @@ import javax.media.jai.iterator.RectIterFactory;
 
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
+import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;

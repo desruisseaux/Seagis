@@ -16,6 +16,7 @@
 package fr.ird.database.coverage;
 
 // J2SE and JAI dependencies
+import java.util.Date;
 import java.rmi.RemoteException;
 import java.util.logging.Logger;
 import javax.media.jai.util.Range;

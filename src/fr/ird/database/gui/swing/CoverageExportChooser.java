@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.gui.swing;
 
@@ -136,7 +126,7 @@ public final class CoverageExportChooser extends JPanel {
         ///
         /// Configure le paneau servant à choisir un répertoire.
         ///
-        chooser=new JFileChooser(directory);
+        chooser = new JFileChooser(directory);
         chooser.setDialogType(JFileChooser.SAVE_DIALOG);
         chooser.setDialogTitle(resources.getString(ResourceKeys.OUT_DIRECTORY));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -152,7 +142,7 @@ public final class CoverageExportChooser extends JPanel {
         ///
         /// Construit le paneau d'options
         ///
-        final JPanel options=new JPanel(new GridBagLayout());
+        final JPanel options = new JPanel(new GridBagLayout());
         final GridBagConstraints c=new GridBagConstraints();
         options.setBorder(BorderFactory.createCompoundBorder(
                           BorderFactory.createTitledBorder(resources.getString(ResourceKeys.OPTIONS)),
@@ -174,7 +164,7 @@ public final class CoverageExportChooser extends JPanel {
      */
     private void updateCount() {
         count.setText(resources.getString(ResourceKeys.COVERAGES_TO_EXPORT_COUNT_$1,
-                                                   new Integer(entries.size())));
+                                          new Integer(entries.size())));
     }
 
     /**
@@ -311,7 +301,7 @@ public final class CoverageExportChooser extends JPanel {
          * Buffer temporaire. Ce buffer est utilisé pour construire
          * chacun des noms de fichier de destination des images.
          */
-        private final StringBuffer buffer = new StringBuffer();
+        private final StringBuilder buffer = new StringBuilder();
 
         /**
          * Objet {@link PropertyParser} à utiliser pour écrire les propriétés d'un
@@ -337,19 +327,23 @@ public final class CoverageExportChooser extends JPanel {
         }
 
         /**
-         * Retourne le nom et le chemin du fichier
-         * de destination pour l'image spécifiée.
+         * Retourne le nom et le chemin du fichier de destination pour l'image spécifiée.
          */
-        private File getDestinationFile(final int index) {
+        private File getDestinationFile(final int index) throws RemoteException {
             return getDestinationFile(index, extension);
         }
 
         /**
-         * Retourne le nom et le chemin du fichier
-         * de destination pour l'image spécifiée.
+         * Retourne le nom et le chemin du fichier de destination pour l'image spécifiée.
          */
-        private File getDestinationFile(final int index, final String extension) {
-            final String filename = entries[index].getFile().getName();
+        private File getDestinationFile(final int index, final String extension)
+                throws RemoteException
+        {
+            File file = entries[index].getFile();
+            if (file == null) {
+                file = new File(entries[index].getURL().getPath());
+            }
+            final String filename = file.getName();
             buffer.setLength(0);
             buffer.append(filename);
             final int extPos = filename.lastIndexOf('.');
@@ -384,8 +378,12 @@ public final class CoverageExportChooser extends JPanel {
             }
             int existing = 0;
             for (int i=0; i<entries.length; i++) {
-                if (getDestinationFile(i).exists()) {
-                    existing++;
+                try {
+                    if (getDestinationFile(i).exists()) {
+                        existing++;
+                    }
+                } catch (RemoteException exception) {
+                    // Ignore. This file will not be counted.
                 }
             }
             if (existing != 0) {
@@ -473,15 +471,16 @@ public final class CoverageExportChooser extends JPanel {
          * est survenu pendant la lecture d'une image.
          */
         public void warningOccurred(final ImageReader source, final String warning) {
-            String name = "";
-            
+            String name = null;
             final ProgressListener progress = this.progress;
             if (progress != null) {
-                final CoverageEntry entry=current;
-                try {
-                    entry.getName();
-                } catch (Exception e) {}            
-                progress.warningOccurred((entry!=null) ? name : null, null, warning);
+                final CoverageEntry entry = current;
+                if (entry != null) try {
+                    name = entry.getName();
+                } catch (RemoteException e) {
+                    name = "<error>";
+                }
+                progress.warningOccurred(name, null, warning);
             }
         }
 

@@ -43,9 +43,11 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 // Geotools dependencies
+import org.geotools.resources.Utilities;
 import org.geotools.resources.SwingUtilities;
 
 // Seagis
+import fr.ird.database.DataBase;
 import fr.ird.database.ConfigurationKey;
 import fr.ird.database.sql.AbstractDataBase;
 import fr.ird.resources.seagis.ResourceKeys;
@@ -54,9 +56,9 @@ import fr.ird.resources.seagis.Resources;
 
 /**
  * Editeur d'instructions SQL. Cet objet peut être construit en lui spécifiant en paramètres
- * l'objet {@link Configuration} qui contient les instructions SQL à utiliser. On peut ensuite
- * appeler {@link #addSQL} pour ajouter une instruction SQL à la liste des instructions qui
- * pourront être éditées. Enfin, on peut appeler la méthode {@link #showDialog} pour faire
+ * l'objet {@link DataBase} qui contient les instructions SQL à utiliser. On peut
+ * ensuite appeler {@link #addSQL} pour ajouter une instruction SQL à la liste des instructions
+ * qui pourront être éditées. Enfin, on peut appeler la méthode {@link #showDialog} pour faire
  * apparaître un éditeur des instructions spécifiées.
  *
  * <p>&nbsp;</p>
@@ -64,6 +66,7 @@ import fr.ird.resources.seagis.Resources;
  * <p>&nbsp;</p>
  *
  * @author Martin Desruisseaux
+ * @version $Id$
  */
 public class SQLEditor extends JPanel {
     /**
@@ -198,8 +201,9 @@ public class SQLEditor extends JPanel {
     }
 
     /**
-     * Construit un éditeur d'instructions SQL
-     * @param preferences Préférences à éditer.
+     * Construit un éditeur d'instructions SQL.
+     *
+     * @param configuration Base de données dont on veut éditer la configuration.
      * @param description Note explicative destinée à l'utilisateur.
      * @param logger Journal dans lequel écrire une notification des
      *               requêtes qui ont été changées.
@@ -261,10 +265,15 @@ public class SQLEditor extends JPanel {
      * déjà un.
      */
     private static String line(String value) {
+        if (value == null) {
+            return "";
+        }
         final int length = value.length();
         if (length != 0) {
             final char c = value.charAt(length-1);
-            if (c!='\r' && c!='\n') value+='\n';
+            if (c!='\r' && c!='\n') {
+                value += '\n';
+            }
         }
         return value;
     }
@@ -272,7 +281,8 @@ public class SQLEditor extends JPanel {
     /**
      * Ajoute une instruction SQL à la liste des instructions qui pourront être éditées.
      *
-     * @param key Clé permetant de retrouver l'instruction SQL actuelle dans l'objet {@link Configuration}.
+     * @param key Clé permetant de retrouver l'instruction SQL actuelle dans l'objet
+     *        {@link DataBase}.
      */
      public synchronized void addSQL(final ConfigurationKey key) {
          userSQL.add(line(configuration.getProperty(key)));
@@ -287,10 +297,16 @@ public class SQLEditor extends JPanel {
     protected void save() {
         for (int i=userSQL.size(); --i>=0;) {
             final ConfigurationKey key = keySQL.get(i);
-            String value = userSQL.get(i).trim();
-            if (!value.equals(configuration.getProperty(key).trim())) {
+            String value = userSQL.get(i);
+            if (value != null) {
+                value = value.trim();
+                if (value.length() == 0) {
+                    value = null;
+                }
+            }
+            if (!Utilities.equals(value, configuration.getProperty(key))) {
                 final int clé;
-                if (value.equals(key.defaultValue.trim())) {
+                if (Utilities.equals(value, key.defaultValue)) {
                     clé = ResourceKeys.REMOVE_QUERY_$1;
                     value = null;
                 } else {

@@ -15,30 +15,15 @@
  */
 package fr.ird.database.coverage.sql;
 
-// Base de données et E/S
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.SQLException;
-import java.rmi.RemoteException;
-import java.io.IOException;
-import java.io.File;
-
-// Coordonnées spatio-temporelles
+// J2SE dependencies
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.awt.geom.Rectangle2D;
-
-// Divers
-import java.util.List;
-import java.util.ArrayList;
-import java.util.prefs.Preferences;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.Level;
-import javax.imageio.spi.IIORegistry;
 import javax.media.jai.util.Range;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.gp.GridCoverageProcessor;
@@ -149,8 +134,15 @@ public class CoverageDataBase extends AbstractDataBase implements fr.ird.databas
     /**
      * {@inheritDoc}
      */
-    public SeriesTable getSeriesTable() throws RemoteException {
+    public synchronized SeriesTable getSeriesTable() throws RemoteException {
         return new fr.ird.database.coverage.sql.SeriesTable(this, connection);
+    }
+ 
+    /**
+     * Retourne la table des formats.
+     */
+    final synchronized FormatTable getFormatTable() throws RemoteException {
+        return new FormatTable(this, connection);
     }
 
     /**
@@ -215,7 +207,7 @@ public class CoverageDataBase extends AbstractDataBase implements fr.ird.databas
     /**
      * {@inheritDoc}
      */
-    public CoverageTable getCoverageTable(final String series) throws RemoteException {
+    public synchronized CoverageTable getCoverageTable(final String series) throws RemoteException {
         final SeriesTable table = getSeriesTable();       
         final SeriesEntry entry = table.getEntry(series);
         table.close();
@@ -260,7 +252,7 @@ public class CoverageDataBase extends AbstractDataBase implements fr.ird.databas
      * les préférences systèmes et utilisées pour interroger les tables de la
      * base de données d'images.
      */
-    public SQLEditor getSQLEditor() {
+    public synchronized SQLEditor getSQLEditor() {
         if (KEYS == null) {
             KEYS = new ConfigurationKey[] {      DRIVER,
                                                  SOURCE,
@@ -294,7 +286,7 @@ public class CoverageDataBase extends AbstractDataBase implements fr.ird.databas
     /**
      * {@inheritDoc}
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (boundingBox != null) {
             boundingBox.close();
         }
@@ -313,51 +305,5 @@ public class CoverageDataBase extends AbstractDataBase implements fr.ird.databas
      */
     protected Logger getLogger() {
         return LOGGER;
-    }
-
-    /**
-     * Affiche des enregistrements de la base de données ou configure les requêtes SQL.
-     * Cette méthode peut être exécutée à partir de la ligne de commande:
-     *
-     * <blockquote><pre>
-     * java fr.ird.database.coverage.sql.CoverageDataBase <var>options</var>
-     * </pre></blockquote>
-     *
-     * Lorsque cette classe est exécutée avec l'argument <code>-config</code>, elle
-     * fait apparaître une boite de dialogue  permettant de configurer les requêtes
-     * SQL utilisées par la base de données. Les requêtes modifiées seront sauvegardées
-     * dans les préférences du système. Lorsque des arguments sont spécifiés,
-     * ils sont interprétés comme suit:
-     *
-     * <blockquote><pre>
-     *  <b>-help</b> <i></i>         Affiche cette liste des options
-     *  <b>-series</b> <i></i>       Affiche l'arborescence des séries
-     *  <b>-formats</b> <i></i>      Affiche la table des formats
-     *  <b>-config</b> <i></i>       Configure la base de données (interface graphique)
-     *  <b>-browse</b> <i></i>       Affiche le contenu de toute la base de données (interface graphique)
-     *  <b>-source</b> <i>name</i>   Source des données                (exemple: "jdbc:odbc:SEAS-Images")
-     *  <b>-driver</b> <i>name</i>   Pilote de la base de données      (exemple: "sun.jdbc.odbc.JdbcOdbcDriver")
-     *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
-     *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
-     *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
-     * </pre></blockquote>
-     *
-     * L'argument <code>-encoding</code> est surtout utile lorsque cette méthode est lancée
-     * à partir de la ligne de commande MS-DOS: ce dernier n'utilise pas la même page
-     * de code que le reste du système Windows. Il est alors nécessaire de préciser la
-     * page de code (souvent 850 ou 437) si on veut obtenir un affichage correct des
-     * caractères étendus. La page de code en cours peut être obtenu en tappant
-     * <code>chcp</code> sur la ligne de commande.
-     *
-     * @throws RemoteException si l'interrogation du catalogue a échoué.
-     */
-    public static void main(final String[] args) throws RemoteException {
-        org.geotools.util.MonolineFormatter.init("fr.ird");
-//        final Main console = new Main(args);
-//        if (console.config) {
-//            getSQLEditor().showDialog(null);
-//            System.exit(0);
-//        }
-//        console.run();
     }
 }

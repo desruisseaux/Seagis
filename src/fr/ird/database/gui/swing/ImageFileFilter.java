@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.gui.swing;
 
@@ -33,7 +23,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-// Divers...
+// Other J2SE dependencies
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageReader;
@@ -44,6 +34,8 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ImageReaderWriterSpi;
 import javax.swing.filechooser.FileFilter;
+
+// Geotools dependencies
 import org.geotools.resources.Utilities;
 
 
@@ -136,8 +128,8 @@ final class ImageFileFilter extends FileFilter {
     private static ImageFileFilter[] getFilters(final Class category, final Locale loc) {
         final Locale locale = (loc!=null) ? loc : Locale.getDefault();
         final List<ImageFileFilter> set = new ArrayList<ImageFileFilter>();
-        for (final Iterator it=IIORegistry.getDefaultInstance().getServiceProviders(category, false); it.hasNext();) {
-            final ImageReaderWriterSpi spi = (ImageReaderWriterSpi) it.next();
+        for (final Iterator<ImageReaderWriterSpi> it=IIORegistry.getDefaultInstance().getServiceProviders(category, false); it.hasNext();) {
+            final ImageReaderWriterSpi spi = it.next();
             final String       description = spi.getDescription(locale);
             final String[]          suffix = spi.getFileSuffixes();
             set.add(new ImageFileFilter(spi, description, suffix));

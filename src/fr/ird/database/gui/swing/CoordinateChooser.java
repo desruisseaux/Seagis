@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.gui.swing;
 
@@ -41,7 +31,6 @@ import javax.swing.BorderFactory;
 
 // Divers
 import java.util.Date;
-import java.sql.SQLException;
 import javax.media.jai.util.Range;
 import java.rmi.RemoteException;
 
@@ -67,8 +56,8 @@ import fr.ird.resources.XArray;
 
 
 /**
- * Boîte de dialogue invitant l'utilisateur à sélectionner une plage de dates et de coordonnées.
- * Ces informations peuvent servir à configurer une table
+ * Boîte de dialogue invitant l'utilisateur à sélectionner une plage de dates
+ * et de coordonnées. Ces informations peuvent servir à configurer une table
  * {@link fr.ird.database.coverage.CoverageTable} en fonction des choix de l'utilisateur.
  *
  * @version $Id$
@@ -105,7 +94,7 @@ public class CoordinateChooser extends org.geotools.gui.swing.CoordinateChooser 
      * @param  database Connection vers la base de données d'images. Cette
      *         connection ne sera utilisée que le temps de la construction.
      *         Aucune référence ne sera retenue après la construction.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation de la base de données a échouée.
      */
     public CoordinateChooser(final CoverageDataBase database) throws RemoteException {
         this(database, database.getTimeRange());
@@ -160,7 +149,7 @@ public class CoordinateChooser extends org.geotools.gui.swing.CoordinateChooser 
      */
     public void setSeries(final SeriesEntry series) {
         final TreePath[] paths = Trees.getPathsToUserObject(treeModel, series);
-        if (paths.length==0) {
+        if (paths.length == 0) {
             return;
         }
         treeSelection.setSelectionPath(paths[0]);
@@ -228,8 +217,7 @@ public class CoordinateChooser extends org.geotools.gui.swing.CoordinateChooser 
             return null;
         }
         /*
-         * If series was hidden, show series
-         * in a separated dialog box.
+         * If series was hidden, show series in a separated dialog box.
          */
         while (SwingUtilities.showOptionDialog(owner, treeView, title)) {
             final SeriesEntry[] series = getSeries();

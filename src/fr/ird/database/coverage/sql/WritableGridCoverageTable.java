@@ -80,7 +80,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
     /**
      * The SQL instruction for inserting a new geographic bounding box.
      */
-    static final ConfigurationKey INSERT_BBOX = createKey(BOUNDING_BOX+":INSERT", ResourceKeys.SQL_GRID_GEOMETRIES_ID_INSERT,
+    static final ConfigurationKey INSERT_BBOX = createKey(BOUNDING_BOX+":INSERT", ResourceKeys.SQL_GRID_GEOMETRIES_INSERT,
             "INSERT INTO "+SCHEMA+".\""+BOUNDING_BOX+"\" " +
             "(x_min, x_max, y_min, y_max, width, height) " +
             "VALUES (?, ?, ?, ?, ?, ?)");

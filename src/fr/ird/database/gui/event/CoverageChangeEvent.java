@@ -41,9 +41,9 @@ public class CoverageChangeEvent extends EventObject {
     /**
      * Construit un événement représentant un changement d'images.
      *
-     * @param source Source de cet événement.
-     * @param entry  Description de l'image (peut être nulle).
-     * @param image  Nouvelle image (peut être nulle).
+     * @param source   Source de cet événement.
+     * @param entry    Description de l'image (peut être nulle).
+     * @param coverage Nouvelle image (peut être nulle).
      */
     public CoverageChangeEvent(final Object        source,
                                final CoverageEntry entry,

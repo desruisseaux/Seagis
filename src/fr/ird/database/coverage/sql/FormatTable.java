@@ -15,14 +15,17 @@
  */
 package fr.ird.database.coverage.sql;
 
-// Base de données
+// J2SE dependencies
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 
-// Seagis
+// Seagis dependencies
 import fr.ird.database.CatalogException;
 import fr.ird.database.ConfigurationKey;
 import fr.ird.resources.seagis.Resources;
@@ -133,6 +136,31 @@ final class FormatTable extends Table {
                                       geophysics, bands.getSampleDimensions(name));
         CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
         return entry;
+    }
+
+    /**
+     * Returns the list of formats.
+     *
+     * @throws SQLException if a database operation failed.
+     */
+    public synchronized List<FormatEntry> getEntries() throws SQLException, RemoteException {
+        final List<FormatEntry> entries = new ArrayList<FormatEntry>();
+        final Statement s = statement.getConnection().createStatement();
+        final ResultSet r = s.executeQuery(selectWithoutWhere(getProperty(SELECT)));
+        while (r.next()) {
+            final String       name  = r.getString (NAME);
+            final String   mimeType  = r.getString (MIME);
+            final String   extension = r.getString (EXTENSION);
+            final boolean geophysics = r.getBoolean(GEOPHYSICS);
+            if (bands == null) {
+                bands = new SampleDimensionTable(database, statement.getConnection());
+            }
+            entries.add(new FormatEntry(name, mimeType, extension,
+                        geophysics, bands.getSampleDimensions(name)));
+        }
+        r.close();
+        s.close();
+        return entries;
     }
 
     /**
