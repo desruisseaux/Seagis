@@ -48,16 +48,22 @@ import fr.ird.animat.Species;
  */
 public abstract class Animal extends RemoteObject implements fr.ird.animat.Animal {
     /**
-     * La population à laquelle appartient cet animal.
+     * La population à laquelle appartient cet animal, ou <code>null</code>
+     * si l'animal est mort.
      */
-    Population population;
+    private Population population;
+
+    /**
+     * Espèce à laquelle appartient cet animal.
+     */
+    private final Species species;
 
     /**
      * Horloge de l'animal. Chaque animal peut avoir une horloge qui lui est propre.
      * Toutes les horloges avancent au même rythme, mais leur temps 0 (qui correspond
      * à la naissance de l'animal) peuvent être différents.
      */
-    protected final Clock clock;
+    private final Clock clock;
 
     /**
      * Le chemin suivit par l'animal depuis le début de la simulation. La méthode
@@ -67,25 +73,26 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     protected final Path path;
 
     /**
-     * Construit un animal à la position initiale spécifiée.
-     *
-     * @param position Position initiale de l'animal.
-     * @param clock {@linkplain Environment#getClock Horloge de l'environnement} auquel sera soumis
-     *        l'animal. L'animal aura {@linkplain #clock sa propre horloge} synchronisée sur celle
-     *        de l'environnement, mais avec un temps 0 (qui correspond à la naissance de l'animal)
-     *        différent.
+     * Les observations effectuées par cet animal depuis sa naissance.
      */
-    public Animal(final Point2D position, final Clock clock) {
-        this.path  = new Path(position);
-        this.clock = clock.getNewClock();
-    }
+    private float[] observations;
 
     /**
-     * Retourne l'espèce à laquelle appartient cet animal.
+     * Construit un animal à la position initiale spécifiée. L'animal n'appartiendra
+     * initiallement à aucune population. 
      *
-     * @return L'espèce à laquelle appartient cet animal.
+     * @param population La population à laquelle appartient cet animal.
+     * @param species L'espèce de cet animal.
+     * @param position Position initiale de l'animal, en degrés de longitudes et de latitudes.
      */
-    public abstract Species getSpecies();
+    public Animal(final Population population, final Species species, final Point2D position) {
+        this.population = population;
+        this.species    = species;
+        this.clock      = population.getEnvironment().getClock().getNewClock();
+        this.path       = new Path(position);
+        population.animals.add(this);
+        population.firePopulationChanged();
+    }
 
     /**
      * Retourne la population à laquelle appartient cet animal.
@@ -96,6 +103,15 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      */
     public Population getPopulation() {
         return population;
+    }
+
+    /**
+     * Retourne l'espèce à laquelle appartient cet animal.
+     *
+     * @return L'espèce à laquelle appartient cet animal.
+     */
+    public Species getSpecies() {
+        return species;
     }
 
     /**
@@ -152,12 +168,40 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     protected abstract void move(float duration);
 
     /**
+     * Fait migrer cette animal vers une nouvelle population.  Si cet animal appartient déjà à
+     * la population spécifiée, rien ne sera fait. Sinon, l'animal sera retiré de son ancienne
+     * population avant d'être ajouté à la population spécifiée.
+     * <br><br>
+     * Un animal peut changer de population par exemple lorsqu'il passe du stade larvaire
+     * vers le stade juvenile. Puisqu'il a cessé de dériver et qu'il s'est mis à nager, on
+     * peut considérer qu'il a rejoint une nouvelle population d'individus avec une autre
+     * dynamique.
+     *
+     * @see Population#getAnimals
+     * @see #kill
+     */
+    public void migrate(final Population population) {
+        synchronized (getTreeLock()) {
+            final Population oldPopulation = this.population;
+            if (oldPopulation != population) {
+                oldPopulation.animals.remove(this);
+                this.population = population;
+                population.animals.add(this);
+                oldPopulation.firePopulationChanged();
+                population.firePopulationChanged();
+            }
+        }
+    }
+
+    /**
      * Tue l'animal. L'animal n'appartiendra plus à aucune population.
      */
     public void kill() {
         synchronized (getTreeLock()) {
-            if (population != null) {
-                population.kill(this);
+            if (population != null) try {
+                population.animals.remove(this);
+                population.firePopulationChanged();
+            } finally {
                 population = null;
             }
         }

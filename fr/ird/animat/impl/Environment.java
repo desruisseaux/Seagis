@@ -63,9 +63,10 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  */
 public class Environment extends RemoteServer implements fr.ird.animat.Environment {
     /**
-     * Ensemble des populations comprises dans cet environnement.
+     * Ensemble des populations comprises dans cet environnement. Cet ensemble est accédé
+     * par le constructeur de {@link Population} et {@link Population#kill} seulement.
      */
-    private final Set<fr.ird.animat.Population> populations = new LinkedHashSet<fr.ird.animat.Population>();
+    final Set<fr.ird.animat.Population> populations = new LinkedHashSet<fr.ird.animat.Population>();
 
     /**
      * Version immutable de la population, retournée par {@link #getPopulation}.
@@ -126,42 +127,6 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
         }
         this.clock = clock;
         queue = new EventQueue(clock);
-    }
-
-    /**
-     * Ajoute une population à cet environnement. Si la population appartient déjà à cet
-     * environnement, rien ne sera fait. Sinon, si la population appartenait à un autre
-     * environnement, alors elle sera retirée de son ancien environnement avant d'être
-     * ajouté à celui-ci.
-     *
-     * @param population La population à ajouter.
-     *
-     * @see #getPopulations
-     * @see Population#kill
-     */
-    public void addPopulation(final Population population) {
-        synchronized (getTreeLock()) {
-            final Environment oldEnvironment = population.environment;
-            if (oldEnvironment != this) {
-                if (oldEnvironment != null) {
-                    oldEnvironment.populations.remove(this);
-                    population.environment = null;
-                    oldEnvironment.fireEnvironmentChanged();
-                }
-                populations.add(population);
-                population.environment = this;
-                fireEnvironmentChanged();
-            }
-        }
-    }
-
-    /**
-     * Utilisé par {@link Population#kill} seulement. Cette méthode existe
-     * uniquement parce que l'ensemble {@link #populations} est privé.
-     */
-    final void kill(final Population population) {
-        assert Thread.holdsLock(getTreeLock());
-        populations.remove(population);
     }
 
     /**

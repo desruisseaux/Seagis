@@ -52,15 +52,16 @@ import fr.ird.animat.event.PopulationChangeListener;
  */
 public abstract class Population extends RemoteObject implements fr.ird.animat.Population {
     /**
-     * L'environnement dans lequel évolue cette population. Peut être <code>null</code> si la
-     * population est "morte". Ce champ est mis-à-jour par {@link Environment#addPopulation}.
+     * L'environnement dans lequel évolue cette population.
+     * Peut être <code>null</code> si la population est "morte".
      */
-    Environment environment;
+    private Environment environment;
 
     /**
-     * Ensemble des animaux de cette population.
+     * Ensemble des animaux de cette population. Cet ensemble est accédé par
+     * les méthodes {@link Animal#migrate} et {@link Animal#kill} seulement.
      */
-    private final Set<fr.ird.animat.Animal> animals = new LinkedHashSet<fr.ird.animat.Animal>();
+    final Set<fr.ird.animat.Animal> animals = new LinkedHashSet<fr.ird.animat.Animal>();
 
     /**
      * Liste immutable des animaux de cette population.
@@ -105,8 +106,12 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
 
     /**
      * Construit une population initialement vide.
+     *
+     * @param environment Environnement Environnement de la population.
      */
-    public Population() {
+    public Population(final Environment environment) {
+        this.environment = environment;
+        environment.fireEnvironmentChanged();
     }
 
     /**
@@ -116,47 +121,6 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
      */
     public Environment getEnvironment() {
         return environment;
-    }
-
-    /**
-     * Ajoute l'animal spécifiée à cette population population. Si l'animal appartient déjà
-     * à cette population, rien ne sera fait. Sinon, si l'animal appartenait à une autre
-     * population, alors elle sera retirée de son ancienne population avant d'être ajouté
-     * à celle-ci.
-     * <br><br>
-     * Un animal peut changer de population par exemple lorsqu'il passe du stade larvaire
-     * vers le stade juvenile. Puisqu'il a cessé de dériver et qu'il s'est mis à nager, on
-     * peut considérer qu'il a rejoint une nouvelle population d'individus avec une autre
-     * dynamique.
-     *
-     * @param animal L'animal à ajouter.
-     *
-     * @see #getAnimals
-     * @see Animal#kill
-     */
-    public void addAnimal(final Animal animal) {
-        synchronized (getTreeLock()) {
-            final Population oldPopulation = animal.population;
-            if (oldPopulation != this) {
-                if (oldPopulation != null) {
-                    oldPopulation.animals.remove(this);
-                    animal.population = null;
-                    oldPopulation.firePopulationChanged();
-                }
-                animals.add(animal);
-                animal.population = this;
-                firePopulationChanged();
-            }
-        }
-    }
-
-    /**
-     * Utilisé par {@link Animal#kill} seulement. Cette méthode existe
-     * uniquement parce que l'ensemble {@link #animals} est privé.
-     */
-    final void kill(final Animal animal) {
-        assert Thread.holdsLock(getTreeLock());
-        animals.remove(animal);
     }
 
     /**
@@ -207,7 +171,7 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
             assert animals.isEmpty() : animals.size();
             animals.clear(); // Par précaution.
             if (environment != null) {
-                environment.kill(this);
+                environment.populations.remove(this);
                 environment = null;
             }
             /*
