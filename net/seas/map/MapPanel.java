@@ -235,6 +235,7 @@ public class MapPanel extends ZoomPane
         addZoomChangeListener(listeners);
         addComponentListener (listeners);
         addMouseListener     (listeners);
+        setResetPolicy       (true);
     }
 
     /**

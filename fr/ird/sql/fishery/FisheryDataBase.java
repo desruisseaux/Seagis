@@ -191,6 +191,44 @@ public class FisheryDataBase extends DataBase
      *
      * @param  table Table dont on veut les espèces. Ce nom devrait
      *         être une constante telle que {@link #LONGLINES}.
+     * @param  species Code des espèces d'intérêt dans la table (par exemple "SWO").
+     *
+     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @throws SQLException si la table n'a pas pu être construite.
+     */
+    public CatchTable getCatchTable(final String table, final String[] species) throws SQLException
+    {
+        final List<Species> list = new ArrayList<Species>(species.length);
+        final SpeciesTable spSQL = new SpeciesTable(connection);
+        for (int i=0; i<species.length; i++)
+        {
+            final Species sp = spSQL.getSpecies(species[i]);
+            if (sp!=null) list.add(sp);
+        }
+        spSQL.close();
+        return getCatchTable(table, list);
+    }
+
+    /**
+     * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
+     * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
+     *
+     * @param  table Table dont on veut les espèces. Ce nom devrait
+     *         être une constante telle que {@link #LONGLINES}.
+     * @param  species Espèces d'intérêt dans la table (par exemple "SWO").
+     *
+     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @throws SQLException si la table n'a pas pu être construite.
+     */
+    public CatchTable getCatchTable(final String table, final String species) throws SQLException
+    {return getCatchTable(table, new String[]{species});}
+
+    /**
+     * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
+     * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
+     *
+     * @param  table Table dont on veut les espèces. Ce nom devrait
+     *         être une constante telle que {@link #LONGLINES}.
      *
      * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
      * @throws SQLException si la table n'a pas pu être construite.

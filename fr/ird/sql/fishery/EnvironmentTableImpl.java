@@ -52,11 +52,10 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] POSITION  */ ENVIRONMENTS+".position, " +
-                                /*[02] PARAMETER */ ENVIRONMENTS+".[param] "   +
+                                /*[02] PARAMETER */ ENVIRONMENTS+".[?] "       +
 
                     "FROM "+ENVIRONMENTS+" "+
-                    "WHERE ID=? AND position=?"+
-                    "ORDER BY position";
+                    "WHERE ID=? AND position=? AND écart_temps=0";
 
     /** Numéro de colonne. */ static final int POSITION  =  1;
     /** Numéro de colonne. */ static final int PARAMETER =  2;
@@ -96,11 +95,11 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     }
 
     /**
-     * Replace substring "[param]" by parameter name.
+     * Replace substring "[?]" by parameter name.
      */
     private static String replace(final String query, final String parameter)
     {
-        final String PARAM = "[param]";
+        final String PARAM = "[?]";
         final StringBuffer buffer=new StringBuffer(query);
         for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;)
         {
@@ -143,8 +142,8 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
         final ResultSet result=statement.executeQuery();
         while (result.next())
         {
-            final double value = result.getDouble(1);
-            if (!Double.isNaN(value))
+            final double value = result.getDouble(PARAMETER);
+            if (!result.wasNull() && !Double.isNaN(value))
             {
                 sum += value;
                 n++;

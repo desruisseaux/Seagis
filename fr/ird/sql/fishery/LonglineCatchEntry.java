@@ -102,16 +102,18 @@ final class LonglineCatchEntry extends AbstractCatchEntry
     public LonglineCatchEntry(final LonglineCatchTable table, final ResultSet result) throws SQLException
     {
         super(result.getInt(LonglineCatchTable.ID), table.species);
+        final float efu;
 
-        this.date = table.getTimestamp(LonglineCatchTable.DATE, result).getTime();
-        this.x1   = getFloat(result,   LonglineCatchTable.START_LONGITUDE);
-        this.y1   = getFloat(result,   LonglineCatchTable.START_LATITUDE );
-        this.x2   = getFloat(result,   LonglineCatchTable.END_LONGITUDE  );
-        this.y2   = getFloat(result,   LonglineCatchTable.END_LATITUDE   );
+        date = table.getTimestamp(LonglineCatchTable.DATE, result).getTime();
+        x1   = getFloat(result,   LonglineCatchTable.START_LONGITUDE);
+        y1   = getFloat(result,   LonglineCatchTable.START_LATITUDE );
+        x2   = getFloat(result,   LonglineCatchTable.END_LONGITUDE  );
+        y2   = getFloat(result,   LonglineCatchTable.END_LATITUDE   );
+        efu  = getFloat(result,   LonglineCatchTable.EFFORT_UNIT    )/1000;
 
         for (int i=0; i<amount.length; i++)
         {
-            amount[i] = getFloat(result, LonglineCatchTable.CATCHS + i);
+            amount[i] = getFloat(result, LonglineCatchTable.CATCHS + i)/efu;
         }
     }
 

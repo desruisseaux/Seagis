@@ -516,7 +516,7 @@ public abstract class ZoomPane extends JComponent
      * <code>false</code> indique au contraire qu'on doit faire apparaître
      * tout le contenu, quitte à laisser des espaces vides dans le panneau.
      */
-    private static final boolean fillPanel=true;
+    private boolean fillPanel=false;
 
     /**
      * Rectangle représentant les coordonnées logiques de la région visible. Cette information est utilisée
@@ -748,6 +748,17 @@ public abstract class ZoomPane extends JComponent
             }
         }
     }
+
+    /**
+     * Set the policy for the zoom when the content is initially drawn
+     * or when user reset the zoom. Value <code>true</code> means that
+     * the panel should be initially completly filled, even if the content
+     * partially falls outside the panel's bound. Value <code>false</code>
+     * means that the full content should apear in the panel, even if some
+     * space is not used. Default value is <code>false</code>.
+     */
+    protected void setResetPolicy(final boolean fill)
+    {fillPanel = fill;}
 
     /**
      * Retourne les coordonnées logiques de toute la région couverte par le contenu de
