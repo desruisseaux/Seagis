@@ -168,7 +168,7 @@ public class PropertyParser
     private transient CoordinateSystem coordinateSystem;
 
     /**
-     * The coordinate system factory to use for construction
+     * The coordinate system factory to use for constructing
      * ellipsoids, projections, coordinate systems...
      */
     private final CoordinateSystemFactory factory;
