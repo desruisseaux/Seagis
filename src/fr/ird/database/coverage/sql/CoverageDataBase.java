@@ -294,14 +294,17 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         if (entry != null) {
             return getCoverageTable(entry);
         } else {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, new Integer(seriesID)));
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1,
+                                                    new Integer(seriesID)));
         }
     }
 
     /**
      * Retourne le processeur par défaut à utiliser pour appliquer des opérations sur les images
      * lues. Les operations sont spécifiées par {@link CoverageTable#setOperation(String)} et
-     * appliquée lors de l'appel de {@link CoverageEntry#getGridCoverage}.
+     * appliquée lors de l'appel de {@link CoverageEntry#getGridCoverage}. Le processeur par
+     * défaut accepte la combinaison d'un certain nombre d'opérations séparées par des point
+     * virgules, par exemple <code>&quot;NodataFilter;GradientMagnitude&quot;</code>.
      *
      * @return Le processeur par défaut.
      * @see CoverageTable#setOperation(String)

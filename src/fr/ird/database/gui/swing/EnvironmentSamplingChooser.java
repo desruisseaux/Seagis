@@ -82,6 +82,21 @@ import fr.ird.resources.seagis.Resources;
  */
 public class EnvironmentSamplingChooser extends JPanel {
     /**
+     * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
+     * &quot;NodataFilter&quot;.
+     *
+     * @see fr.ird.database.coverage.sql.GridCoverageProcessor#NODATA_FILTER
+     */
+    private static final String NODATA_FILTER = "NodataFilter";
+
+    /**
+     * Le séparateur à utiliser entre les noms d'opérations.
+     *
+     * @see fr.ird.database.coverage.sql.GridCoverageProcessor#SEPARATOR
+     */
+    private static final char SEPARATOR = ';';
+
+    /**
      * Nom de l'opération à effectuer sur les images.
      */
     private final JComboBox operation;
@@ -274,9 +289,6 @@ public class EnvironmentSamplingChooser extends JPanel {
             final Map<CaselessStringKey,Object> arguments = new HashMap<CaselessStringKey,Object>();
             arguments.put(new CaselessStringKey("Mask1"), kernels.getHorizontalEditor().getKernel());
             arguments.put(new CaselessStringKey("Mask2"), kernels.getVerticalEditor().getKernel());
-            if (nodataFilter) {
-                GridCoverageProcessor.initialize();
-            }
             filler.setInterpolationAllowed(interpolationAllowed.isSelected());
             filler.getSeries().retainAll(series.getSelectedElements());
             filler.getRelativePositions().retainAll(Arrays.asList(positions.getSelectedValues()));
@@ -289,9 +301,9 @@ public class EnvironmentSamplingChooser extends JPanel {
                         return name;
                     }
                     if (name==null || (name=name.trim()).length()==0) {
-                        return GridCoverageProcessor.NODATA_FILTER;
+                        return NODATA_FILTER;
                     }
-                    return GridCoverageProcessor.NODATA_FILTER + '-' + name;
+                    return NODATA_FILTER + SEPARATOR + name;
                 }
 
                 /** Retourne le nom de la colonne dans laquelle écrire le résultat. */

@@ -151,7 +151,7 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      * @see CoverageDataBase#getDefaultGridCoverageProcessor
      * @see CoverageDataBase#setDefaultGridCoverageProcessor
      */
-    static GridCoverageProcessor PROCESSOR = GridCoverageProcessor.getDefault();
+    static GridCoverageProcessor PROCESSOR = new fr.ird.database.coverage.sql.GridCoverageProcessor();
 
     /**
      * Ensemble des entrés qui ont déjà été retournées par {@link #canonicalize()}

@@ -66,7 +66,6 @@ import org.geotools.cs.CompoundCoordinateSystem;
 
 // Geotools dependencies (GCS)
 import org.geotools.gp.Operation;
-import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.OperationNotFoundException;
 import org.geotools.gc.GridCoverage;
 import org.geotools.util.RangeSet;

@@ -217,7 +217,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
     /**
      * {@inheritDoc}
      */
-    public synchronized Set<ParameterEntry> getAvailableParameters() throws SQLException {
+    public synchronized Set<+ParameterEntry> getAvailableParameters() throws SQLException {
         ensureTableConnected(true, false, false, ColumnTable.LIST);
         return parameterTable.list();
     }

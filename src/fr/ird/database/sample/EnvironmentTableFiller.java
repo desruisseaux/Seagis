@@ -369,11 +369,11 @@ public class EnvironmentTableFiller implements Table {
              * relatives, mais ces positions seront transmises de manière explicites plus loin.
              */
             for (final Map.Entry<SeriesEntry,ParameterEntry[]> series : this.series.entrySet()) {
-                final Coverage3D       coverage;
+                final SeriesCoverage3D coverage;
                 final SamplePosition[]    tasks;
 
                 coverageTable.setSeries(series.getKey());
-                coverage = new Coverage3D(coverageTable);
+                coverage = new SeriesCoverage3D(coverageTable);
                 coverage.setInterpolationAllowed(interpolationAllowed);
                 tasks = SamplePosition.getInstances(sampleEntries, positions, coverage);
                 info(ResourceKeys.POSITIONS_TO_EVALUATE_$1, new Integer(tasks.length));
@@ -422,7 +422,7 @@ public class EnvironmentTableFiller implements Table {
      * Cette méthode écrit un avertissement dans le journal, à la condition
      * qu'il n'y en avait pas déjà un.
      */
-    private static void warning(final Coverage3D source, final PointOutsideCoverageException exception) {
+    private static void warning(final SeriesCoverage3D source, final PointOutsideCoverageException exception) {
         final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
         record.setSourceClassName ("EnvironmentTableFiller");
         record.setSourceMethodName("run");

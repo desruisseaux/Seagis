@@ -54,6 +54,7 @@ public interface ResourceKeys
     public static final int OPTIONS                          =    29;
     public static final int OUT_DIRECTORY                    =    30;
     public static final int POSITIONS_TO_EVALUATE_$1         =    31;
+    public static final int POTENTIAL                        =    97;
     public static final int PROGRESSION                      =    32;
     public static final int REMOVE_QUERY_$1                  =    33;
     public static final int ROOT_DIRECTORY                   =    34;

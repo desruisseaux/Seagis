@@ -47,7 +47,7 @@ import fr.ird.database.coverage.*;
 
 
 /**
- * Teste le fonctionnement de {@link Coverage3D}.
+ * Teste le fonctionnement de {@link SeriesCoverage3D}.
  *
  * @author Martin Desruisseaux
  */
@@ -60,7 +60,7 @@ public class Coverage3DTest extends TestCase {
     /**
      * La couverture à tester. Sera construit par les différentes méthodes <code>testXXX</code>.
      */
-    private Coverage3D coverage;
+    private SeriesCoverage3D coverage;
 
     /**
      * Objet à utiliser pour lire et écrire des dates.
@@ -95,7 +95,7 @@ public class Coverage3DTest extends TestCase {
      */
     public void testCHL() throws Exception {
         final CoverageTable table = database.getCoverageTable("Chlorophylle-a (Monde)");
-        coverage = new Coverage3D(table);
+        coverage = new SeriesCoverage3D(table);
         coverage.setInterpolationAllowed(false);
         assertEquals(0.0851138f, evaluate(66.6100,  -3.2100, "24/12/1997"), 0.0001f);
         assertEquals(0.0851138f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
@@ -108,7 +108,7 @@ public class Coverage3DTest extends TestCase {
      */
     public void testSLA() throws Exception {
         final CoverageTable table = database.getCoverageTable("SLA (Monde - TP/ERS)");
-        coverage = new Coverage3D(table);
+        coverage = new SeriesCoverage3D(table);
         coverage.setInterpolationAllowed(false);
         assertEquals( 20.4f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
         assertEquals(-10.9f, evaluate(61.7800,  -3.5100, "06/01/1997"), 0.0001f);

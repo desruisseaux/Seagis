@@ -53,9 +53,9 @@ import org.geotools.resources.Utilities;
 
 // Base de données et animats
 import fr.ird.database.DataBase;
-import fr.ird.database.coverage.Coverage3D;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.database.coverage.SeriesCoverage3D;
 import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.sample.SampleEntry;
@@ -91,16 +91,17 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
     private final Map<Parameter,Entry> coverages = new TreeMap<Parameter,Entry>();
 
     /**
-     * Informations sur les données pour un paramètre. L'objet {@link Coverage3D} permet d'obtenir une
-     * couverture à une date quelconque. L'objet {@link GridCoverage} contient les données obtenues à
-     * une date précise et qui seront spécifiées à la méthode {@link Parameter#applyEvaluator}. L'objet
-     * {@link Coverage} est la sortie de <code>applyEvaluator(...)</code>, mémorisée afin d'éviter que
-     * cette dernière produit de nouveau calcul lorsque l'objet <code>GridCoverage</code> n'a pas changé
-     * entre deux pas de temps.
+     * Informations sur les données pour un paramètre. L'objet {@link SeriesCoverage3D} permet
+     * d'obtenir une couverture à une date quelconque. L'objet {@link GridCoverage} contient
+     * les données obtenues à une date précise et qui seront spécifiées à la méthode
+     * {@link Parameter#applyEvaluator}. L'objet {@link Coverage} est la sortie de
+     * <code>applyEvaluator(...)</code>, mémorisée afin d'éviter que cette dernière produit de
+     * nouveau calcul lorsque l'objet <code>GridCoverage</code> n'a pas changé entre deux pas
+     * de temps.
      */
     private static final class Entry {
         /** La source de toutes les données pour ce paramètre. */
-        public final Coverage3D coverage3D;
+        public final SeriesCoverage3D coverage3D;
 
         /** L'objet {@link GridCoverage} donné par {@link #coverage3D} à la date courante. */
         public GridCoverage gridCoverage;
@@ -115,7 +116,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
          * Construit une nouvelle entrée pour les données spécifiées.
          * @param La source de toute les données pour un paramètre.
          */
-        public Entry(final Coverage3D coverage3D) {
+        public Entry(final SeriesCoverage3D coverage3D) {
             this.coverage3D = coverage3D;
         }
     }
@@ -174,9 +175,9 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
         SeriesTable   series = null;
         Range      timeRange = null;
         boolean      closedb = false;
-        final Map<String,Coverage3D> coverageBySeries = new HashMap<String,Coverage3D>();
+        final Map<String,SeriesCoverage3D> coverageBySeries = new HashMap<String,SeriesCoverage3D>();
         for (final Parameter parameter : config.parameters) {
-            Coverage3D coverage3D = coverageBySeries.get(parameter.series);
+            SeriesCoverage3D coverage3D = coverageBySeries.get(parameter.series);
             if (coverage3D == null) {
                 /*
                  * Une nouvelle série a été demandée. Configure la table 'images' de façon
@@ -204,7 +205,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
                  * la plage de temps de l'ensemble des données (pour détecter quand il faudra
                  * arrêter la simulation).
                  */
-                coverage3D = new Coverage3D(images);
+                coverage3D = new SeriesCoverage3D(images);
                 if (coverageBySeries.put(parameter.series, coverage3D) != null) {
                     throw new AssertionError();
                 }
@@ -312,7 +313,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
                     }
                     /*
                      * Procède à la lecture des données et vérifie si les calculs ont déjà été
-                     * effectuées sur les données obtenues.  Ca peut se produire si Coverage3D
+                     * effectuées sur les données obtenues. Ca peut se produire si SeriesCoverage3D
                      * retourne le même GridCoverage pour deux pas de temps différents.
                      */
                     final Date date = getClock().getTime();

@@ -33,27 +33,37 @@ import java.util.Collection;
 import java.util.Collections;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
+import java.awt.Color;
+
+// JAI
+import javax.media.jai.ParameterList;
 
 // Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
-import org.geotools.cv.Coverage;
+import org.geotools.cv.Coverage; // Pour Javadoc
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.CannotEvaluateException;
 import org.geotools.gp.CannotReprojectException;
+import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.resources.Utilities;
+import org.geotools.util.NumberRange;
 
 // Seagis
 import fr.ird.database.DataBase;
-import fr.ird.database.coverage.Coverage3D;
+import fr.ird.database.Coverage3D;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.database.coverage.SeriesCoverage3D;
+import fr.ird.resources.seagis.ResourceKeys;
+import fr.ird.resources.seagis.Resources;
 
 
 /**
+ * Valeurs d'un {@link ParameterEntry paramètre} à des positions d'échantillons.
  * Une couverture spatiale représentant une combinaison de paramètres. Cette couverture peut
  * servir par exemple à résumer dans une seule carte de potentiel les informations présentes
  * dans plusieurs cartes.
@@ -61,14 +71,88 @@ import fr.ird.database.coverage.CoverageDataBase;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class CombinationCoverage3D extends Coverage {
+public class ParameterCoverage3D extends Coverage3D {
+    /**
+     * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
+     * &quot;NodataFilter&quot;.
+     *
+     * @see fr.ird.database.coverage.sql.GridCoverageProcessor#NODATA_FILTER
+     */
+    private static final String NODATA_FILTER = "NodataFilter";
+
+    /**
+     * Le séparateur à utiliser entre les noms d'opérations.
+     *
+     * @see fr.ird.database.coverage.sql.GridCoverageProcessor#SEPARATOR
+     */
+    private static final char SEPARATOR = ';';
+
+    /**
+     * La palette de couleurs à utiliser par défaut pour le résultat.
+     */
+    private static final Color[] COLOR_PALETTE = {Color.BLUE, Color.WHITE, Color.RED};
+
+    /**
+     * La plage de valeurs à utiliser par défaut pour les valeur indexées.
+     */
+    private static final NumberRange INDEX_RANGE = new NumberRange(1, 255);
+
     /**
      * Un objet {@link Map} vide a affecter à {@link #coverages}
      */
-    private static Map<SeriesEntry,Coverage3D> EMPTY_MAP = (Map) Collections.EMPTY_MAP;
+    private static Map<SeriesKey,Coverage3D> EMPTY_MAP = (Map) Collections.EMPTY_MAP;
 
     /**
-     * La base de données d'images, ou <code>null</code> si <code>CombinationCoverage3D</code>
+     * Paire comprenant une {@linkplain SeriesEntry série} avec {@linkplain OperationEntry
+     * opération}. Ces paires sont utilisées comme clés dans {@link #coverages}.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
+     */
+    private static final class SeriesKey {
+        /** La série. */                public SeriesEntry    series;
+        /** L'opération à appliquer. */ public OperationEntry operation;
+
+        /** Construit une nouvelle clé. */
+        public SeriesKey() {
+        }
+
+        /** Construit une nouvelle clé pour la série et l'opération spécifiée. */
+        public SeriesKey(final SeriesEntry series, final OperationEntry operation) {
+            this.series    = series;
+            this.operation = operation;
+        }
+
+        /** Retourne un code à peu près unique pour cette clé. */
+        public int hashCode() {
+            int code = series.hashCode();
+            if (operation != null) {
+                code += 37*operation.hashCode();
+            }
+            return code;
+        }
+
+        /** Compare cette clé avec l'objet spécifié. */
+        public boolean equals(final Object object) {
+            if (object instanceof SeriesKey) {
+                final SeriesKey that = (SeriesKey) object;
+                return Utilities.equals(this.series,    that.series) &&
+                       Utilities.equals(this.operation, that.operation);
+            }
+            return false;
+        }
+
+        /** Retourne le nom de la série et son opération. */
+        public String toString() {
+            if (operation == null) {
+                return series.getName();
+            }
+            return operation.getName() + '[' + series.getName() + ']';
+        }
+    }
+
+    /**
+     * La base de données d'images, ou <code>null</code> si <code>ParameterCoverage3D</code>
      * n'a pas construit lui-même cette base. Cette référence est conservée uniquement afin
      * d'être fermée par {@link #dispose}.
      *
@@ -77,7 +161,7 @@ public abstract class CombinationCoverage3D extends Coverage {
     private DataBase database;
 
     /**
-     * La table des images, ou <code>null</code> si cet objet <code>CombinationCoverage3D</code>
+     * La table des images, ou <code>null</code> si cet objet <code>ParameterCoverage3D</code>
      * a été {@linkplain #dispose disposé}. Si non-null, cette table ne sera disposée qu'à
      * la condition que <code>database</code> soit non-nul. Si ce n'est pas le cas, c'est
      * que la table aura été spécifiée explicitement par l'utilisateur et ne nous appartient
@@ -101,10 +185,11 @@ public abstract class CombinationCoverage3D extends Coverage {
     private ParameterEntry.Component[] components;
 
     /**
-     * Les objets {@link Coverage3D} disponibles pour chaque {@linkplain SeriesEntry séries}.
-     * Ce dictionnaire sera construit à chaque appel de {@link #setParameter}.
+     * Les objets {@link Coverage3D} disponibles pour chaque {@linkplain SeriesEntry séries}
+     * et son {@linkplain OperationEntry opération}. Ce dictionnaire sera construit à chaque
+     * appel de {@link #setParameter}.
      */
-    private Map<SeriesEntry,Coverage3D> coverages = EMPTY_MAP;
+    private Map<SeriesKey,Coverage3D> coverages = EMPTY_MAP;
 
     /**
      * Nombre maximal de bandes dans les objets {@link Coverage3D}.
@@ -118,52 +203,83 @@ public abstract class CombinationCoverage3D extends Coverage {
     private SampleDimension sampleDimension;
 
     /**
-     * Construit un objet <code>CombinationCoverage3D</code> qui utilisera les
+     * Le processeur à utiliser pour appliquer des opérations sur des images.
+     */
+    private final GridCoverageProcessor processor =
+            fr.ird.database.coverage.sql.CoverageDataBase.getDefaultGridCoverageProcessor();
+
+    /**
+     * Construit un objet <code>ParameterCoverage3D</code> qui utilisera les
      * connections par défaut. La méthode {@link #dispose} fermera ces connections.
      *
      * @throws SQLException si la connexion à la base de données a échouée.
      */
-    public CombinationCoverage3D() throws SQLException {
+    public ParameterCoverage3D() throws SQLException {
         this(new fr.ird.database.coverage.sql.CoverageDataBase());
     }
 
     /**
-     * Construit un objet <code>CombinationCoverage3D</code>  qui utilisera la base de données
-     * spécifiée. La méthode {@link #dispose} fermera les connections.   Note: ce constructeur
+     * Construit un objet <code>ParameterCoverage3D</code> qui utilisera la base de données
+     * spécifiée. La méthode {@link #dispose} fermera les connections. Note: ce constructeur
      * sera insérée directement dans le code du constructeur précédent si Sun donnait suite au
      * RFE ##4093999 ("Relax constraint on placement of this()/super() call in constructors").
      *
      * @throws SQLException si la connexion à la base de données a échouée.
      */
-    private CombinationCoverage3D(final CoverageDataBase database) throws SQLException {
+    private ParameterCoverage3D(final CoverageDataBase database) throws SQLException {
         this(database.getCoverageTable(), null);
         coverageTable.setOperation("NodataFilter");
         this.database = database;
     }
 
     /**
-     * Construit un objet <code>CombinationCoverage3D</code> qui utilisera la table d'image
-     * spécifiée. La {@linkplain CoverageTable#setGeographicArea zone géographique}, la
-     * {@linkplain CoverageTable#setTimeRange plage de temps} et l'éventuelle
-     * {@linkplain CoverageTable#setOperation opération} définie sur cette table affecteront
-     * toutes les images qui seront lus par cet objet <code>CombinationCoverage3D</code>. En
-     * revanche, la {@linkplain CoverageTable#setSeries séries} sélectionnée sera ignorée et
-     * peut être écrasée.
+     * Construit un objet <code>ParameterCoverage3D</code> qui utilisera la table d'image
+     * spécifiée. La {@linkplain CoverageTable#setGeographicArea zone géographique} et la
+     * {@linkplain CoverageTable#setTimeRange plage de temps} définies sur cette table
+     * affecteront toutes les images qui seront lus par cet objet <code>ParameterCoverage3D</code>.
+     * En revanche, la {@linkplain CoverageTable#setSeries séries sélectionnée} ainsi que
+     * l'éventuelle {@linkplain CoverageTable#setOperation opération} seront ignorées et
+     * peut être écrasées.
      *
      * @param  coverages La table des images à utiliser. Il sera de la responsabilité de
      *         l'utilisateur de fermer cette table lorsque cet objet ne sera plus utilisé
      *         (ça ne sera pas fait automatiquement par {@link #dispose}, puisque la table
-     *         spécifiée n'appartient pas à cet objet <code>CombinationCoverage3D</code>).
+     *         spécifiée n'appartient pas à cet objet <code>ParameterCoverage3D</code>).
      * @param  cs Le système de coordonnées pour cet objet {@link Coverage}, or <code>null</code>
      *         pour utiliser celui de la table <code>coverages</code>.
      * @throws SQLException si la connexion à la base de données a échouée.
      */
-    public CombinationCoverage3D(final CoverageTable coverages,
-                                 final CoordinateSystem cs)
+    public ParameterCoverage3D(final CoverageTable coverages,
+                               final CoordinateSystem cs)
             throws SQLException
     {
-        super("CombinationCoverage3D", cs!=null ? cs : coverages.getCoordinateSystem(), null, null);
+        super("ParameterCoverage3D", cs!=null ? cs : coverages.getCoordinateSystem());
         coverageTable = coverages;
+    }
+
+    /**
+     * Obtient les données sous forme d'objet {@link Coverage3D} pour le paramètre spécifié.
+     * Cette méthode est appelée automatiquement par {@link #setParameter setParameter} pour
+     * obtenir les données qui composent un paramètre. L'implémentation par défaut construit
+     * un objet {@link SeriesCoverage3D}. Les classes dérivées peuvent redéfinir cette méthode
+     * pour construire un autre type de couverture, incluant un autre {@link ParameterCoverage3D}.
+     *
+     * @param parameter Le paramètre environnemental pour lequel on veut les données.
+     * @param table Une table d'images pré-configurée. Cette table est déjà configurée avec la
+     *              série d'image à lire, l'opération à appliquer ainsi que les coordonnées
+     *              spatio-temporelles de la région d'intérêt.
+     */
+    protected Coverage3D createCoverage3D(final ParameterEntry parameter,
+                                          final CoverageTable  table)
+            throws SQLException
+    {
+        try {
+            return new SeriesCoverage3D(table, getCoordinateSystem());
+        } catch (TransformException e) {
+            // Ne devrait pas se produire, puisque le système de coordonnées
+            // est en principe le même que celui de la table.
+            throw new CannotReprojectException(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -177,11 +293,12 @@ public abstract class CombinationCoverage3D extends Coverage {
         if (Utilities.equals(parameter, target)) {
             return;
         }
-        final Map<SeriesEntry,Coverage3D> oldCoverages = coverages;
-        coverages   = EMPTY_MAP;
-        target      = null;
-        components  = null;
-        maxNumBands = 0;
+        final Map<SeriesKey,Coverage3D> oldCoverages = coverages;
+        coverages       = EMPTY_MAP;
+        target          = null;
+        components      = null;
+        sampleDimension = null;
+        maxNumBands     = 0;
         if (parameter == null) {
             return;
         }
@@ -192,18 +309,22 @@ public abstract class CombinationCoverage3D extends Coverage {
          * récupérant ceux qui existent déjà si possible.
          */
         target = parameter;
-        coverages = new HashMap<SeriesEntry,Coverage3D>();
+        coverages = new HashMap<SeriesKey,Coverage3D>();
         final Collection<+ParameterEntry.Component> list = parameter.getComponents();
         final ParameterEntry[] sources;
+        final OperationEntry[] operations;
         if (list == null) {
-            sources = new ParameterEntry[] {target};
+            sources    = new ParameterEntry[] {target};
+            operations = new OperationEntry[] {null};
         } else {
             int i=0;
             components = new ParameterEntry.Component[list.size()];
             sources    = new ParameterEntry[components.length];
+            operations = new OperationEntry[components.length];
             for (final ParameterEntry.Component component : list) {
                 components[i] = component;
                 sources   [i] = component.getSource();
+                operations[i] = component.getOperation();
                 i++;
             }
             assert i == sources.length;
@@ -217,27 +338,36 @@ public abstract class CombinationCoverage3D extends Coverage {
          * d'utilisation par 'evaluate' dans un autre thread.
          */
         for (int i=0; i<sources.length; i++) {
-            final ParameterEntry source = sources[i];
+            final ParameterEntry source    = sources   [i];
+            final OperationEntry operation = operations[i];
             final int band = source.getBand();
             if (band >= maxNumBands) {
                 maxNumBands = band+1;
             }
             SeriesEntry series;
             for (int seriesIndex=0; (series=source.getSeries(seriesIndex))!=null; seriesIndex++) {
-                Coverage3D coverage = coverages.get(series);
+                final SeriesKey key = new SeriesKey(series, operation);
+                Coverage3D coverage = coverages.get(key);
                 if (coverage == null) {
-                    coverage = oldCoverages.get(series);
-                    if (coverage == null) synchronized (coverageTable) {
-                        coverageTable.setSeries(series);
-                        try {
-                            coverage = new Coverage3D(coverageTable, getCoordinateSystem());
-                        } catch (TransformException e) {
-                            // Ne devrait pas se produire, puisque le système de coordonnées
-                            // est en principe le même que celui de la table.
-                            throw new CannotReprojectException(e.getLocalizedMessage(), e);
+                    coverage = oldCoverages.get(key);
+                    if (coverage == null) {
+                        synchronized (coverageTable) {
+                            final String[]      names;
+                            final ParameterList param;
+                            coverageTable.setSeries(series);
+                            param = coverageTable.setOperation(operation.getProcessorOperation());
+                            names = param.getParameterListDescriptor().getParamNames();
+                            for (int j=0; j<names.length; j++) {
+                                final String name  = names[j];
+                                final Object value = operation.getParameter(name);
+                                if (value != null) {
+                                    param.setParameter(name, value);
+                                }
+                            }
+                            coverage = createCoverage3D(source, coverageTable);
                         }
                     }
-                    coverages.put(series, coverage);
+                    coverages.put(key, coverage);
                 }
             }
         }
@@ -248,16 +378,12 @@ public abstract class CombinationCoverage3D extends Coverage {
          * accès simultanés aux données.
          */
         if (false) {
-            for (final Map.Entry<SeriesEntry,Coverage3D> entry : oldCoverages.entrySet()) {
+            for (final Map.Entry<SeriesKey,Coverage3D> entry : oldCoverages.entrySet()) {
                 if (!coverages.containsKey(entry.getKey())) {
                     entry.getValue().dispose();
                 }
             }
         }
-        /*
-         * Obtient une description de l'unique bande de cet objet. A cet fin, on recherchera
-         * les valeurs minimales et maximales que peuvent produire les composantes du paramètre.
-         */
     }
 
     /**
@@ -291,10 +417,52 @@ public abstract class CombinationCoverage3D extends Coverage {
 
     /**
      * Retourne une description de l'unique bande produite en sortie par cet objet.
+     * L'implémentation par défaut recherche les valeurs minimales et maximales que
+     * peuvent produire les composantes du paramètre, et calcule la combinaison de
+     * ces extremums afin de déterminer la plage de valeurs de la bande en sortie.
      */
     public synchronized SampleDimension[] getSampleDimensions() {
         if (sampleDimension == null) {
-            sampleDimension = new SampleDimension();
+            final SeriesKey key = new SeriesKey();
+            if (components == null) {
+                key.series = target.getSeries(0);
+                sampleDimension = coverages.get(key).getSampleDimensions()[target.getBand()];
+            } else {
+                double minimum = 0;
+                double maximum = 0;
+                for (int i=0; i<components.length; i++) {
+                    final ParameterEntry.Component component = components[i];
+                    final ParameterEntry source = component.getSource();
+                    final double         weight = component.getWeight();
+                    if (source.isIdentity()) {
+                        minimum += weight;
+                        maximum += weight;
+                        continue;
+                    }
+                    final SampleDimension sd;
+                    key.series = source.getSeries(0);
+                    key.operation = component.getOperation();
+                    sd = coverages.get(key).getSampleDimensions()[source.getBand()];
+                    double min = weight * component.transform(sd.getMinimumValue());
+                    double max = weight * component.transform(sd.getMaximumValue());
+                    if (min > max) {
+                        final double tmp = min;
+                        min = max;
+                        max = tmp;
+                    }
+                    minimum += min;
+                    maximum += max;
+                }
+                if (minimum < maximum) {
+                    sampleDimension = new SampleDimension(new Category[] {
+                        new Category(Resources.format(ResourceKeys.POTENTIAL),
+                                     COLOR_PALETTE, INDEX_RANGE, new NumberRange(minimum, maximum)),
+                        Category.NODATA
+                    }, null);
+                } else {
+                    sampleDimension = new SampleDimension();
+                }
+            }
         }
         return new SampleDimension[] {sampleDimension};
     }
@@ -313,8 +481,9 @@ public abstract class CombinationCoverage3D extends Coverage {
      * @throws CannotEvaluateException si l'évaluation a échouée.
      */
     public double evaluate(final Point2D coord, final Date time) throws CannotEvaluateException {
+        final SeriesKey key = new SeriesKey();
         final ParameterEntry.Component[] components;
-        final Map<SeriesEntry,Coverage3D> coverages;
+        final Map<SeriesKey,Coverage3D>  coverages;
         double[] buffer;
         synchronized (this) {
             buffer     = new double[maxNumBands];
@@ -327,11 +496,11 @@ public abstract class CombinationCoverage3D extends Coverage {
                 final int band = target.getBand();
                 int seriesIndex = 0;
                 do {
-                    final SeriesEntry series = target.getSeries(seriesIndex++);
-                    if (series == null) {
+                    key.series = target.getSeries(seriesIndex++);
+                    if (key.series == null) {
                         break;
                     }
-                    buffer = coverages.get(series).evaluate(coord, time, buffer);
+                    buffer = coverages.get(key).evaluate(coord, time, buffer);
                 } while (Double.isNaN(buffer[band]));
                 return buffer[band];
             }
@@ -355,14 +524,15 @@ public abstract class CombinationCoverage3D extends Coverage {
             coord1.setLocation(coord);
             time1.setTime(time.getTime());
             component.getRelativePosition().applyOffset(coord1, time1);
+            key.operation = component.getOperation();
             final int band = source.getBand();
             int seriesIndex = 0;
             do {
-                final SeriesEntry series = source.getSeries(seriesIndex++);
-                if (series == null) {
+                key.series = source.getSeries(seriesIndex++);
+                if (key.series == null) {
                     break;
                 }
-                buffer = coverages.get(series).evaluate(coord1, time1, buffer);
+                buffer = coverages.get(key).evaluate(coord1, time1, buffer);
             } while (Double.isNaN(buffer[band]));
             value += component.getWeight() * component.transform(buffer[band]);
         }
@@ -370,11 +540,26 @@ public abstract class CombinationCoverage3D extends Coverage {
     }
 
     /**
+     * Retourne la valeur à la coordonnée spatio-temporelle spécifiée.
+     * L'implémentation par défaut délègue le travail à
+     * <code>{@link #evaluate(Point2D,Date) evaluate}(coord, time)</code>.
+     */
+    public double[] evaluate(final Point2D coord, final Date time, double[] dest)
+            throws CannotEvaluateException
+    {
+        if (dest == null) {
+            dest = new double[1];
+        }
+        dest[0] = evaluate(coord, time);
+        return dest;
+    }
+
+    /**
      * Libère toutes les ressources utilisées par cet objet. Cette méthode devrait être appelée
-     * lorsque l'on sait que cet objet <code>CombinationCoverage3D</code> ne sera plus utilisé.
+     * lorsque l'on sait que cet objet <code>ParameterCoverage3D</code> ne sera plus utilisé.
      * Notez que si une {@linkplain CoverageTable table des images} a été spécifiée explicitement
      * au constructeur, elle ne sera pas fermée puisqu'elle n'appartient pas à cet objet
-     * <code>CombinationCoverage3D</code>; il sera de la responsabilité de l'utilisateur
+     * <code>ParameterCoverage3D</code>; il sera de la responsabilité de l'utilisateur
      * de la fermer lui-même.
      */
     public synchronized void dispose() {
@@ -387,7 +572,7 @@ public abstract class CombinationCoverage3D extends Coverage {
         } catch (SQLException exception) {
             // Des connexions n'ont pas pu être fermées. Mais puisque de toute façon
             // on ne va plus utiliser cet objet, ce n'est pas grave.
-            Utilities.unexpectedException("fr.ird.database.sample", "CombinationCoverage3D",
+            Utilities.unexpectedException("fr.ird.database.sample", "ParameterCoverage3D",
                                           "dispose", exception);
         }
         coverageTable = null;

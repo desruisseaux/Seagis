@@ -97,7 +97,7 @@ final class SamplePosition implements Comparable<SamplePosition> {
      */
     public static SamplePosition[] getInstances(final Collection<SampleEntry> samples,
                                                 final Collection<RelativePositionEntry> positions,
-                                                final Coverage3D coverage)
+                                                final SeriesCoverage3D coverage)
     {
         final SamplePosition[] tasks = new SamplePosition[samples.size() * positions.size()];
         int i=0;

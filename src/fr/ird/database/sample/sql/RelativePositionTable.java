@@ -30,6 +30,9 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+// seagis
+import fr.ird.database.sample.RelativePositionEntry;
+
 
 /**
  * Table des positions spatio-temporelles relatives aux positions des données de pêches.
@@ -84,9 +87,9 @@ final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
     protected RelativePositionEntry getEntry(final ResultSet results) throws SQLException {
-        return new RelativePositionEntry(results.getInt    (ID),
-                                         results.getString (NAME),
-                              Math.round(results.getDouble (TIME_LAG)*DAY),
-                                         results.getBoolean(DEFAULT));
+        return new fr.ird.database.sample.sql.RelativePositionEntry(results.getInt    (ID),
+                                                                    results.getString (NAME),
+                                                         Math.round(results.getDouble (TIME_LAG)*DAY),
+                                                                    results.getBoolean(DEFAULT));
     }
 }

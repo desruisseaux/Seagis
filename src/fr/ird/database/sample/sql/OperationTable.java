@@ -30,6 +30,9 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+// seagis
+import fr.ird.database.sample.OperationEntry;
+
 
 /**
  * Interrogation de la table &quot;Opérations&quot;.
@@ -82,11 +85,11 @@ final class OperationTable extends ColumnTable<OperationEntry> {
      * de l'objet {@link ResultSet} spécifié.
      */
     protected OperationEntry getEntry(final ResultSet results) throws SQLException {
-        return new OperationEntry(results.getInt   (ID),
-                                  results.getString(COLUMN),
-                                  results.getString(PREFIX),
-                                  results.getString(OPERATION),
-                                  results.getString(NAME),
-                                  results.getString(REMARKS));
+        return new fr.ird.database.sample.sql.OperationEntry(results.getInt   (ID),
+                                                             results.getString(COLUMN),
+                                                             results.getString(PREFIX),
+                                                             results.getString(OPERATION),
+                                                             results.getString(NAME),
+                                                             results.getString(REMARKS));
     }
 }

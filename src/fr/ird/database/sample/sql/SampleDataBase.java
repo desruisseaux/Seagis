@@ -250,9 +250,9 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     /**
      * {@inheritDoc}
      */
-    public Set<ParameterEntry> getParameters(final SeriesTable series) throws SQLException {
+    public Set<+ParameterEntry> getParameters(final SeriesTable series) throws SQLException {
         final ParameterTable table = new ParameterTable(connection, ParameterTable.LIST, series);
-        final Set<ParameterEntry> set = table.list();
+        final Set<+ParameterEntry> set = table.list();
         table.close();
         return set;
     }

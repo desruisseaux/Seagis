@@ -61,10 +61,8 @@ import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.pt.MismatchedDimensionException;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform;
-import org.geotools.ct.MathTransform2D;
 import org.geotools.ct.TransformException;
 import org.geotools.ct.CoordinateTransformation;
 import org.geotools.ct.CoordinateTransformationFactory;
@@ -83,20 +81,21 @@ import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.Operation;
 
 // Seagis
+import fr.ird.database.Coverage3D;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
 
 /**
- * Enveloppe une table d'images comme s'il s'agissait d'un espace à trois dimensions, la
- * troisième dimension étant le temps.  Cette classe offre une façon pratique d'extraire
- * des valeurs à des positions et des dates arbitraires. Les valeurs sont interpollées à
- * la fois dans l'espace et dans le temps.
+ * Enveloppe une {@linkplain SeriesEntry série d'images} comme s'il s'agissait d'un espace à
+ * trois dimensions, la troisième dimension étant le temps. Cette classe offre une façon pratique
+ * d'extraire des valeurs à des positions et des dates arbitraires. Les valeurs sont interpollées
+ * à la fois dans l'espace et dans le temps.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Coverage3D extends Coverage {
+public class SeriesCoverage3D extends Coverage3D {
     /**
      * <code>true</code> pour exécuter {@link System#gc} avant tout chargement d'images. Il
      * s'agit d'une tentative de réduction des erreurs de type {@link OutOfMemoryError}.  A
@@ -116,16 +115,6 @@ public class Coverage3D extends Coverage {
      * Listes des bandes des images.
      */
     private final SampleDimension[] bands;
-
-    /**
-     * The temporal coordinate system.
-     */
-    private final TemporalCoordinateSystem temporalCS;
-
-    /**
-     * The dimension of the temporal coordinate system.
-     */
-    private final int temporalDimension;
 
     /**
      * L'envelope (coordonnées géographiques et plage de temps) englobant celles
@@ -227,14 +216,14 @@ public class Coverage3D extends Coverage {
      * Construit une couverture à partir des données de la table spécifiée.
      * Les entrées {@link CoverageEntry} seront mémorisées immediatement.
      * Toute modification faite à la table après la construction de cet objet
-     * <code>Coverage3D</code> (incluant la fermeture de la table) n'auront
+     * <code>SeriesCoverage3D</code> (incluant la fermeture de la table) n'auront
      * aucun effet sur cet objet.
      *
      * @param  table Table d'où proviennent les données.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public Coverage3D(final CoverageTable table) throws SQLException, TransformException {
+    public SeriesCoverage3D(final CoverageTable table) throws SQLException, TransformException {
         this(table, table.getCoordinateSystem());
     }
 
@@ -248,16 +237,10 @@ public class Coverage3D extends Coverage {
      * @throws SQLException si l'interrogation de la base de données a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public Coverage3D(final CoverageTable table, final CoordinateSystem cs)
+    public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
             throws SQLException, TransformException
     {
-        super(table.getSeries().getName(), cs, null, null);
-        temporalCS = CTSUtilities.getTemporalCS(cs);
-        if (temporalCS == null) {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
-        }
-        temporalDimension = CTSUtilities.getDimensionOf(cs, temporalCS.getClass());
-        assert temporalDimension >= 0 : temporalDimension;
+        super(table.getSeries().getName(), cs);
         /*
          * Obtient la liste des images en ordre chronologiques, et
          * vérifie au passage qu'elles ont toutes les mêmes bandes.
@@ -298,22 +281,7 @@ public class Coverage3D extends Coverage {
             }
         }
         this.envelope = envelope;
-        /*
-         * Obtient la partie horizontale de l'envelope, et transforme (si nécessaire)
-         * cette partie en degrés de longitude et de latitude selon WGS84.
-         */
-        Rectangle2D geographicArea = envelope.getReducedEnvelope(temporalDimension, temporalDimension+1).toRectangle2D();
-        final CoordinateSystem sourceCS = CTSUtilities.getHorizontalCS(cs);
-        final CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
-        if (!targetCS.equals(sourceCS, false)) {
-            if (factory == null) {
-                factory = CoordinateTransformationFactory.getDefault();
-            }
-            transform = factory.createFromCoordinateSystems(sourceCS, targetCS);
-            geographicArea = CTSUtilities.transform((MathTransform2D)transform.getMathTransform(),
-                                                    geographicArea, geographicArea);
-        }
-        this.geographicArea = geographicArea;
+        this.geographicArea = getGeographicArea(envelope);
     }
 
     /**
@@ -391,8 +359,7 @@ public class Coverage3D extends Coverage {
      * La plage contiendra des objets {@link Date}.
      */
     public Range getTimeRange() {
-        return new Range(Date.class, temporalCS.toDate(envelope.getMinimum(temporalDimension)),
-                                     temporalCS.toDate(envelope.getMaximum(temporalDimension)));
+        return getTimeRange(envelope);
     }
 
     /**
@@ -472,10 +439,7 @@ public class Coverage3D extends Coverage {
         if (point != null) try {
             final CoverageEntry  entry = entries[index];
             final CoordinateSystem  cs = entry.getCoordinateSystem();
-            CoordinatePoint coordinate = new CoordinatePoint(cs.getDimension());
-            coordinate.ord[temporalDimension!=0 ? 0 : 1] = point.getX();
-            coordinate.ord[temporalDimension>=2 ? 1 : 2] = point.getY();
-            coordinate.ord[temporalDimension] = temporalCS.toValue(date);
+            CoordinatePoint coordinate = getCoordinatePoint(point, date);
             if (!coordinateSystem.equals(cs, false)) {
                 // TODO: implémenter la transformation de coordonnées.
                 throw new CannotEvaluateException("Système de coordonnées incompatibles.");
@@ -742,9 +706,7 @@ public class Coverage3D extends Coverage {
      *
      * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @param  dest  An array in which to store values, or <code>null</code> to create a new array.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
@@ -786,9 +748,7 @@ public class Coverage3D extends Coverage {
      *
      * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @param  dest  An array in which to store values, or <code>null</code> to create a new array.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
@@ -846,9 +806,7 @@ public class Coverage3D extends Coverage {
      *
      * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @param  dest  An array in which to store values, or <code>null</code> to create a new array.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
@@ -895,80 +853,6 @@ public class Coverage3D extends Coverage {
             dest[i] = value;
         }
         return dest;
-    }
-
-    /**
-     * Returns a sequence of integer values for a given point in the coverage.
-     * A value for each sample dimension is included in the sequence. The interpolation
-     * type used when accessing grid values for points which fall between grid cells is
-     * inherited from {@link CoverageTable}:  usually bicubic for spatial axis, and
-     * linear for temporal axis.  The coordinate system of the point is the same as the
-     * grid coverage coordinate system.
-     *
-     * @param  coord The coordinate point where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
-     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
-     * @throws CannotEvaluateException if the computation failed for some other reason.
-     */
-    public int[] evaluate(final CoordinatePoint coord, int[] dest) throws CannotEvaluateException {
-        return evaluate(checkDimension(coord), temporalCS.toDate(coord.ord[temporalDimension]), dest);
-    }
-
-    /**
-     * Returns a sequence of float values for a given point in the coverage.
-     * A value for each sample dimension is included in the sequence. The interpolation
-     * type used when accessing grid values for points which fall between grid cells is
-     * inherited from {@link CoverageTable}:  usually bicubic for spatial axis, and
-     * linear for temporal axis.  The coordinate system of the point is the same as the
-     * grid coverage coordinate system.
-     *
-     * @param  coord The coordinate point where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
-     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
-     * @throws CannotEvaluateException if the computation failed for some other reason.
-     */
-    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws CannotEvaluateException {
-        return evaluate(checkDimension(coord), temporalCS.toDate(coord.ord[temporalDimension]), dest);
-    }
-
-    /**
-     * Returns a sequence of double values for a given point in the coverage.
-     * A value for each sample dimension is included in the sequence. The interpolation
-     * type used when accessing grid values for points which fall between grid cells is
-     * inherited from {@link CoverageTable}:  usually bicubic for spatial axis, and
-     * linear for temporal axis.  The coordinate system of the point is the same as the
-     * grid coverage coordinate system.
-     *
-     * @param  coord The coordinate point where to evaluate.
-     * @param  dest  An array in which to store values, or <code>null</code> to
-     *               create a new array. If non-null, this array must be at least
-     *               <code>{@link #getSampleDimensions()}.size()</code> long.
-     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
-     * @throws CannotEvaluateException if the computation failed for some other reason.
-     */
-    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws CannotEvaluateException {
-        return evaluate(checkDimension(coord), temporalCS.toDate(coord.ord[temporalDimension]), dest);
-    }
-
-    /**
-     * Vérifie que le point spécifié a bien la dimension attendue.
-     *
-     * @param  coord Coordonnée du point dont on veut vérifier la dimension.
-     * @throws MismatchedDimensionException si le point n'a pas la dimension attendue.
-     */
-    private final Point2D checkDimension(final CoordinatePoint coord) throws MismatchedDimensionException {
-        if (coord.getDimension() != coordinateSystem.getDimension()) {
-            throw new MismatchedDimensionException(coord, coordinateSystem);
-        }
-        return new Point2D.Double(coord.ord[temporalDimension!=0 ? 0 : 1],
-                                  coord.ord[temporalDimension>=2 ? 1 : 2]);
     }
 
     /**
@@ -1036,7 +920,7 @@ public class Coverage3D extends Coverage {
     private void log(final int clé, final Object[] parameters) {
         final Locale locale = null;
         final LogRecord record = Resources.getResources(locale).getLogRecord(Level.INFO, clé);
-        record.setSourceClassName("Coverage3D");
+        record.setSourceClassName("SeriesCoverage3D");
         record.setSourceMethodName("evaluate");
         record.setParameters(parameters);
         if (readListener == null) {

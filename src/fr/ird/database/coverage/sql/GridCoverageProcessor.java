@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.database.gui.swing;
+package fr.ird.database.coverage.sql;
 
 // J2SE et JAI
 import java.awt.RenderingHints;
@@ -33,9 +33,6 @@ import javax.media.jai.ParameterList;
 import org.geotools.gp.Operation;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.OperationNotFoundException;
-
-// Seagis
-import fr.ird.database.coverage.sql.CoverageDataBase;
 
 
 /**
@@ -53,25 +50,15 @@ final class GridCoverageProcessor extends org.geotools.gp.GridCoverageProcessor 
     public static final String NODATA_FILTER = "NodataFilter";
 
     /**
-     * <code>true</code> si le processeur a été initialisé.
+     * Le séparateur à utiliser entre les noms d'opérations.
      */
-    private static boolean initialized;
+    public static final char SEPARATOR = ';';
 
-    /**
-     * Initialize le processeur.
-     */
-    public static synchronized void initialize() {
-        if (!initialized) {
-            CoverageDataBase.setDefaultGridCoverageProcessor(new GridCoverageProcessor());
-            initialized = true;
-        }
-    }
-    
     /**
      * Construit un nouveau processeur.
      */
-    private GridCoverageProcessor() {
-        super(CoverageDataBase.getDefaultGridCoverageProcessor(), null);
+    protected GridCoverageProcessor() {
+        super(org.geotools.gp.GridCoverageProcessor.getDefault(), null);
         addOperation(new Concatenated(getOperation("Interpolate")));
         addOperation(new Concatenated(getOperation("GradientMagnitude")));
     }
@@ -93,7 +80,7 @@ final class GridCoverageProcessor extends org.geotools.gp.GridCoverageProcessor 
          * Construit une opération qui envelopera l'opération spécifiée.
          */
         public Concatenated(final Operation operation) {
-            super(NODATA_FILTER + '-' + operation.getName(), operation.getParameterListDescriptor());
+            super(NODATA_FILTER + SEPARATOR + operation.getName(), operation.getParameterListDescriptor());
             this.operation = operation;
         }
 
