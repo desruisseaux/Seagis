@@ -372,13 +372,13 @@ public class ResourceBundle extends java.util.ResourceBundle
         }
         for (int i=0; i<array.length; i++)
         {
-            /*
-             * NOTE: With JDK 1.4, we should check for
-             *       'CharSequence' instead of 'String'.
-             */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            if (array[i] instanceof CharSequence)
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             if (array[i] instanceof String)
+//----- END OF JDK 1.3 FALLBACK -------
             {
-                final String s0=(String) array[i];
+                final String s0=array[i].toString();
                 final String s1=summarize(s0, MAX_STRING_LENGTH);
                 if (s0!=s1 && !s0.equals(s1))
                 {
