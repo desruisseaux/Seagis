@@ -182,8 +182,13 @@ final class Dynamic
     /**
      * Lance la modélisation.
      */
-    public static void main(final String[] args) throws SQLException
+    public static void main(String[] args) throws SQLException
     {
+        if (false && args.length==0)
+        {
+            // Temporary patch for testing purpose
+            args = new String[] {"01/09/1997"};
+        }
         Date time = null;
         if (args.length!=0)
         {
