@@ -25,16 +25,17 @@
  */
 package fr.ird.seasview.layer;
 
-// Map components
-import org.geotools.renderer.Isoline;
-import fr.ird.map.io.GEBCOReader;
-
 // Input/output
 import java.net.URL;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+
+// Map components
+import org.geotools.renderer.geom.Isoline;
+import org.geotools.ct.TransformException;
+import fr.ird.map.io.GEBCOReader;
 
 
 /**
@@ -43,8 +44,7 @@ import java.net.URISyntaxException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
-{
+public final class IsolineFactory extends fr.ird.map.io.IsolineFactory {
     /**
      * The source directory for isolines data.
      */
@@ -76,8 +76,7 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
      * @param  name The source name (not including directory or file extension).
      * @throws FileNotFoundException if the resources has not been found.
      */
-    public IsolineFactory(final String name) throws FileNotFoundException
-    {
+    public IsolineFactory(final String name) throws FileNotFoundException {
         super(toCacheURL(name));
         this.name = name;
     }
@@ -88,12 +87,10 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
      * @param  name The source name (not including directory or file extension).
      * @throws FileNotFoundException if the resources has not been found.
      */
-    private static URL toSourceURL(final String name) throws FileNotFoundException
-    {
+    private static URL toSourceURL(final String name) throws FileNotFoundException {
         final String path = SOURCE_DIRECTORY+name+SOURCE_EXTENSION;
         final URL url = IsolineFactory.class.getClassLoader().getResource(path);
-        if (url==null)
-        {
+        if (url == null) {
             throw new FileNotFoundException(path);
         }
         return url;
@@ -105,12 +102,10 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
      * @param  name The source name (not including directory or file extension).
      * @throws FileNotFoundException if the resources has not been found.
      */
-    private static URL toCacheURL(final String name) throws FileNotFoundException
-    {
-        final String path = CACHE_DIRECTORY+name+CACHE_EXTENSION;
+    private static URL toCacheURL(final String name) throws FileNotFoundException {
+        final String path = CACHE_DIRECTORY + name + CACHE_EXTENSION;
         URL url = IsolineFactory.class.getClassLoader().getResource(path);
-        if (url != null)
-        {
+        if (url != null) {
             return url;
         }
         /*
@@ -121,32 +116,26 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
         Exception cause = null;
         final String sourcePath = url.toExternalForm();
         final int directory = sourcePath.lastIndexOf(SOURCE_DIRECTORY);
-        if (directory >= 0)
-        {
+        if (directory >= 0) {
             final int filename = directory + SOURCE_DIRECTORY.length();
             final int extension = sourcePath.indexOf(SOURCE_EXTENSION, filename);
-            if (extension >= 0)
-            {
-                final int query = extension+SOURCE_EXTENSION.length();
+            if (extension >= 0) {
+                final int query = extension + SOURCE_EXTENSION.length();
                 final String cachePath = sourcePath.substring(0, directory)        +
                                          CACHE_DIRECTORY                           +
                                          sourcePath.substring(filename, extension) +
                                          CACHE_EXTENSION                           +
                                          sourcePath.substring(query);
-                try
-                {
+                try {
                     url = new URL(cachePath);
                     return url;
-                }
-                catch (MalformedURLException exception)
-                {
+                } catch (MalformedURLException exception) {
                     cause = exception;
                 }
             }
         }
         FileNotFoundException e = new FileNotFoundException(path);
-        if (cause!=null)
-        {
+        if (cause != null) {
             e.initCause(cause);
         }
         throw e;
@@ -158,8 +147,7 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
      * @return All isolines parsed.
      * @throws IOException if the reader can't be created.
      */
-    protected Isoline[] readAll() throws IOException
-    {
+    protected Isoline[] readAll() throws IOException {
         final GEBCOReader reader = new GEBCOReader();
         reader.setInput(toSourceURL(name));
         return reader.read();

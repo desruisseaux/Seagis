@@ -82,7 +82,7 @@ import java.util.StringTokenizer;
 
 // Map display
 import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.renderer.Isoline;
+import org.geotools.renderer.geom.Isoline;
 import org.geotools.gui.swing.MapPane;
 import fr.ird.map.io.GEBCOReader;
 import fr.ird.map.io.IsolineReader;

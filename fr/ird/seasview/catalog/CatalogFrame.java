@@ -62,8 +62,8 @@ import fr.ird.sql.image.SeriesEntry;
 import fr.ird.sql.image.ImageDataBase;
 
 // Dialog box
-import fr.ird.awt.progress.Progress;
-import fr.ird.awt.progress.WindowProgress;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.swing.ProgressWindow;
 
 // Main framework
 import fr.ird.seasview.Task;
@@ -152,7 +152,7 @@ public class CatalogFrame extends InternalFrame
      */
     private void update(final Component owner)
     {
-        final WindowProgress progress = new WindowProgress(owner);
+        final ProgressWindow progress = new ProgressWindow(owner);
         progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
         progress.started();
         try

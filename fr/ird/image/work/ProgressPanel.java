@@ -54,7 +54,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
 
 // Divers
 import java.io.IOException;
-import fr.ird.awt.progress.Progress;
+import org.geotools.util.ProgressListener;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -74,7 +74,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ProgressPanel extends Progress implements ActionListener, WindowListener
+final class ProgressPanel implements ProgressListener, ActionListener, WindowListener
 {
     /**
      * Objet effectuant le calcul.  La méthode {@link Worker#stop}
@@ -304,6 +304,12 @@ final class ProgressPanel extends Progress implements ActionListener, WindowList
      * active. L'implémentation par défaut ne fait rien.
      */
     public void windowActivated(final WindowEvent event)
+    {}
+
+    /**
+     * Méthode appelée lorsqu'il faut détruire la fenêtre.
+     */
+    public void dispose()
     {}
 
     /**

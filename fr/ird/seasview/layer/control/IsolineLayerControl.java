@@ -32,7 +32,7 @@ import fr.ird.sql.image.ImageEntry;
 import java.io.FileNotFoundException;
 
 // Map components
-import org.geotools.renderer.Isoline;
+import org.geotools.renderer.geom.Isoline;
 import org.geotools.renderer.j2d.RenderedIsoline;
 import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.seasview.layer.IsolineFactory;

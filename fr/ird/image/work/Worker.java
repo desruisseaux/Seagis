@@ -58,9 +58,9 @@ import java.util.zip.InflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
 
 // Progres et événements
-import fr.ird.awt.progress.Progress;
-import fr.ird.awt.progress.MailProgress;
-import fr.ird.awt.progress.PrintProgress;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.headless.ProgressMailer;
+import org.geotools.gui.headless.ProgressPrinter;
 import javax.swing.event.EventListenerList;
 
 // Ensembles
@@ -114,7 +114,7 @@ public abstract class Worker implements Runnable
     /**
      * Objets à informer des progrès du calcul.
      */
-    private final List<Progress> listenerList = new ArrayList<Progress>();
+    private final List<ProgressListener> listenerList = new ArrayList<ProgressListener>();
 
     /**
      * Nom de l'opération.
@@ -178,14 +178,14 @@ public abstract class Worker implements Runnable
     /**
      * Spécifie un objet à informer des progrès du calcul.
      */
-    public void addProgressListener(final Progress progress)
+    public void addProgressListener(final ProgressListener progress)
     {listenerList.add(progress);}
 
     /**
      * Indique qu'un objet n'est plus intéressé
      * à être informé des progrès du calcul.
      */
-    public void removeProgressListener(final Progress progress)
+    public void removeProgressListener(final ProgressListener progress)
     {listenerList.remove(progress);}
 
     /**
@@ -332,7 +332,7 @@ public abstract class Worker implements Runnable
     }
 
     /**
-     * Démarre le travail. L'implémentation par défaut prévient les objets {@link Progress}
+     * Démarre le travail. L'implémentation par défaut prévient les objets {@link ProgressListener}
      * que la lecture commence et appelle ensuite {@link #run(ImageEntry[])}.
      *
      * @see #stop()
@@ -556,12 +556,12 @@ public abstract class Worker implements Runnable
                 arg = arg.trim().toLowerCase();
                 if (arg.equalsIgnoreCase("-mail"))
                 {
-                    addProgressListener(new MailProgress("salam.teledetection.fr", "martin.desruisseaux@teledetection.fr"));
+                    addProgressListener(new ProgressMailer("salam.teledetection.fr", "martin.desruisseaux@teledetection.fr"));
                     continue;
                 }
                 if (arg.equalsIgnoreCase("-print"))
                 {
-                    addProgressListener(new PrintProgress());
+                    addProgressListener(new ProgressPrinter());
                     continue;
                 }
                 if (arg.equalsIgnoreCase("-show"))

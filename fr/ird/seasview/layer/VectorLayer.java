@@ -49,7 +49,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 // Geotools dependencies
-import org.geotools.renderer.Arrow2D;
+import org.geotools.renderer.geom.Arrow2D;
 import org.geotools.gc.GridCoverage;
 import org.geotools.ct.MathTransform2D;
 import org.geotools.ct.TransformException;

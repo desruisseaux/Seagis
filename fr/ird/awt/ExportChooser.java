@@ -54,8 +54,8 @@ import javax.imageio.event.IIOReadWarningListener;
 // Images et progrès
 import fr.ird.sql.image.ImageEntry;
 import org.geotools.gc.GridCoverage;
-import fr.ird.awt.progress.Progress;
-import fr.ird.awt.progress.WindowProgress;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.swing.ProgressWindow;
 
 // Collections
 import java.util.Set;
@@ -256,7 +256,7 @@ public final class ExportChooser extends JPanel {
          * Cette fenêtre ne sera créée que la première fois où elle
          * sera nécessaire.
          */
-        private Progress progress;
+        private ProgressListener progress;
 
         /**
          * Encodeur à utiliser pour écrire les images. Cet encodeur
@@ -387,7 +387,7 @@ public final class ExportChooser extends JPanel {
         public void start(final ThreadGroup threadGroup, final Component owner) throws IOException {
             final Resources resources = Resources.getResources(owner.getLocale());
             writer   = filter.getImageWriter();
-            progress = new WindowProgress(owner);
+            progress = new ProgressWindow(owner);
             final Thread thread=new Thread(threadGroup, this, resources.getString(ResourceKeys.EXPORT));
             thread.setPriority(Thread.MIN_PRIORITY);
             thread.start();
@@ -430,7 +430,7 @@ public final class ExportChooser extends JPanel {
          * est survenu pendant la lecture d'une image.
          */
         public void warningOccurred(final ImageReader source, final String warning) {
-            final Progress progress=this.progress;
+            final ProgressListener progress = this.progress;
             if (progress != null) {
                 final ImageEntry entry=current;
                 progress.warningOccurred((entry!=null) ? entry.getName() : null, null, warning);

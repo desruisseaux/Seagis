@@ -54,7 +54,7 @@ import org.geotools.resources.Arguments;
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import fr.ird.awt.progress.PrintProgress;
+import org.geotools.gui.headless.ProgressPrinter;
 
 
 /**
@@ -465,7 +465,7 @@ public class FisheryDataBase extends DataBase {
                     }
                 }
                 if (copyTo != null) {
-                    table.copyToTable(copyTo, new PrintProgress(console.out));
+                    table.copyToTable(copyTo, new ProgressPrinter(console.out));
                 } else {
                     table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
                 }

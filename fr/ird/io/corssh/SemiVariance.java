@@ -58,9 +58,9 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import fr.ird.awt.progress.PrintProgress;
-import fr.ird.awt.progress.MailProgress;
-import fr.ird.awt.progress.Progress;
+import org.geotools.gui.headless.ProgressPrinter;
+import org.geotools.gui.headless.ProgressMailer;
+import org.geotools.util.ProgressListener;
 
 // Ensembles
 import java.util.Map;
@@ -146,7 +146,7 @@ final class SemiVariance
      * Boîte de dialogue (ou autre composante) dans laquelle informer
      * des progrès des calculs, ou <code>null</code> s'il n'y en a pas.
      */
-    private Progress progress;
+    private ProgressListener progress;
 
     /**
      * Forme géométrique délimitant une région dans laquelle on cherchera des points.
@@ -210,7 +210,7 @@ final class SemiVariance
      * des progrès des calculs. La valeur <code>null</code> signifie que les progrès
      * ne doivent pas être reportés.
      */
-    public synchronized void setProgress(final Progress progress)
+    public synchronized void setProgress(final ProgressListener progress)
     {this.progress=progress;}
 
     /**
@@ -330,7 +330,7 @@ final class SemiVariance
          * seront pas modifiées en cours de route.
          */
         final RectangularShape      area = this.area;
-        final Progress          progress = this.progress;
+        final ProgressListener  progress = this.progress;
         final long  []          sumDTa   = this.sumDTa;
         final double[]          sumDXa   = this.sumDXa;
         final float []          sumDLa   = this.sumDLa;
@@ -705,13 +705,13 @@ window: while (startWindowTime < endTimeMillis)
             case 1: startTimeText = args[0]; // fall through
             case 0:  break;
         }
-        final DateFormat     format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.FRANCE);
-        final Date        startTime = format.parse(startTimeText);
-        final Date          endTime = format.parse(  endTimeText);
-        final Shape  geographicArea = new Rectangle2D.Double(0, -90, 360, 180);
-        final SemiVariance    stats = new SemiVariance();
-        final Progress     progress = new MailProgress("smtp.ird.teledetection.fr", "martin.desruisseaux@teledetection.fr");
-        final File[] directoryFiles = new File[directories.length];
+        final DateFormat         format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.FRANCE);
+        final Date            startTime = format.parse(startTimeText);
+        final Date              endTime = format.parse(  endTimeText);
+        final Shape      geographicArea = new Rectangle2D.Double(0, -90, 360, 180);
+        final SemiVariance        stats = new SemiVariance();
+        final ProgressListener progress = new ProgressMailer("smtp.ird.teledetection.fr", "martin.desruisseaux@teledetection.fr");
+        final File[]     directoryFiles = new File[directories.length];
         for (int i=0; i<directories.length; i++) directoryFiles[i]=new File(directories[i]);
         stats.setProgress(progress);
         try

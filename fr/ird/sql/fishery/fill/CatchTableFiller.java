@@ -49,7 +49,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
 import org.geotools.resources.Geometry;
-import org.geotools.renderer.Isoline;
+import org.geotools.renderer.geom.Isoline;
 
 
 /**

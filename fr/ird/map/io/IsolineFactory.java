@@ -22,10 +22,6 @@
  */
 package fr.ird.map.io;
 
-// Map components
-import org.geotools.renderer.Isoline;
-import org.geotools.ct.TransformException;
-
 // Collections
 import java.util.Map;
 import java.util.HashMap;
@@ -69,9 +65,16 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Resources
+import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+
+// Map components
+import org.geotools.math.Statistics;
 import org.geotools.resources.Utilities;
+import org.geotools.util.ProgressListener;
+import org.geotools.renderer.geom.Isoline;
+import org.geotools.ct.TransformException;
 
 
 /**
@@ -89,7 +92,12 @@ public abstract class IsolineFactory {
     /**
      * The logger for warning and information messages.
      */
-    private static final Logger logger = Logger.getLogger("fr.ird.map");
+    private static final Logger logger = Logger.getLogger("fr.ird.map.io");
+
+    /**
+     * The progress listener, or <code>null</code> if none.
+     */
+    protected transient ProgressListener progress;
 
     /**
      * Path to serialized {@link Isoline}s as a file. The first time an
@@ -148,6 +156,13 @@ public abstract class IsolineFactory {
         }
         this.cacheFile = file;
         this.cacheURL  = cache;
+    }
+
+    /**
+     * Set the progress listener, or <code>null</code> for none.
+     */
+    public void setProgressListener(final ProgressListener progress) {
+        this.progress = progress;
     }
 
     /**
@@ -429,30 +444,54 @@ public abstract class IsolineFactory {
          * used, but prevent the garbage collector to collect
          * the isolines too early.
          */
-        final Isoline[] all = readAll();
+        Isoline[] all = readAll();
         isolines = new HashMap<Float,Reference<Isoline>>(all.length + all.length/2);
         final Resources resources = Resources.getResources(null);
+        int        pointCount = 0;
+        double    compression = 0;
+        Statistics resolution = null;
         for (int i=0; i<all.length; i++) {
-            final Isoline iso = all[i];
-            add(iso);
-            LogRecord record;
+            final Isoline isoline = all[i];
             try {
-                final float factor = iso.compress(0.75f);
-                record = resources.getLogRecord(Level.FINE, ResourceKeys.ISOLINE_DECIMATED_$2,
-                                                new Float(iso.value), new Float(factor));
-            } catch (TransformException exception) {
-                final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
-                final String message = exception.getLocalizedMessage();
-                if (message != null) {
-                    buffer.append(": ");
-                    buffer.append(message);
+                final Statistics res = isoline.getResolution();
+                if (resolution == null) {
+                    resolution = res;
+                } else {
+                    resolution.add(res);
                 }
-                record = new LogRecord(Level.WARNING, buffer.toString());
-                record.setThrown(exception);
+                final int count = isoline.getPointCount();
+                // TODO: provides some API for controling compression.
+                compression += count * isoline.compress(0.75f);
+                pointCount  += count; // Must be after 'compression'.
+            } catch (TransformException exception) {
+                warning(sourceMethodName, exception);
+                all = XArray.remove(all, i, 1);
             }
-            record.setSourceClassName("IsolineFactory");
-            record.setSourceMethodName(sourceMethodName);
-            logger.log(record);
+        }
+        compression /= pointCount;
+        try {
+            Isoline.assemble(all, progress);
+        } catch (TransformException exception) {
+            // Should not happen.
+            warning(sourceMethodName, exception);
+            final IOException e = new IOException("Illegal coordinates");
+            e.initCause(exception);
+            throw e;
+        }
+        final LogRecord record;
+        record = resources.getLogRecord(Level.FINE, ResourceKeys.ISOLINE_COMPRESSED_$2,
+                                        resolution, new Double(compression));
+        record.setSourceClassName("IsolineFactory");
+        record.setSourceMethodName(sourceMethodName);
+        logger.log(record);
+        /*
+         * Save isolines in the memory cache and on disk.
+         */
+        for (int i=0; i<all.length; i++) {
+            final Isoline isoline = all[i];
+            if (isoline != null) {
+                add(isoline);
+            }
         }
         save(all);
         return all;
@@ -540,7 +579,7 @@ public abstract class IsolineFactory {
         final ZipOutputStream out = new ZipOutputStream(
                 (cacheFile!=null) ? new FileOutputStream(cacheFile) :
                                     cacheURL.openConnection().getOutputStream());
-        out.setComment("Serialized Java objects: fr.ird.map.Isoline");
+        out.setComment("Serialized Java objects: org.geotools.renderer.geom.Isoline");
         out.setLevel(Deflater.BEST_COMPRESSION);
         /*
          * Fist write an index of all available isolines, in increasing
@@ -587,13 +626,31 @@ public abstract class IsolineFactory {
     }
 
     /**
-     * Load a warning record.
+     * Log a warning record for the specified localized message.
      *
      * @param resourceKey The resource key for the message.
      * @param value The value to format with the message.
      */
     private static void warning(final String sourceMethodName, final int resourceKey, final Float value) {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.WARNING, resourceKey, value);
+        record.setSourceClassName ("IsolineFactory");
+        record.setSourceMethodName(sourceMethodName);
+        logger.log(record);
+    }
+
+    /**
+     * Log a warning record for the specified exception.
+     */
+    private static void warning(final String sourceMethodName, final TransformException exception) {
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
+        final String message = exception.getLocalizedMessage();
+        if (message != null) {
+            buffer.append(": ");
+            buffer.append(message);
+        }
+        final LogRecord record;
+        record = new LogRecord(Level.WARNING, buffer.toString());
+        record.setThrown(exception);
         record.setSourceClassName("IsolineFactory");
         record.setSourceMethodName(sourceMethodName);
         logger.log(record);

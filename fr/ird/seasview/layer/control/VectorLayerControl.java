@@ -49,7 +49,7 @@ import fr.ird.seasview.layer.VectorLayer;
 // Divers
 import java.util.Date;
 import java.util.List;
-import org.geotools.renderer.Arrow2D;
+import org.geotools.renderer.geom.Arrow2D;
 
 
 /**

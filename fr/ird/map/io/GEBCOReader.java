@@ -27,7 +27,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Maps
-import org.geotools.renderer.Isoline;
+import org.geotools.renderer.geom.Isoline;
 
 // Input/output
 import java.io.File;

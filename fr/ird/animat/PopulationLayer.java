@@ -62,7 +62,7 @@ import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
 // Geotools dependencies
-import org.geotools.renderer.Arrow2D;
+import org.geotools.renderer.geom.Arrow2D;
 import org.geotools.ct.TransformException;
 import org.geotools.resources.XAffineTransform;
 

@@ -39,8 +39,8 @@ import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
 import fr.ird.awt.ImageTableModel;
 import fr.ird.awt.CoordinateChooserDB;
-import fr.ird.awt.progress.Progress;
-import fr.ird.awt.progress.WindowProgress;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.swing.ProgressWindow;
 
 // Main framework
 import fr.ird.seasview.Task;
@@ -283,7 +283,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                            final SeriesEntry[] series,
                            final JComponent owner) throws SQLException
     {
-        final WindowProgress progress = new WindowProgress(owner);
+        final ProgressWindow progress = new ProgressWindow(owner);
         progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
         progress.started();
 

@@ -58,7 +58,7 @@ import org.geotools.resources.Utilities;
 // Resources
 import fr.ird.util.XArray;
 import fr.ird.sql.DataBase;
-import fr.ird.awt.progress.Progress;
+import org.geotools.util.ProgressListener;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -301,14 +301,14 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      *       fois, alors chaque nouvel appel fermera le {@link RowSet} de l'appel précédent.
      *
      * @param  progress Objet à utiliser pour informer des progrès de l'initialisation, ou
-     *         <code>null</code> si aucun. Cette méthode appelle {@link Progress#started},
-     *         mais n'appelle <strong>pas</strong> {@link Progress#complete} étant donné
+     *         <code>null</code> si aucun. Cette méthode appelle {@link ProgressListener#started},
+     *         mais n'appelle <strong>pas</strong> {@link ProgressListener#complete} étant donné
      *         qu'on voudra probablement continuer à l'utiliser pour informer des progrès
      *         de la lecture du {@link RowSet}.
      * @return Les données environnementales pour les captures.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public synchronized RowSet getRowSet(final Progress progress) throws SQLException {
+    public synchronized RowSet getRowSet(final ProgressListener progress) throws SQLException {
         if (progress != null) {
             progress.setDescription("Initialisation");
             progress.started();
@@ -385,7 +385,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * @return Le nombre d'enregistrement copiés dans la nouvelle table.
      * @throws Si un problème est survenu lors des accès aux bases de données.
      */
-    public synchronized int copyToTable(final String tableName, final Progress progress) throws SQLException {
+    public synchronized int copyToTable(final String tableName, final ProgressListener progress)
+            throws SQLException
+    {
         final ResultSet       source = getRowSet(progress);
         final ResultSetMetaData meta = source.getMetaData();
         final int        columnCount = meta.getColumnCount();

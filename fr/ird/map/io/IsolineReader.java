@@ -23,7 +23,7 @@
 package fr.ird.map.io;
 
 // Maps
-import org.geotools.renderer.Isoline;
+import org.geotools.renderer.geom.Isoline;
 
 // Input/output
 import java.net.URL;

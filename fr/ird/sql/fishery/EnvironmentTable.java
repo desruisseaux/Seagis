@@ -38,7 +38,7 @@ import java.io.IOException;
 
 // SEAS dependencies
 import fr.ird.sql.Table;
-import fr.ird.awt.progress.Progress;
+import org.geotools.util.ProgressListener;
 
 
 /**
@@ -178,14 +178,14 @@ public interface EnvironmentTable extends Table {
      *       fois, alors chaque nouvel appel fermera le {@link RowSet} de l'appel précédent.
      *
      * @param  progress Objet à utiliser pour informer des progrès de l'initialisation, ou
-     *         <code>null</code> si aucun. Cette méthode appelle {@link Progress#started},
-     *         mais n'appelle <strong>pas</strong> {@link Progress#complete} étant donné
+     *         <code>null</code> si aucun. Cette méthode appelle {@link ProgressListener#started},
+     *         mais n'appelle <strong>pas</strong> {@link ProgressListener#complete} étant donné
      *         qu'on voudra probablement continuer à l'utiliser pour informer des progrès
      *         de la lecture du {@link RowSet}.
      * @return Les données environnementales pour les captures.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public abstract RowSet getRowSet(final Progress progress) throws SQLException;
+    public abstract RowSet getRowSet(final ProgressListener progress) throws SQLException;
 
     /**
      * Affiche les enregistrements vers le flot spécifié.
@@ -209,7 +209,7 @@ public interface EnvironmentTable extends Table {
      * @return Le nombre d'enregistrement copiés dans la nouvelle table.
      * @throws Si un problème est survenu lors des accès aux bases de données.
      */
-    public abstract int copyToTable(final String tableName, final Progress progress) throws SQLException;
+    public abstract int copyToTable(final String tableName, final ProgressListener progress) throws SQLException;
 
     /**
      * Définit la valeur des paramètres environnementaux pour une capture. Cette méthode
