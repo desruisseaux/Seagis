@@ -172,7 +172,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
         // HACK: Pour vérifier le décodeur d'image PNG.
         ImageUtilities.allowNativeCodec("png", false, false);
         ImageUtilities.allowNativeCodec("png", true , false);
-        new org.geotools.gui.swing.About().showDialog(null);
+     // new org.geotools.gui.swing.About().showDialog(null);
 
         MonolineFormatter.init("org.geotools");
         MonolineFormatter.init("fr.ird");
