@@ -65,7 +65,7 @@ final class MercatorProjection extends CylindricalProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public MercatorProjection(final Parameter[] parameters) throws MissingParameterException
+    protected MercatorProjection(final Parameter[] parameters) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
@@ -194,16 +194,13 @@ final class MercatorProjection extends CylindricalProjection
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof MercatorProjection) && equals((MercatorProjection) object);}
-
-    /**
-     * Compares the specified object with
-     * this map projection for equality.
-     */
-    final boolean equals(final MercatorProjection that)
     {
-        return super.equals(that) &&
-               Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
+        if (super.equals(object))
+        {
+            final MercatorProjection that = (MercatorProjection) object;
+            return Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
+        }
+        return false;
     }
 
     /**

@@ -25,6 +25,7 @@ package net.seas.opengis.cs;
 // Units and coordinates
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
+import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import net.seas.util.XClass;
@@ -100,6 +101,30 @@ public abstract class CoordinateSystem extends Info
      * (-180,-90) to (180,90), and a geocentric coordinate system could return
      * a box from (-r,-r,-r) to (+r,+r,+r) where r is the approximate radius
      * of the Earth.
+     * <br><br>
+     * The default implementation returns an envelope with infinite bounds.
      */
-    public abstract Envelope getDefaultEnvelope();
+    public Envelope getDefaultEnvelope()
+    {return new Envelope(getDimension());}
+
+    /**
+     * Gets the transformation from this coordinate
+     * system to the specified coordinate system.
+     */
+    CoordinateTransformation transformFrom(final CoordinateSystem system)
+    {throw new UnsupportedOperationException();}
+
+    /**
+     * Gets the transformation from this coordinate
+     * system to the specified coordinate system.
+     */
+    CoordinateTransformation transformTo(final GeographicCoordinateSystem system)
+    {throw new UnsupportedOperationException();}
+
+    /**
+     * Gets the transformation from this coordinate
+     * system to the specified coordinate system.
+     */
+    CoordinateTransformation transformTo(final ProjectedCoordinateSystem system)
+    {throw new UnsupportedOperationException();}
 }

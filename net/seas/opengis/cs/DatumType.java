@@ -50,7 +50,7 @@ public abstract class DatumType implements Serializable
     /**
      * <code>serialVersionUID</code> for interoperability with previous versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 2123402922368772495L;
 
     /**
      * These datums, such as ED50, NAD27 and NAD83, have been designed to
@@ -267,7 +267,7 @@ public abstract class DatumType implements Serializable
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
          */
-        // private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = 7172421404798913210L;
 
         /**
          * Lowest possible value for horizontal datum types.
@@ -308,7 +308,7 @@ public abstract class DatumType implements Serializable
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
          */
-        // private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = -5713408139450202831L;
 
         /**
          * Lowest possible value for vertical datum types.
@@ -347,7 +347,7 @@ public abstract class DatumType implements Serializable
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
          */
-        // private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = -2000541174931444868L;
 
         /**
          * Lowest possible value for local datum types.

@@ -49,6 +49,6 @@ abstract class CylindricalProjection extends MapProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public CylindricalProjection(final Parameter[] parameters) throws MissingParameterException
+    protected CylindricalProjection(final Parameter[] parameters) throws MissingParameterException
     {super(parameters);}
 }

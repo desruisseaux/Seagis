@@ -92,16 +92,13 @@ public class Datum extends Info
      * with this datum for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof Datum) && equals((Datum)object);}
-
-    /**
-     * Compares the specified object
-     * with this datum for equality.
-     */
-    final boolean equals(final Datum that)
     {
-        return super.equals(that) &&
-               XClass.equals(this.getDatumType(), that.getDatumType());
+        if (super.equals(object))
+        {
+            final Datum that = (Datum) object;
+            return XClass.equals(this.type, that.type);
+        }
+        return false;
     }
 
     /**

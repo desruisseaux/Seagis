@@ -46,6 +46,6 @@ abstract class PlanarProjection extends MapProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public PlanarProjection(final Parameter[] parameters) throws MissingParameterException
+    protected PlanarProjection(final Parameter[] parameters) throws MissingParameterException
     {super(parameters);}
 }

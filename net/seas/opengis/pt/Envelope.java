@@ -81,6 +81,17 @@ public final class Envelope implements Cloneable, Serializable
     {ord = (double[]) envelope.ord.clone();}
 
     /**
+     * Construct an envelope of the specified
+     * dimension with infinite bounds.
+     */
+    public Envelope(final int dimension)
+    {
+        ord = new double[dimension*2];
+        Arrays.fill(ord, 0, dimension,          Double.NEGATIVE_INFINITY);
+        Arrays.fill(ord, dimension, ord.length, Double.POSITIVE_INFINITY);
+    }
+
+    /**
      * Construct one-dimensional envelope defined by a range of values.
      *
      * @param min The minimal value.

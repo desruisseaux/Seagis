@@ -174,7 +174,7 @@ abstract class MapProjection extends MathTransform
      *         </ul>
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public MapProjection(final Parameter[] parameters) throws MissingParameterException
+    protected MapProjection(final Parameter[] parameters) throws MissingParameterException
     {
         this.a                =                    Parameter.getValue(parameters, "semi_major", SEMI_MAJOR);
         this.b                =                    Parameter.getValue(parameters, "semi_minor", SEMI_MINOR);
@@ -687,18 +687,16 @@ abstract class MapProjection extends MathTransform
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof MapProjection) && equals((MapProjection) object);}
-
-    /**
-     * Compares the specified object with
-     * this map projection for equality.
-     */
-    final boolean equals(final MapProjection that)
     {
-        return Double.doubleToLongBits(this.a)                == Double.doubleToLongBits(that.a) &&
-               Double.doubleToLongBits(this.b)                == Double.doubleToLongBits(that.b) &&
-               Double.doubleToLongBits(this.centralLongitude) == Double.doubleToLongBits(that.centralLongitude) &&
-               Double.doubleToLongBits(this.centralLatitude)  == Double.doubleToLongBits(that.centralLatitude);
+        if (super.equals(object))
+        {
+            final MapProjection that = (MapProjection) object;
+            return Double.doubleToLongBits(this.a)                == Double.doubleToLongBits(that.a) &&
+                   Double.doubleToLongBits(this.b)                == Double.doubleToLongBits(that.b) &&
+                   Double.doubleToLongBits(this.centralLongitude) == Double.doubleToLongBits(that.centralLongitude) &&
+                   Double.doubleToLongBits(this.centralLatitude)  == Double.doubleToLongBits(that.centralLatitude);
+        }
+        return false;
     }
 
     /**

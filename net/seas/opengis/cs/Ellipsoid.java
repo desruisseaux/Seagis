@@ -95,7 +95,7 @@ public class Ellipsoid extends Info
      * @param radius The equatorial and polar radius.
      * @param unit   The units of the semi-major and semi-minor axis values.
      */
-    public Ellipsoid(final String name, final double radius, final Unit unit)
+    protected Ellipsoid(final String name, final double radius, final Unit unit)
     {this(name, check("radius", radius), radius, Double.POSITIVE_INFINITY, false, unit);}
 
     /**
@@ -106,7 +106,7 @@ public class Ellipsoid extends Info
      * @param semiMinorAxis The polar radius.
      * @param unit          The units of the semi-major and semi-minor axis values.
      */
-    public Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
+    protected Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
     {this(name, semiMajorAxis, semiMinorAxis, semiMajorAxis/(semiMajorAxis-semiMinorAxis), false, unit);}
 
     /**
@@ -250,48 +250,22 @@ public class Ellipsoid extends Info
     {return unit;}
 
     /**
-     * Compares the specified object with this ellipsoid for equality.
-     * Two ellipsoids are considered equals if they have the same name
-     * and are defined with the same quantities (semi-major and semi-minor
-     * axis length if {@link #isIvfDefinitive} returns false, or semi-major
-     * axis length and inverse flattening if {@link #isIvfDefinitive}
-     * returns true).
+     * Compares the specified object with
+     * this ellipsoid for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof Ellipsoid) && equals((Ellipsoid)object);}
-
-    /**
-     * Compares the specified object with this ellipsoid for equality.
-     */
-    final boolean equals(final Ellipsoid that)
     {
-        if (super.equals(that) &&
-            XClass.equals(this.getAxisUnit(),      that.getAxisUnit()) &&
-                   equals(this.getSemiMajorAxis(), that.getSemiMajorAxis()))
+        if (super.equals(object))
         {
-            final boolean ivfDefinitive = isIvfDefinitive();
-            if (ivfDefinitive == that.isIvfDefinitive())
-            {
-                if (ivfDefinitive)
-                {
-                    return equals(this.getInverseFlattening(),
-                                  that.getInverseFlattening());
-                }
-                else
-                {
-                    return equals(this.getSemiMinorAxis(),
-                                  that.getSemiMinorAxis());
-                }
-            }
+            final Ellipsoid that = (Ellipsoid) object;
+            return this.ivfDefinitive == that.ivfDefinitive &&
+                   Double.doubleToLongBits(this.semiMajorAxis)     == Double.doubleToLongBits(that.semiMajorAxis)     &&
+                   Double.doubleToLongBits(this.semiMinorAxis)     == Double.doubleToLongBits(that.semiMinorAxis)     &&
+                   Double.doubleToLongBits(this.inverseFlattening) == Double.doubleToLongBits(that.inverseFlattening) &&
+                   XClass.equals(this.unit, that.unit);
         }
         return false;
     }
-
-    /**
-     * Compare the specified <code>double</code>s for equality.
-     */
-    private static boolean equals(final double a, final double b)
-    {return Double.doubleToLongBits(a) == Double.doubleToLongBits(b);}
 
     /**
      * Returns a hash value for this ellipsoid.

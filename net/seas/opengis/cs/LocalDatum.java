@@ -20,38 +20,45 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package net.seas.opengis.ct;
+package net.seas.opengis.cs;
+
+// Miscellaneous
+import net.seas.util.XClass;
 
 
 /**
- * Thrown when {@link MathTransform#inverse} is invoked but the transform
- * can't be inverted.
+ * Local datum.
+ * If two local datum objects have the same datum type and name, then they
+ * can be considered equal.  This means that coordinates can be transformed
+ * between two different local coordinate systems, as long as they are based
+ * on the same local datum.
  *
- * @version 1.0
+ * @version 1.00
+ * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
+ *
+ * @see org.opengis.cs.CS_LocalDatum
  */
-public class NoninvertibleTransformException extends TransformException
+public class LocalDatum extends Datum
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -2601170123706246740L;
+    private static final long serialVersionUID = 5604979072241525415L;
 
     /**
-     * Constructs a new exception with no detail message.
+     * Construct a new datum with the
+     * specified name and datum type.
+     *
+     * @param name The datum name.
+     * @param type The datum type.
      */
-    public NoninvertibleTransformException()
-    {}
+    protected LocalDatum(final String name, final DatumType.Local type)
+    {super(name, type);}
 
     /**
-     * Constructs a new exception with the specified detail message.
+     * Gets the type of the datum as an enumerated code.
      */
-    public NoninvertibleTransformException(final String message)
-    {super(message);}
-
-    /**
-     * Constructs a new exception with the specified detail message and cause.
-     */
-    public NoninvertibleTransformException(final String message, final Throwable cause)
-    {super(message, cause);}
+    public DatumType.Local getDatumType()
+    {return (DatumType.Local) super.getDatumType();}
 }

@@ -143,20 +143,18 @@ public abstract class Info implements Serializable
      * with this info for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof Info) && equals((Info)object);}
-
-    /**
-     * Compares the specified object
-     * with this info for equality.
-     */
-    final boolean equals(final Info that)
     {
-        return XClass.equals(this.getName(),          that.getName()         ) &&
-               XClass.equals(this.getAuthority(),     that.getAuthority()    ) &&
-               XClass.equals(this.getAuthorityCode(), that.getAuthorityCode()) &&
-               XClass.equals(this.getAlias(),         that.getAlias()        ) &&
-               XClass.equals(this.getAbbreviation(),  that.getAbbreviation() ) &&
-               XClass.equals(this.getRemarks(),       that.getRemarks()      );
+        if (object!=null && getClass().equals(object.getClass()))
+        {
+            final Info that = (Info) object;
+            return XClass.equals(this.getName(),          that.getName()         ) &&
+                   XClass.equals(this.getAuthority(),     that.getAuthority()    ) &&
+                   XClass.equals(this.getAuthorityCode(), that.getAuthorityCode()) &&
+                   XClass.equals(this.getAlias(),         that.getAlias()        ) &&
+                   XClass.equals(this.getAbbreviation(),  that.getAbbreviation() ) &&
+                   XClass.equals(this.getRemarks(),       that.getRemarks()      );
+        }
+        return false;
     }
 
     /**
@@ -174,4 +172,15 @@ public abstract class Info implements Serializable
      */
     static void ensureNonNull(final String name, final Object object) throws IllegalArgumentException
     {if (object==null) throw new IllegalArgumentException(Resources.format(Clé.NULL_ARGUMENT¤1, name));}
+
+    /**
+     * Make sure an array element is non-null.
+     *
+     * @param  name  Argument name.
+     * @param  array User argument.
+     * @param  index Element to check.
+     * @throws IllegalArgumentException if <code>array[i]</code> is null.
+     */
+    static void ensureNonNull(final String name, final Object[] array, final int index) throws IllegalArgumentException
+    {if (array[index]==null) throw new IllegalArgumentException(Resources.format(Clé.NULL_ARGUMENT¤1, name+'['+index+']'));}
 }

@@ -37,6 +37,11 @@ import net.seas.resources.Resources;
 public class MissingParameterException extends RuntimeException
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 3175167318321053417L;
+
+    /**
      * The missing parameter name.
      */
     private final String parameter;

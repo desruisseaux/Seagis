@@ -58,12 +58,16 @@ public final class ConvexHull implements Serializable
 
     /**
      * Construct the simpliest convex hull: a single point.
+     *
+     * @deprecated This method is not implemented.
      */
     public ConvexHull(final CoordinatePoint point)
     {throw new UnsupportedOperationException("Not implemented");}
 
     /**
      * Construct a convex hull defined by an envelope.
+     *
+     * @deprecated This method is not implemented.
      */
     public ConvexHull(final Envelope envelope)
     {throw new UnsupportedOperationException("Not implemented");}
@@ -71,6 +75,8 @@ public final class ConvexHull implements Serializable
     /**
      * Construct a convex hull from an array of ordinates.
      * This method is provided for compatibility with OpenGIS.
+     *
+     * @deprecated This method is not implemented.
      */
     public ConvexHull(final double[] ord)
     {throw new UnsupportedOperationException("Not implemented");}

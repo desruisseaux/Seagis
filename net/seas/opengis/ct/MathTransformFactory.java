@@ -26,6 +26,7 @@ package net.seas.opengis.ct;
 import javax.units.Unit;
 import java.util.Locale;
 import java.awt.geom.Point2D;
+import java.awt.geom.AffineTransform;
 import java.util.NoSuchElementException;
 
 import net.seas.util.XArray;
@@ -99,6 +100,15 @@ public class MathTransformFactory
     {}
 
     /**
+     * Creates an affine transform from a matrix.
+     *
+     * @param matrix The matrix used to define the affine transform.
+     * @return The affine transform.
+     */
+    public MathTransform createAffineTransform(final AffineTransform matrix)
+    {return new AffineTransform2D(matrix);}
+
+    /**
      * Creates a transform by concatenating two existing transforms.
      * A concatenated transform acts in the same way as applying two
      * transforms, one after the other. The dimension of the output
@@ -111,23 +121,7 @@ public class MathTransformFactory
      * @return The concatenated transform.
      */
     public MathTransform createConcatenatedTransform(final MathTransform transform1, final MathTransform transform2)
-    {return null;} // TODO
-
-    /**
-     * Creates a transform which passes through a subset of ordinates to another transform.
-     * This allows transforms to operate on a subset of ordinates.  For example,
-     * if you have (Lat,Lon,Height) coordinates, then you may wish to convert the
-     * height values from meters to feet without affecting the (Lat,Lon) values.
-     * If you wanted to affect the (Lat,Lon) values and leave the Height values
-     * alone, then you would have to swap the ordinates around to
-     * (Height,Lat,Lon).  You can do this with an affine map.
-     *
-     * @param  firstAffectedOrdinate The lowest index of the affected ordinates.
-     * @param  subTransform Transform to use for affected ordinates.
-     * @return The pass through transform.
-     */
-    public MathTransform createPassThroughTransform(final int firstAffectedOrdinate, final MathTransform subTransform)
-    {return null;} // TODO
+    {return transform1.concatenate(transform2);}
 
     /**
      * Creates a transform from a classification name and parameters. The
@@ -145,7 +139,7 @@ public class MathTransformFactory
      * @throws MissingParameterException if a parameter was required but not found.
      */
     public MathTransform createParameterizedTransform(final String classification, final Parameter[] parameters) throws NoSuchElementException, MissingParameterException
-    {return getRegistration(classification).create(parameters);}
+    {return getProvider(classification).create(parameters);}
 
     /**
      * Convenience method for creating a transform from a classification name,
@@ -205,7 +199,7 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no transform for the specified classification.
      */
     public String getName(final String classification, final Locale locale) throws NoSuchElementException
-    {return getRegistration(classification).getName(locale);}
+    {return getProvider(classification).getName(locale);}
 
     /**
      * Get the default parameters from a classification name. The
@@ -220,19 +214,19 @@ public class MathTransformFactory
      *         specified classification.
      */
     public Parameter[] getDefaultParameters(final String classification) throws NoSuchElementException
-    {return getRegistration(classification).getDefaultParameters();}
+    {return getProvider(classification).getDefaultParameters();}
 
     /**
-     * Returns the registration for the specified classification.
+     * Returns the provider for the specified classification.
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
      *         are ignored, and comparaison is case-insensitive.
-     * @return The registration.
+     * @return The provider.
      * @throws NoSuchElementException if there is no registration
      *         for the specified classification.
      */
-    private MathTransform.Provider getRegistration(String classification) throws NoSuchElementException
+    private MathTransform.Provider getProvider(String classification) throws NoSuchElementException
     {
         classification = classification.trim();
         for (int i=0; i<REGISTERED.length; i++)

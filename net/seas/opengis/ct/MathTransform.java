@@ -92,7 +92,7 @@ public abstract class MathTransform
      * short-cuts to avoid doing an infinite number of tests.
      * <br><br>
      * Convex hull are not yet implemented in the <code>net.seas.opengis</code>
-     * package. Consequently, the default implementation for thie method always
+     * package. Consequently, the default implementation for this method always
      * throws a {@link UnsupportedOperationException}.
      *
      * @param  hull The convex hull.
@@ -442,6 +442,19 @@ public abstract class MathTransform
     public abstract boolean isIdentity();
 
     /**
+     * Returns a hash value for this transform.
+     */
+    public int hashCode()
+    {return getDimSource() | (getDimTarget() << 3);}
+
+    /**
+     * Compares the specified object with
+     * this math transform for equality.
+     */
+    public boolean equals(final Object object)
+    {return (object!=null && getClass().equals(object.getClass()));}
+
+    /**
      * Returns a string représentation of this transform.
      */
     public String toString()
@@ -453,6 +466,19 @@ public abstract class MathTransform
         buffer.append(getDimTarget());
         buffer.append("D]");
         return buffer.toString();
+    }
+
+    /**
+     * Creates a transform by concatenating <code>this</code> with the specified
+     * transform. The default implementation construct a {@link ConcatenedTransform}
+     * instance. Subclasses can override this method if they know how to concatenate
+     * efficiently some special transforms.
+     */
+    MathTransform concatenate(final MathTransform that)
+    {
+        if (this.isIdentity()) return that;
+        if (that.isIdentity()) return this;
+        return new ConcatenedTransform(this, that);
     }
 
 

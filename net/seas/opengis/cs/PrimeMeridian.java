@@ -95,21 +95,18 @@ public class PrimeMeridian extends Info
      * this prime meridian for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof PrimeMeridian) && equals((PrimeMeridian)object);}
-
-    /**
-     * Compares the specified object with
-     * this prime meridian for equality.
-     */
-    final boolean equals(final PrimeMeridian that)
     {
-        return super.equals(that) &&
-               Double.doubleToLongBits(this.longitude) == Double.doubleToLongBits(that.longitude) &&
-               XClass.equals(this.unit, that.unit);
+        if (super.equals(object))
+        {
+            final PrimeMeridian that = (PrimeMeridian) object;
+            return Double.doubleToLongBits(this.longitude) == Double.doubleToLongBits(that.longitude) &&
+                   XClass.equals(this.unit, that.unit);
+        }
+        return false;
     }
 
     /**
-     * Returns a string representation of this info.
+     * Returns a string representation of this prime meridian.
      */
     public String toString()
     {return XClass.getShortClassName(this)+'['+getName()+'='+longitude+unit+']';}

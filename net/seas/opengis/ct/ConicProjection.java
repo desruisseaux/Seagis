@@ -53,6 +53,6 @@ abstract class ConicProjection extends MapProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public ConicProjection(final Parameter[] parameters) throws MissingParameterException
+    protected ConicProjection(final Parameter[] parameters) throws MissingParameterException
     {super(parameters);}
 }

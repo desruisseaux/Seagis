@@ -90,7 +90,7 @@ public class ProjectionParameter implements Cloneable, Serializable
      */
     public boolean equals(final Object object)
     {
-        if (object instanceof ProjectionParameter)
+        if (object!=null && getClass().equals(object.getClass()))
         {
             final ProjectionParameter that = (ProjectionParameter) object;
             return Double.doubleToLongBits(this.value) == Double.doubleToLongBits(that.value) &&

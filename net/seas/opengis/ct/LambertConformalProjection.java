@@ -61,7 +61,7 @@ final class LambertConformalProjection extends ConicProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public LambertConformalProjection(final Parameter[] parameters) throws MissingParameterException
+    protected LambertConformalProjection(final Parameter[] parameters) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
@@ -239,18 +239,15 @@ final class LambertConformalProjection extends ConicProjection
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof LambertConformalProjection) && equals((LambertConformalProjection) object);}
-
-    /**
-     * Compares the specified object with
-     * this map projection for equality.
-     */
-    final boolean equals(final LambertConformalProjection that)
     {
-        return super.equals(that) &&
-               Double.doubleToLongBits(this.n)    == Double.doubleToLongBits(that.n) &&
-               Double.doubleToLongBits(this.F)    == Double.doubleToLongBits(that.F) &&
-               Double.doubleToLongBits(this.rho0) == Double.doubleToLongBits(that.rho0);
+        if (super.equals(object))
+        {
+            final LambertConformalProjection that = (LambertConformalProjection) object;
+            return Double.doubleToLongBits(this.n)    == Double.doubleToLongBits(that.n) &&
+                   Double.doubleToLongBits(this.F)    == Double.doubleToLongBits(that.F) &&
+                   Double.doubleToLongBits(this.rho0) == Double.doubleToLongBits(that.rho0);
+        }
+        return false;
     }
 
     /**

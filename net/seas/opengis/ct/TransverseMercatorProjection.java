@@ -145,7 +145,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public TransverseMercatorProjection(final Parameter[] parameters) throws MissingParameterException
+    protected TransverseMercatorProjection(final Parameter[] parameters) throws MissingParameterException
     {this(parameters, false);} // Default to UTM.
 
     /**
@@ -155,7 +155,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * @param  modified <code>true</code> for MTM, <code>false</code> for UTM.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public TransverseMercatorProjection(final Parameter[] parameters, final boolean modified) throws MissingParameterException
+    protected TransverseMercatorProjection(final Parameter[] parameters, final boolean modified) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
@@ -437,17 +437,14 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof TransverseMercatorProjection) && equals((TransverseMercatorProjection) object);}
-
-    /**
-     * Compares the specified object with
-     * this map projection for equality.
-     */
-    final boolean equals(final TransverseMercatorProjection that)
     {
-        return super.equals(that) &&
-               Double.doubleToLongBits(this. x0) == Double.doubleToLongBits(that. x0) &&
-               Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
+        if (super.equals(object))
+        {
+            final TransverseMercatorProjection that = (TransverseMercatorProjection) object;
+            return Double.doubleToLongBits(this. x0) == Double.doubleToLongBits(that. x0) &&
+                   Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
+        }
+        return false;
     }
 
     /**

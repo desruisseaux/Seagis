@@ -91,7 +91,7 @@ final class StereographicProjection extends PlanarProjection
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public StereographicProjection(final Parameter[] parameters) throws MissingParameterException
+    protected StereographicProjection(final Parameter[] parameters) throws MissingParameterException
     {this(parameters, true, true);}
 
     /**
@@ -517,22 +517,19 @@ choice: switch (mode)
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof StereographicProjection) && equals((StereographicProjection) object);}
-
-    /**
-     * Compares the specified object with
-     * this map projection for equality.
-     */
-    final boolean equals(final StereographicProjection that)
     {
-        return super.equals(that) &&
-               Double.doubleToLongBits(this.     k0) == Double.doubleToLongBits(that.     k0) &&
-               Double.doubleToLongBits(this.    ak0) == Double.doubleToLongBits(that.    ak0) &&
-               Double.doubleToLongBits(this.sinphi0) == Double.doubleToLongBits(that.sinphi0) &&
-               Double.doubleToLongBits(this.cosphi0) == Double.doubleToLongBits(that.cosphi0) &&
-               Double.doubleToLongBits(this.   chi1) == Double.doubleToLongBits(that.   chi1) &&
-               Double.doubleToLongBits(this.sinChi1) == Double.doubleToLongBits(that.sinChi1) &&
-               Double.doubleToLongBits(this.cosChi1) == Double.doubleToLongBits(that.cosChi1);
+        if (super.equals(object))
+        {
+            final StereographicProjection that = (StereographicProjection) object;
+            return Double.doubleToLongBits(this.     k0) == Double.doubleToLongBits(that.     k0) &&
+                   Double.doubleToLongBits(this.    ak0) == Double.doubleToLongBits(that.    ak0) &&
+                   Double.doubleToLongBits(this.sinphi0) == Double.doubleToLongBits(that.sinphi0) &&
+                   Double.doubleToLongBits(this.cosphi0) == Double.doubleToLongBits(that.cosphi0) &&
+                   Double.doubleToLongBits(this.   chi1) == Double.doubleToLongBits(that.   chi1) &&
+                   Double.doubleToLongBits(this.sinChi1) == Double.doubleToLongBits(that.sinChi1) &&
+                   Double.doubleToLongBits(this.cosChi1) == Double.doubleToLongBits(that.cosChi1);
+        }
+        return false;
     }
 
     /**

@@ -78,16 +78,10 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
      * this coordinate system for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof HorizontalCoordinateSystem) && equals((HorizontalCoordinateSystem)object);}
-
-    /**
-     * Compares the specified object with
-     * this coordinate system for equality.
-     */
-    final boolean equals(final HorizontalCoordinateSystem that)
     {
-        if (super.equals(that))
+        if (super.equals(object))
         {
+            final HorizontalCoordinateSystem that = (HorizontalCoordinateSystem) object;
             return XClass.equals(this.datum, that.datum);
         }
         return false;

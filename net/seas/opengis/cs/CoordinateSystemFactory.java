@@ -69,6 +69,44 @@ public class CoordinateSystemFactory
     {}
 
     /**
+     * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
+     * or <var>longitude</var>/<var>latitude</var>.
+     *
+     * @param name      Name to give new object.
+     * @param unit      Angular units for created coordinate system.
+     * @param datum     Horizontal datum for created coordinate system.
+     * @param meridian  Prime Meridian for created coordinate system.
+     * @param axis0     Details of 0th ordinates.
+     * @param axis1     Details of 1st ordinates.
+     */
+    public GeographicCoordinateSystem createGeographicCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
+    {return (GeographicCoordinateSystem) pool.intern(new GeographicCoordinateSystem(name, unit, datum, meridian, axis0, axis1));}
+
+    /**
+     * Creates a projected coordinate system using a projection object.
+     *
+     * @param  name Name to give new object.
+     * @param  gcs Geographic coordinate system to base projection on.
+     * @param  projection Projection from geographic to projected coordinate system.
+     * @param  unit Linear units of returned PCS.
+     * @param  axis0 Details of 0th ordinates in returned PCS coordinates.
+     * @param  axis1 Details of 1st ordinates in returned PCS coordinates.
+     */
+    public ProjectedCoordinateSystem createProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
+    {return (ProjectedCoordinateSystem) pool.intern(new ProjectedCoordinateSystem(name, gcs, projection, unit, axis0, axis1));}
+
+    /**
+     * Creates a vertical coordinate system from a datum and linear units.
+     *
+     * @param name  Name to give new object.
+     * @param datum Datum to use for new coordinate system.
+     * @param unit  Units to use for new coordinate system.
+     * @param axis  Axis to use for new coordinate system.
+     */
+    public VerticalCoordinateSystem createVerticalCoordinateSystem(final String name, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
+    {return (VerticalCoordinateSystem) pool.intern(new VerticalCoordinateSystem(name, datum, unit, axis));}
+
+    /**
      * Creates a compound coordinate system.
      *
      * @param name Name to give new object.
@@ -79,36 +117,61 @@ public class CoordinateSystemFactory
     {return (CompoundCoordinateSystem) pool.intern(new CompoundCoordinateSystem(name, head, tail));}
 
     /**
+     * Creates a local coordinate system. The dimension of the local coordinate
+     * system is determined by the size of the axis array.  All the axes will
+     * have the same units.  If you want to make a coordinate system with mixed
+     * units, then you can make a compound coordinate system from different local
+     * coordinate systems.
+     *
+     * @param name  Name to give new object.
+     * @param datum Local datum to use in created CS.
+     * @param unit  Units to use for all axes in created CS.
+     * @param axes  Axes to use in created CS.
+     */
+    public LocalCoordinateSystem createLocalCoordinateSystem(final String name, final LocalDatum datum, final Unit unit, final AxisInfo[] axes)
+    {return (LocalCoordinateSystem) pool.intern(new LocalCoordinateSystem(name, datum, unit, axes));}
+
+    /**
      * Creates an ellipsoid from radius values.
      *
-     * @param name Name to give new object.
+     * @param name          Name to give new object.
      * @param semiMajorAxis Equatorial radius in supplied linear units.
      * @param semiMinorAxis Polar radius in supplied linear units.
-     * @param linearUnit Linear units of ellipsoid axes.
+     * @param unit          Linear units of ellipsoid axes.
      */
-    public Ellipsoid createEllipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit linearUnit)
-    {return (Ellipsoid) pool.intern(new Ellipsoid(name, semiMajorAxis, semiMinorAxis, linearUnit));}
+    public Ellipsoid createEllipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
+    {return (Ellipsoid) pool.intern(new Ellipsoid(name, semiMajorAxis, semiMinorAxis, unit));}
 
     /**
      * Creates an ellipsoid from an major radius, and inverse flattening.
      *
-     * @param name Name to give new object.
-     * @param semiMajorAxis Equatorial radius in supplied linear units.
+     * @param name              Name to give new object.
+     * @param semiMajorAxis     Equatorial radius in supplied linear units.
      * @param inverseFlattening Eccentricity of ellipsoid.
-     * @param linearUnit Linear units of major axis.
+     * @param unit              Linear units of major axis.
      */
-    public Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit linearUnit)
-    {return (Ellipsoid) pool.intern(Ellipsoid.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, linearUnit));}
+    public Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
+    {return (Ellipsoid) pool.intern(Ellipsoid.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, unit));}
 
     /**
      * Creates a prime meridian, relative to Greenwich.
      *
-     * @param name Name to give new object.
-     * @param angularUnit Angular units of longitude.
+     * @param name      Name to give new object.
+     * @param unit      Angular units of longitude.
      * @param longitude Longitude of prime meridian in supplied angular units East of Greenwich.
      */
-    public PrimeMeridian createPrimeMeridian(final String name, final Unit angularUnit, final double longitude)
-    {return (PrimeMeridian) pool.intern(new PrimeMeridian(name, angularUnit, longitude));}
+    public PrimeMeridian createPrimeMeridian(final String name, final Unit unit, final double longitude)
+    {return (PrimeMeridian) pool.intern(new PrimeMeridian(name, unit, longitude));}
+
+    /**
+     * Creates a projection.
+     *
+     * @param name           Name to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param parameters     Parameters to use for projection, in metres or degrees.
+     */
+    public Projection createProjection(final String name, final String classification, final ProjectionParameter[] parameters)
+    {return (Projection) pool.intern(new Projection(name, classification, parameters));}
 
     /**
      * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters. Since this
@@ -118,19 +181,19 @@ public class CoordinateSystemFactory
      * {@link DatumType.Horizontal#OTHER} as the horizontalDatumType,
      * or create it via WKT.
      *
-     * @param name Name to give new object.
-     * @param horizontalDatumType Type of horizontal datum to create.
+     * @param name      Name to give new object.
+     * @param type      Type of horizontal datum to create.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.
-     * @param toWGS84 Suggested approximate conversion from new datum to WGS84.
+     * @param toWGS84   Suggested approximate conversion from new datum to WGS84.
      */
-    public HorizontalDatum createHorizontalDatum(final String name, final DatumType.Horizontal horizontalDatumType, final Ellipsoid ellipsoid, final WGS84ConversionInfo toWGS84)
-    {return (HorizontalDatum) pool.intern(new HorizontalDatum(name, horizontalDatumType, ellipsoid, toWGS84));}
+    public HorizontalDatum createHorizontalDatum(final String name, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo toWGS84)
+    {return (HorizontalDatum) pool.intern(new HorizontalDatum(name, type, ellipsoid, toWGS84));}
 
     /**
      * Creates horizontal datum from an ellipsoid. The datum
      * type will be {@link DatumType.Horizontal#OTHER}.
      *
-     * @param name Name to give new object.
+     * @param name      Name to give new object.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.
      */
     public HorizontalDatum createHorizontalDatum(final String name, final Ellipsoid ellipsoid)
@@ -140,19 +203,18 @@ public class CoordinateSystemFactory
      * Creates a vertical datum from an enumerated type value.
      *
      * @param name Name to give new object.
-     * @param verticalDatumType Type of vertical datum to create.
+     * @param type Type of vertical datum to create.
      */
-    public VerticalDatum createVerticalDatum(final String name, final DatumType.Vertical verticalDatumType)
-    {return (VerticalDatum) pool.intern(new VerticalDatum(name, verticalDatumType));}
+    public VerticalDatum createVerticalDatum(final String name, final DatumType.Vertical type)
+    {return (VerticalDatum) pool.intern(new VerticalDatum(name, type));}
 
     /**
-     * Creates a vertical coordinate system from a datum and linear units.
+     * Creates a local datum.
      *
      * @param name Name to give new object.
-     * @param verticalDatum Datum to use for new coordinate system.
-     * @param verticalUnit Units to use for new coordinate system.
-     * @param axis Axis to use for new coordinate system.
+     * @param localDatumType Type of local datum to create.
+     * @throws RemoteException if a remote method call failed.
      */
-    public VerticalCoordinateSystem createVerticalCoordinateSystem(final String name, final VerticalDatum verticalDatum, final Unit verticalUnit, final AxisInfo axis)
-    {return (VerticalCoordinateSystem) pool.intern(new VerticalCoordinateSystem(name, verticalDatum, verticalUnit, axis));}
+    public LocalDatum createLocalDatum(final String name, final DatumType.Local type)
+    {return (LocalDatum) pool.intern(new LocalDatum(name, type));}
 }

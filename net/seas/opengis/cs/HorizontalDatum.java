@@ -71,6 +71,16 @@ public class HorizontalDatum extends Datum
     }
 
     /**
+     * Creates horizontal datum from an ellipsoid. The datum
+     * type will be {@link DatumType.Horizontal#OTHER}.
+     *
+     * @param name      Name to give new object.
+     * @param ellipsoid Ellipsoid to use in new horizontal datum.
+     */
+    protected HorizontalDatum(final String name, final Ellipsoid ellipsoid)
+    {this(name, DatumType.Horizontal.OTHER, ellipsoid, null);}
+
+    /**
      * Gets the type of the datum as an enumerated code.
      */
     public DatumType.Horizontal getDatumType()
@@ -98,16 +108,13 @@ public class HorizontalDatum extends Datum
      * with this datum for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof HorizontalDatum) && equals((HorizontalDatum)object);}
-
-    /**
-     * Compares the specified object
-     * with this datum for equality.
-     */
-    final boolean equals(final HorizontalDatum that)
     {
-        return super.equals(that) &&
-               XClass.equals(this.getEllipsoid(),       that.getEllipsoid()) &&
-               XClass.equals(this.getWGS84Parameters(), that.getWGS84Parameters());
+        if (super.equals(object))
+        {
+            final HorizontalDatum that = (HorizontalDatum) object;
+            return XClass.equals(this.ellipsoid,  that.ellipsoid) &&
+                   XClass.equals(this.parameters, that.parameters);
+        }
+        return false;
     }
 }

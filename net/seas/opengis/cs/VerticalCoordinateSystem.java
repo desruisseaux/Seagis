@@ -27,6 +27,7 @@ import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.opengis.pt.Envelope;
+import net.seas.opengis.ct.CoordinateTransformation;
 
 
 /**
@@ -135,17 +136,13 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * this coordinate system for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof VerticalCoordinateSystem) && equals((VerticalCoordinateSystem)object);}
-
-    /**
-     * Compares the specified object with
-     * this coordinate system for equality.
-     */
-    final boolean equals(final VerticalCoordinateSystem that)
     {
-        if (super.equals(that))
+        if (super.equals(object))
         {
-            return XClass.equals(this.datum, that.datum);
+            final VerticalCoordinateSystem that = (VerticalCoordinateSystem) object;
+            return XClass.equals(this.datum, that.datum) &&
+                   XClass.equals(this.unit , that.unit ) &&
+                   XClass.equals(this.axis , that.axis );
         }
         return false;
     }

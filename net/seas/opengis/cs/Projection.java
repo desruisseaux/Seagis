@@ -23,6 +23,8 @@
 package net.seas.opengis.cs;
 
 // Miscellaneous
+import java.util.Arrays;
+import net.seas.util.XClass;
 import net.seas.opengis.ct.MissingParameterException;
 
 
@@ -35,38 +37,63 @@ import net.seas.opengis.ct.MissingParameterException;
  *
  * @see org.opengis.cs.CS_Projection
  */
-public abstract class Projection extends Info
+public class Projection extends Info
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO: compute
+    private static final long serialVersionUID = -7116072094430367096L;
+
+    /**
+     * Classification string for projection (e.g. "Transverse_Mercator").
+     */
+    private final String classification;
+
+    /**
+     * Parameters to use for projection, in metres or degrees.
+     */
+    private final ProjectionParameter[] parameters;
 
     /**
      * Construct a new projection.
      *
-     * @param name The projection name.
+     * @param name           Name to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    protected Projection(final String name)
-    {super(name);}
+    protected Projection(final String name, final String classification, final ProjectionParameter[] parameters)
+    {
+        super(name);
+        ensureNonNull("classification", classification);
+        ensureNonNull("parameters",     parameters);
+        this.classification = classification;
+        this.parameters     = (ProjectionParameter[]) parameters.clone();
+        for (int i=0; i<this.parameters.length; i++)
+        {
+            ensureNonNull("parameters", this.parameters, i);
+            this.parameters[i] = this.parameters[i].clone();
+        }
+    }
 
     /**
      * Gets the projection classification name (e.g. "Transverse_Mercator").
      */
-    public abstract String getClassName();
+    public String getClassName()
+    {return classification;}
 
     /**
      * Gets number of parameters of the projection.
      */
-    public abstract int getNumParameters();
+    public int getNumParameters()
+    {return parameters.length;}
 
     /**
      * Gets an indexed parameter of the projection.
      *
      * @param index Zero based index of parameter to fetch.
      */
-    public abstract ProjectionParameter getParameter(final int index);
-
+    public ProjectionParameter getParameter(final int index)
+    {return parameters[index].clone();}
 
     /**
      * Convenience method for fetching a parameter value.
@@ -112,10 +139,9 @@ public abstract class Projection extends Info
     private double getValue(String name, final double defaultValue, final boolean required) throws MissingParameterException
     {
         name = name.trim();
-        final int count=getNumParameters();
-        for (int i=0; i<count; i++)
+        for (int i=0; i<parameters.length; i++)
         {
-            ProjectionParameter parameter = getParameter(i);
+            ProjectionParameter parameter = parameters[i];
             if (name.equalsIgnoreCase(parameter.name))
             {
                 return parameter.value;
@@ -124,4 +150,36 @@ public abstract class Projection extends Info
         if (!required) return defaultValue;
         throw new MissingParameterException(null, name);
     }
+
+    /**
+     * Returns a hash value for this projection.
+     */
+    public int hashCode()
+    {
+        int code = classification.hashCode();
+        for (int i=0; i<parameters.length; i++)
+            code ^= parameters[i].hashCode();
+        return code;
+    }
+
+    /**
+     * Compares the specified object with
+     * this projection for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (super.equals(object))
+        {
+            final Projection that = (Projection) object;
+            return XClass.equals(this.classification, that.classification) &&
+                   Arrays.equals(this.parameters,     that.parameters);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a string representation of this projection.
+     */
+    public String toString()
+    {return XClass.getShortClassName(this)+'['+getClassName()+']';}
 }

@@ -26,6 +26,7 @@ package net.seas.opengis.cs;
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
+import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import net.seas.util.XClass;
@@ -168,16 +169,10 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      * this coordinate system for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof CompoundCoordinateSystem) && equals((CompoundCoordinateSystem)object);}
-
-    /**
-     * Compares the specified object with
-     * this coordinate system for equality.
-     */
-    final boolean equals(final CompoundCoordinateSystem that)
     {
-        if (super.equals(that))
+        if (super.equals(object))
         {
+            final CompoundCoordinateSystem that = (CompoundCoordinateSystem) object;
             return XClass.equals(this.head, that.head) &&
                    XClass.equals(this.tail, that.tail);
         }
