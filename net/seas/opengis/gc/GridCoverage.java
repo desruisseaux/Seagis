@@ -56,6 +56,7 @@ import javax.media.jai.ImageMIPMap;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.GraphicsJAI;
 import javax.media.jai.util.Range;
+import javax.media.jai.util.CaselessStringKey;
 
 // Geometry
 import java.awt.Point;
@@ -72,6 +73,7 @@ import net.seas.util.XAffineTransform;
 import net.seas.util.XDimension2D;
 
 // Collections
+import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -160,7 +162,8 @@ public class GridCoverage extends Coverage
     private static final WeakHashSet<Object> pool=new WeakHashSet<Object>();
 
     /**
-     * Sources grid coverage.
+     * Sources grid coverage. This list must be immutable, since
+     * it is not cloned when returned by {@link #getSources}.
      */
     private final List<GridCoverage> sources;
 
@@ -255,7 +258,7 @@ public class GridCoverage extends Coverage
     public GridCoverage(final String         name, final RenderedImage  image,
                         final CoordinateSystem cs, final Envelope    envelope) throws MismatchedDimensionException
     {
-        this(name, image, cs, envelope, null, false);
+        this(name, image, cs, envelope, null, false, null, null);
     }
 
     /**
@@ -274,10 +277,19 @@ public class GridCoverage extends Coverage
      *                     on the time axis.
      * @param categories   Category lists which allows for the transformation from pixel
      *                     values to real world geophysics value. This array's length must
-     *                     matches the number of bands in <code>image</code>.
+     *                     matches the number of bands in <code>image</code>. This argument
+     *                     may be <code>null</code> if there is no categories for the image.
      * @param isGeophysics <code>true</code> if pixel's values are already geophysics values, or
      *                     <code>false</code> if transformation described in <code>categories</code>
-     *                     must be applied first.
+     *                     must be applied first. This argument is ignored if <code>categories</code>
+     *                     is <code>null</code>.
+     * @param sources      The sources for this grid coverage, or <code>null</code> if none.
+     * @param properties The set of properties for this coverage, or <code>null</code>
+     *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
+     *        OpenGIS calls "Metadata".  There is no <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead. Keys may
+     *        be {@link String} or {@link CaselessStringKey} objects,  while values may
+     *        be any {@link Object}.
      *
      * @throws MismatchedDimensionException If the envelope's dimension
      *         is not the same than the coordinate system's dimension.
@@ -286,9 +298,10 @@ public class GridCoverage extends Coverage
      */
     public GridCoverage(final String         name,       final RenderedImage  image,
                         final CoordinateSystem cs,       final Envelope    envelope,
-                        final CategoryList[] categories, final boolean isGeophysics) throws MismatchedDimensionException
+                        final CategoryList[] categories, final boolean isGeophysics,
+                        final GridCoverage[] sources,    final Map properties) throws MismatchedDimensionException
     {
-        this(name, PlanarImage.wrapRenderedImage(image), cs, envelope.clone(), null, categories, isGeophysics);
+        this(name, PlanarImage.wrapRenderedImage(image), cs, envelope.clone(), null, categories, isGeophysics, sources, properties);
     }
 
     // TODO: In a future version, we will provide a constructor expecting
@@ -303,13 +316,19 @@ public class GridCoverage extends Coverage
      */
     private GridCoverage(final String         name,       final PlanarImage image,
                          final CoordinateSystem cs,       Envelope envelope, MathTransform transform,
-                         final CategoryList[] categories, final boolean isGeophysics) throws MismatchedDimensionException
+                         final CategoryList[] categories, final boolean isGeophysics,
+                         final GridCoverage[] sources,    final Map properties) throws MismatchedDimensionException
     {
-        super(name, cs, image);
-        sources = EMPTY_LIST;
-        /*
+        super(name, cs, image, properties);
+        if (sources!=null)
+        {
+            this.sources = Collections.unmodifiableList(Arrays.asList((GridCoverage[])sources.clone()));
+        }
+        else this.sources = EMPTY_LIST;
+
+        /*------------------------------------------
          * Check category lists. The number of lists
-         * must match the number of image's bands.
+         * must matches the number of image's bands.
          */
         final int numBands = image.getSampleModel().getNumBands();
         if (categories!=null && numBands!=categories.length)
@@ -317,9 +336,11 @@ public class GridCoverage extends Coverage
             throw new IllegalArgumentException(Resources.format(Clé.NUMBER_OF_BANDS_MISMATCH¤2, new Integer(numBands), new Integer(categories.length)));
         }
 
-        /*
-         * Checks the envelope. The envelope must be non-empty and
-         * its dimension must match the coordinate system's dimension.
+        /*------------------------------------------------------------
+         * Checks the envelope. The envelope must be non-empty and its
+         * dimension must matches the coordinate system's dimension. A
+         * pool of shared envelopes will be used in order to recycle
+         * existing envelopes.
          */
         if (envelope==null) try
         {
@@ -350,9 +371,11 @@ public class GridCoverage extends Coverage
         }
         this.envelope = (Envelope)pool.intern(envelope);
 
-        /*
+        /*------------------------------------------------------------------------
          * Compute the grid geometry. If the specified math transform is non-null,
          * it will be used as is. Otherwise, it will be computed from the envelope.
+         * A pool of shared grid geometries will be used in order to recycle existing
+         * objects.
          */
         final GridRange    gridRange = (GridRange)pool.intern(new GridRange(image, dimension));
         final GridGeometry gridGeometry;
@@ -365,7 +388,7 @@ public class GridCoverage extends Coverage
         else gridGeometry = new GridGeometry(gridRange, transform);
         this.gridGeometry = (GridGeometry)pool.intern(gridGeometry);
 
-        /*
+        /*-------------------------------------------------------------------------------
          * Construct sample dimensions and the image.  We keep two versions of the image.
          * One is suitable for rendering (it uses integer pixels, which are rendered much
          * faster than float value),  and the other is suitable for computation (since it
@@ -428,7 +451,9 @@ public class GridCoverage extends Coverage
     }
 
     /**
-     * Returns <code>true</code> if grid data can be edited.
+     * Returns <code>true</code> if grid data can be edited. The default
+     * implementation returns <code>true</code>  if  {@link #data} is an
+     * instance of {@link WritableRenderedImage}.
      */
     public boolean isDataEditable()
     {return (data instanceof WritableRenderedImage);}
@@ -647,9 +672,13 @@ public class GridCoverage extends Coverage
                 }
                 if (band<numNumericBands)
                 {
-                    buffer.append("\u00A0(");
-                    buffer.append(sampleDimensions.get(band).getCategoryList().format(numericRaster.getSampleDouble(x, y, band), null));
-                    buffer.append(')');
+                    final CategoryList categories = sampleDimensions.get(band).getCategoryList();
+                    if (categories!=null)
+                    {
+                        buffer.append("\u00A0(");
+                        buffer.append(categories.format(numericRaster.getSampleDouble(x, y, band), null));
+                        buffer.append(')');
+                    }
                 }
             }
             buffer.append(']');

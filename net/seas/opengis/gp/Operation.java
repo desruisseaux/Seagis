@@ -26,13 +26,22 @@ package net.seas.opengis.gp;
 import net.seas.opengis.gc.GridCoverage;
 import net.seas.opengis.gc.ParameterInfo;
 
-// Miscellaneous
-import java.util.Locale;
+// Parameters
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
+
+// Input/output
+import java.io.Writer;
+import java.io.IOException;
+import net.seas.io.TableWriter;
+
+// Miscellaneous
+import java.util.Locale;
 import net.seas.util.XClass;
+import net.seas.resources.Clé;
+import net.seas.resources.Resources;
 
 
 /**
@@ -169,5 +178,50 @@ public abstract class Operation
      * is usually provided for debugging purposes.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+name+": "+descriptor.getNumParameters()+']';}
+    {return XClass.getShortClassName(this)+'['+getName()+": "+descriptor.getNumParameters()+']';}
+
+    /**
+     * Print a description of this operation to the specified stream.
+     * The description include operation name and a list of parameters.
+     *
+     * @param  out The destination stream.
+     * @throws IOException if an error occured will writing to the stream.
+     */
+    public void print(final Writer out) throws IOException
+    {
+        final String lineSeparator = System.getProperty("line.separator", "\n");
+        out.write(' ');
+        out.write(getName());
+        out.write(lineSeparator);
+
+        final Resources resources = Resources.getResources(null);
+        final TableWriter table = new TableWriter(out, " \u2502 ");
+        table.writeHorizontalSeparator();
+        table.write(resources.getString(Clé.NAME));
+        table.nextColumn();
+        table.write(resources.getString(Clé.CLASS));
+        table.nextColumn();
+        table.write(resources.getString(Clé.DEFAULT_VALUE));
+        table.nextLine();
+        table.writeHorizontalSeparator();
+
+        final String[]    names = descriptor.getParamNames();
+        final Class []  classes = descriptor.getParamClasses();
+        final Object[] defaults = descriptor.getParamDefaults();
+        final int numParameters = descriptor.getNumParameters();
+        for (int i=0; i<numParameters; i++)
+        {
+            table.write(names[i]);
+            table.nextColumn();
+            table.write(XClass.getShortName(classes[i]));
+            table.nextColumn();
+            if (defaults[i] != ParameterListDescriptor.NO_PARAMETER_DEFAULT)
+            {
+                table.write(String.valueOf(defaults[i]));
+            }
+            table.nextLine();
+        }
+        table.writeHorizontalSeparator();
+        table.flush();
+    }
 }

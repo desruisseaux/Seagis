@@ -46,6 +46,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Miscellaneous
+import java.util.List;
+import java.util.ArrayList;
 import java.lang.reflect.Array;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
@@ -214,6 +216,83 @@ final class Interpolator extends GridCoverage
     }
 
     /**
+     * Returns interpolations. The first array's element is the
+     * interpolation for this grid coverage. Other elements (if
+     * any) are fallbacks.
+     */
+    public Interpolation[] getInterpolations()
+    {
+        final List<Interpolation> interp = new ArrayList<Interpolation>();
+        Interpolator scan = this;
+        do
+        {
+            interp.add(interpolation);
+            if (scan.fallback==scan)
+            {
+                interp.add(Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+                break;
+            }
+            scan = scan.fallback;
+        }
+        while (scan!=null);
+        return interp.toArray(new Interpolation[interp.size()]);
+    }
+
+    /**
+     * Return an sequence of integer values for a given two-dimensional point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public int[] evaluate(final Point2D coord, int[] dest) throws PointOutsideCoverageException
+    {
+        if (fallback!=null)
+        {
+            dest = super.evaluate(coord, dest);
+        }
+        final Point2D pixel = toGrid.transform(coord, null);
+        final double x = pixel.getX();
+        final double y = pixel.getY();
+        if (!Double.isNaN(x) && !Double.isNaN(y))
+        {
+            if (interpolate(x, y, dest, 0, data.getNumBands()))
+            {
+                return dest;
+            }
+        }
+        throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
+     * Return an sequence of float values for a given two-dimensional point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public float[] evaluate(final Point2D coord, float[] dest) throws PointOutsideCoverageException
+    {
+        if (fallback!=null)
+        {
+            dest = super.evaluate(coord, dest);
+        }
+        final Point2D pixel = toGrid.transform(coord, null);
+        final double x = pixel.getX();
+        final double y = pixel.getY();
+        if (!Double.isNaN(x) && !Double.isNaN(y))
+        {
+            if (interpolate(x, y, dest, 0, data.getNumBands()))
+            {
+                return dest;
+            }
+        }
+        throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
      * Return an sequence of double values for a given two-dimensional point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
@@ -238,6 +317,145 @@ final class Interpolator extends GridCoverage
             }
         }
         throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
+     * Interpolate at the specified position. If <code>fallback!=null</code>,
+     * then <code>dest</code> <strong>must</strong> have been initialized with
+     * <code>super.evaluate(...)</code> prior to invoking this method.
+     *
+     * @param x      The x position in pixel's coordinates.
+     * @param y      The y position in pixel's coordinates.
+     * @param dest   The destination array, or null.
+     * @param band   The first band's index to interpolate.
+     * @param bandUp The last band's index+1 to interpolate.
+     * @return <code>false</code> if point is outside grid coverage.
+     */
+    private boolean interpolate(final double x, final double y, int[] dest, int band, final int bandUp)
+    {
+        final double x0 = Math.floor(x);
+        final double y0 = Math.floor(y);
+        int ix = (int)x0;
+        int iy = (int)y0;
+        if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
+        {
+            if (fallback==null) return false;
+            if (fallback==this) return true; // super.evaluate(...) succeed prior to this method call.
+            return fallback.interpolate(x, y, dest, band, bandUp);
+        }
+        /*
+         * Create buffers, if not already created.
+         */
+        int[][] samples = ints;
+        if (samples==null)
+        {
+            final int rowCount = interpolation.getHeight();
+            final int colCount = interpolation.getWidth();
+            ints = samples = new int[rowCount][];
+            for (int i=0; i<rowCount; i++)
+                samples[i] = new int[colCount];
+        }
+        /*
+         * Interpolate all bands. TODO: Would it be more efficient to use RectIter?
+         * We are going to read very few points, and we don't know how costly is
+         * RectIterFactory.create(...).
+         */
+        ix += right;
+        iy += bottom;
+        if (dest==null)
+            dest=new int[bandUp];
+        for (; band<bandUp; band++)
+        {
+            for (int sy=iy,j=samples.length; --j>=0; --sy)
+            {
+                final int[] row=samples[j];
+                final int ty=data.YToTileY(sy);
+                for (int sx=ix,i=row.length; --i>=0; --sx)
+                {
+                    final int tx=data.XToTileX(sx);
+                    row[i] = data.getTile(tx, ty).getSample(sx, sy, band);
+                }
+            }
+            final int xfrac = (int) ((x-x0) * (1 << interpolation.getSubsampleBitsH()));
+            final int yfrac = (int) ((y-y0) * (1 << interpolation.getSubsampleBitsV()));
+            dest[band] = interpolation.interpolate(samples, xfrac, yfrac);
+        }
+        return true;
+    }
+
+    /**
+     * Interpolate at the specified position. If <code>fallback!=null</code>,
+     * then <code>dest</code> <strong>must</strong> have been initialized with
+     * <code>super.evaluate(...)</code> prior to invoking this method.
+     *
+     * @param x      The x position in pixel's coordinates.
+     * @param y      The y position in pixel's coordinates.
+     * @param dest   The destination array, or null.
+     * @param band   The first band's index to interpolate.
+     * @param bandUp The last band's index+1 to interpolate.
+     * @return <code>false</code> if point is outside grid coverage.
+     */
+    private boolean interpolate(final double x, final double y, float[] dest, int band, final int bandUp)
+    {
+        final double x0 = Math.floor(x);
+        final double y0 = Math.floor(y);
+        int ix = (int)x0;
+        int iy = (int)y0;
+        if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
+        {
+            if (fallback==null) return false;
+            if (fallback==this) return true; // super.evaluate(...) succeed prior to this method call.
+            return fallback.interpolate(x, y, dest, band, bandUp);
+        }
+        /*
+         * Create buffers, if not already created.
+         */
+        float[][] samples = floats;
+        if (samples==null)
+        {
+            final int rowCount = interpolation.getHeight();
+            final int colCount = interpolation.getWidth();
+            floats = samples = new float[rowCount][];
+            for (int i=0; i<rowCount; i++)
+                samples[i] = new float[colCount];
+        }
+        /*
+         * Interpolate all bands. TODO: Would it be more efficient to use RectIter?
+         * We are going to read very few points, and we don't know how costly is
+         * RectIterFactory.create(...).
+         */
+        ix += right;
+        iy += bottom;
+        if (dest==null)
+            dest=new float[bandUp];
+        for (; band<bandUp; band++)
+        {
+            for (int sy=iy,j=samples.length; --j>=0; --sy)
+            {
+                final float[] row=samples[j];
+                final int ty=data.YToTileY(sy);
+                for (int sx=ix,i=row.length; --i>=0; --sx)
+                {
+                    final int tx=data.XToTileX(sx);
+                    row[i] = data.getTile(tx, ty).getSampleFloat(sx, sy, band);
+                }
+            }
+            final float value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
+            if (Float.isNaN(value))
+            {
+                if (fallback==this) continue; // 'dest' was set by 'super.evaluate(...)'.
+                if (fallback!=null)
+                {
+                    fallback.interpolate(x, y, dest, band, band+1);
+                    continue;
+                }
+                // If no fallback was specified, then 'dest' is not required to
+                // have been initialized. It may contains random value.  Set it
+                // to the NaN value...
+            }
+            dest[band] = value;
+        }
+        return true;
     }
 
     /**

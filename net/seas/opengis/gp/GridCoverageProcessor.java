@@ -22,17 +22,31 @@
  */
 package net.seas.opengis.gp;
 
-// Dependencies
+// OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.gc.GridCoverage;
 
-// Miscellaneous
+// Collections
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Collections;
-import java.util.NoSuchElementException;
+
+// Parameters
+import javax.media.jai.Interpolation;
 import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListImpl;
+import javax.media.jai.ParameterListDescriptor;
 import javax.media.jai.util.CaselessStringKey;
+
+// Input/output
+import java.io.Writer;
+import java.io.IOException;
+import net.seas.util.Console;
+
+// Miscellaneous
+import java.util.Arrays;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 
 
@@ -92,6 +106,7 @@ public class GridCoverageProcessor
         {
             DEFAULT = new GridCoverageProcessor();
             DEFAULT.addOperation(new Interpolator.Operation());
+            DEFAULT.addOperation(new GradientMagnitude());
         }
         return DEFAULT;
     }
@@ -124,11 +139,36 @@ public class GridCoverageProcessor
     {return setView;}
 
     /**
-     * Returns the operation for the specified name,
-     * or <code>null</code> if there is none.
+     * Returns the operation for the specified name.
+     *
+     * @param  operationName Name of the operation.
+     * @return The operation for the given name.
+     * @throws OperationNotFoundException if there is no operation for the specified name.
      */
-    public Operation getOperation(final String name)
-    {return operations.get(new CaselessStringKey(name));}
+    public Operation getOperation(final String name) throws OperationNotFoundException
+    {
+        final Operation operation = operations.get(new CaselessStringKey(name));
+        if (operation!=null)
+        {
+            return operation;
+        }
+        else throw new OperationNotFoundException(Resources.format(Clé.OPERATION_NOT_FOUND¤1, name));
+    }
+
+    /**
+     * Apply a process operation to a grid coverage with default parameters. This
+     * is a convenience method for {@link #doOperation(Operation,ParameterList)}.
+     *
+     * @param  operationName Name of the operation to be applied to the grid coverage..
+     * @param  source The source grid coverage.
+     * @return The result as a grid coverage.
+     * @throws OperationNotFoundException if there is no operation named <code>operationName</code>.
+     */
+    public GridCoverage doOperation(final String operationName, final GridCoverage source) throws OperationNotFoundException
+    {
+        final Operation operation = getOperation(operationName);
+        return doOperation(operation, operation.getParameterList().setParameter("Source", source));
+    }
 
     /**
      * Apply a process operation to a grid coverage.
@@ -139,20 +179,17 @@ public class GridCoverageProcessor
      *         getOperation}(name).{@link Operation#getParameterList getParameterList}()</code>
      *         and to modify the returned list.
      * @return The result as a grid coverage.
-     * @throws NoSuchElementException if there is no operation named <code>operationName</code>.
+     * @throws OperationNotFoundException if there is no operation named <code>operationName</code>.
      */
-    public GridCoverage doOperation(final String operationName, final ParameterList parameters) throws NoSuchElementException
-    {
-        final Operation operation = getOperation(operationName);
-        if (operation!=null)
-        {
-            return doOperation(operation, parameters);
-        }
-        else throw new NoSuchElementException(Resources.format(Clé.OPERATION_NOT_BOUND¤1, operationName));
-    }
+    public GridCoverage doOperation(final String operationName, final ParameterList parameters) throws OperationNotFoundException
+    {return doOperation(getOperation(operationName), parameters);}
 
     /**
-     * Apply a process operation to a grid coverage.
+     * Apply a process operation to a grid coverage. Default implementation
+     * checks if source coverages use an interpolation,    and then invokes
+     * {@link Operation#doOperation}. If all source coverages used the same
+     * interpolation, the same interpolation is applied to the resulting
+     * coverage (except if the resulting coverage has already an interpolation).
      *
      * @param  operation The operation to be applied to the grid coverage..
      * @param  parameters List of name value pairs for the parameters required for
@@ -162,5 +199,81 @@ public class GridCoverageProcessor
      * @return The result as a grid coverage.
      */
     public GridCoverage doOperation(final Operation operation, final ParameterList parameters)
-    {return operation.doOperation(parameters);}
+    {
+        Interpolation[] interpolations = null;
+        final String[] paramNames = parameters.getParameterListDescriptor().getParamNames();
+        for (int i=0; i<paramNames.length; i++)
+        {
+            final Object param = parameters.getObjectParameter(paramNames[i]);
+            if (param instanceof Interpolator)
+            {
+                // If all sources use the same interpolation,  preserve the
+                // interpolation for the resulting coverage. Otherwise, use
+                // the default interpolation (nearest neighbor).
+                final Interpolation[] interp = ((Interpolator) param).getInterpolations();
+                if (interpolations!=null)
+                {
+                    if (!Arrays.equals(interpolations, interp))
+                    {
+                        // Set to no interpolation.
+                        interpolations = new Interpolation[0];
+                    }
+                }
+                else interpolations = interp;
+            }
+        }
+        GridCoverage coverage = operation.doOperation(parameters);
+        if (interpolations!=null && coverage!=null && !(coverage instanceof Interpolator))
+        {
+            coverage = Interpolator.create(coverage, interpolations);
+        }
+        return coverage;
+    }
+
+
+    /**
+     * Print a description of all operations to the specified stream.
+     * The description include operation names and lists of parameters.
+     *
+     * @param  out The destination stream.
+     * @throws IOException if an error occured will writing to the stream.
+     */
+    public void print(final Writer out) throws IOException
+    {
+        final String lineSeparator = System.getProperty("line.separator", "\n");
+        for (final Iterator<Operation> it=getOperations().iterator(); it.hasNext();)
+        {
+            out.write(lineSeparator);
+            it.next().print(out);
+        }
+    }
+
+    /**
+     * Dumps to standard output tables for all operations registered in the
+     * default grid coverage processor. This method can be invoked from the
+     * command line. Optional command line arguments are:
+     *
+     * <blockquote><pre>
+     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
+     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+     *  <b>-output</b> <i>filename</i> A destination filename (default to standard output).
+     * </pre></blockquote>
+     *
+     * Bad output may result on Windows systems if the encoding is not properly
+     * set. Use <code>chcp</code> on Windows NT to know the current code page.
+     */
+    public static void main(final String[] args)
+    {
+        try
+        {
+            final Console console = new Console(args);
+            getDefault().print(console.out);
+            console.out.close();
+        }
+        catch (IOException exception)
+        {
+            // Should not happen.
+            exception.printStackTrace();
+        }
+    }
 }

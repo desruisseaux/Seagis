@@ -233,11 +233,11 @@ public class TableWriter extends FilterWriter
      * Create a new table writer with the specified
      * amount of spaces as column separator.
      *
-     * @param spaces Amount of white spaces to use as column separator.
      * @param out Writer object to provide the underlying stream,
      *        or <code>null</code> if there is no underlying stream.
      *        If <code>out</code> is null, then the {@link #toString}
      *        method is the only way to get the table's content.
+     * @param spaces Amount of white spaces to use as column separator.
      */
     public TableWriter(final Writer out, final int spaces)
     {this(out, XString.spaces(spaces));}
@@ -245,13 +245,13 @@ public class TableWriter extends FilterWriter
     /**
      * Create a new table writer with the specified column separator.
      *
-     * @param separator String to write between columns. Drawing box characters
-     *        are treated specially. For example <code>" \\u2500 "</code> can be
-     *        used for a single-line box.
      * @param out Writer object to provide the underlying stream,
      *        or <code>null</code> if there is no underlying stream.
      *        If <code>out</code> is null, then the {@link #toString}
      *        method is the only way to get the table's content.
+     * @param separator String to write between columns. Drawing box characters
+     *        are treated specially. For example <code>" \\u2502 "</code> can be
+     *        used for a single-line box.
      */
     public TableWriter(final Writer out, final String separator)
     {

@@ -23,7 +23,9 @@
 package net.seas.opengis.gp;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.gc.GridCoverage;
+import net.seas.opengis.cs.CoordinateSystem;
 
 // Java Advanced Imaging
 import javax.media.jai.JAI;
@@ -36,6 +38,10 @@ import javax.media.jai.ParameterListDescriptorImpl;
 
 // Image (Java2D)
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
+
+// Miscellaneous
+import net.seas.resources.Resources;
 
 
 /**
@@ -43,9 +49,9 @@ import java.awt.image.RenderedImage;
  * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>.
  * This class help to leverage the rich set of JAI operators in an OpenGIS framework.
  * <code>OperationJAI</code> inherits operation name and argument types  from {@link
- * OperationDescriptor}.    Source arguments will be set to the {@link GridCoverage}
- * type with name "Source" if there is only one source, or "Source1", "Source2", etc.
- * if there is many sources.
+ * OperationDescriptor}, except source argument type which is set to {@link GridCoverage}.
+ * If there is only one source argument, il will be renamed "Source" for better compliance
+ * to OpenGIS usage.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -61,6 +67,16 @@ public class OperationJAI extends Operation
      * The operation descriptor.
      */
     protected final OperationDescriptor descriptor;
+
+    /**
+     * Construct an OpenGIS operation from a JAI operation. This convenience constructor
+     * fetch the {@link OperationDescriptor} from the specified operation name using the
+     * default {@link JAI} instance.
+     *
+     * @param operationName JAI operation name (e.g. "GradientMagnitude").
+     */
+    public OperationJAI(final String operationName)
+    {this((OperationDescriptor) JAI.getDefaultInstance().getOperationRegistry().getDescriptor(RENDERED_MODE, operationName));}
 
     /**
      * Construct an OpenGIS operation from a JAI operation.
@@ -101,21 +117,23 @@ public class OperationJAI extends Operation
             ensureValid(sourceClasses[i]);
 
         final ParameterListDescriptor parent = descriptor.getParameterListDescriptor(RENDERED_MODE);
-        final Class [] parentClasses  = parent.getParamClasses();
+        final String[] sourceNames    = getSourceNames(descriptor);
         final String[] parentNames    = parent.getParamNames();
+        final Class [] parentClasses  = parent.getParamClasses();
         final Object[] parentDefaults = parent.getParamDefaults();
 
         final int    numSources = descriptor.getNumSources();
-        final Class [] classes  = new Class [parentClasses .length+numSources];
-        final String[] names    = new String[parentNames   .length+numSources];
+        final String[]    names = new String[parentNames   .length+numSources];
+        final Class []  classes = new Class [parentClasses .length+numSources];
         final Object[] defaults = new Object[parentDefaults.length+numSources];
         final Range[]    ranges = new Range [defaults.length];
         for (int i=0; i<ranges.length; i++)
         {
             if (i<numSources)
             {
-                names  [i] = (numSources==1) ? "Source" : "Source"+(i+1);
-                classes[i] = GridCoverage.class;
+                names   [i] = sourceNames[i];
+                classes [i] = GridCoverage.class;
+                defaults[i] = ParameterListDescriptor.NO_PARAMETER_DEFAULT;
             }
             else
             {
@@ -129,7 +147,36 @@ public class OperationJAI extends Operation
     }
 
     /**
-     * Apply a process operation to a grid coverage.
+     * Returns source name for the specified descriptor. If the descriptor has
+     * only one source,  it will be renamed "Source" for better conformance to
+     * to OpenGIS usage.
+     */
+    private static String[] getSourceNames(final OperationDescriptor descriptor)
+    {
+        if (descriptor.getNumSources()==1)
+        {
+            return new String[] {"Source"};
+        }
+        else return descriptor.getSourceNames();
+    }
+
+    /**
+     * Check if array <code>names</code> contains the element <code>name</code>.
+     * Search is done in case-insensitive manner. This method is efficient enough
+     * if <code>names</code> is very short (less than 10 entries).
+     */
+    private static boolean contains(final String[] names, final String name)
+    {
+        for (int i=0; i<names.length; i++)
+            if (name.equalsIgnoreCase(names[i]))
+                return true;
+        return false;
+    }
+
+    /**
+     * Apply a process operation to a grid coverage. The default
+     * implementation separate sources from parameters and invokes
+     * {@link #doOperation(GridCoverage[], ParameterBlockJAI)}.
      *
      * @param  parameters List of name value pairs for the
      *         parameters required for the operation.
@@ -138,20 +185,71 @@ public class OperationJAI extends Operation
     protected GridCoverage doOperation(final ParameterList parameters)
     {
         final ParameterBlockJAI block = new ParameterBlockJAI(descriptor, RENDERED_MODE);
-        final String[] names = parameters.getParameterListDescriptor().getParamNames();
-        for (int i=0; i<names.length; i++)
+        final String[]     paramNames = parameters.getParameterListDescriptor().getParamNames();
+        final String[]    sourceNames = getSourceNames(descriptor);
+        final GridCoverage[]  sources = new GridCoverage[descriptor.getNumSources()];
+        for (int srcCount=0,i=0; i<paramNames.length; i++)
         {
-            final Object param = parameters.getObjectParameter(names[i]);
-            if (param instanceof GridCoverage)
+            final String name  = paramNames[i];
+            final Object param = parameters.getObjectParameter(name);
+            if (contains(sourceNames, name))
             {
-                block.addSource(((GridCoverage)param).getRenderedImage(true));
+                GridCoverage source = (GridCoverage) param;
+                block.addSource(source.getRenderedImage(true));
+                sources[srcCount++] = source;
             }
             else
             {
-                block.setParameter(names[i], param);
+                block.setParameter(name, param);
             }
         }
-        final RenderedImage image = JAI.create(descriptor.getName(), block);
-        return null; // TODO
+        return doOperation(sources, block);
     }
+
+    /**
+     * Apply a JAI operation to a grid coverage. The default implementation checks if
+     * all sources use the same coordinate system and have the same envelope, and then
+     * apply the operation using the following line:
+     *
+     * <blockquote><pre>
+     * {@link JAI#create(String,ParameterBlock) JAI.create}({@link #descriptor}.getName(),&nbsp;parameters)
+     * </pre></blockquote>
+     *
+     * @param  sources The source coverages.
+     * @param  parameters List of name value pairs for the
+     *         parameters required for the operation.
+     * @return The result as a grid coverage.
+     */
+    protected GridCoverage doOperation(final GridCoverage[] sources, final ParameterBlockJAI parameters)
+    {
+        final GridCoverage source = sources[0];
+        final CoordinateSystem cs = source.getCoordinateSystem();
+        final Envelope   envelope = source.getEnvelope();
+        for (int i=1; i<sources.length; i++)
+        {
+            if (!cs.equivalents(sources[i].getCoordinateSystem()))
+                throw new IllegalArgumentException(Resources.format(Clé.INCOMPATIBLE_COORDINATE_SYSTEM));
+            if (!envelope.equals(sources[i].getEnvelope()))
+                throw new IllegalArgumentException(Resources.format(Clé.ENVELOPE_MISMATCH));
+        }
+        RenderedImage data = JAI.create(descriptor.getName(), parameters);
+        data = doExtraOperation(source, data);
+        return new GridCoverage(source.getName(null), // The grid coverage name
+                                data,                 // The underlying data
+                                cs,                   // The coordinate system.
+                                envelope,             // The coverage envelope.
+                                null,                 // The category lists
+                                true,                 // Data are geophysics values.
+                                sources,              // The source grid coverages.
+                                null);                // Properties
+    }
+
+    /**
+     * Apply extra operation on the resulting image. This method is invoked
+     * after the JAI operation has been applied, in order to give to subclasses
+     * a chance to perform some additional work. The default implementation just
+     * returns <code>image</code> without processing.
+     */
+    RenderedImage doExtraOperation(final GridCoverage source, final RenderedImage image)
+    {return image;}
 }

@@ -54,11 +54,13 @@ import net.seas.util.XAffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Collections
+import java.util.Map;
 import java.util.List;
 import java.util.Vector;
 import java.util.Comparator;
 import javax.media.jai.PropertySource;
 import javax.media.jai.PropertySourceImpl;
+import javax.media.jai.util.CaselessStringKey;
 
 // Miscellaneous
 import java.util.Arrays;
@@ -121,7 +123,8 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     {
         // NOTE: This constructor keep a strong reference to the
         //       source coverage (through 'PropertySourceImpl').
-        //       Is it really wanted?
+        //       In many cases, it is not a problem since GridCoverage
+        //       will retains a strong reference to its source anyway.
         super(null, coverage);
         this.name             = coverage.name;
         this.coordinateSystem = coverage.coordinateSystem;
@@ -137,14 +140,19 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
      *        are typically 2D (x,y) while other coverages may be 3D (x,y,z)
      *        or 4D (x,y,z,t). The array's length will determine the number
      *        of dimensions of the coverage.
+     * @param source The source for this coverage, or <code>null</code> if none.
+     *        Source may be (but is not limited to) {@link javax.media.jai.PlanarImage}
+     *        or an other <code>Coverage</code> object.
      * @param properties The set of properties for this coverage, or <code>null</code>
      *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
-     *        OpenGIS calls "Metadata". There is non <code>getMetadataValue(...)</code>
-     *        method in this implementation. Use {@link #getProperty} instead.
+     *        OpenGIS calls "Metadata".  There is no <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead. Keys may
+     *        be {@link String} or {@link CaselessStringKey} objects,  while values may
+     *        be any {@link Object}.
      */
-    public Coverage(final String name, final String[] dimensionNames, final PropertySource properties)
+    protected Coverage(final String name, final String[] dimensionNames, final PropertySource source, final Map properties)
     {
-        super(null, properties);
+        super(properties, source);
         this.name             = name;
         this.coordinateSystem = null;
         this.dimensionNames   = (String[]) dimensionNames.clone();
@@ -159,14 +167,19 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
      * @param coordinateSystem The coordinate system. This specifies
      *        the coordinate system used when accessing a coverage or
      *        grid coverage with the “evaluate” methods.
+     * @param source The source for this coverage, or <code>null</code> if none.
+     *        Source may be (but is not limited to) {@link javax.media.jai.PlanarImage}
+     *        or an other <code>Coverage</code> object.
      * @param properties The set of properties for this coverage, or <code>null</code>
      *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
-     *        OpenGIS calls "Metadata". There is non <code>getMetadataValue(...)</code>
-     *        method in this implementation. Use {@link #getProperty} instead.
+     *        OpenGIS calls "Metadata".  There is no <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead. Keys may
+     *        be {@link String} or {@link CaselessStringKey} objects,  while values may
+     *        be any {@link Object}.
      */
-    public Coverage(final String name, final CoordinateSystem coordinateSystem, final PropertySource properties)
+    protected Coverage(final String name, final CoordinateSystem coordinateSystem, final PropertySource source, final Map properties)
     {
-        super(null, properties);
+        super(properties, source);
         this.name             = name;
         this.coordinateSystem = coordinateSystem;
         this.dimensionNames   = new String[coordinateSystem.getDimension()];
