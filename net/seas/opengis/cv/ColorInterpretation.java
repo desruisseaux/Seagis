@@ -127,9 +127,9 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
      * This method is provided for compatibility with
-     * {@link org.opengis.cv.CV_ColorInterpretation}.</FONT>
+     * {@link org.opengis.cv.CV_ColorInterpretation}.
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -207,9 +207,8 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
-     * If no name is available for the specified locale, a default one will be
-     * used.</FONT>
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
+     * If no name is available for the specified locale, a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.

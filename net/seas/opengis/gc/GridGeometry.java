@@ -136,12 +136,12 @@ public class GridGeometry implements Serializable
 
     /**
      * <FONT COLOR="#FF6633">Returns the affine transform which allows for the transformations
-     * from grid coordinates to real world earth coordinates. The returned affine follows
+     * from grid coordinates to real world earth coordinates.</FONT> The returned affine follows
      * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>
      * convention, i.e. its convert the pixel's <em>upper left corner</em> coordinates
      * (<var>i</var>,<var>j</var>) into real world earth coordinates (<var>x</var>,<var>y</var>).
      * In contrast, {link #gridToCoordinateSystem()} contert the pixel's <em>center</em>
-     * coordinates into real world earth coordinates.</FONT>
+     * coordinates into real world earth coordinates.
      */
     public AffineTransform gridToCoordinateJAI()
     {return (transformJAI!=null) ? (AffineTransform) transformJAI.clone() : null;}
