@@ -144,7 +144,7 @@ public class MathTransformFactory
                 new      StereographicProjection.Provider(),      // Automatic
                 new      StereographicProjection.Provider(true),  // Polar
                 new      StereographicProjection.Provider(false), // Oblique
-                new TransverseMercatorProjection.Provider(true),  // Modified Transverse Mercator
+                new TransverseMercatorProjection.Provider(),      // Transverse Mercator
                 new          GeocentricTransform.Provider(false), // Geographic to Geocentric
                 new          GeocentricTransform.Provider(true)   // Geocentric to Geographic
             });

@@ -209,9 +209,9 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
             final double sinLat = Math.sin(P);
             final double rn     = a / Math.sqrt(1 - e2 * (sinLat*sinLat));
 
-            dstPts[dstOff++] = (rn + h) * cosLat * Math.cos(L); // X
-            dstPts[dstOff++] = (rn + h) * cosLat * Math.sin(L); // Y
-            dstPts[dstOff++] = (rn * (1-e2) + h) * sinLat;      // Z
+            dstPts[dstOff++] = (rn + h) * cosLat * Math.cos(L); // X: Toward prime meridian
+            dstPts[dstOff++] = (rn + h) * cosLat * Math.sin(L); // Y: Toward East
+            dstPts[dstOff++] = (rn * (1-e2) + h) * sinLat;      // Z: Toward North
             srcOff += step;
             dstOff += step;
         }
@@ -244,9 +244,9 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
             final double sinLat = Math.sin(P);
             final double rn     = a / Math.sqrt(1 - e2 * (sinLat*sinLat));
 
-            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.cos(L)); // X
-            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.sin(L)); // Y
-            dstPts[dstOff++] = (float) ((rn * (1-e2) + h) * sinLat);      // Z
+            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.cos(L)); // X: Toward prime meridian
+            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.sin(L)); // Y: Toward East
+            dstPts[dstOff++] = (float) ((rn * (1-e2) + h) * sinLat);      // Z: Toward North
             srcOff += step;
             dstOff += step;
         }
@@ -276,9 +276,9 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
         }
         while (--numPts >= 0)
         {
-            final double x = srcPts[srcOff++];
-            final double y = srcPts[srcOff++];
-            final double z = srcPts[srcOff++];
+            final double x = srcPts[srcOff++]; // Toward prime meridian
+            final double y = srcPts[srcOff++]; // Toward East
+            final double z = srcPts[srcOff++]; // Toward North
 
             // Note: The Java version of 'atan2' work correctly for x==0.
             //       No need for special handling like in the C version.
@@ -352,9 +352,9 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
         }
         while (--numPts >= 0)
         {
-            final double x = srcPts[srcOff++];
-            final double y = srcPts[srcOff++];
-            final double z = srcPts[srcOff++];
+            final double x = srcPts[srcOff++]; // Toward prime meridian
+            final double y = srcPts[srcOff++]; // Toward East
+            final double z = srcPts[srcOff++]; // Toward North
 
             // Note: The Java version of 'atan2' work correctly for x==0.
             //       No need for special handling like in the C version.

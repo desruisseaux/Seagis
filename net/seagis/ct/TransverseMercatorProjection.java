@@ -409,24 +409,42 @@ final class TransverseMercatorProjection extends CylindricalProjection
     static final class Provider extends MapProjection.Provider
     {
         /**
+         * Constant for Universal Transverse Mercator projection (UTM).
+         */
+        public static final int UTM = 1;
+
+        /**
+         * Constant for Modified Transverse Mercator projection (MTM).
+         */
+        public static final int MTM = 2;
+
+        /**
+         * Construct a new registration.
+         */
+        public Provider()
+        {this(0);}
+
+        /**
          * Construct a new registration.
          *
-         * @param modified <code>true</code> for defaulting to Modified Mercator
-         *        Projection (MTM), or <code>false</code> for defaulting to
-         *        Universal Mercator Projection (UTM).
+         * @param type The transform type, {@link UTM} or {@link MTM}.
          */
-        public Provider(final boolean modified)
+        public Provider(final int type)
         {
             super("Transverse_Mercator", ResourceKeys.TRANSVERSE_MERCATOR_PROJECTION);
-            if (modified)
+            switch (type)
             {
-                put("false_easting", 304800.0, null);
-                put("scale_factor",  0.9999,   POSITIVE_RANGE);
-            }
-            else
-            {
-                put("false_easting", 500000.0, null);
-                put("scale_factor",  0.9996,   POSITIVE_RANGE);
+                case UTM:
+                {
+                    put("false_easting", 500000.0, null);
+                    put("scale_factor",  0.9996,   POSITIVE_RANGE);
+                }
+                case MTM:
+                {
+                    put("false_easting", 304800.0, null);
+                    put("scale_factor",  0.9999,   POSITIVE_RANGE);
+                    break;
+                }
             }
         }
 

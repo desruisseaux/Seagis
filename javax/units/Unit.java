@@ -73,10 +73,20 @@ import javax.units.resources.Units;
 public abstract class Unit implements Serializable
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 8745958719541785628L;
+
+    /**
      * Banque des objets qui ont été précédemment créés et
      * enregistrés par un appel à la méthode {@link #intern}.
      */
     private static final WeakHashSet pool=Prefix.pool; // Must be first!
+
+    /**
+     * Convenience constant for dimensionless unit.
+     */
+    public static final Unit DIMENSIONLESS = DerivedUnit.DIMENSIONLESS;
 
     /**
      * Convenience constant for base unit of angle.
