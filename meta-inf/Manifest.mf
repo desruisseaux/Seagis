@@ -1,0 +1,48 @@
+
+Name: net/seas/opengis/cs/
+Specification-Title: OpenGIS® Coordinate Transformation Services
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
+
+Name: net/seas/opengis/ct/
+Specification-Title: OpenGIS® Coordinate Transformation Services
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
+
+Name: net/seas/opengis/pt/
+Specification-Title: OpenGIS® Coordinate Transformation Services
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
+
+Name: net/seas/opengis/cv/
+Specification-Title: OpenGIS® Grid Coverages
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
+
+Name: net/seas/opengis/gc/
+Specification-Title: OpenGIS® Grid Coverages
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
+
+Name: net/seas/opengis/gp/
+Specification-Title: OpenGIS® Grid Coverages
+Specification-Version: 1.0
+Specification-Vendor: OpenGIS Consortium, Inc.
+Implementation-Title: Surveillance de l'Environnement Assistée par Satellites
+Implementation-Version: 0.2
+Implementation-Vendor: Institut de Recherche pour le Développement
