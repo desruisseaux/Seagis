@@ -270,7 +270,7 @@ public class MapPanel extends ZoomPane
         CoordinateTransformation transformation = commonestTransform;
         if (transformation==null || !transformation.getSourceCS().equivalents(source))
         {
-            transformation = Contour.createFromCoordinateSystems(source, coordinateSystem, sourceClassName, sourceMethodName);
+            transformation = Contour.getCoordinateTransformation(source, coordinateSystem, sourceClassName, sourceMethodName);
         }
         return (MathTransform2D) transformation.getMathTransform();
     }
@@ -318,7 +318,7 @@ public class MapPanel extends ZoomPane
                     sourceCS = cs[n];
                 }
             }
-            commonestTransform = Contour.createFromCoordinateSystems(sourceCS, coordinateSystem, sourceClassName, sourceMethodName);
+            commonestTransform = Contour.getCoordinateTransformation(sourceCS, coordinateSystem, sourceClassName, sourceMethodName);
         }
         return commonestTransform;
     }

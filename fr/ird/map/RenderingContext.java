@@ -201,7 +201,7 @@ public final class RenderingContext
         final CoordinateSystem source=layer.getCoordinateSystem();
         if (!transformation.getSourceCS().equivalents(source))
         {
-            transformation = Contour.createFromCoordinateSystems(source, transformation.getTargetCS(), "RenderingContext", "getMathTransform2D");
+            transformation = Contour.getCoordinateTransformation(source, transformation.getTargetCS(), "RenderingContext", "getMathTransform2D");
         }
         return (MathTransform2D) transformation.getMathTransform();
     }
@@ -325,7 +325,7 @@ public final class RenderingContext
                 CoordinateTransformation transformation = this.transformation;
                 if (!transformation.getSourceCS().equivalents(sourceCS))
                 {
-                    transformation = Contour.createFromCoordinateSystems(sourceCS, targetCS, "RenderingContext", "clip");
+                    transformation = Contour.getCoordinateTransformation(sourceCS, targetCS, "RenderingContext", "clip");
                 }
                 clip = temporary = CTSUtilities.transform((MathTransform2D)transformation.getMathTransform(), clip, temporary);
             }

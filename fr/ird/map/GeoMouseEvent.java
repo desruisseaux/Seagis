@@ -172,8 +172,13 @@ public final class GeoMouseEvent extends MouseEvent
             if (!system.equivalents(inverseTransform.getTargetCS()))
             {
                 dest=getVisualCoordinate(dest);
-                if (dest==null) return null;
-                return ((MathTransform2D)Contour.TRANSFORMS.createFromCoordinateSystems(mapPanel.getCoordinateSystem(), system).getMathTransform()).transform(dest, dest);
+                if (dest==null)
+                {
+                    return null;
+                }
+                final CoordinateTransformation tr;
+                tr = Contour.getCoordinateTransformation(mapPanel.getCoordinateSystem(), system);
+                return ((MathTransform2D) tr.getMathTransform()).transform(dest, dest);
             }
             /*
              * Si le système de coordonnées est bien celui que l'on attendait
@@ -243,6 +248,6 @@ public final class GeoMouseEvent extends MouseEvent
             // This method is actually invoked by MouseCoordinateFormat only.
             mapPanel.handleException("MouseCoordinateFormat", "format", exception);
         }
-        return Contour.createFromCoordinateSystems(sourceCS, targetCS, "MouseCoordinateFormat", "format");
+        return Contour.getCoordinateTransformation(sourceCS, targetCS, "MouseCoordinateFormat", "format");
     }
 }

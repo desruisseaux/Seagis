@@ -232,7 +232,7 @@ public class Polygon extends Contour
      * Référence molle vers un tableau <code>float[]</code>
      * de coordonnées (<var>x</var>,<var>y</var>).
      */
-    private static final class Cache extends SoftReference
+    private static final class Cache extends SoftReference<float[]>
     {
         /**
          * Nombre d'objets {@link PathIterator} qui utilisent le tableau de points de la cache
@@ -461,7 +461,7 @@ public class Polygon extends Contour
             {
                 return coordinateTransform;
             }
-            return TRANSFORMS.createFromCoordinateSystems(coordinateTransform.getSourceCS(), coordinateSystem);
+            return getCoordinateTransformation(coordinateTransform.getSourceCS(), coordinateSystem);
         }
         return null;
     }
@@ -1142,7 +1142,7 @@ public class Polygon extends Contour
         float[] array=null;
         if (cache!=null)
         {
-            array = (float[]) cache.get();
+            array = cache.get();
             if (array!=null)
             {
                 if (transform.equals(cache.transform))

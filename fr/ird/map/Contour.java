@@ -54,6 +54,7 @@ import java.util.logging.LogRecord;
 // Miscellaneous
 import java.util.Locale;
 import java.io.Serializable;
+import java.awt.RenderingHints;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -82,11 +83,6 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     private static final long serialVersionUID = 7579026572945453650L;
 
     /**
-     * Objet à utiliser pour fabriquer des transformations.
-     */
-    static final CoordinateTransformationFactory TRANSFORMS = CoordinateTransformationFactory.getDefault();
-
-    /**
      * The logger for map operations.
      */
     static final Logger LOGGER = Logger.getLogger("fr.ird.map");
@@ -94,6 +90,11 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {
         fr.ird.util.InterlineFormatter.init(LOGGER);
     }
+
+    /**
+     * A set of rendering hints.
+     */
+    private static RenderingHints hints = new RenderingHints(null);
 
     /**
      * Nom de ce contour.   Il s'agit en général d'un nom géographique, par exemple
@@ -286,6 +287,16 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {return this;}
 
     /**
+     * Set the rendering hints. TODO: this method may move elsewhere
+     * in a future version.
+     */
+    public static void setRenderingHints(final RenderingHints newHints)
+    {
+        hints.clear();
+        hints.putAll(newHints);
+    }
+
+    /**
      * Return a string representation of this contour for debugging purpose.
      * The returned string will look like
      * "<code>Polygon["Île Quelconque", 44°30'N-51°59'N  70°59'W-54°59'W (56 pts)]</code>".
@@ -380,7 +391,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {
         if (coordinateSystem!=null) try
         {
-            return TRANSFORMS.createFromCoordinateSystems(coordinateSystem, coordinateSystem);
+            return getCoordinateTransformation(coordinateSystem, coordinateSystem);
         }
         catch (CannotCreateTransformException exception)
         {
@@ -393,17 +404,40 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     /**
      * Construct a transform from two coordinate systems.
      */
-    static CoordinateTransformation createFromCoordinateSystems(final CoordinateSystem sourceCS,
+    static CoordinateTransformation getCoordinateTransformation(final CoordinateSystem sourceCS,
+                                                                final CoordinateSystem targetCS)
+        throws CannotCreateTransformException
+    {
+        // TODO: RenderingHints should be declared in Geotools core
+        Object property = hints.get(org.geotools.gp.GridCoverageProcessor.COORDINATE_TRANSFORMATION_FACTORY);
+        final CoordinateTransformationFactory factory;
+        if (property instanceof CoordinateTransformationFactory)
+        {
+            factory = (CoordinateTransformationFactory) property;
+        }
+        else
+        {
+            factory = CoordinateTransformationFactory.getDefault();
+        }
+        return factory.createFromCoordinateSystems(sourceCS, targetCS);
+    }
+
+    /**
+     * Construct a transform from two coordinate systems and
+     * log a message to the logger.
+     */
+    static CoordinateTransformation getCoordinateTransformation(final CoordinateSystem sourceCS,
                                                                 final CoordinateSystem targetCS,
                                                                 final String sourceClassName,
-                                                                final String sourceMethodName) throws CannotCreateTransformException
+                                                                final String sourceMethodName)
+        throws CannotCreateTransformException
     {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER,
                                  ResourceKeys.INITIALIZING_TRANSFORMATION_$2, toString(sourceCS), toString(targetCS));
         record.setSourceClassName (sourceClassName);
         record.setSourceMethodName(sourceMethodName);
         LOGGER.log(record);
-        return TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
+        return getCoordinateTransformation(sourceCS, targetCS);
     }
 
     /**

@@ -114,7 +114,7 @@ public abstract class IsolineFactory
      * set to all isolone values available but values may still <code>null</code>
      * as long as the isoline has not been really loaded.
      */
-    private Map<Float,Reference> isolines;
+    private Map<Float,Reference<Isoline>> isolines;
 
     /**
      * Construct an <code>IsolineFactory</code>.
@@ -470,7 +470,7 @@ public abstract class IsolineFactory
          * the isolines too early.
          */
         final Isoline[] all = readAll();
-        isolines = new HashMap<Float,Reference>(all.length + all.length/2);
+        isolines = new HashMap<Float,Reference<Isoline>>(all.length + all.length/2);
         final Resources resources = Resources.getResources(null);
         for (int i=0; i<all.length; i++)
         {
@@ -517,7 +517,7 @@ public abstract class IsolineFactory
     {
         final DataInputStream in = new DataInputStream(input);
         int count = in.readInt();
-        isolines = new HashMap<Float,Reference>(count + count/2);
+        isolines = new HashMap<Float,Reference<Isoline>>(count + count/2);
         while (--count >= 0)
         {
             isolines.put(new Float(in.readFloat()), null);
@@ -576,7 +576,7 @@ public abstract class IsolineFactory
     private void add(final Isoline isoline)
     {
         final Float key = new Float(isoline.value);
-        final Reference oldRef = isolines.put(key, new SoftReference(isoline));
+        final Reference oldRef = isolines.put(key, new SoftReference<Isoline>(isoline));
         if (oldRef!=null && oldRef.get()!=null)
         {
             // Should not occurs.

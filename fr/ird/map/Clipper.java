@@ -133,7 +133,7 @@ final class Clipper
         if (coordinateSystem!=null && nativeCS!=null && !coordinateSystem.equivalents(nativeCS)) try
         {
             CTSUtilities.transform((MathTransform2D)
-                Contour.createFromCoordinateSystems(coordinateSystem, nativeCS, "Clipper", "setCoordinateSystem").getMathTransform(),
+                Contour.getCoordinateTransformation(coordinateSystem, nativeCS, "Clipper", "setCoordinateSystem").getMathTransform(),
                 logicalClip, clip);
             xmin = (float) clip.getMinX();
             xmax = (float) clip.getMaxX();
