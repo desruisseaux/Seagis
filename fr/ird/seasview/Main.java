@@ -347,6 +347,14 @@ public final class Main {
             /////////////////////////////////////////////
             if (true) {
                 final Action action = new Action(desktop, ResourceKeys.FISHERIES_ENVIRONMENT, true);
+                action.setMnemonicKey(KeyEvent.VK_P);
+                action.addTo(menu);
+            }
+            ////////////////////////////////////////////////////////////
+            ///  Analyses - Extractions de la table d'environnements ///
+            ////////////////////////////////////////////////////////////
+            if (true) {
+                final Action action = new Action(desktop, ResourceKeys.EXTRACT_ENVIRONMENT, true);
                 action.setMnemonicKey(KeyEvent.VK_E);
                 action.addTo(menu);
             }

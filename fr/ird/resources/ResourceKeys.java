@@ -73,6 +73,7 @@ public interface ResourceKeys
     public static final int EXIT                                     =   106;
     public static final int EXPORT                                   =   107;
     public static final int EXPORTING_$1                             =   108;
+    public static final int EXTRACT_ENVIRONMENT                      =   247;
     public static final int FAO_CODE                                 =   109;
     public static final int FILE                                     =   110;
     public static final int FILE_ALREADY_EXIST_$1                    =   111;

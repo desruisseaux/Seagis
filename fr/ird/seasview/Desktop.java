@@ -26,11 +26,13 @@
 package fr.ird.seasview;
 
 // Base de données
+import java.sql.SQLException;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
+import fr.ird.sql.fishery.EnvironmentTable;
 import fr.ird.sql.fishery.fill.EnvironmentTableFiller;
 import fr.ird.sql.fishery.fill.EnvironmentControlPanel;
-import java.sql.SQLException;
+import fr.ird.sql.fishery.fill.ExtractorControlPanel;
 
 // Interface utilisateur
 import java.awt.Color;
@@ -43,11 +45,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
-import fr.ird.awt.CoordinateChooserDB;
-import fr.ird.awt.TimeZoneChooser;
-import fr.ird.awt.About;
 
 // Viewers
+import fr.ird.awt.About;
+import fr.ird.awt.TimeZoneChooser;
+import fr.ird.awt.CoordinateChooserDB;
 import fr.ird.seasview.catalog.CatalogFrame;
 import fr.ird.seasview.navigator.NavigatorFrame;
 
@@ -610,13 +612,29 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             ///  Analyses - Environnements des pêches ///
             /////////////////////////////////////////////
             case ResourceKeys.FISHERIES_ENVIRONMENT: {
-                task = new Task(resources.getString(ResourceKeys.IMAGES_CATALOG)) {
+                task = new Task(resources.getString(ResourceKeys.FISHERIES_ENVIRONMENT)) {
                     protected void run() throws SQLException {
                         final DataBase database = getDataBase();
                         final EnvironmentControlPanel panel = new EnvironmentControlPanel(
                               new EnvironmentTableFiller(database.getImageDataBase(),
                                                          database.getFisheryDataBase()));
                         panel.showDialog(Desktop.this);
+                    }
+                };
+                break;
+            }
+
+            ////////////////////////////////////////////////////////////
+            ///  Analyses - Extractions de la table d'environnements ///
+            ////////////////////////////////////////////////////////////
+            case ResourceKeys.EXTRACT_ENVIRONMENT: {
+                task = new Task(resources.getString(ResourceKeys.EXTRACT_ENVIRONMENT)) {
+                    protected void run() throws SQLException {
+                        final DataBase database = getDataBase();
+                        final EnvironmentTable table = database.getFisheryDataBase().getEnvironmentTable();
+                        final ExtractorControlPanel panel = new ExtractorControlPanel(table);
+                        panel.showAndStart(Desktop.this);
+                        table.close();
                     }
                 };
                 break;

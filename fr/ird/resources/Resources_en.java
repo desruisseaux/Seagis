@@ -29,8 +29,7 @@ package fr.ird.resources;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Resources_en extends Resources
-{
+public class Resources_en extends Resources {
     /**
      * The resource file, using UTF-8 encoding.
      */
@@ -39,6 +38,7 @@ public class Resources_en extends Resources
     /**
      * Construct resources for English.
      */
-    public Resources_en()
-    {super(FILEPATH);}
+    public Resources_en() {
+        super(FILEPATH);
+    }
 }
