@@ -299,7 +299,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
             if (true) {
                 graphics.setTransform(context.getAffineTransform(context.textCS, context.deviceCS));
                 graphics.setStroke(new BasicStroke(0));
-                graphics.setColor(Color.black);
+                graphics.setColor(Color.BLACK);
                 for (int i=0; i<animals.length; i++) {
                     // TODO: il sera peut-être plus efficace d'ajouter une méthode dans 'Population'
                     //       qui retourne la totalité des animaux avec leurs observations.
@@ -505,7 +505,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
                     EnvironmentLayer.failed("PopulationLayer", "paint", exception);
                     return;
                 }
-                icon.setColor(Color.red);
+                icon.setColor(Color.RED);
                 icons.put(species, icon);
             }
             graphics.setColor(icon.getColor());

@@ -422,7 +422,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
      * @throws SQLException si la connexion à la base de données a échouée.
      */
-    private void setParameter(final String parameter) throws SQLException {
+    final void setParameter(final String parameter) throws SQLException {
         if (parameter == null) {
             setParameter((ParameterEntry) null);
             return;

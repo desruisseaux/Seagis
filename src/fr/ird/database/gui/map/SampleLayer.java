@@ -127,7 +127,7 @@ public class SampleLayer extends RenderedMarks {
     /**
      * Couleur des coups nuls.
      */
-    private Color nullColor = Color.BLACK;
+    private Color nullColor = Color.WHITE.darker();
 
     /**
      * Colors to use for each sample in the {@link #samples} list.
@@ -340,7 +340,7 @@ public class SampleLayer extends RenderedMarks {
                     icon = species.getIcon();
                 } catch (RemoteException exception) {
                     Utilities.unexpectedException("fr.ird.animat", "Species", "getIcon", exception);
-                    icon = new fr.ird.animat.server.Species("(erreur)", Color.BLACK).getIcon();
+                    icon = new fr.ird.animat.server.Species("(erreur)", nullColor).getIcon();
                 }
                 icons.put(species, icon);
             }
@@ -624,7 +624,7 @@ public class SampleLayer extends RenderedMarks {
                             }
                         }
                     }
-                    graphics.setColor(Color.black);
+                    graphics.setColor(Color.BLACK);
                     graphics.draw(markShape);
                     break;
                 }

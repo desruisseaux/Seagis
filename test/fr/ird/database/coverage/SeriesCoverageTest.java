@@ -97,7 +97,7 @@ public class SeriesCoverageTest extends TestCase {
      * Teste quelques valeurs de chlorophylle.
      */
     public void testCHL() throws Exception {
-        final CoverageTable table = database.getCoverageTable("Chlorophylle-a (Monde)");
+        final CoverageTable table = database.getCoverageTable("CHL (Monde)");
         coverage = new SeriesCoverage3D(table);
         coverage.setInterpolationAllowed(false);
         assertEquals(0.0851138f, evaluate(66.6100,  -3.2100, "24/12/1997"), 0.00001f);

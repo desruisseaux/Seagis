@@ -129,8 +129,8 @@ public final class CoverageExportChooser extends JPanel {
     public CoverageExportChooser(final File directory) {
         super(new GridBagLayout());
         count.setOpaque(true);
-        count.setBackground(Color.black);
-        count.setForeground(Color.yellow);
+        count.setBackground(Color.BLACK);
+        count.setForeground(Color.YELLOW);
         count.setHorizontalAlignment(SwingConstants.CENTER);
         ///
         /// Configure le paneau servant à choisir un répertoire.
