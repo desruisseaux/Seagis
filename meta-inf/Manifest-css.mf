@@ -5,7 +5,7 @@ Specification-Title: OpenGIS® Coordinate Transformation Services
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Coordinate Transformation Services
-Implementation-Version: 0.4.1
+Implementation-Version: 0.5
 Implementation-Vendor: SEAGIS OpenSource project
 
 Name: net/seagis/cs/
@@ -13,7 +13,7 @@ Specification-Title: OpenGIS® Coordinate Transformation Services
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Coordinate Transformation Services
-Implementation-Version: 0.4.1
+Implementation-Version: 0.5
 Implementation-Vendor: SEAGIS OpenSource project
 
 Name: net/seagis/ct/
@@ -21,5 +21,5 @@ Specification-Title: OpenGIS® Coordinate Transformation Services
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Coordinate Transformation Services
-Implementation-Version: 0.4.1
+Implementation-Version: 0.5
 Implementation-Vendor: SEAGIS OpenSource project

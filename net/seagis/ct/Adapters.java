@@ -35,6 +35,7 @@ import org.opengis.ct.CT_TransformType;
 import org.opengis.ct.CT_MathTransform;
 import org.opengis.ct.CT_MathTransformFactory;
 import org.opengis.ct.CT_CoordinateTransformation;
+import org.opengis.ct.CT_CoordinateTransformationFactory;
 
 // Parameters
 import javax.media.jai.ParameterList;
@@ -138,6 +139,12 @@ public class Adapters
      */
     public CT_MathTransformFactory export(final MathTransformFactory factory)
     {return (factory!=null) ? (CT_MathTransformFactory)factory.toOpenGIS(this) : null;}
+
+    /**
+     * Returns an OpenGIS interface for a coordinate transformation factory.
+     */
+    public CT_CoordinateTransformationFactory export(final CoordinateTransformationFactory factory)
+    {return (factory!=null) ? (CT_CoordinateTransformationFactory)factory.toOpenGIS(this) : null;}
 
     /**
      * Construct an array of OpenGIS structure from a parameter list.

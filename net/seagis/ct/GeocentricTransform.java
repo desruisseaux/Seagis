@@ -63,6 +63,15 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
     private static final long serialVersionUID = -3352045463953828140L;
 
     /**
+     * Maximal error tolerance in metres during assertions. If assertions
+     * are enabled (JDK 1.4 only), then every coordinates transformed with
+     * {@link #inverseTransform} will be transformed again with {@link #transform}.
+     * If the distance between the resulting position and the original position
+     * is greater than <code>MAX_ERROR</code>, then a {@link AssertionError} is thrown.
+     */
+    private static final double MAX_ERROR = 0.01;
+
+    /**
      * Cosine of 67.5 degrees.
      */
     private static final double COS_67P5 = 0.38268343236508977;
@@ -291,6 +300,11 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
                 dstPts[dstOff++] = height;
             }
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            // If assertion are enabled, then transform the
+            // result and compare it with the input array.
+            assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             srcOff += step;
             dstOff += step;
         }
@@ -351,9 +365,28 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
                 dstPts[dstOff++] = (float) height;
             }
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            // If assertion are enabled, then transform the
+            // result and compare it with the input array.
+            assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             srcOff += step;
             dstOff += step;
         }
+    }
+
+    /**
+     * Transform the last half if the specified array and compare
+     * it with the first half. Array <code>points</code> must have
+     * a length of 6.
+     */
+    private boolean checkTransform(final double[] points)
+    {
+        transform(points, 3, points, 3, 1);
+        final double dx = points[0]-points[3];
+        final double dy = points[1]-points[4];
+        final double dz = points[2]-points[5];
+        return Math.sqrt(dx*dx + dy*dy + dz*dz) < MAX_ERROR;
     }
 
     /**

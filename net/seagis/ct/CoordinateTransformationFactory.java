@@ -31,6 +31,11 @@
  */
 package net.seagis.ct;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_CoordinateSystem;
+import org.opengis.ct.CT_CoordinateTransformation;
+import org.opengis.ct.CT_CoordinateTransformationFactory;
+
 // OpenGIS (SEAGIS) dependencies
 import net.seagis.pt.Matrix;
 import net.seagis.cs.AxisInfo;
@@ -56,6 +61,10 @@ import net.seagis.resources.OpenGIS;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
+
+// Remote Method Invocation
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 // Miscellaneous
 import javax.units.Unit;
@@ -1052,4 +1061,55 @@ public class CoordinateTransformationFactory
      */
     private static String getTemporaryName(final CoordinateSystem source)
     {return "Temporary-" + (++temporaryID);}
+
+    /**
+     * Returns an OpenGIS interface for this transform factory.
+     * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
+     */
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
+
+    /**
+     * Wrap a {@link CoordinateTransformationFactory} for use
+     * with OpenGIS. This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends RemoteObject implements CT_CoordinateTransformationFactory
+    {
+        /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
+        /**
+         * Creates a transformation between two coordinate systems.
+         *
+         * @param  sourceCS Input coordinate system.
+         * @param  targetCS Output coordinate system.
+         * @throws RemoteException if the transform can't be created,
+         *                         or if a remote method call failed.
+         */
+        public CT_CoordinateTransformation createFromCoordinateSystems(final CS_CoordinateSystem sourceCS, final CS_CoordinateSystem targetCS) throws RemoteException
+        {
+            try
+            {
+                return adapters.export(CoordinateTransformationFactory.this.createFromCoordinateSystems(adapters.CS.wrap(sourceCS), adapters.CS.wrap(targetCS)));
+            }
+            catch (CannotCreateTransformException exception)
+            {
+                throw new RemoteException(exception.getLocalizedMessage(), exception);
+            }
+        }
+    }
 }

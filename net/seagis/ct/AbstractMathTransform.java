@@ -61,15 +61,14 @@ import net.seagis.resources.css.ResourceKeys;
 
 
 /**
- * Provides default implementations for most of the methods in the
- * {@link MathTransform} interface. This provides a convenient base
- * class from which other transform classes can be easily derived.
- * In addition, <code>AbstractMathTransform</code> provides implementation
- * for the methods in the {@link MathTransform2D} interfaces, but is
- * <strong>not</strong> declared to implements {@link MathTransform2D}.
- * This is up to subclasses to add the <code>implements MathTransform2D</code>
- * declaration if the the transform is know to maps two-dimensional coordinate
- * systems.
+ * Provides a default implementations for most methods required by the
+ * {@link MathTransform} interface. <code>AbstractMathTransform</code>
+ * provides a convenient base class from which other transform classes
+ * can be easily derived. In addition, <code>AbstractMathTransform</code>
+ * implements methods required by the {@link MathTransform2D} interface,
+ * but <strong>does not</strong> implements <code>MathTransform2D</code>.
+ * Subclasses must declare <code>implements&nbsp;MathTransform2D</code>
+ * themself if they know to maps two-dimensional coordinate systems.
  *
  * @version 1.0
  * @author Martin Desruisseaux
