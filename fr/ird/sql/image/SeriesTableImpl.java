@@ -211,7 +211,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
             {
                 if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2)))
                 {
-                    throw new IllegalRecordException(SERIES, Resources.format(ResourceKeys.ERROR_DUPLICATE_SERIES_$1, name));
+                    throw new IllegalRecordException(SERIES, Resources.format(ResourceKeys.ERROR_DUPLICATED_SERIES_$1, name));
                 }
             }
         }

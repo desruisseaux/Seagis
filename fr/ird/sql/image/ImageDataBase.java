@@ -411,6 +411,15 @@ public class ImageDataBase extends DataBase
     }
 
     /**
+     * Construit et retourne un objet qui pourra être utilisé pour
+     * ajouter de nouvelles images à la base de données.
+     *
+     * @throws SQLException si la table n'a pas pu être construite.
+     */
+    public TableFiller getTableFiller() throws SQLException
+    {return new TableFillerImpl(connection, timezone);}
+
+    /**
      * Retourne le répertoire racine à partir d'où construire le
      * chemin des images. Les chemins relatifs spécifiés dans la
      * base de données seront ajoutés à ce répertoire racine.

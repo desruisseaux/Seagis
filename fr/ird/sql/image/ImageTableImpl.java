@@ -710,7 +710,7 @@ final class ImageTableImpl extends Table implements ImageTable
             {
                 final ImageEntry check = new ImageEntryImpl(this, result);
                 if (!entry.equals(check))
-                    throw new IllegalRecordException(IMAGES, Resources.format(ResourceKeys.ERROR_DUPLICATE_IMAGE_$2, entry.getName(), check.getName()));
+                    throw new IllegalRecordException(IMAGES, Resources.format(ResourceKeys.ERROR_DUPLICATED_IMAGE_$2, entry.getName(), check.getName()));
             }
         }
         result.close();

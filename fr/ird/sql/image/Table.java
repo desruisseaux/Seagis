@@ -72,7 +72,7 @@ abstract class Table implements fr.ird.sql.Table
     }
 
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String AREAS       = "Areas";
-    /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String IMAGES      = "Images_new"; // TODO
+    /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String IMAGES      = "Images";
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String FORMATS     = "Formats";
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String BANDS       = "Bands";
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String CATEGORIES  = "Categories";
