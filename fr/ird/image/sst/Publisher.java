@@ -76,74 +76,74 @@ import org.geotools.resources.Arguments;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Publisher {
+public class Publisher {
     /**
      * Nombre de pixels par degrés sur une image originale de température.
      */
-    private static final int PIXELS_BY_DEGREES = 60;
+    protected int pixelsByDegrees = 60;
 
     /**
      * Longitude du coin supérieur droit, en degrés.
      */
-    private static final int XMIN = 35;
+    protected int xMin = 35;
 
     /**
      * Latitude du coin supérieur droit, en degrés. Les
      * latitudes négatives correspondent à l'hémisphère
      * sud.
      */
-    private static final int YMAX = 5;
+    protected int yMax = 5;
 
     /**
      * Nombre de pixels à laisser entre chaque graduation secondaire.
      */
-    private static final int SUB_GRAD_INTERVAL = PIXELS_BY_DEGREES;
+    protected int subGradInterval = pixelsByDegrees;
 
     /**
      * Nombre de pixels à laisser entre chaque graduation principale.
      */
-    private static final int MAIN_GRAD_INTERVAL = 5*SUB_GRAD_INTERVAL;
+    protected int mainGradInternal = 5*subGradInterval;
 
     /**
      * Nombre de pixels à donner aux pointillés et aux espaces entre les pointillés.
      */
-    private static final float[] DASH_PATTERN = new float[] {1};
+    protected float[] dashPattern = new float[] {1};
 
     /**
      * Coordonnées en pixels de la région de la maquette dans laquelle il
      * faudra placer la carte de température. La carte sera automatiquement
      * redimmensionnée pour entrer dans cette région.
      */
-    private final Rectangle imageArea = new Rectangle(20, 385, 1040, 1040);
+    protected final Rectangle imageArea = new Rectangle(20, 385, 1040, 1040);
 
     /**
      * Coordonnées en pixels du coin inférieur gauche
      * à partir d'où écrire la date de l'image.
      */
-    private final Point dateAnchor = new Point(450, 320);
+    protected final Point dateAnchor = new Point(450, 320);
 
     /**
      * Formateur à utiliser pour décoder les dates dans les noms de fichiers.
      * Ce patron doit apparaître au début du nom du fichier (après son chemin).
      * Les caractères qui le suivent, comme l'extension, seront ignorés.
      */
-    private final DateFormat fileDateFormat;
+    protected final DateFormat fileDateFormat;
 
     /**
      * Formateur à utiliser pour réécrire la date à l'intention du client.
      * Cette date formatée sera écrite dans l'image de destination.
      */
-    private final DateFormat imageDateformat;
+    protected final DateFormat imageDateformat;
 
     /**
      * Objet à utiliser pour formatter les angles.
      */
-    private final AngleFormat angleFormat;
+    protected final AngleFormat angleFormat;
 
     /**
      * Nom du fichier de l'image servant de fond.
      */
-    private final String modelPathName;
+    protected final String modelPathName;
 
     /**
      * Construit un formatteur.
@@ -195,34 +195,34 @@ public final class Publisher {
         final Point2D.Double point = new Point2D.Double();
         graphics.setFont(new Font("SansSerif", Font.PLAIN, 12));
         final Stroke normalLine = new BasicStroke(0);
-        final Stroke dashedLine = new BasicStroke(0, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, DASH_PATTERN, 0);
+        final Stroke dashedLine = new BasicStroke(0, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, dashPattern, 0);
         final int xmin = image.getMinX();
         final int xmax = image.getWidth()+xmin;
         final int ymin = image.getMinY();
         final int ymax = image.getHeight()+ymin;
-        for (int x=xmin; x<=xmax; x+=SUB_GRAD_INTERVAL) {
-            final boolean isMainGrad = (x % MAIN_GRAD_INTERVAL)==0;
+        for (int x=xmin; x<=xmax; x+=subGradInterval) {
+            final boolean isMainGrad = (x % mainGradInternal)==0;
             point.x=x; point.y=ymin; transform.transform(point, point); line.x1=point.x; line.y1=point.y;
             point.x=x; point.y=ymax; transform.transform(point, point); line.x2=point.x; line.y2=point.y;
             graphics.setStroke(isMainGrad ? normalLine     : dashedLine);
             graphics.setColor (isMainGrad ? Color.darkGray : Color.gray);
             graphics.draw(line);
             if (isMainGrad) {
-                final double longitude = XMIN + (double)x/PIXELS_BY_DEGREES;
+                final double longitude = xMin + (double)x/pixelsByDegrees;
                 graphics.setColor(Color.BLACK);
                 graphics.drawString(angleFormat.format(new Longitude(longitude)),
                                                        (float)line.x2-12, (float)line.y2+15);
             }
         }
-        for (int y=ymin; y<=ymax; y+=SUB_GRAD_INTERVAL) {
-            final boolean isMainGrad = (y % MAIN_GRAD_INTERVAL)==0;
+        for (int y=ymin; y<=ymax; y+=subGradInterval) {
+            final boolean isMainGrad = (y % mainGradInternal)==0;
             point.x=xmin; point.y=y; transform.transform(point, point); line.x1=point.x; line.y1=point.y;
             point.x=xmax; point.y=y; transform.transform(point, point); line.x2=point.x; line.y2=point.y;
             graphics.setStroke(isMainGrad ? normalLine     : dashedLine);
             graphics.setColor (isMainGrad ? Color.darkGray : Color.gray);
             graphics.draw(line);
             if (isMainGrad) {
-                final double latitude = YMAX - (double)y/PIXELS_BY_DEGREES;
+                final double latitude = yMax - (double)y/pixelsByDegrees;
                 graphics.setColor(Color.BLACK);
                 graphics.drawString(angleFormat.format(new Latitude(latitude)),
                                                        (float)line.x2+4, (float)line.y2+4);
