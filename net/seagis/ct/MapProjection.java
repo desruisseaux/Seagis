@@ -316,7 +316,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
         }
         ptDst = transform(Math.toRadians(x), Math.toRadians(y), ptDst);
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert checkTransform(ptDst, ptSrc, true);
+        assert checkTransform(ptDst, (ptSrc!=ptDst) ? ptSrc : new Point2D.Double(x,y), true);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
         return ptDst;
     }
@@ -483,7 +483,9 @@ abstract class MapProjection extends MathTransform2D.Abstract
      */
     public final Point2D inverseTransform(final Point2D ptSrc, Point2D ptDst) throws TransformException
     {
-        ptDst = inverseTransform(ptSrc.getX(), ptDst.getX(), ptDst);
+        final double x0 = ptSrc.getX();
+        final double y0 = ptDst.getY();
+        ptDst = inverseTransform(x0, y0, ptDst);
         final double x = Math.toDegrees(ptDst.getX());
         final double y = Math.toDegrees(ptDst.getY());
         ptDst.setLocation(x,y);
@@ -496,7 +498,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
             throw new TransformException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
         }
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert checkTransform(ptDst, ptSrc, false);
+        assert checkTransform(ptDst, (ptSrc!=ptDst) ? ptSrc : new Point2D.Double(x0, y0), false);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
         return ptDst;
     }

@@ -408,6 +408,7 @@ public final class Matrix implements Cloneable, Serializable
      */
     public void transform(float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
     {
+        final int size = this.size-1; // The last ordinate will be assumed 1.
         if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
         {
             // If source overlaps destination  (taking in account the 'size' elements of
@@ -419,15 +420,16 @@ public final class Matrix implements Cloneable, Serializable
         }
         while (--numPts>=0)
         {
-            int row=0;
+            int mix=0;
             for (int j=0; j<size; j++)
             {
-                double sum=0;
+                double sum=elt[mix+size];
                 for (int i=0; i<size; i++)
                 {
-                    sum += srcPts[srcOff+i]*elt[row++];
+                    sum += srcPts[srcOff+i]*elt[mix++];
                 }
-                dstPts[dstOff++] = (float)sum;
+                dstPts[dstOff++] = (float) sum;
+                mix++;
             }
             srcOff += size;
         }
@@ -447,6 +449,7 @@ public final class Matrix implements Cloneable, Serializable
      */
     public void transform(double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
     {
+        final int size = this.size-1; // The last ordinate will be assumed 1.
         if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
         {
             // If source overlaps destination  (taking in account the 'size' elements of
@@ -458,15 +461,16 @@ public final class Matrix implements Cloneable, Serializable
         }
         while (--numPts>=0)
         {
-            int row=0;
+            int mix=0;
             for (int j=0; j<size; j++)
             {
-                double sum=0;
+                double sum=elt[mix+size];
                 for (int i=0; i<size; i++)
                 {
-                    sum += srcPts[srcOff+i]*elt[row++];
+                    sum += srcPts[srcOff+i]*elt[mix++];
                 }
                 dstPts[dstOff++] = sum;
+                mix++;
             }
             srcOff += size;
         }

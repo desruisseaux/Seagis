@@ -80,9 +80,8 @@ final class LambertConformalProjection extends ConicProjection
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        final double defaultLatitude =       parameters.getValue("latitude_of_origin", 0);
-        final double phi1= latitudeToRadians(parameters.getValue("standard_parallel1", defaultLatitude), true);
-        final double phi2= latitudeToRadians(parameters.getValue("standard_parallel2", defaultLatitude), true);
+        final double phi1= latitudeToRadians(parameters.getValue("standard_parallel1", 30), true);
+        final double phi2= latitudeToRadians(parameters.getValue("standard_parallel2", 45), true);
 
         //////////////////////////
         //  Compute constants   //
