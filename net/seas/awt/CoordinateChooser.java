@@ -90,7 +90,7 @@ import net.seas.resources.Resources;
  * coordinate system.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/widget/CoordinateChooser.png"></p>
+ * <p align="center"><img src="doc-files/CoordinateChooser.png"></p>
  * <p>&nbsp;</p>
  *
  * @version 1.0

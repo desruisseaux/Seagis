@@ -112,7 +112,7 @@ import net.seas.util.XString;
  * pour effectuer les zooms.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/widget/ZoomPane.png"></p>
+ * <p align="center"><img src="doc-files/ZoomPane.png"></p>
  * <p>&nbsp;</p>
  *
  * Les classes concrètes dérivées de <code>ZoomPane</code> doivent obligatoirement redéfinir
@@ -165,16 +165,16 @@ import net.seas.util.XString;
  * du clavier affectées aux zooms:
  *
  * <P><TABLE ALIGN=CENTER BORDER=2>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/up.png"></TD>        <TD>Défilement vers le haut</TD>   <TD><code>"Up"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/down.png"></TD>      <TD>Défilement vers le bas</TD>    <TD><code>"Down"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/left.png"></TD>      <TD>Défilement vers la gauche</TD> <TD><code>"Left"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/right.png"></TD>     <TD>Défilement vers la droite</TD> <TD><code>"Right"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/pageDown.png"></TD>  <TD>Zoom avant</TD>                <TD><code>"ZoomIn"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/pageUp.png"></TD>    <TD>Zoom arrière</TD>              <TD><code>"ZoomOut"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/end.png"></TD>       <TD>Zoom rapproché</TD>            <TD><code>"Zoom"</code></TD></TR>
- * <TR><TD><IMG SRC="{@docRoot}/doc-files/images/keyboard/home.png"></TD>      <TD>Zoom par défaut</TD>           <TD><code>"Reset"</code></TD></TR>
- * <TR><TD>Ctrl+<IMG SRC="{@docRoot}/doc-files/images/keyboard/left.png"></TD> <TD>Rotation dans le sens inverse des aiguilles d'une montre</TD><TD><code>"RotateLeft"</code></TD></TR>
- * <TR><TD>Ctrl+<IMG SRC="{@docRoot}/doc-files/images/keyboard/right.png"></TD><TD>Rotation dans le sens des aiguilles d'une montre</TD>        <TD><code>"RotateRight"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/up.png"></TD>        <TD>Défilement vers le haut</TD>   <TD><code>"Up"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/down.png"></TD>      <TD>Défilement vers le bas</TD>    <TD><code>"Down"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/left.png"></TD>      <TD>Défilement vers la gauche</TD> <TD><code>"Left"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/right.png"></TD>     <TD>Défilement vers la droite</TD> <TD><code>"Right"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/pageDown.png"></TD>  <TD>Zoom avant</TD>                <TD><code>"ZoomIn"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/pageUp.png"></TD>    <TD>Zoom arrière</TD>              <TD><code>"ZoomOut"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/end.png"></TD>       <TD>Zoom rapproché</TD>            <TD><code>"Zoom"</code></TD></TR>
+ * <TR><TD><IMG SRC="doc-files/keyboard/home.png"></TD>      <TD>Zoom par défaut</TD>           <TD><code>"Reset"</code></TD></TR>
+ * <TR><TD>Ctrl+<IMG SRC="doc-files/keyboard/left.png"></TD> <TD>Rotation dans le sens inverse des aiguilles d'une montre</TD><TD><code>"RotateLeft"</code></TD></TR>
+ * <TR><TD>Ctrl+<IMG SRC="doc-files/keyboard/right.png"></TD><TD>Rotation dans le sens des aiguilles d'une montre</TD>        <TD><code>"RotateRight"</code></TD></TR>
  * </TABLE></P>
  *
  * Dans ce tableau, la dernière colonne donne les chaînes sous lesquelles

@@ -38,7 +38,7 @@ import java.util.NoSuchElementException;
  * {@link java.awt.geom.AffineTransform}.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/geom/Arrow2D.png"></p>
+ * <p align="center"><img src="doc-files/Arrow2D.png"></p>
  * <p align="center">The <code>Arrow2D</code> shape</p>
  * <p>&nbsp;</p>
  *

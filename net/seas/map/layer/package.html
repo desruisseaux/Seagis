@@ -113,7 +113,7 @@
     translations, rotations et cisaillements. Dans notre cas particulier, nous utilisons
     cette matrice pour convertir en pixels des coordonnées exprimées en mètres.</P>
 
-    <P ALIGN="center"><IMG src="{@docRoot}/doc-files/equations/AffineTransform.png"></P>
+    <P ALIGN="center"><IMG src="doc-files/AffineTransform.png"></P>
 
     <P align=justify>La classe {@link java.awt.geom.AffineTransform} fournit un ensemble de
     méthodes permettant d'appliquer des transformations sur cette matrice sans nécessairement
@@ -122,7 +122,7 @@
     l'effet d'une rotation d'un angle quelconque. Notons au passage une identité qui
     se révèlent parfois pratique:</P>
 
-    <P ALIGN="center"><IMG src="{@docRoot}/doc-files/equations/scaleX0.png"> et <IMG src="{@docRoot}/doc-files/equations/scaleY0.png"> sont invariants sous rotations.</P>
+    <P ALIGN="center"><IMG src="doc-files/scaleX0.png"> et <IMG src="doc-files/scaleY0.png"> sont invariants sous rotations.</P>
 
     <P align=justify>En l'absence de rotation ou de cisaillement, les termes
     <var>m</var><SUB>01</SUB> et <var>m</var><SUB>10</SUB> sont nuls. Restent
@@ -130,8 +130,8 @@
     qui nous indiquent l'échelle de la carte telle qu'appliquée par la transformation
     affine. Dans cette situation simplifiée on obtient donc les relations suivantes:</P>
 
-    <P ALIGN="center"><IMG src="{@docRoot}/doc-files/equations/scaleX0.png">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>m</var><SUB>00</SUB>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<CODE>AffineTransform.getScaleX()</CODE></P>
-    <P ALIGN="center"><IMG src="{@docRoot}/doc-files/equations/scaleY0.png">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>m</var><SUB>11</SUB>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<CODE>AffineTransform.getScaleY()</CODE></P>
+    <P ALIGN="center"><IMG src="doc-files/scaleX0.png">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>m</var><SUB>00</SUB>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<CODE>AffineTransform.getScaleX()</CODE></P>
+    <P ALIGN="center"><IMG src="doc-files/scaleY0.png">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>m</var><SUB>11</SUB>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<CODE>AffineTransform.getScaleY()</CODE></P>
 
   </BODY>
 </HTML>

@@ -35,7 +35,7 @@ import net.seas.opengis.cs.Projection;
  * <a href="http://everest.hunter.cuny.edu/mp/plane.html">http://everest.hunter.cuny.edu/mp/plane.html</a>.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/map/PlanarProjection.png"></p>
+ * <p align="center"><img src="doc-files/PlanarProjection.png"></p>
  * <p align="center">Représentation d'une projection planaire<br>
  *
  * @version 1.0

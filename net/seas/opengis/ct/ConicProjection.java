@@ -42,7 +42,7 @@ import net.seas.opengis.cs.Projection;
  * <a href="http://everest.hunter.cuny.edu/mp/conic.html">http://everest.hunter.cuny.edu/mp/conic.html</a>.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/map/ConicProjection.png"></p>
+ * <p align="center"><img src="doc-files/ConicProjection.png"></p>
  * <p align="center">Représentation d'une projection conique<br>
  *
  * @version 1.0

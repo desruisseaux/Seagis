@@ -61,7 +61,7 @@ import net.seas.resources.Resources;
  * </pre></blockquote>
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/widget/TimeZoneChooser.png"></p>
+ * <p align="center"><img src="doc-files/TimeZoneChooser.png"></p>
  * <p>&nbsp;</p>
  *
  * @version 1.0

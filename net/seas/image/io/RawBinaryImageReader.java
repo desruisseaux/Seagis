@@ -647,7 +647,7 @@ public class RawBinaryImageReader extends SimpleImageReader
         /**
          * Default list of file's extensions.
          */
-        private static final String[] EXTENSIONS = new String[] {".raw",".RAW"};
+        private static final String[] EXTENSIONS = new String[] {"raw"};
 
         /**
          * The expected image size, or <code>null</code> if unknow. Setting this

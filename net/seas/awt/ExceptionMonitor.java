@@ -88,7 +88,7 @@ import net.seas.util.XClass;
  * message et éventuellement la trace d'une exception dans une composante visuelle.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/widget/ExceptionMonitor.png"></p>
+ * <p align="center"><img src="doc-files/ExceptionMonitor.png"></p>
  * <p>&nbsp;</p>
  *
  * @version 1.0

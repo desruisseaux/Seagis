@@ -38,7 +38,7 @@ import net.seas.opengis.cs.Projection;
  * <a href="http://everest.hunter.cuny.edu/mp/cylind.html">http://everest.hunter.cuny.edu/mp/cylind.html</a>.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/map/CylindricalProjection.png"></p>
+ * <p align="center"><img src="doc-files/CylindricalProjection.png"></p>
  * <p align="center">Représentation d'une projection cylindrique<br>
  *
  * @version 1.0

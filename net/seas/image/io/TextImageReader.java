@@ -352,7 +352,7 @@ public abstract class TextImageReader extends SimpleImageReader
         /**
          * Default list of file's extensions.
          */
-        private static final String[] EXTENSIONS = new String[] {".txt",".TXT",".asc",".ASC",".dat",".DAT"};
+        private static final String[] EXTENSIONS = new String[] {"txt","asc","dat"};
 
         /**
          * Encodage des caractères à lire, ou <code>null</code> pour utiliser l'encodage

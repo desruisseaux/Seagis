@@ -60,7 +60,7 @@ import net.seas.awt.ExceptionMonitor;
  * fichier de données durant laquelle on veut signaler les erreurs mais sans arrêter la lecture pour autant.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/widget/WindowProgress.png"></p>
+ * <p align="center"><img src="../doc-files/WindowProgress.png"></p>
  * <p>&nbsp;</p>
  *
  * <p>Cette classe est conçue pour fonctionner correctement même si ses méthodes sont appellées
