@@ -76,7 +76,7 @@ public final class SolarElevation extends SourcelessOpImage
      * Objet capable de calculer l'élévation du soleil en fonction d'une date et d'une 
      * position géographique. 
      */
-    final SunRelativePosition solarPosition = new SunRelativePosition();           
+    private final SunRelativePosition solarPosition;           
     
     /** Transformation du système de coordonnées de l'image au système géographique. */
     private final MathTransform transform;
@@ -112,6 +112,8 @@ public final class SolarElevation extends SourcelessOpImage
         super(layout, configuration, model, minX, minY, width, height);                
         this.transform = transform;
         this.grid      = grid;
+        this.solarPosition = new SunRelativePosition();
+        solarPosition.setTwilight(Double.NaN);
     }        
     
     /**
@@ -211,7 +213,7 @@ public final class SolarElevation extends SourcelessOpImage
             while (!iTarget.finishedLines())
             {
                 // Date d'acquisition de la ligne.
-                final Date dateAcquisition = new Date(grid.getTime(row).getTime());
+                solarPosition.setDate(grid.getTime(row));
                 
                 int col = (int)destRect.getX();            
                 iTarget.startPixels();                     
@@ -228,9 +230,7 @@ public final class SolarElevation extends SourcelessOpImage
                     {
                         throw new IllegalArgumentException(te.getMessage());
                     }                    
-                    solarPosition.compute(ordTgt[0], 
-                                          ordTgt[1], 
-                                          dateAcquisition);
+                    solarPosition.setCoordinate(ordTgt[0], ordTgt[1]);
                     iTarget.setSample(solarPosition.getElevation());                    
                     iTarget.nextPixel();                    
                     col ++;

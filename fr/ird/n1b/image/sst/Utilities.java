@@ -304,7 +304,7 @@ public final class Utilities
      * @param format      Format de l'image "png", "gif", ...
      * @apram filename    Filename du fichier de sortie.
      */
-/*    public static final void writeImage(final GridCoverage coverage, 
+    public static final void writeImage(final GridCoverage coverage, 
                                         final String format, 
                                         final String filename) throws IOException
     {
@@ -312,7 +312,7 @@ public final class Utilities
             writeFloatingImageRaw(coverage, filename);
         else
         ImageIO.write(coverage.geophysics(false).getRenderedImage(), format, new File(filename));        
-    }*/
+    }
 
     /**
      * Genere une image du gridCoverage au format floating raw.
@@ -320,7 +320,7 @@ public final class Utilities
      * @param coverage    Le gridCoverage source.
      * @apram filename    Filename du fichier de sortie.
      */
-    /*private static final void writeFloatingImageRaw(final GridCoverage coverage, 
+    private static final void writeFloatingImageRaw(final GridCoverage coverage, 
                                                     final String filename) throws IOException
     {
         final Raster raster = coverage.geophysics(true).getRenderedImage().getData();
@@ -336,7 +336,7 @@ public final class Utilities
             out.writeFloats(array, 0, array.length);                
         }    
         out.close();
-    }*/
+    }
     
     /**
      * Sérialise l'isoline <CODE>in</CODE> dans le fichier <CODE>out</CODE> en réalisant 
@@ -479,6 +479,24 @@ public final class Utilities
     }    
     
     /**
+     * Copie d'un fichier.
+     *
+     * @param src   Fichier source.
+     * @param tgt   Fichier destination.
+     */
+    public static void copySatPos(final File src, final File tgt) throws IOException
+    {
+        final java.io.LineNumberReader readar = new java.io.LineNumberReader(new fr.ird.n1b.PushbackReader(new java.io.FileReader(src)));
+        final DataOutputStream out = new DataOutputStream(new FileOutputStream(tgt));
+        
+        String line;
+        while ((line=readar.readLine())!= null)
+            out.writeBytes(line + "\n");
+        readar.close();
+        out.close();
+    }    
+
+    /**
      * Retourne un <CODE>GridCoverage</CODE> auquel a été superposé l'isoline.
      *
      * @param source      L'image source.
@@ -584,4 +602,26 @@ public final class Utilities
         System.err.println("Impossible de trouver le fichier \"" + name + "\".");
         return null;
     }    
+    
+    /**
+     *
+     */
+    public static void main(String[] args)
+    {
+       try 
+       {
+           final File directory = new File("C:/Partages/SATPOS/SATPOS nouveau format");
+           final File[] array = directory.listFiles();
+           
+           for (int i=0 ; i<array.length ; i++)
+           {
+               System.out.println(array[i]);
+                copySatPos(array[i], new File("C:/Partages/SATPOS/" + array[i].getName()));
+           }
+       }
+       catch (IOException e)
+       {
+           System.err.println(e);
+       }
+    }
 }

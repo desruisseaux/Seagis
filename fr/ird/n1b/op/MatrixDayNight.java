@@ -100,6 +100,9 @@ public final class MatrixDayNight extends PointOpImage
     /** Identifie un pixel dit de <i>nuit</i>. */ 
     public static final double NIGHT = 200;
     
+    /** Permet de caluler l'heure ou le soleil est le plus haut dans la journée. */
+    private final SunRelativePosition solarPosition;
+        
     /** 
      * Grille de localisation des pixels de l'image. Cette grille nos renseigne également
      * sur l'heure d'acquisition des pixels.
@@ -149,6 +152,9 @@ public final class MatrixDayNight extends PointOpImage
         infIncluded = rCrepuscule.isMinIncluded();
         supIncluded = rCrepuscule.isMaxIncluded();
         fCrepuscule = new TransfertFunction(inf, infIncluded, sup, supIncluded);        
+        
+        solarPosition = new SunRelativePosition();                
+        solarPosition.setTwilight(Double.NaN);
     }    
     
     /**
@@ -217,7 +223,6 @@ public final class MatrixDayNight extends PointOpImage
                             final WritableRaster dest, 
                             Rectangle destRect) 
     {                
-        final SunRelativePosition solarPosition = new SunRelativePosition();        
         final RectIter iSource = RectIterFactory.create(sources[0],destRect);
         final WritableRectIter iTarget = RectIterFactory.createWritable(dest ,destRect);        
         destRect = destRect.intersection(sources[0].getBounds());
@@ -235,7 +240,7 @@ public final class MatrixDayNight extends PointOpImage
                 final long timeAcquisition = grid.getTime(row).getTime();
                 
                 // Calcul de l'heure ou le soleil est au plus haut dans la journée.
-                solarPosition.compute(0.0, 0.0, new Date(timeAcquisition));        
+                solarPosition.setDate(new Date(timeAcquisition));        
                 final long timeOfNoon = timeAcquisition - (timeAcquisition%86400000) + 
                                         solarPosition.getNoonTime();                        
 

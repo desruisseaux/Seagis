@@ -249,6 +249,7 @@ public final class SSTSynthese
             for (int j=0 ; j<arrayCoverage.length ; j++)
                 arrayCoverage[j] = null;
             sstSynthese = null;
+            System.gc();
             tileCache.flush();            
             isFirstImage = false;            
             

@@ -82,8 +82,8 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     private static final String[] CHANNEL_DESCRIPTION = {"Channel 1  (visible)", 
                                                          "Channel 2  (visible)", 
                                                          "Channel 3a (visible)",
-                                                         "Cahnnel 3b (thermal)", 
-                                                         "Cahnnel 4  (thermal)", 
+                                                         "Channel 3b (thermal)", 
+                                                         "Channel 4  (thermal)", 
                                                          "Channel 5  (thermal)"};
                                                          
     /** Nombre de bandes contenues dans l'image. */ 

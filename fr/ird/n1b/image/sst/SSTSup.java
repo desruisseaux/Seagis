@@ -122,6 +122,9 @@ public final class SSTSup
     /** Résolution de l'image de sortie. */
     private final double RESOLUTION = Utilities.RESOLUTION; 
 
+    /** Fichier contenant le masque terre (ce fichier est un <CODE>Isoline</CODE> sérialisé). */
+    private final String ISOLINE_PATH;   
+
     /** Taille en Mo du cache JAI. */
     private final long JAI_MEMORY_CACHE;
     
@@ -223,6 +226,7 @@ public final class SSTSup
         START_TIME_SST_DAY = param.getLongParameter(ParseSST.START_TIME_SST_DAY);
         SST_ONE_DAY_LIMITED_AREA = param.getBooleanParameter(ParseSST.SST_ONE_DAY_LIMITED_AREA);
         SST_ONE_DAY_AREA         = (Rectangle2D)param.getObjectParameter(ParseSST.SST_ONE_DAY_AREA);
+        ISOLINE_PATH       = (String)param.getObjectParameter(ParseSST.ISOLINE_PATH);                
 
         // Configuration de JAI.
         final JAI jai = JAI.getDefaultInstance();
@@ -339,6 +343,32 @@ public final class SSTSup
             // SUP des GridCoverages. 
             GridCoverage sstSUP = fr.ird.n1b.op.SSTSup.get(arrayCoverage, bound, configuration);       
             
+            if (i == 0)
+            {
+                // On projète le fond de carte sur la première image trouvée.
+                final Category catSSTLandBg      = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                         Utilities.LAND_BACKGROUND),
+                               catSSTLandContour = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                         Utilities.LAND_CONTOUR);                
+                if (catSSTLandBg == null)
+                    throw new IllegalArgumentException("Category \"" + 
+                                                       Utilities.LAND_BACKGROUND + 
+                                                       "\" is not define.");
+                if (catSSTLandContour == null)
+                    throw new IllegalArgumentException("Category \"" + 
+                                                       Utilities.LAND_CONTOUR + 
+                                                       "\" is not define.");
+                final Color geoSSTLandBg      = catSSTLandBg.getColors()[0],
+                            geoSSTLandContour = catSSTLandContour.getColors()[0];
+
+                final Isoline isoline = Utilities.loadSerializedIsoline(ISOLINE_PATH);
+                if (isoline != null)
+                    sstSUP = Utilities.addLayer(sstSUP, 
+                                                isoline, 
+                                                geoSSTLandBg, 
+                                                geoSSTLandContour);     
+            }
+
             // Ecriture dans un fichier temporaire du SUP. 
             final RenderedImage image = sstSUP.geophysics(false).getRenderedImage();
             final String format = fImageInter.getName().substring(fImageInter.getName().indexOf('.') + 1);
@@ -348,7 +378,8 @@ public final class SSTSup
             for (int j=0 ; j<arrayCoverage.length ; j++)
                 arrayCoverage[j] = null;
             sstSUP = null;
-            tileCache.flush();            
+            tileCache.flush();   
+            System.gc();
             isFirstImage = false;            
             
             // Renome le fichier temporaire du SUP en fichier Intermediaire.
@@ -379,8 +410,8 @@ public final class SSTSup
             info.write("PROCESSING     \t" + ((System.currentTimeMillis() 
                                             - START_COMPUTATION)/1000.0) + " secondes.\n\n");                        
             info.close();                        
-        }
-                
+        }        
+        
         // Renomme les derniers fichiers intermédiaire en fichiers finaux.
         fImageInter.renameTo(fImage);
         fHeaderInter.renameTo(fHeader);        
