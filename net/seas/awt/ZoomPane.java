@@ -486,7 +486,7 @@ public abstract class ZoomPane extends JComponent
      */
     private final class Listeners extends MouseAdapter implements MouseWheelListener, ComponentListener, Serializable
     {
-        public void mouseWheelMoved (final MouseWheelEvent event) {ZoomPane.this.mouseWheelMoved(event);}
+        public void mouseWheelMoved (final MouseWheelEvent event) {ZoomPane.this.mouseWheelMoved (event);}
         public void mousePressed    (final MouseEvent      event) {ZoomPane.this.mayShowPopupMenu(event);}
         public void mouseReleased   (final MouseEvent      event) {ZoomPane.this.mayShowPopupMenu(event);}
         public void componentResized(final ComponentEvent  event) {ZoomPane.this.processSizeEvent(event);}
@@ -861,7 +861,10 @@ public abstract class ZoomPane extends JComponent
      * @throws IllegalArgumentException si <code>source</code> est vide.
      */
     public final void setVisibleArea(final Rectangle2D logicalBounds) throws IllegalArgumentException
-    {transform(setVisibleArea(logicalBounds, getZoomableBounds()));}
+    {
+        verbose("setVisibleArea", logicalBounds);
+        transform(setVisibleArea(logicalBounds, getZoomableBounds()));
+    }
 
     /**
      * Définit les limites de la partie visible, en coordonnées logiques. Cette
@@ -877,7 +880,6 @@ public abstract class ZoomPane extends JComponent
      */
     private AffineTransform setVisibleArea(Rectangle2D source, Rectangle2D dest) throws IllegalArgumentException
     {
-        verbose("setVisibleArea", source);
         /*
          * Vérifie la validité du rectangle <code>source</code>. Un rectangle invalide sera rejeté.
          * Toutefois, on sera plus souple pour <code>dest</code> puisque la fenêtre peut avoir été
@@ -1617,12 +1619,15 @@ public abstract class ZoomPane extends JComponent
      */
     private final void mouseWheelMoved(final MouseWheelEvent event)
     {
-        final int rotation  = event.getWheelRotation();
-        final double scale  = 1+(AMOUNT_SCALE-1)*Math.abs(rotation);
-        final Point2D point = new Point2D.Double(event.getX(), event.getY());
-        correctPointForMagnifier(point);
-        transform(UNIFORM_SCALE, (rotation<0) ? scale : 1/scale, point);
-        event.consume();
+        if (event.getScrollType()==MouseWheelEvent.WHEEL_UNIT_SCROLL)
+        {
+            final int rotation  = event.getUnitsToScroll();
+            final double scale  = 1+(AMOUNT_SCALE-1)*Math.abs(rotation);
+            final Point2D point = new Point2D.Double(event.getX(), event.getY());
+            correctPointForMagnifier(point);
+            transform(UNIFORM_SCALE, (rotation<0) ? scale : 1/scale, point);
+            event.consume();
+        }
     }
 
     /**
@@ -1866,7 +1871,8 @@ public abstract class ZoomPane extends JComponent
                             try
                             {
                                 isAdjusting=true;
-                                setVisibleArea(area);
+                                transform(setVisibleArea(area, getZoomableBounds()));
+                                // Invoke private version in order to avoid logging.
                             }
                             finally
                             {
