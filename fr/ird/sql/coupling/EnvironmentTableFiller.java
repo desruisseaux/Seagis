@@ -103,10 +103,12 @@ public final class EnvironmentTableFiller
     private static final String[][] SERIES =
     {
         {"Pompage d'Ekman",                   "EKP"},
-//      {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
-//      {"SLA (Réunion)",                     "SLA", "U", "V"},
-//      {"SST (synthèse)",                    "SST"},
-//      {"Chlorophylle-a (Réunion)",          "CHL"},
+        {"SLA (Monde - TP)",                  "SLA"},
+        {"SLA (Monde - TP/ERS)",              "SLA"},
+        {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
+        {"SLA (Réunion)",                     "SLA", "U", "V"},
+        {"SST (synthèse)",                    "SST"},
+        {"Chlorophylle-a (Réunion)",          "CHL"},
         {"Bathymétrie de Sandwell (Réunion)", "Z"},
         {"Bathymétrie de Baudry (Réunion)",   "Z"}
     };
@@ -115,7 +117,7 @@ public final class EnvironmentTableFiller
      * Opération à appliquer sur les données, ou <code>null</code>
      * pour n'en appliquer aucune.
      */
-    private static final String OPERATION = "GradientMagnitude";
+    private static final String OPERATION = null; // "GradientMagnitude";
 
     /**
      * Connection vers la base de données d'images.

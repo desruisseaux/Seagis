@@ -38,6 +38,7 @@ import net.seas.map.Layer;
 import net.seas.map.MapPanel;
 import net.seas.map.GeoMouseEvent;
 import net.seas.map.RenderingContext;
+import net.seagis.resources.OpenGIS;
 import net.seagis.resources.XDimension2D;
 import net.seagis.resources.XAffineTransform;
 
@@ -61,7 +62,7 @@ public class GridCoverageLayer extends Layer
     /**
      * The underlying grid coverage.
      */
-    private final GridCoverage coverage;
+    private GridCoverage coverage;
 
     /**
      * The projected grid coverage. This coverage
@@ -74,7 +75,7 @@ public class GridCoverageLayer extends Layer
      * sont extraites une fois pour toute afin de réduire le
      * nombre d'objets créés lors des tracés de la carte.
      */
-    private final Rectangle2D geographicArea;
+    private Rectangle2D geographicArea;
 
     /**
      * Coordonnées en points de la région
@@ -102,6 +103,15 @@ public class GridCoverageLayer extends Layer
     private transient CategoryList[] categories;
 
     /**
+     * Construct a grid coverage layer which will display
+     * image from the specified coordinate systems.
+     */
+    public GridCoverageLayer(final CoordinateSystem coordinateSystem)
+    {
+        super(coordinateSystem);
+    }
+
+    /**
      * Construct a new layer for the specified grid coverage.
      * It is legal to construct many layers for the same grid
      * coverage (in order to be inserted in many {@link MapPanel}
@@ -110,6 +120,27 @@ public class GridCoverageLayer extends Layer
     public GridCoverageLayer(final GridCoverage coverage)
     {
         super(coverage.getCoordinateSystem());
+        setCoverage(coverage);
+    }
+
+    /**
+     * Set the grid coverage. A <code>null</code> value
+     * will remove the current grid coverage.
+     */
+    public void setCoverage(final GridCoverage coverage)
+    {
+        if (coverage == null)
+        {
+            clearCache();
+            this.coverage = null;
+            return;
+        }
+        if (!getCoordinateSystem().equals(OpenGIS.getCoordinateSystem2D(coverage.getCoordinateSystem())))
+        {
+            // TODO: implement changing coordinate system.
+            throw new UnsupportedOperationException("Can't change coordinate system");
+        }
+        clearCache();
         this.coverage = coverage;
         final Envelope envelope = coverage.getEnvelope();
         final GridRange   range = coverage.getGridGeometry().getGridRange();
@@ -124,7 +155,8 @@ public class GridCoverageLayer extends Layer
     }
 
     /**
-     * Returns the underlying grid coverage.
+     * Returns the underlying grid coverage, or <code>null</code>
+     * if no grid coverage has been set.
      */
     public GridCoverage getCoverage()
     {return coverage;}
@@ -135,6 +167,10 @@ public class GridCoverageLayer extends Layer
      */
     private GridCoverage getCoverage(CoordinateSystem targetCS)
     {
+        if (coverage==null)
+        {
+            return null;
+        }
         CoordinateSystem sourceCS;
         if (projectedCoverage==null)
         {
@@ -163,7 +199,11 @@ public class GridCoverageLayer extends Layer
         final Rectangle2D area=mapPanel.getVisibleArea();
         if (area!=null && !area.isEmpty())
         {
-            getCoverage(mapPanel.getCoordinateSystem()).prefetch(area);
+            final GridCoverage coverage = getCoverage(mapPanel.getCoordinateSystem());
+            if (coverage!=null)
+            {
+                coverage.prefetch(area);
+            }
         }
     }
 
@@ -178,8 +218,13 @@ public class GridCoverageLayer extends Layer
      */
     protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        getCoverage(context.getViewCoordinateSystem()).paint(graphics);
-        return XAffineTransform.transform(context.getAffineTransform(RenderingContext.WORLD_TO_POINT), geographicArea, pointArea);
+        final GridCoverage coverage = getCoverage(context.getViewCoordinateSystem());
+        if (coverage!=null)
+        {
+            coverage.paint(graphics);
+            return XAffineTransform.transform(context.getAffineTransform(RenderingContext.WORLD_TO_POINT), geographicArea, pointArea);
+        }
+        return null;
     }
 
     /**
@@ -195,6 +240,10 @@ public class GridCoverageLayer extends Layer
      */
     protected synchronized boolean getLabel(final GeoMouseEvent event, final StringBuffer toAppendTo)
     {
+        if (coverage==null)
+        {
+            return false;
+        }
         point  = event.getCoordinate(getCoordinateSystem(), point);
         values = coverage.evaluate(point, values);
         if (categories==null)
@@ -221,5 +270,18 @@ public class GridCoverageLayer extends Layer
             }
         }
         return modified;
+    }
+
+    /**
+     * Efface les informations qui avaient été
+     * sauvegardées dans la cache interne.
+     */
+    protected void clearCache()
+    {
+        point             = null;
+        values            = null;
+        categories        = null;
+        projectedCoverage = null;
+        super.clearCache();
     }
 }

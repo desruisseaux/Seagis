@@ -65,9 +65,10 @@ final class SeineCatchTable extends AbstractCatchTable
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] ID        */ SEINES+".ID, "          +
-                                /*[02] DATE      */ SEINES+".date, "        +
-                                /*[03] LONGITUDE */ SEINES+".longitude, "   +
-                                /*[04] LATITUDE  */ SEINES+".latitude "     +
+                                /*[02] CALEES    */ SEINES+".nb_calées, "   +
+                                /*[03] DATE      */ SEINES+".date, "        +
+                                /*[04] LONGITUDE */ SEINES+".longitude, "   +
+                                /*[05] LATITUDE  */ SEINES+".latitude "     +
 
                     "FROM "+SEINES+" "+
                     "WHERE "+
@@ -81,10 +82,11 @@ final class SeineCatchTable extends AbstractCatchTable
     //            de {@link Coupling}.
 
     /** Numéro de colonne. */ static final int ID           =  1;
-    /** Numéro de colonne. */ static final int DATE         =  2;
-    /** Numéro de colonne. */ static final int LONGITUDE    =  3;
-    /** Numéro de colonne. */ static final int LATITUDE     =  4;
-    /** Numéro de colonne. */ static final int CATCH_AMOUNT =  5; // Used by SenneCatchEntry
+    /** Numéro de colonne. */ static final int CALEES       =  2;
+    /** Numéro de colonne. */ static final int DATE         =  3;
+    /** Numéro de colonne. */ static final int LONGITUDE    =  4;
+    /** Numéro de colonne. */ static final int LATITUDE     =  5;
+    /** Numéro de colonne. */ static final int CATCH_AMOUNT =  6; // Used by SenneCatchEntry
 
     /** Numéro d'argument. */ private static final int ARG_START_TIME  =  1;
     /** Numéro d'argument. */ private static final int ARG_END_TIME    =  2;

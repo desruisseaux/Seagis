@@ -1,6 +1,6 @@
 /*
  * Remote sensing images: database and visualisation
- * Copyright (C) 2000 Institut de Recherche pour le Développement
+ * Copyright (C) 2002 Institut de Recherche pour le Développement
  *
  *
  *    This library is free software; you can redistribute it and/or
@@ -31,11 +31,15 @@ import java.util.Locale;
 
 
 /**
- * Représentation d'une espèce animale. Chaque objet {@link Animal} devra appartenir à une espèce.
- * Bien que son nom suggère que <code>Species</code> se réfère à la classification des espèces, ce
- * n'est pas nécessairement le cas. On peut aussi utiliser plusieurs objets <code>Species</code>
- * pour représenter des groupes d'individus qui appartiennent à la même espèce animale, mais qui
- * sont de tailles différentes (par exemple les juvéniles versus les adultes).
+ * Représentation d'une espèce animale. Chaque objet {@link Animal} devra
+ * appartenir à une espèce. Bien que le nom <code>Species</code> suggère qu'il
+ * se réfère à la classification des espèces, ce n'est pas nécessairement le
+ * cas. On peut aussi utiliser plusieurs objets <code>Species</code> pour
+ * représenter des groupes d'individus qui appartiennent à la même espèce
+ * animale, mais qui sont de tailles différentes (par exemple les juvéniles
+ * versus les adultes).
+ *
+ * Chaque objet <code>Species</code> est immutable.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -75,9 +79,9 @@ public interface Species
     public abstract Icon getIcon();
 
     /**
-     * Icône représentant cette espèce.  Un icône peut servir à positionner sur une
-     * carte plusieurs individus d'une même espèce, et peut aussi apparaître devant
-     * une étiquette dans les listes déroulantes.
+     * Icône représentant cette espèce.   Un icône peut servir à positionner sur
+     * une carte plusieurs individus d'une même espèce, et peut aussi apparaître
+     * devant une étiquette dans les listes déroulantes.
      *
      * @version 1.0
      * @author Martin Desruisseaux

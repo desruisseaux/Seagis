@@ -519,6 +519,39 @@ public class Coverage3D extends Coverage
     }
 
     /**
+     * Returns a 2 dimensional grid coverage for the given date.
+     *
+     * NOTE: current implementation doesn't returns an interpolated image.
+     *       We will fix that in a future version.
+     *
+     * @param  time The date where to evaluate.
+     * @return The grid coverage at the specified time, or <code>null</code>
+     *         if the requested date fall in a hole in the data.
+     * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
+     */
+    public synchronized GridCoverage getGridCoverage2D(final Date time) throws PointOutsideCoverageException
+    {
+        if (!seek(time))
+        {
+            // Missing data
+            return null;
+        }
+        if (lower==upper)
+        {
+            // No interpolation needed.
+            return lower;
+        }
+        final long timeMillis = time.getTime();
+        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+        // TODO: Interpolate here: lower + ratio*(upper-lower)
+        //       Cache the result; it may be reused often.
+        // NOTE: When interpolation will be done, it should be
+        //       used in 'evaluate(AreaEvaluator...)' implementation.
+        return (ratio < 0.5) ? lower : upper;
+    }
+
+    /**
      * Returns a sequence of double values for a given geographic area in the coverage.
      * A value for each sample dimension is included in the sequence. The first argument
      * ({@link AreaEvaluator}) specify how to perform the computation for each grid coverage.
@@ -529,6 +562,7 @@ public class Coverage3D extends Coverage
      * @param  area  The geographic area to evaluate.
      * @param  time  The date where to evaluate.
      * @return The values.
+     * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
      */
     public synchronized double[] evaluate(final AreaEvaluator evaluator, final Shape area, final Date time) throws PointOutsideCoverageException
     {

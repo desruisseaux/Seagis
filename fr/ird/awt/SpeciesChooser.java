@@ -186,7 +186,7 @@ public final class SpeciesChooser extends JPanel
         ////////////////////
         if (true)
         {
-            final JComboBox   localeBox = new JComboBox(locales); localeBox.setPreferredSize(localeBox.getPreferredSize());
+            final JComboBox   localeBox = new JComboBox(locales);
             final JComponent scrollList = new JScrollPane(list); scrollList.setPreferredSize(new Dimension(80,80));
             final ButtonGroup     group = new ButtonGroup();
             final JPanel          panel = new JPanel(new GridBagLayout());

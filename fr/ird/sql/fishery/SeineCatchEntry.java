@@ -55,6 +55,11 @@ import fr.ird.animat.Species;
 final class SeineCatchEntry extends AbstractCatchEntry
 {
     /**
+     * Tableau vide d'espèces (utilisée lorsqu'il n'y a eu aucune calée).
+     */
+    private static final Species[] EMPTY = new Species[0];
+
+    /**
      * Unités des captures.
      */
     private static final Unit TON = Unit.KILOGRAM.scale(1000);
@@ -79,8 +84,8 @@ final class SeineCatchEntry extends AbstractCatchEntry
      */
     public SeineCatchEntry(final SeineCatchTable table, final ResultSet result) throws SQLException
     {
-        super(result.getInt(SeineCatchTable.ID), table.species.species);
-        final float efu;
+        super(result.getInt(SeineCatchTable.ID),
+              result.getInt(SeineCatchTable.CALEES)!=0 ? table.species.species : EMPTY);
 
         date = table.getTimestamp(SeineCatchTable.DATE, result).getTime();
         x    = getFloat(result,   SeineCatchTable.LONGITUDE);
