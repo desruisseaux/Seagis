@@ -36,7 +36,7 @@ import java.sql.PreparedStatement;
 
 // Images et couleurs
 import java.awt.Color;
-import fr.ird.image.Utilities;
+import fr.ird.util.Utilities;
 
 // Collections
 import java.util.List;

@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.image;
+package fr.ird.util;
 
 // Miscellaneous
 import java.io.File;
