@@ -808,7 +808,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * cette méthode ne correspondent pas aux arguments habituels de {@link java.awt.geom.Rectangle2D}.
      * La convention de <em>Java2D</em> voulant que l'on spécifie un rectangle à l'aide d'un quadruplet
      * (<code>x</code>,<code>y</code>,<code>width</code>,<code>height</code>) est un mauvais choix dans
-     * le contexte d'à peu près toute les méthodes de notre bibliothèque <code>fr.ird</code>. En plus de
+     * le contexte d'à peu près toute les méthodes de notre bibliothèque <code>net.seas</code>. En plus de
      * compliquer la plupart des calculs (pour s'en convaincre, il suffit de compter le nombre d'occurences
      * de l'expression <code>x+width</code> même dans les propres classes géométriques de <em>Java2D</em>),
      * elle est incapable de représenter correctement un rectangle dont une ou plusieurs coordonnées s'étendent

@@ -196,7 +196,7 @@ public abstract class ZoomPane extends JComponent
     /**
      * Journal vers lequel envoyer des informations sur les opérations effectuées.
      */
-    private static final Logger logger = Logger.getLogger("fr.ird.awt");
+    private static final Logger logger = Logger.getLogger("net.seas.awt");
 
     /**
      * Largeur et hauteur minimale de cette composante.
@@ -2143,7 +2143,7 @@ public abstract class ZoomPane extends JComponent
     private void unexpectedException(final String method, final NoninvertibleTransformException exception)
     {
         zoom.setToIdentity();
-        ExceptionMonitor.unexpectedException("fr.ird.awt", "ZoomPane", method, exception);
+        ExceptionMonitor.unexpectedException("net.seas.awt", "ZoomPane", method, exception);
     }
 
     /**
@@ -2151,7 +2151,7 @@ public abstract class ZoomPane extends JComponent
      * par défaut enregistre la trace de l'exception dans le journal.
      */
     private static void unexpectedException(final String method, final RuntimeException exception)
-    {ExceptionMonitor.unexpectedException("fr.ird.awt", "ZoomPane", method, exception);}
+    {ExceptionMonitor.unexpectedException("net.seas.awt", "ZoomPane", method, exception);}
 
     /**
      * Ecrit dans le journal les coordonnées d'un rectangle spécifié.
