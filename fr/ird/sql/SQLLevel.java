@@ -36,24 +36,24 @@ import java.util.logging.Level;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SQLLevel extends Level
-{
+final class SQLLevel extends Level {
+    /**
+     * The level for logging SELECT instructions.
+     */
+    public static final Level SQL_SELECT = new SQLLevel("SQL SELECT", FINE.intValue()-50);
+
     /**
      * The level for logging UPDATE instructions.
      */
-    public static final Level SQL_UPDATE = new SQLLevel("SQL UPDATE", 0);
+    public static final Level SQL_UPDATE = new SQLLevel("SQL UPDATE", INFO.intValue()-50);
 
     /**
      * Construct a new level.
      *
      * @param name  The name of the level, for example "SQL UPDATE".
-     * @param value An integer value for the level, starting from 0.
-     *        0 is the highest level, 1 is the next one, etc.
+     * @param value An integer value for the level.
      */
-    private SQLLevel(final String name, final int value)
-    {
-        super(name, INFO.intValue()-17-value);
-        if (intValue() <= CONFIG.intValue())
-            throw new AssertionError(value);
+    private SQLLevel(final String name, final int value) {
+        super(name, value);
     }
 }

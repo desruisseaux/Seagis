@@ -35,8 +35,11 @@ import java.sql.PreparedStatement;
 // Divers
 import java.util.List;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 // Resources
+import fr.ird.sql.DataBase;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
@@ -125,6 +128,10 @@ final class CouplingTableImpl extends Table {
             buffer.append(query.substring(index));
             query = buffer.toString();
         }
+        final LogRecord record = new LogRecord(DataBase.SQL_SELECT, query);
+        record.setSourceClassName ("CouplingTable");
+        record.setSourceMethodName("<init>");
+        logger.log(record);
         return query;
     }
 

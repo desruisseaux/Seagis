@@ -213,6 +213,11 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
             buffer.append(query.substring(index+total.length()));
             query = buffer.toString();
         }
+        final LogRecord record = new LogRecord(DataBase.SQL_SELECT, query);
+        record.setSourceClassName ("CatchTable");
+        record.setSourceMethodName("setSpecies");
+        logger.log(record);
+        System.out.println(query);
         return query;
     }
 

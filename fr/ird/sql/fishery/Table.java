@@ -115,7 +115,7 @@ abstract class Table implements fr.ird.sql.Table {
         final int searchLength = searchFor.length();
         final int length = text.length();
         for (int i=0; i<length; i++) {
-            if (text.regionMatches(true, 0, searchFor, 0, searchLength)) {
+            if (text.regionMatches(true, i, searchFor, 0, searchLength)) {
                 return i;
             }
         }

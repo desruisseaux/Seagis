@@ -48,6 +48,11 @@ import fr.ird.resources.gui.Resources;
 public abstract class DataBase
 {
     /**
+     * The level for logging SELECT instructions.
+     */
+    public static final Level SQL_SELECT = SQLLevel.SQL_SELECT;
+
+    /**
      * The level for logging UPDATE instructions.
      */
     public static final Level SQL_UPDATE = SQLLevel.SQL_UPDATE;
