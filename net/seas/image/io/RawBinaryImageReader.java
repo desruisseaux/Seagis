@@ -667,7 +667,7 @@ public class RawBinaryImageReader extends SimpleImageReader
          * setting. Subclasses should set a new value at construction time
          * if an other pad value is needed in addition to {@link Double#NaN}.
          * If a single pad value is not enough, more control can be gained
-         * by overriding {@link RawBinaryImageReader#isPädValue}.
+         * by overriding {@link RawBinaryImageReader#isPadValue}.
          */
         protected double padValue = Double.NaN;
 

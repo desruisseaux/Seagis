@@ -242,7 +242,10 @@ public abstract class Coverage implements Dimensioned, PropertySource
         final double[] result = evaluate(coord, (double[])null);
         if (dest==null)  dest = new boolean[result.length];
         for (int i=0; i<result.length; i++)
-            dest[i] = (result[i]!=0);
+        {
+            final double value = result[i];
+            dest[i] = (!Double.isNaN(value) && value!=0);
+        }
         return dest;
     }
 
@@ -584,4 +587,16 @@ public abstract class Coverage implements Dimensioned, PropertySource
             return matrix.toAffineTransform2D();
         }
     }
+
+    /**
+     * Temporary method (will be moved elsewhere in a future version).
+     */
+    protected static RenderedImage toNumeric(final RenderedImage image, final CategoryList[] categories)
+    {return NumericImage.getInstance(image, categories);}
+
+    /**
+     * Temporary method (will be moved elsewhere in a future version).
+     */
+    protected static RenderedImage toThematic(final RenderedImage image, final CategoryList[] categories)
+    {return ThematicImage.getInstance(image, categories);}
 }

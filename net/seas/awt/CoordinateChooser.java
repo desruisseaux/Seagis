@@ -221,10 +221,10 @@ public class CoordinateChooser extends JPanel
 
         setup(tmin, 10,   dateFormat);
         setup(tmax, 10,   dateFormat);
-        setup(xmin,  8,         null);
-        setup(xmax,  8,         null);
-        setup(ymin,  8,         null);
-        setup(ymax,  8,         null);
+        setup(xmin,  7,         null);
+        setup(xmax,  7,         null);
+        setup(ymin,  7,         null);
+        setup(ymax,  7,         null);
         setup(xres,  3, numberFormat);
         setup(yres,  3, numberFormat);
 

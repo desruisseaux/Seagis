@@ -44,6 +44,7 @@ import javax.media.jai.util.Range;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.util.XArray;
 import net.seas.util.XMath;
 import net.seas.util.WeakHashSet;
 import net.seas.resources.Resources;
@@ -137,7 +138,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * peuvent être construits à partir des couleurs qui ont été définies dans les différentes
      * catégories du tableau {@link #byIndex}.
      */
-    private transient WeakHashSet<ColorModel> colors;
+    private transient ColorModel[] colors;
 
     /**
      * Catégorie utilisée lors du dernier encodage ou décodage d'un pixel.  Avant de rechercher
@@ -706,19 +707,11 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      */
     final synchronized ColorModel getColorModel(final boolean geophysicsValue, final int numBands)
     {
-        // Look in the cache for an existing color model. Note: this implementation
-        // is not efficient! However, we should have very few color models (usually
-        // no more than 2), so this implementation still acceptable.
-        if (colors!=null)
+        final int cacheIndex = (numBands*2) + (geophysicsValue ? 0 : 1);
+        // Look in the cache for an existing color model.
+        if (colors!=null && colors.length>cacheIndex)
         {
-            final ColorModel[] models = colors.toArray();
-            for (int i=0; i<models.length; i++)
-            {
-                final ColorModel model = models[i];
-                if (model.getNumComponents()==numBands)
-                    if ((model.getTransferType()==DataBuffer.TYPE_FLOAT) == geophysicsValue)
-                        return model;
-            }
+            return colors[cacheIndex];
         }
         final ColorModel model;
         if (geophysicsValue)
@@ -762,11 +755,16 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             }
         }
         // Cache and returns the color model
+        final int minCacheLength = (cacheIndex+2) & ~1;
         if (colors==null)
         {
-            colors = new WeakHashSet<ColorModel>();
+            colors=new ColorModel[minCacheLength];
         }
-        return colors.intern(model);
+        else if (colors.length<minCacheLength)
+        {
+            colors = XArray.resize(colors, minCacheLength);
+        }
+        return colors[cacheIndex] = model;
     }
 
     /**

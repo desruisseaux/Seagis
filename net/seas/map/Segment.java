@@ -91,9 +91,8 @@ final class Segment implements Serializable
     /**
      * Numéro de version pour compatibilité avec des bathymétries
      * enregistrées sous d'anciennes versions.
-     * TODO: serialver
      */
-    // private static final long serialVersionUID = 7801188955774888294L;
+    private static final long serialVersionUID = 3657087955800630894L;
 
     /**
      * Segments précédent et suivant.    La classe <code>Segment</code> implémente une liste à double liens.

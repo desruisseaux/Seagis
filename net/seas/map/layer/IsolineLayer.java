@@ -73,7 +73,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * rendering.
      */
     private static final boolean ENABLE_CLIP = false;
-    // TODO: NEED TO DEBUG. NEED A STEP TRACE IN RenderingContext.clip
+    // TODO: NEED TO DEBUG. NEED TO TRACE INTO RenderingContext.clip
 
     /**
      * Default color for fills.

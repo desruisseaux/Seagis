@@ -25,9 +25,12 @@ package net.seas.opengis.pt;
 // Miscellaneous
 import java.util.Arrays;
 import java.io.Serializable;
-import net.seas.util.XClass;
+import java.text.ChoiceFormat;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import javax.media.jai.util.Range;
+
+import net.seas.util.XClass;
 import net.seas.resources.Resources;
 
 
@@ -217,6 +220,28 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
      */
     public double getLength(final int dimension)
     {return ord[dimension+ord.length/2] - ord[dimension];}
+
+    /*
+     * Returns the range of values along a dimension as a {@link Range} object. This method may
+     * be overridden by subclasses wanting more flexibility  than what is usually possible with
+     * <code>getMinimum</code> and <code>getMaximum</code>. For example, range along a temporal
+     * axis may be delimited by {@link java.util.Date} objects instead of {@link Double}.
+     */
+//  public Range getRange(final int dimension)
+//  {return new Range(Double.class, new Double(getMinimum(dimension)), new Double(getMaximum(dimension)));}
+
+    /*
+     * Set the envelope's range along the specified dimension. The default
+     * implementation expect a range delimited by {@link Number} objects.
+     */
+//  public void setRange(final int dimension, final Range range)
+//  {
+//      double minimum = ((Number)range.getMinValue()).doubleValue();
+//      double maximum = ((Number)range.getMaxValue()).doubleValue();
+//      if (!range.isMinIncluded()) minimum=ChoiceFormat.    nextDouble(minimum);
+//      if (!range.isMaxIncluded()) maximum=ChoiceFormat.previousDouble(maximum);
+//      setRange(dimension, minimum, maximum);
+//  }
 
     /**
      * Set the envelope's range along the specified dimension.

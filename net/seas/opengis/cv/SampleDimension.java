@@ -83,7 +83,8 @@ public abstract class SampleDimension
      * component. If the sample dimension is not assigned a color interpretation
      * the value is {@link ColorInterpretation#UNDEFINED}.
      */
-    public abstract ColorInterpretation getColorInterpretation();
+    public ColorInterpretation getColorInterpretation()
+    {return ColorInterpretation.UNDEFINED;}
 
     // NOTE: "scale" and "offset" functionality are handled by Category.
 

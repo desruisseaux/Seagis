@@ -103,9 +103,8 @@ public class Polygon extends Contour
     /**
      * Numéro de version pour compatibilité avec des
      * bathymétries enregistrées sous d'anciennes versions.
-     * TODO: serialver
      */
-    //private static final long serialVersionUID = 7801188955774888294L;
+    private static final long serialVersionUID = -2146898555113075365L;
 
     /**
      * Projection à utiliser pour les calculs qui

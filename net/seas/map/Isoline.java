@@ -68,9 +68,8 @@ public class Isoline extends Contour
     /**
      * Numéro de version pour compatibilité avec des
      * bathymétries enregistrées sous d'anciennes versions.
-     * TODO: serialver
      */
-    //private static final long serialVersionUID = 2828645016315459429L;
+    private static final long serialVersionUID = 1056743477082776958L;
 
     /**
      * Système de coordonnées.

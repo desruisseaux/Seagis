@@ -22,6 +22,12 @@
  */
 package net.seas.opengis.cv;
 
+// Miscellaneous
+import java.text.NumberFormat;
+import java.text.FieldPosition;
+import net.seas.resources.Resources;
+import net.seas.opengis.pt.CoordinatePoint;
+
 
 /**
  * Throws when a <code>Coverage.evaluate</code>
@@ -43,4 +49,27 @@ public class PointOutsideCoverageException extends RuntimeException
      */
     public PointOutsideCoverageException(final String message)
     {super(message);}
+
+    /**
+     * Construct an exception with a message for the specified point.
+     */
+    public PointOutsideCoverageException(final CoordinatePoint point)
+    {super(Resources.format(Clé.POINT_OUTSIDE_COVERAGE¤1, toString(point)));}
+
+    /**
+     * Construct a string for the specified point.
+     */
+    private static String toString(final CoordinatePoint point)
+    {
+        final StringBuffer buffer = new StringBuffer();
+        final FieldPosition dummy = new FieldPosition(0);
+        final NumberFormat format = NumberFormat.getNumberInstance();
+        final int       dimension = point.getDimension();
+        for (int i=0; i<dimension; i++)
+        {
+            if (i!=0) buffer.append(", ");
+            format.format(point.getOrdinate(i), buffer, dummy);
+        }
+        return buffer.toString();
+    }
 }

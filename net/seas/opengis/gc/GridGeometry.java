@@ -113,6 +113,27 @@ public class GridGeometry implements Dimensioned, Serializable
     }
 
     /**
+     * Construct a new grid geometry from an affine transform.
+     * This constructor is provided for interoperability with
+     * Java Advanced Imaging.
+     *
+     * @param gridRange The valid coordinate range of a grid coverage.
+     * @param gridToCoordinateJAI The affine transform which allows for the transformations
+     *        from grid coordinates (pixel's <em>upper left</em> corner) to real world earth
+     *        coordinates.
+     */
+    GridGeometry(final GridRange gridRange, final AffineTransform gridToCoordinateJAI)
+    {
+        final int dimension = gridRange.getDimension();
+        if (dimension != 2)
+        {
+            throw new MismatchedDimensionException(dimension, 2);
+        }
+        this.gridRange           = gridRange;
+        this.gridToCoordinateJAI = new AffineTransform(gridToCoordinateJAI);
+    }
+
+    /**
      * Construct a new grid geometry. An affine transform will be computed automatically
      * from the specified envelope.  The <code>inverse</code> argument tells whatever or
      * not an axis should be inversed. Callers will typically set <code>inverse[1]</code>
@@ -164,7 +185,7 @@ public class GridGeometry implements Dimensioned, Serializable
         {
             double scale = userRange.getLength(i) / gridRange.getLength(i);
             double trans;
-            if (inverse==null || inverse[i])
+            if (inverse==null || !inverse[i])
             {
                 trans = userRange.getMinimum(i);
             }
@@ -221,20 +242,6 @@ public class GridGeometry implements Dimensioned, Serializable
     }
 
     /**
-     * Construct a new grid geometry.
-     *
-     * @param gridRange The valid coordinate range of a grid coverage.
-     * @param gridToCoordinateJAI The affine transform which allows for the transformations
-     *        from grid coordinates (pixel's <em>upper left</em> corner) to real world earth
-     *        coordinates.
-     */
-    GridGeometry(final GridRange gridRange, final AffineTransform gridToCoordinateJAI)
-    {
-        this.gridRange           = gridRange;
-        this.gridToCoordinateJAI = gridToCoordinateJAI; // Cloned by caller
-    }
-
-    /**
      * Returns the number of dimensions.
      */
     public int getDimension()
@@ -284,7 +291,13 @@ public class GridGeometry implements Dimensioned, Serializable
      * coordinates into real world earth coordinates.
      */
     final AffineTransform getGridToCoordinateJAI()
-    {return gridToCoordinateJAI;} // No clone for performance raisons.
+    {
+        if (gridToCoordinateJAI==null)
+        {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+        return gridToCoordinateJAI; // No clone for performance raisons.
+    }
 
     /**
      * Returns a hash value for this grid geometry.

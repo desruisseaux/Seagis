@@ -71,6 +71,12 @@ import net.seas.util.Version;
 public abstract class Contour implements Shape, Cloneable, Serializable
 {
     /**
+     * Numéro de version pour compatibilité avec des
+     * bathymétries enregistrées sous d'anciennes versions.
+     */
+    private static final long serialVersionUID = 7579026572945453650L;
+
+    /**
      * Objet à utiliser pour fabriquer des transformations.
      */
     static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.DEFAULT;

@@ -59,7 +59,7 @@ final class ThematicImage extends ImageAdapter
      * @return Image de valeurs de pixels. Les pixels de cette image
      *         correspondront aux thèmes de <code>categories</code>.
      */
-    public static RenderedImage toThematic(final RenderedImage image, final CategoryList[] categories)
+    public static RenderedImage getInstance(final RenderedImage image, final CategoryList[] categories)
     {
         if (image==null) return null;
         if (image instanceof ImageAdapter)

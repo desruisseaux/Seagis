@@ -39,6 +39,7 @@ import net.seas.opengis.pt.Longitude;
 
 // Swing (for JSpinner)
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.JFormattedTextField;
 import javax.swing.AbstractSpinnerModel;
 import javax.swing.text.InternationalFormatter;
@@ -1326,7 +1327,7 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
 
     /**
      * A <code>SpinnerModel</code> for sequences of angles.
-     * This model work like {@link javax.swing.SpinnerNumberModel}.
+     * This model work like {@link SpinnerNumberModel}.
      *
      * @see JSpinner
      * @see SpinnerNumberModel
@@ -1582,7 +1583,7 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      * displayed with a {@link javax.swing.JFormattedTextField} whose format is
      * defined by a {@link javax.swing.text.InternationalFormatter} instance
      * whose minimum and maximum properties are mapped to the
-     * {@link javax.swing.SpinnerNumberModel}.
+     * {@link SpinnerNumberModel}.
      *
      * @version 1.0
      * @author Adapted from Hans Muller
