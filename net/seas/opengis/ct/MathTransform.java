@@ -279,8 +279,8 @@ public abstract class MathTransform extends Info
      * @throws TransformException if a transform failed, or if
      *         this transform does not map two-dimensional spaces.
      */
-    public Shape transform(final Shape shape) throws TransformException
-    {return isIdentity() ? shape : transform(shape, null, null, Geometry.PARALLEL);}
+    public Shape createTransformedShape(final Shape shape) throws TransformException
+    {return isIdentity() ? shape : createTransformedShape(shape, null, null, Geometry.PARALLEL);}
 
     /**
      * Transforme une forme géométrique. Cette méthode copie toujours les coordonnées
@@ -301,7 +301,7 @@ public abstract class MathTransform extends Info
      * @return La forme géométrique transformée.
      * @throws TransformException Si une transformation a échoué.
      */
-    final Shape transform(final Shape shape, final AffineTransform preTr, final AffineTransform postTr, final int quadDir) throws TransformException
+    final Shape createTransformedShape(final Shape shape, final AffineTransform preTr, final AffineTransform postTr, final int quadDir) throws TransformException
     {
         if (getDimSource()!=2 || getDimTarget()!=2)
         {

@@ -553,8 +553,8 @@ abstract class MapProjection extends CoordinateTransform
      *              cette forme seront exprimées en mètres.
      * @throws TransformException si une transformation a échouée.
      */
-    public final Shape transform(final Shape shape) throws TransformException
-    {return transform(shape, null, null, Geometry.HORIZONTAL);}
+    public final Shape createTransformedShape(final Shape shape) throws TransformException
+    {return createTransformedShape(shape, null, null, Geometry.HORIZONTAL);}
 
 
 

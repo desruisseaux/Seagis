@@ -176,8 +176,8 @@ final class CoordinateTransformProxy extends CoordinateTransform
     /**
      * Transform the specified shape.
      */
-    public Shape transform(final Shape shape) throws TransformException
-    {return transform.transform(shape);}
+    public Shape createTransformedShape(final Shape shape) throws TransformException
+    {return transform.createTransformedShape(shape);}
 
     /**
      * Creates the inverse transform of this object.

@@ -106,8 +106,8 @@ final class ConcatenedTransform extends MathTransform
     /**
      * Transform the specified shape.
      */
-    public Shape transform(final Shape shape) throws TransformException
-    {return transform2.transform(transform1.transform(shape));}
+    public Shape createTransformedShape(final Shape shape) throws TransformException
+    {return transform2.createTransformedShape(transform1.createTransformedShape(shape));}
 
     /**
      * Creates the inverse transform of this object.
