@@ -244,7 +244,7 @@ public final class OpenGIS
             dest.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
             return dest;
         }
-        return new Rectangle2D.Double(xmin, ymin, xmax-xmin, ymax-ymin);
+        return new XRectangle2D(xmin, ymin, xmax-xmin, ymax-ymin);
     }
 
     /**

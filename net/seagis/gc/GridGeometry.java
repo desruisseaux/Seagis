@@ -96,7 +96,7 @@ public class GridGeometry implements Dimensioned, Serializable
     private final MathTransform2D gridToCoordinateSystem2D;
 
     /**
-     * The inverse of {@link #gridToCoordinateSystem2D}.
+     * The inverse of <code>gridToCoordinateSystem2D</code>.
      */
     private final MathTransform2D gridFromCoordinateSystem2D;
 

@@ -39,6 +39,7 @@ import java.awt.geom.Rectangle2D;
 
 // Resources
 import net.seagis.resources.Utilities;
+import net.seagis.resources.XRectangle2D;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
@@ -364,7 +365,7 @@ public class Envelope implements Dimensioned, Cloneable, Serializable
     {
         if (ord.length == 4)
         {
-            return new Rectangle2D.Double(ord[0], ord[1], ord[2]-ord[0], ord[3]-ord[1]);
+            return new XRectangle2D(ord[0], ord[1], ord[2]-ord[0], ord[3]-ord[1]);
         }
         throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(getDimension())));
     }
