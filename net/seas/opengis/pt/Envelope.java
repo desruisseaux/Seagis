@@ -43,6 +43,7 @@ import net.seas.resources.Resources;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
+ * @see Rectangle2D
  * @see org.opengis.pt.PT_Envelope
  */
 public final class Envelope implements Cloneable, Serializable
@@ -57,16 +58,6 @@ public final class Envelope implements Cloneable, Serializable
      * ordinates, while the last half contains maximum ordinates.
      */
     private final double[] ord;
-
-    /**
-     * Check if a point has the expected dimension.
-     *
-     * @param  P the point to check.
-     * @param  dimension The expected dimension
-     * @throws IllegalArgumentException if the point don't have the expected dimension.
-     */
-    private static void checkDimension(final CoordinatePoint P, final int dimension) throws IllegalArgumentException
-    {if (P.ord.length != dimension) throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION));}
 
     /**
      * Check if ordinate values in the minimum point are less than or
@@ -100,7 +91,7 @@ public final class Envelope implements Cloneable, Serializable
      */
     public Envelope(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws IllegalArgumentException
     {
-        checkDimension(minCP, maxCP.ord.length);
+        maxCP.ensureDimensionMatch(minCP.ord.length);
         ord = new double[minCP.ord.length + maxCP.ord.length];
         System.arraycopy(minCP.ord, 0, ord, 0,                minCP.ord.length);
         System.arraycopy(maxCP.ord, 0, ord, minCP.ord.length, maxCP.ord.length);
@@ -134,7 +125,7 @@ public final class Envelope implements Cloneable, Serializable
     public void add(final CoordinatePoint point) throws IllegalArgumentException
     {
         final int dimension = ord.length/2;
-        checkDimension(point, dimension);
+        point.ensureDimensionMatch(dimension);
         for (int i=0; i<dimension; i++)
         {
             final double value = point.ord[i];
@@ -154,7 +145,7 @@ public final class Envelope implements Cloneable, Serializable
     public boolean contains(final CoordinatePoint point) throws IllegalArgumentException
     {
         final int dimension = ord.length/2;
-        checkDimension(point, dimension);
+        point.ensureDimensionMatch(dimension);
         for (int i=0; i<dimension; i++)
         {
             final double value = point.ord[i];

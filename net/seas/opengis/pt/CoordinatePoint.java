@@ -40,6 +40,7 @@ import net.seas.resources.Resources;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
+ * @see Point2D
  * @see org.opengis.pt.PT_CoordinatePoint
  */
 public final class CoordinatePoint implements Cloneable, Serializable
@@ -93,6 +94,13 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {this(point.getX(), point.getY());}
 
     /**
+     * Returns the ordinate value along the specified dimension.
+     * This is equivalent to <code>{@link #ord ord}[dimension]</code>.
+     */
+    public final double getOrdinate(final int dimension)
+    {return ord[dimension];}
+
+    /**
      * The number of ordinates of a <code>CoordinatePoint</code>.
      * This is equivalent to <code>{@link #ord ord}.length</code>.
      */
@@ -100,11 +108,21 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {return ord.length;}
 
     /**
-     * Returns the ordinate value along the specified dimension.
-     * This is equivalent to <code>{@link #ord ord}[dimension]</code>.
+     * Convenience method for checking the point's dimension validity.
+     * This method is usually call for argument checking.
+     *
+     * @param  expectedDimension Expected dimension for this point.
+     * @throws IllegalArgumentException if this point doesn't have the expected dimension.
      */
-    public final double getOrdinate(final int dimension)
-    {return ord[dimension];}
+    public final void ensureDimensionMatch(final int expectedDimension) throws IllegalArgumentException
+    {
+        final int dimension = getDimension();
+        if (dimension != expectedDimension)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION¤2,
+                                               new Integer(dimension), new Integer(expectedDimension)));
+        }
+    }
 
     /**
      * Returns a hash value for this coordinate.

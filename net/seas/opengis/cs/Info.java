@@ -109,7 +109,7 @@ public abstract class Info
     {return null;}
 
     /**
-     * Returns a hash value for this datum.
+     * Returns a hash value for this info.
      */
     public int hashCode()
     {

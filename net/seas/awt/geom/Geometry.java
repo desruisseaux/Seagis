@@ -23,11 +23,15 @@
 package net.seas.awt.geom;
 
 // Géometry
+import java.awt.Shape;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.PathIterator;
 
 // Miscellaneous
 import net.seas.util.XMath;
@@ -479,5 +483,33 @@ public final class Geometry
         final double sq3 = (x3*x3 + y3*y3);
         final double x   = (y2*sq3 - y3*sq2) / (y2*x3 - y3*x2);
         return new Point2D.Double(x1+0.5*x, y1+0.5*(sq2-x*x2)/y2);
+    }
+
+    /**
+     * Tente de remplacer la forme géométrique <code>path</code> par une des formes standards
+     * de Java2D. Par exemple, si <code>path</code> ne contient qu'un simple segment de droite
+     * ou une courbe quadratique, alors cette méthode retournera un objet {@link Line2D} ou
+     * {@link QuadCurve2D} respectivement.
+     *
+     * @param  path Forme géométrique à simplifier (généralement un objet {@link GeneralPath}).
+     * @return Forme géométrique standard, ou <code>path</code> si aucun remplacement n'est proposé.
+     */
+    public static Shape toPrimitive(final Shape path)
+    {
+        final float[] buffer=new float[6];
+        final PathIterator it=path.getPathIterator(null);
+        if (!it.isDone() && it.currentSegment(buffer)==PathIterator.SEG_MOVETO && !it.isDone())
+        {
+            final float x1 = buffer[0];
+            final float y1 = buffer[1];
+            final int code=it.currentSegment(buffer);
+            if (it.isDone()) switch (code)
+            {
+                case PathIterator.SEG_LINETO:  return new       Line2D.Float(x1,y1, buffer[0],buffer[1]);
+                case PathIterator.SEG_QUADTO:  return new  QuadCurve2D.Float(x1,y1, buffer[0],buffer[1], buffer[2],buffer[3]);
+                case PathIterator.SEG_CUBICTO: return new CubicCurve2D.Float(x1,y1, buffer[0],buffer[1], buffer[2],buffer[3], buffer[4],buffer[5]);
+            }
+        }
+        return path;
     }
 }

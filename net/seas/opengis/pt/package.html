@@ -9,18 +9,27 @@
 
     <P>&nbsp;</P>
     <H2><A NAME="differences">Differences with the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
+    <BR>&nbsp;
     <UL>
-      <LI>Omitted the <CODE>PT_</CODE> prefix for all classes and interfaces.</LI>
+      <LI>Omitted the <CODE>PT_</CODE> prefix for
+          all classes and interfaces.<BR>&nbsp;</LI>
+
       <LI>Omitted the {@link org.opengis.pt.PT_Matrix} class in order to avoid
           duplication with standard Java classes. Use <CODE>Jama.Matrix</CODE>
-          (temporary package) instead.</LI>
-      <LI>Added {@link net.seas.opengis.pt.ConvexHull} class.</LI>
+          (temporary package) instead.<BR>&nbsp;</LI>
+
+      <LI>Added {@link net.seas.opengis.pt.ConvexHull} class. This class is
+          used as argument type for
+          {@link net.seas.opengis.ct.MathTransform#getDomainFlags}
+          instead of a generic <code>double[][]</code>.<BR>&nbsp;</LI>
+
       <LI>Added {@link net.seas.opengis.pt.Angle}, {@link net.seas.opengis.pt.Latitude}
           and {@link net.seas.opengis.pt.Longitude} classes for parsing and formatting
-          with {@link net.seas.text.AngleFormat}.</LI>
+          with {@link net.seas.text.AngleFormat}.<BR>&nbsp;</LI>
+
       <LI>Provide various methods and constructors to ease interoperability with
           the <A HREF="http://java.sun.com/products/java-media/2D">Java2D</A>
-          geometric package.</LI>
+          geometric package.<BR>&nbsp;</LI>
     </UL>
   </BODY>
 </HTML>

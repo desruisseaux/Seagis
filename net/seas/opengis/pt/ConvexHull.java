@@ -42,7 +42,8 @@ import net.seas.util.XClass;
  * The simplest type of complex hull is a single point. So you can easily ask
  * whether a point is inside, or outside the domain of a math transform.
  * <br><br>
- * <strong>Note: this class is not yet implemented</strong>.
+ * <strong>Note: this class has no direct OpenGIS equivalent
+ *               and is not yet implemented</strong>.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)

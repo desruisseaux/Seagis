@@ -48,4 +48,10 @@ public class TransformException extends Exception
      */
     public TransformException(final String message)
     {super(message);}
+
+    /**
+     * Constructs a new exception with the specified detail message and cause.
+     */
+    public TransformException(final String message, final Throwable cause)
+    {super(message, cause);}
 }
