@@ -34,7 +34,10 @@ import fr.ird.database.coverage.SeriesEntry;
 
 
 /**
- * Un paramètre environnemental.
+ * Un paramètre environnemental. Les paramètres sont souvent associés à une
+ * {@linklplain SeriesEntry série} de la base de données d'images. Un paramètre
+ * environnemental peut être par exemple la température de surface de la mer, ou
+ * la concentration en chlorophylle-a.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -45,7 +48,7 @@ public interface ParameterEntry extends Entry {
     /**
      * Retourne <code>true</code> si ce paramètre est le <cite>paramètre identité</cite>.
      * Le &quot;paramètre identité&quot; est un paramètre artificiel représentant une image
-     * dont toutes les valeurs auraient la valeur 1. Il est utilisé dans des expressions de
+     * dont tous les pixels auraient la valeur 1. Il est utilisé dans des expressions de
      * la forme <code>y = C0 + C1*x + C2*x² + ...</code>, ou <code>C0</code> peut s'écrire
      * <code>C0&times;identité</code>.
      */
@@ -57,7 +60,7 @@ public interface ParameterEntry extends Entry {
      * @param n 0 pour la série principale, ou 1 pour la série de rechange à utiliser si
      *          jamais la série principale n'est pas disponible.
      * @return  La série d'images, ou <code>null</code> si aucune.
-     *          Ce nom ne sera jamais nul pour <code>n=0</code>.
+     *          Cette référence ne sera jamais nulle si <code>n=0</code>.
      */
     public abstract SeriesEntry getSeries(int n);
 
@@ -67,60 +70,21 @@ public interface ParameterEntry extends Entry {
     public abstract int getBand();
 
     /**
-     * Retourne les composantes consituant ce paramètre, ou <code>null</code> s'il n'y en a pas.
-     * Un paramètre peut être le résultat d'une combinaison (par forcément linéaire) de d'autres
-     * paramètres. L'interface {@link Component} spécifie un de ces paramètre ainsi que son poids
-     * relatif.
+     * Retourne les termes d'un modèle linéaire calculant ce paramètre, ou <code>null</code>
+     * s'il n'y a pas de modèle linéaire. Un paramètre peut être le résultat d'une combinaison
+     * de d'autres paramètres, par exemple sous la forme de l'équation suivante:
      *
-     * @return La liste de tous les paramètres composant celui-ci, ou <code>null</code> s'il n'y
-     *         en a pas. Cette liste est immutable.
-     */
-    public abstract List<+Component> getComponents();
-
-    /**
-     * Une des composantes d'un {@linkplain ParameterEntry paramètre}.   Un tableau d'objets
-     * {@link Component} peut-être associé à un objet {@link ParameterEntry} si ce paramètre
-     * est le résultat d'une combinaison d'autres paramètres. Ces combinaisons de paramètres
-     * peuvent servir par exemple à créer une carte de potentiel.
+     * <p align="center"><code>PP</code> = <var>C</var><sub>0</sub> +
+     * <var>C</var><sub>1</sub>&times;<code>SST</code> +
+     * <var>C</var><sub>2</sub>&times;<code>SLA</code> +
+     * <var>C</var><sub>3</sub>&times;<code>SST</code>&times;<code>SLA</code> + ...</p>
      *
-     * @version $Id$
-     * @author Martin Desruisseaux
+     * Chacun des termes à droite du signe = est décrit par un objet {@link LinearModelTerm}.
+     * Ces descriptions incluent le coefficient <var>C</var><sub>n</sub>, qui résulte
+     * généralement d'une régression linéaire multiple.
+     *
+     * @return La liste de tous les termes composant le modèle linéaire,
+     *         ou <code>null</code> s'il n'y en a pas. Cette liste est immutable.
      */
-    public static interface Component extends Entry {
-        /**
-         * Retourne le paramètre calculé.
-         */
-        public abstract ParameterEntry getTarget();
-
-        /**
-         * Retourne une des composante du {@linkplain #getTarget paramètre calculé}.
-         * Les valeurs de cette composantes seront {@link #transform transformée},
-         * puis pondérées par un {@linkplain #getWeight poids}.
-         */
-        public abstract ParameterEntry getSource();
-
-        /**
-         * Retourne la position relative à laquelle évaluer le {@linkplain #getSource paramètre
-         * source}.
-         */
-        public abstract RelativePositionEntry getRelativePosition();
-
-        /**
-         * Retourne l'opération à appliquer sur le {@linkplain #getSource paramètre source}.
-         */
-        public abstract OperationEntry getOperation();
-
-        /**
-         * Retourne le poids du {@linkplain #getSource paramètre source}.
-         */
-        public double getWeight();
-
-        /**
-         * Retourne la transformation à appliquer préalablement sur le {@linkplain #getSource
-         * paramètre source}. Lorsqu'elle n'est pas la transformation identitée, cette
-         * transformation consistera le plus souvent à prendre le logarithme de la valeur
-         * afin de donner à la distribution une apparence plus gaussienne.
-         */
-        public double transform(final double value);
-    }
+    public abstract List<? extends LinearModelTerm> getLinearModel();
 }

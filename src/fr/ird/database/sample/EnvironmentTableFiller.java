@@ -344,10 +344,10 @@ public class EnvironmentTableFiller implements Table {
      */
     public void run() throws SQLException, TransformException {
         SampleDataBase.LOGGER.info("Prépare le remplissage de la table d'environnement.");
-        final Collection<SampleEntry> sampleEntries = getSampleTable().getEntries();
-        final CoverageTable           coverageTable = getCoverageTable();
-        final Set<OperationEntry>        operations = getOperations();
-        final Set<RelativePositionEntry>  positions = getRelativePositions();
+        final Collection<SampleEntry>          sampleEntries = getSampleTable().getEntries();
+        final CoverageTable                    coverageTable = getCoverageTable();
+        final Set<? extends OperationEntry>       operations = getOperations();
+        final Set<? extends RelativePositionEntry> positions = getRelativePositions();
         for (final OperationEntry operation : operations) {
             /*
              * Pour chaque opérations, configure la table d'images en lui appliquant l'opération

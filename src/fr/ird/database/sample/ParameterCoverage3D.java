@@ -75,10 +75,10 @@ import fr.ird.resources.seagis.Resources;
 
 
 /**
- * Valeurs d'un {@link ParameterEntry paramètre} à des positions d'échantillons.
- * Une couverture spatiale représentant une combinaison de paramètres. Cette couverture peut
- * servir par exemple à résumer dans une seule carte de potentiel les informations présentes
- * dans plusieurs cartes.
+ * Valeurs d'un {@link ParameterEntry paramètre} à des positions d'échantillons. Ce paramètre
+ * peut être le résultat d'un {@linkplain ParameterEntry#getLinearModel modèle linéaire}. Une
+ * telle couverture peut servir par exemple à résumer dans une seule carte de potentiel les
+ * informations présentes dans plusieurs cartes.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -112,12 +112,12 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     private static final NumberRange INDEX_RANGE = new NumberRange(1, 255);
 
     /**
-     * Un objet {@link Map} vide a affecter à {@link #coverages}
+     * Un objet {@link Map} vide à affecter à {@link #coverages}
      */
     private static Map<SeriesKey,Coverage3D> EMPTY_MAP = (Map) Collections.EMPTY_MAP;
 
     /**
-     * Paire comprenant une {@linkplain SeriesEntry série} avec {@linkplain OperationEntry
+     * Paire comprenant une {@linkplain SeriesEntry série} avec une {@linkplain OperationEntry
      * opération}. Ces paires sont utilisées comme clés dans {@link #coverages}.
      *
      * @version $Id$
@@ -144,11 +144,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                          final OperationEntry        operation,
                          final RelativePositionEntry position)
         {
-            this.series    = series;
-            this.operation = operation;
-            if (position != null) {
-                timeOffset = position.getTypicalTimeOffset();
-            }
+            this.series     = series;
+            this.operation  = operation;
+            this.timeOffset = (position != null) ? position.getTypicalTimeOffset() : Float.NaN;
         }
 
         /**
@@ -233,7 +231,8 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     private CoverageTable coverageTable;
 
     /**
-     * Le paramètre qui sera produit.
+     * Le paramètre qui sera produit. Ce paramètre sera le même que celui que retourne
+     * {@link LinearModelTerm#getTarget} pour chacun des termes de {@link #linearModel}.
      *
      * @see #getParameter
      * @see #setParameter
@@ -241,9 +240,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     private ParameterEntry target;
 
     /**
-     * La liste des composantes du paramètre à produire.
+     * La liste des termes du modèle linéaire, ou <code>null</code> s'il n'y en a pas.
      */
-    private ParameterEntry.Component[] components;
+    private LinearModelTerm[] linearModel;
 
     /**
      * Les objets {@link Coverage3D} disponibles pour chaque {@linkplain SeriesEntry séries}
@@ -402,7 +401,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * cet objet <code>ParameterCoverage3D</code> a été contruit avec le constructeur sans
      * argument. Elle utilisera un objet {@link SampleDataBase} temporaire.
      */
-    final Set<+ParameterEntry> getParameters() throws SQLException {
+    final Set<? extends ParameterEntry> getParameters() throws SQLException {
         final SampleDataBase database = new fr.ird.database.sample.sql.SampleDataBase();
         final SeriesTable    series   = this.database.getSeriesTable();
         try {
@@ -415,9 +414,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Spécifie le paramètre à produire. Des couvertures spatiales seront produites à partir
-     * des {@linplain ParameterEntry#getComponents composantes} de ce paramètre, s'il y en a.
-     * Cette méthode n'est disponible que si cet objet <code>ParameterCoverage3D</code> a été
-     * contruit avec le constructeur sans argument.
+     * des termes du {@linplain ParameterEntry#getLinearModel modèle linéaire} de ce paramètre,
+     * s'il y en a un. Cette méthode n'est disponible que si cet objet
+     * <code>ParameterCoverage3D</code> a été contruit avec le constructeur sans argument.
      *
      * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
      * @throws SQLException si la connexion à la base de données a échouée.
@@ -438,7 +437,8 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Spécifie le paramètre à produire. Des couvertures spatiales seront produites à partir
-     * des {@linplain ParameterEntry#getComponents composantes} de ce paramètre, s'il y en a.
+     * du {@linplain ParameterEntry#getLinearModel modèle linéaire} de ce paramètre, s'il y
+     * en a un.
      *
      * @param parameter Le paramètre à produire, ou <code>null</code> si aucun.
      * @throws SQLException si la connexion à la base de données a échouée.
@@ -450,7 +450,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         final Map<SeriesKey,Coverage3D> oldCoverages = coverages;
         coverages       = EMPTY_MAP;
         target          = null;
-        components      = null;
+        linearModel     = null;
         envelope        = null;
         sampleDimension = null;
         maxNumBands     = 0;
@@ -458,27 +458,36 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             return;
         }
         /*
-         * Obtient la liste des composantes du paramètre. Si ce paramètre n'a pas de composante,
+         * Obtient tous les descripteurs du modèle linéaire.  Si ce paramètre n'a pas de modèle,
          * alors il sera considérée comme sa propre source le temps de construire l'ensemble des
          * objets Coverage3D.  Pour chaque série impliquée, on construira un objet Coverage3D en
          * récupérant ceux qui existent déjà si possible.
          */
         target = parameter;
         coverages = new HashMap<SeriesKey,Coverage3D>();
-        final Collection<+ParameterEntry.Component> list = parameter.getComponents();
-        final ParameterEntry[] sources;
+        final Collection<? extends LinearModelTerm> list = parameter.getLinearModel();
+        final DescriptorEntry[] descriptors;
+        final ParameterEntry [] sources;
         if (list == null) {
+            descriptors = null;
             sources = new ParameterEntry[] {target};
         } else {
-            int i=0;
-            components = new ParameterEntry.Component[list.size()];
-            sources    = new ParameterEntry[components.length];
-            for (final ParameterEntry.Component component : list) {
-                components[i] = component;
-                sources   [i] = component.getSource();
-                i++;
+            int i=0, n=0;
+            linearModel = new LinearModelTerm[list.size()];
+            for (final LinearModelTerm term : list) {
+                linearModel[i++] = term;
+                n += term.getDescriptors().size();
             }
-            assert i == sources.length;
+            assert i == linearModel.length;
+            descriptors = new DescriptorEntry[n];
+            sources     = new ParameterEntry [n];
+            while (--i >= 0) {
+                for (final DescriptorEntry descriptor : linearModel[i].getDescriptors()) {
+                    sources  [--n] = descriptor.getParameter();
+                    descriptors[n] = descriptor;
+                }
+            }
+            assert n == 0 : n;
         }
         /*
          * A ce stade, on dispose de la liste des sources. Obtient maintenant les 'Coverage3D'
@@ -499,11 +508,11 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             }
             final OperationEntry       operation;
             final RelativePositionEntry position;
-            if (components != null) {
-                final ParameterEntry.Component component;
-                component = components[i];
-                operation = component.getOperation();
-                position  = component.getRelativePosition();
+            if (descriptors != null) {
+                final DescriptorEntry descriptor;
+                descriptor = descriptors[i];
+                operation  = descriptor.getOperation();
+                position   = descriptor.getRelativePosition();
             } else {
                 operation = null;
                 position  = null;
@@ -527,7 +536,6 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                      * une identique à partir de la base de données.
                      */
                     final SeriesKey joker = new SeriesKey(series, operation, null);
-                    joker.timeOffset = Float.NaN;
                     coverage = coverages.get(joker);
                     if (coverage != null) {
                         coverage = clone(coverage);
@@ -583,33 +591,35 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Retourne une envelope englobant les coordonnées spatio-temporelles des données.
-     * Cette envelope sera l'intersection des envelopes de toutes les composantes du
+     * Cette envelope sera l'intersection des envelopes de toutes les descripteurs du
      * paramètre à calculer.
      */
     public synchronized Envelope getEnvelope() {
         if (envelope == null) {
-            if (components != null) {
+            if (linearModel != null) {
                 final SeriesKey key = new SeriesKey();
-                for (final ParameterEntry.Component component : components) {
-                    final ParameterEntry source = component.getSource();
-                    if (source.isIdentity()) {
-                        continue;
-                    }
-                    Envelope toIntersect = null;
-                    key.operation  = component.getOperation();
-                    key.timeOffset = component.getRelativePosition().getTypicalTimeOffset();
-                    for (int i=0; ((key.series=source.getSeries(i))!=null); i++) {
-                        final Envelope toAdd = coverages.get(key).getEnvelope();
-                        if (toIntersect == null) {
-                            toIntersect = toAdd;
-                        } else {
-                            toIntersect.add(toAdd);
+                for (final LinearModelTerm term : linearModel) {
+                    for (final DescriptorEntry descriptor : term.getDescriptors()) {
+                        final ParameterEntry source = descriptor.getParameter();
+                        if (source.isIdentity()) {
+                            continue;
                         }
-                    }
-                    if (envelope == null) {
-                        envelope = toIntersect;
-                    } else {
-                        envelope.intersect(toIntersect);
+                        Envelope toIntersect = null;
+                        key.operation  = descriptor.getOperation();
+                        key.timeOffset = descriptor.getRelativePosition().getTypicalTimeOffset();
+                        for (int i=0; ((key.series=source.getSeries(i))!=null); i++) {
+                            final Envelope toAdd = coverages.get(key).getEnvelope();
+                            if (toIntersect == null) {
+                                toIntersect = toAdd;
+                            } else {
+                                toIntersect.add(toAdd);
+                            }
+                        }
+                        if (envelope == null) {
+                            envelope = toIntersect;
+                        } else {
+                            envelope.intersect(toIntersect);
+                        }
                     }
                 }
             } else {
@@ -657,28 +667,35 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     public synchronized SampleDimension[] getSampleDimensions() {
         if (sampleDimension == null) {
             final SeriesKey key = new SeriesKey();
-            if (components == null) {
+            if (linearModel == null) {
                 key.series = target.getSeries(0);
                 sampleDimension = coverages.get(key).getSampleDimensions()[target.getBand()-1];
             } else {
                 double minimum = 0;
                 double maximum = 0;
-                for (int i=0; i<components.length; i++) {
-                    final ParameterEntry.Component component = components[i];
-                    final ParameterEntry source = component.getSource();
-                    final double         weight = component.getWeight();
-                    if (source.isIdentity()) {
-                        minimum += weight;
-                        maximum += weight;
-                        continue;
+                for (final LinearModelTerm term : linearModel) {
+                    double min = term.getCoefficient();
+                    double max = min;
+                    for (final DescriptorEntry descriptor : term.getDescriptors()) {
+                        final ParameterEntry source = descriptor.getParameter();
+                        if (source.isIdentity()) {
+                            continue;
+                        }
+                        final SampleDimension sd;
+                        key.series     = source.getSeries(0);
+                        key.operation  = descriptor.getOperation();
+                        key.timeOffset = descriptor.getRelativePosition().getTypicalTimeOffset();
+                        sd = coverages.get(key).getSampleDimensions()[source.getBand()-1];
+                        double smin = descriptor.normalize(sd.getMinimumValue());
+                        double smax = descriptor.normalize(sd.getMaximumValue());
+                        if ((Math.abs(smin) > Math.abs(smax)) != (Math.abs(min) > Math.abs(max))) {
+                            final double tmp = smin;
+                            smin = smax;
+                            smax = tmp;
+                        }
+                        min *= smin;
+                        max *= smax;
                     }
-                    final SampleDimension sd;
-                    key.series     = source.getSeries(0);
-                    key.operation  = component.getOperation();
-                    key.timeOffset = component.getRelativePosition().getTypicalTimeOffset();
-                    sd = coverages.get(key).getSampleDimensions()[source.getBand()-1];
-                    double min = weight * component.transform(sd.getMinimumValue());
-                    double max = weight * component.transform(sd.getMaximumValue());
                     if (min > max) {
                         final double tmp = min;
                         min = max;
@@ -699,9 +716,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Retourne la valeur d'un échantillon ou d'un point arbitraire. Cette valeur sera calculée
-     * en combinant toutes les {@linkplain ParameterEntry#getComponents composantes} du paramètre
-     * spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a été spécifié,
-     * alors cette méthode retourne {@link Double#NaN}.
+     * en combinant tous les termes du {@linkplain ParameterEntry#getLinearModel modèle linéaire}
+     * du paramètre spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a
+     * été spécifié, alors cette méthode retourne {@link Double#NaN}.
      *
      * Cette méthode peut être appelée simultanément par plusieurs threads.
      *
@@ -723,14 +740,14 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             assert sample.getTime()      .equals(time)       : time;
         }
         final SeriesKey key = new SeriesKey();
-        final ParameterEntry.Component[] components;
-        final Map<SeriesKey,Coverage3D>  coverages;
+        final LinearModelTerm[] linearModel;
+        final Map<SeriesKey,Coverage3D> coverages;
         double[] buffer;
         synchronized (this) {
-            buffer     = new double[maxNumBands];
-            components = this.components;
-            coverages  = this.coverages;
-            if (components == null) {
+            buffer      = new double[maxNumBands];
+            linearModel = this.linearModel;
+            coverages   = this.coverages;
+            if (linearModel == null) {
                 if (target == null) {
                     return Double.NaN;
                 }
@@ -754,7 +771,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         }
         /*
          * Effectue la combinaison des paramètres. Le code qui suit n'a pas besoin d'être
-         * synchronisé, puisque les seules références utilisées ('components','coverages'
+         * synchronisé, puisque les seules références utilisées ('linearModel','coverages'
          * et 'maxNumBands') ont été copiées dans le bloc synchronisé précédent. Par design,
          * les instances référés ne sont jamais modifiés après leur création par 'setParameters'.
          */
@@ -763,52 +780,54 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         PointOutsideCoverageException outside=null;  // La première exception obtenue.
         final Point2D coord1 = new Point2D.Double(); // La coordonnée spatiale décalée.
         final Date     time1 = new Date(0);          // La coordonnée temporelle décalée.
-        for (int i=0; i<components.length; i++) {
-            final ParameterEntry.Component component = components[i];
-            final ParameterEntry source = component.getSource();
-            if (source.isIdentity()) {
-                value += component.getWeight();
-                continue;
+        for (final LinearModelTerm term : linearModel) {
+            double termValue = term.getCoefficient();
+            for (final DescriptorEntry descriptor : term.getDescriptors()) {
+                final ParameterEntry source = descriptor.getParameter();
+                if (source.isIdentity()) {
+                    continue;
+                }
+                final RelativePositionEntry relativePosition;
+                relativePosition = descriptor.getRelativePosition();
+                key.operation    = descriptor.getOperation();
+                key.timeOffset   = relativePosition.getTypicalTimeOffset();
+                coord1.setLocation(coordinate);
+                time1.setTime(time.getTime());
+                relativePosition.applyOffset(coord1, time1);
+                final int band = source.getBand()-1;
+                int seriesIndex = 0;
+                do {
+                    /*
+                     * Obtient la couverture spatio-temporelle SeriesCoverage3D correspondant à la
+                     * série principale de la composante courante.  Si aucune valeur n'est trouvée
+                     * pour cette série, alors seulement on examinera les séries "de secours".
+                     */
+                    key.series = source.getSeries(seriesIndex++);
+                    if (key.series == null) {
+                        break;
+                    }
+                    final Coverage3D coverage = coverages.get(key);
+                    try {
+                        if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
+                            buffer = ((fr.ird.database.sample.Coverage3D)coverage)
+                                     .evaluate(sample, relativePosition, buffer);
+                        } else {
+                            buffer = coverage.evaluate(coord1, time1, buffer);
+                        }
+                        inside = true;
+                    } catch (PointOutsideCoverageException exception) {
+                        if (outside == null) {
+                            outside = exception;
+                        }
+                        Arrays.fill(buffer, Double.NaN);
+                    }
+                } while (Double.isNaN(buffer[band]));
+                termValue *= descriptor.normalize(buffer[band]);
             }
-            final RelativePositionEntry relativePosition;
-            relativePosition = component.getRelativePosition();
-            key.operation    = component.getOperation();
-            key.timeOffset   = relativePosition.getTypicalTimeOffset();
-            coord1.setLocation(coordinate);
-            time1.setTime(time.getTime());
-            relativePosition.applyOffset(coord1, time1);
-            final int band = source.getBand()-1;
-            int seriesIndex = 0;
-            do {
-                /*
-                 * Obtient la couverture spatio-temporelle SeriesCoverage3D correspondant à la
-                 * série principale de la composante courante.  Si aucune valeur n'est trouvée
-                 * pour cette série, alors seulement on examinera les séries "de secours".
-                 */
-                key.series = source.getSeries(seriesIndex++);
-                if (key.series == null) {
-                    break;
-                }
-                final Coverage3D coverage = coverages.get(key);
-                try {
-                    if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
-                        buffer = ((fr.ird.database.sample.Coverage3D)coverage)
-                                 .evaluate(sample, relativePosition, buffer);
-                    } else {
-                        buffer = coverage.evaluate(coord1, time1, buffer);
-                    }
-                    inside = true;
-                } catch (PointOutsideCoverageException exception) {
-                    if (outside == null) {
-                        outside = exception;
-                    }
-                    Arrays.fill(buffer, Double.NaN);
-                }
-            } while (Double.isNaN(buffer[band]));
-            value += component.getWeight() * component.transform(buffer[band]);
+            value += termValue;
         }
         /*
-         * Calcul terminer. Lance une exception si la coordonnée spécifiée tombait en dehours
+         * Calcul terminer. Lance une exception si la coordonnée spécifiée tombait en dehors
          * de la couverture de *toutes* les séries. Autrement, les séries pour lesquelles le
          * point tombait en dehors auront simplement été considérés comme des données manquantes.
          */
@@ -847,9 +866,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Retourne la valeur à la coordonnée spatio-temporelle spécifiée. Cette valeur sera calculée
-     * en combinant toutes les {@linkplain ParameterEntry#getComponents composantes} du paramètre
-     * spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a été spécifié,
-     * alors cette méthode retourne {@link Double#NaN}.
+     * en combinant tous les termes du {@linkplain ParameterEntry#getLinearModel modèle linéaire}
+     * du paramètre spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a
+     * été spécifié, alors cette méthode retourne {@link Double#NaN}.
      *
      * L'implémentation par défaut délègue le travail à
      * <code>{@link #evaluate(SampleEntry,Point2D,Date) evaluate}(null, coord, time)</code>.

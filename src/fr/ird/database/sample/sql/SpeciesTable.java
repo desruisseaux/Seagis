@@ -99,7 +99,7 @@ final class SpeciesTable extends Table {
      * @param  connection Connection avec la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public SpeciesTable(final Connection connection) throws SQLException {
+    protected SpeciesTable(final Connection connection) throws SQLException {
         super(connection.prepareStatement(preferences.get(SPECIES, SQL_SELECT)));
     }
 

@@ -33,7 +33,7 @@ import java.sql.SQLException;
 
 
 /**
- * Un {@linkplain SampleEntry échantillon } associé à une {@linkplain RelativePositionEntry
+ * Un {@linkplain SampleEntry échantillon} associé à une {@linkplain RelativePositionEntry
  * position relative}. Ces paires seront classées en ordre croissant de date, afin de réduire
  * le nombre d'images à charger. Sans classement, de fréquent retours en arrière seraient
  * nécessaires. Ces objets sont utilisés par {@link EnvironmentColumnFiller}.
@@ -95,8 +95,8 @@ final class SamplePosition implements Comparable<SamplePosition> {
      *                  et après le jour de l'échantillon.
      * @param coverage  L'objet qui servira (plus tard) à calculer les paramètres.
      */
-    public static SamplePosition[] getInstances(final Collection<SampleEntry> samples,
-                                                final Collection<RelativePositionEntry> positions,
+    public static SamplePosition[] getInstances(final Collection<? extends SampleEntry> samples,
+                                                final Collection<? extends RelativePositionEntry> positions,
                                                 final SeriesCoverage3D coverage)
     {
         final SamplePosition[] tasks = new SamplePosition[samples.size() * positions.size()];

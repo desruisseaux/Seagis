@@ -30,9 +30,6 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-// seagis
-import fr.ird.database.sample.RelativePositionEntry;
-
 
 /**
  * Table des positions spatio-temporelles relatives aux positions des données de pêches.
@@ -40,7 +37,9 @@ import fr.ird.database.sample.RelativePositionEntry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
+final class RelativePositionTable
+    extends SingletonTable<fr.ird.database.sample.RelativePositionEntry, RelativePositionEntry>
+{
     /**
      * La requête SQL à utiliser pour obtnir une position relative.
      */
@@ -61,11 +60,11 @@ final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
      * Construit une nouvelle table utilisant la connexion spécifiée.
      *
      * @param  connection Connection vers une base de données des échantillons.
-     * @param  type Le type de la requête. Une des constantes {@link #LIST},
-     *         {@link #BY_ID} ou {@link #BY_NAME}.
+     * @param  type Le type de la requête.
+     *         Une des constantes {@link #LIST}, {@link #BY_ID} ou {@link #BY_NAME}.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public RelativePositionTable(final Connection connection, final int type) throws SQLException {
+    protected RelativePositionTable(final Connection connection, final int type) throws SQLException {
         super(connection, type);
     }
 
@@ -77,7 +76,7 @@ final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
     }
 
     /**
-     * Retourne l'instruction SQL à utiliser pour obtenir les paramètres.
+     * Retourne l'instruction SQL à utiliser pour obtenir les positions relatives.
      */
     protected String getQuery() {
         return preferences.get(POSITIONS, SQL_SELECT);
@@ -86,10 +85,10 @@ final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
     /**
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected RelativePositionEntry getEntry(final ResultSet results) throws SQLException {
-        return new fr.ird.database.sample.sql.RelativePositionEntry(results.getInt    (ID),
-                                                                    results.getString (NAME),
-                                                         Math.round(results.getDouble (TIME_LAG)*DAY),
-                                                                    results.getBoolean(DEFAULT));
+    protected RelativePositionEntry createEntry(final ResultSet results) throws SQLException {
+        return new RelativePositionEntry(results.getInt    (ID),
+                                         results.getString (NAME),
+                              Math.round(results.getDouble (TIME_LAG)*DAY),
+                                         results.getBoolean(DEFAULT));
     }
 }

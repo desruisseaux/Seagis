@@ -30,9 +30,6 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-// seagis
-import fr.ird.database.sample.OperationEntry;
-
 
 /**
  * Interrogation de la table &quot;Opérations&quot;.
@@ -40,7 +37,9 @@ import fr.ird.database.sample.OperationEntry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class OperationTable extends ColumnTable<OperationEntry> {
+final class OperationTable
+    extends SingletonTable<fr.ird.database.sample.OperationEntry, OperationEntry>
+{
     /**
      * Requête SQL pour obtenir le code d'une opération.
      */
@@ -58,11 +57,11 @@ final class OperationTable extends ColumnTable<OperationEntry> {
      * Construit une table des opérations.
      *
      * @param  connection Connection vers une base de données des échantillons.
-     * @param  type Le type de la requête. Une des constantes {@link #LIST},
-     *         {@link #BY_ID} ou {@link #BY_NAME}.
+     * @param  type Le type de la requête.
+     *         Une des constantes {@link #LIST}, {@link #BY_ID} ou {@link #BY_NAME}.
      * @throws SQLException si <code>OperationTable</code> n'a pas pu construire sa requête SQL.
      */
-    OperationTable(final Connection connection, final int type) throws SQLException {
+    protected OperationTable(final Connection connection, final int type) throws SQLException {
         super(connection, type);
     }
 
@@ -74,22 +73,21 @@ final class OperationTable extends ColumnTable<OperationEntry> {
     }
 
     /**
-     * Retourne l'instruction SQL à utiliser pour obtenir les paramètres.
+     * Retourne l'instruction SQL à utiliser pour obtenir les opérations.
      */
     protected String getQuery() {
         return preferences.get(OPERATIONS, SQL_SELECT);
     }
 
     /**
-     * Retourne un objet {@link OperationEntry} correspondant à la ligne courante
-     * de l'objet {@link ResultSet} spécifié.
+     * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected OperationEntry getEntry(final ResultSet results) throws SQLException {
-        return new fr.ird.database.sample.sql.OperationEntry(results.getInt   (ID),
-                                                             results.getString(COLUMN),
-                                                             results.getString(PREFIX),
-                                                             results.getString(OPERATION),
-                                                             results.getString(NAME),
-                                                             results.getString(REMARKS));
+    protected OperationEntry createEntry(final ResultSet results) throws SQLException {
+        return new OperationEntry(results.getInt   (ID),
+                                  results.getString(COLUMN),
+                                  results.getString(PREFIX),
+                                  results.getString(OPERATION),
+                                  results.getString(NAME),
+                                  results.getString(REMARKS));
     }
 }

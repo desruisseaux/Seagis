@@ -59,7 +59,7 @@ final class CruiseTable extends Table {
      * @param  connection Connexion vers la base de données.
      * @throws SQLException si cette table n'a pas pu construire sa requête SQL.
      */
-    public CruiseTable(final Connection connection) throws SQLException {
+    protected CruiseTable(final Connection connection) throws SQLException {
         // Pour l'instant, on ignore la connexion. Elle sera prise en compte dans une version
         // future si on ajoute réellement une table des campagnes dans la base des données.
         super(null);

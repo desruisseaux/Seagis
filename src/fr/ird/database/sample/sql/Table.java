@@ -41,13 +41,15 @@ import fr.ird.database.sample.SampleDataBase;
  * @author Martin Desruisseaux
  */
 abstract class Table implements fr.ird.database.Table {
-    /** Nom de table. */ static final String ENVIRONMENTS = "Environnements";
-    /** Nom de table. */ static final String COMBINATIONS = "Combinaisons";
-    /** Nom de table. */ static final String PARAMETERS   = "Paramètres";
-    /** Nom de table. */ static final String OPERATIONS   = "Opérations";
-    /** Nom de table. */ static final String POSITIONS    = "Positions";
-    /** Nom de table. */ static final String SAMPLES      = "Captures";
-    /** Nom de table. */ static final String SPECIES      = "Espèces";
+    /** Nom de table. */ static final String ENVIRONMENTS  = "Environnements";
+    /** Nom de table. */ static final String LINEAR_MODELS = "Modèles linéaires";
+    /** Nom de table. */ static final String DISTRIBUTIONS = "Distributions";
+    /** Nom de table. */ static final String DESCRIPTORS   = "Descripteurs";
+    /** Nom de table. */ static final String PARAMETERS    = "Paramètres";
+    /** Nom de table. */ static final String OPERATIONS    = "Opérations";
+    /** Nom de table. */ static final String POSITIONS     = "Positions";
+    /** Nom de table. */ static final String SAMPLES       = "Captures";
+    /** Nom de table. */ static final String SPECIES       = "Espèces";
 
     /**
      * Propriétés de la base de données. Ces propriétés peuvent contenir

@@ -100,7 +100,8 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         Table.ENVIRONMENTS,           EnvironmentTableStep .SQL_SELECT,
         Table.ENVIRONMENTS+":UPDATE", EnvironmentTable     .SQL_UPDATE,
         Table.ENVIRONMENTS+":INSERT", EnvironmentTable     .SQL_INSERT,
-        Table.COMBINATIONS,           CombinationTable     .SQL_SELECT,
+        Table.LINEAR_MODELS,          LinearModelTable     .SQL_SELECT,
+        Table.DESCRIPTORS,            DescriptorTable      .SQL_SELECT,
         Table.PARAMETERS,             ParameterTable       .SQL_SELECT,
         Table.OPERATIONS,             OperationTable       .SQL_SELECT,
         Table.POSITIONS,              RelativePositionTable.SQL_SELECT
@@ -120,7 +121,8 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         ResourceKeys.SQL_ENVIRONMENTS,
         ResourceKeys.SQL_ENVIRONMENTS_UPDATE,
         ResourceKeys.SQL_ENVIRONMENTS_INSERT,
-        ResourceKeys.SQL_COMBINATIONS,
+        ResourceKeys.SQL_LINEAR_MODELS,
+        ResourceKeys.SQL_DESCRIPTORS,
         ResourceKeys.SQL_PARAMETERS,
         ResourceKeys.SQL_OPERATIONS,
         ResourceKeys.SQL_POSITIONS
@@ -250,9 +252,9 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     /**
      * {@inheritDoc}
      */
-    public Set<+ParameterEntry> getParameters(final SeriesTable series) throws SQLException {
+    public Set<ParameterEntry> getParameters(final SeriesTable series) throws SQLException {
         final ParameterTable table = new ParameterTable(connection, ParameterTable.LIST, series);
-        final Set<+ParameterEntry> set = table.list();
+        final Set<ParameterEntry> set = table.list();
         table.close();
         return set;
     }

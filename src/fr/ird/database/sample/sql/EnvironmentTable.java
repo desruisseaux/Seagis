@@ -88,19 +88,25 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
      */
     static final String SQL_UPDATE=
                     "UPDATE "+ENVIRONMENTS+" SET [?]=? "+
-                    "WHERE ID=? AND position=? AND paramètre=?";
+                    "WHERE capture=? AND position=? AND paramètre=?";
 
     /**
      * Instruction SQL pour ajouter une donnée environnementale.
      */
     static final String SQL_INSERT=
-                    "INSERT INTO "+ENVIRONMENTS+" (ID,position,paramètre,[?]) "+
+                    "INSERT INTO "+ENVIRONMENTS+" (capture,position,paramètre,[?]) "+
                     "VALUES(?,?,?,?)";
 
-    /** Numéro d'argument. */ private static final int ARG_ID        = 1;
+    /** Numéro d'argument. */ private static final int ARG_SAMPLE    = 1;
     /** Numéro d'argument. */ private static final int ARG_POSITION  = 2;
     /** Numéro d'argument. */ private static final int ARG_PARAMETER = 3;
     /** Numéro d'argument. */ private static final int ARG_VALUE     = 4;
+
+    /**
+     * La table des descripteurs du paysage océanique.
+     * Ne sera construite que la première fois où elle sera nécessaire.
+     */
+    private transient DescriptorTable descriptors;
 
     /**
      * Table des échantillons à joindre avec les paramètres environnementaux retournés par
@@ -127,30 +133,6 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
     private transient boolean[] nullIncluded;
 
     /**
-     * La table des séries. Cette table ne sera pas fermée par {@link #close},
-     * puisqu'elle n'appartient pas à cet objet <code>EnvironmentTable</code>.
-     */
-    private final SeriesTable seriesTable;
-
-    /**
-     * Table des paramètres. Cette table est construite
-     * automatiquement la première fois où elle est nécessaire.
-     */
-    private transient ParameterTable parameterTable;
-
-    /**
-     * Table des opérations. Cette table est construite
-     * automatiquement la première fois où elle est nécessaire.
-     */
-    private transient OperationTable operationTable;
-
-    /**
-     * Table des positions. Cette table est construite automatiquement la
-     * première fois où elle est nécessaire.
-     */
-    private transient RelativePositionTable positionTable;
-
-    /**
      * Instruction à utiliser pour les mises à jour et les insertions.
      * Ces instructions ne seront construites que la première fois où
      * elle seront nécessaires.
@@ -166,14 +148,6 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
     private transient String columnUpdate, columnInsert;
 
     /**
-     * La connection vers la base de données.
-     *
-     * @task TODO: remplacer par <code>statement.getConnection()</code> si on utilise
-     *             un jour le constructeur 'super(...)' avec une valeur non-nulle.
-     */
-    private final Connection connection;
-
-    /**
      * Construit une table.
      *
      * @param  connection Connection vers une base de données des échantillons.
@@ -183,8 +157,8 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
      */
     protected EnvironmentTable(final Connection connection, final SeriesTable series) throws SQLException {
         super(null);
-        this.connection  = connection;
-        this.seriesTable = series;
+        descriptors = new ParameterTable(connection, ParameterTable.BY_ID, series)
+                          .getLinearModelTable().getDescriptorTable();
     }
 
     /**
@@ -202,7 +176,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
             record.setSourceMethodName("setSampleTable");
             SampleDataBase.LOGGER.log(record);
             if (table != null) {
-                sampleTableStep = new SampleTableStep(connection, table);
+                sampleTableStep = new SampleTableStep(descriptors.getConnection(), table);
             }
         }
     }
@@ -217,62 +191,39 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
     /**
      * {@inheritDoc}
      */
-    public synchronized Set<+ParameterEntry> getAvailableParameters() throws SQLException {
-        ensureTableConnected(true, false, false, ColumnTable.LIST);
-        return parameterTable.list();
+    public synchronized Set<ParameterEntry> getAvailableParameters() throws SQLException {
+        return descriptors.getParameterTable(SingletonTable.LIST).list();
     }
 
     /**
      * {@inheritDoc}
      */
     public synchronized Set<OperationEntry> getAvailableOperations() throws SQLException {
-        ensureTableConnected(false, true, false, ColumnTable.LIST);
-        return operationTable.list();
+        return descriptors.getOperationTable(SingletonTable.LIST).list();
     }
 
     /**
      * {@inheritDoc}
      */
     public synchronized Set<RelativePositionEntry> getAvailablePositions() throws SQLException {
-        ensureTableConnected(false, false, true, ColumnTable.LIST);
-        return positionTable.list();
-    }
-
-    /**
-     * Vérifie que les tables des paramètres et des positions sont construites.
-     *
-     * @param  type Le type de la requête. Une des constantes {@link ColumnTable#LIST},
-     *         {@link ColumnTable#BY_ID} ou {@link ColumnTable#BY_NAME}.
-     */
-    private void ensureTableConnected(final boolean parameter,
-                                      final boolean operation,
-                                      final boolean position,
-                                      final int type) throws SQLException
-    {
-        if (parameter && parameterTable == null) {
-            parameterTable = new ParameterTable(connection, type, seriesTable);
-        }
-        if (operation && operationTable == null) {
-            operationTable = new OperationTable(connection, type);
-        }
-        if (position && positionTable == null) {
-            positionTable = new RelativePositionTable(connection, type);
-        }
+        return descriptors.getPositionTable(SingletonTable.LIST).list();
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @task TODO: Le compilateur prototype 2.0 nous oblige à ajouter les cast.
+     *             Vérifier si une version plus récente arrive à résoudre tout seul.
      */
     public synchronized void addParameter(final String  parameter,
                                           final String  operation,
                                           final String  position,
                                           final boolean nullIncluded) throws SQLException
     {
-        ensureTableConnected(true, true, true, ColumnTable.BY_NAME);
-        addParameter(parameterTable.getEntry(parameter),
-                     operationTable.getEntry(operation),
-                      positionTable.getEntry(position),
-                      nullIncluded);
+        addParameter((ParameterEntry)descriptors.getParameterTable(SingletonTable.BY_NAME).getEntry(parameter),
+                     (OperationEntry)descriptors.getOperationTable(SingletonTable.BY_NAME).getEntry(operation),
+              (RelativePositionEntry)descriptors.getPositionTable (SingletonTable.BY_NAME).getEntry(position ),
+                     nullIncluded);
     }
 
     /**
@@ -312,15 +263,17 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
 
     /**
      * {@inheritDoc}
+     *
+     * @task TODO: Le compilateur prototype 2.0 nous oblige à ajouter les cast.
+     *             Vérifier si une version plus récente arrive à résoudre tout seul.
      */
     public synchronized void removeParameter(final String parameter,
                                              final String operation,
                                              final String position) throws SQLException
     {
-        ensureTableConnected(true, true, true, ColumnTable.BY_NAME);
-        removeParameter(parameterTable.getEntry(parameter),
-                        operationTable.getEntry(operation),
-                         positionTable.getEntry(position));
+        removeParameter((ParameterEntry)descriptors.getParameterTable(SingletonTable.BY_NAME).getEntry(parameter),
+                        (OperationEntry)descriptors.getOperationTable(SingletonTable.BY_NAME).getEntry(operation),
+                 (RelativePositionEntry)descriptors.getPositionTable (SingletonTable.BY_NAME).getEntry(position));
     }
 
     /**
@@ -397,7 +350,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
         for (int i=0; i<nullIncluded.length; i++) {
             nullIncluded[i] = hasNul.get(i).booleanValue();
         }
-        return (String[])titles.toArray(new String[titles.size()]);
+        return titles.toArray(new String[titles.size()]);
     }
 
     /**
@@ -411,7 +364,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
         int i = (sampleTableStep!=null) ? 1 : 0;
         final ResultSet[]    results = new ResultSet[parameters.size() + i];
         final boolean[] nullIncluded = new boolean[results.length];
-        final Connection  connection = this.connection;
+        final Connection  connection = descriptors.getConnection();
         if (sampleTableStep != null) {
             results[0] = sampleTableStep.getResultSet();
         }
@@ -563,7 +516,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
             }
             buffer.append(')');
             final String sqlCreate = buffer.toString();
-            creator = (connection!=null ? connection : this.connection).createStatement(
+            creator = (connection!=null ? connection : descriptors.getConnection()).createStatement(
                            ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             creator.execute(sqlCreate);
             buffer.setLength(0);
@@ -657,11 +610,11 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
                     update = null;
                 }
                 if (update == null) {
-                    update = connection.prepareStatement(replaceQuestionMark(
+                    update = descriptors.getConnection().prepareStatement(replaceQuestionMark(
                              preferences.get(ENVIRONMENTS+":UPDATE", SQL_UPDATE), column));
                     columnUpdate = column;
                 }
-                update.setInt   (1+ARG_ID,        sample.getID());
+                update.setInt   (1+ARG_SAMPLE,    sample.getID());
                 update.setInt   (1+ARG_PARAMETER, parameter);
                 update.setInt   (1+ARG_POSITION,  position);
                 update.setDouble(1,               value);
@@ -677,11 +630,11 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
                         insert = null;
                     }
                     if (insert == null) {
-                        insert = connection.prepareStatement(replaceQuestionMark(
+                        insert = descriptors.getConnection().prepareStatement(replaceQuestionMark(
                                  preferences.get(ENVIRONMENTS+":INSERT", SQL_INSERT), column));
                         columnInsert = column;
                     }
-                    insert.setInt   (ARG_ID,        sample.getID());
+                    insert.setInt   (ARG_SAMPLE,    sample.getID());
                     insert.setInt   (ARG_PARAMETER, parameter);
                     insert.setInt   (ARG_POSITION,  position);
                     insert.setDouble(ARG_VALUE,     value);
@@ -719,17 +672,9 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
             update.close();
             update = null;
         }
-        if (positionTable != null) {
-            positionTable.close();
-            positionTable = null;
-        }
-        if (operationTable != null) {
-            operationTable.close();
-            operationTable = null;
-        }
-        if (parameterTable != null) {
-            parameterTable.close();
-            parameterTable = null;
+        if (descriptors != null) {
+            descriptors.close();
+            descriptors = null;
         }
         if (sampleTableStep != null) {
             sampleTableStep.close();

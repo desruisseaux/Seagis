@@ -85,7 +85,7 @@ public interface EnvironmentTable extends Table {
      * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public abstract Set<+ParameterEntry> getAvailableParameters() throws SQLException;
+    public abstract Set<ParameterEntry> getAvailableParameters() throws SQLException;
 
     /**
      * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur

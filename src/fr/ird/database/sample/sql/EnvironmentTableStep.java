@@ -61,12 +61,11 @@ import fr.ird.database.sample.RelativePositionEntry;
 final class EnvironmentTableStep extends Table {
     /**
      * Requête SQL pour obtenir la table des données environnementales.
-     * Cette requête <strong>doit</strong> être classé par numéro ID.
+     * Cette requête <strong>doit</strong> être classé par numéro ID des échantillons.
      */
     static final String SQL_SELECT=
-                    "SELECT ID FROM "+ENVIRONMENTS+" WHERE position=? AND paramètre=? ORDER BY ID";
+           "SELECT capture FROM "+ENVIRONMENTS+" WHERE position=? AND paramètre=? ORDER BY capture";
 
-    /** Numéro de colonne. */ private static final int ID            = 1;
     /** Numéro d'argument. */ private static final int ARG_POSITION  = 1;
     /** Numéro d'argument. */ private static final int ARG_PARAMETER = 2;
 

@@ -163,7 +163,7 @@ public class SampleTableFiller implements Table {
             throws SQLException
     {
         final Collection<SampleEntry> list = table.getEntries();
-        final SampleEntry[] samples = (SampleEntry[])list.toArray(new SampleEntry[list.size()]);
+        final SampleEntry[] samples = list.toArray(new SampleEntry[list.size()]);
         Arrays.sort(samples, new Comparator<SampleEntry>() {
             public int compare(final SampleEntry e1, final SampleEntry e2) {
                 return e1.getTime().compareTo(e2.getTime());
