@@ -121,9 +121,9 @@ public interface CatchTable extends Table
     public abstract List<CatchEntry> getEntries() throws SQLException;
 
     /**
-     * Définie une valeur pour une capture données. Cette méthode peut être utilisée
-     * pour mettre à jour certaine informations relatives à la capture. La capture
-     * spécifiée doit exister dans la base de données.
+     * Définie une valeur réelle pour une capture données.  Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture. La capture spécifiée
+     * doit exister dans la base de données.
      *
      * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
      * @param columnName Nom de la colonne à mettre à jour.
@@ -133,4 +133,18 @@ public interface CatchTable extends Table
      *         de la base de données a échouée pour une autre raison.
      */
     public abstract void setValue(final CatchEntry capture, final String columnName, final float value) throws SQLException;
+
+    /**
+     * Définie une valeur booléenne pour une capture données. Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture.   La capture spécifiée
+     * doit exister dans la base de données.
+     *
+     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
+     * @param columnName Nom de la colonne à mettre à jour.
+     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
+     *                   <code>capture</code>, colonne <code>columnName</code>.
+     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
+     *         de la base de données a échouée pour une autre raison.
+     */
+    public abstract void setValue(final CatchEntry capture, final String columnName, final boolean value) throws SQLException;
 }

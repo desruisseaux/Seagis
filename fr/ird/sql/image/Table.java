@@ -86,7 +86,7 @@ abstract class Table implements fr.ird.sql.Table
      * Constante désignant la valeur "True" dans la clause "WHERE". Pour Access, c'est "True".
      * Pour MySQL, c'est 'Y' (entre appostrophes). Vive les standards qui n'en sont pas!
      */
-    static final String TRUE = "True";
+    static final String TRUE = "TRUE"; // PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules.
 
     /**
      * Clé à utiliser pour mémoriser dans les préférences

@@ -813,9 +813,9 @@ public class ImageTableModel extends AbstractTableModel
 
     /**
      * Classe des entrées des images.  Cette classe redirige la plupart des appels de ses méthodes vers
-     * un autre objet {@link ImageEntry}. La principale exception est la méthode {@link #getImage}, qui
-     * intercepte les appels pour mettre à jour des variables internes indiquant si une image a été vue
-     * ou si sa lecture a échouée.
+     * un autre objet {@link ImageEntry}. La principale exception est la méthode {@link #getGridCoverage},
+     * qui intercepte les appels pour mettre à jour des variables internes indiquant si une image a été
+     * vue ou si sa lecture a échouée.
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -852,11 +852,11 @@ public class ImageTableModel extends AbstractTableModel
          * annulée par l'utilisateur, alors le drapeau {@link #VIEWED} sera levé.
          * Si la lecture a échoué, alors le drapeau {@link #CORRUPTED} sera levé.
          */
-        public GridCoverage getImage(final EventListenerList listenerList) throws IOException
+        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
         {
             try
             {
-                final GridCoverage image=entry.getImage(listenerList);
+                final GridCoverage image=entry.getGridCoverage(listenerList);
                 if (image!=null) setFlag(VIEWED, true);
                 setFlag((byte)(MISSING|CORRUPTED), false);
                 return image;

@@ -172,16 +172,16 @@ final class ImageEntryImpl implements ImageEntry, Serializable
 
     /**
      * Référence molle vers l'image {@link GridCoverage} qui a été retournée lors
-     * du dernier appel de {@link #getImage}. Cette référence est retenue afin
-     * d'éviter de charger inutilement une autre fois l'image si elle est déjà
+     * du dernier appel de {@link #getGridCoverage}.  Cette référence est retenue
+     * afin d'éviter de charger inutilement une autre fois l'image si elle est déjà
      * en mémoire.
      */
     private transient Reference gridCoverage;
 
     /**
      * Référence molle vers l'image {@link RenderedImage} qui a été retournée lors
-     * du dernier appel de {@link #getImage}. Cette référence est retenue afin
-     * d'éviter de charger inutilement une autre fois l'image si elle est déjà
+     * du dernier appel de {@link #getGridCoverage}.   Cette référence est retenue
+     * afin d'éviter de charger inutilement une autre fois l'image si elle est déjà
      * en mémoire.
      */
     private transient Reference renderedImage;
@@ -366,7 +366,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties est survenue.
      * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est pas valide.
      */
-    public synchronized GridCoverage getImage(final EventListenerList listenerList) throws IOException
+    public synchronized GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
     {
         /*
          * NOTE SUR LES SYNCHRONISATIONS: Cette méthode est synchronisée à plusieurs niveau:
@@ -547,9 +547,13 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          */
         GridCoverageProcessor processor = parameters.PROCESSOR;
         Operation             operation = parameters.operation;
-        if (operation!=null)
+        if (operation!=null) try
         {
-            coverage = processor.doOperation(operation, operation.getParameterList().setParameter("Source", coverage));
+            coverage = processor.doOperation(operation, parameters.parameters.setParameter("Source", coverage));
+        }
+        finally
+        {
+            parameters.parameters.setParameter("Source", null);
         }
         /*
          * Applique l'interpolation bicubique, conserve le
@@ -564,8 +568,8 @@ final class ImageEntryImpl implements ImageEntry, Serializable
 
     /**
      * Annule la lecture de l'image. Cette méthode peut être appelée à partir de n'importe quel
-     * thread. Si la méthode {@link #getImage} était en train de lire une image dans un autre
-     * thread, elle s'arrêtera et retournera <code>null</code>.
+     * thread.  Si la méthode {@link #getGridCoverage} était en train de lire une image dans un
+     * autre thread, elle s'arrêtera et retournera <code>null</code>.
      */
     public void abort()
     {parameters.format.abort(this);}

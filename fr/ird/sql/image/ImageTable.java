@@ -46,6 +46,7 @@ import java.util.List;
 import fr.ird.sql.Table;
 import net.seas.plot.RangeSet;
 import javax.media.jai.util.Range;
+import javax.media.jai.ParameterList;
 
 
 /**
@@ -174,24 +175,39 @@ public interface ImageTable extends Table
     public abstract Operation getOperation();
 
     /**
-     * Définit l'opération à appliquer sur les images lues. La valeur <code>null</code>
-     * signifie qu'aucune opération ne doit être appliquée.
+     * Définit l'opération à appliquer sur les images lues. Si des paramètres doivent
+     * être spécifiés  en plus de l'opération,   ils peuvent l'être en appliquant des
+     * méthodes <code>setParameter</code> sur la référence retournée. Par exemple, la
+     * ligne suivante transforme tous les pixels des images à lire en appliquant
+     * l'équation linéaire <code>value*constant+offset</code>:
      *
-     * @param  operation L'opération à appliquer sur les images.
+     * <blockquote><pre>
+     * setOperation("Rescale").setParameter("constants", new double[]{10})
+     *                        .setParameter("offsets"  , new double[]{50]);
+     * </pre></blockquote>
+     *
+     * @param  operation L'opération à appliquer sur les images, ou <code>null</code> pour
+     *         n'appliquer aucune opération.
+     * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
+     *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
+     *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      * @throws SQLException si un accès à la base de données était nécessaire et a échouée.
      */
-    public abstract void setOperation(final Operation operation) throws SQLException;
+    public abstract ParameterList setOperation(final Operation operation) throws SQLException;
 
     /**
-     * Définit l'opération à appliquer sur les images lues. La valeur <code>null</code>
-     * signifie qu'aucune opération ne doit être appliquée. Cette méthode est équivalente
-     * à <code>setOperation({@link GridImageProcessor#getOperation GridImageProcessor.getOperation}(name))</code>.
+     * Définit l'opération à appliquer sur les images lues. Cette méthode est équivalente à
+     * <code>setOperation({@link GridImageProcessor#getOperation GridImageProcessor.getOperation}(name))</code>.
      *
-     * @param  operation Le nom de l'opération à appliquer sur les images.
+     * @param  operation L'opération à appliquer sur les images, ou <code>null</code> pour
+     *         n'appliquer aucune opération.
+     * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
+     *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
+     *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      * @throws SQLException si un accès à la base de données était nécessaire et a échouée.
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
      */
-    public abstract void setOperation(final String operation) throws SQLException, OperationNotFoundException;
+    public abstract ParameterList setOperation(final String operation) throws SQLException, OperationNotFoundException;
 
     /**
      * Retourne la liste des images disponibles dans la plage de coordonnées

@@ -316,9 +316,9 @@ final class LonglineCatchTable extends AbstractCatchTable
 //  }
 
     /**
-     * Définie une valeur pour une capture données. Cette méthode peut être utilisée
-     * pour mettre à jour certaine informations relatives à la capture. La capture
-     * spécifiée doit exister dans la base de données.
+     * Définie une valeur réelle pour une capture données.  Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture. La capture spécifiée
+     * doit exister dans la base de données.
      *
      * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
      * @param columnName Nom de la colonne à mettre à jour.
@@ -334,6 +334,31 @@ final class LonglineCatchTable extends AbstractCatchTable
             update = statement.getConnection().createStatement();
         }
         if (update.executeUpdate("UPDATE "+LONGLINES+" SET "+columnName+"="+value+" WHERE ID="+capture.getID())==0)
+        {
+            throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
+        }
+    }
+
+    /**
+     * Définie une valeur booléenne pour une capture données. Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture.   La capture spécifiée
+     * doit exister dans la base de données.
+     *
+     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
+     * @param columnName Nom de la colonne à mettre à jour.
+     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
+     *                   <code>capture</code>, colonne <code>columnName</code>.
+     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
+     *         de la base de données a échouée pour une autre raison.
+     */
+    public synchronized void setValue(final CatchEntry capture, final String columnName, final boolean value) throws SQLException
+    {
+        if (update==null)
+        {
+            update = statement.getConnection().createStatement();
+        }
+        // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
+        if (update.executeUpdate("UPDATE "+LONGLINES+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID())==0)
         {
             throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
         }

@@ -62,6 +62,7 @@ import net.seas.util.OpenGIS;
 import net.seas.util.WeakHashSet;
 import net.seas.util.XDimension2D;
 import net.seas.resources.Resources;
+import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
 
@@ -80,7 +81,7 @@ final class Parameters implements Serializable
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
-    private static final long serialVersionUID = -3570512426526015662L;
+//  private static final long serialVersionUID = -3570512426526015662L; // TODO
 
     /**
      * Objet à utiliser par défaut pour construire des transformations de coordonnées.
@@ -105,6 +106,12 @@ final class Parameters implements Serializable
      * ou <code>null</code> s'il n'y en a aucune.
      */
     public final Operation operation;
+
+    /**
+     * Paramètres à appliquer sur l'opération, ou
+     * <code>null</code> s'il n'y a pas d'opération.
+     */
+    public final ParameterList parameters;
 
     /**
      * Format à utiliser pour lire les images.
@@ -154,6 +161,8 @@ final class Parameters implements Serializable
      * @param format Format à utiliser pour lire les images.
      * @param pathname Chemin relatif des images.
      * @param operation Opération à appliquer sur les images, ou <code>null</code>.
+     * @param parameters Paramètres à appliquer sur l'opération, ou <code>null</code>
+     *        s'il n'y a pas d'opération.
      * @param coordinateSystem Système de coordonnées utilisé.  Le système de
      *        coordonnées de tête ("head") doit obligatoirement être un objet
      *        {@link HorizontalCoordinateSystem}.
@@ -166,6 +175,7 @@ final class Parameters implements Serializable
                       final FormatEntry              format,
                       final String                   pathname,
                       final Operation                operation,
+                      final ParameterList            parameters,
                       final CompoundCoordinateSystem coordinateSystem,
                       final Rectangle2D              geographicArea,
                       final Dimension2D              resolution,
@@ -175,6 +185,7 @@ final class Parameters implements Serializable
         this.format           = format;
         this.pathname         = pathname;
         this.operation        = operation;
+        this.parameters       = parameters;
         this.coordinateSystem = coordinateSystem;
         this.geographicArea   = geographicArea;
         this.resolution       = resolution;
@@ -207,8 +218,11 @@ final class Parameters implements Serializable
             }
             else newResolution=null;
 
-            final CompoundCoordinateSystem  ccs = new CompoundCoordinateSystem(coordinateSystem.getName(null), cs, coordinateSystem.getTailCS());
-            final Parameters         parameters = new Parameters(series, format, pathname, operation, ccs, newGeographicArea, newResolution, dateFormat);
+            final CompoundCoordinateSystem ccs = new CompoundCoordinateSystem(coordinateSystem.getName(null), cs, coordinateSystem.getTailCS());
+            final Parameters parameters = new Parameters(series, format, pathname,
+                                                         operation, this.parameters,
+                                                         ccs, newGeographicArea, newResolution,
+                                                         dateFormat);
 
             Table.logger.fine(Resources.format(Clé.TRANSFORMATION_TO_CS¤1, cs.getName(null)));
             return (Parameters) Table.pool.intern(parameters);
@@ -228,6 +242,7 @@ final class Parameters implements Serializable
                    XClass.equals(this.format          , that.format          ) &&
                    XClass.equals(this.pathname        , that.pathname        ) &&
                    XClass.equals(this.operation       , that.operation       ) &&
+                   XClass.equals(this.parameters      , that.parameters      ) &&
                    XClass.equals(this.coordinateSystem, that.coordinateSystem) &&
                    XClass.equals(this.geographicArea  , that.geographicArea  ) &&
                    XClass.equals(this.resolution      , that.resolution      ) &&

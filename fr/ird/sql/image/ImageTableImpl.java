@@ -80,6 +80,7 @@ import net.seas.util.OpenGIS;
 import net.seas.plot.RangeSet;
 import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;
+import javax.media.jai.ParameterList;
 
 
 /**
@@ -203,6 +204,12 @@ final class ImageTableImpl extends Table implements ImageTable
      * ou <code>null</code> s'il n'y en a aucune.
      */
     private Operation operation;
+
+    /**
+     * Paramètres de l'opération, ou <code>null</code>
+     * s'il n'y a pas d'opération.
+     */
+    private ParameterList opParam;
 
     /**
      * Dimension logique (en degrés de longitude et de latitude) désirée des pixels
@@ -511,42 +518,58 @@ final class ImageTableImpl extends Table implements ImageTable
     {return operation;}
 
     /**
-     * Définit l'opération à appliquer sur les images lues. La valeur <code>null</code>
-     * signifie qu'aucune opération ne doit être appliquée.
+     * Définit l'opération à appliquer sur les images lues. Si des paramètres doivent
+     * être spécifiés  en plus de l'opération,   ils peuvent l'être en appliquant des
+     * méthodes <code>setParameter</code> sur la référence retournée. Par exemple, la
+     * ligne suivante transforme tous les pixels des images à lire en appliquant
+     * l'équation linéaire <code>value*constant+offset</code>:
      *
-     * @param  operation L'opération à appliquer sur les images.
+     * <blockquote><pre>
+     * setOperation("Rescale").setParameter("constants", new double[]{10})
+     *                        .setParameter("offsets"  , new double[]{50]);
+     * </pre></blockquote>
+     *
+     * @param  operation L'opération à appliquer sur les images, ou <code>null</code> pour
+     *         n'appliquer aucune opération.
+     * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
+     *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
+     *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      */
-    public synchronized void setOperation(final Operation operation)
+    public synchronized ParameterList setOperation(final Operation operation)
     {
-        if (!XClass.equals(operation, this.operation))
+        this.parameters = null;
+        this.operation=operation;
+        final int clé;
+        final String name;
+        if (operation!=null)
         {
-            this.operation=operation;
-            final int clé;
-            final String name;
-            if (operation!=null)
-            {
-                clé  = Clé.SET_OPERATION¤1;
-                name = operation.getName();
-            }
-            else
-            {
-                clé  = Clé.UNSET_OPERATION;
-                name = null;
-            }
-            log("setOperation", Level.CONFIG, clé, name);
+            opParam = operation.getParameterList();
+            name    = operation.getName();
+            clé     = Clé.SET_OPERATION¤1;
         }
+        else
+        {
+            opParam = null;
+            name    = null;
+            clé     = Clé.UNSET_OPERATION;
+        }
+        log("setOperation", Level.CONFIG, clé, name);
+        return opParam;
     }
 
     /**
-     * Définit l'opération à appliquer sur les images lues. La valeur <code>null</code>
-     * signifie qu'aucune opération ne doit être appliquée. Cette méthode est équivalente
-     * à <code>setOperation({@link GridImageProcessor#getOperation GridImageProcessor.getOperation}(name))</code>.
+     * Définit l'opération à appliquer sur les images lues. Cette méthode est équivalente à
+     * <code>setOperation({@link GridImageProcessor#getOperation GridImageProcessor.getOperation}(name))</code>.
      *
-     * @param  operation Le nom de l'opération à appliquer sur les images.
+     * @param  operation L'opération à appliquer sur les images, ou <code>null</code> pour
+     *         n'appliquer aucune opération.
+     * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
+     *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
+     *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
      */
-    public void setOperation(final String operation) throws OperationNotFoundException
-    {setOperation(operation!=null ? Parameters.PROCESSOR.getOperation(operation) : null);}
+    public ParameterList setOperation(final String operation) throws OperationNotFoundException
+    {return setOperation(operation!=null ? Parameters.PROCESSOR.getOperation(operation) : null);}
 
     /**
      * Retourne la liste des images disponibles dans la plage de coordonnées
@@ -894,7 +917,7 @@ final class ImageTableImpl extends Table implements ImageTable
          */
         if (invalidate || !coordinateSystem.equivalents(parameters.coordinateSystem))
         {
-            parameters = (Parameters)pool.intern(new Parameters(series, getFormat(formatID), pathname, operation,
+            parameters = (Parameters)pool.intern(new Parameters(series, getFormat(formatID), pathname, operation, opParam,
                                                                 coordinateSystem, geographicArea, resolution, dateFormat));
         }
         try

@@ -541,8 +541,8 @@ public class ImageDataBase extends DataBase
         if (console.config)
         {
             getSQLEditor().showDialog(null);
+            System.exit(0);
         }
         console.run();
-        System.exit(0);
     }
 }

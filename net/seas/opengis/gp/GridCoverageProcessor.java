@@ -106,14 +106,15 @@ public class GridCoverageProcessor
         {
             DEFAULT = new GridCoverageProcessor();
             DEFAULT.addOperation(new Interpolator.Operation());
-            DEFAULT.addOperation(new GradientMagnitude());
+            DEFAULT.addOperation(new OperationJAI("GradientMagnitude"));
+            DEFAULT.addOperation(new OperationJAI("Rescale"));
         }
         return DEFAULT;
     }
 
     /**
      * Add the specified operation to this processor. This method is usually invoked
-     * at construction time <strong>before</code> this processor is made accessible.
+     * at construction time <strong>before</strong> this processor is made accessible.
      * Once accessible, all <code>GridCoverageProcessor</code> instances should be
      * immutable.
      *
@@ -174,7 +175,7 @@ public class GridCoverageProcessor
     /**
      * Apply a process operation to a grid coverage.
      *
-     * @param  operationName Name of the operation to be applied to the grid coverage..
+     * @param  operationName Name of the operation to be applied to the grid coverage.
      * @param  parameters List of name value pairs for the parameters required for the operation.
      *         The easiest way to construct this list is to invoke <code>{@link #getOperation
      *         getOperation}(name).{@link Operation#getParameterList getParameterList}()</code>
@@ -192,7 +193,7 @@ public class GridCoverageProcessor
      * interpolation, the same interpolation is applied to the resulting
      * coverage (except if the resulting coverage has already an interpolation).
      *
-     * @param  operation The operation to be applied to the grid coverage..
+     * @param  operation The operation to be applied to the grid coverage.
      * @param  parameters List of name value pairs for the parameters required for
      *         the operation.  The easiest way to construct this list is to invoke
      *         <code>operation.{@link Operation#getParameterList getParameterList}()</code>

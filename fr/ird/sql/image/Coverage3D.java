@@ -381,7 +381,7 @@ public class Coverage3D extends Coverage
     {
         final ImageEntry entry = entries[index];
         log(Clé.LOAD_IMAGE¤1, new Object[]{entry});
-        lower = upper = entry.getImage(listeners);
+        lower = upper = entry.getGridCoverage(listeners);
         timeLower = timeUpper = getTime(entry);
     }
 
@@ -395,8 +395,8 @@ public class Coverage3D extends Coverage
         final long timeLower = getTime(entryLower);
         final long timeUpper = getTime(entryUpper);
         log(Clé.LOAD_IMAGES¤2, new Object[]{entryLower, entryUpper});
-        final GridCoverage lower = entryLower.getImage(listeners);
-        final GridCoverage upper = entryUpper.getImage(listeners);
+        final GridCoverage lower = entryLower.getGridCoverage(listeners);
+        final GridCoverage upper = entryUpper.getGridCoverage(listeners);
         this.lower     = lower; // Set only when BOTH images are OK.
         this.upper     = upper;
         this.timeLower = timeLower;

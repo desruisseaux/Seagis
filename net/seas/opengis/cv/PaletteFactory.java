@@ -1,5 +1,5 @@
 /*
- * OpenGIS implementation in Java
+ * SEAS - Surveillance de l'Environnement Assistée par Satellites
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -350,9 +350,15 @@ public class PaletteFactory
     }
 
     /**
-     * Construit une palette de couleur à partir des codes ARGB spécifiés.
-     * Si des codes de couleurs ont une composante Alpha autre que 255, la
-     * palette de couleurs sera translucide.
+     * Returns an index color model for specified ARGB codes.   If the specified
+     * array has not transparent color (i.e. all alpha values are 255), then the
+     * returned color model will be opaque. Otherwise, if the specified array has
+     * one and only one color with alpha value of 0, the returned color model will
+     * have only this transparent color. Otherwise, the returned color model will
+     * be translucide.
+     *
+     * @param  ARGB An array of ARGB values.
+     * @return An index color model for the specified array.
      */
     static IndexColorModel getIndexColorModel(final int[] ARGB)
     {

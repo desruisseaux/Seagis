@@ -267,7 +267,7 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     public abstract List<SampleDimension> getSampleDimensions();
 
     /**
-     * Return a sequence of boolean values for a given point in the coverage.
+     * Returns a sequence of boolean values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid
@@ -293,7 +293,7 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     }
 
     /**
-     * Return a sequence of integer values for a given point in the coverage.
+     * Returns a sequence of integer values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The default
      * interpolation type used when accessing grid values for points which fall
      * between grid cells is nearest neighbor. The coordinate system of the
@@ -321,7 +321,7 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     }
 
     /**
-     * Return an sequence of float values for a given point in the coverage.
+     * Returns a sequence of float values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid coverage
@@ -346,7 +346,7 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     }
 
     /**
-     * Return an sequence of double values for a given point in the coverage.
+     * Returns a sequence of double values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid coverage

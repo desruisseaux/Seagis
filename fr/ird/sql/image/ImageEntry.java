@@ -155,12 +155,12 @@ public interface ImageEntry extends Entry
      * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties est survenue.
      * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est pas valide.
      */
-    public abstract GridCoverage getImage(final EventListenerList listenerList) throws IOException;
+    public abstract GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException;
 
     /**
      * Annule la lecture de l'image. Cette méthode peut être appelée à partir de n'importe quel
-     * thread. Si la méthode {@link #getImage} était en train de lire une image dans un autre
-     * thread, elle s'arrêtera et retournera <code>null</code>.
+     * thread.  Si la méthode {@link #getGridCoverage} était en train de lire une image dans un
+     * autre thread, elle s'arrêtera et retournera <code>null</code>.
      */
     public abstract void abort();
 
@@ -201,8 +201,8 @@ public interface ImageEntry extends Entry
         /**
          * Redirige vers {@link #entry}.
          */
-        public GridCoverage getImage(final EventListenerList listenerList) throws IOException
-        {return entry.getImage(listenerList);}
+        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
+        {return entry.getGridCoverage(listenerList);}
 
         /**
          * Retourne <code>true</code> si les deux objets sont de la

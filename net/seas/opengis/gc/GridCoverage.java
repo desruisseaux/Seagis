@@ -497,7 +497,7 @@ public class GridCoverage extends Coverage
     {return sampleDimensions;}
 
     /**
-     * Return a sequence of integer values for a given point in the coverage.
+     * Returns a sequence of integer values for a given point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -508,7 +508,7 @@ public class GridCoverage extends Coverage
     {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
 
     /**
-     * Return an sequence of float values for a given point in the coverage.
+     * Returns a sequence of float values for a given point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -519,7 +519,7 @@ public class GridCoverage extends Coverage
     {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
 
     /**
-     * Return an sequence of double values for a given point in the coverage.
+     * Returns a sequence of double values for a given point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -530,7 +530,7 @@ public class GridCoverage extends Coverage
     {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
 
     /**
-     * Return a sequence of integer values for a given two-dimensional point in the coverage.
+     * Returns a sequence of integer values for a given two-dimensional point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -546,9 +546,7 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = data.getMinX();
-            final int ymin = data.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
+            if (data.getBounds().contains(x,y)) // getBounds() returns a cached instance.
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -557,7 +555,7 @@ public class GridCoverage extends Coverage
     }
 
     /**
-     * Return an sequence of float values for a given two-dimensional point in the coverage.
+     * Returns a sequence of float values for a given two-dimensional point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -573,9 +571,7 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = data.getMinX();
-            final int ymin = data.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
+            if (data.getBounds().contains(x,y)) // getBounds() returns a cached instance.
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -584,7 +580,7 @@ public class GridCoverage extends Coverage
     }
 
     /**
-     * Return an sequence of double values for a given two-dimensional point in the coverage.
+     * Returns a sequence of double values for a given two-dimensional point in the coverage.
      *
      * @param  coord The coordinate point where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code>.
@@ -600,9 +596,7 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = data.getMinX();
-            final int ymin = data.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
+            if (data.getBounds().contains(x,y)) // getBounds() returns a cached instance.
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -611,11 +605,7 @@ public class GridCoverage extends Coverage
     }
 
     /**
-     * Convertit les coordonnées logiques <code>point</code> en coordonnées pixel.
-     * Le résultat sera placé dans le champ {@link #pixel}. Cette méthode retourne
-     * <code>true</code> si la conversion a réussie, ou <code>false</code> si elle
-     * a échouée ou si les coordonnées résultantes sont en dehors des limites de
-     * l'image.
+     * Transform a "real world" coordinate into a grid coordinate.
      */
     private Point2D inverseTransform(final Point2D point) throws PointOutsideCoverageException
     {

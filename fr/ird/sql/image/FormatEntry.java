@@ -133,7 +133,7 @@ final class FormatEntry implements Entry, Serializable
 
     /**
      * Objet à utiliser pour lire des images de ce format. Cet objet ne sera
-     * créé que lors du premier appel à {@link #getImage}, puis réutilisé pour
+     * créé que lors du premier appel de {@link #read},  puis réutilisé pour
      * tous les appels subséquents.
      */
     private transient ImageReader reader;
