@@ -31,11 +31,17 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Date;
+import javax.media.jai.ParameterList;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.stream.FileImageInputStream;
+
+import java.io.IOException;
 import javax.imageio.metadata.IIOInvalidTreeException;
 
+// SEAGIS.
+import fr.ird.util.CoefficientGrid;
 
 /**
  * Recupère les meta données contenues dans les fichiers
@@ -46,6 +52,14 @@ import javax.imageio.metadata.IIOInvalidTreeException;
  */
 public final class Metadata extends IIOMetadata 
 {
+    /**
+     * ImageReaderN1B auquel est associé cet objet Metadata. Cette référence
+     * est nécéssaire car les metadatas sont trop nombreuses dans le format N1B ou 
+     * level 1B pour être toutes mise en mémoire. Cette référence permettra d'extraire
+     * les metadatas nécessitant beaucoup d'espace mémoire à la volée.
+     */
+    private ImageReaderN1B reader;
+    
     /** 
      * Mots clés des méta-données contenues dans l'arborescence XML.
      * Ces identifiants sont associés à une valeur dans les méta-données.
@@ -54,20 +68,32 @@ public final class Metadata extends IIOMetadata
                                START_TIME     = "START TIME",
                                END_TIME       = "END TIME",
                                SPACECRAFT     = "SPACECRAFT",
-                               DIRECTION      = "DIRECTION";
+                               DIRECTION      = "DIRECTION",
+                               HEIGHT         = "HEIGHT";
 
     /** Keyword/value pairs. */
     private final Map<String,Object> data = new HashMap<String,Object>();
     
     /**
      * Construit un ensemble de méta-données initialement vide.
+     *
+     * @param reader    L'image associée a ce metadata.
      */
-    public Metadata() {
+    public Metadata(final ImageReaderN1B reader) {
         super(false,                          // standard metadata format (not) supported
               MetadataFormat.ROOT_NAME,       // native metadata format name
               "fr.ird.io.n1b.MetadataFormat", // native metadata format class name
               null,                           // extra metadata format names
               null);                          // extra metadata format class names
+        this.reader= reader;
+    }
+    
+    /**
+     * Informe la classe que l'ImageReader va être détruit.
+     */
+    public void dispose()
+    {
+        this.reader = null;
     }
     
     /**
@@ -223,6 +249,15 @@ public final class Metadata extends IIOMetadata
     }
     
     /**
+     * Retourne le nombre de ligne de l'image.
+     * @return le nombre de ligne de l'image.
+     */
+    public int getHeight() 
+    {
+        return ((Integer)get(Metadata.HEIGHT)).intValue();
+    }
+
+    /**
      * Retourne la date de fin de l'acquisition.
      * @return la date de fin de l'acquisition.
      */
@@ -251,5 +286,84 @@ public final class Metadata extends IIOMetadata
     public int getFormat() 
     {
         return ((Integer)get(Metadata.FORMAT)).intValue();
-    }           
+    }         
+    
+    /**
+     * Retourne la grille des points de localisation. 
+     * @return la grille des points de localisation. 
+     */
+    public LocalizationGridN1B getGridLocalization() throws IOException
+    {        
+        checkReader();
+        return reader.getGridLocalization();
+    }
+    
+    /**
+     * Retourne une liste contenant les coefficients de calibration
+     * nécessaire à la calibration du canal désiré.
+     *
+     * @param channel   Canal désiré.
+     * @return une liste contenant les coefficients de calibration
+     *         nécessaire à la calibration du canal désiré.
+     */
+    public ParameterList getCalibrationParameter(final Channel channel) throws IOException
+    {
+        checkReader();
+        return reader.getCalibrationParameter(channel);
+    }
+    
+    /**
+     * Retourne le FileImageInputStream.
+     * @return le FileImageInputStream.
+     */
+    public FileImageInputStream getFileImageInputStream() throws IOException
+    {
+        return (FileImageInputStream)reader.getInput();
+    }
+    
+    /**
+     * Vérifie la présence du Reader.
+     * @exception IllegalStateException Si le reader n'est plus disponible.
+     */
+    private void checkReader() throws IllegalStateException
+    {
+        if (reader == null)
+            throw new IllegalStateException("Reader n'est plus accessible.");
+    }    
+    
+    /**
+     *
+     */
+    public CoefficientGrid getBackScan(final Channel channel) throws IOException
+    {
+        checkReader();
+        return ((ImageReaderN1BKLM)reader).getBackScan(channel);
+    }
+    
+    /**
+     *
+     */
+    public CoefficientGrid getSpaceData(final Channel channel) throws IOException
+    {
+        checkReader();
+        return ((ImageReaderN1BKLM)reader).getSpaceData(channel);
+    }
+    
+    /**
+     *
+     */
+    public CoefficientGrid getTargetTemperatureData() throws IOException
+    {
+        checkReader();
+        return ((ImageReaderN1BKLM)reader).getInternalTargetTemperatureData();
+    }
+
+    /**
+     *
+     */
+    public CoefficientGrid getIrOperational(final Channel channel) throws IOException
+    {
+        checkReader();
+        return ((ImageReaderN1BKLM)reader).getIrOperational(channel);
+    }
 }
