@@ -50,12 +50,12 @@ import java.rmi.RemoteException;
  *
  * @see org.opengis.cs.CS_GeocentricCoordinateSystem
  */
-public abstract class GeocentricCoordinateSystem extends CoordinateSystem
+public class GeocentricCoordinateSystem extends CoordinateSystem
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO: compute
+    private static final long serialVersionUID = -7519238793973433332L;
 
     /**
      * The linear unit.
@@ -73,31 +73,40 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
     private final PrimeMeridian meridian;
 
     /**
+     * The axis infos.
+     */
+    private final AxisInfo[] axis;
+
+    /**
      * Construct a coordinate system.
      *
      * @param name     The coordinate system name.
      * @param unit     The linear unit.
      * @param datum    The horizontal datum.
      * @param meridian The prime meridian.
+     * @param axis     The axis info. This is usually an array of lenght 3.
      */
-    public GeocentricCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
+    public GeocentricCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo[] axis)
     {
         super(name);
         this.unit     = unit;
         this.datum    = datum;
         this.meridian = meridian;
+        ensureNonNull("axis",     axis);
         ensureNonNull("unit",     unit);
         ensureNonNull("datum",    datum);
         ensureNonNull("meridian", meridian);
+        ensureLinearUnit(unit);
+        this.axis = (AxisInfo[]) axis.clone();
     }
 
     /**
-     * Returns the dimension of this coordinate system, which is 3.
+     * Returns the dimension of this coordinate system, which is usually 3.
      *
      * @see org.opengis.cs.CS_GeocentricCoordinateSystem#getDimension()
      */
     public int getDimension()
-    {return 3;}
+    {return axis.length;}
 
     /**
      * Override {@link CoordinateSystem#getDatum()}.
@@ -130,6 +139,17 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
         if (dimension>=0 && dimension<getDimension()) return unit;
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
+
+    /**
+     * Gets axis details for dimension within coordinate system.
+     * Each dimension in the coordinate system has a corresponding axis.
+     *
+     * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystem#getAxis(int)
+     */
+    public AxisInfo getAxis(final int dimension)
+    {return axis[dimension];}
 
     /**
      * Returns the prime meridian.
