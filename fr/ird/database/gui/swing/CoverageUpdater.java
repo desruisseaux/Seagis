@@ -885,13 +885,13 @@ public class CoverageUpdater extends JFrame implements ChangeListener, ListSelec
         final Thread thread = new Thread(new Runnable(){            
             public void run() { 
                 try {
+                    final Updater updater = new Updater();
                     while (true && vRecord.size()>0) {                                
                         final Record record = (Record)vRecord.get(0);
                         progress.setTitle("Insert '" + record.name + "' in database Image.");
                         listImages.setSelectedIndex(0);
 
                         // Connection to database.
-                        final Updater updater = new Updater();
                         updater.insertToDataBase(new File(record.file), 
                                                      record.name,
                                                      record.serie,
