@@ -64,6 +64,7 @@ import net.seas.resources.Resources;
  *  <b>-list</b> <i></i>           List available transforms
  *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
  *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+ *  <b>-output</b> <i>filename</i> A destination filename (default to standard output).
  * </pre></blockquote>
  *
  * @version 1.0
@@ -105,7 +106,8 @@ final class Main extends Console
                     "  -help              Display command line options\n"+
                     "  -list              List available transforms\n"+
                     "  -locale <name>     Locale to be used    (example: \"fr_CA\")\n"+
-                    "  -encoding <name>   Output encoding name (example: \"cp850\")");
+                    "  -encoding <name>   Output encoding name (example: \"cp850\")\n"+
+                    "  -output <filename> Destination filename (default to standard output)");
     }
 
     /**

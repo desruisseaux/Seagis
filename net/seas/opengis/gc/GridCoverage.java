@@ -73,6 +73,7 @@ import net.seas.util.XDimension2D;
 
 // Collections
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Collections;
 import net.seas.util.WeakHashSet;
 
@@ -147,10 +148,21 @@ public class GridCoverage extends Coverage
     private static final double EPS = 1E-6;
 
     /**
+     * An empty list of grid coverage. TODO: Should be {@link Collections#EMPTY_LIST},
+     * but I have trouble with the generic compiler on this one.
+     */
+    private static final List<GridCoverage> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<GridCoverage>(0));
+
+    /**
      * Pool of created object. Objects in this pool must be immutable.
      * Those objects will be shared among many grid coverages.
      */
     private static final WeakHashSet<Object> pool=new WeakHashSet<Object>();
+
+    /**
+     * Sources grid coverage.
+     */
+    private final List<GridCoverage> sources;
 
     /**
      * Underlying data as an {@link RenderedImage} object.   This object contains
@@ -219,6 +231,7 @@ public class GridCoverage extends Coverage
         gridGeometry     = coverage.gridGeometry;
         envelope         = coverage.envelope;
         sampleDimensions = coverage.sampleDimensions;
+        sources          = Collections.singletonList(coverage);
     }
 
     /**
@@ -293,7 +306,7 @@ public class GridCoverage extends Coverage
                          final CategoryList[] categories, final boolean isGeophysics) throws MismatchedDimensionException
     {
         super(name, cs, image);
-
+        sources = EMPTY_LIST;
         /*
          * Check category lists. The number of lists
          * must match the number of image's bands.
@@ -313,7 +326,7 @@ public class GridCoverage extends Coverage
             envelope = new Envelope(getBounds(image));
             for (int i=envelope.getDimension(); --i>=0;)
             {
-                // According OpenGIS's specification, GridGeometry maps pixel's center.
+                // According OpenGIS specification, GridGeometry maps pixel's center.
                 // We want a bounding box for all pixels, not pixel's centers. Offset by
                 // 0.5 (use -0.5 for maximum too, not +0.5).
                 envelope.setRange(i, envelope.getMinimum(i)-0.5, envelope.getMaximum(i)-0.5);
@@ -421,6 +434,20 @@ public class GridCoverage extends Coverage
     {return (data instanceof WritableRenderedImage);}
 
     /**
+     * Returns the source data for a grid coverage. If the <code>GridCoverage</code>
+     * was produced from an underlying dataset, the returned list is an empty list.
+     * If the <code>GridCoverage</code> was produced using
+     * {@link net.seas.opengis.gp.GridCoverageProcessor} then it should return the
+     * source grid coverage of the one used as input to <code>GridCoverageProcessor</code>.
+     * In general the <code>getSource()</code> method is intended to return the original
+     * <code>GridCoverage</code> on which it depends. This is intended to allow applications
+     * to establish what <code>GridCoverage</code>s will be affected when others are updated,
+     * as well as to trace back to the "raw data".
+     */
+    public List<GridCoverage> getSources()
+    {return sources;}
+
+    /**
      * Returns information for the grid coverage geometry. Grid geometry
      * includes the valid range of grid coordinates and the georeferencing.
      */
@@ -494,9 +521,9 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = image.getMinX();
-            final int ymin = image.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            final int xmin = data.getMinX();
+            final int ymin = data.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -521,9 +548,9 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = image.getMinX();
-            final int ymin = image.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            final int xmin = data.getMinX();
+            final int ymin = data.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -548,9 +575,9 @@ public class GridCoverage extends Coverage
         {
             final int x = (int)Math.floor(fx);
             final int y = (int)Math.floor(fy);
-            final int xmin = image.getMinX();
-            final int ymin = image.getMinY();
-            if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+            final int xmin = data.getMinX();
+            final int ymin = data.getMinY();
+            if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
             {
                 return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
             }
@@ -587,42 +614,48 @@ public class GridCoverage extends Coverage
      * <blockquote><pre>(1171,1566)=[196 (29.6 °C)]</pre></blockquote>
      *
      * @param  coord The coordinate point where to evaluate.
-     * @return A string with pixel coordinates and pixel values at the specified location.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @return A string with pixel coordinates and pixel values at the specified location,
+     *         or <code>null</code> if <code>coord</code> is outside coverage.
      */
-    public synchronized String getDebugString(final CoordinatePoint coord) throws PointOutsideCoverageException
+    public synchronized String getDebugString(final CoordinatePoint coord)
     {
         final Point2D pixel = inverseTransform(new Point2D.Double(coord.ord[0], coord.ord[1]));
-        final int                x = (int)Math.floor(pixel.getX());
-        final int                y = (int)Math.floor(pixel.getY());
-        final int    numImageBands = image.getNumBands();
-        final int  numNumericBands = data.getNumBands();
-        final int         numBands = Math.max(numImageBands, numNumericBands);
-        final Raster   imageRaster = image.getTile(image.XToTileX(x), image.YToTileY(y));
-        final Raster numericRaster = data .getTile(data .XToTileX(x), data .YToTileY(y));
-        final StringBuffer  buffer = new StringBuffer();
-        buffer.append('(');
-        buffer.append(x);
-        buffer.append(',');
-        buffer.append(y);
-        buffer.append(")=[");
-
-        for (int band=0; band<numBands; band++)
+        final int         x = (int)Math.floor(pixel.getX());
+        final int         y = (int)Math.floor(pixel.getY());
+        final int      xmin = data.getMinX();
+        final int      ymin = data.getMinY();
+        if (x>=xmin && y>=ymin && x<xmin+data.getWidth() && y<ymin+data.getHeight())
         {
-            if (band!=0) buffer.append(";\u00A0");
-            if (band<numImageBands)
+            final int    numImageBands = image.getNumBands();
+            final int  numNumericBands = data.getNumBands();
+            final int         numBands = Math.max(numImageBands, numNumericBands);
+            final Raster   imageRaster = image.getTile(image.XToTileX(x), image.YToTileY(y));
+            final Raster numericRaster = data .getTile(data .XToTileX(x), data .YToTileY(y));
+            final StringBuffer  buffer = new StringBuffer();
+            buffer.append('(');
+            buffer.append(x);
+            buffer.append(',');
+            buffer.append(y);
+            buffer.append(")=[");
+
+            for (int band=0; band<numBands; band++)
             {
-                buffer.append(imageRaster.getSample(x, y, band));
+                if (band!=0) buffer.append(";\u00A0");
+                if (band<numImageBands)
+                {
+                    buffer.append(imageRaster.getSample(x, y, band));
+                }
+                if (band<numNumericBands)
+                {
+                    buffer.append("\u00A0(");
+                    buffer.append(sampleDimensions.get(band).getCategoryList().format(numericRaster.getSampleDouble(x, y, band), null));
+                    buffer.append(')');
+                }
             }
-            if (band<numNumericBands)
-            {
-                buffer.append("\u00A0(");
-                buffer.append(sampleDimensions.get(band).getCategoryList().format(numericRaster.getSampleDouble(x, y, band), null));
-                buffer.append(')');
-            }
+            buffer.append(']');
+            return buffer.toString();
         }
-        buffer.append(']');
-        return buffer.toString();
+        else return null;
     }
 
     /**

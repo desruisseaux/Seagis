@@ -30,6 +30,7 @@ import net.seas.opengis.cv.PointOutsideCoverageException;
 import java.awt.image.Raster;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.Interpolation;
+import javax.media.jai.InterpolationNearest;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
@@ -45,7 +46,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Miscellaneous
+import java.lang.reflect.Array;
 import net.seas.util.Version;
+import net.seas.resources.Resources;
 
 
 /**
@@ -72,7 +75,10 @@ final class Interpolator extends GridCoverage
 
     /**
      * Second interpolation method to use if this one failed.
-     * May be <code>null</code> if there is no fallback.
+     * May be <code>null</code> if there is no fallback.  By
+     * convention, <code>this</code> means that interpolation
+     * should fallback on <code>super.evaluate(...)</code>
+     * (i.e. nearest neighbor).
      */
     private final Interpolator fallback;
 
@@ -106,43 +112,58 @@ final class Interpolator extends GridCoverage
     private transient int[][] ints;
 
     /**
-     * Construct a new interpolator from a standard interpolation.
+     * Construct a new interpolator.
      *
-     * @param coverage The coverage to interpolate.
-     * @param type The interpolation type. One of
-     *        {@link Interpolation#INTERP_BILINEAR},
-     *        {@link Interpolation#INTERP_BICUBIC} or
-     *        {@link Interpolation#INTERP_BICUBIC_2}.
+     * @param  coverage The coverage to interpolate.
+     * @param  interpolations The interpolations to use and its fallback (if any).
      */
-    public static Interpolator create(final GridCoverage coverage, final int type)
+    public static GridCoverage create(GridCoverage coverage, final Interpolation[] interpolations)
     {
-        final Interpolator fallback;
-        switch (type)
+        if (coverage instanceof Interpolator)
         {
-            case Interpolation.INTERP_NEAREST  : throw new IllegalArgumentException();
-            case Interpolation.INTERP_BICUBIC  : // fall through
-            case Interpolation.INTERP_BICUBIC_2: fallback=create(coverage, Interpolation.INTERP_BILINEAR); break;
-            case Interpolation.INTERP_BILINEAR : // fall through
-            default:                             fallback=null; break;
+            coverage = coverage.getSources().get(0);
         }
-        return new Interpolator(coverage, Interpolation.getInstance(type), fallback);
+        if (interpolations.length==0 || (interpolations[0] instanceof InterpolationNearest))
+        {
+            return coverage;
+        }
+        return new Interpolator(coverage, interpolations, 0);
     }
 
     /**
      * Construct a new interpolator for the specified interpolation.
      *
-     * @param coverage The coverage to interpolate.
-     * @param interpolation The interpolation to use.
-     * @param fallback The fallback interpolator. This interpolator will be
-     *                 used if the current one failed to interpolate a value.
-     *                 May be <code>null</code> if there is no fallback.
+     * @param  coverage The coverage to interpolate.
+     * @param  interpolations The interpolations to use and its fallback
+     *         (if any). This array must have at least 1 element.
+     * @param  index The index of interpolation to use in the <code>interpolations</code> array.
      */
-    public Interpolator(final GridCoverage coverage, final Interpolation interpolation, final Interpolator fallback)
+    private Interpolator(final GridCoverage coverage, final Interpolation[] interpolations, final int index)
     {
         super(coverage);
-        this.interpolation = interpolation;
-        this.fallback      = fallback;
-        try
+        this.interpolation = interpolations[index];
+        if (index+1 < interpolations.length)
+        {
+            if (interpolations[index+1] instanceof InterpolationNearest)
+            {
+                // By convention, 'fallback==this' is for 'super.evaluate(...)'
+                // (i.e. "NearestNeighbor").
+                this.fallback = this;
+            }
+            else this.fallback = new Interpolator(coverage, interpolations, index+1);
+        }
+        else this.fallback = null;
+        /*
+         * Compute the affine transform from "real world" coordinates  to grid coordinates.
+         * This transform maps coordinates to pixel <em>centers</em>. If this transform has
+         * already be created during fallback construction, reuse the fallback's instance
+         * instead of creating a new identical one.
+         */
+        if (fallback!=null && fallback!=this)
+        {
+            this.toGrid = fallback.toGrid;
+        }
+        else try
         {
             final AffineTransform transform = gridGeometry.getGridToCoordinateSystem2D();
             // Note: If we want nearest-neighbor interpolation,
@@ -183,10 +204,13 @@ final class Interpolator extends GridCoverage
         this.right  = right;
         this.bottom = bottom;
 
-        this.xmin = data.getMinX()        + left;
-        this.ymin = data.getMinY()        + top;
-        this.xmax = data.getWidth() +xmin - right;
-        this.ymax = data.getHeight()+ymin - bottom;
+        final int x = data.getMinX();
+        final int y = data.getMinY();
+
+        this.xmin = x + left;
+        this.ymin = y + top;
+        this.xmax = x + data.getWidth()  - right;
+        this.ymax = y + data.getHeight() - bottom;
     }
 
     /**
@@ -199,20 +223,27 @@ final class Interpolator extends GridCoverage
      */
     public double[] evaluate(final Point2D coord, double[] dest) throws PointOutsideCoverageException
     {
-        dest = super.evaluate(coord, dest);
+        if (fallback!=null)
+        {
+            dest = super.evaluate(coord, dest);
+        }
         final Point2D pixel = toGrid.transform(coord, null);
         final double x = pixel.getX();
         final double y = pixel.getY();
         if (!Double.isNaN(x) && !Double.isNaN(y))
         {
-            interpolate(x, y, dest, 0, data.getNumBands());
-            if (false) throw new PointOutsideCoverageException(coord); // TODO
+            if (interpolate(x, y, dest, 0, data.getNumBands()))
+            {
+                return dest;
+            }
         }
-        return dest;
+        throw new PointOutsideCoverageException(coord);
     }
 
     /**
-     * Interpolate at the specified position.
+     * Interpolate at the specified position. If <code>fallback!=null</code>,
+     * then <code>dest</code> <strong>must</strong> have been initialized with
+     * <code>super.evaluate(...)</code> prior to invoking this method.
      *
      * @param x      The x position in pixel's coordinates.
      * @param y      The y position in pixel's coordinates.
@@ -229,11 +260,9 @@ final class Interpolator extends GridCoverage
         int iy = (int)y0;
         if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
         {
-            if (fallback!=null)
-            {
-                return fallback.interpolate(x, y, dest, band, bandUp);
-            }
-            else return false;
+            if (fallback==null) return false;
+            if (fallback==this) return true; // super.evaluate(...) succeed prior to this method call.
+            return fallback.interpolate(x, y, dest, band, bandUp);
         }
         /*
          * Create buffers, if not already created.
@@ -271,20 +300,29 @@ final class Interpolator extends GridCoverage
             final double value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
             if (Double.isNaN(value))
             {
+                if (fallback==this) continue; // 'dest' was set by 'super.evaluate(...)'.
                 if (fallback!=null)
                 {
                     fallback.interpolate(x, y, dest, band, band+1);
                     continue;
                 }
-                continue; // TODO: if (fallbackAllowed)
+                // If no fallback was specified, then 'dest' is not required to
+                // have been initialized. It may contains random value.  Set it
+                // to the NaN value...
             }
             dest[band] = value;
         }
         return true;
     }
 
+
+
+
     /**
-     * The operation.
+     * The "Interpolate" operation. This operation specifies the interpolation type
+     * to be used to interpolate values for points which fall between grid cells.
+     * The default value is nearest neighbor. The new interpolation type operates
+     * on all sample dimensions. See package description for more details.
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -314,7 +352,7 @@ final class Interpolator extends GridCoverage
         };
 
         /**
-         * Construct an operation.
+         * Construct an "Interpolate" operation.
          */
         public Operation()
         {
@@ -340,34 +378,48 @@ final class Interpolator extends GridCoverage
         }
 
         /**
-         * Apply a process operation to a grid coverage. This method
-         * is invoked by {@link GridCoverageProcessor}.
+         * Cast the specified object to an {@link Interpolation object}.
          *
-         * @param  parameters List of name value pairs for the parameters required for the operation.
-         * @return The result as a grid coverage.
+         * @param  type The interpolation type as an {@link Interpolation} or a {@link CharSequence} object.
+         * @return The interpolation object for the specified type.
+         * @throws IllegalArgumentException if the specified interpolation type is not a know one.
+         */
+        private static Interpolation cast(final Object type)
+        {
+            if (type instanceof Interpolation)
+            {
+                return (Interpolation) type;
+            }
+            else if ((Version.MINOR>=4) ? (type instanceof CharSequence) : (type instanceof String))
+            {
+                final String name=type.toString();
+                for (int i=0; i<NAMES.length; i++)
+                    if (NAMES[i].equalsIgnoreCase(name))
+                        return Interpolation.getInstance(TYPES[i]);
+            }
+            throw new IllegalArgumentException(Resources.format(Clé.UNKNOW_INTERPOLATION¤1, type));
+        }
+
+        /**
+         * Apply an interpolation to a grid coverage. This method is invoked
+         * by {@link GridCoverageProcessor} for the "Interpolate" operation.
          */
         protected GridCoverage doOperation(final ParameterList parameters)
         {
             final GridCoverage   source = (GridCoverage)parameters.getObjectParameter("Source");
             final Object           type =               parameters.getObjectParameter("Type"  );
-            Interpolation interpolation = null;
-            if (type instanceof Interpolation)
+            final Interpolation[] interpolations;
+            if (type.getClass().isArray())
             {
-                interpolation = (Interpolation) type;
+                interpolations = new Interpolation[Array.getLength(type)];
+                for (int i=0; i<interpolations.length; i++)
+                    interpolations[i] = cast(Array.get(type, i));
             }
             else
             {
-                final String name=type.toString();
-                for (int i=0; i<NAMES.length; i++)
-                    if (NAMES[i].equalsIgnoreCase(name))
-                        interpolation = Interpolation.getInstance(TYPES[i]);
+                interpolations = new Interpolation[] {cast(type)};
             }
-            if (interpolation!=null)
-            {
-                throw new IllegalArgumentException(String.valueOf(type));
-            }
-            // TODO: fallback, nearest neighbor...
-            return new Interpolator(source, interpolation, null);
+            return create(source, interpolations);
         }
     }
 }

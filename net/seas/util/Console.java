@@ -24,9 +24,11 @@ package net.seas.util;
 
 // Input/output
 import java.io.Writer;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -72,26 +74,56 @@ public class Console
     /**
      * Construct a console.
      *
-     * @param args Command line arguments. Arguments "-encoding" and "-locale" will be
-     *             handle and set to <code>null</code>. Other arguments will be ignored.
+     * @param args Command line arguments. Arguments "-encoding", "-locale" and
+     *             "-output" will be handle. Other arguments will be ignored.
      */
     public Console(final String[] args)
     {
-        this.arguments  = (String[]) args.clone();
-        this.locale     = getLocale(getParameter("-locale"));
-        String encoding = getParameter("-encoding");
-        boolean prefEnc = false;
-        if (Version.MINOR>=4 && encoding==null)
+        this.arguments     = (String[]) args.clone();
+        this.locale        = getLocale(getParameter("-locale"));
+        String encoding    = getParameter("-encoding");
+        String destination = getParameter("-output");
+        try
         {
-            encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
-            prefEnc  = true;
-        }
-        if (encoding!=null) try
-        {
-            out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
-            if (Version.MINOR>=4 && !prefEnc)
+            /*
+             * If a destination file was specified,  open the file using the platform
+             * default encoding or the specified encoding. Do not use encoding stored
+             * in preference since they were usually for console encoding.
+             */
+            if (destination!=null)
             {
-                Preferences.userNodeForPackage(Console.class).put(ENCODING, encoding);
+                final Writer fileWriter;
+                if (encoding!=null)
+                {
+                    fileWriter = new OutputStreamWriter(new FileOutputStream(destination), encoding);
+                }
+                else
+                {
+                    fileWriter = new FileWriter(destination);
+                }
+                out = new PrintWriter(fileWriter);
+                return;
+            }
+            /*
+             * If output to screen, fetch the encoding from user's preferences.
+             */
+            boolean prefEnc = false;
+            if (Version.MINOR>=4 && encoding==null)
+            {
+                encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
+                prefEnc  = true;
+            }
+            if (encoding!=null)
+            {
+                out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
+                if (Version.MINOR>=4 && !prefEnc)
+                {
+                    Preferences.userNodeForPackage(Console.class).put(ENCODING, encoding);
+                }
+            }
+            else
+            {
+                out = new PrintWriter(System.out);
             }
         }
         catch (UnsupportedEncodingException exception)
@@ -105,9 +137,11 @@ public class Console
             else throw new IllegalArgumentException(exception.getLocalizedMessage());
             // IllegalArgumentException is the first 1.2 parent of UnsupportedCharsetException
         }
-        else
+        catch (IOException exception)
         {
-            out = new PrintWriter(System.out);
+            IllegalArgumentException e=new IllegalArgumentException(destination);
+            if (Version.MINOR>=4) e.initCause(exception);
+            throw e;
         }
     }
 

@@ -176,7 +176,7 @@ public class GridGeometry implements Dimensioned, Serializable
         double transY = 0;
         /*
          * Setup the multi-dimensional affine transform for use with OpenGIS.
-         * According OpenGIS's specification, transform must map pixel center.
+         * According OpenGIS specification, transforms must map pixel center.
          * This is done by adding 0.5 to grid coordinates.
          */
         final Matrix matrix = new Matrix(dimension+1);

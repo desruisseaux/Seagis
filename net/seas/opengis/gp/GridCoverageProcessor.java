@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.NoSuchElementException;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;
+import net.seas.resources.Resources;
 
 
 /**
@@ -112,7 +113,7 @@ public class GridCoverageProcessor
         {
             operations.put(name, operation);
         }
-        else throw new IllegalStateException();
+        else throw new IllegalStateException(Resources.format(Clé.OPERATION_ALREADY_BOUND¤1, operation.getName()));
     }
 
     /**
@@ -147,7 +148,7 @@ public class GridCoverageProcessor
         {
             return doOperation(operation, parameters);
         }
-        else throw new NoSuchElementException(operationName);
+        else throw new NoSuchElementException(Resources.format(Clé.OPERATION_NOT_BOUND¤1, operationName));
     }
 
     /**
