@@ -51,7 +51,7 @@ import net.seas.resources.Resources;
  * pixel suivra le chemin suivant (l'ordre des opérations est important):
  *
  * <blockquote><table>
- *   <tr><td><code>{@link #getCoordinateTransform getCoordinateTransform}(layer).transform(point, point)</code></td>
+ *   <tr><td><code>{@link #getMathTransform2D getMathTransform2D}(layer).transform(point, point)</code></td>
  *       <td>pour convertir la coordonnée géographique de la couche {@link Layer} spécifiée vers
  *           vers le système de coordonnées de l'afficheur {@link MapPanel}. Le résultat est
  *           encore en coordonnées logiques (par exemple en véritables mètres sur le terrain
@@ -200,7 +200,7 @@ public final class RenderingContext
         final CoordinateSystem source=layer.getCoordinateSystem();
         if (!transformation.getSourceCS().equivalents(source))
         {
-            transformation = Contour.createFromCoordinateSystems(source, transformation.getTargetCS(), "RenderingContext", "getCoordinateTransform");
+            transformation = Contour.createFromCoordinateSystems(source, transformation.getTargetCS(), "RenderingContext", "getMathTransform2D");
         }
         return (MathTransform2D) transformation.getMathTransform();
     }

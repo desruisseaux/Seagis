@@ -379,7 +379,7 @@ public abstract class Layer implements Serializable
      * autre système de coordonnées que celui de l'afficheur {@link MapPanel}. Les conversions peuvent être faites
      * en utilisant comme suit les informations fournies dans l'objet {@link RenderingContext} passé en argument:
      *
-     * <pre>context.{@link RenderingContext#getCoordinateTransform getCoordinateTransform}({@link #getCoordinateSystem getCoordinateSystem}())</pre>
+     * <pre>context.{@link RenderingContext#getMathTransform2D getMathTransform2D}({@link #getCoordinateSystem getCoordinateSystem}())</pre>
      * <blockquote>Pour transformer les coordonnées de cette couche en coordonnées logiques de l'afficheur. Les traçages
      *             dans l'objet {@link java.awt.Graphics2D} se font par défaut en utilisant ces coordonnées tansformées.</blockquote>
      *
