@@ -114,8 +114,8 @@ public class EnvironmentTableFiller implements Table {
      */
     private static final String[][] DEFAULT_SERIES = {
         {"SST (Réunion - synthèse 5 jours)",  "SST"},
-        {"SST (Monde)",                       "SST-GAC"},
-        {"CHL (Monde)",                       "CHL"},
+        {"SST (Monde - hebdomadaires)",       "SST-GAC"},
+        {"CHL (Monde - hebdomadaires)",       "CHL"},
         {"EKP (Monde)",                       "EKP"},
         {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
         {"SLA (Réunion)",                     "SLA", "U", "V"},
