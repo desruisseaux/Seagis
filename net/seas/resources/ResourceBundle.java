@@ -164,7 +164,7 @@ public class ResourceBundle extends java.util.ResourceBundle
          */
         final Logger    logger = Logger.getLogger("net.seas");
         final LogRecord record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
-        record.setSourceClassName (ResourceBundle.class.getName());
+        record.setSourceClassName (getClass().getName());
         record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");
 
         try

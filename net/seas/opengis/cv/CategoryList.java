@@ -238,8 +238,8 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                 final Category check = byIndex[i];
                 if (!(categ.lower>=check.upper || categ.upper<=check.lower)) // Do not accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
-                                                       new Integer(categ.lower), new Integer(categ.upper),
-                                                       new Integer(check.lower), new Integer(check.upper)));
+                                                       new Integer(categ.lower), new Integer(categ.upper-1),
+                                                       new Integer(check.lower), new Integer(check.upper-1)));
 
                 if (categ.minimum<check.maximum && categ.maximum>check.minimum) // Accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
@@ -307,6 +307,53 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         if (byIndex.length!=0)
             return byIndex[0];
         return new Category(Resources.format(Clé.NODATA), Color.black, 0);
+    }
+
+    /**
+     * Returns what seems to be the "main" category. The default implementation looks
+     * for the quantitative category (if there is one) with the widest sample range.
+     */
+    private Category getMain()
+    {
+        float range=0;
+        Category category=null;
+        for (int i=byValues.length; --i>=0;)
+        {
+            final Category candidate = byValues[i];
+            if (candidate!=null && candidate.isQuantitative())
+            {
+                final float candidateRange = candidate.upper - candidate.lower;
+                if (candidateRange >= range)
+                {
+                    range = candidateRange;
+                    category = candidate;
+                }
+            }
+        }
+        return category;
+    }
+
+    /**
+     * Get the <code>CategoryList</code>'s name.
+     * This string may be <code>null</code> if no description is present.
+     * The default implementation returns the name of what seems to be the
+     * "main" category,  i.e. the quantitative category (if there is one)
+     * with the widest sample range.
+     *
+     * @param  locale The locale, or <code>null</code> for the default one.
+     * @return The localized description. If no description was available
+     *         in the specified locale, a default locale is used.
+     */
+    public String getName(final Locale locale)
+    {
+        final Category category = getMain();
+        if (category!=null)
+        {
+            final StringBuffer buffer = new StringBuffer(category.getName(locale));
+            buffer.append(' ');
+            return String.valueOf(formatRange(buffer, locale));
+        }
+        return null;
     }
 
     /**
@@ -604,6 +651,27 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
+     * Format the range of geophysics values.
+     */
+    private StringBuffer formatRange(StringBuffer buffer, final Locale locale)
+    {
+        final Range range = getRange(true);
+        buffer.append('[');
+        if (range!=null)
+        {
+            buffer=format(((Number)range.getMinValue()).doubleValue(), false, locale, buffer);
+            buffer.append("..");
+            buffer=format(((Number)range.getMaxValue()).doubleValue(), true,  locale, buffer);
+        }
+        else if (unit!=null)
+        {
+            buffer.append(unit);
+        }
+        buffer.append(']');
+        return buffer;
+    }
+
+    /**
      * Returns a color model for this category list. The default implementation
      * may build up the color model from each category's colors (as returned by
      * {@link Category#getColors}). The returned color model will use data type
@@ -747,26 +815,16 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {
         final String lineSeparator = System.getProperty("line.separator", "\n");
         StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
-        final Range   range = getRange(true);
-        buffer.append('[');
-        if (range!=null)
-        {
-            buffer=format(((Number)range.getMinValue()).doubleValue(), false, null, buffer);
-            buffer.append("..");
-            buffer=format(((Number)range.getMaxValue()).doubleValue(), true,  null, buffer);
-        }
-        else if (unit!=null)
-        {
-            buffer.append(unit);
-        }
-        buffer.append(']');
+        buffer = formatRange(buffer, null);
         buffer.append(lineSeparator);
         /*
          * Ecrit la liste des catégories en dessous.
          */
+        final Category main=getMain();
         for (int i=0; i<byIndex.length; i++)
         {
-            buffer.append("    ");
+            buffer.append("   ");
+            buffer.append(byIndex[i]==main ? '*' : ' ');
             buffer.append(byIndex[i]);
             buffer.append(lineSeparator);
         }

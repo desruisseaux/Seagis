@@ -115,7 +115,7 @@ abstract class CategoryComparator implements Comparator<Category>
     public final boolean isSorted(final Category[] categories)
     {
         for (int i=1; i<categories.length; i++)
-            if (getUpper(categories[i-1]) >= getLower(categories[i]))
+            if (getUpper(categories[i-1]) > getLower(categories[i]))
                 return false;
         return true;
     }

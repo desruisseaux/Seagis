@@ -104,7 +104,6 @@ public class WeakHashSet<Element>
         {
             super.clear();
             owner.remove(this);
-            System.out.println(this);
         }
     }
 

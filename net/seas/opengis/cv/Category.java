@@ -67,14 +67,14 @@ public class Category implements Serializable
      * made of all sample values in the range {@link #lower} inclusive to
      * {@link #upper} exclusive.
      */
-    protected final int lower;
+    public final int lower;
 
     /**
      * The upper sample value (exclusive) as an integer. This category is
      * made of all sample values in the range {@link #lower} inclusive to
      * {@link #upper} exclusive.
      */
-    protected final int upper;
+    public final int upper;
 
     /**
      * Offset is the value to add to grid values for this category.
@@ -212,7 +212,7 @@ public class Category implements Serializable
         // Use '!' in order to catch NaN (previous version used float type).
         if (!(lower<upper)/* || Float.isInfinite(lower) || Float.isInfinite(upper)*/)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper)));
+            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper-1)));
         }
         if (Double.isNaN(offset)==isQuantitative || Double.isInfinite(offset))
         {
@@ -355,20 +355,9 @@ public class Category implements Serializable
         buffer.append("[\"");
         buffer.append(name);
         buffer.append("\":[");
-        final int lo = (int)lower;
-        final int up = (int)upper;
-        if (lo==lower && up==upper)
-        {
-            buffer.append(lo);
-            buffer.append("..");
-            buffer.append(up);
-        }
-        else
-        {
-            buffer.append(lower);
-            buffer.append("..");
-            buffer.append(upper);
-        }
+        buffer.append(lower);
+        buffer.append("..");
+        buffer.append(upper-1); // Inclusive
         buffer.append("]]");
         return buffer.toString();
     }

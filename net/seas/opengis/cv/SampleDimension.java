@@ -58,38 +58,13 @@ public abstract class SampleDimension
     /**
      * Get the sample dimension title or description.
      * This string may be <code>null</code> if no description is present.
-     * The default implementation returns the name of what seem to be the
-     * "main" category,  i.e. the quantitative category (if there is one)
-     * with the widest sample range.
      *
      * @param  locale The locale, or <code>null</code> for the default one.
      * @return The localized description. If no description was available
      *         in the specified locale, a default locale is used.
      */
     public String getDescription(final Locale locale)
-    {
-        if (categories!=null)
-        {
-            float range=0;
-            Category category=null;
-            for (int i=categories.size(); --i>=0;)
-            {
-                final Category candidate = categories.get(i);
-                if (candidate!=null && candidate.isQuantitative())
-                {
-                    final float candidateRange = candidate.upper - candidate.lower;
-                    if (candidateRange > range)
-                    {
-                        range = candidateRange;
-                        category = candidate;
-                    }
-                }
-            }
-            if (category!=null)
-                return category.getName(locale);
-        }
-        return null;
-    }
+    {return (categories!=null) ? categories.getName(locale) : null;}
 
     /**
      * Returns the category list for the values contained in a sample dimension.
