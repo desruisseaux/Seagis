@@ -48,6 +48,11 @@ import fr.ird.resources.Resources;
 public abstract class DataBase
 {
     /**
+     * The level for logging UPDATE instructions.
+     */
+    public static final Level SQL_UPDATE = SQLLevel.SQL_UPDATE;
+
+    /**
      * Clé de la propriétée représentant le pilote JDBC
      * à utiliser pour se connecter à la base de données.
      * Cette clé peut être utilisée avec {@link #getProperty}.

@@ -129,7 +129,7 @@ final class SpeciesTable extends Table
             species = new FishSpecies(locales, names, Color.black);
             if (lastSpecies!=null && !lastSpecies.equals(species))
             {
-                throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATE_RECORD_$1, species.getName()));
+                throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, species.getName()));
             }
         }
         result.close();

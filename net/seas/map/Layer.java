@@ -25,8 +25,8 @@ package net.seas.map;
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.ct.TransformException;
-import net.seagis.cs.CompoundCoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.resources.OpenGIS;
 
 // Géométrie et graphisme
 import java.awt.Shape;
@@ -163,25 +163,7 @@ public abstract class Layer implements Serializable
      *         pas être ramené à un système de coordonnées à deux dimensions.
      */
     public Layer(final CoordinateSystem coordinateSystem)
-    {this.coordinateSystem = getCoordinateSystem2D(coordinateSystem);}
-
-    /**
-     * Retourne les deux premières dimensions du système de coordonnées spécifié.
-     *
-     * @param  cs Le système de coordonnées. Ce système doit avoir au moins 2 dimensions.
-     * @return Un système de coordonnées à exactement deux dimensions.
-     * @throws IllegalArgumentException si <code>coordinateSystem</code> ne peut
-     *         pas être ramené à un système de coordonnées à deux dimensions.
-     */
-    static CoordinateSystem getCoordinateSystem2D(final CoordinateSystem cs) throws IllegalArgumentException
-    {
-        if (cs.getDimension()==2) return cs;
-        if (cs instanceof CompoundCoordinateSystem)
-        {
-            return getCoordinateSystem2D(((CompoundCoordinateSystem) cs).getHeadCS());
-        }
-        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_CANT_REDUCE_TO_TWO_DIMENSIONS_$1, cs.getName(null)));
-    }
+    {this.coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);}
 
     /**
      * Retourne le nom de cette couche. L'implémentation par

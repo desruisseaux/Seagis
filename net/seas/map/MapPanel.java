@@ -240,7 +240,7 @@ public class MapPanel extends ZoomPane
     public MapPanel(final CoordinateSystem coordinateSystem)
     {
         super(TRANSLATE_X | TRANSLATE_Y | UNIFORM_SCALE | DEFAULT_ZOOM | ROTATE | RESET);
-        this.coordinateSystem = Layer.getCoordinateSystem2D(coordinateSystem);
+        this.coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);
         addZoomChangeListener(listeners);
         addComponentListener (listeners);
         addMouseListener     (listeners);
