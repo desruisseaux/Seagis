@@ -43,7 +43,7 @@ import java.util.Arrays;
 import net.seas.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

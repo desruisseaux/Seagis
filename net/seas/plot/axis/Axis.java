@@ -52,9 +52,9 @@ import java.lang.UnsupportedOperationException;
 import java.util.ConcurrentModificationException;
 
 // Resources
-import net.seagis.resources.Utilities;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XAffineTransform;
 
 
 /**

@@ -31,9 +31,9 @@ import java.awt.Color;
 import java.awt.Stroke;
 import java.awt.Graphics2D;
 import java.awt.BasicStroke;
-import net.seas.awt.ZoomPane;
 import java.awt.font.GlyphVector;
 import java.awt.font.FontRenderContext;
+import org.geotools.gui.swing.ZoomPane;
 
 // Geometry
 import java.awt.Point;

@@ -44,8 +44,10 @@ import java.beans.PropertyChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
+
 // Divers
-import net.seas.util.SwingUtilities;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
 

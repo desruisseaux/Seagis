@@ -25,16 +25,16 @@
  */
 package fr.ird.io.coverage;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gp.Operation;
-import net.seagis.gc.GridCoverage;
-import net.seagis.cv.CategoryList;
-import net.seagis.ct.TransformException;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.ct.MissingParameterException;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.CoordinateSystem;
+// Geotools dependencies
+import org.geotools.gp.Operation;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.CategoryList;
+import org.geotools.ct.TransformException;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.ct.MissingParameterException;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
 
 // Images
 import java.awt.Color;
@@ -99,8 +99,8 @@ import javax.swing.JTabbedPane;
 
 // Miscellaneous
 import net.seas.util.Console;
-import net.seagis.resources.Utilities;
-import net.seagis.io.DefaultFileFilter;
+import org.geotools.resources.Utilities;
+import org.geotools.io.DefaultFileFilter;
 
 
 /**

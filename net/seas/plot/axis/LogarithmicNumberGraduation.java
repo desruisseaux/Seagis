@@ -28,7 +28,7 @@ package net.seas.plot.axis;
 
 // Divers
 import java.util.Locale;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 
 /**
  * A graduation using numbers on a logarithmic axis.

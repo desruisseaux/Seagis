@@ -51,7 +51,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import net.seas.awt.tree.TreeNode;
 import net.seas.awt.tree.Trees;
-import net.seas.util.SwingUtilities;
 
 // Divers
 import java.util.Date;
@@ -60,8 +59,9 @@ import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
-// SEAGIS dependencies
-import net.seagis.resources.XDimension2D;
+// Geotools dependencies
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.SwingUtilities;
 
 
 /**

@@ -42,7 +42,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
 import fr.ird.awt.CoordinateChooser;
-import net.seas.awt.ExceptionMonitor;
 import net.seas.awt.TimeZoneChooser;
 import net.seas.awt.About;
 
@@ -81,9 +80,12 @@ import java.util.logging.LogRecord;
 // Temps et divers
 import java.util.Date;
 import java.util.TimeZone;
-import net.seagis.io.DefaultFileFilter;
+import org.geotools.io.DefaultFileFilter;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

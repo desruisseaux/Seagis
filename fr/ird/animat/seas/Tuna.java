@@ -33,8 +33,8 @@ import fr.ird.animat.Species;
 import java.awt.geom.Point2D;
 
 // Divers
-import net.seagis.resources.XMath;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.XMath;
+import org.geotools.resources.Utilities;
 
 
 /**

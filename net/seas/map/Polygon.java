@@ -23,18 +23,18 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.Projection;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CoordinateSystemFactory;
-import net.seagis.cs.ProjectedCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.CannotCreateTransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.MathTransform;
-import net.seagis.resources.OpenGIS;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.Projection;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CoordinateSystemFactory;
+import org.geotools.cs.ProjectedCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.CannotCreateTransformException;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.MathTransform;
+import org.geotools.resources.CTSUtilities;
 
 // Geometry and graphics
 import java.awt.Shape;
@@ -48,7 +48,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.IllegalPathStateException;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seagis.resources.XRectangle2D;
+import org.geotools.resources.XRectangle2D;
 
 // Collections
 import java.util.List;
@@ -78,8 +78,8 @@ import java.text.FieldPosition;
 import net.seas.util.XArray;
 import net.seas.util.Console;
 import net.seas.util.Statistics;
-import net.seagis.resources.XMath;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.XMath;
+import org.geotools.resources.Utilities;
 import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
 
@@ -277,7 +277,7 @@ public class Polygon extends Contour
      *        points in this polygon, or <code>null</code> if unknow.
      */
     public Polygon(final CoordinateSystem coordinateSystem)
-    {this(getIdentityTransform(OpenGIS.getCoordinateSystem2D(coordinateSystem)));}
+    {this(getIdentityTransform(CTSUtilities.getCoordinateSystem2D(coordinateSystem)));}
 
     /**
      * Construct a new polyline with the same data than the specified
@@ -357,7 +357,7 @@ public class Polygon extends Contour
      */
     public static Polygon[] getInstances(final Shape shape, CoordinateSystem coordinateSystem)
     {
-        coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);
+        coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
         if (shape instanceof Polygon)
         {
             return new Polygon[] {(Polygon) shape};
@@ -495,7 +495,7 @@ public class Polygon extends Contour
      */
     public synchronized void setCoordinateSystem(CoordinateSystem coordinateSystem) throws TransformException
     {
-        coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);
+        coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
         if (coordinateSystem==null)
         {
             coordinateSystem = getSourceCS();

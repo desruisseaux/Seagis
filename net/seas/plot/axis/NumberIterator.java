@@ -29,7 +29,7 @@ package net.seas.plot.axis;
 // Miscellaneous
 import java.util.Locale;
 import java.text.NumberFormat;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 
 
 /**

@@ -25,14 +25,14 @@
  */
 package fr.ird.layer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cv.SampleDimension;
-import net.seagis.cv.CategoryList;
-import net.seagis.pt.AngleFormat;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cv.SampleDimension;
+import org.geotools.cv.CategoryList;
+import org.geotools.pt.AngleFormat;
+import org.geotools.resources.CTSUtilities;
 
 // Map components
 import net.seas.map.layer.GridMarkLayer;
@@ -61,8 +61,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 // Miscellaneous
-import javax.units.Unit;
-import net.seagis.resources.XMath;
+import org.geotools.units.Unit;
+import org.geotools.resources.XMath;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -179,7 +179,7 @@ public class VectorLayer extends GridMarkLayer
      */
     public synchronized void setData(final GridCoverage coverage, final int bandU, final int bandV)
     {
-        final CoordinateSystem cs = OpenGIS.getCoordinateSystem2D(coverage.getCoordinateSystem());
+        final CoordinateSystem cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
         if (!cs.equivalents(getCoordinateSystem()))
         {
             // TODO: Il faudrait ajouter une méthode Layer.setCoordinateSystem

@@ -27,7 +27,7 @@ package fr.ird.awt.event;
 
 // Evénements et divers
 import java.util.EventObject;
-import net.seagis.gc.GridCoverage;
+import org.geotools.gc.GridCoverage;
 import fr.ird.sql.image.ImageEntry;
 
 

@@ -33,16 +33,16 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import fr.ird.sql.DataBase;
 
-// OpenGIS
-import net.seagis.pt.Envelope;
-import net.seagis.gc.GridRange;
-import net.seagis.gc.GridCoverage;
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.TemporalDatum;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.TemporalCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.TemporalDatum;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Geometry
 import java.awt.Dimension;
@@ -61,7 +61,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 
 
 /**

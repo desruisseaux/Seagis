@@ -24,7 +24,7 @@ package net.seas.util;
 
 
 /**
- * A temporary wrapper around {@link net.seagis.resources.WeakHashSet} leveraging
+ * A temporary wrapper around {@link org.geotools.util.WeakHashSet} leveraging
  * generic type safety. This temporary wrapper will be removed when generic type
  * will be available in JDK 1.5.
  * <br><br>
@@ -40,7 +40,7 @@ public final class WeakHashSet<Element>
     /**
      * The underlying weak hash set.
      */
-    private final net.seagis.resources.WeakHashSet set = new net.seagis.resources.WeakHashSet();
+    private final org.geotools.util.WeakHashSet set = new org.geotools.util.WeakHashSet();
 
     /**
      * Construit un ensemble avec une
@@ -66,7 +66,7 @@ public final class WeakHashSet<Element>
      * </pre></blockquote>
      */
     public final Element intern(final Element object)
-    {return (Element) set.intern(object);}
+    {return (Element) set.canonicalize(object);}
 
     /**
      * Ajoute les objets spécifiés à l'ensemble <code>this</code> si des exemplaires identiques (au sens
@@ -80,7 +80,7 @@ public final class WeakHashSet<Element>
      * </pre></blockquote>
      */
     public final void intern(final Element[] objects)
-    {set.intern(objects);}
+    {set.canonicalize(objects);}
 
     /**
      * Returns the count of element in this set.

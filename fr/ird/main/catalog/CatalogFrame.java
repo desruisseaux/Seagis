@@ -62,7 +62,6 @@ import fr.ird.sql.image.SeriesEntry;
 import fr.ird.sql.image.ImageDataBase;
 
 // Dialog box
-import net.seas.awt.ExceptionMonitor;
 import net.seas.awt.CoordinateChooser;
 import net.seas.awt.progress.Progress;
 import net.seas.awt.progress.WindowProgress;
@@ -71,6 +70,9 @@ import net.seas.awt.progress.WindowProgress;
 import fr.ird.main.Task;
 import fr.ird.main.DataBase;
 import fr.ird.main.InternalFrame;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 // Miscellaneous
 import fr.ird.resources.Resources;

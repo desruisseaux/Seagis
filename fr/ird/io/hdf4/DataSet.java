@@ -31,7 +31,7 @@ import java.awt.image.WritableRaster;
 import java.awt.image.IndexColorModel;
 
 // Miscellaneous
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

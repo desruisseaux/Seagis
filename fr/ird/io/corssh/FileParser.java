@@ -51,7 +51,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

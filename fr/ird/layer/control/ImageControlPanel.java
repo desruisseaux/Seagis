@@ -38,7 +38,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.DefaultListModel;
 import javax.swing.ListSelectionModel;
-import net.seas.util.SwingUtilities;
 import net.seas.awt.KernelEditor;
 
 // Miscellaneous
@@ -47,7 +46,10 @@ import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.operator.coverage.Operation;
 import fr.ird.operator.coverage.ProcessorOperation;
-import net.seagis.gp.GridCoverageProcessor;
+
+// Geotools dependencies
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.resources.SwingUtilities;
 
 
 /**

@@ -32,8 +32,8 @@ import javax.swing.JComponent;
 import net.seas.map.MapPanel;
 import net.seas.map.layer.GridCoverageLayer;
 
-// Implémentation OpenGIS
-import net.seagis.cs.GeographicCoordinateSystem;
+// Geotools dependencies
+import org.geotools.cs.GeographicCoordinateSystem;
 
 
 /**

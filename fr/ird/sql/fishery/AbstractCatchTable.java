@@ -41,9 +41,9 @@ import java.util.GregorianCalendar;
 
 // Geographic coordinates
 import java.awt.geom.Rectangle2D;
-import net.seagis.resources.Utilities;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
+import org.geotools.resources.Utilities;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Utilities
 import java.util.Set;

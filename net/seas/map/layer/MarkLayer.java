@@ -22,11 +22,11 @@
  */
 package net.seas.map.layer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.resources.CTSUtilities;
 
 // Geometry
 import java.awt.Shape;
@@ -38,7 +38,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.XAffineTransform;
 
 // Graphics
 import java.awt.Color;
@@ -49,11 +49,11 @@ import javax.swing.JPopupMenu;
 import javax.media.jai.GraphicsJAI;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import net.seas.map.Layer;
 import net.seas.map.GeoMouseEvent;
 import net.seas.map.RenderingContext;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 import net.seas.util.XArray;
 
 
@@ -374,7 +374,7 @@ public abstract class MarkLayer extends Layer
                 try
                 {
                     Rectangle2D visibleArea = XAffineTransform.inverseTransform(fromWorld, zoomableBounds, null);
-                    visibleArea = OpenGIS.transform((MathTransform2D)projection.inverse(), visibleArea, visibleArea);
+                    visibleArea = CTSUtilities.transform((MathTransform2D)projection.inverse(), visibleArea, visibleArea);
                     userClip = getUserClip(visibleArea);
                 }
                 catch (NoninvertibleTransformException exception)

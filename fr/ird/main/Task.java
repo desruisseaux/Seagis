@@ -31,7 +31,9 @@ import java.awt.EventQueue;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
-import net.seas.awt.ExceptionMonitor;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

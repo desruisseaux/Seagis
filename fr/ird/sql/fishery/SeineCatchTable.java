@@ -64,17 +64,17 @@ final class SeineCatchTable extends AbstractCatchTable
      * les constantes [@link #DATE}, [@link #LONGITUDE} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID        */ SEINES+".ID, "          +
-                                /*[02] CALEES    */ SEINES+".nb_calées, "   +
-                                /*[03] DATE      */ SEINES+".date, "        +
-                                /*[04] LONGITUDE */ SEINES+".longitude, "   +
-                                /*[05] LATITUDE  */ SEINES+".latitude "     +
+                    "SELECT "+  /*[01] ID        */ SEINES+".ID, "      +
+                                /*[02] CALEES    */ SEINES+".nCalees, " +
+                                /*[03] DATE      */ SEINES+".date, "    +
+                                /*[04] LONGITUDE */ SEINES+".x, "       +
+                                /*[05] LATITUDE  */ SEINES+".y "        +
 
                     "FROM "+SEINES+" "+
                     "WHERE "+
                          " (date>=? AND date<=?) "+
-                      "AND (longitude>=? AND longitude<=?) "+
-                      "AND (latitude>=? AND latitude<=?)\n"+
+                      "AND (x>=? AND x<=?) "+
+                      "AND (y>=? AND y<=?)\n"+
                     "ORDER BY date";
 
     // IMPORTANT: Les données DOIVENT être classées en ordre croissant de date

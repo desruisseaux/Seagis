@@ -35,10 +35,10 @@ import java.io.OutputStreamWriter;
 import java.awt.Shape;
 import java.util.Date;
 import java.util.TimeZone;
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.DatumType;
-import net.seagis.cs.HorizontalDatum;
-import net.seagis.cs.GeographicCoordinateSystem;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.DatumType;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Journal
 import java.util.logging.Level;
@@ -46,11 +46,11 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Divers
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import fr.ird.resources.Resources;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

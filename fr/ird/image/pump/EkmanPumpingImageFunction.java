@@ -52,9 +52,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
-// SEAGIS dependencies
-import net.seagis.gc.GridCoverage;
-import net.seagis.ct.TransformException;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.ct.TransformException;
 
 
 /**

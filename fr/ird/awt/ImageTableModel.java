@@ -31,11 +31,10 @@ import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.image.SeriesEntry;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.AxisInfo;
-import net.seagis.gc.GridCoverage;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.AxisInfo;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cs.CoordinateSystem;
 
 
 // Entrés/sorties

@@ -35,20 +35,20 @@ import javax.media.jai.ImageFunction;
 import java.awt.image.ImagingOpException;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.util.Arrays;
 import java.io.IOException;
 
-// Seagis dependencies
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.HorizontalDatum;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cv.Category;
-import net.seagis.cv.CategoryList;
-import net.seagis.gc.GridGeometry;
-import net.seagis.gc.GridCoverage;
-import net.seagis.resources.XMath;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cv.Category;
+import org.geotools.cv.CategoryList;
+import org.geotools.gc.GridGeometry;
+import org.geotools.gc.GridCoverage;
+import org.geotools.resources.XMath;
+import org.geotools.resources.CTSUtilities;
 
 // Rendering
 import javax.swing.JFrame;
@@ -509,7 +509,7 @@ public abstract class AbstractImageFunction implements ImageFunction
                                       final int    countX, final int    countY,
                                       final double[] sumValues, final double[] sumWeight) throws ImagingOpException
     {
-        final HorizontalDatum datum = OpenGIS.getHorizontalDatum(coordinateSystem);
+        final HorizontalDatum datum = CTSUtilities.getHorizontalDatum(coordinateSystem);
         final Ellipsoid ellipsoid = (datum!=null) ? datum.getEllipsoid() : null;
 
         final int    length = countX*countY;

@@ -25,14 +25,14 @@
  */
 package fr.ird.io.coverage;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cs.HorizontalDatum;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.TemporalCoordinateSystem;
-import net.seagis.io.coverage.PropertyParser;
-import net.seagis.cv.CategoryList;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
+import org.geotools.io.coverage.PropertyParser;
+import org.geotools.cv.CategoryList;
 
 // Time parsing
 import java.io.File;
@@ -172,7 +172,7 @@ abstract class AbstractProperties extends PropertyParser
         }
         catch (NoSuchElementException exception)
         {
-            Logger.getLogger("net.seagis.gcs").warning(exception.getLocalizedMessage());
+            Logger.getLogger("org.geotools.gcs").warning(exception.getLocalizedMessage());
             return HorizontalDatum.WGS84;
         }
     }

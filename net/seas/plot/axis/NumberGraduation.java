@@ -27,12 +27,12 @@
 package net.seas.plot.axis;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.util.Locale;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.awt.RenderingHints;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

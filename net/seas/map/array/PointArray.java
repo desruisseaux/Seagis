@@ -26,7 +26,7 @@ package net.seas.map.array;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 import net.seas.resources.Resources;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 import net.seas.resources.ResourceKeys;
 
 

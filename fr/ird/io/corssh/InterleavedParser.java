@@ -32,7 +32,7 @@ import java.io.EOFException;
 import java.io.Serializable;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

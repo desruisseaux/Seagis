@@ -35,8 +35,8 @@ import java.lang.reflect.Array;
 import javax.media.jai.util.Range;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.ClassChanger;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.ClassChanger;
 
 
 /**

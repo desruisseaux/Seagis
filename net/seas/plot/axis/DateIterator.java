@@ -36,7 +36,7 @@ import java.text.DateFormat;
 // Divers
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 

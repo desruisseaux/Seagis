@@ -22,16 +22,16 @@
  */
 package net.seas.map;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.pt.AngleFormat;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.CannotCreateTransformException;
+// Geotools dependencies
+import org.geotools.pt.Latitude;
+import org.geotools.pt.Longitude;
+import org.geotools.pt.AngleFormat;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.CannotCreateTransformException;
 
 // Miscellaneous
 import java.awt.geom.Point2D;

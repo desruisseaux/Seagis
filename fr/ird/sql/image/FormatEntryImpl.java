@@ -25,11 +25,11 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cv.Category;
-import net.seagis.cv.CategoryList;
-import net.seagis.resources.Utilities;
-import net.seagis.io.image.RawBinaryImageReadParam;
+// Geotools dependencies
+import org.geotools.cv.Category;
+import org.geotools.cv.CategoryList;
+import org.geotools.resources.Utilities;
+import org.geotools.io.image.RawBinaryImageReadParam;
 
 // Images
 import java.awt.image.ColorModel;

@@ -23,11 +23,11 @@
  */
 package fr.ird.sql.coupling;
 
-// SEAGIS dependencies
-import net.seagis.gc.GridCoverage;
-import net.seagis.cv.PointOutsideCoverageException;
-import net.seagis.resources.XAffineTransform;
-import net.seagis.resources.Utilities;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.PointOutsideCoverageException;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.Utilities;
 
 // Géométrie
 import java.awt.Shape;

@@ -22,25 +22,24 @@
  */
 package net.seas.map.layer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.gc.GridRange;
-import net.seagis.gc.GridCoverage;
-import net.seagis.cv.CategoryList;
-import net.seagis.cv.SampleDimension;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.gp.GridCoverageProcessor;
 
-// Others SEAGIS packages
+// Others Geotools packages
 import net.seas.map.Layer;
 import net.seas.map.MapPanel;
 import net.seas.map.GeoMouseEvent;
 import net.seas.map.RenderingContext;
-import net.seagis.resources.OpenGIS;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XAffineTransform;
 
 // Miscellaneous
 import java.awt.Shape;
@@ -135,7 +134,7 @@ public class GridCoverageLayer extends Layer
             this.coverage = null;
             return;
         }
-        if (!getCoordinateSystem().equals(OpenGIS.getCoordinateSystem2D(coverage.getCoordinateSystem())))
+        if (!getCoordinateSystem().equals(CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem())))
         {
             // TODO: implement changing coordinate system.
             throw new UnsupportedOperationException("Can't change coordinate system");
@@ -177,8 +176,8 @@ public class GridCoverageLayer extends Layer
             projectedCoverage = coverage;
         }
         sourceCS = projectedCoverage.getCoordinateSystem();
-        sourceCS = OpenGIS.getCoordinateSystem2D(sourceCS);
-        targetCS = OpenGIS.getCoordinateSystem2D(targetCS);
+        sourceCS = CTSUtilities.getCoordinateSystem2D(sourceCS);
+        targetCS = CTSUtilities.getCoordinateSystem2D(targetCS);
         if (!sourceCS.equivalents(targetCS))
         {
             final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();

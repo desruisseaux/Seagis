@@ -25,10 +25,10 @@
  */
 package fr.ird.sql.coupling;
 
-// Dépendences avec OpenGIS (SEAGIS)
-import net.seagis.gc.GridCoverage;
-import net.seagis.pt.CoordinatePoint;
-import net.seagis.cv.PointOutsideCoverageException;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.pt.CoordinatePoint;
+import org.geotools.cv.PointOutsideCoverageException;
 
 // Requêtes SQL
 import java.sql.SQLException;
@@ -58,7 +58,7 @@ import java.util.logging.LogRecord;
 // Divers
 import java.util.Date;
 import javax.media.jai.util.Range;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

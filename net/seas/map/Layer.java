@@ -22,11 +22,11 @@
  */
 package net.seas.map;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.resources.CTSUtilities;
 
 // Géométrie et graphisme
 import java.awt.Shape;
@@ -37,7 +37,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 import javax.media.jai.GraphicsJAI;
 import java.awt.geom.AffineTransform;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.XAffineTransform;
 
 // Evénements
 import java.awt.EventQueue;
@@ -58,7 +58,8 @@ import java.util.Locale;
 import java.io.Serializable;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ZoomPane;
 
 
 /**
@@ -163,7 +164,7 @@ public abstract class Layer implements Serializable
      *         pas être ramené à un système de coordonnées à deux dimensions.
      */
     public Layer(final CoordinateSystem coordinateSystem)
-    {this.coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);}
+    {this.coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);}
 
     /**
      * Retourne le nom de cette couche. L'implémentation par

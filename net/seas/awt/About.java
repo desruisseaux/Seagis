@@ -42,7 +42,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.Icon;
 import javax.swing.Box;
-import net.seas.util.SwingUtilities;
 
 // Input/output
 import java.net.URL;
@@ -68,7 +67,10 @@ import java.util.Iterator;
 import net.seas.util.XArray;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.resources.SwingUtilities;
 
 
 /**

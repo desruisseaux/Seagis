@@ -39,7 +39,7 @@ import java.util.Collections;
 // Resources
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.XArray;
+import org.geotools.resources.XArray;
 
 
 /**

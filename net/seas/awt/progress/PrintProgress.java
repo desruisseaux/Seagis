@@ -39,7 +39,7 @@ import java.text.BreakIterator;
 import net.seas.util.Console;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

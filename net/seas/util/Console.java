@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 import java.util.prefs.Preferences;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

@@ -48,7 +48,7 @@ import java.util.ArrayList;
 // Divers et resources
 import java.util.Locale;
 import java.io.Serializable;
-import net.seagis.cv.CategoryList;
+import org.geotools.cv.CategoryList;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 

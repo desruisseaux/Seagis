@@ -28,8 +28,8 @@ package fr.ird.animat;
 // J2SE
 import java.awt.geom.Point2D;
 
-// Implémentation d'OpenGIS
-import net.seagis.cs.Ellipsoid;
+// Geotools dependencies
+import org.geotools.cs.Ellipsoid;
 
 
 /**

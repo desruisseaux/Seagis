@@ -47,7 +47,6 @@ import javax.swing.JComboBox;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import net.seas.util.SwingUtilities;
 
 // Evénements
 import java.awt.event.ActionEvent;
@@ -60,6 +59,9 @@ import java.util.TimeZone;
 import java.util.ArrayList;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 
 /**

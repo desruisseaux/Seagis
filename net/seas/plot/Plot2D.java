@@ -25,7 +25,6 @@
 package net.seas.plot;
 
 // Base class and axis
-import net.seas.awt.ZoomPane;
 import net.seas.plot.axis.Axis;
 import net.seas.plot.axis.Graduation;
 import net.seas.plot.axis.AbstractGraduation;
@@ -50,6 +49,9 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ZoomPane;
 
 
 /**

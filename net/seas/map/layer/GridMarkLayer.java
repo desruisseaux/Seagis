@@ -23,8 +23,8 @@
 package net.seas.map.layer;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
 
 // Geometry
 import java.awt.Shape;
@@ -34,8 +34,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seagis.resources.XAffineTransform;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.XMath;
 
 // Graphics
 import net.seas.map.RenderingContext;

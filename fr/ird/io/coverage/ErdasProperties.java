@@ -25,9 +25,9 @@
  */
 package fr.ird.io.coverage;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Projection;
-import net.seagis.cv.CategoryList;
+// Geotools dependencies
+import org.geotools.cs.Projection;
+import org.geotools.cv.CategoryList;
 
 // Miscellaneous
 import java.util.NoSuchElementException;

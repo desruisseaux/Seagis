@@ -41,7 +41,7 @@ import java.util.Calendar;
 import java.util.prefs.Preferences;
 import fr.ird.resources.Resources;
 import net.seas.util.WeakHashSet;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

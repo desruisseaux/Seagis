@@ -29,8 +29,8 @@ package fr.ird.animat.seas;
 import java.util.Date;
 import java.sql.SQLException;
 
-// Implémentation d'OpenGIS
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Base de données
 import fr.ird.sql.image.Coverage3D;

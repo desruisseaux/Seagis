@@ -27,7 +27,7 @@ package fr.ird.io.bufr;
 
 // Divers
 import java.io.Serializable;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 
 
 /**

@@ -25,8 +25,8 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cv.Category;
+// Geotools dependencies
+import org.geotools.cv.Category;
 
 // Base de données
 import java.sql.ResultSet;

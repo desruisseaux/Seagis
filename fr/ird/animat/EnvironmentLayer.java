@@ -28,10 +28,10 @@ package fr.ird.animat;
 // Cartes
 import net.seas.map.layer.GridCoverageLayer;
 
-// Implémentation OpenGIS
-import net.seagis.gc.GridCoverage;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.cs.GeographicCoordinateSystem;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Animats
 import fr.ird.animat.event.EnvironmentChangeEvent;

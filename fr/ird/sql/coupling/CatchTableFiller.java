@@ -25,9 +25,8 @@
  */
 package fr.ird.sql.coupling;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Ellipsoid;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.Ellipsoid;
 
 // Database
 import java.sql.SQLException;
@@ -50,7 +49,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
-import net.seagis.resources.Geometry;
+import org.geotools.resources.Geometry;
 
 
 /**

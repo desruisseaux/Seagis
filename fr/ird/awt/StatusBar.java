@@ -45,7 +45,9 @@ import java.util.Arrays;
 import net.seas.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seas.awt.ExceptionMonitor;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

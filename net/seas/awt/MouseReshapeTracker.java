@@ -31,7 +31,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RectangularShape;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.XAffineTransform;
 
 // Graphisme
 import java.awt.Paint;
@@ -53,7 +53,6 @@ import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.text.JTextComponent;
 import javax.swing.JFormattedTextField;
-import net.seas.awt.ExceptionMonitor;
 
 // Evénements
 import java.awt.event.KeyEvent;
@@ -74,11 +73,15 @@ import java.text.SimpleDateFormat;
 // Entrés/sorties et divers
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import net.seagis.resources.XMath;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.XMath;
+import org.geotools.resources.Utilities;
 import net.seas.resources.Resources;
 import net.seas.util.XArray;
 import java.lang.Double;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

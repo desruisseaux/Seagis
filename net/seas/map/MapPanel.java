@@ -22,14 +22,14 @@
  */
 package net.seas.map;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.CannotCreateTransformException;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.CannotCreateTransformException;
+import org.geotools.resources.CTSUtilities;
 
 // Geometry
 import java.awt.Shape;
@@ -41,8 +41,8 @@ import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seagis.resources.XAffineTransform;
-import net.seagis.resources.XDimension2D;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.XDimension2D;
 
 // Graphics
 import java.awt.Stroke;
@@ -51,13 +51,10 @@ import java.awt.Graphics2D;
 import javax.media.jai.GraphicsJAI;
 
 // User interface
-import net.seas.awt.ZoomPane;
 import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
 
 // Events
-import net.seas.awt.event.ZoomChangeListener;
-import net.seas.awt.event.ZoomChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.awt.event.ComponentListener;
@@ -78,8 +75,13 @@ import java.util.Comparator;
 import net.seas.util.XArray;
 import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ZoomPane;
+import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.gui.swing.event.ZoomChangeEvent;
+import org.geotools.gui.swing.event.ZoomChangeListener;
 
 
 /**
@@ -240,7 +242,7 @@ public class MapPanel extends ZoomPane
     public MapPanel(final CoordinateSystem coordinateSystem)
     {
         super(TRANSLATE_X | TRANSLATE_Y | UNIFORM_SCALE | DEFAULT_ZOOM | ROTATE | RESET);
-        this.coordinateSystem = OpenGIS.getCoordinateSystem2D(coordinateSystem);
+        this.coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
         addZoomChangeListener(listeners);
         addComponentListener (listeners);
         addMouseListener     (listeners);
@@ -364,7 +366,8 @@ public class MapPanel extends ZoomPane
                 }
             }
             fireZoomChanged(new AffineTransform()); // Update scrollbars
-            log("net.seas.map", "MapPanel", "setArea", newArea);
+// TODO: Need protected access
+//          log("net.seas.map", "MapPanel", "setArea", newArea);
         }
     }
 
@@ -392,7 +395,7 @@ public class MapPanel extends ZoomPane
                         transform  = getMathTransform2D(system, sourceClassName, sourceMethodName);
                         lastSystem = system;
                     }
-                    bounds = OpenGIS.transform(transform, bounds, null);
+                    bounds = CTSUtilities.transform(transform, bounds, null);
                     if (newArea==null) newArea=bounds;
                     else newArea.add(bounds);
                 }
@@ -418,8 +421,8 @@ public class MapPanel extends ZoomPane
         try
         {
             final MathTransform2D transform = getMathTransform2D(system, sourceClassName, sourceMethodName);
-            oldSubArea = OpenGIS.transform(transform, oldSubArea, null);
-            newSubArea = OpenGIS.transform(transform, newSubArea, null);
+            oldSubArea = CTSUtilities.transform(transform, oldSubArea, null);
+            newSubArea = CTSUtilities.transform(transform, newSubArea, null);
         }
         catch (TransformException exception)
         {
@@ -817,7 +820,7 @@ public class MapPanel extends ZoomPane
                     Rectangle2D area = layer.getPreferredArea();
                     if (area==null) area = new Rectangle2D.Double();
                     area.setRect(area.getCenterX()-0.5*width, area.getCenterY()-0.5*height, width, height);
-                    area   = OpenGIS.transform(transform, area, area);
+                    area   = CTSUtilities.transform(transform, area, area);
                     width  = area.getWidth();
                     height = area.getHeight();
                 }

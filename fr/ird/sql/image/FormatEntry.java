@@ -27,8 +27,8 @@ package fr.ird.sql.image;
 
 // Divers
 import fr.ird.sql.Entry;
-import net.seagis.cv.CategoryList;
-import net.seagis.resources.Utilities;
+import org.geotools.cv.CategoryList;
+import org.geotools.resources.Utilities;
 
 
 /**

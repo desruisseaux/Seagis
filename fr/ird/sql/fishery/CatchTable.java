@@ -40,7 +40,7 @@ import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 
 // Cartographie
-import net.seagis.cs.CoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
 
 
 /**

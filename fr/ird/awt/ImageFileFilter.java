@@ -44,7 +44,7 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ImageReaderWriterSpi;
 import javax.swing.filechooser.FileFilter;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

@@ -1,7 +1,7 @@
 /*
- * SEAGIS - An OpenSource implementation of OpenGIS specification
- *          (C) 2001, Institut de Recherche pour le Développement
- *              1999, Fisheries and Oceans Canada
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2002 Institut de Recherche pour le Développement
+ *               1999, Fisheries and Oceans Canada
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -34,8 +34,8 @@ package fr.ird.animat.seas;
 
 // Divers
 import java.awt.geom.Point2D;
-import net.seagis.cs.Ellipsoid;
-import net.seagis.resources.XMath;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.resources.XMath;
 
 
 /**

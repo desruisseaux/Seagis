@@ -24,7 +24,7 @@ package net.seas.awt.progress;
 
 // Divers
 import javax.swing.ProgressMonitor; // Pour JavaDoc
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

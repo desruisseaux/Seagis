@@ -39,7 +39,9 @@ import java.awt.BorderLayout;
 // Resources
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seas.util.SwingUtilities;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 
 /**

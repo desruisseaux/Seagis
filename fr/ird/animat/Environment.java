@@ -27,7 +27,7 @@ package fr.ird.animat;
 
 // Divers
 import java.util.Date;
-import net.seagis.gc.GridCoverage;
+import org.geotools.gc.GridCoverage;
 import fr.ird.animat.event.EnvironmentChangeListener;
 
 

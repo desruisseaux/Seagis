@@ -51,8 +51,10 @@ import java.lang.reflect.InvocationTargetException;
 // Divers
 import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
-import net.seagis.resources.Utilities;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

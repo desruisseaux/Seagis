@@ -48,7 +48,7 @@ import java.text.FieldPosition;
 
 // Divers
 import net.seas.resources.Resources;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 import net.seas.resources.ResourceKeys;
 
 

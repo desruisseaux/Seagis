@@ -39,7 +39,9 @@ import java.awt.event.ActionEvent;
 // Divers
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seas.awt.ExceptionMonitor;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

@@ -29,7 +29,7 @@ package net.seas.neural;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.BasicStroke;
-import net.seas.awt.ZoomPane;
+import org.geotools.gui.swing.ZoomPane;
 
 // Geometry
 import java.awt.geom.Line2D;

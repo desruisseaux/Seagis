@@ -29,7 +29,7 @@ package net.seas.plot.axis;
 // Divers
 import java.text.Format;
 import java.util.Locale;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.awt.RenderingHints;
 import java.beans.PropertyChangeListener;
 

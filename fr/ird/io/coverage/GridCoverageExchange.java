@@ -25,11 +25,11 @@
  */
 package fr.ird.io.coverage;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cv.CategoryList;
-import net.seagis.gc.GridCoverage;
-import net.seagis.io.coverage.GridCoverageReader;
-import net.seagis.io.coverage.ExoreferencedGridCoverageReader;
+// Geotools dependencies
+import org.geotools.cv.CategoryList;
+import org.geotools.gc.GridCoverage;
+import org.geotools.io.coverage.GridCoverageReader;
+import org.geotools.io.coverage.ExoreferencedGridCoverageReader;
 
 // Input/output
 import java.io.File;
@@ -52,7 +52,7 @@ import java.util.Locale;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class GridCoverageExchange extends net.seagis.gc.GridCoverageExchange
+public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
 {
     /**
      * Register a set of service providers

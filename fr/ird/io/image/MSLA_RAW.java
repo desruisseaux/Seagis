@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.awt.image.DataBuffer;
 import javax.imageio.ImageReader;
 import javax.imageio.spi.ImageReaderSpi;
-import net.seagis.io.image.RawBinaryImageReader;
+import org.geotools.io.image.RawBinaryImageReader;
 
 
 /**

@@ -37,7 +37,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
-import net.seas.util.SwingUtilities;
 
 // Entrés/sorties
 import java.io.File;
@@ -54,7 +53,7 @@ import javax.imageio.event.IIOReadWarningListener;
 
 // Images et progrès
 import fr.ird.sql.image.ImageEntry;
-import net.seagis.gc.GridCoverage;
+import org.geotools.gc.GridCoverage;
 import net.seas.awt.progress.Progress;
 import net.seas.awt.progress.WindowProgress;
 
@@ -68,9 +67,12 @@ import java.util.LinkedHashSet;
 // Divers
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seas.awt.ExceptionMonitor;
 import javax.swing.event.EventListenerList;
-import net.seagis.resources.Utilities;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.resources.SwingUtilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

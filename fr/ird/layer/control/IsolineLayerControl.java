@@ -41,7 +41,9 @@ import fr.ird.io.IsolineFactory;
 import java.awt.Color;
 import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
-import net.seas.awt.ExceptionMonitor;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ExceptionMonitor;
 
 // Miscellaneous
 import java.util.Date;

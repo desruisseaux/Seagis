@@ -25,8 +25,8 @@
  */
 package fr.ird.main.viewer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Map components
 import net.seas.map.MapPanel;
@@ -53,8 +53,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import net.seas.awt.event.ZoomChangeEvent;
-import net.seas.awt.event.ZoomChangeListener;
+import org.geotools.gui.swing.event.ZoomChangeEvent;
+import org.geotools.gui.swing.event.ZoomChangeListener;
 
 // Logger
 import java.util.logging.Level;
@@ -75,7 +75,7 @@ import fr.ird.main.DataBase;
 // Miscellaneous
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

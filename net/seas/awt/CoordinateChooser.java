@@ -31,11 +31,11 @@ import java.util.Calendar;
 import java.awt.Dimension;
 import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
-import net.seagis.pt.Angle;
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.XRectangle2D;
+import org.geotools.pt.Angle;
+import org.geotools.pt.Latitude;
+import org.geotools.pt.Longitude;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XRectangle2D;
 
 // User interface (Swing)
 import java.awt.Insets;
@@ -60,7 +60,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.AbstractSpinnerModel;
 import javax.swing.JFormattedTextField;
 import javax.swing.text.InternationalFormatter;
-import net.seas.util.SwingUtilities;
 
 // Events
 import java.awt.EventQueue;
@@ -75,13 +74,16 @@ import java.text.Format;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import net.seagis.pt.AngleFormat;
+import org.geotools.pt.AngleFormat;
 
 // Miscellaneous
 import java.util.Arrays;
 import java.util.Locale;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 
 /**

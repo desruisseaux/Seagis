@@ -28,13 +28,13 @@ package net.seas.plot.axis;
 
 // Miscellaneous
 import java.util.Locale;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.io.Serializable;
 import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.EventListenerList;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
 

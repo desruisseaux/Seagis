@@ -25,25 +25,25 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cs.AxisInfo;
-import net.seagis.gc.GridRange;
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.AxisOrientation;
-import net.seagis.cs.CoordinateSystem;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.AxisInfo;
+import org.geotools.gc.GridRange;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.AxisOrientation;
+import org.geotools.cs.CoordinateSystem;
 
-import net.seagis.ct.MathTransform;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.ct.CannotCreateTransformException;
-import net.seagis.ct.CoordinateTransformationFactory;
+import org.geotools.ct.MathTransform;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.ct.CannotCreateTransformException;
+import org.geotools.ct.CoordinateTransformationFactory;
 
-import net.seagis.resources.OpenGIS;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.Utilities;
 
 // Divers
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.util.Comparator;
 
 
@@ -154,7 +154,7 @@ public class ImageComparator implements Comparator<ImageEntry>
         this.tDim             = tDim;
         this.coordinateSystem = cs;
         this.target           = envelope;
-        this.ellipsoid        = OpenGIS.getHorizontalDatum(cs).getEllipsoid();
+        this.ellipsoid        = CTSUtilities.getHorizontalDatum(cs).getEllipsoid();
         this.area             = getArea(target);
     }
 
@@ -298,7 +298,7 @@ public class ImageComparator implements Comparator<ImageEntry>
                 final MathTransform transform = transformation.getMathTransform();
                 if (!transform.isIdentity())
                 {
-                    envelope = OpenGIS.transform(transform, envelope);
+                    envelope = CTSUtilities.transform(transform, envelope);
                 }
             }
             this.source = envelope;

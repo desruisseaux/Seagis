@@ -23,11 +23,11 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
-import net.seagis.cs.ProjectedCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.resources.Utilities;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.cs.ProjectedCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.resources.Utilities;
 
 // Geometry and graphics
 import java.awt.Shape;

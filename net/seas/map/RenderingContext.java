@@ -23,20 +23,20 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.ct.CannotCreateTransformException;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.OpenGIS;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.ct.CannotCreateTransformException;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
 
 // Geometry
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.XAffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Miscellaneous
@@ -327,7 +327,7 @@ public final class RenderingContext
                 {
                     transformation = Contour.createFromCoordinateSystems(sourceCS, targetCS, "RenderingContext", "clip");
                 }
-                clip = temporary = OpenGIS.transform((MathTransform2D)transformation.getMathTransform(), clip, temporary);
+                clip = temporary = CTSUtilities.transform((MathTransform2D)transformation.getMathTransform(), clip, temporary);
             }
             catch (TransformException exception)
             {

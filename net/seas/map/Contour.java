@@ -22,16 +22,16 @@
  */
 package net.seas.map;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.ProjectedCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.CoordinateTransformationFactory;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CannotCreateTransformException;
-import net.seagis.resources.Utilities;
+// Geotools dependencies
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.ProjectedCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.CoordinateTransformationFactory;
+import org.geotools.ct.CoordinateTransformation;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CannotCreateTransformException;
+import org.geotools.resources.Utilities;
 
 // Geometry
 import java.awt.Shape;
@@ -42,9 +42,9 @@ import java.awt.geom.Rectangle2D;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.pt.AngleFormat;
+import org.geotools.pt.Latitude;
+import org.geotools.pt.Longitude;
+import org.geotools.pt.AngleFormat;
 
 // Logging
 import java.util.logging.Level;

@@ -78,7 +78,7 @@ public class ImageDataBase extends DataBase
         registry.registerServiceProvider(new fr.ird.io.image.MSLA_RAW());
         registry.registerServiceProvider(new fr.ird.io.image.Aviso_ASC());
         registry.registerServiceProvider(new fr.ird.io.image.USRelaxed_ASC());
-        registry.registerServiceProvider(new net.seagis.io.image.RawBinaryImageReader.Spi());
+        registry.registerServiceProvider(new org.geotools.io.image.RawBinaryImageReader.Spi());
         // Note: previous SPIs (Aviso_ASC, etc.) will be discarted, since
         //       IIORegistry register only singletons for each leaf class.
     }

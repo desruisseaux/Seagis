@@ -22,18 +22,17 @@
  */
 package net.seas.map;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.ProjectedCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.cs.HorizontalDatum;
-import net.seagis.ct.MathTransform;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformation;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.ProjectedCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.ct.MathTransform;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformation;
 
 // Coordinates
 import java.awt.geom.Line2D;
@@ -57,8 +56,8 @@ import net.seas.util.XArray;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.Geometry;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.Geometry;
 
 
 /**

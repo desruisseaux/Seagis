@@ -34,9 +34,9 @@ import java.util.Calendar;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.Format;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.awt.RenderingHints;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

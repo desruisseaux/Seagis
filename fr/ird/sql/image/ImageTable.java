@@ -28,12 +28,12 @@ package fr.ird.sql.image;
 // Base de données
 import java.sql.SQLException;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.gp.Operation;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.gp.OperationNotFoundException;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.gp.Operation;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gp.OperationNotFoundException;
 
 // Coordonnées et projections cartographiques
 import java.util.Date;

@@ -25,26 +25,22 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.pt.CoordinatePoint;
-import net.seagis.pt.MismatchedDimensionException;
+// Geotools dependencies (CTS)
+import org.geotools.pt.Envelope;
+import org.geotools.pt.CoordinatePoint;
+import org.geotools.pt.MismatchedDimensionException;
+import org.geotools.ct.MathTransform;
+import org.geotools.ct.TransformException;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.ct.MathTransform;
-import net.seagis.ct.TransformException;
-
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridRange;
-import net.seagis.gc.GridGeometry;
-import net.seagis.gc.GridCoverage;
-
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cv.Coverage;
-import net.seagis.cv.CategoryList;
-import net.seagis.cv.SampleDimension;
-import net.seagis.cv.ColorInterpretation;
-import net.seagis.cv.PointOutsideCoverageException;
+// Geotools dependencies (GCS)
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridGeometry;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.Coverage;
+import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
+import org.geotools.cv.ColorInterpretation;
+import org.geotools.cv.PointOutsideCoverageException;
 
 // Géométrie
 import java.awt.Shape;
@@ -67,7 +63,7 @@ import javax.imageio.ImageReader;
 import javax.swing.event.EventListenerList;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
-import net.seagis.io.image.IIOReadProgressAdapter;
+import org.geotools.io.image.IIOReadProgressAdapter;
 
 // Journal
 import java.util.logging.Level;

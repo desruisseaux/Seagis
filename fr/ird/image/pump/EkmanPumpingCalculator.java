@@ -29,9 +29,9 @@ package fr.ird.image.pump;
 // Coordinates
 import java.awt.geom.Point2D;
 
-// Seagis dependencies
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
+// Geotools dependencies
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
 
 
 /**

@@ -25,8 +25,8 @@
  */
 package fr.ird.main.viewer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Databases
 import fr.ird.sql.image.ImageEntry;
@@ -50,7 +50,6 @@ import javax.swing.JLabel;
 import javax.swing.JComponent;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
-import net.seas.awt.ExceptionMonitor;
 import fr.ird.awt.StatusBar;
 
 // Main framework
@@ -75,8 +74,12 @@ import java.text.DateFormat;
 import java.text.FieldPosition;
 import javax.media.jai.util.Range;
 
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ExceptionMonitor;
+
+// Resources
 import net.seas.util.XArray;
-import net.seagis.resources.Utilities;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
 

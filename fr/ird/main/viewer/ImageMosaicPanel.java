@@ -32,8 +32,8 @@ import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.image.SeriesEntry;
 
-// OpenGIS implementation (SEAGIS)
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Map components
 import fr.ird.layer.control.LayerControl;
@@ -50,8 +50,6 @@ import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 import net.seas.plot.RangeSet;
 import net.seas.plot.RangeBars;
-import net.seas.util.SwingUtilities;
-import net.seas.awt.ExceptionMonitor;
 
 // Events and models
 import javax.swing.BoundedRangeModel;
@@ -71,6 +69,10 @@ import java.util.Map;
 // Formats
 import java.text.DateFormat;
 import java.text.ParseException;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 // Resources
 import fr.ird.resources.Resources;

@@ -23,10 +23,10 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.resources.OpenGIS;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.resources.CTSUtilities;
 
 // Miscellaneous
 import net.seas.util.XArray;
@@ -132,7 +132,7 @@ final class Clipper
     {
         if (coordinateSystem!=null && nativeCS!=null && !coordinateSystem.equivalents(nativeCS)) try
         {
-            OpenGIS.transform((MathTransform2D)
+            CTSUtilities.transform((MathTransform2D)
                 Contour.createFromCoordinateSystems(coordinateSystem, nativeCS, "Clipper", "setCoordinateSystem").getMathTransform(),
                 logicalClip, clip);
             xmin = (float) clip.getMinX();

@@ -19,7 +19,7 @@ package net.seas.neural;
 // Miscellaneous
 import java.util.Random;
 import java.io.Serializable;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

@@ -25,23 +25,23 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
 
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.TemporalCoordinateSystem;
-import net.seagis.cs.HorizontalCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
+import org.geotools.cs.HorizontalCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.ct.MathTransform2D;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.CoordinateTransformationFactory;
+// Geotools dependencies
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.CoordinateTransformationFactory;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gp.Operation;
-import net.seagis.gp.GridCoverageProcessor;
+// Geotools dependencies
+import org.geotools.gp.Operation;
+import org.geotools.gp.GridCoverageProcessor;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -63,9 +63,9 @@ import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
 
-import net.seagis.resources.OpenGIS;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.XDimension2D;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.XDimension2D;
 
 
 /**
@@ -204,7 +204,7 @@ final class Parameters implements Serializable
         if (!headCS.equivalents(cs))
         {
             final MathTransform2D transform = (MathTransform2D) TRANSFORMS.createFromCoordinateSystems(headCS, cs).getMathTransform();
-            final Rectangle2D newGeographicArea = OpenGIS.transform(transform, geographicArea, null);
+            final Rectangle2D newGeographicArea = CTSUtilities.transform(transform, geographicArea, null);
             final Dimension2D newResolution;
 
             if (resolution!=null)
@@ -214,7 +214,7 @@ final class Parameters implements Serializable
                 Rectangle2D   pixel = new Rectangle2D.Double(geographicArea.getCenterX()-0.5*width,
                                                              geographicArea.getCenterY()-0.5*height,
                                                              width, height);
-                pixel = OpenGIS.transform(transform, pixel, pixel);
+                pixel = CTSUtilities.transform(transform, pixel, pixel);
                 newResolution = new XDimension2D.Double(pixel.getWidth(), pixel.getHeight());
             }
             else newResolution=null;

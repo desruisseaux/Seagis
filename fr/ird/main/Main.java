@@ -50,7 +50,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
 import javax.swing.JCheckBoxMenuItem;
-import net.seas.awt.ExceptionMonitor;
 import fr.ird.sql.ControlPanel;
 
 // Evénements
@@ -78,7 +77,10 @@ import java.util.logging.LogRecord;
 import net.seas.util.Console;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

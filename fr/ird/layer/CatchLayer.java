@@ -58,7 +58,7 @@ import java.awt.Graphics2D;
 import javax.media.jai.GraphicsJAI;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import javax.media.jai.util.Range;

@@ -41,7 +41,6 @@ import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
-import net.seas.util.SwingUtilities;
 
 // Modèles et événements
 import java.awt.event.ActionEvent;
@@ -53,6 +52,9 @@ import javax.swing.event.ListSelectionListener;
 
 // Journal
 import java.util.logging.Logger;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 // Divers
 import java.util.List;

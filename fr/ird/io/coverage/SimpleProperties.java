@@ -25,24 +25,24 @@
  */
 package fr.ird.io.coverage;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.HorizontalDatum;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.CoordinateTransformationFactory;
-import net.seagis.ct.TransformException;
-import net.seagis.ct.MathTransform;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.CoordinateTransformationFactory;
+import org.geotools.ct.TransformException;
+import org.geotools.ct.MathTransform;
 
-import net.seagis.gc.GridRange;
-import net.seagis.cv.CategoryList;
-import net.seagis.resources.OpenGIS;
-import net.seagis.io.coverage.PropertyParser;
+import org.geotools.gc.GridRange;
+import org.geotools.cv.CategoryList;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.io.coverage.PropertyParser;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import java.util.NoSuchElementException;
 import java.awt.image.RasterFormatException;
 
@@ -158,7 +158,7 @@ final class SimpleProperties extends AbstractProperties
             final CoordinateSystem targetCS = ((CompoundCoordinateSystem) getCoordinateSystem()).getHeadCS();
             transform = factory.createFromCoordinateSystems(sourceCS, targetCS).getMathTransform();
             transform = factory.getMathTransformFactory().createPassThroughTransform(0, transform, 1);
-            envelope  = OpenGIS.transform(transform, envelope);
+            envelope  = CTSUtilities.transform(transform, envelope);
         }
         catch (TransformException exception)
         {

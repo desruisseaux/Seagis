@@ -25,8 +25,8 @@
  */
 package fr.ird.layer.control;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Databases and images
 import java.io.IOException;

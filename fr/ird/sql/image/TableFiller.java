@@ -28,7 +28,7 @@ package fr.ird.sql.image;
 // Miscellaneous
 import java.io.File;
 import java.sql.SQLException;
-import net.seagis.gc.GridCoverage;
+import org.geotools.gc.GridCoverage;
 
 
 /**

@@ -33,25 +33,25 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.CompoundCoordinateSystem;
-import net.seagis.cs.TemporalCoordinateSystem;
-import net.seagis.cs.HorizontalCoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
-import net.seagis.ct.TransformException;
+// Geotools dependencies (CTS)
+import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
+import org.geotools.cs.HorizontalCoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.ct.TransformException;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gp.Operation;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.gp.OperationNotFoundException;
+// Geotools dependencies (GCS)
+import org.geotools.gp.Operation;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gp.OperationNotFoundException;
 
-// SEAGIS dependencies
-import net.seagis.resources.OpenGIS;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.XRectangle2D;
+// Geotools dependencies (resources)
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XRectangle2D;
 
 // Géométrie
 import java.awt.Rectangle;
@@ -906,7 +906,7 @@ final class ImageTableImpl extends Table implements ImageTable
      * forme de chaîne de caractères.
      */
     private String getStringArea()
-    {return OpenGIS.toWGS84String(coordinateSystem.getHeadCS(), geographicArea);}
+    {return CTSUtilities.toWGS84String(coordinateSystem.getHeadCS(), geographicArea);}
 
     /**
      * Enregistre un évènement dans le journal.

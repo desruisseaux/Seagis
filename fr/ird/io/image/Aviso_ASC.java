@@ -28,7 +28,7 @@ package fr.ird.io.image;
 // Miscellaneous
 import java.util.Locale;
 import java.nio.charset.Charset;
-import net.seagis.io.image.TextRecordImageReader;
+import org.geotools.io.image.TextRecordImageReader;
 
 
 /**

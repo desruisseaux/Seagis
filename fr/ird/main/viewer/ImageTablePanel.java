@@ -25,8 +25,8 @@
  */
 package fr.ird.main.viewer;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
 
 // Database
 import java.sql.SQLException;

@@ -24,7 +24,7 @@ package net.seas.util;
 
 // Miscellaneous
 import java.io.Serializable;
-import net.seagis.io.TableWriter;
+import org.geotools.io.TableWriter;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
 

@@ -42,7 +42,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import net.seas.awt.ZoomPane;
 
 // Graphics
 import java.awt.Font;
@@ -76,7 +75,7 @@ import java.util.ConcurrentModificationException;
 // Timezone and units
 import java.util.Date;
 import java.util.TimeZone;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 
 // Formats
 import java.text.Format;
@@ -91,8 +90,11 @@ import net.seas.plot.axis.AbstractGraduation;
 // Resources
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seas.awt.ExceptionMonitor;
 import net.seas.awt.MouseReshapeTracker;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ZoomPane;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**

@@ -25,12 +25,12 @@
  */
 package fr.ird.sql.image;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cv.CategoryList;
-import net.seagis.gc.GridCoverage;
-import net.seagis.gc.GridGeometry;
-import net.seagis.cs.CoordinateSystem;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cv.CategoryList;
+import org.geotools.gc.GridCoverage;
+import org.geotools.gc.GridGeometry;
+import org.geotools.cs.CoordinateSystem;
 
 // Entrés/sorties
 import java.io.File;

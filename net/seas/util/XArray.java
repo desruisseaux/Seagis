@@ -24,7 +24,7 @@ package net.seas.util;
 
 
 /**
- * Temporary wrapper around {@link net.seagis.resources.XArray}
+ * Temporary wrapper around {@link org.geotools.resources.XArray}
  * leveraging generic type safety. This temporary wrapper will
  * be removed when generic type will be available in JDK 1.5.
  *
@@ -53,7 +53,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static <Element> Element[] resize(final Element[] array, final int length)
-    {return (Element[]) net.seagis.resources.XArray.resize(array, length);}
+    {return (Element[]) org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -68,7 +68,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static double[] resize(final double[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -83,7 +83,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static float[] resize(final float[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -98,7 +98,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static long[] resize(final long[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -113,7 +113,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static int[] resize(final int[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -128,7 +128,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static short[] resize(final short[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -143,7 +143,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static byte[] resize(final byte[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -158,7 +158,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static char[] resize(final char[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Renvoie un nouveau tableau qui contiendra les mêmes éléments que <code>array</code> mais avec la longueur <code>length</code>
@@ -173,7 +173,7 @@ public final class XArray
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
     public static boolean[] resize(final boolean[] array, final int length)
-    {return net.seagis.resources.XArray.resize(array, length);}
+    {return org.geotools.resources.XArray.resize(array, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -187,7 +187,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static <Element> Element[] remove(final Element[] array, final int index, final int length)
-    {return (Element[]) net.seagis.resources.XArray.remove(array, index, length);}
+    {return (Element[]) org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -201,7 +201,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static double[] remove(final double[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -215,7 +215,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static float[] remove(final float[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -229,7 +229,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static long[] remove(final long[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -243,7 +243,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static int[] remove(final int[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -257,7 +257,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static short[] remove(final short[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -271,7 +271,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static byte[] remove(final byte[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -285,7 +285,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static char[] remove(final char[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Retire des éléments au milieu d'un tableau.
@@ -299,7 +299,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static boolean[] remove(final boolean[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.remove(array, index, length);}
+    {return org.geotools.resources.XArray.remove(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -315,7 +315,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static <Element> Element[] insert(final Element[] array, final int index, final int length)
-    {return (Element[]) net.seagis.resources.XArray.insert(array, index, length);}
+    {return (Element[]) org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -331,7 +331,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static double[] insert(final double[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -346,7 +346,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static float[] insert(final float[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -361,7 +361,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static long[] insert(final long[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -377,7 +377,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static int[] insert(final int[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -393,7 +393,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static short[] insert(final short[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -409,7 +409,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static byte[] insert(final byte[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -425,7 +425,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static char[] insert(final char[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère des espaces au milieu d'un tableau.
@@ -441,7 +441,7 @@ public final class XArray
      *                elle retournera un tableau nouvellement créé.
      */
     public static boolean[] insert(final boolean[] array, final int index, final int length)
-    {return net.seagis.resources.XArray.insert(array, index, length);}
+    {return org.geotools.resources.XArray.insert(array, index, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -459,7 +459,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static <Element> Element[] insert(final Element[] src, final int src_pos, final Element[] dst, final int dst_pos, final int length)
-    {return (Element[]) net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return (Element[]) org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -477,7 +477,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static double[] insert(final double[] src, final int src_pos, final double[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -495,7 +495,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static float[] insert(final float[] src, final int src_pos, final float[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -513,7 +513,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static long[] insert(final long[] src, final int src_pos, final long[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -531,7 +531,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static int[] insert(final int[] src, final int src_pos, final int[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -549,7 +549,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static short[] insert(final short[] src, final int src_pos, final short[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -567,7 +567,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static byte[] insert(final byte[] src, final int src_pos, final byte[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -585,7 +585,7 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static char[] insert(final char[] src, final int src_pos, final char[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 
     /**
      * Insère une portion de tableau dans un autre tableau. Le tableau <code>src</code>
@@ -603,5 +603,5 @@ public final class XArray
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
     public static boolean[] insert(final boolean[] src, final int src_pos, final boolean[] dst, final int dst_pos, final int length)
-    {return net.seagis.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
+    {return org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);}
 }

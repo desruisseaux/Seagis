@@ -41,7 +41,6 @@ import fr.ird.awt.SpeciesChooser;
 // Interface utilisateur
 import java.awt.Color;
 import javax.swing.JComponent;
-import net.seas.awt.ExceptionMonitor;
 
 // Divers
 import java.util.Set;
@@ -50,6 +49,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import javax.swing.event.EventListenerList;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
+import org.geotools.gui.swing.ExceptionMonitor;
 
 // Resources
 import fr.ird.resources.Resources;

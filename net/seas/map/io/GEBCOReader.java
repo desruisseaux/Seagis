@@ -22,9 +22,9 @@
  */
 package net.seas.map.io;
 
-// OpenGIS depencies (SEAGIS)
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
+// Geotools depencies
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Maps
 import net.seas.map.Isoline;
@@ -42,7 +42,7 @@ import java.util.TreeMap;
 // Miscellaneous
 import java.util.Locale;
 import java.text.ParseException;
-import net.seagis.io.LineFormat;
+import org.geotools.io.LineFormat;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
 

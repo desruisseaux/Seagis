@@ -23,10 +23,10 @@
 package net.seas.awt;
 
 // Angles
-import net.seagis.pt.Angle;
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.pt.AngleFormat;
+import org.geotools.pt.Angle;
+import org.geotools.pt.Latitude;
+import org.geotools.pt.Longitude;
+import org.geotools.pt.AngleFormat;
 
 // Swing (for JSpinner)
 import javax.swing.JSpinner;
@@ -42,7 +42,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

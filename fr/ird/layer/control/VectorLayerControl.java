@@ -32,7 +32,7 @@ import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
 
 // Images
-import net.seagis.gc.GridCoverage;
+import org.geotools.gc.GridCoverage;
 import java.awt.image.RenderedImage;
 
 // Graphical user interface

@@ -31,7 +31,6 @@ import fr.ird.animat.Species;
 import fr.ird.sql.fishery.FisheryDataBase;
 
 // Interface utilisateur
-import net.seas.util.SwingUtilities;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Component;
@@ -76,6 +75,9 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 // Divers
 import java.util.Locale;

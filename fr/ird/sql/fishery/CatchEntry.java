@@ -37,7 +37,7 @@ import java.awt.geom.Rectangle2D;
 
 // Divers
 import java.util.Set;
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import javax.media.jai.util.Range;
 
 

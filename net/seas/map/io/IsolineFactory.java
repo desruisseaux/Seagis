@@ -24,7 +24,7 @@ package net.seas.map.io;
 
 // Map components
 import net.seas.map.Isoline;
-import net.seagis.ct.TransformException;
+import org.geotools.ct.TransformException;
 
 // Collections
 import java.util.Map;
@@ -71,7 +71,7 @@ import java.util.logging.LogRecord;
 // Resources
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**
@@ -245,7 +245,7 @@ public abstract class IsolineFactory
      *
      * If an isoline has been found, then this method returns a clone of this
      * isoline. Note that cloning {@link Isoline} means that only meta-data
-     * info (like {@link net.seagis.cs.CoordinateSystem}) are really cloned.
+     * info (like {@link org.geotools.cs.CoordinateSystem}) are really cloned.
      * Most voluminous data (like the array of points defining ploygons) are
      * shared among all clones.
      *

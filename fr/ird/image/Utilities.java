@@ -29,7 +29,7 @@ package fr.ird.image;
 import java.io.File;
 import java.util.Locale;
 import java.nio.charset.Charset;
-import net.seagis.io.image.PaletteFactory;
+import org.geotools.io.image.PaletteFactory;
 
 
 /**

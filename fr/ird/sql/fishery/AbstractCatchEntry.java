@@ -36,10 +36,10 @@ import java.util.Set;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 
-// Formatting (SEAGIS)
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.pt.AngleFormat;
+// Formatting (Geotools)
+import org.geotools.pt.Latitude;
+import org.geotools.pt.Longitude;
+import org.geotools.pt.AngleFormat;
 
 // Miscellaneous
 import fr.ird.animat.Species;

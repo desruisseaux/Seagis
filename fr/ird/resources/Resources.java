@@ -25,7 +25,7 @@ package fr.ird.resources;
 // Miscellaneous
 import java.util.Locale;
 import java.util.MissingResourceException;
-import net.seagis.resources.ResourceBundle;
+import org.geotools.resources.ResourceBundle;
 
 
 /**
@@ -56,8 +56,7 @@ public class Resources extends ResourceBundle
     {super(filepath);}
 
     /**
-     * Returns the name of the logger to use,
-     * which is <code>net.seagis.css</code>.
+     * Returns the name of the logger to use.
      */
     protected String getLoggerName()
     {return "net.seas";}

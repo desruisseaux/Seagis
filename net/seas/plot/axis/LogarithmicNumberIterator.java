@@ -28,7 +28,7 @@ package net.seas.plot.axis;
 
 // Divers
 import java.util.Locale;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 
 
 /**

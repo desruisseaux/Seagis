@@ -41,9 +41,9 @@ import fr.ird.io.hdf4.Parser;
 import fr.ird.io.hdf4.DataSet;
 import ncsa.hdf.hdflib.HDFException;
 
-// OpenGIS (implémentation seagis)
-import net.seagis.gc.GridCoverage;
-import net.seagis.cs.GeographicCoordinateSystem;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 
 /**

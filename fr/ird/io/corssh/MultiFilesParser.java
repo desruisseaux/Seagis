@@ -50,7 +50,7 @@ import java.util.NoSuchElementException;
 import java.awt.Shape;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

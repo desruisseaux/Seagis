@@ -1,5 +1,6 @@
 /*
- * OpenGIS implementation in Java
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2000 Institut de Recherche pour le Développement
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -39,7 +40,6 @@ import javax.swing.JToggleButton;
 import javax.swing.BorderFactory;
 import javax.swing.JColorChooser;
 import javax.swing.SwingConstants;
-import net.seas.util.SwingUtilities;
 import fr.ird.awt.MarkColorChooser;
 
 // Miscellaneous
@@ -54,6 +54,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+// Geotools dependencies
+import org.geotools.resources.SwingUtilities;
 
 
 /**

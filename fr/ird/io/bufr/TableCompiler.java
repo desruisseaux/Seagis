@@ -28,7 +28,7 @@ package fr.ird.io.bufr;
 // Divers
 import java.io.*;
 import java.util.*;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**

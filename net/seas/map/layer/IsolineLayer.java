@@ -23,9 +23,9 @@
 package net.seas.map.layer;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seagis.cs.Ellipsoid;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
 
 // Map
 import net.seas.map.Layer;
@@ -40,8 +40,8 @@ import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.XAffineTransform;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XAffineTransform;
 
 // Graphics
 import java.awt.Paint;
@@ -54,7 +54,7 @@ import javax.media.jai.GraphicsJAI;
 // Miscellaneous
 import java.util.List;
 import java.util.ArrayList;
-import net.seagis.resources.XMath;
+import org.geotools.resources.XMath;
 
 
 /**

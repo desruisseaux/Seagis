@@ -36,11 +36,11 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.cs.GeographicCoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Divers
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import javax.media.jai.util.Range;
 import fr.ird.animat.Species;
 

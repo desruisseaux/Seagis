@@ -30,20 +30,20 @@ import java.sql.ResultSet;
 import java.sql.SQLWarning;
 import java.sql.SQLException;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.pt.Envelope;
-import net.seagis.cs.CoordinateSystem;
-import net.seagis.ct.TransformException;
-import net.seagis.cv.Category;
-import net.seagis.cv.CategoryList;
-import net.seagis.gp.Operation;
-import net.seagis.gc.GridRange;
-import net.seagis.gc.GridGeometry;
-import net.seagis.gc.GridCoverage;
-import net.seagis.gp.GridCoverageProcessor;
-import net.seagis.resources.XDimension2D;
-import net.seagis.resources.Utilities;
-import net.seagis.resources.OpenGIS;
+// Geotools dependencies
+import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.cv.Category;
+import org.geotools.cv.CategoryList;
+import org.geotools.gp.Operation;
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridGeometry;
+import org.geotools.gc.GridCoverage;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
 
 // Images
 import java.awt.image.RenderedImage;
@@ -614,7 +614,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
             buffer.append(')');
         }
         buffer.append(' ');
-        buffer.append(OpenGIS.toWGS84String(parameters.coordinateSystem.getHeadCS(), getGeographicArea()));
+        buffer.append(CTSUtilities.toWGS84String(parameters.coordinateSystem.getHeadCS(), getGeographicArea()));
         buffer.append(']');
         return buffer.toString();
     }

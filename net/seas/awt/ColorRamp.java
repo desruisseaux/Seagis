@@ -59,17 +59,17 @@ import net.seas.plot.axis.NumberGraduation;
 import net.seas.plot.axis.AbstractGraduation;
 import net.seas.plot.axis.LogarithmicNumberGraduation;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.cv.Category;
-import net.seagis.cv.CategoryList;
-import net.seagis.cv.SampleDimension;
-import net.seagis.gc.GridCoverage;
+// Geotools dependencies
+import org.geotools.cv.Category;
+import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
+import org.geotools.gc.GridCoverage;
 
 // Miscellaneous
-import javax.units.Unit;
+import org.geotools.units.Unit;
 import net.seas.resources.Resources;
 import net.seas.resources.ResourceKeys;
-import net.seagis.resources.Utilities;
+import org.geotools.resources.Utilities;
 
 
 /**
@@ -259,7 +259,10 @@ public class ColorRamp extends JComponent
             if (graduation!=null)
                 graduation.addPropertyChangeListener(ui);
         }
-        this.units      = graduation.getUnitLabel();
+        if (graduation != null)
+        {
+            this.units  = graduation.getUnitLabel();
+        }
         this.graduation = graduation;
         this.colors     = colors;
         this.lower      = lower;
