@@ -44,6 +44,7 @@ import org.geotools.renderer.j2d.Renderer;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
+import org.geotools.cs.GeographicCoordinateSystem;
 
 // Animats
 import fr.ird.animat.Simulation;
@@ -62,7 +63,7 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
      * La carte à afficher. Le système de coordonnées sera
      * un système géographique selon l'ellipsoïde WGS84.
      */
-    protected final MapPane mapPane = new MapPane();
+    protected final MapPane mapPane = new MapPane(GeographicCoordinateSystem.WGS84);
 
     /**
      * La barre d'état. Elle contiendra entre autres les coordonnées

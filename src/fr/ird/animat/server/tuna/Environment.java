@@ -312,20 +312,29 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
                         return entry.coverage;
                     }
                     /*
-                     * Procède à la lecture des données et vérifie si les calculs ont déjà été
-                     * effectuées sur les données obtenues. Ca peut se produire si SeriesCoverage3D
-                     * retourne le même GridCoverage pour deux pas de temps différents.
+                     * Détermine la date de l'image a demandée. Etant donnée que la précision des
+                     * données de pêches est généralement inférieure à 12 heures, on ne va pas
+                     * demander des images à cette heure précise; on laissera plutôt le système
+                     * choisir une date qui évitera des interpollations autant que possible. Dans
+                     * tous les cas, on s'assure que la date "snappée" ne s'écarte pas de la date
+                     * de la pêche de plus de TIME_RESOLUTION millisecondes.
                      */
                     final Date date = getClock().getTime();
                     final long time = date.getTime() + param.timelag;
                     date.setTime(time);
                     entry.coverage3D.snap(null, date); // Avoid temporal interpolation.
+                    final long delta = ((time-date.getTime()) / TIME_RESOLUTION) * TIME_RESOLUTION;
+                    date.setTime(date.getTime() + delta);
+                    assert Math.abs(date.getTime() - time) <= TIME_RESOLUTION : delta;
+                    /*
+                     * Procède à la lecture des données et vérifie si les calculs ont déjà été
+                     * effectuées sur les données obtenues. Ca peut se produire si SeriesCoverage3D
+                     * retourne le même GridCoverage pour deux pas de temps différents.
+                     */
                     GridCoverage gridCoverage;
-                    if (Math.abs(time-date.getTime()) <= TIME_RESOLUTION) try {
+                    try {
                         gridCoverage = entry.coverage3D.getGridCoverage2D(date);
                     } catch (PointOutsideCoverageException exception) {
-                        gridCoverage = null;
-                    } else {
                         gridCoverage = null;
                     }
                     if (gridCoverage != entry.gridCoverage) {

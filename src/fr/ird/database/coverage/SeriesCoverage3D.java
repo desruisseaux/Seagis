@@ -107,6 +107,11 @@ public class SeriesCoverage3D extends Coverage3D {
     private static final boolean RUN_GC = false;
 
     /**
+     * Petite quantité pour éviter les erreurs d'arrondissement.
+     */
+    private static final double EPS = 1E-6;
+
+    /**
      * Liste des images à prendre en compte.
      */
     private final CoverageEntry[] entries;
@@ -673,6 +678,8 @@ public class SeriesCoverage3D extends Coverage3D {
             return interpolated;
         }
         final double ratio = (double)(timeMillis-lowerTime) / (double)(upperTime-lowerTime);
+        if (Math.abs(  ratio) <= EPS) return lower;
+        if (Math.abs(1-ratio) <= EPS) return upper;
         if (interpolationAllowed) {
             final GridCoverageProcessor processor = getGridCoverageProcessor();
             final Operation operation = processor.getOperation("Combine");
