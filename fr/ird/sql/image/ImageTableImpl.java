@@ -752,20 +752,26 @@ final class ImageTableImpl extends Table implements ImageTable
         final ResultSet result = statement.executeQuery();
         while (result.next())
         {
-            final Date startTime = getTimestamp(START_TIME, result);
-            final Date   endTime = getTimestamp(  END_TIME, result);
-            final long    period = Math.round(result.getDouble(PERIOD)*DAY); // 0 si le champ est blanc.
-            final long lgEndTime = endTime.getTime();
-            final long checkTime = lgEndTime-period;
-            if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime())
+            if (t!=null)
             {
-                // Il arrive parfois que des images soient prises à toutes les 24 heures,
-                // mais pendant 12 heures seulement. On veut éviter que de telles images
-                // apparaissent tout le temps entrecoupées d'images manquantes.
-                startTime.setTime(checkTime);
+                final Date startTime = getTimestamp(START_TIME, result);
+                final Date   endTime = getTimestamp(  END_TIME, result);
+                if (startTime!=null && endTime!=null)
+                {
+                    final long    period = Math.round(result.getDouble(PERIOD)*DAY); // 0 si le champ est blanc.
+                    final long lgEndTime = endTime.getTime();
+                    final long checkTime = lgEndTime-period;
+                    if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime())
+                    {
+                        // Il arrive parfois que des images soient prises à toutes les 24 heures,
+                        // mais pendant 12 heures seulement. On veut éviter que de telles images
+                        // apparaissent tout le temps entrecoupées d'images manquantes.
+                        startTime.setTime(checkTime);
+                    }
+                    lastEndTime = lgEndTime;
+                    t.add(startTime, endTime);
+                }
             }
-            lastEndTime = lgEndTime;
-            if (t!=null) t.add(startTime.getTime(),   endTime.getTime());
             if (x!=null) x.add(result.getFloat(XMIN), result.getFloat(XMAX));
             if (y!=null) y.add(result.getFloat(YMIN), result.getFloat(YMAX));
         }

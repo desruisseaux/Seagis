@@ -60,7 +60,7 @@ public class DateGraduation extends AbstractGraduation
     /**
      * The time zone for graduation labels.
      */
-    private final TimeZone timezone;
+    private TimeZone timezone;
 
     /**
      * Construct a graduation with the supplied time zone.
@@ -196,13 +196,24 @@ public class DateGraduation extends AbstractGraduation
     {return timezone;}
 
     /**
+     * Sets the time zone for this graduation. This
+     * affect only the way labels are displayed.
+     */
+    public void setTimeZone(final TimeZone timezone)
+    {this.timezone = (TimeZone) timezone.clone();}
+
+    /**
      * Returns the format to use for formatting labels. The format
      * really used by {@link TickIterator#getLabel} may not be the
      * same. For example, some iterators may choose to show or hide
      * hours, minutes and seconds.
      */
     public Format getFormat()
-    {return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());}
+    {
+        final DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
+        format.setTimeZone(timezone);
+        return format;
+    }
     
     /**
      * Returns an iterator object that iterates along the graduation ticks

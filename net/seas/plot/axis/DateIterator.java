@@ -37,6 +37,8 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import net.seagis.resources.XMath;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 
 /**
@@ -148,6 +150,22 @@ final class DateIterator implements TickIterator
         Calendar.MINUTE,
         Calendar.SECOND,
         Calendar.MILLISECOND
+    };
+
+    /**
+     * Liste des noms des champs (à des fins de déboguage seulement).
+     * Cette liste doit être dans le même ordre que les éléments de
+     * {@link #FIELD}.
+     */
+    private static final String[] FIELD_NAME=
+    {
+        "YEAR",
+        "MONTH",
+        "DAY",
+        "HOUR",
+        "MINUTE",
+        "SECOND",
+        "MILLISECOND"
     };
 
     /**
@@ -426,11 +444,10 @@ final class DateIterator implements TickIterator
             // Arrondie la date de départ. Note: ce calcul exige que
             // tous les champs commencent à 0 plutôt que 1, y compris
             // les mois et le jour du mois.
-            int toRound = calendar.get(tickField);
-            if (tickField==Calendar.DAY_OF_MONTH) toRound--;
+            final int offset = calendar.getActualMinimum(tickField);
+            int      toRound = calendar.get(tickField)-offset;
             toRound = (toRound/tickAdd)*tickAdd;
-            if (tickField==Calendar.DAY_OF_MONTH) toRound++;
-            calendar.set(tickField, toRound);
+            calendar.set(tickField, toRound+offset);
         }
         truncate(calendar, tickField);
         nextTick=calendar.getTime().getTime();
@@ -440,7 +457,6 @@ final class DateIterator implements TickIterator
             calendar.add(tickField, tickAdd);
             nextTick=calendar.getTime().getTime();
         }
-
         date.setTime(nextSubTick);
         calendar.setTime(date);
         while (nextSubTick<minimum)
@@ -471,7 +487,7 @@ final class DateIterator implements TickIterator
      * la responsabilité de l'appelant de restituer {@link #calendar} dans son état
      * correct après l'appel de cette méthode.
      */
-    private static void truncate(final Calendar calendar, final int field)
+    private static void truncate(final Calendar calendar, int field)
     {
         for (int i=0; i<FIELD.length; i++)
         {
@@ -479,7 +495,10 @@ final class DateIterator implements TickIterator
             {
                 calendar.get(field); // Force la mise à jour des champs.
                 while (++i<FIELD.length)
-                    calendar.clear(FIELD[i]);
+                {
+                    field = FIELD[i];
+                    calendar.set(field, calendar.getActualMinimum(field));
+                }
                 break;
             }
         }
@@ -558,7 +577,7 @@ final class DateIterator implements TickIterator
         date.setTime(nextSubTick);
         calendar.setTime(date);
         return label;
-}
+    }
 
     /**
      * Passe à la graduation suivante.
@@ -679,5 +698,41 @@ final class DateIterator implements TickIterator
             calendar.setTime(date);
         }
         assert calendar.getTime().getTime() == nextSubTick;
+    }
+
+    /**
+     * Retourne le nom du champ de {@link Calendar}
+     * correspondant à la valeur spécifiée.
+     */
+    private static String getFieldName(final int field)
+    {
+        for (int i=0; i<FIELD.length; i++)
+            if (FIELD[i]==field) return FIELD_NAME[i];
+        return String.valueOf(field);
+    }
+
+    /**
+     * Returns a string representation of this iterator.
+     * Used for debugging purpose only.
+     */
+    public String toString()
+    {
+        if (false)
+        {
+            final StringWriter  buf = new StringWriter();
+            final PrintWriter   out = new PrintWriter(buf);
+            final DateFormat format = DateFormat.getDateTimeInstance();
+            format.setTimeZone(calendar.getTimeZone());
+            out.print("Minimum      = "); out.println(format.format(new Date(minimum)));
+            out.print("Maximum      = "); out.println(format.format(new Date(maximum)));
+            out.print("Increment    = "); out.print(increment/(24*3600000f)); out.println(" days");
+            out.print("Tick inc.    = "); out.print(   tickAdd); out.print(' '); out.println(getFieldName(   tickField));
+            out.print("SubTick inc. = "); out.print(subTickAdd); out.print(' '); out.println(getFieldName(subTickField));
+            out.print("Next tick    = "); out.println(format.format(new Date(   nextTick)));
+            out.print("Next subtick = "); out.println(format.format(new Date(nextSubTick)));
+            out.flush();
+            return buf.toString();
+        }
+        else return super.toString();
     }
 }

@@ -47,6 +47,7 @@ import net.seas.awt.TimeZoneChooser;
 import net.seas.awt.About;
 
 // Viewers
+import fr.ird.main.catalog.CatalogFrame;
 import fr.ird.main.viewer.NavigatorFrame;
 
 // Evénements
@@ -613,6 +614,21 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             case ResourceKeys.EXIT:
             {
                 exit();
+            }
+
+            //////////////////////////////////////////////
+            ///  Séries - Sommaire des plages de temps ///
+            //////////////////////////////////////////////
+            case ResourceKeys.IMAGES_CATALOG:
+            {
+                task=new Task(resources.getString(ResourceKeys.IMAGES_CATALOG))
+                {
+                    protected void run() throws SQLException
+                    {
+                        addFrame(new CatalogFrame(getDataBase(), Desktop.this));
+                    }
+                };
+                break;
             }
 
             //////////////////////////////////////

@@ -112,6 +112,14 @@ public abstract class Progress
     public abstract void complete();
 
     /**
+     * Libère les ressources utilisées par l'état d'avancement. Si l'état
+     * d'avancement était affichée dans une fenêtre, cette fenêtre peut être
+     * détruite. L'implémentation par défaut ne fait rien.
+     */
+    public void dispose()
+    {}
+
+    /**
      * Envoie un message d'avertissement. Ce message pourra être envoyé vers le
      * périphérique d'erreur standard, apparaître dans une fenêtre ou être tout
      * simplement ignoré.

@@ -256,6 +256,29 @@ public class RangeBars extends ZoomPane
     }
 
     /**
+     * Set the timezone for graduation label. This affect only the way
+     * labels are displayed. This method can be invoked only if this
+     * <code>RangeBars</code> has been constructed with the
+     * <code>RangeBars(TimeZone)</code> constructor.
+     *
+     * @param  timezone The new time zone.
+     * @throws IllegalStateException if this <code>RangeBars</code> has has
+     *         not been constructed with the <code>RangeBars(TimeZone)</code>
+     *         constructor.
+     */
+    public void setTimeZone(final TimeZone timezone)
+    {
+        final Graduation graduation = axis.getGraduation();
+        if (graduation instanceof DateGraduation)
+        {
+            ((DateGraduation) graduation).setTimeZone(timezone);
+            clearCache();
+            repaint();
+        }
+        else throw new IllegalStateException();
+    }
+
+    /**
      * Efface toutes les barres qui étaient tracées.
      */
     public synchronized void clear()
@@ -306,6 +329,25 @@ public class RangeBars extends ZoomPane
         rangeSet.add(first, last);
         clearCache();
         repaint();
+    }
+
+    /**
+     * Définit les plages de valeurs pour l'étiquette spécifiée.
+     * Les anciennes plages de valeurs pour cette étiquette seront
+     * oubliées.
+     *
+     * @param label     Etiquette pour laquelle définir une plage de valeur.
+     * @param newRanges Nouvelle plage de valeurs.
+     */
+    public synchronized void setRanges(final String label, final RangeSet newRanges)
+    {
+        if (newRanges!=null)
+        {
+            ranges.put(label, newRanges);
+            clearCache();
+            repaint();
+        }
+        else remove(label);
     }
 
     /**
@@ -639,6 +681,20 @@ public class RangeBars extends ZoomPane
             slider.setAdjustable(SwingConstants.NORTH, b);
             slider.setAdjustable(SwingConstants.SOUTH, b);
         }
+    }
+
+    /**
+     * Set the font for labels and graduations. This font is applied unchanged
+     * to labels. However, graduations will use a slightly smaller and plain font,
+     * even if the specified font was in bold or italic.
+     */
+    public void setFont(final Font font)
+    {
+        super.setFont(font);
+        axis.setLabelFont(font);
+        final int size = font.getSize();
+        axis.setFont(font.deriveFont(Font.PLAIN, size-(size>=14 ? 2 : 1)));
+        clearCache();
     }
 
     /**
@@ -1513,10 +1569,10 @@ public class RangeBars extends ZoomPane
         public Editors(final RangeBars rangeBars, Format format)
         {
             rangeBars.ensureSliderCreated();
-            if (format==null)     format = rangeBars.axis.getGraduation().getFormat();
-            final JTextComponent editor1 = rangeBars.slider.addEditor(format, SwingConstants.WEST, rangeBars);
-            final JTextComponent editor2 = rangeBars.slider.addEditor(format, SwingConstants.EAST, rangeBars);
-            final GridBagConstraints   c = new GridBagConstraints();
+            if (format==null)   format = rangeBars.axis.getGraduation().getFormat();
+            final JComponent   editor1 = rangeBars.slider.addEditor(format, SwingConstants.WEST, rangeBars);
+            final JComponent   editor2 = rangeBars.slider.addEditor(format, SwingConstants.EAST, rangeBars);
+            final GridBagConstraints c = new GridBagConstraints();
             setLayout(new GridBagLayout());
             /*
              * Place les champs de textes qui permettent d'éditer

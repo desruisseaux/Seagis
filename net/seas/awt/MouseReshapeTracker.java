@@ -44,10 +44,13 @@ import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.Component;
 import javax.swing.JFrame;
+import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.text.JTextComponent;
 import javax.swing.JFormattedTextField;
 import net.seas.awt.ExceptionMonitor;
@@ -64,7 +67,9 @@ import javax.swing.event.MouseInputAdapter;
 import java.util.Date;
 import java.text.Format;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 // Entrés/sorties et divers
 import java.io.IOException;
@@ -337,7 +342,7 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * Liste des champs de texte qui représenteront
      * les coordonnées des bords du rectangle.
      */
-    private Control[] fields;
+    private Control[] editors;
 
     /**
      * Construit un objet capable de bouger et redimmensionner
@@ -1279,9 +1284,9 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
      */
     public void updateEditors()
     {
-        if (fields!=null)
-            for (int i=0; i<fields.length; i++)
-                fields[i].updateText();
+        if (editors!=null)
+            for (int i=0; i<editors.length; i++)
+                editors[i].updateText();
     }
 
     /**
@@ -1317,50 +1322,82 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * @return       Un éditeur dans laquelle l'utilisateur pourra spécifier
      *               la position d'un des bords de la forme géométrique.
      * @throws       IllegalArgumentException si <code>side</code> n'était pas
-     *               un des codes reconnus ou si <code>field</code> était déjà
-     *               enregistré.
+     *               un des codes reconnus.
      */
-    public synchronized JTextComponent addEditor(final Format format, final int side, Component toRepaint) throws IllegalArgumentException
+    public synchronized JComponent addEditor(final Format format, final int side, Component toRepaint) throws IllegalArgumentException
     {
-        final JFormattedTextField field = new JFormattedTextField(format);
+        final JComponent       component;
+        final JFormattedTextField editor;
+        if (format instanceof DecimalFormat)
+        {
+            final SpinnerNumberModel   model = new SpinnerNumberModel();
+            final JSpinner           spinner = new JSpinner(model);
+            final JSpinner.NumberEditor sedt = (JSpinner.NumberEditor) spinner.getEditor();
+            final DecimalFormat targetFormat = sedt.getFormat();
+            final DecimalFormat sourceFormat = (DecimalFormat) format;
+            // TODO: Next lines would be much more efficient if only we had a
+            // NumberEditor.setFormat(NumberFormat) method (See RFE #4520587)
+            targetFormat.setDecimalFormatSymbols(sourceFormat.getDecimalFormatSymbols());
+            targetFormat.applyPattern(sourceFormat.toPattern());
+            editor = sedt.getTextField();
+            component = spinner;
+        }
+        else if (format instanceof SimpleDateFormat)
+        {
+            final SpinnerDateModel        model = new SpinnerDateModel();
+            final JSpinner              spinner = new JSpinner(model);
+            final JSpinner.DateEditor      sedt = (JSpinner.DateEditor) spinner.getEditor();
+            final SimpleDateFormat targetFormat = sedt.getFormat();
+            final SimpleDateFormat sourceFormat = (SimpleDateFormat) format;
+            // TODO: Next lines would be much more efficient if only we had a
+            // DateEditor.setFormat(DateFormat) method... (See RFE #4520587)
+            targetFormat.setDateFormatSymbols(sourceFormat.getDateFormatSymbols());
+            targetFormat.applyPattern(sourceFormat.toPattern());
+            editor = sedt.getTextField();
+            component = spinner;
+        }
+        else
+        {
+            component = editor = new JFormattedTextField(format);
+        }
         /**
          * "9" est la largeur par défaut des champs de texte. Ces largeurs sont
          * exprimées en nombre de colonnes. <i>Swing</i> ne semble pas mesurer
          * ces largeurs très précisement; il semble en metre plus que ce qu'on
          * lui demande. Pour cette raison, on spécifie une largeur plus étroite.
          */
-        field.setColumns(5);
-        field.setHorizontalAlignment(JTextField.RIGHT);
-        Insets insets=field.getMargin();
+        editor.setColumns(5);
+        editor.setHorizontalAlignment(JTextField.RIGHT);
+        Insets insets=editor.getMargin();
         insets.right += 2;
-        field.setMargin(insets);
+        editor.setMargin(insets);
         /*
-         * Ajoute l'éditeur à la liste des éditeurs à contrôler. Augmenter à chaque fois
-         * la longueur du tableau 'fields' n'est pas la stratégie la plus efficace, mais
+         * Ajoute l'éditeur à la liste des éditeurs à contrôler.  Augmenter à chaque fois
+         * la longueur du tableau 'editors' n'est pas la stratégie la plus efficace, mais
          * elle suffira puisqu'il est peu probable qu'on ajoutera plus de 4 éditeurs.
          */
-        final Control control=new Control(field, (format instanceof DateFormat), convertSwingConstant(side), toRepaint);
-        if (fields==null) fields=new Control[1];
-        else fields = XArray.resize(fields, fields.length+1);
-        fields[fields.length-1]=control;
-        return field;
+        final Control control=new Control(editor, (format instanceof DateFormat), convertSwingConstant(side), toRepaint);
+        if (editors==null) editors=new Control[1];
+        else editors = XArray.resize(editors, editors.length+1);
+        editors[editors.length-1]=control;
+        return component;
     }
 
     /**
      * Retire un éditeur de la liste de ceux qui
      * affichait les coordonnées de la visière.
      *
-     * @param field Éditeur à retirer.
+     * @param editor Éditeur à retirer.
      */
-    public synchronized void removeEditor(final JTextComponent field)
+    public synchronized void removeEditor(final JComponent editor)
     {
-        if (fields!=null)
+        if (editors!=null)
         {
-            for (int i=0; i<fields.length; i++)
+            for (int i=0; i<editors.length; i++)
             {
-                if (fields[i].field==field)
+                if (editors[i].editor == editor)
                 {
-                    fields = XArray.remove(fields, i, 1);
+                    editors = XArray.remove(editors, i, 1);
                     /*
                      * En principe, il n'y aura pas d'autres objets à
                      * retirer du tableau. Mais on laisse tout de même
@@ -1368,7 +1405,7 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
                      */
                 }
             }
-            if (fields.length==0) fields=null;
+            if (editors.length==0) editors=null;
         }       
     }
 
@@ -1441,10 +1478,10 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
          * Champ de texte représentant la coordonnée
          * d'un des bords de la visière.
          */
-        public final JFormattedTextField field;
+        public final JFormattedTextField editor;
 
         /**
-         * <code>true</code> si le champ {@link #field} formatte
+         * <code>true</code> si le champ {@link #editor} formatte
          * des dates, ou <code>false</code> s'il formatte des nombres.
          */
         private final boolean isDate;
@@ -1470,8 +1507,8 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
          * Construit un objet qui contrôlera
          * un des bords du rectangle.
          *
-         * @param field  Champ qui contiendra la coordonnée du bord du rectangle.
-         * @param isDate <code>true</code> si le champ {@link #field} formatte
+         * @param editor Champ qui contiendra la coordonnée du bord du rectangle.
+         * @param isDate <code>true</code> si le champ {@link #editor} formatte
          *        des dates, ou <code>false</code> s'il formatte des nombres.
          * @param side Bord du rectangle à contrôler. Cet argument désigne le bord visible sur l'écran. Par
          *        exemple <code>NORTH</code> désigne toujours le bord du haut sur l'écran. Toutefois, ça peut
@@ -1483,14 +1520,14 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
          *        le champ ait été édité, ou <code>null</code>
          *        s'il n'y en a pas.
          */
-        public Control(final JFormattedTextField field, final boolean isDate, final int side, final Component toRepaint)
+        public Control(final JFormattedTextField editor, final boolean isDate, final int side, final Component toRepaint)
         {
-            this.field     = field;
+            this.editor    = editor;
             this.isDate    = isDate;
             this.side      = side;
             this.toRepaint = toRepaint;
-            updateText(field);
-            field.addPropertyChangeListener("value", this);
+            updateText(editor);
+            editor.addPropertyChangeListener("value", this);
         }
 
         /**
@@ -1502,8 +1539,8 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
             final Object source=event.getSource();
             if (source instanceof JFormattedTextField)
             {
-                final JFormattedTextField field = (JFormattedTextField) source;
-                final Object value=field.getValue();
+                final JFormattedTextField editor = (JFormattedTextField) source;
+                final Object value = editor.getValue();
                 if (value!=null)
                 {
                     final double v=(value instanceof Date)       ?
@@ -1577,7 +1614,7 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
                         }
                     }
                 }
-                updateText(field);
+                updateText(editor);
             }
         }
 
@@ -1586,11 +1623,11 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
          * Cette méthode ajustera la valeur affichée dans le champ de
          * texte en fonction de la position du glissoir.
          */
-        private void updateText(final JFormattedTextField field)
+        private void updateText(final JFormattedTextField editor)
         {
             String text;
             if (!logicalShape.isEmpty() ||
-                ((text=field.getText())!=null && text.trim().length()!=0))
+                ((text=editor.getText())!=null && text.trim().length()!=0))
             {
                 double value;
                 switch (inverseTransform(side))
@@ -1601,15 +1638,15 @@ public class MouseReshapeTracker extends MouseInputAdapter implements Shape
                     case  EAST: value=logicalShape.getMaxX(); break;
                     default   : return;
                 }
-                field.setValue((isDate) ? (Object)new Date(Math.round(value)) : (Object)new Double(value));
+                editor.setValue((isDate) ? (Object)new Date(Math.round(value)) : (Object)new Double(value));
             }
         }
 
         /**
-         * Met à jour le texte apparaissant dans {@link #field}
+         * Met à jour le texte apparaissant dans {@link #editor}
          * en fonction de la position actuelle du rectangle.
          */
         public void updateText()
-        {updateText(field);}
+        {updateText(editor);}
     }
 }

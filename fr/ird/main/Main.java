@@ -336,6 +336,7 @@ public final class Main
             {
                 final Action action=new Action(desktop, ResourceKeys.ADD_SERIES, true);
                 action.setMnemonicKey(KeyEvent.VK_A);
+                action.setIcon("general/Add");
                 action.addTo(menu);
                 enableWhenFrameFocused.add(action);
             }
@@ -345,7 +346,8 @@ public final class Main
             if (true)
             {
                 final Action action=new Action(desktop, ResourceKeys.CLOSE_SERIES, true);
-                action.setMnemonicKey(KeyEvent.VK_S);
+                action.setMnemonicKey(KeyEvent.VK_F);
+                action.setIcon("general/Remove");
                 action.addTo(menu);
                 enableWhenFrameFocused.add(action);
             }
@@ -357,8 +359,20 @@ public final class Main
                 menu.addSeparator();
                 final Action action=new Action(desktop, ResourceKeys.CHANGE_COORDINATES, true);
                 action.setMnemonicKey(KeyEvent.VK_C);
+                action.setIcon("general/Find");
                 action.addTo(menu);
                 enableWhenFrameFocused.add(action);
+            }
+            //////////////////////////////////////////////
+            ///  Séries - Sommaire des plages de temps ///
+            //////////////////////////////////////////////
+            if (true)
+            {
+                menu.addSeparator();
+                final Action action=new Action(desktop, ResourceKeys.IMAGES_CATALOG, true);
+                action.setMnemonicKey(KeyEvent.VK_S);
+                action.setIcon("general/Information");
+                action.addTo(menu);
             }
         }
         /////////////////////

@@ -293,6 +293,14 @@ public class WindowProgress extends Progress
     {call(Caller.COMPLETE);}
 
     /**
+     * Libère les ressources utilisées par l'état d'avancement. Si l'état
+     * d'avancement était affichée dans une fenêtre, cette fenêtre peut être
+     * détruite.
+     */
+    public void dispose()
+    {call(Caller.DISPOSE);}
+
+    /**
      * Écrit un message d'avertissement. Les messages apparaîtront dans
      * une zone de texte sous la barre des progrès. Cette zone de texte
      * ne deviendra visible qu'après l'écriture d'au moins un message.
@@ -590,16 +598,5 @@ public class WindowProgress extends Progress
                 warningArea.append(text);
             }
         }
-    }
-
-    /**
-     * Méthode appelée automatiquement lorsqu'on en a terminé avec
-     * la fenêtre des progrès. Cette méthode fait disparaître la
-     * fenêtre et libère les ressources qu'elle utilisait.
-     */
-    protected void finalize() throws Throwable
-    {
-        call(Caller.DISPOSE);
-        super.finalize();
     }
 }

@@ -1645,7 +1645,7 @@ public abstract class ZoomPane extends JComponent
             else
             {
                 correctPointForMagnifier(point);
-                transform(UNIFORM_SCALE, scale, point);
+                transform(UNIFORM_SCALE & type, scale, point);
             }
             event.consume();
         }
