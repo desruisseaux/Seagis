@@ -25,8 +25,8 @@ package fr.ird.sql.coupling;
 
 // Miscellaneous
 import java.awt.Shape;
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.ct.TransformException;
+import net.seagis.gc.GridCoverage;
+import net.seagis.ct.TransformException;
 
 
 /**

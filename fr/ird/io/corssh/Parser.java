@@ -35,10 +35,10 @@ import java.io.OutputStreamWriter;
 import java.awt.Shape;
 import java.util.Date;
 import java.util.TimeZone;
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.DatumType;
-import net.seas.opengis.cs.HorizontalDatum;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.DatumType;
+import net.seagis.cs.HorizontalDatum;
+import net.seagis.cs.GeographicCoordinateSystem;
 
 // Journal
 import java.util.logging.Level;
@@ -50,7 +50,7 @@ import javax.units.Unit;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import fr.ird.resources.Resources;
-import net.seas.util.XString;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -526,9 +526,9 @@ public abstract class Parser
             String text;
             final NumberFormat format = NumberFormat.getNumberInstance();
             final double duration = (parser.getEndTime().getTime()-parser.getStartTime().getTime())/(24*60*60*1000.0);
-            text=format.format(parser.getPassCount());   out.write("      Pass count="); out.write(XString.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
-            text=format.format(parser.getRecordCount()); out.write("    Record count="); out.write(XString.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
-            text=format.format(duration);                out.write(" Duration (days)="); out.write(XString.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
+            text=format.format(parser.getPassCount());   out.write("      Pass count="); out.write(Utilities.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
+            text=format.format(parser.getRecordCount()); out.write("    Record count="); out.write(Utilities.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
+            text=format.format(duration);                out.write(" Duration (days)="); out.write(Utilities.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
         }
         if (start!=null)
         {

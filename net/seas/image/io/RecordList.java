@@ -25,10 +25,10 @@ package net.seas.image.io;
 // Divers
 import java.util.Arrays;
 import net.seas.util.XArray;
-import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import javax.imageio.IIOException;
 import java.awt.image.WritableRaster;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -352,7 +352,7 @@ final class RecordList
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(getLineCount());
         buffer.append("\u00A0\u00D7\u00A0");

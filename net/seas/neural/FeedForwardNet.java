@@ -18,8 +18,8 @@ package net.seas.neural;
 
 // Miscellaneous
 import java.io.Serializable;
-import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -567,7 +567,7 @@ public class FeedForwardNet implements Serializable
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(Resources.format(Clé.NEURAL_NETWORK_SUMMARY¤5, new Object[] {
                       new Integer(getNumInputs()),

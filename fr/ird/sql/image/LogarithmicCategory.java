@@ -27,8 +27,8 @@ package fr.ird.sql.image;
 
 // Divers
 import java.awt.Color;
-import net.seas.util.XMath;
-import net.seas.opengis.cv.Category;
+import net.seagis.cv.Category;
+import net.seagis.resources.XMath;
 
 
 /**

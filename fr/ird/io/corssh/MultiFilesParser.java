@@ -48,8 +48,8 @@ import java.util.NoSuchElementException;
 
 // Divers
 import java.awt.Shape;
-import net.seas.util.XString;
 import fr.ird.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -437,11 +437,11 @@ final class MultiFilesParser extends Parser implements Serializable
         final StringBuffer toString(StringBuffer b, final DateFormat f, final Date d, final FieldPosition p)
         {
             int i;
-            i=b.length(); b.append(file.getName());                b.append(   XString.spaces(Math.max(15-(b.length()-i), 1)));
-            i=b.length(); d.setTime(startTime); b=f.format(d,b,p); b.insert(i, XString.spaces(Math.max(22-(b.length()-i), 1)));
-            i=b.length(); d.setTime(  endTime); b=f.format(d,b,p); b.insert(i, XString.spaces(Math.max(22-(b.length()-i), 1)));
-            i=b.length(); b.append(passCount);                     b.insert(i, XString.spaces(Math.max( 5-(b.length()-i), 1)));
-            i=b.length(); b.append(recordCount);                   b.insert(i, XString.spaces(Math.max( 8-(b.length()-i), 1)));
+            i=b.length(); b.append(file.getName());                b.append(   Utilities.spaces(Math.max(15-(b.length()-i), 1)));
+            i=b.length(); d.setTime(startTime); b=f.format(d,b,p); b.insert(i, Utilities.spaces(Math.max(22-(b.length()-i), 1)));
+            i=b.length(); d.setTime(  endTime); b=f.format(d,b,p); b.insert(i, Utilities.spaces(Math.max(22-(b.length()-i), 1)));
+            i=b.length(); b.append(passCount);                     b.insert(i, Utilities.spaces(Math.max( 5-(b.length()-i), 1)));
+            i=b.length(); b.append(recordCount);                   b.insert(i, Utilities.spaces(Math.max( 8-(b.length()-i), 1)));
             return b;
         }
 

@@ -23,11 +23,12 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-import net.seas.opengis.ct.CannotCreateTransformException;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.ct.CannotCreateTransformException;
 
 // Miscellaneous
 import java.awt.geom.Point2D;
@@ -51,7 +52,7 @@ public class MouseCoordinateFormat
      * Transformation à utiliser pour passer du système de coordonnées de
      * l'affichage vers le système de coordonnées à utiliser pour l'écriture.
      */
-    private CoordinateTransform transform;
+    private CoordinateTransformation transformation;
 
     /**
      * Formateur des coordonnées géographiques.
@@ -90,15 +91,7 @@ public class MouseCoordinateFormat
      */
     public MouseCoordinateFormat(final CoordinateSystem system)
     {
-        try
-        {
-            Contour.TRANSFORMS.createFromCoordinateSystems(system, system);
-        }
-        catch (CannotCreateTransformException exception)
-        {
-            // Should not happen, since we are just asking for an identity transform/
-            ExceptionMonitor.unexpectedException("net.seas.map", "MouseCoordinateFormat", "<init>", exception);
-        }
+        transformation = Contour.getIdentityTransform(system);
     }
 
     /**
@@ -140,8 +133,8 @@ public class MouseCoordinateFormat
                 Point2D point=geoEvent.getVisualCoordinate(this.point);
                 if (point!=null) try
                 {
-                    transform = geoEvent.getTransformToTarget(transform);
-                    point     = transform.transform(point, point);
+                    transformation = geoEvent.getTransformToTarget(transformation);
+                    point = ((MathTransform2D) transformation.getMathTransform()).transform(point, point);
                     buffer.setLength(0);
                     coordinateFormat.format(point.getX(), point.getY(), buffer, null);
                     if (valueVisible)

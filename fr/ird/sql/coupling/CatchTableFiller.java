@@ -26,8 +26,8 @@
 package fr.ird.sql.coupling;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.resources.OpenGIS;
 
 // Database
 import java.sql.SQLException;
@@ -50,7 +50,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
-import net.seas.awt.geom.Geometry;
+import net.seagis.resources.Geometry;
 
 
 /**

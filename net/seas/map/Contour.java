@@ -23,12 +23,15 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.ProjectedCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-import net.seas.opengis.ct.CoordinateTransformFactory;
-import net.seas.opengis.ct.TransformException;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.ProjectedCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.ct.CoordinateTransformationFactory;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CannotCreateTransformException;
+import net.seagis.resources.Utilities;
 
 // Geometry
 import java.awt.Shape;
@@ -39,18 +42,21 @@ import java.awt.geom.Rectangle2D;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.pt.Longitude;
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
 import net.seas.text.AngleFormat;
 
 // Logging
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 
 // Miscellaneous
 import java.util.Locale;
 import java.io.Serializable;
-import net.seas.util.XClass;
 import net.seas.util.Version;
+import net.seas.resources.Resources;
+import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -79,12 +85,16 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     /**
      * Objet à utiliser pour fabriquer des transformations.
      */
-    static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.getDefault();
+    static final CoordinateTransformationFactory TRANSFORMS = CoordinateTransformationFactory.getDefault();
 
     /**
      * The logger for map operations.
      */
-    static final Logger logger = Logger.getLogger("net.seas.map");
+    static final Logger LOGGER = Logger.getLogger("net.seas.map");
+    static
+    {
+        net.seas.util.InterlineFormatter.init(LOGGER);
+    }
 
     /**
      * Nom de ce contour.   Il s'agit en général d'un nom géographique, par exemple
@@ -100,7 +110,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {}
 
     /**
-     * Returns a contour with the same
+     * Construct a contour with the same
      * data than the specified contour.
      */
     public Contour(final Contour contour)
@@ -304,7 +314,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
         }
         final String         name=getName(null);
         final FieldPosition dummy=new FieldPosition(0);
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         if (name!=null)
         {
@@ -337,7 +347,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     {
         if (object!=null && object.getClass().equals(getClass()))
         {
-            return XClass.equals(name, ((Contour) object).name);
+            return Utilities.equals(name, ((Contour) object).name);
         }
         else return false;
     }
@@ -361,5 +371,42 @@ public abstract class Contour implements Shape, Cloneable, Serializable
             if (Version.MINOR>=4) e.initCause(exception);
             throw e;
         }
+    }
+
+    /**
+     * Retourne une transformation identitée pour le système de coordonnées
+     * spécifié, ou <code>null</code> si <code>coordinateSystem</code> est nul.
+     */
+    static CoordinateTransformation getIdentityTransform(final CoordinateSystem coordinateSystem)
+    {
+        if (coordinateSystem!=null) try
+        {
+            return TRANSFORMS.createFromCoordinateSystems(coordinateSystem, coordinateSystem);
+        }
+        catch (CannotCreateTransformException exception)
+        {
+            // Should not happen; we are just asking for an identity transform!
+            ExceptionMonitor.unexpectedException("net.seas.map", "Contour", "getIdentityTransform", exception);
+        }
+        return null;
+    }
+
+    /**
+     * Construct a transform from two coordinate systems.
+     */
+    static CoordinateTransformation createFromCoordinateSystems(final CoordinateSystem sourceCS,
+                                                                final CoordinateSystem targetCS,
+                                                                final String sourceClassName,
+                                                                final String sourceMethodName) throws CannotCreateTransformException
+    {
+        if (Version.MINOR >= 4)
+        {
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
+                                     Clé.INITIALIZING_TRANSFORMATION¤2, sourceCS, targetCS);
+            record.setSourceClassName (sourceClassName);
+            record.setSourceMethodName(sourceMethodName);
+            LOGGER.log(record);
+        }
+        return TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
     }
 }

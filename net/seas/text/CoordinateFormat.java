@@ -31,15 +31,15 @@ import java.text.ParseException;
 import java.text.DecimalFormatSymbols;
 
 // Angles
-import net.seas.opengis.pt.Angle;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.pt.Longitude;
-import net.seas.opengis.pt.CoordinatePoint;
+import net.seagis.pt.Angle;
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
+import net.seagis.pt.CoordinatePoint;
 
 // Miscellaneous
-import net.seas.util.XClass;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -336,7 +336,7 @@ public class CoordinateFormat extends Format
         {
             return format((CoordinatePoint)obj, toAppendTo, pos);
         }
-        else throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(1), XClass.getShortClassName(obj)));
+        else throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(1), Utilities.getShortClassName(obj)));
     }
 
     /**
@@ -671,5 +671,5 @@ public class CoordinateFormat extends Format
      * méthode n'est utile qu'à des fins de déboguage.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+getAnglePattern()+']';}
+    {return Utilities.getShortClassName(this)+'['+getAnglePattern()+']';}
 }

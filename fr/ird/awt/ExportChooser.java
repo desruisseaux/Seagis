@@ -54,7 +54,7 @@ import javax.imageio.event.IIOReadWarningListener;
 
 // Images et progrès
 import fr.ird.sql.image.ImageEntry;
-import net.seas.opengis.gc.GridCoverage;
+import net.seagis.gc.GridCoverage;
 import net.seas.awt.progress.Progress;
 import net.seas.awt.progress.WindowProgress;
 
@@ -66,10 +66,10 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 // Divers
-import net.seas.util.XClass;
 import fr.ird.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 import javax.swing.event.EventListenerList;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -107,6 +107,11 @@ public final class ExportChooser extends JPanel
     private final JLabel count=new JLabel();
 
     /**
+     * Resources pour la construction des étiquettes.
+     */
+    private final Resources resources = Resources.getResources(getLocale());
+
+    /**
      * Construit une boîte de dialogue.
      *
      * @param directory Répertoire de destination par défaut, ou <code>null</code>
@@ -125,7 +130,7 @@ public final class ExportChooser extends JPanel
         ///
         chooser=new JFileChooser(directory);
         chooser.setDialogType(JFileChooser.SAVE_DIALOG);
-        chooser.setDialogTitle(Resources.format(Clé.OUT_DIRECTORY));
+        chooser.setDialogTitle(resources.getString(Clé.OUT_DIRECTORY));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setControlButtonsAreShown(false);
         chooser.setPreferredSize(new Dimension(400,300)); // La dimension par défaut est (500,300).
@@ -142,10 +147,10 @@ public final class ExportChooser extends JPanel
         final JPanel options=new JPanel(new GridBagLayout());
         final GridBagConstraints c=new GridBagConstraints();
         options.setBorder(BorderFactory.createCompoundBorder(
-                          BorderFactory.createTitledBorder(Resources.format(Clé.OPTIONS)),
+                          BorderFactory.createTitledBorder(resources.getString(Clé.OPTIONS)),
                           BorderFactory.createEmptyBorder(/*top*/6,/*left*/9,/*bottom*/6,/*right*/9)));
         c.gridx=0; c.fill=c.BOTH; c.insets.right=6;
-        c.gridy=0; options.add(new JLabel(Resources.format(Clé.NOT_AVAILABLE)), c);
+        c.gridy=0; options.add(new JLabel(resources.getString(Clé.NOT_AVAILABLE)), c);
         ///
         /// Place les composantes
         ///
@@ -161,7 +166,7 @@ public final class ExportChooser extends JPanel
      * le nombre d'images à exporter.
      */
     private void updateCount()
-    {count.setText(Resources.format(Clé.IMAGES_TO_EXPORT_COUNT¤1, new Integer(entries.size())));}
+    {count.setText(resources.getString(Clé.IMAGES_TO_EXPORT_COUNT¤1, new Integer(entries.size())));}
 
     /**
      * Ajoute les entrées spécifiées à la liste des images à écrire. Les
@@ -355,9 +360,10 @@ public final class ExportChooser extends JPanel
          */
         public boolean getUserConfirmation(final Component owner)
         {
+            final Resources resources = Resources.getResources(owner.getLocale());
             if (directory==null || !directory.isDirectory())
             {
-                SwingUtilities.showMessageDialog(owner, Resources.format(Clé.BAD_DIRECTORY), Resources.format(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
+                SwingUtilities.showMessageDialog(owner, resources.getString(Clé.BAD_DIRECTORY), resources.getString(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             int existing=0;
@@ -368,8 +374,8 @@ public final class ExportChooser extends JPanel
             }
             if (existing!=0)
             {
-                if (!SwingUtilities.showConfirmDialog(owner, Resources.format(Clé.CONFIRM_OVERWRITE_ALL¤2, new Integer(existing), new Integer(entries.length)),
-                                                      Resources.format(Clé.CONFIRM_OVERWRITE), JOptionPane.WARNING_MESSAGE))
+                if (!SwingUtilities.showConfirmDialog(owner, resources.getString(Clé.CONFIRM_OVERWRITE_ALL¤2, new Integer(existing), new Integer(entries.length)),
+                                                      resources.getString(Clé.CONFIRM_OVERWRITE), JOptionPane.WARNING_MESSAGE))
                 {
                     return false;
                 }
@@ -390,9 +396,10 @@ public final class ExportChooser extends JPanel
          */
         public void start(final ThreadGroup threadGroup, final Component owner) throws IOException
         {
+            final Resources resources = Resources.getResources(owner.getLocale());
             writer   = filter.getImageWriter();
             progress = new WindowProgress(owner);
-            final Thread thread=new Thread(threadGroup, this, Resources.format(Clé.EXPORT));
+            final Thread thread=new Thread(threadGroup, this, resources.getString(Clé.EXPORT));
             thread.setPriority(Thread.MIN_PRIORITY);
             thread.start();
         }
@@ -425,7 +432,7 @@ public final class ExportChooser extends JPanel
                 catch (Exception exception)
                 {
                     String message=exception.getLocalizedMessage();
-                    if (message==null) message=XClass.getShortClassName(exception);
+                    if (message==null) message=Utilities.getShortClassName(exception);
                     progress.warningOccurred(entry.getName(), null, message);
                 }
                 writer.reset();

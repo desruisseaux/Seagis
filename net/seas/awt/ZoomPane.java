@@ -60,8 +60,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.geom.RectangularShape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seas.util.XAffineTransform;
-import net.seas.util.XDimension2D;
+import net.seagis.resources.XAffineTransform;
+import net.seagis.resources.XDimension2D;
 
 // Graphics
 import java.awt.Paint;
@@ -103,7 +103,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import net.seas.resources.Resources;
 import net.seas.util.Version;
-import net.seas.util.XString;
 
 
 /**

@@ -23,8 +23,8 @@
 package net.seas.awt.progress;
 
 // Divers
-import net.seas.util.XClass;
 import javax.swing.ProgressMonitor; // Pour JavaDoc
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -162,5 +162,5 @@ public abstract class Progress
      * <pre>Progress["Lecture des données"]</pre>
      */
     public synchronized String toString()
-    {return XClass.getShortClassName(this)+'['+getDescription()+']';}
+    {return Utilities.getShortClassName(this)+'['+getDescription()+']';}
 }

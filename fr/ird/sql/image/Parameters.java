@@ -26,22 +26,22 @@
 package fr.ird.sql.image;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
+import net.seagis.pt.Envelope;
 
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.CompoundCoordinateSystem;
-import net.seas.opengis.cs.TemporalCoordinateSystem;
-import net.seas.opengis.cs.HorizontalCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-
-// OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.ct.CoordinateTransformFactory;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.CompoundCoordinateSystem;
+import net.seagis.cs.TemporalCoordinateSystem;
+import net.seagis.cs.HorizontalCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.gp.Operation;
-import net.seas.opengis.gp.GridCoverageProcessor;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CoordinateTransformationFactory;
+
+// OpenGIS dependencies (SEAGIS)
+import net.seagis.gp.Operation;
+import net.seagis.gp.GridCoverageProcessor;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -57,14 +57,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 
 // Divers
-import net.seas.util.XClass;
-import net.seas.util.OpenGIS;
 import net.seas.util.WeakHashSet;
-import net.seas.util.XDimension2D;
 import net.seas.resources.Resources;
 import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
+
+import net.seagis.resources.OpenGIS;
+import net.seagis.resources.Utilities;
+import net.seagis.resources.XDimension2D;
 
 
 /**
@@ -86,7 +87,7 @@ final class Parameters implements Serializable
     /**
      * Objet à utiliser par défaut pour construire des transformations de coordonnées.
      */
-    public static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.getDefault();
+    public static final CoordinateTransformationFactory TRANSFORMS = CoordinateTransformationFactory.getDefault();
 
     /**
      * L'objet à utiliser pour appliquer
@@ -202,7 +203,7 @@ final class Parameters implements Serializable
         final CoordinateSystem headCS = coordinateSystem.getHeadCS();
         if (!headCS.equivalents(cs))
         {
-            final CoordinateTransform transform = TRANSFORMS.createFromCoordinateSystems(headCS, cs);
+            final MathTransform2D transform = (MathTransform2D) TRANSFORMS.createFromCoordinateSystems(headCS, cs).getMathTransform();
             final Rectangle2D newGeographicArea = OpenGIS.transform(transform, geographicArea, null);
             final Dimension2D newResolution;
 
@@ -238,15 +239,15 @@ final class Parameters implements Serializable
         if (o instanceof Parameters)
         {
             final Parameters that = (Parameters) o;
-            return XClass.equals(this.series          , that.series          ) &&
-                   XClass.equals(this.format          , that.format          ) &&
-                   XClass.equals(this.pathname        , that.pathname        ) &&
-                   XClass.equals(this.operation       , that.operation       ) &&
-                   XClass.equals(this.parameters      , that.parameters      ) &&
-                   XClass.equals(this.coordinateSystem, that.coordinateSystem) &&
-                   XClass.equals(this.geographicArea  , that.geographicArea  ) &&
-                   XClass.equals(this.resolution      , that.resolution      ) &&
-                   XClass.equals(this.dateFormat      , that.dateFormat      );
+            return Utilities.equals(this.series          , that.series          ) &&
+                   Utilities.equals(this.format          , that.format          ) &&
+                   Utilities.equals(this.pathname        , that.pathname        ) &&
+                   Utilities.equals(this.operation       , that.operation       ) &&
+                   Utilities.equals(this.parameters      , that.parameters      ) &&
+                   Utilities.equals(this.coordinateSystem, that.coordinateSystem) &&
+                   Utilities.equals(this.geographicArea  , that.geographicArea  ) &&
+                   Utilities.equals(this.resolution      , that.resolution      ) &&
+                   Utilities.equals(this.dateFormat      , that.dateFormat      );
         }
         return false;
     }

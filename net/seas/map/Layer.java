@@ -23,9 +23,10 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.TransformException;
+import net.seagis.cs.CompoundCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
 
 // Géométrie et graphisme
 import java.awt.Shape;
@@ -36,18 +37,13 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 import javax.media.jai.GraphicsJAI;
 import java.awt.geom.AffineTransform;
-import net.seas.util.XAffineTransform;
+import net.seagis.resources.XAffineTransform;
 
 // Evénements
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.EventListenerList;
-
-// Journal
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.LogRecord;
 
 // Interface utilisateur
 import javax.swing.JComponent;
@@ -56,10 +52,9 @@ import javax.swing.JPopupMenu;
 // Divers
 import java.util.Locale;
 import java.io.Serializable;
-import net.seas.util.XClass;
-import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -162,21 +157,45 @@ public abstract class Layer implements Serializable
      * Construit une couche cartographique avec
      * le système de coordonnées spécifié.
      *
-     * @param coordinateSystem système de coordonnées de cette couche. Ce
-     *        système sera retourné par la méthode {@link #getCoordinateSystem}.
+     * @param coordinateSystem système de coordonnées de cette couche.
+     *        Ce système de coordonnées doit avoir 2 dimensions, ou être
+     *        un sytème de la classe {@link CompoundCoordinateSystem} dont
+     *        le système de tête (<code>headCS</code>) a deux dimensions.
+     *
+     * @throws IllegalArgumentException si <code>coordinateSystem</code> ne peut
+     *         pas être ramené à un système de coordonnées à deux dimensions.
      */
     public Layer(final CoordinateSystem coordinateSystem)
-    {this.coordinateSystem=coordinateSystem;}
+    {this.coordinateSystem = getCoordinateSystem2D(coordinateSystem);}
+
+    /**
+     * Retourne les deux premières dimensions du système de coordonnées spécifié.
+     *
+     * @param  cs Le système de coordonnées. Ce système doit avoir au moins 2 dimensions.
+     * @return Un système de coordonnées à exactement deux dimensions.
+     * @throws IllegalArgumentException si <code>coordinateSystem</code> ne peut
+     *         pas être ramené à un système de coordonnées à deux dimensions.
+     */
+    static CoordinateSystem getCoordinateSystem2D(final CoordinateSystem cs) throws IllegalArgumentException
+    {
+        if (cs.getDimension()==2) return cs;
+        if (cs instanceof CompoundCoordinateSystem)
+        {
+            return getCoordinateSystem2D(((CompoundCoordinateSystem) cs).getHeadCS());
+        }
+        throw new IllegalArgumentException(Resources.format(Clé.CANT_REDUCE_TO_TWO_DIMENSIONS¤1, cs.getName(null)));
+    }
 
     /**
      * Retourne le nom de cette couche. L'implémentation par
      * défaut retourne le nom de la classe avec son ordre Z.
      */
     public String getName()
-    {return XClass.getShortClassName(this)+'['+getZOrder()+']';}
+    {return Utilities.getShortClassName(this)+'['+getZOrder()+']';}
 
     /**
-     * Retourne le système de coordonnées de cette couche. Les coordonnées géographiques
+     * Retourne le système de coordonnées de cette couche. Le système retourné
+     * aura toujours exactement 2 dimensions. Les coordonnées géographiques
      * retournées par {@link #getPreferredArea} seront exprimées selon ce système.
      */
     public final CoordinateSystem getCoordinateSystem()
@@ -594,13 +613,13 @@ public abstract class Layer implements Serializable
         {
             if (shape==null || clipBounds==null || shape.intersects(clipBounds))
             {
-                if (Version.MINOR>=4)
+                if (true)
                 {
                     if (painting==null)
                     {
                         painting = Resources.format(Clé.PAINTING¤1, getName());
                     }
-                    Contour.logger.finest(painting);
+                    Contour.LOGGER.finest(painting);
                     // Use FINEST level since this event is
                     // likely to generate a lot of records.
                 }

@@ -30,8 +30,8 @@ import java.util.Date;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.Serializable;
-import net.seas.util.XClass;
 import fr.ird.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -330,7 +330,7 @@ final class InterleavedParser extends Parser implements Serializable
     {
         final long time = getTime();
         final Date date = (time!=Long.MIN_VALUE) ? new Date(time) : null;
-        assert(XClass.equals(date, current.getDate()));
+        assert Utilities.equals(date, current.getDate());
         return date;
     }
 

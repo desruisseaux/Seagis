@@ -24,8 +24,8 @@
 package fr.ird.sql.coupling;
 
 // OpenGIS dependencies
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.cv.PointOutsideCoverageException;
+import net.seagis.gc.GridCoverage;
+import net.seagis.cv.PointOutsideCoverageException;
 
 // Géométrie
 import java.awt.Shape;
@@ -33,7 +33,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import net.seas.util.XAffineTransform;
+import net.seagis.resources.XAffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Java Advanced Imaging et divers
@@ -109,7 +109,7 @@ class AreaAverage implements AreaEvaluator
     public double[] evaluate(final GridCoverage coverage, final Shape area)
     {
         final RenderedImage        data = coverage.getRenderedImage(true);
-        final AffineTransform transform = coverage.getGridGeometry().getAffineTransform2D();
+        final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem();
         final Point2D.Double coordinate = new Point2D.Double();
         final Rectangle2D    areaBounds = area.getBounds2D();
         final Rectangle          bounds = getBounds(areaBounds, transform, data);
@@ -123,7 +123,7 @@ class AreaAverage implements AreaEvaluator
             {
                 for (int x=bounds.x; !iterator.finishedPixels(); x++)
                 {
-                    assert(bounds.contains(x,y));
+                    assert bounds.contains(x,y);
                     coordinate.x = x;
                     coordinate.y = y;
                     // TODO: que faire si 'area' intercepte le pixel mais pas le centre?

@@ -44,7 +44,7 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ImageReaderWriterSpi;
 import javax.swing.filechooser.FileFilter;
-import net.seas.util.XClass;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -248,7 +248,7 @@ final class ImageFileFilter extends FileFilter
      * Cette information ne sert qu'à des fins de déboguage.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+name+']';}
+    {return Utilities.getShortClassName(this)+'['+name+']';}
 
     /**
      * Envoie vers le périphérique de sortie standard une

@@ -23,17 +23,18 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.Projection;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.CoordinateSystemFactory;
-import net.seas.opengis.cs.ProjectedCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-import net.seas.opengis.ct.CannotCreateTransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.MathTransform;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.Projection;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.CoordinateSystemFactory;
+import net.seagis.cs.ProjectedCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.ct.CannotCreateTransformException;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.ct.MathTransform;
+import net.seagis.resources.OpenGIS;
 
 // Geometry and graphics
 import java.awt.Shape;
@@ -47,7 +48,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.IllegalPathStateException;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seas.util.XRectangle2D;
+import net.seagis.resources.XRectangle2D;
 
 // Collections
 import java.util.List;
@@ -73,19 +74,17 @@ import java.util.Locale;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Miscellaneous
-import net.seas.util.XMath;
 import net.seas.util.XArray;
-import net.seas.util.XClass;
-import net.seas.util.XString;
 import net.seas.util.Console;
 import net.seas.util.Version;
 import net.seas.util.Statistics;
+import net.seagis.resources.XMath;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -176,14 +175,14 @@ public class Polygon extends Contour
 
     /**
      * Transformation permettant de passer du système de coordonnées des points <code>data</code>
-     * vers le système de coordonnées de ce polyligne. {@link CoordinateTransform#getSourceCS}
+     * vers le système de coordonnées de ce polyligne. {@link CoordinateTransformation#getSourceCS}
      * doit obligatoirement être le système de coordonnées de <code>data</code>, tandis que
-     * {@link CoordinateTransform#getTargetCS} doit être le système de coordonnées du polyligne.
+     * {@link CoordinateTransformation#getTargetCS} doit être le système de coordonnées du polyligne.
      * Lorsque ce polyligne utilise le même système de coordonnées que <code>data</code> (ce qui
      * est le cas la plupart du temps), alors ce champ contiendra une transformation identité.
      * Ce champ peut être nul si le système de coordonnées de <code>data</code> n'est pas connu.
      */
-    private CoordinateTransform coordinateTransform;
+    private CoordinateTransformation coordinateTransform;
 
     /**
      * Rectangle englobant complètement tous les points de <code>data</code>. Ce
@@ -261,8 +260,17 @@ public class Polygon extends Contour
     /**
      * Construit un polyligne initialement vide.
      */
-    private Polygon(final CoordinateTransform coordinateTransform)
-    {this.coordinateTransform = coordinateTransform;}
+    private Polygon(final CoordinateTransformation coordinateTransform)
+    {
+        this.coordinateTransform = coordinateTransform;
+        CoordinateSystem cs;
+        if ((cs=coordinateTransform.getSourceCS()).getDimension() != 2 ||
+            (cs=coordinateTransform.getTargetCS()).getDimension() != 2)
+        {
+            // TODO
+            throw new IllegalArgumentException(String.valueOf(cs));
+        }
+    }
 
     /**
      * Construct an empty polyline.
@@ -315,24 +323,6 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne une transformation identitée pour le système de coordonnées
-     * spécifié, ou <code>null</code> si <code>coordinateSystem</code> est nul.
-     */
-    private static CoordinateTransform getIdentityTransform(final CoordinateSystem coordinateSystem)
-    {
-        if (coordinateSystem!=null) try
-        {
-            return TRANSFORMS.createFromCoordinateSystems(coordinateSystem, coordinateSystem);
-        }
-        catch (CannotCreateTransformException exception)
-        {
-            // Should not happen; we are just asking for an identity transform!
-            Segment.unexpectedException("Polygon", "getIdentityTransform", exception);
-        }
-        return null;
-    }
-
-    /**
      * Construit des polylignes à partir des coordonnées (<var>x</var>,<var>y</var>) spécifiées.
      * Les valeurs <code>NaN</code> au début et à la fin de <code>data</code> seront ignorées.
      * Celles qui apparaissent au milieu auront pour effet de séparer le trait en plusieurs
@@ -349,7 +339,7 @@ public class Polygon extends Contour
     {
         final Segment[]  segments = Segment.getInstances(data);
         final Polygon[] polylines = new Polygon[segments.length];
-        final CoordinateTransform ct = getIdentityTransform(coordinateSystem);
+        final CoordinateTransformation ct = getIdentityTransform(coordinateSystem);
         for (int i=0; i<polylines.length; i++)
         {
             polylines[i]=new Polygon(ct);
@@ -374,12 +364,12 @@ public class Polygon extends Contour
         {
             return new Polygon[] {(Polygon) shape};
         }
-        final CoordinateTransform  ct = getIdentityTransform(coordinateSystem);
-        final List<Polygon> polylines = new ArrayList<Polygon>();
-        final Rectangle2D      bounds = shape.getBounds2D();
-        final PathIterator        pit = shape.getPathIterator(null, 0.025*Math.max(bounds.getHeight(), bounds.getWidth()));
-        final float[]          buffer = new float[6];
-        float[]                 array = new float[64];
+        final CoordinateTransformation ct = getIdentityTransform(coordinateSystem);
+        final List<Polygon>     polylines = new ArrayList<Polygon>();
+        final Rectangle2D          bounds = shape.getBounds2D();
+        final PathIterator            pit = shape.getPathIterator(null, 0.025*Math.max(bounds.getHeight(), bounds.getWidth()));
+        final float[]              buffer = new float[6];
+        float[]                     array = new float[64];
         while (!pit.isDone())
         {
             if (pit.currentSegment(array)!=PathIterator.SEG_MOVETO)
@@ -443,7 +433,7 @@ public class Polygon extends Contour
      */
     private CoordinateSystem getSourceCS()
     {
-        final CoordinateTransform coordinateTransform = this.coordinateTransform; // avoid synchronization
+        final CoordinateTransformation coordinateTransform = this.coordinateTransform; // avoid synchronization
         return (coordinateTransform!=null) ? coordinateTransform.getSourceCS() : null;
     }
 
@@ -452,7 +442,7 @@ public class Polygon extends Contour
      */
     public CoordinateSystem getCoordinateSystem()
     {
-        final CoordinateTransform coordinateTransform = this.coordinateTransform; // avoid synchronization
+        final CoordinateTransformation coordinateTransform = this.coordinateTransform; // avoid synchronization
         return (coordinateTransform!=null) ? coordinateTransform.getTargetCS() : null;
     }
 
@@ -464,9 +454,9 @@ public class Polygon extends Contour
      *
      * @throws CannotCreateTransformException Si la transformation ne peut pas être créée.
      */
-    private CoordinateTransform getCoordinateTransform(final CoordinateSystem coordinateSystem) throws CannotCreateTransformException
+    private CoordinateTransformation getCoordinateTransformation(final CoordinateSystem coordinateSystem) throws CannotCreateTransformException
     {
-        final CoordinateTransform coordinateTransform = this.coordinateTransform; // avoid synchronization
+        final CoordinateTransformation coordinateTransform = this.coordinateTransform; // avoid synchronization
         if (coordinateSystem!=null && coordinateTransform!=null)
         {
             if (coordinateSystem.equivalents(coordinateTransform.getTargetCS()))
@@ -474,6 +464,22 @@ public class Polygon extends Contour
                 return coordinateTransform;
             }
             return TRANSFORMS.createFromCoordinateSystems(coordinateTransform.getSourceCS(), coordinateSystem);
+        }
+        return null;
+    }
+
+    /**
+     * Returns a math transform for the specified transformations.
+     * If no transformation is available, or if it is the identity
+     * transform, then this method returns <code>null</code>. This
+     * method accept null argument.
+     */
+    private static MathTransform2D getMathTransform2D(final CoordinateTransformation transformation)
+    {
+        if (transformation!=null)
+        {
+            final MathTransform transform = transformation.getMathTransform();
+            if (!transform.isIdentity()) return (MathTransform2D) transform;
         }
         return null;
     }
@@ -496,7 +502,7 @@ public class Polygon extends Contour
             coordinateSystem = getSourceCS();
             // May still null. Its ok.
         }
-        final CoordinateTransform transformCandidate = getCoordinateTransform(coordinateSystem);
+        final CoordinateTransformation transformCandidate = getCoordinateTransformation(coordinateSystem);
         /*
          * Compute bounds now. The getBounds2D(...) method scan every point.
          * Concequently, if a exception must be throws, it will be thrown now.
@@ -505,7 +511,7 @@ public class Polygon extends Contour
          *       using source coordinate system (which doesn't change).
          *       No change to 'dataBounds' neither.
          */
-        bounds = Segment.getBounds2D(data, transformCandidate);
+        bounds = Segment.getBounds2D(data, (MathTransform2D)transformCandidate.getMathTransform());
         /*
          * Store the new coordinate transform
          * only after projection succeded.
@@ -520,8 +526,8 @@ public class Polygon extends Contour
      * Une transformation nulle (<code>null</code>) est considérée comme étant
      * une transformation identitée.
      */
-    private static boolean isIdentity(final CoordinateTransform coordinateTransform)
-    {return coordinateTransform==null || coordinateTransform.isIdentity();}
+    private static boolean isIdentity(final CoordinateTransformation coordinateTransform)
+    {return coordinateTransform==null || coordinateTransform.getMathTransform().isIdentity();}
 
     /**
      * Test if this polyline is empty. An
@@ -569,7 +575,9 @@ public class Polygon extends Contour
         {
             dataBounds = getBounds(data, null);
             if (isIdentity(coordinateTransform))
+            {
                 bounds = dataBounds; // Avoid computing the same rectangle two times
+            }
         }
         return dataBounds;
     }
@@ -606,9 +614,9 @@ public class Polygon extends Contour
      */
     private Rectangle2D getCachedBounds(final CoordinateSystem coordinateSystem) throws TransformException
     {
-        if (XClass.equals(getSourceCS(),         coordinateSystem)) return getDataBounds();
-        if (XClass.equals(getCoordinateSystem(), coordinateSystem)) return getCachedBounds();
-        Rectangle2D bounds=Segment.getBounds2D(data, coordinateTransform);
+        if (Utilities.equals(getSourceCS(),         coordinateSystem)) return getDataBounds();
+        if (Utilities.equals(getCoordinateSystem(), coordinateSystem)) return getCachedBounds();
+        Rectangle2D bounds=Segment.getBounds2D(data, getMathTransform2D(coordinateTransform));
         if (bounds==null) bounds=new Rectangle2D.Float();
         return bounds;
     }
@@ -623,12 +631,12 @@ public class Polygon extends Contour
      * @return Un rectangle englobant toutes les points de <code>data</code>.
      *         Ce rectangle peut être vide, mais ne sera jamais nul.
      */
-    private static Rectangle2D getBounds(final Segment data, final CoordinateTransform coordinateTransform)
+    private static Rectangle2D getBounds(final Segment data, final CoordinateTransformation coordinateTransform)
     {
         Rectangle2D bounds;
         try
         {
-            bounds=Segment.getBounds2D(data, coordinateTransform);
+            bounds=Segment.getBounds2D(data, getMathTransform2D(coordinateTransform));
             if (bounds==null) bounds=new Rectangle2D.Float();
         }
         catch (TransformException exception)
@@ -648,10 +656,10 @@ public class Polygon extends Contour
      *
      * @param  x Coordonnée <var>x</var> du point à tester.
      * @param  y Coordonnée <var>y</var> du point à tester.
-     * @param  transform Transformation à utiliser pour convertir les points de {@link #data},
+     * @param  transformation Transformation à utiliser pour convertir les points de {@link #data},
      *         ou <code>null</code> pour ne pas faire de transformation. Si une transformation
      *         non-nulle est spécifiée, elle devrait avoir été obtenue par un appel à la méthode
-     *         <code>getCoordinateTransform(targetCS)</code>. Tous les points du polygone seront
+     *         <code>getCoordinateTransformation(targetCS)</code>. Tous les points du polygone seront
      *         alors projetés selon le système de coordonnées <code>targetCS</code>. Autant que
      *         possible, il est plus efficace de ne calculer que la projection inverse du point
      *         (<var>x</var>,<var>y</var>) et de spécifier <code>null</code> pour cet argument.
@@ -660,7 +668,7 @@ public class Polygon extends Contour
      * @author André Gosselin (version originale en C)
      * @author Martin Desruisseaux (adaptation pour le Java)
      */
-    private boolean contains(final float x, final float y, final CoordinateTransform transform)
+    private boolean contains(final float x, final float y, final CoordinateTransformation transformation)
     {
         if (interiorSign==UNKNOW)
         {
@@ -677,7 +685,7 @@ public class Polygon extends Contour
         int   intSuspended         = 0;
         int   nPointsToRecheck     = 0;
         final Point2D.Float nextPt = new Point2D.Float();
-        final Segment.Iterator  it = new Segment.Iterator(data, transform);
+        final Segment.Iterator  it = new Segment.Iterator(data, getMathTransform2D(transformation));
         float x1                   = Float.NaN;
         float y1                   = Float.NaN;
         /*
@@ -840,12 +848,16 @@ public class Polygon extends Contour
         // and vis-versa. This is because some projections transform straight lines
         // into curves, but the Polygon class ignore curves and always use straight
         // lines between any two points.
-        if (!isIdentity(coordinateTransform)) try
+        if (coordinateTransform!=null) try
         {
-            final Point2D.Double point=new Point2D.Double(x,y);
-            coordinateTransform.inverse().transform(point, point);
-            x = point.x;
-            y = point.y;
+            final MathTransform transform = coordinateTransform.getMathTransform();
+            if (!transform.isIdentity())
+            {
+                Point2D point = new Point2D.Double(x,y);
+                point = ((MathTransform2D) transform.inverse()).transform(point, point);
+                x = point.getX();
+                y = point.getY();
+            }
         }
         catch (TransformException exception)
         {
@@ -913,7 +925,8 @@ public class Polygon extends Contour
             {
                 final Point2D.Float firstPt = new Point2D.Float();
                 final  Line2D.Float segment = new  Line2D.Float();
-                final Segment.Iterator   it = new Segment.Iterator(shape.data, shape.getCoordinateTransform(coordinateSystem));
+                final Segment.Iterator   it = new Segment.Iterator(shape.data, shape.getMathTransform2D(
+                                                                   shape.getCoordinateTransformation(coordinateSystem)));
                 if (it.next(firstPt)!=null && contains(firstPt.x, firstPt.y, null))
                 {
                     segment.x2 = firstPt.x;
@@ -1049,7 +1062,8 @@ public class Polygon extends Contour
             {
                 final Point2D.Float firstPt = new Point2D.Float();
                 final  Line2D.Float segment = new  Line2D.Float();
-                final Segment.Iterator   it = new Segment.Iterator(shape.data, shape.getCoordinateTransform(coordinateSystem));
+                final Segment.Iterator   it = new Segment.Iterator(shape.data, shape.getMathTransform2D(
+                                                                   shape.getCoordinateTransformation(coordinateSystem)));
                 if (it.next(firstPt)!=null)
                 {
                     if (checkEdgeOnly || !contains(firstPt.x, firstPt.y))
@@ -1152,7 +1166,7 @@ public class Polygon extends Contour
                     // Should be uncommon. Doesn't hurt, but may be a memory issue for big polyline.
                     if (Version.MINOR>=4)
                     {
-                        logger.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
+                        LOGGER.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
                     }
                     array=null; // {@link #toArray} will allocate a new array.
                 }
@@ -1173,7 +1187,7 @@ public class Polygon extends Contour
                                      getName(null), new Integer(pointCount), new Integer(drawingDecimation));
             record.setSourceClassName ("Polygon");
             record.setSourceMethodName("getDrawingArray");
-            logger.log(record);
+            LOGGER.log(record);
         }
         cache = new Cache(array);
         cache.transform = transform;
@@ -1225,7 +1239,7 @@ public class Polygon extends Contour
      * that memory consumption should stay low.
      */
     public synchronized Collection<Point2D> getPoints()
-    {return new Segment.Collection(Segment.clone(data), coordinateTransform);}
+    {return new Segment.Collection(Segment.clone(data), getMathTransform2D(coordinateTransform));}
 
     /**
      * Stores the value of the first point into the specified point object.
@@ -1239,10 +1253,11 @@ public class Polygon extends Contour
      */
     public synchronized Point2D getFirstPoint(Point2D point) throws NoSuchElementException
     {
-        point=Segment.getFirstPoint(data, point);
-        if (coordinateTransform!=null) try
+        point = Segment.getFirstPoint(data, point);
+        final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+        if (transform!=null) try
         {
-            point=coordinateTransform.transform(point, point);
+            point = transform.transform(point, point);
         }
         catch (TransformException exception)
         {
@@ -1265,10 +1280,11 @@ public class Polygon extends Contour
      */
     public synchronized Point2D getLastPoint(Point2D point) throws NoSuchElementException
     {
-        point=Segment.getLastPoint(data, point);
-        if (coordinateTransform!=null) try
+        point = Segment.getLastPoint(data, point);
+        final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+        if (transform!=null) try
         {
-            point=coordinateTransform.transform(point, point);
+            point = transform.transform(point, point);
         }
         catch (TransformException exception)
         {
@@ -1291,10 +1307,11 @@ public class Polygon extends Contour
     public synchronized void getFirstPoints(final Point2D[] points) throws NoSuchElementException
     {
         Segment.getFirstPoints(data, points);
-        if (coordinateTransform!=null) try
+        final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+        if (transform!=null) try
         {
             for (int i=0; i<points.length; i++)
-                points[i]=coordinateTransform.transform(points[i], points[i]);
+                points[i] = transform.transform(points[i], points[i]);
         }
         catch (TransformException exception)
         {
@@ -1302,7 +1319,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getFirstPoints", exception);
         }
-        assert(points.length==0 || XClass.equals(getFirstPoint(null), points[0]));
+        assert(points.length==0 || Utilities.equals(getFirstPoint(null), points[0]));
     }
 
     /**
@@ -1317,10 +1334,11 @@ public class Polygon extends Contour
     public synchronized void getLastPoints(final Point2D[] points) throws NoSuchElementException
     {
         Segment.getLastPoints(data, points);
-        if (coordinateTransform!=null) try
+        final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+        if (transform!=null) try
         {
             for (int i=0; i<points.length; i++)
-                points[i]=coordinateTransform.transform(points[i], points[i]);
+                points[i] = transform.transform(points[i], points[i]);
         }
         catch (TransformException exception)
         {
@@ -1328,7 +1346,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getLastPoints", exception);
         }
-        assert(points.length==0 || XClass.equals(getLastPoint(null), points[points.length-1]));
+        assert(points.length==0 || Utilities.equals(getLastPoint(null), points[points.length-1]));
     }
 
     /**
@@ -1371,11 +1389,12 @@ public class Polygon extends Contour
     {
         if (interiorSign==UNKNOW)
         {
-            if (coordinateTransform!=null)
+            final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+            if (transform!=null)
             {
                 final float[] oldBorder = border;
                 border = new float[upper-lower];
-                coordinateTransform.inverse().transform(oldBorder, lower, border, 0, border.length);
+                transform.inverse().transform(oldBorder, lower, border, 0, border.length);
                 lower = 0;
                 upper = border.length;
             }
@@ -1405,7 +1424,7 @@ public class Polygon extends Contour
     public synchronized void append(final Polygon toAppend) throws TransformException
     {
         if (toAppend==null) return;
-        if (!XClass.equals(getSourceCS(), toAppend.getSourceCS()))
+        if (!Utilities.equals(getSourceCS(), toAppend.getSourceCS()))
         {
             throw new UnsupportedOperationException(); // TODO.
         }
@@ -1549,7 +1568,7 @@ public class Polygon extends Contour
             final Projection projection = new Projection("Generated", CARTESIAN, ellipsoid, center);
             targetCS = new ProjectedCoordinateSystem("Generated", geoCS, projection);
         }
-        Segment.setResolution(data, getCoordinateTransform(targetCS), resolution);
+        Segment.setResolution(data, getCoordinateTransformation(targetCS), resolution);
         clearCache(); // Clear everything in the cache.
     }
 
@@ -1667,9 +1686,10 @@ public class Polygon extends Contour
     public synchronized float[] toArray(float[] dest, final int subSampling)
     {
         dest = Segment.toArray(data, dest, subSampling);
-        if (!isIdentity(coordinateTransform)) try
+        final MathTransform2D transform = getMathTransform2D(coordinateTransform);
+        if (transform!=null) try
         {
-            coordinateTransform.transform(dest, 0, dest, 0, dest.length/2);
+            transform.transform(dest, 0, dest, 0, dest.length/2);
         }
         catch (TransformException exception)
         {
@@ -1695,9 +1715,9 @@ public class Polygon extends Contour
         if (super.equals(object))
         {
             final Polygon that = (Polygon) object;
-            return           this.interiorSign    ==   that.interiorSign         &&
-               XClass.equals(this.coordinateTransform, that.coordinateTransform) &&
-              Segment.equals(this.data,                that.data);
+            return                  this.interiorSign    ==   that.interiorSign         &&
+                   Utilities.equals(this.coordinateTransform, that.coordinateTransform) &&
+                     Segment.equals(this.data,                that.data);
         }
         else return false;
     }
@@ -1819,11 +1839,11 @@ public class Polygon extends Contour
             {
                 length=titles[i].length();
                 final int spaces = Math.max(width-length/2, 0);
-                out.write(XString.spaces(spaces));
+                out.write(Utilities.spaces(spaces));
                 out.write(titles[i]);
                 length += spaces;
             }
-            out.write(XString.spaces(1+2*width-length));
+            out.write(Utilities.spaces(1+2*width-length));
             iterators[i]=points[i].iterator();
         }
         out.write(lineSeparator);
@@ -1841,7 +1861,7 @@ public class Polygon extends Contour
                 {
                     final int start = buffer.length();
                     if (point!=null) format.format(xy ? point.getX() : point.getY(), buffer, dummy);
-                    buffer.insert(start, XString.spaces(width-(buffer.length()-start)));
+                    buffer.insert(start, Utilities.spaces(width-(buffer.length()-start)));
                     if (xy) buffer.append('\u00A0'); // No-break space
                 }
                 while (!(xy = !xy));

@@ -28,7 +28,7 @@ import java.io.FilterWriter;
 import java.io.IOException;
 
 // Miscellaneous
-import net.seas.util.XString;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -114,7 +114,7 @@ public class TabExpanderWriter extends FilterWriter
     private void expand() throws IOException
     {
         final int width = tabWidth - (column % tabWidth);
-        out.write(XString.spaces(width));
+        out.write(Utilities.spaces(width));
         column += width;
     }
     

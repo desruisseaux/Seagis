@@ -31,18 +31,19 @@ import java.sql.SQLWarning;
 import java.sql.SQLException;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-
-import net.seas.opengis.cv.Category;
-import net.seas.opengis.cv.CategoryList;
-import net.seas.opengis.gp.Operation;
-import net.seas.opengis.gc.GridRange;
-import net.seas.opengis.gc.GridGeometry;
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.gp.GridCoverageProcessor;
+import net.seagis.pt.Envelope;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.TransformException;
+import net.seagis.cv.Category;
+import net.seagis.cv.CategoryList;
+import net.seagis.gp.Operation;
+import net.seagis.gc.GridRange;
+import net.seagis.gc.GridGeometry;
+import net.seagis.gc.GridCoverage;
+import net.seagis.gp.GridCoverageProcessor;
+import net.seagis.resources.XDimension2D;
+import net.seagis.resources.Utilities;
+import net.seagis.resources.OpenGIS;
 
 // Images
 import java.awt.image.RenderedImage;
@@ -66,7 +67,6 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
-import net.seas.util.XDimension2D;
 
 // Références faibles
 import net.seas.util.WeakHashSet;
@@ -78,8 +78,6 @@ import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.Collections;
-import net.seas.util.OpenGIS;
-import net.seas.util.XClass;
 import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
@@ -617,9 +615,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      */
     private boolean equalsStrict(final ImageEntryImpl that)
     {
-        return          this.ID       == that.ID          &&
-          XClass.equals(this.filename,   that.filename  ) &&
-          XClass.equals(this.parameters, that.parameters) &&
+        return             this.ID       == that.ID          &&
+          Utilities.equals(this.filename,   that.filename  ) &&
+          Utilities.equals(this.parameters, that.parameters) &&
           sameSize(that) && sameCoordinates(that);
     }
 
@@ -692,7 +690,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      */
     final ImageEntryImpl getLowestResolution(final ImageEntryImpl that)
     {
-        if (XClass.equals(this.parameters.series, that.parameters.series) && sameCoordinates(that))
+        if (Utilities.equals(this.parameters.series, that.parameters.series) && sameCoordinates(that))
         {
             if (this.width<=that.width && this.height<=that.height) return this;
             if (this.width>=that.width && this.height>=that.height) return that;

@@ -26,9 +26,9 @@
 package fr.ird.sql.coupling;
 
 // Dépendences avec OpenGIS (SEAGIS)
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.pt.CoordinatePoint;
-import net.seas.opengis.cv.PointOutsideCoverageException;
+import net.seagis.gc.GridCoverage;
+import net.seagis.pt.CoordinatePoint;
+import net.seagis.cv.PointOutsideCoverageException;
 
 // Requêtes SQL
 import java.sql.SQLException;
@@ -57,8 +57,8 @@ import java.util.logging.LogRecord;
 
 // Divers
 import java.util.Date;
-import net.seas.util.XClass;
 import javax.media.jai.util.Range;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -299,7 +299,7 @@ public final class EnvironmentTableFiller
     private void warning(final PointOutsideCoverageException exception)
     {
         final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
-        record.setSourceClassName (XClass.getShortClassName(this));
+        record.setSourceClassName (Utilities.getShortClassName(this));
         record.setSourceMethodName("run");
         if (false) record.setThrown(exception);
         Logger.getLogger("fr.ird.sql.fishery").log(record);

@@ -23,10 +23,11 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.cs.ProjectedCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.TransformException;
+import net.seagis.cs.ProjectedCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.resources.Utilities;
 
 // Geometry and graphics
 import java.awt.Shape;
@@ -51,10 +52,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 import net.seas.util.XArray;
-
-// Miscellaneous
-import net.seas.util.XClass;
-import net.seas.util.Version;
 
 
 /**
@@ -147,7 +144,7 @@ public class Isoline extends Contour
     {
         bounds = null;
         final CoordinateSystem oldCoordinateSystem = this.coordinateSystem;
-        if (XClass.equals(oldCoordinateSystem, coordinateSystem)) return;
+        if (Utilities.equals(oldCoordinateSystem, coordinateSystem)) return;
         int i=polygonCount;
         try
         {
@@ -512,12 +509,7 @@ public class Isoline extends Contour
      * </pre></blockquote>
      */
     public synchronized Set<Polygon> getPolygons()
-    {
-        if (Version.MINOR>=4)
-            return new LinkedHashSet<Polygon>(getPolygonList(false));
-        else
-            return new HashSet<Polygon>(getPolygonList(false));
-    }
+    {return new LinkedHashSet<Polygon>(getPolygonList(false));}
 
     /**
      * Returns the set of polygons as a list. This method is faster than

@@ -25,8 +25,8 @@ package net.seas.map.array;
 // Divers
 import java.awt.geom.Point2D;
 import java.io.Serializable;
-import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -271,7 +271,7 @@ public abstract class PointArray implements Serializable
     public final String toString()
     {
         final Point2D.Float point=new Point2D.Float();
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         final int count=count();
         buffer.append('[');
         buffer.append(count);

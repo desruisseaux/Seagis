@@ -23,21 +23,21 @@
 package net.seas.map.layer;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.gc.GridRange;
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.cv.CategoryList;
-import net.seas.opengis.cv.SampleDimension;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
+import net.seagis.pt.Envelope;
+import net.seagis.gc.GridRange;
+import net.seagis.gc.GridCoverage;
+import net.seagis.cv.CategoryList;
+import net.seagis.cv.SampleDimension;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.TransformException;
 
 // Others SEAGIS packages
 import net.seas.map.Layer;
 import net.seas.map.MapPanel;
 import net.seas.map.GeoMouseEvent;
 import net.seas.map.RenderingContext;
-import net.seas.util.XAffineTransform;
-import net.seas.util.XDimension2D;
+import net.seagis.resources.XDimension2D;
+import net.seagis.resources.XAffineTransform;
 
 // Miscellaneous
 import java.util.List;
@@ -156,7 +156,10 @@ public class GridCoverageLayer extends Layer
      */
     protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        final CoordinateSystem sourceCS = coverage.getCoordinateSystem();
+        // Note: 'getCoordinateSystem()' is similar to 'coverage.getCoordinateSystem()',
+        //       except that it returns only the two first dimensions of the coverage's
+        //       coordinate system.
+        final CoordinateSystem sourceCS = getCoordinateSystem();
         final CoordinateSystem targetCS = context.getViewCoordinateSystem();
         if (!sourceCS.equivalents(targetCS))
         {
@@ -184,10 +187,10 @@ public class GridCoverageLayer extends Layer
         values = coverage.evaluate(point, values);
         if (categories==null)
         {
-            final List<SampleDimension> dimensions = coverage.getSampleDimensions();
-            final CategoryList[] categories = new CategoryList[dimensions.size()];
+            final SampleDimension[] dimensions = coverage.getSampleDimensions();
+            final CategoryList[] categories = new CategoryList[dimensions.length];
             for (int i=0; i<categories.length; i++)
-                categories[i] = dimensions.get(i).getCategoryList();
+                categories[i] = dimensions[i].getCategoryList();
         }
         boolean modified = false;
         for (int i=0; i<values.length; i++)

@@ -47,9 +47,9 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 
 // Divers
-import net.seas.util.XClass;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -201,7 +201,7 @@ public class MailProgress extends Progress
         {
             if (Version.MINOR>=4)
             {
-                final LogRecord warning = new LogRecord(Level.WARNING, "CATCH "+XClass.getShortClassName(exception));
+                final LogRecord warning = new LogRecord(Level.WARNING, "CATCH "+Utilities.getShortClassName(exception));
                 warning.setSourceClassName(getClass().getName());
                 warning.setSourceMethodName(method);
                 warning.setThrown(exception);

@@ -26,8 +26,9 @@
 package fr.ird.sql.image;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cv.Category;
-import net.seas.opengis.cv.CategoryList;
+import net.seagis.cv.Category;
+import net.seagis.cv.CategoryList;
+import net.seagis.resources.Utilities;
 
 // Images
 import java.awt.image.ColorModel;
@@ -69,7 +70,6 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
 import net.seas.util.XArray;
-import net.seas.util.XClass;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
 
@@ -474,12 +474,12 @@ final class FormatEntry implements Entry, Serializable
         if (o instanceof FormatEntry)
         {
             final FormatEntry that = (FormatEntry) o;
-            return               this.ID       == that.ID          &&
-                   XClass.equals(this.name,       that.name     )  &&
-                   XClass.equals(this.mimeType,   that.mimeType )  &&
-                   XClass.equals(this.extension,  that.extension)  &&
-                   Arrays.equals(this.categories, that.categories) &&
-                                 this.geophysics==that.geophysics;
+            return                  this.ID       == that.ID          &&
+                   Utilities.equals(this.name,       that.name     )  &&
+                   Utilities.equals(this.mimeType,   that.mimeType )  &&
+                   Utilities.equals(this.extension,  that.extension)  &&
+                      Arrays.equals(this.categories, that.categories) &&
+                                    this.geophysics==that.geophysics;
         }
         return false;
     }
@@ -524,7 +524,7 @@ final class FormatEntry implements Entry, Serializable
     public String toString()
     {
         StringBuffer buffer=new StringBuffer(40);
-        buffer.append(XClass.getShortClassName(this));
+        buffer.append(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer=toString(buffer);
         buffer.append(']');

@@ -26,25 +26,25 @@
 package fr.ird.sql.image;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.pt.CoordinatePoint;
-import net.seas.opengis.pt.MismatchedDimensionException;
+import net.seagis.pt.Envelope;
+import net.seagis.pt.CoordinatePoint;
+import net.seagis.pt.MismatchedDimensionException;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.ct.MathTransform;
-import net.seas.opengis.ct.TransformException;
+import net.seagis.ct.MathTransform;
+import net.seagis.ct.TransformException;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.gc.GridRange;
-import net.seas.opengis.gc.GridGeometry;
-import net.seas.opengis.gc.GridCoverage;
+import net.seagis.gc.GridRange;
+import net.seagis.gc.GridGeometry;
+import net.seagis.gc.GridCoverage;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cv.Coverage;
-import net.seas.opengis.cv.CategoryList;
-import net.seas.opengis.cv.SampleDimension;
-import net.seas.opengis.cv.ColorInterpretation;
-import net.seas.opengis.cv.PointOutsideCoverageException;
+import net.seagis.cv.Coverage;
+import net.seagis.cv.CategoryList;
+import net.seagis.cv.SampleDimension;
+import net.seagis.cv.ColorInterpretation;
+import net.seagis.cv.PointOutsideCoverageException;
 
 // Géométrie
 import java.awt.Shape;
@@ -106,7 +106,7 @@ public class Coverage3D extends Coverage
      * liste ne sera construite que la première fois où
      * elle sera demandée.
      */
-    private transient List<SampleDimension> dimensions;
+    private transient SampleDimension[] dimensions;
 
     /**
      * Enveloppe des données englobées par cet objet.
@@ -255,7 +255,7 @@ public class Coverage3D extends Coverage
      * domain in coordinate system coordinates.
      */
     public Envelope getEnvelope()
-    {return envelope.clone();}
+    {return (Envelope) envelope.clone();}
 
     /**
      * Retrieve sample dimension information for the coverage.
@@ -264,18 +264,17 @@ public class Coverage3D extends Coverage
      * the no data values, minimum and maximum values and a color table if one is associated
      * with the dimension.
      */
-    public synchronized List<SampleDimension> getSampleDimensions()
+    public synchronized SampleDimension[] getSampleDimensions()
     {
         if (dimensions==null)
         {
-            final SampleDimension[] array = new SampleDimension[categories.length];
-            for (int i=0; i<array.length; i++)
+            dimensions = new SampleDimension[categories.length];
+            for (int i=0; i<dimensions.length; i++)
             {
-                array[i] = new SampleDimension(categories[i]);
+                dimensions[i] = new SampleDimension(categories[i]);
             }
-            dimensions = Collections.unmodifiableList(Arrays.asList(array));
         }
-        return dimensions;
+        return (SampleDimension[]) dimensions.clone();
     }
 
     /**

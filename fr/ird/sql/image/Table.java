@@ -41,7 +41,7 @@ import java.util.Calendar;
 import java.util.prefs.Preferences;
 import fr.ird.resources.Resources;
 import net.seas.util.WeakHashSet;
-import net.seas.util.XClass;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -107,6 +107,10 @@ abstract class Table implements fr.ird.sql.Table
      * Journal des évènements.
      */
     static final Logger logger = Logger.getLogger("fr.ird.sql");
+    static
+    {
+        net.seas.util.InterlineFormatter.init(logger);
+    }
 
     /**
      * Propriétés de la base de données. Ces propriétés peuvent contenir
@@ -168,7 +172,7 @@ abstract class Table implements fr.ird.sql.Table
         }
         catch (SQLException exception)
         {
-            if (XClass.getShortClassName(exception).startsWith("NotImplemented"))
+            if (Utilities.getShortClassName(exception).startsWith("NotImplemented"))
             {
                 // Workaround for a bug in MySQL's JDBC:
                 // org.gjt.mm.mysql.jdbc2.NotImplemented

@@ -23,10 +23,10 @@
 package net.seas.map.layer;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.resources.OpenGIS;
 
 // Geometry
 import java.awt.Shape;
@@ -38,7 +38,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seas.util.XAffineTransform;
+import net.seagis.resources.XAffineTransform;
 
 // Graphics
 import java.awt.Color;
@@ -53,8 +53,8 @@ import javax.units.Unit;
 import net.seas.map.Layer;
 import net.seas.map.GeoMouseEvent;
 import net.seas.map.RenderingContext;
+import net.seagis.resources.XMath;
 import net.seas.util.XArray;
-import net.seas.util.XMath;
 
 
 /**
@@ -108,7 +108,7 @@ public abstract class MarkLayer extends Layer
      * Projection cartographique utilisée la
      * dernière fois pour obtenir les données.
      */
-    private transient CoordinateTransform lastProjection;
+    private transient MathTransform2D lastProjection;
 
     /**
      * Transformation affine utilisée la dernière fois.
@@ -364,7 +364,7 @@ public abstract class MarkLayer extends Layer
              * à tracer les flèches et, plus tard,  à déterminer si le curseur de la souris traîne sur l'une d'entre
              * elles. Certains éléments peuvent être nuls s'ils n'apparaissent pas dans la zone de traçage.
              */
-            final CoordinateTransform projection=context.getCoordinateTransform(this);
+            final MathTransform2D projection=context.getMathTransform2D(this);
             if (validateShapesArray(count) || !equals(projection, lastProjection) || !fromWorld.equals(lastTransform))
             {
                 boundingBox    = null;
@@ -374,7 +374,7 @@ public abstract class MarkLayer extends Layer
                 try
                 {
                     Rectangle2D visibleArea = XAffineTransform.inverseTransform(fromWorld, zoomableBounds, null);
-                    visibleArea = OpenGIS.transform(projection.inverse(), visibleArea, visibleArea);
+                    visibleArea = OpenGIS.transform((MathTransform2D)projection.inverse(), visibleArea, visibleArea);
                     userClip = getUserClip(visibleArea);
                 }
                 catch (NoninvertibleTransformException exception)

@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 // Divers
-import net.seas.util.XClass;
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;

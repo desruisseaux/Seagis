@@ -33,10 +33,10 @@ import java.util.ConcurrentModificationException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import javax.media.jai.util.Range;
-import net.seas.util.XClass;
 import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -152,7 +152,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         }
         if (!Comparable.class.isAssignableFrom(type))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.NOT_COMPARABLE_CLASS¤1, XClass.getShortClassName(type)));
+            throw new IllegalArgumentException(Resources.format(Clé.NOT_COMPARABLE_CLASS¤1, Utilities.getShortClassName(type)));
         }
         Class elementType = ClassChanger.getTransformedClass(type); // e.g. change Date --> Double
         useClassChanger   = (elementType!=type);
@@ -586,7 +586,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         if (object!=null && object.getClass().equals(getClass()))
         {
             final RangeSet that = (RangeSet) object;
-            if (XClass.equals(this.type, that.type))
+            if (Utilities.equals(this.type, that.type))
             {
                 if (array instanceof double[]) return Arrays.equals((double[])this.array, (double[])that.array);
                 if (array instanceof  float[]) return Arrays.equals(( float[])this.array, ( float[])that.array);
@@ -607,7 +607,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
      */
     public synchronized String toString()
     {
-        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         boolean first=true;
         for (java.util.Iterator<Range> it=iterator(); it.hasNext();)

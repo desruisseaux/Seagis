@@ -23,22 +23,22 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.CompoundCoordinateSystem;
-import net.seas.opengis.cs.ProjectedCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.MathTransform;
-import net.seas.opengis.cs.HorizontalDatum;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.CompoundCoordinateSystem;
+import net.seagis.cs.ProjectedCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.cs.HorizontalDatum;
+import net.seagis.ct.MathTransform;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.resources.OpenGIS;
 
 // Coordinates
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import net.seas.awt.geom.Geometry;
 import net.seas.map.array.PointArray;
 import net.seas.map.array.PointIterator;
 
@@ -53,11 +53,12 @@ import java.lang.UnsupportedOperationException;
 import java.io.Serializable;
 
 // Miscellaneous
-import net.seas.util.XClass;
 import net.seas.util.XArray;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
+import net.seagis.resources.Geometry;
 
 
 /**
@@ -452,7 +453,7 @@ final class Segment implements Serializable
             if (points[j]==null) points[j]=new Point2D.Float(it.nextX(), it.nextY());
             else points[j].setLocation(it.nextX(), it.nextY());
         }
-        assert(XClass.equals(getFirstPoint(scan, null), points[0]));
+        assert Utilities.equals(getFirstPoint(scan, null), points[0]);
     }
 
     /**
@@ -522,8 +523,8 @@ final class Segment implements Serializable
             if (points[j]==null) points[j]=new Point2D.Float(it.nextX(), it.nextY());
             else points[j].setLocation(it.nextX(), it.nextY());
         }
-        assert(!it.hasNext());
-        assert(XClass.equals(getLastPoint(scan, null), points[points.length-1]));
+        assert !it.hasNext();
+        assert Utilities.equals(getLastPoint(scan, null), points[points.length-1]);
     }
 
     /**
@@ -705,7 +706,7 @@ final class Segment implements Serializable
      * @return Un rectangle englobeant toutes les coordonnées de ce segment et de ceux qui le suivent.
      * @throws TransformException Si une projection cartographique a échoué.
      */
-    public static Rectangle2D getBounds2D(Segment scan, final CoordinateTransform transform) throws TransformException
+    public static Rectangle2D getBounds2D(Segment scan, final MathTransform2D transform) throws TransformException
     {
         float xmin = Float.POSITIVE_INFINITY;
         float xmax = Float.NEGATIVE_INFINITY;
@@ -774,7 +775,7 @@ final class Segment implements Serializable
      *
      * @param  scan Segment. Cet argument peut être n'importe quel maillon d'une chaîne,
      *         mais cette méthode sera plus rapide si c'est le premier maillon.
-     * @param  coordinateTransform Systèmes de coordonnées source et destination.
+     * @param  transformation Systèmes de coordonnées source et destination.
      *         <code>getSourceCS()</code> doit être le système interne des points
      *         des segments,  tandis que  <code>getTargetCS()</code> doit être le
      *         système dans lequel faire le calcul. C'est <code>getTargetCS()</code>
@@ -786,27 +787,30 @@ final class Segment implements Serializable
      *         point. Voir la description de cette méthode pour les unités.
      * @throws TransformException Si une transformation de coordonnées a échouée.
      */
-    public static Statistics getResolution(Segment scan, CoordinateTransform transform) throws TransformException
+    static Statistics getResolution(Segment scan, final CoordinateTransformation transformation) throws TransformException
     {
         /*
          * Checks the coordinate system validity. If valid and if geographic,
          * gets the ellipsoid to use for orthodromic distance computations.
          */
-        final Ellipsoid ellipsoid;
-        if (transform!=null)
+        final MathTransform2D transform;
+        final Ellipsoid       ellipsoid;
+        if (transformation!=null)
         {
-            final CoordinateSystem targetCS = transform.getTargetCS();
-            if (!XClass.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
+            final MathTransform tr = transformation.getMathTransform();
+            transform = !tr.isIdentity() ? (MathTransform2D) tr : null;
+            final CoordinateSystem targetCS = transformation.getTargetCS();
+            if (!Utilities.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
             {
                 throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
             }
-            if (transform.isIdentity())
-            {
-                transform = null;
-            }
             ellipsoid = getEllipsoid(targetCS);
         }
-        else ellipsoid=null;
+        else
+        {
+            transform = null;
+            ellipsoid = null;
+        }
         /*
          * Compute statistics...
          */
@@ -845,15 +849,15 @@ final class Segment implements Serializable
      *
      * @param  scan Segment. Cet argument peut être n'importe quel maillon d'une chaîne,
      *         mais cette méthode sera plus rapide si c'est le premier maillon.
-     * @param  transform Transformation permettant de convertir les coordonnées des segments vers
-     *         des coordonnées cartésiennes. Cet argument peut être nul si les coordonnées de
+     * @param  transformation Transformation permettant de convertir les coordonnées des segments
+     *         vers des coordonnées cartésiennes. Cet argument peut être nul si les coordonnées de
      *         <code>this</code> sont déjà exprimées selon un système de coordonnées cartésiennes.
      * @param  resolution Résolution désirée, selon les mêmes unités que {@link #getResolution}.
      * @throws TransformException Si une erreur est survenue lors d'une projection cartographique.
      *
      * @see #getResolution
      */
-    public static void setResolution(Segment scan, CoordinateTransform transform, double resolution) throws TransformException
+    public static void setResolution(Segment scan, final CoordinateTransformation transformation, double resolution) throws TransformException
     {
         /*
          * Checks arguments validity. This method do not support latitude/longitude
@@ -863,19 +867,32 @@ final class Segment implements Serializable
         {
             throw new IllegalArgumentException(String.valueOf(resolution));
         }
-        if (transform!=null)
+        final MathTransform2D transform;
+        final MathTransform2D inverseTransform;
+        if (transformation!=null)
         {
-            final CoordinateSystem targetCS = transform.getTargetCS();
-            if (getEllipsoid(targetCS)!=null || !XClass.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
+            final CoordinateSystem targetCS = transformation.getTargetCS();
+            if (getEllipsoid(targetCS)!=null || !Utilities.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
             {
                 throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
             }
-            if (transform.isIdentity())
+            final MathTransform tr = transformation.getMathTransform();
+            if (!tr.isIdentity())
             {
-                transform = null;
+                transform        = (MathTransform2D) tr;
+                inverseTransform = (MathTransform2D) transform.inverse();
+            }
+            else
+            {
+                transform        = null;
+                inverseTransform = null;
             }
         }
-        final MathTransform inverseTransform = (transform!=null) ? transform.inverse() : null;
+        else
+        {
+            transform        = null;
+            inverseTransform = null;
+        }
         /*
          * Performs the linear interpolations, assuming
          * that we are using a cartesian coordinate system.
@@ -1152,7 +1169,7 @@ final class Segment implements Serializable
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         int index=1;
         for (Segment scan=previous; scan!=null; scan=scan.previous)
@@ -1207,7 +1224,7 @@ final class Segment implements Serializable
             {
                 final PointArray array1 = poly1.getArray(arrayID);
                 final PointArray array2 = poly2.getArray(arrayID);
-                if (!XClass.equals(array1, array2)) return false;
+                if (!Utilities.equals(array1, array2)) return false;
             }
             poly1 = poly1.next;
             poly2 = poly2.next;
@@ -1261,12 +1278,12 @@ final class Segment implements Serializable
         /**
          * Transformation à appliquer sur chacun des points.
          */
-        private final CoordinateTransform transform;
+        private final MathTransform2D transform;
 
         /**
          * Construit un ensemble de points.
          */
-        public Collection(final Segment data, final CoordinateTransform transform)
+        public Collection(final Segment data, final MathTransform2D transform)
         {
             this.data = data;
             this.transform = transform;
@@ -1328,7 +1345,7 @@ final class Segment implements Serializable
          * Transformation à appliquer sur les coordonnées,
          * ou <code>null</code> s'il n'y en a pas.
          */
-        private final CoordinateTransform transform;
+        private final MathTransform2D transform;
 
         /**
          * Point utilisé temporairement pour les projections.
@@ -1344,7 +1361,7 @@ final class Segment implements Serializable
          *        coordonnées, ou <code>null</code> s'il n'y en
          *        a pas.
          */
-        public Iterator(final Segment segment, final CoordinateTransform transform)
+        public Iterator(final Segment segment, final MathTransform2D transform)
         {
             start=current=getFirst(segment);
             this.transform = (transform!=null && !transform.isIdentity()) ? transform : null;

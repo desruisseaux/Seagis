@@ -31,11 +31,11 @@ import java.util.Calendar;
 import java.awt.Dimension;
 import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
-import net.seas.opengis.pt.Angle;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.pt.Longitude;
-import net.seas.util.XDimension2D;
-import net.seas.util.XRectangle2D;
+import net.seagis.pt.Angle;
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
+import net.seagis.resources.XDimension2D;
+import net.seagis.resources.XRectangle2D;
 
 // User interface (Swing)
 import java.awt.Insets;

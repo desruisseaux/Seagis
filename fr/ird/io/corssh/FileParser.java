@@ -42,7 +42,6 @@ import java.util.GregorianCalendar;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
-import net.seas.util.XString;
 
 // Géométrie
 import java.awt.Shape;
@@ -51,6 +50,7 @@ import java.awt.Shape;
 import java.util.Arrays;
 import java.util.Iterator;
 import fr.ird.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -818,11 +818,11 @@ final class FileParser extends Parser
                 numberFormat.setMaximumFractionDigits(3);
             }
             int last;
-            last=buffer.length(); angleFormat .format(getField(LATITUDE  )/DEGREES_TO_INT, buffer, pos); buffer.insert(last, XString.spaces(10-(buffer.length()-last)));
-            last=buffer.length(); angleFormat .format(getField(LONGITUDE )/DEGREES_TO_INT, buffer, pos); buffer.insert(last, XString.spaces(10-(buffer.length()-last)));
-            last=buffer.length(); numberFormat.format(getField(HEIGHT    )/ METRES_TO_INT, buffer, pos); buffer.insert(last, XString.spaces(10-(buffer.length()-last)));
-            last=buffer.length(); numberFormat.format(getField(MEAN      )/ METRES_TO_INT, buffer, pos); buffer.insert(last, XString.spaces(10-(buffer.length()-last)));
-            last=buffer.length(); numberFormat.format(getField(BAROMETRIC)/ METRES_TO_INT, buffer, pos); buffer.insert(last, XString.spaces(10-(buffer.length()-last)));
+            last=buffer.length(); angleFormat .format(getField(LATITUDE  )/DEGREES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
+            last=buffer.length(); angleFormat .format(getField(LONGITUDE )/DEGREES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
+            last=buffer.length(); numberFormat.format(getField(HEIGHT    )/ METRES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
+            last=buffer.length(); numberFormat.format(getField(MEAN      )/ METRES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
+            last=buffer.length(); numberFormat.format(getField(BAROMETRIC)/ METRES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
             return buffer.toString();
         }
         else return "(pas de données)"; // TODO: localize

@@ -60,8 +60,8 @@ import net.seas.text.LineFormat;
 
 // Divers
 import java.util.Locale;
-import net.seas.util.XMath;
 import net.seas.util.XArray;
+import net.seagis.resources.XMath;
 import net.seas.resources.Resources;
 import javax.media.jai.util.Range;
 import java.util.logging.Logger;

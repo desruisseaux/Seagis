@@ -36,10 +36,10 @@ import java.text.NumberFormat;
 import java.text.BreakIterator;
 
 // Divers
-import net.seas.util.XString;
 import net.seas.util.Console;
 import net.seas.util.Version;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -364,7 +364,7 @@ public class PrintProgress extends Progress
                 buffer.append(") ");
                 prefix=buffer.toString();
                 buffer.setLength(0);
-                second=XString.spaces(prefix.length());
+                second=Utilities.spaces(prefix.length());
             }
         }
         int width=maxLength-prefix.length()-1;

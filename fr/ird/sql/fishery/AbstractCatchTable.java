@@ -40,15 +40,15 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 // Cartographie
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seagis.resources.Utilities;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
 
 // Collections
 import java.util.Set;
 import java.util.Iterator;
 
 // Divers
-import net.seas.util.XClass;
 import fr.ird.animat.Species;
 import javax.media.jai.util.Range;
 
@@ -153,7 +153,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable
             }
             catch (SQLException exception)
             {
-                if (XClass.getShortClassName(exception).startsWith("NotImplemented"))
+                if (Utilities.getShortClassName(exception).startsWith("NotImplemented"))
                 {
                     // Workaround for a bug in MySQL's JDBC:
                     // org.gjt.mm.mysql.jdbc2.NotImplemented

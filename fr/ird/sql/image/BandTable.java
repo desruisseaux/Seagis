@@ -26,8 +26,8 @@
 package fr.ird.sql.image;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cv.Category;
-import net.seas.opengis.cv.CategoryList;
+import net.seagis.cv.Category;
+import net.seagis.cv.CategoryList;
 
 // Base de données
 import java.sql.ResultSet;

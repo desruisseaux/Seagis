@@ -32,11 +32,10 @@ import net.seas.text.LineFormat;
 
 // Miscellaneous
 import java.util.Random;
-import net.seas.util.XClass;
 import net.seas.util.XArray;
-import net.seas.util.XString;
 import net.seas.resources.Resources;
 import java.util.NoSuchElementException;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -384,7 +383,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
         final double stdv[] = new double[numInputs + numOutputs];
         statistics(mean, stdv);
 
-              StringBuffer  buffer = new StringBuffer(XClass.getShortClassName(this));
+              StringBuffer  buffer = new StringBuffer(Utilities.getShortClassName(this));
         final String lineSeparator = System.getProperty("line.separator", "\n");
         final NumberFormat numbers = NumberFormat.getNumberInstance();
         final FieldPosition  dummy = new FieldPosition(0);
@@ -419,7 +418,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
         buffer.append('=');
         final int p = buffer.length();
         buffer=numbers.format(value, buffer, dummy);
-        buffer.insert(p, XString.spaces(11-(buffer.length()-p)));
+        buffer.insert(p, Utilities.spaces(11-(buffer.length()-p)));
         return buffer;
     }
 

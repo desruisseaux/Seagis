@@ -29,17 +29,16 @@ package fr.ird.sql.image;
 import java.sql.SQLException;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.gp.Operation;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.gp.GridCoverageProcessor;
-import net.seas.opengis.gp.OperationNotFoundException;
+import net.seagis.pt.Envelope;
+import net.seagis.gp.Operation;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.gp.GridCoverageProcessor;
+import net.seagis.gp.OperationNotFoundException;
 
 // Coordonnées et projections cartographiques
 import java.util.Date;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
-import net.seas.opengis.cs.CoordinateSystem;
 
 // Divers
 import java.util.List;

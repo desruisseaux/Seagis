@@ -19,7 +19,7 @@ package net.seas.neural;
 // Miscellaneous
 import java.util.Random;
 import java.io.Serializable;
-import net.seas.util.XClass;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -181,7 +181,7 @@ public class Neuron implements Serializable
      */
     public String toString()
     {
-        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         if (inputs!=null)
         {

@@ -33,9 +33,9 @@ import java.text.ParseException;
 import java.text.DecimalFormatSymbols;
 
 // Angles
-import net.seas.opengis.pt.Angle;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.pt.Longitude;
+import net.seagis.pt.Angle;
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
 
 // Swing (for JSpinner)
 import javax.swing.JSpinner;
@@ -47,10 +47,9 @@ import javax.swing.text.DefaultFormatterFactory;
 import java.io.Serializable;
 
 // Miscellaneous
-import net.seas.util.XMath;
-import net.seas.util.XClass;
-import net.seas.util.XString;
+import net.seagis.resources.XMath;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -652,7 +651,7 @@ public class AngleFormat extends Format
             numberFormat.setMaximumFractionDigits(2);
             return numberFormat.format(obj, toAppendTo, (pos!=null) ? pos : dummy);
         }
-        throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(0), XClass.getShortClassName(obj)));
+        throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(0), Utilities.getShortClassName(obj)));
     }
 
     /**
@@ -1320,7 +1319,7 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      * méthode n'est utile qu'à des fins de déboguage.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+toPattern()+']';}
+    {return Utilities.getShortClassName(this)+'['+toPattern()+']';}
 
 
 
@@ -1491,7 +1490,7 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
             {
                 throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤1, value));
             }
-            if (!XClass.equals(value, this.value))
+            if (!Utilities.equals(value, this.value))
             {
                 this.value = (Angle)value;
                 fireStateChanged();

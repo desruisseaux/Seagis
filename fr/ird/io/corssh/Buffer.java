@@ -41,8 +41,8 @@ import java.util.ConcurrentModificationException;
 import java.io.Serializable;
 import java.util.Arrays;
 import net.seas.util.XArray;
-import net.seas.util.XClass;
 import fr.ird.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -923,7 +923,7 @@ public final class Buffer implements Serializable
      */
     public synchronized String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(recordCount);
         buffer.append(" records");

@@ -27,6 +27,9 @@ import java.lang.Number;
 import java.lang.Long;
 import java.util.Date;
 
+// Miscellaneous
+import net.seagis.resources.Utilities;
+
 
 /**
  * Transforme un objet d'une classe vers une autre. Cette classe sert principalement
@@ -125,7 +128,7 @@ public abstract class ClassChanger
      * Returns a string representation for this class changer.
      */
     public String toString()
-    {return "ClassChanger["+XClass.getShortName(source)+"\u00A0\u21E8\u00A0"+XClass.getShortName(target)+']';}
+    {return "ClassChanger["+source.getName()+"\u00A0\u21E8\u00A0"+target.getName()+']';}
 
     /**
      * Inscrit un nouvel objet <code>ClassChanger</code>. Les objets <code>ClassChanger</code> inscrits

@@ -28,7 +28,7 @@ package fr.ird.io.bufr;
 // Divers
 import java.io.*;
 import java.util.*;
-import net.seas.util.XString;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -221,7 +221,7 @@ final class TableCompiler
                 System.err.println("Il manque une ligne à la fin du fichier.");
                 break;
             }
-            line = line + XString.spaces(80-line.length()) + nextLine;
+            line = line + Utilities.spaces(80-line.length()) + nextLine;
             final String FXY       = line.substring(  0, 6);
             final String name      = line.substring(  6, 66);
             final String units     = line.substring( 66, 84);

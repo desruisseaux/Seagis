@@ -23,8 +23,8 @@
 package net.seas.image.io;
 
 // Miscellaneous
-import net.seas.util.XClass;
 import java.awt.color.ColorSpace;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -134,5 +134,5 @@ final class ScaledColorSpace extends ColorSpace
      * Returns a string representation of this color model.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+getMinValue(0)+", "+getMaxValue(0)+']';}
+    {return Utilities.getShortClassName(this)+'['+getMinValue(0)+", "+getMaxValue(0)+']';}
 }

@@ -31,7 +31,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RectangularShape;
 import java.awt.geom.NoninvertibleTransformException;
-import net.seas.util.XAffineTransform;
+import net.seagis.resources.XAffineTransform;
 
 // Graphisme
 import java.awt.Paint;
@@ -69,8 +69,8 @@ import java.text.ParseException;
 // Entrés/sorties et divers
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
-import net.seas.util.XClass;
 import net.seas.util.XArray;
 import net.seas.util.XMath;
 import java.lang.Double;
@@ -1425,7 +1425,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * représentant cet objet.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+XClass.getShortClassName(logicalShape)+']';}
+    {return Utilities.getShortClassName(this)+'['+Utilities.getShortClassName(logicalShape)+']';}
 
     /**
      * Synchronise un des bords du rectangle avec un champ de texte.  Chaque fois que

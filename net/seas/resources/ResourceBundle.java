@@ -32,8 +32,6 @@ import java.util.MissingResourceException;
 // Formats
 import java.text.Format;
 import java.text.MessageFormat;
-import net.seas.util.XString;
-import net.seas.util.XClass;
 
 // Entrés/sorties
 import java.io.Writer;
@@ -50,6 +48,7 @@ import java.util.logging.LogRecord;
 
 // Divers
 import net.seas.util.Version;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -137,7 +136,7 @@ public class ResourceBundle extends java.util.ResourceBundle
             int indexCR=value.indexOf('\r'); if (indexCR<0) indexCR=value.length();
             int indexLF=value.indexOf('\n'); if (indexLF<0) indexLF=value.length();
             final String number = String.valueOf(i);
-            out.write(XString.spaces(5-number.length()));
+            out.write(Utilities.spaces(5-number.length()));
             out.write(number);
             out.write(":\t");
             out.write(value.substring(0, Math.min(indexCR,indexLF)));
@@ -560,7 +559,7 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     public synchronized String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         if (values!=null)
         {

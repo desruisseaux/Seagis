@@ -34,25 +34,29 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.CompoundCoordinateSystem;
-import net.seas.opengis.cs.TemporalCoordinateSystem;
-import net.seas.opengis.cs.HorizontalCoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
-import net.seas.opengis.ct.TransformException;
+import net.seagis.pt.Envelope;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.CompoundCoordinateSystem;
+import net.seagis.cs.TemporalCoordinateSystem;
+import net.seagis.cs.HorizontalCoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.ct.TransformException;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.gp.Operation;
-import net.seas.opengis.gp.GridCoverageProcessor;
-import net.seas.opengis.gp.OperationNotFoundException;
+import net.seagis.gp.Operation;
+import net.seagis.gp.GridCoverageProcessor;
+import net.seagis.gp.OperationNotFoundException;
+
+// SEAGIS dependencies
+import net.seagis.resources.OpenGIS;
+import net.seagis.resources.Utilities;
+import net.seagis.resources.XDimension2D;
+import net.seagis.resources.XRectangle2D;
 
 // Géométrie
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
-import net.seas.util.XDimension2D;
-import net.seas.util.XRectangle2D;
 
 // Temps
 import java.util.Date;
@@ -75,8 +79,6 @@ import java.util.logging.LogRecord;
 
 // Divers
 import java.io.File;
-import net.seas.util.XClass;
-import net.seas.util.OpenGIS;
 import net.seas.plot.RangeSet;
 import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;
@@ -487,7 +489,7 @@ final class ImageTableImpl extends Table implements ImageTable
      */
     public synchronized void setPreferredResolution(final Dimension2D pixelSize)
     {
-        if (!XClass.equals(resolution, pixelSize))
+        if (!Utilities.equals(resolution, pixelSize))
         {
             parameters = null;
             final int clé;
@@ -895,7 +897,7 @@ final class ImageTableImpl extends Table implements ImageTable
          */
         final boolean invalidate = (parameters==null) ||
                                    (parameters.format.getID()!=formatID) ||
-                                   !XClass.equals(parameters.pathname, pathname);
+                                   !Utilities.equals(parameters.pathname, pathname);
         if (!invalidate && cs.equivalents(parameters.coordinateSystem.getHeadCS()))
         {
             if (formatTable!=null)

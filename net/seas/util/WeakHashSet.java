@@ -296,8 +296,8 @@ public class WeakHashSet<Element>
         }
         if (Version.MINOR>=4)
         {
-            // FINER is the default level for entering, returning, or throwing an exception.
-            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
+            // Note: FINER is the default level for entering, returning, or throwing an exception.
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINEST, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
             record.setSourceClassName("WeakHashSet");
             record.setSourceMethodName(augmentation ? "intern" : "remove");
             Logger.getLogger("net.seas.util").log(record);

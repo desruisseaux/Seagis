@@ -24,8 +24,8 @@
 package fr.ird.sql.coupling;
 
 // OpenGIS dependencies
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.cv.PointOutsideCoverageException;
+import net.seagis.gc.GridCoverage;
+import net.seagis.cv.PointOutsideCoverageException;
 
 // Temps et géométrie
 import java.util.Date;

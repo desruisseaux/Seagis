@@ -36,11 +36,11 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.pt.Longitude;
-import net.seas.text.AngleFormat;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
+import net.seagis.pt.AngleFormat;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.GeographicCoordinateSystem;
 
 // Divers
 import javax.units.Unit;

@@ -75,9 +75,9 @@ import java.util.ArrayList;
 // Divers
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
+import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
 import net.seas.util.Version;
-import net.seas.util.XClass;
 
 
 /**
@@ -176,7 +176,7 @@ public final class ExceptionMonitor
     {
         if (Version.MINOR>=4)
         {
-            final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(error));
+            final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(error));
             final String message = error.getLocalizedMessage();
             if (message!=null)
             {
@@ -369,7 +369,7 @@ public final class ExceptionMonitor
              * de {@link JDialog}. La trace de l'exception ne sera pas écrite
              * tout de suite.
              */
-            final String title=resources.getString(Clé.ERROR¤1, XClass.getShortClassName(exception));
+            final String title=resources.getString(Clé.ERROR¤1, Utilities.getShortClassName(exception));
             final JDesktopPane desktop=getDesktopPaneForComponent(owner);
             if (desktop!=null)
             {
@@ -403,7 +403,7 @@ public final class ExceptionMonitor
             {
                 message=exception.getLocalizedMessage();
                 if (message==null)
-                    message=resources.getString(Clé.NO_DETAILS¤1, XClass.getShortClassName(exception));
+                    message=resources.getString(Clé.NO_DETAILS¤1, Utilities.getShortClassName(exception));
             }
             final JTextArea textArea=new JTextArea(message, 1, WIDTH);
             textArea.setEditable(false);
@@ -457,10 +457,10 @@ public final class ExceptionMonitor
                         if (!(traceComponent instanceof JTabbedPane))
                         {
                             final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
-                            tabs.addTab(XClass.getShortClassName(this.exception), traceComponent);
+                            tabs.addTab(Utilities.getShortClassName(this.exception), traceComponent);
                             traceComponent = tabs;
                         }
-                        ((JTabbedPane) traceComponent).addTab(XClass.getShortClassName(exception), scroll);
+                        ((JTabbedPane) traceComponent).addTab(Utilities.getShortClassName(exception), scroll);
                     }
                     else traceComponent = scroll;
                 }

@@ -32,10 +32,10 @@ import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.image.SeriesEntry;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.AxisInfo;
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.AxisInfo;
+import net.seagis.gc.GridCoverage;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.resources.OpenGIS;
 
 
 // Entrés/sorties

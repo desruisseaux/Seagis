@@ -49,9 +49,9 @@ import javax.swing.BoundedRangeModel;
 import java.lang.reflect.InvocationTargetException;
 
 // Divers
-import net.seas.util.XString;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -315,14 +315,14 @@ public class WindowProgress extends Progress
             if (margin.length()!=0)
             {
                 wm -= (margin.length()+3);
-                buffer.append(XString.spaces(wm));
+                buffer.append(Utilities.spaces(wm));
                 buffer.append('(');
                 buffer.append(margin);
                 buffer.append(')');
                 wm = 1;
             }
         }
-        buffer.append(XString.spaces(wm));
+        buffer.append(Utilities.spaces(wm));
         buffer.append(warning);
         if (buffer.charAt(buffer.length()-1)!='\n')
         {

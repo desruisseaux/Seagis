@@ -23,18 +23,19 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.ct.CannotCreateTransformException;
-import net.seas.util.OpenGIS;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.ct.CannotCreateTransformException;
+import net.seagis.resources.OpenGIS;
 
 // Geometry
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import net.seas.util.XAffineTransform;
+import net.seagis.resources.XAffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Miscellaneous
@@ -101,13 +102,13 @@ public final class RenderingContext
     /**
      * Transformation (généralement une projection cartographique) servant à convertir les
      * coordonnées géographiques vers les données projetées à l'écran. La valeur retournée
-     * par {@link CoordinateTransform#getTargetCS} doit obligatoirement être le système de
-     * coordonnées utilisé pour l'affichage. En revanche, la valeur retournée par {@link
-     * CoordinateTransform#getSourceCS} peut être n'importe quel système de coordonnées,
+     * par {@link CoordinateTransformation#getTargetCS} doit obligatoirement être le système
+     * de coordonnées utilisé pour l'affichage. En revanche, la valeur retournée par {@link
+     * CoordinateTransformation#getSourceCS} peut être n'importe quel système de coordonnées,
      * mais il vaux mieux pour des raisons de performance que ce soit le système de
      * coordonnées le plus utilisé par les couches.
      */
-    private final CoordinateTransform transform;
+    private final CoordinateTransformation transformation;
 
     /**
      * Transformation affine convertissant les mètres vers les unités de texte (1/72 de pouce).
@@ -151,11 +152,11 @@ public final class RenderingContext
      * Construit un objet <code>RenderingContext</code> avec les paramètres spécifiés.
      * Ce constructeur ne fait pas de clones.
      *
-     * @param transform  Transformation (généralement une projection cartographique) servant à convertir les
+     * @param transformation Transformation (généralement une projection cartographique) servant à convertir les
      *                   coordonnées géographiques vers les données projetées à l'écran. La valeur retournée
-     *                   par {@link CoordinateTransform#getTargetCS} doit obligatoirement être le système de
+     *                   par {@link CoordinateTransformation#getTargetCS} doit obligatoirement être le système de
      *                   coordonnées utilisé pour l'affichage. En revanche, la valeur retournée par {@link
-     *                   CoordinateTransform#getSourceCS} peut être n'importe quel système de coordonnées,
+     *                   CoordinateTransformation#getSourceCS} peut être n'importe quel système de coordonnées,
      *                   mais il vaux mieux pour des raisons de performance que ce soit le système de
      *                   coordonnées le plus utilisé par les couches.
      * @param fromWorld  Transformation affine convertissant les mètres vers les unités de texte (1/72 de pouce).
@@ -163,15 +164,15 @@ public final class RenderingContext
      * @param bounds     Position et dimension de la région de la fenêtre dans lequel se fait le traçage.
      * @param isPrinting Indique si le traçage se fait vers l'imprimante plutôt qu'à l'écran.
      */
-    RenderingContext(final CoordinateTransform transform, final AffineTransform fromWorld, final AffineTransform fromPoints, final Rectangle bounds, final boolean isPrinting)
+    RenderingContext(final CoordinateTransformation transformation, final AffineTransform fromWorld, final AffineTransform fromPoints, final Rectangle bounds, final boolean isPrinting)
     {
-        if (transform!=null && fromWorld!=null && fromPoints!=null)
+        if (transformation!=null && fromWorld!=null && fromPoints!=null)
         {
-            this.transform  = transform;
-            this.fromWorld  = fromWorld;
-            this.fromPoints = fromPoints;
-            this.isPrinting = isPrinting;
-            this.bounds     = bounds;
+            this.transformation = transformation;
+            this.fromWorld      = fromWorld;
+            this.fromPoints     = fromPoints;
+            this.isPrinting     = isPrinting;
+            this.bounds         = bounds;
         }
         else throw new NullPointerException();
     }
@@ -180,7 +181,7 @@ public final class RenderingContext
      * Retourne le système de coordonnées de l'afficheur.
      */
     public CoordinateSystem getViewCoordinateSystem()
-    {return transform.getTargetCS();}
+    {return transformation.getTargetCS();}
 
     /**
      * Retourne la transformation à utiliser pour convertir les coordonnées d'une couche vers
@@ -193,14 +194,15 @@ public final class RenderingContext
      *         {@link MapPanel}).
      * @throws CannotCreateTransformException Si la transformation n'a pas pu être créée.
      */
-    public CoordinateTransform getCoordinateTransform(final Layer layer) throws CannotCreateTransformException
+    public MathTransform2D getMathTransform2D(final Layer layer) throws CannotCreateTransformException
     {
+        CoordinateTransformation transformation = this.transformation;
         final CoordinateSystem source=layer.getCoordinateSystem();
-        if (!transform.getSourceCS().equivalents(source))
+        if (!transformation.getSourceCS().equivalents(source))
         {
-            return Contour.TRANSFORMS.createFromCoordinateSystems(source, transform.getTargetCS());
+            transformation = Contour.createFromCoordinateSystems(source, transformation.getTargetCS(), "RenderingContext", "getCoordinateTransform");
         }
-        return transform;
+        return (MathTransform2D) transformation.getMathTransform();
     }
 
     /**
@@ -319,12 +321,12 @@ public final class RenderingContext
             }
             if (!targetCS.equivalents(sourceCS)) try
             {
-                CoordinateTransform transform = this.transform;
-                if (!transform.getSourceCS().equivalents(sourceCS))
+                CoordinateTransformation transformation = this.transformation;
+                if (!transformation.getSourceCS().equivalents(sourceCS))
                 {
-                    transform = Contour.TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
+                    transformation = Contour.createFromCoordinateSystems(sourceCS, targetCS, "RenderingContext", "clip");
                 }
-                clip = temporary = OpenGIS.transform(transform, clip, temporary);
+                clip = temporary = OpenGIS.transform((MathTransform2D)transformation.getMathTransform(), clip, temporary);
             }
             catch (TransformException exception)
             {
@@ -357,7 +359,7 @@ public final class RenderingContext
             if (contour!=null)
             {
                 contours.add(contour);
-                Contour.logger.finer("Clip performed"); // TODO: give more precision
+                Contour.LOGGER.finer("Clip performed"); // TODO: give more precision
             }
         }
         return contour;

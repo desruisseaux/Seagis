@@ -26,8 +26,8 @@
 package fr.ird.io.bufr;
 
 // Divers
-import net.seas.util.XMath;
 import java.io.Serializable;
+import net.seagis.resources.XMath;
 
 
 /**

@@ -26,24 +26,24 @@
 package fr.ird.sql.image;
 
 // OpenGIS dependencies (SEAGIS)
-import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.cs.AxisInfo;
-import net.seas.opengis.gc.GridRange;
-import net.seas.opengis.cs.Ellipsoid;
-import net.seas.opengis.cs.AxisOrientation;
-import net.seas.opengis.cs.CoordinateSystem;
+import net.seagis.pt.Envelope;
+import net.seagis.cs.AxisInfo;
+import net.seagis.gc.GridRange;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.AxisOrientation;
+import net.seagis.cs.CoordinateSystem;
 
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransform;
-import net.seas.opengis.ct.CoordinateTransformFactory;
-import net.seas.opengis.ct.CannotCreateTransformException;
+import net.seagis.ct.MathTransform;
+import net.seagis.ct.TransformException;
+import net.seagis.ct.CoordinateTransformation;
+import net.seagis.ct.CannotCreateTransformException;
+import net.seagis.ct.CoordinateTransformationFactory;
 
 // Divers
 import javax.units.Unit;
 import java.util.Comparator;
 
-import net.seas.util.XClass;
-import net.seas.util.OpenGIS;
+import net.seagis.resources.OpenGIS;
 import net.seas.awt.ExceptionMonitor;
 
 
@@ -79,7 +79,7 @@ public class ImageComparator implements Comparator<ImageEntry>
     /**
      * Object à utiliser pour construire des transformations de coordonnées.
      */
-    private final CoordinateTransformFactory factory = CoordinateTransformFactory.getDefault();
+    private final CoordinateTransformationFactory factory = CoordinateTransformationFactory.getDefault();
 
     /**
      * Système de coordonnées dans lequel faire les comparaisons. Il s'agit
@@ -94,7 +94,7 @@ public class ImageComparator implements Comparator<ImageEntry>
      * Cette transformation est conservée dans une cache interne afin
      * d'éviter de construire cet objet trop fréquement.
      */
-    private transient CoordinateTransform transform;
+    private transient CoordinateTransformation transformation;
 
     /**
      * Ellispoide à utiliser pour calculer les distances orthodromiques.
@@ -291,10 +291,11 @@ public class ImageComparator implements Comparator<ImageEntry>
             GridRange     range = entry.getGridGeometry().getGridRange();
             if (!coordinateSystem.equivalents(cs))
             {
-                if (transform==null || !transform.getSourceCS().equivalents(cs))
+                if (transformation==null || !transformation.getSourceCS().equivalents(cs))
                 {
-                    transform = factory.createFromCoordinateSystems(cs, coordinateSystem);
+                    transformation = factory.createFromCoordinateSystems(cs, coordinateSystem);
                 }
+                final MathTransform transform = transformation.getMathTransform();
                 if (!transform.isIdentity())
                 {
                     envelope = OpenGIS.transform(transform, envelope);

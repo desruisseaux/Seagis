@@ -56,9 +56,11 @@ import net.seas.util.SwingUtilities;
 // Divers
 import java.util.Date;
 import net.seas.util.XArray;
-import net.seas.util.XDimension2D;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+
+// SEAGIS dependencies
+import net.seagis.resources.XDimension2D;
 
 
 /**
