@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.io.Serializable;
 import net.seagis.pt.CoordinatePoint;
 import javax.media.jai.ParameterList;
+import javax.media.jai.util.Range;
 
 // Resources
 import net.seagis.resources.Utilities;
@@ -369,7 +370,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     {
         final int numRow = matrix.getNumRow();
         final int numCol = matrix.getNumCol();
-        final StringBuffer buffer = new StringBuffer("PARAM_MT[\"Affine\"");
+        final StringBuffer buffer = paramMT("Affine");
         final StringBuffer eltBuf = new StringBuffer("elt_");
         addParameter(buffer, "Num_row", numRow);
         addParameter(buffer, "Num_col", numCol);
@@ -401,6 +402,12 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     static final class Provider extends MathTransformProvider
     {
         /**
+         * Range of positives values. Range
+         * goes from 1 to the maximum value.
+         */
+        private static final Range POSITIVE_RANGE = new Range(Integer.class, new Integer(1), new Integer(Integer.MAX_VALUE));
+
+        /**
          * Create a provider for affine transforms of the specified
          * dimension. Created affine transforms will have a size of
          * <code>numRow&nbsp;&times;&nbsp;numCol</code>.
@@ -411,8 +418,8 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
         public Provider(final int numRow, final int numCol)
         {
             super("Affine", ResourceKeys.AFFINE_TRANSFORM, null);
-            put("Num_row", numRow, POSITIVE_RANGE);
-            put("Num_col", numCol, POSITIVE_RANGE);
+            put("Num_row", numRow, POSITIVE_RANGE); // Add integer (not double) parameter
+            put("Num_col", numCol, POSITIVE_RANGE); // Add integer (not double) parameter
             final StringBuffer buffer=new StringBuffer("elt_");
             for (int j=0; j<=numRow; j++)
             {

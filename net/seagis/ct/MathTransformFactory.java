@@ -145,7 +145,9 @@ public class MathTransformFactory
                 new      StereographicProjection.Provider(true),  // Polar
                 new      StereographicProjection.Provider(false), // Oblique
                 new TransverseMercatorProjection.Provider(false), // Universal
-                new TransverseMercatorProjection.Provider(true)   // Modified
+                new TransverseMercatorProjection.Provider(true),  // Modified
+                new          GeocentricTransform.Provider(false), // Geographic to Geocentric
+                new          GeocentricTransform.Provider(true)   // Geocentric to Geographic
             });
             for (int i=DEFAULT.providers.length; --i>=0;)
             {

@@ -423,6 +423,19 @@ public abstract class AbstractMathTransform implements MathTransform
     }
 
     /**
+     * Returns a string buffer initialized with "PARAM_MT"
+     * and a classification name. This is a convenience
+     * method for WKT formatting.
+     */
+    static StringBuffer paramMT(final String classification)
+    {
+        final StringBuffer buffer=new StringBuffer("PARAM_MT[\"");
+        buffer.append(classification);
+        buffer.append('"');
+        return buffer;
+    }
+
+    /**
      * Add the <code>", PARAMETER["<name>", <value>]"</code> string
      * to the specified string buffer. This is a convenience method
      * for constructing WKT for "PARAM_MT".

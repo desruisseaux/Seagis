@@ -115,6 +115,16 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
     private final AxisInfo[] axis;
 
     /**
+     * Construct a geocentric coordinate system with default
+     * axis. Unit are metres and prime meridian is greenwich.
+     *
+     * @param name  The coordinate system name.
+     * @param datum The horizontal datum.
+     */
+    public GeocentricCoordinateSystem(final String name, final HorizontalDatum datum)
+    {this(name, Unit.METRE, datum, PrimeMeridian.GREENWICH);}
+
+    /**
      * Construct a geocentric coordinate system with default axis.
      * The <var>X</var> axis points towards the prime meridian.
      * The <var>Y</var> axis points East.

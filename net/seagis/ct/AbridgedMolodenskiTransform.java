@@ -242,7 +242,7 @@ class AbridgedMolodenskiTransform extends AbstractMathTransform implements Seria
      */
     public final String toString()
     {
-        final StringBuffer buffer = new StringBuffer("PARAM_MT[\"Abridged_Molodenski\"");
+        final StringBuffer buffer = paramMT("Abridged_Molodenski");
         addParameter(buffer, "dim", getDimSource());
         addParameter(buffer, "dx",              dx);
         addParameter(buffer, "dy",              dy);

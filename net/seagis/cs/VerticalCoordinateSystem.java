@@ -65,6 +65,13 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     private static final long serialVersionUID = -8629573233560414552L;
 
     /**
+     * Default vertical coordinate system using ellipsoidal datum.
+     * Ellipsoidal heights are measured along the normal to the
+     * ellipsoid used in the definition of horizontal datum.
+     */
+    public static final VerticalCoordinateSystem ELLIPSOIDAL = new VerticalCoordinateSystem("Ellipsoidal", VerticalDatum.ELLIPSOIDAL);
+
+    /**
      * The vertical datum.
      */
     private final VerticalDatum datum;

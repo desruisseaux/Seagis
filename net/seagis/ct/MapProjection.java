@@ -747,9 +747,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      */
     public final String toString()
     {
-        final StringBuffer buffer=new StringBuffer("PARAM_MT[\"");
-        buffer.append(classification);
-        buffer.append('"');
+        final StringBuffer buffer=paramMT(classification);
         toString(buffer);
         buffer.append(']');
         return buffer.toString();

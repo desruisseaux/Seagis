@@ -70,6 +70,15 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     private static final long serialVersionUID = -488997059924367289L;
 
     /**
+     * A default three-dimensional coordinate system for use with geographic
+     * coordinates with heights above the ellipsoid. The head coordinate
+     * system is {@link GeographicCoordinateSystem#WGS84} and the tail
+     * coordinate system is {@link VerticalCoordinateSystem#ELLIPSOIDAL}.
+     */
+    public static final CompoundCoordinateSystem WGS84 = new CompoundCoordinateSystem("WGS84",
+                      GeographicCoordinateSystem.WGS84, VerticalCoordinateSystem.ELLIPSOIDAL);
+
+    /**
      * First sub-coordinate system.
      */
     private final CoordinateSystem head;

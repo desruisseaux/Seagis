@@ -175,6 +175,8 @@ final class Resampler extends GridCoverage
                     //       more general by accepting flips and 90°
                     //       rotation, but we need to change 'scale'
                     //       in order to accept AffineTransform objects.
+                    //       In fact, we NEED to do this since this patch
+                    //       is wrong: GridCoverage may inverse the 'y' axis.
                     final GridRange range = targetGridGeometry.getGridRange();
                     final Dimension  size = new Dimension(range.getLength(0), range.getLength(1));
                     Rectangle2D    bounds = new Rectangle2D.Double(range.getLower(0), range.getLower(1), size.width, size.height);

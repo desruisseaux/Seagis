@@ -187,7 +187,7 @@ public abstract class MathTransformProvider
     }
 
     /**
-     * Add or change a parameter to this math transform provider. If this <code>MathTransformProvider</code>
+     * Adds or changes a parameter to this math transform provider. If this <code>MathTransformProvider</code>
      * has been constructed with {@link #DEFAULT_PROJECTION_DESCRIPTOR} as argument, then default values
      * are already provided for "semi_major", "semi_minor", "central_meridian" and "latitude_of_origin".
      * Subclasses may call this method in their constructor for adding or changing parameters.
@@ -200,12 +200,53 @@ public abstract class MathTransformProvider
      *                     are valid for this parameter.
      * @throws IllegalStateException If {@link #getParameterList} has already been invoked prior to this call.
      */
-    protected synchronized final void put(String parameter, final double defaultValue, final Range range) throws IllegalStateException
+    protected final void put(final String parameter, final double defaultValue, final Range range) throws IllegalStateException
+    {put(parameter, Double.class, wrap(defaultValue), range);}
+
+    /**
+     * Adds or changes an integer parameter to this math transform provider.
+     * Support of integer values help to make the API clearer, but the true
+     * OpenGIS's parameter class support only <code>double</code> values.
+     * This is why this method is not yet public. Current SEAGIS version use
+     * integer parameters only for matrix dimension and for a custom parameter
+     * in geocentric transform. We hope the user will barely notice it...
+     *
+     * @param parameter    The parameter name.
+     * @param defaultValue The default value for this parameter.
+     * @param range        The range of legal values. This is up to the caller to
+     *                     build is own range with integer values (predefined ranges
+     *                     like {@link #POSITIVE_RANGE} will not work).
+     *
+     * @throws IllegalStateException If {@link #getParameterList}
+     *         has already been invoked prior to this call.
+     */
+    final void put(final String parameter, final int defaultValue, final Range range) throws IllegalStateException
+    {put(parameter, Integer.class, new Integer(defaultValue), range);}
+
+    /**
+     * Adds or changes a parameter to this math transform provider.
+     *
+     * @param parameter    The parameter name.
+     * @param type         The parameter type.
+     * @param defaultValue The default value for this parameter.
+     * @param range        The range of legal values.
+     *
+     * @throws IllegalStateException If {@link #getParameterList}
+     *         has already been invoked prior to this call.
+     */
+    private synchronized void put(String parameter, final Class type, Object defaultValue, final Range range) throws IllegalStateException
     {
         if (properties==null)
         {
             // Construction is finished.
             throw new IllegalStateException();
+        }
+        if (defaultValue!=null && range!=null)
+        {
+            // Slight optimization for reducing the amount of objects in the heap.
+            Object check;
+            if (defaultValue.equals(check=range.getMinValue())) defaultValue=check;
+            if (defaultValue.equals(check=range.getMaxValue())) defaultValue=check;
         }
         parameter = parameter.trim();
         final int end = properties.length;
@@ -214,16 +255,16 @@ public abstract class MathTransformProvider
             if (parameter.equalsIgnoreCase(properties[i].toString()))
             {
                 properties[i+0] = parameter;
-                properties[i+1] = Double.class;
-                properties[i+2] = wrap(defaultValue);
+                properties[i+1] = type;
+                properties[i+2] = defaultValue;
                 properties[i+3] = range;
                 return;
             }
         }
         properties = XArray.resize(properties, end+RECORD_LENGTH);
         properties[end+0] = parameter;
-        properties[end+1] = Double.class;
-        properties[end+2] = wrap(defaultValue);
+        properties[end+1] = type;
+        properties[end+2] = defaultValue;
         properties[end+3] = range;
     }
 

@@ -58,6 +58,13 @@ public class VerticalDatum extends Datum
     private static final long serialVersionUID = 1663224345779675117L;
 
     /**
+     * Default vertical datum for ellipsoidal heights. Ellipsoidal heights
+     * are measured along the normal to the ellipsoid used in the definition
+     * of horizontal datum.
+     */
+    public static final VerticalDatum ELLIPSOIDAL = new VerticalDatum("Ellipsoidal", DatumType.ELLIPSOIDAL);
+
+    /**
      * Creates a vertical datum from an enumerated type value.
      *
      * @param name Name to give new object.
