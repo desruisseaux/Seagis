@@ -112,11 +112,14 @@ public final class SensorAngle extends SourcelessOpImage
      * pixels de l'image N1B. <CODE>bound</CODE> définie la zone de l'image à calculer.
      *
      * @param grid              La grille de localisation des pixels.
+     * @param transform         Transformation du système de coordonnées de l'image vers 
+     *                          le système géographique.
      * @param configuration     Configuration du traitement réalisé par JAI.
      * @return une image contenant l'angle de visé du capteur/satellite pour chacun des 
      *         pixels de l'image N1B. <CODE>bound</CODE> définie la zone de l'image à calculer.
      */
     public static RenderedImage get(final LocalizationGridN1B    grid,
+                                    final MathTransform          transform,
                                     final Rectangle              bound,
                                     final Map                    configuration)
     {
@@ -136,32 +139,15 @@ public final class SensorAngle extends SourcelessOpImage
                                                                               1);
         layout.setSampleModel(sampleModel);
         layout.setColorModel(PlanarImage.getDefaultColorModel(DataBuffer.TYPE_FLOAT,1));                        
-
-        try
-        {
-            final AffineTransform at = new AffineTransform(ImageReaderN1B.INTERVAL_NEXT_CONTROL_POINT, 0, 
-                                                           0, 1, 
-                                                           ImageReaderN1B.OFFSET_FIRST_CONTROL_POINT-1, 0);        
-            final MathTransform gridToGeo = grid.getMathTransform();                
-            final MathTransform imToGrid  = MathTransformFactory.getDefault().createAffineTransform(at).inverse();                            
-            final MathTransform imToGeo   = MathTransformFactory.getDefault().createConcatenatedTransform(imToGrid, 
-                                                                                                          gridToGeo);        
-            
-            /* Construction du gridCoverage a retourner. */
-            return new SensorAngle(layout, 
-                                   sampleModel, 
-                                   (int)bound.getX(),
-                                   (int)bound.getY(),
-                                   (int)bound.getWidth(),
-                                   (int)bound.getHeight(), 
-                                   grid,
-                                   imToGeo,
-                                   configuration);
-        }
-        catch (org.geotools.ct.NoninvertibleTransformException e)
-        {
-            throw new IllegalArgumentException(e.getMessage());
-        }              
+        return new SensorAngle(layout, 
+                               sampleModel, 
+                               (int)bound.getX(),
+                               (int)bound.getY(),
+                               (int)bound.getWidth(),
+                               (int)bound.getHeight(), 
+                               grid,
+                               transform,
+                               configuration);
     } 
     
     /**

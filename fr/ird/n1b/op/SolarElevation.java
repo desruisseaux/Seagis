@@ -48,15 +48,10 @@ import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
 import fr.ird.n1b.io.LocalizationGridN1B;
-import fr.ird.n1b.io.ImageReaderN1B;
 
 // GEOTOOLS
 import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
-import org.geotools.cs.AxisInfo;
-import org.geotools.cs.AxisOrientation;
-import org.geotools.cs.FittedCoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform;
 import org.geotools.ct.MathTransformFactory;
 import org.geotools.ct.TransformException;
@@ -122,12 +117,15 @@ public final class SolarElevation extends SourcelessOpImage
      * définie la zone de l'image à calculer.
      *
      * @param grid              La grille de localization des pixels.
+     * @param transform         Transformation du système de coordonnées de l'image vers 
+     *                          le système géographique.
      * @param bound             Limite de l'image de sortie.
      * @param configuration     Configuration du traitement realise par JAI.
      * @return une image contenant l'angle d'élévation du soleil par rapport à la position
      * géographique de chacun des pixels et à leur date d'acquisition. 
      */
     public static RenderedImage get(final LocalizationGridN1B grid,
+                                    final MathTransform       transform,
                                     final Rectangle           bound,
                                     final Map                 configuration) 
     {        
@@ -147,45 +145,15 @@ public final class SolarElevation extends SourcelessOpImage
                                                                               1);
         layout.setSampleModel(sampleModel);
         layout.setColorModel(PlanarImage.getDefaultColorModel(DataBuffer.TYPE_FLOAT, 1));                        
-        final AxisInfo[] AXIS    = {new AxisInfo("colonne", AxisOrientation.OTHER),
-                                    new AxisInfo("ligne"  , AxisOrientation.OTHER)};                                                                                                             
-        final Envelope enveloppe =  new Envelope(new Rectangle2D.Double(bound.getMinX(),
-                                                                        bound.getMinY(),
-                                                                        bound.getWidth(),
-                                                                        bound.getHeight()));
-        
-        try
-        {
-            final AffineTransform at = new AffineTransform(ImageReaderN1B.INTERVAL_NEXT_CONTROL_POINT, 
-                                                           0, 
-                                                           0, 
-                                                           1, 
-                                                           ImageReaderN1B.OFFSET_FIRST_CONTROL_POINT-1, 
-                                                           0);        
-            final MathTransform gridToGeo = grid.getMathTransform();                
-            final MathTransform imToGrid  = MathTransformFactory.getDefault().createAffineTransform(at).inverse();                            
-            final MathTransform imToGeo   = MathTransformFactory.getDefault().createConcatenatedTransform(imToGrid, 
-                                                                                                          gridToGeo);        
-            final FittedCoordinateSystem cs = new FittedCoordinateSystem("N1B",   
-                                                                         GeographicCoordinateSystem.WGS84, 
-                                                                         imToGeo, 
-                                                                         AXIS);                        
-
-            // Construction du gridCoverage a retourner. 
-            return new SolarElevation(layout, 
-                                      sampleModel, 
-                                      (int)bound.getX(),
-                                      (int)bound.getY(),
-                                      (int)bound.getWidth(),
-                                      (int)bound.getHeight(), 
-                                      imToGeo,
-                                      grid,           
-                                      configuration);
-        }
-        catch (org.geotools.ct.NoninvertibleTransformException e)
-        {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+        return new SolarElevation(layout, 
+                                  sampleModel, 
+                                  (int)bound.getX(),
+                                  (int)bound.getY(),
+                                  (int)bound.getWidth(),
+                                  (int)bound.getHeight(), 
+                                  transform,
+                                  grid,           
+                                  configuration);
     }    
     
     /**
