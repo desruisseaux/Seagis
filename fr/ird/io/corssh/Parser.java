@@ -49,7 +49,7 @@ import java.util.logging.LogRecord;
 import org.geotools.units.Unit;
 import java.text.DateFormat;
 import java.text.NumberFormat;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.Resources;
 import org.geotools.resources.Utilities;
 
 

@@ -100,8 +100,8 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import javax.media.jai.util.Range;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

@@ -39,7 +39,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.prefs.Preferences;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.Resources;
 import fr.ird.util.WeakHashSet;
 import org.geotools.resources.Utilities;
 

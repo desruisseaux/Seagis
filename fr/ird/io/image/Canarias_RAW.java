@@ -69,10 +69,38 @@ public class Canarias_RAW extends RawBinaryImageReader.Spi
 
         protected double transform(final double value)
         {
-            if (value<=00.0) return Double.NaN;
-            if (value>=99.0) return Double.NaN;
-            if (value>=25.5) return Double.NaN; // TODO: temporary patch.
+            if (value<=00.0) return LAND;
+            if (value>=99.0) return NODATA;
+            if (value<=0.01) return NODATA;
+            // Note: Can't apply the following patch on SeaWifs images.
+//            if (value>=25.5) return Double.NaN; // TODO: temporary patch.
             return value;
         }
+    }
+
+    /**
+     * Copie de {@link org.geotools.cv.Category#toNaN}.
+     */
+    private static float toNaN(int index) throws IndexOutOfBoundsException {
+        index += 0x200000;
+        if (index>=0 && index<=0x3FFFFF) {
+            final float value = Float.intBitsToFloat(0x7FC00000 + index);
+            assert Float.isNaN(value);
+            return value;
+        }
+        else {
+            throw new IndexOutOfBoundsException(Integer.toHexString(index));
+        }
+    }
+
+    private static final double LAND   = toNaN(255);
+    private static final double NODATA = toNaN(  0);
+
+    public static void main(String[] args) throws Exception {
+        args = new String[] {
+            "-group",   "2041402270",
+            "-sources", "D:/Pouponnière/Méditerranée/Chlorophylle/chl_020819.txt"
+        };
+        fr.ird.io.coverage.Processor.main(args);
     }
 }

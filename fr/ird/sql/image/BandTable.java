@@ -41,8 +41,8 @@ import java.util.ArrayList;
 
 // Divers
 import org.geotools.units.Unit;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

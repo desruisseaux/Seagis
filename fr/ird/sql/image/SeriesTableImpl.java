@@ -49,8 +49,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.io.Serializable;
 import org.geotools.cv.SampleDimension;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

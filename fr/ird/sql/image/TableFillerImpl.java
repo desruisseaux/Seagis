@@ -59,8 +59,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.units.Unit;
 
 

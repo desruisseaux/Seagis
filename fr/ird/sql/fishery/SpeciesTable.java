@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.awt.Color;
 import java.util.Locale;
 import fr.ird.animat.Species;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

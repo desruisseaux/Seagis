@@ -56,8 +56,8 @@ import java.util.TimeZone;
 import java.util.Iterator;
 import java.awt.Rectangle;
 import org.geotools.resources.Arguments;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

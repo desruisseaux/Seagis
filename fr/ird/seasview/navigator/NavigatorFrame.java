@@ -61,8 +61,8 @@ import java.util.List;
 import java.util.TimeZone;
 
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.gui.swing.ExceptionMonitor;

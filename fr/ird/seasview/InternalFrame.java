@@ -40,8 +40,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.TimeZone;
 import java.sql.SQLException;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

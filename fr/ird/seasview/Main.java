@@ -74,8 +74,8 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Divers
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.resources.Arguments;
@@ -194,7 +194,7 @@ public final class Main {
             ///////////////////////////
             ///  Fichier - Exporter ///
             ///////////////////////////
-            if (false) {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.EXPORT, true);
                 action.setMnemonicKey(KeyEvent.VK_E);
                 action.setToolTipText(ResourceKeys.EXPORT);

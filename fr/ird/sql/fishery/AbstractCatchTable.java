@@ -54,8 +54,8 @@ import java.util.logging.LogRecord;
 // Miscellaneous
 import fr.ird.sql.DataBase;
 import fr.ird.animat.Species;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import javax.media.jai.util.Range;
 
 

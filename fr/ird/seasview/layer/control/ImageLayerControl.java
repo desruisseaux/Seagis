@@ -47,8 +47,8 @@ import javax.swing.event.EventListenerList;
 
 // Miscellaneous
 import java.util.Date;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

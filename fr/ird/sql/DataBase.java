@@ -35,8 +35,8 @@ import java.sql.DriverManager;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import fr.ird.resources.gui.ResourceKeys;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
 
 
 /**

@@ -37,8 +37,8 @@ import java.awt.Component;
 import java.awt.BorderLayout;
 
 // Resources
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.resources.SwingUtilities;

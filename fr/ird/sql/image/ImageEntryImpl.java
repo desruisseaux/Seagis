@@ -80,7 +80,7 @@ import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.Collections;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;

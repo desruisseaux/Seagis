@@ -61,8 +61,8 @@ import org.geotools.units.Unit;
 
 // Miscellaneous
 import fr.ird.map.layer.GridMarkLayer;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

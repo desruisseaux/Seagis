@@ -42,8 +42,8 @@ import fr.ird.awt.KernelEditor;
 
 // Miscellaneous
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import fr.ird.operator.coverage.Operation;
 import fr.ird.operator.coverage.ProcessorOperation;
 

@@ -37,8 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 // Resources
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.XArray;
 
 

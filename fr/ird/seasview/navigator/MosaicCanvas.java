@@ -73,8 +73,8 @@ import java.util.ArrayList;
 import fr.ird.seasview.DataBase;
 
 // Miscellaneous
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
 
 

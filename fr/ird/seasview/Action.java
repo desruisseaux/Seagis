@@ -37,8 +37,8 @@ import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
 // Divers
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.gui.swing.ExceptionMonitor;

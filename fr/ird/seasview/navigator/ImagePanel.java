@@ -54,8 +54,8 @@ import fr.ird.seasview.layer.control.LayerControl;
 
 // Miscellaneous
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

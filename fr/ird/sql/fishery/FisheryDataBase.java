@@ -42,6 +42,7 @@ import java.io.IOException;
 // Collections
 import java.util.Set;
 import java.util.List;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -51,8 +52,9 @@ import org.geotools.resources.Arguments;
 
 // Divers
 import fr.ird.animat.Species;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.awt.progress.PrintProgress;
 
 
 /**
@@ -304,17 +306,27 @@ public class FisheryDataBase extends DataBase {
      * Lorsque cette classe est exécutée avec l'argument <code>-config</code>, elle
      * fait apparaître une boite de dialogue  permettant de configurer les requêtes
      * SQL utilisées par la base de données. Les requêtes modifiées seront sauvegardées
-     * dans les préférences du système. Lorsque des arguments sont spécifiés,
-     * ils sont interprétés comme suit:
+     * dans les préférences du système. Lorsque ce sont d'autres arguments qui sont spécifiés,
+     * ils servent à afficher ou copier dans une autre table les données environnementales.
+     * Les arguments permis sont:
      *
      * <blockquote><pre>
      *  <b>-config</b> <i></i>       Configure la base de données (interface graphique)
+     *  <b>-copyTo</b> <i>table</i>  Copie les données dans une table au lieu de les afficher.
      *  <b>-count</b> <i>n</i>       Nombre maximal d'enregistrement à afficher (20 par défaut).
+     *  <b>-o</b> <i>operation</i>   Ajoute une opération (exemple: "valeur", "sobel3", etc.).
+     *  <b>-p</b> <i>parameter</i>   Ajoute un paramètre (exemple: "SST", "CHL", etc.).
+     *  <b>-t</b> <i>timeLag</i>     Ajoute un écart de temps en jours (exemple: 0, -5, etc.).
      *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
      *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
      *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
      * </pre></blockquote>
      *
+     * Les arguments <code>-o</code>, <code>-p</code> et <code>-t</code> peuvent apparaître
+     * autant de fois que nécessaire afin d'ajouter plusieurs opérations, paramètres et écarts
+     * de temps. Toutes les combinaisons possibles de ces arguments seront pris en compte. Chacun
+     * de ces arguments doivent apparaître au moins une fois si on veut avoir des données à afficher.
+     * <br><br>
      * L'argument <code>-encoding</code> est surtout utile lorsque cette méthode est lancée
      * à partir de la ligne de commande MS-DOS: ce dernier n'utilise pas la même page
      * de code que le reste du système Windows. Il est alors nécessaire de préciser la
@@ -324,33 +336,67 @@ public class FisheryDataBase extends DataBase {
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public static void main(final String[] args) throws SQLException, IOException {
+    public static void main(final String[] args) throws SQLException {
         final Arguments  console = new Arguments(args);
         final boolean     config = console.getFlag("-config");
         final Integer maxRecords = console.getOptionalInteger("-count");
-        String[]   columns = console.getRemainingArguments(Integer.MAX_VALUE);
+        final String      copyTo = console.getOptionalString("-copyTo");
         if (config) {
             getSQLEditor().showDialog(null);
             System.exit(0);
         }
-        columns = new String[] {"valeur","sobel3"};
-        if (columns.length != 0) {
-            final String[] parameters = new String[] {"SST", "CHL", "SLA"};
+        final List<String> operations = new ArrayList<String>();
+        final List<String> parameters = new ArrayList<String>();
+        final List<Number> timeLags   = new ArrayList<Number>();
+        if (true) {
+            String candidate;
+            while ((candidate=console.getOptionalString("-o")) != null) {
+                operations.add(candidate);
+            }
+            while ((candidate=console.getOptionalString("-p")) != null) {
+                parameters.add(candidate);
+            }
+            Number t;
+            while ((t=console.getOptionalInteger("-t")) != null) {
+                timeLags.add(t);
+            }
+            console.getRemainingArguments(0);
+        } else {
+            //
+            // Debugging code
+            //
+            operations.add("valeur");
+            operations.add("sobel3");
+            parameters.add("CHL");
+            parameters.add("SST");
+            parameters.add("SLA");
+            timeLags.add(new Integer( 0));
+            timeLags.add(new Integer(-5));
+        }
+        if (!operations.isEmpty() || !parameters.isEmpty() || !timeLags.isEmpty()) {
             final FisheryDataBase database = new FisheryDataBase();
-            final EnvironmentTable table = database.getEnvironmentTable();
-            for (int i=0; i<parameters.length; i++) {
-                for (int j=0; j<columns.length; j++) {
-                    table.addParameter(columns[j], parameters[i], EnvironmentTable.CENTER,  0);
-                    table.addParameter(columns[j], parameters[i], EnvironmentTable.CENTER, -5);
+            try {
+                final EnvironmentTable table = database.getEnvironmentTable();
+                for (final Iterator<String> o=operations.iterator(); o.hasNext();) {
+                    final String operation = o.next();
+                    for (final Iterator<String> p=parameters.iterator(); p.hasNext();) {
+                        final String parameter = p.next();
+                        for (final Iterator<Number> t=timeLags.iterator(); t.hasNext();) {
+                            final int timeLag = t.next().intValue();
+                            table.addParameter(operation, parameter, EnvironmentTable.CENTER,  timeLag);
+                        }
+                    }
                 }
+                if (copyTo != null) {
+                    table.copyToTable(copyTo, new PrintProgress(console.out));
+                } else {
+                    table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
+                }
+                table.close();
+            } catch (Exception exception) {
+                database.close();
+                exception.printStackTrace(console.out);
             }
-            if (false) {
-                table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
-            } else {
-                table.copyToTable("Test", new fr.ird.awt.progress.PrintProgress(console.out));
-            }
-            table.close();
-            database.close();
         }
     }
 }

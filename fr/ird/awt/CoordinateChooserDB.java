@@ -56,8 +56,8 @@ import fr.ird.awt.tree.Trees;
 import java.util.Date;
 import fr.ird.util.XArray;
 import javax.media.jai.util.Range;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.resources.XDimension2D;

@@ -59,8 +59,8 @@ import org.geotools.resources.Utilities;
 import fr.ird.util.XArray;
 import fr.ird.sql.DataBase;
 import fr.ird.awt.progress.Progress;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -344,7 +344,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         final int        columnCount = meta.getColumnCount();
         final int[]            width = new int[columnCount];
         for (int i=0; i<columnCount; i++) {
-            final String title = meta.getColumnLabel(i);
+            final String title = meta.getColumnLabel(i+1);
             out.write(title);
             int length = title.length();
             width[i] = Math.max(i==0 ? 11 : 7, length);

@@ -76,8 +76,8 @@ import java.util.logging.LogManager;
 // Utilitaires
 import java.util.Arrays;
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

@@ -80,8 +80,8 @@ import org.geotools.gui.swing.ExceptionMonitor;
 
 // Resources
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.ResourceKeys;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
 
 
 /**

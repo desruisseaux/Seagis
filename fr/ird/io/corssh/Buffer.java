@@ -41,8 +41,8 @@ import java.util.ConcurrentModificationException;
 import java.io.Serializable;
 import java.util.Arrays;
 import fr.ird.util.XArray;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
 
 

@@ -71,8 +71,8 @@ import org.geotools.io.image.RawBinaryImageReadParam;
 import fr.ird.util.XArray;
 import fr.ird.awt.tree.MutableTreeNode;
 import fr.ird.awt.tree.DefaultMutableTreeNode;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

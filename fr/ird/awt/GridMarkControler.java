@@ -45,8 +45,8 @@ import fr.ird.awt.MarkColorChooser;
 // Miscellaneous
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import java.awt.image.RenderedImage;
 
 // Events

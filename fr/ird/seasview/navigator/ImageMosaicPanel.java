@@ -75,8 +75,8 @@ import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Resources
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

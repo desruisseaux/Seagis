@@ -65,8 +65,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 // Divers
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import javax.swing.event.EventListenerList;
 
 // Geotools dependencies
@@ -86,8 +86,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class ExportChooser extends JPanel
-{
+public final class ExportChooser extends JPanel {
     /**
      * Objet à utiliser pour sélectionner
      * un répertoire de destination.
@@ -96,13 +95,8 @@ public final class ExportChooser extends JPanel
 
     /**
      * Ensemble des images à écrire. L'ordre des éléments doit être préservés.
-     *
-     * TODO: Pas moyen de compiler avec le "generic compiler" (JSR-14).
-     *       Ce con nous invente un "name clash" qui n'existe pas entre
-     *       Container et Component.setFocusTraversalKeys  (méthode que
-     *       nous n'utilisons pourtant pas!).
      */
-    private final Set/*<ImageEntry>*/ entries=new LinkedHashSet/*<ImageEntry>*/(256);
+    private final Set<ImageEntry> entries=new LinkedHashSet<ImageEntry>(256);
 
     /**
      * Etiquette indiquant le nombre d'images à exporter.
@@ -120,8 +114,7 @@ public final class ExportChooser extends JPanel
      * @param directory Répertoire de destination par défaut, ou <code>null</code>
      *                  pour utiliser le répertoire du compte de l'utilisateur.
      */
-    public ExportChooser(final File directory)
-    {
+    public ExportChooser(final File directory) {
         super(new GridBagLayout());
         count.setOpaque(true);
         count.setBackground(Color.black);
@@ -136,14 +129,14 @@ public final class ExportChooser extends JPanel
         chooser.setDialogTitle(resources.getString(ResourceKeys.OUT_DIRECTORY));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setControlButtonsAreShown(false);
-        chooser.setPreferredSize(new Dimension(400,300)); // La dimension par défaut est (500,300).
         chooser.setAcceptAllFileFilterUsed(false);
         ///
         /// Ajoute les filtres de fichiers
         ///
         final ImageFileFilter[] fileFilters=ImageFileFilter.getWriterFilters(null);
-        for (int i=0; i<fileFilters.length; i++)
+        for (int i=0; i<fileFilters.length; i++) {
             chooser.addChoosableFileFilter(fileFilters[i]);
+        }
         ///
         /// Construit le paneau d'options
         ///
@@ -168,36 +161,37 @@ public final class ExportChooser extends JPanel
      * Met à jour l'étiquette qui indique
      * le nombre d'images à exporter.
      */
-    private void updateCount()
-    {count.setText(resources.getString(ResourceKeys.IMAGES_TO_EXPORT_COUNT_$1, new Integer(entries.size())));}
+    private void updateCount() {
+        count.setText(resources.getString(ResourceKeys.IMAGES_TO_EXPORT_COUNT_$1,
+                                                   new Integer(entries.size())));
+    }
 
     /**
      * Ajoute les entrées spécifiées à la liste des images à écrire. Les
      * images seront écrites dans l'ordre qu'elles apparaissent dans le
      * tableau <code>entries</code>. Toutefois, les doublons seront ignorés.
      */
-    public synchronized void addEntries(final ImageEntry[] entries)
-    {
-        for (int i=0; i<entries.length; i++)
+    public synchronized void addEntries(final ImageEntry[] entries)  {
+        for (int i=0; i<entries.length; i++) {
             this.entries.add(entries[i]);
+        }
         updateCount();
     }
 
     /**
      * Retire les entrées spécifiées de la liste des images à écrire.
      */
-    public synchronized void removeEntries(final ImageEntry[] entries)
-    {
-        for (int i=entries.length; --i>=0;)
+    public synchronized void removeEntries(final ImageEntry[] entries) {
+        for (int i=entries.length; --i>=0;) {
             this.entries.remove(entries[i]);
+        }
         updateCount();
     }
 
     /**
      * Retire toutes les entrées de la liste des images à écrire.
      */
-    public synchronized void removeAllEntries()
-    {
+    public synchronized void removeAllEntries() {
         entries.clear();
         updateCount();
     }
@@ -205,16 +199,18 @@ public final class ExportChooser extends JPanel
     /**
      * Retourne les entrées des images qui seront à écrire.
      */
-    public synchronized ImageEntry[] getEntries()
-    {return (ImageEntry[]) entries.toArray(new ImageEntry[entries.size()]);}
+    public synchronized ImageEntry[] getEntries() {
+        return entries.toArray(new ImageEntry[entries.size()]);
+    }
 
     /**
      * Retourne le répertoire dans lequel écrire les images. Ce répertoire a
      * été spécifiée lors de la construction de cet objet, mais peut avoir été
      * modifié par l'utilisateur.
      */
-    public File getDestinationDirectory()
-    {return chooser.getSelectedFile();}
+    public File getDestinationDirectory() {
+        return chooser.getSelectedFile();
+    }
 
     /**
      * Fait apparaître la boîte de dialogue. Si l'utilisateur n'a pas annulé
@@ -230,20 +226,14 @@ public final class ExportChooser extends JPanel
      * @return <code>true</code> si l'utilisateur a lancé les exportations,
      *         ou <code>false</code> s'il a annulé l'opération.
      */
-    public boolean showDialogAndStart(final Component owner, final ThreadGroup threadGroup)
-    {
-        while (SwingUtilities.showOptionDialog(owner, this, chooser.getDialogTitle()))
-        {
+    public boolean showDialogAndStart(final Component owner, final ThreadGroup threadGroup) {
+        while (SwingUtilities.showOptionDialog(owner, this, chooser.getDialogTitle())) {
             final Worker worker=new Worker(this);
-            if (worker.getUserConfirmation(owner))
-            {
-                try
-                {
+            if (worker.getUserConfirmation(owner)) {
+                try {
                     worker.start(threadGroup, owner);
                     return true;
-                }
-                catch (IOException exception)
-                {
+                } catch (IOException exception) {
                     ExceptionMonitor.show(owner, exception);
                 }
             }
@@ -252,15 +242,15 @@ public final class ExportChooser extends JPanel
     }
 
     /**
-     * Classe ayant la charge d'exporter les images en arrière plan.  Le constructeur de cette classe fait
-     * une copie de tous les paramètres pertinents de {@link ExportChooser}, tels qu'ils étaient au moment
-     * de la construction. Par la suite, aucune référence vers {@link ExportChooser} n'est conservée.
+     * Classe ayant la charge d'exporter les images en arrière plan.  Le constructeur de cette
+     * classe fait une copie de tous les paramètres pertinents de {@link ExportChooser},  tels
+     * qu'ils étaient au moment de la construction. Par la suite, aucune référence vers {@link
+     * ExportChooser} n'est conservée.
      *
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Worker implements Runnable, IIOReadWarningListener
-    {
+    private static final class Worker implements Runnable, IIOReadWarningListener {
         /**
          * Fenêtre dans laquelle écrire les progrès de l'opération.
          * Cette fenêtre ne sera créée que la première fois où elle
@@ -319,10 +309,8 @@ public final class ExportChooser extends JPanel
          * @param chooser Boîte de dialogue qui demandait à l'utilisateur
          *        de choisir un répertoire de destination ainsi qu'un format.
          */
-        public Worker(final ExportChooser chooser)
-        {
-            synchronized (chooser)
-            {
+        public Worker(final ExportChooser chooser) {
+            synchronized (chooser) {
                 this.filter    = (ImageFileFilter) chooser.chooser.getFileFilter();
                 this.entries   = chooser.getEntries();
                 this.directory = chooser.getDestinationDirectory();
@@ -334,15 +322,15 @@ public final class ExportChooser extends JPanel
          * Retourne le nom et le chemin du fichier
          * de destination pour l'image spécifiée.
          */
-        private File getDestinationFile(final int index)
-        {
-            final String filename=entries[index].getFile().getName();
+        private File getDestinationFile(final int index) {
+            final String filename = entries[index].getFile().getName();
             buffer.setLength(0);
             buffer.append(filename);
-            final int extPos=filename.lastIndexOf('.');
-            if (extPos>=0) buffer.setLength(extPos);
-            if (extension.length()!=0)
-            {
+            final int extPos = filename.lastIndexOf('.');
+            if (extPos >= 0) {
+                buffer.setLength(extPos);
+            }
+            if (extension.length() != 0) {
                 buffer.append('.');
                 buffer.append(extension);
             }
@@ -350,7 +338,7 @@ public final class ExportChooser extends JPanel
         }
 
         /**
-         * Vérifie si les images peuvent être écrites dans le répertoire choisit. Cette méthode
+         * Vérifie si les images peuvent être écrites dans le répertoire choisi. Cette méthode
          * vérifie d'abord si le répertoire est valide. Elle vérifie ensuite si le répertoire
          * contient déjà des images qui risquent d'être écrasées. Si c'est le cas, alors cette
          * méthode fait apparaître une boîte de dialogue qui demande à l'utilisateur de confirmer
@@ -361,23 +349,20 @@ public final class ExportChooser extends JPanel
          * @return <code>true</code> si on peut procéder aux écritures des images, ou <code>false</code> si
          *         l'utilisateur a demandé à arrêter l'opération.
          */
-        public boolean getUserConfirmation(final Component owner)
-        {
+        public boolean getUserConfirmation(final Component owner) {
             final Resources resources = Resources.getResources(owner.getLocale());
-            if (directory==null || !directory.isDirectory())
-            {
+            if (directory==null || !directory.isDirectory()) {
                 SwingUtilities.showMessageDialog(owner, resources.getString(ResourceKeys.ERROR_BAD_DIRECTORY),
                                  resources.getString(ResourceKeys.ERROR_BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
-            int existing=0;
-            for (int i=0; i<entries.length; i++)
-            {
-                if (getDestinationFile(i).exists())
+            int existing = 0;
+            for (int i=0; i<entries.length; i++) {
+                if (getDestinationFile(i).exists()) {
                     existing++;
+                }
             }
-            if (existing!=0)
-            {
+            if (existing != 0) {
                 if (!SwingUtilities.showConfirmDialog(owner, resources.getString(ResourceKeys.CONFIRM_OVERWRITE_ALL_$2, new Integer(existing),
                                     new Integer(entries.length)), resources.getString(ResourceKeys.CONFIRM_OVERWRITE), JOptionPane.WARNING_MESSAGE))
                 {
@@ -398,8 +383,7 @@ public final class ExportChooser extends JPanel
          * @param  owner Composante parente dans laquelle faire apparaître la fenêtre des progrès.
          * @throws IOException si une erreur a empêché le démarrage des exportations.
          */
-        public void start(final ThreadGroup threadGroup, final Component owner) throws IOException
-        {
+        public void start(final ThreadGroup threadGroup, final Component owner) throws IOException {
             final Resources resources = Resources.getResources(owner.getLocale());
             writer   = filter.getImageWriter();
             progress = new WindowProgress(owner);
@@ -414,27 +398,22 @@ public final class ExportChooser extends JPanel
          * méthode directement. Appelez plutôt {@link #start}, qui se chargera d'appeller
          * <code>run()</code> dans un thread en arrière-plan.
          */
-        public void run()
-        {
+        public void run() {
             final EventListenerList listeners = new EventListenerList();
             listeners.add(IIOReadWarningListener.class, this);
 
             progress.started();
-            for (int i=0; i<entries.length; i++)
-            {
+            for (int i=0; i<entries.length; i++) {
                 final ImageEntry entry=entries[i];
                 progress.setDescription(Resources.format(ResourceKeys.EXPORTING_$1, entry.getName()));
                 progress.progress(((float)(i*100))/entries.length);
-                try
-                {
+                try {
                     final GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
                     final ImageOutputStream output=ImageIO.createImageOutputStream(getDestinationFile(i));
                     writer.setOutput(output);
                     writer.write(image.getRenderedImage());
                     output.close();
-                }
-                catch (Exception exception)
-                {
+                } catch (Exception exception) {
                     String message=exception.getLocalizedMessage();
                     if (message==null) message=Utilities.getShortClassName(exception);
                     progress.warningOccurred(entry.getName(), null, message);
@@ -449,11 +428,9 @@ public final class ExportChooser extends JPanel
          * Méthode appelée automatiquement lorsqu'un avertissement
          * est survenu pendant la lecture d'une image.
          */
-        public void warningOccurred(final ImageReader source, final String warning)
-        {
+        public void warningOccurred(final ImageReader source, final String warning) {
             final Progress progress=this.progress;
-            if (progress!=null)
-            {
+            if (progress != null) {
                 final ImageEntry entry=current;
                 progress.warningOccurred((entry!=null) ? entry.getName() : null, null, warning);
             }

@@ -74,8 +74,8 @@ import fr.ird.seasview.InternalFrame;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Miscellaneous
-import fr.ird.resources.gui.Resources;
-import fr.ird.resources.gui.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**

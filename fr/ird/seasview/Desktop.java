@@ -83,8 +83,8 @@ import java.util.logging.LogRecord;
 import java.util.Date;
 import java.util.TimeZone;
 import org.geotools.io.DefaultFileFilter;
-import fr.ird.resources.gui.ResourceKeys;
-import fr.ird.resources.gui.Resources;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
 
 // Geotools dependencies
 import org.geotools.gui.swing.ExceptionMonitor;
