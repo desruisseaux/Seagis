@@ -31,8 +31,11 @@
  */
 package net.seagis.gp;
 
-// Images (Java2D)
+// Images and geometry (Java2D)
+import java.awt.Dimension;
 import java.awt.RenderingHints;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 
@@ -49,6 +52,7 @@ import javax.media.jai.InterpolationNearest;
 
 // OpenGIS (SEAGIS-GCS) dependencies
 import net.seagis.cv.Category;
+import net.seagis.gc.GridRange;
 import net.seagis.gc.GridCoverage;
 import net.seagis.gc.GridGeometry;
 import net.seagis.cv.CategoryList;
@@ -71,6 +75,7 @@ import net.seagis.resources.Images;
 import net.seagis.resources.OpenGIS;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
+import net.seagis.resources.XAffineTransform;
 
 
 /**
@@ -100,6 +105,11 @@ import net.seagis.resources.gcs.ResourceKeys;
  */
 final class Resampler extends GridCoverage
 {
+    /**
+     * Small value for catching rounding errors.
+     */
+    private static final double EPS = 1E-6;
+
     /**
      * Construct a new grid coverage for the resampler operation.
      *
@@ -131,7 +141,7 @@ final class Resampler extends GridCoverage
      * Create a new coverage with a different coordinate reference system.
      *
      * @param  sourceCoverage The source grid coverage.
-     * @param  targetCS Coordinate system of the new grid coverage.
+     * @param  targetCS Coordinate system for the new grid coverage, or <code>null</code>.
      * @param  targetGridGeometry The target grid geometry, or <code>null</code> for default.
      * @param  interpolation The interpolation to use.
      * @param  factory The transformation factory to use.
@@ -144,6 +154,35 @@ final class Resampler extends GridCoverage
                                          final Interpolation             interpolation,
                                          final CoordinateTransformationFactory factory) throws TransformException
     {
+        /*
+         * If the user request a new grid geometry with the
+         * same coordinate system, and if the grid geometry
+         * is equivalents to a simple extraction of a sub-area,
+         * delegate the work to the 'scale' method.
+         */
+        if (targetGridGeometry!=null && targetCS==null)
+        {
+            final MathTransform2D transform = targetGridGeometry.getGridToCoordinateSystem2D();
+            if (transform instanceof AffineTransform)
+            {
+                final AffineTransform at = (AffineTransform) transform;
+                if ((at.getType() & ~(AffineTransform.TYPE_IDENTITY    |
+                                      AffineTransform.TYPE_TRANSLATION |
+                                      AffineTransform.TYPE_MASK_SCALE))==0)
+                {
+                    // NO flip, no rotation, no shear.
+                    // TODO: we could make this algorithm slightly
+                    //       more general by accepting flips and 90°
+                    //       rotation, but we need to change 'scale'
+                    //       in order to accept AffineTransform objects.
+                    final GridRange range = targetGridGeometry.getGridRange();
+                    final Dimension  size = new Dimension(range.getLength(0), range.getLength(1));
+                    Rectangle2D    bounds = new Rectangle2D.Double(range.getLower(0), range.getLower(1), size.width, size.height);
+                    bounds = XAffineTransform.transform(at, bounds, bounds);
+                    return scale(sourceCoverage, bounds, size);
+                }
+            }
+        }
         /*
          * If the source coverage is already a projected one,
          * go up in the chain until the source grid coverage.
@@ -190,16 +229,7 @@ final class Resampler extends GridCoverage
             OpenGIS.getCoordinateSystem2D(sourceCS);
             OpenGIS.getCoordinateSystem2D(targetCS);
         }
-        /*
-         * Gets the category lists from the source coverage. We will
-         * use exactly the same categories for the transformed coverage.
-         */
-        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
-        final CategoryList[]    categories = new CategoryList[samplesDim.length];
-        for (int i=0; i<categories.length; i++)
-        {
-            categories[i] = samplesDim[i].getCategoryList();
-        }
+        final CategoryList[] categories = getCategories(sourceCoverage);
         /*
          * The projection are usually applied on floating-point values, in order
          * to gets maximal precision and to handle correctly the special case of
@@ -309,6 +339,70 @@ final class Resampler extends GridCoverage
     }
 
     /**
+     * Scale and/or crop a grid coverage in order to keep only a subarea.
+     * The resulting coverage will use the same coordinate system than the
+     * source coverage.
+     *
+     * @param  sourceCoverage The source grid coverage.
+     * @param  area The subarea to extract, in the coordinate system units.
+     * @param  size The size to scale image to, or <code>null</code> if the
+     *         image should not be scaled.
+     * @return The resulting grid coverage.
+     */
+    public static GridCoverage scale(final GridCoverage sourceCoverage, Rectangle2D area, final Dimension size) throws TransformException
+    {
+        final MathTransform2D  gridToCS = sourceCoverage.getGridGeometry().getGridToCoordinateSystem2D();
+        final RenderedImage sourceImage = sourceCoverage.getRenderedImage(true);
+        RenderedImage image=sourceImage;
+        /*
+         * Get the grid indices for the destination image.  If the destination indices are
+         * differents from the source indices (i.e. if the user is requesting a subarea of
+         * source coverage), then extract the requested subarea using the "Crop" operation.
+         */
+        boolean changed=false;
+        int tmp;
+        int xmin = image.getMinX();
+        int ymin = image.getMinY();
+        int xmax = image.getWidth()  + xmin;
+        int ymax = image.getHeight() + ymin;
+        final Rectangle2D bounds = OpenGIS.transform((MathTransform2D)gridToCS.inverse(), area, null);
+        tmp = (int)Math.floor(bounds.getMinX() + EPS); if (tmp>xmin) {xmin=tmp; changed=true;}
+        tmp = (int)Math.floor(bounds.getMinY() + EPS); if (tmp>ymin) {ymin=tmp; changed=true;}
+        tmp = (int)Math.ceil (bounds.getMaxX() - EPS); if (tmp<xmax) {xmax=tmp; changed=true;}
+        tmp = (int)Math.ceil (bounds.getMaxY() - EPS); if (tmp<ymax) {ymax=tmp; changed=true;}
+        bounds.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
+        if (changed)
+        {
+            image = JAI.create("Crop", new ParameterBlock().addSource(image)
+                                       .add((float)bounds.getX    ()).add((float)bounds.getY())
+                                       .add((float)bounds.getWidth()).add((float)bounds.getHeight()));
+            area = OpenGIS.transform(gridToCS, bounds, bounds);
+        }
+        /*
+         * If the requested image size is different from current image
+         * size, then scale the image using the "Scale" operation.
+         */
+        if (size!=null && (size.width!=image.getWidth () || size.height!=image.getHeight()))
+        {
+            throw new UnsupportedOperationException("Not yet implemented"); // TODO
+        }
+        /*
+         * Returns the resulting grid coverage.
+         */
+        if (image==sourceImage)
+        {
+            return sourceCoverage;
+        }
+        final Envelope envelope = sourceCoverage.getEnvelope();
+        envelope.setRange(0, area.getMinX(), area.getMaxX());
+        envelope.setRange(1, area.getMinY(), area.getMaxY());
+        return new GridCoverage(sourceCoverage.getName(null),
+                                image, sourceCoverage.getCoordinateSystem(),
+                                envelope, getCategories(sourceCoverage), true,
+                                new GridCoverage[] {sourceCoverage}, null);
+    }
+
+    /**
      * Check if the mapping between pixel values and geophysics value
      * is a linear relation for all bands in the specified categories.
      */
@@ -338,6 +432,21 @@ final class Resampler extends GridCoverage
             return false;
         }
         return true;
+    }
+
+    /**
+     * Gets the category lists from the source coverage. We will
+     * use exactly the same categories for the transformed coverage.
+     */
+    private static CategoryList[] getCategories(final GridCoverage coverage)
+    {
+        final SampleDimension[] samplesDim = coverage.getSampleDimensions();
+        final CategoryList[]    categories = new CategoryList[samplesDim.length];
+        for (int i=0; i<categories.length; i++)
+        {
+            categories[i] = samplesDim[i].getCategoryList();
+        }
+        return categories;
     }
 
     /**
