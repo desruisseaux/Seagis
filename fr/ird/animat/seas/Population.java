@@ -59,15 +59,32 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     private Animal[] animals = new Animal[32];
 
     /**
+     * Nombre d'entrées valides dans la liste {@link #animals}.
+     */
+    private int count = 0;
+
+    /**
+     * Distance maximale que peuvent parcourir les animaux de
+     * cette population à chaque instruction {@link #move}.
+     */
+    private final double maximumDistance;
+
+    /**
      * Liste des objets intéressés à être informés
      * des changements apportés à cette population.
      */
     private final EventListenerList listenerList = new EventListenerList();
 
     /**
-     * Nombre d'entrées valides dans la liste {@link #animals}.
+     * Construit une population.
+     *
+     * @param maximumDistance Distance maximale que peuvent parcourir les
+     *        animaux de cette population à chaque instruction {@link #move}.
      */
-    private int count = 0;
+    public Population(final double maximumDistance)
+    {
+        this.maximumDistance = maximumDistance;
+    }
 
     /**
      * Retire tous les animaux de cette population.
@@ -121,7 +138,7 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     {
         for (int i=0; i<count; i++)
         {
-            animals[i].move();
+            animals[i].move(maximumDistance);
         }
         firePopulationChanged(PopulationChangeEvent.ANIMAL_MOVED);
     }

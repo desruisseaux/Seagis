@@ -87,30 +87,28 @@ public final class Main extends Console
                 properties.load(in);
                 in.close();
             }
-            /////////////////////////////////////////////////
-            ////    Extrait la propriété "START_TIME"    ////
-            /////////////////////////////////////////////////
+            ////////////////////////////////////////////////
+            ////    Extrait les propriétés du modèle    ////
+            ////////////////////////////////////////////////
             final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.FRANCE);
             final Date startTime = dateFormat.parse(getProperty(properties, "START_TIME"));
-            /////////////////////////////////////////////////
-            ////    Extrait la propriété "TIME_STEP"     ////
-            /////////////////////////////////////////////////
+
             final long timeStep = Math.round((24.0*60*60*1000)*
                     Double.parseDouble(getProperty(properties, "TIME_STEP")));
-            /////////////////////////////////////////////////
-            ////    Extrait la propriété "PAUSE"         ////
-            /////////////////////////////////////////////////
+
             final long pause = Math.round(1000*
                     Double.parseDouble(getProperty(properties, "PAUSE")));
-            /////////////////////////////////////////////////
-            ////    Extrait la propriété "RESOLUTION"    ////
-            /////////////////////////////////////////////////
+
             final double resolution =
                     Double.parseDouble(getProperty(properties, "RESOLUTION"))/60;
+
+            final double moveDistance = (timeStep!=0 ? timeStep*1852 : 1852)*
+                    Double.parseDouble(getProperty(properties, "DAILY_DISTANCE"));
+
             /////////////////////////////////////////////////
             ////    Construit la dynamique du modèle     ////
             /////////////////////////////////////////////////
-            dynamic = new Dynamic(resolution, startTime, timeStep, pause);
+            dynamic = new Dynamic(resolution, moveDistance, startTime, timeStep, pause);
         }
         catch (Exception exception)
         {

@@ -97,7 +97,7 @@ final class Dynamic implements Runnable
     /**
      * Population des thons.
      */
-    private final Population population = new Population();
+    private final Population population;
 
     /**
      * L'afficheur de cette dynamique.
@@ -119,6 +119,7 @@ final class Dynamic implements Runnable
      *         a échouée.
      */
     public Dynamic(final double resolution,
+                   final double moveDistance,
                    final Date   time,
                    final long   timeStep,
                    final long   pause) throws SQLException
@@ -127,6 +128,7 @@ final class Dynamic implements Runnable
         final FisheryDataBase fisheries = new FisheryDataBase();
         this.catchs      = fisheries.getCatchTable(SPECIES);
         this.environment = new Environment(images, time, resolution);
+        this.population  = new Population(moveDistance);
         this.toClose     = new DataBase[] {images, fisheries};
         this.timeStep    = timeStep;
         this.pause       = pause;

@@ -219,19 +219,22 @@ final class Tuna extends MobileObject implements Animal
      * Déplace l'animal en fonction de son environnement. La méthode
      * {@link #observe} doit avoir d'abord été appelée, sans quoi
      * aucun déplacement ne sera fait (l'animal ne sachant pas où aller).
+     *
+     * @param maximumDistance Distance maximale (en mètres) que peut
+     *        parcourir l'animal au cours de ce déplacement.
      */
-    public void move()
+    public void move(final double maximumDistance)
     {
         final ParameterValue[] values = getObservations();
         if (values != null)
         {
-            final ParameterValue param = values[0];
+            final ParameterValue param = values[values.length-1];
             if (param!=null)
             {
                 final Point2D location = param.getLocation();
                 if (location != null)
                 {
-                    moveToward(5*1852, location);
+                    moveToward(maximumDistance, location);
                 }
             }
         }
