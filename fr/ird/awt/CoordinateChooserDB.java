@@ -62,6 +62,7 @@ import fr.ird.resources.gui.ResourceKeys;
 // Geotools dependencies
 import org.geotools.resources.XDimension2D;
 import org.geotools.resources.SwingUtilities;
+import org.geotools.gui.swing.CoordinateChooser;
 
 
 /**

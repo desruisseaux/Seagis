@@ -62,7 +62,6 @@ import fr.ird.sql.image.SeriesEntry;
 import fr.ird.sql.image.ImageDataBase;
 
 // Dialog box
-import fr.ird.awt.CoordinateChooser;
 import fr.ird.awt.progress.Progress;
 import fr.ird.awt.progress.WindowProgress;
 
