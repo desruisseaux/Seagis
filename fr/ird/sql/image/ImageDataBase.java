@@ -98,6 +98,7 @@ public class ImageDataBase extends DataBase
     {
         "IMAGE_COUNT",  SeriesTableImpl.SQL_COUNT,
         "SERIES_TREE",  SeriesTableImpl.SQL_TREE,
+        "SERIES_BY_ID", SeriesTableImpl.SQL_SELECT_BY_ID,
         Table.SERIES,   SeriesTableImpl.SQL_SELECT,
         Table.IMAGES,    ImageTableImpl.SQL_SELECT,
         Table.FORMATS,      FormatTable.SQL_SELECT,
@@ -116,6 +117,7 @@ public class ImageDataBase extends DataBase
     {
         Clé.SQL_IMAGE_COUNT,
         Clé.SQL_SERIES_TREE,
+        Clé.SQL_SERIES_BY_ID,
         Clé.SQL_SERIES,
         Clé.SQL_IMAGES,
         Clé.SQL_FORMAT,

@@ -64,10 +64,14 @@ import fr.ird.resources.Resources;
 final class SeriesTableImpl extends Table implements SeriesTable
 {
     /**
-     * Requêtes SQL utilisées par cette classe pour obtenir
-     * une série à partir de son nom ou de son numéro ID.
+     * Requêtes SQL utilisées par cette classe pour obtenir une série à partir de son nom.
      */
-    static final String SQL_SELECT = "SELECT ID, name FROM "+SERIES+" WHERE Choose(?, ID=?, name LIKE ?)";
+    static final String SQL_SELECT = "SELECT ID, name FROM "+SERIES+" WHERE name LIKE ?";
+
+    /**
+     * Requêtes SQL utilisées par cette classe pour obtenir une série à partir de son numéro ID.
+     */
+    static final String SQL_SELECT_BY_ID = "SELECT ID, name FROM "+SERIES+" WHERE ID=?";
 
     /**
      * Requête SQL pour compter le nombre
@@ -112,19 +116,27 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /** Numéro de colonne. */ private static final int PARAMETER_NAME = 8;
     /** Numéro de colonne. */ private static final int GROUPS_FORMAT  = 9;
 
-    /** Numéro d'argument. */ private static final int ARG_SWITCH = 1;
-    /** Numéro d'argument. */ private static final int ARG_ID     = 2;
-    /** Numéro d'argument. */ private static final int ARG_NAME   = 3;
+    /** Numéro d'argument. */ private static final int ARG_ID     = 1;
+    /** Numéro d'argument. */ private static final int ARG_NAME   = 1;
 
     /**
-     * Requète SQL faisant le lien
-     * avec la base de données.
+     * Connection avec la base de données.
      */
-    private final PreparedStatement statement;
+    private final Connection connection;
 
     /**
-     * Requête utilisée pour compter le nombre d'images appartenant à une
-     * série. Cette requête ne sera construite que lorsqu'elle sera nécessaire.
+     * Requète SQL retournant une série à partir de son nom.
+     */
+    private PreparedStatement selectByName;
+
+    /**
+     * Requète SQL retournant une série à partir de son numéro ID.
+     */
+    private PreparedStatement selectByID;
+
+    /**
+     * Requête utilisée pour compter le nombre d'images appartenant à une série.
+     * Cette requête ne sera construite que lorsqu'elle sera nécessaire.
      */
     private transient PreparedStatement count;
 
@@ -135,11 +147,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @throws SQLException si <code>SeriesTable</code> n'a pas pu construire sa requête SQL.
      */
     protected SeriesTableImpl(final Connection connection) throws SQLException
-    {
-        statement = connection.prepareStatement(preferences.get(SERIES, SQL_SELECT));
-        statement.setInt   (ARG_ID,    0);
-        statement.setString(ARG_NAME, "");
-    }
+    {this.connection = connection;}
 
     /**
      * Retourne une référence vers un enregistrement de la table des séries.
@@ -152,9 +160,12 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     public synchronized SeriesEntry getSeries(final int ID) throws SQLException
     {
-        statement.setInt(ARG_SWITCH, 1);
-        statement.setInt(ARG_ID,    ID);
-        return getSeries(statement);
+        if (selectByID==null)
+        {
+            selectByID = connection.prepareStatement(preferences.get("SERIES_BY_ID", SQL_SELECT_BY_ID));
+        }
+        selectByID.setInt(ARG_ID, ID);
+        return getSeries(selectByID);
     }
 
     /**
@@ -168,9 +179,12 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     public synchronized SeriesEntry getSeries(final String name) throws SQLException
     {
-        statement.setInt   (ARG_SWITCH, 2);
-        statement.setString(ARG_NAME, name);
-        return getSeries(statement);
+        if (selectByName==null)
+        {
+            selectByName = connection.prepareStatement(preferences.get(SERIES, SQL_SELECT));
+        }
+        selectByName.setString(ARG_NAME, name);
+        return getSeries(selectByName);
     }
 
     /**
@@ -203,7 +217,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     public synchronized List<SeriesEntry> getSeries() throws SQLException
     {
-        final Statement    statement = this.statement.getConnection().createStatement();
+        final Statement    statement = connection.createStatement();
         final ResultSet    resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
         final List<SeriesEntry> list = new ArrayList<SeriesEntry>();
         SeriesReference      last = null;
@@ -234,7 +248,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
     {
         FormatTable       formats = null;
         final Locale       locale = null;
-        final Statement statement = this.statement.getConnection().createStatement();
+        final Statement statement = connection.createStatement();
         final ResultSet resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
         final int    SERIES_INDEX = 2; // Index des séries dans les tableaux ci-dessous.
         final int[]        colIDs = new int[]    {PARAMETER_ID,   OPERATION_ID,   SERIES_ID,   GROUPS_ID  }; // Doit être décroissant!
@@ -339,7 +353,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
     {
         if (count==null)
         {
-            count = statement.getConnection().prepareStatement(preferences.get("IMAGE_COUNT", SQL_COUNT));
+            count = connection.prepareStatement(preferences.get("IMAGE_COUNT", SQL_COUNT));
         }
         count.setInt(1, series.getID());
         final ResultSet resultSet = count.executeQuery();
@@ -361,11 +375,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     public synchronized void close() throws SQLException
     {
-        if (count!=null)
-        {
-            count.close();
-        }
-        statement.close();
+        if (selectByName != null) {selectByName.close(); selectByName = null;}
+        if (selectByID   != null) {selectByID  .close(); selectByID   = null;}
+        if (count        != null) {count       .close(); count        = null;}
     }
 
 

@@ -111,9 +111,6 @@ public class ResourceBundle extends java.util.ResourceBundle
      * List resources to the specified stream.
      *
      * @param out   The destination stream.
-     * @param lower The beginning index (inclusive).
-     * @param upper The ending index (exclusive), or
-     *              {@link Integer#MAX_VALUE} for all resources.
      * @throws IOException if an output operation failed.
      */
     public final synchronized void list(final Writer out) throws IOException
