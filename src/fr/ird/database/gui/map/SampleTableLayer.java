@@ -42,6 +42,7 @@ import org.geotools.ct.TransformException;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis dependencies
+import fr.ird.database.sample.CruiseEntry;
 import fr.ird.database.sample.SampleEntry;
 import fr.ird.database.sample.SampleTable;
 
@@ -113,7 +114,8 @@ public class SampleTableLayer extends SampleLayer {
      */
     protected boolean accept(final SampleEntry sample) {
         // Exclude the entries created by the random generator.
-        return sample.getCruise().getID() != 0;
+        final CruiseEntry cruise = sample.getCruise();
+        return cruise==null || cruise.getID() != 0;
     }
 
     /**

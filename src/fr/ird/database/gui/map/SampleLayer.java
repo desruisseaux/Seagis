@@ -290,7 +290,7 @@ public class SampleLayer extends RenderedMarks {
                 case SAMPLE_VALUES    : // fall through
                 case SAMPLE_POSITIONS : shape=null;              break;
                 case SAMPLE_COVERAGES : shape=sample.getShape(); break;
-                default: throw new IllegalStateException();
+                default: throw new IllegalStateException(String.valueOf(markType));
             }
             final Species species = sample.getDominantSpecies();
             colors [i] = (species!=null) ? getIcon(species).getColor() : nullColor;
@@ -298,7 +298,7 @@ public class SampleLayer extends RenderedMarks {
             /*
              * Expand the bounding box by the sample's geographic extent.
              */
-            if (!useFill[i]) {
+            if (shape != null) {
                 hasShape = true;
                 final Rectangle2D bounds = shape.getBounds2D();
                 if (geographicArea == null) {
@@ -435,6 +435,12 @@ public class SampleLayer extends RenderedMarks {
         int index = -1;
 
         /**
+         * The geograhic area of current mark, or <code>null</code> if none.
+         * Will be computed only when first requested.
+         */
+        private transient Shape currentArea;
+
+        /**
          * Construct an iterator.
          */
         public Iterator() {
@@ -454,6 +460,7 @@ public class SampleLayer extends RenderedMarks {
         public void setIteratorPosition(final int n) {
             assert count == samples.size();
             assert n>=-1 && n<count : n;
+            currentArea = null;
             index = n;
         }
         
@@ -462,6 +469,7 @@ public class SampleLayer extends RenderedMarks {
          */
         public boolean next() {
             assert count == samples.size();
+            currentArea = null;
             return ++index < count;
         }
 
@@ -509,12 +517,15 @@ public class SampleLayer extends RenderedMarks {
          * then this method returns <code>null</code>.
          */
         public Shape geographicArea() {
-            switch (markType) {
-                case SAMPLE_VALUES    : // fall through
-                case SAMPLE_POSITIONS : return super.geographicArea();
-                case SAMPLE_COVERAGES : return samples.get(index).getShape();
-                default: throw new IllegalStateException();
+            if (currentArea == null) {
+                switch (markType) {
+                    case SAMPLE_VALUES    : // fall through
+                    case SAMPLE_POSITIONS : currentArea = super.geographicArea();        break;
+                    case SAMPLE_COVERAGES : currentArea = samples.get(index).getShape(); break;
+                    default: throw new IllegalStateException(String.valueOf(markType));
+                }
             }
+            return currentArea;
         }
 
         /**
@@ -529,8 +540,15 @@ public class SampleLayer extends RenderedMarks {
          */
         public Shape markShape() {
             switch (markType) {
-                case SAMPLE_COVERAGES: // fall through
-                case SAMPLE_POSITIONS: return super.markShape();
+                case SAMPLE_COVERAGES: {
+                    if (geographicArea() != null) {
+                        return null;
+                    }
+                    // fall through
+                }
+                case SAMPLE_POSITIONS: {
+                    return super.markShape();
+                }
                 case SAMPLE_VALUES: {
                     final SampleEntry   sample = samples.get(index);
                     final Set<Species> species = sample.getSpecies();
@@ -583,7 +601,7 @@ public class SampleLayer extends RenderedMarks {
          */
         protected void paint(final Graphics2D      graphics,
                              final Shape           geographicArea,
-                             final Shape           markShape,
+                                   Shape           markShape,
                              final RenderedImage   markIcon,
                              final AffineTransform iconXY,
                              final GlyphVector     label,
@@ -592,14 +610,21 @@ public class SampleLayer extends RenderedMarks {
             assert count == samples.size();
             assert index < count : index;
             switch (markType) {
-                case SAMPLE_POSITIONS: // fall through
                 case SAMPLE_COVERAGES: {
-                    graphics.setColor(colors[index]);
-                    if (useFill[index]) {
-                        graphics.fill(markShape);
-                        graphics.setColor(colors[index].darker());
+                    if (geographicArea != null) {
+                        markShape = geographicArea;
                     }
-                    graphics.draw(markShape);
+                    // fall through
+                }
+                case SAMPLE_POSITIONS: {
+                    if (markShape != null) {
+                        graphics.setColor(colors[index]);
+                        if (useFill[index]) {
+                            graphics.fill(markShape);
+                            graphics.setColor(colors[index].darker());
+                        }
+                        graphics.draw(markShape);
+                    }
                     break;
                 }
                 case SAMPLE_VALUES: {
