@@ -54,6 +54,12 @@ final class AffineTransform2D extends MathTransform implements Serializable
     private final AffineTransform transform;
 
     /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    private transient AffineTransform2D inverse;
+
+    /**
      * Construct an affine transform.
      */
     protected AffineTransform2D(final AffineTransform transform)
@@ -98,16 +104,18 @@ final class AffineTransform2D extends MathTransform implements Serializable
     /**
      * Creates the inverse transform of this object.
      */
-    public MathTransform inverse() throws NoninvertibleTransformException
+    public synchronized MathTransform inverse() throws NoninvertibleTransformException
     {
-        try
+        if (inverse==null) try
         {
-            return new AffineTransform2D(transform.createInverse());
+            inverse = new AffineTransform2D(transform.createInverse());
+            inverse.inverse = this;
         }
         catch (java.awt.geom.NoninvertibleTransformException exception)
         {
             throw new NoninvertibleTransformException(exception.getLocalizedMessage(), exception);
         }
+        return inverse;
     }
 
     /**

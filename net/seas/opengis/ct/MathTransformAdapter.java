@@ -79,6 +79,12 @@ final class MathTransformAdapter extends MathTransform implements Serializable
     private final boolean isIdentity;
 
     /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    private transient MathTransformAdapter inverse;
+
+    /**
      * Construct an adapter.
      *
      * @throws RemoteException if a remote call failed.
@@ -140,16 +146,18 @@ final class MathTransformAdapter extends MathTransform implements Serializable
      * @throws NoninvertibleTransformException if the inverse transform
      *         can't be created, or if a remote call failed.
      */
-    public MathTransform inverse() throws NoninvertibleTransformException
+    public synchronized MathTransform inverse() throws NoninvertibleTransformException
     {
-        try
+        if (inverse==null) try
         {
-            return new MathTransformAdapter(transform.inverse());
+            inverse = new MathTransformAdapter(transform.inverse());
+            inverse.inverse = this;
         }
         catch (RemoteException exception)
         {
             throw new NoninvertibleTransformException(exception.getLocalizedMessage(), exception);
         }
+        return inverse;
     }
 
     /**

@@ -54,6 +54,12 @@ final class ConcatenedTransform extends MathTransform
     private final MathTransform transform2;
 
     /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    private transient ConcatenedTransform inverse;
+
+    /**
      * Default constructor.
      */
     public ConcatenedTransform(final MathTransform transform1, final MathTransform transform2)
@@ -136,8 +142,15 @@ final class ConcatenedTransform extends MathTransform
     /**
      * Creates the inverse transform of this object.
      */
-    public MathTransform inverse() throws NoninvertibleTransformException
-    {return new ConcatenedTransform(transform2.inverse(), transform1.inverse());}
+    public synchronized MathTransform inverse() throws NoninvertibleTransformException
+    {
+        if (inverse==null)
+        {
+            inverse = new ConcatenedTransform(transform2.inverse(), transform1.inverse());
+            inverse.inverse = this;
+        }
+        return inverse;
+    }
 
     /**
      * Gets the dimension of input points.

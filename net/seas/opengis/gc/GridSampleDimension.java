@@ -27,6 +27,9 @@ import net.seas.opengis.cv.CategoryList;
 import net.seas.opengis.cv.SampleDimension;
 import net.seas.opengis.cv.ColorInterpretation;
 
+// Miscellaneous
+import javax.media.jai.Histogram;
+
 
 /**
  * Describes the band values for a grid coverage.
@@ -38,22 +41,19 @@ import net.seas.opengis.cv.ColorInterpretation;
 final class GridSampleDimension extends SampleDimension
 {
     /**
-     * The grid coverage.
+     * Band number for this sample dimension.
+     * TODO: Should be set from GridCoverage.
      */
-//  private final GridCoverage coverage;
+    private final int band = 0;
 
     /**
      * Construct a sample dimension with a set of categories.
      *
-     * @param coverage The grid coverage.
      * @param categories The category list for this sample dimension, or
      *        <code>null</code> if this sample dimension has no category.
      */
-    public GridSampleDimension(/*final GridCoverage coverage,*/ final CategoryList categories)
-    {
-        super(categories);
-//      this.coverage = coverage;
-    }
+    public GridSampleDimension(final CategoryList categories)
+    {super(categories);}
 
     /**
      * Returns the color interpretation of the sample dimension.
@@ -67,37 +67,43 @@ final class GridSampleDimension extends SampleDimension
     /**
      * Returns the minimum value occurring in this sample dimension.
      */
-    public double getMinimumValue()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getMinimumValue()
+//  {return getHistogram().getLowValue(band);}
 
     /**
      * Returns the maximum value occurring in this sample dimension.
      */
-    public double getMaximumValue()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getMaximumValue()
+//  {return getHistogram().getHighValue(band);}
 
     /**
      * Determine the mode grid value in this sample dimension.
      */
-    public double getModeValue()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getModeValue()
+//  {throw new UnsupportedOperationException("Not implemented");}
 
     /**
      * Determine the median grid value in this sample dimension.
      */
-    public double getMedianValue()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getMedianValue()
+//  {throw new UnsupportedOperationException("Not implemented");}
 
     /**
      * Determine the mean grid value in this sample dimension.
      */
-    public double getMeanValue()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getMeanValue()
+//  {return getHistogram().getMean()[band];}
 
     /**
      * Determine the standard deviation from the mean
-     * of the grid values in this sample dimension.
+     * of the grid values in a sample dimension.
      */
-    public double getStandardDeviation()
-    {throw new UnsupportedOperationException("Not implemented");}
+//  public double getStandardDeviation()
+//  {return getHistogram().getStandardDeviation()[band];}
+
+    /**
+     * Gets the histogram for the underlying grid coverage.
+     */
+//  private Histogram getHistogram()
+//  {throw new UnsupportedOperationException("Not implemented");}
 }

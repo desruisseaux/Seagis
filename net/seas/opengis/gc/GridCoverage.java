@@ -692,45 +692,6 @@ public class GridCoverage extends Coverage
         //       Same for setDataBlock*
 //  }
 
-    /*
-     * Determine the histogram of grid values for this coverage.
-     */
-//  public Histogram getHistogram()
-//  {
-//      final List<SampleDimension> samples = getSampleDimensions();
-//      final int    dimension = samples.size();
-//      final double[] minimum = new double[dimension];
-//      final double[] maximum = new double[dimension];
-//      Arrays.fill(minimum, Double.POSITIVE_INFINITY);
-//      Arrays.fill(maximum, Double.NEGATIVE_INFINITY);
-//      for (int i=0; i<dimension; i++)
-//      {
-//          final CategoryList categories = samples.get(i).getCategoryList();
-//          if (categories!=null)
-//          {
-//              final Range range = categories.getRange(true);
-//              if (range!=null)
-//              {
-//                  minimum[i] = ((Number)range.getMinValue()).doubleValue();
-//                  maximum[i] = ((Number)range.getMaxValue()).doubleValue();
-//              }
-//          }
-//      }
-        // TODO
-//      return null;
-//  }
-
-    /*
-     * Determine the histogram of grid values for this coverage.
-     *
-     * @param  miniumEntryValue Minimum value stored in the first histogram entry.
-     * @param  maximumEntryValue Maximum value stored in the last histogram entry.
-     * @param  numberEntries Number of entries in the histogram.
-     * @return The histogram.
-     */
-//  public Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries)
-//  {return null;}
-
     /**
      * Returns grid data as a rendered image. If <code>geophysics</code> is <code>true</code>,
      * this method returns an image's view filled with "real world" data (e.g. temperature in

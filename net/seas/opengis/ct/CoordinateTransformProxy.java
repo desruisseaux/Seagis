@@ -74,6 +74,12 @@ final class CoordinateTransformProxy extends CoordinateTransform
     private final MathTransform transform;
 
     /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    private transient CoordinateTransformProxy inverse;
+
+    /**
      * Construct a coordinate transformation.
      *
      * @param transform The math transform.
@@ -182,8 +188,15 @@ final class CoordinateTransformProxy extends CoordinateTransform
     /**
      * Creates the inverse transform of this object.
      */
-    public MathTransform inverse() throws NoninvertibleTransformException
-    {return new CoordinateTransformProxy(transform.inverse(), type, targetCS, sourceCS);}
+    public synchronized MathTransform inverse() throws NoninvertibleTransformException
+    {
+        if (inverse==null)
+        {
+            inverse = new CoordinateTransformProxy(transform.inverse(), type, targetCS, sourceCS);
+            inverse.inverse = this;
+        }
+        return inverse;
+    }
     
     /**
      * Tests whether this transform does not move any points.

@@ -180,16 +180,16 @@ final class Interpolator extends GridCoverage
         }
         else try
         {
-            final AffineTransform transform = gridGeometry.getGridToCoordinateSystem2D();
+            final AffineTransform transform = gridGeometry.getAffineTransform2D();
             // Note: If we want nearest-neighbor interpolation,
             //       we need to add the following line:
             //
             //       transform.translate(-0.5, -0.5);
             //
             //       This is because we need to cancel the last 'translate(0.5, 0.5)' that appear in
-            //       'getGridToCoordinateSystem2D()' (we must remember that OpenGIS's transform maps
-            //       pixel CENTER, while JAI transforms maps pixel UPPER LEFT corner).   For exemple
-            //       the  (12.4, 18.9)  coordinates still lies on the [12,9] pixel.  Since the JAI's
+            //       'getAffineTransform2D()'  (we must remember that OpenGIS's transform maps pixel
+            //       CENTER, while JAI transforms maps pixel UPPER LEFT corner).     For exemple the
+            //       (12.4, 18.9)  coordinates still lies on the [12,9] pixel.       Since the JAI's
             //       nearest-neighbor interpolation use 'Math.floor' operation instead of 'Math.round',
             //       we must follow this convention.
             //
@@ -200,8 +200,7 @@ final class Interpolator extends GridCoverage
             //       point coordinates) lies exactly at the edge between pixels [12,19] and [12,20];
             //       the evaluated value should be a mid-value between those two pixels. If we want
             //       center of mass located at pixel centers, we must keep the (0.5, 0.5) translation
-            //       provided by 'getGridToCoordinateSystem2D()' for interpolation other than nearest-
-            //       neighbor.
+            //       provided by 'getAffineTransform2D()' for interpolation other than nearest-neighbor.
             toGrid = transform.createInverse();
         }
         catch (NoninvertibleTransformException exception)

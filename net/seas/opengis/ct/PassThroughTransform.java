@@ -40,6 +40,11 @@ import net.seas.util.XClass;
 final class PassThroughTransform extends MathTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    //private static final long serialVersionUID = -7260613547208966035L; // TODO
+
+    /**
      * Index of the first affected ordinate.
      */
     private final int firstAffectedOrdinate;
@@ -54,6 +59,12 @@ final class PassThroughTransform extends MathTransform
      * The sub transform.
      */
     private final MathTransform transform;
+
+    /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    private transient PassThroughTransform inverse;
 
     /**
      * Create a pass through transform.
@@ -150,8 +161,15 @@ final class PassThroughTransform extends MathTransform
     /**
      * Creates the inverse transform of this object.
      */
-    public MathTransform inverse() throws NoninvertibleTransformException
-    {return new PassThroughTransform(firstAffectedOrdinate, transform.inverse(), numTrailingOrdinates);}
+    public synchronized MathTransform inverse() throws NoninvertibleTransformException
+    {
+        if (inverse==null)
+        {
+            inverse = new PassThroughTransform(firstAffectedOrdinate, transform.inverse(), numTrailingOrdinates);
+            inverse.inverse = this;
+        }
+        return inverse;
+    }
 
     /**
      * Compares the specified object with

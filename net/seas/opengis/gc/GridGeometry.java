@@ -286,21 +286,33 @@ public class GridGeometry implements Dimensioned, Serializable
     }
 
     /**
-     * Returns the two-dimensional affine transform which allows for the transformations
-     * from grid coordinates to real world earth coordinates.   If the grid coverage has
-     * more than two dimensions, only the two first dimensions will be taken in account.
-     * This allows Java2D to work with image's horizontal data  while ignoring vertical
-     * or temporal dimensions.
-     * <br><br>
-     * OpenGIS requires that the transform maps <em>pixel centers</em> to real world
-     * coordinates. This is different from some other systems that map pixel's upper
-     * left corner.
+     * Returns an affine transform view of {@link #getGridToCoordinateSystem() gridToCoordinateSystem}
+     * for the two first dimensions. This method will succed only if the following conditions are meet:
      *
-     * @return The two-dimensional affine transform for the two first dimensions,
-     *         or <code>null</code> if no affine transform is available. If non-null,
-     *         the returned affine transform maps pixel's centers.
+     * <ul>
+     *   <li>Grid coordinate system must have two or more dimensions.</li>
+     *   <li>If grid coordinate systems has more than two dimensions,  ordinate values in
+     *       extra dimensions must have no influence on the transformation result for the
+     *       first two dimensions. In other words, the transformation from
+     *       (<var>x<sub>0</sub></var>,&nbsp;<var>x<sub>1</sub></var>,&nbsp;<var>x<sub>2</sub></var>...) to
+     *       (<var>y<sub>0</sub></var>,&nbsp;<var>y<sub>1</sub></var>,&nbsp;<var>y<sub>2</sub></var>...)
+     *       must be such that <var>y<sub>0</sub></var> and <var>y<sub>1</sub></var> depend only on
+     *       <var>x<sub>0</sub></var> and <var>x<sub>1</sub></var>.</li>
+     *   <li>The transformation of the two first ordinates from grid to "real world"
+     *       coordinate system must be affine.</li>
+     * </ul>
+     *
+     * This allows Java2D to work with image's horizontal data while ignoring vertical
+     * or temporal dimensions. Note that OpenGIS requires that the transform maps
+     * <em>pixel centers</em> to real world coordinates. This is different from some
+     * other systems that map pixel's upper left corner.
+     *
+     * @return The affine transform which allows for the transformations from grid coordinates
+     *         to real world earth coordinates, operating only on the two first dimensions.
+     *         The affine transform maps pixel's centers.
+     * @throws IllegalStateException if an affine transform can't be created for this grid geometry.
      */
-    public AffineTransform getGridToCoordinateSystem2D()
+    public AffineTransform getAffineTransform2D() throws IllegalStateException
     {
         if (gridToCoordinateJAI!=null)
         {
@@ -308,7 +320,7 @@ public class GridGeometry implements Dimensioned, Serializable
             transform.translate(0.5, 0.5); // Map to pixel's center.
             return transform;
         }
-        else return null;
+        else return gridToCoordinateSystem.toAffineTransform2D();
     }
 
     /**

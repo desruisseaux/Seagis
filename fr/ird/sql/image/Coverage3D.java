@@ -264,7 +264,7 @@ public class Coverage3D extends Coverage
             final SampleDimension[] array = new SampleDimension[categories.length];
             for (int i=0; i<array.length; i++)
             {
-                array[i] = new Dimension(categories[i]);
+                array[i] = new SampleDimension(categories[i]);
             }
             dimensions = Collections.unmodifiableList(Arrays.asList(array));
         }
@@ -512,7 +512,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of integer values for a given point in the coverage.
+     * Returns a sequence of integer values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -539,12 +539,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(point, dest);
+            return evaluate(lower, point, dest);
         }
 
         int[] last=null;
-        last = upper.evaluate(point, last);
-        dest = lower.evaluate(point, dest);
+        last = evaluate(upper, point, last);
+        dest = evaluate(lower, point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -556,7 +556,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of float values for a given point in the coverage.
+     * Returns a sequence of float values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -583,12 +583,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(point, dest);
+            return evaluate(lower, point, dest);
         }
 
         float[] last=null;
-        last = upper.evaluate(point, last);
-        dest = lower.evaluate(point, dest);
+        last = evaluate(upper, point, last);
+        dest = evaluate(lower, point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -600,7 +600,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of double values for a given point in the coverage.
+     * Returns a sequence of double values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -627,12 +627,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(point, dest);
+            return evaluate(lower, point, dest);
         }
 
         double[] last=null;
-        last = upper.evaluate(point, last);
-        dest = lower.evaluate(point, dest);
+        last = evaluate(upper, point, last);
+        dest = evaluate(lower, point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -644,7 +644,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of integer values for a given point in the coverage.
+     * Returns a sequence of integer values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -666,7 +666,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of float values for a given point in the coverage.
+     * Returns a sequence of float values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -688,7 +688,7 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Return an sequence of double values for a given point in the coverage.
+     * Returns a sequence of double values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The interpolation
      * type used when accessing grid values for points which fall between grid cells is
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
@@ -708,6 +708,30 @@ public class Coverage3D extends Coverage
         // TODO: Current implementation doesn't check the coordinate system.
         return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
     }
+
+    /**
+     * Returns a sequence of integer values for a giver point in the specified grid coverage.
+     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
+     * may override this method for performing a more sophesticated computation.
+     */
+    protected int[] evaluate(final GridCoverage coverage, final Point2D coord, final int[] dest)
+    {return coverage.evaluate(coord, dest);}
+
+    /**
+     * Returns a sequence of integer values for a giver point in the specified grid coverage.
+     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
+     * may override this method for performing a more sophesticated computation.
+     */
+    protected float[] evaluate(final GridCoverage coverage, final Point2D coord, final float[] dest)
+    {return coverage.evaluate(coord, dest);}
+
+    /**
+     * Returns a sequence of integer values for a giver point in the specified grid coverage.
+     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
+     * may override this method for performing a more sophesticated computation.
+     */
+    protected double[] evaluate(final GridCoverage coverage, final Point2D coord, final double[] dest)
+    {return coverage.evaluate(coord, dest);}
 
     /**
      * Vérifie que le point spécifié a bien la dimension attendue.
@@ -776,72 +800,5 @@ public class Coverage3D extends Coverage
                 record=null;
             }
         }
-    }
-
-
-
-
-    /**
-     * Sample dimension for {@link Coverage3D}.
-     *
-     * @version 1.00
-     * @author Martin Desruisseaux
-     */
-    private static final class Dimension extends SampleDimension
-    {
-        /**
-         * Construct a sample dimension with a set of categories.
-         *
-         * @param categories The category list for this sample dimension, or
-         *        <code>null</code> if this sample dimension has no category.
-         */
-        public Dimension(final CategoryList categories)
-        {super(categories);}
-
-        /**
-         * Returns the color interpretation of the sample dimension.
-         * Since {@link CategoryList} are designed for indexed color
-         * models, current implementation returns {@link ColorInterpretation#PALETTE_INDEX}.
-         * We need to find a more general way in some future version.
-         */
-        public ColorInterpretation getColorInterpretation()
-        {return ColorInterpretation.PALETTE_INDEX;}
-
-        /**
-         * Returns the minimum value occurring in this sample dimension.
-         */
-        public double getMinimumValue()
-        {throw new UnsupportedOperationException("Not implemented");}
-
-        /**
-         * Returns the maximum value occurring in this sample dimension.
-         */
-        public double getMaximumValue()
-        {throw new UnsupportedOperationException("Not implemented");}
-
-        /**
-         * Determine the mode grid value in this sample dimension.
-         */
-        public double getModeValue()
-        {throw new UnsupportedOperationException("Not implemented");}
-
-        /**
-         * Determine the median grid value in this sample dimension.
-         */
-        public double getMedianValue()
-        {throw new UnsupportedOperationException("Not implemented");}
-
-        /**
-         * Determine the mean grid value in this sample dimension.
-         */
-        public double getMeanValue()
-        {throw new UnsupportedOperationException("Not implemented");}
-
-        /**
-         * Determine the standard deviation from the mean
-         * of the grid values in this sample dimension.
-         */
-        public double getStandardDeviation()
-        {throw new UnsupportedOperationException("Not implemented");}
     }
 }

@@ -25,6 +25,7 @@ package net.seas.opengis.cv;
 // Miscellaneous
 import java.util.Locale;
 import javax.units.Unit;
+import javax.media.jai.util.Range;
 
 
 /**
@@ -35,7 +36,7 @@ import javax.units.Unit;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public abstract class SampleDimension
+public class SampleDimension
 {
     /**
      * The category list for this sample dimension,
@@ -43,6 +44,16 @@ public abstract class SampleDimension
      * has no category.
      */
     private final CategoryList categories;
+
+    /**
+     * The minimum value in this sample dimension.
+     */
+    private final double minimum;
+
+    /**
+     * The maximum value in this sample dimension.
+     */
+    private final double maximum;
 
     /**
      * Construct a sample dimension with a set of categories.
@@ -53,6 +64,20 @@ public abstract class SampleDimension
     public SampleDimension(final CategoryList categories)
     {
         this.categories = categories;
+        double min = Double.NEGATIVE_INFINITY;
+        double max = Double.POSITIVE_INFINITY;
+        if (categories!=null)
+        {
+            final Range range = categories.getRange(true);
+            if (range!=null)
+            {
+                Comparable n;
+                n=range.getMinValue(); if (n instanceof Number) min=((Number)n).doubleValue();
+                n=range.getMaxValue(); if (n instanceof Number) max=((Number)n).doubleValue();
+            }
+        }
+        this.minimum = min;
+        this.maximum = max;
     }
 
     /**
@@ -97,34 +122,15 @@ public abstract class SampleDimension
 
     /**
      * Returns the minimum value occurring in this sample dimension.
+     * The default implementation query the value from {@link CategoryList}, if available.
      */
-    public abstract double getMinimumValue();
+    public double getMinimumValue()
+    {return minimum;}
 
     /**
      * Returns the maximum value occurring in this sample dimension.
+     * The default implementation query the value from {@link CategoryList}, if available.
      */
-    public abstract double getMaximumValue();
-
-    /**
-     * Determine the mode grid value in this sample dimension.
-     */
-    public abstract double getModeValue();
-
-    /**
-     * Determine the median grid value in this sample dimension.
-     */
-    public abstract double getMedianValue();
-
-    /**
-     * Determine the mean grid value in this sample dimension.
-     */
-    public abstract double getMeanValue();
-
-    /**
-     * Determine the standard deviation from the mean
-     * of the grid values in this sample dimension.
-     */
-    public abstract double getStandardDeviation();
-
-    // No histogram. It is moved in GridCoverage instead.
+    public double getMaximumValue()
+    {return maximum;}
 }
