@@ -27,6 +27,7 @@ package fr.ird.database;
 
 // Géométrie et image
 import java.awt.geom.Point2D;
+import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
@@ -320,13 +321,18 @@ public abstract class Coverage3D extends Coverage {
     }
 
     /**
-     * Returns a 2 dimensional grid coverage for the given date.
+     * Returns a 2 dimensional grid coverage for the given date. The grid geometry will be computed
+     * in order to produces image with the {@linkplain #getDefaultPixelSize() default pixel size},
+     * if any.
      *
      * @param  time The date where to evaluate.
      * @return The grid coverage at the specified time, or <code>null</code>
      *         if the requested date fall in a hole in the data.
      * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
+     *
+     * @see #getRenderableImage(Date)
+     * @see RenderableImage#createDefaultRendering()
      */
     public GridCoverage getGridCoverage2D(final Date time) throws CannotEvaluateException {
         final String              name = getName(null);
@@ -339,15 +345,42 @@ public abstract class Coverage3D extends Coverage {
     }
 
     /**
-     * Returns 2D view of this grid coverage as the given date.
-     * This method allows interoperability with Java2D.
+     * Returns 2D view of this grid coverage as the given date. For images produced by the
+     * {@linkplain RenderableImage#createDefaultRendering() default rendering}, the size
+     * will be computed from the {@linkplain #getDefaultPixelSize() default pixel size},
+     * if any.
+     *
+     * @param  date The date where to evaluate the images.
+     * @return The renderable image.
      */
     public RenderableImage getRenderableImage(final Date date) {
         return new Renderable(date);
     }
 
     /**
-     * Produit des images sur demande.
+     * Returns the default pixel size for images to be produced by {@link #getRenderableImage(Date)}.
+     * This method is invoked by {@link RenderableImage#createDefaultRendering()} for computing a
+     * default image size. The default implementation for this method always returns <code>null</code>.
+     * Subclasses should overrides this method in order to provides a pixel size better suited to
+     * their data.
+     *
+     * @return The default pixel size, or <code>null</code> if no default is provided.
+     */
+    protected Dimension2D getDefaultPixelSize() {
+        return null;
+    }
+
+    /**
+     * Produit des images sur demande. La méthode {@link Coverage3D#getGridCoverage2D(Date)}
+     * utilise cette classe pour produire des couvertures de données à des dates arbitraires.
+     * Elle procède en effectuant les étapes suivantes:
+     *
+     * <ul>
+     *   <li>Appeler {@link Coverage3D#getRenderableImage(Date)} pour obtenir une instance de
+     *       <code>Renderable</code>.</li>
+     *   <li>Appeler {@link #createDefaultRendering()} pour obtenir une couverture avec la
+     *       taille par défaut.</li>
+     * </ul>
      *
      * @version $Id$
      * @author Martin Desruisseaux
@@ -360,6 +393,19 @@ public abstract class Coverage3D extends Coverage {
             super(temporalDimension!=0 ? 0 : 1,
                   temporalDimension>=2 ? 1 : 2);
             coordinate.ord[temporalDimension] = temporalCS.toValue(date);
+        }
+        
+        /**
+         * Returns a rendered image with width and height computed from
+         * {@link Coverage3D#getDefaultPixelSize()}.
+         */
+        public RenderedImage createDefaultRendering() {
+            final Dimension2D pixelSize = getDefaultPixelSize();
+            if (pixelSize == null) {
+                return super.createDefaultRendering();
+            }
+            return createScaledRendering((int)Math.round(getWidth()  / pixelSize.getWidth()),
+                                         (int)Math.round(getHeight() / pixelSize.getHeight()), null);
         }
     }
 }

@@ -104,7 +104,8 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     /**
      * La palette de couleurs à utiliser par défaut pour le résultat.
      */
-    private static final Color[] COLOR_PALETTE = {Color.BLUE, Color.WHITE, Color.RED};
+    private static final Color[] COLOR_PALETTE =
+            {Color.BLUE, Color.CYAN, Color.WHITE, Color.YELLOW, Color.RED};
 
     /**
      * La plage de valeurs à utiliser par défaut pour les valeur indexées.
@@ -955,33 +956,56 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     }
 
     /**
-     * Lance la création d'une image de potentiel de pêche à partir de la ligne de commande.
+     * Lance la création d'images de potentiel de pêche à partir de la ligne de commande.
      * Les arguments sont:
      *
      * <ul>
      *   <li><code>-parameter=<var>P</var></code> où <var>P</var> est un des paramètre énuméré
      *       dans la table &quot;Paramètre&quot; de la base de données des échantillons (par
      *       exemple &quot;PP1&quot;).</li>
-     *   <li><code>-date=<var>date</var> est la date (en heure universelle) de l'image à générer.
-     *       Par exemple &quot;18/08/1999&quot;.</li>
+     *   <li><code>-date=<var>date</var> est la date (en heure universelle) de l'image à générer
+     *       (par exemple &quot;18/08/1999&quot;). Son format dépend des conventions du système,
+     *       qui peut être spécifié par l'argument <code>-locale</code>.</li>
      *   <li><code>-file=<var>file</var> est un nom de fichier optionel dans lequel enregistrer
-     *        le résultat.</li>
+     *       le résultat. Si cet argument est omis, alors l'image sera affichée à l'écran sans
+     *       être enregistrée.</li>
+     *   <li><code>-locale=<var>locale</var> désigne les conventions locales à utiliser pour lire
+     *       l'argument <code>-date</code>. Si cet argument est omis, les conventions courantes du
+     *       système sont utilisées.</li>
+     *   <li><code>-generator=<var>classname</var></code> est le nom d'une sous-classe de {@link
+     *        ParameterCoverage3D} à utiliser pour générer les images de potentiel. Si cet
+     *        argument est omis, alors <code>fr.ird.database.sample.ParameterCoverage3D</code>
+     *        est utilisé directement.</li>
      * </ul>
      *
      * @param  args Les paramètres transmis sur la ligne de commande.
+     *
      * @throws ParseException si le format de la date n'est pas légal.
      * @throws SQLException si une connexion à la base de données a échouée.
      * @throws IOException si l'image ne peut pas être enregistrée.
+     * @throws ClassNotFoundException si la classe spécifiée dans l'argument
+     *         <code>-generator</code> n'a pas été trouvée.
+     * @throws ClassCastException si la classe spécifiée dans l'argument
+     *         <code>-generator</code> n'est pas une sous-classe de {@link ParameterCoverage3D}.
+     * @throws InstantiationException si la classe spécifiée dans l'argument
+     *         <code>-generator</code> est abstraite.
+     * @throws IllegalAccessException si la classe spécifiée dans l'argument
+     *         <code>-generator</code> n'a pas de constructeur public sans argument.
      */
-    public static void main(final String[] args) throws ParseException, SQLException, IOException {
+    public static void main(final String[] args)
+            throws ParseException, SQLException, IOException,
+                   ClassNotFoundException, ClassCastException,
+                   InstantiationException, IllegalAccessException
+    {
         MonolineFormatter.init("org.geotools");
         MonolineFormatter.init("fr.ird");
         final Arguments arguments = new Arguments(args);
-        final String     filename = arguments.getOptionalString("-file");
         final String    parameter = arguments.getRequiredString("-parameter");
         final DateFormat   format = DateFormat.getDateInstance(DateFormat.SHORT, arguments.locale);
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        final Date date = format.parse(arguments.getRequiredString("-date"));
+        final Date           date = format.parse(arguments.getRequiredString("-date"));
+        final String     filename = arguments.getOptionalString("-file");
+        final String    generator = arguments.getOptionalString("-generator");
         arguments.getRemainingArguments(0);
         /*
          * Procède à la création de l'image, à son enregistrement puis à son affichage.
@@ -990,7 +1014,12 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         final double scale  = 1.0/64;
         final GridCoverage coverage;
         JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
-        final ParameterCoverage3D coverage3D = new ParameterCoverage3D();
+        final ParameterCoverage3D coverage3D;
+        if (generator != null) {
+            coverage3D = (ParameterCoverage3D) Class.forName(generator).newInstance();
+        } else {
+            coverage3D = new ParameterCoverage3D();
+        }
         try {
             coverage3D.setParameter(parameter);
             coverage3D.setOutputRange(new NumberRange(1*scale+offset, 255*scale+offset));

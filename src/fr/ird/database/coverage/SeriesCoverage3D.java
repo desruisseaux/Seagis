@@ -408,6 +408,17 @@ public class SeriesCoverage3D extends Coverage3D {
     }
 
     /**
+     * Check if the given coordinate system is compatible with this coverage's
+     * {@link #coordinateSystem}. This method is used for assertions.
+     *
+     * @param cs The coordinate system to test.
+     * @return <code>true</code> if the specified cs is compatible.
+     */
+    private boolean isCompatibleCS(final CoordinateSystem cs) {
+        return CTSUtilities.getSubCoordinateSystem(cs, 0, cs.getDimension()).equals(cs, false);
+    }
+
+    /**
      * Snap the specified coordinate point and date to the closest point available in
      * this coverage. First, this method locate the image at or near the specified date
      * (if no image was available at the specified date, the closest one is selected).
@@ -669,8 +680,8 @@ public class SeriesCoverage3D extends Coverage3D {
             // No interpolation needed.
             return lower;
         }
-        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
-        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
+        assert isCompatibleCS(lower.getCoordinateSystem()) : lower;
+        assert isCompatibleCS(upper.getCoordinateSystem()) : upper;
 
         final long timeMillis = time.getTime();
         assert (timeMillis>=lowerTime && timeMillis<=upperTime) : time;
@@ -744,8 +755,8 @@ public class SeriesCoverage3D extends Coverage3D {
             Arrays.fill(dest, 0, bands.length, 0);
             return dest;
         }
-        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
-        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
+        assert isCompatibleCS(lower.getCoordinateSystem()) : lower;
+        assert isCompatibleCS(upper.getCoordinateSystem()) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
@@ -786,8 +797,8 @@ public class SeriesCoverage3D extends Coverage3D {
             Arrays.fill(dest, 0, bands.length, Float.NaN);
             return dest;
         }
-        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
-        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
+        assert isCompatibleCS(lower.getCoordinateSystem()) : lower;
+        assert isCompatibleCS(upper.getCoordinateSystem()) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
@@ -844,8 +855,8 @@ public class SeriesCoverage3D extends Coverage3D {
             Arrays.fill(dest, 0, bands.length, Double.NaN);
             return dest;
         }
-        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
-        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
+        assert isCompatibleCS(lower.getCoordinateSystem()) : lower;
+        assert isCompatibleCS(upper.getCoordinateSystem()) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
