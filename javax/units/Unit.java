@@ -263,7 +263,7 @@ public abstract class Unit implements Serializable
      * langue française. Si aucun nom n'est disponible pour l'unité
      * courante, retourne simplement son symbole.
      */
-    /*public*/ String getLocalizedName()
+    public String getLocalizedName()
     {return Units.localize(symbol);}
 
     /**

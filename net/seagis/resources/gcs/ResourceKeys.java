@@ -77,15 +77,16 @@ public interface ResourceKeys
     public static final int ERROR_OPERATION_NOT_FOUND_$1         =    52;
     public static final int ERROR_PARSE_EXCEPTION_$2             =    53;
     public static final int ERROR_POINT_OUTSIDE_COVERAGE_$1      =    54;
-    public static final int ERROR_RANGE_OVERLAP_$4               =    55;
-    public static final int ERROR_RGB_OUT_OF_RANGE_$1            =    56;
-    public static final int ERROR_UNDEFINED_PROPERTY             =    57;
-    public static final int ERROR_UNDEFINED_PROPERTY_$1          =    58;
-    public static final int ERROR_UNEXPECTED_IMAGE_SIZE          =    59;
-    public static final int ERROR_UNKNOW_INTERPOLATION_$1        =    60;
-    public static final int ERROR_UNKNOW_PARAMETER_NAME_$1       =    61;
-    public static final int ERROR_UNPARSABLE_NUMBER_$1           =    62;
-    public static final int ERROR_UNSPECIFIED_COORDINATE_SYSTEM  =    63;
-    public static final int ERROR_UNSPECIFIED_IMAGE_SIZE         =    64;
-    public static final int ERROR_UNSUPPORTED_DATA_TYPE          =    65;
+    public static final int ERROR_QUALITATIVE_CATEGORY_$1        =    55;
+    public static final int ERROR_RANGE_OVERLAP_$4               =    56;
+    public static final int ERROR_RGB_OUT_OF_RANGE_$1            =    57;
+    public static final int ERROR_UNDEFINED_PROPERTY             =    58;
+    public static final int ERROR_UNDEFINED_PROPERTY_$1          =    59;
+    public static final int ERROR_UNEXPECTED_IMAGE_SIZE          =    60;
+    public static final int ERROR_UNKNOW_INTERPOLATION_$1        =    61;
+    public static final int ERROR_UNKNOW_PARAMETER_NAME_$1       =    62;
+    public static final int ERROR_UNPARSABLE_NUMBER_$1           =    63;
+    public static final int ERROR_UNSPECIFIED_COORDINATE_SYSTEM  =    64;
+    public static final int ERROR_UNSPECIFIED_IMAGE_SIZE         =    65;
+    public static final int ERROR_UNSUPPORTED_DATA_TYPE          =    66;
 }
