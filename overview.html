@@ -42,5 +42,40 @@
     <P ALIGN="justify">Factory classes allow the creation of OpenGIS objects (RMI enabled)
     backed by SEAGIS classes. Internally, interoperability between OpenGIS interfaces and
     SEAGIS classes is assured through a set of RMI-aware adapters.</P>
+
+
+    <P>&nbsp;</P>
+    <H2><A NAME="dependencies">JAR files and dependencies</A></H2>
+    <P ALIGN="justify">The naming convention for JAR files is as follows: OpenGIS's
+    interfaces are packaged in JAR files starting with <CODE>opengis</CODE>, while
+    SEAGIS implementations are packaged in JAR files starting with <CODE>seagis</CODE>.
+    Each JAR filename ends with an abreviation of the OpenGIS's specification thats
+    apply: <CODE>css</CODE> for <CITE>Coordinate System Specification</CITE> and
+    <CODE>gcs</CODE> for <CITE>Grid Coverage Specification</CITE>.</P>
+
+    <P>&nbsp;</P>
+    <TABLE ALIGN="center" BORDER="3" CELLPADDING="6" BGCOLOR="F4F8FF">
+      <TR BGCOLOR="#B9DCFF">
+        <TH>JAR file</TH> <TH>Content</TH> <TH>Dependencies</TH>
+      </TR>
+      <TR>
+        <TD><CODE>opengis-css.jar</CODE></TD>
+        <TD>OpenGIS's interfaces for <code>CS</code>, <code>CT</code>
+            and <code>PT</code> packages.</code></TD>
+        <TD>(none)</TD>
+      </TR>
+      <TR>
+        <TD><CODE>seagis-css.jar</CODE></TD>
+        <TD>SEAGIS implementation for <code>CS</code>, <code>CT</code>
+            and <code>PT</code> packages.</code></TD>
+        <TD><CODE>opengis-css.jar</CODE></TD>
+      </TR>
+      <TR>
+        <TD><CODE>seagis-gcs.jar</CODE></TD>
+        <TD>SEAGIS implementation for <code>CV</code>, <code>GC</code>
+            and <code>GP</code> packages.</code></TD>
+        <TD><CODE>seagis-css.jar</CODE></TD>
+      </TR>
+    </TABLE> 
   </BODY>
 </HTML>
