@@ -23,33 +23,31 @@
  */
 package fr.ird.sql.fishery.fill;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-
-// Divers
+// J2SE dependencies
 import java.util.Arrays;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 
+// Geotools dependencies
+import org.geotools.cv.Coverage;
+import org.geotools.gc.GridCoverage;
+import org.geotools.pt.CoordinatePoint;
+
 // Base de données environnementales et de pêches
 import java.sql.SQLException;
 import fr.ird.sql.image.Coverage3D;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.fishery.CatchEntry;
-
-// Evaluateurs
 import fr.ird.operator.coverage.Evaluator;
-import fr.ird.operator.coverage.ParameterValue;
 
 
 /**
  * Données environnementales à des positions de pêches. Cette couverture offre
- * une méthode {@link #evaluate(CatchEntry,Evaluator)} qui est capable d'adapter
- * son calcul en fonction de la données de pêche. Par exemple, le calcul pourrait
- * se faire dans une région géographique dont la taille dépend de la longueur
- * de la palangre.
+ * une méthode {@link #evaluate(CatchEntry)} qui est capable d'adapter son calcul
+ * en fonction de la données de pêche. Par exemple, le calcul pourrait se faire
+ * dans une région géographique dont la taille dépend de la longueur de la palangre.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -81,25 +79,91 @@ final class CatchCoverage extends Coverage3D {
     }
 
     /**
-     * Evalue les valeurs du paramètre géophysique pour une capture.
-     * La région géographique ainsi que la date des données environnementales
-     * à utiliser sont déterminées à partir des coordonnées et de la date de
-     * la capture.
+     * Evalue les valeurs du paramètre géophysique pour une capture. La région géographique
+     * ainsi que la date des données environnementales à utiliser sont déterminées à partir
+     * des coordonnées et de la date de la capture, à l'aide des méthodes {@link #getShape}
+     * et {@link #getTime}. La couverture spatiales des données est obtenues par un appel à
+     * {@link #getCoverage(CathEntry)}. Toutes ces méthodes peuvent être redéfinies.
+     *
+     * @param  capture Données de pêche pour laquelle on veut les paramètres environnementaux.
+     * @param  dest    Tableau de destination, ou <code>null</code>.
+     * @return Les paramètres environnementaux pour la donnée de pêche spécifiée.
      */
-    public synchronized double[] evaluate(final CatchEntry capture, final Evaluator evaluator) {
-        final GridCoverage coverage = getGridCoverage2D(getTime(capture));
+    public synchronized double[] evaluate(final CatchEntry capture, double[] dest) {
+        final Coverage coverage = getCoverage(capture);
         if (coverage == null) {
-            final double[] result = new double[getNumSampleDimensions()];
-            Arrays.fill(result, Double.NaN);
-            return result;
+            final int numBands = getNumSampleDimensions();
+            if (dest == null) {
+                dest = new double[numBands];
+            }
+            Arrays.fill(dest, 0, numBands, Double.NaN);
+            return dest;
         }
-        final ParameterValue[] values = evaluator.evaluate(coverage, getShape(capture));
-        final double[] result = new double[values.length];
-        for (int i=0; i<values.length; i++) {
-            final ParameterValue value = values[i];
-            result[i] = (value!=null) ? value.getValue() : Double.NaN;
+        if (coverage instanceof Evaluator) {
+            return ((Evaluator) coverage).evaluate(getShape(capture), dest);
+        } else {
+            final Point2D coord = capture.getCoordinate();
+            if (coverage instanceof GridCoverage) {
+                return ((GridCoverage) coverage).evaluate(coord, dest);
+            } else {
+                return coverage.evaluate(new CoordinatePoint(coord), dest);
+            }
         }
-        return result;
+    }
+
+    /**
+     * Retourne toute la couverture spatiale disponible des données environnementales pour
+     * la capture spécifiée. Cette méthode obtient une date appropriée pour la capture par
+     * un appel à <code>{@linkplain #getTime getTime}(capture)</code>, puis obtient les données
+     * spatiales correspondantes par un appel à {@link #getGridCoverage2D}. La date de l'image
+     * retournée n'est pas nécessairement égale à celle de la pêche. En effet, l'implémentation
+     * par défaut de {@link #getTime} retourne plutôt une date dans les 24 heures avant ou après
+     * la pêche, mais dont l'heure a été ajustée de façon à correspondre à celle des données
+     * satellitaires disponibles.
+     * <br><br>
+     * Les classes dérivées peuvent redéfinir cette méthode pour appliquer une opération sur
+     * l'image avant de la retourner. Les opérations de type {@link Evaluator} sont traitées
+     * d'une façon spéciale par {@link #evaluate(CatchEntry, double[])} afin profiter de leur
+     * méthode {@link Evaluator#evaluate(Shape,double[])}.
+     *
+     * @param  capture La capture pour laquelle on veut la couverture des données environnementales.
+     * @return La couverture de données environnementales pour la capture spécifiée.
+     */
+    protected Coverage getCoverage(final CatchEntry capture) {
+        return getGridCoverage2D(getTime(capture));
+    }
+
+    /**
+     * Retourne la date d'une image proche de la date de la capture, si une telle image existe.
+     * L'implémentation par défaut retourne une date dans les 24 heures avant ou après la pêche,
+     * mais dont l'heure a été ajustée de façon à coller à celle des données satellitaires
+     * disponibles. On évite ainsi des interpolations si une image est disponible le jour de la
+     * pêche. Cette démarche est justifiée par le fait que l'heure de la pêche n'est pas bien
+     * connue. Dans ces conditions, interpoler entre deux images séparées de 24 heures n'a pas
+     * beaucoup de sens.
+     *
+     * @param  capture La capture dont on veut la date et heure.
+     * @return Une date et heure proche de celle de la capture (à moins de 24 heures),
+     *         mais éventuellement ajustée pour correspondre à celle des images.
+     */
+    protected Date getTime(final CatchEntry capture) {
+        final Date time = capture.getTime();
+        if (true) {
+            /*
+             * Change l'heure à laquelle on interpollera de façon à utiliser celle de l'image
+             * la plus proche, tout en restant dans les 24 heures qui suivent ou précedent la
+             * pêche.  Cette opération a pour but d'éviter les interpolations lorsqu'on a des
+             * données de disponibles la journée même.
+             */
+            long dt = time.getTime();
+            snap(null, time);
+            final long imageTime = time.getTime();
+            dt -= imageTime;    // Temps entre la pêche et l'image, positif si la pêche vient après.
+            dt = (dt/DAY)*DAY;  // Arrondi (vers 0) l'intervalle à un nombre entier de jours.
+            time.setTime(imageTime + dt);
+            assert Math.abs(time.getTime() - capture.getTime().getTime())<DAY : dt;
+        }
+        return time;
     }
 
     /**
@@ -115,35 +179,5 @@ final class CatchCoverage extends Coverage3D {
     protected Shape getShape(final CatchEntry capture) {
         final Point2D coord = capture.getCoordinate();
         return new Ellipse2D.Double(coord.getX()-semiX, coord.getY()-semiY, 2*semiX, 2*semiY);
-    }
-
-    /**
-     * Retourne la date à laquelle interpoller les calculs relatifs à la capture spécifiée.
-     * Cette date ne sera pas nécessairement égale à celle de la pêche. L'implémentation par
-     * défaut retourne une date le même jour que la pêche, mais dont l'heure a été ajustée de
-     * façon à coller à celle des données satellitaires disponibles (et éviter ainsi des
-     * interpolations si une image est disponible le jour de la pêche).
-     */
-    protected Date getTime(final CatchEntry capture) {
-        final Date time = capture.getTime();
-        if (true) {
-            /*
-             * Change l'heure à laquelle on interpollera de façon à être celle de l'image
-             * la plus proche, tout en restant dans les 24 heures qui suivent la pêche.
-             * Cette opération a pour but d'éviter les interpolations lorsqu'on a des
-             * données disponibles la journée même ("journée même" étant définie comme
-             * étant les 24 heures qui suivent la pêche).
-             */
-            long dt = time.getTime();
-            snap(null, time);
-            final long imageTime = time.getTime();
-            dt -= imageTime;
-            if (dt >= 0) {
-                dt += (DAY-1); // Force round to +infinity
-            }
-            time.setTime(imageTime + (dt/DAY)*DAY);
-            assert((dt=time.getTime()-capture.getTime().getTime())<DAY && dt>=0) : dt;
-        }
-        return time;
     }
 }

@@ -54,6 +54,11 @@ import fr.ird.animat.Species;
  */
 final class LonglineCatchEntry extends AbstractCatchEntry {
     /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = -856538436667543534L;
+
+    /**
      * Date et heure de la capture, en nombre de
      * millisecondes écoulées depuis le 1 janvier 1970.
      */
@@ -201,10 +206,9 @@ final class LonglineCatchEntry extends AbstractCatchEntry {
      * identique à l'objet spécifié.
      */
     public boolean equals(final Object other) {
-        if (other instanceof LonglineCatchEntry) {
+        if (super.equals(other)) {
             final LonglineCatchEntry that = (LonglineCatchEntry) other;
-            return this.ID   == that.ID   &&
-                   this.date == that.date &&
+            return this.date == that.date &&
                    Float.floatToIntBits(this.x1) == Float.floatToIntBits(that.x1) &&
                    Float.floatToIntBits(this.y1) == Float.floatToIntBits(that.y1) &&
                    Float.floatToIntBits(this.x2) == Float.floatToIntBits(that.x2) &&

@@ -40,8 +40,7 @@ import javax.media.jai.ParameterList;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ProcessorOperation extends Operation
-{
+public class ProcessorOperation extends Operation {
     /**
      * Le processeur.
      */
@@ -94,14 +93,10 @@ public class ProcessorOperation extends Operation
     /**
      * Applique l'opération sur une image.
      */
-    protected synchronized GridCoverage doFilter(final GridCoverage coverage)
-    {
-        if (parameters!=null)
-        {
+    protected synchronized GridCoverage doFilter(final GridCoverage coverage) {
+        if (parameters != null) {
             return processor.doOperation(operation, parameters.setParameter("Source", coverage));
-        }
-        else
-        {
+        } else {
             return processor.doOperation(operation, coverage);
         }
     }

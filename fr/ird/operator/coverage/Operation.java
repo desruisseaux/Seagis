@@ -49,8 +49,7 @@ import org.geotools.util.WeakValueHashMap;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Operation
-{
+public abstract class Operation {
     /**
      * The operation name.
      */
@@ -68,8 +67,9 @@ public abstract class Operation
      *
      * @param name Nom de cet opérateur.
      */
-    public Operation(final String name)
-    {this.name=name;}
+    public Operation(final String name) {
+        this.name = name;
+    }
     
     /**
      * Applique l'opération sur image. Si cette opération a déjà été appliquée
@@ -79,24 +79,19 @@ public abstract class Operation
      * @param  covarage Image à transformer.
      * @return Image transformée.
      */
-    public final synchronized GridCoverage filter(final GridCoverage coverage)
-    {
+    public final synchronized GridCoverage filter(final GridCoverage coverage) {
         // Check if a cached instance is available.
-        if (filtered != null)
-        {
+        if (filtered != null) {
             final GridCoverage result = (GridCoverage) filtered.get(coverage);
-            if (result!=null)
-            {
+            if (result != null) {
                 return result;
             }
         }
         // Performs the operation. This call is usually fast. The real work
         // is defered by {@link javax.media.jai.OpImage} to rendering time.
         final GridCoverage result = doFilter(coverage);
-        if (result != coverage)
-        {
-            if (filtered == null)
-            {
+        if (result != coverage) {
+            if (filtered == null) {
                 filtered = new WeakValueHashMap();
             }
             filtered.put(coverage, result);
@@ -125,12 +120,14 @@ public abstract class Operation
      * @return Le nom de cette opérateur, tel qu'il apparaîtra dans
      *         les composantes <cite>Swing</cite>.
      */
-    public String toString()
-    {return name;}
+    public String toString() {
+        return name;
+    }
 
     /**
      * Free all resources used by this operation.
      */
-    public synchronized void dispose()
-    {filtered = null;}
+    public synchronized void dispose() {
+        filtered = null;
+    }
 }

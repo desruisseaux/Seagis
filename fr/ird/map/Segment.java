@@ -38,8 +38,8 @@ import org.geotools.ct.CoordinateTransformation;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import fr.ird.map.array.PointArray;
-import fr.ird.map.array.PointIterator;
+import org.geotools.renderer.array.PointArray;
+import org.geotools.renderer.array.PointIterator;
 
 // Collections
 import java.util.List;
@@ -53,9 +53,9 @@ import java.io.Serializable;
 
 // Miscellaneous
 import fr.ird.util.XArray;
-import fr.ird.util.Statistics;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import org.geotools.resources.Statistics;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.Geometry;
 
@@ -1410,7 +1410,7 @@ final class Segment implements Serializable
         {
             if (hasNext())
             {
-                Point2D point=iterator.next();
+                Point2D point = (Point2D) iterator.next();
                 if (transform!=null) try
                 {
                     point = transform.transform(point, point);

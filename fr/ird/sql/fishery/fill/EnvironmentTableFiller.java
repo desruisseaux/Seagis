@@ -64,11 +64,6 @@ import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.FisheryDataBase;
 import fr.ird.sql.fishery.EnvironmentTable;
 
-// Evaluateurs
-import fr.ird.operator.coverage.Evaluator;
-import fr.ird.operator.coverage.AverageEvaluator;
-import fr.ird.operator.coverage.GradientEvaluator;
-
 
 /**
  * Classe ayant la charge de remplir la table  "Environnement"  de la base de données "Pêches" à

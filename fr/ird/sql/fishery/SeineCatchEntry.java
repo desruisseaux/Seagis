@@ -54,6 +54,11 @@ import fr.ird.animat.Species;
  */
 final class SeineCatchEntry extends AbstractCatchEntry {
     /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = 6792710597884632992L;
+
+    /**
      * Tableau vide d'espèces (utilisée lorsqu'il n'y a eu aucune calée).
      */
     private static final Species[] EMPTY = new Species[0];
@@ -171,10 +176,9 @@ final class SeineCatchEntry extends AbstractCatchEntry {
      * identique à l'objet spécifié.
      */
     public boolean equals(final Object other) {
-        if (other instanceof SeineCatchEntry) {
+        if (super.equals(other)) {
             final SeineCatchEntry that = (SeineCatchEntry) other;
-            return this.ID   == that.ID   &&
-                   this.date == that.date &&
+            return this.date == that.date &&
                    Float.floatToIntBits(this.x) == Float.floatToIntBits(that.x) &&
                    Float.floatToIntBits(this.y) == Float.floatToIntBits(that.y);
         }

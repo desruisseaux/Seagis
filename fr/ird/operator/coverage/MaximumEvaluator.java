@@ -23,17 +23,13 @@
  */
 package fr.ird.operator.coverage;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-import org.geotools.resources.XAffineTransform;
-import org.geotools.resources.Utilities;
-
 // Géométrie
 import java.awt.Shape;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.RectangularShape;
 
 // Java Advanced Imaging et divers
 import java.util.Arrays;
@@ -41,49 +37,60 @@ import java.awt.image.RenderedImage;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.Utilities;
+
+// Sesgis dependencies
+import fr.ird.util.XArray;
+
 
 /**
- * Une fonction déterminant la position de la valeur maximale
- * dans une région géographique.
+ * Une fonction déterminant la position de la valeur maximale dans une région géographique. Cet
+ * objet {@link Coverage} aura le même nombre de bandes que l'objet {@link GridCoverage} source,
+ * suivit de bandes représentant les coordonnées (<var>x</var>,<var>y</var>) des endroits où le
+ * maximum a été trouvé.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class MaximumEvaluator extends AbstractEvaluator {
+public class MaximumEvaluator extends Evaluator {
     /**
-     * Construit un objet par défaut.
-     */
-    public MaximumEvaluator() {
-    }
-
-    /**
-     * Retourne le nom de cette opération.
-     */
-    public String getName() {
-        return "Maximum";
-    }
-
-    /**
-     * Retourne la position du pixel maximal.
+     * Construit un évaluateur pour l'image spécifiée.
      *
-     * @param  coverage La couverture sur laquelle appliquer la fonction.
-     * @param  area La région géographique dans laquelle rechercher un pixel.
-     *         Les coordonnées de cette région doivent être exprimées selon
-     *         le système de coordonnées de <code>coverage</code>.
-     * @return La position du pixel recherché selon le système de coordonnées
-     *         de l'image. Cette méthode retourne une position pour chaque
-     *         bande.
+     * @param coverage Les données sources.
+     * @param area La forme géométrique de la région à évaluer.
      */
-    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area) {
-        final RenderedImage         data = coverage.getRenderedImage();
-        final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
-        final Point2D.Double  coordinate = new Point2D.Double();
-        final Rectangle2D     areaBounds = area.getBounds2D();
-        final Rectangle           bounds = getBounds(areaBounds, transform, data);
-        final ParameterValue[] locations = new ParameterValue[data.getSampleModel().getNumBands()];
-        final double[]          maximums = new double[locations.length];
-        Arrays.fill(maximums, Double.NEGATIVE_INFINITY);
-        double[] values=null;
+    public MaximumEvaluator(final GridCoverage coverage, final RectangularShape area) {
+        super("Maximum", coverage.getSampleDimensions().length, coverage, area);
+        /*
+         * En plus de la valeur, ne retient que les bandes des coordonnées (x,y). Si
+         * il y avait des bandes pour des coordonnées (z,...), elles seront éliminées.
+         */
+        bands = XArray.resize(bands, 3*coverage.getSampleDimensions().length);
+    }
+
+    /**
+     * Trouve le maximum dans la région géographique spécifiée.
+     *
+     * @param  area  Région géographique autour de laquelle évaluer la fonction.
+     * @param  dest  Tableau dans lequel mémoriser le résultat, ou <code>null</code>.
+     * @return Les résultats par bandes.
+     */
+    public double[] evaluate(final Shape area, double[] dest) {
+        if (dest == null) {
+            dest = new double[bands.length];
+        }
+        final RenderedImage        data = coverage.getRenderedImage();
+        final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
+        final Point2D.Double coordinate = new Point2D.Double();
+        final Rectangle2D    areaBounds = area.getBounds2D();
+        final Rectangle          bounds = getBounds(areaBounds, transform, data);
+        final int              numBands = data.getSampleModel().getNumBands();
+        Arrays.fill(dest, 0, numBands, Double.NEGATIVE_INFINITY);
+        Arrays.fill(dest, numBands, bands.length, Double.NaN);
+        double[] values = null;
         if (!bounds.isEmpty()) {
             final RectIter iterator = RectIterFactory.create(data, bounds);
             for (int y=bounds.y; !iterator.finishedLines(); y++) {
@@ -95,12 +102,10 @@ public class MaximumEvaluator extends AbstractEvaluator {
                         values = iterator.getPixel(values);
                         for (int i=0; i<values.length; i++) {
                             final double z = values[i];
-                            if (z > maximums[i]) {
-                                maximums[i] = z;
-                                if (locations[i] == null) {
-                                    locations[i] = new ParameterValue.Double(coverage, this);
-                                }
-                                locations[i].setValue(z, coordinate);
+                            if (z > dest[i]) {
+                                dest[i             ] =            z;
+                                dest[i +   numBands] = coordinate.x;
+                                dest[i + 2*numBands] = coordinate.y;
                             }
                         }
                     }
@@ -110,6 +115,17 @@ public class MaximumEvaluator extends AbstractEvaluator {
                 iterator.nextLine();
             }
         }
-        return locations;
+        /*
+         * Si certains maximums n'ont pas été trouvés, donne la valeur NaN.
+         */
+        for (int i=0; i<numBands; i++) {
+            if (Double.isInfinite(dest[        i]) &&
+                Double.isNaN(dest[numBands   + i]) &&
+                Double.isNaN(dest[numBands*2 + i]))
+            {
+                dest[i] = Double.NaN;
+            }
+        }
+        return dest;
     }
 }

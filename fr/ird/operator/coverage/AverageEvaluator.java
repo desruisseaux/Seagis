@@ -25,8 +25,8 @@ package fr.ird.operator.coverage;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.XAffineTransform;
 
 // Géométrie
 import java.awt.Shape;
@@ -34,6 +34,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.RectangularShape;
 
 // Java Advanced Imaging et divers
 import java.awt.image.RenderedImage;
@@ -42,36 +43,32 @@ import javax.media.jai.iterator.RectIterFactory;
 
 
 /**
- * Une fonction calculant la valeur moyenne
- * des pixels dans une région géographique.
+ * Une fonction calculant la valeur moyenne des pixels dans une région géographique. Cet
+ * objet {@link Coverage} aura le même nombre de bandes que l'objet {@link GridCoverage}
+ * source, la moyenne étant calculée pour chaque bande.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class AverageEvaluator extends AbstractEvaluator implements Evaluator {
+public class AverageEvaluator extends Evaluator {
     /**
-     * Construit un évaluateur par défaut.
-     */
-    public AverageEvaluator() {
-    }
-
-    /**
-     * Retourne le nom de cette opération.
-     */
-    public String getName() {
-        return "Average";
-    }
-
-    /**
-     * Evalue la fonction pour une zone géographique de la couverture spécifiée.
-     * Cette fonction est évaluée pour chaque bande de la couverture (ou image).
+     * Construit un évaluateur pour l'image spécifiée.
      *
-     * @param coverage La couverture sur laquelle appliquer la fonction.
-     * @param area La région géographique sur laquelle évaluer la fonction.
-     *        Les coordonnées de cette région doivent être exprimées selon
-     *        le système de coordonnées de <code>coverage</code>.
+     * @param coverage Les données sources.
+     * @param area La forme géométrique de la région à évaluer.
      */
-    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area) {
+    public AverageEvaluator(final GridCoverage coverage, final RectangularShape area) {
+        super("Moyenne", 0, coverage, area);
+    }
+
+    /**
+     * Calcule la moyenne dans la région géographique spécifiée.
+     *
+     * @param  area  Région géographique autour de laquelle évaluer la fonction.
+     * @param  dest  Tableau dans lequel mémoriser le résultat, ou <code>null</code>.
+     * @return Les résultats par bandes.
+     */
+    public double[] evaluate(final Shape area, double[] dest) {
         final RenderedImage        data = coverage.getRenderedImage();
         final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Point2D.Double coordinate = new Point2D.Double();
@@ -105,11 +102,13 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator {
                 iterator.nextLine();
             }
         }
-        final ParameterValue[] result = new ParameterValue[sum.length];
-        for (int i=0; i<result.length; i++) {
-            result[i] = new ParameterValue.Double(coverage, this);
-            result[i].setValue(sum[i]/count[i], null);
+        assert sum.length == bands.length;
+        if (dest == null) {
+            dest = new double[sum.length];
         }
-        return result;
+        for (int i=0; i<sum.length; i++) {
+            dest[i] = sum[i] / count[i];
+        }
+        return dest;
     }
 }

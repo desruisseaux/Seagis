@@ -25,19 +25,23 @@
  */
 package fr.ird.sql.fishery;
 
-// Graphisme
+// J2SE
 import java.awt.Color;
-import javax.swing.ImageIcon;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
-// Divers
 import java.util.Set;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.HashSet;
+import java.io.Serializable;
+import javax.swing.ImageIcon;
 import javax.vecmath.MismatchedSizeException;
+import java.io.ObjectStreamException;
 
+// Divers
 import fr.ird.animat.Species;
+import fr.ird.util.WeakHashSet;
 import org.geotools.resources.Utilities;
 
 
@@ -51,7 +55,17 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class FishSpecies implements Species {
+final class FishSpecies implements Species, Serializable {
+    /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = -7479818382272253204L;
+
+    /**
+     * Ensemble des espèces déjà créée.
+     */
+    private static final WeakHashSet<Species> pool = new WeakHashSet<Species>();
+
     /**
      * Default width for icons, in pixels.
      */
@@ -100,7 +114,7 @@ final class FishSpecies implements Species {
     public FishSpecies(final Locale[] locales, final String[] names, final Color color) throws IllegalArgumentException {
         this.locales = locales;
         this.names   = names;
-        if (locales.length!=names.length) {
+        if (locales.length != names.length) {
             throw new MismatchedSizeException();
         }
         final Set<Locale> set = new HashSet<Locale>();
@@ -166,18 +180,60 @@ final class FishSpecies implements Species {
     }
 
     /**
-     * Retourne un icone représentant cette espèce.
-     */
-    public Species.Icon getIcon() {
-        return new Icon();
-    }
-
-    /**
      * Retourne le nom de cette espèce. Le nom sera retourné
      * de préférence dans la langue par défaut du système.
      */
     public String toString() {
         return getName();
+    }
+
+    /**
+     * Compare cette espèce avec l'objet spécifié.
+     */
+    public boolean equals(final Object object) {
+        if (object instanceof Species) {
+            final Species that = (Species) object;
+            return Arrays.equals(locales, locales) &&
+                   Arrays.equals(names,   names)   &&
+                   Utilities.equals(defaultColor, defaultColor);
+        }
+        return false;
+    }
+
+    /**
+     * Retourne un code pour cette espèce.
+     */
+    public int hashCode() {
+        int code = names.length;
+        for (int i=0; i<names.length; i++) {
+            code = code*37 + names[i].hashCode();
+        }
+        return code;
+    }
+
+    /**
+     * Retourne un exemplaire unique de cette espèce. Si un exemplaire
+     * existe déjà dans la machine virtuelle, il sera retourné. Sinon,
+     * cette méthode retourne <code>this</code>. Cette méthode est
+     * habituellement appelée après la construction.
+     */
+    public Species intern() {
+        return pool.intern(this);
+    }
+
+    /**
+     * Après la lecture binaire, vérifie si
+     * l'espèce lue existait déjà en mémoire.
+     */
+    private Object readResolve() throws ObjectStreamException {
+        return intern();
+    }
+
+    /**
+     * Retourne un icone représentant cette espèce.
+     */
+    public Species.Icon getIcon() {
+        return new Icon();
     }
 
     /**

@@ -25,16 +25,13 @@
  */
 package fr.ird.sql.fishery;
 
-// Geometry
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-
-// Collections
+// J2SE dependencies
 import java.util.Set;
-
-// Formatting
+import java.util.Arrays;
 import java.text.DateFormat;
 import java.text.FieldPosition;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 // Formatting (Geotools)
 import org.geotools.pt.Latitude;
@@ -52,6 +49,11 @@ import fr.ird.animat.Species;
  * @author Martin Desruisseaux
  */
 abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry {
+    /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = -7400603494537440922L;
+
     /**
      * Objet à utiliser par défaut pour les écritures des dates.
      */
@@ -197,6 +199,19 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry {
      */
     public final int hashCode() {
         return ID;
+    }
+
+    /**
+     * Vérifie si cette entré est identique à l'objet spécifié.
+     */
+    public boolean equals(final Object object) {
+        if (object!=null && object.getClass().equals(getClass())) {
+            final AbstractCatchEntry that = (AbstractCatchEntry) object;
+            return this.ID == that.ID &&
+                   Arrays.equals(this.amount,  that.amount) &&
+                   Arrays.equals(this.species, that.species);
+        }
+        return false;
     }
 
     /**

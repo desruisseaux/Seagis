@@ -25,11 +25,12 @@
  */
 package fr.ird.sql.fishery;
 
-// Collections
+// J2SE dependencies
 import java.util.Set;
 import java.util.Collection;
 import java.util.AbstractSet;
 import java.util.NoSuchElementException;
+import java.io.Serializable;
 
 // Miscellaneous
 import fr.ird.animat.Species;
@@ -42,7 +43,12 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class SpeciesSet extends AbstractSet<Species> {
+class SpeciesSet extends AbstractSet<Species> implements Serializable {
+    /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = 6555886839089616118L;
+
     /**
      * Espèces visés par cette pêche. En général, on aura un seul exemplaire de
      * ce tableau qui sera partagé par plusieurs objets {@link AbstractCatch}.

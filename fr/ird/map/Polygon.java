@@ -76,10 +76,10 @@ import java.text.FieldPosition;
 
 // Miscellaneous
 import fr.ird.util.XArray;
-import fr.ird.util.Statistics;
 import org.geotools.resources.XMath;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.Statistics;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
 
