@@ -26,7 +26,7 @@
 package fr.ird.n1b.op;
 
 // SEAGIS
-import fr.ird.image.sst.n1b.Utilities;
+import fr.ird.n1b.image.sst.Utilities;
 import fr.ird.op.KernelFilter;
 
 // J2SE && JAI

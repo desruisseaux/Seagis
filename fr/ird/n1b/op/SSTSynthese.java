@@ -52,7 +52,7 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.image.sst.n1b.Utilities;
+import fr.ird.n1b.image.sst.Utilities;
 
 /**
  * Calcul la synthèse de plusieurs images Sea Surface Temperature (S.S.T.). L'objectif de 

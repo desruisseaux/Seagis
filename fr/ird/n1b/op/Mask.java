@@ -44,7 +44,7 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.image.n1b.Filter;
+import fr.ird.n1b.image.Filter;
 
 /**
  * Calcul un masque en fonction d'un filtre et d'une ou plusieurs images sources. Les 

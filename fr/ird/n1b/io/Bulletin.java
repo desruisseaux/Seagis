@@ -239,7 +239,7 @@ public final class Bulletin
     public void load(final File directory, final Date date) throws IOException
     {
         final String filename = getFilename(date);
-        final LineNumberReader in = new LineNumberReader(new PushbackReader(new FileReader(new File(directory, filename))));
+        final LineNumberReader in = new LineNumberReader(new FileReader(new File(directory, filename)));
         in.setLineNumber(1);
         load(in, filename);
         in.close();

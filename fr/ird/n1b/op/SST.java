@@ -49,7 +49,7 @@ import javax.media.jai.iterator.WritableRectIter;
  * <UL>
  *  <LI>Les coefficients A1, A2, A3, A4 de la formule de jour.</LI>
  *  <LI>Les coefficients A1, A2, A3, A4 de la formule de nuit.</LI>
- *  <LI>L'angle de visé du satellite/capteur lors de l'acquisition de chacun des pixels.</LI>
+ *  <LI>L'angle zénithal du satellite/capteur lors de l'acquisition de chacun des pixels.</LI>
  *  <LI>La température de brillance de chacun des pixels pour les canaux 4 et 5.</LI>
  *  <LI>L'état d'acquisition des pixels (acquisition de nuit, de jour ou entre jour/nuit).</LI>
  * </UL><BR><BR>
@@ -63,7 +63,7 @@ import javax.media.jai.iterator.WritableRectIter;
  *      T5 la température de brillance du canal 5, <BR>
  *      A1, A2, A3, A4 les coefficients (ils different pour les pixels acquis de nuit 
  *      ou de jour), <BR>
- *      Z l'angle d'acquisition du pixel (ou encore nommé angle de visé du satellite),<BR>
+ *      Z l'angle zénithal du satellite lors de d'acquisition du pixel,<BR>
  *      SEC la sécante de l'angle : SEC(Z) = 1/cos(angle).</i><BR><BR>
  *
  *
@@ -108,8 +108,8 @@ public final class SST extends PointOpImage
      *                          de chacun des pixels en Kelvin.
      * @param tb5               Une image contenant la température de brillance du canal 5
      *                          de chacun des pixels en Kelvin.
-     * @param angle             Une image contenant l'angle de visé du satellite/capteur 
-     *                          lors de l'acquisition des pixels en degré.
+     * @param angle             Une image contenant l'angle zénithal du satellite lors de 
+     *                          l'acquisition du pixel en degré.
      * @param matrix            Une image contenant l'état d'acquisition de chacun des 
      *                          pixels (acquisition de jour, de nuit, transitoire jour/nuit).
      * @param coeffDay          Les coefficient a0, a1, a2, a3 de la formule de calcul de 
@@ -282,7 +282,7 @@ public final class SST extends PointOpImage
      * Calcul de la S.S.T. d'un pixel.
      *
      * @param coeff         Tableau de coefficients de la SST. 
-     * @param angle         Angle de visé du satellite lors de l'acquisition du pixel.
+     * @param angle         Angle zénithal du satellite lors de l'acquisition du pixel.
      * @param tb4           Température de brillance du canal 4.
      * @param tb5           Température de brillance du canal 5.
      * @return La SST.
@@ -299,7 +299,7 @@ public final class SST extends PointOpImage
     /**
      * Calcul de la sécante de l'angle. 
      *
-     * @param angle  Angle de visé du satellite lors de l'acquisition du pixel en degré.
+     * @param angle  Angle zénithal du satellite lors de l'acquisition du pixel en degré.
      * @return la sécante de l'angle.
      */ 
     private static double computeSecante(final double angle) 

@@ -52,7 +52,7 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.image.sst.n1b.Utilities;
+import fr.ird.n1b.image.sst.Utilities;
 
 /**
  * Calcul le <i>SUP</i> de plusieurs images Sea Surface Temperature (S.S.T.). L'objectif de ce 
@@ -265,7 +265,7 @@ public final class SSTSup extends SourcelessOpImage
         final double[] minCP = {xmin, ymin},
                        maxCP = {xmax, ymax};
         final Envelope envelope = new Envelope(minCP, maxCP);  
-        return new GridCoverage("", 
+        return new GridCoverage("Sup", 
                                 synthese,         
                                 WGS84,                                     
                                 envelope,
@@ -285,7 +285,7 @@ public final class SSTSup extends SourcelessOpImage
                                final WritableRaster  dest, 
                                final Rectangle       destRect)     
     {            
-        /* Par defaut, l'image générée a pour valeur NoData. */
+        // Par defaut, l'image générée a pour valeur NoData. 
         final double pNoData = ((Integer)rNoData.getMinValue()).intValue();
         WritableRectIter iTarget = RectIterFactory.createWritable(dest ,destRect);
 
@@ -321,7 +321,7 @@ public final class SSTSup extends SourcelessOpImage
             if (!destRect.intersects(srcRect))
                 continue;                
             
-            /* Synthèse de la région commune. */            
+            /* Sup de la région commune. */            
             final Rectangle destRect_ = destRect.intersection(srcRect);            
             iTarget             = RectIterFactory.createWritable(dest ,destRect_);
             final RectIter iSrc = RectIterFactory.create(imageSrc,destRect_);            

@@ -220,7 +220,7 @@ public final class Metadata extends IIOMetadata
      *
      * @return la date de debut de l'acquisition.
      */
-    public Date getDateDebut() 
+    public Date getStartTime() 
     {
         return ((Date)get(Metadata.START_TIME));
     }
@@ -230,7 +230,7 @@ public final class Metadata extends IIOMetadata
      *
      * @return la date de fin de l'acquisition.
      */
-    public Date getDateFin() 
+    public Date getEndTime() 
     {
         return ((Date)get(Metadata.END_TIME));
     }    
