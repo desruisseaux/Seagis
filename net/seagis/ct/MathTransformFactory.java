@@ -135,6 +135,13 @@ public class MathTransformFactory
     {
         if (DEFAULT==null)
         {
+            /*
+             * NOTE: Current implementation of  Projection.getParameterList()
+             *       assume that the default MathTransformFactory.getProvider
+             *       looks only for projections.  Implementation needs update
+             *       if the array below contains some transforms  of an other
+             *       kind than MapProjection.
+             */
             DEFAULT = new MathTransformFactory(new MathTransformProvider[]
             {
                 new           MercatorProjection.Provider(),
@@ -287,26 +294,6 @@ public class MathTransformFactory
     }
 
     /**
-     * Creates a transform from a classification name and parameters.
-     * The client must ensure that all the linear parameters are expressed
-     * in meters, and all the angular parameters are expressed in degrees.
-     * Also, they must supply "semi_major" and "semi_minor" parameters
-     * for cartographic projection transforms.
-     *
-     * @param  classification The classification name of the transform
-     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
-     *         are ignored, and comparaison is case-insensitive.
-     * @param  parameters The parameter values in standard units.
-     * @return The parameterized transform.
-     * @throws NoSuchElementException if there is no transform for the specified classification.
-     * @throws MissingParameterException if a parameter was required but not found.
-     *
-     * @see org.opengis.ct.CT_MathTransformFactory#createParameterizedTransform
-     */
-    public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
-    {return (MathTransform) pool.intern(getProvider(classification).create(parameters));}
-
-    /**
      * Creates a transform which passes through a subset of ordinates to another transform.
      * This allows transforms to operate on a subset of ordinates. For example, if you have
      * (<var>latitidue</var>,<var>longitude</var>,<var>height</var>) coordinates, then you
@@ -346,6 +333,27 @@ public class MathTransformFactory
     }
 
     /**
+     * Creates a transform from a classification name and parameters.
+     * The client must ensure that all the linear parameters are expressed
+     * in meters, and all the angular parameters are expressed in degrees.
+     * Also, they must supply "semi_major" and "semi_minor" parameters
+     * for cartographic projection transforms.
+     *
+     * @param  classification The classification name of the transform
+     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
+     *         are ignored, and comparaison is case-insensitive.
+     * @param  parameters The parameter values in standard units.
+     * @return The parameterized transform.
+     * @throws NoSuchElementException if there is no transform for the specified classification.
+     * @throws MissingParameterException if a parameter was required but not found.
+     *
+     * @see org.opengis.ct.CT_MathTransformFactory#createParameterizedTransform
+     * @see #getAvailableTransforms
+     */
+    public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
+    {return (MathTransform) pool.intern(getProvider(classification).create(parameters));}
+
+    /**
      * Convenience method for creating a transform from a projection.
      *
      * @param  projection The projection.
@@ -359,6 +367,8 @@ public class MathTransformFactory
     /**
      * Returns the classification names of every available transforms.
      * The returned array may have a zero length, but will never be null.
+     *
+     * @see #createParameterizedTransform
      */
     public String[] getAvailableTransforms()
     {
@@ -382,6 +392,9 @@ public class MathTransformFactory
      *         for the current default locale.
      * @return Localized classification name (e.g. "<cite>Mercator transverse</cite>").
      * @throws NoSuchElementException if there is no transform for the specified classification.
+     *
+     * @deprecated Use <code>getProvider(classification).getName(locale)</code> instead.
+     *             This method will be removed in the next version.
      */
     public String getName(final String classification, final Locale locale) throws NoSuchElementException
     {return getProvider(classification).getName(locale);}
@@ -397,21 +410,29 @@ public class MathTransformFactory
      * @return Default parameters for a transform of the specified classification.
      * @throws NoSuchElementException if there is no transform for the
      *         specified classification.
+     *
+     * @deprecated getProvider(classification).getParameterList() instead.
+     *             This method will be removed in the next version.
      */
     public ParameterList getParameterList(final String classification) throws NoSuchElementException
     {return getProvider(classification).getParameterList();}
 
     /**
-     * Returns the provider for the specified classification.
+     * Returns the provider for the specified classification. This provider
+     * may be used to query parameter list for a classification name (e.g.
+     * <code>getProvider("Transverse_Mercator").getParameterList()</code>),
+     * or the transform name in a given locale (e.g.
+     * <code>getProvider("Transverse_Mercator").getName({@link Locale#FRENCH})</code>)
      *
      * @param  classification The classification name of the transform
-     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
-     *         are ignored, and comparaison is case-insensitive.
+     *         (e.g. "Transverse_Mercator"). It should be one of the name
+     *         returned by {@link #getAvailableTransforms}. Leading and
+     *         trailing spaces are ignored. Comparisons are case-insensitive.
      * @return The provider.
-     * @throws NoSuchElementException if there is no registration
-     *         for the specified classification.
+     * @throws NoSuchElementException if there is no provider registered
+     *         with the specified classification name.
      */
-    private MathTransformProvider getProvider(String classification) throws NoSuchElementException
+    public MathTransformProvider getProvider(String classification) throws NoSuchElementException
     {
         classification = classification.trim();
         for (int i=0; i<providers.length; i++)
