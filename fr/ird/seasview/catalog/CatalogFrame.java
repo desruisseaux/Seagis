@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.seasview.catalog;
 
@@ -57,9 +47,9 @@ import org.geotools.gui.swing.ExceptionMonitor;
 import fr.ird.awt.RangeBars;
 import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.SeriesTable;
-import fr.ird.database.coverage.GridCoverageRange;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageRanges;
 import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.seasview.Task;
 import fr.ird.seasview.DataBase;
@@ -153,7 +143,7 @@ public class CatalogFrame extends InternalFrame {
                 progress.setDescription(name);
                 progress.progress(factor*index++);
                 final CoverageTable images = database.getCoverageTable(entry);                
-                final GridCoverageRange gcRange = images.getRanges(null, null, new RangeSet(Date.class));
+                final CoverageRanges gcRange = images.getRanges(false, false, true, false);
                 final RangeSet  timeRanges = gcRange.t;
                 images.close();
                 if (!timeRanges.isEmpty()) {

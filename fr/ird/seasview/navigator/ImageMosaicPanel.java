@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.seasview.navigator;
 
@@ -68,11 +58,11 @@ import org.geotools.gui.swing.ExceptionMonitor;
 import fr.ird.awt.RangeBars;
 import fr.ird.seasview.DataBase;
 import fr.ird.database.CatalogException;
-import fr.ird.database.coverage.CoverageTable;
-import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageRanges;
 import fr.ird.resources.experimental.Resources;
-import fr.ird.database.coverage.GridCoverageRange;
 import fr.ird.seasview.layer.control.LayerControl;
 import fr.ird.resources.experimental.ResourceKeys;
 
@@ -236,15 +226,15 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      */
     private List<CoverageEntry> addSeriesImpl(final CoverageTable table) throws RemoteException {
         
-        final SeriesEntry       newSeries;
-        final GridCoverageRange gcRange;
-        final RangeSet          ranges;
+        final SeriesEntry    newSeries;
+        final CoverageRanges gcRange;
+        final RangeSet       ranges;
         List<CoverageEntry> entries = new ArrayList<CoverageEntry>();
 
         synchronized (table) {
             newSeries = table.getSeries();
-            gcRange   = table.getRanges(null, null, new RangeSet(Date.class), entries);
-            entries   = gcRange.entryList;
+            gcRange   = table.getRanges(false, false, true, true);
+            entries   = gcRange.entries;
             ranges    = gcRange.t;
         }
         EventQueue.invokeLater(new Runnable() {
