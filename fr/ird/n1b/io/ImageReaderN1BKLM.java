@@ -64,30 +64,17 @@ import fr.ird.io.text.ParseSatellite;
 import org.geotools.pt.CoordinatePoint;
 
 /**
- * Cette classe définie les méthodes spécifiques aux images N1B (level 1B) standard pour le 
- * format KLM (nouveau format).
+ * Cette classe définit les méthodes spécifiques aux images N1B (ou level 1B) standard 
+ * pour le format KLM (nouveau format). Les données issues des satellites KLM (satellite 
+ * 15, 16 et 17) doivent en général être codé selon le format KLM ci-dessous.
  *
  * @author Remi EVE
  * @version $Id$
  */
 public final class ImageReaderN1BKLM extends ImageReaderN1B 
 {
-    /** Identifiant des paramètres accessibles dans la liste de paramètres de calibration.  */
-    public static final String WAVE_LENGTH = "Central wave length",
-                               RADIANCE_CONSTANT    = "Constant for radiance computation (Constant1 and constant2)",
-                               THERMAL_COEFFICIENT         = "Thermal calibration coefficient",                               
-                               SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients";
-    
-    /** Description des canaux. */
-    private static final String[] CHANNEL_DESCRIPTION = {"Channel 1  (visible)", 
-                                                         "Channel 2  (visible)", 
-                                                         "Channel 3a (visible)",
-                                                         "Channel 3b (thermal)", 
-                                                         "Channel 4  (thermal)", 
-                                                         "Channel 5  (thermal)"};
-                                                         
     /** Nombre de bandes contenues dans l'image. */ 
-    private static final int NUM_BANDE = 6;   
+    private static final int NUM_BANDE = 5;   
     
     /** Taille du TBM. */
     private final int SIZE_TBM;
@@ -97,42 +84,7 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     
     /** Taille d'un data record. */
     private final int SIZE_DATA;
-
-    /** 
-     * A chaque enregistrement et pour chaque canal, 3 valeurs sont disponibles et doivent 
-     * être utilisées lors de la calibration des canaux thermiques : a0, a1 et a2.<BR><BR>
-     *
-     * Elles sont stockées dans le fichier de la facon suivante (pour le canal 3b) :
-     * <UL>
-     *   <LI>IR Operational Cal Ch 3b Coefficient 1 (a0)</LI>
-     *   <LI>IR Operational Cal Ch 3b Coefficient 2 (a1)</LI>
-     *   <LI>IR Operational Cal Ch 3b Coefficient 3 (a2)</LI>
-     * </UL><BR><BR>
-     *
-     * La constante ci-dessous indique le nombre de coefficients de calibration thermique 
-     * par canal.
-     */
-    private static final int NUM_COEFFICIENT_THERMAL_CALIBRATION = 3;  
-    
-    /** 
-     * A chaque enregistrement et pour chaque canal, 2 valeurs sont disponibles et doivent 
-     * être utilisées lors de la calibration des canaux visibles et proche du visible : 
-     * slope et intercept.<BR><BR>
-     *
-     * Elles sont stockées dans le fichier de la facon suivante (pour le canal 3a) :
-     * <UL>
-     *   <LI>Visible prelaunch cal ch3a slope 1</LI>
-     *   <LI>Visible prelaunch cal ch3a intercept 1</LI>     
-     *   <LI>Visible prelaunch cal ch3a slope 2</LI>
-     *   <LI>Visible prelaunch cal ch3a intercept 2</LI>     
-     *   <LI>Visible prelaunch cal ch3a intersection</LI>     
-     * </UL><BR><BR>
-     *
-     * La constante ci-dessous indique le nombre de coefficients de calibration thermique 
-     * par canal.
-     */
-    private static final int NUM_SLOPE_INTERCEPT_COEF = 5;
-    
+        
     /** 
      * Constructeur.
      *
@@ -148,8 +100,247 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         SIZE_DATA   = getData().getSize();        
     }
         
+    /////////////////////////////////////////////////    
+    /////////////////////////////////////////////////
+    // Extraction des coefficients de calibration. //
+    /////////////////////////////////////////////////
+    /////////////////////////////////////////////////    
     /**
-     * Extraction des <i>packed-video data</i> d'un canal.
+     * Retourne la liste des paramètres de calibration du <CODE>channel</CODE>.
+     *
+     * @param channel   Canal désiré.
+     * @return la liste des paramètres de calibration du <CODE>channel</CODE>.
+     */
+    public ParameterList getCalibrationParameter(final Channel channel) throws IOException
+    {
+        final String descriptor       = "AVHRR_KLM";
+        if (channel.isThermal())
+        {            
+            // Thermique.
+            final String[] paramNames     = {"THERMAL CALIBRATION COEFFICIENT", 
+                                             "CENTRAL WAVE LENGHT",
+                                             "RADIANCE CONSTANT"};
+            final Class[]  paramClasses   = {CoefficientGrid.class,
+                                             Double.class, 
+                                             double[].class};
+            final Object[]  paramDefaults = {null,
+                                             null, 
+                                             null};
+            ParameterList parameters = new ParameterListImpl(
+                                        new ParameterListDescriptorImpl(descriptor,
+                                                                        paramNames,
+                                                                        paramClasses,
+                                                                        paramDefaults,
+                                                                        null));                                                         
+            parameters.setParameter("THERMAL CALIBRATION COEFFICIENT", 
+                                    getIrOperational(channel));        
+            parameters.setParameter("CENTRAL WAVE LENGHT", 
+                                    getCentralWave(channel));
+            parameters.setParameter("RADIANCE CONSTANT", 
+                                    getConstant(channel));
+            return parameters;
+        }
+        else
+        {
+            // Visible.
+            final String[] paramNames     = {"THERMAL CALIBRATION COEFFICIENT", 
+                                             "SLOPE INTERCEPT COEFFICIENTS"};
+            final Class[]  paramClasses   = {CoefficientGrid.class,
+                                             CoefficientGrid.class};
+            final Object[]  paramDefaults = {null,
+                                             null};
+            ParameterList parameters = new ParameterListImpl(
+                                            new ParameterListDescriptorImpl(descriptor,
+                                                                            paramNames,
+                                                                            paramClasses,
+                                                                            paramDefaults,
+                                                                            null));                                                         
+            parameters.setParameter("SLOPE INTERCEPT COEFFICIENTS", 
+                                    getSlopeIntercept(channel));
+            parameters.setParameter("THERMAL CALIBRATION COEFFICIENT", 
+                                    getIrOperational(channel));        
+            return parameters;        
+        }
+    }    
+
+    /**
+     * Retourne la longueur d'onde du <CODE>channel</CODE>.
+     *
+     * @param channel   Le canal désiré.
+     * @return la longueur d'onde du <CODE>channel</CODE>.
+     */
+    private double getCentralWave(final Channel channel) throws IOException
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field;
+        double sf = 1;
+        
+        if (channel.equals(Channel.CHANNEL_3B))
+        {
+            field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_3B); 
+            sf = 1E2; 
+        } else if (channel.equals(Channel.CHANNEL_4))
+        {
+            field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_4);  
+            sf = 1E3; 
+        } else if (channel.equals(Channel.CHANNEL_5)) 
+        {
+            field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_5);  
+            sf = 1E3; 
+        } else throw new IllegalArgumentException("Erreur de canal.");        
+        
+        return ((double)field.getInteger(input, base))/sf;
+    }    
+    
+    /**
+     * Retourne les constantes <i>constant1</i> et <i>constant2</i>.
+     *
+     * @param channel   Le canal désiré.
+     * @return les constantes <i>constant1</i> et <i>constant2</i>.
+     */
+    private double[] getConstant(final Channel channel) throws IOException
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field1, 
+                    field2;
+        
+        if (channel.equals(Channel.CHANNEL_3B))
+        {
+            field1 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_3B); 
+            field2 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_3B); 
+        } else if (channel.equals(Channel.CHANNEL_4))
+        {
+            field1 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_4); 
+            field2 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_4); 
+        } else if (channel.equals(Channel.CHANNEL_5))
+        {
+            field1 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_5);                 
+            field2 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_5); 
+        } else throw new IllegalArgumentException("Erreur de canal.");
+        
+        final double[] array = {((double)field1.getInteger(input, base))/1E5, 
+                                ((double)field2.getInteger(input, base))/1E6};
+        return array;
+    }    
+
+    /**
+     * Retourne les coefficients thermique du <CODE>channel</CODE> désiré.
+     *
+     * @param channel   Le canal.
+     * @return les coefficients thermique du <CODE>channel</CODE> désiré.
+     */
+    private CoefficientGrid getIrOperational(final Channel channel) throws IOException     
+    {
+        /* A chaque enregistrement et pour chaque canal, 3 valeurs sont disponibles : 
+           a0, a1 et a2.
+           Elles sont stockées dans le fichier de la facon suivante (pour le canal 3b) :
+                - IR Operational Cal Ch 3b Coefficient 1 (a0)
+                - IR Operational Cal Ch 3b Coefficient 2 (a1)
+                - IR Operational Cal Ch 3b Coefficient 3 (a2)
+           La constante ci-dessous indique le nombre de coefficients de calibration 
+           thermique par canal. */
+        final int count = 3;          
+        
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final double[] array         = new double[count];        
+        final CoefficientGrid grid   = new CoefficientGrid(getHeight(0), count);
+        final Field[] field          = new Field[count];
+        
+        if (channel.equals(Channel.CHANNEL_3B))
+        {
+            field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_3B);
+            field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_3B);
+            field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_3B);
+        } else if (channel.equals(Channel.CHANNEL_4))
+        {
+            field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_4);
+            field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_4);
+            field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_4);
+        } else if (channel.equals(Channel.CHANNEL_5)) 
+        { 
+            field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_5);
+            field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_5);
+            field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_5);
+        } else throw new IllegalArgumentException("Erreur de canal.");
+                        
+        long base = SIZE_TBM + SIZE_HEADER;        
+        for (int row=0 ; row<getHeight(0) ; row++, base+=SIZE_DATA) 
+        {
+            for (int index=0 ; index<count ; index++)
+                array[index] = ((double)field[index].getUnsignedInteger(input, base))/1.0E6;            
+            grid.setElement(row,  array);            
+        }
+        return grid;        
+    }
+    
+    /**
+     * Retourne les coeffcients de calibration de canaux du visible ou proche du visible. 
+     *
+     * @param channel   Le canal désiré.
+     * @return les coeffcients de calibration de canaux du visible ou proche du visible. 
+     */
+    private CoefficientGrid getSlopeIntercept(final Channel channel) throws IOException     
+    {
+        /* A chaque enregistrement et pour chaque canal, 5 coefficients sont disponibles :
+                - Visible prelaunch cal ch3a slope 1
+                - Visible prelaunch cal ch3a intercept 1
+                - Visible prelaunch cal ch3a slope 2
+                - Visible prelaunch cal ch3a intercept 2
+                - Visible prelaunch cal ch3a intersection
+           La constante ci-dessous indique le nombre de coefficients de calibration 
+           thermique par canal. */
+        final int count = 5;
+
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final double[] array         = new double[count];        
+        final CoefficientGrid grid   = new CoefficientGrid(getHeight(0), count);
+        final Field[] field          = new Field[count];
+        
+        if (channel.equals(Channel.CHANNEL_1))             
+        {
+            field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_1);
+            field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_1);
+            field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_1);
+            field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_1);
+            field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_1);
+        } else if (channel.equals(Channel.CHANNEL_2))             
+        {
+            field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_2);
+            field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_2);
+            field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_2);
+            field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_2);
+            field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_2);                     
+        } else if (channel.equals(Channel.CHANNEL_3A))
+        {   
+            field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_3A);
+            field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_3A);
+            field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_3A);
+            field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_3A);
+            field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_3A);                     
+        } else throw new IllegalArgumentException("Erreur de canal.");
+                        
+        long base = SIZE_TBM + SIZE_HEADER;        
+        for (int row=0 ; row<getHeight(0) ; row++, base+=SIZE_DATA) 
+        {
+            array[0] = (double)field[0].getUnsignedInteger(input, base)/1E7;            
+            array[1] = (double)field[1].getUnsignedInteger(input, base)/1E6;            
+            array[2] = (double)field[2].getUnsignedInteger(input, base)/1E7;            
+            array[3] = (double)field[3].getUnsignedInteger(input, base)/1E6;            
+            array[4] = (double)field[4].getUnsignedInteger(input, base);            
+            grid.setElement(row,  array);            
+        }
+        return grid;        
+    }
+    
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    // Extraction des principales données //
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    /**
+     * Extraction des <i>packed-video data</i> d'une bande.
      *
      * @param iterator      Un itérateur sur une RenderedImage.
      * @param param         Paramètres de l'image.
@@ -229,16 +420,12 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
                         break;
 
                     case 3 :
-                        compteur = 1;
-                        break;
-
-                    case 4 :
                         compteur = 4;
                         break;
 
-                    case 5 :
+                    case 4 :
                         compteur = 2;
-                        break;                                            
+                        break;                                                                    
                 }
 
                 while (iterateur.finishedPixels() == false) 
@@ -265,7 +452,6 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
                             break;
                     }
                     int tmp = (int)((word >>>decalage) & 1023);
-                    //if (indiceLine == 2) System.out.println(tmp);
                     iterateur.setSample(tmp);
                     iterateur.nextPixel();
                     compteur = (compteur +1) % 5;
@@ -281,308 +467,140 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     }
 
     /**
-     * Retourne les coefficients thermique du <CODE>channel</CODE> désiré.
+     * Extraction des <i>packed-video data</i> d'un canal.
      *
-     * @param channel   Le canal.
-     * @return les coefficients thermique du <CODE>channel</CODE> désiré.
+     * @param iterator      Un itérateur sur une RenderedImage.
+     * @param channel       Canal désiré.
+     * @exception   IOException si une input ou output exception survient.
      */
-    private CoefficientGrid getIrOperationalCoef(final int channel) throws IOException     
+    public void extractPackedVideoData(final WritableRectIter iterateur, 
+                                       final Channel          channel) throws IOException 
     {
+        long base = SIZE_TBM + SIZE_HEADER;
         final ImageInputStream input = (FileImageInputStream)this.input;
-        final double[] array = new double[NUM_COEFFICIENT_THERMAL_CALIBRATION];        
-        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_COEFFICIENT_THERMAL_CALIBRATION);
-        final Field[] field = new Field[NUM_COEFFICIENT_THERMAL_CALIBRATION];
+        final int imageIndex = 0;
+        int[] bandeSrc = {0},
+              bandeDst = {0};
+        DataInputStream bis = null;
+        Field fieldPackedVideo = getData().get(Format.DATA_PACKED_VIDEO_DATA);
+        byte[] bufferMemoire = new byte[fieldPackedVideo.size];
+        int compteur   = 0, 
+            word       = 0,
+            decalage   = 0,
+            indiceLine = 0;
+        byte videoData = 0;                        
         
-        switch (channel) 
-        {
-            case 3 : 
-                     field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_3B);
-                     field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_3B);
-                     field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_3B);
-                     break;
-                
-            case 4 :
-                     field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_4);
-                     field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_4);
-                     field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_4);
-                     break;
-                
-            case 5 : 
-                     field[0] = getData().get(Format.DATA_KLM_COEFFICIENT1_CHANNEL_5);
-                     field[1] = getData().get(Format.DATA_KLM_COEFFICIENT2_CHANNEL_5);
-                     field[2] = getData().get(Format.DATA_KLM_COEFFICIENT3_CHANNEL_5);
-                     break;
-                
-            default : throw new IllegalArgumentException("Channel error");
-        }
-                        
-        long base = SIZE_TBM + SIZE_HEADER;        
-        for (int indiceLine=0 ; indiceLine<getHeight(0) ; indiceLine++, base+=SIZE_DATA) 
-        {
-            for (int i=0 ; i<NUM_COEFFICIENT_THERMAL_CALIBRATION ; i++)
-                array[i] = (double)field[i].getUnsignedInteger(input, base)/1E6;            
-            coefficients.setElement(indiceLine,  array);            
-        }
-        return coefficients;        
-    }
-    
-    /**
-     * Retourne les coeffcients de calibrations de canaux du visible ou proche du visible. 
-     *
-     * @param channel   Le vanal désiré.
-     * @return les coeffcients de calibrations de canaux du visible ou proche du visible. 
-     */
-    private CoefficientGrid getSlopeInterceptCoef(final int channel) throws IOException     
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;
-        final double[] array = new double[NUM_SLOPE_INTERCEPT_COEF];        
-        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_SLOPE_INTERCEPT_COEF);
-        final Field[] field = new Field[NUM_SLOPE_INTERCEPT_COEF];
+        processImageStarted(0);        
         
-        switch (channel) 
+        for (int indiceBande=0 ; indiceBande<bandeSrc.length && indiceBande<bandeDst.length ; indiceBande++)
         {
-            case 0 : 
-                     field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_1);
-                     field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_1);
-                     field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_1);
-                     field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_1);
-                     field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_1);
-                     break;
+            if (bandeSrc[indiceBande] >= NUM_BANDE)
+                throw new IllegalArgumentException("Index de la bande source en dehors des limites de l'image.");        
+
+            iterateur.startBands();
+            iterateur.startLines();
+            iterateur.startPixels();
+
+            // On se positionne sur la bonne bande.
+            while(bandeDst[indiceBande] > 0 && iterateur.finishedBands() == false)
+                iterateur.nextBand();
+
+            if (bandeDst[indiceBande] > 0)
+                throw new IllegalArgumentException("Index de la bande de destination en dehors des limites de l'image.");        
+
+            // Parcours des lignes.
+            while(iterateur.finishedLines() == false)       
+            {
+                boolean extract = true;
+                if ((channel.equals(Channel.CHANNEL_3A) && !(getStateChannel3(indiceLine)==1)) || 
+                    (channel.equals(Channel.CHANNEL_3B) && !(getStateChannel3(indiceLine)==0)))
+                    extract = false;                
                 
-            case 1 :
-                     field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_2);
-                     field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_2);
-                     field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_2);
-                     field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_2);
-                     field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_2);                     
-                     break;
-                
-            case 2 : 
-                     field[0] = getData().get(Format.DATA_KLM_SLOPE_1_CHANNEL_3A);
-                     field[1] = getData().get(Format.DATA_KLM_INTERCEPT_1_CHANNEL_3A);
-                     field[2] = getData().get(Format.DATA_KLM_SLOPE_2_CHANNEL_3A);
-                     field[3] = getData().get(Format.DATA_KLM_INTERCEPT_2_CHANNEL_3A);
-                     field[4] = getData().get(Format.DATA_KLM_INTERSECTION_CHANNEL_3A);                     
-                     break;
-                
-            default : throw new IllegalArgumentException("Channel error");
+                if (extract) 
+                {
+                    iterateur.startPixels();
+
+                    // Pour optimiser le temps de lecture de ces données, elles sont lues en 
+                    // direct dans le fichier.
+                    input.seek(base + fieldPackedVideo.offset);                                   
+                    compteur =0;
+
+                    // Positionne le data record en mémoire tampon.
+                    input.readFully(bufferMemoire);
+                    bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(bufferMemoire)));
+
+                    if (channel.equals(Channel.CHANNEL_1))                         
+                            compteur = 0;
+                    else if (channel.equals(Channel.CHANNEL_2))
+                            compteur = 3;
+                    else if (channel.equals(Channel.CHANNEL_3))                        
+                            compteur = 1;
+                    else if (channel.equals(Channel.CHANNEL_4))
+                            compteur = 4;
+                    else if (channel.equals(Channel.CHANNEL_5))
+                            compteur = 2;
+
+                    while (iterateur.finishedPixels() == false) 
+                    {                              
+                        // Lecture du mot de 4 octets.
+                        word = bis.readInt();                
+
+                        switch (compteur) 
+                        {
+                            case 0 : 
+                                decalage = 20;
+                                break;
+
+                            case 1 :          
+                                decalage = 0;
+                                break;
+
+                            case 2 : case 4 :
+                                compteur = (compteur +1) % 5;
+                                continue;
+
+                            case 3 :     
+                                decalage = 10;
+                                break;
+                        }
+                        int tmp = (int)((word >>>decalage) & 1023);
+                        iterateur.setSample(tmp);
+                        iterateur.nextPixel();
+                        compteur = (compteur +1) % 5;
+                    }                
+                }
+                iterateur.nextLine();
+                indiceLine++;                
+                if (indiceLine % 50 == 0)
+                    processImageProgress((float)(100.0/getHeight(imageIndex) * (indiceLine+1)) 
+                                    / Math.min(bandeSrc.length, bandeDst.length));
+                base += SIZE_DATA;
+            }
         }
-                        
-        long base = SIZE_TBM + SIZE_HEADER;        
-        for (int indiceLine=0 ; indiceLine<getHeight(0) ; indiceLine++, base+=SIZE_DATA) 
-        {
-            array[0] = (double)field[0].getUnsignedInteger(input, base)/1E7;            
-            array[1] = (double)field[1].getUnsignedInteger(input, base)/1E6;            
-            array[2] = (double)field[2].getUnsignedInteger(input, base)/1E7;            
-            array[3] = (double)field[3].getUnsignedInteger(input, base)/1E6;            
-            array[4] = (double)field[4].getUnsignedInteger(input, base);            
-            coefficients.setElement(indiceLine,  array);            
-        }
-        return coefficients;        
+        processImageComplete();            
     }
 
     /**
-     * Retourne la date de fin de l'acquisition.
-     * @return la date de fin de l'acquisition.
-     */
-    public Date getEndTime() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_STOP_TIME);
-        return field.getDateFormatv1(input, base);
-    }
-    
-    /**
-     * Retourne la hauteur de l'image.
-     * @return la hauteur de l'image.
-     */
-    public int getHeight() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_NUMBER_OF_SCANS);        
-        return (short)field.getUnsignedShort(input, base);
-    }
-    
-    /**
-     * Retourne une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
-     * @return une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
-     */
-    public String getSpacecraft() throws IOException 
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;                
-        final Field field = getTBM().get(Format.TBM_SPACECRAFT_ID);        
-        return field.getString(input, 0);
-    }
-    
-    /**
-     * Retourne la date de début de l'acquisition.
-     * Return la date de début de l'acquisition.
-     */
-    public Date getStartTime() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_START_TIME);
-        return field.getDateFormatv1(input, base);
-    }    
-    
-    /**
-     * Retourne la date extraite d'un <i>Data Record</i>.
+     * Retourne une image contenant les <i>packed-video data</i> d'un canal. L'image
+     * retournée contiendra uniquement les informations du canal désiré.
      *
-     * @param field     Champs à extraitre.
-     * @param index     Index dans le flux.
-     * @return la date extraite d'un <i>Data Record</i>.
+     * @param imageIndex    Index de l'image à extraire.
+     * @param channel       Canal désiré.
+     * @return      une image contenant les <i>packed-video data</i> d'un canal.
      */
-    protected Date extractDateFromData(final Field field, final long base) throws IOException 
+    public BufferedImage read(final int imageIndex, final Channel channel) throws IOException
     {
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        return field.getDateFormatv2(input, base);        
-    }    
-            
-    /**
-     * Retourne une liste de paramètres contenant les paramètres de calibration.
-     *
-     * @param channel   Canal désiré.
-     * @return une liste de paramètres contenant les paramètres de calibration.
-     */
-    public ParameterList getCalibrationParameter(int channel) throws IOException
-    {
-        if (channel == 3 || channel == 4 ||  channel == 5)
-        {
-            // Thermique.
-            final String descriptor       = "AVHRR_KLM";
-            final String[] paramNames     = {THERMAL_COEFFICIENT, 
-                                             WAVE_LENGTH,
-                                             RADIANCE_CONSTANT};
-            final Class[]  paramClasses   = {CoefficientGrid.class,
-                                             Double.class, 
-                                             double[].class};
-            final Object[]  paramDefaults = {null,
-                                             null, 
-                                             null};
-            ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
-                                                                                             paramNames,
-                                                                                             paramClasses,
-                                                                                             paramDefaults,
-                                                                                             null));                                                         
-            parameters.setParameter(THERMAL_COEFFICIENT, getIrOperationalCoef(channel));        
-            parameters.setParameter(WAVE_LENGTH, getCentralWave(channel));
-            parameters.setParameter(RADIANCE_CONSTANT, getConstant(channel));
-            return parameters;
-        }
-        else
-        {
-            // Visible.
-            final String descriptor       = "AVHRR_KLM";
-            final String[] paramNames     = {THERMAL_COEFFICIENT, 
-                                             SLOPE_INTERCEPT_COEFFICIENT};
-            final Class[]  paramClasses   = {CoefficientGrid.class,
-                                             CoefficientGrid.class};
-            final Object[]  paramDefaults = {null,
-                                             null};
-            ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
-                                                                                             paramNames,
-                                                                                             paramClasses,
-                                                                                             paramDefaults,
-                                                                                             null));                                                         
-            parameters.setParameter(SLOPE_INTERCEPT_COEFFICIENT, getSlopeInterceptCoef(channel));
-            parameters.setParameter(THERMAL_COEFFICIENT, getIrOperationalCoef(channel));        
-            return parameters;        
-        }
-    }    
+        final int[] bandeSrc       = {getBand(channel)};        
+        final ImageReadParam param = new ImageReadParam();
+        param.setSourceBands(bandeSrc);                                                           
+        BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
+                                                getHeight(imageIndex), 
+                                                BufferedImage.TYPE_USHORT_GRAY);        
+        WritableRectIter rif = RectIterFactory.createWritable(image, null);
+        extractPackedVideoData(rif, param);
+        return image;
+    }           
 
-    /**
-     * Retourne la longueur d'onde du <CODE>channel</CODE>.
-     *
-     * @param channel   Le canal désiré.
-     * @return la longueur d'onde du <CODE>channel</CODE>.
-     */
-    private double getCentralWave(final int channel) throws IOException
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        Field field;
-        double sf = 1;
-        
-        switch (channel) 
-        {
-            case 3 : field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_3B); sf = 1E2; break;                
-            case 4 : field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_4);  sf = 1E3; break;                
-            case 5 : field = getHeader().get(Format.HEADER_KLM_WAVE_CHANNEL_5);  sf = 1E3; break;                
-            default : throw new IllegalArgumentException("Channel error");
-        }
-        return ((double)field.getInteger(input, base)/sf);
-    }    
-    
-    /**
-     * Retourne les constantes <i>constant1</i> et <i>constant2</i>.
-     *
-     * @param channel   Le canal désiré.
-     * @return les constantes <i>constant1</i> et <i>constant2</i>.
-     */
-    private double[] getConstant(final int channel) throws IOException
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        Field field1, field2;
-        
-        switch (channel) 
-        {
-            case 3 : field1 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_3B); 
-                     field2 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_3B); 
-                     break;                
-            case 4 : field1 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_4); 
-                     field2 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_4); 
-                     break;                
-            case 5 : field1 = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_5);                 
-                     field2 = getHeader().get(Format.HEADER_KLM_CONSTANT1_CHANNEL_5); break;                
-            default : throw new IllegalArgumentException("Channel error");
-        }
-        final double[] array = {((double)field1.getInteger(input, base)/1E5), 
-                                ((double)field2.getInteger(input, base)/1E6)};
-        return array;
-    }    
-
-    /**
-     * Retourne la <i>constant2</i>.
-     *
-     * @param channel   Le canal désiré.
-     * @return la <i>constant2</i>.
-     */
-    private double getConstant2(final int channel) throws IOException
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        Field field;
-        
-        switch (channel) 
-        {
-            case 3 : field = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_3B); break;                
-            case 4 : field = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_4); break;                
-            case 5 : field = getHeader().get(Format.HEADER_KLM_CONSTANT2_CHANNEL_5); break;                
-            default : throw new IllegalArgumentException("Channel error");
-        }
-        return ((double)field.getInteger(input, base)/1E6);
-    }            
-    
-    /**
-     * Retourne <i>0</i> si le canal 3b est sélectionné, <i>1</i> si le canal 3a est 
-     * sélectionné et <i>2</i> pour la transition d'un canal à l'autre.
-     *
-     * @param row   Numéro de la ligne.
-     * @return <i>0</i> si le canal 3b est sélectionné, <i>1</i> si le canal 3a est 
-     * sélectionné et <i>2</i> pour la transition d'un canal à l'autre.
-     */
-    private int getStateChannel3(final int row) throws IOException
-    {
-        final long base = SIZE_TBM + SIZE_HEADER + row*SIZE_DATA;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getData().get(Format.DATA_KLM_AVHRR_DIGITAL_B_DATA);        
-        return (field.getUnsignedShort(input, base) & 128) / 128;        
-    }
-    
     /**
      * Extraction d'une grille contenant l'ensemble des points de localisation. 
      *
@@ -631,13 +649,65 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         return grid;                
     }  
     
+    /////////////////////////////
+    /////////////////////////////
+    // Extraction des Metadata //
+    /////////////////////////////
+    /////////////////////////////        
     /**
-     * Retourne la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
-     * ou <CODE>SOUTH_TO_NORTH</CODE>.
-     * @return la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
-     * ou <CODE>SOUTH_TO_NORTH</CODE>.
+     * Retourne la date de fin de l'acquisition.
+     * @return la date de fin de l'acquisition.
      */
-    public int getDirection() throws IOException 
+    protected Date getEndTime() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_STOP_TIME);
+        return field.getDateFormatv1(input, base);
+    }
+    
+    /**
+     * Retourne la hauteur de l'image.
+     * @return la hauteur de l'image.
+     */
+    protected int getHeight() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_NUMBER_OF_SCANS);        
+        return (short)field.getUnsignedShort(input, base);
+    }
+    
+    /**
+     * Retourne une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
+     * @return une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
+     */
+    protected String getSpacecraft() throws IOException 
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;                
+        final Field field = getTBM().get(Format.TBM_SPACECRAFT_ID);        
+        return field.getString(input, 0);
+    }
+    
+    /**
+     * Retourne la date de début de l'acquisition.
+     * Return la date de début de l'acquisition.
+     */
+    protected Date getStartTime() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_START_TIME);
+        return field.getDateFormatv1(input, base);
+    }    
+
+    /**
+     * Retourne la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     * @return la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     */
+    protected int getDirection() throws IOException 
     {
         final ImageInputStream input = (FileImageInputStream)this.input;
         final long base1 = SIZE_TBM + SIZE_HEADER,
@@ -647,24 +717,80 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         final double latitude2 = field.getInteger(input, base2)/1.0E4;    
         return ((latitude1 < latitude2) ? SOUTH_TO_NORTH : NORTH_TO_SOUTH);            
     }  
-    
+
+    /////////////////////
+    /////////////////////
+    // Autres méthodes //
+    /////////////////////
+    /////////////////////    
     /**
-     * Retourne une description du canal.
+     * Retourne le nombre de bandes de l'image.
+     * @return le nombre de bandes de l'image.
+     */
+    public int getNumBands() 
+    {
+        return 5;
+    }      
+
+    /////////////////////////
+    /////////////////////////    
+    // Méthodes internes . //
+    /////////////////////////
+    /////////////////////////            
+    /**
+     * Retourne la date extraite d'un <i>Data Record</i>.
+     *
+     * @param field     Champs à extraitre.
+     * @param index     Index dans le flux.
+     * @return la date extraite d'un <i>Data Record</i>.
+     */
+    protected Date extractDateFromData(final Field field, final long base) 
+                                                                    throws IOException 
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        return field.getDateFormatv2(input, base);        
+    }    
+            
+    /**
+     * Retourne <i>0</i> si le canal 3b est sélectionné, <i>1</i> si le canal 3a est 
+     * sélectionné et <i>2</i> pour la transition d'un canal à l'autre.
+     *
+     * @param row   Numéro de la ligne.
+     * @return <i>0</i> si le canal 3b est sélectionné, <i>1</i> si le canal 3a est 
+     * sélectionné et <i>2</i> pour la transition d'un canal à l'autre.
+     */
+    private int getStateChannel3(final int row) throws IOException
+    {
+        final long base = SIZE_TBM + SIZE_HEADER + row*SIZE_DATA;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getData().get(Format.DATA_KLM_AVHRR_DIGITAL_B_DATA);        
+        return (field.getUnsignedShort(input, base) & 128) / 128;        
+    }
+        
+    /**
+     * Retourne la bande contenant les données du canal.
      *
      * @param channel   Le canal désiré.
-     * Retourne une description du canal.
+     * @return la bande contenant les données du canal.
      */
-    public String toString(int channel) {
-        if (channel < 0 ||channel >= getChannelsNumber())
-            throw new IllegalArgumentException("This indexed channel doesn't exist.");
-        return CHANNEL_DESCRIPTION[channel];
+    private int getBand(final Channel channel)
+    {
+        final int band;
+         if (channel.equals(Channel.CHANNEL_1))
+            band = 0;
+        else if (channel.equals(Channel.CHANNEL_2))
+            band = 1;
+        else if (channel.equals(Channel.CHANNEL_3))            
+            band = 2;
+        else if (channel.equals(Channel.CHANNEL_3A))            
+            band = 2;
+        else if (channel.equals(Channel.CHANNEL_3B))            
+            band = 2;
+        else if (channel.equals(Channel.CHANNEL_4))            
+            band = 3;
+        else if (channel.equals(Channel.CHANNEL_5))                        
+            band = 4;
+        else throw new IllegalArgumentException("Canal inexistant.");
+        return band;
     }
-    
-    /**
-     * Retourne le nombre de canaux disponibles.
-     * @return le nombre de canaux disponibles.
-     */
-    public int getChannelsNumber() {
-        return 6;
-    }    
 }

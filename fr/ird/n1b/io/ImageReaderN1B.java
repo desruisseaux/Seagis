@@ -149,6 +149,8 @@ import fr.ird.util.CoefficientGrid;
  *      différents formats avec certitude.</LI>
  *  <LI>Il serait utile d'utiliser les nouvelles classes NIO pour gérer les flux d'entrée/sortie afin 
  *      d'améliorer les performances.</LI>
+ *  <LI>La détection du format de N1B (AJ ou KLM) est rudimenaire. Il serait nécéssaire
+ *      de trouver un critère d'identification du format</LI>.
  * </UL>
  *
  *
@@ -175,8 +177,8 @@ public abstract class ImageReaderN1B extends ImageReader
 
     /** Identifiant de la direction du satellite durant l'acquisition. */
     public static final int SOUTH_TO_NORTH = 0,
-                            NORTH_TO_SOUTH = 1;
-        
+                            NORTH_TO_SOUTH = 1;        
+    
     /**
      * M?ta donn?es lues. Cet objet est initialement nul, et
      * construit une fois la lecture de l'en-t?te effectu?e.
@@ -210,7 +212,50 @@ public abstract class ImageReaderN1B extends ImageReader
         HEADER = Format.getHeader(format);
         DATA   = Format.getData(format);
     }
+    
+    /**
+     * Sets the input source to use to the given ImageInputStream or other Object.
+     *
+     * @param input the ImageInputStream or other Object to use for future decoding.
+     * @param seekForwardOnly if true, images and metadata may only be read in 
+     *                        ascending order from this input source.
+     * @param ignoreMetadata if true, metadata may be ignored during reads.
+     */
+    public void setInput(final Object  input,
+                         final boolean seekForwardOnly,
+                         final boolean ignoreMetadata) 
+    {        
+        super.setInput(input, seekForwardOnly, ignoreMetadata);        
+        try 
+        {
+            parseMetadata();
+        }
+        catch (IOException ioe) 
+        {
+            throw new IllegalArgumentException("Une exception a été levé lors de " + 
+                                               "l'extraction des Metadata.");            
+        }
+    }
+    
+    /////////////////////////////////////////////////    
+    /////////////////////////////////////////////////
+    // Extraction des coefficients de calibration. //
+    /////////////////////////////////////////////////
+    /////////////////////////////////////////////////    
+    /**
+     * Retourne une liste de paramètres contenant les paramètres de calibration.
+     *
+     * @param channel   Canal désiré.
+     * @return une liste de paramètres contenant les paramètres de calibration.
+     */
+    public abstract ParameterList getCalibrationParameter(final Channel channel) 
+                                                                throws IOException;
 
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    // Extraction des principales données //
+    ////////////////////////////////////////
+    ////////////////////////////////////////
     /**
      * Extraction d'une grille contenant l'ensemble des points de localisation. 
      *
@@ -229,7 +274,66 @@ public abstract class ImageReaderN1B extends ImageReader
     public abstract void extractPackedVideoData(final WritableRectIter  iterator, 
                                                 final ImageReadParam    param) 
                                                                 throws IOException;
+
+    /**    
+     * Retourne une image contenant les <i>packed-video data</i> d'une bande. 
+     *
+     * @param imageIndex    Index de l'image à extraire.
+     * @param param         Paramètres de l'extraction.
+     * @return      une image contenant les <i>packed-video data</i> du canal désiré. 
+     * @exception   IOException si une input ou output exception survient.
+     */            
+    public BufferedImage read(final int imageIndex, final ImageReadParam param) 
+                                                                    throws IOException 
+    {
+        checkIndex(imageIndex);        
+        BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
+                                                getHeight(imageIndex), 
+                                                BufferedImage.TYPE_USHORT_GRAY);        
+        WritableRectIter rif = RectIterFactory.createWritable(image, null);
+        extractPackedVideoData(rif, param);
+        return image;
+    }        
+        
+    /**    
+     * Retourne une image contenant les <i>packed-video data</i> d'un canal. L'image 
+     * retournée contiendra uniquement les informations du canal désiré.
+     *
+     * @param imageIndex    Index de l'image à extraire.
+     * @param canal Canal désiré.
+     * @return      une image contenant les <i>packed-video data</i> d'un canal. 
+     */            
+    public abstract BufferedImage read(final int imageIndex, final Channel channel) 
+                                                                    throws IOException;
+    /**
+     * Retourne une image contenant les <i>packed-video data</i> d'un canal. 
+     *
+     * @param imageIndex    Index de l'image à extraire.
+     * @param param         Paramètres de l'extraction.
+     * @return      une image contenant les <i>packed-video data</i> d'un canal. 
+     * @exception   IOException si une input ou output exception survient.
+     */
+    public RenderedImage readAsRenderedImage(final int            imageIndex, 
+                                             final ImageReadParam param) throws IOException
+    {        
+        return new TiledImage(read(imageIndex, param), 512, 512);
+    }
     
+    /**
+     * Vérifie l'index de l'image.
+     * @exception IndexOutOfBoundsException Si l'index de l'image n'est pas correcte.
+     */
+    private void checkIndex(final int imageIndex) throws IndexOutOfBoundsException
+    {
+        if (imageIndex != 0)
+            throw new IndexOutOfBoundsException("bad index");
+    }
+
+    /////////////////////////////
+    /////////////////////////////
+    // Extraction des Metadata //
+    /////////////////////////////
+    /////////////////////////////        
     /**
      * Retourne une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
      * @return une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
@@ -252,7 +356,7 @@ public abstract class ImageReaderN1B extends ImageReader
      * Retourne la hauteur de l'image.
      * @return la hauteur de l'image.
      */
-    public abstract int getHeight() throws IOException;
+    protected abstract int getHeight() throws IOException;
     
     /**
      * Retourne la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
@@ -260,64 +364,8 @@ public abstract class ImageReaderN1B extends ImageReader
      * @return la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
      * ou <CODE>SOUTH_TO_NORTH</CODE>.
      */
-    public abstract int getDirection() throws IOException;    
-
-    /**
-     * Retourne la date extraite d'un <i>Data Record</i>.
-     *
-     * @param field     Champs à extraitre.
-     * @param index     Index dans le flux.
-     * @return la date extraite d'un <i>Data Record</i>.
-     */
-    protected abstract Date extractDateFromData(final Field field, 
-                                                final long  base) throws IOException;    
+    protected abstract int getDirection() throws IOException;    
     
-    /**
-     * Retourne une liste de paramètres contenant les paramètres de calibration.
-     *
-     * @param channel   Canal désiré.
-     * @return une liste de paramètres contenant les paramètres de calibration.
-     */
-    public abstract ParameterList getCalibrationParameter(final int channel) 
-                                                                throws IOException;
-
-    /**
-     * Retourne le nombre de canaux disponibles.
-     * @return le nombre de canaux disponibles.
-     */
-    public abstract int getChannelsNumber();
-
-    /**
-     * Retourne une description du canal.
-     *
-     * @param channel   Le canal désiré.
-     * Retourne une description du canal.
-     */
-    public abstract String toString(final int channel);
-
-    /**
-     * Sets the input source to use to the given ImageInputStream or other Object.
-     *
-     * @param input the ImageInputStream or other Object to use for future decoding.
-     * @param seekForwardOnly if true, images and metadata may only be read in 
-     *                        ascending order from this input source.
-     * @param ignoreMetadata if true, metadata may be ignored during reads.
-     */
-    public void setInput(final Object  input,
-                         final boolean seekForwardOnly,
-                         final boolean ignoreMetadata) 
-    {        
-        super.setInput(input, seekForwardOnly, ignoreMetadata);        
-        try 
-        {
-            parseMetadata();
-        }
-        catch (IOException ioe) 
-        {
-            throw new IllegalArgumentException("An exception has occured when extracting Metadata.");            
-        }
-   }
-                          
     /**
      * Implémentation de la méthode <CODE>getHeight(final int imageIndex)</CODE> de la 
      * classe abstraite <COCE>ImageReader</CODE>.
@@ -329,9 +377,35 @@ public abstract class ImageReaderN1B extends ImageReader
     public int getHeight(final int imageIndex) throws IOException 
     {
         checkIndex(imageIndex);        
-        return ((Integer)metadata.get(Metadata.HEIGHT)).intValue();
+        return getHeight();
     }
-    
+
+    /**
+     * Implémentation de la méthode <CODE>getWidth(final int imageIndex)</CODE> de 
+     * la classe abstraite <CODE>ImageReader</CODE>.
+     *
+     * @return      Returns the width in pixels of the given image within the input
+     *              source.
+     * @exception   IOException if an error occurs reading the width information from the 
+     *              input source.
+     */    
+    public int getWidth(final int imageIndex) throws IOException 
+    {
+        checkIndex(imageIndex);        
+        return NB_PIXEL_LINE;
+    }
+
+    /////////////////////
+    /////////////////////
+    // Autres méthodes //
+    /////////////////////
+    /////////////////////    
+    /**
+     * Retourne le nombre de bandes de l'image.
+     * @return le nombre de bandes de l'image.
+     */
+    public abstract int getNumBands();
+
     /**
      * Implémentation de la méthode <CODE>getImageMetadata(int imageIndex)</CODE> de la 
      * classe abstraite <CODE>ImageReader</CODE>.
@@ -363,8 +437,7 @@ public abstract class ImageReaderN1B extends ImageReader
     {
         checkIndex(imageIndex);        
         List liste = new ArrayList();
-        liste.add(ImageTypeSpecifier.createGrayscale(16, DataBuffer.TYPE_USHORT, false));
-        
+        liste.add(ImageTypeSpecifier.createGrayscale(16, DataBuffer.TYPE_USHORT, false));        
         return liste.iterator();
     }    
 
@@ -399,136 +472,7 @@ public abstract class ImageReaderN1B extends ImageReader
     {
         return null;
     }
-    
-    /**
-     * Implémentation de la méthode <CODE>getWidth(final int imageIndex)</CODE> de 
-     * la classe abstraite <CODE>ImageReader</CODE>.
-     *
-     * @return      Returns the width in pixels of the given image within the input
-     *              source.
-     * @exception   IOException if an error occurs reading the width information from the 
-     *              input source.
-     */    
-    public int getWidth(final int imageIndex) throws IOException 
-    {
-        checkIndex(imageIndex);        
-        return NB_PIXEL_LINE;
-    }
-    
-    /**    
-     * Retourne une image contenant les <i>packed-video data</i> d'un canal. 
-     *
-     * @param imageIndex    Index de l'image à extraire.
-     * @param param         Paramètres de l'extraction.
-     * @return      une image contenant les <i>packed-video data</i> d'un canal. 
-     * @exception   IOException si une input ou output exception survient.
-     */            
-    public BufferedImage read(final int imageIndex, final ImageReadParam param) 
-                                                                    throws IOException 
-    {
-        checkIndex(imageIndex);        
-        BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
-                                                getHeight(imageIndex), 
-                                                BufferedImage.TYPE_USHORT_GRAY);        
-        WritableRectIter rif = RectIterFactory.createWritable(image, null);
-        extractPackedVideoData(rif, param);
-        return image;
-    }        
-        
-    /**
-     * Retourne une image contenant les <i>packed-video data</i> d'un canal. 
-     *
-     * @param imageIndex    Index de l'image à extraire.
-     * @param param         Paramètres de l'extraction.
-     * @return      une image contenant les <i>packed-video data</i> d'un canal. 
-     * @exception   IOException si une input ou output exception survient.
-     */
-    public RenderedImage readAsRenderedImage(final int            imageIndex, 
-                                             final ImageReadParam param) throws IOException
-    {        
-        return new TiledImage(read(imageIndex, param), 512, 512);
-    }
-    
-    /**
-     * Vérifie l'index de l'image.
-     * @exception IndexOutOfBoundsException Si l'index de l'image n'est pas correcte.
-     */
-    private void checkIndex(final int imageIndex) throws IndexOutOfBoundsException
-    {
-        if (imageIndex != 0)
-            throw new IndexOutOfBoundsException("bad index");
-    }
-    
-    /** 
-     * Convertie un tableau de byte en chaîne de caractères.
-     *
-     * @param   b tableau de byte à convertir.
-     * @return  une chaine de caractères.
-     **/
-    private static String byteArrayToString(final byte[] b) 
-    {
-        StringBuffer s = new StringBuffer();
-        
-        for (int i=0 ; i<b.length ; i++) 
-            s.append(b[i]);                
-        return s.toString();
-    }
-    
-    /** 
-     * Convertie un tableau de byte en double.
-     *
-     * @param   b tableau de byte à transformer.
-     * @return  un double.
-     */
-    private static double byteArrayToDouble(final byte[] b) 
-    {
-        return Double.parseDouble(byteArrayToString(b));                        
-    }    
-    
-    /** 
-     * Convertie un tableau de byte en long.
-     *
-     * @param   b tableau de byte à transformer.
-     * @return  un long.
-     */
-    private static long byteArrayToLong(final byte[] b) 
-    {
-        return Long.parseLong(byteArrayToString(b));        
-    }        
-    
-    /** 
-     * Convertie un tableau de byte en short.
-     *
-     * @param   b tableau de byte à transformer.
-     * @return  un short.
-     */
-    public static short byteArrayToShort(final byte[] b) 
-    {
-        return Short.parseShort(byteArrayToString(b));        
-    }           
-    
-    /** 
-     * Convertie un tableau de byte en float.
-     *
-     * @param   b tableau de byte à transformer.
-     * @return  un float.
-     */
-    private static float byteArrayToFloat(final byte[] b) 
-    {
-        return Float.parseFloat(byteArrayToString(b));        
-    }           
 
-    /** 
-     * Convertie un tableau de byte en int.
-     *
-     * @param   b tableau de byte à transformer.
-     * @return  un int.
-     */
-    public static int byteArrayToInt(final byte[] b) 
-    {
-        return Integer.parseInt(byteArrayToString(b));        
-    }               
-    
     /**
      * Retourne un ImageReaderN1B.
      *
@@ -580,7 +524,23 @@ public abstract class ImageReaderN1B extends ImageReader
         reader.setInput(input);        
         return reader;
     }
-        
+
+    /**
+     * Retourne le format <CODE>Format.FORMAT_AJ</CODE> ou <CODE>Format.FORMAT_KLM</CODE> 
+     * du fichier.
+     * @return le format  <CODE>Format.FORMAT_AJ</CODE> ou <CODE>Format.FORMAT_KLM</CODE> 
+     * du fichier.
+     */
+    private int getFormat() 
+    {
+        return format;
+    }    
+
+    /////////////////////////
+    /////////////////////////    
+    // Méthodes internes . //
+    /////////////////////////
+    /////////////////////////                
     /**
      * Lecture des principales informations du Header et du TBM.
      * @exception   IOException si une input ou output exception survient.
@@ -590,21 +550,11 @@ public abstract class ImageReaderN1B extends ImageReader
         metadata = new Metadata();
         metadata.put(Metadata.SPACECRAFT, getSpacecraft());        
         metadata.put(Metadata.START_TIME, getStartTime());
-        metadata.put(Metadata.HEIGHT,     getHeight());
         metadata.put(Metadata.END_TIME,   getEndTime());        
+        metadata.put(Metadata.DIRECTION,  getDirection());        
+        metadata.put(Metadata.FORMAT,     getFormat());        
     }    
 
-    /**
-     * Retourne le format <CODE>Format.FORMAT_AJ</CODE> ou <CODE>Format.FORMAT_KLM</CODE> 
-     * du fichier.
-     * @return le format  <CODE>Format.FORMAT_AJ</CODE> ou <CODE>Format.FORMAT_KLM</CODE> 
-     * du fichier.
-     */
-    public int getFormat() 
-    {
-        return format;
-    }    
-    
     /** 
      * Retourne le format du <i>TBM</i>.
      * @return le format du <i>TBM</i>. 
@@ -630,5 +580,5 @@ public abstract class ImageReaderN1B extends ImageReader
     protected Format getData()
     {
         return DATA;    
-    }   
+    }       
 }

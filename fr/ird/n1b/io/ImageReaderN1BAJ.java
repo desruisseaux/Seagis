@@ -77,25 +77,18 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.units.Unit;
 
 /**
- * Cette classe définie les méthodes spécifiques aux images N1B (level 1B) standard pour le 
- * format POD (ancien format utilisé pour le stockage des données issues des satellites
- * NOAA A-J).
+ * Cette classe définit les méthodes spécifiques aux images N1B (level 1B) standard pour 
+ * le format POD. Ce format est utilisé pour le stockage des  des données issues des 
+ * satellites NOAA AJ. <BR><BR>
  *
-* @author Remi EVE
+ * Il est a noté qu'il est fréquent de trouver des images au format POD/AJ contenant
+ * des données provenant de satellites KLM.
+ *
+ * @author Remi EVE
  * @version $Id$
  */
 public class ImageReaderN1BAJ extends ImageReaderN1B 
-{        
-    /** Identifiant des paramètres accessibles dans la liste de paramètres de calibration.  */
-    public static final String SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients";
-    
-    /** Description des canaux. */
-    private static final String[] CHANNEL_DESCRIPTION = {"Channel 1  (visible)", 
-                                                         "Channel 2  (visible)", 
-                                                         "Channel 3  (visible)",
-                                                         "Cahnnel 4  (thermal)", 
-                                                         "Channel 5  (thermal)"};
-                                                         
+{                                                                     
     /** Nombre de bandes de l'image. */ 
     private static final int NUM_BANDE = 5;      
 
@@ -113,20 +106,6 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
      * g?ocentrique vers le syst?me g?ographique.
      */
     private final CoordinateTransformation transformation;
-
-    /** 
-     * A chaque enregistrement et pour chaque canal, deux valeurs sont disponibles et 
-     * utilisées lors de la calibration. Elles sont stockées dans le fichier comme suit :
-     * <BR><BR>
-     * <UL>
-     *   <LI><i>slope</i> value</LI>
-     *   <LI><i>intercept</i> value</LI>
-     * </UL>
-     * <BR><BR>
-     * La constante ci-dessous indique le nombre de coefficients de calibration par 
-     * canal et par ligne.
-     */
-    private static final int NUM_COEF_SLOPE_INTERCEPT  = 2;  
 
     /** 
      * Creates a new instance of ImageReaderN1BAJ 
@@ -170,8 +149,87 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
         }                        
     }    
     
+    /////////////////////////////////////////////////    
+    /////////////////////////////////////////////////
+    // Extraction des coefficients de calibration. //
+    /////////////////////////////////////////////////
+    /////////////////////////////////////////////////    
     /**
-     * Extraction des <i>packed-video data</i> d'un canal.
+     * Retourne une liste de paramètres contenant les paramètres de calibration du
+     * <CODE>channel</CODE> désiré.
+     *
+     * @param channel   Channel désiré.
+     * @return une liste de paramètres contenant les paramètres de calibration du 
+     *         <CODE>channel</CODE> désiré.
+     */
+    public ParameterList getCalibrationParameter(final Channel channel) throws IOException
+    {
+        final String descriptor       = "AVHRR_AJ";
+        final String[] paramNames     = {"SLOPE INTERCEPT COEFFICIENTS"};
+        final Class[]  paramClasses   = {CoefficientGrid.class};
+        final Object[]  paramDefaults = {null};
+        final ParameterList parameters = new ParameterListImpl(
+                                            new ParameterListDescriptorImpl(descriptor,
+                                                                            paramNames,
+                                                                            paramClasses,
+                                                                            paramDefaults,
+                                                                            null));        
+        parameters.setParameter("SLOPE INTERCEPT COEFFICIENTS", 
+                                getSlopeIntercept(channel));
+        return parameters;
+    }       
+
+    /**
+     * Retourne une grille contenant les coefficients de calibration du 
+     * <code>channel</code>
+     *
+     * @param channel   Canal désiré.
+     * @return une grille contenant les coefficients de calibration du 
+     *         <code>channel</code>.
+     */
+    private CoefficientGrid getSlopeIntercept(final Channel channel) throws IOException 
+    {
+        /* A chaque enregistrement et pour chaque canal, deux coefficients sont 
+           nécessaires : slope et intercept. La constante ci-dessous indique le nombre de 
+           coefficients de calibration par canal et par ligne. */
+        final int count = 2;                 
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final double div1 = 2<<29;  
+        final double div2 = 2<<21;
+        final double[] array = new double[count];        
+        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), count);
+        final Field fieldCoeff;
+        
+        if (channel.equals(Channel.CHANNEL_1))
+            fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_1); 
+        else if (channel.equals(Channel.CHANNEL_2))
+            fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_2); 
+        else if (channel.equals(Channel.CHANNEL_3))
+            fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_3); 
+        else if (channel.equals(Channel.CHANNEL_4))
+            fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_4); 
+        else if (channel.equals(Channel.CHANNEL_5))
+            fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_5);                 
+        else throw new IllegalArgumentException("Erreur de canal.");
+                        
+        long base = SIZE_TBM + SIZE_HEADER;
+        for (int row=0 ; row<getHeight(0) ; row++, base+=SIZE_DATA) 
+        {
+            input.seek(base + fieldCoeff.offset);                                 
+            array[0] = (double)input.readUnsignedInt() / div1; 
+            array[1] = (double)input.readUnsignedInt() / div2; 
+            coefficients.setElement(row, array);            
+        }
+        return coefficients;        
+    }    
+
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    // Extraction des principales données //
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+    /**
+     * Extraction des <i>packed-video data</i> d'une bande.
      *
      * @param iterator      Un itérateur sur une RenderedImage.
      * @param param         Paramètres de l'image.
@@ -299,126 +357,6 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
     }
 
     /**
-     * Retourne une grille contenant les coefficients de calibration du <code>channel</code>
-     *
-     * @param channel   Canal désiré.
-     * @return une grille contenant les coefficients de calibration du <code>channel</code>.
-     */
-    private CoefficientGrid getSlopeInterceptCoef(final int channel) throws IOException 
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;
-        final double div1 = 2<<29;  
-        final double div2 = 2<<21;
-        final double[] array = new double[NUM_COEF_SLOPE_INTERCEPT];        
-        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_COEF_SLOPE_INTERCEPT);
-        Field fieldCoeff;
-        
-        switch (channel) 
-        {
-            case 0 : fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_1); break;                
-            case 1 : fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_2); break;                
-            case 2 : fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_3); break;                
-            case 3 : fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_4); break;                
-            case 4 : fieldCoeff = getData().get(Format.DATA_AJ_CALIBRATION_COEF_CHANNEL_5); break;                
-            default : throw new IllegalArgumentException("Channel error");
-        }
-                        
-        long base = SIZE_TBM + SIZE_HEADER;
-        for (int indiceLine=0 ; indiceLine<getHeight(0) ; indiceLine++, base+=SIZE_DATA) 
-        {
-            input.seek(base + fieldCoeff.offset);                     
-            
-            // Slope value.
-            array[0] = (double)input.readUnsignedInt() / div1; 
-            // Intercept value.
-            array[1] = (double)input.readUnsignedInt() / div2; 
-            coefficients.setElement(indiceLine, array);            
-        }
-        return coefficients;        
-    }    
-    
-    /**
-     * Retourne la date de fin de l'acquisition.
-     * @return la date de fin de l'acquisition.
-     */
-    public Date getEndTime() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_STOP_TIME);
-        return extractDateFromData(field, base);
-    }
-    
-    /**
-     * Retourne la hauteur de l'image.
-     * @return la hauteur de l'image.
-     */
-    public int getHeight() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_NUMBER_OF_SCANS);
-        return field.getShort(input, base);
-    }
-    
-    /**
-     * Retourne une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
-     * @return une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
-     */
-    public String getSpacecraft() throws IOException 
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getTBM().get(Format.TBM_SPACECRAFT_ID);
-        return field.getString(input, 0);
-    }
-    
-    /**
-     * Retourne la date de début de l'acquisition.
-     * Return la date de début de l'acquisition.
-     */
-    public Date getStartTime() throws IOException 
-    {
-        final long base = SIZE_TBM;
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        final Field field = getHeader().get(Format.HEADER_START_TIME);
-        return extractDateFromData(field, base);    
-    }
-    
-    /**
-     * Retourne la date extraite d'un <i>Data Record</i>.
-     *
-     * @param field     Champs à extraitre.
-     * @param index     Index dans le flux.
-     * @return la date extraite d'un <i>Data Record</i>.
-     */
-    protected Date extractDateFromData(final Field field, final long base) throws IOException
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;        
-        return field.getDateFormatv3(input, base);
-    }   
-        
-    /**
-     * Retourne une liste de paramètres contenant les paramètres de calibration.
-     *
-     * @param channel   Canal désiré.
-     * @return une liste de paramètres contenant les paramètres de calibration.
-     */
-    public ParameterList getCalibrationParameter(int channel) throws IOException
-    {
-        final String descriptor       = "AVHRR_AJ";
-        final String[] paramNames     = {SLOPE_INTERCEPT_COEFFICIENT};
-        final Class[]  paramClasses   = {CoefficientGrid.class};
-        final Object[]  paramDefaults = {null};
-        final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
-                                                                                               paramNames,
-                                                                                               paramClasses,
-                                                                                               paramDefaults,
-                                                                                               null));        
-        parameters.setParameter(SLOPE_INTERCEPT_COEFFICIENT, getSlopeInterceptCoef(channel));
-        return parameters;
-    }       
-    
-    /**
      * Extraction d'une grille contenant l'ensemble des points de localisation. 
      *
      * @return      Une grille de points de localisation.
@@ -464,7 +402,131 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
         assert grid.isMonotonic(false);
         return grid;        
     }    
-
+    
+    /**
+     * Retourne une image contenant les <i>packed-video data</i> d'un canal. L'image
+     * retournée contiendra uniquement les informations du canal désiré. 
+     *
+     * @param imageIndex    Index de l'image à extraire.
+     * @param channel       Canal désiré.
+     * @return une image contenant les <i>packed-video data</i> d'un canal.
+     */
+    public BufferedImage read(final int imageIndex, final Channel channel) throws IOException
+    {
+        final int[] bandeSrc       = {getBand(channel)};        
+        final ImageReadParam param = new ImageReadParam();
+        param.setSourceBands(bandeSrc);                                                           
+        BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
+                                                getHeight(imageIndex), 
+                                                BufferedImage.TYPE_USHORT_GRAY);        
+        WritableRectIter rif = RectIterFactory.createWritable(image, null);
+        extractPackedVideoData(rif, param);
+        return image;
+    }       
+    
+    /////////////////////////////
+    /////////////////////////////
+    // Extraction des Metadata //
+    /////////////////////////////
+    /////////////////////////////        
+    /**
+     * Retourne la date de fin de l'acquisition.
+     * @return la date de fin de l'acquisition.
+     */
+    protected Date getEndTime() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_STOP_TIME);
+        return extractDateFromData(field, base);
+    }
+    
+    /**
+     * Retourne la hauteur de l'image.
+     * @return la hauteur de l'image.
+     */
+    protected int getHeight() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_NUMBER_OF_SCANS);
+        return field.getShort(input, base);
+    }
+    
+    /**
+     * Retourne une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
+     * @return une chaîne de caractère identifiant le satellite utilisé pour l'acquisition.
+     */
+    protected String getSpacecraft() throws IOException 
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getTBM().get(Format.TBM_SPACECRAFT_ID);
+        return field.getString(input, 0);
+    }
+    
+    /**
+     * Retourne la date de début de l'acquisition.
+     * Return la date de début de l'acquisition.
+     */
+    protected Date getStartTime() throws IOException 
+    {
+        final long base = SIZE_TBM;
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        final Field field = getHeader().get(Format.HEADER_START_TIME);
+        return extractDateFromData(field, base);    
+    }
+    
+    /**
+     * Retourne la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     * @return la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     */
+    protected int getDirection() throws IOException 
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final long base1 = SIZE_TBM + SIZE_HEADER,
+                   base2 = SIZE_TBM + SIZE_HEADER + (getHeight()-1)*SIZE_DATA;        
+        final Field field = getData().get(Format.DATA_EARTH_LOCATION);
+        
+        final double latitude1 = field.getShort(input, base1)/128.0;        
+        final double latitude2 = field.getShort(input, base2)/128.0;    
+        
+        return ((latitude1 < latitude2) ? SOUTH_TO_NORTH : NORTH_TO_SOUTH);            
+    }    
+    
+    /////////////////////
+    /////////////////////
+    // Autres méthodes //
+    /////////////////////
+    /////////////////////    
+    /**
+     * Retourne le nombre de bandes de l'image.
+     * @return le nombre de bandes de l'image.
+     */
+    public int getNumBands() 
+    {
+        return 5;
+    }
+        
+    /////////////////////////
+    /////////////////////////    
+    // Méthodes internes . //
+    /////////////////////////
+    /////////////////////////    
+    /**
+     * Retourne la date extraite d'un <i>Data Record</i>.
+     *
+     * @param field     Champs à extraitre.
+     * @param index     Index dans le flux.
+     * @return la date extraite d'un <i>Data Record</i>.
+     */
+    protected Date extractDateFromData(final Field field, final long base) throws IOException
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;        
+        return field.getDateFormatv3(input, base);
+    }   
+            
     /**
      * Retourne l'altitude du satellite.
      * @return l'altitude du satellite.
@@ -492,7 +554,7 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
         point = getGeographicCoordinate(point);
         return point.getOrdinate(2);
     }    
-    
+
     /**
      * Retourne les coordonn?es g?ographiques du satellite ? la date sp?cifi?e.
      * Cette m?thode obtient les coordonn?es g?ocentriques et les transforme en
@@ -516,44 +578,27 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
             throw e;
         }
     }    
-    
+
     /**
-     * Retourne la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
-     * ou <CODE>SOUTH_TO_NORTH</CODE>.
-     * @return la direction du satellite lors de l'acquisition <CODE>NORTH_TO_SOUTH</CODE>
-     * ou <CODE>SOUTH_TO_NORTH</CODE>.
-     */
-    public int getDirection() throws IOException 
-    {
-        final ImageInputStream input = (FileImageInputStream)this.input;
-        final long base1 = SIZE_TBM + SIZE_HEADER,
-                   base2 = SIZE_TBM + SIZE_HEADER + (getHeight()-1)*SIZE_DATA;        
-        final Field field = getData().get(Format.DATA_EARTH_LOCATION);
-        
-        final double latitude1 = field.getShort(input, base1)/128.0;        
-        final double latitude2 = field.getShort(input, base2)/128.0;    
-        
-        return ((latitude1 < latitude2) ? SOUTH_TO_NORTH : NORTH_TO_SOUTH);            
-    }
-    
-    /**
-     * Retourne une description du canal.
+     * Retourne la bande contenant les données du canal désiré.
      *
      * @param channel   Le canal désiré.
-     * Retourne une description du canal.
+     * @return la bande contenant les données du canal désiré.
      */
-    public String toString(int channel) {
-        if (channel < 0 ||channel >= this.getChannelsNumber())
-            throw new IllegalArgumentException("This indexed channel doesn't exist.");
-        return CHANNEL_DESCRIPTION[channel];
-    }
-    
-    /**
-     * Retourne le nombre de canaux disponibles.
-     * @return le nombre de canaux disponibles.
-     */
-    public int getChannelsNumber() 
+    private int getBand(final Channel channel)
     {
-        return 5;
+       final int band;
+         if (channel.equals(Channel.CHANNEL_1))
+            band = 0;
+        else if (channel.equals(Channel.CHANNEL_2))
+            band = 1;
+        else if (channel.equals(Channel.CHANNEL_3))            
+            band = 2;
+        else if (channel.equals(Channel.CHANNEL_4))            
+            band = 3;
+        else if (channel.equals(Channel.CHANNEL_5))                        
+            band = 4;
+        else throw new IllegalArgumentException("Canal inexistant.");
+        return band;
     }    
 }
