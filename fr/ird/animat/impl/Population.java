@@ -104,24 +104,18 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     }
 
     /**
-     * Ajoute un nouvel animal dans cette population. L'animal sera de l'espèce spécifiée
-     * et apparaîtra à la position initiale spécifiée.
+     * Ajoute un nouvel animal dans cette population. L'implémentation par défault retourne
+     * <code>new Animal(species, this, position)</code>. Le constructeur de {@link Animal}
+     * se charge d'ajouter automatiquement le nouvel animal à cette population.
      *
      * @param  species L'espèce de cet animal.
      * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
      * @return L'animal créé.
      */
     public Animal newAnimal(fr.ird.animat.Species species, final Point2D position) {
-        if (!(species instanceof Species)) {
-            final Locale[] locales = species.getLocales();
-            final String[] names = new String[locales.length];
-            for (int i=0; i<locales.length; i++) {
-                names[i] = species.getName(locales[i]);
-            }
-            species = new Species(locales, names, species.getIcon().getColor());
+        synchronized (getTreeLock()) {
+            return new Animal(Species.wrap(species), this, position);
         }
-        // Le constructeur de 'Animal' ajoute automatiquement l'animal à cette population.
-        return new Animal((Species)species, this, position);
     }
 
     /**
@@ -231,19 +225,6 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     }
 
     /**
-     * A appeler à chaque fois que la population change.
-     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
-     * {@link #getTreeLock()}. L'appel de {@link PopulationChangeListener#populationChanged}
-     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
-     *
-     * @param type Le type de changement qui est survenu. Cet argument peut être une des
-     *        constantes énumérées dans {@link PopulationChangeEvent}.
-     */
-    protected void firePopulationChanged(final int type) {
-        firePopulationChanged(new PopulationChangeEvent(this, type, null, null));
-    }
-
-    /**
      * Préviens tous les objets intéressés qu'un animal a été ajouté ou supprimé.
      *
      * @param animal L'animal ajouté ou supprimé.
@@ -263,14 +244,17 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
 
     /**
      * Préviens tous les objets intéressés que la population a changée.
+     * Cette méthode est habituellement appelée à l'intérieur d'un bloc synchronisé sur
+     * {@link #getTreeLock()}. L'appel de {@link PopulationChangeListener#populationChanged}
+     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
      *
      * @param event Un objet décrivant le changement survenu.
      */
-    private void firePopulationChanged(final PopulationChangeEvent event) {
+    protected void firePopulationChanged(final PopulationChangeEvent event) {
+        final Object[] listeners = listenerList.getListenerList();
         final Runnable run = new Runnable() {
             public void run() {
                 assert Thread.holdsLock(getTreeLock());
-                final Object[] listeners = listenerList.getListenerList();
                 for (int i=listeners.length; (i-=2)>=0;) {
                     if (listeners[i] == PopulationChangeListener.class) try {
                         ((PopulationChangeListener)listeners[i+1]).populationChanged(event);

@@ -323,10 +323,10 @@ public final class Path extends Point2D implements Shape, Serializable {
      * alors on s'arrêtera à la position du point spécifié. Le {@linkplain #getHeading cap}
      * sera modifié de façon à correspondre à la direction vers le nouveau point.
      *
-     * @param point Point vers lequel avancer, en milles nautiques. Un point
-     *              identique à <code>this</code> ne fera pas bouger l'animal,
+     * @param point Point vers lequel avancer, en degrés de longitude et de latitude.
+     *              Un point identique à <code>this</code> ne fera pas bouger l'animal,
      *              quelle que soit la valeur de <code>distance</code>.
-     * @param distance Distance à parcourir, en milles nautiques. Une valeur
+     * @param distance Distance maximale à parcourir, en milles nautiques. Une valeur
      *                 négative fera fuir l'animal dans la direction opposée.
      * @return <code>true</code> si on a atteint le point spécifié, ou
      *         <code>false</code> si on s'est déplacé sans l'atteindre.

@@ -97,7 +97,8 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
      * la date de fin du pas de temps courant, alors cette méthode signale ce fait en
      * retournant un numéro négatif.
      *
-     * @param  time Date pour laquelle on veut le pas de temps.
+     * @param  time Date pour laquelle on veut le pas de temps, or <code>null</code> pour le
+     *         pas de temps courrant.
      * @return Le numéro séquentiel du pas de temps à la date spécifiée, ou un nombre négatif
      *         si la date spécifiée est antérieure à la date initiale de l'horloge ou ultérieure
      *         à la date de fin du pas de temps courant.
@@ -108,7 +109,8 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
      * Retourne le numéro séquentiel du pas de temps correspondant à la date spécifiée.
      * Ce numéro sera compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
      *
-     * @param  time Date pour laquelle on veut le pas de temps.
+     * @param  time Date pour laquelle on veut le pas de temps, or <code>null</code> pour le
+     *         pas de temps courrant.
      * @return Le numéro séquentiel du pas de temps à la date spécifiée.
      * @throws IllegalArgumentException si la date spécifiée est antérieure à la date initiale
      *         de l'horloge ou ultérieure à la date de fin du pas de temps courant.
@@ -381,6 +383,9 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          * Ce numéro sera compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
          */
         protected int computeStepSequenceNumber(final Date time) {
+            if (time == null) {
+                return getStepSequenceNumber();
+            }
             long delta = time.getTime();
             if (delta < this.time + duration) {
                 delta -= initialTime;

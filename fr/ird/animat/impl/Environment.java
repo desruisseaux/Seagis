@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.EventListener;
 import java.util.NoSuchElementException;
 import javax.swing.event.EventListenerList;
-import java.rmi.server.RemoteServer;
+import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
 // OpenGIS et Geotools
@@ -61,7 +61,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Environment extends RemoteServer implements fr.ird.animat.Environment {
+public class Environment extends RemoteObject implements fr.ird.animat.Environment {
     /**
      * Ensemble des populations comprises dans cet environnement. Cet ensemble est accédé
      * par le constructeur de {@link Population} et {@link Population#kill} seulement.
@@ -106,13 +106,16 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     }
 
     /**
-     * Ajoute une nouvelle population dans cet environnement.
+     * Ajoute une nouvelle population dans cet environnement. L'implémentation par défaut retourne
+     * simplement <code>new Population(this)</code>. Le constructeur de {@link Population} se charge
+     * d'ajouter automatiquement la nouvelle population à cet environnement.
      *
      * @return La population créée.
      */
     public Population newPopulation() {
-        // Le constructeur de 'Population' ajoute automatiquement la population à cet environnement.
-        return new Population(this);
+        synchronized (getTreeLock()) {
+            return new Population(this);
+        }
     }
 
     /**
@@ -187,12 +190,18 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     /**
      * Avance l'horloge d'un pas de temps. Cette opération peut provoquer le chargement
      * de nouvelles données et lancer un événement {@link EnvironmentChangeEvent}.
+     *
+     * @return <code>true</code> si cette méthode a pu avancer au pas de temps suivant,
+     *         ou <code>false</code> s'il n'y a plus de données disponibles pour les pas
+     *         de temps suivants.
      */
-    public void nextTimeStep() {
+    public boolean nextTimeStep() {
         synchronized (getTreeLock()) {
             clock.nextTimeStep();
-            fireEnvironmentChanged(EnvironmentChangeEvent.DATE_CHANGED);
+            fireEnvironmentChanged(new EnvironmentChangeEvent(this, EnvironmentChangeEvent.DATE_CHANGED,
+                                                              clock.getTime(), null, null));
         }
+        return true;
     }
 
     /**
@@ -216,19 +225,6 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     }
 
     /**
-     * Préviens tous les objets intéressés que l'environnement a changé.
-     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
-     * {@link #getTreeLock()}. L'appel de {@link EnvironmentChangeListener#environmentChanged}
-     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
-     *
-     * @param type Le type de changement qui est survenu. Cet argument peut être une des
-     *        constantes énumérées dans {@link EnvironmentChangeEvent}.
-     */
-    protected void fireEnvironmentChanged(final int type) {
-        fireEnvironmentChanged(new EnvironmentChangeEvent(this, type, null, null));
-    }
-
-    /**
      * Préviens tous les objets intéressés qu'une population a été ajoutée ou supprimée.
      *
      * @param population La population ajoutée ou supprimée.
@@ -239,23 +235,28 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
         final Set<fr.ird.animat.Population> change = Collections.singleton((fr.ird.animat.Population)population);
         final EnvironmentChangeEvent event;
         if (added) {
-            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_ADDED, change, null);
+            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_ADDED,
+                                               null, change, null);
         } else {
-            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_REMOVED, null, change);
+            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_REMOVED,
+                                               null, null, change);
         }
         fireEnvironmentChanged(event);
     }
 
     /**
      * Préviens tous les objets intéressés que l'environnement a changé.
+     * Cette méthode est habituellement appelée à l'intérieur d'un bloc synchronisé sur
+     * {@link #getTreeLock()}. L'appel de {@link EnvironmentChangeListener#environmentChanged}
+     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
      *
      * @param event Un objet décrivant le changement survenu.
      */
-    private void fireEnvironmentChanged(final EnvironmentChangeEvent event) {
+    protected void fireEnvironmentChanged(final EnvironmentChangeEvent event) {
+        final Object[] listeners = listenerList.getListenerList();
         queue.invokeLater(new Runnable() {
             public void run() {
                 assert Thread.holdsLock(getTreeLock());
-                final Object[] listeners = listenerList.getListenerList();
                 for (int i=listeners.length; (i-=2)>=0;) {
                     if (listeners[i] == EnvironmentChangeListener.class) try {
                         ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
@@ -313,5 +314,12 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
             assert listenerList.getListenerCount() == 0;
             queue.dispose();
         }
+    }
+
+    /**
+     * Libère les ressources utilisées par cet environnement.
+     */
+    protected void finalize() {
+        queue.dispose();
     }
 }

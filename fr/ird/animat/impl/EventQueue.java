@@ -40,7 +40,7 @@ final class EventQueue extends Thread {
     /**
      * The group for all <code>EventQueue</code>.
      */
-    private static final ThreadGroup GROUP = new ThreadGroup("Animats EventQueue");
+    private static final ThreadGroup GROUP = new ThreadGroup("Animats event queues");
 
     /**
      * The object to synchronize on. No event will be fired as long as an other
@@ -67,7 +67,7 @@ final class EventQueue extends Thread {
      *        <code>synchronized(lock)</code> block.
      */
     public EventQueue(final Object lock) {
-        super(GROUP, "RepaintManager");
+        super(GROUP, "(untitled queue)");
         this.lock = lock;
         setPriority(NORM_PRIORITY);
         setDaemon(true);
@@ -76,17 +76,15 @@ final class EventQueue extends Thread {
     /**
      * Schedule an event to be fired. This method can be invoked from any thread,
      * which may or may not be the Swing thread. In all cases, this method returns
-     * immediately. All events are enqueued for later processing in the Swing thread.
+     * immediately. All events are enqueued for later processing.
      *
      * <ul>
      *   <li>If a lock on {@link #lock} is hold, then the event will be delayed until
      *       the lock is released. Other repaint events may be enqueued in the main time.</li>
-     *   <li>Once the lock has been released, events are fired in the Swing thread for all
-     *       pending events. Processing all events at once in the Swing thread give a chance
-     *       for Swing to merge multiple repaint events.</li>
+     *   <li>Once the lock has been released, events are fired in this thread for all
+     *       pending events. Waiting for the lock help to ensure that the computation
+     *       step was finished before to notify listeners.</li>
      * </ul>
-     *
-     * This method is usually invoked in a thread holding the <code>lock</code>.
      */
     public void invokeLater(final Runnable event) {
         synchronized (lock) {
@@ -110,13 +108,8 @@ final class EventQueue extends Thread {
     public void run() {
         synchronized (lock) {
             while (!kill) {
-                /*
-                 * If we are going to wait for the lock,  block in this thread instead
-                 * of Swing thread. We will fire events in Swing thread later in order
-                 * to gives it a chance to collapse multiple repaint events.
-                 */
                 while (!events.isEmpty()) {
-                    java.awt.EventQueue.invokeLater(events.removeFirst());
+                    events.removeFirst().run();
                 }
                 try {
                     // Release the lock and wait for notification.

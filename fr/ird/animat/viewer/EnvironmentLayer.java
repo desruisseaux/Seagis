@@ -29,13 +29,17 @@ package fr.ird.animat.viewer;
 import java.util.Map;
 import java.util.Set;
 import java.util.Date;
+import java.util.List;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Collections;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.EventQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
 // OpenGIS dependencies
@@ -65,7 +69,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EnvironmentLayer extends RenderedGridCoverage implements EnvironmentChangeListener {
+final class EnvironmentLayer extends RenderedGridCoverage {
     /**
      * L'adapter à utiliser pour convertir les couches 
      */
@@ -105,6 +109,12 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     final ColorBar colors = new ColorBar();
 
     /**
+     * L'objet chargé d'écouter les modifications survenant dans l'environnement.
+     * Ces changements peuvent survenir sur une machine distante.
+     */
+    private final Listener listener;
+
+    /**
      * Construit une couche pour l'environnement spécifié.
      *
      * @param  environment Environnement à afficher.
@@ -112,53 +122,25 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      */
     public EnvironmentLayer(final Environment environment) throws RemoteException {
         super(null);
-        final Set<Parameter> parameters = environment.getParameters();
-        this.parameter = parameters.iterator().next();
-        environment.addEnvironmentChangeListener(this);
-        setCoverage(environment.getCoverage(parameter));
-    }
-
-    /**
-     * Appelée quand l'environnement a changé. Si la date a changée, l'image correspondant
-     * au pas de temps courant sera chargée et affichée.  Les notifications d'ajouts et de
-     * suppressions de populations seront transmis aux {@link #listeners} (afin de réduire
-     * le volume de données éventuellement transmis par une machine distante) mais ne recevront
-     * pas de traitement particuliers dans cette méthode.
-     */
-    public void environmentChanged(final EnvironmentChangeEvent event) throws RemoteException {
-        if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
-            final Environment environment = event.getSource();
-            final Date oldDate = date;
-            date = environment.getClock().getTime();
-            setCoverage(environment.getCoverage(parameter));
-            listeners.firePropertyChange("date", oldDate, date);
-        }
-        /*
-         * Signale les changements de populations. Bien que l'on travaille sur des ensembles,
-         * en général il n'y aura qu'une seule population d'ajoutée ou de supprimée.
-         */
-        Set<Population> change = event.getPopulationRemoved();
-        if (change != null) {
-            for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
-                listeners.firePropertyChange("population", it.next(), null);
-            }
-        }
-        change = event.getPopulationAdded();
-        if (change != null) {
-            for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
-                listeners.firePropertyChange("population", null, it.next());
-            }
+        final Iterator<Parameter> parameters = environment.getParameters().iterator();
+        if (parameters.hasNext()) {
+            listener  = new Listener();
+            parameter = parameters.next();
+            setCoverage(adapters.wrap(environment.getCoverage(parameter)));
+            environment.addEnvironmentChangeListener(listener);
+        } else {
+            parameter = null;
+            listener  = null;
         }
     }
 
     /**
      * Définit la couverture à afficher.
      */
-    private void setCoverage(final CV_Coverage coverage) throws RemoteException {
-        final Coverage cv = adapters.wrap(coverage);
+    private void setCoverage(final Coverage coverage) {
         final GridCoverage grid;
-        if (cv instanceof GridCoverage) {
-            grid = (GridCoverage) cv;
+        if (coverage instanceof GridCoverage) {
+            grid = (GridCoverage) coverage;
         } else {
             grid = null;
         }
@@ -181,5 +163,76 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
         coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
         super.setGridCoverage(coverage);
         colors.setColors(coverage);
+    }
+
+    /**
+     * Objet ayant la charge de réagir aux changements survenant dans l'environnement.
+     * Ces changements peuvent se produire sur une machine distante.
+     */
+    private final class Listener extends RemoteObject implements EnvironmentChangeListener,
+                                                                 Runnable
+    {
+        /**
+         * Liste des changements survenus récemment dans l'environnement. Cette
+         * liste sera traitée dans l'ordre "premier arrivé, premier traité".
+         */
+        private final LinkedList<EnvironmentChangeEvent> events = new LinkedList<EnvironmentChangeEvent>();
+
+        /**
+         * La nouvelle couverture à prendre en compte.
+         */
+        private transient Coverage coverage;
+
+        /**
+         * Appelée quand l'environnement a changé. Si la date a changée, l'image correspondant
+         * au pas de temps courant sera chargée et affichée.  Les notifications d'ajouts et de
+         * suppressions de populations seront transmis aux {@link #listeners} (afin de réduire
+         * le volume de données éventuellement transmis par une machine distante) mais ne recevront
+         * pas de traitement particuliers dans cette méthode.
+         */
+        public synchronized void environmentChanged(final EnvironmentChangeEvent event)
+                throws RemoteException
+        {
+            events.addLast(event);
+            if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
+                coverage = adapters.wrap(event.getSource().getCoverage(parameter));
+            }
+            EventQueue.invokeLater(this);
+        }
+
+        /**
+         * Procède au traitement des événements. Cette méthode sera exécutée dans le thread
+         * de Swing.
+         */
+        public synchronized void run() {
+            while (!events.isEmpty()) {
+                if (coverage != null) {
+                    setCoverage(coverage);
+                    coverage = null;
+                }
+                final EnvironmentChangeEvent event = events.removeFirst();
+                if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
+                    final Date oldDate = date;
+                    date = event.getEnvironmentDate();
+                    listeners.firePropertyChange("date", oldDate, date);
+                }
+                /*
+                 * Signale les changements de populations. Bien que l'on travaille sur des ensembles,
+                 * en général il n'y aura qu'une seule population d'ajoutée ou de supprimée.
+                 */
+                Set<Population> change = event.getPopulationRemoved();
+                if (change != null) {
+                    for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
+                        listeners.firePropertyChange("population", it.next(), null);
+                    }
+                }
+                change = event.getPopulationAdded();
+                if (change != null) {
+                    for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
+                        listeners.firePropertyChange("population", null, it.next());
+                    }
+                }
+            }
+        }
     }
 }

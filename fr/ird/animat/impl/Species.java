@@ -63,11 +63,18 @@ public class Species implements fr.ird.animat.Species, Serializable {
     private static final long serialVersionUID = 1428323484284560694L;
 
     /**
-     * Valeur par défaut du rayon de perception de l'animal, en mètres.
+     * Valeur par défaut du rayon de perception de l'animal, en miles nautiques.
      *
      * @see #getPerceptionArea
      */
-    private static final double PERCEPTION_RADIUS = 10000;
+    private static final double PERCEPTION_RADIUS = 30;
+
+    /**
+     * La langue par défaut du système.
+     */
+    private static final Locale[] DEFAULT_LOCALES = new Locale[] {
+        Locale.getDefault()
+    };
 
     /**
      * Liste des paramètres par défaut observés par les animaux de cette espèce.
@@ -133,6 +140,17 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * dans l'objet {@link Path} plutôt que dans le tableau interne de {@link Animal}.
      */
     final int headingIndex;
+
+    /**
+     * Construit une espèce avec un nom dans la {@link Locale#getDefault langue par défaut}
+     * du système.
+     *
+     * @param name  Le nom de l'espèce.
+     * @param color La couleur de l'espèce.
+     */
+    public Species(final String name, final Color color) {
+        this(DEFAULT_LOCALES, new String[] {name}, color);
+    }
 
     /**
      * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
@@ -252,6 +270,22 @@ public class Species implements fr.ird.animat.Species, Serializable {
         }
         this.headingIndex = headingIndex;
         assert getObservedParameters().size() == parameters.length;
+    }
+
+    /**
+     * Retourne un objet {@link fr.ird.animat.Species} arbitraire
+     * sous forme d'un objet {@link Species} de cette classe.
+     */
+    static Species wrap(final fr.ird.animat.Species species) {
+        if (species instanceof Species) {
+            return (Species) species;
+        }
+        final Locale[] locales = species.getLocales();
+        final String[] names = new String[locales.length];
+        for (int i=0; i<locales.length; i++) {
+            names[i] = species.getName(locales[i]);
+        }
+        return new Species(locales, names, species.getIcon().getColor());
     }
 
     /**

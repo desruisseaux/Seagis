@@ -28,6 +28,7 @@ package fr.ird.animat;
 // J2SE standard
 import java.util.Set;
 import java.awt.Shape;
+import java.awt.geom.Point2D;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -58,6 +59,18 @@ public interface Population extends Remote {
      *         et que cette exécution a échouée.
      */
     Environment getEnvironment() throws RemoteException;
+
+    /**
+     * Ajoute un nouvel animal dans cette population. L'animal sera de
+     * l'espèce spécifiée et apparaîtra à la position initiale spécifiée.
+     *
+     * @param  species L'espèce de cet animal.
+     * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
+     * @return L'animal créé.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Animal newAnimal(Species species, Point2D position) throws RemoteException;
 
     /**
      * Retourne l'ensemble des animaux appartenant à cette population.

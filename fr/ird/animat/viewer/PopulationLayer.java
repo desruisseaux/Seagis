@@ -40,6 +40,7 @@ import java.awt.image.RenderedImage;
 import java.awt.font.GlyphVector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
 // Utilitaires
@@ -79,9 +80,7 @@ import fr.ird.animat.event.PopulationChangeListener;
  * @version $Id$
  * @author Martin Desruisseaus
  */
-final class PopulationLayer extends RenderedMarks
-                implements PopulationChangeListener, PropertyChangeListener
-{
+final class PopulationLayer extends RenderedMarks implements PropertyChangeListener {
     /**
      * Longueur de la flèche représentant les thons.
      */
@@ -136,6 +135,12 @@ final class PopulationLayer extends RenderedMarks
     private final Map<Species,Species.Icon> icons = new HashMap<Species,Species.Icon>();
 
     /**
+     * L'objet chargé d'écouter les modifications survenant dans la population.
+     * Ces changements peuvent survenir sur une machine distante.
+     */
+    private final Listener listener;
+
+    /**
      * Construit une couche pour la population spécifiée.
      *
      * @param  population Population à afficher.
@@ -144,16 +149,20 @@ final class PopulationLayer extends RenderedMarks
      */
     public PopulationLayer(final Population population) throws RemoteException {
         refresh(population);
-        population.addPopulationChangeListener(this);
+        listener = new Listener();
+        population.addPopulationChangeListener(listener);
     }
 
     /**
      * Remet à jour cette composante pour la population spécifiée.
      */
     private void refresh(final Population population) throws RemoteException {
-        final Collection<Animal> col = population.getAnimals();
-        animals = col.toArray(new Animal[col.size()]);
-        bounds = population.getSpatialBounds();
+        synchronized (getTreeLock()) {
+            final Collection<Animal> col = population.getAnimals();
+            animals = col.toArray(new Animal[col.size()]);
+            bounds = population.getSpatialBounds();
+            setPreferredArea((bounds!=null) ? bounds.getBounds2D() : null);
+        }
     }
 
     /**
@@ -260,17 +269,6 @@ final class PopulationLayer extends RenderedMarks
     }
 
     /**
-     * Appelée quand la population a changée.
-     *
-     * @throws RemoteException si une exécution sur une machine distante
-     *         était nécessaire et a échoué.
-     */
-    public void populationChanged(final PopulationChangeEvent event) throws RemoteException {
-        refresh(event.getSource());
-        repaint();
-    }
-
-    /**
      * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
      */
     public void propertyChange(final PropertyChangeEvent event) {
@@ -290,6 +288,13 @@ final class PopulationLayer extends RenderedMarks
         record.setSourceMethodName(method);
         record.setThrown(exception);
         Logger.getLogger("fr.ird.animat.viewer").log(record);
+    }
+
+    /**
+     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
+     */
+    private static void failed(final String method, final RemoteException exception) {
+        failed("PopulationLayer.MarkIterator", method, exception);
     }
 
     /**
@@ -335,7 +340,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 update();
             } catch (RemoteException exception) {
-                failed("PopulationLayer.MarkIterator", "setIteratorPosition", exception);
+                failed("setIteratorPosition", exception);
                 observations = null;
                 heading = null;
             }
@@ -350,7 +355,7 @@ final class PopulationLayer extends RenderedMarks
                     update();
                     return true;
                 } catch (RemoteException exception) {
-                    failed("PopulationLayer.MarkIterator", "next", exception);
+                    failed("next", exception);
                 }
             }
             observations = null;
@@ -411,7 +416,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 species = animals[index].getSpecies();
             } catch (RemoteException exception) {
-                failed("PopulationLayer.MarkIterator", "paint", exception);
+                failed("paint", exception);
                 return;
             }
             Species.Icon icon = icons.get(species);
@@ -422,6 +427,24 @@ final class PopulationLayer extends RenderedMarks
             }
             graphics.setColor(icon.getColor());
             graphics.fill(markShape);
+        }
+    }
+
+    /**
+     * Objet ayant la charge de réagir aux changements survenant dans l'environnement.
+     * Ces changements peuvent se produire sur une machine distante.
+     */
+    private final class Listener extends RemoteObject implements PopulationChangeListener {
+        /**
+         * Appelée quand la population a changée.
+         */
+        public void populationChanged(final PopulationChangeEvent event) throws RemoteException {
+            if (event.changeOccured(PopulationChangeEvent.ANIMALS_ADDED |
+                                    PopulationChangeEvent.ANIMALS_REMOVED))
+            {
+                refresh(event.getSource());
+                repaint();
+            }
         }
     }
 }

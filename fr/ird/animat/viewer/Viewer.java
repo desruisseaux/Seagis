@@ -47,6 +47,7 @@ import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Animats
+import fr.ird.animat.Simulation;
 import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
 
@@ -58,7 +59,7 @@ import fr.ird.animat.Environment;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Viewer implements PropertyChangeListener {
+public final class Viewer extends JComponent {
     /**
      * La carte à afficher. Le système de coordonnées
      * sera un système géographique selon l'ellipsoïde
@@ -73,6 +74,11 @@ public final class Viewer implements PropertyChangeListener {
     private final StatusBar status = new StatusBar(map);
 
     /**
+     * La simulation en cours.
+     */
+    private final Simulation simulation;
+
+    /**
      * La couche de l'environnement à afficher.
      */
     private final EnvironmentLayer environmentLayer;
@@ -83,17 +89,25 @@ public final class Viewer implements PropertyChangeListener {
     private final Map<Population,PopulationLayer> populationLayers;
 
     /**
+     * Objet ayant la charge d'écouter les changements survenant dans {@link EnvironmentLayer}.
+     */
+    private final Listener listener;
+
+    /**
      * Construit un afficheur.
      *
-     * @param environment L'environnement à afficher.
+     * @param simulation La simulation à afficher.
      */
-    public Viewer(final Environment environment) throws RemoteException {
+    public Viewer(final Simulation simulation) throws RemoteException {
+        listener = new Listener();
+        this.simulation = simulation;
+        final Environment environment = simulation.getEnvironment();
         /*
          * Ajoute l'échelle de la carte et l'environnement.
          */
         map.setPaintingWhileAdjusting(true);
         environmentLayer = new EnvironmentLayer(environment);
-        environmentLayer.addPropertyChangeListener(this);
+        environmentLayer.addPropertyChangeListener(listener);
         final Renderer renderer = map.getRenderer();
         renderer.addLayer(new RenderedMapScale());
         renderer.addLayer(environmentLayer);
@@ -111,47 +125,48 @@ public final class Viewer implements PropertyChangeListener {
             populationLayers.put(population, layer);
             renderer.addLayer(layer);
         }
-    }
-
-    /**
-     * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
-     */
-    public void propertyChange(final PropertyChangeEvent event) {
-        try {
-            final String property = event.getPropertyName();
-            if (property.equalsIgnoreCase("population")) {
-                final Renderer renderer = map.getRenderer();
-                Population population = (Population) event.getOldValue();
-                if (population != null) {
-                    final PopulationLayer layer = populationLayers.remove(population);
-                    renderer.removeLayer(layer);
-                    environmentLayer.removePropertyChangeListener(layer);
-                    layer.dispose();
-                }
-                population = (Population) event.getNewValue();
-                if (population != null) {
-                    final PopulationLayer layer = new PopulationLayer(population);
-                    environmentLayer.addPropertyChangeListener(layer);
-                    populationLayers.put(population, layer);
-                    renderer.addLayer(layer);
-                }
-            }
-        } catch (RemoteException exception) {
-            PopulationLayer.failed("Viewer", "propertyChange", exception);
-        }
-    }
-
-    /**
-     * Retourne la composante visuelle dans laquelle seront
-     * affichées les animaux et leur environnement.
-     */
-    public JComponent getView() {
-        final JPanel panel   = new JPanel(new BorderLayout());
+        /*
+         * Construit l'interface.
+         */
+        setLayout(new BorderLayout());
         final JPanel mapPane = new JPanel(new BorderLayout());
         mapPane.add(map.createScrollPane(),  BorderLayout.CENTER);
         mapPane.add(environmentLayer.colors, BorderLayout.SOUTH );
-        panel.  add(mapPane,                 BorderLayout.CENTER);
-        panel.  add(status,                  BorderLayout.SOUTH );
-        return panel;
+        add(mapPane, BorderLayout.CENTER);
+        add(status,  BorderLayout.SOUTH );
+    }
+
+    /**
+     * Classe ayant la charge d'écouter les changements survenant dans
+     * {@link EnvironmentLayer}.
+     */
+    private final class Listener implements PropertyChangeListener {
+        /**
+         * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
+         */
+        public void propertyChange(final PropertyChangeEvent event) {
+            try {
+                final String property = event.getPropertyName();
+                if (property.equalsIgnoreCase("population")) {
+                    final Renderer renderer = map.getRenderer();
+                    Population population = (Population) event.getOldValue();
+                    if (population != null) {
+                        final PopulationLayer layer = populationLayers.remove(population);
+                        renderer.removeLayer(layer);
+                        environmentLayer.removePropertyChangeListener(layer);
+                        layer.dispose();
+                    }
+                    population = (Population) event.getNewValue();
+                    if (population != null) {
+                        final PopulationLayer layer = new PopulationLayer(population);
+                        environmentLayer.addPropertyChangeListener(layer);
+                        populationLayers.put(population, layer);
+                        renderer.addLayer(layer);
+                    }
+                }
+            } catch (RemoteException exception) {
+                PopulationLayer.failed("Viewer", "propertyChange", exception);
+            }
+        }
     }
 }

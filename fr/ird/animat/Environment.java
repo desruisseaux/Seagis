@@ -51,6 +51,16 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  */
 public interface Environment extends Remote {
     /**
+     * Ajoute une nouvelle population dans cet environnement.
+     * La nouvelle population ne contiendra initialement aucun animal.
+     *
+     * @return La population créée.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Population newPopulation() throws RemoteException;
+
+    /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
      * Les populations &quot;{@linkplain Population#kill mortes}&quot; ne
      * sont pas comprises dans cet ensemble.

@@ -27,6 +27,7 @@ package fr.ird.animat.event;
 
 // Dependencies
 import java.util.Set;
+import java.util.Date;
 import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
 
@@ -47,7 +48,7 @@ public class EnvironmentChangeEvent extends ChangeEvent {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -5883647949371506640L;
+//    private static final long serialVersionUID = -5883647949371506640L;
 
     /**
      * Drapeau indiquant que la {@linkplain Environment#getClock date de l'environnement}
@@ -80,6 +81,11 @@ public class EnvironmentChangeEvent extends ChangeEvent {
     static final int LAST = POPULATIONS_REMOVED;
 
     /**
+     * La nouvelle date de l'environnement, ou {@link Long#MIN_VALUE} si elle n'a pas changé.
+     */
+    private final long time;
+
+    /**
      * Les populations qui ont été ajoutées. Ce champ devrait être nul
      * si le drapeau {@link #POPULATIONS_ADDED} n'est pas défini à 1.
      */
@@ -102,6 +108,8 @@ public class EnvironmentChangeEvent extends ChangeEvent {
      *                {@link #POPULATIONS_ADDED} et
      *                {@link #POPULATIONS_REMOVED}.
      *
+     * @param date    La nouvelle date de l'environnement, ou <code>null</code>
+     *                si elle n'a pas changé.
      * @param added   Les populations qui ont été ajoutées à l'environnement,
      *                ou <code>null</code> si cet argument ne s'applique pas.
      * @param removed Les populations qui ont été supprimées de l'environnement,
@@ -109,10 +117,12 @@ public class EnvironmentChangeEvent extends ChangeEvent {
      */
     public EnvironmentChangeEvent(final Environment     source,
                                   int                   type,
+                                  final Date            date,
                                   final Set<Population> added,
                                   final Set<Population> removed)
     {
-        super(source, control(type, added, removed));
+        super(source, control(type, date, added, removed));
+        this.time    = (date!=null) ? date.getTime() : Long.MIN_VALUE;
         this.added   = added;
         this.removed = removed;
     }
@@ -123,9 +133,15 @@ public class EnvironmentChangeEvent extends ChangeEvent {
      * RFE #4093999.
      */
     private static final int control(int type,
+                                     final Date            date,
                                      final Set<Population> added,
                                      final Set<Population> removed)
     {
+        if (date != null) {
+            type |= DATE_CHANGED;
+        } else {
+            type &= ~DATE_CHANGED;
+        }
         if (added != null) {
             type |= POPULATIONS_ADDED;
         } else {
@@ -144,6 +160,13 @@ public class EnvironmentChangeEvent extends ChangeEvent {
      */
     public Environment getSource() {
         return (Environment) super.getSource();
+    }
+
+    /**
+     * Retourne la nouvelle date de l'environnement, ou <code>null</code> si elle n'a pas changé.
+     */
+    public Date getEnvironmentDate() {
+        return (time != Long.MIN_VALUE) ? new Date(time) : null;
     }
 
     /**
