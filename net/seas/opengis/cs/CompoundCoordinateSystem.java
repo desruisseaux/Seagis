@@ -30,7 +30,6 @@ import org.opengis.cs.CS_CompoundCoordinateSystem;
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
-import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import java.util.Map;

@@ -28,6 +28,7 @@ import org.opengis.ct.CT_DomainFlags;
 import org.opengis.ct.CT_TransformType;
 import org.opengis.ct.CT_MathTransform;
 import org.opengis.ct.CT_MathTransformFactory;
+import org.opengis.ct.CT_CoordinateTransformation;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
@@ -54,7 +55,13 @@ public final class Adapters
      * Returns an OpenGIS interface for a math transform.
      */
     public static CT_MathTransform export(final MathTransform transform)
-    {return (transform!=null) ? (CT_MathTransform)transform.toOpenGIS() : null;}
+    {return (transform!=null) ? (CT_MathTransform)transform.cachedOpenGIS(false) : null;}
+
+    /**
+     * Returns an OpenGIS interface for a math transform.
+     */
+    public static CT_CoordinateTransformation export(final CoordinateTransform transform)
+    {return (transform!=null) ? (CT_CoordinateTransformation)transform.cachedOpenGIS(true) : null;}
 
     /**
      * Returns an OpenGIS interface for a math transform factory.
@@ -91,6 +98,23 @@ public final class Adapters
         if (transform instanceof MathTransform.Export)
             return ((MathTransform.Export)transform).unwrap();
         return new MathTransformAdapter(transform);
+    }
+
+    /**
+     * Returns a coordinate transform for an OpenGIS interface.
+     * @throws RemoteException if a remote call failed.
+     */
+    public static CoordinateTransform wrap(final CT_CoordinateTransformation transform) throws RemoteException
+    {
+        if (transform==null) return null;
+        if (transform instanceof CoordinateTransform.Export)
+        {
+            return (CoordinateTransform) ((CoordinateTransform.Export)transform).unwrap();
+        }
+        return new CoordinateTransformProxy(wrap(transform.getTransformType()),
+               net.seas.opengis.cs.Adapters.wrap(transform.getSourceCS()),
+               net.seas.opengis.cs.Adapters.wrap(transform.getTargetCS()),
+                                            wrap(transform.getMathTransform()));
     }
 
     /**

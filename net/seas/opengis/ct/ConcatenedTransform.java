@@ -56,8 +56,9 @@ final class ConcatenedTransform extends MathTransform
     /**
      * Default constructor.
      */
-    protected ConcatenedTransform(final MathTransform transform1, final MathTransform transform2)
+    public ConcatenedTransform(final MathTransform transform1, final MathTransform transform2)
     {
+        super("ConcatenedTransform");
         this.transform1 = transform1;
         this.transform2 = transform2;
         if (transform1.getDimTarget() != transform2.getDimSource())

@@ -33,7 +33,6 @@ import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.ct.CoordinateTransformation;
 import java.rmi.RemoteException;
 
 

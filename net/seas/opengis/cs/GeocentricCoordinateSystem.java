@@ -32,7 +32,6 @@ import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
-import net.seas.opengis.ct.CoordinateTransformation;
 import java.rmi.RemoteException;
 
 

@@ -32,7 +32,6 @@ import org.opengis.cs.CS_CoordinateSystem;
 import java.util.Map;
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import net.seas.util.XClass;

@@ -33,7 +33,6 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.Latitude;
 import net.seas.opengis.pt.Longitude;
 import net.seas.opengis.pt.CoordinatePoint;
-import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import java.util.Map;

@@ -30,6 +30,8 @@ import net.seas.opengis.pt.Latitude;
 import net.seas.opengis.pt.Longitude;
 import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
+import net.seas.opengis.cs.ProjectedCoordinateSystem;
+import net.seas.opengis.cs.GeographicCoordinateSystem;
 import net.seas.opengis.cs.Ellipsoid;
 
 // Geometry
@@ -56,7 +58,7 @@ import net.seas.text.CoordinateFormat;
  * @author André Gosselin
  * @author Martin Desruisseaux
  */
-abstract class MapProjection extends MathTransform
+abstract class MapProjection extends CoordinateTransform
 {
     /**
      * Erreur maximale (en mètres) tolérées lorsque l'on fait une
@@ -106,6 +108,22 @@ abstract class MapProjection extends MathTransform
      * Default semi-minor axis length (from WGS 1984).
      */
     static final double SEMI_MINOR = SEMI_MAJOR*(1-1/298.257223563);
+
+    /**
+     * The source coordinate system. If <code>null</code>, then {@link #getSourceCS()}
+     * will initialize it to the <code>targetCS</code>'s geographic coordinate system.
+     * This field is not final in order to allow caller to initialize it after construction.
+     * But once this field is initialized, it should be considered as final.
+     */
+    protected GeographicCoordinateSystem sourceCS;
+
+    /**
+     * The destination coordinate system. This field is not final in
+     * order to allow caller to initialize it after construction.
+     * But once this field is initialized, it should be considered
+     * as final.
+     */
+    protected ProjectedCoordinateSystem targetCS;
 
     /**
      * Indique si le modèle terrestre est sphérique. La valeur <code>true</code>
@@ -176,6 +194,7 @@ abstract class MapProjection extends MathTransform
      */
     protected MapProjection(final Parameter[] parameters) throws MissingParameterException
     {
+        super("MapProjection");
         this.a                =                    Parameter.getValue(parameters, "semi_major");
         this.b                =                    Parameter.getValue(parameters, "semi_minor");
         this.centralLongitude = longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true);
@@ -186,15 +205,43 @@ abstract class MapProjection extends MathTransform
     }
 
     /**
+     * Gets the semantic type of transform.
+     */
+    public TransformType getTransformType()
+    {return TransformType.CONVERSION;}
+
+    /**
+     * Gets the source coordinate system.
+     */
+    public final synchronized GeographicCoordinateSystem getSourceCS()
+    {
+        if (sourceCS==null)
+        {
+            final ProjectedCoordinateSystem targetCS = getTargetCS();
+            if (targetCS!=null)
+            {
+                sourceCS = targetCS.getGeographicCoordinateSystem();
+            }
+        }
+        return sourceCS;
+    }
+
+    /**
+     * Gets the target coordinate system.
+     */
+    public final ProjectedCoordinateSystem getTargetCS()
+    {return targetCS;}
+
+    /**
      * Gets the dimension of input points, which is 2.
      */
-    public int getDimSource()
+    public final int getDimSource()
     {return 2;}
 
     /**
      * Gets the dimension of output points, which is 2.
      */
-    public int getDimTarget()
+    public final int getDimTarget()
     {return 2;}
 
     /**

@@ -27,6 +27,9 @@ import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;
 import net.seas.opengis.pt.ConvexHull;
+
+// Miscellaneous
+import java.io.Serializable;
 import net.seas.util.XClass;
 
 
@@ -37,8 +40,13 @@ import net.seas.util.XClass;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-final class AffineTransform2D extends MathTransform
+final class AffineTransform2D extends MathTransform implements Serializable
 {
+    /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -7260613547208966035L;
+
     /**
      * The identity transform for 2D coordinate systems.
      */
@@ -53,7 +61,10 @@ final class AffineTransform2D extends MathTransform
      * Construct an affine transform.
      */
     protected AffineTransform2D(final AffineTransform transform)
-    {this.transform = (AffineTransform) transform.clone();}
+    {
+        super("AffineTransform");
+        this.transform = (AffineTransform) transform.clone();
+    }
 
     /**
      * Transforms the specified <code>ptSrc</code>

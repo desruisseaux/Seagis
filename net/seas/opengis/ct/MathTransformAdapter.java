@@ -38,18 +38,26 @@ import net.seas.opengis.ct.NoninvertibleTransformException;
 // Miscellaneous
 import java.util.Locale;
 import net.seas.util.XClass;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 
 
 /**
  * Wrap an {@link CT_MathTransform} into a {@link MathTransform}.
- * This class is provided for compatibility with OpenGIS.
+ * This class is provided for compatibility with OpenGIS. It is
+ * serializable if the underlying {@link CT_MathTransform} is
+ * serializable too.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class MathTransformAdapter extends MathTransform
+final class MathTransformAdapter extends MathTransform implements Serializable
 {
+    /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -2015173964914740510L;
+
     /**
      * The OpenGIS math transform.
      */
@@ -77,6 +85,7 @@ final class MathTransformAdapter extends MathTransform
      */
     public MathTransformAdapter(final CT_MathTransform transform) throws RemoteException
     {
+        super(XClass.getShortClassName(transform));
         this.transform  = transform;
         this.dimSource  = transform.getDimSource();
         this.dimTarget  = transform.getDimTarget();

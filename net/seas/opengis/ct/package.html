@@ -7,9 +7,11 @@
   <BODY>
     <P ALIGN="justify">Coordinate Transformations implementation.
     Transformations (for example map projections) are performed by
-    {@link MathTransform}. Instances of {@link MathTransform} are
-    created by {@link MathTransformFactory}. For example, a mercator
-    cylindrical projection can be created by the following code:</P>
+    {@link net.seas.opengis.ct.MathTransform}. Instances of
+    {@link net.seas.opengis.ct.MathTransform} are created by
+    {@link net.seas.opengis.ct.MathTransformFactory}. For example,
+    a mercator cylindrical projection can be created by the following
+    code:</P>
 
     <BLOCKQUOTE><PRE>
 {@link net.seas.opengis.ct.MathTransform} projection = {@link net.seas.opengis.ct.MathTransformFactory#DEFAULT}.createParameterizedTransform("Mercator_1SP", null, null);

@@ -241,18 +241,34 @@ public class Info implements Serializable
      */
     final synchronized Object cachedOpenGIS()
     {
+        Object info = cachedOpenGIS(null);
+        if (info==null)
+        {
+            info = cachedOpenGIS(toOpenGIS());
+        }
+        return info;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this info. This method first look
+     * in an internal cache. If no interface was previously cached and
+     * <code>newInstance</code> is non-null, then this method cache
+     * <code>newInstance</code> and returns it. <strong>This method
+     * is for internal use only. DO NOT USE.</strong>
+     */
+    protected final Object cachedOpenGIS(final Object newInstance)
+    {
         if (proxy!=null)
         {
             if (proxy instanceof Reference)
             {
                 final Object ref = ((Reference) proxy).get();
-                if (ref!=null) return (CS_Info) ref;
+                if (ref!=null) return ref;
             }
-            else return (CS_Info) proxy;
+            else return proxy;
         }
-        final Object info = toOpenGIS();
-        proxy = new WeakReference(info);
-        return info;
+        proxy = (newInstance!=null) ? new WeakReference(newInstance) : null;
+        return newInstance;
     }
 
     /**

@@ -29,6 +29,7 @@ import org.opengis.ct.CT_MathTransform;
 import org.opengis.ct.CT_DomainFlags;
 
 // OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Info;
 import net.seas.opengis.pt.ConvexHull;
 import net.seas.opengis.pt.CoordinatePoint;
 
@@ -42,6 +43,7 @@ import java.awt.geom.IllegalPathStateException;
 import net.seas.awt.geom.Geometry;
 
 // Remote Method Invocation
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
@@ -55,43 +57,35 @@ import javax.media.jai.PerspectiveTransform;
 
 
 /**
- * Transforms multi-dimensional coordinate points.      This class transforms coordinate value
- * for a point given in the source coordinate system to coordinate value for the same point in
- * the target coordinate system. In an ISO conversion, the transformation is accurate to within
- * the limitations of the computer making the calculations. In an ISO transformation, where
- * some of the operational parameters are derived from observations, the transformation is
- * accurate to within the limitations of those observations.
- * <br><br>
- * If a client application wishes to query the source and target
- * coordinate systems of a transformation, then it should keep hold
- * of the {@link CoordinateTransformation} class, and use the
- * contained math transform object whenever it wishes to perform a
- * transform.
+ * Transforms multi-dimensional coordinate points.   This class transforms coordinate value
+ * for a point given in the source coordinate system to coordinate value for the same point
+ * in the target coordinate system. In an ISO conversion, the transformation is accurate to
+ * within the limitations of the computer making the calculations. In an ISO transformation,
+ * where some of the operational parameters are derived from observations, the transformation
+ * is accurate to within the limitations of those observations.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
+ * @see org.opengis.ct.CT_MathTransform
  * @see AffineTransform
  * @see PerspectiveTransform
- * @see org.opengis.ct.CT_MathTransform
  */
-public abstract class MathTransform
+public abstract class MathTransform extends Info
 {
     /**
-     * Default constructor.
+     * Serial number for interoperability with different versions.
      */
-    protected MathTransform()
-    {}
+    //private static final long serialVersionUID = ?; // TODO
 
     /**
-     * Returns a human readable name localized for the specified locale.
-     * If no name is available for the specified locale, this method may
-     * returns a name in an arbitrary locale. The default implementation
-     * returns the class name.
+     * Construct a math transform with the specified name.
+     *
+     * @param name A default name for this math transform.
      */
-    public String getName(final Locale locale)
-    {return XClass.getShortClassName(this);}
+    public MathTransform(final String name)
+    {super(name);}
 
     /**
      * Gets flags classifying domain points within a convex hull.
@@ -367,13 +361,13 @@ public abstract class MathTransform
                      * Ce point sera traité après le 'switch', d'où
                      * l'utilisation d'un 'break' plutôt que 'continue'.
                      *
-                     * NOTE: LE POINT CALCULÉ EST BIEN SUR LA COURBE, MAIS N'EST PAS NÉCESSAIREMENT REPRÉSENTATIF.
-                     *       CET ALGORITHME REMPLACE LES DEUX POINTS DE CONTRÔLES PAR UN SEUL, CE QUI SE TRADUIT
-                     *       PAR UNE PERTE DE SOUPLESSE QUI PEUT DONNER DE MAUVAIS RÉSULTATS SI LA COURBE CUBIQUE
-                     *       ÉTAIT BIEN TORDU. PROJETER UNE COURBE CUBIQUE NE ME SEMBLE PAS ÊTRE UN PROBLÈME SIMPLE,
-                     *       MAIS HEUREUSEMENT CE CAS DEVRAIT ÊTRE ASSEZ RARE. IL SE PRODUIRA LE PLUS SOUVENT SI ON
-                     *       ESSAYE DE PROJETER UN CERCLE OU UNE ELLIPSE, AUXQUELS CAS L'ALGORITHME ACTUEL DONNERA
-                     *       QUAND MÊME DES RÉSULTATS TOLÉRABLES.
+                     * NOTE: Le point calculé est bien sur la courbe, mais n'est pas nécessairement représentatif.
+                     *       Cet algorithme remplace les deux points de contrôles par un seul, ce qui se traduit
+                     *       par une perte de souplesse qui peut donner de mauvais résultats si la courbe cubique
+                     *       était bien tordue. Projeter une courbe cubique ne me semble pas être un problème simple,
+                     *       mais heureusement ce cas devrait être assez rare. Il se produira le plus souvent si on
+                     *       essaye de projeter un cercle ou une ellipse, auxquels cas l'algorithme actuel donnera
+                     *       quand même des résultats tolérables.
                      */
                     indexLastPt = 4;
                     indexCtrlPt = 0;
@@ -459,10 +453,17 @@ public abstract class MathTransform
      */
     MathTransform concatenate(final MathTransform that)
     {
-        if (this.isIdentity()) return that;
-        if (that.isIdentity()) return this;
-        return new ConcatenedTransform(this, that);
+        if (this.isIdentity()) return that.getMathTransform();
+        if (that.isIdentity()) return this.getMathTransform();
+        return new ConcatenedTransform(this.getMathTransform(), that.getMathTransform());
     }
+
+    /**
+     * Gets the math transform. This method is
+     * overrided by {@link CoordinateTransformProxy}.
+     */
+    MathTransform getMathTransform()
+    {return this;}
 
     /**
      * Returns a hash value for this transform.
@@ -495,28 +496,55 @@ public abstract class MathTransform
      * Returns an OpenGIS interface for this math transform.
      * The returned object is suitable for RMI use.
      *
-     * Note: The returned type is a generic {@link Object} in order
-     *       to avoid too early class loading of OpenGIS interface.
+     * Note 1: The returned type is a generic {@link Object} in order
+     *         to avoid too early class loading of OpenGIS interface.
+     *
+     * Note 2: We do NOT want this method to override Info.toOpenGIS(),
+     *         since the returned object do not implements CS_Info. The
+     *         package-private access do the trick.
      */
     Object toOpenGIS()
     {return new Export();}
+
+    /**
+     * Returns an OpenGIS interface for this transform.
+     * This method first look in the cache. If no
+     * interface was previously cached, then this
+     * method invokes {@link #toOpenGIS} and cache
+     * the result.
+     */
+    final synchronized Object cachedOpenGIS(final boolean allowSubclass)
+    {
+        Object info = cachedOpenGIS(null);
+        if (info==null)
+        {
+            info = cachedOpenGIS(allowSubclass ? toOpenGIS() : new Export());
+        }
+        return info;
+    }
 
 
 
 
     /**
-     * Base class for inverse {@link MathTransform}.
+     * Base class for inverse {@link MathTransform}. This class is serializable
+     * if the underlying {@link MathTransform} is serializable too.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    abstract class Inverse extends MathTransform
+    abstract class Inverse extends MathTransform implements Serializable
     {
+        /**
+         * Serial number for interoperability with different versions.
+         */
+        private static final long serialVersionUID = 2370521414804482480L;
+
         /**
          * Default constructor.
          */
         protected Inverse()
-        {}
+        {super(Resources.format(Clé.INVERSE_OF¤1, MathTransform.super.getName(null)));}
 
         /**
          * Returns a human readable name localized for the specified locale.
