@@ -6,5 +6,5 @@ Specification-Title: (none)
 Specification-Version: (none)
 Specification-Vendor: (none)
 Implementation-Title: Couplage pêches et environnement
-Implementation-Version: 0.6
+Implementation-Version: 0.6.1
 Implementation-Vendor: Institut de Recherche pour le Développement

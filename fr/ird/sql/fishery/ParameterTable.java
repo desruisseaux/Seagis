@@ -52,7 +52,7 @@ final class ParameterTable extends Table {
      * Requête SQL pour obtenir le code d'un paramètre environnemental.
      */
     static final String SQL_LIST=
-                    "SELECT name FROM "+PARAMETERS+" SORTED BY name";
+                    "SELECT name FROM "+PARAMETERS+" ORDER BY name";
 
     /**
      * Requête SQL pour obtenir le code d'un paramètre environnemental.
@@ -152,7 +152,7 @@ final class ParameterTable extends Table {
         final ResultSet   result = stm.executeQuery(SQL_LIST);
         final Set<String>  param = new LinkedHashSet<String>();
         while (result.next()) {
-            final String item = result.getString(0);
+            final String item = result.getString(1);
             if (item != null) {
                 param.add(item);
             }

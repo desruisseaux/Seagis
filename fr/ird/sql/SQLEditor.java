@@ -73,8 +73,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class SQLEditor extends JPanel
-{
+public class SQLEditor extends JPanel {
     /** Index du nom de l'instruction SQL.     */ private static final int NAME    = 0;
     /** Index de l'instruction SQL par défaut. */ private static final int DEFAULT = 1;
     /** Index de la clé de l'instruction SQL.  */ private static final int KEY     = 2;
@@ -130,8 +129,7 @@ public class SQLEditor extends JPanel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Model extends AbstractListModel implements ListSelectionListener, ActionListener
-    {
+    private final class Model extends AbstractListModel implements ListSelectionListener, ActionListener {
         /**
          * Index de l'instruction sélectionné.
          */
@@ -146,23 +144,23 @@ public class SQLEditor extends JPanel
         /**
          * Retourne le nombre d'instructions.
          */
-        public int getSize()
-        {return toDisplay.size();}
+        public int getSize() {
+            return toDisplay.size();
+        }
 
         /**
          * Retourne l'instruction à l'index spécifié.
          */
-        public Object getElementAt(final int index)
-        {return toDisplay.get(index)[NAME];}
+        public Object getElementAt(final int index) {
+            return toDisplay.get(index)[NAME];
+        }
 
         /**
          * Sélectionne une nouvelle instruction. Le
          * contenu du champ de texte sera mis à jour.
          */
-        public void valueChanged(final ListSelectionEvent event)
-        {
-            if (index>=0 && index<toDisplay.size())
-            {
+        public void valueChanged(final ListSelectionEvent event) {
+            if (index>=0 && index<toDisplay.size()) {
                 commit();
             }
             valueTextChanged();
@@ -174,12 +172,12 @@ public class SQLEditor extends JPanel
          * preferences. Cette étape sera faite à la fin par la méthode
          * {@link #save()} si l'utilisateur clique sur "Ok"
          */
-        final void commit()
-        {
+        final void commit() {
             final String[] record=toDisplay.get(index);
             String editedText = valueArea.getText();
-            if (editedText.trim().length()==0)
+            if (editedText.trim().length()==0) {
                 editedText = record[DEFAULT];
+            }
             record[VALUE] = editedText;
         }
 
@@ -187,17 +185,13 @@ public class SQLEditor extends JPanel
          * Affiche dans <code>valueArea</code> l'instruction SQL qui
          * correspond à la sélection courrante de l'utilisateur.
          */
-        void valueTextChanged()
-        {
+        void valueTextChanged() {
             index=sqlList.getSelectedIndex();
-            if (index>=0 && index<toDisplay.size())
-            {
+            if (index>=0 && index<toDisplay.size()) {
                 final String[] record=toDisplay.get(index);
                 valueArea.setText(record[VALUE]);
                 valueArea.setEnabled(true);
-            }
-            else
-            {
+            } else {
                 valueArea.setText(null);
                 valueArea.setEnabled(false);
             }
@@ -207,11 +201,9 @@ public class SQLEditor extends JPanel
          * Vérifie si de nouvelles instructions SQL ont été
          * ajoutées à la suite des instruction déjà déclarées.
          */
-        protected void update()
-        {
+        protected void update() {
             final int size=toDisplay.size();
-            if (size>lastSize)
-            {
+            if (size>lastSize) {
                 fireIntervalAdded(this, lastSize, size-1);
                 lastSize=size;
             }
@@ -221,8 +213,9 @@ public class SQLEditor extends JPanel
          * Méthode appelée automatiquement lorsque l'utilisateur
          * clique sur le bouton "Rétablir".
          */
-        public void actionPerformed(final ActionEvent event)
-        {reset();}
+        public void actionPerformed(final ActionEvent event) {
+            reset();
+        }
     }
 
     /**
@@ -232,12 +225,13 @@ public class SQLEditor extends JPanel
      * @param logger Journal dans lequel écrire une notification des
      *               requêtes qui ont été changées.
      */
-    public SQLEditor(final Preferences preferences, final String description, final Logger logger)
-    {
+    public SQLEditor(final Preferences preferences, final String description, final Logger logger) {
         super(new BorderLayout());
         this.logger=logger;
         this.preferences=preferences;
-        if (preferences==null) throw new NullPointerException();
+        if (preferences==null) {
+            throw new NullPointerException();
+        }
 
         sqlList.addListSelectionListener(model);
         sqlList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -261,10 +255,8 @@ public class SQLEditor extends JPanel
      * @param  owner Composante par-dessus laquelle faire apparaître la boîte de dialogue.
      * @return <code>true</code> si l'utilisateur à cliqué sur "Ok", ou <code>false</code> sinon.
      */
-    public boolean showDialog(final Component owner)
-    {
-        if (toDisplay.isEmpty())
-        {
+    public boolean showDialog(final Component owner) {
+        if (toDisplay.isEmpty()) {
             // Il n'y a rien à afficher.
             return false;
         }
@@ -286,11 +278,9 @@ public class SQLEditor extends JPanel
      * à la fin de texte spécifié s'il n'y en avait pas
      * déjà un.
      */
-    private static String line(String value)
-    {
+    private static String line(String value) {
         final int length=value.length();
-        if (length!=0)
-        {
+        if (length!=0) {
             final char c = value.charAt(length-1);
             if (c!='\r' && c!='\n') value+='\n';
         }
@@ -308,8 +298,7 @@ public class SQLEditor extends JPanel
      */
     public void addSQL(final String title, final String defaultSQL, final String key)
     {
-        synchronized (toDisplay)
-        {
+        synchronized (toDisplay) {
             final String[] record = new String[4];
             record[NAME   ] = title;
             record[DEFAULT] = defaultSQL;
@@ -324,30 +313,22 @@ public class SQLEditor extends JPanel
      * méthode sera appelée automatiquement lorsque l'utilisateur appuie
      * sur "Ok" dans la boîte de dialogue.
      */
-    protected void save()
-    {
-        synchronized (toDisplay)
-        {
-            for (int i=toDisplay.size(); --i>=0;)
-            {
+    protected void save() {
+        synchronized (toDisplay) {
+            for (int i=toDisplay.size(); --i>=0;) {
                 final String[] record = toDisplay.get(i);
                 final String      key = record[KEY];
                 final String    value = record[VALUE].trim();
-                if (!value.equals(preferences.get(key, record[DEFAULT]).trim()))
-                {
+                if (!value.equals(preferences.get(key, record[DEFAULT]).trim())) {
                     final int clé;
-                    if (value.equals(record[DEFAULT].trim()))
-                    {
+                    if (value.equals(record[DEFAULT].trim())) {
                         preferences.remove(key);
                         clé = ResourceKeys.REMOVE_QUERY_$1;
-                    }
-                    else
-                    {
+                    } else {
                         preferences.put(key, value);
                         clé = ResourceKeys.DEFINE_QUERY_$1;
                     }
-                    if (logger!=null)
-                    {
+                    if (logger != null) {
                         logger.config(Resources.format(clé, key));
                     }
                 }
@@ -358,12 +339,9 @@ public class SQLEditor extends JPanel
     /**
      * Rétablit les requêtes par défaut.
      */
-    private void reset()
-    {
-        synchronized (toDisplay)
-        {
-            for (int i=toDisplay.size(); --i>=0;)
-            {
+    private void reset() {
+        synchronized (toDisplay) {
+            for (int i=toDisplay.size(); --i>=0;) {
                 final String[] record=toDisplay.get(i);
                 record[VALUE] = line(record[DEFAULT]);
             }
@@ -377,6 +355,7 @@ public class SQLEditor extends JPanel
      * ou {@link DataBase#TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
-    public String getProperty(final String name)
-    {return preferences.get(name, null);}
+    public String getProperty(final String name) {
+        return preferences.get(name, null);
+    }
 }

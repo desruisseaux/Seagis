@@ -65,17 +65,17 @@ import fr.ird.resources.gui.ResourceKeys;
  * de la base de données d'images. Les options reconnues sont:
  *
  * <blockquote><pre>
- *  <b>-help</b> <i></i>           Affiche cette liste des options
- *  <b>-series</b> <i></i>         Affiche l'arborescence des séries
- *  <b>-groups</b> <i></i>         Affiche l'arborescence des groupes (incluant les séries)
- *  <b>-formats</b> <i></i>        Affiche la table des formats
- *  <b>-config</b> <i></i>         Configure la base de données (interface graphique)
- *  <b>-browse</b> <i></i>         Affiche le contenu de toute la base de données (interface graphique)
- *  <b>-source</b> <i>name</i>     Source des données                (exemple: "jdbc:odbc:SEAS-Images")
- *  <b>-driver</b> <i>name</i>     Pilote de la base de données      (exemple: "sun.jdbc.odbc.JdbcOdbcDriver")
- *  <b>-locale</b> <i>name</i>     Langue et conventions d'affichage (exemple: "fr_CA")
- *  <b>-encoding</b> <i>name</i>   Page de code pour les sorties     (exemple: "cp850")
- *  <b>-output</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
+ *  <b>-help</b> <i></i>         Affiche cette liste des options
+ *  <b>-series</b> <i></i>       Affiche l'arborescence des séries
+ *  <b>-groups</b> <i></i>       Affiche l'arborescence des groupes (incluant les séries)
+ *  <b>-formats</b> <i></i>      Affiche la table des formats
+ *  <b>-config</b> <i></i>       Configure la base de données (interface graphique)
+ *  <b>-browse</b> <i></i>       Affiche le contenu de toute la base de données (interface graphique)
+ *  <b>-source</b> <i>name</i>   Source des données                (exemple: "jdbc:odbc:SEAS-Images")
+ *  <b>-driver</b> <i>name</i>   Pilote de la base de données      (exemple: "sun.jdbc.odbc.JdbcOdbcDriver")
+ *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
+ *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
+ *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
  * </pre></blockquote>
  *
  * L'argument <code>-cp</code> est surtout utile lorsque cette méthode est lancée
@@ -88,8 +88,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Main extends Arguments
-{
+final class Main extends Arguments {
     /**
      * Pilote utilisée.
      */
@@ -118,8 +117,7 @@ final class Main extends Arguments
      *
      * @param args Arguments transmis sur la ligne de commande.
      */
-    public Main(final String[] args)
-    {
+    public Main(final String[] args) {
         super(args);
         this.config   = getFlag          ("-config");
         String driver = getOptionalString("-driver");
@@ -134,15 +132,11 @@ final class Main extends Arguments
      * Retourne la connexion vers la base de données.
      * @throws SQLException si la connexion n'a pas pu être établie.
      */
-    private Connection getConnection() throws SQLException
-    {
-        if (connection==null) try
-        {
+    private Connection getConnection() throws SQLException {
+        if (connection==null) try {
             Class.forName(driver);
             connection = DriverManager.getConnection(source);
-        }
-        catch (ClassNotFoundException exception)
-        {
+        } catch (ClassNotFoundException exception) {
             final SQLException e = new SQLException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
@@ -153,24 +147,23 @@ final class Main extends Arguments
     /**
      * Print help instructions.
      */
-    private void help()
-    {
+    private void help() {
         out.println();
         out.println("Outils de ligne de commande pour la base de données d'images\n"+
                     "1999-2002, Institut de Recherche pour le Développement\n"+
                     "\n"+
                     "Options disponibles:\n"+
-                    "  -help              Affiche cette liste des options\n"+
-                    "  -series            Affiche l'arborescence des séries\n"+
-                    "  -groups            Affiche l'arborescence des groupes (incluant les séries)\n"+
-                    "  -formats           Affiche la table des formats\n"+
-                    "  -config            Configure la base de données (interface graphique)\n"+
-                    "  -browse            Affiche le contenu de toute la base de données (interface graphique)\n"+
-                    "  -source <name>     Source des données                (exemple: \"jdbc:odbc:SEAS-Images\")\n"+
-                    "  -driver <name>     Pilote de la base de données      (exemple: \"sun.jdbc.odbc.JdbcOdbcDriver\")\n"+
-                    "  -locale <name>     Langue et conventions d'affichage (exemple: \"fr_CA\")\n"+
-                    "  -encoding <name>   Page de code pour les sorties     (exemple: \"cp850\")\n"+
-                    "  -output <filename> Fichier de destination (le périphérique standard par défaut)");
+                    "  -help            Affiche cette liste des options\n"+
+                    "  -series          Affiche l'arborescence des séries\n"+
+                    "  -groups          Affiche l'arborescence des groupes (incluant les séries)\n"+
+                    "  -formats         Affiche la table des formats\n"+
+                    "  -config          Configure la base de données (interface graphique)\n"+
+                    "  -browse          Affiche le contenu de toute la base de données (interface graphique)\n"+
+                    "  -source <name>   Source des données                (exemple: \"jdbc:odbc:SEAS-Images\")\n"+
+                    "  -driver <name>   Pilote de la base de données      (exemple: \"sun.jdbc.odbc.JdbcOdbcDriver\")\n"+
+                    "  -locale <name>   Langue et conventions d'affichage (exemple: \"fr_CA\")\n"+
+                    "  -encoding <name> Page de code pour les sorties     (exemple: \"cp850\")\n"+
+                    "  -Xout <filename> Fichier de destination (le périphérique standard par défaut)");
     }
 
     /**
@@ -179,8 +172,7 @@ final class Main extends Arguments
      * de données  ainsi que le bon fonctionnement de l'implémentation
      * de {@link SeriesTable}.
      */
-    private void series(final int leafType) throws SQLException
-    {
+    private void series(final int leafType) throws SQLException {
         final Connection connection = getConnection();
         final SeriesTable series = new SeriesTableImpl(connection);
         final TreeModel    model = series.getTree(leafType);
@@ -195,16 +187,14 @@ final class Main extends Arguments
      * Cette méthode sert à vérifier le contenu de la base de données, ainsi
      * que le bon fonctionnement des classes d'interrogation.
      */
-    private void formats() throws SQLException
-    {
+    private void formats() throws SQLException {
         final Connection connection = getConnection();
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.FORMATS));
         final String        query = "SELECT ID FROM "+Table.FORMATS;
         final Statement statement = connection.createStatement();
         final ResultSet resultSet = statement.executeQuery(query);
         final FormatTable formats = new FormatTable(connection);
-        while (resultSet.next())
-        {
+        while (resultSet.next()) {
             final Integer ID=new Integer(resultSet.getInt(1));
             root.add(formats.getEntry(ID).getTree(locale));
         }
@@ -220,8 +210,7 @@ final class Main extends Arguments
      * Affiche dans une fenêtre <i>Swing</i>
      * le contenu de toute la base de données.
      */
-    private void browse() throws SQLException
-    {
+    private void browse() throws SQLException {
         final Connection    connection = getConnection();
         final SeriesTable  seriesTable = new SeriesTableImpl(connection);
         final TreeModel      treeModel = seriesTable.getTree(SeriesTable.CATEGORY_LEAF);
@@ -234,8 +223,7 @@ final class Main extends Arguments
         final ImageTable      imageTable = new ImageTableImpl(connection, TimeZone.getTimeZone(Table.getPreference(DataBase.TIMEZONE)));
         imageTable.setGeographicArea(new Rectangle(-180, -90, 360, 180));
         imageTable.setTimeRange(new Date(0), new Date());
-        for (final Iterator<SeriesEntry> it=seriesTable.getSeries().iterator(); it.hasNext();)
-        {
+        for (final Iterator<SeriesEntry> it=seriesTable.getSeries().iterator(); it.hasNext();) {
             final SeriesEntry currentSeries = it.next();
             imageTable.setSeries(currentSeries);
             final JTable table = new JTable(new ImageTableModel(imageTable));
@@ -256,8 +244,7 @@ final class Main extends Arguments
     /**
      * Exécute tout.
      */
-    public void run() throws SQLException
-    {
+    public void run() throws SQLException {
         final boolean formats = getFlag("-formats");
         final boolean  groups = getFlag("-groups");
         final boolean  series = getFlag("-series");
@@ -272,8 +259,7 @@ final class Main extends Arguments
         if (browse)       browse();
         if (help)         help();
 
-        if (connection!=null)
-        {
+        if (connection!=null) {
             connection.close();
             connection = null;
         }
@@ -285,6 +271,7 @@ final class Main extends Arguments
      * de données. Cette méthode sert à vérifier le contenu de la base
      * de données ainsi que le bon fonctionnement de cette classe.
      */
-    public static void main(final String[] args) throws SQLException
-    {new Main(args).run();}
+    public static void main(final String[] args) throws SQLException {
+        new Main(args).run();
+    }
 }

@@ -130,7 +130,7 @@ final class CouplingResultSet implements ResultSet {
             throw new SQLException();
         }
         if (last == this) {
-            return true;
+            return false;
         }
         return last.wasNull();
     }
@@ -145,12 +145,12 @@ final class CouplingResultSet implements ResultSet {
             last = this;
             return 0;
         }
-        final int index = columnIndex / columnCount;
-        if (columnIndex<0 || columnIndex>=results.length) {
+        final int index = --columnIndex / columnCount;
+        if (columnIndex<0 || index>=results.length) {
             throw new SQLException("Numéro de colonne invalide.");
         }
         last = results[index];
-        return columnIndex % columnCount + 2;
+        return (columnIndex % columnCount) + 2;
     }
     
     //======================================================================

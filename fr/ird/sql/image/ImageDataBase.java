@@ -66,14 +66,12 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ImageDataBase extends DataBase
-{
+public class ImageDataBase extends DataBase {
     /**
      * Register a set of service providers
      * the first time this class is loaded.
      */
-    static
-    {
+    static {
         final IIORegistry registry = IIORegistry.getDefaultInstance();
         registry.registerServiceProvider(new fr.ird.io.image.MSLA_RAW());
         registry.registerServiceProvider(new fr.ird.io.image.Aviso_ASC());
@@ -104,8 +102,7 @@ public class ImageDataBase extends DataBase
      * la propriété "Images" donne l'instruction SQL à utiliser pour interroger la
      * table d'images.
      */
-    private static final String[] DEFAULT_PROPERTIES=
-    {
+    private static final String[] DEFAULT_PROPERTIES = {
         "IMAGE_COUNT",     SeriesTableImpl.SQL_COUNT,
         "SERIES_TREE",     SeriesTableImpl.SQL_TREE,
         "SERIES_BY_ID",    SeriesTableImpl.SQL_SELECT_BY_ID,
@@ -124,8 +121,7 @@ public class ImageDataBase extends DataBase
      * Ces clés doivent apparaîtrent dans le même ordre que
      * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
      */
-    private static final int[] PROPERTY_NAMES=
-    {
+    private static final int[] PROPERTY_NAMES = {
         ResourceKeys.SQL_IMAGE_COUNT,
         ResourceKeys.SQL_SERIES_TREE,
         ResourceKeys.SQL_SERIES_BY_ID,
@@ -191,8 +187,7 @@ public class ImageDataBase extends DataBase
      * Cet URL sera puisé dans les préférences de l'utilisateur
      * autant que possible.
      */
-    private static String getDefaultURL()
-    {
+    private static String getDefaultURL() {
         Table.logger.log(loadDriver(Table.getPreference(DRIVER)));
         return Table.getPreference(SOURCE);
     }
@@ -205,8 +200,9 @@ public class ImageDataBase extends DataBase
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public ImageDataBase() throws SQLException
-    {super(getDefaultURL(), TimeZone.getTimeZone(Table.getPreference(TIMEZONE)));}
+    public ImageDataBase() throws SQLException {
+        super(getDefaultURL(), TimeZone.getTimeZone(Table.getPreference(TIMEZONE)));
+    }
 
     /**
      * Ouvre une connection avec la base de données des images.
@@ -218,8 +214,9 @@ public class ImageDataBase extends DataBase
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public ImageDataBase(final String url, final TimeZone timezone) throws SQLException
-    {super(url, timezone);}
+    public ImageDataBase(final String url, final TimeZone timezone) throws SQLException {
+        super(url, timezone);
+    }
 
     /**
      * Ouvre une connection avec la base de données des images.
@@ -233,21 +230,21 @@ public class ImageDataBase extends DataBase
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public ImageDataBase(final String url, final TimeZone timezone, final String user, final String password) throws SQLException
-    {super(url, timezone, user, password);}
+    public ImageDataBase(final String url, final TimeZone timezone,
+                         final String user, final String password) throws SQLException
+    {
+        super(url, timezone, user, password);
+    }
 
     /**
      * Vérifie que la région est valide, en puisant les
      * données dans la base de données si nécessaire.
      */
-    private void ensureXYTValid() throws SQLException
-    {
-        if (!areaValid)
-        {
+    private void ensureXYTValid() throws SQLException {
+        if (!areaValid) {
             final Statement statement=connection.createStatement();
             final ResultSet result=statement.executeQuery(Table.preferences.get(Table.AREAS, SQL_AREA));
-            if (result.next())
-            {
+            if (result.next()) {
                 boolean wasNull=false;
                 final Calendar      calendar = new GregorianCalendar(timezone);
                 final Calendar localCalendar = new GregorianCalendar();
@@ -257,8 +254,7 @@ public class ImageDataBase extends DataBase
                 ymin=result.getFloat(4); wasNull |= result.wasNull();
                 xmax=result.getFloat(5); wasNull |= result.wasNull();
                 ymax=result.getFloat(6); wasNull |= result.wasNull();
-                if (!wasNull)
-                {
+                if (!wasNull) {
                     this.startTime = startTime.getTime();
                     this.  endTime =   endTime.getTime();
                     areaValid=true;
@@ -278,8 +274,7 @@ public class ImageDataBase extends DataBase
      *         ne contient pas d'images.
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      */
-    public synchronized Rectangle2D getGeographicArea() throws SQLException
-    {
+    public synchronized Rectangle2D getGeographicArea() throws SQLException {
         ensureXYTValid();
         return (areaValid) ? new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin) : null;
     }
@@ -291,8 +286,7 @@ public class ImageDataBase extends DataBase
      *
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      */
-    public synchronized Range getTimeRange() throws SQLException
-    {
+    public synchronized Range getTimeRange() throws SQLException {
         ensureXYTValid();
         return (areaValid) ? new Range(Date.class, new Date(startTime), new Date(endTime)) : null;
     }
@@ -305,8 +299,9 @@ public class ImageDataBase extends DataBase
      *
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public SeriesTable getSeriesTable() throws SQLException
-    {return new SeriesTableImpl(connection);}
+    public SeriesTable getSeriesTable() throws SQLException {
+        return new SeriesTableImpl(connection);
+    }
 
     /**
      * Construit et retourne un objet qui interrogera la table "Images" de
@@ -317,25 +312,20 @@ public class ImageDataBase extends DataBase
      *
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public synchronized ImageTable getImageTable() throws SQLException
-    {
-        if (series==null)
-        {
+    public synchronized ImageTable getImageTable() throws SQLException {
+        if (series == null) {
             int maxImageCount = Integer.MIN_VALUE;
             final SeriesTable table = getSeriesTable();
-            for (final Iterator<SeriesEntry> it=table.getSeries().iterator(); it.hasNext();)
-            {
+            for (final Iterator<SeriesEntry> it=table.getSeries().iterator(); it.hasNext();) {
                 final SeriesEntry entry = it.next();
                 final int imageCount = table.getImageCount(entry);
-                if (imageCount >= maxImageCount)
-                {
+                if (imageCount >= maxImageCount) {
                     this.series   = entry;
                     maxImageCount = imageCount;
                 }
             }
             table.close();
-            if (series==null)
-            {
+            if (series == null) {
                 throw new IllegalRecordException(Table.SERIES, Resources.format(ResourceKeys.ERROR_NO_SERIES));
             }
         }
@@ -352,19 +342,15 @@ public class ImageDataBase extends DataBase
      * @throws SQLException si la référence n'est pas valide
      *         ou table n'a pas pu être construite.
      */
-    public synchronized ImageTable getImageTable(final SeriesEntry series) throws SQLException
-    {
+    public synchronized ImageTable getImageTable(final SeriesEntry series) throws SQLException {
         final Rectangle2D geographicArea;
         final Date startTime, endTime;
         ensureXYTValid();
-        if (areaValid)
-        {
+        if (areaValid) {
             geographicArea = new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin);
             startTime      = new Date(this.startTime);
             endTime        = new Date(this.  endTime);
-        }
-        else
-        {
+        } else {
             geographicArea = new Rectangle2D.Double(-180, -90, 180, 360);
             startTime      = new Date(0);
             endTime        = new Date();
@@ -388,13 +374,15 @@ public class ImageDataBase extends DataBase
      * @param  series Nom de la série d'images.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public ImageTable getImageTable(final String series) throws SQLException
-    {
+    public ImageTable getImageTable(final String series) throws SQLException {
         final SeriesTable table = getSeriesTable();
         final SeriesEntry entry = table.getSeries(series);
         table.close();
-        if (entry!=null) return getImageTable(entry);
-        else throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
+        if (entry!=null) {
+            return getImageTable(entry);
+        } else {
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
+        }
     }
 
     /**
@@ -406,13 +394,15 @@ public class ImageDataBase extends DataBase
      * @param  series Numéro de la série d'images.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public ImageTable getImageTable(final int seriesID) throws SQLException
-    {
+    public ImageTable getImageTable(final int seriesID) throws SQLException {
         final SeriesTable table = getSeriesTable();
         final SeriesEntry entry = table.getSeries(seriesID);
         table.close();
-        if (entry!=null) return getImageTable(entry);
-        else throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, new Integer(seriesID)));
+        if (entry!=null) {
+            return getImageTable(entry);
+        } else {
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, new Integer(seriesID)));
+        }
     }
 
     /**
@@ -421,8 +411,9 @@ public class ImageDataBase extends DataBase
      *
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public TableFiller getTableFiller() throws SQLException
-    {return new TableFillerImpl(connection, timezone);}
+    public TableFiller getTableFiller() throws SQLException {
+        return new TableFillerImpl(connection, timezone);
+    }
 
     /**
      * Retourne le répertoire racine à partir d'où construire le
@@ -431,8 +422,9 @@ public class ImageDataBase extends DataBase
      *
      * @return Répertoire racine des images.
      */
-    public static File getDefaultDirectory()
-    {return (Table.directory!=null) ? Table.directory : new File(".");}
+    public static File getDefaultDirectory() {
+        return (Table.directory!=null) ? Table.directory : new File(".");
+    }
 
     /**
      * Définit le répertoire racine à partir duquel puiser les images.
@@ -443,13 +435,13 @@ public class ImageDataBase extends DataBase
      *
      * @param directory Répertoire racine des images.
      */
-    public static void setDefaultDirectory(final File directory)
-    {
+    public static void setDefaultDirectory(final File directory) {
         Table.directory=directory;
-        if (directory!=null)
+        if (directory!=null) {
             Table.preferences.put(Table.DIRECTORY, directory.getPath());
-        else
+        } else {
             Table.preferences.remove(Table.DIRECTORY);
+        }
     }
 
     /**
@@ -457,8 +449,7 @@ public class ImageDataBase extends DataBase
      * {@link #setSynchronizedDirectories} pour une description
      * plus détaillée.
      */
-    public static File[] getSynchronizedDirectories()
-    {
+    public static File[] getSynchronizedDirectories() {
         final File[] directories=new File[FormatEntryImpl.synchronizedDirectories.length];
         System.arraycopy(FormatEntryImpl.synchronizedDirectories, 0, directories, 0, directories.length);
         return directories;
@@ -494,11 +485,11 @@ public class ImageDataBase extends DataBase
      * <p>Notez enfin que cette liste n'a d'impact que sur la performance. Que la liste soit
      * précise ou pas ne devrait pas affecter les résultats obtenus.</p>
      */
-    public static void setSynchronizedDirectories(final File[] directories) throws IOException
-    {
+    public static void setSynchronizedDirectories(final File[] directories) throws IOException {
         final File[] dir=new File[directories.length];
-        for (int i=0; i<dir.length; i++)
+        for (int i=0; i<dir.length; i++) {
             dir[i]=directories[i].getCanonicalFile();
+        }
         FormatEntryImpl.synchronizedDirectories = dir;
     }
 
@@ -508,18 +499,18 @@ public class ImageDataBase extends DataBase
      * les préférences systèmes et utilisées pour interroger les tables de la
      * base de données d'images.
      */
-    public static SQLEditor getSQLEditor()
-    {
+    public static SQLEditor getSQLEditor() {
         assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(0)), Table.logger)
+        final SQLEditor editor=new SQLEditor(Table.preferences,
+            resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(0)), Table.logger)
         {
             public String getProperty(final String name)
             {return Table.getPreference(name);}
         };
-        for (int i=0; i<PROPERTY_NAMES.length; i++)
-        {
-            editor.addSQL(resources.getString(PROPERTY_NAMES[i]), DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
+        for (int i=0; i<PROPERTY_NAMES.length; i++) {
+            editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
+                          DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
         }
         return editor;
     }
@@ -535,24 +526,24 @@ public class ImageDataBase extends DataBase
      * Lorsque cette classe est exécutée avec l'argument <code>-config</code>, elle
      * fait apparaître une boite de dialogue  permettant de configurer les requêtes
      * SQL utilisées par la base de données. Les requêtes modifiées seront sauvegardées
-     * dans les préférences de l'utilisateur. Lorsque des arguments sont spécifiés,
+     * dans les préférences du système. Lorsque des arguments sont spécifiés,
      * ils sont interprétés comme suit:
      *
      * <blockquote><pre>
-     *  <b>-help</b> <i></i>           Affiche cette liste des options
-     *  <b>-series</b> <i></i>         Affiche l'arborescence des séries
-     *  <b>-groups</b> <i></i>         Affiche l'arborescence des groupes (incluant les séries)
-     *  <b>-formats</b> <i></i>        Affiche la table des formats
-     *  <b>-config</b> <i></i>         Configure la base de données (interface graphique)
-     *  <b>-browse</b> <i></i>         Affiche le contenu de toute la base de données (interface graphique)
-     *  <b>-source</b> <i>name</i>     Source des données                (exemple: "jdbc:odbc:SEAS-Images")
-     *  <b>-driver</b> <i>name</i>     Pilote de la base de données      (exemple: "sun.jdbc.odbc.JdbcOdbcDriver")
-     *  <b>-locale</b> <i>name</i>     Langue et conventions d'affichage (exemple: "fr_CA")
-     *  <b>-encoding</b> <i>name</i>   Page de code pour les sorties     (exemple: "cp850")
-     *  <b>-output</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
+     *  <b>-help</b> <i></i>         Affiche cette liste des options
+     *  <b>-series</b> <i></i>       Affiche l'arborescence des séries
+     *  <b>-groups</b> <i></i>       Affiche l'arborescence des groupes (incluant les séries)
+     *  <b>-formats</b> <i></i>      Affiche la table des formats
+     *  <b>-config</b> <i></i>       Configure la base de données (interface graphique)
+     *  <b>-browse</b> <i></i>       Affiche le contenu de toute la base de données (interface graphique)
+     *  <b>-source</b> <i>name</i>   Source des données                (exemple: "jdbc:odbc:SEAS-Images")
+     *  <b>-driver</b> <i>name</i>   Pilote de la base de données      (exemple: "sun.jdbc.odbc.JdbcOdbcDriver")
+     *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
+     *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
+     *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
      * </pre></blockquote>
      *
-     * L'argument <code>-cp</code> est surtout utile lorsque cette méthode est lancée
+     * L'argument <code>-encoding</code> est surtout utile lorsque cette méthode est lancée
      * à partir de la ligne de commande MS-DOS: ce dernier n'utilise pas la même page
      * de code que le reste du système Windows. Il est alors nécessaire de préciser la
      * page de code (souvent 850 ou 437) si on veut obtenir un affichage correct des
@@ -561,11 +552,9 @@ public class ImageDataBase extends DataBase
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public static void main(final String[] args) throws SQLException
-    {
+    public static void main(final String[] args) throws SQLException {
         final Main console = new Main(args);
-        if (console.config)
-        {
+        if (console.config) {
             getSQLEditor().showDialog(null);
             System.exit(0);
         }

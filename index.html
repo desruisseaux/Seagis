@@ -21,6 +21,7 @@
     <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Summary">Summary</A>&nbsp;&nbsp;&nbsp;</TD>
     <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Requirements">Requirements</A>&nbsp;&nbsp;&nbsp;</TD>
     <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Download">Download</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Changes">Changes</A>&nbsp;&nbsp;&nbsp;</TD>
     <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Contacts">Contacts</A>&nbsp;&nbsp;&nbsp;</TD>
     <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Links">Links</A>&nbsp;&nbsp;&nbsp;</TD>
   </TR>
@@ -113,18 +114,39 @@ from Geotools 2.</P>
     <TD nowrap>SEAGIS implementation</TD>
     <TD nowrap><A HREF="javadoc/seagis">Browse JavaDoc</A></TD>
     <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/geotools/geotools2/geotools-src/">Browse CVS</A></TD>
-    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=103123">Download sources and binaries</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=111660">Download sources and binaries</A></TD>
   </TR>
   <TR ALIGN="center">
     <TD nowrap>Experimental package</TD>
     <TD nowrap><A HREF="javadoc/seas">Browse JavaDoc</A></TD>
     <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/experimental">Browse CVS</A></TD>
-    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=103126">Download sources and binaries</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=111664">Download sources and binaries</A></TD>
   </TR>
 </TABLE>
 
-<P ALIGN="justify">Current version is alpha-0.6. Changes since last version include
-the following:</P>
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Changes">Changes</A></H2>
+<P ALIGN="justify">Current version is <strong>alpha-0.6.1</strong>.
+Changes since last version include the following:</P>
+
+<UL>
+  <LI><CITE>Well Know Text</CITE> (WKT) parsing has been implemented</LI>.
+
+  <LI>A <CODE>MathTransform</CODE> backed by a localization grid has been
+      added. Localization grid are used in remote sensing for transforming
+      coordinate from a system tied to the spacecraft into geographic
+      coordinates.</LI>
+
+  <LI>The EPSG factory now return coordinate system with fractional degrees
+      even if it was declared as sexagesimal degrees in the EPSG database.
+      Sexagesimal degrees are really unconvenient in any computation process.
+      User still able to use sexagesimal degrees if he really want it.</LI>
+</UL>
+
+<P ALIGN="justify">Changes between <strong>alpha-0.6.0</strong> and
+<strong>alpha-0.5.2</strong> include:</P>
 
 <UL>
   <LI>Orthodromic distance computation has been improved. The old

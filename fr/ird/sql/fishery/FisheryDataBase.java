@@ -35,8 +35,9 @@ import java.sql.ResultSetMetaData;
 import fr.ird.sql.SQLEditor;
 import fr.ird.sql.DataBase;
 
-// Temps
+// Divers
 import java.util.TimeZone;
+import java.io.IOException;
 
 // Collections
 import java.util.Set;
@@ -44,6 +45,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+
+// Geotools
+import org.geotools.resources.Arguments;
 
 // Divers
 import fr.ird.animat.Species;
@@ -57,8 +61,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class FisheryDataBase extends DataBase
-{
+public class FisheryDataBase extends DataBase {
     /** TODO: Temporary switch */
     private static final boolean SEINES = true;
 
@@ -67,8 +70,7 @@ public class FisheryDataBase extends DataBase
      * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
      * pas défini de préférence pour un paramètre.
      */
-    private static String getPreference(final String name)
-    {
+    private static String getPreference(final String name) {
         String def=null;
         if (name!=null)
         {
@@ -85,8 +87,7 @@ public class FisheryDataBase extends DataBase
      * la propriété "Pêches" donne l'instruction SQL à utiliser pour interroger la
      * table des pêches.
      */
-    private static final String[] DEFAULT_PROPERTIES=
-    {
+    private static final String[] DEFAULT_PROPERTIES = {
         Table.SPECIES,                SpeciesTable        .SQL_SELECT,
         Table.LONGLINES,              LonglineCatchTable  .SQL_SELECT,
         Table.SEINES,                 SeineCatchTable     .SQL_SELECT,
@@ -101,8 +102,7 @@ public class FisheryDataBase extends DataBase
      * Ces clés doivent apparaîtrent dans le même ordre que
      * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
      */
-    private static final int[] PROPERTY_NAMES=
-    {
+    private static final int[] PROPERTY_NAMES = {
         ResourceKeys.SQL_SPECIES,
         ResourceKeys.SQL_LONGLINES,
         ResourceKeys.SQL_SEINES,
@@ -116,8 +116,7 @@ public class FisheryDataBase extends DataBase
      * Cet URL sera puisé dans les préférences de l'utilisateur
      * autant que possible.
      */
-    private static String getDefaultURL()
-    {
+    private static String getDefaultURL() {
         Table.logger.log(loadDriver(getPreference(DRIVER)));
         if (SEINES) return "jdbc:odbc:SEAS-Sennes"; // TODO: temporary patch
         return getPreference(SOURCE);
@@ -135,8 +134,9 @@ public class FisheryDataBase extends DataBase
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
-    public FisheryDataBase() throws SQLException
-    {super(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));}
+    public FisheryDataBase() throws SQLException {
+        super(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));
+    }
 
     /**
      * Ouvre une connection avec la base de données de pêches.
@@ -147,8 +147,9 @@ public class FisheryDataBase extends DataBase
      *         en heure GMT les dates écrites dans la base de données.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    public FisheryDataBase(final String name, final TimeZone timezone) throws SQLException
-    {super(name, timezone);}
+    public FisheryDataBase(final String name, final TimeZone timezone) throws SQLException {
+        super(name, timezone);
+    }
 
     /**
      * Retourne les espèces énumérés dans la base de données.
@@ -156,8 +157,7 @@ public class FisheryDataBase extends DataBase
      * @return Ensemble des espèces répertoriées dans la base de données.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public Set<Species> getSpecies() throws SQLException
-    {
+    public Set<Species> getSpecies() throws SQLException {
         final SpeciesTable   spTable = new SpeciesTable(connection);
         final Statement    statement = connection.createStatement();
         final ResultSet       result = statement.executeQuery("SELECT * FROM "+catchTable);
@@ -176,16 +176,12 @@ public class FisheryDataBase extends DataBase
      * @return La table des captures pour les espèces demandées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(final Collection<Species> species) throws SQLException
-    {
+    public CatchTable getCatchTable(final Collection<Species> species) throws SQLException {
         final Set<Species> speciesSet = (species instanceof Set<Species>) ?
               (Set<Species>) species : new LinkedHashSet<Species>(species);
-        if (SEINES)
-        {
+        if (SEINES) {
             return new SeineCatchTable(connection, timezone, speciesSet);
-        }
-        else
-        {
+        } else {
             return new LonglineCatchTable(connection, timezone, speciesSet);
         }
     }
@@ -202,10 +198,11 @@ public class FisheryDataBase extends DataBase
     {
         final List<Species> list = new ArrayList<Species>(species.length);
         final SpeciesTable spSQL = new SpeciesTable(connection);
-        for (int i=0; i<species.length; i++)
-        {
+        for (int i=0; i<species.length; i++) {
             final Species sp = spSQL.getSpecies(species[i], i);
-            if (sp!=null) list.add(sp);
+            if (sp!=null) {
+                list.add(sp);
+            }
         }
         spSQL.close();
         return getCatchTable(list);
@@ -219,8 +216,9 @@ public class FisheryDataBase extends DataBase
      * @return La table des captures pour l'espèce demandée.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(final String species) throws SQLException
-    {return getCatchTable(new String[]{species});}
+    public CatchTable getCatchTable(final String species) throws SQLException {
+        return getCatchTable(new String[]{species});
+    }
 
     /**
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
@@ -229,8 +227,9 @@ public class FisheryDataBase extends DataBase
      * @return La table des captures pour toute les espèces répertoriées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable() throws SQLException
-    {return getCatchTable(getSpecies());}
+    public CatchTable getCatchTable() throws SQLException {
+        return getCatchTable(getSpecies());
+    }
 
     /**
      * Construit et retourne un objet qui interrogera un paramètre
@@ -239,10 +238,29 @@ public class FisheryDataBase extends DataBase
      *
      * @param parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
      *        disponibles peut être obtenu avec {@link #getAvailableParameters()}.
-     * @param operation Opération (exemple "valeur" ou "sobel").
+     * @param operation Opération (exemple "valeur" ou "sobel"). Ces opérations
+     *        correspondent à des noms des colonnes de la table "Environnement".
      */
-    public EnvironmentTable getEnvironmentTable(final String parameter, final String operation) throws SQLException
-    {return new EnvironmentTableImpl(connection, parameter, operation);}
+    public EnvironmentTable getEnvironmentTable(final String parameter, final String operation) throws SQLException {
+        return new EnvironmentTableImpl(connection, parameter, operation);
+    }
+
+    /**
+     * Construit et retourne un objet qui associera des valeurs environnementales
+     * à chaque captures.
+     *
+     * <strong>NOTE: dans une version future, on pourrait probablement fusionner
+     *         <code>EnvironmentTable</code> et <code>CouplingTable</code> en une
+     *         seule interface.</strong>
+     *
+     * @param parameters Paramètres (exemple "SST" ou "EKP"). La liste des paramètres
+     *        disponibles peut être obtenu avec {@link #getAvailableParameters()}.
+     * @param operations Opérations (exemple "valeur" ou "sobel"). Ces opérations
+     *        correspondent à des noms des colonnes de la table "Environnement".
+     */
+    public CouplingTable getCouplingTable(final String[] parameters, final String[] operations) throws SQLException {
+        return new CouplingTableImpl(connection, parameters, operations);
+    }
 
     /**
      * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
@@ -259,19 +277,71 @@ public class FisheryDataBase extends DataBase
      * les instructions SQL. Les instructions modifiées seront utilisées pour
      * interroger les tables de la base de données de pêches.
      */
-    public static SQLEditor getSQLEditor()
-    {
+    public static SQLEditor getSQLEditor() {
         assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(1)), Table.logger)
+        final SQLEditor editor=new SQLEditor(Table.preferences,
+                resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(1)), Table.logger)
         {
             public String getProperty(final String name)
             {return getPreference(name);}
         };
-        for (int i=0; i<PROPERTY_NAMES.length; i++)
-        {
-            editor.addSQL(resources.getString(PROPERTY_NAMES[i]), DEFAULT_PROPERTIES[(i<<1)+1], DEFAULT_PROPERTIES[i<<1]);
+        for (int i=0; i<PROPERTY_NAMES.length; i++) {
+            editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
+                    DEFAULT_PROPERTIES[(i<<1)+1], DEFAULT_PROPERTIES[i<<1]);
         }
         return editor;
+    }
+
+    /**
+     * Affiche des enregistrements de la base de données ou configure les requêtes SQL.
+     * Cette méthode peut être exécutée à partir de la ligne de commande:
+     *
+     * <blockquote><pre>
+     * java fr.ird.sql.fishery.FisheryDataBase <var>options</var> [colonnes]
+     * </pre></blockquote>
+     *
+     * Lorsque cette classe est exécutée avec l'argument <code>-config</code>, elle
+     * fait apparaître une boite de dialogue  permettant de configurer les requêtes
+     * SQL utilisées par la base de données. Les requêtes modifiées seront sauvegardées
+     * dans les préférences du système. Lorsque des arguments sont spécifiés,
+     * ils sont interprétés comme suit:
+     *
+     * <blockquote><pre>
+     *  <b>-config</b> <i></i>       Configure la base de données (interface graphique)
+     *  <b>-count</b> <i>n</i>       Nombre maximal d'enregistrement à afficher (20 par défaut).
+     *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
+     *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
+     *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
+     * </pre></blockquote>
+     *
+     * L'argument <code>-encoding</code> est surtout utile lorsque cette méthode est lancée
+     * à partir de la ligne de commande MS-DOS: ce dernier n'utilise pas la même page
+     * de code que le reste du système Windows. Il est alors nécessaire de préciser la
+     * page de code (souvent 850 ou 437) si on veut obtenir un affichage correct des
+     * caractères étendus. La page de code en cours peut être obtenu en tappant
+     * <code>chcp</code> sur la ligne de commande.
+     *
+     * @throws SQLException si l'interrogation de la base de données a échouée.
+     */
+    public static void main(final String[] args) throws SQLException, IOException {
+        final Arguments  console = new Arguments(args);
+        final boolean     config = console.getFlag("-config");
+        final Integer maxRecords = console.getOptionalInteger("-count");
+        String[]   columns = console.getRemainingArguments(Integer.MAX_VALUE);
+        if (config) {
+            getSQLEditor().showDialog(null);
+            System.exit(0);
+        }
+        columns = new String[] {"valeur","sobel3"};
+        if (columns.length != 0) {
+            final String[] parameters = new String[] {"SST", "CHL", "SLA"};
+            final FisheryDataBase database = new FisheryDataBase();
+            final CouplingTable table = database.getCouplingTable(parameters, columns);
+            table.setTimeLags(new int[] {-5, 0});
+            table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
+            table.close();
+            database.close();
+        }
     }
 }
