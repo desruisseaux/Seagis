@@ -397,7 +397,6 @@ public class RawBinaryImageReader extends SimpleImageReader
         final WritableRaster srcRaster = isDirect ? dstRaster : WritableRaster.createWritableRaster(streamModel.createCompatibleSampleModel(streamWidth, Math.min(8, streamHeight)), null);
         final DataBuffer        buffer = srcRaster.getDataBuffer();
         final int         bufferHeight = srcRaster.getHeight();
-        final int               length = buffer.getSize();
         final int[]            offsets = buffer.getOffsets();
         final double[]         minimum = new double[numSrcBands];
         final double[]         maximum = new double[numSrcBands];

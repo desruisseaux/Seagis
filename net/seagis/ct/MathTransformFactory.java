@@ -138,6 +138,7 @@ public class MathTransformFactory
         {
             DEFAULT = new MathTransformFactory(new MathTransformProvider[]
             {
+                new              MatrixTransform.Provider(4,4), // Default to 4x4 matrix
                 new           MercatorProjection.Provider(),
                 new   LambertConformalProjection.Provider(),
                 new      StereographicProjection.Provider(),      // Automatic
@@ -464,16 +465,7 @@ public class MathTransformFactory
     {
         final MathTransform transform;
         classification = classification.trim();
-        if (classification.equalsIgnoreCase("Affine"))
-        {
-            // Special case for "Affine", since the ParameterListDescriptor
-            // depends of the matrix size.
-            transform = MatrixTransform.Provider.staticCreate(parameters);
-        }
-        else
-        {
-            transform = getMathTransformProvider(classification).create(parameters);
-        }
+        transform = getMathTransformProvider(classification).create(parameters);
         return (MathTransform) pool.intern(transform);
     }
 
@@ -496,14 +488,11 @@ public class MathTransformFactory
      */
     public String[] getAvailableTransforms()
     {
-        final String[] names = new String[providers.length+1];
-        int i; for (i=0; i<names.length; i++)
+        final String[] names = new String[providers.length];
+        for (int i=0; i<names.length; i++)
         {
             names[i] = providers[i].getClassName();
         }
-        // Special case for "Affine", since the ParameterListDescriptor
-        // depends of the matrix size.
-        names[i] = "Affine";
         return names;
     }
 
