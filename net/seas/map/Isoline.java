@@ -25,6 +25,8 @@ package net.seas.map;
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cs.CoordinateSystem;
 import net.seas.opengis.ct.TransformException;
+import net.seas.opengis.cs.ProjectedCoordinateSystem;
+import net.seas.opengis.cs.GeographicCoordinateSystem;
 
 // Geometry and graphics
 import java.awt.Shape;
@@ -193,8 +195,9 @@ public class Isoline extends Contour
      * a direct reference to the internally cached bounding box. DO
      * NOT MODIFY!
      */
-    private Rectangle2D getCachedBounds()
+    final Rectangle2D getCachedBounds()
     {
+        assert Thread.holdsLock(this);
         if (bounds==null)
         {
             for (int i=polygonCount; --i>=0;)
@@ -739,7 +742,7 @@ public class Isoline extends Contour
     {
         polygons = XArray.resize(polygons, polygonCount);
 
-        bounds = null;
+        bounds            = null;
         int    sumCount   = 0;
         double sumPercent = 0;
         for (int i=polygonCount; --i>=0;)
@@ -759,23 +762,31 @@ public class Isoline extends Contour
     }
 
     /**
-     * Retourne un isoligne contenant les points de  <code>this</code>  qui apparaissent dans le clip
-     * spécifié. Si aucun point de cet isoligne n'appparaît à l'intérieur de <code>clip</code>, alors
-     * cette méthode retourne <code>null</code>.    Si tous les points de cet isoligne apparaissent à
-     * l'intérieur de <code>clip</code>, alors cette méthode retourne <code>this</code>. Sinon, cette
-     * méthode retourne un isoligne qui contiendra seulement les points qui apparaissent à l'intérieur
-     * de <code>clip</code>. Cet isoligne partagera les mêmes données que <code>this</code> autant que
-     * possible, de sorte que la consommation de mémoire devrait rester raisonable.
+     * Returns an isoline approximatively equals to this isoline clipped to the specified bounds.
+     * The clip is only approximative  in that  the resulting isoline may extends outside the clip
+     * area. However, it is garanted that the resulting isoline contains at least all the interior
+     * of the clip area.
      *
-     * @param  clip Coordonnées de la région à couper.
-     * @return Isoligne éventuellement coupé.
+     * If this method can't performs the clip, or if it believe that it doesn't worth to do a clip,
+     * it returns <code>this</code>. If this isoline doesn't intersect the clip area, then this method
+     * returns <code>null</code>. Otherwise, a new isoline is created and returned. The new isoline
+     * will try to share as much internal data as possible with <code>this</code> in order to keep
+     * memory footprint low.
+     *
+     * @param  clipper An object containing the clip area.
+     * @return <code>null</code> if this isoline doesn't intersect the clip, <code>this</code>
+     *         if no clip has been performed, or a new clipped isoline otherwise.
      */
-    private final Isoline getClipped(final Clipper clipper)
+    final Isoline getClipped(final Clipper clipper)
     {
+        final Rectangle2D clipRegion = clipper.setCoordinateSystem(coordinateSystem);
         final Polygon[] clipPolygons = new Polygon[polygonCount];
         int         clipPolygonCount = 0;
         boolean              changed = false;
-
+        /*
+         * Clip all polygons, discarding
+         * polygons outside the clip.
+         */
         for (int i=0; i<polygonCount; i++)
         {
             final Polygon toClip  = polygons[i];
@@ -789,10 +800,18 @@ public class Isoline extends Contour
         }
         if (changed)
         {
+            /*
+             * If at least one polygon has been clipped, returns a new isoline.
+             * Note: we set the new bounds to the clip region. It may be bigger
+             * than computed bounds, but it is needed for optimal behaviour of
+             * {@link RenderingContext#clip}. Clipped isolines should not be
+             * public anyways (except for very short time).
+             */
              final Isoline isoline = new Isoline(coordinateSystem);
-             isoline.setName(getName(null));
-             isoline.polygons = XArray.resize(clipPolygons, clipPolygonCount);
-             isoline.polygonCount = clipPolygonCount;
+             isoline.polygons      = XArray.resize(clipPolygons, clipPolygonCount);
+             isoline.polygonCount  = clipPolygonCount;
+             isoline.bounds        = clipRegion;
+             isoline.setName(super.getName(null));
              return isoline;
         }
         else return this;

@@ -133,9 +133,8 @@ public class CoordinateChooser extends JPanel
     private final AbstractButton radioPrefRes;
 
     /**
-     * Composante qui affiche l'arborescence des séries, ou <code>null</code> s'il n'y en a pas.
-     * Ce champ peut être mis à <code>null</code> plus tard après la construction par un appel à
-     * la méthode {@link #disposeSeriesPanel}.
+     * Composante facultative à afficher à la droite
+     * du paneau <code>CoordinateChooser</code>.
      */
     private JComponent accessory;
 

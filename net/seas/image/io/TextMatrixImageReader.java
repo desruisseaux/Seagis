@@ -447,7 +447,8 @@ public class TextMatrixImageReader extends TextImageReader
          *       (uppercase and lowercase).</li>
          *
          *   <li>Input types ({@link #inputTypes}):
-         *       {@link File}, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
+         *       {@link java.io.File}, {@link java.net.URL}, {@link java.io.Reader},
+         *       {@link java.io.InputStream} et {@link javax.imageio.stream.ImageInputStream}.</li>
          * </ul>
          *
          * @param name Format name, or <code>null</code> to let {@link #names} unset.

@@ -372,9 +372,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * index.
      *
      * @param  geophysicsValues <code>true</code> for the range of geophysics values
-     *         <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         <code>[{@link Category#minimum}..{@link Category#maximum}]</code>,
      *         or <code>false</code> for the range of sample index
-     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     *         <code>[{@link Category#lower}..{@link Category#upper}]</code>.
      * @return The range of values, or <code>null</code> if this category list
      *         has no category.
      */
@@ -679,9 +679,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * type for sample index.
      *
      * @param  geophysicsValues <code>true</code> to request a color model applicable to geophysics
-     *         values <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         values <code>[{@link Category#minimum}..{@link Category#maximum}]</code>,
      *         or <code>false</code> to request a color model applicable to sample index
-     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     *         <code>[{@link Category#lower}..{@link Category#upper}]</code>.
      * @return The requested color model.
      */
     public ColorModel getColorModel(final boolean geophysicsValue)
@@ -695,9 +695,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * type for sample index.
      *
      * @param  geophysicsValues <code>true</code> to request a color model applicable to geophysics
-     *         values <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         values <code>[{@link Category#minimum}..{@link Category#maximum}]</code>,
      *         or <code>false</code> to request a color model applicable to sample index
-     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     *         <code>[{@link Category#lower}..{@link Category#upper}]</code>.
      * @param  numBands The number of bands for the color model.  The returned color model may
      *         take in account only the first band and ignore the others, but the existence of
      *         all <code>numBands</code> will be at least tolerated.  Supplemental bands, even

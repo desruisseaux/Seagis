@@ -105,13 +105,7 @@ public class MapPanel extends ZoomPane
     private static final Comparator<Layer> COMPARATOR=new Comparator<Layer>()
     {
         public int compare(final Layer layer1, final Layer layer2)
-        {
-            final float z1 = layer1.getZOrder();
-            final float z2 = layer2.getZOrder();
-            if (z1<z2) return -1;
-            if (z1>z2) return +1;
-            return 0;
-        }
+        {return Float.compare(layer1.getZOrder(), layer2.getZOrder());}
     };
 
     /**
@@ -164,7 +158,7 @@ public class MapPanel extends ZoomPane
     private Stroke stroke;
 
     /**
-     * Indique si le prochain traçage ({@link #paintComponent(Graphics2D)}
+     * Indique si le prochain traçage ({@link #paintComponent(Graphics2D)})
      * sera en fait une impression. Si c'est le cas, alors il ne faudra pas
      * mettre à jour certains champs internes.
      */
@@ -839,32 +833,6 @@ public class MapPanel extends ZoomPane
     protected Dimension getDefaultSize()
     {return new Dimension(512,512);}
 
-    /*
-     * Retourne les coordonnées projetées de la région visible à l'écran. Ces coordonnées
-     * sont exprimées en mètres, ou un degrés si aucune projection cartographique n'a été
-     * définie. Cette information peut être utilisée par certaines couches qui voudraient
-     * utiliser un système de caches, pour ne faire de coûteux calculs que sur leurs parties
-     * visibles.
-     *
-     * @param expand Facteur d'agrandissement du rectangle. La valeur 0 fera retourner un
-     *        rectangle délimitant exactement la partie visible, tandis que la valeur 0.25
-     *        (par exemple) fera retourner un rectangle agrandit de 25%.
-     *        Lorsque <code>getArea</code> est utilisée pour délimiter une région à placer
-     *        dans une cache, il est conseillé de se laisser une marge (par exemple de 25%)
-     *        pour que la cache puisse être encore utilisée même après quelques translations.
-     */
-//  private static Rectangle2D getVisibleArea(final Rectangle2D visibleArea, final float expand)
-//  {
-//      final double trans  = 0.5*expand;
-//      final double scale  = 1.0+expand;
-//      final double width  = visibleArea.getWidth();
-//      final double height = visibleArea.getHeight();
-//      return new Rectangle2D.Double(visibleArea.getX()-trans*width,
-//                                    visibleArea.getY()-trans*height,
-//                                                       scale*width,
-//                                                       scale*height);
-//  }
-
     /**
      * Paint this <code>MapLayer</code> and all visible
      * layers it contains. Zoom are taken in account.
@@ -883,10 +851,10 @@ public class MapPanel extends ZoomPane
         final Layer[]       layers = this.layers;
         final GraphicsJAI graphics = GraphicsJAI.createGraphicsJAI(graph, this);
         final Rectangle clipBounds = graphics.getClipBounds();
-        final MapPaintContext context;
+        final RenderingContext context;
         try
         {
-            context = new MapPaintContext(getCommonestTransform(), new AffineTransform(zoom), graphics.getTransform(), getZoomableBounds(null), isPrinting);
+            context = new RenderingContext(getCommonestTransform(), new AffineTransform(zoom), graphics.getTransform(), getZoomableBounds(null), isPrinting);
         }
         catch (CannotCreateTransformException exception)
         {
@@ -938,7 +906,7 @@ public class MapPanel extends ZoomPane
     /**
      * Print this <code>MapLayer</code> and all visible
      * layers it contains. Zoom are taken in account in
-     * the same way than the {@link #paintComponent(Graphics2D}}
+     * the same way than the {@link #paintComponent(Graphics2D)}
      * method.
      *
      * @param graph The graphics context.
@@ -960,26 +928,22 @@ public class MapPanel extends ZoomPane
      * Méthode appelée automatiquement chaque fois que le zoom a changé.
      * Cette méthode met à jour les coordonnées des formes géométriques
      * déclarées dans les objets {@link Layer}.
+     *
+     * @param event Le changement de zoom, ou <code>null</code> s'il
+     *        n'est pas connu. Dans ce dernier cas, toutes les couches
+     *        seront redessinées lors du prochain traçage.
      */
     private void zoomChanged(final ZoomChangeEvent event)
     {
-        AffineTransform modifier;
-        try
-        {
-            // Retrouve l'ancien zoom.
-            modifier=event.getChange().createInverse();
-            modifier.preConcatenate(zoom);
-            // Trouve la transformation passant de l'ancien zoom au nouveau
-            modifier=modifier.createInverse();
-            modifier.preConcatenate(zoom);
-        }
-        catch (NoninvertibleTransformException exception)
-        {
-            modifier = null;
-        }
+        final AffineTransform change = (event!=null) ? event.getChange() : null;
+        if (change!=null && change.isIdentity()) return;
         for (int i=layerCount; --i>=0;)
         {
-            layers[i].zoomChanged(modifier);
+            /*
+             * Remind: 'Layer' is about to use the affine transform change
+             *         for updating its bounding shape in pixel coordinates.
+             */
+            layers[i].zoomChanged(change);
         }
     }
 

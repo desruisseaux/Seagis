@@ -52,7 +52,7 @@ import javax.media.jai.GraphicsJAI;
 import javax.units.Unit;
 import net.seas.map.Layer;
 import net.seas.map.GeoMouseEvent;
-import net.seas.map.MapPaintContext;
+import net.seas.map.RenderingContext;
 import net.seas.util.XArray;
 import net.seas.util.XMath;
 
@@ -256,7 +256,7 @@ public abstract class MarkLayer extends Layer
      * l'origine (0,0) et ses coordonnées doivent être exprimées en points (1/72 de pouces). Par exemple
      * pour dessiner des flèches de courants, la forme modèle devrait être une flèche toujours orientée
      * vers l'axe des <var>x</var> positif (le 0° arithmétique), avoir sa base centrée à (0,0) et être
-     * de dimension raisonable (par exemple 16x4 pixels). La méthode {@link #paint(GraphicsJAI, MapPaintContext)}
+     * de dimension raisonable (par exemple 16x4 pixels). La méthode {@link #paint(GraphicsJAI, RenderingContext)}
      * prendra automatiquement en charge les rotations et translations pour ajuster le modèle aux différentes
      * marques. L'implémentation par défaut retourne toujours un cercle centré à (0,0) et d'un diamètre de 10
      * points.
@@ -266,7 +266,7 @@ public abstract class MarkLayer extends Layer
 
     /**
      * Dessine la forme géométrique spécifiée. Cette méthode est appellée automatiquement par la méthode
-     * {@link #paint(GraphicsJAI, MapPaintContext)}. Les classes dérivées peuvent la redéfinir si elles
+     * {@link #paint(GraphicsJAI, RenderingContext)}. Les classes dérivées peuvent la redéfinir si elles
      * veulent modifier la façon dont les stations sont dessinées. Cette méthode reçoit en argument une
      * forme géométrique <code>shape</code> à dessiner dans <code>graphics</code>. Les rotations,
      * translations et facteurs d'échelles nécessaires pour bien représenter la marque auront déjà été
@@ -339,12 +339,12 @@ public abstract class MarkLayer extends Layer
      * @see #getShape
      * @see #paint(GraphicsJAI, Shape, int)
      */
-    protected synchronized Shape paint(final GraphicsJAI graphics, final MapPaintContext context) throws TransformException
+    protected synchronized Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        final AffineTransform fromPoints = context.getAffineTransform(MapPaintContext.FROM_POINT_TO_PIXEL);
-        final AffineTransform fromWorld  = context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT);
+        final AffineTransform fromPoints = context.getAffineTransform(RenderingContext.POINT_TO_PIXEL);
+        final AffineTransform fromWorld  = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
         final Rectangle   zoomableBounds = context.getZoomableBounds();
-        final int             count      = getCount();
+        final int                  count = getCount();
         if (count!=0)
         {
             /*

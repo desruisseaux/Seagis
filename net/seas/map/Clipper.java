@@ -52,8 +52,10 @@ final class Clipper
     private final CoordinateSystem coordinateSystem;
 
     /**
-     * Région à couper. Les coordonnées de cette
-     * région ne doivent pas avoir été projetées.
+     * Région à couper. Les coordonnées de cette région doivent être exprimées
+     * selon le système de coordonnées {@link #coordinateSyste} (spécifié lors
+     * de la construction) et ne pas être modifiées. Ce rectangle doit être en
+     * lecture seule.
      */
     private final Rectangle2D logicalClip;
 
@@ -128,7 +130,7 @@ final class Clipper
      */
     public Rectangle2D setCoordinateSystem(final CoordinateSystem nativeCS)
     {
-        if (coordinateSystem!=null && nativeCS!=null) try
+        if (coordinateSystem!=null && nativeCS!=null && !coordinateSystem.equivalents(nativeCS)) try
         {
             OpenGIS.transform(
                 Contour.TRANSFORMS.createFromCoordinateSystems(coordinateSystem, nativeCS),
@@ -140,7 +142,7 @@ final class Clipper
         }
         catch (TransformException exception)
         {
-            // Cette exception peut être normale (TODO: donner une référence de plus haut niveau).
+            // Cette exception peut être normale.
             Segment.unexpectedException("Clipper", "setCoordinateSystem", exception);
             clip.setRect(0,0,0,0);
         }

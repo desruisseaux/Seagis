@@ -55,7 +55,7 @@ import net.seas.resources.Resources;
  * Creates math transforms. <code>MathTransformFactory</code> is a low level
  * factory that is used to create {@link MathTransform} objects.   Many high
  * level GIS applications will never need to use a <code>MathTransformFactory</code>
- * directly; they can use a {@link CoordinateTransformationFactory} instead.
+ * directly; they can use a {@link CoordinateTransformFactory} instead.
  * However, the <code>MathTransformFactory</code> class is specified here,
  * since it can be used directly by applications that wish to transform other
  * types of coordinates (e.g. color coordinates, or image pixel coordinates).

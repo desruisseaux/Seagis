@@ -69,7 +69,7 @@ import net.seas.util.XArray;
 
 
 /**
- * Base class of all coverage type. {@linkplain net.seas.opengis.cv.GridCoverage Grid coverages}
+ * Base class of all coverage type. {@linkplain net.seas.opengis.gc.GridCoverage Grid coverages}
  * are typically 2D while other coverages may be 3D or 4D. The dimension of grid coverage may be
  * queried in many ways:
  *

@@ -29,10 +29,11 @@ import net.seas.opengis.ct.TransformException;
 
 // Map
 import net.seas.map.Layer;
-import net.seas.map.Isoline;
+import net.seas.map.Contour;
 import net.seas.map.Polygon;
+import net.seas.map.Isoline;
 import net.seas.map.GeoMouseEvent;
-import net.seas.map.MapPaintContext;
+import net.seas.map.RenderingContext;
 
 // Geometry
 import java.awt.Shape;
@@ -51,6 +52,8 @@ import javax.swing.UIManager;
 import javax.media.jai.GraphicsJAI;
 
 // Miscellaneous
+import java.util.List;
+import java.util.ArrayList;
 import net.seas.util.XMath;
 
 
@@ -64,6 +67,14 @@ import net.seas.util.XMath;
  */
 public class IsolineLayer extends Layer implements Polygon.Renderer
 {
+    /**
+     * Set to <code>false</code> to disable clipping acceleration.
+     * May be useful if you suspect that a bug is preventing proper
+     * rendering.
+     */
+    private static final boolean ENABLE_CLIP = false;
+    // TODO: NEED TO DEBUG. NEED A STEP TRACE IN RenderingContext.clip
+
     /**
      * Default color for fills.
      */
@@ -81,6 +92,12 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * The isoline data.
      */
     protected final Isoline isoline;
+
+    /**
+     * Clipped isolines. A clipped isoline may be
+     * faster to render than the full isoline.
+     */
+    private final List<Contour> clipped = ENABLE_CLIP ? new ArrayList<Contour>(4) : null;
 
     /**
      * Paint for contour lines. Default to
@@ -132,6 +149,10 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
         else dx = dy = resolution;
         setPreferredPixelSize(new XDimension2D.Double(TICKNESS*dx , TICKNESS*dy));
         setPreferredArea(bounds);
+        if (clipped!=null)
+        {
+            clipped.add(isoline);
+        }
     }
 
     /**
@@ -231,7 +252,8 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
 
     /**
      * Drawn the isolines. Default implementation invokes <code>drawPolygon(...)</code>
-     * for each polygon to drawn.
+     * for each polygon to drawn.   Note that polygons given to code>drawPolygon</code>
+     * may be clipped or decimated for faster rendering.
      *
      * @param  graphics The graphics context.
      * @param  context  The set of transformations needed for transforming geographic
@@ -239,32 +261,53 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * @return A bounding shape of isolines, in points coordinates.
      * @throws TransformException If a transformation failed.
      */
-    protected Shape paint(final GraphicsJAI graphics, final MapPaintContext context) throws TransformException
+    protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        final Paint      oldPaint = graphics.getPaint();
-        final Stroke    oldStroke = graphics.getStroke();
+        /*
+         * Reproject isoline if the coordinate system changed
+         * (all cached isolines must be discarded in this case).
+         */
+        final CoordinateSystem viewCS = context.getViewCoordinateSystem();
+        if (!viewCS.equivalents(isoline.getCoordinateSystem()))
+        {
+            isoline.setCoordinateSystem(viewCS);
+            if (clipped!=null)
+            {
+                clipped.clear();
+                clipped.add(isoline);
+            }
+        }
+        /*
+         * Rendering acceleration: First performs the clip (if enabled),
+         *                         then compute the decimation to use.
+         */
         final Rectangle2D  bounds = isoline.getBounds2D();
-        final AffineTransform  tr = context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT);
-        final Ellipsoid ellipsoid = isoline.getEllipsoid();
-        double r; // Desired resolution (a lower resolution will lead to faster rendering)
-        if (ellipsoid!=null)
+        final AffineTransform  tr = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
+        final Isoline      toDraw = (clipped!=null) ? (Isoline)context.clip(clipped) : isoline;
+        if (toDraw!=null)
         {
-            final double  x = bounds.getCenterX();
-            final double  y = bounds.getCenterY();
-            final double dx = 0.5/XAffineTransform.getScaleX0(tr);
-            final double dy = 0.5/XAffineTransform.getScaleY0(tr);
-            r = ellipsoid.orthodromicDistance(x-dx, y-dy, x+dy, y+dy);
+            final Paint      oldPaint = graphics.getPaint();
+            final Stroke    oldStroke = graphics.getStroke();
+            final Ellipsoid ellipsoid = isoline.getEllipsoid();
+            double r; // Desired resolution (a lower resolution will lead to faster rendering)
+            if (ellipsoid!=null)
+            {
+                final double  x = bounds.getCenterX();
+                final double  y = bounds.getCenterY();
+                final double dx = 0.5/XAffineTransform.getScaleX0(tr);
+                final double dy = 0.5/XAffineTransform.getScaleY0(tr);
+                r = ellipsoid.orthodromicDistance(x-dx, y-dy, x+dy, y+dy);
+            }
+            else
+            {
+                // Assume a cartesian coordinate system.
+                r = 1/Math.sqrt((r=tr.getScaleX())*r + (r=tr.getScaleY())*r +
+                                (r=tr.getShearX())*r + (r=tr.getShearY())*r);
+            }
+            toDraw.paint(graphics, (float)(resolution*r), this);
+            graphics.setStroke(oldStroke);
+            graphics.setPaint (oldPaint);
         }
-        else
-        {
-            r = 1/Math.sqrt((r=tr.getScaleX())*r + (r=tr.getScaleY())*r +
-                            (r=tr.getShearX())*r + (r=tr.getShearY())*r);
-        }
-
-        isoline.setCoordinateSystem(context.getViewCoordinateSystem());
-        isoline.paint(graphics, (float)(resolution*r), this);
-        graphics.setStroke(oldStroke);
-        graphics.setPaint (oldPaint);
         return XAffineTransform.transform(tr, bounds, bounds);
     }
 

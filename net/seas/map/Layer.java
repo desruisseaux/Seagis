@@ -354,23 +354,23 @@ public abstract class Layer implements Serializable
 
     /**
      * Procède au traçage de cette couche. Cette méthode sera appelée automatiquement par
-     * {@link fr.ird.map.MapPanel#paintComponent(java.awt.Graphics2D)} chaque fois que cette couche aura besoin
+     * {@link MapPanel#paintComponent(java.awt.Graphics2D)} chaque fois que cette couche aura besoin
      * d'être redessinée. Le traçage doit se faire selon le système de coordonnées de l'affichage (généralement
      * des mètres sur le terrain, à ne pas confondre avec des mètres sur l'écran!). Il sera de la responsabilité
      * de cette méthode d'effectuer les conversions nécessaires si cette couche <code>Layer</code> utilise un
      * autre système de coordonnées que celui de l'afficheur {@link MapPanel}. Les conversions peuvent être faites
-     * en utilisant comme suit les informations fournies dans l'objet {@link MapPaintContext} passé en argument:
+     * en utilisant comme suit les informations fournies dans l'objet {@link RenderingContext} passé en argument:
      *
-     * <pre>context.{@link MapPaintContext#getProjectionFrom getProjectionFrom}({@link #getCoordinateSystem getCoordinateSystem}())</pre>
+     * <pre>context.{@link RenderingContext#getCoordinateTransform getCoordinateTransform}({@link #getCoordinateSystem getCoordinateSystem}())</pre>
      * <blockquote>Pour transformer les coordonnées de cette couche en coordonnées logiques de l'afficheur. Les traçages
      *             dans l'objet {@link java.awt.Graphics2D} se font par défaut en utilisant ces coordonnées tansformées.</blockquote>
      *
-     * <pre>context.{@link MapPaintContext#getTransform getTransform}({@link MapPaintContext#FROM_WORLD_TO_POINT})</pre>
+     * <pre>context.{@link RenderingContext#getAffineTransform getAffineTransform}({@link RenderingContext#WORLD_TO_POINT})</pre>
      * <blockquote>Pour transformer les coordonnées logiques de l'afficheur en "points" (environ 1/72 de pouce).
      *             Cette transformation dépend des zoom, translations et rotations qui ont été appliquées sur la
      *             carte.</blockquote>
      *
-     * <pre>context.{@link MapPaintContext#getTransform getTransform}({@link MapPaintContext#FROM_POINT_TO_PIXEL})</pre>
+     * <pre>context.{@link RenderingContext#getAffineTransform getAffineTransform}({@link RenderingContext#POINT_TO_PIXEL})</pre>
      * <blockquote>Pour transformer les "points" (1/72 de pouce) en pixels. Cette transformation dépend du
      *             périphérique de sortie (par exemple l'écran ou l'imprimante).</blockquote>
      *
@@ -380,14 +380,14 @@ public abstract class Layer implements Serializable
      * Pour alterner entre le traçage de couches et l'écriture de texte, on peut procéder comme suit:</p>
      *
      * <blockquote><pre>
-     * &nbsp;Shape paint(GraphicsJAI graphics, MapPaintContext context)
+     * &nbsp;Shape paint(GraphicsJAI graphics, RenderingContext context)
      * &nbsp;{
      * &nbsp;    // <i>Tracer ici les éléments géographiques</i>
      * &nbsp;    // <i>en coordonnées utilisateurs (m ou °).</i>
-     * &nbsp;    graphics.setTransform(context.getAffineTransform(MapPaintContext.FROM_POINT_TO_PIXEL));
+     * &nbsp;    graphics.setTransform(context.getAffineTransform(RenderingContext.POINT_TO_PIXEL));
      * &nbsp;    // <i>Ecrivez ici le texte ou les étiquettes.</i>
      * &nbsp;    // <i>Les coordonnées sont en <u>points</u>.</i>
-     * &nbsp;    graphics.setTransform(context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT));
+     * &nbsp;    graphics.setTransform(context.getAffineTransform(RenderingContext.WORLD_TO_POINT));
      * &nbsp;    // <i>Continuez le traçage d'éléments</i>
      * &nbsp;    // <i>géographiques en mètres ou degrés.</i>
      * &nbsp;
@@ -400,7 +400,7 @@ public abstract class Layer implements Serializable
      *         géographiques (<var>longitude</var>,<var>latitude</var>) en coordonnées pixels.
      *
      * @return Une approximation de la forme géométrique tracée, en <strong>points</strong> (c'est-à-dire le
-     *         résultat de la transformation {@link MapPaintContext#FROM_WORLD_TO_POINT}). Cette forme doit être en
+     *         résultat de la transformation {@link RenderingContext#WORLD_TO_POINT}). Cette forme doit être en
      *         points plutôt qu'en coordonnées logiques parce que certaines couche sont dessinées à des positions
      *         fixes dans la fenêtre (par exemple l'échelle de la carte) plutôt qu'à des positions qui varient
      *         avec le zoom. Toutefois, il n'est pas obligatoire que la forme retournée puisse restituer exactement
@@ -410,7 +410,7 @@ public abstract class Layer implements Serializable
      *
      * @throws TransformException Si un problème est survenu lors d'une projection cartographique.
      */
-    protected abstract Shape paint(final GraphicsJAI graphics, final MapPaintContext context) throws TransformException;
+    protected abstract Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException;
 
     /**
      * Méthode appelée automatiquement pour construire une chaîne de caractères représentant la valeur
@@ -561,19 +561,19 @@ public abstract class Layer implements Serializable
      * Cette méthode met à jour les coordonnées des formes géométriques
      * déclarées dans les objets {@link Layer}.
      *
-     * @param modifier Transformation à utiliser pour transformer les
-     *        coordonnées, ou <code>null</code> si elle n'est pas connue.
+     * @param change Transformation à utiliser pour transformer les coordonnées,
+     *        ou <code>null</code> si elle n'est pas connue. Dans ce dernier cas,
+     *        la couche sera inconditionnellement redessinée lors du prochain traçage.
      */
-    final void zoomChanged(final AffineTransform modifier)
+    final void zoomChanged(final AffineTransform change)
     {
         final Shape shape=this.shape;
         if (shape!=null)
         {
-            if (modifier!=null)
+            if (change!=null)
             {
                 final Rectangle2D bounds=shape.getBounds2D();
-                this.shape=XAffineTransform.transform(modifier, bounds, bounds);
-System.out.println(shape);
+                this.shape=XAffineTransform.transform(change, bounds, bounds);
             }
             else this.shape=null;
         }
@@ -588,11 +588,11 @@ System.out.println(shape);
      *                   coordonnées de cette couche en coordonnées pixels.
      * @param clipBounds Coordonnées en points de la portion de l'écran à redessiner.
      */
-    final synchronized void paint(final GraphicsJAI graphics, final MapPaintContext context, final Rectangle clipBounds) throws TransformException
+    final synchronized void paint(final GraphicsJAI graphics, final RenderingContext context, final Rectangle clipBounds) throws TransformException
     {
         if (visible)
         {
-//TODO      if (shape==null || clipBounds==null || shape.intersects(clipBounds))
+            if (shape==null || clipBounds==null || shape.intersects(clipBounds))
             {
                 if (Version.MINOR>=4)
                 {
@@ -643,7 +643,7 @@ System.out.println(shape);
      *        de <code>big</code> et <code>small</code> conïncide, ou <code>false</code> pour exiger
      *        que <code>small</code> ne touche pas aux bords de <code>big</code>.
      */
-    private static boolean contains(final Rectangle2D big, final Rectangle2D small, final boolean edge)
+    static boolean contains(final Rectangle2D big, final Rectangle2D small, final boolean edge)
     {
         return edge ? (small.getMinX()>=big.getMinX() && small.getMaxX()<=big.getMaxX() && small.getMinY()>=big.getMinY() && small.getMaxY()<=big.getMaxY()):
                       (small.getMinX()> big.getMinX() && small.getMaxX()< big.getMaxX() && small.getMinY()> big.getMinY() && small.getMaxY()< big.getMaxY());

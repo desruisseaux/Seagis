@@ -86,7 +86,7 @@ public class RawBinaryImageReadParam extends ImageReadParam
 
     /**
      * Returns the image size in the input stream, or <code>null</code> if unknow.
-     * Image size is specified by the last call to {@link #setImageSize} or
+     * Image size is specified by the last call to {@link #setStreamImageSize} or
      * {@link #setStreamSampleModel}.
      */
     public Dimension getStreamImageSize()
@@ -94,10 +94,10 @@ public class RawBinaryImageReadParam extends ImageReadParam
 
     /**
      * Specify the data type in input stream. Setting data type to
-     * {@link DataType#TYPE_UNDEFINED} reset the default value, which
+     * {@link DataBuffer#TYPE_UNDEFINED} reset the default value, which
      * is reader dependent.
      *
-     * @param dataType The data type, or {@link DataType#TYPE_UNDEFINED} if unknow.
+     * @param dataType The data type, or {@link DataBuffer#TYPE_UNDEFINED} if unknow.
      *        Know data type should be a constant from {@link DataBuffer}. Common
      *        types are {@link DataBuffer#TYPE_INT}, {@link DataBuffer#TYPE_FLOAT}
      *        and {@link DataBuffer#TYPE_DOUBLE}.
@@ -113,7 +113,7 @@ public class RawBinaryImageReadParam extends ImageReadParam
 
     /**
      * Returns the data type in input stream, or {@link DataBuffer#TYPE_UNDEFINED}
-     * if unknow. Data type is specified by the last call to {@link #setDataType}
+     * if unknow. Data type is specified by the last call to {@link #setStreamDataType}
      * or {@link #setStreamSampleModel}.
      */
     public int getStreamDataType()
@@ -141,7 +141,7 @@ public class RawBinaryImageReadParam extends ImageReadParam
      *
      * <blockquote><pre>
      * setStreamImageSize(model.getWidth(), model.getHeight());
-     * setDataType(model.getDataType());
+     * setStreamDataType(model.getDataType());
      * </pre></blockquote>
      *
      * Setting the sample model to <code>null</code> reset

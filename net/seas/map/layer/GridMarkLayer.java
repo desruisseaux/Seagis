@@ -38,7 +38,7 @@ import net.seas.util.XAffineTransform;
 import net.seas.util.XMath;
 
 // Graphics
-import net.seas.map.MapPaintContext;
+import net.seas.map.RenderingContext;
 import javax.media.jai.GraphicsJAI;
 
 // Miscellaneous
@@ -344,13 +344,13 @@ public abstract class GridMarkLayer extends MarkLayer
      * @throws TransformException si une projection
      *         cartographique était nécessaire et a échouée.
      */
-    protected synchronized Shape paint(final GraphicsJAI graphics, final MapPaintContext context) throws TransformException
+    protected synchronized Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
         if (autoDecimate)
         {
             Point2D delta=new Point2D.Double(1,1);
             delta = transform.deltaTransform(delta, delta);
-            delta = context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT).deltaTransform(delta, delta);
+            delta = context.getAffineTransform(RenderingContext.WORLD_TO_POINT).deltaTransform(delta, delta);
             final int decimateX = Math.max(1, (int)Math.ceil(spaceX/delta.getX()));
             final int decimateY = Math.max(1, (int)Math.ceil(spaceY/delta.getY()));
             if (decimateX!=this.decimateX || decimateY!=this.decimateY)

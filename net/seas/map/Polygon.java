@@ -576,15 +576,13 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne un rectangle englobant tous les points projetés de ce polyligne. Parce que cette méthode
-     * retourne directement le rectangle de la cache et non une copie, le rectangle retourné ne devrait
-     * jamais être modifié.
-     *
-     * @return Un rectangle englobant tous les points de ce polyligne.
-     *         Ce rectangle peut être vide, mais ne sera jamais nul.
+     * Return the bounding box of this isoline. This methode returns
+     * a direct reference to the internally cached bounding box. DO
+     * NOT MODIFY!
      */
     final Rectangle2D getCachedBounds()
     {
+        assert Thread.holdsLock(this);
         if (bounds==null)
         {
             bounds = getBounds(data, coordinateTransform);
@@ -1586,16 +1584,20 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne un polyligne contenant les points de <code>this</code>  qui apparaissent dans le clip
-     * spécifié. Si aucun point de ce polyligne n'appparaît à l'intérieur de <code>clip</code>, alors
-     * cette méthode retourne <code>null</code>.    Si tous les points de ce polyligne apparaissent à
-     * l'intérieur de <code>clip</code>, alors cette méthode retourne <code>this</code>. Sinon, cette
-     * méthode retourne un polyligne qui contiendra seulement les points qui apparaissent à l'intérieur
-     * de <code>clip</code>. Ce polyligne partagera les mêmes données que <code>this</code> autant que
-     * possible, de sorte que la consommation de mémoire devrait rester raisonable.
+     * Returns a polyline approximatively equals to this polyline clipped to the specified bounds.
+     * The clip is only approximative  in that the resulting polyline may extends outside the clip
+     * area. However, it is garanted that the resulting polyline contains at least all the interior
+     * of the clip area.
      *
-     * @param  clip Coordonnées de la région à couper.
-     * @return Polyligne éventuellement coupé.
+     * If this method can't performs the clip, or if it believe that it doesn't worth to do a clip,
+     * it returns <code>this</code>. If this polyline doesn't intersect the clip area, then this method
+     * returns <code>null</code>. Otherwise, a new polyline is created and returned. The new polyline
+     * will try to share as much internal data as possible with <code>this</code> in order to keep
+     * memory footprint low.
+     *
+     * @param  clipper An object containing the clip area.
+     * @return <code>null</code> if this polyline doesn't intersect the clip, <code>this</code>
+     *         if no clip has been performed, or a new clipped polyline otherwise.
      */
     final Polygon getClipped(final Clipper clipper)
     {

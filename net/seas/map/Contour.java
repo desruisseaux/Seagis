@@ -158,6 +158,14 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     public abstract boolean isEmpty();
 
     /**
+     * Return the bounding box of this isoline. This methode returns
+     * a direct reference to the internally cached bounding box. DO
+     * NOT MODIFY!
+     */
+    Rectangle2D getCachedBounds()
+    {return getBounds2D();} // To be overriden by subclasses.
+
+    /**
      * Test if the interior of this contour entirely contains the given rectangle.
      * The rectangle's coordinates must expressed in this contour's coordinate
      * system (as returned by {@link #getCoordinateSystem}).
@@ -242,6 +250,25 @@ public abstract class Contour implements Shape, Cloneable, Serializable
      *         There is no guaranteed on contour's state in case of failure.
      */
     public abstract void setResolution(final double resolution) throws TransformException;
+
+    /**
+     * Returns a contour approximatively equals to this contour clipped to the specified bounds.
+     * The clip is only approximative  in that  the resulting contour may extends outside the clip
+     * area. However, it is garanted that the resulting contour contains at least all the interior
+     * of the clip area.
+     *
+     * If this method can't performs the clip, or if it believe that it doesn't worth to do a clip,
+     * it returns <code>this</code>. If this contour doesn't intersect the clip area, then this method
+     * returns <code>null</code>. Otherwise, a new contour is created and returned. The new contour
+     * will try to share as much internal data as possible with <code>this</code> in order to keep
+     * memory footprint low.
+     *
+     * @param  clipper An object containing the clip area.
+     * @return <code>null</code> if this contour doesn't intersect the clip, <code>this</code>
+     *         if no clip has been performed, or a new clipped contour otherwise.
+     */
+    Contour getClipped(final Clipper clipper)
+    {return this;}
 
     /**
      * Return a string representation of this contour for debugging purpose.

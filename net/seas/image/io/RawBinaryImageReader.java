@@ -81,7 +81,7 @@ import net.seas.resources.Resources;
  * <strong>Data type</strong> can be specified in two ways:
  *
  * <ul>
- *   <li>Call {@link RawBinaryImageReadParam#setDataType}.</li>
+ *   <li>Call {@link RawBinaryImageReadParam#setStreamDataType}.</li>
  *   <li>Define a <code>RawBinaryImageReader</code> subclass
  *       overriding {@link #getRawDataType}.</li>
  * </ul>

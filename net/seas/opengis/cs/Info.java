@@ -205,7 +205,7 @@ public class Info implements Serializable
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
      *
-     * @see org.opengis.cs.CS_Info#getAbreviation()
+     * @see org.opengis.cs.CS_Info#getAbbreviation()
      */
     public String getAbbreviation(final Locale locale)
     {return (properties!=null) ? (String)properties.get("abbreviation") : null;}

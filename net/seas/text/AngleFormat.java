@@ -1581,7 +1581,8 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      * An editor for a {@link javax.swing.JSpinner}. The value of the editor is
      * displayed with a {@link javax.swing.JFormattedTextField} whose format is
      * defined by a {@link javax.swing.text.InternationalFormatter} instance
-     * whose minimum and maximum properties are mapped to the {@link SpinnerNumberModel}.
+     * whose minimum and maximum properties are mapped to the
+     * {@link javax.swing.SpinnerNumberModel}.
      *
      * @version 1.0
      * @author Adapted from Hans Muller
