@@ -197,14 +197,18 @@ public abstract class LayerControl
      * une nouvelle couche proprement configurée. Cette méthode peut être
      * appelée de n'importe quel thread (généralement pas celui de <i>Swing</i>).
      *
-     * @param  layer Couche à configurer.
+     * @param  layer Couche à configurer. Si non-nul, alors cette couche doit
+     *         avoir été créé précédemment par ce même objet <code>LayerControl</code>.
+     * @param  entry Image à afficher. Il s'agit d'une image sélectionnée par
+     *         l'utilisateur dans la liste déroulante qui apparaît à gauche de
+     *         la mosaïque d'images.
      * @param  listeners Objets à informer des progrès d'une éventuelle lecture.
      * @return Une couche proprement configurée, ou <code>null</code> si la configuration
      *         se traduirait à toute fin pratique par la disparition de la couche.
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public abstract Layer configLayer(final Layer layer, final EventListenerList listeners) throws SQLException, IOException;
+    public abstract Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
 
     /**
      * Fait apparaître un paneau de configuration pour une couche. Cette méthode est

@@ -58,7 +58,7 @@ import net.seas.awt.geom.Arrow2D;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class MarkColorChooser extends JColorChooser
+final class MarkColorChooser extends JColorChooser
 {
     /**
      * Image à placer en arrière-plan dans l'aperçu,
