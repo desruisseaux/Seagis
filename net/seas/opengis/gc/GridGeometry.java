@@ -262,6 +262,10 @@ public class GridGeometry implements Dimensioned, Serializable
      * affine transformation. The coordinate system of the real world coordinates
      * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
      * math transform is available, this method returns <code>null</code>.
+     * <br><br>
+     * OpenGIS requires that the transform maps <em>pixel centers</em> to real world
+     * coordinates. This is different from some other systems that map pixel's upper
+     * left corner.
      */
     public synchronized MathTransform getGridToCoordinateSystem()
     {
@@ -282,13 +286,41 @@ public class GridGeometry implements Dimensioned, Serializable
     }
 
     /**
-     * Returns the affine transform which allows for the transformations
+     * Returns the two-dimensional affine transform which allows for the transformations
+     * from grid coordinates to real world earth coordinates.   If the grid coverage has
+     * more than two dimensions, only the two first dimensions will be taken in account.
+     * This allows Java2D to work with image's horizontal data  while ignoring vertical
+     * or temporal dimensions.
+     * <br><br>
+     * OpenGIS requires that the transform maps <em>pixel centers</em> to real world
+     * coordinates. This is different from some other systems that map pixel's upper
+     * left corner.
+     *
+     * @return The two-dimensional affine transform for the two first dimensions,
+     *         or <code>null</code> if no affine transform is available. If non-null,
+     *         the returned affine transform maps pixel's centers.
+     */
+    public AffineTransform getGridToCoordinateSystem2D()
+    {
+        if (gridToCoordinateJAI==null)
+        {
+            final AffineTransform transform = new AffineTransform(gridToCoordinateJAI);
+            transform.translate(0.5, 0.5); // Map to pixel's center.
+            return transform;
+        }
+        else return null;
+    }
+
+    /**
+     * Returns the two-dimensional affine transform which allows for the transformations
      * from grid coordinates to real world earth coordinates. The returned affine follows
      * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>
      * convention, i.e. its convert the pixel's <em>upper left corner</em> coordinates
      * (<var>i</var>,<var>j</var>) into real world earth coordinates (<var>x</var>,<var>y</var>).
      * In contrast, {link #gridToCoordinateSystem()} contert the pixel's <em>center</em>
      * coordinates into real world earth coordinates.
+     *
+     * @return The two-dimensional affine transform for the horizontal component.
      */
     final AffineTransform getGridToCoordinateJAI()
     {

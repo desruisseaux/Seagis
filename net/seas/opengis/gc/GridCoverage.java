@@ -635,6 +635,20 @@ public class GridCoverage extends Coverage
 //  {return null;}
 
     /**
+     * Returns grid data as a rendered image. If <code>geophysics</code> is <code>true</code>,
+     * this method returns an image's view filled with "real world" data (e.g. temperature in
+     * Celsius degres as floating point values). If <code>geophysics</code> is <code>false</code>,
+     * then this method returns a "classical" image with integer pixel values.  The "geophysics"
+     * view is better for computation, while the "classical" view is more suitable for rendering
+     * on screen.
+     *
+     * If this <code>GridCoverage</code> hasn't been constructed with a <code>CategoryList[]</code>
+     * argument, then the <code>geophysics</code> parameter has no effect.
+     */
+    public RenderedImage getRenderedImage(final boolean geophysics)
+    {return geophysics ? numeric : image;}
+
+    /**
      * Dessine l'image vers le graphique spécifié. Il est de la responsabilité du programmeur de s'assurer
      * que la transformation affine de <code>graphics</code> représente un espace en coordonnées logiques,
      * le même que celui de {@link #getCoordinateSystem}.
