@@ -510,43 +510,6 @@ public class MathTransformFactory
     }
 
     /**
-     * Returns a human readable name localized for the specified locale.
-     * If no name is available for the specified locale, this method may returns a name in an
-     * arbitrary locale.
-     *
-     * @param  classification The classification name of the transform
-     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
-     *         are ignored, and comparaison is case-insensitive.
-     * @param  Locale The locale (e.g. {@link Locale#FRENCH}), or <code>null</code>
-     *         for the current default locale.
-     * @return Localized classification name (e.g. "<cite>Mercator transverse</cite>").
-     * @throws NoSuchElementException if there is no transform for the specified classification.
-     *
-     * @deprecated Use <code>getMathTransformProvider(classification).getName(locale)</code> instead.
-     *             This method will be removed in the next release.
-     */
-    public String getName(final String classification, final Locale locale) throws NoSuchElementException
-    {return getMathTransformProvider(classification).getName(locale);}
-
-    /**
-     * Get the parameter list from a classification name.
-     * The client may change any of those parameters and submit them to
-     * {@link #createParameterizedTransform(String,ParameterList)}.
-     *
-     * @param  classification The classification name of the transform
-     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
-     *         are ignored, and comparaison is case-insensitive.
-     * @return Default parameters for a transform of the specified classification.
-     * @throws NoSuchElementException if there is no transform for the
-     *         specified classification.
-     *
-     * @deprecated getMathTransformProvider(classification).getParameterList() instead.
-     *             This method will be removed in the next release.
-     */
-    public ParameterList getParameterList(final String classification) throws NoSuchElementException
-    {return getMathTransformProvider(classification).getParameterList();}
-
-    /**
      * Returns the provider for the specified classification. This provider
      * may be used to query parameter list for a classification name (e.g.
      * <code>getMathTransformProvider("Transverse_Mercator").getParameterList()</code>),

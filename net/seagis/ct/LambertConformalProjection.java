@@ -270,8 +270,8 @@ final class LambertConformalProjection extends ConicProjection
         public Provider()
         {
             super("Lambert_Conformal_Conic_2SP", ResourceKeys.LAMBERT_CONFORMAL_PROJECTION);
-            put("standard_parallel1", 30, LATITUDE_RANGE);
-            put("standard_parallel2", 45, LATITUDE_RANGE);
+            put("standard_parallel1", 30.0, LATITUDE_RANGE);
+            put("standard_parallel2", 45.0, LATITUDE_RANGE);
         }
 
         /**

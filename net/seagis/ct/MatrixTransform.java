@@ -429,7 +429,7 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
                     buffer.append(j);
                     buffer.append('_');
                     buffer.append(i);
-                    put(buffer.toString(), (i==j) ? 1 : 0, null);
+                    put(buffer.toString(), (i==j) ? 1.0 : 0.0, null);
                 }
             }
         }

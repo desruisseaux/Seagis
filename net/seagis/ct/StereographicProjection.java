@@ -573,7 +573,7 @@ choice: switch (mode)
         public Provider()
         {
             super("Stereographic", ResourceKeys.STEREOGRAPHIC_PROJECTION);
-            put("latitude_true_scale", 90, LATITUDE_RANGE);
+            put("latitude_true_scale", 90.0, LATITUDE_RANGE);
             polar = true;
             auto  = true;
         }
@@ -588,7 +588,7 @@ choice: switch (mode)
         public Provider(final boolean polar)
         {
             super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", ResourceKeys.STEREOGRAPHIC_PROJECTION);
-            put("latitude_true_scale", polar ? 90 : 0, LATITUDE_RANGE);
+            put("latitude_true_scale", polar ? 90.0 : 0.0, LATITUDE_RANGE);
             this.polar = polar;
             this.auto  = false;
         }
