@@ -6,5 +6,18 @@
   </HEAD>
   <BODY>
     <P ALIGN="justify">Positioning implementation.</P>
+
+    <P>&nbsp;</P>
+    <H2><A NAME="differences">Differences with the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
+    <UL>
+      <LI>Omitted the <CODE>PT_</CODE> prefix for all classes and interfaces.</LI>
+      <LI>Omitted the {@link org.opengis.pt.PT_Matrix} class in order to avoid
+          duplication with standard Java classes. Use <CODE>Jama.Matrix</CODE>
+          (temporary package) instead.</LI>
+      <LI>Added {@link net.seas.opengis.pt.ConvexHull} class.</LI>
+      <LI>Provide various methods and constructors to ease interoperability with
+          the <A HREF="http://java.sun.com/products/java-media/2D">Java2D</A>
+          geometric package.</LI>
+    </UL>
   </BODY>
 </HTML>
