@@ -30,6 +30,8 @@ import net.seagis.cv.CategoryList;
 import net.seagis.cv.SampleDimension;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.ct.TransformException;
+import net.seagis.gp.GridCoverageProcessor;
+import net.seagis.resources.OpenGIS;
 
 // Others SEAGIS packages
 import net.seas.map.Layer;
@@ -61,6 +63,12 @@ public class GridCoverageLayer extends Layer
      * The underlying grid coverage.
      */
     private final GridCoverage coverage;
+
+    /**
+     * The projected grid coverage. This coverage
+     * is computed only when first needed.
+     */
+    private transient GridCoverage projectedCoverage;
 
     /**
      * Coordonnées géographiques de l'image. Ces coordonnées
@@ -123,6 +131,28 @@ public class GridCoverageLayer extends Layer
     {return coverage;}
 
     /**
+     * Returns the grid coverage projected
+     * to the specified coordinate system.
+     */
+    private GridCoverage getCoverage(CoordinateSystem targetCS)
+    {
+        CoordinateSystem sourceCS;
+        if (projectedCoverage==null)
+        {
+            projectedCoverage = coverage;
+        }
+        sourceCS = projectedCoverage.getCoordinateSystem();
+        sourceCS = OpenGIS.getCoordinateSystem2D(sourceCS);
+        targetCS = OpenGIS.getCoordinateSystem2D(targetCS);
+        if (!sourceCS.equivalents(targetCS))
+        {
+            final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
+            projectedCoverage = processor.doOperation("Resample", coverage, "CoordinateSystem", targetCS);
+        }
+        return projectedCoverage;
+    }
+
+    /**
      * Prévient cette couche qu'elle sera bientôt dessinée sur la carte spécifiée. Cette méthode peut
      * être appelée avant que cette couche soit ajoutée à la carte.  Elle peut lancer en arrière-plan
      * quelques threads qui prépareront l'image. Note: il ne sert à rien d'appeller cette méthode
@@ -134,14 +164,7 @@ public class GridCoverageLayer extends Layer
         final Rectangle2D area=mapPanel.getVisibleArea();
         if (area!=null && !area.isEmpty())
         {
-            final CoordinateSystem sourceCS = mapPanel.getCoordinateSystem();
-            final CoordinateSystem targetCS = coverage.getCoordinateSystem();
-            if (sourceCS.equivalents(targetCS))
-            {
-                coverage.prefetch(area);
-            }
-            // Do not prefetch if coordinate systems don't match:
-            // A new projected coverage have to be created anyway.
+            getCoverage(mapPanel.getCoordinateSystem()).prefetch(area);
         }
     }
 
@@ -156,17 +179,7 @@ public class GridCoverageLayer extends Layer
      */
     protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        // Note: 'getCoordinateSystem()' is similar to 'coverage.getCoordinateSystem()',
-        //       except that it returns only the two first dimensions of the coverage's
-        //       coordinate system.
-        final CoordinateSystem sourceCS = getCoordinateSystem();
-        final CoordinateSystem targetCS = context.getViewCoordinateSystem();
-        if (!sourceCS.equivalents(targetCS))
-        {
-            // TODO: Use GridCoverageProcessor when Resample will be implemented.
-            throw new UnsupportedOperationException("Image projection not yet implemented");
-        }
-        coverage.paint(graphics);
+        getCoverage(context.getViewCoordinateSystem()).paint(graphics);
         return XAffineTransform.transform(context.getAffineTransform(RenderingContext.WORLD_TO_POINT), geographicArea, pointArea);
     }
 
@@ -199,7 +212,9 @@ public class GridCoverageLayer extends Layer
             if (text!=null)
             {
                 if (modified)
+                {
                     toAppendTo.append(", ");
+                }
                 toAppendTo.append(text);
                 modified = true;
             }
