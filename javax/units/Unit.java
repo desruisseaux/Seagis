@@ -41,7 +41,12 @@ public final class Unit implements Serializable
     public static final Unit SECOND = new Unit("s");
 
     /**
-     * Base unit of time.
+     * Unit of time.
+     */
+    public static final Unit MILLISECOND = new Unit("ms", 0.001, SECOND);
+
+    /**
+     * Unit of time.
      */
     public static final Unit DAY = new Unit("day", 24*60*60, SECOND);
 

@@ -1,3 +1,4 @@
+Class-Path: opengis-css.jar
 
 Name: net/seagis/pt/
 Specification-Title: OpenGIS® Coordinate Transformation Services

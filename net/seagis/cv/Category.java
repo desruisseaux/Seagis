@@ -285,7 +285,7 @@ public class Category implements Serializable
      *
      * @see CategoryList#toValue
      */
-    protected double toValue(final int index)
+    public double toValue(final int index)
     {return offset + scale*index;}
 
     /**
@@ -295,7 +295,7 @@ public class Category implements Serializable
      *
      * @see CategoryList#toIndex
      */
-    protected int toIndex(final double value)
+    public int toIndex(final double value)
     {
         final double index = Math.rint((value-offset)/scale);
         return (index>=lower) ? ((index<upper) ? (int)index : upper-1) : lower;

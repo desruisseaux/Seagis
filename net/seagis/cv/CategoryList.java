@@ -355,14 +355,14 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
      */
     private Category getMain()
     {
-        float range=0;
+        int range=0;
         Category category=null;
         for (int i=byValues.length; --i>=0;)
         {
             final Category candidate = byValues[i];
             if (candidate!=null && candidate.isQuantitative())
             {
-                final float candidateRange = candidate.upper - candidate.lower;
+                final int candidateRange = candidate.upper - candidate.lower;
                 if (candidateRange >= range)
                 {
                     range = candidateRange;
