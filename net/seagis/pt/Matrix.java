@@ -70,7 +70,7 @@ import net.seagis.resources.css.ResourceKeys;
  * @see <A HREF="http://math.nist.gov/javanumerics/jama/">Jama matrix</A>
  * @see <A HREF="http://jcp.org/jsr/detail/83.jsp">JSR-83 Multiarray package</A>
  */
-public final class Matrix extends GMatrix
+public class Matrix extends GMatrix
 {
     /**
      * Serial number for interoperability with different versions.
@@ -311,7 +311,7 @@ public final class Matrix extends GMatrix
      *
      * @see org.opengis.pt.PT_Matrix#elt
      */
-    public double[][] getElements()
+    public final double[][] getElements()
     {
         final int numCol = getNumCol();
         final double[][] matrix = new double[getNumRow()][];
@@ -327,7 +327,7 @@ public final class Matrix extends GMatrix
      * A transform is affine if the matrix is square and last row contains
      * only zeros, except in the last column which contains 1.
      */
-    public boolean isAffine()
+    public final boolean isAffine()
     {
         int dimension  = getNumRow();
         if (dimension != getNumCol())
@@ -343,7 +343,7 @@ public final class Matrix extends GMatrix
     /**
      * Returns <code>true</code> if this matrix is an identity matrix.
      */
-    public boolean isIdentity()
+    public final boolean isIdentity()
     {
         final int numRow = getNumRow();
         final int numCol = getNumCol();
@@ -366,7 +366,7 @@ public final class Matrix extends GMatrix
      * @throws IllegalStateException if this matrix is not 3x3,
      *         or if the last row is not [0 0 1].
      */
-    public AffineTransform toAffineTransform2D() throws IllegalStateException
+    public final AffineTransform toAffineTransform2D() throws IllegalStateException
     {
         int check;
         if ((check=getNumRow())!=3 || (check=getNumCol())!=3)
