@@ -35,7 +35,7 @@ import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
 import org.geotools.cv.Category;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 import org.geotools.gc.GridRange;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
@@ -344,15 +344,15 @@ final class ImageEntryImpl implements ImageEntry, Serializable
     {return (endTime!=Long.MAX_VALUE) ? new Date(endTime) : null;}
 
     /**
-     * Retourne les listes de catégories pour toutes les bandes de l'image. Les objets
-     * {@link CategoryList} indiquent comment interpréter les valeurs des pixels.  Par
-     * exemple, ils peuvent indiquer que la valeur 9 désigne des nuages.
+     * Retourne les listes des bandes de l'image. Les objets {@link SampleDimension}
+     * indiquent comment interpréter les valeurs des pixels. Par exemple, ils peuvent
+     * indiquer que la valeur 9 désigne des nuages.
      *
      * @return La liste des catégories pour chaque bande de l'image.
      *         La longueur de ce tableau sera égale au nombre de bandes.
      */
-    public CategoryList[] getCategoryLists()
-    {return parameters.format.getCategoryLists(null);}
+    public SampleDimension[] getSampleDimensions()
+    {return parameters.format.getSampleDimensions(null);}
 
     /**
      * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
@@ -542,7 +542,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * de la région à charger. Procède maintenant à la lecture.
          */
         final FormatEntryImpl format = parameters.format;
-        final CategoryList[] categoryLists;
+        final SampleDimension[] bands;
         synchronized (format)
         {
             final ImageReadParam param = format.getDefaultReadParam();
@@ -553,7 +553,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
                 image=format.read(getFile(), imageIndex, param, listenerList, new Dimension(width, height), this);
                 if (image==null) return null;
             }
-            categoryLists = format.getCategoryLists(param);
+            bands = format.getSampleDimensions(param);
         }
         /*
          * La lecture est maintenant terminée et n'a pas été annulée.
@@ -571,7 +571,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
             coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
         }
         GridCoverage coverage = new GridCoverage(filename, image, coordinateSystem,
-                                new Envelope(min, max), categoryLists, format.geophysics, null,
+                                new Envelope(min, max), bands, null,
                                 Collections.singletonMap(SOURCE_KEY, this));
         /*
          * Si l'utilisateur a spécifié une operation à appliquer

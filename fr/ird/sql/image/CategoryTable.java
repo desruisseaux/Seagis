@@ -27,16 +27,14 @@ package fr.ird.sql.image;
 
 // Geotools dependencies
 import org.geotools.cv.Category;
+import org.geotools.ct.MathTransform1D;
+import org.geotools.ct.MathTransformFactory;
 
 // Base de données
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
-
-// Images et couleurs
-import java.awt.Color;
-import fr.ird.util.Utilities;
 
 // Collections
 import java.util.List;
@@ -55,6 +53,12 @@ import java.io.FileNotFoundException;
 import java.util.Locale;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+
+// Divers
+import java.awt.Color;
+import fr.ird.util.Utilities;
+import javax.media.jai.util.Range;
+import javax.media.jai.ParameterList;
 
 
 /**
@@ -97,6 +101,12 @@ final class CategoryTable extends Table
      * avec la base de données.
      */
     private final PreparedStatement statement;
+
+    /**
+     * Exponential transform in base 10.
+     * Will be constructed only when first needed.
+     */
+    private transient MathTransform1D exponential;
 
     /**
      * Construit une table en utilisant la connection spécifiée.
@@ -150,10 +160,30 @@ final class CategoryTable extends Table
              * Construit une catégorie correspondant à
              * l'enregistrement qui vient d'être lu.
              */
-            final Category category;
-            if (!isQuantifiable) category = new            Category(name, colors, lower, upper+1);
-            else if (!log)       category = new            Category(name, colors, lower, upper+1, c0, c1);
-            else                 category = new LogarithmicCategory(name, colors, lower, upper+1, c0, c1);
+            Category category;
+            final Range range = new Range(Integer.class, new Integer(lower), new Integer(upper));
+            if (!isQuantifiable)
+            {
+                category = new Category(name, colors, range, (MathTransform1D)null);
+            }
+            else
+            {
+                category = new Category(name, colors, range, c0, c1);
+                if (log)
+                {
+                    final MathTransformFactory factory = MathTransformFactory.getDefault();
+                    if (exponential == null)
+                    {
+                        final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
+                        param.setParameter("Dimension", 1);
+                        param.setParameter("Base", 10);
+                        exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
+                    }
+                    MathTransform1D tr = category.getSampleToGeophysics();
+                    tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);
+                    category = new Category(name, colors, range, tr);
+                }
+            }
             categories.add(category);
         }
         result.close();

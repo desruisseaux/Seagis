@@ -82,7 +82,7 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
 
     /**
      * Type de ligne pour les trajectoire. Par défaut, on utilise
-     * une ligne d'une épaisseur de 1 mile nautique.
+     * une ligne d'une épaisseur de 1 mille nautique.
      */
     private static final Stroke PATH_STROKE = new BasicStroke(1/60f);
 

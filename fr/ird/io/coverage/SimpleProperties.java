@@ -37,7 +37,7 @@ import org.geotools.ct.TransformException;
 import org.geotools.ct.MathTransform;
 
 import org.geotools.gc.GridRange;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.io.coverage.PropertyParser;
 
@@ -75,11 +75,10 @@ final class SimpleProperties extends AbstractProperties
     /**
      * Construct a <code>ErdasProperties</code> object.
      *
-     * @param categories The category lists to be
-     *        returned by {@link #getCategoryList}.
+     * @param bands The bands to be returned by {@link #getSampleDimension}.
      */
-    public SimpleProperties(final CategoryList[] categories)
-    {super(categories);}
+    public SimpleProperties(final SampleDimension[] bands)
+    {super(bands);}
 
     /**
      * Returns the property for the specified key.

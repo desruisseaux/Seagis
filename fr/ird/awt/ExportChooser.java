@@ -427,10 +427,10 @@ public final class ExportChooser extends JPanel
                 progress.progress(((float)(i*100))/entries.length);
                 try
                 {
-                    final GridCoverage image = entry.getGridCoverage(listeners);
+                    final GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
                     final ImageOutputStream output=ImageIO.createImageOutputStream(getDestinationFile(i));
                     writer.setOutput(output);
-                    writer.write(image.getRenderedImage(false));
+                    writer.write(image.getRenderedImage());
                     output.close();
                 }
                 catch (Exception exception)

@@ -56,14 +56,6 @@ public interface EnvironmentTable extends Table
     public static final int END_POINT = 100;
 
     /**
-     * Constante désignant une surface dans une certaine région autour de
-     * la ligne de pêche. L'implémentation par défaut utilise un rayon de
-     * 10 miles nautiques, mais la spécification pourrait être raffinée
-     * dans une version future.
-     */
-    public static final int AREA = 110;
-
-    /**
      * Définit la position relative sur la ligne de pêche où l'on veut les valeurs.
      * Les principales valeurs permises sont {@link #START_POINT}, {@link #CENTER}
      * et {@link #END_POINT}.

@@ -26,8 +26,8 @@
 package fr.ird.io.coverage;
 
 // Geotools dependencies
-import org.geotools.cv.CategoryList;
 import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
 import org.geotools.io.coverage.GridCoverageReader;
 import org.geotools.io.coverage.ExoreferencedGridCoverageReader;
 
@@ -88,10 +88,9 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
     private final AbstractProperties[] parsers = new AbstractProperties[readers.length];
 
     /**
-     * The category lists to be used for
-     * constructing {@link GridCoverage} objects.
+     * The bands to be used for constructing {@link GridCoverage} objects.
      */
-    private final CategoryList[] categories;
+    private final SampleDimension[] bands;
 
     /**
      * Properties read during the last call to {@link #createFromName}.
@@ -101,11 +100,10 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
     /**
      * Construct a <code>GridCoverageExchange</code> object.
      *
-     * @param categories The category lists to be used
-     *        for constructing {@link GridCoverage}s.
+     * @param bands The bands to be used for constructing {@link GridCoverage}s.
      */
-    public GridCoverageExchange(final CategoryList[] categories)
-    {this.categories = categories;}
+    public GridCoverageExchange(final SampleDimension[] bands)
+    {this.bands = bands;}
 
     /**
      * Create a new {@link GridCoverage} from a grid coverage file.
@@ -128,8 +126,8 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
             {
                 switch (i)
                 {
-                    case SST:    parser=new ErdasProperties (categories); break;
-                    case CHLORO: parser=new SimpleProperties(categories); break;
+                    case SST:    parser=new ErdasProperties (bands); break;
+                    case CHLORO: parser=new SimpleProperties(bands); break;
                     default:     throw new AssertionError(i);
                 }
                 reader = new ExoreferencedGridCoverageReader("RAW-Canarias", "raw", parser);

@@ -25,19 +25,13 @@
  */
 package fr.ird.sql.image;
 
-// Geotools dependencies
-import org.geotools.cv.Category;
-import org.geotools.cv.CategoryList;
-import org.geotools.resources.Utilities;
-import org.geotools.io.image.RawBinaryImageReadParam;
-
 // Images
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.IndexColorModel;
 
-// Décodeurs
+// Image I/O
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.IIOException;
@@ -48,7 +42,7 @@ import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
 import javax.swing.event.EventListenerList;
 
-// Entrés/sorties
+// Generic I/O
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -56,20 +50,27 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-// Géométrie
-import java.awt.Dimension;
-import java.awt.Rectangle;
-
-// Arborescence
-import fr.ird.awt.tree.MutableTreeNode;
-import fr.ird.awt.tree.DefaultMutableTreeNode;
-
-// Divers
+// Other J2SE dependencies
+import java.util.List;
 import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
-import fr.ird.util.XArray;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+
+// JAI dependencies
 import javax.media.jai.util.Range;
+
+// Geotools dependencies
+import org.geotools.cv.Category;
+import org.geotools.cv.SampleDimension;
+import org.geotools.resources.Utilities;
+import org.geotools.io.image.RawBinaryImageReadParam;
+
+// Seagis dependencies
+import fr.ird.util.XArray;
+import fr.ird.awt.tree.MutableTreeNode;
+import fr.ird.awt.tree.DefaultMutableTreeNode;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
@@ -118,16 +119,15 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     final String extension;
 
     /**
-     * Liste des catégories appartenant à ce format. Les éléments
+     * Liste des bandes appartenant à ce format. Les éléments
      * de ce tableau doit correspondre dans l'ordre aux bandes
      * <code>[0,1,2...]</code> de l'image.
      */
-    private final CategoryList[] categories;
+    private final SampleDimension[] bands;
 
     /**
-     * <code>true</code> si les données lues représenteront déjà les
-     * valeurs du paramètre géophysique,  ou <code>false</code> s'il
-     * faut d'abord appliquer {@link CategoryList#toValue}.
+     * <code>true</code> si les données lues représenteront
+     * déjà les valeurs du paramètre géophysique.
      */
     public final boolean geophysics;
 
@@ -160,20 +160,23 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @param extension  Extension (sans le point) des noms de fichier
      *                   (par exemple "png").
      * @param geophysics <code>true</code> si les données lues représenteront déjà les
-     *                   valeurs du paramètre géophysique,  ou <code>false</code> s'il
-     *                   faut d'abord appliquer {@link CategoryList#toValue}.
-     * @param categories Listes des catégories apparaissant dans ce format.
-     *                   Il peut y avoir plusieurs ensembles de catégories
-     *                   qui utilisent différentes bandes de l'image.
+     *                   valeurs du paramètre géophysique.
+     * @param bands      Listes des bandes apparaissant dans ce format.
      */
-    protected FormatEntryImpl(final int ID, final String name, final String mimeType, final String extension, final boolean geophysics, final CategoryList[] categories)
+    protected FormatEntryImpl(final int ID, final String name, final String mimeType,
+                              final String extension, final boolean geophysics,
+                              final SampleDimension[] bands)
     {
         this.ID         = ID;
         this.name       = name.trim();
         this.mimeType   = mimeType.trim().intern();
         this.extension  = extension.trim().intern();
         this.geophysics = geophysics;
-        this.categories = categories;
+        this.bands      = bands;
+        for (int i=0; i<bands.length; i++)
+        {
+            bands[i] = bands[i].geophysics(geophysics);
+        }
     }
 
     /**
@@ -195,19 +198,19 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     {return null;}
 
     /**
-     * Retourne les listes de catégories {@link CategoryList} qui permettent
+     * Retourne les listes de bandes {@link SampleDimension} qui permettent
      * de décoder les valeurs des paramètres géophysiques. Cette méthode peut
-     * retourner plusieurs objets {@link CategoryList}, un par bande.
+     * retourner plusieurs objets {@link SampleDimension}, un par bande.
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CategoryList[] getCategoryLists()
-    {return getCategoryLists(null);}
+    public SampleDimension[] getSampleDimensions()
+    {return getSampleDimensions(null);}
 
     /**
-     * Retourne les listes de catégories {@link CategoryList} qui permettent de
-     * décoder les valeurs des paramètres géophysiques  des images lues par cet
-     * objet. Cette méthode peut retourner plusieurs objets {@link CategoryList},
+     * Retourne les bandes {@link SampleDimension} qui permettent de
+     * décoder les valeurs des paramètres géophysiques des images lues par cet
+     * objet. Cette méthode peut retourner plusieurs objets {@link SampleDimension},
      * un par bande. De façon optionnelle, on peut spécifier à cette méthode les
      * paramètres {@link ImageReadParam} qui ont servit à lire une image (c'est-à-dire
      * les mêmes paramètres que ceux qui avaient été donnés à {@link #read}).
@@ -217,9 +220,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @param param    Paramètres qui ont servit à lire l'image, ou
      *                 <code>null</code> pour les paramètres par défaut.
      */
-    final CategoryList[] getCategoryLists(final ImageReadParam param)
+    final SampleDimension[] getSampleDimensions(final ImageReadParam param)
     {
-        int  bandCount = categories.length;
+        int  bandCount = bands.length;
         int[] srcBands = null;
         int[] dstBands = null;
         if (param!=null)
@@ -229,9 +232,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
             if (srcBands!=null && srcBands.length<bandCount) bandCount=srcBands.length;
             if (dstBands!=null && dstBands.length<bandCount) bandCount=dstBands.length;
         }
-        final CategoryList[] categoryLists = new CategoryList[bandCount];
+        final SampleDimension[] selectedBands = new SampleDimension[bandCount];
         /*
-         * Recherche les objets 'CategoryList'  qui correspondent
+         * Recherche les objets 'SampleDimension' qui correspondent
          * aux bandes sources demandées. Ces objets seront placés
          * aux index des bandes de destination spécifiées.
          */
@@ -239,9 +242,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         {
             final int srcBand = (srcBands!=null) ? srcBands[j] : j;
             final int dstBand = (dstBands!=null) ? dstBands[j] : j;
-            categoryLists[dstBand] = categories[srcBand];
+            selectedBands[dstBand] = bands[srcBand];
         }
-        return categoryLists;
+        return selectedBands;
     }
 
     /**
@@ -525,7 +528,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                    Utilities.equals(this.name,       that.name     )  &&
                    Utilities.equals(this.mimeType,   that.mimeType )  &&
                    Utilities.equals(this.extension,  that.extension)  &&
-                      Arrays.equals(this.categories, that.categories) &&
+                      Arrays.equals(this.bands,      that.bands    )  &&
                                     this.geophysics==that.geophysics;
         }
         return false;
@@ -539,14 +542,15 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     final MutableTreeNode getTree(final Locale locale)
     {
         final DefaultMutableTreeNode root = new TreeNode(this);
-        for (int i=0; i<categories.length; i++)
+        for (int i=0; i<bands.length; i++)
         {
-            final CategoryList categories = this.categories[i];
-            final int       categoryCount = categories.size();
-            final DefaultMutableTreeNode node = new TreeNode(categories, i, locale);
+            final SampleDimension band = bands[i];
+            final List      categories = band.getCategories();
+            final int    categoryCount = categories.size();
+            final DefaultMutableTreeNode node = new TreeNode(band, locale);
             for (int j=0; j<categoryCount; j++)
             {
-                node.add(new TreeNode(categories.get(j), locale));
+                node.add(new TreeNode((Category)categories.get(j), locale));
             }
             root.add(node);
         }
@@ -607,10 +611,10 @@ final class FormatEntryImpl implements FormatEntry, Serializable
          * Construit un noeud pour la liste spécifiée. Ce constructeur ne
          * balaie pas les catégories contenues dans la liste spécifiée.
          */
-        public TreeNode(final CategoryList categories, final int band, final Locale locale)
+        public TreeNode(final SampleDimension band, final Locale locale)
         {
-            super(categories);
-            text = categories.getName(locale);
+            super(band);
+            text = band.getDescription(locale);
         }
 
         /**
@@ -620,8 +624,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         {
             super(category, false);
             final StringBuffer buffer = new StringBuffer();
-            buffer.append('[');  append(buffer, category.lower);
-            buffer.append(".."); append(buffer, category.upper-1); // Inclusive
+            final Range range = category.geophysics(false).getRange();
+            buffer.append('[');  append(buffer, range.getMinValue());
+            buffer.append(".."); append(buffer, range.getMaxValue()); // Inclusive
             buffer.append("] ");
             buffer.append(category.getName(locale));
             text = buffer.toString();
@@ -630,7 +635,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         /**
          * Append an integer with at least 3 digits.
          */
-        private static void append(final StringBuffer buffer, final int value)
+        private static void append(final StringBuffer buffer, final Comparable value)
         {
             final String number = String.valueOf(value);
             for (int i=3-number.length(); --i>=0;)

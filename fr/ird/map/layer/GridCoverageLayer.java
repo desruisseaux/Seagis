@@ -22,30 +22,32 @@
  */
 package fr.ird.map.layer;
 
+// Miscellaneous
+import java.util.Locale;
+import java.awt.Shape;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.AffineTransform;
+import javax.media.jai.GraphicsJAI;
+
 // Geotools dependencies
 import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.ct.TransformException;
+import org.geotools.cv.SampleDimension;
 import org.geotools.gc.GridRange;
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.CategoryList;
-import org.geotools.cv.SampleDimension;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
-
-// Others Geotools packages
-import fr.ird.map.Layer;
-import fr.ird.map.MapPanel;
-import fr.ird.map.GeoMouseEvent;
-import fr.ird.map.RenderingContext;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XDimension2D;
 import org.geotools.resources.XAffineTransform;
 
-// Miscellaneous
-import java.awt.Shape;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import javax.media.jai.GraphicsJAI;
+// Others packages
+import fr.ird.map.Layer;
+import fr.ird.map.MapPanel;
+import fr.ird.map.GeoMouseEvent;
+import fr.ird.map.RenderingContext;
 
 
 /**
@@ -96,10 +98,10 @@ public class GridCoverageLayer extends Layer
     private transient double[] values;
 
     /**
-     * Liste des catégories. Cette liste ne sera créée
+     * Liste des bandes. Cette liste ne sera créée
      * que la première fois où elle sera nécessaire.
      */
-    private transient CategoryList[] categories;
+    private transient SampleDimension[] bands;
 
     /**
      * Construct a grid coverage layer which will display
@@ -220,7 +222,14 @@ public class GridCoverageLayer extends Layer
         final GridCoverage coverage = getCoverage(context.getViewCoordinateSystem());
         if (coverage!=null)
         {
-            coverage.paint(graphics);
+            final MathTransform2D mathTransform = coverage.getGridGeometry().getGridToCoordinateSystem2D();
+            if (!(mathTransform instanceof AffineTransform)) {
+                throw new UnsupportedOperationException("Non-affine transformations not yet implemented"); // TODO
+            }
+            final AffineTransform gridToCoordinate = (AffineTransform) mathTransform;
+            final AffineTransform transform = new AffineTransform(gridToCoordinate);
+            transform.translate(-0.5, -0.5); // Map to upper-left corner.
+            graphics.drawRenderedImage(coverage.getRenderedImage(), transform);
             return XAffineTransform.transform(context.getAffineTransform(RenderingContext.WORLD_TO_POINT), geographicArea, pointArea);
         }
         return null;
@@ -245,14 +254,14 @@ public class GridCoverageLayer extends Layer
         }
         point  = event.getCoordinate(getCoordinateSystem(), point);
         values = coverage.evaluate(point, values);
-        if (categories==null)
+        if (bands == null)
         {
-            categories = coverage.getCategoryLists();
+            bands = coverage.getSampleDimensions();
         }
         boolean modified = false;
         for (int i=0; i<values.length; i++)
         {
-            final String text = categories[i].format(values[i], /*Locale*/null);
+            final String text = bands[i].getLabel(values[i], (Locale)null);
             if (text!=null)
             {
                 if (modified)
@@ -274,7 +283,7 @@ public class GridCoverageLayer extends Layer
     {
         point             = null;
         values            = null;
-        categories        = null;
+        bands             = null;
         projectedCoverage = null;
         super.clearCache();
     }

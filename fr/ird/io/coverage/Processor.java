@@ -28,7 +28,7 @@ package fr.ird.io.coverage;
 // Geotools dependencies
 import org.geotools.gp.Operation;
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.ct.MissingParameterException;
@@ -155,11 +155,9 @@ public class Processor extends Console
     private final TableFiller tableFiller;
 
     /**
-     * Listes des catégories pour chaque bandes des images à lire.
-     * Chaque objet {@link CategoryList} correspond à une bande de
-     * l'image.
+     * Listes des bandes des images à lire.
      */
-    private final CategoryList[] categories;
+    private final SampleDimension[] bands;
 
     /**
      * Isolignes formant la bathymétrie.
@@ -312,7 +310,7 @@ public class Processor extends Console
                 database.close();
                 throw new IllegalArgumentException("Code de groupe inconnu: "+groupID);
             }
-            categories  = format.getCategoryLists();
+            bands = format.getSampleDimensions();
             if (updateDB)
             {
                 tableFiller = database.getTableFiller();
@@ -410,7 +408,7 @@ public class Processor extends Console
     {
         if (exchange==null)
         {
-            exchange = new GridCoverageExchange(categories);
+            exchange = new GridCoverageExchange(bands);
             exchange.setLocale(locale);
         }
         GridCoverage coverage = exchange.createFromName(file.getPath());
@@ -523,7 +521,7 @@ public class Processor extends Console
         out.print(filename);
         out.print(": Projection...\r");
         out.flush();
-        final BufferedImage image = ((PlanarImage) coverage.getRenderedImage(false)).getAsBufferedImage();
+        final BufferedImage image = ((PlanarImage) coverage.geophysics(false).getRenderedImage()).getAsBufferedImage();
 
         if (isolines!=null) try
         {

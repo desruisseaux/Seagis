@@ -77,7 +77,7 @@ public class MaximumEvaluator extends AbstractEvaluator
      */
     public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
     {
-        final RenderedImage         data = coverage.getRenderedImage(true);
+        final RenderedImage         data = coverage.getRenderedImage();
         final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Point2D.Double  coordinate = new Point2D.Double();
         final Rectangle2D     areaBounds = area.getBounds2D();

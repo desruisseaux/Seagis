@@ -44,9 +44,9 @@ import org.geotools.cs.Ellipsoid;
 import org.geotools.cs.HorizontalDatum;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.Category;
-import org.geotools.cv.CategoryList;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
 import org.geotools.resources.XMath;
 import org.geotools.resources.CTSUtilities;
 
@@ -584,13 +584,13 @@ public abstract class AbstractImageFunction implements ImageFunction
         final Rectangle2D coordBounds = getGeographicArea();
         final Rectangle   pixelBounds = new Rectangle(0, 0, width, height);
         final GridGeometry   geometry = new GridGeometry(pixelBounds, coordBounds);
-        final CategoryList categories = new CategoryList(new Category[]
+        final SampleDimension    band = new SampleDimension(new Category[]
         {
             new Category("Donnée manquante", Color.black, 0),
             new Category(getName(), getColorPalette(), 1, 256, minimum-scale, scale)
         }, getUnit());
         return new GridCoverage(name, this, getCoordinateSystem(), geometry,
-                                new CategoryList[] {categories}, null);
+                                new SampleDimension[] {band}, null);
     }
 
     /**

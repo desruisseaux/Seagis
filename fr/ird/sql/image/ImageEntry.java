@@ -27,9 +27,9 @@ package fr.ird.sql.image;
 
 // Geotools dependencies
 import org.geotools.pt.Envelope;
-import org.geotools.cv.CategoryList;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gc.GridGeometry;
+import org.geotools.cv.SampleDimension;
 import org.geotools.cs.CoordinateSystem;
 
 // Entrés/sorties
@@ -131,14 +131,13 @@ public interface ImageEntry extends Entry
     public abstract Rectangle2D getGeographicArea();
 
     /**
-     * Retourne les listes de catégories pour toutes les bandes de l'image. Les objets
-     * {@link CategoryList} indiquent comment interpréter les valeurs des pixels.  Par
-     * exemple, ils peuvent indiquer que la valeur 9 désigne des nuages.
+     * Retourne les bandes de l'image. Les objets {@link SampleDimension} indiquent
+     * comment interpréter les valeurs des pixels. Par exemple, ils peuvent indiquer
+     * que la valeur 9 désigne des nuages.
      *
-     * @return La liste des catégories pour chaque bande de l'image.
-     *         La longueur de ce tableau sera égale au nombre de bandes.
+     * @return La liste des bandes de l'image.
      */
-    public abstract CategoryList[] getCategoryLists();
+    public abstract SampleDimension[] getSampleDimensions();
 
     /**
      * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
@@ -199,20 +198,20 @@ public interface ImageEntry extends Entry
 
         /** Image enveloppée par ce proxy. */ protected final ImageEntry entry;
         /** Construit un proxy.            */ protected Proxy(final ImageEntry entry) {this.entry=entry; if (entry==null) throw new NullPointerException();}
-        /** Redirige vers {@link #entry}.  */ public int              getID()               {return entry.getID();}
-        /** Redirige vers {@link #entry}.  */ public SeriesEntry      getSeries()           {return entry.getSeries();}
-        /** Redirige vers {@link #entry}.  */ public String           getName()             {return entry.getName();}
-        /** Redirige vers {@link #entry}.  */ public String           getRemarks()          {return entry.getRemarks();}
-        /** Redirige vers {@link #entry}.  */ public File             getFile()             {return entry.getFile();}
-        /** Redirige vers {@link #entry}.  */ public GridGeometry     getGridGeometry()     {return entry.getGridGeometry();}
-        /** Redirige vers {@link #entry}.  */ public CoordinateSystem getCoordinateSystem() {return entry.getCoordinateSystem();}
-        /** Redirige vers {@link #entry}.  */ public Envelope         getEnvelope()         {return entry.getEnvelope();}
-        /** Redirige vers {@link #entry}.  */ public Range            getTimeRange()        {return entry.getTimeRange();}
-        /** Redirige vers {@link #entry}.  */ public Rectangle2D      getGeographicArea()   {return entry.getGeographicArea();}
-        /** Redirige vers {@link #entry}.  */ public CategoryList[]   getCategoryLists()    {return entry.getCategoryLists();}
-        /** Redirige vers {@link #entry}.  */ public String           toString()            {return entry.toString();}
-        /** Redirige vers {@link #entry}.  */ public int              hashCode()            {return entry.hashCode();}
-        /** Redirige vers {@link #entry}.  */ public void             abort()               {entry.abort();}
+        /** Redirige vers {@link #entry}.  */ public int               getID()               {return entry.getID();}
+        /** Redirige vers {@link #entry}.  */ public SeriesEntry       getSeries()           {return entry.getSeries();}
+        /** Redirige vers {@link #entry}.  */ public String            getName()             {return entry.getName();}
+        /** Redirige vers {@link #entry}.  */ public String            getRemarks()          {return entry.getRemarks();}
+        /** Redirige vers {@link #entry}.  */ public File              getFile()             {return entry.getFile();}
+        /** Redirige vers {@link #entry}.  */ public GridGeometry      getGridGeometry()     {return entry.getGridGeometry();}
+        /** Redirige vers {@link #entry}.  */ public CoordinateSystem  getCoordinateSystem() {return entry.getCoordinateSystem();}
+        /** Redirige vers {@link #entry}.  */ public Envelope          getEnvelope()         {return entry.getEnvelope();}
+        /** Redirige vers {@link #entry}.  */ public Range             getTimeRange()        {return entry.getTimeRange();}
+        /** Redirige vers {@link #entry}.  */ public Rectangle2D       getGeographicArea()   {return entry.getGeographicArea();}
+        /** Redirige vers {@link #entry}.  */ public SampleDimension[] getSampleDimensions() {return entry.getSampleDimensions();}
+        /** Redirige vers {@link #entry}.  */ public String            toString()            {return entry.toString();}
+        /** Redirige vers {@link #entry}.  */ public int               hashCode()            {return entry.hashCode();}
+        /** Redirige vers {@link #entry}.  */ public void              abort()               {entry.abort();}
 
         /**
          * Redirige vers {@link #entry}.

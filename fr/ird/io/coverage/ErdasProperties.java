@@ -27,7 +27,7 @@ package fr.ird.io.coverage;
 
 // Geotools dependencies
 import org.geotools.cs.Projection;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 
 // Miscellaneous
 import java.util.NoSuchElementException;
@@ -69,11 +69,10 @@ final class ErdasProperties extends AbstractProperties
     /**
      * Construct a <code>ErdasProperties</code> object.
      *
-     * @param categories The category lists to be
-     *        returned by {@link #getCategoryList}.
+     * @param bands The bands to be returned by {@link #getSampleDimensions}.
      */
-    public ErdasProperties(final CategoryList[] categories)
-    {super(categories);}
+    public ErdasProperties(final SampleDimension[] bands)
+    {super(bands);}
 
     /**
      * Parse a header line. This implementation overrides the default

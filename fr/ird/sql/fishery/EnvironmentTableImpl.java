@@ -202,7 +202,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      */
     public synchronized void setPosition(final int position) throws SQLException
     {
-        if ((position>=START_POINT && position<=END_POINT) || position==AREA)
+        if (position>=START_POINT && position<=END_POINT)
         {
             statement.setInt(ARG_POSITION, position);
             this.position = position;

@@ -478,7 +478,7 @@ public abstract class Parser
         if (coordinateSystem==null)
         {
             final String name = "Topex/Poseidon";
-            final Ellipsoid   ellipsoid = new Ellipsoid      (name, 6378136.3, 6356751.6, Unit.METRE);
+            final Ellipsoid   ellipsoid = Ellipsoid.createEllipsoid(name, 6378136.3, 6356751.6, Unit.METRE);
             final HorizontalDatum datum = new HorizontalDatum(name, DatumType.GEOCENTRIC, ellipsoid, null);
             coordinateSystem = new GeographicCoordinateSystem(name, datum);
         }

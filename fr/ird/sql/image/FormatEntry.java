@@ -27,7 +27,7 @@ package fr.ird.sql.image;
 
 // Divers
 import fr.ird.sql.Entry;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
 
 
@@ -41,9 +41,9 @@ import org.geotools.resources.Utilities;
 public interface FormatEntry extends Entry
 {
     /**
-     * Retourne les listes de catégories {@link CategoryList} qui permettent
+     * Retourne les listes des bandes {@link SampleDimension} qui permettent
      * de décoder les valeurs des paramètres géophysiques. Cette méthode peut
-     * retourner plusieurs objets {@link CategoryList}, un par bande.
+     * retourner plusieurs objets {@link SampleDimension}, un par bande.
      */
-    public abstract CategoryList[] getCategoryLists();
+    public abstract SampleDimension[] getSampleDimensions();
 }

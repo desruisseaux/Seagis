@@ -25,17 +25,17 @@
  */
 package fr.ird.seasview.layer;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-import org.geotools.ct.MathTransform2D;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cv.SampleDimension;
-import org.geotools.cv.CategoryList;
-import org.geotools.pt.AngleFormat;
-import org.geotools.resources.CTSUtilities;
+// Images
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import javax.media.jai.PlanarImage;
+import javax.media.jai.iterator.RandomIter;
+import javax.media.jai.iterator.RandomIterFactory;
 
-// Map components
-import fr.ird.map.layer.GridMarkLayer;
+// Graphics
+import java.awt.Paint;
+import java.awt.Color;
+import javax.media.jai.GraphicsJAI;
 
 // Geometry
 import java.awt.Shape;
@@ -44,25 +44,23 @@ import fr.ird.awt.geom.Arrow2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 
-// Graphics
-import java.awt.Paint;
-import java.awt.Color;
-import javax.media.jai.GraphicsJAI;
-
-// Images
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.iterator.RandomIter;
-import javax.media.jai.iterator.RandomIterFactory;
-
-// Input/output
+// J2SE miscellaneous
+import java.util.Locale;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-// Miscellaneous
-import org.geotools.units.Unit;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.ct.MathTransform2D;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cv.SampleDimension;
+import org.geotools.pt.AngleFormat;
+import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XMath;
+import org.geotools.units.Unit;
+
+// Miscellaneous
+import fr.ird.map.layer.GridMarkLayer;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
@@ -89,9 +87,9 @@ public class VectorLayer extends GridMarkLayer
     private int bandU, bandV;
 
     /**
-     * A category to use as a formatter for geophysics values.
+     * A band to use as a formatter for geophysics values.
      */
-    private CategoryList theme;
+    private SampleDimension theme;
 
     /**
      * Forme géométrique représentant une flèche.  Le début de cette flèche
@@ -177,8 +175,9 @@ public class VectorLayer extends GridMarkLayer
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public synchronized void setData(final GridCoverage coverage, final int bandU, final int bandV)
+    public synchronized void setData(GridCoverage coverage, final int bandU, final int bandV)
     {
+        coverage = coverage.geophysics(true);
         final CoordinateSystem cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
         if (!cs.equivalents(getCoordinateSystem()))
         {
@@ -188,16 +187,16 @@ public class VectorLayer extends GridMarkLayer
             throw new IllegalArgumentException();
         }
         final SampleDimension[] samples = coverage.getSampleDimensions();
-        final CategoryList  categoriesU = samples[bandU].getCategoryList();
-        final CategoryList  categoriesV = samples[bandV].getCategoryList();
-        final Unit unitU = categoriesU.getUnits();
-        final Unit unitV = categoriesV.getUnits();
+        final SampleDimension   sampleU = samples[bandU];
+        final SampleDimension   sampleV = samples[bandV];
+        final Unit unitU = sampleU.getUnits();
+        final Unit unitV = sampleV.getUnits();
         if (!unitU.equals(unitV))
         {
             throw new IllegalArgumentException();
         }
-        this.data  = PlanarImage.wrapRenderedImage(coverage.getRenderedImage(true));
-        this.theme = categoriesU;
+        this.data  = PlanarImage.wrapRenderedImage(coverage.getRenderedImage());
+        this.theme = sampleU;
         this.bandU = bandU;
         this.bandV = bandV;
         final Dimension       size = new Dimension(data.getWidth(), data.getHeight());
@@ -310,7 +309,7 @@ public class VectorLayer extends GridMarkLayer
         angle -= 360*Math.floor(angle/360);
 
         buffer.setLength(0);
-        buffer.append(theme.format(amplitude, null));
+        buffer.append(theme.getLabel(amplitude, (Locale)null));
         buffer.append("  ");
         return angleFormat.format(angle, buffer, null).toString();
     }

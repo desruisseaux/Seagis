@@ -48,9 +48,11 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 
-// Events
+// Miscellaneous
+import java.util.List;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.media.jai.util.Range;
 
 // Axis
 import fr.ird.awt.axis.Graduation;
@@ -60,16 +62,17 @@ import fr.ird.awt.axis.AbstractGraduation;
 import fr.ird.awt.axis.LogarithmicNumberGraduation;
 
 // Geotools dependencies
+import org.geotools.ct.MathTransform1D;
+import org.geotools.ct.TransformException;
 import org.geotools.cv.Category;
-import org.geotools.cv.CategoryList;
 import org.geotools.cv.SampleDimension;
 import org.geotools.gc.GridCoverage;
+import org.geotools.units.Unit;
+import org.geotools.resources.Utilities;
 
 // Miscellaneous
-import org.geotools.units.Unit;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.resources.Utilities;
 
 
 /**
@@ -229,12 +232,14 @@ public class ColorRamp extends JComponent
      *         <code>false</code>, then this component doesn't
      *         need a repaint since the change is not visible.
      *
-     * @see #setColorRamp(CategoryList)
+     * @see #setColorRamp(SampleDimension)
      * @see #setColorRamp(GridCoverage)
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    public boolean setColorRamp(final Graduation graduation, final IndexColorModel colors, final int lower, final int upper)
+    public boolean setColorRamp(final Graduation graduation,
+                                final IndexColorModel colors,
+                                final int lower, final int upper)
     {
         /*
          * Checks if the change may have a visual impact. This will
@@ -273,39 +278,41 @@ public class ColorRamp extends JComponent
 
     /**
      * Sets the colors to paint. The range of indexed colors and the
-     * minimum and maximum values are fetched from the supplied
-     * category list.
+     * minimum and maximum values are fetched from the supplied band.
      *
-     * @param categories The category list.
-     * @param colors The colors to paint.
+     * @param  band The band.
+     * @param  colors The colors to paint.
      * @return <code>true</code> if the state of this <code>ColorRamp</code>
      *         changed as a result of this call. If this method returns
      *         <code>false</code>, then this component doesn't
      *         need a repaint since the change is not visible.
      *
      * @see #setColorRamp(Graduation,IndexedColorModel)
-     * @see #setColorRamp(CategoryList)
+     * @see #setColorRamp(SampleDimension)
      * @see #setColorRamp(GridCoverage)
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    private boolean setColorRamp(final CategoryList categories, final IndexColorModel colors)
+    private boolean setColorRamp(final SampleDimension band, final IndexColorModel colors)
     {
         /*
          * Looks for what seems to be the "main" category. We look for the
          * quantitative category (if there is one) with the widest sample range.
          */
-        int range=0;
+        double maxRange=0;
         Category category=null;
+        final List categories = band.getCategories();
         for (int i=categories.size(); --i>=0;)
         {
-            final Category candidate = categories.get(i);
+            final Category candidate = ((Category) categories.get(i)).geophysics(false);
             if (candidate!=null && candidate.isQuantitative())
             {
-                final int candidateRange = candidate.upper - candidate.lower;
-                if (candidateRange >= range)
+                final Range range = candidate.getRange();
+                final double rangeValue = ((Number)range.getMaxValue()).doubleValue() -
+                                          ((Number)range.getMinValue()).doubleValue();
+                if (rangeValue >= maxRange)
                 {
-                    range = candidateRange;
+                    maxRange = rangeValue;
                     category = candidate;
                 }
             }
@@ -318,10 +325,23 @@ public class ColorRamp extends JComponent
          * Now that we know what seems to be the "main" category,
          * construct a graduation for it.
          */
-        final int  lower = category.lower;
-        final int  upper = category.upper;
-        double min = category.toValue(lower);
-        double max = category.toValue(upper);
+        final Range range = category.getRange();
+        final int  lower = ((Number)range.getMinValue()).intValue();
+        final int  upper = ((Number)range.getMaxValue()).intValue();
+        double min,max;
+        try
+        {
+            final MathTransform1D tr = category.getSampleToGeophysics();
+            min = tr.transform(lower);
+            max = tr.transform(upper);
+        }
+        catch (TransformException cause)
+        {
+            IllegalArgumentException e = new IllegalArgumentException(Resources.format(
+                            ResourceKeys.ERROR_BAD_ARGUMENT_$2, "category", category));
+            e.initCause(cause);
+            throw e;
+        }
         if (min > max)
         {
             // This case occurs typically when displaying a color ramp for
@@ -331,10 +351,11 @@ public class ColorRamp extends JComponent
         }
         if (!(min <= max))
         {
-            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2, "category", category));
+            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
+                                                             "category", category));
         }
         AbstractGraduation graduation = (this.graduation instanceof AbstractGraduation) ? (AbstractGraduation) this.graduation : null;
-        graduation = createGraduation(graduation, category, categories.getUnits());
+        graduation = createGraduation(graduation, category, band.getUnits());
         /*
          * Set the color ramp using the new graduation. We want that
          * EVERY lines below to be executed, even if one of them
@@ -348,10 +369,9 @@ public class ColorRamp extends JComponent
 
     /**
      * Sets the colors to paint. The range of indexed colors and the
-     * minimum and maximum values are fetched from the supplied
-     * category list.
+     * minimum and maximum values are fetched from the supplied band.
      *
-     * @param categories The category list, or <code>null</code>.
+     * @param band The band, or <code>null</code>.
      * @return <code>true</code> if the state of this <code>ColorRamp</code>
      *         changed as a result of this call. If this method returns
      *         <code>false</code>, then this component doesn't
@@ -362,15 +382,16 @@ public class ColorRamp extends JComponent
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    public boolean setColorRamp(final CategoryList categories)
+    public boolean setColorRamp(SampleDimension band)
     {
-        if (categories==null)
+        if (band==null)
         {
             return setColorRamp(null, null, 0, 0);
         }
-        final ColorModel colors = categories.getColorModel(false);
+        band = band.geophysics(false);
+        final ColorModel colors = band.getColorModel(0,1);
         // TODO: What whould we do in case of ClassCastException? Open question...
-        return setColorRamp(categories, (IndexColorModel) colors);
+        return setColorRamp(band, (IndexColorModel) colors);
     }
 
     /**
@@ -385,20 +406,21 @@ public class ColorRamp extends JComponent
      *         need a repaint since the change is not visible.
      *
      * @see #setColorRamp(Graduation,IndexedColorModel)
-     * @see #setColorRamp(CategoryList)
+     * @see #setColorRamp(SampleDimension)
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    public boolean setColorRamp(final GridCoverage coverage)
+    public boolean setColorRamp(GridCoverage coverage)
     {
         if (coverage==null)
         {
             return setColorRamp(null, null, 0, 0);
         }
-        final ColorModel       colors = coverage.getRenderedImage(false).getColorModel();
-        final CategoryList categories = coverage.getSampleDimensions()[0].getCategoryList();
+        coverage = coverage.geophysics(false);
+        final ColorModel    colors = coverage.getRenderedImage().getColorModel();
+        final SampleDimension band = coverage.getSampleDimensions()[0];
         // TODO: What whould we do in case of ClassCastException? Open question...
-        return setColorRamp(categories, (IndexColorModel) colors);
+        return setColorRamp(band, (IndexColorModel) colors);
     }
 
     /**

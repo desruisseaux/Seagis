@@ -46,14 +46,24 @@ import javax.media.jai.iterator.RectIterFactory;
 
 
 /**
- * Une fonction estimant le gradient
- * dans une région géographique.
+ * Une fonction estimant le gradient dans une région géographique.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public class GradientEvaluator extends AbstractEvaluator implements Evaluator
 {
+    /**
+     * Facteur pour convertir des mètres vers les unités du résultat.
+     * Cette classe calcule au départ des gradients en unités du paramètre
+     * par mètres. Ce facteur convertit le gradient en unités par 60 milles
+     * nautiques (environ 1 degrés de latitude).
+     *
+     * TODO: C'est une solution temporaire. Dans une version future, il faudra
+     *       faire une gestion correcte des unités.
+     */
+    private static final double METERS_BY_UNIT = 60*1852;
+
     /**
      * Rang du gradient à choisir, en percentage. Par exemple la valeur 0.8
      * signifie que le gradient retenu sera celui qui est supérieur à 80% de
@@ -96,7 +106,7 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
      */
     public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
     {
-        final RenderedImage         data = coverage.getRenderedImage(true);
+        final RenderedImage         data = coverage.getRenderedImage();
         final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Ellipsoid        ellipsoid = Ellipsoid.WGS84; // TODO: interroger le système de coordonnées!
         final Point2D.Double coordinate0 = new Point2D.Double();
@@ -173,7 +183,7 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
             {
                 Arrays.sort(array);
                 result[i] = new ParameterValue.Double(coverage, this);
-                result[i].setValue(array[index]/1000, null); // TODO: Unités (/km)
+                result[i].setValue(array[index]*METERS_BY_UNIT, null);
             }
         }
         return result;

@@ -27,7 +27,7 @@ package fr.ird.sql.image;
 
 // Geotools dependencies
 import org.geotools.cv.Category;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 
 // Base de données
 import java.sql.ResultSet;
@@ -94,20 +94,19 @@ final class BandTable extends Table
     {statement = connection.prepareStatement(preferences.get(BANDS, SQL_SELECT));}
 
     /**
-     * Retourne les listes de catégories qui se rapportent au format spécifié.
+     * Retourne les bandes qui se rapportent au format spécifié.
      *
-     * @param  formatID Identificateur du format pour lequel on veut les catégories.
-     * @return Les listes de catégories du format demandé. Plusieurs liste
-     *         peuvent être retournées si le format contient plusieurs bandes.
+     * @param  formatID Identificateur du format pour lequel on veut les bandes.
+     * @return Les listes des bandes du format demandé.
      * @throws SQLException si l'interrogation de la table "Bands" a échoué.
      */
-    public synchronized CategoryList[] getCategoryList(final int formatID) throws SQLException
+    public synchronized SampleDimension[] getSampleDimensions(final int formatID) throws SQLException
     {
         statement.setInt(ARG_ID, formatID);
 
-        int                     lastBand = 0;
-        final List<CategoryList> mappers = new ArrayList<CategoryList>();
-        final ResultSet           result = statement.executeQuery();
+        int                        lastBand = 0;
+        final List<SampleDimension> mappers = new ArrayList<SampleDimension>();
+        final ResultSet              result = statement.executeQuery();
 
         while (result.next())
         {
@@ -126,10 +125,10 @@ final class BandTable extends Table
                 categories = new CategoryTable(statement.getConnection());
             }
             final Category[] categoryArray = categories.getCategories(bandID);
-            final CategoryList mapper;
+            final SampleDimension mapper;
             try
             {
-                mapper = new CategoryList(categoryArray, unit);
+                mapper = new SampleDimension(categoryArray, unit);
             }
             catch (IllegalArgumentException exception)
             {
@@ -147,10 +146,10 @@ final class BandTable extends Table
                                                         new Integer(lastBand), new Integer(band)));
             }
             lastBand = band;
-            mappers.add((CategoryList)pool.intern(mapper));
+            mappers.add((SampleDimension)pool.intern(mapper));
         }
         result.close();
-        return mappers.toArray(new CategoryList[mappers.size()]);
+        return mappers.toArray(new SampleDimension[mappers.size()]);
     }
 
     /**

@@ -180,7 +180,8 @@ final class FormatTable extends Table
         {
             bands = new BandTable(statement.getConnection());
         }
-        final FormatEntryImpl entry = new FormatEntryImpl(formatID, name, mimeType, extension, geophysics, bands.getCategoryList(formatID));
+        final FormatEntryImpl entry = new FormatEntryImpl(formatID, name, mimeType, extension,
+                                              geophysics, bands.getSampleDimensions(formatID));
         logger.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
         return entry;
     }

@@ -32,7 +32,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.io.coverage.PropertyParser;
-import org.geotools.cv.CategoryList;
+import org.geotools.cv.SampleDimension;
 
 // Time parsing
 import java.io.File;
@@ -80,19 +80,18 @@ abstract class AbstractProperties extends PropertyParser
     private final DateFormat outputDateFormat = new SimpleDateFormat("yyDDD", Locale.FRANCE);
 
     /**
-     * The category lists to be returned by {@link #getCategoryList}.
+     * The category lists to be returned by {@link #getSampleDimensions}.
      */
-    private final CategoryList[] categories;
+    private final SampleDimension[] bands;
 
     /**
      * Construct an <code>AbstractProperties</code> object.
      *
-     * @param categories The category lists to be
-     *        returned by {@link #getCategoryList}.
+     * @param bands The category lists to be returned by {@link #getSampleDimensions}.
      */
-    protected AbstractProperties(final CategoryList[] categories)
+    protected AbstractProperties(final SampleDimension[] bands)
     {
-        this.categories = categories;
+        this.bands = bands;
         final TimeZone UTC = TimeZone.getTimeZone("UTC");
         inputDateFormat .setTimeZone(UTC);
         outputDateFormat.setTimeZone(UTC);
@@ -178,17 +177,10 @@ abstract class AbstractProperties extends PropertyParser
     }
 
     /**
-     * Returns the category lists for each band
-     * of the {@link GridCoverage} to be read.
+     * Returns the to bands.
      */
-    public CategoryList[] getCategoryLists()
-    {return categories;}
-
-    /**
-     * Tells if pixel values map directly geophysics values.
-     */
-    public boolean isGeophysics()
-    {return true;}
+    public SampleDimension[] getSampleDimensions()
+    {return bands;}
 
     /**
      * Gets the output filename <strong>without</strong> extension.

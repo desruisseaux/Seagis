@@ -107,22 +107,22 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
-        {"Bathymétrie de Sandwell (Réunion)", "FLR"},
-        {"Bathymétrie de Baudry (Réunion)",   "FLR"},
+        {"SST (synthèse)",                    "SST"},
+        {"Chlorophylle-a (Réunion)",          "CHL"},
         {"Pompage d'Ekman",                   "EKP"},
         {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
         {"SLA (Réunion)",                     "SLA", "U", "V"},
         {"SLA (Monde - TP)",                  "SLA"},
         {"SLA (Monde - TP/ERS)",              "SLA"},
-        {"SST (synthèse)",                    "SST"},
-        {"Chlorophylle-a (Réunion)",          "CHL"}
+        {"Bathymétrie de Sandwell (Réunion)", "FLR"},
+        {"Bathymétrie de Baudry (Réunion)",   "FLR"}
     };
 
     /**
      * Opération à appliquer sur les données, ou <code>null</code>
      * pour n'en appliquer aucune.
      */
-    private static final String OPERATION = null; // "GradientMagnitude";
+    private static final String OPERATION = null; //"GradientMagnitude";
 
     /**
      * Colonne de la table "environnement" dans lequel placer le résultat.
@@ -135,7 +135,7 @@ public final class EnvironmentTableFiller
      * Fonction à utiliser pour calculer les valeurs
      * à l'intérieur d'une région géographique.
      */
-    private final Evaluator evaluator = null; // new GradientEvaluator();
+    private final Evaluator evaluator = null; //new GradientEvaluator(0.95);
 
     /**
      * Connection vers la base de données d'images.
@@ -182,6 +182,7 @@ public final class EnvironmentTableFiller
         }
         images.setOperation(OPERATION);
         final CatchCoverage coverage = new CatchCoverage(images);
+        coverage.setInterpolationAllowed(true);
         images.close();
 
         computePointData(catchs, coverage, update);
@@ -230,7 +231,7 @@ public final class EnvironmentTableFiller
                 }
                 for (int c=0; c<update.length; c++)
                 {
-                    update[c].setPosition(EnvironmentTable.AREA);
+                    update[c].setPosition(EnvironmentTable.CENTER);
                     update[c].set(capture, (float)values[c], time);
                 }
             }

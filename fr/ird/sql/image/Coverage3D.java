@@ -37,10 +37,10 @@ import org.geotools.gc.GridRange;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.Coverage;
-import org.geotools.cv.CategoryList;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.ColorInterpretation;
 import org.geotools.cv.PointOutsideCoverageException;
+import org.geotools.gp.GridCoverageProcessor;
 
 // Géométrie
 import java.awt.Shape;
@@ -93,21 +93,19 @@ public class Coverage3D extends Coverage
     private final ImageEntry[] entries;
 
     /**
-     * Listes de catégories des images.
+     * Listes des bandes des images.
      */
-    private final CategoryList[] categories;
-
-    /**
-     * Les {@link SampleDimension} pour cet objet. Cette
-     * liste ne sera construite que la première fois où
-     * elle sera demandée.
-     */
-    private transient SampleDimension[] dimensions;
+    private final SampleDimension[] bands;
 
     /**
      * Enveloppe des données englobées par cet objet.
      */
     private final Envelope envelope;
+
+    /**
+     * Indique si les interpolations sont permises.
+     */
+    private boolean interpolationAllowed = true;
 
     /**
      * Intervalle de temps maximal toléré entre la fin d'une image et
@@ -151,10 +149,16 @@ public class Coverage3D extends Coverage
     private transient long timeLower=Long.MAX_VALUE, timeUpper=Long.MIN_VALUE;
 
     /**
+     * L'objet à utiliser pour effectuer des opérations sur les images
+     * (notamment modifier les interpolations). Ne sera construit que
+     * la première fois où il sera nécessaire.
+     */
+    private transient GridCoverageProcessor processor;
+
+    /**
      * Initialize fields after deserialization.
      */
-    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException
-    {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         timeLower = Long.MAX_VALUE;
         timeUpper = Long.MIN_VALUE;
@@ -170,16 +174,17 @@ public class Coverage3D extends Coverage
      * @param  table Table d'où proviennent les données.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public Coverage3D(final ImageTable table) throws SQLException
-    {
+    public Coverage3D(final ImageTable table) throws SQLException {
         super(table.getSeries().getName(), table.getCoordinateSystem(), null, null);
         final List<ImageEntry> entryList = table.getEntries();
-        this.entries    = entryList.toArray(new ImageEntry[entryList.size()]);
-        this.envelope   = table.getEnvelope();
-        this.categories = (entries.length!=0) ? entries[0].getCategoryLists() : new CategoryList[0];
-        for (int i=1; i<entries.length; i++)
-            if (!Arrays.equals(categories, entries[i].getCategoryLists()))
+        this.entries  = entryList.toArray(new ImageEntry[entryList.size()]);
+        this.envelope = table.getEnvelope();
+        this.bands    = (entries.length!=0) ? entries[0].getSampleDimensions() : new SampleDimension[0];
+        for (int i=1; i<entries.length; i++) {
+            if (!Arrays.equals(bands, entries[i].getSampleDimensions())) {
                 throw new SQLException(Resources.format(ResourceKeys.ERROR_CATEGORIES_MITMATCH));
+            }
+        }
         Arrays.sort(entries, COMPARATOR);
     }
 
@@ -188,10 +193,8 @@ public class Coverage3D extends Coverage
      * des recherches rapides. Ce comparateur utilise la date du
      * milieu comme critère.
      */
-    private static final Comparator<Object> COMPARATOR = new Comparator<Object>()
-    {
-        public int compare(final Object entry1, final Object entry2)
-        {
+    private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
+        public int compare(final Object entry1, final Object entry2) {
             final long time1 = getTime(entry1);
             final long time2 = getTime(entry2);
             if (time1 < time2) return -1;
@@ -205,14 +208,11 @@ public class Coverage3D extends Coverage
      * {@link Date} ou {@link ImageEntry}. Dans ce dernier cas, la date sera
      * extraite avec {@link #getTime}.
      */
-    private static long getTime(final Object object)
-    {
-        if (object instanceof Date)
-        {
+    private static long getTime(final Object object) {
+        if (object instanceof Date) {
             return ((Date) object).getTime();
         }
-        if (object instanceof ImageEntry)
-        {
+        if (object instanceof ImageEntry) {
             return getTime((ImageEntry) object);
         }
         return Long.MIN_VALUE;
@@ -223,23 +223,18 @@ public class Coverage3D extends Coverage
      * plage de temps (par exemple s'il s'agit de données qui ne varient pas avec le
      * temps, comme la bathymétrie), alors cette méthode retourne {@link Long#MIN_VALUE}.
      */
-    private static long getTime(final ImageEntry entry)
-    {
+    private static long getTime(final ImageEntry entry) {
         final Range timeRange = entry.getTimeRange();
-        if (timeRange!=null)
-        {
+        if (timeRange!=null) {
             final Date startTime = (Date) timeRange.getMinValue();
             final Date   endTime = (Date) timeRange.getMaxValue();
-            if (startTime!=null)
-            {
-                if (endTime!=null)
-                {
+            if (startTime!=null) {
+                if (endTime!=null) {
                     return (endTime.getTime()+startTime.getTime())/2;
+                } else {
+                    return startTime.getTime();
                 }
-                else return startTime.getTime();
-            }
-            else if (endTime!=null)
-            {
+            } else if (endTime!=null) {
                 return endTime.getTime();
             }
         }
@@ -250,15 +245,15 @@ public class Coverage3D extends Coverage
      * Returns The bounding box for the coverage
      * domain in coordinate system coordinates.
      */
-    public Envelope getEnvelope()
-    {return (Envelope) envelope.clone();}
+    public Envelope getEnvelope() {
+        return (Envelope) envelope.clone();
+    }
 
     /**
      * Returns the number of {@link SampleDimension} in this coverage.
      */
-    public int getNumSampleDimensions()
-    {
-        return categories.length;
+    public int getNumSampleDimensions() {
+        return bands.length;
     }
 
     /**
@@ -268,17 +263,8 @@ public class Coverage3D extends Coverage
      * the no data values, minimum and maximum values and a color table if one is associated
      * with the dimension.
      */
-    public synchronized SampleDimension[] getSampleDimensions()
-    {
-        if (dimensions==null)
-        {
-            dimensions = new SampleDimension[categories.length];
-            for (int i=0; i<dimensions.length; i++)
-            {
-                dimensions[i] = new SampleDimension(categories[i]);
-            }
-        }
-        return (SampleDimension[]) dimensions.clone();
+    public SampleDimension[] getSampleDimensions() {
+        return (SampleDimension[]) bands.clone();
     }
 
     /**
@@ -296,41 +282,33 @@ public class Coverage3D extends Coverage
      * @param date  The date to snap (can not be null, since we need to
      *              know the image's date before to snap the point).
      */
-    public void snap(final Point2D point, final Date date) // No synchronization needed.
-    {
+    public void snap(final Point2D point, final Date date) { // No synchronization needed.
         int index = Arrays.binarySearch(entries, date, COMPARATOR);
-        if (index<0)
-        {
+        if (index<0) {
             /*
              * There is no exact match for the date.
              * Snap the date to the closest image.
              */
             index = ~index;
             long time;
-            if (index==entries.length)
-            {
+            if (index==entries.length) {
                 if (index==0) return; // No entries in this coverage!
                 time = getTime(entries[--index]);
-            }
-            else if (index>=1)
-            {
+            } else if (index>=1) {
                 time = date.getTime();
                 final long lowerTime = getTime(entries[index-1]);
                 final long upperTime = getTime(entries[index])-1; // Long.MIN_VALUE-1 == Long.MAX_VALUE
-                assert(time>lowerTime && time<upperTime);
-                if (time-lowerTime < upperTime-time)
-                {
+                assert (time>lowerTime && time<upperTime);
+                if (time-lowerTime < upperTime-time) {
                     index--;
                     time = lowerTime;
+                } else {
+                    time = upperTime+1;
                 }
-                else time = upperTime+1;
-            }
-            else
-            {
+            } else {
                 time = getTime(entries[index]);
             }
-            if (time!=Long.MIN_VALUE && time!=Long.MAX_VALUE)
-            {
+            if (time!=Long.MIN_VALUE && time!=Long.MAX_VALUE) {
                 date.setTime(time);
             }
         }
@@ -338,26 +316,22 @@ public class Coverage3D extends Coverage
          * Now that we know the image entry,
          * snap the spatial coordinate point.
          */
-        if (point!=null) try
-        {
+        if (point != null) try {
             // TODO: Next line assume we are using the default table implementation.
-            assert(coordinateSystem.equivalents(entries[index].getCoordinateSystem()));
+            assert coordinateSystem.equivalents(entries[index].getCoordinateSystem());
             CoordinatePoint    coordinate = new CoordinatePoint(point.getX(), point.getY(), ImageTableImpl.toJulian(date.getTime()));
             final GridGeometry   geometry = entries[index].getGridGeometry();
             final GridRange         range = geometry.getGridRange();
             final MathTransform transform = geometry.getGridToCoordinateSystem();
             coordinate = transform.inverse().transform(coordinate, coordinate);
-            for (int i=coordinate.getDimension(); --i>=0;)
-            {
+            for (int i=coordinate.getDimension(); --i>=0;) {
                 coordinate.ord[i] = Math.max(range.getLower(i),
                                     Math.min(range.getUpper(i)-1,
                                     (int)Math.rint(coordinate.ord[i])));
             }
             coordinate = transform.transform(coordinate, coordinate);
             point.setLocation(coordinate.ord[0], coordinate.ord[1]);
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             PointOutsideCoverageException e=new PointOutsideCoverageException(point);
             e.initCause(exception);
             throw e;
@@ -367,18 +341,34 @@ public class Coverage3D extends Coverage
     /**
      * Prépare un enregistrement pour le journal.
      */
-    private void log(final int clé, final Object[] parameters)
-    {
+    private void log(final int clé, final Object[] parameters) {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, clé);
         record.setSourceClassName("Coverage3D");
         record.setSourceMethodName("evaluate");
         record.setParameters(parameters);
-        if (readListener==null)
-        {
+        if (readListener == null) {
             readListener = new Listeners();
             addIIOReadProgressListener(readListener);
         }
         readListener.record = record;
+    }
+
+    /**
+     * Load a single image for the specified image entry.
+     *
+     * @param  entry The image to load.
+     * @return The loaded image.
+     * @throws IOException if an error occured while loading image.
+     */
+    private GridCoverage load(final ImageEntry entry) throws IOException {
+        GridCoverage coverage = entry.getGridCoverage(listeners);
+        if (!interpolationAllowed) {
+            if (processor == null) {
+                processor = GridCoverageProcessor.getDefault();
+            }
+            coverage = processor.doOperation("Interpolate", coverage, "Type", "NearestNeighbor");
+        }
+        return coverage;
     }
 
     /**
@@ -387,11 +377,10 @@ public class Coverage3D extends Coverage
      * @param  index Index in {@link #entries} for the image to load.
      * @throws IOException if an error occured while loading image.
      */
-    private void load(final int index) throws IOException
-    {
+    private void load(final int index) throws IOException {
         final ImageEntry entry = entries[index];
         log(ResourceKeys.LOADING_IMAGE_$1, new Object[]{entry});
-        lower = upper = entry.getGridCoverage(listeners);
+        lower = upper = load(entry);
         timeLower = timeUpper = getTime(entry);
     }
 
@@ -400,13 +389,12 @@ public class Coverage3D extends Coverage
      *
      * @throws IOException if an error occured while loading images.
      */
-    private void load(final ImageEntry entryLower, final ImageEntry entryUpper) throws IOException
-    {
+    private void load(final ImageEntry entryLower, final ImageEntry entryUpper) throws IOException {
         final long timeLower = getTime(entryLower);
         final long timeUpper = getTime(entryUpper);
         log(ResourceKeys.LOADING_IMAGES_$2, new Object[]{entryLower, entryUpper});
-        final GridCoverage lower = entryLower.getGridCoverage(listeners);
-        final GridCoverage upper = entryUpper.getGridCoverage(listeners);
+        final GridCoverage lower = load(entryLower);
+        final GridCoverage upper = load(entryUpper);
         this.lower     = lower; // Set only when BOTH images are OK.
         this.upper     = upper;
         this.timeLower = timeLower;
@@ -424,15 +412,13 @@ public class Coverage3D extends Coverage
      * @throws PointOutsideCoverageException si la date spécifiée est
      *         en dehors de la plage de temps des données disponibles.
      */
-    private boolean seek(final Date date) throws PointOutsideCoverageException
-    {
+    private boolean seek(final Date date) throws PointOutsideCoverageException {
         /*
          * Check if images currently loaded
          * are valid for the requested date.
          */
         final long time = date.getTime();
-        if (time>=timeLower && time<=timeUpper)
-        {
+        if (time>=timeLower && time<=timeUpper) {
             return true;
         }
         /*
@@ -441,10 +427,8 @@ public class Coverage3D extends Coverage
          * as upper bounds ({@link #upper}).
          */
         int index = Arrays.binarySearch(entries, date, COMPARATOR);
-        try
-        {
-            if (index>=0)
-            {
+        try {
+            if (index>=0) {
                 /*
                  * An exact match has been found.
                  * Load only this image and exit.
@@ -453,37 +437,29 @@ public class Coverage3D extends Coverage
                 return true;
             }
             index = ~index; // Insertion point (note: ~ is NOT the minus sign).
-            if (index==entries.length)
-            {
-                if (--index>=0) // Does this coverage has at least 1 image?
-                {
+            if (index == entries.length) {
+                if (--index>=0) { // Does this coverage has at least 1 image?
                     /*
                      * The requested date is after the last image's central time.
                      * Maybe it is not after the last image's *end* time. Check...
                      */
-                    if (entries[index].getTimeRange().contains(date))
-                    {
+                    if (entries[index].getTimeRange().contains(date)) {
                         load(index);
                         return true;
                     }
                 }
                 // fall through the exception at this method's end.
-            }
-            else if (index==0)
-            {
+            } else if (index == 0) {
                 /*
                  * The requested date is before the first image's central time.
                  * Maybe it is not before the first image's *start* time. Check...
                  */
-                if (entries[index].getTimeRange().contains(date))
-                {
+                if (entries[index].getTimeRange().contains(date)) {
                     load(index);
                     return true;
                 }
                 // fall through the exception at this method's end.
-            }
-            else
-            {
+            } else {
                 /*
                  * An interpolation between two image seems possible.
                  * Checks if there is not a time lag between both.
@@ -494,26 +470,29 @@ public class Coverage3D extends Coverage
                 final Range      upperRange = upperEntry.getTimeRange();
                 final long lowerEnd   = getTime(lowerRange.getMaxValue());
                 final long upperStart = getTime(upperRange.getMinValue())-1; // MIN_VALUE-1 == MAX_VALUE
-                if (lowerEnd+maxTimeLag >= upperStart)
-                {
-                    load(lowerEntry, upperEntry);
+                if (lowerEnd+maxTimeLag >= upperStart) {
+                    if (interpolationAllowed) {
+                        load(lowerEntry, upperEntry);
+                    } else {
+                        int nearest = index;
+                        if (Math.abs(getTime(upperRange)-time) < Math.abs(time-getTime(lowerRange))) {
+                            nearest++;
+                        }
+                        load(nearest);
+                    }
                     return true;
                 }
-                if (lowerRange.contains(date))
-                {
+                if (lowerRange.contains(date)) {
                     load(index-1);
                     return true;
                 }
-                if (upperRange.contains(date))
-                {
+                if (upperRange.contains(date)) {
                     load(index);
                     return true;
                 }
                 return false; // Missing data.
             }
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             PointOutsideCoverageException e=new PointOutsideCoverageException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
@@ -532,15 +511,12 @@ public class Coverage3D extends Coverage
      *         if the requested date fall in a hole in the data.
      * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
      */
-    public synchronized GridCoverage getGridCoverage2D(final Date time) throws PointOutsideCoverageException
-    {
-        if (!seek(time))
-        {
+    public synchronized GridCoverage getGridCoverage2D(final Date time) throws PointOutsideCoverageException {
+        if (!seek(time)) {
             // Missing data
             return null;
         }
-        if (lower==upper)
-        {
+        if (lower == upper) {
             // No interpolation needed.
             return lower;
         }
@@ -576,28 +552,26 @@ public class Coverage3D extends Coverage
      */
     public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest) throws PointOutsideCoverageException
     {
-        if (!seek(time))
-        {
+        if (!seek(time)) {
             // Missing data
-            if (dest==null) dest=new int[categories.length];
-            Arrays.fill(dest, 0, categories.length, 0);
+            if (dest == null) {
+                dest = new int[bands.length];
+            }
+            Arrays.fill(dest, 0, bands.length, 0);
             return dest;
         }
-        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
-        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
-        if (lower==upper)
-        {
+        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
+        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        if (lower == upper) {
             return lower.evaluate(point, dest);
         }
-
         int[] last=null;
         last = upper.evaluate(point, last);
         dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
-        assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
-        for (int i=0; i<last.length; i++)
-        {
+        for (int i=0; i<last.length; i++) {
             dest[i] = (int)Math.round(dest[i] + ratio*(last[i]-dest[i]));
         }
         return dest;
@@ -620,28 +594,26 @@ public class Coverage3D extends Coverage
      */
     public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest) throws PointOutsideCoverageException
     {
-        if (!seek(time))
-        {
+        if (!seek(time)) {
             // Missing data
-            if (dest==null) dest=new float[categories.length];
-            Arrays.fill(dest, 0, categories.length, Float.NaN);
+            if (dest == null) {
+                dest = new float[bands.length];
+            }
+            Arrays.fill(dest, 0, bands.length, Float.NaN);
             return dest;
         }
-        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
-        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
-        if (lower==upper)
-        {
+        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
+        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        if (lower == upper) {
             return lower.evaluate(point, dest);
         }
-
         float[] last=null;
         last = upper.evaluate(point, last);
         dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
-        assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
-        for (int i=0; i<last.length; i++)
-        {
+        for (int i=0; i<last.length; i++) {
             dest[i] = (float)(dest[i] + ratio*(last[i]-dest[i]));
         }
         return dest;
@@ -664,28 +636,26 @@ public class Coverage3D extends Coverage
      */
     public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest) throws PointOutsideCoverageException
     {
-        if (!seek(time))
-        {
+        if (!seek(time)) {
             // Missing data
-            if (dest==null) dest=new double[categories.length];
-            Arrays.fill(dest, 0, categories.length, Double.NaN);
+            if (dest == null) {
+                dest = new double[bands.length];
+            }
+            Arrays.fill(dest, 0, bands.length, Double.NaN);
             return dest;
         }
-        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
-        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
-        if (lower==upper)
-        {
+        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
+        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        if (lower == upper) {
             return lower.evaluate(point, dest);
         }
-
         double[] last=null;
         last = upper.evaluate(point, last);
         dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
-        assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
-        for (int i=0; i<last.length; i++)
-        {
+        for (int i=0; i<last.length; i++) {
             dest[i] += ratio*(last[i]-dest[i]);
         }
         return dest;
@@ -765,37 +735,62 @@ public class Coverage3D extends Coverage
      */
     private final void checkDimension(final CoordinatePoint coord) throws MismatchedDimensionException
     {
-        if (coord.getDimension()!=coordinateSystem.getDimension())
+        if (coord.getDimension() != coordinateSystem.getDimension()) {
             throw new MismatchedDimensionException(coord, coordinateSystem);
+        }
+    }
+
+    /**
+     * Indique si cet objet est autorisé à interpoller dans l'espace et dans le temps.
+     * La valeur par défaut est <code>true</code>.
+     */
+    public boolean isInterpolationAllowed() {
+        return interpolationAllowed;
+    }
+
+    /**
+     * Spécifie si cet objet est autorisé à interpoller dans l'espace et dans le temps.
+     * La valeur par défaut est <code>true</code>.
+     */
+    public synchronized void setInterpolationAllowed(final boolean flag) {
+        lower     = null;
+        upper     = null;
+        timeLower = Long.MAX_VALUE;
+        timeUpper = Long.MIN_VALUE;
+        interpolationAllowed = flag;
     }
 
     /**
      * Adds an {@link IIOReadWarningListener} to
      * the list of registered warning listeners.
      */
-    public void addIIOReadWarningListener(final IIOReadWarningListener listener)
-    {listeners.add(IIOReadWarningListener.class, listener);}
+    public void addIIOReadWarningListener(final IIOReadWarningListener listener) {
+        listeners.add(IIOReadWarningListener.class, listener);
+    }
 
     /**
      * Removes an {@link IIOReadWarningListener} from
      * the list of registered warning listeners.
      */
-    public void removeIIOReadWarningListener(final IIOReadWarningListener listener)
-    {listeners.remove(IIOReadWarningListener.class, listener);}
+    public void removeIIOReadWarningListener(final IIOReadWarningListener listener) {
+        listeners.remove(IIOReadWarningListener.class, listener);
+    }
 
     /**
      * Adds an {@link IIOReadProgressListener} to
      * the list of registered progress listeners.
      */
-    public void addIIOReadProgressListener(final IIOReadProgressListener listener)
-    {listeners.add(IIOReadProgressListener.class, listener);}
+    public void addIIOReadProgressListener(final IIOReadProgressListener listener) {
+        listeners.add(IIOReadProgressListener.class, listener);
+    }
 
     /**
      * Removes an {@link IIOReadProgressListener} from
      * the list of registered progress listeners.
      */
-    public void removeIIOReadProgressListener(final IIOReadProgressListener listener)
-    {listeners.remove(IIOReadProgressListener.class, listener);}
+    public void removeIIOReadProgressListener(final IIOReadProgressListener listener) {
+        listeners.remove(IIOReadProgressListener.class, listener);
+    }
 
     /**
      * Objet ayant la charge de suivre le chargement d'une image. Cet objet sert
@@ -805,8 +800,7 @@ public class Coverage3D extends Coverage
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Listeners extends IIOReadProgressAdapter
-    {
+    private static final class Listeners extends IIOReadProgressAdapter {
         /**
          * The record to log.
          */
@@ -815,10 +809,8 @@ public class Coverage3D extends Coverage
         /**
          * Reports that an image read operation is beginning.
          */
-        public void imageStarted(ImageReader source, int imageIndex)
-        {
-            if (record!=null)
-            {
+        public void imageStarted(ImageReader source, int imageIndex) {
+            if (record!=null) {
                 Table.logger.log(record);
                 source.removeIIOReadProgressListener(this);
                 record=null;

@@ -102,7 +102,8 @@ public class CatchCoverage extends Coverage3D
         final double[] result = new double[values.length];
         for (int i=0; i<values.length; i++)
         {
-            result[i] = values[i].getValue();
+            final ParameterValue value = values[i];
+            result[i] = (value!=null) ? value.getValue() : Double.NaN;
         }
         return result;
     }
