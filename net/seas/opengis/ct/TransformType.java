@@ -23,10 +23,13 @@
 package net.seas.opengis.ct;
 
 // Miscellaneous
-import net.seas.util.XClass;
+import java.util.Locale;
 import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import net.seas.resources.Resources;
+import net.seas.resources.Clé;
+import net.seas.util.XClass;
 
 
 /**
@@ -38,34 +41,34 @@ import java.util.NoSuchElementException;
  *
  * @see org.opengis.ct.CT_TransformType
  */
-public class TransformType implements Serializable
+public final class TransformType implements Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -1187157188547650512L;
 
     /**
      * Unknown or unspecified type of transform.
      */
-    public static final TransformType OTHER = new TransformType(0);
+    public static final TransformType OTHER = new TransformType(0, Clé.OTHER);
 
     /**
      * Transform depends only on defined parameters.
      * For example, a cartographic projection.
      */
-    public static final TransformType CONVERSION = new TransformType(1);
+    public static final TransformType CONVERSION = new TransformType(1, Clé.CONVERSION);
 
     /**
      * Transform depends only on empirically derived parameters.
      * For example a datum transformation.
      */
-    public static final TransformType TRANSFORMATION = new TransformType(2);
+    public static final TransformType TRANSFORMATION = new TransformType(2, Clé.TRANSFORMATION);
 
     /**
      * Transform depends on both defined and empirical parameters.
      */
-    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType(3);
+    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType(3, Clé.CONVERSION_AND_TRANSFORMATION);
 
     /**
      * Transform types by value. Used to
@@ -80,15 +83,12 @@ public class TransformType implements Serializable
     };
 
     /**
-     * Enum names. TODO: localize!
+     * Resource key, used for building localized name. This key doesn't need to
+     * be serialized, since {@link #readResolve} canonicalize enums according their
+     * {@link #value}. Furthermore, its value is implementation-dependent (which is
+     * an other raison why it should not be serialized).
      */
-    private static final String[] NAMES =
-    {
-        "Other",
-        "Conversion",
-        "Transformation",
-        "Conversion and transformation"
-    };
+    private transient final int clé;
 
     /**
      * The enum value. This field is public for compatibility
@@ -99,8 +99,11 @@ public class TransformType implements Serializable
     /**
      * Construct a new enum value.
      */
-    private TransformType(final int value)
-    {this.value = value;}
+    private TransformType(final int value, final int clé)
+    {
+        this.value = value;
+        this.clé   = clé;
+    }
 
     /**
      * Return the enum for the specified value. This method is provided
@@ -117,6 +120,17 @@ public class TransformType implements Serializable
     }
 
     /**
+     * Returns this enum's name in the specified locale. If no name
+     * is available for the specified locale, a default one will be
+     * used.
+     *
+     * @param  locale The locale, or <code>null</code> for the current default locale.
+     * @return Enum's name in the specified locale.
+     */
+    public String getName(final Locale locale)
+    {return Resources.getResources(locale).getString(clé);}
+
+    /**
      * Returns the enum value.
      */
     public int hashCode()
@@ -128,7 +142,7 @@ public class TransformType implements Serializable
      */
     public boolean equals(final Object object)
     {
-        if (object!=null && getClass().equals(object.getClass()))
+        if (object instanceof TransformType)
         {
             return ((TransformType) object).value == value;
         }
@@ -142,8 +156,9 @@ public class TransformType implements Serializable
     {
         final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
-        if (value>=0 && value<NAMES.length)
-            buffer.append(NAMES[value]);
+        final String name = getName(null);
+        if (name!=null)
+            buffer.append(name);
         else
             buffer.append(value);
         buffer.append(']');

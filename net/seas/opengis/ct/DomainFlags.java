@@ -23,10 +23,14 @@
 package net.seas.opengis.ct;
 
 // Miscellaneous
-import net.seas.util.XClass;
+import java.util.Locale;
 import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import net.seas.resources.Resources;
+import net.seas.resources.Clé;
+import net.seas.util.XArray;
+import net.seas.util.XClass;
 
 
 /**
@@ -45,9 +49,9 @@ import java.util.NoSuchElementException;
 public final class DomainFlags implements Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 5585150830410796130L;
 
     /**
      * Domain flags by value. Used to
@@ -112,6 +116,34 @@ public final class DomainFlags implements Serializable
     }
 
     /**
+     * Returns enum's names in the specified locale. For example if this
+     * enum has value "3", then <code>getNames</code> returns an array
+     * of two elements: "Inside" and "Outside".
+     *
+     * @param  locale The locale, or <code>null</code> for the current default locale.
+     * @return Enum's names in the specified locale (never <code>null</code>).
+     */
+    public String[] getNames(final Locale locale)
+    {
+        int            count = 0;
+        int             bits = value;
+        Resources  resources = null;
+        final int[]     clés = {Clé.INSIDE, Clé.OUTSIDE, Clé.DISCONTINUOUS};
+        final String[] names = new String[clés.length];
+        for (int i=0; i<clés.length; i++)
+        {
+            if ((bits & 1)!=0)
+            {
+                if (resources==null)
+                    resources = Resources.getResources(locale);
+                names[count++] = resources.getString(clés[i]);
+            }
+            bits >>>= 1;
+        }
+        return XArray.resize(names, count);
+    }
+
+    /**
      * Returns a combination of two domain flags. This is equivalent
      * to <code>getEnum(this.{@link #value} | flags.value)</code>.
      */
@@ -142,21 +174,13 @@ public final class DomainFlags implements Serializable
      */
     public String toString()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final String[]      names = getNames(null);
+        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
-
-        boolean  first = true;
-        int       bits = value;
-        String[] names = {"Inside","Outside","Discontinuous"}; // TODO: localize
         for (int i=0; i<names.length; i++)
         {
-            if ((bits & 1)!=0)
-            {
-                if (!first) buffer.append('|');
-                buffer.append(names[i]);
-                first = false;
-            }
-            bits >>>= 1;
+            if (i!=0) buffer.append('|');
+            buffer.append(names[i]);
         }
         buffer.append(']');
         return buffer.toString();
