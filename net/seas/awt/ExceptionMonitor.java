@@ -66,7 +66,7 @@ import java.util.logging.LogRecord;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import net.seas.io.TabExpanderWriter;
+import net.seagis.io.ExpandedTabWriter;
 
 // Collections
 import java.util.List;
@@ -229,7 +229,7 @@ public final class ExceptionMonitor
     private static String printStackTrace(final Throwable exception)
     {
         final StringWriter writer=new StringWriter();
-        exception.printStackTrace(new PrintWriter(new TabExpanderWriter(writer, TAB_WIDTH)));
+        exception.printStackTrace(new PrintWriter(new ExpandedTabWriter(writer, TAB_WIDTH)));
         return writer.toString();
     }
 

@@ -32,7 +32,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.UnsupportedCharsetException;
-import net.seas.io.TableWriter;
 
 // Miscellaneous
 import java.util.Locale;

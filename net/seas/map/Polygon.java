@@ -1560,7 +1560,7 @@ public class Polygon extends Contour
             final Rectangle2D    bounds = getCachedBounds();
             final Point2D        center = new Point2D.Double(bounds.getCenterX(), bounds.getCenterY());
             final Ellipsoid   ellipsoid = geoCS.getHorizontalDatum().getEllipsoid();
-            final Projection projection = new Projection("Generated", CARTESIAN, ellipsoid, center);
+            final Projection projection = new Projection("Generated", CARTESIAN, ellipsoid, center, null);
             targetCS = new ProjectedCoordinateSystem("Generated", geoCS, projection);
         }
         Segment.setResolution(data, getCoordinateTransformation(targetCS), resolution);

@@ -24,7 +24,7 @@ package net.seas.util;
 
 // Miscellaneous
 import java.io.Serializable;
-import net.seas.io.TableWriter;
+import net.seagis.io.TableWriter;
 import net.seas.resources.Resources;
 
 
