@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.gui.swing;
 
@@ -51,18 +41,16 @@ import javax.swing.event.ListSelectionListener;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 // Geotools dependencies
 import org.geotools.resources.SwingUtilities;
 
 // Seagis
-import fr.ird.database.DataBase;
-import fr.ird.database.Configuration;
-import fr.ird.resources.seagis.Resources;
+import fr.ird.database.ConfigurationKey;
+import fr.ird.database.sql.AbstractDataBase;
 import fr.ird.resources.seagis.ResourceKeys;
-
 import fr.ird.resources.seagis.Resources;
+
 
 /**
  * Editeur d'instructions SQL. Cet objet peut être construit en lui spécifiant en paramètres
@@ -78,31 +66,20 @@ import fr.ird.resources.seagis.Resources;
  * @author Martin Desruisseaux
  */
 public class SQLEditor extends JPanel {
-    /** Index du nom de l'instruction SQL.     */ private static final int NAME    = 0;
-    /** Index de l'instruction SQL par défaut. */ private static final int DEFAULT = 1;
-    /** Index de la clé de l'instruction SQL.  */ private static final int KEY     = 2;
-    /** Index de l'instruction SQL actuelle.   */ private static final int VALUE   = 3;
+    /**
+     * Liste des clés représentant les instructions SQL éditables.
+     */
+    private final List<ConfigurationKey> keySQL = new ArrayList<ConfigurationKey>();
 
     /**
-     * Liste des instructions dont on veut permettre l'édition.
-     * Chaque élément de cette liste est un tableau de 4 chaînes
-     * de caractères, qui contiennent dans l'ordre:
-     *
-     * <ul>
-     *   <li>Un nom descriptif de l'instruction SQL, dans la langue de l'utilisateur.</li>
-     *   <li>L'instruction SQL par défaut.</li>
-     *   <li>L'instruction SQL actuelle.</li>
-     * </ul>
+     * Liste des instructions SQL éditées par l'utilisateur.
      */
-    //private final List<String[]> toDisplay = new ArrayList<String[]>();
-    private final List<Configuration.Key> keyToDisplay = new ArrayList<Configuration.Key>();
-    private final List<String[]> toDisplay = new ArrayList<String[]>();
+    private final List<String> userSQL = new ArrayList<String>();
     
     /**
-     * Préférences à éditer.
+     * Base de données à éditer.
      */
-    //protected final Preferences preferences;
-    protected final Configuration configuration;
+    protected final AbstractDataBase configuration;
 
     /**
      * Journal dans lequel écrire une notification
@@ -113,13 +90,13 @@ public class SQLEditor extends JPanel {
     /**
      * Composante dans laquelle l'utilisateur pourra éditer les instructions SQL.
      * Avant de changer la requête à éditer, le contenu de ce champ devra être
-     * copié dans <code>toDisplay.get(index)[VALUE]</code>.
+     * copié dans <code>userSQL.get(index)</code>.
      */
     private final JTextArea valueArea = new JTextArea(5,40);
 
     /**
      * Modèle pour l'affichage de la liste des noms descriptifs des instructions SQL.
-     * Ce modèle s'occupe des transferts entre <code>valueArea</code> et <code>toDisplay</code>.
+     * Ce modèle s'occupe des transferts entre <code>valueArea</code> et <code>userSQL</code>.
      */
     private final Model model = new Model();
 
@@ -129,8 +106,7 @@ public class SQLEditor extends JPanel {
     private final JList sqlList = new JList(model);
 
     /**
-     * Modèle pour l'affichage de la liste des
-     * noms descriptifs des instructions SQL.
+     * Modèle pour l'affichage de la liste des noms descriptifs des instructions SQL.
      *
      * @version $Id$
      * @author Martin Desruisseaux
@@ -139,11 +115,10 @@ public class SQLEditor extends JPanel {
         /**
          * Index de l'instruction sélectionné.
          */
-        int index=-1;
+        int index = -1;
 
         /**
-         * Taille qu'avait {@link #toDisplay} lors
-         * de dernier appel de {@link #update}.
+         * Taille qu'avait {@link #userSQL} lors du dernier appel de {@link #update}.
          */
         private int lastSize;
 
@@ -151,17 +126,14 @@ public class SQLEditor extends JPanel {
          * Retourne le nombre d'instructions.
          */
         public int getSize() {
-            return toDisplay.size();
+            return keySQL.size();
         }
 
         /**
          * Retourne l'instruction à l'index spécifié.
          */
         public Object getElementAt(final int index) {
-            final Resources resources = Resources.getResources(null);            
-            final Configuration.Key record = keyToDisplay.get(index);            
-            return resources.getString(keyToDisplay.get(index).description);
-            // return record.name;
+            return keySQL.get(index).description.toString(getLocale());
         }
 
         /**
@@ -169,7 +141,7 @@ public class SQLEditor extends JPanel {
          * contenu du champ de texte sera mis à jour.
          */
         public void valueChanged(final ListSelectionEvent event) {
-            if (index>=0 && index<toDisplay.size()) {
+            if (index>=0 && index<userSQL.size()) {
                 commit();
             }
             valueTextChanged();
@@ -182,13 +154,11 @@ public class SQLEditor extends JPanel {
          * {@link #save()} si l'utilisateur clique sur "Ok"
          */
         final void commit() {
-            final Configuration.Key key=keyToDisplay.get(index);
-            final String[] record=toDisplay.get(index);
             String editedText = valueArea.getText();
-            if (editedText.trim().length()==0) {
-                editedText = key.defaultValue;
+            if (editedText.trim().length() == 0) {
+                editedText = keySQL.get(index).defaultValue;
             }
-            record[0] = editedText;
+            userSQL.set(index, editedText);
         }
 
         /**
@@ -196,10 +166,9 @@ public class SQLEditor extends JPanel {
          * correspond à la sélection courrante de l'utilisateur.
          */
         void valueTextChanged() {
-            index=sqlList.getSelectedIndex();
-            if (index>=0 && index<toDisplay.size()) {
-                final String[] record=toDisplay.get(index);
-                valueArea.setText(record[0]);
+            index = sqlList.getSelectedIndex();
+            if (index>=0 && index<userSQL.size()) {
+                valueArea.setText(userSQL.get(index));
                 valueArea.setEnabled(true);
             } else {
                 valueArea.setText(null);
@@ -212,10 +181,10 @@ public class SQLEditor extends JPanel {
          * ajoutées à la suite des instruction déjà déclarées.
          */
         protected void update() {
-            final int size=toDisplay.size();
-            if (size>lastSize) {
+            final int size = userSQL.size();
+            if (size > lastSize) {
                 fireIntervalAdded(this, lastSize, size-1);
-                lastSize=size;
+                lastSize = size;
             }
         }
         
@@ -235,14 +204,16 @@ public class SQLEditor extends JPanel {
      * @param logger Journal dans lequel écrire une notification des
      *               requêtes qui ont été changées.
      */
-    public SQLEditor(final fr.ird.database.Configuration configuration, final String description, final Logger logger) {
+    public SQLEditor(final AbstractDataBase configuration,
+                     final String           description,
+                     final Logger           logger)
+    {
         super(new BorderLayout());
-        this.logger=logger;
-        this.configuration=configuration;
-        if (configuration==null) {
+        this.logger = logger;
+        this.configuration = configuration;
+        if (configuration == null) {
             throw new NullPointerException();
         }
-
         sqlList.addListSelectionListener(model);
         sqlList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         valueArea.setFont(new Font("monospaced", Font.PLAIN, 12));
@@ -266,7 +237,7 @@ public class SQLEditor extends JPanel {
      * @return <code>true</code> si l'utilisateur à cliqué sur "Ok", ou <code>false</code> sinon.
      */
     public boolean showDialog(final Component owner) {
-        if (toDisplay.isEmpty()) {
+        if (userSQL.isEmpty()) {
             // Il n'y a rien à afficher.
             return false;
         }
@@ -277,7 +248,8 @@ public class SQLEditor extends JPanel {
         //       que l'on ajoute sur la barre des boutons (en plus de "Ok" et "Annuler").
         //       Pour afficher le bouton "Rétablir" malgré ces défauts, ne pas mettre
         //       'model' en commentaire.
-        final boolean ok = SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.SQL_QUERIES)/*, model*/);
+        final boolean ok = SwingUtilities.showOptionDialog(owner, this,
+                           Resources.format(ResourceKeys.SQL_QUERIES)/*, model*/);
         model.commit();
         if (ok) save();
         return ok;
@@ -289,8 +261,8 @@ public class SQLEditor extends JPanel {
      * déjà un.
      */
     private static String line(String value) {
-        final int length=value.length();
-        if (length!=0) {
+        final int length = value.length();
+        if (length != 0) {
             final char c = value.charAt(length-1);
             if (c!='\r' && c!='\n') value+='\n';
         }
@@ -300,34 +272,11 @@ public class SQLEditor extends JPanel {
     /**
      * Ajoute une instruction SQL à la liste des instructions qui pourront être éditées.
      *
-     * @param title Nom descriptif de l'instruction SQL, dans la langue de l'utilisateur.
-     * @param defaultSQL Instruction SQL par défaut. L'instruction actuelle sera obtenu à l'aide du
-     *        paramètre <code>key</code> et de l'objet {@link Preferences} spécifié au constructeur.
-     * @param key Clé permetant de retrouver l'instruction SQL actuelle dans l'objet {@link Preferences}
-     *        spécifié au constructeur.
-     */
-     /*public void addSQL(final String title, final String defaultSQL, final String key) {
-        synchronized (toDisplay) {
-            final String[] record = new String[4];
-            record[NAME   ] = title;
-            record[DEFAULT] = defaultSQL;
-            record[KEY    ] = key;
-            record[VALUE  ] = line(preferences.get(key, defaultSQL));
-            toDisplay.add(record);
-        }
-    }*/
-    
-    
-    /**
-     * Ajoute une instruction SQL à la liste des instructions qui pourront être éditées.
-     *
      * @param key Clé permetant de retrouver l'instruction SQL actuelle dans l'objet {@link Configuration}.
      */
-     public void addSQL(final Configuration.Key key) {
-         synchronized (toDisplay) {
-             toDisplay.add(new String[]{line(configuration.get(key))});
-             keyToDisplay.add(key);
-         }
+     public synchronized void addSQL(final ConfigurationKey key) {
+         userSQL.add(line(configuration.getProperty(key)));
+         keySQL.add(key);
      }
 
     /**
@@ -336,24 +285,20 @@ public class SQLEditor extends JPanel {
      * sur "Ok" dans la boîte de dialogue.
      */
     protected void save() {
-        synchronized (toDisplay) {
-            for (int i=toDisplay.size(); --i>=0;) {
-                final String[] record = toDisplay.get(i);
-                final Configuration.Key key = keyToDisplay.get(i);
-                //final String      key = record[KEY];
-                final String    value = record[0].trim();
-                if (!value.equals(configuration.get(key).trim())) {
-                    final int clé;
-                    if (value.equals(key.defaultValue.trim())) {
-                        // preferences.remove(key);
-                        clé = ResourceKeys.REMOVE_QUERY_$1;
-                    } else {
-                        configuration.set(key, value);
-                        clé = ResourceKeys.DEFINE_QUERY_$1;
-                    }
-                    if (logger != null) {
-                        logger.config(Resources.format(clé, key.name));
-                    }
+        for (int i=userSQL.size(); --i>=0;) {
+            final ConfigurationKey key = keySQL.get(i);
+            String value = userSQL.get(i).trim();
+            if (!value.equals(configuration.getProperty(key).trim())) {
+                final int clé;
+                if (value.equals(key.defaultValue.trim())) {
+                    clé = ResourceKeys.REMOVE_QUERY_$1;
+                    value = null;
+                } else {
+                    clé = ResourceKeys.DEFINE_QUERY_$1;
+                }
+                configuration.setProperty(key, value);
+                if (logger != null) {
+                    logger.config(Resources.format(clé, key.name));
                 }
             }
         }
@@ -363,49 +308,9 @@ public class SQLEditor extends JPanel {
      * Rétablit les requêtes par défaut.
      */
     private void reset() {
-        synchronized (toDisplay) {
-            for (int i=toDisplay.size(); --i>=0;) {
-                final String[] record=toDisplay.get(i);
-                record[VALUE] = line(record[DEFAULT]);
-            }
-            model.valueTextChanged();
+        for (int i=userSQL.size(); --i>=0;) {
+            userSQL.set(i, line(keySQL.get(i).defaultValue));
         }
+        model.valueTextChanged();
     }
-
-    /**
-     * Retourne une des propriétée par défaut de la base de données. La clé <code>name</code>
-     * est habituellement une des constantes {@link DataBase#DRIVER}, {@link DataBase#SOURCE}
-     * ou {@link DataBase#TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
-     * demandée n'est pas définie.
-     */
-    public Configuration.Key getProperty(final String name) {
-        for (int i=0 ; i<keyToDisplay.size() ; i++) 
-        {
-            final Configuration.Key key = keyToDisplay.get(i);
-            if (key.name.equals(name)) 
-            {
-                return key;
-            }
-        }
-        throw new IllegalArgumentException("Impossible de trouver la clef '" + name + "'.");
-    }
-    
-    /**
-     * Retourne une des propriétée par défaut de la base de données. La clé <code>name</code>
-     * est habituellement une des constantes {@link DataBase#DRIVER}, {@link DataBase#SOURCE}
-     * ou {@link DataBase#TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
-     * demandée n'est pas définie.
-     */
-    public Configuration.Key getKey(final String name) {
-        for (int i=0 ; i<keyToDisplay.size() ; i++) 
-        {
-            final Configuration.Key key = keyToDisplay.get(i);
-            if (key.name.equals(name)) 
-            {
-                return key;
-            }
-        }
-        
-        throw new IllegalArgumentException("Impossible de trouver la clef '" + name + "'.");
-    }    
 }

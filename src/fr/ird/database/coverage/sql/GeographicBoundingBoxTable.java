@@ -28,6 +28,9 @@ import java.util.GregorianCalendar;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 
+// Geotools dependencies
+import org.geotools.resources.geometry.XRectangle2D;
+
 // Seagis dependencies.
 import fr.ird.database.ConfigurationKey;
 import fr.ird.database.CatalogException;
@@ -59,12 +62,12 @@ final class GeographicBoundingBoxTable extends Table {
             "WHERE (visible=TRUE)");
 
 
-    /** Date de début des images de la base de données.      */ private long  startTime;
-    /** Date de fin des images de la base de données.        */ private long  endTime;
-    /** Longitude minimale des images de la base de données. */ private float xmin;
-    /** Latitude  minimale des images de la base de données. */ private float ymin;
-    /** Longitude maximale des images de la base de données. */ private float xmax;
-    /** Latitude  maximale des images de la base de données. */ private float ymax;
+    /** Date de début des images de la base de données.      */ private long   startTime;
+    /** Date de fin des images de la base de données.        */ private long   endTime;
+    /** Longitude minimale des images de la base de données. */ private double xmin;
+    /** Latitude  minimale des images de la base de données. */ private double ymin;
+    /** Longitude maximale des images de la base de données. */ private double xmax;
+    /** Latitude  maximale des images de la base de données. */ private double ymax;
 
     /**
      * Indique si les coordonnées géographiques et la plage de temps sont valides.
@@ -88,10 +91,10 @@ final class GeographicBoundingBoxTable extends Table {
             final Calendar localCalendar = new GregorianCalendar();
             final Date         startTime = getTimestamp(1, result, calendar, localCalendar); wasNull |= (startTime==null);
             final Date           endTime = getTimestamp(2, result, calendar, localCalendar); wasNull |= (  endTime==null);
-            xmin = result.getFloat(3); wasNull |= result.wasNull();
-            ymin = result.getFloat(4); wasNull |= result.wasNull();
-            xmax = result.getFloat(5); wasNull |= result.wasNull();
-            ymax = result.getFloat(6); wasNull |= result.wasNull();
+            xmin = result.getDouble(3); wasNull |= result.wasNull();
+            ymin = result.getDouble(4); wasNull |= result.wasNull();
+            xmax = result.getDouble(5); wasNull |= result.wasNull();
+            ymax = result.getDouble(6); wasNull |= result.wasNull();
             if (!wasNull) {
                 this.startTime = startTime.getTime();
                 this.  endTime =   endTime.getTime();
@@ -113,7 +116,7 @@ final class GeographicBoundingBoxTable extends Table {
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      */
     public Rectangle2D getGeographicArea() throws SQLException {
-        return (isValid) ? new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin) : null;
+        return (isValid) ? new XRectangle2D(xmin, ymin, xmax-xmin, ymax-ymin) : null;
     }
 
     /**

@@ -35,6 +35,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+import java.util.prefs.Preferences;
 
 // Seagis dependencies
 import fr.ird.database.DataBase;
@@ -128,6 +129,9 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
 
     /**
      * Le fichier dans lequel seront lu et écrit les propriétés.
+     * Cette information est conservée afin de ne pas écraser une
+     * autre configuration si {@link #setConfigurationFile} est
+     * appellée après la création de cet objet <code>DataBase</code>.
      */
     private final File propertyFile;
 
@@ -146,7 +150,6 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
      * Ouvre une connection vers une base de données. Chacun des arguments à ce
      * constructeur peut être nul, auquel cas une valeur par défaut sera utilisée.
      *
-     * @param  propertyFile Fichier contenant les propriétés de connection à la base.
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
      *         en heure GMT les dates apparaissant dans la base de données.
@@ -156,8 +159,7 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
      * @throws IOException si le fichier de configuration existe mais n'a pas pu être ouvert.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    protected AbstractDataBase(File propertyFile,
-                               TimeZone timezone,
+    protected AbstractDataBase(TimeZone timezone,
                                String     source,
                                String       user,
                                String   password)
@@ -168,12 +170,12 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
          * à la méthode 'getProperty' de fonctionner. Cette dernière sera utilisée dans
          * les lignes suivantes, et risque aussi d'être surchargée.
          */
+        propertyFile = getConfigurationFile();
         if (propertyFile!=null && propertyFile.exists()) {
             final InputStream in = new BufferedInputStream(new FileInputStream(propertyFile));
             properties.loadFromXML(in);
             in.close();
         }
-        this.propertyFile = propertyFile;
         if (timezone == null) {
             final String ID = getProperty(TIMEZONE);
             if (ID != null) {
@@ -183,6 +185,7 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
         this.timezone = timezone;
         if (source == null) {
             source = getProperty(SOURCE);
+            getLogger().log(loadDriver(getProperty(DRIVER)));
         }
         this.source = source;
         if (user == null) {
@@ -275,6 +278,46 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
     // ramasse-miettes détectera qu'elles ne sont plus utilisées.
 
     /**
+     * Returns the configuration file path for this database. If the configuration
+     * file can't be obtained, then this method returns <code>null</code>, which
+     * is to be understood as "no configuration file".
+     */
+    public File getConfigurationFile() {
+        final String name     = getConfigurationName();
+        final String filename = Preferences.userNodeForPackage(DataBase.class).get(name, null);
+        if (filename != null) {
+            return new File(filename);
+        }
+        final String home = System.getProperty("user.home");
+        File path = new File(home, "Application Data");
+        if (path.isDirectory()) {
+            path = new File(path, "SeasView");
+        } else {
+            path = new File(home, ".SeasView");
+        }
+        if (!path.exists()) {
+            if (!path.mkdir()) {
+                return null;
+            }
+        }
+        return new File(path, name+".xml");
+    }
+
+    /**
+     * Set the configuration file path for this database.
+     */
+    public void setConfigurationFile(final File file) {
+        Preferences.userNodeForPackage(DataBase.class).put(getConfigurationName(), file.getPath());
+    }
+
+    /**
+     * Returns name for this database. Typical values are <code>"GridCoverageConfiguration"</code>
+     * or <code>"ObservationConfiguration"</code>. This name is used for fetching a default
+     * configuration file and preference node.
+     */
+    protected abstract String getConfigurationName();
+
+    /**
      * Retourne le logger à utiliser pour enregister d'éventuels avertissements.
      */
     protected abstract Logger getLogger();
@@ -288,7 +331,7 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
      *         un message indiquant que le pilote a été chargé (avec le numéro
      *         de version du pilote), ou que son chargement a échoué.
      */
-    protected static LogRecord loadDriver(final String driverClassName) {
+    private static LogRecord loadDriver(final String driverClassName) {
         final Level level = driverClassName.equals(loadedDriver) ? Level.FINEST : Level.CONFIG;
         LogRecord record;
         try {

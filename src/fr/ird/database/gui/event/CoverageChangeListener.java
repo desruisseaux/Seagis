@@ -12,20 +12,10 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.gui.event;
 
-// J2SE
+// J2SE dependencies
 import java.util.EventListener;
 
 

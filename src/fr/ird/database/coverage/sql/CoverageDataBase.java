@@ -35,22 +35,25 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import java.util.logging.Level;
 import javax.imageio.spi.IIORegistry;
 import javax.media.jai.util.Range;
 
 // Geotools
 import org.geotools.gp.GridCoverageProcessor;
-import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
-import fr.ird.database.SQLDataBase;
 import fr.ird.database.CatalogException;
+import fr.ird.database.ConfigurationKey;
 import fr.ird.database.gui.swing.SQLEditor;
-import fr.ird.resources.seagis.Resources;
-import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.sql.AbstractDataBase;
+import fr.ird.resources.seagis.ResourceKeys;
+import fr.ird.resources.seagis.Resources;
 
 
 /**
@@ -59,168 +62,107 @@ import fr.ird.database.coverage.CoverageTable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class CoverageDataBase extends SQLDataBase implements fr.ird.database.coverage.CoverageDataBase {
+public class CoverageDataBase extends AbstractDataBase implements fr.ird.database.coverage.CoverageDataBase {
     /**
-     * Liste des propriétées par défaut. Les valeurs aux index pairs sont les index
-     * des propriétées. Les valeurs aux index impairs sont les valeurs. Par exemple
-     * la propriété "GridCoverages" donne l'instruction SQL à utiliser pour interroger
-     * la table d'images.
+     * Liste des clés de configurations. Ne sera construit que la première fois où
+     * elle sera nécessaire (afin d'éviter le chargement d'un grand nombre de classes).
      */
-    /*private static final String[] DEFAULT_PROPERTIES = {
-        Table.SERIES+":TREE",             SeriesTable.SQL_TREE,
-        Table.SERIES+":ID",               SeriesTable.SQL_SELECT_BY_ID,
-        Table.SERIES,                     SeriesTable.SQL_SELECT,
-        Table.GRID_COVERAGES,       GridCoverageTable.SQL_SELECT,
-        Table.FORMATS,                    FormatTable.SQL_SELECT,
-        Table.SAMPLE_DIMENSIONS, SampleDimensionTable.SQL_SELECT,
-        Table.CATEGORIES,               CategoryTable.SQL_SELECT,
-        Table.GRID_GEOMETRIES,      GridGeometryTable.SQL_SELECT
-    };*/
-
-    /**
-     * Liste des noms descriptifs à donner aux propriétés.
-     * Ces noms sont identifiés par des clés de ressources.
-     * Ces clés doivent apparaîtrent dans le même ordre que
-     * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
-     */
-    /*private static final int[] PROPERTY_NAMES = {
-        ResourceKeys.SQL_SERIES_TREE,
-        ResourceKeys.SQL_SERIES_BY_ID,
-        ResourceKeys.SQL_SERIES,
-        ResourceKeys.SQL_GRID_COVERAGES,
-        ResourceKeys.SQL_FORMATS,
-        ResourceKeys.SQL_SAMPLE_DIMENSIONS,
-        ResourceKeys.SQL_CATEGORIES,
-        ResourceKeys.SQL_GRID_GEOMETRIES
-    };*/
+    private static ConfigurationKey[] KEYS;
 
     /**
      * La géométrie de l'ensemble des images de la base de données,
      * ou <code>null</code> si elle n'a pas encore été calculée.
      */
-    private transient GridGeometryTable geometry;
+    private transient GeographicBoundingBoxTable boundingBox;
 
     /**
      * Séries d'images à proposer par défaut. On tentera de déterminer cette série
      * une fois pour toute la première fois que {@link #getCoverageTable()} sera appelée.
      */
-    private transient fr.ird.database.coverage.SeriesEntry series;
-
-    /**
-     * Retourne l'URL par défaut de la base de données d'images.
-     * Cet URL sera puisé dans les préférences de l'utilisateur
-     * autant que possible.
-     */
-    private static String getDefaultURL() {                
-        final String driver = Table.configuration.get(Configuration.KEY_DRIVER);
-        LOGGER.log(loadDriver(driver));
-        return Table.configuration.get(Configuration.KEY_SOURCE);
-    }
+    private transient SeriesEntry series;
 
     /**
      * Ouvre une connection avec une base de données par défaut. Le nom de la base de
-     * données ainsi que le pilote à utiliser   seront puisés dans les préférences du
-     * système.
+     * données ainsi que le pilote à utiliser seront puisés dans le fichier de
+     * configuration.
      *
-     * @throws SQLException Si on n'a pas pu se connecter
-     *         à la base de données.
+     * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    public CoverageDataBase() throws RemoteException {
-        super(getDefaultURL(), TimeZone.getTimeZone(Table.configuration.get(Configuration.KEY_TIME_ZONE)),
-             Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
+    public CoverageDataBase() throws IOException, SQLException {
+        this(null, null, null, null);
     }
 
     /**
      * Ouvre une connection avec la base de données des images.
+     * Chaque argument nul sera remplacé par la valeur spécifiée dans le fichier de configuration.
      *
-     * @param  url Protocole et nom de la base de données d'images.
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
      *         en heure GMT les dates écrites dans la base de données.
-     * @throws SQLException Si on n'a pas pu se connecter
-     *         à la base de données.
-     */
-    public CoverageDataBase(final String url, final TimeZone timezone) throws RemoteException {
-        super(url, timezone, Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
-    }
-
-    /**
-     * Ouvre une connection avec la base de données des images.
-     *
      * @param  url Protocole et nom de la base de données d'images.
-     * @param  timezone Fuseau horaire des dates inscrites dans la base
-     *         de données. Cette information est utilisée pour convertir
-     *         en heure GMT les dates écrites dans la base de données.
      * @param  user Nom d'utilisateur de la base de données.
      * @param  password Mot de passe.
-     * @throws SQLException Si on n'a pas pu se connecter
-     *         à la base de données.
+     * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    public CoverageDataBase(final String url, final TimeZone timezone, final String user, final String password) throws RemoteException
+    public CoverageDataBase(final TimeZone timezone,
+                            final String   source,
+                            final String   user,
+                            final String   password) throws IOException, SQLException
     {
-        super(url, timezone, user, password);
+        super(timezone, source, user, password);
     }
 
     /**
      * Vérifie que la région est valide, en puisant les
      * données dans la base de données si nécessaire.
      */
-    private void ensureGeometryValid() throws RemoteException {
-        if (geometry == null) {
-            geometry = new GridGeometryTable(connection, timezone);
+    private void ensureGeometryValid() throws RemoteException, SQLException {
+        if (boundingBox == null) {
+            boundingBox = new GeographicBoundingBoxTable(this, connection, timezone);
         }
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @return {@inheritDoc}
-     * @throws RemoteException si le catalogue n'a pas pu être interrogé.
      */
     public synchronized Rectangle2D getGeographicArea() throws RemoteException {
         try {
             ensureGeometryValid();
-            return new XRectangle2D(geometry.getGeographicArea());
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            return boundingBox.getGeographicArea();
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
         }
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
      */
     public synchronized Range getTimeRange() throws RemoteException {
         try {
             ensureGeometryValid();
-            return geometry.getTimeRange();
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            return boundingBox.getTimeRange();
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
         }            
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @throws RemoteException si la table n'a pas pu être construite.
      */
-    public fr.ird.database.coverage.SeriesTable getSeriesTable() throws RemoteException {
-        return new SeriesTable(connection);
+    public SeriesTable getSeriesTable() throws RemoteException {
+        return new fr.ird.database.coverage.sql.SeriesTable(this, connection);
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @throws RemoteException si la table n'a pas pu être construite.
      */
     public synchronized CoverageTable getCoverageTable()
             throws RemoteException
     {
         if (series == null) {
             double minPeriod = Double.POSITIVE_INFINITY;
-            final fr.ird.database.coverage.SeriesTable table = getSeriesTable();
-            for (final fr.ird.database.coverage.SeriesEntry entry : table.getEntries()) {
+            final SeriesTable table = getSeriesTable();
+            for (final SeriesEntry entry : table.getEntries()) {
                 final double period = entry.getPeriod();
                 if (period < minPeriod) {
                     this.series = entry;
@@ -229,7 +171,8 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
             }
             table.close();
             if (series == null) {
-                throw new IllegalRecordException(Table.SERIES, Resources.format(ResourceKeys.ERROR_NO_SERIES));
+                throw new IllegalRecordException(Table.SERIES,
+                          Resources.format(ResourceKeys.ERROR_NO_SERIES));
             }
         }
         return getCoverageTable(series);
@@ -237,11 +180,8 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
 
     /**
      * {@inheritDoc}
-     *
-     * @param  series {@inheritDoc}
-     * @throws RemoteException si la référence n'est pas valide ou table n'a pas pu être construite.
      */
-    public synchronized CoverageTable getCoverageTable(final fr.ird.database.coverage.SeriesEntry series)
+    public synchronized CoverageTable getCoverageTable(final SeriesEntry series)
             throws RemoteException
     {
         Rectangle2D geographicArea = getGeographicArea();
@@ -257,7 +197,12 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
             startTime = new Date(0);
             endTime   = new Date( );
         }
-        final CoverageTable table = new WritableGridCoverageTable(connection, timezone);
+        final CoverageTable table;
+        try {
+            table = new WritableGridCoverageTable(this, connection, timezone);
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
+        }            
         // Initial setup of the table. We set the series last in order to
         // avoid logging of "setGeographicArea" and "setTimeRange". Those
         // two methods do not log anything as long as the series in null.
@@ -269,37 +214,15 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
 
     /**
      * {@inheritDoc}
-     *
-     * @param  series {@inheritDoc}
-     * @throws RemoteException si la table n'a pas pu être construite.
      */
     public CoverageTable getCoverageTable(final String series) throws RemoteException {
-        final fr.ird.database.coverage.SeriesTable table = getSeriesTable();       
-        final fr.ird.database.coverage.SeriesEntry entry = table.getEntry(series);
-        
+        final SeriesTable table = getSeriesTable();       
+        final SeriesEntry entry = table.getEntry(series);
         table.close();
         if (entry != null) {
             return getCoverageTable(entry);
         } else {
             throw new CatalogException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param  series {@inheritDoc}
-     * @throws RemoteException si la table n'a pas pu être construite.
-     */
-    public CoverageTable getCoverageTable(final int seriesID) throws RemoteException {
-        final fr.ird.database.coverage.SeriesTable table = getSeriesTable();
-        final fr.ird.database.coverage.SeriesEntry entry = table.getEntry(seriesID);
-        table.close();
-        if (entry != null) {
-            return getCoverageTable(entry);
-        } else {
-            throw new CatalogException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1,
-                                                    new Integer(seriesID)));
         }
     }
 
@@ -332,147 +255,64 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
     }
 
     /**
-     * Retourne le répertoire racine à partir d'où construire le
-     * chemin des images. Les chemins relatifs spécifiés dans la
-     * base de données seront ajoutés à ce répertoire racine.
-     *
-     * @return Répertoire racine des images.
-     */
-    public static File getDefaultDirectory() {
-        // return (Table.directory!=null) ? Table.directory : new File(".");
-        return new File(Table.configuration.get(Configuration.KEY_DIRECTORY)!=null ? Table.configuration.get(Configuration.KEY_DIRECTORY) : ".");
-    }
-
-    /**
-     * Définit le répertoire racine à partir duquel puiser les images. L'appel de cette méthode
-     * affecte toutes les {@link CoverageTable} qui utilisent le répertoire racine par défaut,
-     * pour la session de travail courante ainsi que pour toutes les prochaines sessions (le
-     * répertoire sera sauvegardé dans les préférences systèmes).
-     *
-     * @param directory Répertoire racine des images.
-     */
-    public static void setDefaultDirectory(final File directory) {
-        Table.directory=directory;
-        // if (directory!=null) {
-            // Table.PREFERENCES.put(Table.DIRECTORY, directory.getPath());
-        // } else {
-            // Table.PREFERENCES.remove(Table.DIRECTORY);
-            // Configuration.get(Configuration.KEY_DIRECTORY_ROOT);
-        // }
-        Table.configuration.set(Table.configuration.KEY_DIRECTORY, directory.toString());
-    }
-
-    /**
-     * Retourne le fichier de configuration permettant de se connecter et d'interroger 
-     * la base.
-     */
-    public static File getDefaultConfigurationFile() {
-        final String name = Table.preferences.get(Table.DATABASE, "");
-        if (name.trim().length() == 0 || !(new File(name).exists())) {
-            return new File(Configuration.class.getClassLoader().
-                getResource("fr/ird/database/coverage/sql/resources/resources.properties").getPath());
-        }
-        return new File(name);
-    }
-    
-    /**
-     * Définit le fichier de configuration à utiliser pour se connecter interroger 
-     * la base.
-     *
-     * @param file  Le fichier de configuration.
-     */
-    public static void setDefaultFileOfConfiguration(final File file) {
-        Table.preferences.put(Table.DATABASE, file.toString());
-    }
-
-    /**
      * Construit et retourne un panneau qui permet à l'utilisateur de modifier
      * les instructions SQL. Les instructions modifiées seront conservées dans
      * les préférences systèmes et utilisées pour interroger les tables de la
      * base de données d'images.
      */
-    public static SQLEditor getSQLEditor() {
-        //assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
+    public SQLEditor getSQLEditor() {
+        if (KEYS == null) {
+            KEYS = new ConfigurationKey[] {      DRIVER,
+                                                 SOURCE,
+                                                 USER,
+                                                 PASSWORD,
+                                                 TIMEZONE,
+                                                 ROOT_DIRECTORY,
+                                                 ROOT_URL,
+                      GeographicBoundingBoxTable.SELECT,
+        fr.ird.database.coverage.sql.SeriesTable.SELECT,
+        fr.ird.database.coverage.sql.SeriesTable.SELECT_SUBSERIES,
+        fr.ird.database.coverage.sql.SeriesTable.SELECT_TREE,
+                                     FormatTable.SELECT,
+                            SampleDimensionTable.SELECT,
+                                   CategoryTable.SELECT,
+                               GridCoverageTable.SELECT,
+                               GridCoverageTable.SELECT_ID,
+                       WritableGridCoverageTable.SELECT_BBOX,
+                       WritableGridCoverageTable.INSERT_BBOX,
+                       WritableGridCoverageTable.INSERT_COVERAGE};
+        }
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor = new SQLEditor(Table.configuration,
-            resources.getString(ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(0)), LOGGER)
-        {
-            public Configuration.Key getProperty(final String name) {
-                final Configuration.Key[] keys = {Configuration.KEY_SERIES_TREE,
-                                                  Configuration.KEY_SERIES_ID,
-                                                  Configuration.KEY_SERIES_SUBSERIES,
-                                                  Configuration.KEY_SERIES_NAME,
-                                                  Configuration.KEY_GRID_COVERAGES_ID_INSERT,
-                                                  Configuration.KEY_GRID_COVERAGES_INSERT,
-                                                  Configuration.KEY_GRID_GEOMETRIES_ID_INSERT,
-                                                  Configuration.KEY_GRID_GEOMETRIES_INSERT,
-                                                  Configuration.KEY_GRID_COVERAGES,
-                                                  Configuration.KEY_GRID_COVERAGES3,
-                                                  Configuration.KEY_GRID_COVERAGES1,
-                                                  Configuration.KEY_GRID_COVERAGES2,
-                                                  Configuration.KEY_FORMATS,
-                                                  Configuration.KEY_SAMPLE_DIMENSIONS,
-                                                  Configuration.KEY_CATEGORIES,
-                                                  Configuration.KEY_GRID_GEOMETRIES,
-                                                  Configuration.KEY_GEOMETRY,
-                                                  Configuration.KEY_DRIVER,
-                                                  Configuration.KEY_SOURCE,
-                                                  Configuration.KEY_TIME_ZONE,
-                                                  Configuration.KEY_DIRECTORY,
-                                                  Configuration.KEY_LOGIN,
-                                                  Configuration.KEY_PASSWORD};
-
-                for (int i=0 ; i<keys.length ; i++) 
-                {
-                    final Configuration.Key key = keys[i];
-                    if (key.name.equals(name)) 
-                    {
-                        return key;
-                    }
-                }
-                throw new IllegalArgumentException("Impossible de trouver la propriété '" + name + "'.");            
-             }
-        };
-        
-        // for (int i=0; i<PROPERTY_NAMES.length; i++) {
-        //     editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
-        //                   DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
-        // }
-                
-        final Configuration.Key[] keys = {Configuration.KEY_SERIES_TREE,
-                                          Configuration.KEY_SERIES_ID,
-                                          Configuration.KEY_SERIES_SUBSERIES,
-                                          Configuration.KEY_SERIES_NAME,
-                                          Configuration.KEY_GRID_COVERAGES_ID_INSERT,
-                                          Configuration.KEY_GRID_COVERAGES_INSERT,
-                                          Configuration.KEY_GRID_GEOMETRIES_ID_INSERT,
-                                          Configuration.KEY_GRID_GEOMETRIES_INSERT,
-                                          Configuration.KEY_GRID_COVERAGES,
-                                          Configuration.KEY_GRID_COVERAGES3,
-                                          Configuration.KEY_GRID_COVERAGES1,
-                                          Configuration.KEY_GRID_COVERAGES2,
-                                          Configuration.KEY_FORMATS,
-                                          Configuration.KEY_SAMPLE_DIMENSIONS,
-                                          Configuration.KEY_CATEGORIES,
-                                          Configuration.KEY_GRID_GEOMETRIES,
-                                          Configuration.KEY_GEOMETRY};
-                                          
-        for (int i=0; i<keys.length; i++) {
-            editor.addSQL(keys[i]);
+        final SQLEditor editor = new SQLEditor(this, resources.getString(
+              ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(0)), LOGGER);
+        for (int i=0; i<KEYS.length; i++) {
+            editor.addSQL(KEYS[i]);
         }
         return editor;
     }
     
     /**
      * {@inheritDoc}
-     *
-     * @throws RemoteException si un problème est survenu lors de la disposition des ressources.
      */
-    public void close() throws RemoteException {
-        if (geometry != null) {
-            geometry.close();
+    public void close() throws IOException {
+        if (boundingBox != null) {
+            boundingBox.close();
         }
         super.close();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected String getConfigurationName() {
+        return "CoverageConfiguration";
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     /**
@@ -513,15 +353,11 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      */
     public static void main(final String[] args) throws RemoteException {
         org.geotools.util.MonolineFormatter.init("fr.ird");
-        final Main console = new Main(args);
-        if (console.config) {
-            getSQLEditor().showDialog(null);
-            System.exit(0);
-        }
-        console.run();
+//        final Main console = new Main(args);
+//        if (console.config) {
+//            getSQLEditor().showDialog(null);
+//            System.exit(0);
+//        }
+//        console.run();
     }
-    
-    protected java.util.logging.Logger getLogger() {
-    }
-    
 }

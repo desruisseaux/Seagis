@@ -17,7 +17,6 @@ package fr.ird.database.coverage.sql;
 
 // Base de données
 import java.sql.ResultSet;
-import java.sql.SQLWarning;
 import java.sql.SQLException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -25,15 +24,12 @@ import java.rmi.server.UnicastRemoteObject;
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import java.net.URL;
 import java.net.MalformedURLException;
 import javax.imageio.IIOException;
 import javax.imageio.ImageReadParam;
 import javax.swing.event.EventListenerList;
-import javax.imageio.event.IIOReadWarningListener;
-import javax.imageio.event.IIOReadProgressListener;
 
 // Geométrie
 import java.awt.Dimension;
@@ -48,7 +44,6 @@ import java.lang.ref.SoftReference;
 
 // Divers
 import java.util.Date;
-import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.Collections;
 import java.awt.image.RenderedImage;
@@ -66,7 +61,6 @@ import org.geotools.ct.MathTransform2D;
 import org.geotools.ct.CoordinateTransformationFactory;
 
 // Geotools (GCS)
-import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.gc.GridRange;
 import org.geotools.gc.GridGeometry;
@@ -79,14 +73,11 @@ import org.geotools.util.WeakHashSet;
 import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
-import fr.ird.database.CatalogException;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.CoverageDataBase;
-import fr.ird.resources.seagis.Resources;
 
 
 /**
@@ -825,7 +816,7 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
      * Après la lecture binaire, vérifie si
      * l'entrée lue existait déjà en mémoire.
      */
-    private Object readResolve() throws ObjectStreamException {
+    protected final Object readResolve() throws ObjectStreamException {
         return canonicalize();
     }
 
@@ -844,14 +835,6 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
      */
     final GridCoverageEntry canonicalize() {
         return (GridCoverageEntry) POOL.canonicalize(this);
-    }
-
-    /**
-     * Applique {@link #canonicalize()} sur un tableau d'entrées.
-     * Ce tableau peut contenir des éléments nuls.
-     */
-    static void canonicalize(final CoverageEntry[] entries) {
-        POOL.canonicalize(entries);
     }
 
     /**

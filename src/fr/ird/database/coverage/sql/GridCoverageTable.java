@@ -18,14 +18,12 @@ package fr.ird.database.coverage.sql;
 // Base de données
 import java.sql.Timestamp;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.rmi.RemoteException;
 
 // Géométrie
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 
@@ -39,12 +37,9 @@ import java.text.DateFormat;
 // Collections
 import java.util.Map;
 import java.util.List;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 // Divers
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import javax.media.jai.ParameterList;
@@ -53,18 +48,17 @@ import javax.media.jai.util.Range;
 // Geotools dependencies (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.measure.Longitude;
+import org.geotools.measure.Latitude;
 
 // Geotools dependencies (GCS)
 import org.geotools.gp.Operation;
 import org.geotools.gp.OperationNotFoundException;
 import org.geotools.gc.GridCoverage;
-import org.geotools.util.RangeSet;
 
 // Geotools dependencies (resources)
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
@@ -636,37 +630,38 @@ class GridCoverageTable extends Table implements CoverageTable {
                     }
                 }
                 if (ranges.x != null) {
-                    final float xmin;
-                    final float xmax;
-                    if (newEntry!=null) {
+                    final double xmin;
+                    final double xmax;
+                    if (newEntry != null) {
                         xmin = newEntry.xmin;
                         xmax = newEntry.xmax;
                     } else {
-                        xmin = result.getFloat(XMIN);
-                        xmax = result.getFloat(XMAX);
+                        xmin = result.getDouble(XMIN);
+                        xmax = result.getDouble(XMAX);
                     }
-                    ranges.x.add(xmin, xmax);
+                    ranges.x.add(new Longitude(xmin), new Longitude(xmax));
                 }
                 if (ranges.y != null) {
-                    final float ymin;
-                    final float ymax;
+                    final double ymin;
+                    final double ymax;
                     if (newEntry != null) {
                         ymin = newEntry.ymin;
                         ymax = newEntry.ymax;
                     } else {
-                        ymin = result.getFloat(YMIN);
-                        ymax = result.getFloat(YMAX);
+                        ymin = result.getDouble(YMIN);
+                        ymax = result.getDouble(YMAX);
                     }
-                    ranges.y.add(ymin, ymax);
+                    ranges.y.add(new Latitude(ymin), new Latitude(ymax));
                 }
             }
             result.close();
             if (entries != null) {
-                final List<CoverageEntry> newEntries;
-                newEntries = entries.subList(startIndex, entries.size());
-                final int size = newEntries.size();
-                GridCoverageEntry.canonicalize(newEntries.toArray(new CoverageEntry[size]));
-                log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1, new Integer(size));
+                final int size = entries.size();
+                for (int i=startIndex; i<size; i++) {
+                    entries.set(i, ((GridCoverageEntry) entries.get(i)).canonicalize());
+                }
+                log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1,
+                                  new Integer(size-startIndex));
             }
         } catch (SQLException e) {
             throw new CatalogException(e);
