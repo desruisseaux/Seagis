@@ -40,7 +40,7 @@ import net.seas.resources.Resources;
 
 
 /**
- * <FONT COLOR="#FF6633">A list of categories.</FONT> A category is a range of sample
+ * A list of categories. A category is a range of sample
  * values reserved for a structure or a geophysics parameter.  For example, an image
  * may use some sample values for clouds, lands and ices, and a range of sample values
  * for sea surface temperature. Such an image may be build of four categories: three
@@ -273,54 +273,6 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {return byIndex[index];}
 
     /**
-     * Returns the unit information for quantitative categories in this list.
-     * May returns <code>null</code>  if there is no quantitative categories
-     * in this list, or if there is no unit information.
-     */
-    public Unit getUnits()
-    {return unit;}
-
-    /**
-     * Returns a color model for this category list. The default implementation
-     * build up the color model from each category's colors (as returned by
-     * {@link Category#getColors}).
-     */
-    final synchronized IndexColorModel getIndexColorModel()
-    {
-        if (colors==null)
-        {
-            if (byIndex.length==0)
-            {
-                // Construct a gray scale palette.
-                final byte[] RGB = new byte[256];
-                for (int i=0; i<RGB.length; i++) RGB[i] = (byte)i;
-                colors = new IndexColorModel(8, RGB.length, RGB, RGB, RGB);
-            }
-            else
-            {
-                /*
-                 * Calcule le nombre de couleurs de la palette
-                 * en cherchant l'index le plus élevé des thèmes.
-                 */
-                assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-                final int mapSize = Math.round(byIndex[byIndex.length-1].upper);
-                final int[]  ARGB = new int[mapSize];
-                /*
-                 * Interpole les codes de couleurs dans la palette. Les couleurs
-                 * correspondantes aux plages non-définies par un thème seront transparentes.
-                 */
-                for (int i=0; i<byIndex.length; i++)
-                {
-                    final Category category = byIndex[i];
-                    PaletteFactory.expand(category.getColors(), ARGB, Math.round(category.lower), Math.round(category.upper));
-                }
-                colors = PaletteFactory.getIndexColorModel(ARGB);
-            }
-        }
-        return colors;
-    }
-
-    /**
      * Retourne une catégorie à utiliser pour représenter les données manquantes.
      * Si aucune catégorie ne représente une valeur <code>NaN</code>, alors cette
      * méthode retourne une catégorie arbitraire.
@@ -336,6 +288,54 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         if (byIndex.length!=0)
             return byIndex[0];
         return new Category(Resources.format(Clé.NODATA), Color.black, 0);
+    }
+
+    /**
+     * Returns the unit information for quantitative categories in this list.
+     * May returns <code>null</code>  if there is no quantitative categories
+     * in this list, or if there is no unit information.
+     */
+    public Unit getUnits()
+    {return unit;}
+
+    /**
+     * Returns the minimal geophysics value (inclusive) allowed for this
+     * category list. This value is expressed in {@link #getUnits} units.
+     */
+    final float getMinimumValue()
+    {
+        assert(CategoryComparator.BY_VALUES.isSorted(byValues));
+        return (byValues.length!=0) ? byValues[0].minimum : Float.NaN;
+    }
+
+    /**
+     * Returns the maximal geophysics value (exclusive) allowed for this
+     * category list. This value is expressed in {@link #getUnits} units.
+     */
+    final float getMaximumValue()
+    {
+        assert(CategoryComparator.BY_VALUES.isSorted(byValues));
+        return (byValues.length!=0) ? byValues[byValues.length-1].maximum : Float.NaN;
+    }
+
+    /**
+     * Returns the minimal sample value (inclusive) allowed for this
+     * category list.
+     */
+    final float getMinimumSample()
+    {
+        assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
+        return (byIndex.length!=0) ? byIndex[0].lower : Float.NaN;
+    }
+
+    /**
+     * Returns the maximal sample value (exclusive) allowed for this
+     * category list.
+     */
+    final float getMaximumSample()
+    {
+        assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
+        return (byIndex.length!=0) ? byIndex[byIndex.length-1].upper : Float.NaN;
     }
 
     /**
@@ -576,6 +576,46 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             }
         }
         return buffer;
+    }
+
+    /**
+     * Returns a color model for this category list. The default implementation
+     * build up the color model from each category's colors (as returned by
+     * {@link Category#getColors}).
+     */
+    final synchronized IndexColorModel getIndexColorModel()
+    {
+        if (colors==null)
+        {
+            if (byIndex.length==0)
+            {
+                // Construct a gray scale palette.
+                final byte[] RGB = new byte[256];
+                for (int i=0; i<RGB.length; i++) RGB[i] = (byte)i;
+                colors = new IndexColorModel(8, RGB.length, RGB, RGB, RGB);
+            }
+            else
+            {
+                /*
+                 * Calcule le nombre de couleurs de la palette
+                 * en cherchant l'index le plus élevé des thèmes.
+                 */
+                assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
+                final int mapSize = Math.round(byIndex[byIndex.length-1].upper);
+                final int[]  ARGB = new int[mapSize];
+                /*
+                 * Interpole les codes de couleurs dans la palette. Les couleurs
+                 * correspondantes aux plages non-définies par un thème seront transparentes.
+                 */
+                for (int i=0; i<byIndex.length; i++)
+                {
+                    final Category category = byIndex[i];
+                    PaletteFactory.expand(category.getColors(), ARGB, Math.round(category.lower), Math.round(category.upper));
+                }
+                colors = PaletteFactory.getIndexColorModel(ARGB);
+            }
+        }
+        return colors;
     }
 
     /**

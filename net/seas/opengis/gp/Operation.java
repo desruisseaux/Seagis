@@ -112,7 +112,7 @@ public class Operation
     {return new ParameterInfo(descriptor, index);}
 
     /**
-     * <FONT COLOR="#FF6633">Retrieve the parameter information for a given name.</FONT>
+     * Retrieve the parameter information for a given name.
      * Search is case-insensitive.
      */
     public ParameterInfo getParameterInfo(final String name)

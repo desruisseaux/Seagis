@@ -35,8 +35,6 @@ import javax.imageio.IIOException;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
- *
- * @see org.opengis.gc.GC_GridCoverageExchange
  */
 public abstract class GridCoverageExchange
 {

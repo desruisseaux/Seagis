@@ -26,9 +26,14 @@ package net.seas.opengis.gc;
 import net.seas.opengis.ct.MathTransform;
 import net.seas.opengis.ct.MathTransformFactory;
 
+// Geometry
+import java.awt.geom.Dimension2D;
+import java.awt.geom.AffineTransform;
+import net.seas.util.XAffineTransform;
+import net.seas.util.XDimension2D;
+
 // Miscellaneous
 import java.io.Serializable;
-import java.awt.geom.AffineTransform;
 
 
 /**
@@ -46,7 +51,7 @@ public class GridGeometry implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 398116590319460364L;
+//  private static final long serialVersionUID = 398116590319460364L; // TODO
 
     /**
      * The valid coordinate range of a grid coverage. The lowest
@@ -54,47 +59,54 @@ public class GridGeometry implements Serializable
      * have a minimum coordinate of 0 and maximum of 512, with 511
      * as the highest valid index.
      */
-    private final GridRange range;
+    private final GridRange gridRange;
 
     /**
-     * The affine transform, or <code>null</code> if the transform
-     * can't be represented as a 2D affine transform.
+     * Transformation affine convertissant les indices de pixels de l'image en coordonnées logiques (en
+     * mètres ou en degrés selon le système de coordonnées de l'image). Pour convertir des indices de
+     * pixels en coordonnées logiques, il suffit d'écrire:
+     *
+     * <pre>gridToCoordinateJAI.transform(pixels, point);</pre>
+     *
+     * Notez que la coordonnées obtenue sera dans le coin supérieur gauche du pixel (vers les indices
+     * <var>i</var> et <var>j</var> minimums). Pour obtenir des coordonnées au centre du pixel, il faut
+     * d'abord appeller <code>geoReferencing.translate(0.5, 0.5)</code> avant de faire les transformations,
+     * ou encore ajouter 0.5 aux coordonnées pixels <code>pixels.x</code> et <code>pixels.y</code>.
      */
-    private final AffineTransform transformJAI;
+    private final AffineTransform gridToCoordinateJAI;
 
     /**
-     * The math transform. If <code>null</code>, will be
-     * computed from <code>transformJAI</code> when requested.
+     * The math transform. If <code>null</code>, will be computed
+     * from <code>gridToCoordinateJAI</code> when requested.
      */
-    private MathTransform transform;
+    private MathTransform gridToCoordinateSystem;
 
     /**
      * Construct a new grid geometry.
      *
-     * @param range The valid coordinate range of a grid coverage.
-     * @param transform The math transform which allows for the transformations
-     *        from grid coordinates (pixel's <em>center</em>) to real world earth
-     *        coordinates.
+     * @param gridRange The valid coordinate range of a grid coverage.
+     * @param gridToCoordinateSystem The math transform which allows for the transformations
+     *        from grid coordinates (pixel's <em>center</em>) to real world earth coordinates.
      */
-    public GridGeometry(final GridRange range, final MathTransform transform)
+    public GridGeometry(final GridRange gridRange, final MathTransform gridToCoordinateSystem)
     {
-        this.range     = range;
-        this.transform = transform;
-        transformJAI   = null;
+        this.gridRange              = gridRange;
+        this.gridToCoordinateSystem = gridToCoordinateSystem;
+        this.gridToCoordinateJAI    = null;
     }
 
     /**
      * Construct a new grid geometry.
      *
-     * @param range The valid coordinate range of a grid coverage.
-     * @param transform The affine transform which allows for the transformations
-     *        from grid coordinates (pixel's <em>upper left</em> corner) to real
-     *        world earth coordinates.
+     * @param gridRange The valid coordinate range of a grid coverage.
+     * @param gridToCoordinateJAI The affine transform which allows for the transformations
+     *        from grid coordinates (pixel's <em>upper left</em> corner) to real world earth
+     *        coordinates.
      */
-    public GridGeometry(final GridRange range, final AffineTransform transform)
+    GridGeometry(final GridRange gridRange, final AffineTransform gridToCoordinateJAI)
     {
-        this.range   = range;
-        transformJAI = new AffineTransform(transform);
+        this.gridRange           = gridRange;
+        this.gridToCoordinateJAI = gridToCoordinateJAI; // Cloned by caller
     }
 
     /**
@@ -104,7 +116,7 @@ public class GridGeometry implements Serializable
      * of 512, with 511 as the highest valid index.
      */
     public GridRange getGridRange()
-    {return range;}
+    {return gridRange;}
 
     /**
      * Returns the math transform which allows for the transformations
@@ -116,11 +128,16 @@ public class GridGeometry implements Serializable
      * The default implementation compute the math
      * transform from {@link #gridToCoordinateJAI}.
      */
-    public synchronized MathTransform gridToCoordinateSystem()
+    public synchronized MathTransform getGridToCoordinateSystem()
     {
-        if (transform==null)
+        if (gridToCoordinateSystem==null)
         {
-            final AffineTransform tr = gridToCoordinateJAI();
+            if (gridRange.getDimension()!=2)
+            {
+                // TODO
+                throw new UnsupportedOperationException("Not implemented");
+            }
+            final AffineTransform tr = getGridToCoordinateJAI();
             if (tr!=null)
             {
                 // AffineTransform's operations are applied in reverse order.
@@ -128,21 +145,41 @@ public class GridGeometry implements Serializable
                 // set the position in the pixel center),  and then apply the
                 // transformation specified by gridToCoordinateJAI().
                 tr.translate(0.5, 0.5);
-                transform = MathTransformFactory.DEFAULT.createAffineTransform(tr);
+                gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(tr);
             }
         }
-        return transform;
+        return gridToCoordinateSystem;
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the affine transform which allows for the transformations
-     * from grid coordinates to real world earth coordinates.</FONT> The returned affine follows
+     * Returns the affine transform which allows for the transformations
+     * from grid coordinates to real world earth coordinates. The returned affine follows
      * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>
      * convention, i.e. its convert the pixel's <em>upper left corner</em> coordinates
      * (<var>i</var>,<var>j</var>) into real world earth coordinates (<var>x</var>,<var>y</var>).
      * In contrast, {link #gridToCoordinateSystem()} contert the pixel's <em>center</em>
      * coordinates into real world earth coordinates.
      */
-    public AffineTransform gridToCoordinateJAI()
-    {return (transformJAI!=null) ? (AffineTransform) transformJAI.clone() : null;}
+    final AffineTransform getGridToCoordinateJAI()
+    {return gridToCoordinateJAI;} // No clone for performance raisons.
+
+    /**
+     * Returns an estimation of pixel size, in user coordinates.
+     * Note: the returned dimension is an <em>estimation only</em>,
+     *       and may be improved in future version.
+     */
+    public Dimension2D getPixelSize()
+    {
+        if (gridToCoordinateJAI!=null)
+        {
+            final double scaleX0 = XAffineTransform.getScaleX0(gridToCoordinateJAI);
+            final double scaleY0 = XAffineTransform.getScaleY0(gridToCoordinateJAI);
+            return new XDimension2D.Double(scaleX0, scaleY0);
+        }
+        else
+        {
+            // TODO
+            throw new UnsupportedOperationException("Not implemented");
+        }
+    }
 }

@@ -22,19 +22,15 @@
  */
 package net.seas.util;
 
-// Géométrie
+// Geometry
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
-// Divers
-import net.seas.util.XMath;
-
 
 /**
- * Quelques méthodes statiques
- * relatives aux transformations affines.
+ * Utility methods for affine transforms.
  *
  * @version 1.0
  * @author Martin Desruisseaux

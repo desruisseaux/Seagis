@@ -137,26 +137,37 @@ public final class GridRange implements Serializable
      * Construct two-dimensional range defined by a {@link RenderedImage}.
      */
     public GridRange(final RenderedImage image)
+    {this(image,0);}
+
+    /**
+     * Construct two-dimensional range defined by a {@link RenderedImage}.
+     *
+     * @param image The image.
+     * @param dimension Number of dimensions for this grid range.
+     *        Dimensions over 2 will be set to the [0..1] range.
+     */
+    GridRange(final RenderedImage image, final int dimension)
     {
+        index = new int[dimension*2];
         final int x = image.getMinX();
         final int y = image.getMinY();
-        index = new int[]
-        {
-            x,                  y,
-            x+image.getWidth(), y+image.getHeight()
-        };
+        index[0] = x;
+        index[1] = y;
+        index[dimension+0] = x+image.getWidth();
+        index[dimension+1] = y+image.getHeight();
+        Arrays.fill(index, dimension+2, index.length, 1);
         checkCoherence();
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the number of dimensions.</FONT>
+     * Returns the number of dimensions.
      */
     public int getDimension()
     {return index.length/2;}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the valid minimum inclusive grid
-     * coordinate along the specified dimension.</FONT>
+     * Returns the valid minimum inclusive grid
+     * coordinate along the specified dimension.
      */
     public int getLower(final int dimension)
     {
@@ -165,14 +176,21 @@ public final class GridRange implements Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the valid maximum exclusive grid
-     * coordinate along the specified dimension.</FONT>
+     * Returns the valid maximum exclusive grid
+     * coordinate along the specified dimension.
      */
     public int getUpper(final int dimension)
     {
         if (dimension>=0) return index[dimension+index.length/2];
         else throw new ArrayIndexOutOfBoundsException(dimension);
     }
+
+    /**
+     * Returns the number of integer grid coordinates along the specified dimension.
+     * This is equals to <code>getUpper(dimension)-getLower(dimension)</code>.
+     */
+    public int getLength(final int dimension)
+    {return index[dimension+index.length/2] - index[dimension];}
 
     /**
      * Returns a hash value for this grid range.

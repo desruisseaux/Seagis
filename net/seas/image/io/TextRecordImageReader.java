@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 // Entrés/sorties
 import java.io.IOException;
@@ -288,10 +289,10 @@ public class TextRecordImageReader extends TextImageReader
     }
 
     /**
-     * Retourne le nombre de bandes dans l'image à l'index spécifié.
+     * Returns the number of bands available for the specified image.
      *
-     * @param  imageIndex Index de l'image dont on veut connaître le nombre de bandes.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     * @param  imageIndex  The image index.
+     * @throws IOException if an error occurs reading the information from the input source.
      */
     public int getNumBands(final int imageIndex) throws IOException
     {return getRecords(imageIndex).getColumnCount() - (getColumnX(imageIndex)==getColumnY(imageIndex) ? 1 : 2);}
@@ -317,13 +318,17 @@ public class TextRecordImageReader extends TextImageReader
     {return getRecords(imageIndex).getPointCount(getColumnY(imageIndex), getGridTolerance());}
 
     /**
-     * Retourne les coordonnées logiques couvertes par l'image.
-     * Les limites du rectangle retourné correspondront aux valeurs
-     * minimales et maximales des <var>x</var> et <var>y</var>.
+     * Returns the smallest bounding box containing the full image in user coordinates.
+     * The default implementation search for minimum and maximum values in <var>x</var>
+     * and <var>y</var> columns (as returned by {link #getColumnX} and {link #getColumnY})
+     * and returns a rectangle containing <code>(xmin-dx/2,&nbsp;ymin-dy/2)</code>) and
+     * <code>(xmax+dx/2,&nbsp;ymax+dy/2)</code>) points, where <var>dx</var> and
+     * <var>dy</var> are grid cell width and height (i.e. the smallest interval between
+     * <var>x</var> and <var>y</var> values).
      *
-     * @param  imageIndex Index de l'image dont on veut les coordonnées logiques.
-     * @return Coordonnées logiques couverte par l'image.
-     * @throws IOException si la lecture de l'image a échoué.
+     * @param  imageIndex the index of the image to be queried.
+     * @return Image bounds in user coordinates.
+     * @throws IOException If an error occurs reading the width information from the input source.
      */
     public Rectangle2D getLogicalBounds(final int imageIndex) throws IOException
     {
@@ -353,6 +358,9 @@ public class TextRecordImageReader extends TextImageReader
      * AffineTransform tr = getTransform(imageIndex);
      * tr.translate(0.5, 0.5);
      * </pre></blockquote>
+     *
+     * The default implementation compute the affine transform from
+     * {@link #getLogicalBounds}.
      *
      * @param  imageIndex The 0-based image index.
      * @return A transform mapping pixel coordinates to logical coordinates.
@@ -545,12 +553,12 @@ public class TextRecordImageReader extends TextImageReader
     }
 
     /**
-     * Procède à la lecture d'une image.
+     * Reads the image indexed by <code>imageIndex</code> and returns it as a complete buffered image.
      *
-     * @param  imageIndex Index de l'image à lire.
-     * @param  param Paramètres de la lecture, ou <code>null</code> s'il n'y en a pas.
-     * @return Image lue.
-     * @throws IOException si l'opération a échoué.
+     * @param  the index of the image to be retrieved.
+     * @param  param Parameters used to control the reading process, or <code>null</code>.
+     * @return the desired portion of the image.
+     * @throws IOException if an error occurs during reading.
      */
     public BufferedImage read(final int imageIndex, final ImageReadParam param) throws IOException
     {

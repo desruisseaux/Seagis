@@ -34,16 +34,9 @@ import javax.units.Unit;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
- *
- * @see org.opengis.cv.CV_SampleDimension
  */
 public abstract class SampleDimension
 {
-    /**
-     * The sample dimension name.
-     */
-    private final String name;
-
     /**
      * The category list for this sample dimension,
      * or <code>null</code> if this sample dimension
@@ -54,28 +47,20 @@ public abstract class SampleDimension
     /**
      * Construct a sample dimension with a set of categories.
      *
-     * @param name The sample dimension name.
      * @param categories The category list for this sample dimension, or
      *        <code>null</code> if this sample dimension has no category.
      */
-    public SampleDimension(final String name, final CategoryList categories)
+    public SampleDimension(final CategoryList categories)
     {
-        this.name       = name.trim();
         this.categories = categories;
     }
-
-    /**
-     * Get the sample dimension name.
-     */
-    public String getName()
-    {return name;}
 
     /**
      * Get the sample dimension title or description.
      * This string may be <code>null</code> if no description is present.
      * The default implementation returns the name of what seem to be the
-     * "main" category, i.e. the quantative category (if there is one) with
-     * the widest sample range.
+     * "main" category,  i.e. the quantitative category (if there is one)
+     * with the widest sample range.
      *
      * @param  locale The locale, or <code>null</code> for the default one.
      * @return The localized description. If no description was available

@@ -24,7 +24,6 @@ package net.seas.opengis.cv;
 
 // Miscellaneous
 import java.awt.Color;
-import java.lang.Double; // For JavaDoc
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Comparator;
@@ -35,7 +34,7 @@ import net.seas.resources.Resources;
 
 
 /**
- * <FONT COLOR="#FF6633">A category delimited by a range of sample values.</FONT>
+ * A category delimited by a range of sample values.
  * A category may represent qualitative or quantitative information, for
  * example geomorphologic structures or geophysics parameters. Some image
  * mixes both qualitative and quantitative categories. For example, images
@@ -44,8 +43,8 @@ import net.seas.resources.Resources;
  * categories for cloud, land and ice.
  * <br><br>
  * All categories must have a human readable name. In addition, some quantitative
- * categories may define a linear equation <code>y=C<sub>0</sub>+C<sub>1</sub>*x</code>
- * converting sample values <var>x</var> into geophysics values <var>y</var>.
+ * categories may define a linear equation <code>v=C<sub>0</sub>+C<sub>1</sub>*p</code>
+ * converting sample values <var>p</var> into geophysics values <var>v</var>.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -99,14 +98,14 @@ public class Category implements Serializable
      * This coefficient is {@link Double#NaN} if this category is not a
      * quantitative one.
      */
-    protected final float C0;
+    final float C0;
 
     /**
      * The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
      * This coefficient is {@link Double#NaN} if this category is not a
      * quantitative one.
      */
-    protected final float C1;
+    final float C1;
 
     /**
      * Codes ARGB des couleurs de la catégorie. Les couleurs par
@@ -207,8 +206,8 @@ public class Category implements Serializable
      *                 from opaque black to opaque white).
      * @param  lower   The lower sample value, inclusive. This is usually an integer.
      * @param  upper   The upper sample value, exclusive. This is usually an integer.
-     * @param  C0      The C0 coefficient in the linear equation <code>y=C0+C1*x</code>.
-     * @param  C1      The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
+     * @param  C0      The C0 coefficient in the linear equation <code>v=C0+C1*p</code>.
+     * @param  C1      The C1 coefficient in the linear equation <code>v=C0+C1*p</code>.
      *
      * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to <code>upper</code>,
      *         or if <code>C0</code> or <code>C1</code> coefficients are illegal.
@@ -231,12 +230,13 @@ public class Category implements Serializable
      *                 from opaque black to opaque white).
      * @param  lower   The lower sample value, inclusive. This is usually an integer.
      * @param  upper   The upper sample value, exclusive. This is usually an integer.
-     * @param  C0      The C0 coefficient in the linear equation <code>y=C0+C1*x</code>.
-     * @param  C1      The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
+     * @param  C0      The C0 coefficient in the linear equation <code>v=C0+C1*p</code>.
+     * @param  C1      The C1 coefficient in the linear equation <code>v=C0+C1*p</code>.
      * @param  isQuantitative <code>true</code> if this category is a quantitative one.
      *
-     * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to <code>upper</code>,
-     *         or if <code>C0</code> or <code>C1</code> coefficients are illegal.
+     * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to
+     *         <code>upper</code>, or if <code>C0</code> and/or <code>C1</code> coefficients
+     *         are illegal.
      */
     private Category(final String name, final Color[] colors, final float lower, final float upper, final float C0, final float C1, boolean isQuantitative) throws IllegalArgumentException
     {
@@ -500,12 +500,14 @@ public class Category implements Serializable
     }
 
 
+
+
     /**
-     * <FONT COLOR="#FF6633">A quantitative category converting converting geophysics values
-     * into sample values through a logarithmic equation.</FONT> The reverse operation
+     * A quantitative category converting converting geophysics values
+     * into sample values through a logarithmic equation. The reverse operation
      * (convert sample values into geophysics values) is done through the following equation:
-     * <code>y=10^(C<sub>0</sub>+C<sub>1</sub>*x)</code> where <var>x</var> is the (usually
-     * integer) pixel value and <var>y</var> is the (usually floating-point) geophysics value.
+     * <code>v=10^(C<sub>0</sub>+C<sub>1</sub>*p)</code> where <var>p</var> is the (usually
+     * integer) pixel value and <var>v</var> is the (usually floating-point) geophysics value.
      *
      * @version 1.0
      * @author Martin Desruisseaux

@@ -52,7 +52,7 @@ import net.seas.awt.ExceptionMonitor;
 
 
 /**
- * <FONT COLOR="#FF6633">A factory class for {@link IndexColorModel} objects.</FONT>
+ * A factory class for {@link IndexColorModel} objects.
  * Default implementation for this class create {@link IndexColorModel} objects from
  * palette definition files. Definition files are text files containing an arbitrary
  * number of lines, each line containing RGB components ranging from 0 to 255 inclusive.

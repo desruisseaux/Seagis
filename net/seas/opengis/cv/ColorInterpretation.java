@@ -42,8 +42,6 @@ import net.seas.resources.Resources;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
- *
- * @see org.opengis.cv.CV_ColorInterpretation
  */
 public final class ColorInterpretation extends EnumeratedParameter
 {
@@ -108,6 +106,12 @@ public final class ColorInterpretation extends EnumeratedParameter
         HUE_BAND,  SATURATION_BAND, LIGHTNESS_BAND,
         CYAN_BAND, MAGENTA_BAND,    YELLOW_BAND,    BLACK_BAND
     };
+    static
+    {
+        for (int i=0; i<ENUMS.length; i++)
+            if (ENUMS[i].getValue()!=i)
+                throw new ExceptionInInitializerError(String.valueOf(ENUMS[i]));
+    }
 
     /**
      * Resource key, used for building localized name. This key doesn't need to
@@ -127,7 +131,7 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
+     * Return the enum for the specified value.
      * This method is provided for compatibility with
      * {@link org.opengis.cv.CV_ColorInterpretation}.
      *
@@ -142,7 +146,7 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified color model and band number.</FONT>
+     * Return the enum for the specified color model and band number.
      *
      * @param  model The color model.
      * @param  band  The band to query.
@@ -207,8 +211,9 @@ public final class ColorInterpretation extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
-     * If no name is available for the specified locale, a default one will be used.
+     * Returns this enum's name in the specified locale.
+     * If no name is available for the specified locale,
+     * a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.

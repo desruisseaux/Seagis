@@ -59,6 +59,7 @@ import javax.media.jai.PropertySourceImpl;
 // Miscellaneous
 import java.util.Arrays;
 import java.util.Locale;
+import javax.media.jai.Histogram;
 import net.seas.resources.Resources;
 import net.seas.util.XArray;
 
@@ -86,9 +87,14 @@ import net.seas.util.XArray;
 public abstract class Coverage implements Dimensioned, PropertySource
 {
     /**
+     * The coverage name.
+     */
+    private final String name;
+
+    /**
      * The coordinate system, or <code>null</code> if there is none.
      */
-    private CoordinateSystem coordinateSystem;
+    private final CoordinateSystem coordinateSystem;
 
     /**
      * The names of each dimension in the coverage. Typically these names are
@@ -101,14 +107,16 @@ public abstract class Coverage implements Dimensioned, PropertySource
     /**
      * Construct a coverage with no coordinate system.
      *
+     * @param name The coverage name.
      * @param dimensionNames The names of each dimension in the coverage.
      *        Typically these names are “x”, “y”, “z” and “t”. Grid coverages
      *        are typically 2D (x,y) while other coverages may be 3D (x,y,z)
      *        or 4D (x,y,z,t). The array's length will determine the number
      *        of dimensions of the coverage.
      */
-    public Coverage(final String[] dimensionNames)
+    public Coverage(final String name, final String[] dimensionNames)
     {
+        this.name             = name;
         this.coordinateSystem = null;
         this.dimensionNames   = (String[]) dimensionNames.clone();
     }
@@ -118,17 +126,32 @@ public abstract class Coverage implements Dimensioned, PropertySource
      * The names of each dimension in the coverage will be determined
      * from the coordinate system axis infos.
      *
+     * @param name The coverage name.
      * @param coordinateSystem The coordinate system. This specifies
      *        the coordinate system used when accessing a coverage or
      *        grid coverage with the “evaluate” methods.
      */
-    public Coverage(final CoordinateSystem coordinateSystem)
+    public Coverage(final String name, final CoordinateSystem coordinateSystem)
     {
+        this.name             = name;
         this.coordinateSystem = coordinateSystem;
         this.dimensionNames   = new String[coordinateSystem.getDimension()];
         for (int i=0; i<dimensionNames.length; i++)
             dimensionNames[i] = coordinateSystem.getAxis(i).name;
     }
+
+    /**
+     * Returns the coverage name, localized for the supplied locale.
+     * If the specified locale is not available, returns a name in an
+     * arbitrary locale. The default implementation returns the name
+     * specified at construction time.
+     *
+     * @param  locale The desired locale, or <code>null</code> for a default locale.
+     * @return The coverage name in the specified locale, or in an arbitrary locale
+     *         if the specified localization is not available.
+     */
+    public String getName(final Locale locale)
+    {return name;}
 
     /**
      * Returns the coordinate system. This specifies the coordinate system used when
@@ -264,7 +287,42 @@ public abstract class Coverage implements Dimensioned, PropertySource
     public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
 
     /**
-     * <FONT COLOR="#FF6633">Returns 2D view of this grid coverage as a renderable image.</FONT>
+     * Determine the histogram of grid values for this coverage.
+     */
+    public Histogram getHistogram()
+    {
+        final List<SampleDimension> samples = getSampleDimensions();
+        final int dimension = samples.size();
+        final double[] minimum=new double[dimension];
+        final double[] maximum=new double[dimension];
+        Arrays.fill(minimum, Double.POSITIVE_INFINITY);
+        Arrays.fill(maximum, Double.NEGATIVE_INFINITY);
+        for (int i=0; i<dimension; i++)
+        {
+            final CategoryList categories = samples.get(i).getCategoryList();
+            if (categories!=null)
+            {
+                minimum[i] = categories.getMinimumValue();
+                maximum[i] = categories.getMaximumValue();
+            }
+        }
+        // TODO
+        return null;
+    }
+
+    /**
+     * Determine the histogram of grid values for this coverage.
+     *
+     * @param  miniumEntryValue Minimum value stored in the first histogram entry.
+     * @param  maximumEntryValue Maximum value stored in the last histogram entry.
+     * @param  numberEntries Number of entries in the histogram.
+     * @return The histogram.
+     */
+    public Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries)
+    {return null;}
+
+    /**
+     * Returns 2D view of this grid coverage as a renderable image.
      * This method allows interoperability with Java2D.
      *
      * @param  xAxis Dimension to use for <var>x</var> axis.
@@ -325,7 +383,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
     {return Image.UndefinedProperty;}
 
     /**
-     * <FONT COLOR="#FF6633">Base class for renderable image of a grid coverage.</FONT>
+     * Base class for renderable image of a grid coverage.
      * Renderable images allow interoperability with Java2D for a two-dimensional view
      * of a coverage (which may or may not be a grid coverage).
      *
@@ -483,6 +541,8 @@ public abstract class Coverage implements Dimensioned, PropertySource
             final int ymax = dstRect.y + dstRect.height;
             final int numBands = raster.getNumBands();
             final double[] samples=new double[numBands];
+            final double[] padNaNs=new double[numBands];
+            Arrays.fill(padNaNs, Double.NaN);
             try
             {
                 for (int y=ymin; y<ymax; y++)
@@ -492,9 +552,13 @@ public abstract class Coverage implements Dimensioned, PropertySource
                         point2D.x = x;
                         point2D.y = y;
                         transform.inverseTransform(point2D, point2D);
-                        coordinate.ord[xAxis] = point2D.x;
-                        coordinate.ord[yAxis] = point2D.y;
-                        raster.setPixel(x, y, evaluate(coordinate, samples));
+                        if (area==null || area.contains(point2D))
+                        {
+                            coordinate.ord[xAxis] = point2D.x;
+                            coordinate.ord[yAxis] = point2D.y;
+                            raster.setPixel(x, y, evaluate(coordinate, samples));
+                        }
+                        else raster.setPixel(x, y, padNaNs);
                     }
                 }
             }
@@ -525,15 +589,15 @@ public abstract class Coverage implements Dimensioned, PropertySource
             final CoordinateSystem  cs = getCoordinateSystem();
             if (cs!=null)
             {
-                final AxisOrientation[] axis = new AxisOrientation[cs.getDimension()];
-                final AxisOrientation[] normalized = new AxisOrientation[axis.length];
-                for (int i=0; i<axis.length; i++)
+                final AxisOrientation[] axis = new AxisOrientation[]
                 {
-                    axis[i] = cs.getAxis(i).orientation;
-                    normalized[i] = axis[i].absolute();
-                }
-                Arrays.sort(normalized);
-                normalized[1] = normalized[1].inverse(); // Image's Y axis is downward.
+                    cs.getAxis(xAxis).orientation,
+                    cs.getAxis(yAxis).orientation
+                };
+                final AxisOrientation[] normalized = (AxisOrientation[]) axis.clone();
+                Arrays.sort(normalized); // TODO: is it really a good idea?
+                normalized[0] = normalized[0].absolute();
+                normalized[1] = normalized[1].absolute().inverse(); // Image's Y axis is downward.
                 matrix = Matrix.createAffineTransform(srcEnvelope, axis, dstEnvelope, normalized);
             }
             else
