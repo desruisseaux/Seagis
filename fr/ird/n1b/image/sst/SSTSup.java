@@ -125,7 +125,7 @@ import org.geotools.cs.AxisOrientation;
 public final class SSTSup
 {
     /** Boolean : true pour corriger les pixels acquis de jour lorsque cela est possible. */
-    private final boolean CORRECTION = true;
+    private final boolean DAY_CORRECTION_TEMPERATURE;
     
     /** Système de coordonnée des images S.S.T.. */  
     private final CoordinateSystem WGS84 = Utilities.WGS84;
@@ -253,7 +253,8 @@ public final class SSTSup
         SST_ONE_DAY_LIMITED_AREA = param.getBooleanParameter(ParseSST.SST_ONE_DAY_LIMITED_AREA);
         SST_ONE_DAY_AREA         = (Rectangle2D)param.getObjectParameter(ParseSST.SST_ONE_DAY_AREA);
         ISOLINE_PATH       = (String)param.getObjectParameter(ParseSST.ISOLINE_PATH);                
-
+        DAY_CORRECTION_TEMPERATURE = param.getBooleanParameter(ParseSST.DAY_CORRECTION_TEMPERATURE);
+        
         // Configuration de JAI.
         final JAI jai = JAI.getDefaultInstance();
         final TileCache tileCache = jai.getTileCache();
@@ -354,7 +355,7 @@ public final class SSTSup
                                                                          configuration);
             
             
-            if (stat!=null && CORRECTION)
+            if (stat!=null && DAY_CORRECTION_TEMPERATURE)
             {
                 // Correction des pixels de jours.
                 final File fileMask = new File(src[i].getPath().substring(0, src[i].getPath().length()-7).toString() + "msk.png");                                                
