@@ -421,9 +421,9 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
             putInt("Num_row", numRow, POSITIVE_RANGE); // Add integer (not double) parameter
             putInt("Num_col", numCol, POSITIVE_RANGE); // Add integer (not double) parameter
             final StringBuffer buffer=new StringBuffer("elt_");
-            for (int j=0; j<=numRow; j++)
+            for (int j=0; j<numRow; j++)
             {
-                for (int i=0; i<=numCol; i++)
+                for (int i=0; i<numCol; i++)
                 {
                     buffer.setLength(4);
                     buffer.append(j);
