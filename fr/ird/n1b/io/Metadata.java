@@ -50,12 +50,11 @@ public final class Metadata extends IIOMetadata
      * Mots clés des méta-données contenues dans l'arborescence XML.
      * Ces identifiants sont associés à une valeur dans les méta-données.
      */
-    public static final String FORMAT_VERSION = "version",
-                               START_TIME     = "start_time",
-                               END_TIME       = "end_time",
-                               LINES_COUNT    = "lines_count",
-                               SPACECRAFT     = "spacecraft",
-                               HEIGHT         = "height";
+    public static final String FORMAT         = "FORMAT",
+                               START_TIME     = "START TIME",
+                               END_TIME       = "END TIME",
+                               SPACECRAFT     = "SPACECRAFT",
+                               DIRECTION      = "DIRECTION";
 
     /** Keyword/value pairs. */
     private final Map<String,Object> data = new HashMap<String,Object>();
@@ -207,7 +206,6 @@ public final class Metadata extends IIOMetadata
         
     /**
      * Retourne l'identifiant du satellite.
-     *
      * @return l'identifiant du satellite.
      */
     public String getSpacecraft() 
@@ -217,21 +215,41 @@ public final class Metadata extends IIOMetadata
     
     /**
      * Retourne la date de debut de l'acquisition.
-     *
      * @return la date de debut de l'acquisition.
      */
     public Date getStartTime() 
     {
         return ((Date)get(Metadata.START_TIME));
     }
-
+    
     /**
      * Retourne la date de fin de l'acquisition.
-     *
      * @return la date de fin de l'acquisition.
      */
     public Date getEndTime() 
     {
         return ((Date)get(Metadata.END_TIME));
-    }    
+    }
+
+    /**
+     * Retourne la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     * @return la direction du satellite lors de l'acquisition <CODE>ImageReaderN1B.NORTH_TO_SOUTH</CODE>
+     * ou <CODE>ImageReaderN1B.SOUTH_TO_NORTH</CODE>.
+     */
+    public int getDirection() 
+    {
+        return ((Integer)get(Metadata.DIRECTION)).intValue();
+    }       
+    
+    /**
+     * Retourne le format du fichier N1B <CODE>Format.FORMAT_AJ</CODE> ou 
+     * <CODE>Format.FORMAT_KLM</CODE>.
+     * @return le format du fichier N1B <CODE>Format.FORMAT_AJ</CODE> ou 
+     * <CODE>Format.FORMAT_KLM</CODE>.
+     */
+    public int getFormat() 
+    {
+        return ((Integer)get(Metadata.FORMAT)).intValue();
+    }           
 }
