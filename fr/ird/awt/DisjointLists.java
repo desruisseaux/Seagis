@@ -30,8 +30,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.ImageIcon;
-import javax.swing.border.Border;
-import javax.swing.BorderFactory;
+import javax.swing.JScrollPane;
 import javax.swing.AbstractListModel;
 
 // Events
@@ -240,14 +239,11 @@ public class DisjointLists extends JPanel {
         final List choices = new ArrayList();
         left  = new JList(new Model(choices));
         right = new JList(new Model(choices));
-
+        final JScrollPane  leftPane = new JScrollPane( left);
+        final JScrollPane rightPane = new JScrollPane(right);
         final Dimension size = new Dimension(160, 200);
-        left .setPreferredSize(size);
-        right.setPreferredSize(size);
-
-        final Border border = BorderFactory.createLoweredBevelBorder();
-        left .setBorder(border);
-        right.setBorder(border);
+        leftPane .setPreferredSize(size);
+        rightPane.setPreferredSize(size);
 
         /*
          * Setup buttons
@@ -267,8 +263,8 @@ public class DisjointLists extends JPanel {
          */
         final GridBagConstraints c = new GridBagConstraints();
         c.gridy=0; c.gridwidth=1; c.gridheight=4; c.weightx=c.weighty=1; c.fill=c.BOTH;
-        c.gridx=0; add(left,  c);
-        c.gridx=2; add(right, c);
+        c.gridx=0; add( leftPane,  c);
+        c.gridx=2; add(rightPane, c);
 
         c.insets.left = c.insets.right = 9;
         c.gridx=1; c.gridheight=1; c.weightx=0; c.fill=c.HORIZONTAL;
