@@ -106,7 +106,7 @@ public class Projection extends Info
 
     /**
      * Creates a projection. The set of parameters (<code>parameters</code>) may be queried with
-     * <code>{@link MathTransformFactory#getProvider MathTransformFactory.getProvider}(classification).{@link
+     * <code>{@link MathTransformFactory#getMathTransformProvider MathTransformFactory.getMathTransformProvider}(classification).{@link
      *              MathTransformProvider#getParameterList getParameterList()}</code>.
      *
      * @param name           Name to give new object.
@@ -148,7 +148,7 @@ public class Projection extends Info
     {
         try
         {
-            return MathTransformFactory.getDefault().getProvider(classification).getParameterList();
+            return MathTransformFactory.getDefault().getMathTransformProvider(classification).getParameterList();
         }
         catch (NoSuchElementException exception)
         {
