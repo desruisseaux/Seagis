@@ -75,10 +75,13 @@ public final class Viewer extends JTabbedPane {
     public void addSimulation(final Simulation simulation) throws RemoteException {
         final String     name = simulation.getName();
         final JComponent pane = new RuleSimulationPane(simulation);
+        final JComponent plot = new PopulationMonitor(simulation.getEnvironment());
         EventQueue.invokeLater(new Runnable() {
             public void run() {
+                final int toShow = getTabCount();
                 addTab(name, pane);
-                setSelectedIndex(getTabCount()-1);
+                addTab("Graphiques", plot);
+                setSelectedIndex(toShow);
             }
         });
     }

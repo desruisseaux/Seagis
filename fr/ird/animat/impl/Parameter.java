@@ -37,6 +37,7 @@ import java.rmi.server.UnicastRemoteObject;
 import org.geotools.cv.Coverage;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.cv.PointOutsideCoverageException;
+import org.geotools.util.NumberRange;
 
 // Seagis dependencies
 import fr.ird.animat.Observation;
@@ -86,6 +87,14 @@ public class Parameter extends RemoteObject implements fr.ird.animat.Parameter {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Retourne la plage de valeurs attendue pour ce paramètre, ou <code>null</code>
+     * si elle n'est pas connue.
+     */
+    public NumberRange getRange() {
+        return null;
     }
 
     /**

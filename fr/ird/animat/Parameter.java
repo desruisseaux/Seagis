@@ -30,8 +30,9 @@ import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
 import java.rmi.Remote;
 
-// OpenGIS dependencies
+// OpenGIS and Geotools dependencies
 import org.opengis.cv.CV_Coverage;
+import org.geotools.util.NumberRange;
 
 
 /**
@@ -73,4 +74,13 @@ public interface Parameter extends Remote {
      *         et que cette exécution a échouée.
      */
     float getWeight(Animal animal) throws RemoteException;
+
+    /**
+     * Retourne la plage de valeurs attendue pour ce paramètre, ou <code>null</code>
+     * si elle n'est pas connue.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    NumberRange getRange() throws RemoteException;
 }

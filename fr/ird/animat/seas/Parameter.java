@@ -40,9 +40,11 @@ import java.util.logging.LogRecord;
 // Geotools dependencies
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.resources.Utilities;
+import org.geotools.util.NumberRange;
 
 // seagis dependencies
 import fr.ird.animat.Observation;
@@ -155,6 +157,11 @@ final class Parameter extends fr.ird.animat.impl.Parameter implements Comparable
      * Le nombre de bandes dans les images de ce paramètre.
      */
     private final byte numSampleDimensions;
+
+    /**
+     * La plage de valeurs, ou <code>null</code> si elle n'est pas encore connue.
+     */
+    private NumberRange range;
 
     /**
      * Construit un paramètre.
@@ -273,6 +280,14 @@ final class Parameter extends fr.ird.animat.impl.Parameter implements Comparable
     }
 
     /**
+     * Retourne la plage de valeurs attendue pour ce paramètre, ou <code>null</code>
+     * si elle n'est pas connue.
+     */
+    public NumberRange getRange() {
+        return range;
+    }
+
+    /**
      * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
      * <code>environment.{@link Environment#getCoverage getCoverage}(this)</code>.
      * Ce nombre sera généralement de 1 ou 3.
@@ -313,6 +328,15 @@ final class Parameter extends fr.ird.animat.impl.Parameter implements Comparable
         }
         if (operation != null) {
             coverage = PROCESSOR.doOperation(operation, coverage);
+        }
+        if (true) {
+            final SampleDimension[] bands = coverage.geophysics(true).getSampleDimensions();
+            final NumberRange candidate = bands[0].getRange();
+            if (range == null) {
+                range = candidate;
+            } else if (!range.contains(candidate)) {
+                range = NumberRange.wrap(range.union(candidate));
+            }
         }
         if (evaluator != null) {
             if (evaluator.equalsIgnoreCase("Minimum")) {
