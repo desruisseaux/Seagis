@@ -32,7 +32,7 @@ package net.seas.opengis.cs;
  *
  * @see org.opengis.cs.CS_Projection
  */
-public abstract class Projection // TODO extends Info
+public abstract class Projection extends Info
 {
     /**
      * Gets number of parameters of the projection.

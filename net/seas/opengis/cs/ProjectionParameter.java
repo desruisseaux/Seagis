@@ -44,7 +44,7 @@ import net.seas.util.XClass;
 public class ProjectionParameter implements Cloneable, Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
     private static final long serialVersionUID = -8277498873677222418L;
 
@@ -68,6 +68,7 @@ public class ProjectionParameter implements Cloneable, Serializable
     {
         this.name  = name;
         this.value = value;
+        Info.ensureNonNull("name", name);
     }
 
     /**
