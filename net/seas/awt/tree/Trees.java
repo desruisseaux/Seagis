@@ -185,7 +185,7 @@ public final class Trees
      * Cette arborescence apparaître correctement si elle
      * est écrite avec une police mono-espacée.
      *
-     * @param  Noeud à partir d'où écrire l'arborescence.
+     * @param  node Noeud à partir d'où écrire l'arborescence.
      * @return Chaîne de caractères représentant l'arborescence.
      */
     public static String toString(final TreeNode node)
