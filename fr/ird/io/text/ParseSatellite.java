@@ -56,10 +56,10 @@ public class ParseSatellite extends Parse
     public final static String DEFAULT_FILE = "application-data/configuration/Satellite.txt";
 
     /** Identifiant à analyser. */
-    public static final String WAVE_LENGTH = "Central wave length",
-                               SATELLITE   = "Satellite",
-                               CHANNEL     = "Channel",
-                               TEMPERATURE_CONSTANT      = "Constant for temperature computation (A, B, and C)",
+    public static final String WAVE_LENGTH               = "Central wave length",
+                               SATELLITE                 = "Satellite",
+                               CHANNEL                   = "Channel",
+                               TEMPERATURE_CONSTANT      = "Temperature constant",
                                LINEAR_SPLIT_WINDOW_DAY   = "Linear split window day coefficients",    
                                LINEAR_SPLIT_WINDOW_NIGHT = "Linear split window night coefficients";    
     
@@ -122,9 +122,9 @@ public class ParseSatellite extends Parse
             if (value.equals("WAVE_LENGTH")) 
             {
                 value = token.nextToken().trim();
-                if ((channel==3 && value.equals("CHANNEL3")) || 
-                    (channel==4 && value.equals("CHANNEL4")) || 
-                    (channel==5 && value.equals("CHANNEL5")))
+                if ((channel==2 && value.equals("CHANNEL3")) || 
+                    (channel==3 && value.equals("CHANNEL4")) || 
+                    (channel==4 && value.equals("CHANNEL5")))
                     parameterOut.setParameter(WAVE_LENGTH, Double.parseDouble(token.nextToken()));
             }
             else if (value.equals("LINEAR_SPLIT_WINDOW_DAY") || 
@@ -142,9 +142,9 @@ public class ParseSatellite extends Parse
             else if (value.equals("ABC")) 
             {
                 value = token.nextToken().trim();                
-                if ((channel==3 && value.equals("CHANNEL3")) || 
-                    (channel==4 && value.equals("CHANNEL4")) || 
-                    (channel==5 && value.equals("CHANNEL5")))                
+                if ((channel==2 && value.equals("CHANNEL3")) || 
+                    (channel==3 && value.equals("CHANNEL4")) || 
+                    (channel==4 && value.equals("CHANNEL5")))                
                 {                    
                     final double[] array = new double[3];
                     int num = -1;

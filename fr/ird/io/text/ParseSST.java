@@ -40,7 +40,7 @@ import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptorImpl;
 
 // J2SE.
-import fr.ird.util.ThresoldRange;
+import fr.ird.n1b.util.ThresoldRange;
 
 /**
  * Analyse le fichier de configuration de l'application S.S.T. (Sea Surface Temperature).
