@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
@@ -34,6 +24,8 @@ import java.io.ObjectOutputStream;
 import java.io.FileNotFoundException;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
+import java.rmi.server.RemoteStub;
+import java.rmi.RemoteException;
 
 // Collections
 import java.util.Map;
@@ -48,7 +40,6 @@ import java.util.Collections;
 
 // Tables et évenements
 import java.awt.EventQueue;
-import java.rmi.RemoteException;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.UndoableEditEvent;
@@ -251,12 +242,11 @@ public class CoverageTableModel extends AbstractTableModel {
             dateFormat   =      (DateFormat) table.  dateFormat.clone();
             timeFormat   =      (DateFormat) table.  timeFormat.clone();
             entries      = (CoverageEntry[]) table.     entries.clone();
-
             final CoverageEntry[] entries = this.entries;
             for (int i=entries.length; --i>=0;) {
                 if (entries[i] instanceof ProxyEntry) {
                     final ProxyEntry oldProxy = (ProxyEntry) entries[i];
-                    final ProxyEntry newProxy = new ProxyEntry(unwrap(oldProxy.getEntry()));
+                    final ProxyEntry newProxy = new ProxyEntry(unwrap(oldProxy.entry));
                     newProxy.flags = oldProxy.flags;
                     entries[i] = newProxy;
                 }
@@ -369,7 +359,7 @@ public class CoverageTableModel extends AbstractTableModel {
                         proxies = new HashMap<CoverageEntry,ProxyEntry>();
                     }
                     final ProxyEntry proxy = (ProxyEntry) entry;
-                    proxies.put(proxy.getEntry(), proxy);
+                    proxies.put(proxy.entry, proxy);
                 }
             }
         }
@@ -382,7 +372,7 @@ public class CoverageTableModel extends AbstractTableModel {
      */
     private static CoverageEntry unwrap(CoverageEntry entry) {
         while (entry instanceof ProxyEntry) {
-            entry = ((ProxyEntry) entry).getEntry();
+            entry = ((ProxyEntry) entry).entry;
         }
         return entry;
     }
@@ -424,74 +414,72 @@ public class CoverageTableModel extends AbstractTableModel {
     }
 
     /**
-     * Retourne les numéros d'identification des images présentes dans cette
-     * table. Les numéros d'identification sont les numéros retournés par
-     * {@link CoverageEntry#getID}. Cette méthode peut retourner un tableau
-     * de longueur 0, mais ne retourne jamais <code>null</code>.
+     * Retourne les noms des images présentes dans cette table. Les noms sont obtenus
+     * par {@link CoverageEntry#getName} et sont habituellement unique pour une série
+     * donnée. Cette méthode peut retourner un tableau de longueur 0, mais ne retourne
+     * jamais <code>null</code>.
+     *
+     * @throws RemoteException si une interrogation de la base de données était
+     *         nécessaire et a échoué.
      */
-    public synchronized int[] getEntryIDs() throws RemoteException {
-        final CoverageEntry[] entries = this.entries;
-        final int[] IDs = new int[(entries!=null) ? entries.length : 0];
-        for (int i=0; i<IDs.length; i++) {
-            IDs[i] = entries[i].getID();
+    public synchronized String[] getEntryNames() throws RemoteException {
+        final String[] names = new String[(entries!=null) ? entries.length : 0];
+        for (int i=0; i<names.length; i++) {
+            names[i] = entries[i].getName();
         }
-        return IDs;
+        return names;
     }
 
     /**
-     * Retourne les numéros d'identification des images aux lignes
-     * spécifiées.   Les numéros d'identification sont les numéros
-     * retournés par {@link CoverageEntry#getID}. Cette méthode
-     * peut retourner un tableau de longueur 0, mais ne retourne jamais
-     * <code>null</code>.
+     * Retourne les noms des images aux lignes spécifiées. Les noms sont obtenus
+     * par {@link CoverageEntry#getName}. Cette méthode peut retourner un tableau
+     * de longueur 0, mais ne retourne jamais <code>null</code>.
+     *
+     * @throws RemoteException si une interrogation de la base de données était
+     *         nécessaire et a échoué.
      */
-    public synchronized int[] getEntryIDs(int[] rows) throws RemoteException {
-        final CoverageEntry[] entries = this.entries;
-        final int[] IDs = new int[rows.length];
-        for (int i=0; i<IDs.length; i++) {
-            IDs[i] = entries[rows[i]].getID();
+    public synchronized String[] getEntryNames(int[] rows) throws RemoteException {
+        final String[] names = new String[rows.length];
+        for (int i=0; i<names.length; i++) {
+            names[i] = entries[rows[i]].getName();
         }
-        return IDs;
+        return names;
     }
 
     /**
      * Retourne les numéros de lignes qui correspondent aux images spécifiées.
-     * Les images sont désignées par leurs numéros ID (le numéro retourné par
-     * {@link CoverageEntry#getID}). Cette méthode est l'inverse de
-     * {@link #getEntryIDs}.
+     * Les images sont désignées par leurs noms (tel que retourné par
+     * {@link CoverageEntry#getName}). Cette méthode est l'inverse de
+     * {@link #getEntryNames}.
      *
-     * @param  IDs Numéros d'identifications des images.
+     * @param  names Noms des images.
      * @return Numéro de lignes des images demandées. Ce tableau aura toujours
-     *         la même longueur que <code>IDs</code>. Les images qui n'ont pas
+     *         la même longueur que <code>names</code>. Les images qui n'ont pas
      *         été trouvées dans la table auront l'index -1.
+     * @throws RemoteException si une interrogation de la base de données était
+     *         nécessaire et a échoué.
      */
-    public synchronized int[] indexOf(final int[] IDs) throws RemoteException {
-        final CoverageEntry[] entries = this.entries;
-        final int[] sortedIDs  = (int[]) IDs.clone();
-        final int[] sortedRows = new int[IDs.length];
-        Arrays.sort(sortedIDs);
-        Arrays.fill(sortedRows, -1);
-        for (int i=entries.length; --i>=0;) {
-            final int index = Arrays.binarySearch(sortedIDs, entries[i].getID());
-            if (index >= 0) {
-                sortedRows[index]=i;
+    public synchronized int[] indexOf(final String[] names) throws RemoteException {
+        final Map<String,int[]> map = new HashMap<String,int[]>(names.length*2);
+        for (int i=0; i<names.length; i++) {
+            int[] index = map.put(names[i], new int[]{i});
+            if (index != null) {
+                // Cas où le même nom serait demandé plusieurs fois.
+                final int length = index.length;
+                index = XArray.resize(index, length+1);
+                index[length] = i;
+                map.put(names[i], index);
             }
         }
-        /*
-         * Replace les numéros de ligne dans l'ordre qui correspond à 'IDs'.
-         * L'algorithme ci-dessous n'est pas le plus efficace (il aurait été
-         * plus rapide d'utiliser encore 'binarySearch(sortedIDs...)',  mais
-         * il a l'avantage de fonctionner correctement s'il y a des doublons
-         * dans 'IDs'.
-         */
-        final int[] rows = new int[sortedRows.length];
+        final int[] rows = new int[names.length];
         Arrays.fill(rows, -1);
-        for (int i=sortedIDs.length; --i>=0;) {
-            final int ID  = sortedIDs [i];
-            final int row = sortedRows[i];
-            if (row >= 0) {
-                for (int j=IDs.length; --j>=0;) {
-                    if (IDs[j]==ID) rows[j]=row;
+        // Fait la boucle en sens inverse de façon à ce qu'en cas de doublons,
+        // l'occurence retenue soit la première apparaissant dans la liste.
+        for (int i=entries.length; --i>=0;) {
+            final int[] index = map.get(entries[i].getName());
+            if (index != null) {
+                for (int j=0; j<index.length; j++) {
+                    rows[index[j]] = i;
                 }
             }
         }
@@ -503,13 +491,7 @@ public class CoverageTableModel extends AbstractTableModel {
      * nul ou n'apparaît pas dans la table, alors il sera ignoré.
      */
     public synchronized void remove(final CoverageEntry toRemove) {
-        final Set<CoverageEntry> singleton = new HashSet<CoverageEntry>();
-        singleton.add(toRemove);
-        remove(singleton);
-
-//  TODO: the following line should have been enough,
-//        if the Collections class was generic...
-//      remove(Collections.singleton(unwrap(toRemove)));
+        remove(Collections.singleton(unwrap(toRemove)));
     }
 
     /**
@@ -528,7 +510,7 @@ public class CoverageTableModel extends AbstractTableModel {
      */
     public synchronized void remove(final CoverageEntry[] toRemove) {
         final Set<CoverageEntry> toRemoveSet;
-        toRemoveSet = new HashSet<CoverageEntry>(Math.max(2*toRemove.length, 11));
+        toRemoveSet = new HashSet<CoverageEntry>(2*toRemove.length);
         for (int i=0; i<toRemove.length; i++) {
             toRemoveSet.add(unwrap(toRemove[i]));
         }
@@ -543,7 +525,7 @@ public class CoverageTableModel extends AbstractTableModel {
      */
     public synchronized void remove(final int[] rows) {
         final Set<CoverageEntry> toRemoveSet;
-        toRemoveSet = new HashSet<CoverageEntry>(Math.max(2*rows.length, 11));
+        toRemoveSet = new HashSet<CoverageEntry>(2*rows.length);
         for (int i=0; i<rows.length; i++) {
             toRemoveSet.add(unwrap(entries[rows[i]]));
         }
@@ -572,7 +554,7 @@ public class CoverageTableModel extends AbstractTableModel {
         int upper = entriesLength;
         for (int i=upper; --i>=-1;) {
             if (i<0 || !toRemove.contains(unwrap(entries[i]))) {
-                final int lower=i+1;
+                final int lower = i+1;
                 if (upper != lower) {
                     if (entries == oldEntries) {
                         // Créé une copie, de façon à ne pas modifier le tableau 'entries' original.
@@ -603,6 +585,8 @@ public class CoverageTableModel extends AbstractTableModel {
      *
      * @param  rows Ligne à copier.
      * @return Objet transférable contenant les lignes copiées.
+     * @throws RemoteException si une interrogation de la base de données était
+     *         nécessaire et a échoué.
      */
     public synchronized Transferable copy(final int[] rows) throws RemoteException {
         if (fieldPosition == null) {
@@ -678,11 +662,11 @@ public class CoverageTableModel extends AbstractTableModel {
      * @return Valeur de la cellule aux index spécifiés.
      */
     public synchronized Object getValueAt(final int row, final int column) {
+        CoverageEntry entry = entries[row];
+        if (!(entry instanceof ProxyEntry)) {
+            entries[row] = entry = new ProxyEntry(entry);
+        }
         try {
-            CoverageEntry entry = entries[row];
-            if (!(entry instanceof ProxyEntry)) {
-                entries[row] = entry = new ProxyEntry(entry);
-            }
             switch (column) {
                 default:   return null;
                 case NAME: return entry.getName();
@@ -707,8 +691,10 @@ public class CoverageTableModel extends AbstractTableModel {
                     return buffer.toString();
                 }
             }
-        } catch (RemoteException e) {
-            throw new IllegalArgumentException(e);
+        } catch (RemoteException exception) {
+            ((ProxyEntry) entry).setFlag(ProxyEntry.RMI_FAILURE, true);
+            // TODO: Log a message with FINE level.
+            return null;
         }
     }
 
@@ -833,9 +819,10 @@ public class CoverageTableModel extends AbstractTableModel {
          */
         private static final long serialVersionUID = 8398851451224196337L;
 
-        /** Drapeau indiquant qu'une image a été vue.        */ public static final byte VIEWED    = 1;
-        /** Drapeau indiquant qu'un fichier est introuvable. */ public static final byte MISSING   = 2;
-        /** Drapeau indiquant qu'un fichier est mauvais.     */ public static final byte CORRUPTED = 4;
+        /** Drapeau indiquant qu'une image a été vue.        */ public static final byte VIEWED      = 1;
+        /** Drapeau indiquant qu'un fichier est introuvable. */ public static final byte MISSING     = 2;
+        /** Drapeau indiquant qu'un fichier est mauvais.     */ public static final byte CORRUPTED   = 4;
+        /** Drapeau indiquant qu'un appel RMI a échoué.      */ public static final byte RMI_FAILURE = 8;
         /** Drapeau indiquant l'état de l'image courante.    */ public              byte flags;
 
         /**
@@ -847,23 +834,19 @@ public class CoverageTableModel extends AbstractTableModel {
         }
 
         /**
-         * Retourne l'entré enveloppée par ce proxy.
-         */
-        final CoverageEntry getEntry() {
-            return entry;
-        }
-
-        /**
          * Procède à la lecture d'une image. Si la lecture a réussi sans avoir été
          * annulée par l'utilisateur, alors le drapeau {@link #VIEWED} sera levé.
          * Si la lecture a échoué, alors le drapeau {@link #CORRUPTED} sera levé.
          */
         public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
             try {
-                final GridCoverage image=entry.getGridCoverage(listenerList);
-                if (image!=null) setFlag(VIEWED, true);
-                setFlag((byte)(MISSING|CORRUPTED), false);
+                final GridCoverage image = entry.getGridCoverage(listenerList);
+                setFlag((byte)(MISSING|CORRUPTED|RMI_FAILURE), false);
+                setFlag(VIEWED, image!=null);
                 return image;
+            } catch (RemoteException exception) {
+                setFlag(RMI_FAILURE, true);
+                throw exception;
             } catch (FileNotFoundException exception) {
                 setFlag(MISSING, true);
                 throw exception;
@@ -945,16 +928,32 @@ public class CoverageTableModel extends AbstractTableModel {
         }
 
         /**
-         * Vérifie si les fichiers de la liste existent.   Si un fichier
+         * Vérifie si les fichiers de la liste existent. Si un fichier
          * n'existe pas, le drapeau {@link ProxyEntry#MISSING} sera lévé
-         * pour l'objet {@link ProxyEntry} correspondant.
+         * pour l'objet {@link ProxyEntry} correspondant. Cette vérification
+         * n'est pas effectuée pour les objets résidant sur un serveur distant.
          */
         public void run() {
             ProxyEntry entry;
             while ((entry=next(list)) != null) {
-                final File file=entry.getFile();
-                if (file != null) {
-                    entry.setFlag(ProxyEntry.MISSING, !file.isFile());
+                CoverageEntry check = entry;
+                do {
+                    check = ((CoverageEntry.Proxy) check).entry;
+                    if (check instanceof RemoteStub) {
+                        return;
+                    }
+                } while (check instanceof CoverageEntry.Proxy);
+                // No stub (we are running on the local machine).
+                // Check for file existence.
+                try {
+                    final File file = entry.getFile();
+                    if (file != null) {
+                        entry.setFlag(ProxyEntry.MISSING, !file.isFile());
+                    }
+                    entry.setFlag(ProxyEntry.RMI_FAILURE, false);
+                } catch (RemoteException exception) {
+                    entry.setFlag(ProxyEntry.RMI_FAILURE, true);
+                    // TODO: Log a message with FINE level.
                 }
             }
         }
@@ -1024,9 +1023,10 @@ public class CoverageTableModel extends AbstractTableModel {
                     final CoverageEntry entry = imageTable.entries[row];
                     if (entry instanceof ProxyEntry) {
                         final byte flags = ((ProxyEntry) entry).flags;
-                        if ((flags & ProxyEntry.VIEWED   ) != 0) {foreground=Color.blue ;                      }
-                        if ((flags & ProxyEntry.MISSING  ) != 0) {foreground=Color.red  ;                      }
-                        if ((flags & ProxyEntry.CORRUPTED) != 0) {foreground=Color.white; background=Color.red;}
+                        if ((flags & ProxyEntry.VIEWED     ) != 0) {foreground=Color.BLUE ;                         }
+                        if ((flags & ProxyEntry.MISSING    ) != 0) {foreground=Color.RED  ;                         }
+                        if ((flags & ProxyEntry.CORRUPTED  ) != 0) {foreground=Color.WHITE; background=Color.RED;   }
+                        if ((flags & ProxyEntry.RMI_FAILURE) != 0) {foreground=Color.BLACK; background=Color.YELLOW;}
                     }
                 }
             }

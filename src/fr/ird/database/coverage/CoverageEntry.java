@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
@@ -72,16 +62,20 @@ public interface CoverageEntry extends Entry {
 
     /**
      * Retourne la série à laquelle appartient cette image.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract SeriesEntry getSeries();
+    public abstract SeriesEntry getSeries() throws RemoteException;
 
     /**
      * Retourne le nom du fichier de l'image avec son chemin complet.
      * Si l'image n'est pas accessible localement (par exemple si elle
      * est produite par un serveur distant), alors cette méthode peut
      * retourner <code>null</code>.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract File getFile();
+    public abstract File getFile() throws RemoteException;
 
     /**
      * Retourne des informations sur la géométrie de l'image. Ces informations
@@ -95,8 +89,10 @@ public interface CoverageEntry extends Entry {
      * de l'image telle qu'elle est déclarée dans la base de données, indépendamment de la
      * façon dont elle sera lue. L'image qui sera retournée par {@link #getGridCoverage}
      * peut avoir une géométrie différente si un clip et/ou une décimation ont été appliqués.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract GridGeometry getGridGeometry();
+    public abstract GridGeometry getGridGeometry() throws RemoteException;
 
     /**
      * Retourne le système de coordonnées de l'image. En général, ce système
@@ -110,8 +106,10 @@ public interface CoverageEntry extends Entry {
      *
      * Notez que ce système de coordonnées peut ne pas être le même qui celui qui sert
      * à interroger la base de données d'images ({@link CoverageTable#getCoordinateSystem}).
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract CoordinateSystem getCoordinateSystem();
+    public abstract CoordinateSystem getCoordinateSystem() throws RemoteException;
 
     /**
      * Retourne les coordonnées spatio-temporelles de l'image. Le système de
@@ -120,8 +118,10 @@ public interface CoverageEntry extends Entry {
      * table d'image (voir {@link CoverageTable#setGeographicArea}). La couverture
      * retournée par {@link #getGridCoverage} peut donc avoir une envelope plus
      * petite que celle retournée par cette méthode.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract Envelope getEnvelope();
+    public abstract Envelope getEnvelope() throws RemoteException;
 
     /**
      * Retourne les coordonnées géographiques de la région couverte par l'image.
@@ -129,16 +129,20 @@ public interface CoverageEntry extends Entry {
      * selon l'ellipsoïde WGS 1984. Appeler cette méthode équivaut à n'extraire
      * que la partie horizontale de  {@link #getEnvelope}  et à transformer les
      * coordonnées si nécessaire.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract Rectangle2D getGeographicArea();
+    public abstract Rectangle2D getGeographicArea() throws RemoteException;
 
     /**
      * Retourne la plage de temps couverte par l'image.   Cette plage sera délimitée
      * par des objets {@link Date}.  Appeler cette méthode équivaut à n'extraire que
      * la partie temporelle de {@link #getEnvelope} et à transformer les coordonnées
      * si nécessaire.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract Range getTimeRange();
+    public abstract Range getTimeRange() throws RemoteException;
 
     /**
      * Retourne les bandes de l'image. Les objets {@link SampleDimension} indiquent
@@ -152,8 +156,9 @@ public interface CoverageEntry extends Entry {
      *
      * @return La liste des catégories géophysiques pour chaque bande de l'image.
      *         La longueur de ce tableau sera égale au nombre de bandes.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract SampleDimension[] getSampleDimensions();
+    public abstract SampleDimension[] getSampleDimensions() throws RemoteException;
 
     /**
      * Retourne l'image correspondant à cette entrée. Si l'image avait déjà été lue précédemment
@@ -193,6 +198,7 @@ public interface CoverageEntry extends Entry {
      *         est survenue.
      * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est
      *         pas valide.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException;
 
@@ -200,16 +206,18 @@ public interface CoverageEntry extends Entry {
      * Annule la lecture de l'image. Cette méthode peut être appelée à partir de n'importe quel
      * thread.  Si la méthode {@link #getGridCoverage} était en train de lire une image dans un
      * autre thread, elle s'arrêtera et retournera <code>null</code>.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract void abort();
+    public abstract void abort() throws RemoteException;
 
 
     /**
-     * Classe de base des objets {@link CoverageEntry} qui délègue tout ou une partir de leur
+     * Classe de base des objets {@link CoverageEntry} qui délègue tout ou une partie de leur
      * travail sur un autre objet {@link CoverageEntry}. L'implémentation par défaut de
      * <code>Proxy</code> redirige tous les appels des méthodes vers l'objet {@link CoverageEntry}
      * qui a été spécifié lors de la construction. Les classes dérivées vont typiquement redéfinir
-     * quelques méthodesafin d'ajouter ou de modifier certaines fonctionalitées.
+     * quelques méthodes afin d'ajouter ou de modifier certaines fonctionalitées.
      *
      * @version $Id$
      * @author Martin Desruisseaux
@@ -220,29 +228,39 @@ public interface CoverageEntry extends Entry {
          */
         private static final long serialVersionUID = 1679051552440633120L;
 
-        /** Image enveloppée par ce proxy. */ protected final CoverageEntry entry;
-        /** Construit un proxy.            */ protected Proxy(final CoverageEntry entry) {this.entry=entry; if (entry==null) throw new NullPointerException();}
-        /** Redirige vers {@link #entry}.  */ public int               getID() throws RemoteException {return entry.getID();}
-        /** Redirige vers {@link #entry}.  */ public SeriesEntry       getSeries()           {return entry.getSeries();}
-        /** Redirige vers {@link #entry}.  */ public String            getName() throws RemoteException  {return entry.getName();}
-        /** Redirige vers {@link #entry}.  */ public String            getRemarks() throws RemoteException {return entry.getRemarks();}
-        /** Redirige vers {@link #entry}.  */ public File              getFile()             {return entry.getFile();}
-        /** Redirige vers {@link #entry}.  */ public GridGeometry      getGridGeometry()     {return entry.getGridGeometry();}
-        /** Redirige vers {@link #entry}.  */ public CoordinateSystem  getCoordinateSystem() {return entry.getCoordinateSystem();}
-        /** Redirige vers {@link #entry}.  */ public Envelope          getEnvelope()         {return entry.getEnvelope();}
-        /** Redirige vers {@link #entry}.  */ public Range             getTimeRange()        {return entry.getTimeRange();}
-        /** Redirige vers {@link #entry}.  */ public Rectangle2D       getGeographicArea()   {return entry.getGeographicArea();}
-        /** Redirige vers {@link #entry}.  */ public SampleDimension[] getSampleDimensions() {return entry.getSampleDimensions();}
-        /** Redirige vers {@link #entry}.  */ public String            toString()            {return entry.toString();}
-        /** Redirige vers {@link #entry}.  */ public int               hashCode()            {return entry.hashCode();}
-        /** Redirige vers {@link #entry}.  */ public void              abort()               {entry.abort();}
+        /**
+         * Image enveloppée par ce proxy.
+         */
+        public final CoverageEntry entry;
 
         /**
-         * Redirige vers {@link #entry}.
+         * Construit un proxy qui redirigera tous les appels vers l'entrée spécifiée.
          */
+        protected Proxy(final CoverageEntry entry) {
+            this.entry = entry;
+            if (entry == null) {
+                throw new NullPointerException();
+            }
+        }
+
+        /** Redirige vers {@link #entry}. */ public SeriesEntry       getSeries()           throws RemoteException {return entry.getSeries();}
+        /** Redirige vers {@link #entry}. */ public String            getName()             throws RemoteException {return entry.getName();}
+        /** Redirige vers {@link #entry}. */ public String            getRemarks()          throws RemoteException {return entry.getRemarks();}
+        /** Redirige vers {@link #entry}. */ public File              getFile()             throws RemoteException {return entry.getFile();}
+        /** Redirige vers {@link #entry}. */ public GridGeometry      getGridGeometry()     throws RemoteException {return entry.getGridGeometry();}
+        /** Redirige vers {@link #entry}. */ public CoordinateSystem  getCoordinateSystem() throws RemoteException {return entry.getCoordinateSystem();}
+        /** Redirige vers {@link #entry}. */ public Envelope          getEnvelope()         throws RemoteException {return entry.getEnvelope();}
+        /** Redirige vers {@link #entry}. */ public Range             getTimeRange()        throws RemoteException {return entry.getTimeRange();}
+        /** Redirige vers {@link #entry}. */ public Rectangle2D       getGeographicArea()   throws RemoteException {return entry.getGeographicArea();}
+        /** Redirige vers {@link #entry}. */ public SampleDimension[] getSampleDimensions() throws RemoteException {return entry.getSampleDimensions();}
+        /** Redirige vers {@link #entry}. */
         public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
             return entry.getGridCoverage(listenerList);
         }
+
+        /** Redirige vers {@link #entry}. */ public void   abort() throws RemoteException {entry.abort();}
+        /** Redirige vers {@link #entry}. */ public String toString() {return entry.toString();}
+        /** Redirige vers {@link #entry}. */ public int    hashCode() {return entry.hashCode();}
 
         /**
          * Retourne <code>true</code> si les deux objets sont de la même classe

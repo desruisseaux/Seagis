@@ -12,18 +12,11 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
+
+// J2SE dependencies
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.cv.SampleDimension;
@@ -51,6 +44,8 @@ public interface FormatEntry extends Entry {
      * peuvent être des nombres réels
      * (<code>{@link SampleDimension#geophysics geophysics}(true)</code>)
      * si l'image est enregistrée dans un format brut ou ASCII.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract SampleDimension[] getSampleDimensions();
+    public abstract SampleDimension[] getSampleDimensions() throws RemoteException;
 }

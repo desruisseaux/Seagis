@@ -82,7 +82,7 @@ import fr.ird.database.CatalogException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
-import fr.ird.database.coverage.GridCoverageRange;
+import fr.ird.database.coverage.CoverageRanges;
 import fr.ird.database.coverage.CoverageComparator;
 import fr.ird.database.coverage.CoverageEntry;
 import fr.ird.database.coverage.CoverageTable;
@@ -623,17 +623,8 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t)
-            throws RemoteException
-    {
-        return getRanges(x, y, t, null);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public final synchronized GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
-                                             final List<CoverageEntry> entryList)
+    public final synchronized CoverageRanges getRanges(
+            final boolean x, final boolean y, final boolean t, final boolean entries)
             throws RemoteException
     {
         try {
@@ -741,7 +732,7 @@ class GridCoverageTable extends Table implements CoverageTable {
         } catch (SQLException e) {
             throw new CatalogException(e);
         }     
-        return new GridCoverageRange(x, y, t, entryList);
+        return new CoverageRanges(x, y, t, entryList);
     }
 
     /**

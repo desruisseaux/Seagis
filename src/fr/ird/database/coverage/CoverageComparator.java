@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
@@ -125,35 +115,10 @@ public class CoverageComparator implements Comparator<CoverageEntry> {
      * Construit un comparateur pour les images de la table spécifiée.
      *
      * @param table Table qui a produit les images qui seront à comparer.
+     * @throws RemoteException si la connexion au serveur a échouée.
      */
-    public CoverageComparator(final CoverageTable table) {
-        this(getCoordinateSystem(table), getEnvelope(table));
-    }
-
-    /**
-     * Retourne le système de coordonnée.
-     *
-     * @param table Table qui a produit les images qui seront à comparer.
-     */
-    private static final CoordinateSystem getCoordinateSystem(final CoverageTable table) {
-        try {
-            return table.getCoordinateSystem();
-        } catch (RemoteException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-    
-    /**
-     * Retourne l'enveloppe.
-     *
-     * @param table Table qui a produit les images qui seront à comparer.
-     */
-    private static final Envelope getEnvelope(final CoverageTable table) {
-        try {
-            return table.getEnvelope();
-        } catch (RemoteException e) {
-            throw new IllegalArgumentException(e);
-        }
+    public CoverageComparator(final CoverageTable table) throws RemoteException {
+        this(table.getCoordinateSystem(), table.getEnvelope());
     }
 
     /**
@@ -268,6 +233,12 @@ public class CoverageComparator implements Comparator<CoverageEntry> {
                                           "CoverageComparator",
                                           "evaluator", exception);
             return null;
+        } catch (RemoteException exception) {
+            // TODO: use logger instead.
+            Utilities.unexpectedException("fr.ird.database.coverage",
+                                          "CoverageComparator",
+                                          "evaluator", exception);
+            return null;
         }
     }
 
@@ -300,10 +271,11 @@ public class CoverageComparator implements Comparator<CoverageEntry> {
          * Construit un évaluateur pour l'image spécifiée.
          *
          * @param  entry L'image qui sera a évaluer.
+         * @throws RemoteException si la connexion au serveur a échouée.
          * @throws TransformException si une transformation était
          *         nécessaire et n'a pas pu être effectuée.
          */
-        public Evaluator(final CoverageEntry entry) throws TransformException {
+        public Evaluator(final CoverageEntry entry) throws RemoteException, TransformException {
             Envelope   envelope = entry.getEnvelope();
             CoordinateSystem cs = entry.getCoordinateSystem();
             GridRange     range = entry.getGridGeometry().getGridRange();
@@ -317,7 +289,6 @@ public class CoverageComparator implements Comparator<CoverageEntry> {
                 }
             }
             this.source = envelope;
-
             int xDim = -1;
             int yDim = -1;
             for (int i=cs.getDimension(); --i>=0;) {

@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
@@ -56,6 +46,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
+import java.lang.reflect.UndeclaredThrowableException;
 
 // OpenGIS
 import org.opengis.coverage.CannotEvaluateException;
@@ -261,7 +252,11 @@ public class SeriesCoverage3D extends Coverage3D {
                 throw new CatalogException(Resources.format(ResourceKeys.ERROR_CATEGORIES_MITMATCH));
             }
         }
-        Arrays.sort(entries, COMPARATOR);
+        try {
+            Arrays.sort(entries, COMPARATOR);
+        } catch (UndeclaredThrowableException exception) {
+            rethrow(exception);
+        }
         /*
          * Calcule l'enveloppe englobant celles de toutes les images.
          * Les coordonnées seront transformées si nécessaires.
@@ -315,19 +310,38 @@ public class SeriesCoverage3D extends Coverage3D {
      */
     private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
         public int compare(final Object entry1, final Object entry2) {
-            final long time1 = getTime(entry1);
-            final long time2 = getTime(entry2);
-            if (time1 < time2) return -1;
-            if (time1 > time2) return +1;
-            return 0;
+            try {
+                final long time1 = getTime(entry1);
+                final long time2 = getTime(entry2);
+                if (time1 < time2) return -1;
+                if (time1 > time2) return +1;
+                return 0;
+            } catch (RemoteException exception) {
+                // Will be catch are rethrow as RemoteException in caller block.
+                throw new UndeclaredThrowableException(exception);
+            }
         }
     };
+
+    /**
+     * Rethrows the exception in {@link #COMPARATOR} as a {@link RemoteException}.
+     */
+    private static void rethrow(final UndeclaredThrowableException exception) throws RemoteException {
+        final Throwable cause = exception.getCause();
+        if (cause instanceof RemoteException) {
+            throw (RemoteException) cause;
+        }
+        if (cause instanceof RuntimeException) {
+            throw (RuntimeException) cause;
+        }
+        throw exception;
+    }
 
     /**
      * Retourne la date de l'objet spécifiée. Si l'argument est un objet
      * {@link Date}, alors la date sera extraite avec {@link #getTime}.
      */
-    private static long getTime(final Object object) {
+    private static long getTime(final Object object) throws RemoteException {
         if (object instanceof Date) {
             return ((Date) object).getTime();
         }
@@ -342,7 +356,7 @@ public class SeriesCoverage3D extends Coverage3D {
      * plage de temps (par exemple s'il s'agit de données qui ne varient pas avec le
      * temps, comme la bathymétrie), alors cette méthode retourne {@link Long#MIN_VALUE}.
      */
-    private static long getTime(final CoverageEntry entry) {
+    private static long getTime(final CoverageEntry entry) throws RemoteException {
         return getTime(entry.getTimeRange());
     }
 
@@ -435,64 +449,82 @@ public class SeriesCoverage3D extends Coverage3D {
      *              know the image's date before to snap the point).
      */
     public void snap(final Point2D point, final Date date) { // No synchronization needed.
-        int index = Arrays.binarySearch(entries, date, COMPARATOR);
-        if (index<0) {
-            /*
-             * There is no exact match for the date.
-             * Snap the date to the closest image.
-             */
-            index = ~index;
-            long time;
-            if (index == entries.length) {
-                if (index == 0) {
-                    return; // No entries in this coverage
-                }
-                time = getTime(entries[--index]);
-            } else if (index>=1) {
-                time = date.getTime();
-                final long lowerTime = getTime(entries[index-1]);
-                final long upperTime = getTime(entries[index])-1; // Long.MIN_VALUE-1 == Long.MAX_VALUE
-                assert (time>lowerTime && time<upperTime);
-                if (time-lowerTime < upperTime-time) {
-                    index--;
-                    time = lowerTime;
+        try {
+            int index;
+            try {
+                index = Arrays.binarySearch(entries, date, COMPARATOR);
+            } catch (UndeclaredThrowableException exception) {
+                rethrow(exception);
+                return;
+            }
+            if (index < 0) {
+                /*
+                 * There is no exact match for the date.
+                 * Snap the date to the closest image.
+                 */
+                index = ~index;
+                long time;
+                if (index == entries.length) {
+                    if (index == 0) {
+                        return; // No entries in this coverage
+                    }
+                    time = getTime(entries[--index]);
+                } else if (index>=1) {
+                    time = date.getTime();
+                    final long lowerTime = getTime(entries[index-1]);
+                    final long upperTime = getTime(entries[index])-1; // Long.MIN_VALUE-1 == Long.MAX_VALUE
+                    assert (time>lowerTime && time<upperTime);
+                    if (time-lowerTime < upperTime-time) {
+                        index--;
+                        time = lowerTime;
+                    } else {
+                        time = upperTime+1;
+                    }
                 } else {
-                    time = upperTime+1;
+                    time = getTime(entries[index]);
                 }
-            } else {
-                time = getTime(entries[index]);
+                if (time!=Long.MIN_VALUE && time!=Long.MAX_VALUE) {
+                    date.setTime(time);
+                }
             }
-            if (time!=Long.MIN_VALUE && time!=Long.MAX_VALUE) {
-                date.setTime(time);
+            /*
+             * Now that we know the image entry,
+             * snap the spatial coordinate point.
+             */
+            if (point != null) try {
+                final CoverageEntry  entry = entries[index];
+                final CoordinateSystem  cs = entry.getCoordinateSystem();
+                CoordinatePoint coordinate = getCoordinatePoint(point, date);
+                if (!coordinateSystem.equals(cs, false)) {
+                    // TODO: implémenter la transformation de coordonnées.
+                    throw new CannotEvaluateException("Système de coordonnées incompatibles.");
+                }
+                final GridGeometry   geometry = entry.getGridGeometry();
+                final GridRange         range = geometry.getGridRange();
+                final MathTransform transform = geometry.getGridToCoordinateSystem();
+                coordinate = transform.inverse().transform(coordinate, coordinate);
+                for (int i=coordinate.getDimension(); --i>=0;) {
+                    coordinate.ord[i] = Math.max(range.getLower(i),
+                                        Math.min(range.getUpper(i)-1,
+                                        (int)Math.rint(coordinate.ord[i])));
+                }
+                coordinate = transform.transform(coordinate, coordinate);
+                point.setLocation(coordinate.ord[0], coordinate.ord[1]);
+            } catch (TransformException exception) {
+                throw new CannotEvaluateException(cannotEvaluate(point), exception);
             }
+        } catch (RemoteException exception) {
+            throw new CannotEvaluateException(cannotEvaluate(point), exception);
         }
-        /*
-         * Now that we know the image entry,
-         * snap the spatial coordinate point.
-         */
-        if (point != null) try {
-            final CoverageEntry  entry = entries[index];
-            final CoordinateSystem  cs = entry.getCoordinateSystem();
-            CoordinatePoint coordinate = getCoordinatePoint(point, date);
-            if (!coordinateSystem.equals(cs, false)) {
-                // TODO: implémenter la transformation de coordonnées.
-                throw new CannotEvaluateException("Système de coordonnées incompatibles.");
-            }
-            final GridGeometry   geometry = entry.getGridGeometry();
-            final GridRange         range = geometry.getGridRange();
-            final MathTransform transform = geometry.getGridToCoordinateSystem();
-            coordinate = transform.inverse().transform(coordinate, coordinate);
-            for (int i=coordinate.getDimension(); --i>=0;) {
-                coordinate.ord[i] = Math.max(range.getLower(i),
-                                    Math.min(range.getUpper(i)-1,
-                                    (int)Math.rint(coordinate.ord[i])));
-            }
-            coordinate = transform.transform(coordinate, coordinate);
-            point.setLocation(coordinate.ord[0], coordinate.ord[1]);
-        } catch (TransformException exception) {
-            // TODO: provides a message
-            throw new CannotEvaluateException(/*point, exception*/);
-        }
+    }
+
+    /**
+     * Returns a message for exception.
+     */
+    private static String cannotEvaluate(final Point2D point) {
+        return org.geotools.resources.gcs.Resources.format(
+               org.geotools.resources.gcs.ResourceKeys.ERROR_CANT_EVALUATE_$1,
+               point); // TODO: provides a better formatting here.
     }
 
     /**
@@ -595,9 +627,15 @@ public class SeriesCoverage3D extends Coverage3D {
          * requested date. Search for the image to use
          * as upper bounds ({@link #upper}).
          */
-        int index = Arrays.binarySearch(entries, date, COMPARATOR);
         try {
-            if (index>=0) {
+            int index;
+            try {
+                index = Arrays.binarySearch(entries, date, COMPARATOR);
+            } catch (UndeclaredThrowableException exception) {
+                rethrow(exception);
+                return false;
+            }
+            if (index >= 0) {
                 /*
                  * An exact match has been found.
                  * Load only this image and exit.

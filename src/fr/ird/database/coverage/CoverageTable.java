@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
@@ -61,19 +51,19 @@ import fr.ird.database.Table;
 public interface CoverageTable extends Table {
     /**
      * Retourne la référence vers la séries d'images.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract SeriesEntry getSeries() throws RemoteException;
 
     /**
      * Définit la série dont on veut les images.
      *
-     * @param  series       Réference vers la série d'images. Cette référence
-     *                      est construite à partir du champ ID dans la table
-     *                      "Series" de la base de données.
-     * @throws RemoteException si une erreur est survenu lors de l'accès à la
-     *                      base de données, ou si <code>series</code> ne
-     *                      se réfère pas à un enregistrement de la table
-     *                      des séries.
+     * @param  series Réference vers la série d'images. Cette référence
+     *                est construite à partir de la table "Series" de la base de données.
+     * @throws NoSuchRecordException si <code>series</code> ne se réfère pas à un enregistrement
+     *         de la table des séries.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setSeries(final SeriesEntry series) throws RemoteException;
 
@@ -86,12 +76,16 @@ public interface CoverageTable extends Table {
      *   <li>Les latitudes,  en degrés selon l'ellipsoïde WGS 1984.</li>
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract CoordinateSystem getCoordinateSystem() throws RemoteException;
 
     /**
      * Retourne les coordonnées spatio-temporelles de la région d'intérêt. Le système
      * de coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract Envelope getEnvelope() throws RemoteException;
 
@@ -101,7 +95,7 @@ public interface CoverageTable extends Table {
      * cette méthode équivaut à effectuer les transformations nécessaires des coordonnées
      * et à appeler {@link #setTimeRange} et {@link #setGeographicArea}.
      *
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setEnvelope(final Envelope envelope) throws RemoteException;
 
@@ -109,6 +103,8 @@ public interface CoverageTable extends Table {
      * Retourne la période de temps d'intérêt.  Cette plage sera délimitée par des objets
      * {@link Date}. Appeler cette méthode équivant à n'extraire que la partie temporelle
      * de {@link #getEnvelope} et à transformer les coordonnées si nécessaire.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract Range getTimeRange() throws RemoteException;
 
@@ -118,7 +114,7 @@ public interface CoverageTable extends Table {
      * (voir {@link #getEnvelope}).
      *
      * @param  range Période d'intérêt dans laquelle rechercher des images.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setTimeRange(final Range range) throws RemoteException;
 
@@ -129,7 +125,7 @@ public interface CoverageTable extends Table {
      *
      * @param  startTime Date du  début de la plage de temps, inclusive.
      * @param  endTime   Date de la fin de la plage de temps, inclusive.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setTimeRange(final Date startTime, final Date endTime) throws RemoteException;
 
@@ -139,6 +135,8 @@ public interface CoverageTable extends Table {
      * selon l'ellipsoïde WGS 1984. Appeler cette méthode équivaut à n'extraire
      * que la partie horizontale de  {@link #getEnvelope}  et à transformer les
      * coordonnées si nécessaire.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract Rectangle2D getGeographicArea() throws RemoteException;
 
@@ -149,14 +147,16 @@ public interface CoverageTable extends Table {
      * {@link #setEnvelope}).
      *
      * @param  rect Coordonnées géographiques de la région, selon l'ellipsoïde WGS 1984.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setGeographicArea(final Rectangle2D rect) throws RemoteException;
 
     /**
      * Retourne la dimension désirée des pixels de l'images.
      *
-     * @return Résolution préférée, ou <code>null</code> si la lecture
+     * @return Résolution préférée, ou <code>null</code> si la lecture doit se faire avec
+     *         la meilleure résolution disponible.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      *         doit se faire avec la meilleure résolution disponible.
      */
     public abstract Dimension2D getPreferredResolution() throws RemoteException;
@@ -169,7 +169,7 @@ public interface CoverageTable extends Table {
      *
      * @param  pixelSize Taille préférée des pixels. Les unités sont les mêmes
      *         que celles de {@link #setGeographicArea}.
-     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract void setPreferredResolution(final Dimension2D pixelSize) throws RemoteException;
 
@@ -178,6 +178,8 @@ public interface CoverageTable extends Table {
      * peut représenter par exemple un gradient. Si aucune opération n'est appliquée
      * (c'est-à-dire si les images retournées représentent les données originales),
      * alors cette méthode retourne <code>null</code>.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract Operation getOperation() throws RemoteException;
 
@@ -198,7 +200,7 @@ public interface CoverageTable extends Table {
      * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
      *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
-     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract ParameterList setOperation(final Operation operation) throws RemoteException;
 
@@ -211,8 +213,8 @@ public interface CoverageTable extends Table {
      * @return Liste de paramètres par défaut, ou <code>null</code> si <code>operation</code>
      *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
-     * @throws RemoteException si un accès au catalogue était nécessaire et a échouée.
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract ParameterList setOperation(final String operation) throws RemoteException, OperationNotFoundException;
 
@@ -223,7 +225,7 @@ public interface CoverageTable extends Table {
      * cette classe.
      *
      * @return Liste d'images qui interceptent la plage de temps et la région géographique d'intérêt.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract List<CoverageEntry> getEntries() throws RemoteException;
 
@@ -236,23 +238,9 @@ public interface CoverageTable extends Table {
      *
      * @return Une image choisie arbitrairement dans la région et la plage de date
      *         sélectionnées, ou <code>null</code> s'il n'y a pas d'image dans ces plages.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract CoverageEntry getEntry() throws RemoteException;
-
-    /**
-     * Retourne l'image correspondant au numéro ID spécifié. L'argument <code>ID</code>
-     * correspond au numéro {@link CoverageEntry#getID} d'une des images retournées par
-     * {@link #getEntries()} ou {@link #getEntry()}.  L'image demandée doit appartenir
-     * à la série accédée par cette table (voir {@link #getSeries}). L'image retournée
-     * sera découpée de façon à n'inclure que les coordonnées spécifiées lors du dernier
-     * appel de {@link #setGeographicArea}.
-     *
-     * @param  ID Numéro identifiant l'image désirée.
-     * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
-     */
-    public abstract CoverageEntry getEntry(final int ID) throws RemoteException;
 
     /**
      * Retourne l'image nommée. L'argument <code>name</code> correspond au nom {@link CoverageEntry#getName}
@@ -260,41 +248,27 @@ public interface CoverageTable extends Table {
      * appartenir à la série accédée par cette table ({@link #getSeries}). L'image retournée sera découpée
      * de façon à n'inclure que les coordonnées spécifiées lors du dernier appel de {@link #setGeographicArea}.
      *
-     * @param  name Nom de l'image désirée.
+     * @param  name Nom de l'image désirée, sans son extension.
      * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract CoverageEntry getEntry(final String name) throws RemoteException;
 
     /**
-     * Obtient les plages de temps et de coordonnées couvertes par les images de cette table.
+     * Obtient les plages de temps et de coordonnées des images, ainsi que la liste des entrées
+     * correspondantes. L'objet retourné ne contiendra que les informations demandées. Par exemple
+     * si l'argument <code>t</code> est <code>false</code>, alors {@link CoverageRanges#t} sera
+     * <code>null</code>.
      *
-     * @param x Objet dans lequel ajouter les plages de longitudes, ou <code>null</code> pour ne pas extraire ces plages.
-     * @param y Objet dans lequel ajouter les plages de latitudes,  ou <code>null</code> pour ne pas extraire ces plages.
-     * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
-     * @return Un objet contenant l'ensemble des plages modifiées.
-     *
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
+     * @param x <code>true</code> pour obtenir les plages de longitudes.
+     * @param y <code>true</code> pour obtenir les plages de latitudes.
+     * @param t <code>true</code> pour obtenir les plages de temps.
+     * @param entries <code>true</code> pour obtenir les entrés
+     *        (comme dans à un appel à {@link #getEntries}).
+     * @return Un objet contenant les plages demandées ansi que la liste des entrées.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws RemoteException;
-
-    /**
-     * Obtient les plages de temps et de coordonnées des images, ainsi que la
-     * liste des entrées correspondantes. Cette méthode peut être vue comme une
-     * combinaison des méthodes {@link #getRanges(RangeSet,RangeSet,RangeSet)}
-     * et {@link #getEntries()}.
-     *
-     * @param x Objet dans lequel ajouter les plages de longitudes, ou <code>null</code> pour ne pas extraire ces plages.
-     * @param y Objet dans lequel ajouter les plages de latitudes,  ou <code>null</code> pour ne pas extraire ces plages.
-     * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
-     * @param entryList Liste dans laquelle ajouter les images qui auront été
-     *        lues, ou <code>null</code> pour ne pas construire cette liste.
-     * @return Un objet contenant l'ensemble des plages ansi que la liste des entrées modifiées.
-     *
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
-     */
-    public GridCoverageRange getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
-                                    final List<CoverageEntry> entryList) throws RemoteException;
+    public CoverageRanges getRanges(boolean x, boolean y, boolean t, boolean entries) throws RemoteException;
 
     /**
      * Ajoute une entrée dans la table "<code>GridCoverages</code>". La méthode
@@ -303,10 +277,10 @@ public interface CoverageTable extends Table {
      * @param  coverage L'image à ajouter. Cette image doit avoir au moins trois dimensions,
      *         la troisième dimension étant la date de l'image sur l'axe du temps.
      * @param  Le nom de l'image, sans son chemin ni son extension.
-     * @return Le numéro ID de l'image si elle a été ajoutée à la base de données, ou <code>null</code>
+     * @return <code>true</code> si l'image a été ajoutée à la base de données, ou <code>false</code>
      *         si une image avec le même nom existait déjà pour la série courante. Dans ce dernier cas,
      *         la base de données ne sera pas modifiée et un message d'avertissement sera écrit.
-     * @throws RemoteException si l'opération a échouée ou si la table est en lecture seule.
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws RemoteException;
+    public boolean addGridCoverage(final GridCoverage coverage, final String filename) throws RemoteException;
 }

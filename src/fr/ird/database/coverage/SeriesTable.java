@@ -12,33 +12,24 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage;
 
-// J2SE
+// J2SE dependencies
 import java.util.Set;
 import java.rmi.RemoteException;
 import javax.swing.tree.TreeModel;
 
-// Geotools
+// Geotools dependencies
 import org.geotools.gui.swing.tree.TreeNode;
 
-// Seagis
+// Seagis dependencies
 import fr.ird.database.Table;
+import fr.ird.database.IllegalRecordException;
 
 
 /**
- * Connection vers une table des séries. Un objet <code>SeriesTable</code> est capable de retrouver
+ * Connexion vers une table des séries. Un objet <code>SeriesTable</code> est capable de retrouver
  * les paramètres et opérations qui forment les séries, et de placer ces informations dans une
  * arborescence avec des chemins de la forme "<code>paramètre/opération/série</code>".
  *
@@ -65,17 +56,6 @@ public interface SeriesTable extends Table {
      * ne doit pas aller plus loin que les catégories (après les sous-séries).
      */
     public static final int CATEGORY_LEAF = 7;
-
-    /**
-     * Retourne une référence vers un enregistrement de la table des séries.
-     *
-     * @param  ID Numéro identifiant la série recherchée.
-     * @return La série identifiée par le numéro ID, ou <code>null</code>
-     *         si aucune série de ce numéro n'a été trouvée.
-     * @throws RemoteException si le catalogue n'a pas pu être interrogée.
-     * @throws IllegalRecordException Si plusieurs séries portent le même ID.
-     */
-    public abstract SeriesEntry getEntry(final int ID) throws RemoteException;
 
     /**
      * Retourne une référence vers un enregistrement de la table des séries.

@@ -102,6 +102,11 @@ public interface DataBase extends Remote {
      */
     public static final class Key implements Serializable {
         /**
+         * Pour compatibilité entre différentes versions.
+         */
+        private static final long serialVersionUID = 4719725873634041733L;
+
+        /**
          * Ensemble des clés déjà créés.
          */
         private static final Map<String,Key> POOL = new HashMap<String,Key>();
