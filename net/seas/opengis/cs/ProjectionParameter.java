@@ -45,9 +45,8 @@ public class ProjectionParameter implements Cloneable, Serializable
 {
     /**
      * Serial number for compatibility with different versions.
-     * TODO: compute serialver
      */
-    //private static final long serialVersionUID = ?;
+    private static final long serialVersionUID = -8277498873677222418L;
 
     /**
      * The parameter name.

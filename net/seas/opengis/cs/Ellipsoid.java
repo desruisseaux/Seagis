@@ -48,9 +48,8 @@ public class Ellipsoid implements Serializable
 {
     /**
      * Serial number for compatibility with previous versions.
-     * TODO: compure serialver
      */
-    //private static final long serialVersionUID = ?;
+    private static final long serialVersionUID = 2765283406742376392L;
 
     /**
      * Name of this ellipsoid.

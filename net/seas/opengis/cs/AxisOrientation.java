@@ -45,9 +45,8 @@ public final class AxisOrientation implements Serializable
 {
     /**
      * Serial number for compatibility with different versions.
-     * TODO: compute serialver
      */
-    //private static final long serialVersionUID = ?;
+    private static final long serialVersionUID = 6962768641608234346L;
 
     /**
      * The enum value. This field is public for compatibility

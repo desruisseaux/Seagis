@@ -48,9 +48,8 @@ public final class Envelope implements Cloneable, Serializable
 {
     /**
      * Serial number for compatibility with different versions.
-     * TODO: compute serialver
      */
-    //private static final long serialVersionUID = ?;
+    private static final long serialVersionUID = 2728048901796327047L;
 
     /**
      * Point containing minimum ordinate values.
