@@ -48,17 +48,18 @@ public class Resources extends ResourceBundle
      * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
     public Resources() throws IOException
-    {super(Resources_fr.FILEPATH);}
+    {super(null, null);}
 
     /**
      * Initialise les ressources en
      * utilisant le fichier spécifié.
      *
+     * @param  locale {@link Locale} des ressources (à titre informatif).
      * @param  filename Nom du fichier binaire contenant les ressources.
      * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
-    Resources(final String filepath) throws IOException
-    {super(filepath);}
+    protected Resources(final Locale locale, final String filepath) throws IOException
+    {super(locale, filepath);}
 
     /**
      * Returns resources in the given locale.
@@ -110,7 +111,7 @@ public class Resources extends ResourceBundle
      * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
      */
     public static String format(final int key, final Object arg0, final Object arg1) throws MissingResourceException
-    {return getResources(null).getString(key, new Object[] {arg0, arg1});}
+    {return getResources(null).getString(key, arg0, arg1);}
 
     /**
      * Renvoie la ressource associée à la clé spécifiée en remplaçant
@@ -125,7 +126,7 @@ public class Resources extends ResourceBundle
      * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException
-    {return getResources(null).getString(key, new Object[] {arg0, arg1, arg2});}
+    {return getResources(null).getString(key, arg0, arg1, arg2);}
 
     /**
      * Renvoie la ressource associée à la clé spécifiée en remplaçant
@@ -141,7 +142,7 @@ public class Resources extends ResourceBundle
      * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException
-    {return getResources(null).getString(key, new Object[] {arg0, arg1, arg2, arg3});}
+    {return getResources(null).getString(key, arg0, arg1, arg2, arg3);}
 
     /**
      * Renvoie la ressource associée à la clé spécifiée en remplaçant
@@ -158,5 +159,19 @@ public class Resources extends ResourceBundle
      * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
-    {return getResources(null).getString(key, new Object[] {arg0, arg1, arg2, arg3, arg4});}
+    {return getResources(null).getString(key, arg0, arg1, arg2, arg3, arg4);}
+
+    /**
+     * Retourne la ressource associée à la clé spécifiée
+     * en la terminant par les caractères ":&nbsp;".
+     */
+    public static String label(final int key)
+    {return getResources(null).getLabel(key);}
+
+    /**
+     * Retourne la ressource associée à la clé spécifiée
+     * en la terminant par les caractères "...".
+     */
+    public static String trailing(final int key)
+    {return getResources(null).getTrailing(key);}
 }
