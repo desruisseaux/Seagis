@@ -49,6 +49,7 @@ import java.io.Writer;
 // Divers
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
+import java.util.regex.Pattern;
 import java.util.Comparator;
 
 
@@ -444,7 +445,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
     private void writeJavaSources(final File destination) throws IOException
     {
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        final String   rootPackage = destination.getPath().replace('\\','.').replace('/','.');
+        final String   rootPackage = toRelative(destination).getPath().replace('\\','.').replace('/','.');
         final boolean   rootExists = keysByPackage.containsKey(rootPackage+'.'+sourceFilename);
         for (final Iterator<Map.Entry<String,Set<String>>> it=keysByPackage.entrySet().iterator(); it.hasNext();)
         {
@@ -503,6 +504,29 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
             out.write("}"); out.write(lineSeparator);
             out.close();
         }
+    }
+
+    /**
+     * Make a file path relative to classpath.
+     */
+    private static File toRelative(final File path)
+    {
+        String bestpath = null;
+        final String  absolutePath = path.getAbsolutePath();
+        final String fileSeparator = System.getProperty("file.separator", "/");
+        final String[]  classpaths = Pattern.compile(System.getProperty("path.separator", ":")).split(System.getProperty("java.class.path", "."));
+        for (int i=0; i<classpaths.length; i++)
+        {
+            String classpath = new File(classpaths[i]).getAbsolutePath();
+            if (!classpath.endsWith(fileSeparator)) classpath+=fileSeparator;
+            if (absolutePath.startsWith(classpath))
+            {
+                final String candidate = absolutePath.substring(classpath.length());
+                if (bestpath==null || bestpath.length()>candidate.length())
+                    bestpath = candidate;
+            }
+        }
+        return (bestpath!=null) ? new File(bestpath) : path;
     }
 
     /**
@@ -594,7 +618,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
             System.out.println("Usage: java net.seas.resources.Compiler [source] [destination] [langues]");
             System.out.println("  [source]      est le répertoire source à partir d'où chercher les fichiers \"resources*.properties\".");
             System.out.println("                Tous les sous-répertoires seront aussi balayés.");
-            System.out.println("  [destination] est le répertoire dans lequel écrire le fichier \"resources*.dat\".");
+            System.out.println("  [destination] est le répertoire dans lequel écrire le fichier \"resources*.serialized\".");
             System.out.println("  [langues]     est un ou plusieurs codes de langues (\"_fr\", \"_en\", etc.).");
         }
         final File          source = new File(args[0]);
