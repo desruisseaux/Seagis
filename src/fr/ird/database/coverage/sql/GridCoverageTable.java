@@ -560,7 +560,7 @@ class GridCoverageTable extends Table implements CoverageTable {
                 final GridCoverageEntry check = new GridCoverageEntry(this, result);
                 if (!entry.equals(check)) {
                     throw new IllegalRecordException(GRID_COVERAGES, Resources.format(
-                            ResourceKeys.ERROR_DUPLICATED_IMAGE_$2, entry.getName(), check.getName()));
+                            ResourceKeys.ERROR_DUPLICATED_COVERAGE_$2, entry.getName(), check.getName()));
                 }
             }
         }
@@ -683,7 +683,7 @@ class GridCoverageTable extends Table implements CoverageTable {
             newEntries = entryList.subList(startIndex, entryList.size());
             final int size = newEntries.size();
             GridCoverageEntry.canonicalize((CoverageEntry[])newEntries.toArray(new CoverageEntry[size]));
-            log("getEntries", Level.FINE, ResourceKeys.FOUND_IMAGES_$1, new Integer(size));
+            log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1, new Integer(size));
         }
     }
 

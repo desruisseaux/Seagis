@@ -428,7 +428,7 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
         update.setObject(ARG_VALUE, value);
         update.setInt(ARG_ID, sample.getID());
         if (update.executeUpdate() == 0) {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, sample));
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_SAMPLE_NOT_FOUND_$1, sample));
         }
     }
 

@@ -91,11 +91,11 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         ResourceKeys.SQL_SERIES_TREE,
         ResourceKeys.SQL_SERIES_BY_ID,
         ResourceKeys.SQL_SERIES,
-        ResourceKeys.SQL_IMAGES,
+        ResourceKeys.SQL_GRID_COVERAGES,
         ResourceKeys.SQL_FORMAT,
-        ResourceKeys.SQL_BANDS,
+        ResourceKeys.SQL_SAMPLE_DIMENSIONS,
         ResourceKeys.SQL_CATEGORIES,
-        ResourceKeys.SQL_AREA
+        ResourceKeys.SQL_GRID_GEOMETRY
     };
 
     /**
@@ -382,7 +382,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
         final SQLEditor editor = new SQLEditor(Table.PREFERENCES,
-            resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(0)), LOGGER)
+            resources.getString(ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(0)), LOGGER)
         {
             public String getProperty(final String name) {
                 return Table.getPreference(name);

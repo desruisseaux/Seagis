@@ -232,10 +232,9 @@ abstract class ColumnTable<T extends Entry> extends Table {
         }
         results.close();
         if (entry == null) {
-            // TODO: localize
             final String table = getTableName();
-            throw new NoSuchRecordException(table, "Aucun enregistrement pour \""+key+
-                                            "\" n'a été trouvé dans la table \""+table+"\".");
+            throw new NoSuchRecordException(table, Resources.format(
+                                                ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
         }
         pool.put(key, entry);
         return entry;

@@ -233,8 +233,7 @@ public class Coverage3D extends Coverage {
         super(table.getSeries().getName(), cs, null, null);
         temporalCS = CTSUtilities.getTemporalCS(cs);
         if (temporalCS == null) {
-            // TODO: localize.
-            throw new IllegalArgumentException("Système de coordonnées invalide.");
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
         }
         temporalDimension = CTSUtilities.getDimensionOf(cs, temporalCS.getClass());
         assert temporalDimension >= 0 : temporalDimension;

@@ -89,8 +89,8 @@ public class ControlPanel extends JPanel {
      * l'instant, peut-être dynamique dans une version future).
      */
     private static final int[] titles = {
-        ResourceKeys.IMAGES,
-        ResourceKeys.FISHERIES
+        ResourceKeys.COVERAGES,
+        ResourceKeys.SAMPLES
     };
 
     /**

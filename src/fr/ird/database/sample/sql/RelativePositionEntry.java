@@ -35,6 +35,8 @@ import org.geotools.resources.Utilities;
 
 // Seagis
 import fr.ird.database.sample.SampleEntry;
+import fr.ird.resources.seagis.Resources;
+import fr.ird.resources.seagis.ResourceKeys;
 
 
 /**
@@ -146,8 +148,7 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
      * Retourne le nom de cette entré, comme {@link #getName}.
      */
     public String toString() {
-        // TODO: localize
-        return (name==null || name.length()==0) ? "(aucun)" : name;
+        return (name==null || name.length()==0) ? Resources.format(ResourceKeys.UNNAMED) : name;
     }
 
     /**

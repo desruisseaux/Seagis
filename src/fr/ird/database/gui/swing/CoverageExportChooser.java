@@ -172,7 +172,7 @@ public final class CoverageExportChooser extends JPanel {
      * Met à jour l'étiquette qui indique le nombre d'images à exporter.
      */
     private void updateCount() {
-        count.setText(resources.getString(ResourceKeys.IMAGES_TO_EXPORT_COUNT_$1,
+        count.setText(resources.getString(ResourceKeys.COVERAGES_TO_EXPORT_COUNT_$1,
                                                    new Integer(entries.size())));
     }
 

@@ -221,10 +221,10 @@ final class WritableGridCoverageTable extends GridCoverageTable {
         }
         selectImage.setInt(1, getSeries().getID());
         selectImage.setString(2, filename);
-        Integer ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_IMAGE_$1);
+        Integer ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
         if (ID != null) {
             log(Resources.getResources(null).getLogRecord(Level.WARNING,
-                ResourceKeys.ERROR_IMAGE_ALREADY_EXIST_$1, filename));
+                ResourceKeys.ERROR_COVERAGE_ALREADY_EXIST_$1, filename));
             return false;
         }
         /*
@@ -235,7 +235,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
             insertImage = getConnection().createStatement();
         }
         if (insertImage.executeUpdate(sqlInsertCoverage(null, filename, startTime, endTime, areaID)) == 1) {
-            ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_IMAGE_$1);
+            ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_COVERAGE_$1);
             log(new LogRecord(CoverageDataBase.SQL_UPDATE,
                               sqlInsertCoverage(ID, filename, startTime, endTime, areaID)));
             if (ID != null) {
@@ -272,7 +272,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
         selectArea.setInt   (5, size.width);
         selectArea.setInt   (6, size.height);
         selectArea.setInt   (7, csID);
-        Integer ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_AREA_$1);
+        Integer ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_GEOMETRY_$1);
         if (ID != null) {
             return ID.intValue();
         }
@@ -280,7 +280,7 @@ final class WritableGridCoverageTable extends GridCoverageTable {
             insertArea = getConnection().createStatement();
         }
         if (insertArea.executeUpdate(sqlInsertGeometry(null, area, size, csID)) == 1) {
-            ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_AREA_$1);
+            ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_GEOMETRY_$1);
             log(new LogRecord(CoverageDataBase.SQL_UPDATE,
                               sqlInsertGeometry(ID, area, size, csID)));
             if (ID != null) {

@@ -113,9 +113,9 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      */
     private static final int[] PROPERTY_NAMES = {
         ResourceKeys.SQL_SPECIES,
-        ResourceKeys.SQL_SEINES,
-        ResourceKeys.SQL_LONGLINES,
-        ResourceKeys.SQL_CATCHS_UPDATE,
+        ResourceKeys.SQL_SAMPLES_POINT,
+        ResourceKeys.SQL_SAMPLES_LINE,
+        ResourceKeys.SQL_SAMPLES_UPDATE,
         ResourceKeys.SQL_ENVIRONMENTS,
         ResourceKeys.SQL_ENVIRONMENTS_UPDATE,
         ResourceKeys.SQL_ENVIRONMENTS_INSERT,
@@ -344,8 +344,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         assert 2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length;
         final Resources resources = Resources.getResources(null);
         final SQLEditor editor = new SQLEditor(Table.preferences,
-                resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1,
-                                    new Integer(1)), LOGGER)
+            resources.getString(ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(1)), LOGGER)
         {
             public String getProperty(final String name) {
                 return getPreference(name);
