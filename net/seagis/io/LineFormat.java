@@ -417,7 +417,7 @@ public class LineFormat
      *         créé avec la bonne longueur si <code>array</code> était nul.
      * @throws ParseException si <code>array</code> était non-nul et que sa longueur
      *         ne correspond pas au nombre de données lues, ou si une des données lues
-     *         n'est pas convertible en nombre.
+     *         n'est pas convertible en nombre entier de type <code>long</code>.
      */
     public synchronized long[] getValues(long[] array) throws ParseException
     {
@@ -426,7 +426,13 @@ public class LineFormat
         else
             array=new long[count];
         for (int i=0; i<count; i++)
-            array[i]=getNumber(i).longValue();
+        {
+            final Number n = getNumber(i);
+            if ((array[i]=n.longValue()) != n.doubleValue())
+            {
+                throw notAnInteger(i);
+            }
+        }
         return array;
     }
 
@@ -443,7 +449,7 @@ public class LineFormat
      *         créé avec la bonne longueur si <code>array</code> était nul.
      * @throws ParseException si <code>array</code> était non-nul et que sa longueur
      *         ne correspond pas au nombre de données lues, ou si une des données lues
-     *         n'est pas convertible en nombre.
+     *         n'est pas convertible en nombre entier de type <code>int</code>.
      */
     public synchronized int[] getValues(int[] array) throws ParseException
     {
@@ -452,7 +458,13 @@ public class LineFormat
         else
             array=new int[count];
         for (int i=0; i<count; i++)
-            array[i]=getNumber(i).intValue();
+        {
+            final Number n = getNumber(i);
+            if ((array[i]=n.intValue()) != n.doubleValue())
+            {
+                throw notAnInteger(i);
+            }
+        }
         return array;
     }
 
@@ -469,7 +481,7 @@ public class LineFormat
      *         créé avec la bonne longueur si <code>array</code> était nul.
      * @throws ParseException si <code>array</code> était non-nul et que sa longueur
      *         ne correspond pas au nombre de données lues, ou si une des données lues
-     *         n'est pas convertible en nombre.
+     *         n'est pas convertible en nombre entier de type <code>short</code>.
      */
     public synchronized short[] getValues(short[] array) throws ParseException
     {
@@ -478,7 +490,13 @@ public class LineFormat
         else
             array=new short[count];
         for (int i=0; i<count; i++)
-            array[i]=getNumber(i).shortValue();
+        {
+            final Number n = getNumber(i);
+            if ((array[i]=n.shortValue()) != n.doubleValue())
+            {
+                throw notAnInteger(i);
+            }
+        }
         return array;
     }
 
@@ -495,7 +513,7 @@ public class LineFormat
      *         créé avec la bonne longueur si <code>array</code> était nul.
      * @throws ParseException si <code>array</code> était non-nul et que sa longueur
      *         ne correspond pas au nombre de données lues, ou si une des données lues
-     *         n'est pas convertible en nombre.
+     *         n'est pas convertible en nombre entier de type <code>byte</code>.
      */
     public synchronized byte[] getValues(byte[] array) throws ParseException
     {
@@ -504,7 +522,13 @@ public class LineFormat
         else
             array=new byte[count];
         for (int i=0; i<count; i++)
-            array[i]=getNumber(i).byteValue();
+        {
+            final Number n = getNumber(i);
+            if ((array[i]=n.byteValue()) != n.doubleValue())
+            {
+                throw notAnInteger(i);
+            }
+        }
         return array;
     }
 
@@ -523,6 +547,19 @@ public class LineFormat
             throw new ParseException(Resources.format(count<expected ? ResourceKeys.ERROR_LINE_TOO_SHORT_$2 : ResourceKeys.ERROR_LINE_TOO_LONG_$3,
                                      new Integer(count), new Integer(expected), line.substring(lower,upper).trim()), lower);
         }
+    }
+
+    /**
+     * Creates an exception for a value not being an integer.
+     *
+     * @param  i the value index.
+     * @return The exception.
+     */
+    private ParseException notAnInteger(final int i)
+    {
+        return new ParseException(Resources.format(ResourceKeys.ERROR_NOT_AN_INTEGER_$1,
+                                                   line.substring(limits[i], limits[i+1])),
+                                                   limits[i]);
     }
 
     /**
