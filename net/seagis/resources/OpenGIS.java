@@ -104,7 +104,7 @@ public final class OpenGIS
 
     /**
      * Returns the first horizontal datum found in a coordinate system,
-     * or <code>null</code> if there is none. Note: if a future version,
+     * or <code>null</code> if there is none. Note: in a future version,
      * we may implement this method directly into {@link CoordinateSystem}
      * (not sure yet if it would be a good idea).
      */
