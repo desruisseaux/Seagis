@@ -201,18 +201,70 @@ public class GridCoverageProcessor
     }
 
     /**
-     * Apply a process operation to a grid coverage with default parameters. This
-     * is a convenience method for {@link #doOperation(Operation,ParameterList)}.
+     * Convenience method applying a process operation with default parameters.
      *
      * @param  operationName Name of the operation to be applied to the grid coverage..
      * @param  source The source grid coverage.
      * @return The result as a grid coverage.
      * @throws OperationNotFoundException if there is no operation named <code>operationName</code>.
+     *
+     * @see #doOperation(Operation,ParameterList)
      */
     public GridCoverage doOperation(final String operationName, final GridCoverage source) throws OperationNotFoundException
     {
         final Operation operation = getOperation(operationName);
-        return doOperation(operation, operation.getParameterList().setParameter("Source", source));
+        return doOperation(operation, operation.getParameterList()
+                                      .setParameter("Source", source));
+    }
+
+    /**
+     * Convenience method applying a process operation with one parameter.
+     *
+     * @param  operationName  Name of the operation to be applied to the grid coverage..
+     * @param  source         The source grid coverage.
+     * @param  argumentName1  The name of the first parameter to set.
+     * @param  argumentValue1 The value for the first parameter.
+     * @return The result as a grid coverage.
+     * @throws OperationNotFoundException if there is no operation named <code>operationName</code>.
+     * @throws IllegalArgumentException if there is no parameter with the specified name.
+     *
+     * @see #doOperation(Operation,ParameterList)
+     */
+    public GridCoverage doOperation(final String operationName, final GridCoverage source,
+                                    final String argumentName1, final Object argumentValue1)
+                                    throws OperationNotFoundException, IllegalArgumentException
+    {
+        final Operation operation = getOperation(operationName);
+        return doOperation(operation, operation.getParameterList()
+                                      .setParameter("Source", source)
+                                      .setParameter(argumentName1, argumentValue1));
+    }
+
+    /**
+     * Convenience method applying a process operation with two parameters.
+     *
+     * @param  operationName  Name of the operation to be applied to the grid coverage..
+     * @param  source         The source grid coverage.
+     * @param  argumentName1  The name of the first parameter to set.
+     * @param  argumentValue1 The value for the first parameter.
+     * @param  argumentName2  The name of the second parameter to set.
+     * @param  argumentValue2 The value for the second parameter.
+     * @return The result as a grid coverage.
+     * @throws OperationNotFoundException if there is no operation named <code>operationName</code>.
+     * @throws IllegalArgumentException if there is no parameter with the specified name.
+     *
+     * @see #doOperation(Operation,ParameterList)
+     */
+    public GridCoverage doOperation(final String operationName, final GridCoverage source,
+                                    final String argumentName1, final Object argumentValue1,
+                                    final String argumentName2, final Object argumentValue2)
+                                    throws OperationNotFoundException, IllegalArgumentException
+    {
+        final Operation operation = getOperation(operationName);
+        return doOperation(operation, operation.getParameterList()
+                                      .setParameter("Source", source)
+                                      .setParameter(argumentName1, argumentValue1)
+                                      .setParameter(argumentName2, argumentValue2));
     }
 
     /**

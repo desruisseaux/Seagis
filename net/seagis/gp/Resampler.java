@@ -138,16 +138,23 @@ final class Resampler extends GridCoverage
      * @return The new grid coverage, or <code>sourceCoverage</code> if no resampling was needed.
      * @throws TransformException if the grid coverage can't be reprojected.
      */
-    public static GridCoverage reproject(final GridCoverage             sourceCoverage,
+    public static GridCoverage reproject(      GridCoverage             sourceCoverage,
                                          final CoordinateSystem               targetCS,
                                          final GridGeometry         targetGridGeometry,
                                          final Interpolation             interpolation,
                                          final CoordinateTransformationFactory factory) throws TransformException
     {
-        if (targetGridGeometry!=null)
+        /*
+         * If the source coverage is already a projected one,
+         * go up in the chain until the source grid coverage.
+         */
+        while (sourceCoverage instanceof Resampler)
         {
-            // TODO: Implement the "GridGeometry" argument.
-            throw new CannotReprojectException("'GridGeometry' parameter not yet implemented");
+            final GridCoverage[] sources = sourceCoverage.getSources();
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            if (sources.length!=1) throw new AssertionError(sources.length);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            sourceCoverage = sources[0];
         }
         /*
          * Perform a first argument check. The
@@ -165,6 +172,11 @@ final class Resampler extends GridCoverage
         if (sourceCS.equivalents(targetCS) && targetGridGeometry==null)
         {
             return sourceCoverage;
+        }
+        if (targetGridGeometry!=null)
+        {
+            // TODO: Implement the "GridGeometry" argument.
+            throw new CannotReprojectException("'GridGeometry' parameter not yet implemented");
         }
         /*
          * We use the next two lines mostly as an argument check. If a coordinate system
