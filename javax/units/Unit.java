@@ -73,6 +73,12 @@ import javax.units.resources.Units;
 public abstract class Unit implements Serializable
 {
     /**
+     * Banque des objets qui ont été précédemment créés et
+     * enregistrés par un appel à la méthode {@link #intern}.
+     */
+    private static final WeakHashSet pool=Prefix.pool; // Must be first!
+
+    /**
      * Convenience constant for base unit of angle.
      */
     public static final Unit RADIAN = get("rad");
@@ -111,12 +117,6 @@ public abstract class Unit implements Serializable
      * Convenience constant for unit of mass.
      */
     public static final Unit TON = get("ton");
-
-    /**
-     * Banque des objets qui ont été précédemment créés et
-     * enregistrés par un appel à la méthode {@link #intern}.
-     */
-    private static final WeakHashSet pool=Prefix.pool;
 
     /**
      * Symbole des unités de cet objet <code>Unit</code> (par exemple "kg").
@@ -598,8 +598,11 @@ public abstract class Unit implements Serializable
     {
         synchronized (pool)
         {
-            final Unit canonical=(Unit) pool.get(new Unamed());
-            if (canonical!=null) return canonical;
+            final Object canonical = pool.get(new Unamed());
+            if (canonical instanceof Unit)
+            {
+                return (Unit) canonical;
+            }
             pool.add(this);
             return this;
         }

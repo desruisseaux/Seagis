@@ -65,7 +65,7 @@ final class UnitSet implements Serializable
      * enregistrer les unités sous une forme
      * binaire.
      */
-    public static final String PATHNAME = "applicationData/serialized/Units.dat";
+    public static final String PATHNAME = "javax/units/resources/units.serialized";
 
     /**
      * Liste des préfix standards du système SI.
