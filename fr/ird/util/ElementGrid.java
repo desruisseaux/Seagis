@@ -11,7 +11,7 @@ import org.geotools.pt.CoordinatePoint;
  * fixe d'éléments flottants (tableau à deux dimensions).
  *
  * @author  Remi EVE
- * @version 1.0
+ * @version $Id$
  */
 public final class ElementGrid 
 {  
