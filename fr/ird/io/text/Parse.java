@@ -28,7 +28,7 @@ import javax.media.jai.ParameterListDescriptorImpl;
  * devra nécéssairement le faire.
  * 
  * @author  Remi EVE
- * @version 1.0
+ * @version $Id$
  */
 public abstract class Parse 
 {   
