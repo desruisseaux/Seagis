@@ -54,32 +54,42 @@ import net.seagis.cs.GeographicCoordinateSystem;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class WindImageFunction extends AbstractImageFunction
+class WindImageFunction extends AbstractImageFunction
 {
+    /**
+     * Liste des fichiers de données à utiliser.
+     */
+    private final File[] files;
+
+    /**
+     * Index du prochain fichier à lire.
+     */
+    private int fileIndex;
+
     /**
      * Ensemble des coordonnéess <var>x</var> des points.
      */
-    private final DataSet longitude;
+    protected DataSet longitude;
 
     /**
      * Ensemble des coordonnéess <var>y</var> des points.
      */
-    private final DataSet latitude;
+    protected DataSet latitude;
 
     /**
      * Ensemble des vitesses du vent en chaque points.
      */
-    private final DataSet windSpeed;
+    protected DataSet windSpeed;
 
     /**
      * Ensemble des directions du vent en chaque points.
      */
-    private final DataSet windDirection;
+    protected DataSet windDirection;
 
     /**
      * Nombre de points à lire.
      */
-    private final int count;
+    private int count;
 
     /**
      * Index du prochain point à lire.
@@ -87,47 +97,123 @@ final class WindImageFunction extends AbstractImageFunction
     private int index;
 
     /**
-     * Construit une fonction qui utilisera
-     * les données du fichier spécifié.
+     * Construit une fonction qui utilisera les données du fichier spécifié.
+     * Si le fichier est un répertoire, alors tous les fichiers de ce répertoire
+     * seront utilisés.
      *
-     * @param  filename Fichier de données QuikScat de niveau L1B.
-     * @throws HDFException si la lecture du fichier a échouée.
+     * @param file Fichier de données QuikScat de niveau L1B.
      */
-    public WindImageFunction(final File filename) throws HDFException
+    public WindImageFunction(final File file)
     {
         super(GeographicCoordinateSystem.WGS84);
-        final Parser parser = new QuikscatParser(filename);
-        longitude           = parser.getDataSet("wvc_lon");
-        latitude            = parser.getDataSet("wvc_lat");
-        windSpeed           = parser.getDataSet("wind_speed_selection");
-        windDirection       = parser.getDataSet("wind_dir_selection");
-        parser.close();
+        if (file.isDirectory())
+        {
+            files = file.listFiles();
+        }
+        else
+        {
+            files = new File[] {file};
+        }
+    }
 
-        count = windSpeed.getRowCount() * windSpeed.getColumnCount();
+    /**
+     * Construit une fonction qui utilisera les données des fichiers spécifiés.
+     *
+     * @param  files Fichiers de données QuikScat de niveau L1B.
+     */
+    public WindImageFunction(final File[] files)
+    {
+        super(GeographicCoordinateSystem.WGS84);
+        this.files = (File[]) files.clone();
     }
 
     /**
      * Positionne le curseur au début du flot de données. Lorsque <code>ImageFunction</code>
      * a besoin de connaître les données qui constituent une image, il va d'abord appeller
      * <code>rewind()</code>, puis fera une série d'appel à {@link #next}.
+     *
+     * @throws IOException si l'opération a échouée.
      */
-    protected void rewind()
+    protected final void rewind() throws IOException
     {
         index = 0;
+        if (fileIndex > 1)
+        {
+            count         = 0;
+            fileIndex     = 0;
+            longitude     = null;
+            latitude      = null;
+            windSpeed     = null;
+            windDirection = null;
+        }
     }
 
     /**
      * Retourne les coordonnées (<var>x</var>,<var>y</var>,<var>z</var>) de la donnée
      * courante, puis passe au point suivant. S'il ne reste plus de point à balayer,
      * alors cette méthode retourne <code>null</code>.
+     *
+     * @throws IOException si la lecture a échouée.
      */
-    protected double[] next(final double[] data)
+    protected final double[] next(final double[] data) throws IOException
     {
-        if (index >= count) return null;
+        while (index >= count) try
+        {
+            if (fileIndex >= files.length)
+            {
+                return null;
+            }
+            final QuikscatParser parser = new QuikscatParser(files[fileIndex]);
+            count = load(parser);
+            parser.close();
+            index = 0;
+            fileIndex++;
+        }
+        catch (HDFException exception)
+        {
+            final IOException ioe = new IOException(exception.getLocalizedMessage());
+            ioe.initCause(exception);
+            throw ioe;
+        }
+        return compute(index++, data);
+    }
+
+    /**
+     * Procède à la lecture des données. Cette méthode est appelée automatiquement
+     * par {@link #next} lorsqu'une nouvelle lecture de données est nécessaire.
+     * L'implémentation par défaut obtient les séries de données pour les paramètres
+     * <code>"wvc_lon"</code>, <code>"wvc_lat"</code>, <code>"wind_speed_selection"</code>
+     * et <code>"wind_dir_selection"</code>. Il est de la responsabilité de l'appellant de
+     * fermer l'objet <code>parser</code> après la lecture.
+     *
+     * @param  parser Décodeur de données à utiliser.
+     * @return Le nombre de valeurs qui pourront être calculées à partir des données lues.
+     *         Lors des appels à {@link #compute}, l'index variera de 0 inclusivement
+     *         jusqu'à <var>n</var> exclusivement, ou <var>n</var> est la valeur retournée
+     *         par cette méthode.
+     * @throws HDFException si la lecture du fichier a échoué.
+     */
+    protected int load(final QuikscatParser parser) throws HDFException
+    {
+        longitude     = parser.getDataSet("wvc_lon");
+        latitude      = parser.getDataSet("wvc_lat");
+        windSpeed     = parser.getDataSet("wind_speed_selection");
+        windDirection = parser.getDataSet("wind_dir_selection");
+        return windSpeed.getRowCount() * windSpeed.getColumnCount();
+    }
+
+    /**
+     * Calcule la valeur du paramètre à l'index spécifié. La valeur de l'index
+     * est comprise dans les limites des tableaux {@link #longitude}, {@link #latitude},
+     * {@link #windSpeed} et {@link #windDirection}. L'implémentation par défaut retourne
+     * le vitesse du vent. Cette méthode est appelée automatiquement par {@link #next}
+     * lorsque nécessaire.
+     */
+    protected double[] compute(final int index, final double[] data)
+    {
         final double x = longitude.get(index);
         final double y =  latitude.get(index);
         final double z = windSpeed.get(index);
-        index++;
         if (data!=null)
         {
             data[0] = x;
@@ -137,44 +223,27 @@ final class WindImageFunction extends AbstractImageFunction
         }
         return new double[] {x,y,z};
     }
-    
-    /**
-     * Lance la création des images.
-     */
-    final void run() throws IOException
-    {
-//      setGeographicArea(new Rectangle2D.Double(0, -75, 360, 150));
-//      setImageSize     (new Dimension(1024,512));
-//      setValueRange    (-5E-6, 5E-6);
-//      setColors        ("applicationData/colors/RedBlue.pal");
-//      final RenderedImage image = maker.getImage();
-        final GridCoverage image = getGridCoverage("Vent", 1024, 512);
-        if (image!=null)
-        {
-            java.awt.Frame frame=frame=new java.awt.Frame("Une passe");
-            frame.add(new javax.media.jai.widget.ScrollingImagePanel(image.getRenderedImage(false), 400, 400));
-            frame.pack();
-            frame.show();
-//          ImageIO.write(image, "png", new File("wind.png"));
-        }
-    }
 
     /**
-     * Convert a set of string into a set of files.
-     * This is used for {@link #main} methods only.
+     * Free all resources used by this <code>ImageFunction</code>.
+     * Trying to use this object after <code>dispose()</code> may
+     * fail.
+     *
+     * @throws IOException If an I/O operation was required and failed.
      */
-    static File[] toFiles(final String[] args)
+    public synchronized void dispose() throws IOException
     {
-        final File[] files = new File[args.length];
-        for (int i=0; i<args.length; i++)
-            files[i] = new File(args[i]);
-        return files;
+        super.dispose();
+        longitude     = null;
+        latitude      = null;
+        windSpeed     = null;
+        windDirection = null;
     }
 
     /**
      * Run the program.
      */
-    public static void main(String[] args) throws IOException, HDFException
+    public static void main(String[] args) throws IOException
     {
         args = new String[]
         {
@@ -184,7 +253,15 @@ final class WindImageFunction extends AbstractImageFunction
             "E:/PELOPS/Images/QuikSCAT/L2B/1999/220/QS_S2B00707.20001241609",
             "E:/PELOPS/Images/QuikSCAT/L2B/1999/220/QS_S2B00708.20001241653"
         };
-        final WindImageFunction function = new WindImageFunction(toFiles(args)[0]);
-        function.run();
+        final File[] files = new File[args.length];
+        for (int i=0; i<args.length; i++)
+        {
+            files[i] = new File(args[i]);
+        }
+//      final WindImageFunction function = new WindImageFunction(files[0]);
+        final WindImageFunction function = new WindImageFunction(
+              new File("E:/PELOPS/Images/QuikSCAT/L2B/1999/220/"));
+        final GridCoverage image = function.show("Vent", 1024, 512);
+        function.dispose();
     }
 }

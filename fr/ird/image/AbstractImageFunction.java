@@ -28,12 +28,14 @@ package fr.ird.image;
 // Image, colors and geometry
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.Dimension;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.ImageFunction;
 import java.awt.image.ImagingOpException;
 
 // Miscellaneous
+import javax.units.Unit;
 import java.util.Arrays;
 import java.io.IOException;
 
@@ -47,6 +49,11 @@ import net.seagis.gc.GridGeometry;
 import net.seagis.gc.GridCoverage;
 import net.seagis.resources.XMath;
 import net.seagis.resources.OpenGIS;
+
+// Rendering
+import javax.swing.JFrame;
+import net.seas.map.MapPanel;
+import net.seas.map.layer.GridCoverageLayer;
 
 
 /**
@@ -84,6 +91,21 @@ public abstract class AbstractImageFunction implements ImageFunction
     private double minimum=Double.NaN, maximum=Double.NaN;
 
     /**
+     * The color palette.
+     */
+    private Color[] colors;
+
+    /**
+     * The name for values.
+     */
+    private String name = "Values";
+
+    /**
+     * The value's unit.
+     */
+    private Unit unit;
+
+    /**
      * Construct an {@link ImageFunction}
      * for cartesian coordinate systems.
      */
@@ -97,7 +119,153 @@ public abstract class AbstractImageFunction implements ImageFunction
      *           cartesien coordinate system..
      */
     protected AbstractImageFunction(final CoordinateSystem cs)
-    {this.coordinateSystem = cs;}
+    {
+        this.coordinateSystem = cs;
+        try
+        {
+            colors = Utilities.getPaletteFactory().getColors("Rainbow");
+        }
+        catch (IOException exception)
+        {
+            colors = new Color[] {Color.black, Color.white};
+        }
+    }
+
+    /**
+     * Returns the underlying coordinate systems.
+     * This coordinate system is usually set at
+     * construction time.
+     */
+    public CoordinateSystem getCoordinateSystem()
+    {return coordinateSystem;}
+
+    /**
+     * Retourne les coordonnées géographique couvertes.
+     * Les coordonnées sont exprimées selon le système
+     * de coordonnées {@link #getCoordinateSystem}.
+     *
+     * @throws IOException si une lecture des données a été
+     *         nécessaire et que cette opération a échouée.
+     */
+    public synchronized Rectangle2D getGeographicArea() throws IOException
+    {
+        if (geographicArea == null)
+        {
+            ensureValid();
+        }
+        return (geographicArea!=null) ? (Rectangle2D) geographicArea.clone() : new Rectangle2D.Double();
+    }
+
+    /**
+     * Set the geographic area. A <code>null</code> value
+     * will reset the default area, which is computed from
+     * available data.
+     */
+    public synchronized void setGeographicArea(final Rectangle2D area)
+    {geographicArea = (area!=null) ? (Rectangle2D) area.clone() : null;}
+
+    /**
+     * Retourne la valeur minimale de la plage de valeurs.
+     *
+     * @throws IOException si une lecture des données a été
+     *         nécessaire et que cette opération a échouée.
+     */
+    public synchronized double getMinimum() throws IOException
+    {
+        if (Double.isNaN(minimum))
+        {
+            ensureValid();
+        }
+        return minimum;
+    }
+
+    /**
+     * Set the minimum value range. If this value is greater than
+     * the current maximum, then the maximum will also be set to
+     * this value.
+     */
+    public synchronized void setMinimum(final double value)
+    {
+        minimum = value;
+        if (maximum < value)
+            maximum = value;
+    }
+
+    /**
+     * Retourne la valeur maximale de la plage de valeurs.
+     *
+     * @throws IOException si une lecture des données a été
+     *         nécessaire et que cette opération a échouée.
+     */
+    public synchronized double getMaximum() throws IOException
+    {
+        if (Double.isNaN(maximum))
+        {
+            ensureValid();
+        }
+        return maximum;
+    }
+
+    /**
+     * Set the maximum value range. If this value is less than
+     * the current minimum, then the minimum will also be set
+     * to this value.
+     */
+    public synchronized void setMaximum(final double value)
+    {
+        maximum = value;
+        if (minimum > value)
+            minimum = value;
+    }
+
+    /**
+     * Returns the color palette to use.
+     *
+     * @throws IOException If this information can't
+     *         be fetch from the datafile.
+     */
+    public synchronized Color[] getColorPalette() throws IOException
+    {return (Color[]) colors.clone();}
+
+    /**
+     * Set the color palette by name. The name must be one of valid
+     * color palettes in the <code>"applicationData/colors"</code>
+     * directory.
+     *
+     * @throws IOException if the color palette can't be read.
+     */
+    public synchronized void setColorPalette(final String palette) throws IOException
+    {colors = Utilities.getPaletteFactory().getColors(palette);}
+
+    /**
+     * Returns the value's unit, or <code>null</code> if none.
+     *
+     * @throws IOException If this information can't
+     *         be fetch from the datafile.
+     */
+    public Unit getUnit() throws IOException
+    {return unit;}
+
+    /**
+     * Set the value's unit.
+     */
+    public void setUnit(final Unit unit)
+    {this.unit = unit;}
+
+    /**
+     * Returns name for values.
+     *
+     * @throws IOException If this information can't
+     *         be fetch from the datafile.
+     */
+    public String getName() throws IOException
+    {return name;}
+
+    /**
+     * Set the name for values.
+     */
+    public void setName(final String name)
+    {this.name = name;}
 
     /**
      * Positionne le curseur au début du flot de données. Lorsque <code>ImageFunction</code>
@@ -196,54 +364,6 @@ public abstract class AbstractImageFunction implements ImageFunction
      */
     public int getNumElements()
     {return 1;}
-
-    /**
-     * Retourne la valeur minimale de la plage de valeurs.
-     *
-     * @throws IOException si une lecture des données a été
-     *         nécessaire et que cette opération a échouée.
-     */
-    public synchronized double getMinimum() throws IOException
-    {
-        ensureValid();
-        return minimum;
-    }
-
-    /**
-     * Retourne la valeur maximale de la plage de valeurs.
-     *
-     * @throws IOException si une lecture des données a été
-     *         nécessaire et que cette opération a échouée.
-     */
-    public synchronized double getMaximum() throws IOException
-    {
-        ensureValid();
-        return maximum;
-    }
-
-    /**
-     * Retourne les coordonnées géographique couvertes.
-     * Les coordonnées sont exprimées selon le système
-     * de coordonnées {@link #getCoordinateSystem}.
-     *
-     * @throws IOException si une lecture des données a été
-     *         nécessaire et que cette opération a échouée.
-     */
-    public synchronized Rectangle2D getGeographicArea() throws IOException
-    {
-        ensureValid();
-        return (geographicArea!=null) ? (Rectangle2D) geographicArea.clone() : new Rectangle2D.Double();
-    }
-
-    /**
-     * Returns the underlying coordinate systems.
-     * This coordinate system is usually set at
-     * construction time.
-     */
-    public CoordinateSystem getCoordinateSystem()
-    {
-        return coordinateSystem;
-    }
 
     /**
      * Calcule automatiquement les valeurs de {@link #geographicArea} et les
@@ -448,7 +568,6 @@ public abstract class AbstractImageFunction implements ImageFunction
 
     /**
      * Returns a grid coverage for this image function.
-     * A default color palette is used.
      *
      * @param  name  The grid coverage name.
      * @param  width The desired image width.
@@ -467,10 +586,33 @@ public abstract class AbstractImageFunction implements ImageFunction
         final CategoryList categories = new CategoryList(new Category[]
         {
             new Category("Donnée manquante", Color.black, 0),
-            new Category("Valeur", Utilities.getPaletteFactory().getColors("Rainbow"), 1, 256, minimum-scale, scale)
-        });
+            new Category(getName(), getColorPalette(), 1, 256, minimum-scale, scale)
+        }, getUnit());
         return new GridCoverage(name, this, getCoordinateSystem(), geometry,
                                 new CategoryList[] {categories}, null);
+    }
+
+    /**
+     * Convenience method displaying this image function.
+     *
+     * @param  name  The grid coverage name.
+     * @param  width The desired image width.
+     * @param  width The desired image height.
+     * @return The grid coverage.
+     * @throws IOException if an error occured while reading file.
+     */
+    public GridCoverage show(final String name, final int width, final int height) throws IOException
+    {
+        final GridCoverage coverage = getGridCoverage(name, width, height);
+        final MapPanel map = new MapPanel(getCoordinateSystem());
+        map.addLayer(new GridCoverageLayer(coverage));
+        map.setPreferredSize(new Dimension(width, height));
+        final JFrame frame = new JFrame(name);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(map);
+        frame.pack();
+        frame.show();
+        return coverage;
     }
 
     /**
@@ -482,6 +624,9 @@ public abstract class AbstractImageFunction implements ImageFunction
      */
     public synchronized void dispose() throws IOException
     {
+        unit           = null;
+        name           = null;
+        colors         = null;
         geographicArea = null;
         minimum = maximum = Double.NaN;
     }

@@ -126,7 +126,7 @@ import java.lang.Double;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-class MouseReshapeTracker extends MouseInputAdapter implements Shape
+public class MouseReshapeTracker extends MouseInputAdapter implements Shape
 {
     /**
      * Largeur minimale que devrait

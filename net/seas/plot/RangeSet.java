@@ -121,6 +121,13 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
     private int modCount;
 
     /**
+     * <code>true</code> if and only if the element class represents a primitive type.
+     * This is equivalents to <code>elementType.isPrimitive()</code> and is computed
+     * once for ever for performance reason.
+     */
+    private final boolean isPrimitive;
+
+    /**
      * <code>true</code> if we should invoke {@link ClassChanger#toNumber}
      * before to store a value into the array. It will be the case if the
      * array <code>array</code> contains primitive elements and the type
@@ -154,7 +161,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         {
             throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NOT_COMPARABLE_CLASS_$1, Utilities.getShortClassName(type)));
         }
-        Class elementType = ClassChanger.getTransformedClass(type); // e.g. change Date --> Double
+        Class elementType = ClassChanger.getTransformedClass(type); // e.g. change Date --> Long
         useClassChanger   = (elementType!=type);
         // If 'elementType' is a wrapper class,
         // find the corresponding primitive type.
@@ -168,7 +175,8 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         }
         this.type        = type;
         this.elementType = elementType;
-        this.relaxedType = (!useClassChanger && elementType.isPrimitive()) ? Number.class : type;
+        this.isPrimitive = elementType.isPrimitive();
+        this.relaxedType = (!useClassChanger && isPrimitive) ? Number.class : type;
     }
 
     /**
@@ -495,9 +503,9 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         private int modCount = RangeSet.this.modCount;
 
         /**
-         * The array lenght.
+         * The array length.
          */
-        private int length = (array!=null) ? Array.getLength(array) : 0;
+        private int length = getLength();
 
         /**
          * Current position in {@link RangeSet#array}.
@@ -517,18 +525,8 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         {
             if (hasNext())
             {
-                Comparable lower = (Comparable)Array.get(array, position++);
-                Comparable upper = (Comparable)Array.get(array, position++);
-                if (useClassChanger) try
-                {
-                    lower = ClassChanger.toComparable((Number)lower, type);
-                    upper = ClassChanger.toComparable((Number)upper, type);
-                }
-                catch (ClassNotFoundException exception)
-                {
-                    // Should not happen, since class type should have been checked by addRange(...)
-                    Utilities.unexpectedException("net.seas.plot", "RangeSet.Iterator", "next", exception);
-                }
+                final Comparable lower = get(position++);
+                final Comparable upper = get(position++);
                 if (RangeSet.this.modCount != modCount)
                 {
                     // Check it last, in case a change occured
@@ -561,6 +559,38 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
             else throw new IllegalStateException();
         }
     }
+
+    /**
+     * Returns the array length.
+     */
+    final int getLength()
+    {return (array!=null) ? Array.getLength(array) : 0;}
+
+    /**
+     * Returns the value at the specified index.
+     * Even index are lower bounds, while odd index are upper bounds.
+     */
+    final Comparable get(final int index)
+    {
+        Comparable value = (Comparable) Array.get(array, index);
+        if (useClassChanger) try
+        {
+            value = ClassChanger.toComparable((Number)value, type);
+        }
+        catch (ClassNotFoundException exception)
+        {
+            // Should not happen, since class type should have been checked by all 'add(...)' methods
+            Utilities.unexpectedException("net.seas.plot", "RangeSet.Iterator", "next", exception);
+        }
+        return value;
+    }
+
+    /**
+     * Returns the value at the specified index as a <code>double</code>.
+     * Even index are lower bounds, while odd index are upper bounds.
+     */
+    final double getDouble(final int index)
+    {return (isPrimitive) ? Array.getDouble(array, index) : ((Number) Array.get(array, index)).doubleValue();}
 
     /**
      * Returns a hash value for this set of ranges.
