@@ -72,6 +72,7 @@ import java.util.logging.LogRecord;
 
 // Divers
 import java.util.Date;
+import java.util.Locale;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
@@ -404,21 +405,6 @@ public class Coverage3D extends Coverage {
     }
 
     /**
-     * Prépare un enregistrement pour le journal.
-     */
-    private void log(final int clé, final Object[] parameters) {
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.INFO, clé);
-        record.setSourceClassName("Coverage3D");
-        record.setSourceMethodName("evaluate");
-        record.setParameters(parameters);
-        if (readListener == null) {
-            readListener = new Listeners();
-            addIIOReadProgressListener(readListener);
-        }
-        readListener.record = record;
-    }
-
-    /**
      * Load a single image for the specified image entry.
      *
      * @param  entry The image to load.
@@ -625,7 +611,8 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest) throws CannotEvaluateException
+    public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest)
+            throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -668,7 +655,8 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest) throws CannotEvaluateException
+    public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest)
+            throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -711,7 +699,8 @@ public class Coverage3D extends Coverage {
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest) throws CannotEvaluateException
+    public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest)
+            throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -873,6 +862,29 @@ public class Coverage3D extends Coverage {
     }
 
     /**
+     * Log the given record.
+     */
+    protected void log(final LogRecord record) {
+        Table.logger.log(record);
+    }
+
+    /**
+     * Prépare un enregistrement pour le journal.
+     */
+    private void log(final int clé, final Object[] parameters) {
+        final Locale locale = null;
+        final LogRecord record = Resources.getResources(locale).getLogRecord(Level.INFO, clé);
+        record.setSourceClassName("Coverage3D");
+        record.setSourceMethodName("evaluate");
+        record.setParameters(parameters);
+        if (readListener == null) {
+            readListener = new Listeners();
+            addIIOReadProgressListener(readListener);
+        }
+        readListener.record = record;
+    }
+
+    /**
      * Objet ayant la charge de suivre le chargement d'une image. Cet objet sert
      * surtout à enregistrer dans le journal un enregistrement indiquant que la
      * lecture d'une image a commencé.
@@ -880,7 +892,7 @@ public class Coverage3D extends Coverage {
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Listeners extends IIOReadProgressAdapter {
+    private final class Listeners extends IIOReadProgressAdapter {
         /**
          * The record to log.
          */
@@ -890,10 +902,10 @@ public class Coverage3D extends Coverage {
          * Reports that an image read operation is beginning.
          */
         public void imageStarted(ImageReader source, int imageIndex) {
-            if (record!=null) {
-                Table.logger.log(record);
+            if (record != null) {
+                log(record);
                 source.removeIIOReadProgressListener(this);
-                record=null;
+                record = null;
             }
         }
     }

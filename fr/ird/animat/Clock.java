@@ -77,6 +77,11 @@ public interface Clock {
     float getAge();
 
     /**
+     * Retourne la date pour le numéro séquentiel spécifié.
+     */
+    Date getTime(int step);
+
+    /**
      * Retourne la date au milieu du pas de temps courant.
      */
     Date getTime();

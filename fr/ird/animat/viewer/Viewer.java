@@ -58,6 +58,7 @@ public final class Viewer extends JTabbedPane {
     public Viewer() {
         super(TOP);
         final LoggingPanel logging = new LoggingPanel("fr.ird");
+        logging.setColumnVisible(LoggingPanel.LOGGER, false);
         final Handler handler = logging.getHandler();
         Logger.getLogger("org.geotools").addHandler(handler);
         if (false) handler.setLevel(Level.FINE);

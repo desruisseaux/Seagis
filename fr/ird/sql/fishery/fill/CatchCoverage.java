@@ -24,11 +24,12 @@
 package fr.ird.sql.fishery.fill;
 
 // J2SE dependencies
-import java.util.Arrays;
-import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
+import java.util.logging.LogRecord;
+import java.util.Arrays;
+import java.util.Date;
 
 // Geotools dependencies
 import org.geotools.cv.Coverage;
@@ -67,6 +68,11 @@ final class CatchCoverage extends Coverage3D {
      * The semi axis length along <var>y</var> axis.
      */
     private final double semiY = 10.0/60;
+
+    /**
+     * Le dernier avertissement reporté, ou <code>null</code> s'il n'y en a pas.
+     */
+    transient LogRecord lastWarning;
 
     /**
      * Construit une couverture à partir des données de la table spécifiée.
@@ -179,5 +185,16 @@ final class CatchCoverage extends Coverage3D {
     protected Shape getShape(final CatchEntry capture) {
         final Point2D coord = capture.getCoordinate();
         return new Ellipse2D.Double(coord.getX()-semiX, coord.getY()-semiY, 2*semiX, 2*semiY);
+    }
+
+    /**
+     * Log the given record.
+     */
+    protected void log(final LogRecord record) {
+        if (lastWarning != null) {
+            super.log(lastWarning);
+            lastWarning = null;
+        }
+        super.log(record);
     }
 }

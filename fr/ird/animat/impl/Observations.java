@@ -56,8 +56,7 @@ import org.geotools.resources.Utilities;
  *
  * @see Animal#getObservations
  */
-final class Observations extends AbstractMap<Parameter,Observation> implements Serializable
-{
+final class Observations extends AbstractMap<Parameter,Observation> implements Serializable {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */

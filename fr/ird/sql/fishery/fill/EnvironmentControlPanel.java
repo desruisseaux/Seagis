@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.Handler;
 
 // JAI
 import javax.media.jai.KernelJAI;
@@ -244,8 +245,11 @@ public class EnvironmentControlPanel extends JPanel {
      */
     public void showDialog(final Component owner) {
         if (SwingUtilities.showOptionDialog(owner, this, "Environnement aux positions de pêches")) {
-            final LoggingPanel logging = new LoggingPanel("");
-            logging.getHandler().setLevel(Level.FINE);
+            final LoggingPanel logging = new LoggingPanel("fr.ird");
+            logging.setColumnVisible(LoggingPanel.LOGGER, false);
+            final Handler handler = logging.getHandler();
+            Logger.getLogger("org.geotools").addHandler(handler);
+            handler.setLevel(Level.FINE);
             logging.show(owner);
 
             final Map<String,Object> arguments = new HashMap<String,Object>();

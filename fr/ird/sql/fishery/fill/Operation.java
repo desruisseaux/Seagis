@@ -56,7 +56,7 @@ import fr.ird.sql.fishery.EnvironmentTable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class Operation {
+final class Operation {
     /**
      * Le nom de l'opération. Ce nom doit être un des noms reconnus par
      * {@link GridCoverageProcessor}.
@@ -73,12 +73,6 @@ class Operation {
      * dans une interface utilisateur et n'affecte pas l'opération réellement appliquée.
      */
     private final String description;
-
-    /**
-     * Indique si un avertissement a déjà été écrit.
-     * Seul le premier d'une série d'avertissement sera écrit.
-     */
-    transient boolean warningReported;
 
     /**
      * Construit une nouvelle operation. Les arguments <code>name</code> et <code>column</code>
@@ -119,18 +113,18 @@ class Operation {
 
     /**
      * Indique qu'un point est en dehors de la région des données couvertes.
-     * Cette méthode écrit un avertissement dans le journal, mais sans la
-     * trace de l'exception (puisque cette erreur peut être normale).
+     * Cette méthode écrit un avertissement dans le journal, à la condition
+     * qu'il n'y en avait pas déjà un.
      */
-    final void warning(final PointOutsideCoverageException exception) {
-        if (!warningReported) {
-            final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
-            record.setSourceClassName ("EnvironmentTableFiller");
-            record.setSourceMethodName("run");
-            if (false) record.setThrown(exception);
-            Logger.getLogger("fr.ird.sql.fishery").log(record);
-            warningReported = true;
+    private void warning(final CatchCoverage source, final PointOutsideCoverageException exception) {
+        final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
+        record.setSourceClassName ("EnvironmentTableFiller");
+        record.setSourceMethodName("run");
+        record.setThrown(exception);
+        if (source.lastWarning == null) {
+            source.log(record);
         }
+        source.lastWarning = record;
     }
 
     /**
@@ -163,9 +157,9 @@ class Operation {
                     point.setLocation(x,y);
                     try {
                         values = coverage.evaluate(point, time, values);
-                        warningReported = false;
+                        coverage.lastWarning = null;
                     } catch (PointOutsideCoverageException exception) {
-                        warning(exception);
+                        warning(coverage, exception);
                         continue;
                     }
                     for (int c=0; c<update.length; c++) {
@@ -176,9 +170,9 @@ class Operation {
             } else {
                 try {
                     values = coverage.evaluate(capture.getCoordinate(), time, values);
-                    warningReported = false;
+                    coverage.lastWarning = null;
                 } catch (PointOutsideCoverageException exception) {
-                    warning(exception);
+                    warning(coverage, exception);
                     continue;
                 }
                 // Si la capture était en un point seulement,

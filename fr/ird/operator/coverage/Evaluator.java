@@ -35,7 +35,6 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.RenderedImage;
 import java.util.Locale;
 import java.util.Arrays;
-import javax.media.jai.util.Range;
 import javax.vecmath.MismatchedSizeException;
 
 // Geotools dependencies
@@ -51,6 +50,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.CannotEvaluateException;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.Utilities;
+import org.geotools.util.NumberRange;
 
 
 /**
@@ -65,7 +65,7 @@ public abstract class Evaluator extends Coverage {
     /**
      * La plage de valeurs des pixels sans données manquantes.
      */
-    private static final Range SAMPLE_RANGE;
+    private static final NumberRange SAMPLE_RANGE;
 
     /**
      * La plage de valeurs des pixels excluant la valeur de la donnée manquante.
@@ -73,7 +73,7 @@ public abstract class Evaluator extends Coverage {
      * ne doit pas être confondue avec le 0 des valeurs géophysiques,  qui elles
      * sont traitées différements.
      */
-    private static final Range SAMPLE_RANGE_X;
+    private static final NumberRange SAMPLE_RANGE_X;
 
     /**
      * Catégorie des données manquantes. La place de valeurs de cette catégorie
@@ -87,12 +87,12 @@ public abstract class Evaluator extends Coverage {
      */
     private static final Color[] COLORS = null;
     static {
-        final Range SAMPLE_MISSING;
+        final NumberRange SAMPLE_MISSING;
         final Integer zero  = new Integer(  0);
         final Integer upper = new Integer(256);
-        SAMPLE_RANGE    = new Range(Integer.class, zero, true , upper, false);
-        SAMPLE_RANGE_X  = new Range(Integer.class, zero, false, upper, false);
-        SAMPLE_MISSING  = new Range(Integer.class, zero, true , zero , true );
+        SAMPLE_RANGE    = new NumberRange(Integer.class, zero, true , upper, false);
+        SAMPLE_RANGE_X  = new NumberRange(Integer.class, zero, false, upper, false);
+        SAMPLE_MISSING  = new NumberRange(Integer.class, zero, true , zero , true );
         CATEGORY_NODATA = new Category("No data", null, SAMPLE_MISSING, (MathTransform1D) null);
     }
 
@@ -182,10 +182,10 @@ public abstract class Evaluator extends Coverage {
         category    = new Category[2];
         category[0] = CATEGORY_NODATA;
         for (int i=0; i<s.length; i++) {
-            final SampleDimension src = s[i].geophysics(true);
-            final Range      geoRange = src.getRange();
-            final Category       main = src.getCategory((((Number)geoRange.getMinValue()).doubleValue() +
-                                                         ((Number)geoRange.getMaxValue()).doubleValue())/2);
+            final SampleDimension  src = s[i].geophysics(true);
+            final NumberRange geoRange = src.getRange();
+            final Category        main = src.getCategory((((Number)geoRange.getMinValue()).doubleValue() +
+                                                          ((Number)geoRange.getMaxValue()).doubleValue())/2);
             buffer.setLength(bufferBase);
             buffer.append(main.getName(locale));
             buffer.append(']');
@@ -199,8 +199,8 @@ public abstract class Evaluator extends Coverage {
         category = new Category[1];
         for (int i=0; i<dimNames.length; i++) {
             category[0] = new Category(dimNames[i], COLORS, SAMPLE_RANGE,
-                          new Range(Double.class, new Double(envelope.getMinimum(i)), true,
-                                                  new Double(envelope.getMaximum(i)), false));
+                          new NumberRange(envelope.getMinimum(i), true,
+                                          envelope.getMaximum(i), false));
             final int k = s.length + numAxisSet*i;
             Arrays.fill(bands, k, k+numAxisSet, new SampleDimension(category, cs.getUnits(i)));
         }

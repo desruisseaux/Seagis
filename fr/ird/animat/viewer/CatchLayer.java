@@ -26,15 +26,19 @@
 package fr.ird.animat.viewer;
 
 // J2SE dependencies
-import java.awt.Color;
+import java.util.List;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.awt.Color;
+import java.awt.EventQueue;
 import java.sql.SQLException;
 import java.rmi.RemoteException;
 
 // Geotools & Seagis dependencies
 import org.geotools.resources.Utilities;
+import fr.ird.sql.fishery.CatchEntry;
 import fr.ird.animat.seas.Fisheries;
 import fr.ird.animat.Species;
 
@@ -62,9 +66,14 @@ final class CatchLayer extends fr.ird.seasview.layer.CatchLayer {
     private int timezoneOffset;
 
     /**
-     * Le jour des données affichées, en nombre de jours depuis le 1 janvier 1970 heure locale.
+     * La date des données affichées.
      */
-    private int day = Integer.MIN_VALUE;
+    private transient Date time;
+
+    /**
+     * Thread ayant la charge de mettre à jour les positions de pêches.
+     */
+    private transient Thread updater;
 
     /**
      * Construit une nouvelle couche.
@@ -91,22 +100,66 @@ final class CatchLayer extends fr.ird.seasview.layer.CatchLayer {
     }
 
     /**
+     * Retourne le jour de la date spécifiée, en nombre de jours
+     * depuis le 1 janvier 1970 en heure locale.
+     */
+    private int getDay(final Date time) {
+        if (time == null) {
+            return Integer.MIN_VALUE;
+        }
+        return (int)((time.getTime() + timezoneOffset) / (24*60*60*1000));
+    }
+
+    /**
      * Remet à jour la liste des captures. Cette méthode n'effectuera la mise à jour que si la
      * date spécifiée est à une journée différente de celle des données déjà en mémoire, afin
-     * d'éviter d'interroger base de données trop souvent.
+     * d'éviter d'interroger la base de données trop souvent.
      */
-    public void refresh(final Date time) {
-        if (time == null) {
-            setCatchs(null);
-            day = Integer.MIN_VALUE;
+    public synchronized void refresh(final Date time) {
+        if (getDay(time) == getDay(this.time)) {
             return;
         }
-        final int newDay = (int)((time.getTime() + timezoneOffset) / (24*60*60*1000));
-        if (newDay != day) try {
-            setCatchs(fisheries.getCatchs());
-            day = newDay;
-        } catch (SQLException exception) {
-            Utilities.unexpectedException("fr.ird.animat.viewer", "CatchLayer", "refresh", exception);
+        this.time = time;
+        if (updater == null) {
+            updater = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        refresh();
+                    } finally {
+                        updater = null;
+                    }
+                }
+            });
+            updater.setDaemon(true);
+            updater.setPriority(Thread.NORM_PRIORITY - 2);
+            updater.start();
         }
+        notifyAll();
+    }
+
+    /**
+     * Procède à la mise à jour des positions de pêches. Cette méthode est habituellement
+     * appelée dans un thread autre que celui de Swing.
+     */
+    private void refresh() {
+        while (isVisible()) {
+            try {
+                final List<CatchEntry> catchs = (time!=null) ? fisheries.getCatchs() : null;
+                synchronized (this) {
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            setCatchs(catchs);
+                        }
+                    });
+                    wait();
+                }
+            } catch (SQLException exception) {
+                Utilities.unexpectedException("fr.ird.animat.viewer", "CatchLayer", "refresh", exception);
+            } catch (InterruptedException exception) {
+                // Quelqu'un ne veut pas nous laisser dormir.
+                // Retourne au travail.
+            }
+        }
+        updater = null;
     }
 }

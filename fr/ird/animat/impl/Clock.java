@@ -143,6 +143,11 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
     }
 
     /**
+     * Retourne la date pour le numéro séquentiel spécifié.
+     */
+    public abstract Date getTime(final int step);
+
+    /**
      * Retourne la date au milieu du pas de temps courant.
      * Cette date est incrémentée toutes les fois que {@link #nextTimeStep} est appelée.
      */
@@ -252,6 +257,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          */
         public int getStepSequenceNumber() {
             return Clock.this.getStepSequenceNumber() - offset;
+        }
+        
+        /**
+         * Retourne la date pour le numéro séquentiel spécifié.
+         */
+        public Date getTime(final int step) {
+            return Clock.this.getTime(step + offset);
         }
 
         /**
@@ -429,6 +441,13 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
             final long delta = time - initialTime;
             assert delta>=0 && (delta % duration)==0 : delta;
             return (int) (delta/duration);
+        }
+        
+        /**
+         * Retourne la date pour le numéro séquentiel spécifié.
+         */
+        public Date getTime(final int step) {
+            return new Date(initialTime + step*duration);
         }
 
         /**

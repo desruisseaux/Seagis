@@ -43,6 +43,9 @@ import java.util.Arrays;
 // Divers
 import java.util.Date;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 
 // JAI
 import javax.media.jai.ParameterList;
@@ -63,6 +66,8 @@ import fr.ird.sql.fishery.CatchEntry;
 import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.FisheryDataBase;
 import fr.ird.sql.fishery.EnvironmentTable;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
 
 
 /**
@@ -324,6 +329,8 @@ public final class EnvironmentTableFiller {
      *         lors des accès à la base de données.
      */
     public void run() throws SQLException {
+        final Logger logger = Logger.getLogger("fr.ird.sql.fishery");
+        logger.info("Prépare le remplissage de la table d'environnement.");
         final CatchEntry[]   catchs = getCatchs();
         final ImageTable imageTable = images.getImageTable();
         final ParameterList  params = imageTable.setOperation(operation.name);
@@ -341,9 +348,16 @@ public final class EnvironmentTableFiller {
         for (final Iterator<Map.Entry<SeriesEntry,String[]>> it=series.entrySet().iterator(); it.hasNext();) {
             final Map.Entry<SeriesEntry,String[]> series = it.next();
             imageTable.setSeries(series.getKey());
-            final CatchCoverage    coverage = new CatchCoverage(imageTable);
+            final CatchCoverage coverage = new CatchCoverage(imageTable);
             coverage.setInterpolationAllowed(true);
-            final Task[]              tasks = Task.getTasks(catchs, coverage, daysToEvaluate);
+            final Task[] tasks = Task.getTasks(catchs, coverage, daysToEvaluate);
+            if (true) {
+                final LogRecord record = Resources.getResources(null).getLogRecord(Level.INFO,
+                                  ResourceKeys.POSITIONS_TO_EVALUATE_$1, new Integer(tasks.length));
+                record.setSourceClassName("EnvironmentTableFiller");
+                record.setSourceMethodName("run");
+                logger.log(record);
+            }
             final String[]       parameters = series.getValue();
             final EnvironmentTable[] update = new EnvironmentTable[TEST_ONLY ? 0 : parameters.length];
             for (int i=0; i<update.length; i++) {
@@ -356,6 +370,7 @@ public final class EnvironmentTableFiller {
             }
         }
         imageTable.close();
+        logger.info("Remplissage de la table d'environnement terminé.");
     }
 
     /**
