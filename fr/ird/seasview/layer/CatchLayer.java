@@ -53,10 +53,13 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.AffineTransform;
 
 // Graphics
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.RenderedImage;
+import java.awt.font.GlyphVector;
 
 // Miscellaneous
 import org.geotools.units.Unit;
@@ -178,14 +181,6 @@ public class CatchLayer extends RenderedMarks {
      * méthode {@link #getShape}.
      */
     private transient Arc2D arc;
-
-    /**
-     * Forme géométrique représentant une successions d'arcs. Cette forme
-     * est utilisée pour représenter un graphique en secteur ou chaque secteur
-     * ("pointe de tarte" d'un cercle) représente les captures d'une espèce en
-     * particulier.
-     */
-    private transient GeneralPath path;
 
 
 
@@ -365,65 +360,10 @@ public class CatchLayer extends RenderedMarks {
     }
 
     /**
-     * Returns the number of catch positions to display.
-     */
-    public int getCount() {
-        return catchs.size();
-    }
-
-    /**
      * Returns an iterator for iterating through catch marks.
      */
     public MarkIterator getMarkIterator() {
         return new Iterator();
-    }
-
-    /**
-     * Draw a mark for a catch position.
-     *
-     * @param graphics The destination graphics.
-     * @param shape    The shape to draw, in pixel coordinates.
-     * @param index    The index of the catch to draw.
-     */
-    protected void paint(final Graphics2D graphics, final Shape shape, final MarkIterator iterator)
-    {
-        final int index = ((Iterator)iterator).index;
-        switch (markType) {
-            case POSITIONS_ONLY: // fall through
-            case GEAR_COVERAGES: {
-                graphics.setColor(colors[index]);
-                if (useFill[index]) {
-                    graphics.fill(shape);
-                    graphics.setColor(colors[index].darker());
-                }
-                graphics.draw(shape);
-                break;
-            }
-            case CATCH_AMOUNTS: {
-                final CatchEntry   capture = catchs.get(index);
-                final Set<Species> species = capture.getSpecies();
-                final int            count = species.size();
-                if (count == 1) {
-                    graphics.setColor(colors[index]);
-                    graphics.fill(shape);
-                } else {
-                    final ShapeBroker broker=new ShapeBroker(shape);
-                    for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
-                        graphics.setColor(getIcon(it.next()).getColor());
-                        graphics.fill(broker);
-                        if (broker.finished()) {
-                            break;
-                        }
-                    }
-                }
-                graphics.setColor(Color.black);
-                graphics.draw(shape);
-                break;
-            }
-            default: {
-                throw new IllegalStateException();
-            }
-        }
     }
 
     /**
@@ -486,13 +426,20 @@ public class CatchLayer extends RenderedMarks {
          * Construct an iterator.
          */
         public Iterator() {
-            count = getCount();
+            count = catchs.size();
+        }
+        
+        /**
+         * Returns the current iterator index.
+         */
+        public int getIteratorPosition() {
+            return index;
         }
         
         /**
          * Moves the iterator to the specified index.
          */
-        public void seek(final int n) {
+        public void setIteratorPosition(final int n) {
             index = n;
         }
         
@@ -576,7 +523,14 @@ public class CatchLayer extends RenderedMarks {
                     final int            count = species.size();
                     switch (count) {
                         case 0: return null;
-                        case 1: return circle;
+                        case 1: {
+                            if (circle == null) {
+                                circle = new Ellipse2D.Float(-0.5f*DEFAULT_WIDTH,
+                                                             -0.5f*DEFAULT_WIDTH,
+                                                             DEFAULT_WIDTH, DEFAULT_WIDTH);
+                            }
+                            return circle;
+                        }
                     }
                     /*
                      * At this stage, we know that we have to draw a plot
@@ -586,8 +540,8 @@ public class CatchLayer extends RenderedMarks {
                     if (circle == null) {
                         circle = new Ellipse2D.Float(-0.5f*DEFAULT_WIDTH, -0.5f*DEFAULT_WIDTH, DEFAULT_WIDTH, DEFAULT_WIDTH);
                         arc    = new Arc2D.Float(circle.getBounds2D(), 0, 360, Arc2D.PIE);
-                        path   = new GeneralPath();
                     }
+                    final GeneralPath path = new GeneralPath();
                     final double scale = 360.0/capture.getCatch();
                     if (!(scale>0 && scale<Double.POSITIVE_INFINITY)) {
                         return null;
@@ -607,6 +561,55 @@ public class CatchLayer extends RenderedMarks {
                     return path;
                 }
                 default: throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * Draw a mark for a catch position.
+         */
+        protected void paint(final Graphics2D      graphics,
+                             final Shape           geographicArea,
+                             final Shape           markShape,
+                             final RenderedImage   markIcon,
+                             final AffineTransform iconXY,
+                             final GlyphVector     label,
+                             final Point2D.Float   labelXY)
+        {
+            switch (markType) {
+                case POSITIONS_ONLY: // fall through
+                case GEAR_COVERAGES: {
+                    graphics.setColor(colors[index]);
+                    if (useFill[index]) {
+                        graphics.fill(markShape);
+                        graphics.setColor(colors[index].darker());
+                    }
+                    graphics.draw(markShape);
+                    break;
+                }
+                case CATCH_AMOUNTS: {
+                    final CatchEntry   capture = catchs.get(index);
+                    final Set<Species> species = capture.getSpecies();
+                    final int            count = species.size();
+                    if (count == 1) {
+                        graphics.setColor(colors[index]);
+                        graphics.fill(markShape);
+                    } else {
+                        final ShapeBroker broker = new ShapeBroker(markShape);
+                        for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
+                            graphics.setColor(getIcon(it.next()).getColor());
+                            graphics.fill(broker);
+                            if (broker.finished()) {
+                                break;
+                            }
+                        }
+                    }
+                    graphics.setColor(Color.black);
+                    graphics.draw(markShape);
+                    break;
+                }
+                default: {
+                    throw new IllegalStateException();
+                }
             }
         }
 

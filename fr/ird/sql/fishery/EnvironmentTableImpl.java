@@ -556,7 +556,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                     update = null;
                 }
                 if (update == null) {
-                    update = statement.getConnection().prepareStatement(replaceQuestionMark(
+                    update = connection.prepareStatement(replaceQuestionMark(
                              preferences.get(ENVIRONMENTS+":UPDATE", SQL_UPDATE), column));
                     columnUpdate = column;
                 }
@@ -577,7 +577,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                         insert = null;
                     }
                     if (insert == null) {
-                        insert = statement.getConnection().prepareStatement(replaceQuestionMark(
+                        insert = connection.prepareStatement(replaceQuestionMark(
                                  preferences.get(ENVIRONMENTS+":INSERT", SQL_INSERT), column));
                         columnInsert = column;
                     }

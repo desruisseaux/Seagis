@@ -142,7 +142,7 @@ public final class VectorLayerControl extends LayerControl {
         }
         synchronized(this) {
             if (controler != null) {
-                layer.setColor(controler.getColor());
+                layer.setMarkPaint(controler.getColor());
                 setDecimation(layer, controler.getDecimation());
             }
         }
