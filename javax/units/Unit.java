@@ -101,8 +101,8 @@ public final class Unit implements Serializable
      * Check if amount of the specified unit
      * can be converted into amount of this unit.
      */
-    public boolean canConvert(final Unit unit)
-    {return this.unit==unit.unit;}
+    public boolean canConvert(final Unit other)
+    {return (unit==other.unit) || (unit!=null && unit.equals(other.unit));}
 
     /**
      * Convert a value from one unit to an other.
@@ -112,7 +112,7 @@ public final class Unit implements Serializable
     public double convert(final double value, final Unit unit)
     {
         if (canConvert(unit)) return value*unit.scale/scale;
-        throw new IllegalArgumentException(String.valueOf(unit));
+        throw new IllegalArgumentException("Can't convert from \""+this+"\" to \""+unit+"\".");
     }
 
     /**

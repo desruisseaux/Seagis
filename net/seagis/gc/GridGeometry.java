@@ -54,6 +54,8 @@ import java.awt.geom.AffineTransform;
 import java.io.Serializable;
 import net.seagis.resources.OpenGIS;
 import net.seagis.resources.Utilities;
+import net.seagis.resources.gcs.Resources;
+import net.seagis.resources.gcs.ResourceKeys;
 
 
 /**
@@ -317,7 +319,7 @@ public class GridGeometry implements Dimensioned, Serializable
     {
         if (gridToCoordinateSystem2D!=null)
             return gridToCoordinateSystem2D;
-        else throw new IllegalStateException(); // TODO
+        else throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_TRANSFORM2D_AVAILABLE));
     }
 
     /**
