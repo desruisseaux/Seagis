@@ -34,7 +34,6 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
-import java.util.Map;
 import net.seas.util.XClass;
 import java.rmi.RemoteException;
 
@@ -80,12 +79,13 @@ public abstract class CoordinateSystem extends Info
     {super(name);}
 
     /**
-     * Construct a coordinate system.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param properties The coordinate system properties.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    CoordinateSystem(final Map<String,String> properties)
-    {super(properties);}
+    CoordinateSystem(final CS_CoordinateSystem cs) throws RemoteException
+    {super(cs);}
 
     /**
      * Dimension of the coordinate system.
@@ -122,27 +122,6 @@ public abstract class CoordinateSystem extends Info
      */
     public Envelope getDefaultEnvelope()
     {return new Envelope(getDimension());}
-
-    /**
-     * Gets the transformation from this coordinate
-     * system to the specified coordinate system.
-     */
-    CoordinateTransformation transformFrom(final CoordinateSystem system)
-    {throw new UnsupportedOperationException();}
-
-    /**
-     * Gets the transformation from this coordinate
-     * system to the specified coordinate system.
-     */
-    CoordinateTransformation transformTo(final GeographicCoordinateSystem system)
-    {throw new UnsupportedOperationException();}
-
-    /**
-     * Gets the transformation from this coordinate
-     * system to the specified coordinate system.
-     */
-    CoordinateTransformation transformTo(final ProjectedCoordinateSystem system)
-    {throw new UnsupportedOperationException();}
 
     /**
      * Returns an OpenGIS interface for this coordinate

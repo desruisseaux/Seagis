@@ -22,12 +22,17 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_LinearUnit;
+import org.opengis.cs.CS_PrimeMeridian;
+import org.opengis.cs.CS_GeocentricCoordinateSystem;
+
 // Miscellaneous
-import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.opengis.ct.CoordinateTransformation;
+import java.rmi.RemoteException;
 
 
 /**
@@ -87,22 +92,18 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Construct a coordinate system.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param properties The coordinate system properties.
-     * @param unit       The linear unit.
-     * @param datum      The horizontal datum.
-     * @param meridian   The prime meridian.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    GeocentricCoordinateSystem(final Map<String,String> properties, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
+    GeocentricCoordinateSystem(final CS_GeocentricCoordinateSystem cs) throws RemoteException
     {
-        super(properties);
-        this.unit     = unit;
-        this.datum    = datum;
-        this.meridian = meridian;
-        ensureNonNull("unit",     unit);
-        ensureNonNull("datum",    datum);
-        ensureNonNull("meridian", meridian);
+        super(cs);
+        unit     = Adapters.wrap(cs.getLinearUnit());
+        datum    = Adapters.wrap(cs.getHorizontalDatum());
+        meridian = Adapters.wrap(cs.getPrimeMeridian());
+        // Accept null value.
     }
 
     /**

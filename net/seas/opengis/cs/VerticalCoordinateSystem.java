@@ -28,7 +28,6 @@ import org.opengis.cs.CS_VerticalDatum;
 import org.opengis.cs.CS_VerticalCoordinateSystem;
 
 // Miscellaneous
-import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -79,33 +78,32 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     public VerticalCoordinateSystem(final String name, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
     {
         super(name);
+        this.datum = datum;
+        this.unit  = unit;
+        this.axis  = axis;
         ensureNonNull("datum", datum);
         ensureNonNull("unit",  unit );
         ensureNonNull("axis",  axis );
         ensureLinearUnit(unit);
-        this.datum = datum;
-        this.unit  = unit;
-        this.axis  = axis;
     }
 
     /**
-     * Creates a vertical coordinate system from a datum and linear units.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param properties Properties to give new object.
-     * @param datum      Datum to use for new coordinate system.
-     * @param unit       Units to use for new coordinate system.
-     * @param axis       Axis to use for new coordinate system.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    VerticalCoordinateSystem(final Map<String,String> properties, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
+    VerticalCoordinateSystem(final CS_VerticalCoordinateSystem cs) throws RemoteException
     {
-        super(properties);
-        ensureNonNull("datum", datum);
-        ensureNonNull("unit",  unit );
-        ensureNonNull("axis",  axis );
-        ensureLinearUnit(unit);
-        this.datum = datum;
-        this.unit  = unit;
-        this.axis  = axis;
+        super(cs);
+        if (cs.getDimension()!=1)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
+        }
+        datum = Adapters.wrap(cs.getVerticalDatum());
+        unit  = Adapters.wrap(cs.getVerticalUnit());
+        axis  = Adapters.wrap(cs.getAxis(0));
+        // Accept null value.
     }
 
     /**

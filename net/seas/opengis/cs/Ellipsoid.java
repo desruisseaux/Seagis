@@ -138,25 +138,20 @@ public class Ellipsoid extends Info
     }
 
     /**
-     * Construct a new ellipsoid using the specified axis length.
+     * Wrap the specified OpenGIS ellipsoid.
      *
-     * @param properties        Properties of this ellipsoid.
-     * @param semiMajorAxis     The equatorial radius.
-     * @param semiMinorAxis     The polar radius.
-     * @param inverseFlattening The inverse of the flattening value.
-     * @param ivfDefinitive     Is the Inverse Flattening definitive for this ellipsoid?
-     * @param unit              The units of the semi-major and semi-minor axis values.
+     * @param  info The OpenGIS ellipsoid.
+     * @throws RemoteException if a remote call failed.
      */
-    Ellipsoid(final Map<String,String> properties, final double semiMajorAxis, final double semiMinorAxis, final double inverseFlattening, final boolean ivfDefinitive, final Unit unit)
+    Ellipsoid(final CS_Ellipsoid ellipsoid) throws RemoteException
     {
-        super(properties);
-        this.unit = unit;
-        this.semiMajorAxis     = check("semiMajorAxis",     semiMajorAxis);
-        this.semiMinorAxis     = check("semiMinorAxis",     semiMinorAxis);
-        this.inverseFlattening = check("inverseFlattening", inverseFlattening);
-        this.ivfDefinitive     = ivfDefinitive;
-        ensureNonNull ("unit", unit);
-        ensureLinearUnit(unit);
+        super(ellipsoid);
+        unit              = Adapters.wrap(ellipsoid.getAxisUnit());
+        semiMajorAxis     = ellipsoid.getSemiMajorAxis();
+        semiMinorAxis     = ellipsoid.getSemiMinorAxis();
+        inverseFlattening = ellipsoid.getInverseFlattening();
+        ivfDefinitive     = ellipsoid.isIvfDefinitive();
+        // Accept with no check.
     }
 
     /**

@@ -27,7 +27,6 @@ import org.opengis.cs.CS_Projection;
 import org.opengis.cs.CS_ProjectionParameter;
 
 // Miscellaneous
-import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
@@ -92,37 +91,31 @@ public class Projection extends Info
         ensureNonNull("classification", classification);
         ensureNonNull("parameters",     parameters);
         this.classification = classification;
-        this.parameters     = clone(parameters);
+        this.parameters = (Parameter[]) parameters.clone();
+        for (int i=0; i<this.parameters.length; i++)
+        {
+            ensureNonNull("parameters", this.parameters, i);
+            this.parameters[i] = this.parameters[i].clone();
+        }
     }
 
     /**
-     * Creates a projection.
+     * Wrap the specified OpenGIS projection.
      *
-     * @param properties     Properties to give new object.
-     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
-     * @param parameters     Parameters to use for projection, in metres or degrees.
+     * @param  projection The OpenGIS projection.
+     * @throws RemoteException if a remote call failed.
      */
-    Projection(final Map<String,String> properties, final String classification, final Parameter[] parameters)
+    Projection(final CS_Projection projection) throws RemoteException
     {
-        super(properties);
-        ensureNonNull("classification", classification);
-        ensureNonNull("parameters",     parameters);
-        this.classification = classification;
-        this.parameters     = clone(parameters);
-    }
-
-    /**
-     * Returns a deep clone of the specified parameters array.
-     */
-    private static Parameter[] clone(Parameter[] parameters)
-    {
-        parameters = (Parameter[]) parameters.clone();
+        super(projection);
+        classification = projection.getClassName();
+        parameters = new Parameter[projection.getNumParameters()];
         for (int i=0; i<parameters.length; i++)
         {
-            ensureNonNull("parameters", parameters, i);
-            parameters[i] = parameters[i].clone();
+            final CS_ProjectionParameter param = projection.getParameter(i);
+            if (param!=null)
+                parameters[i] = new Parameter(param.name, param.value);
         }
-        return parameters;
     }
 
     /**

@@ -36,6 +36,11 @@ import net.seas.resources.Resources;
 
 // Collections
 import java.util.Map;
+import java.util.HashMap;
+
+// References
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 // Remote Method Invocation
 import java.rmi.Remote;
@@ -75,7 +80,7 @@ public class Info implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 6074780819696693524L;
 
     /**
      * This object name.
@@ -91,35 +96,43 @@ public class Info implements Serializable
     private final Map<String,String> properties;
 
     /**
+     * OpenGIS object returned by {@link #cachedOpenGIS}.
+     * It may be a hard or a strong reference.
+     */
+    private transient Object proxy;
+
+    /**
      * Create an object with the specified name.
      *
      * @param name This object name.
      */
     public Info(final String name)
-    {this(name, null);}
-
-    /**
-     * Create an object with the specified properties.
-     *
-     * @param name This object name.
-     */
-    Info(final Map<String,String> properties)
-    {this(properties.get("name"), properties);}
-
-    /**
-     * Create an object with the specified name.
-     *
-     * @param name This object name.
-     * @param Properties for all methods except {@link #getName}.  For
-     *        example the method {@link #getAuthorityCode} returns the
-     *        value of property <code>"authorityCode"</code>.   May be
-     *        null if there is no properties for this object.
-     */
-    private Info(final String name, final Map<String,String> properties)
     {
         this.name=name;
-        this.properties=properties;
+        this.properties=null;
         ensureNonNull("name", name);
+    }
+
+    /**
+     * Wrap the specified OpenGIS structure.
+     *
+     * @param  info The OpenGIS structure.
+     * @throws RemoteException if a remote call failed.
+     */
+    Info(final CS_Info info) throws RemoteException
+    {
+        this.proxy = info;
+        // Note: current implementation search all info immediatly.
+        // Future implementation may differ fetching until needed.
+        properties = new HashMap<String,String>(16);
+        properties.put("name", this.name=info.getName());
+        properties.put("authority",      info.getAuthority());
+        properties.put("authorityCode",  info.getAuthorityCode());
+        properties.put("alias",          info.getAlias());
+        properties.put("abbreviation",   info.getAbbreviation());
+        properties.put("remarks",        info.getRemarks());
+        properties.put("WKT",            info.getWKT());
+        properties.put("XML",            info.getXML());
     }
 
     /**
@@ -216,6 +229,29 @@ public class Info implements Serializable
      */
     CS_Info toOpenGIS()
     {return new Export();}
+
+    /**
+     * Returns an OpenGIS interface for this info.
+     * This method first look in the cache. If no
+     * interface was previously cached, then this
+     * method invokes {@link #toOpenGIS} and cache
+     * the result.
+     */
+    final synchronized CS_Info cachedOpenGIS()
+    {
+        if (proxy!=null)
+        {
+            if (proxy instanceof Reference)
+            {
+                final Object ref = ((Reference) proxy).get();
+                if (ref!=null) return (CS_Info) ref;
+            }
+            else return (CS_Info) proxy;
+        }
+        final CS_Info info = toOpenGIS();
+        proxy = new WeakReference(info);
+        return info;
+    }
 
     /**
      * Make sure an argument is non-null.

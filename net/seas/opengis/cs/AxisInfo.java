@@ -135,7 +135,7 @@ public class AxisInfo implements Serializable
         /**
          * Serial number for interoperability with different versions.
          */
-        //private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = -4483288472675548351L;
 
         /**
          * The key for localization.

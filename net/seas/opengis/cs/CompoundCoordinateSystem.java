@@ -33,7 +33,6 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
-import java.util.Map;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import java.rmi.RemoteException;
@@ -85,19 +84,17 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Creates a compound coordinate system.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param properties Properties to give new object.
-     * @param head Coordinate system to use for earlier ordinates.
-     * @param tail Coordinate system to use for later ordinates.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    CompoundCoordinateSystem(final Map<String,String> properties, final CoordinateSystem head, final CoordinateSystem tail)
+    CompoundCoordinateSystem(final CS_CompoundCoordinateSystem cs) throws RemoteException
     {
-        super(properties);
-        this.head = head;
-        this.tail = tail;
-        ensureNonNull("head", head);
-        ensureNonNull("tail", tail);
+        super(cs);
+        this.head = Adapters.wrap(cs.getHeadCS());
+        this.tail = Adapters.wrap(cs.getTailCS());
+        // Accept null value.
     }
 
     /**

@@ -274,8 +274,38 @@ public class MathTransformFactory
         /**
          * Creates an affine transform from a matrix.
          */
-        public CT_MathTransform createAffineTransform(PT_Matrix matrix) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        public CT_MathTransform createAffineTransform(final PT_Matrix matrix) throws RemoteException
+        {
+            final double[][] rows = (double[][]) matrix.elt.clone();
+            final int   dimTarget = rows.length-1;
+            final int   dimSource = rows[0].length-1;
+            for (int i=0; i<=dimTarget; i++)
+            {
+                rows[i] = (double[])rows[i].clone();
+                if (rows[i].length-1 != dimSource)
+                {
+                    throw new IllegalArgumentException(Resources.format(Clé.ROW_LENGTH_MISMATCH));
+                }
+            }
+            /*
+             * If the user is requesting a 2D transform, delegate to the
+             * highly optimized java.awt.geom.AffineTransform class.
+             */
+            if (dimSource==2 && dimTarget==2)
+            {
+                final double[] row2 = rows[2];
+                if (row2[0]==0 && row2[1]==0 && row2[2]==1)
+                {
+                    final double[] row0 = rows[0];
+                    final double[] row1 = rows[1];
+                    return Adapters.export(MathTransformFactory.this.createAffineTransform(new AffineTransform(row0[0], row1[0], row0[1], row1[1], row0[2], row1[2])));
+                }
+            }
+            /*
+             * General case (not yet implemented).
+             */
+            throw new UnsupportedOperationException("Not implemented");
+        }
 
         /**
          * Creates a transform by concatenating two existing transforms.

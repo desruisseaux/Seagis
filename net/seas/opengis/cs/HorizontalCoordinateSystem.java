@@ -27,7 +27,6 @@ import org.opengis.cs.CS_HorizontalDatum;
 import org.opengis.cs.CS_HorizontalCoordinateSystem;
 
 // Miscellaneous
-import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -85,22 +84,22 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Construct a coordinate system.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param properties The coordinate system properties.
-     * @param datum      The horizontal datum.
-     * @param axis0      Details of 0th ordinates in created coordinate system.
-     * @param axis1      Details of 1st ordinates in created coordinate system.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    HorizontalCoordinateSystem(final Map<String,String> properties, final HorizontalDatum datum, final AxisInfo axis0, final AxisInfo axis1)
+    HorizontalCoordinateSystem(final CS_HorizontalCoordinateSystem cs) throws RemoteException
     {
-        super(properties);
-        this.datum = datum;
-        this.axis0 = axis0;
-        this.axis1 = axis1;
-        ensureNonNull("datum", datum);
-        ensureNonNull("axis0", axis0);
-        ensureNonNull("axis1", axis1);
+        super(cs);
+        if (cs.getDimension()!=2)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
+        }
+        datum = Adapters.wrap(cs.getHorizontalDatum());
+        axis0 = Adapters.wrap(cs.getAxis(0));
+        axis1 = Adapters.wrap(cs.getAxis(1));
+        // Accept null value.
     }
 
     /**

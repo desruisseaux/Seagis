@@ -25,8 +25,8 @@ package net.seas.opengis.cs;
 // OpenGIS dependencies
 import org.opengis.cs.CS_VerticalDatum;
 
-// Miscellaneous
-import java.util.Map;
+// Remote Method invocation
+import java.rmi.RemoteException;
 
 
 /**
@@ -55,13 +55,13 @@ public class VerticalDatum extends Datum
     {super(name, type);}
 
     /**
-     * Creates a vertical datum from an enumerated type value.
+     * Wrap the specified OpenGIS datum.
      *
-     * @param properties Properties to give new object.
-     * @param type Type of vertical datum to create.
+     * @param  datum The OpenGIS datum.
+     * @throws RemoteException if a remote call failed.
      */
-    VerticalDatum(final Map<String,String> properties, final DatumType.Vertical type)
-    {super(properties, type);}
+    VerticalDatum(final CS_VerticalDatum datum) throws RemoteException
+    {super(datum);}
 
     /**
      * Gets the type of the datum as an enumerated code.

@@ -36,7 +36,6 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
-import java.util.Map;
 import javax.units.Unit;
 import java.awt.geom.Point2D;
 import net.seas.util.XClass;
@@ -131,25 +130,18 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
-     * Creates a projected coordinate system using a projection object.
+     * Wrap an OpenGIS coordinate system.
      *
-     * @param  properties Properties to give new object.
-     * @param  gcs Geographic coordinate system to base projection on.
-     * @param  projection Projection from geographic to projected coordinate system.
-     * @param  unit Linear units of created PCS.
-     * @param  axis0 Details of 0th ordinates in created PCS coordinates.
-     * @param  axis1 Details of 1st ordinates in created PCS coordinates.
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
      */
-    ProjectedCoordinateSystem(final Map<String,String> properties, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
+    ProjectedCoordinateSystem(final CS_ProjectedCoordinateSystem cs) throws RemoteException
     {
-        super(properties, gcs.getHorizontalDatum(), axis0, axis1);
-        ensureNonNull("gcs",        gcs);
-        ensureNonNull("projection", projection);
-        ensureNonNull("unit",       unit);
-        ensureLinearUnit(unit);
-        this.gcs        = gcs;
-        this.projection = projection;
-        this.unit       = unit;
+        super(cs);
+        gcs        = Adapters.wrap(cs.getGeographicCoordinateSystem());
+        projection = Adapters.wrap(cs.getProjection());
+        unit       = Adapters.wrap(cs.getLinearUnit());
+        // Accept null value.
     }
 
     /**
@@ -199,13 +191,6 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
         }
         return false;
     }
-
-    /**
-     * Gets the transformation from this coordinate
-     * system to the specified coordinate system.
-     */
-    CoordinateTransformation transformFrom(final CoordinateSystem system)
-    {return transformTo(this);}
 
     /**
      * Returns an OpenGIS interface for this projected coordinate

@@ -32,7 +32,6 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 
 // Miscellaneous
-import java.util.Map;
 import java.util.Arrays;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -63,7 +62,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 8134569504808754836L;
+    private static final long serialVersionUID = 8506198734333409238L;
 
     /**
      * The local datum.
@@ -73,7 +72,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Units used along all axis.
      */
-    private final Unit unit;
+    private final Unit[] unit;
 
     /**
      * Axes details.
@@ -97,43 +96,35 @@ public class LocalCoordinateSystem extends CoordinateSystem
         super(name);
         ensureNonNull("datum", datum);
         ensureNonNull("unit",  unit );
-        this.datum = datum;
-        this.unit  = unit;
-        this.axes  = clone(axes);
-    }
-
-    /**
-     * Creates a local coordinate system. The dimension of the local coordinate
-     * system is determined by the size of the axis array.  All the axes will
-     * have the same units.  If you want to make a coordinate system with mixed
-     * units, then you can make a compound coordinate system from different local
-     * coordinate systems.
-     *
-     * @param properties Properties to give new object.
-     * @param datum      Local datum to use in created coordinate system.
-     * @param unit       Units to use for all axes in created coordinate system.
-     * @param axes       Axes to use in created coordinate system.
-     */
-    LocalCoordinateSystem(final Map<String,String> properties, final LocalDatum datum, final Unit unit, final AxisInfo[] axes)
-    {
-        super(properties);
-        ensureNonNull("datum", datum);
-        ensureNonNull("unit",  unit );
-        this.datum = datum;
-        this.unit  = unit;
-        this.axes  = clone(axes);
-    }
-
-    /**
-     * Returns a clone of the axis array.
-     */
-    private static AxisInfo[] clone(AxisInfo[] axes)
-    {
         ensureNonNull("axes",  axes );
-        axes = (AxisInfo[])axes.clone();
+        this.datum = datum;
+        this.unit  = new Unit[axes.length];
+        this.axes  = (AxisInfo[])axes.clone();
+        for (int i=0; i<this.axes.length; i++)
+        {
+            this.unit[i] = unit;
+            ensureNonNull("axes", this.axes, i);
+        }
+    }
+
+    /**
+     * Wrap an OpenGIS coordinate system.
+     *
+     * @param  cs The OpenGIS coordinate system.
+     * @throws RemoteException if a remote call failed.
+     */
+    LocalCoordinateSystem(final CS_LocalCoordinateSystem cs) throws RemoteException
+    {
+        super(cs);
+        datum = Adapters.wrap(cs.getLocalDatum());
+        axes  = new AxisInfo[cs.getDimension()];
+        unit  = new Unit[axes.length];
         for (int i=0; i<axes.length; i++)
-            ensureNonNull("axes", axes, i);
-        return axes;
+        {
+            axes[i] = Adapters.wrap(cs.getAxis (i));
+            unit[i] = Adapters.wrap(cs.getUnits(i));
+            // Accept null value.
+        }
     }
 
     /**
@@ -162,23 +153,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * @param dimension Zero based index of axis.
      */
     public Unit getUnits(final int dimension)
-    {
-        if (dimension>=0 && dimension<getDimension()) return unit;
-        throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
-    }
-
-    /**
-     * Gets default envelope of coordinate system.
-     */
-    public Envelope getDefaultEnvelope()
-    {
-        final int dimension = getDimension();
-        final CoordinatePoint minCP = new CoordinatePoint(dimension);
-        final CoordinatePoint maxCP = new CoordinatePoint(dimension);
-        Arrays.fill(minCP.ord, Double.NEGATIVE_INFINITY);
-        Arrays.fill(maxCP.ord, Double.POSITIVE_INFINITY);
-        return new Envelope(minCP, maxCP);
-    }
+    {return unit[dimension];}
 
     /**
      * Compares the specified object with
@@ -190,7 +165,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
         {
             final LocalCoordinateSystem that = (LocalCoordinateSystem) object;
             return XClass.equals(this.datum, that.datum) &&
-                   XClass.equals(this.unit , that.unit ) &&
+                   Arrays.equals(this.unit , that.unit ) &&
                    Arrays.equals(this.axes , that.axes );
         }
         return false;

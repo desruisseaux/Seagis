@@ -25,8 +25,8 @@ package net.seas.opengis.cs;
 // OpenGIS dependencies
 import org.opengis.cs.CS_LocalDatum;
 
-// Miscellaneous
-import java.util.Map;
+// Remote Method Invocation
+import java.rmi.RemoteException;
 
 
 /**
@@ -59,13 +59,13 @@ public class LocalDatum extends Datum
     {super(name, type);}
 
     /**
-     * Creates a local datum.
+     * Wrap the specified OpenGIS datum.
      *
-     * @param properties Properties to give new object.
-     * @param localDatumType Type of local datum to create.
+     * @param  datum The OpenGIS datum.
+     * @throws RemoteException if a remote call failed.
      */
-    LocalDatum(final Map<String,String> properties, final DatumType.Local type)
-    {super(properties, type);}
+    LocalDatum(final CS_LocalDatum datum) throws RemoteException
+    {super(datum);}
 
     /**
      * Gets the type of the datum as an enumerated code.

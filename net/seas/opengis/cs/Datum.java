@@ -27,7 +27,6 @@ import org.opengis.cs.CS_Datum;
 import org.opengis.cs.CS_DatumType;
 
 // Miscellaneous
-import java.util.Map;
 import net.seas.util.XClass;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -77,17 +76,16 @@ public class Datum extends Info
     }
 
     /**
-     * Construct a new datum with the
-     * specified properties and datum type.
+     * Wrap the specified OpenGIS datum.
      *
-     * @param properties The datum properties.
-     * @param type       The datum type.
+     * @param  datum The OpenGIS datum.
+     * @throws RemoteException if a remote call failed.
      */
-    Datum(final Map<String,String> properties, final DatumType type)
+    Datum(final CS_Datum datum) throws RemoteException
     {
-        super(properties);
-        this.type = type;
-        ensureNonNull("type", type);
+        super(datum);
+        type = Adapters.wrap(datum.getDatumType());
+        // Accept null value.
     }
 
     /**

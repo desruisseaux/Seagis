@@ -92,20 +92,17 @@ public class HorizontalDatum extends Datum
     }
 
     /**
-     * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
+     * Wrap the specified OpenGIS datum.
      *
-     * @param properties Properties to give new object.
-     * @param type       Type of horizontal datum to create.
-     * @param ellipsoid  Ellipsoid to use in new horizontal datum.
-     * @param toWGS84    Suggested approximate conversion from new datum to WGS84,
-     *                   or <code>null</code> if there is none.
+     * @param  datum The OpenGIS datum.
+     * @throws RemoteException if a remote call failed.
      */
-    HorizontalDatum(final Map<String,String> properties, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo parameters)
+    HorizontalDatum(final CS_HorizontalDatum datum) throws RemoteException
     {
-        super(properties, type);
-        this.ellipsoid  = ellipsoid;
-        this.parameters = (parameters!=null) ? parameters.clone() : null;
-        ensureNonNull("ellipsoid", ellipsoid);
+        super(datum);
+        ellipsoid  = Adapters.wrap(datum.getEllipsoid());
+        parameters = Adapters.wrap(datum.getWGS84Parameters());
+        // Accept null value.
     }
 
     /**
