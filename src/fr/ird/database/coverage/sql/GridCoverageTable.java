@@ -519,10 +519,13 @@ class GridCoverageTable extends Table implements CoverageTable {
 
     /**
      * {@inheritDoc}
+     *
+     * @task TODO: Move hard-coded SQL statements into some configuration file.
      */
     public final synchronized CoverageEntry getEntry(final int ID) throws SQLException {
         if (imageByID == null) {
-            final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT))+" WHERE ID=?";
+            final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+                                        " WHERE "+GRID_COVERAGES+".ID=?";
             imageByID = statement.getConnection().prepareStatement(query);
         }
         imageByID.setInt(1, ID);
@@ -531,6 +534,8 @@ class GridCoverageTable extends Table implements CoverageTable {
 
     /**
      * {@inheritDoc}
+     *
+     * @task TODO: Move hard-coded SQL statements into some configuration file.
      */
     public final synchronized CoverageEntry getEntry(final String name) throws SQLException {
         if (imageByName == null) {
