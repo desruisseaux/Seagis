@@ -105,13 +105,17 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      */
     public Matrix getAffineTransform()
     {
-        final double S = 1 + ppm/1E+6;
+        // Note: (ex, ey, ez) is a rotation in microdegrees.
+        //       We need to convert it into radians (the 'R'
+        //       factor in RS).
+        final double  S = 1 + ppm/1E+6;
+        final double RS = (Math.PI/(180*1E+6)) * S;
         return new Matrix(4,4, new double[]
         {
-                 S,  -ez*S,  +ey*S,  dx,
-             +ez*S,      S,  -ex*S,  dy,
-             -ey*S,  +ex*S,      S,  dz,
-                 0,      0,      0,   1
+                 S,  -ez*RS,  +ey*RS,  dx,
+             +ez*RS,      S,  -ex*RS,  dy,
+             -ey*RS,  +ex*RS,      S,  dz,
+                  0,       0,      0,   1
         });
     }
 
@@ -182,13 +186,13 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
     public String toString()
     {
         final StringBuffer buffer=new StringBuffer("TOWGS84[\"");
-        buffer.append(areaOfUse);
-        buffer.append(dx); buffer.append(", ");
-        buffer.append(dy); buffer.append(", ");
-        buffer.append(dz); buffer.append(", ");
-        buffer.append(ex); buffer.append(", ");
-        buffer.append(ey); buffer.append(", ");
-        buffer.append(ez); buffer.append(", ");
+        buffer.append(areaOfUse); buffer.append("\", ");
+        buffer.append(dx);        buffer.append(", ");
+        buffer.append(dy);        buffer.append(", ");
+        buffer.append(dz);        buffer.append(", ");
+        buffer.append(ex);        buffer.append(", ");
+        buffer.append(ey);        buffer.append(", ");
+        buffer.append(ez);        buffer.append(", ");
         buffer.append(ppm);
         buffer.append(']');
         return buffer.toString();
