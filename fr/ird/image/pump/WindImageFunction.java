@@ -244,34 +244,57 @@ class WindImageFunction extends AbstractImageFunction {
     }
 
     /**
-     * Run the program. Optional arguments are:
-     * <ul>
-     *   <li><code>-width</code> = <var>[integer]</var></code>
-     *       The image width. Default to 1024</code>.</li>
-     *   <li><code>-height</code> = <var>[integer]</var></code>
-     *       The image height. Default to 512</code>.</li>
-     *   <li><code>-output = <var>[PNG file]</var></code>
-     *       The file were to write the PNG image. If ommited, then
-     *       the image will be displayed to screen.</li>
-     * </ul>
+     * Retourne le poid à donner à une valeur en fonction de sa
+     * distance.
+     *
+     * Cette méthode est inspirée de la méthode utilisée par la Nasa pour créer des images
+     * d'anomalie de la hauteur de l'eau à partir des données de Topex/Poseidon:
+     *
+     * <blockquote>
+     *     The color images of TOPEX data are produced using a radial exponential weighting
+     *     function to fill in the gaps between ground tracks. This fill-in is performed in
+     *     order to obtain a smoother, more understandable presentation of the data.   Each
+     *     pixel on the output graphical image is assigned a value,   which is derived from
+     *     whatever raw TOPEX measurements fall within a 9 degree radius of the point being
+     *     "filled in". Each raw data value which is within the cutoff radius is assigned a
+     *     weighting value. Raw data points closest to the "fill-in" pixel get a value near
+     *     1, while points near the cutoff radius get a value nearer 0.  The final weighted
+     *     value at the "fill in" pixel is determined in two steps.   First, a numerator is
+     *     formed, the sum of the various raw data values, each multiplied by its own
+     *     weighting value.  Then that sum is divided by a denominator, which is the sum of
+     *     the weighting values which were used in forming the numerator. 
+     * </blockquote>
+     *
+     * <P align="right"><i>How TOPEX Images are Generated</i> in
+     * <A HREF="http://podaac.jpl.nasa.gov/topex/www/process.html">http://podaac.jpl.nasa.gov/topex/www/process.html</A>
+     *
+     * @param  distance Distance entre la position d'une valeur et
+     *         le centre du pixel, en mètres.  Cette distance sera
+     *         précise à la condition qu'un système de coordonnées
+     *         approprié  ait été spécifié lors de la construction
+     *         de cet objet.
+     * @return Un poid à donner aux mesures qui se trouvent à cette
+     *         distance. Il peut s'agir de n'importe quel nombre réel
+     *         positif (pas nécessairement entre 0 et 1).
+     */
+    protected double getWeight(final double distance) {
+        // Le nombre au dénominateur est la distance à laquelle le poid
+        // n'est plus que de 37% de ce qu'il était au centre. Au double
+        // de cette distance, le poid est de 14%.
+        return Math.exp(distance / -25000);
+    }
+
+    /**
+     * Display in a windows the wind image for the specified files. This method is
+     * for testing purpose only. See {@link EkmanPumpingImageFunction#main} for a
+     * more complete console application.
      */
     public static void main(String[] args) throws IOException {
         final Arguments arguments = new Arguments(args);
         if (args.length == 0) {
-            arguments.out.println("Crée une image représentant l'intensité du vent.");
-            arguments.out.println("Arguments optionels:");
-            arguments.out.println("  -width  = [entier]    Largeur de l'image (1024 par défaut)");
-            arguments.out.println("  -height = [entier]    Hauteur de l'image ( 512 par défaut)");
-            arguments.out.println("  -output = [fichier]   Fichier PNG dans lequel enregistrer");
-            arguments.out.println();
-            arguments.out.println("Les autres arguments sont les noms de répertoires et/ou de fichiers L2B à lire.");
+            arguments.out.println("Voir EkmanPumpingImageFunction pour la version complète.");
             return;
         }
-        final String destination = arguments.getOptionalString("-output");
-        final Integer   optWidth = arguments.getOptionalInteger("-width");
-        final Integer  optHeight = arguments.getOptionalInteger("-height");
-        final int width  = (optWidth != null) ? optWidth.intValue() : 1024;
-        final int height = (optWidth != null) ? optWidth.intValue() :  512;
         args = arguments.getRemainingArguments(Integer.MAX_VALUE);
         final File[] files = new File[args.length];
         for (int i=0; i<args.length; i++) {
@@ -281,13 +304,7 @@ class WindImageFunction extends AbstractImageFunction {
         if (false) {
             function.setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
         }
-        final GridCoverage image;
-        if (destination != null) {
-            image = function.getGridCoverage("Vent", width, height);
-            ImageIO.write(image.geophysics(true).getRenderedImage(), "png", new File(destination));
-        } else {
-            image = function.show("Vent", width, height);
-        }
+        function.show("Vent", 1024, 512);
         function.dispose();
     }
 }
