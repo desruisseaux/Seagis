@@ -46,7 +46,7 @@ public final class GridRange implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 4840837441311884179L;
 
     /**
      * Minimum and maximum grid ordinates. The first half contains minimum

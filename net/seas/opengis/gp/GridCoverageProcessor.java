@@ -50,6 +50,19 @@ public abstract class GridCoverageProcessor
     {}
 
     /**
+     * Returns the number of operations supported by this grid coverage processor.
+     */
+    public abstract int getNumOperations();
+
+    /**
+     * Retrieve a grid processing operation information. The operation information
+     * will contain the name of the operation as well as a list of its parameters.
+     *
+     * @param index The operation index, from 0 inclusive to {@link #getNumOperations()} exclusive.
+     */
+    public abstract Operation getOperation(int index);
+
+    /**
      * Apply a process operation to a grid coverage.
      *
      * @param  operationName Name of the operation to be applied to the grid coverage..

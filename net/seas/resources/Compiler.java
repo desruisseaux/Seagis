@@ -351,7 +351,7 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
         /*
          * Procède au chargement des ID déjà existants.
          */
-        int nextID = 0;
+        int nextID = 1; // 0 is a reserved ID for no resources.
         for (final Iterator<String> it=keysByPackage.keySet().iterator(); it.hasNext();)
         {
             final String classname = it.next();

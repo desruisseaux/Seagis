@@ -46,17 +46,19 @@ public abstract class Coverage
     /**
      * Returns the coordinate system. This specifies the coordinate system used
      * when accessing a coverage or grid coverage with the “evaluate” methods.
-     * It is also the coordinate system of the coordinates used with the
-     * math transform. This coordinate system is usually different than
+     * It is also the coordinate system of the coordinates used with the math
+     * transform {@link net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
+     * gridToCoordinateSystem()}. This coordinate system is usually different than
      * the grid coordinate system of the grid. A grid coverage can be accessed
      * (re-projected) with new coordinate system with the
-     * {@link net.seas.opengis.gp.GridCoverageProcessor} component. In this case,
-     * a new instance of a grid coverage is created.
+     * {@link net.seas.opengis.gp.GridCoverageProcessor} component.
+     * In this case, a new instance of a grid coverage is created.
      *
      * @return The coordinate system, or <code>null</code> if this coverage
      *         does not have an associated coordinate system.
      *
      * @see net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
+     * @see net.seas.opengis.gp.GridCoverageProcessor#move
      */
     public abstract CoordinateSystem getCoordinateSystem();
 
@@ -85,7 +87,7 @@ public abstract class Coverage
     /**
      * Retrieve sample dimension information for the coverage. For a grid coverage,
      * a sample dimension is a band. The sample dimension information include such
-     * things as description, data type of the value (bit, byte, integer…), the no
+     * things as description, data type of the value (bit, byte, integer...), the no
      * data values, minimum and maximum values and a color table if one is associated
      * with the dimension. A coverage must have at least one sample dimension.
      */

@@ -25,6 +25,11 @@ package net.seas.opengis.gc;
 // Coordinate systems
 import net.seas.opengis.cs.CoordinateSystem;
 
+// Input/output
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.IIOException;
+
 
 /**
  * Support for creation of grid coverages from persistent formats
@@ -43,6 +48,31 @@ public abstract class GridCoverageExchange
      */
     public GridCoverageExchange()
     {}
+
+    /**
+     * Export a grid coverage to a persistent file format.
+     *
+     * @param gridCoverage Source grid coverage.
+     * @param fileFormat String which indicates exported file format.
+     *        The file format types are implementation specific.
+     *        Sample file formats include:
+     *        <ul>
+     *          <li>“GeoTIFF” - GeoTIFF</li>
+     *          <li>“PIX” - PCI Geomatics PIX</li>
+     *          <li>“HDF-EOS” - NASA HDF-EOS</li>
+     *          <li>“NITF” - National Image Transfer Format</li>
+     *          <li>“STDS-DEM” - Standard Transfer Data Standard</li>
+     *        </ul>
+     *        Note: none of the above cited file formats are currently implemented.
+     *
+     * @param fileName File name to store grid coverage. This file name can be any
+     *        valid file name within the underlying operating system of the server.
+     *
+     * @throws IOException if an input/output operation (including RMI) failed.
+     * @throws IIOException if the file format is not compatiable with the grid
+     *         coverage.
+     */
+    public abstract void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException;
 
     /**
      * Create a new coverage with a different coordinate reference system.

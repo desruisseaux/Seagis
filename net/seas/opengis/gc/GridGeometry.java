@@ -22,8 +22,13 @@
  */
 package net.seas.opengis.gc;
 
-// Dependencies
+// OpenGIS (SEAGIS) dependencies
 import net.seas.opengis.ct.MathTransform;
+import net.seas.opengis.ct.MathTransformFactory;
+
+// Miscellaneous
+import java.io.Serializable;
+import java.awt.geom.AffineTransform;
 
 
 /**
@@ -36,8 +41,13 @@ import net.seas.opengis.ct.MathTransform;
  *
  * @see org.opengis.gc.GC_GridGeometry
  */
-public abstract class GridGeometry
+public class GridGeometry implements Serializable
 {
+    /**
+     * Serial number for interoperability with different versions.
+     */
+    // private static final long serialVersionUID = ?; // TODO
+
     /**
      * The valid coordinate range of a grid coverage. The lowest
      * valid grid coordinate is zero. A grid with 512 cells can
@@ -47,12 +57,39 @@ public abstract class GridGeometry
     private final GridRange range;
 
     /**
+     * The affine transform, or <code>null</code> if the transform
+     * can't be represented as a 2D affine transform.
+     */
+    private final AffineTransform transformJAI;
+
+    /**
+     * The math transform. If <code>null</code>, will be
+     * computed from {@link #transformJAI} when requested.
+     */
+    private MathTransform transform;
+
+    /**
      * Construct a new grid geometry.
      *
      * @param range The valid coordinate range of a grid coverage.
      */
-    public GridGeometry(final GridRange range)
-    {this.range = range;}
+    public GridGeometry(final GridRange range, final MathTransform transform)
+    {
+        this.range     = range;
+        this.transform = transform;
+        transformJAI   = null;
+    }
+
+    /**
+     * Construct a new grid geometry.
+     *
+     * @param range The valid coordinate range of a grid coverage.
+     */
+    public GridGeometry(final GridRange range, final AffineTransform transform)
+    {
+        this.range   = range;
+        transformJAI = new AffineTransform(transform);
+    }
 
     /**
      * Returns the valid coordinate range of a grid coverage.
@@ -69,6 +106,37 @@ public abstract class GridGeometry
      * affine transformation. The coordinate system of the real world coordinates
      * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
      * math transform is available, this method returns <code>null</code>.
+     * <br><br>
+     * The default implementation compute the math
+     * transform from {@link #gridToCoordinateJAI}.
      */
-    public abstract MathTransform gridToCoordinateSystem();
+    public synchronized MathTransform gridToCoordinateSystem()
+    {
+        if (transform==null)
+        {
+            final AffineTransform tr = gridToCoordinateJAI();
+            if (tr!=null)
+            {
+                // AffineTransform's operations are applied in reverse order.
+                // We translate the grid coordinate by (0.5,0.5) first (which
+                // set the position in the pixel center),  and then apply the
+                // transformation specified by gridToCoordinateJAI().
+                tr.translate(0.5, 0.5);
+                transform = MathTransformFactory.DEFAULT.createAffineTransform(tr);
+            }
+        }
+        return transform;
+    }
+
+    /**
+     * Returns the affine transform which allows for the transformations from grid
+     * coordinates to real world earth coordinates.    The returned affine follows
+     * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>
+     * convention, i.e. its convert the pixel's <em>upper left corner</em> coordinates
+     * (<var>i</var>,<var>j</var>) into real world earth coordinates (<var>x</var>,<var>y</var>).
+     * In contrast, {link #gridToCoordinateSystem()} contert the pixel's <em>center</em>
+     * coordinates into real world earth coordinates.
+     */
+    public AffineTransform gridToCoordinateJAI()
+    {return (transformJAI!=null) ? (AffineTransform) transformJAI.clone() : null;}
 }
