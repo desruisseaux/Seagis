@@ -125,6 +125,24 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Vertical DEPTH = new Vertical("DEPTH", 2006, Clé.DEPTH);
 
     /**
+     * <FONT COLOR="#FF6633">A temporal datum for Universal Time (UTC).</FONT>
+     * UTC is based on an atomic clock, while GMT is based on astronomical observations.
+     * <br><br>
+     * <strong>Note: This enum is not part of OpenGIS specification. It may change
+     *         in incompatible way if OpenGIS define an equivalent enum.</strong>
+     */
+    public static final Temporal UTC = new Temporal("UTC", 3001, Clé.UTC);
+
+    /**
+     * <FONT COLOR="#FF6633">A temporal datum for Greenwich Mean Time (GMT).</FONT>
+     * GMT is based on astronomical observations, while UTC is based on an atomic clock.
+     * <br><br>
+     * <strong>Note: This enum is not part of OpenGIS specification. It may change
+     *         in incompatible way if OpenGIS define an equivalent enum.</strong>
+     */
+    public static final Temporal GMT = new Temporal("GMT", 3002, Clé.GMT);
+
+    /**
      * List of predefined enum types.
      */
     private static final DatumType[] ENUMS =
@@ -138,7 +156,9 @@ public abstract class DatumType extends EnumeratedParameter
         ALTITUDE_BAROMETRIC,
         NORMAL,
         GEOID_MODEL_DERIVED,
-        DEPTH
+        DEPTH,
+        UTC,
+        GMT
     };
 
     /**
@@ -181,6 +201,10 @@ public abstract class DatumType extends EnumeratedParameter
         {
             datum = new Vertical("Custom", value, 0);
         }
+        else if (value>=Temporal.MINIMUM && value<=Temporal.MAXIMUM)
+        {
+            datum = new Temporal("Custom", value, 0);
+        }
         else if (value>=Local.MINIMUM && value<=Local.MAXIMUM)
         {
             datum = new Local("Custom", value, 0);
@@ -200,6 +224,13 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
+     * Returns <code>true</code> if the specified orientation is compatible
+     * with this datum type. For example, a vertical datum is compatible only
+     * with orientations UP and DOWN.
+     */
+    abstract boolean isCompatibleOrientation(final AxisOrientation orientation);
+
+    /**
      * Get the minimum value.
      */
     abstract int getMinimum();
@@ -216,7 +247,7 @@ public abstract class DatumType extends EnumeratedParameter
 
     /**
      * <FONT COLOR="#FF6633">Return the type name in the specified locale.</FONT>
-     * Type may be "Horizontal", "Vertical" ou "Local".
+     * Type may be "Horizontal", "Vertical", "Temporal" or "Local".
      */
     public String getType(final Locale locale)
     {return Resources.getResources(locale).getString(getTypeKey());}
@@ -278,6 +309,19 @@ public abstract class DatumType extends EnumeratedParameter
         private Horizontal(final String name, final int value, final int clé)
         {super(name, value, clé);}
 
+        /**
+         * Returns <code>true</code> if the specified orientation is compatible
+         * with this datum type. Compatible orientations are NORTH, SOUTH, EAST
+         * and WEST.
+         */
+        boolean isCompatibleOrientation(final AxisOrientation orientation)
+        {
+            return AxisOrientation.NORTH.equals(orientation) ||
+                   AxisOrientation.SOUTH.equals(orientation) ||
+                   AxisOrientation.EAST .equals(orientation) ||
+                   AxisOrientation.WEST .equals(orientation);
+        }
+
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
         /** Return the type key.   */ final int getTypeKey() {return Clé.HORIZONTAL;}
@@ -317,9 +361,71 @@ public abstract class DatumType extends EnumeratedParameter
         private Vertical(final String name, final int value, final int clé)
         {super(name, value, clé);}
 
+        /**
+         * Returns <code>true</code> if the specified orientation is compatible
+         * with this datum type. Compatible orientations are UP and DOWN.
+         */
+        boolean isCompatibleOrientation(final AxisOrientation orientation)
+        {
+            return AxisOrientation.UP  .equals(orientation) ||
+                   AxisOrientation.DOWN.equals(orientation);
+        }
+
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
         /** Return the type key.   */ final int getTypeKey() {return Clé.VERTICAL;}
+    }
+
+    /**
+     * <FONT COLOR="#FF6633">Temporal datum type.</FONT>
+     *
+     * @version 1.00
+     * @author Martin Desruisseaux
+     */
+    public static final class Temporal extends DatumType
+    {
+        /**
+         * <code>serialVersionUID</code> for interoperability with previous versions.
+         */
+        // private static final long serialVersionUID = ?; // TODO
+
+        /**
+         * Lowest possible value for temporal datum types.
+         * <br><br>
+         * <strong>Note: Temporal enums are not part of OpenGIS specification. The
+         *               <code>MINIMUM</code> "constant" may change in the future
+         *               if OpenGIS defines an equivalent datum type.</strong>
+         */
+        public static final int MINIMUM = 3000;
+
+        /**
+         * Highest possible value for temporal datum types.
+         * <br><br>
+         * <strong>Note: Temporal enums are not part of OpenGIS specification. The
+         *               <code>MAXIMUM</code> "constant" may change in the future
+         *               if OpenGIS defines an equivalent datum type.</strong>
+         */
+        public static final int MAXIMUM = 3999;
+
+        /**
+         * Construct a new enum with the specified value.
+         */
+        private Temporal(final String name, final int value, final int clé)
+        {super(name, value, clé);}
+
+        /**
+         * Returns <code>true</code> if the specified orientation is compatible
+         * with this datum type. Compatible orientations are FUTURE and PAST.
+         */
+        boolean isCompatibleOrientation(final AxisOrientation orientation)
+        {
+            return AxisOrientation.FUTURE.equals(orientation) ||
+                   AxisOrientation.PAST  .equals(orientation);
+        }
+
+        /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
+        /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
+        /** Return the type key.   */ final int getTypeKey() {return Clé.TEMPORAL;}
     }
 
     /**
@@ -350,6 +456,13 @@ public abstract class DatumType extends EnumeratedParameter
          */
         private Local(final String name, final int value, final int clé)
         {super(name, value, clé);}
+
+        /**
+         * Returns <code>true</code> if the specified orientation is compatible
+         * with this datum type. Local datum accept all orientations.
+         */
+        boolean isCompatibleOrientation(final AxisOrientation orientation)
+        {return true;}
 
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}

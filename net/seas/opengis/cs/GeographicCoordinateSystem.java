@@ -154,17 +154,9 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      */
     public Unit getUnits(final int dimension)
     {
-        if (dimension>=0 && dimension<getDimension()) return getAngularUnit();
+        if (dimension>=0 && dimension<getDimension()) return unit;
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
-
-    /**
-     * Gets angular unit. This convenience is equivalent to
-     * <code>{@link #getUnits getUnits}(0)</code> or
-     * <code>{@link #getUnits getUnits}(1)</code>.
-     */
-    public Unit getAngularUnit()
-    {return unit;}
 
     /**
      * Returns the prime meridian.
@@ -281,7 +273,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          * Returns the AngularUnit.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
-        {return (CS_AngularUnit) adapters.export(GeographicCoordinateSystem.this.getAngularUnit());}
+        {return (CS_AngularUnit) adapters.export(GeographicCoordinateSystem.this.getUnits());}
 
         /**
          * Returns the PrimeMeridian.

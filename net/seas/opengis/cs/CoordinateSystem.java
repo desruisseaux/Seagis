@@ -92,14 +92,20 @@ public abstract class CoordinateSystem extends Info
      * (e.g. two north axis, or a east and a west axis).
      * This methods may be invoked from subclasses constructors.
      *
+     * @param  type The datum type, or <code>null</code> if unknow.
      * @throws IllegalArgumentException if two axis have the same direction.
      */
-    final void checkAxis() throws IllegalArgumentException
+    final void checkAxis(final DatumType type) throws IllegalArgumentException
     {
-        final int dimension = getDimension();
+        final int  dimension = getDimension();
         for (int i=0; i<dimension; i++)
         {
-            final AxisOrientation check = getAxis(i).orientation.absolute();
+            AxisOrientation check = getAxis(i).orientation;
+            if (type!=null && !type.isCompatibleOrientation(check))
+            {
+                throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_AXIS_ORIENTATION¤1, check.getName(null)));
+            }
+            check = check.absolute();
             if (!check.equals(AxisOrientation.OTHER))
             {
                 for (int j=i+1; j<dimension; j++)
@@ -135,6 +141,23 @@ public abstract class CoordinateSystem extends Info
      * @param dimension Zero based index of axis.
      */
     public abstract Unit getUnits(int dimension);
+
+    /**
+     * If all dimensions use the same units, returns this
+     * units. Otherwise, returns <code>null</code>.
+     */
+    final Unit getUnits()
+    {
+        Unit units = null;
+        for (int i=getDimension(); --i>=0;)
+        {
+            final Unit check = getUnits(i);
+            if (units==null) units=check;
+            else if (!units.equals(check))
+                return null;
+        }
+        return units;
+    }
 
     /**
      * Gets default envelope of coordinate system.

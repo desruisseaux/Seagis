@@ -106,7 +106,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
             this.unit[i] = unit;
             ensureNonNull("axes", this.axes, i);
         }
-        checkAxis();
+        checkAxis(datum.getDatumType());
     }
 
     /**

@@ -68,19 +68,17 @@ public final class AxisOrientation extends EnumeratedParameter
 
     /**
      * Increasing ordinates values go South.
-     * This is rarely used.
      */
     public static final AxisOrientation SOUTH = new AxisOrientation("SOUTH", 2, Clé.SOUTH);
 
     /**
      * Increasing ordinates values go East.
-     * This is rarely used.
+     * This is usually used for Grid X coordinates and Longitude.
      */
     public static final AxisOrientation EAST = new AxisOrientation("EAST", 3, Clé.EAST);
 
     /**
      * Increasing ordinates values go West.
-     * This is usually used for Grid X coordinates and Longitude.
      */
     public static final AxisOrientation WEST = new AxisOrientation("WEST", 4, Clé.WEST);
 
@@ -97,10 +95,28 @@ public final class AxisOrientation extends EnumeratedParameter
     public static final AxisOrientation DOWN = new AxisOrientation("DOWN", 6, Clé.DOWN);
 
     /**
+     * <FONT COLOR="#FF6633">Increasing time go toward future.</FONT>
+     * This is used for temporal axis.
+     */
+    public static final AxisOrientation FUTURE = new AxisOrientation("FUTURE", 7, Clé.FUTURE);
+
+    /**
+     * <FONT COLOR="#FF6633">Increasing time go toward past.</FONT>
+     * This is used for temporal axis.
+     */
+    public static final AxisOrientation PAST = new AxisOrientation("PAST", 8, Clé.PAST);
+
+    /**
+     * The last paired value. Paired value are NORTH-SOUTH, EAST-WEST,
+     * UP-DOWN, FUTURE-PAST.
+     */
+    private static final int LAST_PAIRED_VALUE = 8;
+
+    /**
      * Axis orientations by value. Used to
      * canonicalize after deserialization.
      */
-    private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN};
+    private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN,FUTURE,PAST};
 
     /**
      * Resource key, used for building localized name. This key doesn't need to
@@ -145,15 +161,15 @@ public final class AxisOrientation extends EnumeratedParameter
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * Returns the opposite orientation of this axis. The opposite
-     * of North is South, and the opposite of South is North.  The
-     * same apply to East-West and Up-Down. Other axis orientation
-     * are returned inchanged.
+     * <FONT COLOR="#FF6633">Returns the opposite orientation of this axis.</FONT>
+     * The opposite of North is South, and the opposite of South is North.
+     * The same apply to East-West, Up-Down and Future-Past.
+     * Other axis orientation are returned inchanged.
      */
     public AxisOrientation inverse()
     {
         final int value=getValue()-1;
-        if (value>=0 && value<=5)
+        if (value>=0 && value<LAST_PAIRED_VALUE)
         {
             return ENUMS[(value ^ 1)+1];
         }
@@ -161,31 +177,33 @@ public final class AxisOrientation extends EnumeratedParameter
     }
 
     /**
-     * Returns the "absolute" orientation of this axis. This "absolute"
-     * operation is similar to the <code>Math.abs(int)</code> method in
-     * that "negative" orientation (<code>SOUTH</code>, <code>WEST</code>,
-     * <code>DOWN</code>) are changed for their positive counterpart
-     * (<code>NORTH</code>, <code>EAST</code>, <code>UP</code>). More
-     * specifically, the following conversion table is applied.
-     *
-     * <table border="1">
+     * <FONT COLOR="#FF6633">Returns the "absolute" orientation of this axis.</FONT>
+     * This "absolute" operation is similar to the <code>Math.abs(int)</code> method
+     * in that "negative" orientation (<code>SOUTH</code>, <code>WEST</code>, <code>DOWN</code>,
+     * <code>PAST</code>) are changed for their positive counterpart (<code>NORTH</code>,
+     * <code>EAST</code>, <code>UP</code>, <code>FUTURE</code>). More specifically, the
+     * following conversion table is applied.
+     * <br>&nbsp;
+     * <table align="center" border="1">
      *   <tr>
      *     <td align="center" bgcolor="#C4ECFF">&nbsp;&nbsp;<strong>Orientation</strong>&nbsp;&nbsp;</td>
      *     <td align="center" bgcolor="#C4ECFF">&nbsp;&nbsp;<strong>Absolute value</strong>&nbsp;&nbsp;</td>
      *   </tr>
-     *   <tr><td align="center">NORTH</td> <td align="center">NORTH</td></tr>
-     *   <tr><td align="center">SOUTH</td> <td align="center">NORTH</td></tr>
-     *   <tr><td align="center">EAST</td>  <td align="center">EAST</td> </tr>
-     *   <tr><td align="center">WEST</td>  <td align="center">EAST</td> </tr>
-     *   <tr><td align="center">UP</td>    <td align="center">UP</td>   </tr>
-     *   <tr><td align="center">DOWN</td>  <td align="center">UP</td>   </tr>
-     *   <tr><td align="center">OTHER</td> <td align="center">OTHER</td></tr>
+     *   <tr><td align="center">NORTH</td> <td align="center">NORTH</td> </tr>
+     *   <tr><td align="center">SOUTH</td> <td align="center">NORTH</td> </tr>
+     *   <tr><td align="center">EAST</td>  <td align="center">EAST</td>  </tr>
+     *   <tr><td align="center">WEST</td>  <td align="center">EAST</td>  </tr>
+     *   <tr><td align="center">UP</td>    <td align="center">UP</td>    </tr>
+     *   <tr><td align="center">DOWN</td>  <td align="center">UP</td>    </tr>
+     *   <tr><td align="center">FUTURE</td><td align="center">FUTURE</td></tr>
+     *   <tr><td align="center">PAST</td>  <td align="center">FUTURE</td></tr>
+     *   <tr><td align="center">OTHER</td> <td align="center">OTHER</td> </tr>
      * </table>
      */
     public AxisOrientation absolute()
     {
         final int value=getValue()-1;
-        if (value>=0 && value<=5)
+        if (value>=0 && value<LAST_PAIRED_VALUE)
         {
             return ENUMS[(value & ~1)+1];
         }

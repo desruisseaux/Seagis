@@ -161,22 +161,14 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     {return projection;}
 
     /**
-     * Gets linear unit. This convenience is equivalent to
-     * <code>{@link #getUnits getUnits}(0)</code> or
-     * <code>{@link #getUnits getUnits}(1)</code>.
-     */
-    public Unit getLinearUnit()
-    {return unit;}
-
-    /**
      * Gets units for dimension within coordinate system.
-     * This angular unit is the same for all axis.
+     * This linear unit is the same for all axis.
      *
      * @param dimension Zero based index of axis.
      */
     public Unit getUnits(final int dimension)
     {
-        if (dimension>=0 && dimension<getDimension()) return getLinearUnit();
+        if (dimension>=0 && dimension<getDimension()) return unit;
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
 
@@ -240,7 +232,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
          * Returns the LinearUnits.
          */
         public CS_LinearUnit getLinearUnit() throws RemoteException
-        {return (CS_LinearUnit) adapters.export(ProjectedCoordinateSystem.this.getLinearUnit());}
+        {return (CS_LinearUnit) adapters.export(ProjectedCoordinateSystem.this.getUnits());}
 
         /**
          * Gets the projection.

@@ -281,6 +281,18 @@ public class Info implements Serializable
     {if (array[index]==null) throw new IllegalArgumentException(Resources.format(Clé.NULL_ARGUMENT¤1, name+'['+index+']'));}
 
     /**
+     * Make sure that the specified unit is a temporal one.
+     *
+     * @param  unit Unit to check.
+     * @throws IllegalArgumentException if <code>unit</code> is not a temporal unit.
+     */
+    static void ensureTimeUnit(final Unit unit) throws IllegalArgumentException
+    {
+        if (!Unit.SECOND.canConvert(unit))
+            throw new IllegalArgumentException(Resources.format(Clé.NON_TEMPORAL_UNIT¤1, unit));
+    }
+
+    /**
      * Make sure that the specified unit is a linear one.
      *
      * @param  unit Unit to check.

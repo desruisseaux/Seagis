@@ -22,60 +22,51 @@
  */
 package net.seas.opengis.cs;
 
-// OpenGIS dependencies
-import org.opengis.cs.CS_LinearUnit;
-import org.opengis.cs.CS_VerticalDatum;
-import org.opengis.cs.CS_VerticalCoordinateSystem;
-
 // Miscellaneous
 import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.opengis.pt.Envelope;
-import java.rmi.RemoteException;
 
 
 /**
- * A one-dimensional coordinate system suitable for vertical measurements.
+ * <FONT COLOR="#FF6633">A one-dimensional coordinate system suitable for time measurements.</FONT>
  *
- * @version 1.00
- * @author OpenGIS (www.opengis.org)
+ * @version 1.0
  * @author Martin Desruisseaux
- *
- * @see org.opengis.cs.CS_VerticalCoordinateSystem
  */
-public class VerticalCoordinateSystem extends CoordinateSystem
+public class TemporalCoordinateSystem extends CoordinateSystem
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 3670736517382316475L;
+    //private static final long serialVersionUID = ?; // TODO
 
     /**
-     * The vertical datum.
+     * The temporal datum.
      */
-    private final VerticalDatum datum;
+    private final TemporalDatum datum;
 
     /**
-     * Units used along the vertical axis.
+     * Units used along the time axis.
      */
     private final Unit unit;
 
     /**
-     * Axis details for vertical dimension within coordinate system.
+     * Axis details for time dimension within coordinate system.
      */
     private final AxisInfo axis;
 
     /**
-     * Creates a vertical coordinate system from a datum and linear units.
+     * Creates a temporal coordinate system from a datum and time units.
      *
      * @param name  Name to give new object.
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
      * @param axis  Axis to use for new coordinate system.
      */
-    public VerticalCoordinateSystem(final String name, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
+    public TemporalCoordinateSystem(final String name, final TemporalDatum datum, final Unit unit, final AxisInfo axis)
     {
         super(name);
         this.datum = datum;
@@ -84,19 +75,19 @@ public class VerticalCoordinateSystem extends CoordinateSystem
         ensureNonNull("datum", datum);
         ensureNonNull("unit",  unit );
         ensureNonNull("axis",  axis );
-        ensureLinearUnit(unit);
+        ensureTimeUnit(unit);
         checkAxis(datum.getDatumType());
     }
 
     /**
-     * Creates a vertical coordinate system from a datum and linear units.
+     * Creates a temporal coordinate system from a datum and time units.
      *
      * @param properties The set of properties.
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
      * @param axis  Axis to use for new coordinate system.
      */
-    VerticalCoordinateSystem(final Map<String,Object> properties, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
+    TemporalCoordinateSystem(final Map<String,Object> properties, final TemporalDatum datum, final Unit unit, final AxisInfo axis)
     {
         super(properties);
         this.datum = datum;
@@ -112,14 +103,14 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     {return 1;}
 
     /**
-     * Gets the vertical datum, which indicates the measurement method.
+     * Gets the temporal datum, which indicates the measurement method.
      */
-    public VerticalDatum getVerticalDatum()
+    public TemporalDatum getTemporalDatum()
     {return datum;}
 
     /**
-     * Gets axis details for vertical dimension within coordinate system.
-     * A vertical coordinate system have only one axis, always at index 0.
+     * Gets axis details for temporal dimension within coordinate system.
+     * A temporal coordinate system have only one axis, always at index 0.
      *
      * @param dimension Zero based index of axis.
      */
@@ -132,7 +123,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
 
     /**
      * Gets units for dimension within coordinate system.
-     * A vertical coordinate system have only one unit,
+     * A temporal coordinate system have only one unit,
      * always at index 0.
      *
      * @param dimension Must be 0.
@@ -152,58 +143,11 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     {
         if (super.equals(object))
         {
-            final VerticalCoordinateSystem that = (VerticalCoordinateSystem) object;
+            final TemporalCoordinateSystem that = (TemporalCoordinateSystem) object;
             return XClass.equals(this.datum, that.datum) &&
                    XClass.equals(this.unit , that.unit ) &&
                    XClass.equals(this.axis , that.axis );
         }
         return false;
-    }
-
-    /**
-     * Returns an OpenGIS interface for this vertical coordinate
-     * system. The returned object is suitable for RMI use.
-     *
-     * Note: The returned type is a generic {@link Object} in order
-     *       to avoid too early class loading of OpenGIS interface.
-     */
-    final Object toOpenGIS(final Object adapters)
-    {return new Export(adapters);}
-
-
-
-
-    /////////////////////////////////////////////////////////////////////////
-    ////////////////                                         ////////////////
-    ////////////////             OPENGIS ADAPTER             ////////////////
-    ////////////////                                         ////////////////
-    /////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Wrap a {@link VerticalCoordinateSystem} object for use with OpenGIS.
-     * This class is suitable for RMI use.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     */
-    private final class Export extends CoordinateSystem.Export implements CS_VerticalCoordinateSystem
-    {
-        /**
-         * Construct a remote object.
-         */
-        protected Export(final Object adapters)
-        {super(adapters);}
-
-        /**
-         * Gets the vertical datum, which indicates the measurement method.
-         */
-        public CS_VerticalDatum getVerticalDatum() throws RemoteException
-        {return adapters.export(VerticalCoordinateSystem.this.getVerticalDatum());}
-
-        /**
-         * Gets the units used along the vertical axis.
-         */
-        public CS_LinearUnit getVerticalUnit() throws RemoteException
-        {return (CS_LinearUnit) adapters.export(VerticalCoordinateSystem.this.getUnits());}
     }
 }
