@@ -43,6 +43,9 @@ import org.geotools.units.Unit;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
+// Seagis
+import fr.ird.database.sample.CruiseEntry;
+
 
 /**
  * Un échantillon pris sur une ligne (par exemple une capture à la palangre).
@@ -80,7 +83,7 @@ final class LinearSampleEntry extends SampleEntry {
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
     public LinearSampleEntry(final LinearSampleTable table, final ResultSet result) throws SQLException {
-        super(result.getInt(LinearSampleTable.ID), table.species.species);
+        super(result.getInt(LinearSampleTable.ID), null, table.species.species);
         final float efu;
 
         date = table.getTimestamp(LinearSampleTable.DATE, result).getTime();

@@ -57,6 +57,7 @@ import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleDataBase;
 import fr.ird.database.ServerException;
 import fr.ird.database.sample.SampleEntry;
+import fr.ird.database.sample.CruiseEntry;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
@@ -101,6 +102,12 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
      * Work around for Sun's bug #4380653. Used by 'getTimestamp(...)'
      */
     private transient Calendar localCalendar;
+
+    /**
+     * La table des campagnes d'échantillonages. Ne sera construite que
+     * la première fois où elle sera demandée.
+     */
+    private CruiseTable cruises;
 
     /**
      * Ensemble immutable des espèces. Le contenu d'un objet {@link SpeciesSet} ne doit
@@ -232,6 +239,17 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
         record.setSourceMethodName("setSpecies");
         SampleDataBase.LOGGER.log(record);
         return query;
+    }
+
+    /**
+     * Retourne une campagne d'échantillonage pour le numéro ID spécifié.
+     */
+    final CruiseEntry getCruise(final int ID) throws SQLException {
+        assert Thread.holdsLock(this);
+        if (cruises == null) {
+            cruises = new CruiseTable(statement.getConnection());
+        }
+        return cruises.getEntry(ID);
     }
 
     /**

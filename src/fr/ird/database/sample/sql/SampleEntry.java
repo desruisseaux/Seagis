@@ -40,6 +40,7 @@ import org.geotools.pt.AngleFormat;
 
 // Miscellaneous
 import fr.ird.animat.Species;
+import fr.ird.database.sample.CruiseEntry;
 
 
 /**
@@ -76,6 +77,11 @@ abstract class SampleEntry extends SpeciesSet implements fr.ird.database.sample.
     protected final int ID;
 
     /**
+     * La campagne d'échantillonage pendant laquelle a été pris cet échantillon.
+     */
+    private final CruiseEntry cruise;
+
+    /**
      * Quantité mesuré (par exemple nombre de poissons capturés) pour chaque espèce.
      * Ce tableau devra obligatoirement avoir une longueur égale au nombre d'espèces.
      */
@@ -87,13 +93,14 @@ abstract class SampleEntry extends SpeciesSet implements fr.ird.database.sample.
      * classes dérivées d'affecter des valeurs aux éléments de {@link #amount}.
      *
      * @param ID Numéro identifiant cet échantillons.
-     * @param species Espèce composant cet échantillons.
-     *        <strong>Ce tableau ne sera pas cloné</strong>.
+     * @param cruise La campagne d'échantillonage pendant laquelle a été pris cet échantillon.
+     * @param species Espèce composant cet échantillons. <strong>Ce tableau ne sera pas cloné</strong>.
      *        Evitez donc de le modifier après la construction.
      */
-    protected SampleEntry(final int ID, final Species[] species) {
+    protected SampleEntry(final int ID, final CruiseEntry cruise, final Species[] species) {
         super(species);
         this.ID     = ID;
+        this.cruise = cruise;
         this.amount = new float[species.length];
     }
 
@@ -122,6 +129,13 @@ abstract class SampleEntry extends SpeciesSet implements fr.ird.database.sample.
      */
     public String getRemarks() {
         return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public CruiseEntry getCruise() {
+        return cruise;
     }
 
     /**

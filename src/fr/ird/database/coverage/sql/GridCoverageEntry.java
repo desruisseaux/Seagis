@@ -113,8 +113,12 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
     /**
      * Compare deux entrées selon le même critère que celui qui a apparait dans
      * l'instruction "ORDER BY" dans la réquête SQL de {@link GridCoverageTable}).
+     * Les entrés sans dates sont une exception: elles sont considérées comme non-ordonnées.
      */
     boolean compare(final GridCoverageEntry other) {
+        if (startTime==Long.MIN_VALUE && endTime==Long.MAX_VALUE) {
+            return false;
+        }
         return endTime == other.endTime;
     }
 

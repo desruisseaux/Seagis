@@ -45,6 +45,7 @@ import java.util.Collection;
 // Seagis
 import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleEntry;
+import fr.ird.database.sample.CruiseEntry;
 
 
 /**
@@ -62,14 +63,14 @@ final class PunctualSampleTable extends SampleTable {
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] ID        */ "ID, "      +
-                                /*[02] CALEES    */ "nCalees, " +
-                                /*[03] DATE      */ "date, "    +
-                                /*[04] LONGITUDE */ "x, "       +
-                                /*[05] LATITUDE  */ "y "        +
+                                /*[02] CRUISE    */ "maree, " +
+                                /*[03] CALEES    */ "nCalees, " +
+                                /*[04] DATE      */ "date, "    +
+                                /*[05] LONGITUDE */ "x, "       +
+                                /*[06] LATITUDE  */ "y "        +
 
                     "FROM "+SAMPLES+"\n"+
-                    "WHERE "+
-                         " (date>=? AND date<=?) "+
+                    "WHERE (date>=? AND date<=?) "+
                       "AND (x>=? AND x<=?) "+
                       "AND (y>=? AND y<=?) "+
                       "AND (total>=?) "+
@@ -80,11 +81,12 @@ final class PunctualSampleTable extends SampleTable {
     //            de {@link EnvironmentTableFiller}.
 
     /** Numéro de colonne. */ static final int ID           =  1;
-    /** Numéro de colonne. */ static final int CALEES       =  2;
-    /** Numéro de colonne. */ static final int DATE         =  3;
-    /** Numéro de colonne. */ static final int LONGITUDE    =  4;
-    /** Numéro de colonne. */ static final int LATITUDE     =  5;
-    /** Numéro de colonne. */ static final int SAMPLE_VALUE =  6;
+    /** Numéro de colonne. */ static final int CRUISE       =  2;
+    /** Numéro de colonne. */ static final int CALEES       =  3;
+    /** Numéro de colonne. */ static final int DATE         =  4;
+    /** Numéro de colonne. */ static final int LONGITUDE    =  5;
+    /** Numéro de colonne. */ static final int LATITUDE     =  6;
+    /** Numéro de colonne. */ static final int SAMPLE_VALUE =  7;
 
     /** Numéro d'argument. */ private static final int ARG_START_TIME  =  1;
     /** Numéro d'argument. */ private static final int ARG_END_TIME    =  2;

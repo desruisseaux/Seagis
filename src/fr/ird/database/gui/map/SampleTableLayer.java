@@ -28,6 +28,7 @@ package fr.ird.database.gui.map;
 // J2SE dependencies
 import java.util.Date;
 import java.util.List;
+import java.util.Iterator;
 import java.util.Collection;
 import java.util.Collections;
 import java.sql.SQLException;
@@ -77,7 +78,7 @@ public class SampleTableLayer extends SampleLayer {
                 e.initCause(exception);
                 throw e;
             }
-            setSamples(sampleTable.getEntries());
+            setSamples(filter(sampleTable.getEntries()));
             updateTypicalAmplitude();
         }
     }
@@ -93,6 +94,26 @@ public class SampleTableLayer extends SampleLayer {
         super(layer, (layer.sampleTable!=null) ? layer.sampleTable.getCoordinateSystem()
                                                : GeographicCoordinateSystem.WGS84);
         this.sampleTable = layer.sampleTable;
+    }
+
+    /**
+     * Remove all entries for which {@link #accept} returned <code>false</code>.
+     */
+    private Collection<SampleEntry> filter(final Collection<SampleEntry> entries) {
+        for (final Iterator<SampleEntry> it=entries.iterator(); it.hasNext();) {
+            if (!accept(it.next())) {
+                it.remove();
+            }
+        }
+        return entries;
+    }
+
+    /**
+     * Returns <code>true</code> if the given sample should appears in this layer.
+     */
+    protected boolean accept(final SampleEntry sample) {
+        // Exclude the entries created by the random generator.
+        return sample.getCruise().getID() != 0;
     }
 
     /**

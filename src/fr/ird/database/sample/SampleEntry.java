@@ -53,6 +53,12 @@ import fr.ird.animat.Species;
  */
 public interface SampleEntry extends Entry {
     /**
+     * Retourne la campagne d'échantillonage pendant laquelle a été pris cet échantillon.
+     * Peut retourner <code>null</code> si ne s'applique pas.
+     */
+    public abstract CruiseEntry getCruise();
+
+    /**
      * Retourne une coordonnée représentative de l'échantillons, en degrés de longitude et latitude.
      */
     public abstract Point2D getCoordinate();

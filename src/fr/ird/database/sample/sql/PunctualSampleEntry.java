@@ -89,6 +89,7 @@ final class PunctualSampleEntry extends SampleEntry {
      */
     public PunctualSampleEntry(final PunctualSampleTable table, final ResultSet result) throws SQLException {
         super(result.getInt(PunctualSampleTable.ID),
+              table.getCruise(result.getInt(PunctualSampleTable.CRUISE)),
               result.getInt(PunctualSampleTable.CALEES)!=0 ? table.species.species : EMPTY);
 
         date = table.getTimestamp(PunctualSampleTable.DATE, result).getTime();
