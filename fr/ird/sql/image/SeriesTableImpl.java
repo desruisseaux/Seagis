@@ -68,12 +68,12 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son nom.
      */
-    static final String SQL_SELECT = "SELECT ID, name, description FROM "+SERIES+" WHERE name LIKE ?";
+    static final String SQL_SELECT = "SELECT ID, name, description, period FROM "+SERIES+" WHERE name LIKE ?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son numéro ID.
      */
-    static final String SQL_SELECT_BY_ID = "SELECT ID, name, description FROM "+SERIES+" WHERE ID=?";
+    static final String SQL_SELECT_BY_ID = "SELECT ID, name, description, period FROM "+SERIES+" WHERE ID=?";
 
     /**
      * Requête SQL pour compter le nombre
@@ -101,7 +101,8 @@ final class SeriesTableImpl extends Table implements SeriesTable
                        /*[10] PARAMETER_ID      */     SERIES+".parameter, "   +
                        /*[11] PARAMETER_NAME    */ PARAMETERS+".name, "        +
                        /*[12] PARAMETER_REMARKS */ PARAMETERS+".description, " +
-                       /*[13] GROUPS_FORMAT     */     GROUPS+".format\n"      +
+                       /*[13] GROUPS_FORMAT     */     GROUPS+".format,"       +
+                       /*[14] PERIOD            */     SERIES+".period\n"      +
            "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
                        OPERATIONS + ", " +
                        SERIES     + ", " +
@@ -126,6 +127,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /** Numéro de colonne. */ private static final int PARAMETER_NAME    = 11;
     /** Numéro de colonne. */ private static final int PARAMETER_REMARKS = 12;
     /** Numéro de colonne. */ private static final int GROUPS_FORMAT     = 13;
+    /** Numéro de colonne. */ private static final int PERIOD            = 14;
 
     /** Numéro d'argument. */ private static final int ARG_ID     = 1;
     /** Numéro d'argument. */ private static final int ARG_NAME   = 1;
@@ -250,7 +252,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
             final int ID         = resultSet.getInt   (1);
             final String name    = resultSet.getString(2);
             final String remarks = resultSet.getString(3);
-            entry=new SeriesReference(SERIES, name, ID, remarks);
+            final double period  = resultSet.getDouble(4);
+            entry = new SeriesReference(SERIES, name, ID, remarks,
+                       resultSet.wasNull() ? Double.NaN : period);
             while (resultSet.next())
             {
                 if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2)))
@@ -280,7 +284,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
             final int                ID = resultSet.getInt   (SERIES_ID);
             final String           name = resultSet.getString(SERIES_NAME);
             final String        remarks = resultSet.getString(SERIES_REMARKS);
-            final SeriesReference entry = new SeriesReference(SERIES, name, ID, remarks);
+            final double         period = resultSet.getDouble(PERIOD);
+            final SeriesReference entry = new SeriesReference(SERIES, name, ID, remarks,
+                                             resultSet.wasNull() ? Double.NaN : period);
             if (!entry.equals(last)) list.add(last=entry);
         }
         resultSet.close();
@@ -327,6 +333,11 @@ final class SeriesTableImpl extends Table implements SeriesTable
                 names  [i] = resultSet.getString(branch.name   );
                 remarks[i] = resultSet.getString(branch.remarks);
             }
+            double period = resultSet.getDouble(PERIOD);
+            if (resultSet.wasNull())
+            {
+                period = Double.NaN;
+            }
             DefaultMutableTreeNode branch=root;
       scan: for (int i=0; i<branchCount; i++)
             {
@@ -351,7 +362,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
                 final Reference ref;
                 if (tableName == SERIES)
                 {
-                    ref=new SeriesReference(tableName, names[i], ID, remarks[i]);
+                    ref = new SeriesReference(tableName, names[i], ID, remarks[i], period);
                 }
                 else
                 {
@@ -591,7 +602,27 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     private static final class SeriesReference extends Reference implements SeriesEntry
     {
-        protected SeriesReference(final String table, final String name, final int ID, final String remarks)
-        {super(table, name, ID, remarks);}
+        /**
+         * La période "normale" des images de cette série (en nombre
+         * de jours), ou {@link Double#NaN} si elle est inconnue.
+         */
+        private final double period;
+
+        /**
+         * Construit une nouvelle référence.
+         */
+        protected SeriesReference(final String table, final String name, final int ID,
+                                  final String remarks, final double period)
+        {
+            super(table, name, ID, remarks);
+            this.period = period;
+        }
+
+        /**
+         * Retourne la période "normale" des images de cette série (en nombre
+         * de jours), ou {@link Double#NaN} si elle est inconnue.
+         */
+        public double getPeriod()
+        {return period;}
     }
 }

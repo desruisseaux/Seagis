@@ -118,8 +118,7 @@ final class ImageTableImpl extends Table implements ImageTable
                                 /*[11] YMAX       */  AREAS+".ymax, "        +
                                 /*[12] WIDTH      */  AREAS+".width, "       +
                                 /*[13] HEIGHT     */  AREAS+".height, "      +
-                                /*[14] FORMAT     */ GROUPS+".format, "      +
-                                /*[15] PERIOD     */ GROUPS+".period\n"      +
+                                /*[14] FORMAT     */ GROUPS+".format\n"      +
 
                     "FROM ("+IMAGES+" INNER JOIN "+AREAS+ " ON "+IMAGES+".area="  +AREAS+ ".ID)"+
                                     " INNER JOIN "+GROUPS+" ON "+IMAGES+".groupe="+GROUPS+".ID\n"+
@@ -145,7 +144,6 @@ final class ImageTableImpl extends Table implements ImageTable
     /** Numéro de colonne. */ static final int WIDTH      = 12;
     /** Numéro de colonne. */ static final int HEIGHT     = 13;
     /** Numéro de colonne. */ static final int FORMAT     = 14;
-    /** Numéro de colonne. */ static final int PERIOD     = 15;
 
     /** Numéro d'argument. */ private static final int ARG_XMIN       = 1;
     /** Numéro d'argument. */ private static final int ARG_XMAX       = 2;
@@ -794,6 +792,7 @@ final class ImageTableImpl extends Table implements ImageTable
              */
             if (t!=null)
             {
+                final long period = Math.round(series.getPeriod()*DAY); // 0 if period is NaN
                 final Date startTime;
                 final Date   endTime;
                 if (newEntry!=null)
@@ -808,7 +807,6 @@ final class ImageTableImpl extends Table implements ImageTable
                 }
                 if (startTime!=null && endTime!=null)
                 {
-                    final long    period = Math.round(result.getDouble(PERIOD)*DAY); // 0 si le champ est blanc.
                     final long lgEndTime = endTime.getTime();
                     final long checkTime = lgEndTime-period;
                     if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime())
