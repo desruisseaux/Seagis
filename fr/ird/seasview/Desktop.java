@@ -67,6 +67,7 @@ import java.util.logging.LogRecord;
 import java.sql.SQLException;
 
 // Geotools
+import org.geotools.gui.swing.About;
 import org.geotools.io.DefaultFileFilter;
 import org.geotools.gui.swing.ExceptionMonitor;
 
@@ -82,7 +83,6 @@ import fr.ird.database.gui.swing.SampleRowSetChooser;
 import fr.ird.database.gui.swing.EnvironmentSamplingChooser;
 
 // Afficheurs
-import fr.ird.awt.About;
 import fr.ird.awt.TimeZoneChooser;
 import fr.ird.seasview.catalog.CatalogFrame;
 import fr.ird.seasview.navigator.NavigatorFrame;
@@ -488,7 +488,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
      *   <li>{@link ResourceKeys#SAVE}</li>
      *   <li>{@link ResourceKeys#SAVE_AS}</li>
      *   <li>{@link ResourceKeys#EXIT}</li>
-     *   <li>{@link ResourceKeys#TIMEZONE}</li>
+     *   <li>{@link ResourceKeys#TIME_ZONE}</li>
      *   <li>{@link ResourceKeys#DATABASE}</li>
      *   <li>{@link ResourceKeys#ABOUT}</li>
      * </ul>
@@ -645,7 +645,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
             //////////////////////////////////////
             ///  Préférences - Fuseau horaire  ///
             //////////////////////////////////////
-            case ResourceKeys.TIMEZONE: {
+            case ResourceKeys.TIME_ZONE: {
                 TimeZone selectedTimezone = this.timezone;
                 final TimeZoneChooser chooser = new TimeZoneChooser(resources.getString(ResourceKeys.TIMEZONE_SELECTION_MESSAGE));
                 chooser.setTimeZone(selectedTimezone);

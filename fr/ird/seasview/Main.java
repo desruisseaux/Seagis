@@ -27,7 +27,6 @@ package fr.ird.seasview;
 
 // Bases de données et images
 import java.sql.SQLException;
-import javax.media.jai.JAI;
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 
@@ -55,6 +54,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.prefs.Preferences;
+
+// JAI
+import javax.media.jai.JAI;
+import javax.media.jai.TileScheduler;
 
 // Geotools
 import org.geotools.resources.Arguments;
@@ -403,7 +406,7 @@ public final class Main {
             ///  Préférences - Fuseau horaire ///
             /////////////////////////////////////
             if (true) {
-                final Action action = new Action(desktop, ResourceKeys.TIMEZONE, true);
+                final Action action = new Action(desktop, ResourceKeys.TIME_ZONE, true);
                 action.setMnemonicKey(KeyEvent.VK_H);
                 action.addTo(menu);
             }
@@ -509,6 +512,11 @@ public final class Main {
             JAI.getDefaultInstance().getTileCache().setMemoryCapacity(value);
             // La capacité par défaut était de 64 Megs.
         }
+        /*
+         * Modifie la priorité du 'TileScheduler' afin d'éviter de bloquer le thread de Swing.
+         * La priorité par défaut était NORM_PRIORITY (c'est-à-dire 5).
+         */
+        JAI.getDefaultInstance().getTileScheduler().setPriority(Thread.NORM_PRIORITY - 1);
         /*
          * Procède au chargement de la classe du pilote. Cette classe
          * s'enregistrement automatiquement auprès du gestionnaire de
