@@ -43,7 +43,7 @@ import java.util.prefs.Preferences;
 abstract class Table implements fr.ird.sql.Table
 {
     /* Nom de table. */ static final String ENVIRONMENTS = "Environnements";
-    /* Nom de table. */ static final String LONGLINES    = "Captures";
+    /* Nom de table. */ static final String CATCHS       = "Captures";
     /* Nom de table. */ static final String SPECIES      = "Espèces";
 
     /**

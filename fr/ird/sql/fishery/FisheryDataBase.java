@@ -77,11 +77,6 @@ public class FisheryDataBase extends DataBase
     }
 
     /**
-     * Constante représentant la table de pêches des palangriers.
-     */
-    public static final String LONGLINES = Table.LONGLINES;
-
-    /**
      * Liste des propriétées par défaut. Les valeurs aux index pairs sont les index
      * des propriétées. Les valeurs aux index impairs sont les valeurs. Par exemple
      * la propriété "Pêches" donne l'instruction SQL à utiliser pour interroger la
@@ -89,8 +84,8 @@ public class FisheryDataBase extends DataBase
      */
     private static final String[] DEFAULT_PROPERTIES=
     {
-        Table.SPECIES,    SpeciesTable      .SQL_SELECT,
-        Table.LONGLINES,  LonglineCatchTable.SQL_SELECT
+        Table.SPECIES, SpeciesTable      .SQL_SELECT,
+        Table.CATCHS,  LonglineCatchTable.SQL_SELECT
     };
 
     /**
@@ -141,22 +136,14 @@ public class FisheryDataBase extends DataBase
     /**
      * Retourne les espèces énumérés dans la base de données.
      *
-     * @param  table Table dont on veut les espèces. Ce nom devrait
-     *         être une constante telle que {@link #LONGLINES}.
-     * @return Ensemble des espèces trouvées dans la table spécifiée.
-     *
-     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @return Ensemble des espèces répertoriées dans la base de données.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public Set<Species> getSpecies(String table) throws SQLException
+    public Set<Species> getSpecies() throws SQLException
     {
-        table=table.trim();
-        if (LONGLINES.equalsIgnoreCase(table)) table=Table.LONGLINES;
-        else throw new IllegalArgumentException(table);
-
         final SpeciesTable   spTable = new SpeciesTable(connection);
         final Statement    statement = connection.createStatement();
-        final ResultSet       result = statement.executeQuery("SELECT * FROM "+table);
+        final ResultSet       result = statement.executeQuery("SELECT * FROM "+Table.CATCHS);
         final Set<Species>   species = spTable.getSpecies(result.getMetaData());
         result   .close();
         statement.close();
@@ -168,35 +155,24 @@ public class FisheryDataBase extends DataBase
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
      *
-     * @param  table Table dont on veut les espèces. Ce nom devrait
-     *         être une constante telle que {@link #LONGLINES}.
      * @param  species Espèces d'intérêt dans la table.
-     *
-     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @return La table des captures pour les espèces demandées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(String table, final Collection<Species> species) throws SQLException
+    public CatchTable getCatchTable(final Collection<Species> species) throws SQLException
     {
-        table=table.trim();
-        if (LONGLINES.equalsIgnoreCase(table))
-        {
-            return new LonglineCatchTable(connection, timezone, new LinkedHashSet<Species>(species));
-        }
-        else throw new IllegalArgumentException(table);
+        return new LonglineCatchTable(connection, timezone, new LinkedHashSet<Species>(species));
     }
 
     /**
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
      *
-     * @param  table Table dont on veut les espèces. Ce nom devrait
-     *         être une constante telle que {@link #LONGLINES}.
      * @param  species Code des espèces d'intérêt dans la table (par exemple "SWO").
-     *
-     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @return La table des captures pour les espèces demandées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(final String table, final String[] species) throws SQLException
+    public CatchTable getCatchTable(final String[] species) throws SQLException
     {
         final List<Species> list = new ArrayList<Species>(species.length);
         final SpeciesTable spSQL = new SpeciesTable(connection);
@@ -206,38 +182,29 @@ public class FisheryDataBase extends DataBase
             if (sp!=null) list.add(sp);
         }
         spSQL.close();
-        return getCatchTable(table, list);
+        return getCatchTable(list);
     }
 
     /**
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
      *
-     * @param  table Table dont on veut les espèces. Ce nom devrait
-     *         être une constante telle que {@link #LONGLINES}.
      * @param  species Espèces d'intérêt dans la table (par exemple "SWO").
-     *
-     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @return La table des captures pour l'espèce demandée.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(final String table, final String species) throws SQLException
-    {return getCatchTable(table, new String[]{species});}
+    public CatchTable getCatchTable(final String species) throws SQLException
+    {return getCatchTable(new String[]{species});}
 
     /**
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
      *
-     * @param  table Table dont on veut les espèces. Ce nom devrait
-     *         être une constante telle que {@link #LONGLINES}.
-     *
-     * @throws IllegalArgumentException si le nom <code>table</code> n'a pas été reconnu.
+     * @return La table des captures pour toute les espèces répertoriées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(String table) throws SQLException
-    {
-        table=table.trim();
-        return getCatchTable(table, getSpecies(table));
-    }
+    public CatchTable getCatchTable() throws SQLException
+    {return getCatchTable(getSpecies());}
 
     /**
      * Construit et retourne un objet qui interrogera un paramètre

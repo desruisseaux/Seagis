@@ -95,7 +95,7 @@ public final class CatchTableFiller
      */
     public void computeAnchorDistances(final String columnName) throws SQLException
     {
-        final CatchTable        table = database.getCatchTable(FisheryDataBase.LONGLINES);
+        final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
         final int               count = catchs.size();
         for (int i=0; i<count; i++)
@@ -128,7 +128,7 @@ public final class CatchTableFiller
      */
     public void computeInterCatchDistances(final long maxTimeLag, final String columnName) throws SQLException
     {
-        final CatchTable        table = database.getCatchTable(FisheryDataBase.LONGLINES);
+        final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
 
         // TODO: Classer par date de début.
@@ -181,7 +181,7 @@ public final class CatchTableFiller
      */
     public void computeCoastDistances(final Shape coast, final String columnName) throws SQLException
     {
-        final CatchTable        table = database.getCatchTable(FisheryDataBase.LONGLINES);
+        final CatchTable        table = database.getCatchTable();
         final List<CatchEntry> catchs = table.getEntries();
         final int               count = catchs.size();
         for (int i=0; i<count; i++)

@@ -150,7 +150,7 @@ public final class EnvironmentTableFiller
     private void run(final String[] series) throws SQLException
     {
         final ImageTable         images = this.images.getImageTable(series[0]);
-        final CatchTable         pêches = this.pêches.getCatchTable(FisheryDataBase.LONGLINES);
+        final CatchTable         pêches = this.pêches.getCatchTable();
 //      if (series[0].equals(SERIES[0][0]))
 //      {
 //          pêches.setTimeRange(new Date(98, 9, 26), new Date());

@@ -113,7 +113,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
 
         for (int i=0; i<amount.length; i++)
         {
-            amount[i] = getFloat(result, LonglineCatchTable.CATCHS + i)/efu;
+            amount[i] = getFloat(result, LonglineCatchTable.CATCH_AMOUNT + i)/efu;
         }
     }
 

@@ -67,15 +67,15 @@ final class LonglineCatchTable extends AbstractCatchTable
      * les constantes [@link #START_TIME}, [@link #LONGITUDE} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ LONGLINES+".ID, "          +
-                                /*[02] DATE            */ LONGLINES+".date, "        +
-                                /*[03] START_LONGITUDE */ LONGLINES+".x1, "          +
-                                /*[04] START_LATITUDE  */ LONGLINES+".y1, "          +
-                                /*[05] END_LONGITUDE   */ LONGLINES+".x2, "          +
-                                /*[06] END_LATITUDE    */ LONGLINES+".y2, "          +
-                                /*[07] EFFORT_UNIT     */ LONGLINES+".nb_hameçons\n" +
+                    "SELECT "+  /*[01] ID              */ CATCHS+".ID, "          +
+                                /*[02] DATE            */ CATCHS+".date, "        +
+                                /*[03] START_LONGITUDE */ CATCHS+".x1, "          +
+                                /*[04] START_LATITUDE  */ CATCHS+".y1, "          +
+                                /*[05] END_LONGITUDE   */ CATCHS+".x2, "          +
+                                /*[06] END_LATITUDE    */ CATCHS+".y2, "          +
+                                /*[07] EFFORT_UNIT     */ CATCHS+".nb_hameçons\n" +
 
-                    "FROM "+LONGLINES+" "+
+                    "FROM "+CATCHS+" "+
                     "WHERE (date>=? AND date<=?) "+
 //                    "AND (max(x1,x2)>=? AND min(x1,x2)<=?) "+
 //                    "AND (max(y1,y2)>=? AND min(y1,y2)<=?)\n"+
@@ -92,7 +92,7 @@ final class LonglineCatchTable extends AbstractCatchTable
     /** Numéro de colonne. */ static final int END_LONGITUDE   =  5;
     /** Numéro de colonne. */ static final int END_LATITUDE    =  6;
     /** Numéro de colonne. */ static final int EFFORT_UNIT     =  7;
-    /** Numéro de colonne. */ static final int CATCHS          =  8;
+    /** Numéro de colonne. */ static final int CATCH_AMOUNT    =  8;
 
     /** Numéro d'argument. */ private static final int ARG_START_TIME  =  1;
     /** Numéro d'argument. */ private static final int ARG_END_TIME    =  2;
@@ -140,7 +140,7 @@ final class LonglineCatchTable extends AbstractCatchTable
      */
     protected LonglineCatchTable(final Connection connection, final TimeZone timezone, final Set<Species> species) throws SQLException
     {
-        super(connection.prepareStatement(completeQuery(preferences.get(LONGLINES, SQL_SELECT), LONGLINES, species)), timezone, species);
+        super(connection.prepareStatement(completeQuery(preferences.get(CATCHS, SQL_SELECT), CATCHS, species)), timezone, species);
         setTimeRange(new Date(0), new Date());
         setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
     }
@@ -335,7 +335,7 @@ final class LonglineCatchTable extends AbstractCatchTable
         {
             update = statement.getConnection().createStatement();
         }
-        if (update.executeUpdate("UPDATE "+LONGLINES+" SET "+columnName+"="+value+" WHERE ID="+capture.getID())==0)
+        if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+value+" WHERE ID="+capture.getID())==0)
         {
             throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
         }
@@ -360,7 +360,7 @@ final class LonglineCatchTable extends AbstractCatchTable
             update = statement.getConnection().createStatement();
         }
         // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
-        if (update.executeUpdate("UPDATE "+LONGLINES+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID())==0)
+        if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID())==0)
         {
             throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
         }

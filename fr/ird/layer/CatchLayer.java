@@ -31,6 +31,7 @@ import net.seas.map.layer.MarkLayer;
 // Data bases
 import java.sql.SQLException;
 import fr.ird.animat.Species;
+import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.fishery.CatchEntry;
 import fr.ird.sql.fishery.CatchTable;
 
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Collection;
 
 // Geometry
 import java.awt.Shape;
@@ -60,6 +62,8 @@ import javax.media.jai.GraphicsJAI;
 import javax.units.Unit;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
+import javax.media.jai.util.Range;
+import javax.swing.event.EventListenerList;
 
 
 /**
@@ -70,7 +74,7 @@ import java.text.FieldPosition;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class CatchLayer extends MarkLayer
+public class CatchLayer extends MarkLayer implements ImageAdjustable
 {
     /**
      * Connection to the catch table.
@@ -248,6 +252,22 @@ public class CatchLayer extends MarkLayer
     }
 
     /**
+     * Ajust this layer's content for the specified image. This method invokes
+     * {@link #setTimeRange} with a time range equals to the image's time range.
+     * This method can be invoked from any thread (may not be the <i>Swing</i>
+     * thread).
+     *
+     * @param  image The image to adjust for.
+     * @param  listeners Listener for reporting progress, or <code>null</code> if none.
+     * @throws SQLException If an access to the underlying database failed.
+     */
+    public void adjust(final ImageEntry image, final EventListenerList listeners) throws SQLException
+    {
+        final Range timeRange = image.getTimeRange();
+        setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());
+    }
+
+    /**
      * Query the underlying {@link CatchTable} for a new set of catchs to display.
      * This method first invokes {@link FisheryTable#setTimeRange} with the specified
      * time range, and then query for all catchs in this time range.
@@ -256,7 +276,7 @@ public class CatchLayer extends MarkLayer
      * @param  startTime Time of the end catch to display.
      * @throws SQLException If a SQL query failed.
      */
-    public void setTimeRange(final Date startTime, final Date endTime) throws SQLException
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException
     {
         synchronized (catchTable)
         {
@@ -271,8 +291,9 @@ public class CatchLayer extends MarkLayer
      * Validate {@link #colors} after new
      * catch entries have been read.
      */
-    private synchronized void validate()
+    private void validate()
     {
+        assert Thread.holdsLock(this);
         hasShape = false;
         colors   = new Color[catchs.size()];
         useFill  = new boolean[colors.length];
@@ -525,6 +546,20 @@ public class CatchLayer extends MarkLayer
                 break;
             }
             default: throw new IllegalStateException();
+        }
+    }
+
+    /**
+     * Define appareance for a set of species.
+     *
+     * @param icons A set of icons to use for species.
+     */
+    public synchronized void addIcons(final Collection<Species.Icon> icons)
+    {
+        for (final Iterator<Species.Icon> it=icons.iterator(); it.hasNext();)
+        {
+            final Species.Icon icon = it.next();
+            this.icons.put(icon.getSpecies(), icon);
         }
     }
 
