@@ -151,7 +151,6 @@ final class Resampler extends GridCoverage
         final RenderingHints hints = operation.getRenderingHints();
         hints.add(Images.getRenderingHints(data));
         operation.setRenderingHints(hints);
-System.out.println(data);
 
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert sourceImage == sourceCoverage.getRenderedImage(true);

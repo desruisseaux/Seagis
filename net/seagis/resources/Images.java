@@ -87,18 +87,15 @@ public final class Images
     private static ImageLayout getImageLayout(final RenderedImage image, final boolean initToImage)
     {
         ImageLayout layout = initToImage ? new ImageLayout(image) : null;
-        if (image.getNumXTiles()!=1 || image.getNumYTiles()!=1)
+        if (image.getNumXTiles()==1 && image.getNumYTiles()==1)
         {
-            // The image is already tiled; JAI will probably
-            // reuse the same tile size,  which is usually a
-            // correct guess.
+            // If the image was already tiled, reuse the same tile size.
+            // Otherwise, compute default tile size.  If a default tile
+            // size can't be computed, it will be left unset.
             if (layout != null)
             {
                 layout = layout.unsetTileLayout();
             }
-        }
-        else
-        {
             Dimension defaultSize = JAI.getDefaultTileSize();
             if (defaultSize!=null)
             {
@@ -157,19 +154,39 @@ public final class Images
     }
 
     /**
-     * Suggest a tile size close to <code>tileSize</code>
-     * for the specified <code>imageSize</code>.
+     * Suggest a tile size close to <code>tileSize</code> for the specified
+     * <code>imageSize</code>. If this method can't suggest a size, then it
+     * returns 0.
      */
     private static int toTileSize(final int imageSize, final int tileSize)
     {
+        int sopt=0, rmax=0;
         final int MAX_TILE_SIZE = Math.min(tileSize*2, imageSize);
         final int stop = Math.max(tileSize-MIN_TILE_SIZE, MAX_TILE_SIZE-tileSize);
         for (int i=0; i<=stop; i++)
         {
-            int c;
-            if ((c=tileSize-i)>=MIN_TILE_SIZE && (imageSize % c) == 0) return c;
-            if ((c=tileSize+i)<=MAX_TILE_SIZE && (imageSize % c) == 0) return c;
+            int s,r;
+            if ((s=tileSize-i) >= MIN_TILE_SIZE)
+            {
+                r = imageSize % s;
+                if (r==0) return s;
+                if (r > rmax)
+                {
+                    rmax = r;
+                    sopt = s;
+                }
+            }
+            if ((s=tileSize+i) <= MAX_TILE_SIZE)
+            {
+                r = imageSize % s;
+                if (r==0) return s;
+                if (r > rmax)
+                {
+                    rmax = r;
+                    sopt = s;
+                }
+            }
         }
-        return 0;
+        return (tileSize-rmax <= tileSize/4) ? sopt : 0;
     }
 }
