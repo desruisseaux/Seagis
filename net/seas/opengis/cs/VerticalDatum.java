@@ -62,7 +62,7 @@ public class VerticalDatum extends Datum
     /**
      * Creates a vertical datum.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param localDatumType Type of vertical datum to create.
      */
     VerticalDatum(final Map<String,Object> properties, final DatumType type)

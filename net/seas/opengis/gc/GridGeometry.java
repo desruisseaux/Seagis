@@ -27,6 +27,8 @@ import net.seas.opengis.ct.MathTransform;
 import net.seas.opengis.ct.MathTransformFactory;
 
 // Geometry
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 import java.awt.geom.AffineTransform;
 import net.seas.util.XAffineTransform;
@@ -93,6 +95,34 @@ public class GridGeometry implements Serializable
         this.gridRange              = gridRange;
         this.gridToCoordinateSystem = gridToCoordinateSystem;
         this.gridToCoordinateJAI    = null;
+    }
+
+    /**
+     * Construct a new two-dimensional grid geometry. A map transform will
+     * be computed automatically with an inverted <var>y</var> axis (i.e.
+     * <code>gridRange</code> and <code>userRange</code> are assumed to
+     * have axis in opposite direction).
+     *
+     * @param gridRange The valid coordinate range of a grid coverage.
+     *                  Increasing <var>x</var> values goes right and
+     *                  increasing <var>y</var> values goes <strong>down</strong>.
+     * @param userRange The corresponding coordinate range in user coordinate.
+     *                  Increasing <var>x</var> values goes right and
+     *                  increasing <var>y</var> values goes <strong>up</strong>.
+     *                  This rectangle must contains entirely all pixels, i.e.
+     *                  the rectangle's upper left corner must coincide with
+     *                  the upper left corner of the first pixel and the rectangle's
+     *                  lower right corner must coincide with the lower right corner
+     *                  of the last pixel.
+     */
+    public GridGeometry(final Rectangle gridRange, final Rectangle2D userRange)
+    {
+        final double scaleX = userRange.getWidth()  / gridRange.getWidth();
+        final double scaleY = userRange.getHeight() / gridRange.getHeight();
+        final double transX = userRange.getMinX()   - gridRange.x*scaleX;
+        final double transY = userRange.getMaxY()   + gridRange.y*scaleY;
+        this.gridRange           = new GridRange(gridRange);
+        this.gridToCoordinateJAI = new AffineTransform(scaleX, 0, 0, -scaleY, transX, transY);
     }
 
     /**

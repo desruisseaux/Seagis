@@ -85,7 +85,7 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
     /**
      * Construct a coordinate system.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      */
     CoordinateSystem(final Map<String,Object> properties)
     {super(properties);}

@@ -22,6 +22,10 @@
  */
 package net.seas.opengis.cs;
 
+// Time
+import java.util.Date;
+import java.util.TimeZone;
+
 // Miscellaneous
 import java.util.Map;
 import javax.units.Unit;
@@ -41,7 +45,7 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 4173428679516430534L;
+    private static final long serialVersionUID = -1445221105136473835L;
 
     /**
      * The temporal datum.
@@ -49,32 +53,52 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     private final TemporalDatum datum;
 
     /**
-     * Units used along the time axis.
-     */
-    private final Unit unit;
-
-    /**
      * Axis details for time dimension within coordinate system.
      */
     private final AxisInfo axis;
 
     /**
+     * Units used along the time axis.
+     */
+    private final Unit unit;
+
+    /**
+     * The epoch, in milliseconds since January 1, 1970, 00:00:00 UTC.
+     */
+    private final long epoch;
+
+    /**
+     * Creates a temporal coordinate system from a datum.
+     * Units are seconds and values are increasing toward
+     * future.
+     *
+     * @param name  Name  to give new object.
+     * @param datum Datum to use for new coordinate system.
+     * @param epoch The epoch (i.e. date of origin).
+     */
+    public TemporalCoordinateSystem(final String name, final TemporalDatum datum, final Date epoch)
+    {this(name, datum, Unit.SECOND, epoch, AxisInfo.TIME);}
+
+    /**
      * Creates a temporal coordinate system from a datum and time units.
      *
-     * @param name  Name to give new object.
+     * @param name  Name  to give new object.
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
-     * @param axis  Axis to use for new coordinate system.
+     * @param epoch The epoch (i.e. date of origin).
+     * @param axis  Axis  to use for new coordinate system.
      */
-    public TemporalCoordinateSystem(final String name, final TemporalDatum datum, final Unit unit, final AxisInfo axis)
+    public TemporalCoordinateSystem(final String name, final TemporalDatum datum, final Unit unit, final Date epoch, final AxisInfo axis)
     {
         super(name);
-        this.datum = datum;
-        this.unit  = unit;
-        this.axis  = axis;
         ensureNonNull("datum", datum);
         ensureNonNull("unit",  unit );
+        ensureNonNull("epoch", epoch);
         ensureNonNull("axis",  axis );
+        this.datum    = datum;
+        this.unit     = unit;
+        this.epoch    = epoch.getTime();
+        this.axis     = axis;
         ensureTimeUnit(unit);
         checkAxis(datum.getDatumType());
     }
@@ -82,16 +106,18 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     /**
      * Creates a temporal coordinate system from a datum and time units.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
-     * @param axis  Axis to use for new coordinate system.
+     * @param epoch The epoch (i.e. date of origin).
+     * @param axis  Axis  to use for new coordinate system.
      */
-    TemporalCoordinateSystem(final Map<String,Object> properties, final TemporalDatum datum, final Unit unit, final AxisInfo axis)
+    TemporalCoordinateSystem(final Map<String,Object> properties, final TemporalDatum datum, final Unit unit, final Date epoch, final AxisInfo axis)
     {
         super(properties);
         this.datum = datum;
         this.unit  = unit;
+        this.epoch = epoch.getTime();
         this.axis  = axis;
         // Accept null values.
     }
@@ -113,6 +139,13 @@ public class TemporalCoordinateSystem extends CoordinateSystem
      */
     public TemporalDatum getTemporalDatum()
     {return datum;}
+
+    /**
+     * Returns the epoch. The epoch is the origin of
+     * the time axis, i.e. the date for value zero.
+     */
+    public Date getEpoch()
+    {return new Date(epoch);}
 
     /**
      * Gets axis details for temporal dimension within coordinate system.

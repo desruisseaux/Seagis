@@ -145,7 +145,7 @@ public class Ellipsoid extends Info
     /**
      * Construct a new ellipsoid using the specified axis length.
      *
-     * @param properties        The set of properties.
+     * @param properties        The set of properties (see {@link Info}).
      * @param semiMajorAxis     The equatorial radius.
      * @param semiMinorAxis     The polar radius.
      * @param inverseFlattening The inverse of the flattening value.

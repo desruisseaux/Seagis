@@ -63,7 +63,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 8506198734333409238L;
+    private static final long serialVersionUID = -8344742184879699719L;
 
     /**
      * The local datum.
@@ -73,7 +73,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Units used along all axis.
      */
-    private final Unit[] unit;
+    private final Unit[] units;
 
     /**
      * Axes details.
@@ -101,11 +101,11 @@ public class LocalCoordinateSystem extends CoordinateSystem
         ensureNonNull("unit",  unit );
         ensureNonNull("axes",  axes );
         this.datum = datum;
-        this.unit  = new Unit[axes.length];
+        this.units = new Unit[axes.length];
         this.axes  = (AxisInfo[])axes.clone();
         for (int i=0; i<this.axes.length; i++)
         {
-            this.unit[i] = unit;
+            this.units[i] = unit;
             ensureNonNull("axes", this.axes, i);
         }
         checkAxis(datum.getDatumType());
@@ -114,16 +114,16 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Creates a local coordinate system.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param datum Local datum to use in created coordinate system.
-     * @param unit  Units to use in created coordinate system.
+     * @param units Units to use in created coordinate system.
      * @param axes  Axes to use in created coordinate system.
      */
-    LocalCoordinateSystem(final Map<String,Object> properties, final LocalDatum datum, final Unit[] unit, final AxisInfo[] axes)
+    LocalCoordinateSystem(final Map<String,Object> properties, final LocalDatum datum, final Unit[] units, final AxisInfo[] axes)
     {
         super(properties);
         this.datum = datum;
-        this.unit  = unit;
+        this.units = units;
         this.axes  = axes;
         // Accept null values.
     }
@@ -168,7 +168,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * @see org.opengis.cs.CS_LocalCoordinateSystem#getUnits(int)
      */
     public Unit getUnits(final int dimension)
-    {return unit[dimension];}
+    {return units[dimension];}
 
     /**
      * Compares the specified object with
@@ -180,7 +180,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
         {
             final LocalCoordinateSystem that = (LocalCoordinateSystem) object;
             return XClass.equals(this.datum, that.datum) &&
-                   Arrays.equals(this.unit , that.unit ) &&
+                   Arrays.equals(this.units, that.units) &&
                    Arrays.equals(this.axes , that.axes );
         }
         return false;

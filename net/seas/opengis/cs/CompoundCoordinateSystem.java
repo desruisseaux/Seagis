@@ -89,7 +89,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     /**
      * Creates a compound coordinate system.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param head Coordinate system to use for earlier ordinates.
      * @param tail Coordinate system to use for later ordinates.
      */

@@ -60,16 +60,6 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     private static final long serialVersionUID = -4074962239062277502L;
 
     /**
-     * Default axis info for longitude.
-     */
-    private static final AxisInfo EAST = new AxisInfo("x", AxisOrientation.EAST);
-
-    /**
-     * Default axis info for latitude.
-     */
-    private static final AxisInfo NORTH = new AxisInfo("y", AxisOrientation.NORTH);
-
-    /**
      * The angular unit.
      */
     private final Unit unit;
@@ -85,17 +75,6 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     private final Projection projection;
 
     /**
-     * Creates a projected coordinate system using WGS84 datum.
-     * Projected coordinates will be in meters, <var>x</var> values
-     * increasing east and <var>y</var> values increasing north.
-     *
-     * @param  name Name to give new object.
-     * @param  projection Projection from geographic to projected coordinate system.
-     */
-    public ProjectedCoordinateSystem(final String name, final Projection projection)
-    {this(name, GeographicCoordinateSystem.WGS84, projection);}
-
-    /**
      * Creates a projected coordinate system using the specified geographic
      * system. Projected coordinates will be in meters, <var>x</var> values
      * increasing east and <var>y</var> values increasing north.
@@ -105,7 +84,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * @param  projection Projection from geographic to projected coordinate system.
      */
     public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection)
-    {this(name, gcs, projection, Unit.METRE, EAST, NORTH);}
+    {this(name, gcs, projection, Unit.METRE, AxisInfo.X, AxisInfo.Y);}
 
     /**
      * Creates a projected coordinate system using a projection object.
@@ -134,7 +113,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     /**
      * Creates a projected coordinate system using a projection object.
      *
-     * @param  properties The set of properties.
+     * @param  properties The set of properties (see {@link Info}).
      * @param  gcs Geographic coordinate system to base projection on.
      * @param  projection Projection from geographic to projected coordinate system.
      * @param  unit Linear units of created PCS.

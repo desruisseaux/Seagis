@@ -47,6 +47,50 @@ public class AxisInfo implements Serializable
     private static final long serialVersionUID = 2949229234384551980L;
 
     /**
+     * Default axis info for <var>x</var> values.
+     * Increasing ordinates values go East. This
+     * is usually used with projected coordinate
+     * systems.
+     */
+    public static final AxisInfo X = new AxisInfo("x", AxisOrientation.EAST);
+
+    /**
+     * Default axis info for <var>y</var> values.
+     * Increasing ordinates values go North. This
+     * is usually used with projected coordinate
+     * systems.
+     */
+    public static final AxisInfo Y = new AxisInfo("y", AxisOrientation.NORTH);
+
+    /**
+     * Default axis info for longitudes.
+     * Increasing ordinates values go East.
+     * This is usually used with geographic
+     * coordinate systems.
+     */
+    public static final AxisInfo LONGITUDE = new AxisInfo.Localized("Longitude", Clé.LONGITUDE, AxisOrientation.EAST);
+
+    /**
+     * Default axis info for latitudes.
+     * Increasing ordinates values go North.
+     * This is usually used with geographic
+     * coordinate systems.
+     */
+    public static final AxisInfo LATITUDE = new AxisInfo.Localized("Latitude", Clé.LATITUDE, AxisOrientation.NORTH);
+
+    /**
+     * The default axis for altitude values.
+     * Increasing ordinates values go up.
+     */
+    public static final AxisInfo ALTITUDE = new AxisInfo.Localized("Altitude", Clé.ALTITUDE, AxisOrientation.UP);
+
+    /**
+     * A default axis for time values.
+     * Increasing time go toward future.
+     */
+    public static final AxisInfo TIME = new AxisInfo.Localized("Time", Clé.TIME, AxisOrientation.FUTURE);
+
+    /**
      * Human readable name for axis.
      * Possible values are <code>X</code>, <code>Y</code>,
      * <code>Long</code>, <code>Lat</code> or any other
@@ -137,7 +181,7 @@ public class AxisInfo implements Serializable
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Localized extends AxisInfo
+    private static final class Localized extends AxisInfo
     {
         /**
          * Serial number for interoperability with different versions.

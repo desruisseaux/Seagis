@@ -85,7 +85,7 @@ public class PrimeMeridian extends Info
     /**
      * Creates a prime meridian, relative to Greenwich.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param unit       Angular units of longitude.
      * @param longitude  Longitude of prime meridian in supplied angular units East of Greenwich.
      */

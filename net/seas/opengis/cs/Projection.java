@@ -70,18 +70,6 @@ public class Projection extends Info
     private final ParameterList parameters;
 
     /**
-     * Convenience constructor for a projection using the WGS84 ellipsoid.
-     *
-     * @param name           Name to give new object.
-     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
-     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
-     *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
-     *                       will be set according.
-     */
-    public Projection(final String name, final String classification, final Point2D centre)
-    {this(name, classification, Ellipsoid.WGS84, centre);}
-
-    /**
      * Convenience constructor for a projection using the specified ellipsoid.
      *
      * @param name           Name to give new object.
@@ -93,23 +81,7 @@ public class Projection extends Info
      *                       will be set according.
      */
     public Projection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
-    {
-        super(name);
-        ensureNonNull("classification", classification);
-        this.classification = classification;
-        parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
-        if (ellipsoid!=null)
-        {
-            final Unit axisUnit = ellipsoid.getAxisUnit();
-            parameters.setParameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
-            parameters.setParameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
-        }
-        if (centre!=null)
-        {
-            parameters.setParameter("central_meridian",   centre.getX());
-            parameters.setParameter("latitude_of_origin", centre.getY());
-        }
-    }
+    {this(name, classification, getParameterList(ellipsoid, centre));}
 
     /**
      * Creates a projection. The set of parameters (<code>parameters</code>) may be
@@ -133,7 +105,7 @@ public class Projection extends Info
     /**
      * Creates a projection.
      *
-     * @param properties     The set of properties.
+     * @param properties     The set of properties (see {@link Info}).
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
@@ -143,6 +115,32 @@ public class Projection extends Info
         this.classification = classification;
         this.parameters     = parameters;
         // Accept null values.
+    }
+
+    /**
+     * Construct a list of parameter from the specified ellipsoid and point.
+     *
+     * @param ellipsoid Ellipsoid parameter. If non-null <code>"semi_major"</code> and
+     *                  <code>"semi_minor"</code> parameters will be set according.
+     * @param centre    Central meridian and latitude of origin, in degrees. If non-null,
+     *                  <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                  will be set according.
+     */
+    static ParameterList getParameterList(final Ellipsoid ellipsoid, final Point2D centre)
+    {
+        final ParameterList parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
+        if (ellipsoid!=null)
+        {
+            final Unit axisUnit = ellipsoid.getAxisUnit();
+            parameters.setParameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
+            parameters.setParameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
+        }
+        if (centre!=null)
+        {
+            parameters.setParameter("central_meridian",   centre.getX());
+            parameters.setParameter("latitude_of_origin", centre.getY());
+        }
+        return parameters;
     }
 
     /**

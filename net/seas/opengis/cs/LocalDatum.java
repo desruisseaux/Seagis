@@ -66,7 +66,7 @@ public class LocalDatum extends Datum
     /**
      * Creates a local datum.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param localDatumType Type of local datum to create.
      */
     LocalDatum(final Map<String,Object> properties, final DatumType type)

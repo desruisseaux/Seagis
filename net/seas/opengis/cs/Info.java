@@ -115,16 +115,28 @@ public class Info implements Serializable
 
     /**
      * Create an object with the specified properties.
+     * Property keys are any of the following strings:
+     * <ul>
+     *   <li>"name" (mandatory)</li>
+     *   <li>"authority"</li>
+     *   <li>"authorityCode"</li>
+     *   <li>"alias"</li>
+     *   <li>"abbreviation"</li>
+     *   <li>"remarks"</li>
+     * </ul>
+     * Values are usually {@link String}, or may be <code>null</code>
+     * if a particular property is not defined. The "name" property
+     * is mandatory.
      *
      * @param properties The set of properties.
      * @param name This object name.
      */
     Info(final Map<String,Object> properties)
     {
+        ensureNonNull("properties", properties);
         this.properties = properties;
         this.name       = (String)properties.get("name");
         this.proxy      = (Object)properties.get("proxy");
-        // Accept null values.
     }
 
     /**

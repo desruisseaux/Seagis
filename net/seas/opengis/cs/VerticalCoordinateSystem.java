@@ -68,6 +68,16 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     private final AxisInfo axis;
 
     /**
+     * Creates a vertical coordinate system from a datum. Units
+     * will be metres and values will be increasing upward.
+     *
+     * @param name  Name to give new object.
+     * @param datum Datum to use for new coordinate system.
+     */
+    public VerticalCoordinateSystem(final String name, final VerticalDatum datum)
+    {this(name, datum, Unit.METRE, AxisInfo.ALTITUDE);}
+
+    /**
      * Creates a vertical coordinate system from a datum and linear units.
      *
      * @param name  Name to give new object.
@@ -93,7 +103,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     /**
      * Creates a vertical coordinate system from a datum and linear units.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
      * @param axis  Axis to use for new coordinate system.

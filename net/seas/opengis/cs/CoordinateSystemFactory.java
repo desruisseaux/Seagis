@@ -49,6 +49,7 @@ import org.opengis.cs.CS_WGS84ConversionInfo;
 
 // Miscellaneous
 import javax.units.Unit;
+import java.awt.geom.Point2D;
 import net.seas.util.WeakHashSet;
 import javax.media.jai.ParameterList;
 
@@ -99,6 +100,18 @@ public class CoordinateSystemFactory
     {}
 
     /**
+     * Creates a geographic coordinate system.  This coordinate system will use
+     * <var>longitude</var>/<var>latitude</var> ordinates with longitude values
+     * increasing east and latitude values increasing north.  Angular units are
+     * degrees and prime meridian is Greenwich.
+     *
+     * @param name      Name to give new object.
+     * @param datum     Horizontal datum for created coordinate system.
+     */
+    public GeographicCoordinateSystem createGeographicCoordinateSystem(final String name, final HorizontalDatum datum)
+    {return createGeographicCoordinateSystem(name, Unit.DEGREE, datum, PrimeMeridian.GREENWICH, AxisInfo.LONGITUDE, AxisInfo.LATITUDE);}
+
+    /**
      * Creates a geographic coordinate system, which could be
      * <var>latitude</var>/<var>longiude</var> or
      * <var>longitude</var>/<var>latitude</var>.
@@ -116,6 +129,18 @@ public class CoordinateSystemFactory
     {return (GeographicCoordinateSystem) pool.intern(new GeographicCoordinateSystem(name, unit, datum, meridian, axis0, axis1));}
 
     /**
+     * Creates a projected coordinate system using the specified geographic
+     * system. Projected coordinates will be in meters, <var>x</var> values
+     * increasing east and <var>y</var> values increasing north.
+     *
+     * @param  name Name to give new object.
+     * @param  gcs Geographic coordinate system to base projection on.
+     * @param  projection Projection from geographic to projected coordinate system.
+     */
+    public ProjectedCoordinateSystem createProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection)
+    {return createProjectedCoordinateSystem(name, gcs, projection, Unit.METRE, AxisInfo.X, AxisInfo.Y);}
+
+    /**
      * Creates a projected coordinate system using a projection object.
      *
      * @param  name Name to give new object.
@@ -129,6 +154,16 @@ public class CoordinateSystemFactory
      */
     public ProjectedCoordinateSystem createProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
     {return (ProjectedCoordinateSystem) pool.intern(new ProjectedCoordinateSystem(name, gcs, projection, unit, axis0, axis1));}
+
+    /**
+     * Creates a vertical coordinate system from a datum. Units
+     * will be metres and values will be increasing upward.
+     *
+     * @param name  Name to give new object.
+     * @param datum Datum to use for new coordinate system.
+     */
+    public VerticalCoordinateSystem createVerticalCoordinateSystem(final String name, final VerticalDatum datum)
+    {return createVerticalCoordinateSystem(name, datum, Unit.METRE, AxisInfo.ALTITUDE);}
 
     /**
      * Creates a vertical coordinate system from a datum and linear units.
@@ -221,6 +256,20 @@ public class CoordinateSystemFactory
      */
     public Projection createProjection(final String name, final String classification, final ParameterList parameters)
     {return (Projection) pool.intern(new Projection(name, classification, parameters));}
+
+    /**
+     * Convenience method for constructing a projection using the specified ellipsoid.
+     *
+     * @param name           Name to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param ellipsoid      Ellipsoid parameter. If non-null <code>"semi_major"</code> and
+     *                       <code>"semi_minor"</code> parameters will be set according.
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
+     *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                       will be set according.
+     */
+    public Projection createProjection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
+    {return createProjection(name, classification, Projection.getParameterList(ellipsoid, centre));}
 
     /**
      * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.

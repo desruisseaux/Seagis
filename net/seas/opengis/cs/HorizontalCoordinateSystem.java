@@ -88,7 +88,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     /**
      * Construct a coordinate system.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param datum The horizontal datum.
      * @param axis0 Details of 0th ordinates in created coordinate system.
      * @param axis1 Details of 1st ordinates in created coordinate system.

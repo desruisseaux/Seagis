@@ -77,10 +77,9 @@ public class Datum extends Info
     }
 
     /**
-     * Construct a new datum with
-     * the specified properties.
+     * Construct a new datum with the specified properties.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param type The datum type.
      */
     Datum(final Map<String,Object> properties, final DatumType type)

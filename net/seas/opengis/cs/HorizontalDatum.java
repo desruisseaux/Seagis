@@ -96,7 +96,7 @@ public class HorizontalDatum extends Datum
     /**
      * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param type       Type of horizontal datum to create.
      * @param ellipsoid  Ellipsoid to use in new horizontal datum.
      * @param toWGS84    Suggested approximate conversion from new datum to WGS84,

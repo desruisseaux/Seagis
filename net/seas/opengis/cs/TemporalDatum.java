@@ -24,6 +24,8 @@ package net.seas.opengis.cs;
 
 // Miscellaneous
 import java.util.Map;
+import java.util.Locale;
+import net.seas.resources.Resources;
 
 
 /**
@@ -37,7 +39,21 @@ public class TemporalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-     private static final long serialVersionUID = -3132187036753923869L;
+    private static final long serialVersionUID = -3132187036753923869L;
+
+    /**
+     * Default datum for Universal Time Clock (UTC).
+     * UTC is based on an atomic clock, while GMT is
+     * based on astronomical observations.
+     */
+    public static final TemporalDatum UTC = new TemporalDatum("UTC", DatumType.UTC);
+
+    /**
+     * Default datum for Greenwich Mean Time (GMT).
+     * GMT is based on astronomical observations,
+     * while UTC is based on an atomic clock.
+     */
+    public static final TemporalDatum GMT = new TemporalDatum("GMT", DatumType.GMT);
 
     /**
      * Creates a temporal datum from an enumerated type value.
@@ -51,7 +67,7 @@ public class TemporalDatum extends Datum
     /**
      * Creates a temporal datum.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param localDatumType Type of temporal datum to create.
      */
     TemporalDatum(final Map<String,Object> properties, final DatumType type)

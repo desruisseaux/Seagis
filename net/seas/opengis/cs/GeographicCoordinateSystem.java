@@ -67,16 +67,6 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private static final long serialVersionUID = -80914667908100423L;
 
     /**
-     * Default axis info for longitude.
-     */
-    private static final AxisInfo EAST = new AxisInfo.Localized("Longitude", Clé.LONGITUDE, AxisOrientation.EAST);
-
-    /**
-     * Default axis info for latitude.
-     */
-    private static final AxisInfo NORTH = new AxisInfo.Localized("Latitude", Clé.LATITUDE, AxisOrientation.NORTH);
-
-    /**
      * A geographic coordinate system using WGS84 datum.
      * This coordinate system use <var>longitude</var>/<var>latitude</var> ordinates
      * with longitude values increasing north and latitude values increasing east.
@@ -104,7 +94,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * @param datum     Horizontal datum for created coordinate system.
      */
     public GeographicCoordinateSystem(final String name, final HorizontalDatum datum)
-    {this(name, Unit.DEGREE, datum, PrimeMeridian.GREENWICH, EAST, NORTH);}
+    {this(name, Unit.DEGREE, datum, PrimeMeridian.GREENWICH, AxisInfo.LONGITUDE, AxisInfo.LATITUDE);}
 
     /**
      * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
@@ -133,7 +123,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
      * or <var>longitude</var>/<var>latitude</var>.
      *
-     * @param properties The set of properties.
+     * @param properties The set of properties (see {@link Info}).
      * @param unit       Angular units for created coordinate system.
      * @param datum      Horizontal datum for created coordinate system.
      * @param meridian   Prime Meridian for created coordinate system.
