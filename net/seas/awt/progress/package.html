@@ -1,0 +1,30 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title></title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<p>Suivi des progrès d'une longue opération. La classe {@link
+fr.ird.awt.progress.Progress} sert de base à toutes les classes
+de ce paquet qui informeront l'utilisateur des progrès d'une
+longue opération. Cette information peut apparaître par exemple
+comme un pourcentage écrit sur l'écran d'un terminal ({@link fr.ird.awt.progress.PrintProgress})
+ou sous forme d'une barre des progrès dans une boîte de
+dialogue ({@link fr.ird.awt.progress.WindowProgress}).</p>
+
+<p>Le JDK 1.2 offrait déjà une classe pour l'affichage des
+progrès d'une longue opération: {@link javax.swing.ProgressMonitor}.
+Cette classe standard n'est pas utilisée ici car elle n'offrait
+pas exactement les fonctionnalités désirées. Une des
+fonctionnalités les plus importantes de {@link fr.ird.awt.progress.Progress}
+est la possibilité d'afficher des messages d'avertissements.
+Cette possibilité est utilisée par exemple lorsque l'on
+rencontre des erreurs durant le long processus, mais qui ne sont
+pas assez graves pour l'interrompre.</p>
+</body>
+</html>
