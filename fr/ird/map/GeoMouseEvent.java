@@ -56,8 +56,7 @@ import org.geotools.resources.CTSUtilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class GeoMouseEvent extends MouseEvent
-{
+public final class GeoMouseEvent extends MouseEvent {
     /**
      * Carte qui a construit cet événement.
      */
@@ -95,8 +94,7 @@ public final class GeoMouseEvent extends MouseEvent
      * @param event Evénement original.
      * @param mapPanel Carte ayant produit cet événement.
      */
-    public GeoMouseEvent(final MouseEvent event, final MapPanel mapPanel)
-    {
+    public GeoMouseEvent(final MouseEvent event, final MapPanel mapPanel) {
         super(event.getComponent(),    // the Component that originated the event
               event.getID(),           // the integer that identifies the event
               event.getWhen(),         // a long int that gives the time the event occurred
@@ -119,8 +117,7 @@ public final class GeoMouseEvent extends MouseEvent
      * @return La coordonnée pixel. Si <code>dest</code> était non-nul,
      *         alors il sera utilisé et retourné.
      */
-    public Point2D getPoint2D(Point2D dest)
-    {
+    public Point2D getPoint2D(Point2D dest) {
         if (dest!=null) dest.setLocation(getX(), getY());
         else dest=new Point2D.Double(getX(), getY());
         mapPanel.correctPointForMagnifier(dest);
@@ -139,8 +136,9 @@ public final class GeoMouseEvent extends MouseEvent
      *         Si la coordonnée a pu être obtenue et que <code>dest</code> est non-nul, alors
      *         une nouveau point sera automatiquement créé et retourné.
      */
-    public Point2D getVisualCoordinate(final Point2D dest)
-    {return mapPanel.inverseTransform(getPoint2D(dest));}
+    public Point2D getVisualCoordinate(final Point2D dest) {
+        return mapPanel.inverseTransform(getPoint2D(dest));
+    }
 
     /**
      * Retourne les coordonnées logiques de l'endroit où s'est produit l'évènement.
@@ -155,13 +153,10 @@ public final class GeoMouseEvent extends MouseEvent
      *         Si la coordonnée a pu être obtenue et que <code>dest</code> est non-nul, alors
      *         une nouveau point sera automatiquement créé et retourné.
      */
-    public Point2D getCoordinate(CoordinateSystem system, Point2D dest)
-    {
+    public Point2D getCoordinate(CoordinateSystem system, Point2D dest) {
         system = CTSUtilities.getCoordinateSystem2D(system);
-        try
-        {
-            if (inverseTransform==null)
-            {
+        try {
+            if (inverseTransform==null) {
                 inverseTransform = mapPanel.getCommonestTransformation("GeoMouseEvent", "getCoordinate").inverse();
             }
             /*
@@ -169,11 +164,9 @@ public final class GeoMouseEvent extends MouseEvent
              * celui que l'on attendait, calcule à la volé les
              * coordonnées.
              */
-            if (!system.equivalents(inverseTransform.getTargetCS()))
-            {
+            if (!system.equals(inverseTransform.getTargetCS(), false)) {
                 dest=getVisualCoordinate(dest);
-                if (dest==null)
-                {
+                if (dest == null) {
                     return null;
                 }
                 final CoordinateTransformation tr;
@@ -185,10 +178,8 @@ public final class GeoMouseEvent extends MouseEvent
              * et qu'on avait déjà calculé les coordonnées précédemment, utilise
              * le résultat qui avait été conservé dans la cache.
              */
-            if (projected)
-            {
-                if (dest!=null)
-                {
+            if (projected) {
+                if (dest != null) {
                     dest.setLocation(px,py);
                     return dest;
                 }
@@ -199,22 +190,19 @@ public final class GeoMouseEvent extends MouseEvent
              * une cache interne pour les interogations subséquentes.
              */
             dest=getVisualCoordinate(dest);
-            if (dest!=null)
-            {
+            if (dest != null) {
                 dest = ((MathTransform2D) inverseTransform.getMathTransform()).transform(dest, dest);
                 px=dest.getX();
                 py=dest.getY();
                 projected=true;
             }
             return dest;
-        }
-        /*
-         * Si une projection cartographique a échouée, reporte
-         * l'erreur à l'objet {@link MapPanel} qui avait lancé
-         * cet événement.
-         */
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
+            /*
+             * Si une projection cartographique a échouée, reporte
+             * l'erreur à l'objet {@link MapPanel} qui avait lancé
+             * cet événement.
+             */
             mapPanel.handleException("GeoMouseEvent", "getCoordinate", exception);
         }
         return null;
@@ -229,22 +217,19 @@ public final class GeoMouseEvent extends MouseEvent
     final CoordinateTransformation getTransformToTarget(final CoordinateTransformation cached) throws CannotCreateTransformException
     {
         final CoordinateSystem sourceCS = mapPanel.getCoordinateSystem();
-        if (sourceCS.equivalents(cached.getSourceCS())) return cached;
+        if (sourceCS.equals(cached.getSourceCS(), false)) {
+            return cached;
+        }
         final CoordinateSystem targetCS = cached.getTargetCS();
-        try
-        {
-            if (inverseTransform==null)
-            {
+        try {
+            if (inverseTransform == null) {
                 inverseTransform = mapPanel.getCommonestTransformation("MouseCoordinateFormat", "format").inverse();
             }
-            assert sourceCS.equivalents(inverseTransform.getSourceCS());
-            if (targetCS.equivalents(inverseTransform.getTargetCS()))
-            {
+            assert sourceCS.equals(inverseTransform.getSourceCS(), false);
+            if (targetCS.equals(inverseTransform.getTargetCS(), false)) {
                 return inverseTransform;
             }
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             // This method is actually invoked by MouseCoordinateFormat only.
             mapPanel.handleException("MouseCoordinateFormat", "format", exception);
         }

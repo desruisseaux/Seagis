@@ -278,8 +278,8 @@ public class ImageComparator implements Comparator<ImageEntry> {
             Envelope   envelope = entry.getEnvelope();
             CoordinateSystem cs = entry.getCoordinateSystem();
             GridRange     range = entry.getGridGeometry().getGridRange();
-            if (!coordinateSystem.equivalents(cs)) {
-                if (transformation==null || !transformation.getSourceCS().equivalents(cs)) {
+            if (!coordinateSystem.equals(cs, false)) {
+                if (transformation==null || !transformation.getSourceCS().equals(cs, false)) {
                     transformation = factory.createFromCoordinateSystems(cs, coordinateSystem);
                 }
                 final MathTransform transform = transformation.getMathTransform();

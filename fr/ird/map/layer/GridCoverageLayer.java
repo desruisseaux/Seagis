@@ -58,8 +58,7 @@ import fr.ird.map.RenderingContext;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class GridCoverageLayer extends Layer
-{
+public class GridCoverageLayer extends Layer {
     /**
      * The underlying grid coverage.
      */
@@ -107,8 +106,7 @@ public class GridCoverageLayer extends Layer
      * Construct a grid coverage layer which will display
      * image from the specified coordinate systems.
      */
-    public GridCoverageLayer(final CoordinateSystem coordinateSystem)
-    {
+    public GridCoverageLayer(final CoordinateSystem coordinateSystem) {
         super(coordinateSystem);
     }
 
@@ -118,8 +116,7 @@ public class GridCoverageLayer extends Layer
      * coverage (in order to be inserted in many {@link MapPanel}
      * for example).
      */
-    public GridCoverageLayer(final GridCoverage coverage)
-    {
+    public GridCoverageLayer(final GridCoverage coverage) {
         super(coverage.getCoordinateSystem());
         setCoverage(coverage);
     }
@@ -128,16 +125,13 @@ public class GridCoverageLayer extends Layer
      * Set the grid coverage. A <code>null</code> value
      * will remove the current grid coverage.
      */
-    public void setCoverage(final GridCoverage coverage)
-    {
-        if (coverage == null)
-        {
+    public void setCoverage(final GridCoverage coverage) {
+        if (coverage == null) {
             clearCache();
             this.coverage = null;
             return;
         }
-        if (!getCoordinateSystem().equals(CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem())))
-        {
+        if (!getCoordinateSystem().equals(CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem()))) {
             // TODO: implement changing coordinate system.
             throw new UnsupportedOperationException("Can't change coordinate system");
         }
@@ -159,29 +153,26 @@ public class GridCoverageLayer extends Layer
      * Returns the underlying grid coverage, or <code>null</code>
      * if no grid coverage has been set.
      */
-    public GridCoverage getCoverage()
-    {return coverage;}
+    public GridCoverage getCoverage() {
+        return coverage;
+    }
 
     /**
      * Returns the grid coverage projected
      * to the specified coordinate system.
      */
-    private GridCoverage getCoverage(CoordinateSystem targetCS)
-    {
-        if (coverage==null)
-        {
+    private GridCoverage getCoverage(CoordinateSystem targetCS) {
+        if (coverage == null) {
             return null;
         }
         CoordinateSystem sourceCS;
-        if (projectedCoverage==null)
-        {
+        if (projectedCoverage == null) {
             projectedCoverage = coverage.geophysics(false);
         }
         sourceCS = projectedCoverage.getCoordinateSystem();
         sourceCS = CTSUtilities.getCoordinateSystem2D(sourceCS);
         targetCS = CTSUtilities.getCoordinateSystem2D(targetCS);
-        if (!sourceCS.equivalents(targetCS))
-        {
+        if (!sourceCS.equals(targetCS, false)) {
             final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
             projectedCoverage = processor.doOperation("Resample", coverage.geophysics(false),
                                                       "CoordinateSystem", targetCS);
@@ -196,14 +187,11 @@ public class GridCoverageLayer extends Layer
      * immédiatement avant de faire afficher cette couche. Cette méthode n'est utile que lorsqu'elle
      * est appelée un peu en avance.
      */
-    public void prefetch(final MapPanel mapPanel)
-    {
+    public void prefetch(final MapPanel mapPanel) {
         final Rectangle2D area=mapPanel.getVisibleArea();
-        if (area!=null && !area.isEmpty())
-        {
+        if (area!=null && !area.isEmpty()) {
             final GridCoverage coverage = getCoverage(mapPanel.getCoordinateSystem());
-            if (coverage != null)
-            {
+            if (coverage != null) {
                 coverage.prefetch(area);
             }
         }
@@ -218,11 +206,9 @@ public class GridCoverageLayer extends Layer
      * @return Un rectangle englobeant l'image dessinée, en points (1/72 de pouce).
      * @throws TransformException si une projection cartographique était nécessaire et qu'elle a échoué.
      */
-    protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
-    {
+    protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException {
         final GridCoverage coverage = getCoverage(context.getViewCoordinateSystem());
-        if (coverage != null)
-        {
+        if (coverage != null) {
             final MathTransform2D mathTransform = coverage.getGridGeometry().getGridToCoordinateSystem2D();
             if (!(mathTransform instanceof AffineTransform)) {
                 throw new UnsupportedOperationException("Non-affine transformations not yet implemented"); // TODO
@@ -247,26 +233,20 @@ public class GridCoverageLayer extends Layer
      * @param  toAppendTo Le buffer dans lequel ajouter des informations.
      * @return <code>true</code> si cette méthode a ajouté des informations dans <code>toAppendTo</code>.
      */
-    protected synchronized boolean getLabel(final GeoMouseEvent event, final StringBuffer toAppendTo)
-    {
-        if (coverage == null)
-        {
+    protected synchronized boolean getLabel(final GeoMouseEvent event, final StringBuffer toAppendTo) {
+        if (coverage == null) {
             return false;
         }
         point  = event.getCoordinate(getCoordinateSystem(), point);
         values = coverage.evaluate(point, values);
-        if (bands == null)
-        {
+        if (bands == null) {
             bands = coverage.getSampleDimensions();
         }
         boolean modified = false;
-        for (int i=0; i<values.length; i++)
-        {
+        for (int i=0; i<values.length; i++) {
             final String text = bands[i].getLabel(values[i], (Locale)null);
-            if (text!=null)
-            {
-                if (modified)
-                {
+            if (text != null) {
+                if (modified) {
                     toAppendTo.append(", ");
                 }
                 toAppendTo.append(text);
@@ -280,8 +260,7 @@ public class GridCoverageLayer extends Layer
      * Efface les informations qui avaient été
      * sauvegardées dans la cache interne.
      */
-    protected void clearCache()
-    {
+    protected void clearCache() {
         point             = null;
         values            = null;
         bands             = null;

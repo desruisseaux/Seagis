@@ -97,8 +97,7 @@ import javax.media.jai.util.Range;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageTableImpl extends Table implements ImageTable
-{
+final class ImageTableImpl extends Table implements ImageTable {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des images.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
@@ -169,15 +168,15 @@ final class ImageTableImpl extends Table implements ImageTable
     /**
      * Convertit un jour julien en date.
      */
-    static Date toDate(final double t)
-    {return new Date(Math.round(t*DAY)+EPOCH);}
+    static Date toDate(final double t) {
+        return new Date(Math.round(t*DAY)+EPOCH);
+    }
 
     /**
      * Convertit une date en nombre de jours écoulés depuis le 1er janvier 1950.
      * Les valeurs <code>[MIN/MAX]_VALUE</code> sont converties en infinies.
      */
-    static double toJulian(final long time)
-    {
+    static double toJulian(final long time) {
         if (time==Long.MIN_VALUE) return Double.NEGATIVE_INFINITY;
         if (time==Long.MAX_VALUE) return Double.POSITIVE_INFINITY;
         return (time-EPOCH)/DAY;
@@ -317,8 +316,7 @@ final class ImageTableImpl extends Table implements ImageTable
      *                    base de données.
      * @throws SQLException si <code>ImageTable</code> n'a pas pu construire sa requête SQL.
      */
-    ImageTableImpl(final Connection connection, final TimeZone timezone) throws SQLException
-    {
+    ImageTableImpl(final Connection connection, final TimeZone timezone) throws SQLException {
         statement = connection.prepareStatement(preferences.get(IMAGES, SQL_SELECT));
         this.timezone   = timezone;
         this.calendar   = new GregorianCalendar(timezone);
@@ -329,8 +327,9 @@ final class ImageTableImpl extends Table implements ImageTable
     /**
      * Retourne la référence vers la séries d'images.
      */
-    public SeriesEntry getSeries()
-    {return series;}
+    public SeriesEntry getSeries() {
+        return series;
+    }
 
     /**
      * Définit la série dont on veut les images.
@@ -343,14 +342,11 @@ final class ImageTableImpl extends Table implements ImageTable
      *                      se réfère pas à un enregistrement de la table
      *                      des séries.
      */
-    public synchronized void setSeries(final SeriesEntry series) throws SQLException
-    {
-        if (!series.equals(this.series))
-        {
+    public synchronized void setSeries(final SeriesEntry series) throws SQLException {
+        if (!series.equals(this.series)) {
             parameters = null;
             statement.setInt(ARG_SERIES, series.getID());
             this.series=series;
-
             log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
         }
     }
@@ -365,15 +361,15 @@ final class ImageTableImpl extends Table implements ImageTable
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
      */
-    public final CoordinateSystem getCoordinateSystem()
-    {return coordinateSystem;}
+    public final CoordinateSystem getCoordinateSystem() {
+        return coordinateSystem;
+    }
 
     /**
      * Retourne les coordonnées spatio-temporelles de la région d'intérêt. Le système
      * de coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
      */
-    public synchronized Envelope getEnvelope()
-    {
+    public synchronized Envelope getEnvelope() {
         final Envelope envelope = new Envelope(3);
         envelope.setRange(0, geographicArea.getMinX(), geographicArea.getMaxX());
         envelope.setRange(1, geographicArea.getMinY(), geographicArea.getMaxY());
@@ -389,8 +385,7 @@ final class ImageTableImpl extends Table implements ImageTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setEnvelope(final Envelope envelope) throws SQLException
-    {
+    public synchronized void setEnvelope(final Envelope envelope) throws SQLException {
         // No coordinate transformation needed for this implementation.
         setGeographicArea(new Rectangle2D.Double(envelope.getMinimum(0), envelope.getMinimum(1),
                                                  envelope.getLength (0), envelope.getLength (1)));
@@ -402,8 +397,9 @@ final class ImageTableImpl extends Table implements ImageTable
      * {@link Date}. Appeler cette méthode équivant à n'extraire que la partie temporelle
      * de {@link #getEnvelope} et à transformer les coordonnées si nécessaire.
      */
-    public synchronized Range getTimeRange()
-    {return new Range(Date.class, new Date(startTime), new Date(endTime));}
+    public synchronized Range getTimeRange() {
+        return new Range(Date.class, new Date(startTime), new Date(endTime));
+    }
 
     /**
      * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
@@ -413,14 +409,15 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  range Période d'intérêt dans laquelle rechercher des images.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public void setTimeRange(final Range range) throws SQLException
-    {
+    public void setTimeRange(final Range range) throws SQLException {
         Date startTime = (Date) range.getMinValue();
         Date   endTime = (Date) range.getMaxValue();
-        if (!range.isMinIncluded())
+        if (!range.isMinIncluded()) {
             startTime = new Date(startTime.getTime()+1);
-        if (!range.isMaxIncluded())
+        }
+        if (!range.isMaxIncluded()) {
             endTime = new Date(endTime.getTime()-1);
+        }
         setTimeRange(startTime, endTime);
     }
 
@@ -433,12 +430,10 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  endTime   Date de la fin de la plage de temps, inclusive.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException
-    {
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
         final long newStartTime = startTime.getTime();
         final long newEndTime   =   endTime.getTime();
-        if (newStartTime!=this.startTime || newEndTime!=this.endTime)
-        {
+        if (newStartTime!=this.startTime || newEndTime!=this.endTime) {
             parameters = null;
             final Timestamp time=new Timestamp(newStartTime);
             statement.setTimestamp(ARG_START_TIME, time, calendar);
@@ -447,8 +442,7 @@ final class ImageTableImpl extends Table implements ImageTable
             this.startTime = newStartTime;
             this.endTime   = newEndTime;
 
-            if (series != null)
-            {
+            if (series != null) {
                 // Don't log if this object is configured by ImageDataBase.
                 final String startText = dateFormat.format(startTime);
                 final String   endText = dateFormat.format(  endTime);
@@ -465,8 +459,9 @@ final class ImageTableImpl extends Table implements ImageTable
      * que la partie horizontale de  {@link #getEnvelope}  et à transformer les
      * coordonnées si nécessaire.
      */
-    public synchronized Rectangle2D getGeographicArea()
-    {return (Rectangle2D) geographicArea.clone();}
+    public synchronized Rectangle2D getGeographicArea() {
+        return (Rectangle2D) geographicArea.clone();
+    }
 
     /**
      * Définit les coordonnées géographiques de la région d'intérêt   (dans laquelle rechercher des
@@ -477,10 +472,8 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  rect Coordonnées géographiques de la région, selon l'ellipsoïde WGS 1984.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException
-    {
-        if (!rect.equals(geographicArea))
-        {
+    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
+        if (!rect.equals(geographicArea)) {
             parameters = null;
             statement.setDouble(ARG_XMIN, rect.getMinX());
             statement.setDouble(ARG_XMAX, rect.getMaxX());
@@ -488,8 +481,7 @@ final class ImageTableImpl extends Table implements ImageTable
             statement.setDouble(ARG_YMAX, rect.getMaxY());
             geographicArea = new XRectangle2D(rect);
 
-            if (series != null)
-            {
+            if (series != null) {
                 // Don't log if this object is configured by ImageDataBase.
                 log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$2,
                                          new String[] {getStringArea(), series.getName()});
@@ -503,8 +495,9 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return Résolution préférée, ou <code>null</code> si la lecture
      *         doit se faire avec la meilleure résolution disponible.
      */
-    public synchronized Dimension2D getPreferredResolution()
-    {return (resolution!=null) ? (Dimension2D)resolution.clone() : null;}
+    public synchronized Dimension2D getPreferredResolution() {
+        return (resolution!=null) ? (Dimension2D)resolution.clone() : null;
+    }
 
     /**
      * Définit la dimension désirée des pixels de l'images.  Cette information n'est
@@ -515,26 +508,20 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  pixelSize Taille préférée des pixels. Les unités sont les mêmes
      *         que celles de {@link #setGeographicArea}.
      */
-    public synchronized void setPreferredResolution(final Dimension2D pixelSize)
-    {
-        if (!Utilities.equals(resolution, pixelSize))
-        {
+    public synchronized void setPreferredResolution(final Dimension2D pixelSize) {
+        if (!Utilities.equals(resolution, pixelSize)) {
             parameters = null;
             final int clé;
             final Object param;
-            if (pixelSize!=null)
-            {
+            if (pixelSize != null) {
                 resolution = (Dimension2D)pixelSize.clone();
                 clé = ResourceKeys.SET_RESOLUTION_$3;
-                param = new Object[]
-                {
+                param = new Object[] {
                     new Double(resolution.getWidth()),
                     new Double(resolution.getHeight()),
                     series.getName()
                 };
-            }
-            else
-            {
+            } else {
                 resolution = null;
                 clé = ResourceKeys.UNSET_RESOLUTION_$1;
                 param = series.getName();
@@ -549,8 +536,9 @@ final class ImageTableImpl extends Table implements ImageTable
      * (c'est-à-dire si les images retournées représentent les données originales),
      * alors cette méthode retourne <code>null</code>.
      */
-    public Operation getOperation()
-    {return operation;}
+    public Operation getOperation() {
+        return operation;
+    }
 
     /**
      * Définit l'opération à appliquer sur les images lues. Si des paramètres doivent
@@ -570,20 +558,16 @@ final class ImageTableImpl extends Table implements ImageTable
      *         était nul. Les modifications apportées sur cette liste de paramètres influenceront
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      */
-    public synchronized ParameterList setOperation(final Operation operation)
-    {
+    public synchronized ParameterList setOperation(final Operation operation) {
         this.parameters = null;
         this.operation=operation;
         final int clé;
         final Object param;
-        if (operation!=null)
-        {
+        if (operation != null) {
             opParam = operation.getParameterList();
             param   = new String[] {operation.getName(), series.getName()};
             clé     = ResourceKeys.SET_OPERATION_$2;
-        }
-        else
-        {
+        } else {
             opParam = null;
             param   = series.getName();
             clé     = ResourceKeys.UNSET_OPERATION_$1;
@@ -603,8 +587,9 @@ final class ImageTableImpl extends Table implements ImageTable
      *         les images obtenues lors du prochain appel d'une méthode <code>getEntry</code>.
      * @throws OperationNotFoundException si l'opération <code>operation</code> n'a pas été trouvée.
      */
-    public ParameterList setOperation(final String operation) throws OperationNotFoundException
-    {return setOperation(operation!=null ? Parameters.PROCESSOR.getOperation(operation) : null);}
+    public ParameterList setOperation(final String operation) throws OperationNotFoundException {
+        return setOperation(operation!=null ? Parameters.PROCESSOR.getOperation(operation) : null);
+    }
 
     /**
      * Retourne la liste des images disponibles dans la plage de coordonnées
@@ -615,8 +600,7 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return Liste d'images qui interceptent la plage de temps et la région géographique d'intérêt.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public List<ImageEntry> getEntries() throws SQLException
-    {
+    public List<ImageEntry> getEntries() throws SQLException {
         /*
          * On construit un tableau d'ImageEntry ET NON d'ImageEntryImpl
          * parce que certains utilisateurs (par exemple ImageTableModel)
@@ -639,15 +623,12 @@ final class ImageTableImpl extends Table implements ImageTable
      *         sélectionnées, ou <code>null</code> s'il n'y a pas d'image dans ces plages.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public ImageEntry getEntry() throws SQLException
-    {
+    public ImageEntry getEntry() throws SQLException {
         ImageEntry best = null;
         final ImageComparator comparator=new ImageComparator(this);
-        for (final Iterator<ImageEntry> it=getEntries().iterator(); it.hasNext();)
-        {
+        for (final Iterator<ImageEntry> it=getEntries().iterator(); it.hasNext();) {
             final ImageEntry entry = it.next();
-            if (best==null || comparator.compare(entry, best)<=-1)
-            {
+            if (best==null || comparator.compare(entry, best) <= -1) {
                 best = entry;
             }
         }
@@ -666,10 +647,8 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized ImageEntry getEntry(final int ID) throws SQLException
-    {
-        if (imageByID==null)
-        {
+    public synchronized ImageEntry getEntry(final int ID) throws SQLException {
+        if (imageByID == null) {
             final String query = select(preferences.get(IMAGES, SQL_SELECT))+" WHERE "+IMAGES+".ID=?";
             imageByID = statement.getConnection().prepareStatement(query);
         }
@@ -687,10 +666,8 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return L'image demandée, ou <code>null</code> si elle n'a pas été trouvée.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized ImageEntry getEntry(final String name) throws SQLException
-    {
-        if (imageByName==null)
-        {
+    public synchronized ImageEntry getEntry(final String name) throws SQLException {
+        if (imageByName == null) {
             final String query = select(preferences.get(IMAGES, SQL_SELECT))+" WHERE ("+GROUPS+".visible="+TRUE+") AND (series=?) AND (filename LIKE ?)";
             imageByName = statement.getConnection().prepareStatement(query);
         }
@@ -703,20 +680,18 @@ final class ImageTableImpl extends Table implements ImageTable
      * Retourne l'image correspondant à la requête spécifiée. Il ne
      * doit y avoir qu'une image correspondant à cette requête.
      */
-    private ImageEntry getEntry(final PreparedStatement query) throws SQLException
-    {
+    private ImageEntry getEntry(final PreparedStatement query) throws SQLException {
         assert Thread.holdsLock(this);
         ImageEntry entry=null;
         final ResultSet result=query.executeQuery();
-        if (result.next())
-        {
+        if (result.next()) {
             entry=new ImageEntryImpl(this, result).intern();
-            while (result.next())
-            {
+            while (result.next()) {
                 final ImageEntry check = new ImageEntryImpl(this, result);
-                if (!entry.equals(check))
+                if (!entry.equals(check)) {
                     throw new IllegalRecordException(IMAGES, Resources.format(
                             ResourceKeys.ERROR_DUPLICATED_IMAGE_$2, entry.getName(), check.getName()));
+                }
             }
         }
         result.close();
@@ -733,8 +708,7 @@ final class ImageTableImpl extends Table implements ImageTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException
-    {
+    public void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException {
         getRanges(x, y, t, null);
     }
 
@@ -752,42 +726,35 @@ final class ImageTableImpl extends Table implements ImageTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void getRanges(final RangeSet x, final RangeSet y, final RangeSet t, final List<ImageEntry> entryList) throws SQLException
+    public synchronized void getRanges(final RangeSet x, final RangeSet y, final RangeSet t,
+                                       final List<ImageEntry> entryList) throws SQLException
     {
         ImageEntryImpl newEntry = null;
         long        lastEndTime = Long.MIN_VALUE;
         final int    startIndex = (entryList!=null) ? entryList.size() : 0;
         final ResultSet  result = statement.executeQuery();
-  loop: while (result.next())
-        {
+  loop: while (result.next()) {
             /*
              * Add the new entry to the list.  If many entries have the same
              * spatio-temporal coordinates but different resolution, then an
              * entry with a resolution close to the requested resolution will
              * be selected.
              */
-            if (entryList!=null)
-            {
+            if (entryList != null) {
                 newEntry = new ImageEntryImpl(this, result);
-                for (int i=entryList.size(); --i>=0;)
-                {
+                for (int i=entryList.size(); --i>=0;) {
                     final ImageEntryImpl olderEntry = (ImageEntryImpl) entryList.get(i);
-                    if (!olderEntry.compare(newEntry))
-                    {
+                    if (!olderEntry.compare(newEntry)) {
                         // Entry not equals according the "ORDER BY" clause.
                         break;
                     }
                     final ImageEntryImpl lowestResolution = olderEntry.getLowestResolution(newEntry);
-                    if (lowestResolution!=null)
-                    {
+                    if (lowestResolution != null) {
                         // Two entries has the same spatio-temporal coordinates.
-                        if (lowestResolution.hasEnoughResolution(resolution, coordinateSystem))
-                        {
+                        if (lowestResolution.hasEnoughResolution(resolution, coordinateSystem)) {
                             // The entry with the lowest resolution is enough.
                             entryList.set(i, lowestResolution);
-                        }
-                        else if (lowestResolution == olderEntry)
-                        {
+                        } else if (lowestResolution == olderEntry) {
                             // No entry has enough resolution;
                             // keep the one with the finest resolution.
                             entryList.set(i, newEntry);
@@ -806,27 +773,21 @@ final class ImageTableImpl extends Table implements ImageTable
              * have the same spatio-temporal coordinates than one visible row,
              * it should not have any effect except improving performance.
              */
-            if (t!=null)
-            {
+            if (t != null) {
                 final long period = Math.round(series.getPeriod()*DAY); // 0 if period is NaN
                 final Date startTime;
                 final Date   endTime;
-                if (newEntry!=null)
-                {
+                if (newEntry != null) {
                     startTime = newEntry.getStartTime();
                       endTime = newEntry.getEndTime();
-                }
-                else
-                {
+                } else {
                     startTime = getTimestamp(START_TIME, result);
                       endTime = getTimestamp(  END_TIME, result);
                 }
-                if (startTime!=null && endTime!=null)
-                {
+                if (startTime!=null && endTime!=null) {
                     final long lgEndTime = endTime.getTime();
                     final long checkTime = lgEndTime-period;
-                    if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime())
-                    {
+                    if (checkTime <= lastEndTime  &&  checkTime < startTime.getTime()) {
                         // Il arrive parfois que des images soient prises à toutes les 24 heures,
                         // mais pendant 12 heures seulement. On veut éviter que de telles images
                         // apparaissent tout le temps entrecoupées d'images manquantes.
@@ -836,33 +797,25 @@ final class ImageTableImpl extends Table implements ImageTable
                     t.add(startTime, endTime);
                 }
             }
-            if (x!=null)
-            {
+            if (x != null) {
                 final float xmin;
                 final float xmax;
-                if (newEntry!=null)
-                {
+                if (newEntry!=null) {
                     xmin = newEntry.xmin;
                     xmax = newEntry.xmax;
-                }
-                else
-                {
+                } else {
                     xmin = result.getFloat(XMIN);
                     xmax = result.getFloat(XMAX);
                 }
                 x.add(xmin, xmax);
             }
-            if (y!=null)
-            {
+            if (y != null) {
                 final float ymin;
                 final float ymax;
-                if (newEntry!=null)
-                {
+                if (newEntry != null) {
                     ymin = newEntry.ymin;
                     ymax = newEntry.ymax;
-                }
-                else
-                {
+                } else {
                     ymin = result.getFloat(YMIN);
                     ymax = result.getFloat(YMAX);
                 }
@@ -870,8 +823,7 @@ final class ImageTableImpl extends Table implements ImageTable
             }
         }
         result.close();
-        if (entryList!=null)
-        {
+        if (entryList != null) {
             final List<ImageEntry> newEntries = entryList.subList(startIndex, entryList.size());
             final int size = newEntries.size();
             ImageEntryImpl.intern(newEntries.toArray(new ImageEntry[size]));
@@ -887,15 +839,12 @@ final class ImageTableImpl extends Table implements ImageTable
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (imageByID!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (imageByID != null) {
             imageByID.close();
             imageByID = null;
         }
-        if (formatTable!=null)
-        {
+        if (formatTable != null) {
             formatTable.close();
             formatTable = null;
         }
@@ -905,8 +854,7 @@ final class ImageTableImpl extends Table implements ImageTable
     /**
      * Retourne une chaîne de caractères décrivant cette table.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringBuffer buffer=new StringBuffer("ImageTable[\"");
         buffer.append(series.getName());
         buffer.append("\": ");
@@ -919,14 +867,14 @@ final class ImageTableImpl extends Table implements ImageTable
      * Retourne les coordonnées demandées sous
      * forme de chaîne de caractères.
      */
-    private String getStringArea()
-    {return CTSUtilities.toWGS84String(coordinateSystem.getHeadCS(), geographicArea);}
+    private String getStringArea() {
+        return CTSUtilities.toWGS84String(coordinateSystem.getHeadCS(), geographicArea);
+    }
 
     /**
      * Enregistre un évènement dans le journal.
      */
-    private static void log(final String method, final Level level, final int clé, final Object param)
-    {
+    private static void log(final String method, final Level level, final int clé, final Object param) {
         final Resources resources = Resources.getResources(null);
         final LogRecord record = resources.getLogRecord(level, clé, param);
         record.setSourceClassName("ImageTable");
@@ -938,18 +886,15 @@ final class ImageTableImpl extends Table implements ImageTable
      * Procède à l'extraction d'une date
      * en tenant compte du fuseau horaire.
      */
-    final Date getTimestamp(final int field, final ResultSet result) throws SQLException
-    {
+    final Date getTimestamp(final int field, final ResultSet result) throws SQLException {
         assert Thread.holdsLock(this);
-        if (false)
-        {
+        if (false) {
             // Cette ligne aurait suffit si ce n'était du bug #4380653...
             return result.getTimestamp(field, calendar);
-        }
-        else
-        {
-            if (localCalendar==null)
+        } else {
+            if (localCalendar == null) {
                 localCalendar=new GregorianCalendar();
+            }
             return getTimestamp(field, result, calendar, localCalendar);
         }
     }
@@ -962,22 +907,17 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  formatID Numéro identifiant le format voulu.
      * @throws SQLException si le format spécifié n'a pas été trouvé.
      */
-    private FormatEntryImpl getFormat(final int formatID) throws SQLException
-    {
+    private FormatEntryImpl getFormat(final int formatID) throws SQLException {
         assert Thread.holdsLock(this);
         final Integer ID   = new Integer(formatID);
         FormatEntryImpl format = formats.get(ID);
-        if (format==null)
-        {
-            if (formatTable==null)
-            {
+        if (format == null) {
+            if (formatTable == null) {
                 formatTable = new FormatTable(statement.getConnection());
             }
             format = formatTable.getEntry(ID);
             formats.put(ID, format);
-        }
-        else if (formatTable!=null)
-        {
+        } else if (formatTable != null) {
             /*
              * Si on a demandé un format qui avait déjà été lu auparavant,
              * il y a de bonnes chances pour qu'on n'ai plus besoin de la
@@ -1008,14 +948,15 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return Un objet incluant les paramètres demandées ainsi que ceux de la table.
      * @throws SQLException si les paramètres n'ont pas pu être obtenus.
      */
-    final synchronized Parameters getParameters(final int seriesID, final int formatID, final String pathname, HorizontalCoordinateSystem cs) throws SQLException
+    final synchronized Parameters getParameters(final int seriesID, final int formatID,
+                                                final String pathname,
+                                                HorizontalCoordinateSystem cs)
+        throws SQLException
     {
-        if (seriesID != series.getID())
-        {
+        if (seriesID != series.getID()) {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
         }
-        if (cs==null)
-        {
+        if (cs == null) {
             cs = (HorizontalCoordinateSystem) coordinateSystem.getHeadCS();
         }
         /*
@@ -1025,10 +966,8 @@ final class ImageTableImpl extends Table implements ImageTable
         final boolean invalidate = (parameters==null) ||
                                    (parameters.format.getID()!=formatID) ||
                                    !Utilities.equals(parameters.pathname, pathname);
-        if (!invalidate && cs.equivalents(parameters.coordinateSystem.getHeadCS()))
-        {
-            if (formatTable!=null)
-            {
+        if (!invalidate && cs.equals(parameters.coordinateSystem.getHeadCS(), false)) {
+            if (formatTable != null) {
                 /*
                  * Si on a demandé un format qui avait déjà été lu auparavant,
                  * il y a de bonnes chances pour qu'on n'ai plus besoin de la
@@ -1044,17 +983,13 @@ final class ImageTableImpl extends Table implements ImageTable
          * Construit un nouveau bloc de paramètres et projète les
          * coordonnées vers le système de coordonnées spécifié.
          */
-        if (invalidate || !coordinateSystem.equivalents(parameters.coordinateSystem))
-        {
+        if (invalidate || !coordinateSystem.equals(parameters.coordinateSystem, false)) {
             parameters = (Parameters)pool.intern(new Parameters(series, getFormat(formatID), pathname, operation, opParam,
                                                                 coordinateSystem, geographicArea, resolution, dateFormat));
         }
-        try
-        {
+        try {
             parameters = parameters.createTransformed(cs);
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             final SQLException e = new SQLException(Resources.format(
                     ResourceKeys.ERROR_INCOMPATIBLE_COORDINATES_$1, getStringArea()));
             e.initCause(exception);

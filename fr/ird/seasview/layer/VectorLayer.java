@@ -74,8 +74,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class VectorLayer extends GridMarkLayer
-{
+public class VectorLayer extends GridMarkLayer {
     /**
      * Image représentant les composantes U et V des vecteurs.
      */
@@ -130,8 +129,7 @@ public class VectorLayer extends GridMarkLayer
      * Procède à la lecture binaire de cet objet,
      * puis initialise des champs internes.
      */
-    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException
-    {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         lastI = -1;
         lastJ = -1;
@@ -141,8 +139,9 @@ public class VectorLayer extends GridMarkLayer
      * Construit un champ de vecteur qui ne
      * contient initialement aucune donnée.
      */
-    public VectorLayer()
-    {super();}
+    public VectorLayer() {
+        super();
+    }
 
     /**
      * Construit un champ de vecteur qui utilisera
@@ -151,8 +150,9 @@ public class VectorLayer extends GridMarkLayer
      * @param coordinateSystem Système de coordonnées
      *        des positions (<var>x</var>,<var>y</var>).
      */
-    public VectorLayer(final CoordinateSystem coordinateSystem)
-    {super(coordinateSystem);}
+    public VectorLayer(final CoordinateSystem coordinateSystem) {
+        super(coordinateSystem);
+    }
 
     /**
      * Construit un champ de vecteur qui
@@ -162,8 +162,7 @@ public class VectorLayer extends GridMarkLayer
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV)
-    {
+    public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV) {
         super(coverage.getCoordinateSystem());
         setData(coverage, bandU, bandV);
     }
@@ -175,12 +174,10 @@ public class VectorLayer extends GridMarkLayer
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public synchronized void setData(GridCoverage coverage, final int bandU, final int bandV)
-    {
+    public synchronized void setData(GridCoverage coverage, final int bandU, final int bandV) {
         coverage = coverage.geophysics(true);
         final CoordinateSystem cs = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
-        if (!cs.equivalents(getCoordinateSystem()))
-        {
+        if (!cs.equals(getCoordinateSystem(), false)) {
             // TODO: Il faudrait ajouter une méthode Layer.setCoordinateSystem
             //       et changer le système de coordonnées ici pour prendre celui
             //       des images.
@@ -191,8 +188,7 @@ public class VectorLayer extends GridMarkLayer
         final SampleDimension   sampleV = samples[bandV];
         final Unit unitU = sampleU.getUnits();
         final Unit unitV = sampleV.getUnits();
-        if (!unitU.equals(unitV))
-        {
+        if (!unitU.equals(unitV)) {
             throw new IllegalArgumentException();
         }
         this.data  = PlanarImage.wrapRenderedImage(coverage.getRenderedImage());
@@ -211,22 +207,25 @@ public class VectorLayer extends GridMarkLayer
     /**
      * Définit la couleur de remplissage des flèches.
      */
-    public void setColor(final Color color)
-    {this.color=color;}
+    public void setColor(final Color color) {
+        this.color = color;
+    }
 
     /**
      * Retourne les unités de l'amplitude des vecteurs, ou <code>null</code>
      * si ces unités ne sont pas connues. Dans les cas des flèches de courant
      * par exemple, ça sera typiquement des "cm/s".
      */
-    public Unit getAmplitudeUnit()
-    {return theme.getUnits();}
+    public Unit getAmplitudeUnit() {
+        return theme.getUnits();
+    }
 
     /**
      * Retourne l'amplitude typique des données de cette couche.
      */
-    public double getTypicalAmplitude()
-    {return 25;} // TODO
+    public double getTypicalAmplitude() {
+        return 25; // TODO
+    }
 
     /**
      * Retourne l'amplitude horizontale d'un vecteur. Cette amplitude
@@ -236,9 +235,10 @@ public class VectorLayer extends GridMarkLayer
      * @param  j Index du point selon <var>y</var>, dans la plage <code>[0..height-1]</code>.
      * @return Amplitude du vecteur à la position spécifiée, selon les unités {@link #getAmplitudeUnit}.
      */
-    public double getAmplitude(final int i, final int j)
-    {
-        if (i!=lastI || j!=lastJ) computeUV(i,j);
+    public double getAmplitude(final int i, final int j) {
+        if (i!=lastI || j!=lastJ) {
+            computeUV(i,j);
+        }
         return XMath.hypot(lastU, lastV);
     }
 
@@ -249,9 +249,10 @@ public class VectorLayer extends GridMarkLayer
      * @param  j Index du point selon <var>y</var>, dans la plage <code>[0..height-1]</code>.
      * @return Direction du vecteur à la position spécifiée, en radians arithmétiques.
      */
-    public double getDirection(final int i, final int j)
-    {
-        if (i!=lastI || j!=lastJ) computeUV(i,j);
+    public double getDirection(final int i, final int j) {
+        if (i!=lastI || j!=lastJ) {
+            computeUV(i,j);
+        }
         return Math.atan2(lastV, lastU);
     }
 
@@ -259,8 +260,7 @@ public class VectorLayer extends GridMarkLayer
      * Calcule les composantes (<var>u</var>,<var>v</var>)
      * du vecteur à la position indiquée.
      */
-    private void computeUV(final int i, final int j)
-    {
+    private void computeUV(final int i, final int j) {
         final Raster tile = data.getTile(data.XToTileX(i), data.YToTileY(j));
         final int x = i+data.getMinX();
         final int y = j+data.getMinY();
@@ -276,8 +276,9 @@ public class VectorLayer extends GridMarkLayer
      * la direction des <var>x</var> positifs (soit à un angle de 0 radians
      * arithmétiques).
      */
-    public Shape getMarkShape(final int i)
-    {return DEFAULT_SHAPE;}
+    public Shape getMarkShape(final int i) {
+        return DEFAULT_SHAPE;
+    }
 
     /**
      * Procède au traçage d'une flèche.
@@ -287,8 +288,7 @@ public class VectorLayer extends GridMarkLayer
      * @param shape    Forme géométrique représentant la flèche à tracer.
      * @param index    Index de la flèche à tracer.
      */
-    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index)
-    {
+    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index) {
         graphics.setColor(color);
         graphics.fill(shape);
     }
@@ -296,10 +296,8 @@ public class VectorLayer extends GridMarkLayer
     /**
      * Retourne l'amplitude de la flèche.
      */
-    protected synchronized String getToolTipText(final int index)
-    {
-        if (angleFormat==null)
-        {
+    protected synchronized String getToolTipText(final int index) {
+        if (angleFormat == null) {
             buffer = new StringBuffer();
             angleFormat = new AngleFormat("D.dd°");
         }

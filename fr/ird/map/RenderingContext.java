@@ -70,8 +70,7 @@ import fr.ird.resources.ResourceKeys;
  * @see Layer#paint
  * @see MapPanel#paintComponent
  */
-public final class RenderingContext
-{
+public final class RenderingContext {
     /**
      * Expansion factor for clip. When a clip for some rectangle is requested, a bigger
      * clip will be computed in order to avoid recomputing a new one if user zoom up or
@@ -165,24 +164,29 @@ public final class RenderingContext
      * @param bounds     Position et dimension de la région de la fenêtre dans lequel se fait le traçage.
      * @param isPrinting Indique si le traçage se fait vers l'imprimante plutôt qu'à l'écran.
      */
-    RenderingContext(final CoordinateTransformation transformation, final AffineTransform fromWorld, final AffineTransform fromPoints, final Rectangle bounds, final boolean isPrinting)
+    RenderingContext(final CoordinateTransformation transformation,
+                     final AffineTransform          fromWorld,
+                     final AffineTransform          fromPoints,
+                     final Rectangle                bounds,
+                     final boolean                  isPrinting)
     {
-        if (transformation!=null && fromWorld!=null && fromPoints!=null)
-        {
+        if (transformation!=null && fromWorld!=null && fromPoints!=null) {
             this.transformation = transformation;
             this.fromWorld      = fromWorld;
             this.fromPoints     = fromPoints;
             this.isPrinting     = isPrinting;
             this.bounds         = bounds;
+        } else {
+            throw new NullPointerException();
         }
-        else throw new NullPointerException();
     }
 
     /**
      * Retourne le système de coordonnées de l'afficheur.
      */
-    public CoordinateSystem getViewCoordinateSystem()
-    {return transformation.getTargetCS();}
+    public CoordinateSystem getViewCoordinateSystem() {
+        return transformation.getTargetCS();
+    }
 
     /**
      * Retourne la transformation à utiliser pour convertir les coordonnées d'une couche vers
@@ -195,12 +199,10 @@ public final class RenderingContext
      *         {@link MapPanel}).
      * @throws CannotCreateTransformException Si la transformation n'a pas pu être créée.
      */
-    public MathTransform2D getMathTransform2D(final Layer layer) throws CannotCreateTransformException
-    {
+    public MathTransform2D getMathTransform2D(final Layer layer) throws CannotCreateTransformException {
         CoordinateTransformation transformation = this.transformation;
         final CoordinateSystem source=layer.getCoordinateSystem();
-        if (!transformation.getSourceCS().equivalents(source))
-        {
+        if (!transformation.getSourceCS().equals(source, false)) {
             transformation = Contour.getCoordinateTransformation(source, transformation.getTargetCS(), "RenderingContext", "getMathTransform2D");
         }
         return (MathTransform2D) transformation.getMathTransform();
@@ -226,10 +228,8 @@ public final class RenderingContext
      *
      * <strong>Note: cette méthode ne fait pas de clone. Ne modifiez pas l'objet retourné!</strong>
      */
-    public AffineTransform getAffineTransform(final int type)
-    {
-        switch (type)
-        {
+    public AffineTransform getAffineTransform(final int type) {
+        switch (type) {
             case WORLD_TO_POINT: return fromWorld;
             case POINT_TO_PIXEL: return fromPoints;
             default: throw new IllegalArgumentException(Integer.toString(type));
@@ -242,8 +242,9 @@ public final class RenderingContext
      * <strong>Note: cette méthode ne fait pas de clone. Ne modifiez pas l'objet
      * retourné!</strong>
      */
-    public Rectangle getZoomableBounds()
-    {return bounds;}
+    public Rectangle getZoomableBounds() {
+        return bounds;
+    }
 
     /**
      * Clip a contour to the current widget's bounds. The clip is only approximative
@@ -269,26 +270,20 @@ public final class RenderingContext
      * @return A possibly clipped contour. May be any element of the list or a new contour.
      *         May be <code>null</code> if the "master" contour doesn't intercept the clip.
      */
-    public Contour clip(final List<Contour> contours)
-    {
-        if (contours.isEmpty())
-        {
+    public Contour clip(final List<Contour> contours) {
+        if (contours.isEmpty()) {
             throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_EMPTY_LIST));
         }
-        if (isPrinting)
-        {
+        if (isPrinting) {
             return contours.get(0);
         }
         /*
          * Gets the clip area expressed in MapPanel's coordinate system
          * (i.e. gets bounds in "logical visual coordinates").
          */
-        if (logicalClip==null) try
-        {
+        if (logicalClip==null) try {
             logicalClip = XAffineTransform.inverseTransform(fromWorld, bounds, logicalClip);
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             // (should not happen) Clip failed: conservatively returns the whole contour.
             Utilities.unexpectedException("fr.ird.map", "RenderingContext", "clip", exception);
             return contours.get(0);
@@ -303,8 +298,7 @@ public final class RenderingContext
         Rectangle2D bounds;
         Rectangle2D temporary=null;
         int index=contours.size();
-        do
-        {
+        do {
             contour = contours.get(--index);
             clip    = logicalClip;
             /*
@@ -315,22 +309,17 @@ public final class RenderingContext
              * way, so we are better to check...
              */
             final CoordinateSystem sourceCS;
-            synchronized (contour)
-            {
+            synchronized (contour) {
                 bounds   = contour.getCachedBounds();
                 sourceCS = contour.getCoordinateSystem();
             }
-            if (!targetCS.equivalents(sourceCS)) try
-            {
+            if (!targetCS.equals(sourceCS, false)) try {
                 CoordinateTransformation transformation = this.transformation;
-                if (!transformation.getSourceCS().equivalents(sourceCS))
-                {
+                if (!transformation.getSourceCS().equals(sourceCS, false)) {
                     transformation = Contour.getCoordinateTransformation(sourceCS, targetCS, "RenderingContext", "clip");
                 }
                 clip = temporary = CTSUtilities.transform((MathTransform2D)transformation.getMathTransform(), clip, temporary);
-            }
-            catch (TransformException exception)
-            {
+            } catch (TransformException exception) {
                 Utilities.unexpectedException("fr.ird.map", "RenderingContext", "clip", exception);
                 continue; // A contour seems invalid. It will be ignored (and probably garbage collected soon).
             }
@@ -339,26 +328,24 @@ public final class RenderingContext
              * test if the clip fall completly inside the contour. If yes,
              * then we should use this contour for clipping.
              */
-            if (Layer.contains(bounds, clip, true)) break;
-        }
-        while (index!=0);
+            if (Layer.contains(bounds, clip, true)) {
+                break;
+            }
+        } while (index!=0);
         /*
          * A clipped contour has been found (or we reached the begining
          * of the list). Check if the requested clip is small enough to
          * worth a clipping.
          */
         final double ratio2 = (bounds.getWidth()*bounds.getHeight()) / (clip.getWidth()*clip.getHeight());
-        if (ratio2 >= CLIP_SCALE*CLIP_SCALE)
-        {
-            if (clipper==null)
-            {
+        if (ratio2 >= CLIP_SCALE*CLIP_SCALE) {
+            if (clipper == null) {
                 clipper = new Clipper(scale(logicalClip, CLIP_SCALE), targetCS);
             }
             // Remove the last part of the list, which is likely to be invalide.
             contours.subList(index+1, contours.size()).clear();
-            contour=contour.getClipped(clipper);
-            if (contour!=null)
-            {
+            contour = contour.getClipped(clipper);
+            if (contour != null) {
                 contours.add(contour);
                 Contour.LOGGER.finer("Clip performed"); // TODO: give more precision
             }
@@ -371,8 +358,7 @@ public final class RenderingContext
      * unchanged. A scale of 2 make the rectangle two times wider and heigher. In
      * any case, the rectangle's center doesn't move.
      */
-    private static Rectangle2D scale(final Rectangle2D rect, final double scale)
-    {
+    private static Rectangle2D scale(final Rectangle2D rect, final double scale) {
         final double trans  = 0.5*(scale-1);
         final double width  = rect.getWidth();
         final double height = rect.getHeight();
@@ -385,6 +371,7 @@ public final class RenderingContext
      * Indique si le traçage se fait vers l'imprimante
      * (ou un autre périphérique) plutôt qu'à l'écran.
      */
-    public boolean isPrinting()
-    {return isPrinting;}
+    public boolean isPrinting() {
+        return isPrinting;
+    }
 }

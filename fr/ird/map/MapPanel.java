@@ -102,17 +102,16 @@ import org.geotools.gui.swing.event.ZoomChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class MapPanel extends ZoomPane
-{
+public class MapPanel extends ZoomPane {
     /**
      * Objet utilisé pour comparer deux objets {@link Layer}.
      * Ce comparateur permettra de classer les {@link Layer}
      * par ordre croissant d'ordre <var>z</var>.
      */
-    private static final Comparator<Layer> COMPARATOR=new Comparator<Layer>()
-    {
-        public int compare(final Layer layer1, final Layer layer2)
-        {return Float.compare(layer1.getZOrder(), layer2.getZOrder());}
+    private static final Comparator<Layer> COMPARATOR=new Comparator<Layer>() {
+        public int compare(final Layer layer1, final Layer layer2) {
+            return Float.compare(layer1.getZOrder(), layer2.getZOrder());
+        }
     };
 
     /**
@@ -183,36 +182,30 @@ public class MapPanel extends ZoomPane
      * de l'ordre <var>z</var> ainsi qu'aux changements des coordonnées géographiques
      * d'une couche.
      */
-    private final class Listeners extends MouseAdapter implements ComponentListener, PropertyChangeListener, ZoomChangeListener
-    {
+    private final class Listeners extends MouseAdapter implements ComponentListener, PropertyChangeListener, ZoomChangeListener {
         public void zoomChanged     (final ZoomChangeEvent     event) {MapPanel.this.zoomChanged (event);}
         public void mouseClicked    (final MouseEvent          event) {MapPanel.this.mouseClicked(event);}
         public void componentResized(final ComponentEvent      event) {MapPanel.this.zoomChanged (null );}
         public void componentMoved  (final ComponentEvent      event) {}
         public void componentShown  (final ComponentEvent      event) {}
         public void componentHidden (final ComponentEvent      event) {clearCache();}
-        public void propertyChange  (final PropertyChangeEvent event)
-        {
-            if (EventQueue.isDispatchThread())
-            {
+        public void propertyChange  (final PropertyChangeEvent event) {
+            if (EventQueue.isDispatchThread()) {
                 final String propertyName = event.getPropertyName();
-                if (propertyName.equals("preferredArea"))
-                {
-                    changeArea((Rectangle2D) event.getOldValue(), (Rectangle2D) event.getNewValue(), ((Layer) event.getSource()).getCoordinateSystem(), "Layer", "setPreferredArea");
-                }
-                else if (propertyName.equals("preferredPixelSize"))
-                {
+                if (propertyName.equals("preferredArea")) {
+                    changeArea((Rectangle2D) event.getOldValue(),
+                               (Rectangle2D) event.getNewValue(),
+                               ((Layer) event.getSource()).getCoordinateSystem(),
+                               "Layer", "setPreferredArea");
+                } else if (propertyName.equals("preferredPixelSize")) {
                     stroke=null;
-                }
-                else if (propertyName.equals("zOrder"))
-                {
+                } else if (propertyName.equals("zOrder")) {
                     layerSorted=false;
                 }
-            }
-            else EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {propertyChange(event);}
+            } else EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    propertyChange(event);
+                }
             });
         }
     }
@@ -223,8 +216,9 @@ public class MapPanel extends ZoomPane
      * Le panneau ne contiendra initialement aucune couche. Les couches
      * pourront être ajoutées par des appels à {@link #addLayer}.
      */
-    public MapPanel()
-    {this(GeographicCoordinateSystem.WGS84);}
+    public MapPanel() {
+        this(GeographicCoordinateSystem.WGS84);
+    }
 
     /**
      * Construit un panneau avec ln système de coordonnées spécifié.
@@ -239,8 +233,7 @@ public class MapPanel extends ZoomPane
      * @throws IllegalArgumentException si <code>coordinateSystem</code> ne peut
      *         pas être ramené à un système de coordonnées à deux dimensions.
      */
-    public MapPanel(final CoordinateSystem coordinateSystem)
-    {
+    public MapPanel(final CoordinateSystem coordinateSystem) {
         super(TRANSLATE_X | TRANSLATE_Y | UNIFORM_SCALE | DEFAULT_ZOOM | ROTATE | RESET);
         this.coordinateSystem = CTSUtilities.getCoordinateSystem2D(coordinateSystem);
         addZoomChangeListener(listeners);
@@ -258,18 +251,21 @@ public class MapPanel extends ZoomPane
      * @return Le système de coordonnées de l'affichage. Ce système
      *         aura toujours exactement deux dimensions.
      */
-    public CoordinateSystem getCoordinateSystem()
-    {return coordinateSystem;}
+    public CoordinateSystem getCoordinateSystem() {
+        return coordinateSystem;
+    }
 
     /**
      * Retourne une transformation permettant de convertir les coordonnées exprimées selon
      * le système <code>source</code> vers le système d'affichage {@link #coordinateSystem}.
      */
-    private MathTransform2D getMathTransform2D(final CoordinateSystem source, final String sourceClassName, final String sourceMethodName) throws CannotCreateTransformException
+    private MathTransform2D getMathTransform2D(final CoordinateSystem source,
+                                               final String sourceClassName,
+                                               final String sourceMethodName)
+        throws CannotCreateTransformException
     {
         CoordinateTransformation transformation = commonestTransform;
-        if (transformation==null || !transformation.getSourceCS().equivalents(source))
-        {
+        if (transformation==null || !transformation.getSourceCS().equals(source, false)) {
             transformation = Contour.getCoordinateTransformation(source, coordinateSystem, sourceClassName, sourceMethodName);
         }
         return (MathTransform2D) transformation.getMathTransform();
@@ -280,10 +276,8 @@ public class MapPanel extends ZoomPane
      * des couches en coordonnées d'affichage. Cette transformation sera conservée dans une
      * cache interne pour améliorer les performances.
      */
-    final CoordinateTransformation getCommonestTransformation(final String sourceClassName, final String sourceMethodName) throws CannotCreateTransformException
-    {
-        if (commonestTransform==null)
-        {
+    final CoordinateTransformation getCommonestTransformation(final String sourceClassName, final String sourceMethodName) throws CannotCreateTransformException {
+        if (commonestTransform == null) {
             int n=0;
             final CoordinateSystem[] cs=new CoordinateSystem[layerCount];
             final int[]           count=new int             [layerCount];
@@ -291,13 +285,10 @@ public class MapPanel extends ZoomPane
              * Compte le nombre d'occurences de
              * chaque systèmes de coordonnées.
              */
-      scan: for (int i=0; i<layerCount; i++)
-            {
+      scan: for (int i=0; i<layerCount; i++) {
                 final CoordinateSystem sys=layers[i].getCoordinateSystem();
-                for (int j=0; j<n; j++)
-                {
-                    if (sys.equivalents(cs[j]))
-                    {
+                for (int j=0; j<n; j++) {
+                    if (sys.equals(cs[j], false)) {
                         count[n]++;
                         continue scan;
                     }
@@ -310,10 +301,8 @@ public class MapPanel extends ZoomPane
              */
             CoordinateSystem sourceCS = coordinateSystem;
             int maxCount = 0;
-            while (--n>=0)
-            {
-                if (count[n] >= maxCount)
-                {
+            while (--n>=0) {
+                if (count[n] >= maxCount) {
                     maxCount = n;
                     sourceCS = cs[n];
                 }
@@ -333,9 +322,8 @@ public class MapPanel extends ZoomPane
      * @return The enclosing area computed from available data, or <code>null</code>
      *         if this area can't be computed.
      */
-    public Rectangle2D getArea()
-    {
-        final Rectangle2D area=this.area;
+    public Rectangle2D getArea() {
+        final Rectangle2D area = this.area;
         return (area!=null) ? (Rectangle2D) area.clone() : null;
     }
 
@@ -344,24 +332,17 @@ public class MapPanel extends ZoomPane
      * computation. User should not call this method himself; he/she should calls
      * <code>get/setPreferredArea</code> instead.
      */
-    private void setArea(final Rectangle2D newArea)
-    {
+    private void setArea(final Rectangle2D newArea) {
         final Rectangle2D oldArea=this.area;
-        if (!Utilities.equals(oldArea, newArea))
-        {
+        if (!Utilities.equals(oldArea, newArea)) {
             this.area=newArea;
             firePropertyChange("area", oldArea, newArea);
-            if (super.getToolTipText()==null)
-            {
-                if (oldArea==null)
-                {
-                    if (newArea!=null)
-                    {
+            if (super.getToolTipText() == null) {
+                if (oldArea == null) {
+                    if (newArea != null) {
                         ToolTipManager.sharedInstance().registerComponent(this);
                     }
-                }
-                else if (newArea==null)
-                {
+                } else if (newArea == null) {
                     ToolTipManager.sharedInstance().unregisterComponent(this);
                 }
             }
@@ -376,31 +357,27 @@ public class MapPanel extends ZoomPane
      * Sa valeur sera calculée à partir des informations retournées par
      * toutes les couches de cette carte.
      */
-    private void computeArea(final String sourceClassName, final String sourceMethodName)
-    {
+    private void computeArea(final String sourceClassName, final String sourceMethodName) {
         Rectangle2D         newArea = null;
         CoordinateSystem lastSystem = null;
         MathTransform2D   transform = null;
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             final Layer  layer=layers[i];
             Rectangle2D bounds=layer.getPreferredArea();
-            if (bounds!=null)
-            {
+            if (bounds != null) {
                 final CoordinateSystem system=layer.getCoordinateSystem();
-                try
-                {
-                    if (lastSystem==null || !lastSystem.equivalents(system))
-                    {
+                try {
+                    if (lastSystem==null || !lastSystem.equals(system, false)) {
                         transform  = getMathTransform2D(system, sourceClassName, sourceMethodName);
                         lastSystem = system;
                     }
                     bounds = CTSUtilities.transform(transform, bounds, null);
-                    if (newArea==null) newArea=bounds;
-                    else newArea.add(bounds);
-                }
-                catch (TransformException exception)
-                {
+                    if (newArea==null) {
+                        newArea=bounds;
+                    } else {
+                        newArea.add(bounds);
+                    }
+                } catch (TransformException exception) {
                     handleException(sourceClassName, sourceMethodName, exception);
                 }
             }
@@ -418,24 +395,21 @@ public class MapPanel extends ZoomPane
     private void changeArea(Rectangle2D oldSubArea, Rectangle2D newSubArea, final CoordinateSystem system,
                             final String sourceClassName, final String sourceMethodName)
     {
-        try
-        {
+        try {
             final MathTransform2D transform = getMathTransform2D(system, sourceClassName, sourceMethodName);
             oldSubArea = CTSUtilities.transform(transform, oldSubArea, null);
             newSubArea = CTSUtilities.transform(transform, newSubArea, null);
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             handleException(sourceClassName, sourceMethodName, exception);
             computeArea(sourceClassName, sourceMethodName);
             return;
         }
         final Rectangle2D expandedArea = Layer.changeArea(area, oldSubArea, newSubArea);
-        if (expandedArea!=null)
-        {
+        if (expandedArea != null) {
             setArea(expandedArea);
+        } else {
+            computeArea(sourceClassName, sourceMethodName);
         }
-        else computeArea(sourceClassName, sourceMethodName);
     }
 
     /**
@@ -454,16 +428,12 @@ public class MapPanel extends ZoomPane
      * @see #getLayers
      * @see #removeLayer
      */
-    public synchronized void addLayer(final Layer layer) throws IllegalArgumentException
-    {
-        synchronized (layer)
-        {
-            if (layer.mapPanel == this)
-            {
+    public synchronized void addLayer(final Layer layer) throws IllegalArgumentException {
+        synchronized (layer) {
+            if (layer.mapPanel == this) {
                 return;
             }
-            if (layer.mapPanel != null)
-            {
+            if (layer.mapPanel != null) {
                 throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MAPPANEL_NOT_OWNER));
             }
             layer.mapPanel = this;
@@ -471,12 +441,10 @@ public class MapPanel extends ZoomPane
              * Ajoute la nouvelle couche dans le tableau {@link #layers}. Le tableau
              * sera agrandit si nécessaire et on déclarera qu'il a besoin d'être reclassé.
              */
-            if (layers==null)
-            {
+            if (layers == null) {
                 layers = new Layer[16];
             }
-            if (layerCount >= layers.length)
-            {
+            if (layerCount >= layers.length) {
                 layers = XArray.resize(layers, Math.max(layerCount,8) << 1);
             }
             layers[layerCount++]=layer;
@@ -487,8 +455,7 @@ public class MapPanel extends ZoomPane
             commonestTransform = null;
             stroke             = null;
         }
-        if (layerCount==1)
-        {
+        if (layerCount == 1) {
             reset();
         }
         repaint(); // Must be invoked last
@@ -508,16 +475,12 @@ public class MapPanel extends ZoomPane
      * @see #addLayer
      * @see #getLayers
      */
-    public synchronized void removeLayer(final Layer layer) throws IllegalArgumentException
-    {
-        synchronized (layer)
-        {
-            if (layer.mapPanel == null)
-            {
+    public synchronized void removeLayer(final Layer layer) throws IllegalArgumentException {
+        synchronized (layer) {
+            if (layer.mapPanel == null) {
                 return;
             }
-            if (layer.mapPanel != this)
-            {
+            if (layer.mapPanel != this) {
                 throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MAPPANEL_NOT_OWNER));
             }
             repaint(); // Must be invoked first
@@ -532,11 +495,9 @@ public class MapPanel extends ZoomPane
              * toutes les occurences de cette couche, même si en principe elle ne
              * devrait apparaître qu'une et une seule fois.
              */
-            for (int i=layerCount; --i>=0;)
-            {
+            for (int i=layerCount; --i>=0;) {
                 final Layer scan=layers[i];
-                if (scan==layer)
-                {
+                if (scan == layer) {
                     System.arraycopy(layers, i+1, layers, i, (--layerCount)-i);
                     layers[layerCount]=null;
                 }
@@ -550,14 +511,11 @@ public class MapPanel extends ZoomPane
     /**
      * Remove all layers from this <code>MapPanel</code>.
      */
-    public synchronized void removeAllLayers()
-    {
+    public synchronized void removeAllLayers() {
         repaint(); // Must be invoked first
-        while (--layerCount>=0)
-        {
+        while (--layerCount>=0) {
             final Layer layer=layers[layerCount];
-            synchronized (layer)
-            {
+            synchronized (layer) {
                 layer.removePropertyChangeListener(listeners);
                 layer.setVisible(false);
                 layer.clearCache();
@@ -583,39 +541,38 @@ public class MapPanel extends ZoomPane
      * @see #addLayer(Layer)
      * @see #removeLayer(Layer)
      */
-    public synchronized Layer[] getLayers()
-    {
+    public synchronized Layer[] getLayers() {
         sortLayers();
-        if (layers!=null)
-        {
+        if (layers != null) {
             final Layer[] array=new Layer[layerCount];
             System.arraycopy(layers, 0, array, 0, layerCount);
             return array;
+        } else {
+            return new Layer[0];
         }
-        else return new Layer[0];
     }
 
     /**
      * Returns the number of layers in this map panel.
      */
-    public synchronized int getLayerCount()
-    {return layerCount;}
+    public synchronized int getLayerCount() {
+        return layerCount;
+    }
 
     /**
      * Check if there is at least one registered layer.
      * Used internally by {@link MouseCoordinateFormat}.
      */
-    final boolean hasLayers()
-    {return layerCount!=0;}
+    final boolean hasLayers() {
+        return layerCount != 0;
+    }
 
     /**
      * Procède au classement immédiat des
      * couches, si ce n'était pas déjà fait.
      */
-    private void sortLayers()
-    {
-        if (!layerSorted && layers!=null)
-        {
+    private void sortLayers() {
+        if (!layerSorted && layers!=null) {
             layers = XArray.resize(layers, layerCount);
             Arrays.sort(layers, COMPARATOR);
             layerSorted=true;
@@ -630,11 +587,9 @@ public class MapPanel extends ZoomPane
      *
      * @param tooltip The default tooltip, or <code>null</code> if none.
      */
-    public void setToolTipText(final String tooptip)
-    {
+    public void setToolTipText(final String tooptip) {
         super.setToolTipText(tooptip);
-        if (tooptip==null && area!=null)
-        {
+        if (tooptip==null && area!=null) {
             ToolTipManager.sharedInstance().registerComponent(this);
         }
     }
@@ -650,20 +605,19 @@ public class MapPanel extends ZoomPane
      * @return The tool tip text, or <code>null</code> if there
      *         is no tool tip for this location.
      */
-    public String getToolTipText(final MouseEvent event)
-    {
+    public String getToolTipText(final MouseEvent event) {
         sortLayers();
         final int                  x = event.getX();
         final int                  y = event.getY();
         final Layer[]         layers = this.layers;
         final GeoMouseEvent geoEvent = (GeoMouseEvent) event;
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             final Layer layer=layers[i];
-            if (layer.contains(x,y))
-            {
+            if (layer.contains(x,y)) {
                 final String tooltip=layer.getToolTipText(geoEvent);
-                if (tooltip!=null) return tooltip;
+                if (tooltip!=null) {
+                    return tooltip;
+                }
             }
         }
         return super.getToolTipText(event);
@@ -678,20 +632,19 @@ public class MapPanel extends ZoomPane
      * @param  event The mouse event.
      * @return The popup menu for this event, or <code>null</code> if there is none.
      */
-    protected JPopupMenu getPopupMenu(final MouseEvent event)
-    {
+    protected JPopupMenu getPopupMenu(final MouseEvent event) {
         sortLayers();
         final int                  x = event.getX();
         final int                  y = event.getY();
         final Layer[]         layers = this.layers;
         final GeoMouseEvent geoEvent = (GeoMouseEvent) event;
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             final Layer layer=layers[i];
-            if (layer.contains(x,y))
-            {
+            if (layer.contains(x,y)) {
                 final JPopupMenu menu=layer.getPopupMenu(geoEvent);
-                if (menu!=null) return menu;
+                if (menu!=null) {
+                    return menu;
+                }
             }
         }
         return getDefaultPopupMenu(geoEvent);
@@ -702,30 +655,29 @@ public class MapPanel extends ZoomPane
      * is invoked when no layers proposed a popup menu for this event. The
      * default implementation returns a menu with navigation options.
      */
-    protected JPopupMenu getDefaultPopupMenu(final GeoMouseEvent event)
-    {return super.getPopupMenu(event);}
+    protected JPopupMenu getDefaultPopupMenu(final GeoMouseEvent event) {
+        return super.getPopupMenu(event);
+    }
 
     /**
      * Invoked when user clicked on this <code>MapPanel</code>. The default
      * implementation invokes {@link Layer#mouseClicked} for some layers in
      * decreasing z-order until one consume the event (with {@link MouseEvent#consume}).
      */
-    protected void mouseClicked(final MouseEvent event)
-    {
-        if ((event.getModifiers() & MouseEvent.BUTTON1_MASK)!=0)
-        {
+    protected void mouseClicked(final MouseEvent event) {
+        if ((event.getModifiers() & MouseEvent.BUTTON1_MASK)!=0) {
             sortLayers();
             final int                  x = event.getX();
             final int                  y = event.getY();
             final Layer[]         layers = this.layers;
             final GeoMouseEvent geoEvent = (GeoMouseEvent) event;
-            for (int i=layerCount; --i>=0;)
-            {
+            for (int i=layerCount; --i>=0;) {
                 final Layer layer=layers[i];
-                if (layer.contains(x,y))
-                {
+                if (layer.contains(x,y)) {
                     layer.mouseClicked(geoEvent);
-                    if (geoEvent.isConsumed()) break;
+                    if (geoEvent.isConsumed()) {
+                        break;
+                    }
                 }
             }
         }
@@ -752,13 +704,12 @@ public class MapPanel extends ZoomPane
         final int          x = event.getX();
         final int          y = event.getY();
         final Layer[] layers = this.layers;
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             final Layer layer=layers[i];
-            if (layer.contains(x,y))
-            {
-                if (layer.getLabel(event, toAppendTo))
+            if (layer.contains(x,y)) {
+                if (layer.getLabel(event, toAppendTo)) {
                     return true;
+                }
             }
         }
         return false;
@@ -769,16 +720,18 @@ public class MapPanel extends ZoomPane
      * wrap the <code>MouseEvent</code> into a <code>GeoMouseEvent</code>
      * and pass it to any registered <code>MouseListener</code> objects.
      */
-    protected void processMouseEvent(final MouseEvent event)
-    {super.processMouseEvent(new GeoMouseEvent(event, this));}
+    protected void processMouseEvent(final MouseEvent event) {
+        super.processMouseEvent(new GeoMouseEvent(event, this));
+    }
 
     /**
      * Processes mouse motion events occurring on this component. This method
      * wrap the <code>MouseEvent</code> into a <code>GeoMouseEvent</code>
      * and pass it to any registered <code>MouseMotionListener</code> objects.
      */
-    protected void processMouseMotionEvent(final MouseEvent event)
-    {super.processMouseMotionEvent(new GeoMouseEvent(event, this));}
+    protected void processMouseMotionEvent(final MouseEvent event) {
+        super.processMouseMotionEvent(new GeoMouseEvent(event, this));
+    }
 
     /**
      * Efface les données qui avaient été conservées dans une cache interne. L'appel
@@ -790,10 +743,10 @@ public class MapPanel extends ZoomPane
      * traçage sera plus lent, le temps que <code>MapPanel</code> reconstruise les
      * caches internes.
      */
-    private void clearCache()
-    {
-        for (int i=layerCount; --i>=0;)
+    private void clearCache() {
+        for (int i=layerCount; --i>=0;) {
             layers[i].clearCache();
+        }
     }
 
     /**
@@ -802,21 +755,17 @@ public class MapPanel extends ZoomPane
      * finest resolution (transformed in this <code>MapPanel</code>'s coordinate
      * system).
      */
-    protected Dimension2D getPreferredPixelSize()
-    {
+    protected Dimension2D getPreferredPixelSize() {
         double minWidth  = Double.POSITIVE_INFINITY;
         double minHeight = Double.POSITIVE_INFINITY;
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             final Layer layer = layers[i];
             final Dimension2D size=layer.getPreferredPixelSize();
-            if (size!=null) try
-            {
+            if (size!=null) try {
                 double width  = size.getWidth();
                 double height = size.getHeight();
                 final MathTransform2D transform = getMathTransform2D(layer.getCoordinateSystem(), "MapPanel", "getPreferredPixelSize");
-                if (!transform.isIdentity())
-                {
+                if (!transform.isIdentity()) {
                     Rectangle2D area = layer.getPreferredArea();
                     if (area==null) area = new Rectangle2D.Double();
                     area.setRect(area.getCenterX()-0.5*width, area.getCenterY()-0.5*height, width, height);
@@ -826,18 +775,16 @@ public class MapPanel extends ZoomPane
                 }
                 if (width  < minWidth ) minWidth =width;
                 if (height < minHeight) minHeight=height;
-            }
-            catch (TransformException exception)
-            {
+            } catch (TransformException exception) {
                 handleException("MapPanel", "getPreferredPixelSize", exception);
                 // Not a big deal. Continue...
             }
         }
-        if (!Double.isInfinite(minWidth) && !Double.isInfinite(minHeight))
-        {
+        if (!Double.isInfinite(minWidth) && !Double.isInfinite(minHeight)) {
             return new XDimension2D.Double(minWidth, minHeight);
+        } else {
+            return super.getPreferredPixelSize();
         }
-        else return super.getPreferredPixelSize();
     }
 
     /**
@@ -845,8 +792,9 @@ public class MapPanel extends ZoomPane
      * returned by {@link #getPreferredSize} if no preferred size has
      * been explicitly set.
      */
-    protected Dimension getDefaultSize()
-    {return new Dimension(512,512);}
+    protected Dimension getDefaultSize() {
+        return new Dimension(512,512);
+    }
 
     /**
      * Paint this <code>MapLayer</code> and all visible
@@ -854,25 +802,20 @@ public class MapPanel extends ZoomPane
      *
      * @param graph The graphics context.
      */
-    protected void paintComponent(final Graphics2D graph)
-    {
+    protected void paintComponent(final Graphics2D graph) {
         sortLayers();
-        if (stroke==null)
-        {
+        if (stroke == null) {
             Dimension2D s = getPreferredPixelSize();
             double t; t=Math.sqrt((t=s.getWidth())*t + (t=s.getHeight())*t);
-            stroke=new BasicStroke((float)t);
+            stroke = new BasicStroke((float)t);
         }
         final Layer[]       layers = this.layers;
         final GraphicsJAI graphics = GraphicsJAI.createGraphicsJAI(graph, this);
         final Rectangle clipBounds = graphics.getClipBounds();
         final RenderingContext context;
-        try
-        {
+        try {
             context = new RenderingContext(getCommonestTransformation("MapPanel", "paintComponent"), new AffineTransform(zoom), graphics.getTransform(), getZoomableBounds(null), isPrinting);
-        }
-        catch (CannotCreateTransformException exception)
-        {
+        } catch (CannotCreateTransformException exception) {
             ExceptionMonitor.paintStackTrace(graphics, getBounds(), exception);
             handleException("MapPanel", "paintComponent", exception);
             return;
@@ -883,18 +826,12 @@ public class MapPanel extends ZoomPane
          * Dessine les couches en commençant par
          * celles qui ont un <var>z</var> le plus bas.
          */
-        for (int i=0; i<layerCount; i++)
-        {
-            try
-            {
+        for (int i=0; i<layerCount; i++) {
+            try {
                 layers[i].paint(graphics, context, clipBounds);
-            }
-            catch (TransformException exception)
-            {
+            } catch (TransformException exception) {
                 handleException("MapPanel", "paintComponent", exception);
-            }
-            catch (RuntimeException exception)
-            {
+            } catch (RuntimeException exception) {
                 Utilities.unexpectedException("fr.ird.map", "MapPanel", "paintComponent", exception);
             }
         }
@@ -905,15 +842,11 @@ public class MapPanel extends ZoomPane
      *
      * @param graph The graphics context.
      */
-    protected void paintMagnifier(final Graphics2D graphics)
-    {
-        try
-        {
+    protected void paintMagnifier(final Graphics2D graphics) {
+        try {
             isPrinting=true; // La loupe est soumise à des contraintes similaires à celles de l'impression.
             super.paintMagnifier(graphics);
-        }
-        finally
-        {
+        } finally {
             isPrinting=false;
         }
     }
@@ -926,15 +859,11 @@ public class MapPanel extends ZoomPane
      *
      * @param graph The graphics context.
      */
-    protected void printComponent(final Graphics2D graphics)
-    {
-        try
-        {
+    protected void printComponent(final Graphics2D graphics) {
+        try {
             isPrinting=true;
             super.printComponent(graphics);
-        }
-        finally
-        {
+        } finally {
             isPrinting=false;
         }
     }
@@ -948,12 +877,12 @@ public class MapPanel extends ZoomPane
      *        n'est pas connu. Dans ce dernier cas, toutes les couches
      *        seront redessinées lors du prochain traçage.
      */
-    private void zoomChanged(final ZoomChangeEvent event)
-    {
+    private void zoomChanged(final ZoomChangeEvent event) {
         AffineTransform change = (event!=null) ? event.getChange() : null;
-        if (change!=null) try
-        {
-            if (change.isIdentity()) return;
+        if (change != null) try {
+            if (change.isIdentity()) {
+                return;
+            }
             // NOTE: 'change' is a transformation in LOGICAL coordinates.
             //       But 'Layer.zoomChanged(...)' expect a transformation
             //       in PIXEL coordinates. Compute the matrix now...
@@ -961,15 +890,12 @@ public class MapPanel extends ZoomPane
             matrix.preConcatenate(change);
             matrix.preConcatenate(zoom);
             change = matrix;
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             // Should not happen.
             Utilities.unexpectedException("fr.ird.map", "MapPanel", "zoomChanged", exception);
             change = null;
         }
-        for (int i=layerCount; --i>=0;)
-        {
+        for (int i=layerCount; --i>=0;) {
             /*
              * Remind: 'Layer' is about to use the affine transform change
              *         for updating its bounding shape in pixel coordinates.
@@ -982,14 +908,10 @@ public class MapPanel extends ZoomPane
      * Retourne la transformation inverse du
      * point spécifié. Le point sera modifié.
      */
-    final Point2D inverseTransform(final Point2D point)
-    {
-        try
-        {
+    final Point2D inverseTransform(final Point2D point) {
+        try {
             return zoom.inverseTransform(point, point);
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             // This method is actually invoked by GeoMouseEvent only.
             Utilities.unexpectedException("fr.ird.map", "GeoMouseEvent", "getVisualCoordinate", exception);
             return null;
@@ -1003,8 +925,12 @@ public class MapPanel extends ZoomPane
      * dialogue pour reporter l'erreur, et retourner rapidement pour éviter de bloquer
      * la queue des événements de <i>Swing</i>.
      */
-    protected void handleException(final String className, final String methodName, final TransformException exception)
-    {Utilities.unexpectedException("fr.ird.map", className, methodName, exception);}
+    protected void handleException(final String className,
+                                   final String methodName,
+                                   final TransformException exception)
+    {
+        Utilities.unexpectedException("fr.ird.map", className, methodName, exception);
+    }
 
     /**
      * Préviens que ce paneau sera bientôt détruit. Cette méthode peut être appelée lorsque cet
@@ -1013,10 +939,8 @@ public class MapPanel extends ZoomPane
      * son travail. Après l'appel de cette méthode, on ne doit plus utiliser ni cet objet
      * <code>MapPanel</code> ni aucune des couches qu'il contenait.
      */
-    public void dispose()
-    {
-        for (int i=layerCount; --i>=0;)
-        {
+    public void dispose() {
+        for (int i=layerCount; --i>=0;) {
             layers[i].clearCache();
             layers[i].dispose();
         }

@@ -199,7 +199,7 @@ final class Parameters implements Serializable {
      */
     public Parameters createTransformed(final HorizontalCoordinateSystem cs) throws TransformException {
         final CoordinateSystem headCS = coordinateSystem.getHeadCS();
-        if (!headCS.equivalents(cs)) {
+        if (!headCS.equals(cs, false)) {
             final MathTransform2D transform = (MathTransform2D) TRANSFORMS.createFromCoordinateSystems(headCS, cs).getMathTransform();
             final Rectangle2D newGeographicArea = CTSUtilities.transform(transform, geographicArea, null);
             final Dimension2D newResolution;

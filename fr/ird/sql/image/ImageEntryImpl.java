@@ -666,7 +666,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
                Float.floatToIntBits(this.xmax) == Float.floatToIntBits(that.xmax) &&
                Float.floatToIntBits(this.ymin) == Float.floatToIntBits(that.ymin) &&
                Float.floatToIntBits(this.ymax) == Float.floatToIntBits(that.ymax) &&
-               parameters.coordinateSystem.equivalents(that.parameters.coordinateSystem);
+               parameters.coordinateSystem.equals(that.parameters.coordinateSystem, false);
     }
 
     /**
@@ -750,7 +750,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
             final float dx = (xmax-xmin);
             final float dy = (ymax-ymin);
             final CoordinateSystem targetCS = getCoordinateSystem();
-            if (!sourceCS.equivalents(targetCS)) {
+            if (!sourceCS.equals(targetCS, false)) {
                 throw new UnsupportedOperationException(); // Not implemented
             }
             if ((1+EPS)*width  >= dx/this.width &&

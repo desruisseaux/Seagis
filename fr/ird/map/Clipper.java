@@ -44,8 +44,7 @@ import java.awt.geom.Rectangle2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Clipper
-{
+final class Clipper {
     /**
      * Système de coordonnées du {@link #logicalClip}.
      */
@@ -112,8 +111,7 @@ final class Clipper
      * @param clip Les limites de la région à conserver.
      * @param coordinateSystem Système de coordonnées du <code>clip</code>.
      */
-    public Clipper(final Rectangle2D clip, final CoordinateSystem coordinateSystem)
-    {
+    public Clipper(final Rectangle2D clip, final CoordinateSystem coordinateSystem) {
         this.logicalClip = clip;
         this.clip = (Rectangle2D) clip.clone();
         this.coordinateSystem = coordinateSystem;
@@ -128,10 +126,8 @@ final class Clipper
      *         ne sera jamais nul, mais peut être vide si la projection a
      *         échouée.
      */
-    public Rectangle2D setCoordinateSystem(final CoordinateSystem nativeCS)
-    {
-        if (coordinateSystem!=null && nativeCS!=null && !coordinateSystem.equivalents(nativeCS)) try
-        {
+    public Rectangle2D setCoordinateSystem(final CoordinateSystem nativeCS) {
+        if (coordinateSystem!=null && nativeCS!=null && !coordinateSystem.equals(nativeCS, false)) try {
             CTSUtilities.transform((MathTransform2D)
                 Contour.getCoordinateTransformation(coordinateSystem, nativeCS, "Clipper", "setCoordinateSystem").getMathTransform(),
                 logicalClip, clip);
@@ -139,9 +135,7 @@ final class Clipper
             xmax = (float) clip.getMaxX();
             ymin = (float) clip.getMinY();
             ymax = (float) clip.getMaxY();
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             // Cette exception peut être normale.
             Segment.unexpectedException("Clipper", "setCoordinateSystem", exception);
             clip.setRect(0,0,0,0);
@@ -154,15 +148,12 @@ final class Clipper
      * la fin de la bordure {@link #border}. Le tableau
      * sera automatiquement agrandit selon les besoins.
      */
-    private void addBorder(final float x0, final float y0)
-    {
-        if (borderLength >= 2)
-        {
+    private void addBorder(final float x0, final float y0) {
+        if (borderLength >= 2) {
             if (border[borderLength-2]==x0  &&
                 border[borderLength-1]==y0) return;
         }
-        if (borderLength >= border.length)
-        {
+        if (borderLength >= border.length) {
             border = XArray.resize(border, 2*borderLength);
         }
         border[borderLength++] = x0;
@@ -175,15 +166,12 @@ final class Clipper
      * Le tableau sera automatiquement agrandit selon
      * les besoins.
      */
-    private void addIntersect(final float x0, final float y0)
-    {
-        if (intersectLength >= 2)
-        {
+    private void addIntersect(final float x0, final float y0) {
+        if (intersectLength >= 2) {
             if (intersect[intersectLength-2]==x0  &&
                 intersect[intersectLength-1]==y0) return;
         }
-        if (intersectLength >= intersect.length)
-        {
+        if (intersectLength >= intersect.length) {
             intersect = XArray.resize(intersect, 2*intersectLength);
         }
         intersect[intersectLength++] = x0;
@@ -204,55 +192,41 @@ final class Clipper
      * @param x1 Coordonnées <var>x</var> du dernier point détecté à l'extérieur du rectangle {@link #clip}.
      * @param y1 Coordonnées <var>y</var> du dernier point détecté à l'extérieur du rectangle {@link #clip}.
      */
-    private void buildBorder(final double clockwise, float x0, float y0, final float x1, final float y1)
-    {
-        if (clockwise > 0)
-        {
-            while (true)
-            {
-                if (y0 >= ymax)
-                {
+    private void buildBorder(final double clockwise, float x0, float y0, final float x1, final float y1) {
+        if (clockwise > 0) {
+            while (true) {
+                if (y0 >= ymax) {
                     if (y1>=ymax && x1>=x0) break;
                     if (x0<xmax) addBorder(x0=xmax, y0=ymax);
                 }
-                if (x0 >= xmax)
-                {
+                if (x0 >= xmax) {
                     if (x1>=xmax && y1<=y0) break;
                     if (y0>ymin) addBorder(x0=xmax, y0=ymin);
                 }
-                if (y0 <= ymin)
-                {
+                if (y0 <= ymin) {
                     if (y1<=ymin && x1<=x0) break;
                     if (x0>xmin) addBorder(x0=xmin, y0=ymin);
                 }
-                if (x0 <= xmin)
-                {
+                if (x0 <= xmin) {
                     if (x1<=xmin && y1>=y0) break;
                     if (y0<ymax) addBorder(x0=xmin, y0=ymax);
                 }
             }
-        }
-        else if (clockwise < 0)
-        {
-            while (true)
-            {
-                if (y0 >= ymax)
-                {
+        } else if (clockwise < 0) {
+            while (true) {
+                if (y0 >= ymax) {
                     if (y1>=ymax && x1<=x0) break;
                     if (x0>xmin) addBorder(x0=xmin, y0=ymax);
                 }
-                if (x0 <= xmin)
-                {
+                if (x0 <= xmin) {
                     if (x1<=xmin && y1<=y0) break;
                     if (y0>ymin) addBorder(x0=xmin, y0=ymin);
                 }
-                if (y0 <= ymin)
-                {
+                if (y0 <= ymin) {
                     if (y1<=ymin && x1>=x0) break;
                     if (x0<xmax)  addBorder(x0=xmax, y0=ymin);
                 }
-                if (x0 >= xmax)
-                {
+                if (x0 >= xmax) {
                     if (x1>=xmax && y1>=y0) break;
                     if (y0<ymax) addBorder(x0=xmax, y0=ymax);
                 }
@@ -265,24 +239,17 @@ final class Clipper
      * Entre les deux sera inséré la bordure {@link #border}, s'il y en a une. Cette
      * méthode retourne le polygone résultant de la fusion.
      */
-    private Polygon attach(Polygon result, Polygon sub)
-    {
-        if (sub!=null) try
-        {
-            if (result==null)
-            {
+    private Polygon attach(Polygon result, Polygon sub) {
+        if (sub != null) try {
+            if (result == null) {
                 result=sub.clone();
                 result.prependBorder(border, 0, borderLength);
-            }
-            else
-            {
+            } else {
                 result.appendBorder(border, 0, borderLength);
                 result.append(sub);
             }
             borderLength=0;
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             // Should not happen, since we are working
             // in polygon's native coordinate system.
             Polygon.unexpectedException("getClipped", exception);
@@ -305,8 +272,7 @@ final class Clipper
      * @param  polygon Polygone à couper dans une région.
      * @return Polygone coupé.
      */
-    public final Polygon getClipped(final Polygon polygon, final Segment.Iterator it)
-    {
+    public final Polygon getClipped(final Polygon polygon, final Segment.Iterator it) {
         borderLength=0;
         intersectLength=0;
         Polygon result=null;
@@ -318,8 +284,7 @@ final class Clipper
          * ou à l'extérieur de la région d'intérêt. Cette vérification sert à initialiser la
          * variable <code>inside</code>, qui servira pour le reste de cette méthode.
          */
-        if (it.next(line))
-        {
+        if (it.next(line)) {
             final float firstX = line.x2;
             final float firstY = line.y2;
             boolean inside = (firstX>=xmin && firstX<=xmax) && (firstY>=ymin && firstY<=ymax);
@@ -330,8 +295,7 @@ final class Clipper
             float  y0               =  Float.NaN;
             double clockwise        =  0;
             int lower=0, upper=0;
-            while (true)
-            {
+            while (true) {
                 /*
                  * Extrait la coordonnées suivantes. Le point <code>line.p2</code>
                  * contiendra le point que l'on vient d'extraire, tandis que le
@@ -340,10 +304,8 @@ final class Clipper
                  * ont été balayées, on réutilisera le premier point pour refermer
                  * le polygone.
                  */
-                if (!it.next(line))
-                {
-                    if ((line.x2!=firstX || line.y2!=firstY) && polygonType!=Polygon.UNKNOW)
-                    {
+                if (!it.next(line)) {
+                    if ((line.x2!=firstX || line.y2!=firstY) && polygonType!=Polygon.UNKNOW) {
                         line.x2 = firstX;
                         line.y2 = firstY;
                     }
@@ -425,30 +387,25 @@ final class Clipper
                  *     cette situation particulière.
                  */
                 intersectLength=0;
-                if (lineInsideAndOutside || lineCompletlyOutside)
-                {
+                if (lineInsideAndOutside || lineCompletlyOutside) {
                     final float cxmin = Math.max(xmin, Math.min(x1, x2));
                     final float cxmax = Math.min(xmax, Math.max(x1, x2));
                     final float cymin = Math.max(ymin, Math.min(y1, y2));
                     final float cymax = Math.min(ymax, Math.max(y1, y2));
 
-                    if (ymax>=cymin && ymax<=cymax)
-                    {
+                    if (ymax>=cymin && ymax<=cymax) {
                         final float v = dx/dy*(ymax-y1)+x1;
                         if (v>=cxmin && v<=cxmax) addIntersect(v, ymax);
                     }
-                    if (ymin>=cymin && ymin<=cymax)
-                    {
+                    if (ymin>=cymin && ymin<=cymax) {
                         final float v = dx/dy*(ymin-y1)+x1;
                         if (v>=cxmin && v<=cxmax) addIntersect(v, ymin);
                     }
-                    if (xmax>=cxmin && xmax<=cxmax)
-                    {
+                    if (xmax>=cxmin && xmax<=cxmax) {
                         final float v = dy/dx*(xmax-x1)+y1;
                         if (v>=cymin && v<=cymax) addIntersect(xmax, v);
                     }
-                    if (xmin>=cxmin && xmin<=cxmax)
-                    {
+                    if (xmin>=cxmin && xmin<=cxmax) {
                         final float v = dy/dx*(xmin-x1)+y1;
                         if (v>=cymin && v<=cymax) addIntersect(xmin, v);
                     }
@@ -459,14 +416,11 @@ final class Clipper
                      * normalement jamais plus de 2 points à classer, ce qui rend cette
                      * technique très avantageuse.
                      */
-                    boolean modified; do
-                    {
+                    boolean modified; do {
                         modified=false;
-                        for (int i=2; i<intersectLength; i+=2)
-                        {
+                        for (int i=2; i<intersectLength; i+=2) {
                             if ((intersect[i-2]-x1)*dx+(intersect[i-1]-y1)*dy >
-                                (intersect[i+0]-x1)*dx+(intersect[i+1]-y1)*dy)
-                            {
+                                (intersect[i+0]-x1)*dx+(intersect[i+1]-y1)*dy) {
                                 final float x=intersect[i-2];
                                 final float y=intersect[i-1];
                                 intersect[i-2] = intersect[i+0];
@@ -476,68 +430,54 @@ final class Clipper
                                 modified = true;
                             }
                         }
-                    }
-                    while (modified);
+                    } while (modified);
                 }
-                if (lineInsideAndOutside)
-                {
+                if (lineInsideAndOutside) {
                     /*
                      * Une intersection a donc été trouvée. Soit qu'on vient d'entrer dans la région
                      * d'intérêt, ou soit qu'on vient d'en sortir. La variable <code>inside</code>
                      * indiquera si on vient d'entrer ou de sortir de la région <code>clip</code>.
                      */
                     inside=!inside;
-                    if (inside)
-                    {
+                    if (inside) {
                         /*
                          * Si on vient d'entrer dans la région d'intérêt {@link #clip}, alors vérifie
                          * s'il faut ajouter des points pour contourner la bordure du clip. Ces points
                          * seront effectivement mémorisés plus tard, lorsque l'on sortira du clip.
                          */
                         float xl,yl;
-                        if (intersectLength >= 2)
-                        {
+                        if (intersectLength >= 2) {
                             xl = intersect[0];
                             yl = intersect[1];
-                        }
-                        else
-                        {
+                        } else {
                             xl = x1;
                             yl = y1;
                         }
-                        if (Float.isNaN(x0) || Float.isNaN(y0))
-                        {
+                        if (Float.isNaN(x0) || Float.isNaN(y0)) {
                             initialClockwise = clockwise;
                             initialX1        = xl;
                             initialY1        = yl;
-                        }
-                        else
-                        {
+                        } else {
                             buildBorder(clockwise, x0, y0, xl, yl);
                         }
                         x0=Float.NaN;
                         y0=Float.NaN;
                         clockwise=0;
-                    }
-                    else
-                    {
+                    } else {
                         /*
                          * Si on vient de sortir de la région d'intérêt, alors on créera un nouveau
                          * "sous-polygone" qui contiendra seulement les données qui apparaissent dans la
                          * région (les données ne seront pas copiées; seul un jeu de références sera effectué).
                          * Les coordonnées x0,y0 seront celles du premier point en dehors du clip.
                          */
-                        if (intersectLength >= 2)
-                        {
+                        if (intersectLength >= 2) {
                             x0 = intersect[intersectLength-2];
                             y0 = intersect[intersectLength-1];
-                        }
-                        else
-                        {
+                        } else {
                             x0 = x2;
                             y0 = y2;
                         }
-                        result=attach(result, polygon.subpoly(lower, upper));
+                        result = attach(result, polygon.subpoly(lower, upper));
                     }
                     lower = upper;
                     /*
@@ -545,11 +485,10 @@ final class Clipper
                      * La méthode {@link #addBorder} s'assurera au passage
                      * qu'on ne répête pas deux fois les mêmes points.
                      */
-                    for (int i=0; i<intersectLength;)
+                    for (int i=0; i<intersectLength;) {
                         addBorder(intersect[i++], intersect[i++]);
-                }
-                else if (lineCompletlyOutside)
-                {
+                    }
+                } else if (lineCompletlyOutside) {
                     /*
                      * On sait maintenant que les points (x1,y1) et (x2,y2) sont
                      * tous deux à l'extérieur du clip. Mais ça ne veux pas dire
@@ -557,8 +496,7 @@ final class Clipper
                      * le clip. S'il y a au moins deux points d'intersections, la
                      * ligne traverse le clip et on devra l'ajouter à la bordure.
                      */
-                    if (intersectLength >= 4)
-                    {
+                    if (intersectLength >= 4) {
                         /*
                          * D'abord, on refait le calcul de <code>clockwise</code>
                          * (voir plus haut) mais en comptant seulement la composante
@@ -582,14 +520,11 @@ final class Clipper
                                 clockwise2 += dy/dx*(x2-xmin);
 
                         clockwise -= clockwise2;
-                        if (Float.isNaN(x0) || Float.isNaN(y0))
-                        {
+                        if (Float.isNaN(x0) || Float.isNaN(y0)) {
                             initialClockwise = clockwise;
                             initialX1        = line.x1;
                             initialY1        = line.y1;
-                        }
-                        else
-                        {
+                        } else {
                             buildBorder(clockwise, x0, y0, intersect[0], intersect[1]);
                         }
                         x0 = intersect[intersectLength-2];
@@ -600,8 +535,9 @@ final class Clipper
                          * La méthode {@link #addBorder} s'assurera au passage
                          * qu'on ne répête pas deux fois les mêmes points.
                          */
-                        for (int i=0; i<intersectLength;)
+                        for (int i=0; i<intersectLength;) {
                             addBorder(intersect[i++], intersect[i++]);
+                        }
                     }
                 }
             }
@@ -609,33 +545,24 @@ final class Clipper
              * A la fin de la boucle, ajoute les points
              * restants s'ils étaient à l'intérieur du clip.
              */
-            if (inside)
-            {
+            if (inside) {
                 result=attach(result, polygon.subpoly(lower, upper));
             }
-            if (polygonType!=Polygon.UNKNOW)
-            {
-                if (!Float.isNaN(x0) && !Float.isNaN(y0))
-                {
+            if (polygonType != Polygon.UNKNOW) {
+                if (!Float.isNaN(x0) && !Float.isNaN(y0)) {
                     buildBorder(clockwise+initialClockwise, x0, y0, initialX1, initialY1);
                 }
             }
-            if (result!=null)
-            {
-                try
-                {
+            if (result != null) {
+                try {
                     result.appendBorder(border, 0, borderLength);
                     result.close(polygonType);
-                }
-                catch (TransformException exception)
-                {
+                } catch (TransformException exception) {
                     // Should not happen, since we are working
                     // in polygon's native coordinate system.
                     Polygon.unexpectedException("getClipped", exception);
                 }
-            }
-            else if (borderLength!=0)
-            {
+            } else if (borderLength != 0) {
                 /*
                  * Si aucun polygone n'a été créé, mais qu'on a quand
                  * même détecté des intersections (c'est-à-dire si le
@@ -649,9 +576,7 @@ final class Clipper
                 assert(results.length==1);
                 result = results[0];
                 result.close(polygonType);
-            }
-            else if (polygon.contains(clip.getCenterX(), clip.getCenterY()))
-            {
+            } else if (polygon.contains(clip.getCenterX(), clip.getCenterY())) {
                 /*
                  * Si absolument aucun point du polygone ne se trouve à
                  * l'intérieur du zoom, alors le zoom est soit complètement

@@ -65,8 +65,7 @@ import org.geotools.resources.XMath;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class IsolineLayer extends Layer implements Polygon.Renderer
-{
+public class IsolineLayer extends Layer implements Polygon.Renderer {
     /**
      * Set to <code>false</code> to disable clipping acceleration.
      * May be useful if you suspect that a bug is preventing proper
@@ -124,8 +123,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     /**
      * Construct a layer for the specified isoline.
      */
-    public IsolineLayer(Isoline isoline)
-    {
+    public IsolineLayer(Isoline isoline) {
         super((isoline=isoline.clone()).getCoordinateSystem());
         this.isoline = isoline;
         setZOrder(isoline.value);
@@ -134,8 +132,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
         final float    resolution = isoline.getResolution();
         final Ellipsoid ellipsoid = isoline.getEllipsoid();
         final double dx,dy;
-        if (ellipsoid!=null)
-        {
+        if (ellipsoid != null) {
             // Transforms the resolution into a pixel size in the middle of 'bounds'.
             // Note: 'r' is the inverse of **apparent** ellipsoid's radius at latitude 'y'.
             //       For the inverse of "real" radius, we would have to swap sin and cos.
@@ -146,12 +143,12 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
                                            cos/ellipsoid.getSemiMinorAxis());
             dy = Math.toDegrees(resolution*r);
             dx = dy*cos;
+        } else {
+            dx = dy = resolution;
         }
-        else dx = dy = resolution;
         setPreferredPixelSize(new XDimension2D.Double(TICKNESS*dx , TICKNESS*dy));
         setPreferredArea(bounds);
-        if (clipped!=null)
-        {
+        if (clipped != null) {
             clipped.add(isoline);
         }
     }
@@ -160,41 +157,47 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * Sets the contouring color or paint.
      * This paint will be used by all polygons.
      */
-    public void setContour(final Paint paint)
-    {contour=paint;}
+    public void setContour(final Paint paint) {
+        contour = paint;
+    }
 
     /**
      * Returns the contouring color or paint.
      */
-    public Paint getContour()
-    {return contour;}
+    public Paint getContour() {
+        return contour;
+    }
 
     /**
      * Sets the filling color or paint. This paint
      * will be used only for closed polygons.
      */
-    public void setFill(final Paint paint)
-    {fill=paint;}
+    public void setFill(final Paint paint) {
+        fill = paint;
+    }
 
     /**
      * Returns the filling color or paint.
      */
-    public Paint getfill()
-    {return fill;}
+    public Paint getfill() {
+        return fill;
+    }
 
     /**
      * Set the background color or paint. This information
      * is needed in order to allows <code>IsolineLayer</code>
      * to fill holes correctly.
      */
-    public void setBackground(final Paint paint)
-    {background=paint;}
+    public void setBackground(final Paint paint) {
+        background = paint;
+    }
 
     /**
      * Returns the background color or paint.
      */
-    public Paint getBackground()
-    {return background;}
+    public Paint getBackground() {
+        return background;
+    }
 
     /**
      * Sets the rendering resolution in points. A value of 6 means that <code>IsolineLayer</code>
@@ -206,17 +209,20 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      *        screen, a point is a pixel.  When rendering on printer, a point is about
      *        1/72 of inch.
      */
-    public void setRenderingResolution(final int resolution)
-    {
-        if (resolution>0) this.resolution=resolution;
-        else throw new IllegalArgumentException(String.valueOf(resolution));
+    public void setRenderingResolution(final int resolution) {
+        if (resolution > 0) {
+            this.resolution=resolution;
+        } else {
+            throw new IllegalArgumentException(String.valueOf(resolution));
+        }
     }
 
     /**
      * Returns the rendering resolution in points.
      */
-    public int getRenderingResolution()
-    {return resolution;}
+    public int getRenderingResolution() {
+        return resolution;
+    }
 
     /**
      * Draw or fill a polygon. The rendering is usually done with <code>graphics.draw(polygon)</code>
@@ -228,19 +234,15 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * @param graphics The graphics context.
      * @param polygon  The polygon to draw.
      */
-    public void drawPolygon(final Graphics2D graphics, final Polygon polygon)
-    {
-        switch (polygon.getInteriorSign())
-        {
-            case Polygon.ELEVATION:
-            {
+    public void drawPolygon(final Graphics2D graphics, final Polygon polygon) {
+        switch (polygon.getInteriorSign()) {
+            case Polygon.ELEVATION: {
                 graphics.setPaint(fill);
                 graphics.fill(polygon);
                 if (contour.equals(fill)) return;
                 break;
             }
-            case Polygon.DEPRESSION:
-            {
+            case Polygon.DEPRESSION: {
                 graphics.setPaint(background);
                 graphics.fill(polygon);
                 if (contour.equals(background)) return;
@@ -262,18 +264,15 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * @return A bounding shape of isolines, in points coordinates.
      * @throws TransformException If a transformation failed.
      */
-    protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
-    {
+    protected Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException {
         /*
          * Reproject isoline if the coordinate system changed
          * (all cached isolines must be discarded in this case).
          */
         final CoordinateSystem viewCS = context.getViewCoordinateSystem();
-        if (!viewCS.equivalents(isoline.getCoordinateSystem()))
-        {
+        if (!viewCS.equals(isoline.getCoordinateSystem(), false)) {
             isoline.setCoordinateSystem(viewCS);
-            if (clipped!=null)
-            {
+            if (clipped != null) {
                 clipped.clear();
                 clipped.add(isoline);
             }
@@ -285,22 +284,18 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
         final Rectangle2D  bounds = isoline.getBounds2D();
         final AffineTransform  tr = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
         final Isoline      toDraw = (clipped!=null) ? (Isoline)context.clip(clipped) : isoline;
-        if (toDraw!=null)
-        {
+        if (toDraw != null) {
             final Paint      oldPaint = graphics.getPaint();
             final Stroke    oldStroke = graphics.getStroke();
             final Ellipsoid ellipsoid = isoline.getEllipsoid();
             double r; // Desired resolution (a higher value will lead to faster rendering)
-            if (ellipsoid!=null)
-            {
+            if (ellipsoid!=null) {
                 final double  x = bounds.getCenterX();
                 final double  y = bounds.getCenterY();
                 final double dx = 0.5/XAffineTransform.getScaleX0(tr);
                 final double dy = 0.5/XAffineTransform.getScaleY0(tr);
                 r = ellipsoid.orthodromicDistance(x-dx, y-dy, x+dy, y+dy);
-            }
-            else
-            {
+            } else {
                 // Assume a cartesian coordinate system.
                 r = 1/Math.sqrt((r=tr.getScaleX())*r + (r=tr.getScaleY())*r +
                                 (r=tr.getShearX())*r + (r=tr.getShearY())*r);
@@ -320,13 +315,13 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      * @return The tool tip text, or <code>null</code> if there
      *         in no tool tips for this location.
      */
-    protected String getToolTipText(final GeoMouseEvent event)
-    {
+    protected String getToolTipText(final GeoMouseEvent event) {
         final Point2D point=event.getVisualCoordinate(null);
-        if (point!=null)
-        {
+        if (point != null) {
             final String toolTips = isoline.getToolTipText(point);
-            if (toolTips!=null) return toolTips;
+            if (toolTips != null) {
+                return toolTips;
+            }
         }
         return super.getToolTipText(event);
     }

@@ -327,7 +327,7 @@ public class Coverage3D extends Coverage {
          */
         if (point != null) try {
             // TODO: Next line assume we are using the default table implementation.
-            assert coordinateSystem.equivalents(entries[index].getCoordinateSystem());
+            assert coordinateSystem.equals(entries[index].getCoordinateSystem(), false);
             CoordinatePoint    coordinate = new CoordinatePoint(point.getX(), point.getY(), ImageTableImpl.toJulian(date.getTime()));
             final GridGeometry   geometry = entries[index].getGridGeometry();
             final GridRange         range = geometry.getGridRange();
@@ -537,8 +537,8 @@ public class Coverage3D extends Coverage {
             // No interpolation needed.
             return lower;
         }
-        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
-        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
+        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
 
         final long timeMillis = time.getTime();
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
@@ -577,8 +577,8 @@ public class Coverage3D extends Coverage {
             Arrays.fill(dest, 0, bands.length, 0);
             return dest;
         }
-        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
-        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
+        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
@@ -619,8 +619,8 @@ public class Coverage3D extends Coverage {
             Arrays.fill(dest, 0, bands.length, Float.NaN);
             return dest;
         }
-        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
-        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
+        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
@@ -661,8 +661,8 @@ public class Coverage3D extends Coverage {
             Arrays.fill(dest, 0, bands.length, Double.NaN);
             return dest;
         }
-        assert coordinateSystem.equivalents(lower.getCoordinateSystem()) : lower;
-        assert coordinateSystem.equivalents(upper.getCoordinateSystem()) : upper;
+        assert coordinateSystem.equals(lower.getCoordinateSystem(), false) : lower;
+        assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
         if (lower == upper) {
             return lower.evaluate(point, dest);
         }
