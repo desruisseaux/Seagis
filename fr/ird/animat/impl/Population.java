@@ -27,17 +27,20 @@ package fr.ird.animat.impl;
 
 // J2SE
 import java.util.Set;
+import java.util.Locale;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
 import java.awt.Shape;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import javax.swing.event.EventListenerList;
 import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
 // Animats
+import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
@@ -81,37 +84,14 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     private final EventListenerList listenerList = new EventListenerList();
 
     /**
-     * Evénement indiquant qu'un changement est survenu dans la population.
-     */
-    private final PopulationChangeEvent event = new PopulationChangeEvent(this);
-
-    /**
-     * Classe à exécuter lorsque l'environnement a changé.
-     *
-     * @see #fireEnvironmentChanged()
-     */
-    private final Runnable firePopulationChanged = new Runnable() {
-        public void run() {
-            assert Thread.holdsLock(getTreeLock());
-            final Object[] listeners = listenerList.getListenerList();
-            for (int i=listeners.length; (i-=2)>=0;) {
-                if (listeners[i] == PopulationChangeListener.class) try {
-                    ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
-                } catch (RemoteException exception) {
-                    Environment.listenerException("Population", "firePopulationChanged", exception);
-                }
-            }
-        }
-    };
-
-    /**
      * Construit une population initialement vide.
      *
      * @param environment Environnement Environnement de la population.
      */
-    public Population(final Environment environment) {
+    protected Population(final Environment environment) {
         this.environment = environment;
-        environment.fireEnvironmentChanged();
+        environment.populations.add(this);
+        environment.fireEnvironmentChanged(this, true);
     }
 
     /**
@@ -121,6 +101,27 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      */
     public final Environment getEnvironment() {
         return environment;
+    }
+
+    /**
+     * Ajoute un nouvel animal dans cette population. L'animal sera de l'espèce spécifiée
+     * et apparaîtra à la position initiale spécifiée.
+     *
+     * @param  species L'espèce de cet animal.
+     * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
+     * @return L'animal créé.
+     */
+    public Animal newAnimal(fr.ird.animat.Species species, final Point2D position) {
+        if (!(species instanceof Species)) {
+            final Locale[] locales = species.getLocales();
+            final String[] names = new String[locales.length];
+            for (int i=0; i<locales.length; i++) {
+                names[i] = species.getName(locales[i]);
+            }
+            species = new Species(locales, names, species.getIcon().getColor());
+        }
+        // Le constructeur de 'Animal' ajoute automatiquement l'animal à cette population.
+        return new Animal((Species)species, this, position);
     }
 
     /**
@@ -170,8 +171,10 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
             }
             assert animals.isEmpty() : animals.size();
             animals.clear(); // Par précaution.
-            if (environment != null) {
+            if (environment != null) try {
                 environment.populations.remove(this);
+                environment.fireEnvironmentChanged(this, false);
+            } finally {
                 environment = null;
             }
             /*
@@ -229,17 +232,59 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
 
     /**
      * A appeler à chaque fois que la population change.
-     *
      * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
      * {@link #getTreeLock()}. L'appel de {@link PopulationChangeListener#populationChanged}
      * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
+     *
+     * @param type Le type de changement qui est survenu. Cet argument peut être une des
+     *        constantes énumérées dans {@link PopulationChangeEvent}.
      */
-    protected void firePopulationChanged() {
+    protected void firePopulationChanged(final int type) {
+        firePopulationChanged(new PopulationChangeEvent(this, type, null, null));
+    }
+
+    /**
+     * Préviens tous les objets intéressés qu'un animal a été ajouté ou supprimé.
+     *
+     * @param animal L'animal ajouté ou supprimé.
+     * @param added <code>true</code> si l'animal a été ajouté, ou <code>false</code>
+     *        s'il a été supprimé.
+     */
+    final void firePopulationChanged(final Animal animal, final boolean added) {
+        final Set<fr.ird.animat.Animal> change = Collections.singleton((fr.ird.animat.Animal)animal);
+        final PopulationChangeEvent event;
+        if (added) {
+            event = new PopulationChangeEvent(this, PopulationChangeEvent.ANIMALS_ADDED, change, null);
+        } else {
+            event = new PopulationChangeEvent(this, PopulationChangeEvent.ANIMALS_REMOVED, null, change);
+        }
+        firePopulationChanged(event);
+    }
+
+    /**
+     * Préviens tous les objets intéressés que la population a changée.
+     *
+     * @param event Un objet décrivant le changement survenu.
+     */
+    private void firePopulationChanged(final PopulationChangeEvent event) {
+        final Runnable run = new Runnable() {
+            public void run() {
+                assert Thread.holdsLock(getTreeLock());
+                final Object[] listeners = listenerList.getListenerList();
+                for (int i=listeners.length; (i-=2)>=0;) {
+                    if (listeners[i] == PopulationChangeListener.class) try {
+                        ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
+                    } catch (RemoteException exception) {
+                        Environment.listenerException("Population", "firePopulationChanged", exception);
+                    }
+                }
+            }
+        };
         final Environment environment = getEnvironment();
         if (environment != null) {
-            environment.queue.invokeLater(firePopulationChanged);
+            environment.queue.invokeLater(run);
         } else {
-            firePopulationChanged.run();
+            run.run();
         }
     }
 

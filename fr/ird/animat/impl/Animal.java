@@ -127,13 +127,13 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      * @param population La population à laquelle appartient cet animal.
      * @param position Position initiale de l'animal, en degrés de longitudes et de latitudes.
      */
-    public Animal(final Species species, final Population population, final Point2D position) {
+    protected Animal(final Species species, final Population population, final Point2D position) {
         this.population = population;
         this.species    = species;
         this.clock      = population.getEnvironment().getClock().getNewClock();
         this.path       = new Path(position);
         population.animals.add(this);
-        population.firePopulationChanged();
+        population.firePopulationChanged(this, true);
     }
 
     /**
@@ -364,9 +364,9 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
                 oldPopulation.animals.remove(this);
                 this.population = population;
                 population.animals.add(this);
-                fireAnimalChanged();
-                oldPopulation.firePopulationChanged();
-                population.firePopulationChanged();
+                fireAnimalChanged(AnimalChangeEvent.POPULATION_CHANGED);
+                oldPopulation.firePopulationChanged(this, false);
+                population.firePopulationChanged(this, true);
             }
         }
     }
@@ -383,7 +383,7 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
             }
             if (species != this.species) {
                 this.species = species;
-                fireAnimalChanged();
+                fireAnimalChanged(AnimalChangeEvent.SPECIES_CHANGED);
             }
         }
     }
@@ -395,11 +395,11 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
         synchronized (getTreeLock()) {
             if (population != null) try {
                 population.animals.remove(this);
-                population.firePopulationChanged();
+                population.firePopulationChanged(this, false);
             } finally {
                 population = null;
             }
-            fireAnimalChanged();
+            fireAnimalChanged(AnimalChangeEvent.KILLED);
         }
     }
 
@@ -436,10 +436,12 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
      * {@link #getTreeLock()}. L'appel de {@link AnimalChangeListener#animalChanged} sera
      * mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
+     *
+     * @param type Le {@linkplain AnimalChangeEvent#getType type de changement} qui est survenu.
      */
-    protected void fireAnimalChanged() {
-        final AnimalChangeEvent event = new AnimalChangeEvent(this);
-        final Runnable fireAnimalChanged = new Runnable() {
+    protected void fireAnimalChanged(final int type) {
+        final AnimalChangeEvent event = new AnimalChangeEvent(this, type);
+        final Runnable run = new Runnable() {
             public void run() {
                 assert Thread.holdsLock(getTreeLock());
                 final EventListenerList listenerList = Animal.this.listenerList;
@@ -459,11 +461,11 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
         if (population != null) {
             final Environment environment = population.getEnvironment();
             if (environment != null) {
-                environment.queue.invokeLater(fireAnimalChanged);
+                environment.queue.invokeLater(run);
                 return;
             }
         }
-        fireAnimalChanged.run();
+        run.run();
     }
 
     /**

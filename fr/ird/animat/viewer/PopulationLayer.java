@@ -55,13 +55,13 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Geotools dependencies
-import org.geotools.renderer.geom.Arrow2D;
 import org.geotools.ct.TransformException;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.RenderingContext;
+import org.geotools.renderer.geom.Arrow2D;
 
 // Animats
 import fr.ird.animat.Animal;
@@ -122,7 +122,7 @@ final class PopulationLayer extends RenderedMarks
      * La date des données à afficher. Cette date sera constamment
      * mise à jour lorsque l'environnement change.
      */
-    private Date date = new Date();
+    private Date date = null;
 
     /**
      * Coordonnées géographiques de la région couverte par la population,
@@ -260,7 +260,7 @@ final class PopulationLayer extends RenderedMarks
     }
 
     /**
-     * Appelée quand une population a changée.
+     * Appelée quand la population a changée.
      *
      * @throws RemoteException si une exécution sur une machine distante
      *         était nécessaire et a échoué.
@@ -274,18 +274,19 @@ final class PopulationLayer extends RenderedMarks
      * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
      */
     public void propertyChange(final PropertyChangeEvent event) {
-        if (event.getPropertyName().equalsIgnoreCase("date")) {
+        final String property = event.getPropertyName();
+        if (property.equalsIgnoreCase("date")) {
             date = (Date) event.getNewValue();
             repaint();
         }
     }
 
     /**
-     * Appelée automatiquement par l'itérateur lorsque l'exécution d'une méthode RMI a échouée.
+     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
      */
-    private static void failed(final String method, final RemoteException exception) {
+    static void failed(final String classe, final String method, final RemoteException exception) {
         final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
-        record.setSourceClassName("PopulationLayer.MarkIterator");
+        record.setSourceClassName(classe);
         record.setSourceMethodName(method);
         record.setThrown(exception);
         Logger.getLogger("fr.ird.animat.viewer").log(record);
@@ -334,7 +335,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 update();
             } catch (RemoteException exception) {
-                failed("setIteratorPosition", exception);
+                failed("PopulationLayer.MarkIterator", "setIteratorPosition", exception);
                 observations = null;
                 heading = null;
             }
@@ -349,7 +350,7 @@ final class PopulationLayer extends RenderedMarks
                     update();
                     return true;
                 } catch (RemoteException exception) {
-                    failed("next", exception);
+                    failed("PopulationLayer.MarkIterator", "next", exception);
                 }
             }
             observations = null;
@@ -410,7 +411,7 @@ final class PopulationLayer extends RenderedMarks
             try {
                 species = animals[index].getSpecies();
             } catch (RemoteException exception) {
-                failed("paint", exception);
+                failed("PopulationLayer.MarkIterator", "paint", exception);
                 return;
             }
             Species.Icon icon = icons.get(species);

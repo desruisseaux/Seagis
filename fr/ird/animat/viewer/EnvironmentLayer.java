@@ -29,6 +29,7 @@ package fr.ird.animat.viewer;
 import java.util.Map;
 import java.util.Set;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Collections;
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -52,6 +53,7 @@ import org.geotools.gui.swing.ColorBar;
 
 // Animats
 import fr.ird.animat.Parameter;
+import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
@@ -117,14 +119,36 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     }
 
     /**
-     * Appelée quand un environnement a changé. Si l'image affichée a changée, elle sera retracée.
+     * Appelée quand l'environnement a changé. Si la date a changée, l'image correspondant
+     * au pas de temps courant sera chargée et affichée.  Les notifications d'ajouts et de
+     * suppressions de populations seront transmis aux {@link #listeners} (afin de réduire
+     * le volume de données éventuellement transmis par une machine distante) mais ne recevront
+     * pas de traitement particuliers dans cette méthode.
      */
     public void environmentChanged(final EnvironmentChangeEvent event) throws RemoteException {
-        final Environment environment = event.getSource();
-        final Date oldDate = date;
-        date = environment.getClock().getTime();
-        setCoverage(environment.getCoverage(parameter));
-        listeners.firePropertyChange("date", oldDate, date);
+        if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
+            final Environment environment = event.getSource();
+            final Date oldDate = date;
+            date = environment.getClock().getTime();
+            setCoverage(environment.getCoverage(parameter));
+            listeners.firePropertyChange("date", oldDate, date);
+        }
+        /*
+         * Signale les changements de populations. Bien que l'on travaille sur des ensembles,
+         * en général il n'y aura qu'une seule population d'ajoutée ou de supprimée.
+         */
+        Set<Population> change = event.getPopulationRemoved();
+        if (change != null) {
+            for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
+                listeners.firePropertyChange("population", it.next(), null);
+            }
+        }
+        change = event.getPopulationAdded();
+        if (change != null) {
+            for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
+                listeners.firePropertyChange("population", null, it.next());
+            }
+        }
     }
 
     /**

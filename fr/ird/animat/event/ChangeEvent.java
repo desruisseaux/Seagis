@@ -26,62 +26,62 @@
 package fr.ird.animat.event;
 
 // Dependencies
+import java.util.EventObject;
 import fr.ird.animat.Animal;
+import fr.ird.animat.Population;
+import fr.ird.animat.Environment;
 
 
 /**
- * Un événement signalant que l'état d'un {@link Animal animal} a changé. La raison du changement
- * peut être une migration vers une nouvelle population ou une métamorphose en une nouvelle
- * espèce, mais n'inclus généralement pas les déplacements d'animaux étant donné que ces derniers
- * surviennent typiquement à chaque pas de temps.
+ * Un événement signalant que l'état d'un {@link Animal animal}, d'une {@link Population population}
+ * ou d'un {@link Environment environnement] a changé.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  *
  * @see AnimalChangeListener
+ * @see PopulationChangeListener
+ * @see EnvironmentChangeListener
  */
-public class AnimalChangeEvent extends ChangeEvent {
+public class ChangeEvent extends EventObject {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -8282372966814112917L;
+    private static final long serialVersionUID = 6123591095950499007L;
 
     /**
-     * Drapeau indiquant que l'animal a changé de population. Les événements de ce type
-     * sont généralement lancés en même temps qu'un événement {@link PopulationChangeEvent}
-     * de la population concernée.
+     * Le type de changement qui est survenu. Ce champ peut être n'importe quelle combinaison des
+     * constantes énumérées dans {@link AnimalChangeListener}, {@link PopulationChangeListener}
+     * et {@link EnvironmentChangeListener}.
      */
-    public static final int POPULATION_CHANGED = PopulationChangeEvent.LAST << 1;
-
-    /**
-     * Drapeau indiquant que l'animal a changé d'espèce.
-     */
-    public static final int SPECIES_CHANGED = POPULATION_CHANGED << 1;
-
-    /**
-     * Drapeau indiquant que l'animal a été tué.
-     */
-    public static final int KILLED = SPECIES_CHANGED << 1;
+    final int type;
 
     /**
      * Construit un nouvel événement.
      *
      * @param source La source.
      * @param type Le {@linkplain #getType type de changement} qui est survenu.
-     *        Ce type être n'importe quelle combinaison de 
-     *
-     *        {@link #POPULATION_CHANGED},
-     *        {@link #SPECIES_CHANGED} et
-     *        {@link #KILLED}.
      */
-    public AnimalChangeEvent(final Animal source, final int type) {
-        super(source, type);
+    public ChangeEvent(final Object source, final int type) {
+        super(source);
+        this.type = type;
     }
 
     /**
-     * Retourne la source.
+     * Retourne le type de changement qui est survenu. Ce type peut être n'importe quelle
+     * combinaison des constantes énumérées dans {@link AnimalChangeListener},
+     * {@link PopulationChangeListener} et {@link EnvironmentChangeListener}.
      */
-    public Animal getSource() {
-        return (Animal) super.getSource();
+    public int getType() {
+        return type;
+    }
+
+    /**
+     * Retourne <code>true</code> si au moins un des changements spécifiés est survenu.
+     * Le drapeau <code>flags</code> peut contenir n'importe quelle combinaison acceptée
+     * par {@link #getType}.
+     */
+    public boolean changeOccured(final int flags) {
+        return (getType() & flags) != 0;
     }
 }

@@ -34,8 +34,6 @@ import java.util.NoSuchElementException;
 import javax.swing.event.EventListenerList;
 import java.rmi.server.RemoteServer;
 import java.rmi.RemoteException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 // OpenGIS et Geotools
 import org.geotools.cv.Coverage;
@@ -82,30 +80,6 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     private final EventListenerList listenerList = new EventListenerList();
 
     /**
-     * Evénement indiquant qu'un changement est survenu dans l'environnement.
-     */
-    private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
-
-    /**
-     * Classe à exécuter lorsque l'environnement a changé.
-     *
-     * @see #fireEnvironmentChanged()
-     */
-    private final Runnable fireEnvironmentChanged = new Runnable() {
-        public void run() {
-            assert Thread.holdsLock(getTreeLock());
-            final Object[] listeners = listenerList.getListenerList();
-            for (int i=listeners.length; (i-=2)>=0;) {
-                if (listeners[i] == EnvironmentChangeListener.class) try {
-                    ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
-                } catch (RemoteException exception) {
-                    listenerException("Environment", "fireEnvironmentChanged", exception);
-                }
-            }
-        }
-    };
-
-    /**
      * The event queue.
      */
     final EventQueue queue;
@@ -115,29 +89,6 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
      * dans {@link #queue}, seront synchronisés sur cette horloge.
      */
     private final Clock clock;
-
-    /**
-     * Un buffer utilisé temporairement pour contenir les informations extraites des bandes
-     * des objets {@link Coverage}. Ce buffer est réutilisé par {@link Animal#observe} autant
-     * que possible afin de réduire la quantité d'objets créés sur le tas. Cela suppose
-     * évidemment qu'il n'y aura pas deux animaux utilisant ce buffer en même temps.
-     */
-    transient float[] tmpSamples = new float[50];
-
-    /**
-     * Un buffer utilisé temporairement par {@link Animal#observe} pour stoker des observations.
-     * Cela suppose évidemment qu'il n'y aura pas deux animaux utilisant ce buffer en même temps.
-     */
-    transient float[] tmpObservations = new float[50];
-
-    /**
-     * Reconstruit les informations qui n'ont pas été sauvegardées lors de la serialisation.
-     */
-    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        tmpSamples      = new float[50];
-        tmpObservations = new float[50];
-    }
 
     /**
      * Construit un environnement par défaut.
@@ -152,6 +103,16 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
         }
         this.clock = clock;
         queue = new EventQueue(clock);
+    }
+
+    /**
+     * Ajoute une nouvelle population dans cet environnement.
+     *
+     * @return La population créée.
+     */
+    public Population newPopulation() {
+        // Le constructeur de 'Population' ajoute automatiquement la population à cet environnement.
+        return new Population(this);
     }
 
     /**
@@ -230,7 +191,7 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     public void nextTimeStep() {
         synchronized (getTreeLock()) {
             clock.nextTimeStep();
-            fireEnvironmentChanged();
+            fireEnvironmentChanged(EnvironmentChangeEvent.DATE_CHANGED);
         }
     }
 
@@ -255,16 +216,55 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
     }
 
     /**
-     * Préviens tous les objets intéressés que des données ont changés.
-     * Cette méthode peut être appelée par les classes dérivées suite à
-     * un chargement de nouvelles données.
-     *
+     * Préviens tous les objets intéressés que l'environnement a changé.
      * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
      * {@link #getTreeLock()}. L'appel de {@link EnvironmentChangeListener#environmentChanged}
      * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
+     *
+     * @param type Le type de changement qui est survenu. Cet argument peut être une des
+     *        constantes énumérées dans {@link EnvironmentChangeEvent}.
      */
-    protected void fireEnvironmentChanged() {
-        queue.invokeLater(fireEnvironmentChanged);
+    protected void fireEnvironmentChanged(final int type) {
+        fireEnvironmentChanged(new EnvironmentChangeEvent(this, type, null, null));
+    }
+
+    /**
+     * Préviens tous les objets intéressés qu'une population a été ajoutée ou supprimée.
+     *
+     * @param population La population ajoutée ou supprimée.
+     * @param added <code>true</code> si la population a été ajoutée, ou <code>false</code>
+     *        si elle a été supprimée.
+     */
+    final void fireEnvironmentChanged(final Population population, final boolean added) {
+        final Set<fr.ird.animat.Population> change = Collections.singleton((fr.ird.animat.Population)population);
+        final EnvironmentChangeEvent event;
+        if (added) {
+            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_ADDED, change, null);
+        } else {
+            event = new EnvironmentChangeEvent(this, EnvironmentChangeEvent.POPULATIONS_REMOVED, null, change);
+        }
+        fireEnvironmentChanged(event);
+    }
+
+    /**
+     * Préviens tous les objets intéressés que l'environnement a changé.
+     *
+     * @param event Un objet décrivant le changement survenu.
+     */
+    private void fireEnvironmentChanged(final EnvironmentChangeEvent event) {
+        queue.invokeLater(new Runnable() {
+            public void run() {
+                assert Thread.holdsLock(getTreeLock());
+                final Object[] listeners = listenerList.getListenerList();
+                for (int i=listeners.length; (i-=2)>=0;) {
+                    if (listeners[i] == EnvironmentChangeListener.class) try {
+                        ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
+                    } catch (RemoteException exception) {
+                        listenerException("Environment", "fireEnvironmentChanged", exception);
+                    }
+                }
+            }
+        });
     }
 
     /**

@@ -26,15 +26,22 @@
 package fr.ird.animat.viewer;
 
 // J2SE dependencies
+import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.awt.BorderLayout;
 import java.awt.Graphics2D;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 import java.rmi.RemoteException;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 // Geotools dependencies
 import org.geotools.gui.swing.MapPane;
 import org.geotools.gui.swing.StatusBar;
+import org.geotools.renderer.j2d.Renderer;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
@@ -51,7 +58,7 @@ import fr.ird.animat.Environment;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Viewer {
+public final class Viewer implements PropertyChangeListener {
     /**
      * La carte à afficher. Le système de coordonnées
      * sera un système géographique selon l'ellipsoïde
@@ -68,26 +75,70 @@ public final class Viewer {
     /**
      * La couche de l'environnement à afficher.
      */
-    private final EnvironmentLayer environment;
+    private final EnvironmentLayer environmentLayer;
 
     /**
-     * La couche représentant la population.
+     * Les couches représentant les populations.
      */
-    private final PopulationLayer population;
+    private final Map<Population,PopulationLayer> populationLayers;
 
     /**
      * Construit un afficheur.
      *
-     * @param population  La population à afficher.
+     * @param environment L'environnement à afficher.
      */
-    public Viewer(final Population population) throws RemoteException {
-        this.environment = new EnvironmentLayer(population.getEnvironment());
-        this.population  = new  PopulationLayer(population);
-        this.environment.addPropertyChangeListener(this.population);
+    public Viewer(final Environment environment) throws RemoteException {
+        /*
+         * Ajoute l'échelle de la carte et l'environnement.
+         */
         map.setPaintingWhileAdjusting(true);
-        map.getRenderer().addLayer(this.environment);
-        map.getRenderer().addLayer(this.population );
-        map.getRenderer().addLayer(new RenderedMapScale());
+        environmentLayer = new EnvironmentLayer(environment);
+        environmentLayer.addPropertyChangeListener(this);
+        final Renderer renderer = map.getRenderer();
+        renderer.addLayer(new RenderedMapScale());
+        renderer.addLayer(environmentLayer);
+        /*
+         * Ajoute toutes les populations.
+         */
+        final Set<Population> populations = environment.getPopulations();
+        int size = populations.size();
+        size += size/2;
+        populationLayers = new HashMap<Population,PopulationLayer>(size);
+        for (final Iterator<Population> it=populations.iterator(); it.hasNext();) {
+            final Population population = it.next();
+            final PopulationLayer layer = new PopulationLayer(population);
+            environmentLayer.addPropertyChangeListener(layer);
+            populationLayers.put(population, layer);
+            renderer.addLayer(layer);
+        }
+    }
+
+    /**
+     * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
+     */
+    public void propertyChange(final PropertyChangeEvent event) {
+        try {
+            final String property = event.getPropertyName();
+            if (property.equalsIgnoreCase("population")) {
+                final Renderer renderer = map.getRenderer();
+                Population population = (Population) event.getOldValue();
+                if (population != null) {
+                    final PopulationLayer layer = populationLayers.remove(population);
+                    renderer.removeLayer(layer);
+                    environmentLayer.removePropertyChangeListener(layer);
+                    layer.dispose();
+                }
+                population = (Population) event.getNewValue();
+                if (population != null) {
+                    final PopulationLayer layer = new PopulationLayer(population);
+                    environmentLayer.addPropertyChangeListener(layer);
+                    populationLayers.put(population, layer);
+                    renderer.addLayer(layer);
+                }
+            }
+        } catch (RemoteException exception) {
+            PopulationLayer.failed("Viewer", "propertyChange", exception);
+        }
     }
 
     /**
@@ -97,10 +148,10 @@ public final class Viewer {
     public JComponent getView() {
         final JPanel panel   = new JPanel(new BorderLayout());
         final JPanel mapPane = new JPanel(new BorderLayout());
-        mapPane.add(map.createScrollPane(), BorderLayout.CENTER);
-        mapPane.add(environment.colors,     BorderLayout.SOUTH );
-        panel.add(mapPane, BorderLayout.CENTER);
-        panel.add(status,  BorderLayout.SOUTH );
+        mapPane.add(map.createScrollPane(),  BorderLayout.CENTER);
+        mapPane.add(environmentLayer.colors, BorderLayout.SOUTH );
+        panel.  add(mapPane,                 BorderLayout.CENTER);
+        panel.  add(status,                  BorderLayout.SOUTH );
         return panel;
     }
 }
