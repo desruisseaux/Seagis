@@ -66,7 +66,6 @@ public final class SatelliteRelativeAngle
 
     /** Système de coordonnées géographique utilisé. */
     final CoordinateSystem sourceCS = GeographicCoordinateSystem.WGS84;
-
     
     /**
      * Construit un objet de type SatteliteRelativeAngle.
