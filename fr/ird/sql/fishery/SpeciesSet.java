@@ -75,6 +75,8 @@ class SpeciesSet extends AbstractSet<Species>
 
     /**
      * Returns an iterator over the species in this catch.
+     * This iterator <strong>must</strong> returns species
+     * always in the same order.
      */
     public final java.util.Iterator<Species> iterator()
     {return new Iterator(species);}

@@ -47,7 +47,7 @@ import java.util.NoSuchElementException;
  *
  * Disjoint sets are thread-safe.
  *
- * @version December 11, 2001
+ * @version 1.0
  * @author Martin Desruisseaux
  */
 public class DisjointSet extends AbstractSet
@@ -347,7 +347,7 @@ public class DisjointSet extends AbstractSet
     /**
      * The iterator for {@link DisjointSet}.
      *
-     * @version December 11, 2001
+     * @version 1.0
      * @author Martin Desruisseaux
      */
     private final class Iter implements Iterator

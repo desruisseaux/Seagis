@@ -88,8 +88,10 @@ public interface CatchEntry extends Entry
 
     /**
      * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
-     * que {@link #getCatch(Species)} retourne une valeur différente de
-     * zéro pour chacune de ces espèces.
+     * que {@link #getCatch(Species)} retourne une valeur différente de zéro
+     * pour chacune de ces espèces. L'ensemble retourné est immutable et son
+     * itérateur {@link Set#iterator}  garanti qu'il retournera toujours les
+     * espèces dans le même ordre pour un objet {@link CatchEntry} donné.
      */
     public abstract Set<Species> getSpecies();
 

@@ -44,6 +44,12 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
     private final Species[] species;
 
     /**
+     * Index de la dernière espèce interrogée.
+     * Utilisé pour optimiser {@link #getCatch(Species)}.
+     */
+    private transient int last;
+
+    /**
      * Numéro d'identification de la pêche.
      */
     protected final int ID;
@@ -122,14 +128,20 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
     }
 
     /**
-     * Retourne la quantité de poissons pêchés pour une expèce donnée.
+     * Retourne la quantité de poissons pêchés pour une espèce donnée.
      */
     public final float getCatch(final Species species)
     {
+        // Fast check (slight optimization)
         final Species[] array=this.species;
+        if (++last == array.length) last=0;
+        if (array[last]==species)
+            return amount[last];
+
+        // Normal (slower) check.
         for (int i=0; i<array.length; i++)
             if (array[i].equals(species))
-                return amount[i];
+                return amount[last=i];
         return 0;
     }
 
