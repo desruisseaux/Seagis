@@ -12,7 +12,7 @@
 <P><FONT FACE="Arial Narrow"><B>
 &nbsp;<A HREF="javadoc/index.html">Browse&nbsp;the&nbsp;JavaDoc</A><BR>
 &nbsp;<A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/">Browse&nbsp;the&nbsp;CVS&nbsp;repository</A><BR>
-&nbsp;<A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=60108">Download&nbsp;sources&nbsp;and&nbsp;binaries</A><BR>
+&nbsp;<A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=70242">Download&nbsp;sources&nbsp;and&nbsp;binaries</A><BR>
 &nbsp;<A HREF="demo/index.html">Demos&nbsp;for&nbsp;developers</A><BR>
 &nbsp;<A HREF="http://sourceforge.net/projects/seagis">SourceForge&nbsp;project&nbsp;page</A><BR>
 &nbsp;<A HREF="http://lists.sourceforge.net/lists/listinfo/seagis-discuss">Discussion&nbsp;list</A><BR>
@@ -67,34 +67,28 @@ existing Java classes like <A HREF="http://java.sun.com/j2se/1.4/docs/api/java/t
 for parsing and formatting angles, and <A HREF="http://java.sun.com/j2se/1.4/docs/api/javax/imageio/ImageReader.html"><CODE>ImageReader</CODE></A>
 for reading ASCII and binary files.</FONT></P>
 
-<P ALIGN="justify"><FONT FACE="Verdana">Full source code is freely available under LGPL license,
-which allow linking against many open source and commercial projects.</FONT></P>
-
-
-<P>&nbsp;</P>
-<H2>Why yet an other geographic package?</H2>
-<P ALIGN="justify"><FONT FACE="Verdana"><A HREF="http://www.openmap.org/">OpenMap</A> and
-<A HREF="http://geotools.sourceforge.net/docs.php">GeoTools</A> are two others valuable packages
-which may worth your consideration. However, SEAGIS is different in three aspects:</P>
-
-<UL>
-    <LI>We try to conform to the <A HREF="http://www.opengis.org">OpenGIS</A> specification. Non-OpenGIS APIs appear in clearly
-        separated packages (see <A HREF="javadoc/overview-summary.html#packages_organization">Packages organization</A>).</LI>
-    <LI>We try to make best use of latest Java packages, especially <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>
-        (For example, the Sun's <A HREF="http://java.sun.com/j2se/1.4/docs/api/java/awt/geom/AffineTransform.html">AffineTransform</A>
-        class is highly optimized and should be more extensively used).
-        We try to remove API that duplicates standard classes. Our package does not carry around legacy code from JDK 1.1 days.</LI>
-    <LI>SEAGIS is under LGPL license, which is similar but somewhat less restrictive than GPL
-        (see <A HREF="http://www.mozilla.org/MPL/FAQ.html#7">What is the LGPL?</A>,
-        <A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL code be incorporated into the Communicator code base?</A>).</LI>
-</UL>
+<P ALIGN="justify"><FONT FACE="Verdana">Full source code is freely available
+under LGPL license, which is similar but somewhat less restrictive than GPL
+(see <A HREF="http://www.mozilla.org/MPL/FAQ.html#7">What is the LGPL?</A>,
+<A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL code be
+incorporated into the Communicator code base?</A>).</FONT></P>
 
 
 <P>&nbsp;</P>
 <H2>Requirements</H2>
+<P ALIGN="justify">The SEAGIS download requires the following software:</P>
 <UL>
-    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.4.0-beta3</A> (mandatory)</LI>
-    <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A> (mandatory)</LI>
+    <LI><A HREF="http://java.sun.com/j2se/1.3/">J2SE 1.3</A> or later.</LI>
+    <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging 1.1</A> or later.</LI>
+</UL>
+<P ALIGN="justify">In addition, an <STRONG>optional</STRONG> experimental package
+can be downloaded separately. This experimental package contains modules not part
+of OpenGIS's specification, but related to geographic information. The experimental
+package has higher requirement than the SEAGIS package, as noted below. Note that
+you <STRONG>do not</STRONG> need those requirements if you download only the SEAGIS
+package.</P>
+<UL>
+    <LI><A HREF="http://java.sun.com/j2se/1.4/">J2SE 1.4.0-beta3</A> (mandatory)</LI>
     <LI><A HREF="http://developer.java.sun.com/developer/earlyAccess/adding_generics/">Prototype compiler for JSR014:
         Adding Generics to the Java Programming Language</A> (optional)</LI>
 </UL>
@@ -114,7 +108,5 @@ which may worth your consideration. However, SEAGIS is different in three aspect
 </UL>
 
 </TD></TR></TABLE>
-
-
 </BODY>
 </HTML>
