@@ -74,7 +74,7 @@ public interface ResourceKeys
     public static final int ERROR_INDEX_OUT_OF_BOUNDS_$1                =    49;
     public static final int ERROR_LATITUDE_OUT_OF_RANGE_$1              =    50;
     public static final int ERROR_LONGITUDE_OUT_OF_RANGE_$1             =    51;
-    public static final int ERROR_MATRIX_NOT_SQUARE                     =    52;
+    public static final int ERROR_MATRIX_NOT_REGULAR                    =    52;
     public static final int ERROR_MISMATCHED_DIMENSION_$2               =    53;
     public static final int ERROR_MISSING_PARAMETER_$1                  =    54;
     public static final int ERROR_NONINVERTIBLE_TRANSFORM               =    55;
