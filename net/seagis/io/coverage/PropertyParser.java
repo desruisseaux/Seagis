@@ -143,7 +143,8 @@ public class PropertyParser
      */
     private static final String[] PROJECTIONS=
     {
-        "Mercator",   "Mercator_1SP"
+        "Mercator",            "Mercator_1SP",
+        "Geographic (Lat/Lon)", null
     };
 
     /**
@@ -653,6 +654,8 @@ public class PropertyParser
      *     <code>"false_easting"</code> and
      *     <code>"false_northing"</code>.
      *
+     * @return The projection, or <code>null</code> if the underlying coordinate
+     *         system is not a {@link ProjectedCoordinateSystem}.
      * @throws NoSuchElementException if no value exists for the "Projection" key.
      * @throws NumberFormatException if a parameter value can't be parsed as a <code>double</code>.
      */
@@ -672,6 +675,10 @@ public class PropertyParser
                 classification = PROJECTIONS[i+1];
                 break;
             }
+        }
+        if (classification==null)
+        {
+            return null;
         }
         boolean semiMajorAxisDefined = false;
         boolean semiMinorAxisDefined = false;
