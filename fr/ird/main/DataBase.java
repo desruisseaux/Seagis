@@ -72,13 +72,17 @@ public final class DataBase
 
     /**
      * Connexion vers la base de données d'images.
+     * Si <code>null</code>, alors la connexion sera
+     * établie la première fois où elle sera demandée.
      */
-    private final ImageDataBase images;
+    private ImageDataBase images;
 
     /**
      * Connexion vers la base de données de pêches.
+     * Si <code>null</code>, alors la connexion sera
+     * établie la première fois où elle sera demandée.
      */
-    private final FisheryDataBase fisheries;
+    private FisheryDataBase fisheries;
 
     /**
      * Groupe des threads qui sont en train d'effectuer une opération.
@@ -129,7 +133,7 @@ public final class DataBase
      * @throws SQLException si les connections avec les bases de données ont échouées.
      */
     public DataBase() throws SQLException
-    {this(new ImageDataBase(), new FisheryDataBase());}
+    {this(null, null);}
 
     /**
      * Construit une nouvelle source de données
@@ -146,12 +150,6 @@ public final class DataBase
     {this(new ImageDataBase(images, imagesTZ), new FisheryDataBase(fisheries, fisheriesTZ));}
 
     /**
-     * Retourne le fuseau horaire de la table d'images.
-     */
-    final TimeZone getTimeZone()
-    {return images.getTimeZone();}
-
-    /**
      * Returns a thread group that may be used
      * for reading images as a background process.
      */
@@ -163,8 +161,28 @@ public final class DataBase
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public ImageDataBase getImageDataBase() throws SQLException
-    {return images;}
+    public synchronized ImageDataBase getImageDataBase() throws SQLException
+    {
+        if (images==null)
+        {
+            images = new ImageDataBase();
+        }
+        return images;
+    }
+
+    /**
+     * Retourne la base de données des pêches.
+     *
+     * @throws SQLException si les accès à la base de données ont échoués.
+     */
+    private synchronized FisheryDataBase getFisheryDataBase() throws SQLException
+    {
+        if (fisheries==null)
+        {
+            fisheries = new FisheryDataBase();
+        }
+        return fisheries;
+    }
 
     /**
      * Retourne une table d'images pour la série spécifiée.
@@ -173,7 +191,10 @@ public final class DataBase
      * @throws SQLException si les accès à la base de données ont échoués.
      */
     public ImageTable getImageTable(final SeriesEntry series) throws SQLException
-    {return (series!=null) ? images.getImageTable(series) : images.getImageTable();}
+    {
+        final ImageDataBase images = getImageDataBase();
+        return (series!=null) ? images.getImageTable(series) : images.getImageTable();
+    }
 
     /**
      * Construit et retourne une liste de controleurs permettant
@@ -183,6 +204,7 @@ public final class DataBase
      */
     public synchronized LayerControl[] getLayerControls() throws SQLException
     {
+        final ImageDataBase      images = getImageDataBase();
         final List<LayerControl> layers = new ArrayList<LayerControl>(3);
         final ImageTable       currents = images.getImageTable(SLA_TABLE);
         layers.add(new ImageLayerControl());
@@ -190,6 +212,7 @@ public final class DataBase
         {
             layers.add(new VectorLayerControl(currents, 1, 2));
         }
+        final FisheryDataBase fisheries = getFisheryDataBase();
         layers.add(new CatchLayerControl(fisheries));
         return layers.toArray(new LayerControl[layers.size()]);
     }
@@ -201,7 +224,15 @@ public final class DataBase
      */
     public synchronized void close() throws SQLException
     {
-        images   .close();
-        fisheries.close();
+        if (images!=null)
+        {
+            images.close();
+            images = null;
+        }
+        if (fisheries!=null)
+        {
+            fisheries.close();
+            fisheries = null;
+        }
     }
 }

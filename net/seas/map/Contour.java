@@ -398,7 +398,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
                                                                 final String sourceClassName,
                                                                 final String sourceMethodName) throws CannotCreateTransformException
     {
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER,
                                  ResourceKeys.INITIALIZING_TRANSFORMATION_$2, toString(sourceCS), toString(targetCS));
         record.setSourceClassName (sourceClassName);
         record.setSourceMethodName(sourceMethodName);

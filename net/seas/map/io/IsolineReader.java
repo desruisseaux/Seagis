@@ -34,6 +34,10 @@ import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+// Resources
+import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
+
 
 /**
  * Base class for bathymetry readers.
@@ -113,7 +117,7 @@ public abstract class IsolineReader
         {
             return new BufferedReader(new InputStreamReader(url.openStream()));
         }
-        throw new IOException("No input set"); // TODO: localize.
+        throw new IOException(Resources.format(ResourceKeys.ERROR_NO_INPUT_SET));
     }
 
     /**

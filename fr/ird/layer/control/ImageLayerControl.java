@@ -78,7 +78,7 @@ public final class ImageLayerControl extends LayerControl
     {return Resources.format(ResourceKeys.IMAGES);}
 
     /**
-     * Retourne une couche appropriée pour l'image spécifié. Cette méthode peut être
+     * Retourne une couche appropriée pour l'image spécifiée. Cette méthode peut être
      * appelée de n'importe quel Thread, généralement pas celui de <i>Swing</i>.
      *
      * @param  layer Couche à configurer. Si non-nul, alors cette couche doit

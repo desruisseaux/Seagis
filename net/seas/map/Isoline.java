@@ -62,11 +62,17 @@ import net.seas.resources.ResourceKeys;
 
 /**
  * An isoline built from a set of polylines.
+ * <br><br>
+ * Note: this class has a natural ordering that is inconsistent with equals.
+ * The {@link #compareTo} method compare only the isoline's values, while
+ * {@link #equals} compares also all polygon points. The natural ordering
+ * for <code>Isoline</code> is convenient for sorting isolines in increasing
+ * order of altitude.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class Isoline extends Contour
+public class Isoline extends Contour implements Comparable<Isoline>
 {
     /**
      * Numéro de version pour compatibilité avec des
@@ -857,8 +863,27 @@ public class Isoline extends Contour
     }
 
     /**
-     * Compares the specified object with
-     * this isoline for equality.
+     * Compare this isoline with the specified isoline.   Note that this method is
+     * inconsistent with <code>equals</code>. <code>compareTo</code> compares only
+     * isoline values, while <code>equals</code> compare all polygon points.   The
+     * natural ordering for <code>Isoline</code> is convenient for sorting isolines
+     * in increasing order of altitude.
+     *
+     * @param  iso The isoline to compare value with.
+     * @return <ul>
+     *           <li>+1 if this isoline's value is greater than the specified isoline value.</li>
+     *           <li>-1 if this isoline's value is less than the specified isoline value.</li>
+     *           <li>0 is both isoline has the same value.</li>
+     *         </ul>
+     */
+    public int compareTo(final Isoline iso)
+    {return Float.compare(value, iso.value);}
+
+    /**
+     * Compares the specified object with this isoline for equality.
+     * This methods checks for isoline values ({@link #values}) and
+     * all polygon points. This is different from {@link #compareTo},
+     * which compares only isoline values.
      */
     public synchronized boolean equals(final Object object)
     {
@@ -883,6 +908,10 @@ public class Isoline extends Contour
      */
     public synchronized Isoline clone()
     {
+        // Note: we can't use the 'Isoline(Isoline)' constructor,
+        //       because the user way have subclassed this isoline.
+        //       this is important for 'net.seas.map.io.IsolineFactory'
+        //       among others.
         final Isoline isoline=(Isoline) super.clone();
         isoline.polygons=new Polygon[polygonCount];
         for (int i=isoline.polygons.length; --i>=0;)

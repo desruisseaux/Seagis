@@ -167,7 +167,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
     public Desktop(final DataBase database)
     {
         this.database = database;
-        this.timezone = database.getTimeZone();
+        this.timezone = TimeZone.getTimeZone("UTC");
         setDragMode(OUTLINE_DRAG_MODE);
     }
 
@@ -345,9 +345,9 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
     {return database;}
 
     /**
-     * Retourne le fuseau horaire pour l'affichage et la saisie des dates dans l'application. Par défaut,
-     * ce sera le fuseau horaire de la base de données. L'utilisateur pourra toutefois changer ce fuseau
-     * horaire sans que cela n'affecte celui de la base de données.
+     * Retourne le fuseau horaire pour l'affichage et la saisie des dates dans l'application.
+     * L'utilisateur pourra changer ce fuseau horaire sans que cela n'affecte celui de la base
+     * de données.
      */
     public final TimeZone getTimeZone()
     {return timezone;}
