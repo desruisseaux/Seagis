@@ -85,7 +85,7 @@ public class Coverage3D extends fr.ird.database.coverage.Coverage3D {
      * <code>true</code> si cette implémentation est l'implémentation par défaut. Dans ce
      * dernier cas, {@link #evaluate(SampleEntry,double[])} pourra profiter de la méthode
      * {@link #evaluate(Point2D,Date,double[])}, qui applique une interpolation temporelle.
-     * Ce bricolage est temporaire et pourra être supprimée lorsque {@link #getGridCoverage2D}
+     * Ce bricolage est temporaire et pourra être supprimé lorsque {@link #getGridCoverage2D}
      * retournera une image interpolée.
      */
     private final boolean isDefaultImplementation;

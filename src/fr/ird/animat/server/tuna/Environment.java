@@ -315,12 +315,16 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
                      * effectuées sur les données obtenues.  Ca peut se produire si Coverage3D
                      * retourne le même GridCoverage pour deux pas de temps différents.
                      */
-                    final Date time = getClock().getTime();
-                    time.setTime(time.getTime() + param.timelag);
+                    final Date date = getClock().getTime();
+                    final long time = date.getTime() + param.timelag;
+                    date.setTime(time);
+                    entry.coverage3D.snap(null, date); // Avoid temporal interpolation.
                     GridCoverage gridCoverage;
-                    try {
-                        gridCoverage = entry.coverage3D.getGridCoverage2D(time);
+                    if (Math.abs(time-date.getTime()) <= TIME_RESOLUTION) try {
+                        gridCoverage = entry.coverage3D.getGridCoverage2D(date);
                     } catch (PointOutsideCoverageException exception) {
+                        gridCoverage = null;
+                    } else {
                         gridCoverage = null;
                     }
                     if (gridCoverage != entry.gridCoverage) {

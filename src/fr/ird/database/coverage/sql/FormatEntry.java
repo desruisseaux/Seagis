@@ -28,14 +28,17 @@ package fr.ird.database.coverage.sql;
 // Images
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
+import java.awt.image.SampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.IndexColorModel;
+import java.awt.image.renderable.ParameterBlock;
 
 // Image I/O
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.IIOException;
 import javax.imageio.ImageReadParam;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.event.IIOReadWarningListener;
@@ -57,22 +60,24 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Collections;
+import java.util.EventListener;
 import java.util.IdentityHashMap;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
 import java.awt.Dimension;
-import java.awt.Rectangle;
 
-// JAI dependencies
+// Java Advanced Imaging
+import javax.media.jai.JAI;
 import javax.media.jai.util.Range;
+import com.sun.media.imageio.stream.RawImageInputStream;
 
 // Geotools dependencies
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
-import org.geotools.io.image.RawBinaryImageReadParam;
 import org.geotools.gui.swing.tree.MutableTreeNode;
 import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
+import org.geotools.io.image.RawBinaryImageReadParam;
 
 // Seagis dependencies
 import fr.ird.resources.XArray;
@@ -95,6 +100,12 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
     private static final long serialVersionUID = -3074567810624000603L;
+
+    /**
+     * <code>true</code> pour utiliser l'opération "ImageRead" de JAI, ou <code>false</code>
+     * pour utiliser directement l'objet {@link ImageReader}.
+     */
+    private static final boolean USE_IMAGE_READ_OPERATION = false;
 
     /**
      * Liste des répertoires synchronisées. Voyez {@link #setSynchronizedDirectories}
@@ -203,6 +214,14 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
     }
 
     /**
+     * La langue à utiliser pour le décodeur d'image, ou <code>null</code> pour la langue
+     * par défaut.
+     */
+    private static Locale getLocale() {
+        return null;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public SampleDimension[] getSampleDimensions() {
@@ -260,14 +279,21 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
      */
     private ImageReader getImageReader() throws IIOException {
         assert Thread.holdsLock(this);
-        if (reader == null) {
-            final Iterator readers = ImageIO.getImageReadersByMIMEType(mimeType);
-            if (!readers.hasNext()) {
-                throw new IIOException(Resources.format(ResourceKeys.ERROR_NO_IMAGE_DECODER_$1, mimeType));
-            }
-            reader = (ImageReader) readers.next();
+        if (reader != null) {
+            return reader;
         }
-        return reader;
+        Iterator readers;
+        if (mimeType.length() != 0) {
+            readers = ImageIO.getImageReadersByMIMEType(mimeType);
+            if (readers.hasNext()) {
+                return reader = (ImageReader)readers.next();
+            }
+        }
+        readers = ImageIO.getImageReadersByFormatName(extension);
+        if (readers.hasNext()) {
+            return reader = (ImageReader)readers.next();
+        }
+        throw new IIOException(Resources.format(ResourceKeys.ERROR_NO_IMAGE_DECODER_$1, mimeType));
     }
 
     /**
@@ -299,7 +325,7 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
         file = file.getCanonicalFile();
         while (file != null) {
             for (int i=0; i<sync.length; i++) {
-                final File drive=sync[i];
+                final File drive = sync[i];
                 if (file.equals(drive)) {
                     return drive;
                 }
@@ -324,12 +350,11 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
      * @param  file Nom du fichier à lire. Ce nom peut désigner un fichier sur un serveur distant.
      * @param  imageIndex Index (à partir de 0) de l'image à lire.
      * @param  param Bloc de paramètre à utiliser pour la lecture.
-     * @param  listeners Objets à informer des progrès de la lecture ainsi que des éventuels
+     * @param  listenerList Objets à informer des progrès de la lecture ainsi que des éventuels
      *         avertissements, ou <code>null</code> s'il n'y en a pas. Les objets qui ne sont
      *         pas de la classe {@link IIOReadWarningListener} ou {@link IIOReadProgressListener}
      *         ne seront pas pris en compte. Cette méthode s'engage à ne pas modifier l'objet
      *         {@link EventListenerList} donné.
-     * @param  warningListener Objet à informer des avertissement lors de la lecture.
      * @param  expected Dimension prévue de l'image.
      * @param  source Objet {@link CoverageEntry} qui a demandé la lecture de l'image.
      *         Cette information sera utilisée par {@link #abort} pour vérifier si
@@ -341,7 +366,7 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
     final RenderedImage read(final File              file,
                              final int               imageIndex,
                              final ImageReadParam    param,
-                             final EventListenerList listeners,
+                             final EventListenerList listenerList,
                              final Dimension         expected,
                              final CoverageEntry     source) throws IOException
     {
@@ -367,60 +392,115 @@ final class FormatEntry implements fr.ird.database.coverage.FormatEntry, Seriali
              */
             final ImageReader reader = getImageReader();
             final ImageReaderSpi spi = reader.getOriginatingProvider();
-            if (spi != null) {
-                final Class[] types = spi.getInputTypes();
-                if (contains(types, File.class)) {
-                    inputObject = file;
-                } else if (contains(types, URL.class)) {
-                    try {
-                        inputObject = file.toURL();
-                    } catch (MalformedURLException exception) {
-                        // Ignore...
-                    }
+            final Class[] inputTypes = (spi!=null) ? spi.getInputTypes() : ImageReaderSpi.STANDARD_INPUT_TYPE;
+            if (contains(inputTypes, File.class)) {
+                inputObject = file;
+            } else if (contains(inputTypes, URL.class)) {
+                try {
+                    inputObject = file.toURL();
+                } catch (MalformedURLException exception) {
+                    // Ignore... Le code suivant sera un "fallback" raisonable.
                 }
             }
             if (inputObject == null) {
                 inputObject = inputStream = ImageIO.createImageInputStream(file);
+                if (inputObject == null) {
+                    throw new FileNotFoundException(Resources.format(
+                            ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
+                }
             }
-            if (inputObject == null) {
-                throw new FileNotFoundException(Resources.format(
-                        ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
+            /*
+             * Si l'image à lire est au format "RAW", définit la taille de l'image.  C'est
+             * nécessaire puisque le format binaire RAW ne contient aucune information sur
+             * la taille des images qu'elle contient.
+             */
+            if (inputStream!=null && contains(inputTypes, RawImageInputStream.class)) {
+                final SampleDimension[] bands = getSampleDimensions(param);
+                final ColorModel  cm = bands[0].getColorModel(0, bands.length);
+                final SampleModel sm = cm.createCompatibleSampleModel(expected.width, expected.height);
+                inputObject = inputStream = new RawImageInputStream(inputStream,
+                                                                    new ImageTypeSpecifier(cm, sm),
+                                                                    new long[]{0},
+                                                                    new Dimension[]{expected});
+            }
+            // Patch temporaire, en attendant que les décodeurs spéciaux (e.g. "image/raw-msla")
+            // soient adaptés à l'architecture du décodeur RAW de Sun.
+            if (param instanceof RawBinaryImageReadParam) {
+                final RawBinaryImageReadParam rawParam = (RawBinaryImageReadParam) param;
+                if (rawParam.getStreamImageSize() == null) {
+                    rawParam.setStreamImageSize(expected);
+                }
+                if (geophysics && rawParam.getDestinationType() == null) {
+                    final int dataType = rawParam.getStreamDataType();
+                    if (dataType != DataBuffer.TYPE_FLOAT &&
+                        dataType != DataBuffer.TYPE_DOUBLE)
+                    {
+                        rawParam.setDestinationType(DataBuffer.TYPE_FLOAT);
+                    }
+                }
             }
             /*
              * Configure maintenant le décodeur et lance la lecture de l'image.
+             * Cette étape existe en deux versions: avec utilisation de l'opération
+             * "ImageRead", ou lecture directe à partir du ImageReader.
              */
-            try {
-                if (listeners != null) {
-                    final Object[] list = listeners.getListenerList();
-                    for (int i=0; i<list.length; i+=2) {
-                        if (list[i]==IIOReadWarningListener .class) reader.addIIOReadWarningListener ((IIOReadWarningListener)  list[i+1]);
-                        if (list[i]==IIOReadProgressListener.class) reader.addIIOReadProgressListener((IIOReadProgressListener) list[i+1]);
-                    }
-                }
-                reader.setInput(inputObject, true, true);
+            if (USE_IMAGE_READ_OPERATION) {
                 /*
-                 * If we are going to read a RAW binary file, set the expected
-                 * image size. This is necessary since RAW binary files don't
-                 * know their image's size.
+                 * Utilisation de l'opération "ImageRead": cette approche retarde la lecture des
+                 * tuiles à un moment indéterminé après l'appel de cette méthode (ce qui rend caduc
+                 * la synchronisation sur 'getLock(...)'). Elle a l'avantage de contrôler la mémoire
+                 * consommée grâce au TileCache de JAI, Mais elle rend plus difficile la gestion des
+                 * exceptions et l'annulation de la lecture avec 'abort()', ce qui rend encore caduc
+                 * le queue 'enqueued'.
                  */
-                if (param instanceof RawBinaryImageReadParam) {
-                    final RawBinaryImageReadParam rawParam = (RawBinaryImageReadParam) param;
-                    if (rawParam.getStreamImageSize() == null) {
-                        rawParam.setStreamImageSize(expected);
+                EventListener[] listeners = null;
+                if (listenerList != null) {
+                    int   count = 0;
+                    final Object[] list = listenerList.getListenerList();
+                    listeners = new EventListener[list.length/2];
+               add: for (int i=1; i<list.length; i+=2) {
+                        final EventListener candidate = (EventListener)list[i];
+                        for (int j=count; --j>=0;) {
+                            if (listeners[j] == candidate) {
+                                continue add;
+                            }
+                        }
+                        listeners[count++] = candidate;
                     }
-                    if (geophysics && rawParam.getDestinationType() == null) {
-                        final int dataType = rawParam.getStreamDataType();
-                        if (dataType != DataBuffer.TYPE_FLOAT &&
-                            dataType != DataBuffer.TYPE_DOUBLE)
-                        {
-                            rawParam.setDestinationType(DataBuffer.TYPE_FLOAT);
+                    listeners = XArray.resize(listeners, count);
+                }
+                image = JAI.create("ImageRead", new ParameterBlock()
+                    .add(inputObject)     // Objet à utiliser en entré
+                    .add(imageIndex)      // Index de l'image à lire
+                    .add(Boolean.FALSE)   // Pas de lecture des méta-données
+                    .add(Boolean.FALSE)   // Pas de lecture des "thumbnails"
+                    .add(Boolean.TRUE)    // Vérifier la validité de "input"
+                    .add(listeners)       // Liste des "listener"
+                    .add(getLocale())     // Langue du décodeur
+                    .add(param)           // Les paramètres
+                    .add(reader));        // L'objet à utiliser pour la lecture.
+                this.reader = null;       // N'utilise que un ImageReader par opération.
+            } else try {
+                /*
+                 * Utilisation direct du 'ImageReader': cette approche lit l'image immédiatement,
+                 * ce qui facilite la gestion des exceptions, de l'anulation de la lecture avec
+                 * 'abort()' les synchronisations.
+                 */
+                if (listenerList != null) {
+                    final Object[] list = listenerList.getListenerList();
+                    for (int i=0; i<list.length; i+=2) {
+                        if (list[i] == IIOReadWarningListener.class) {
+                            reader.addIIOReadWarningListener((IIOReadWarningListener) list[i+1]);
+                        }
+                        if (list[i] == IIOReadProgressListener.class) {
+                            reader.addIIOReadProgressListener((IIOReadProgressListener) list[i+1]);
                         }
                     }
-                } else {
-                    // Don't perform this check if we are reading a RAW image,
-                    // since the RAW image doesn't know its size by itself.
-                    checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex),
-                              expected, file);
+                }
+                reader.setLocale(getLocale());
+                reader.setInput(inputObject, true, true);
+                if (!(param instanceof RawBinaryImageReadParam)) {
+                    checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex), expected, file);
                 }
                 /*
                  * Read the file, close it in the "finally" block and returns the image.

@@ -56,6 +56,7 @@ import java.lang.ref.SoftReference;
 // Divers
 import java.util.Date;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.Collections;
 import java.awt.image.RenderedImage;
 import javax.media.jai.util.Range;
@@ -159,10 +160,25 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      * meilleur travail de cache sur les images.
      */
     private static final WeakHashSet POOL = Table.POOL;
+    
+    /**
+     * Liste des derniers {@link GridCoverageEntry} pour lesquels la méthode
+     * {@link #getGridCoverage} a été appelée. Lorsqu'une nouvelle image est lue, les références
+     * molles des plus anciennes sont changées en références faibles afin d'augmenter les chances
+     * que le ramasse-miette se débarasse des images les plus anciennes avant que la mémoire ne
+     * sature.
+     */
+    private static final LinkedList<GridCoverageEntry> LAST_INVOKED = new LinkedList<GridCoverageEntry>();
 
     /**
-     * Petite valeur utilisée pour contourner
-     * les erreurs d'arrondissement.
+     * Nombre maximal d'entrés à conserver dans la {@link #LAST_INVOKED}.
+     *
+     * @task TODO: Une meilleure mesure serait la mémoire occupée...
+     */
+    private static final int ENTRY_CAPACITY = 12;
+
+    /**
+     * Petite valeur utilisée pour contourner les erreurs d'arrondissement.
      */
     private static final double EPS = 1E-6;
 
@@ -630,7 +646,25 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
         }
         renderedImage = new WeakReference<RenderedImage>(image);
         gridCoverage  = new SoftReference<GridCoverage>(coverage);
+        synchronized (LAST_INVOKED) {
+            LAST_INVOKED.addLast(this);
+            while (LAST_INVOKED.size() > ENTRY_CAPACITY) {
+                LAST_INVOKED.removeFirst().clearSoftReference();
+            }
+        }
         return coverage;
+    }
+
+    /**
+     * Remplace la référence molle de {@link #gridCoverage} par une référence faible.
+     * Cette méthode est appelée par quand on a déterminé que la mémoire allouée par
+     * un {@link GridCoverage} devrait être libérée.
+     */
+    private synchronized void clearSoftReference() {
+        if (gridCoverage instanceof SoftReference) {
+            final GridCoverage coverage = gridCoverage.get();
+            gridCoverage = (coverage!=null) ? new WeakReference<GridCoverage>(coverage) : null;
+        }
     }
 
     /**

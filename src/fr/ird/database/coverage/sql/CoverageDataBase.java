@@ -329,9 +329,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * plus détaillée.
      */
     public static File[] getSynchronizedDirectories() {
-        final File[] directories = new File[FormatEntry.synchronizedDirectories.length];
-        System.arraycopy(FormatEntry.synchronizedDirectories, 0, directories, 0, directories.length);
-        return directories;
+        return (File[]) FormatEntry.synchronizedDirectories.clone();
     }
 
     /**
@@ -365,7 +363,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * précise ou pas ne devrait pas affecter les résultats obtenus.</p>
      */
     public static void setSynchronizedDirectories(final File[] directories) throws IOException {
-        final File[] dir=new File[directories.length];
+        final File[] dir = new File[directories.length];
         for (int i=0; i<dir.length; i++) {
             dir[i]=directories[i].getCanonicalFile();
         }

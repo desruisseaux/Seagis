@@ -63,8 +63,8 @@ final class PunctualSampleTable extends SampleTable {
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] ID        */ "ID, "      +
-                                /*[02] CRUISE    */ "maree, " +
-                                /*[03] CALEES    */ "nCalees, " +
+                                /*[02] CRUISE    */ "marée,   " +
+                                /*[03] CALEES    */ "nSennes, " +
                                 /*[04] DATE      */ "date, "    +
                                 /*[05] LONGITUDE */ "x, "       +
                                 /*[06] LATITUDE  */ "y "        +

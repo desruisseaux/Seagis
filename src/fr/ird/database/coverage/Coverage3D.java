@@ -54,6 +54,7 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import javax.media.jai.util.Range;
+import javax.media.jai.ParameterList;
 
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
@@ -79,6 +80,7 @@ import org.geotools.cv.ColorInterpretation;
 import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gp.Operation;
 
 // Seagis
 import fr.ird.resources.seagis.Resources;
@@ -103,7 +105,7 @@ public class Coverage3D extends Coverage {
      * donnée à la machine virtuelle avec l'option -Xmx. Le problème est peut-être lié au
      * bug #4640743 (SoftReferences are not being released in time and cause OutOfMemoryError).
      */
-    private static final boolean RUN_GC = true;
+    private static final boolean RUN_GC = false;
 
     /**
      * Liste des images à prendre en compte.
@@ -396,7 +398,7 @@ public class Coverage3D extends Coverage {
      * Snap the specified coordinate point and date to the closest point available in
      * this coverage. First, this method locate the image at or near the specified date
      * (if no image was available at the specified date, the closest one is selected).
-     * The <code>date</code> argument is then set to this date. Then, this method locate
+     * The <code>date</code> argument is then set to this date. Next, this method locate
      * the pixel under the <code>point</code> coordinate on this image. The <code>point</code>
      * argument is then set to this pixel center. Consequently, calling any <code>evaluate</code>
      * method with snapped coordinates will returns non-interpolated values.
@@ -466,6 +468,17 @@ public class Coverage3D extends Coverage {
     }
 
     /**
+     * Returns the grid coverage processor to use for applying operations.
+     * The grid coverage processor will be created when first needed.
+     */
+    private GridCoverageProcessor getGridCoverageProcessor() {
+        if (processor == null) {
+            processor = GridCoverageProcessor.getDefault();
+        }
+        return processor;
+    }
+
+    /**
      * Load a single image for the specified image entry.
      *
      * @param  entry The image to load.
@@ -475,9 +488,7 @@ public class Coverage3D extends Coverage {
     private GridCoverage load(final CoverageEntry entry) throws IOException {
         GridCoverage coverage = entry.getGridCoverage(listeners);
         if (!interpolationAllowed) {
-            if (processor == null) {
-                processor = GridCoverageProcessor.getDefault();
-            }
+            final GridCoverageProcessor processor = getGridCoverageProcessor();
             coverage = processor.doOperation("Interpolate", coverage, "Type", "NearestNeighbor");
         }
         return coverage;
@@ -650,13 +661,19 @@ public class Coverage3D extends Coverage {
         final long timeMillis = time.getTime();
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
-
-        // TODO: Interpolate here: lower + ratio*(upper-lower)
-        //       Cache the result; it may be reused often.
-
-        // GridCoverage result = lower + ratio*(upper-lower)
-
-        return (ratio < 0.5) ? lower : upper;
+        if (interpolationAllowed) {
+            final GridCoverageProcessor processor = getGridCoverageProcessor();
+            final Operation operation = processor.getOperation("Combine");
+            final ParameterList param = operation.getParameterList();
+            param.setParameter("source0",  lower);
+            param.setParameter("source1",  upper);
+            param.setParameter("weights0", new double[]{1-ratio});
+            param.setParameter("weights1", new double[]{  ratio});
+            return processor.doOperation(operation, param);
+            // TODO: We should cache the result, since it may be reused often.
+        } else {
+            return (ratio <= 0.5) ? lower : upper;
+        }
     }
 
     /**
