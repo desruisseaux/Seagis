@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.ImageIcon;
+import javax.swing.UIManager;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.LookAndFeel;
@@ -109,8 +110,30 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class RangeBars extends ZoomPane
-{
+public class RangeBars extends ZoomPane {
+    /**
+     * Constant for the horizontal orientation.
+     * Labels and bars are both horizontal.
+     */
+    public static final int HORIZONTAL = SwingConstants.HORIZONTAL;
+
+    /**
+     * Constant for the vertical orientation.
+     * Labels and bars are both vertical.
+     */
+    public static final int VERTICAL = SwingConstants.VERTICAL;
+
+    /**
+     * Constant for the vertical orientation.
+     * Bars are vertical, but labels still horizontal.
+     */
+    public static final int VERTICAL_BARS = 2;
+
+    /**
+     * An affine transform for applying a 90° rotation on text labels.
+     */
+    private static final AffineTransform ROTATE_90 = new AffineTransform(0, 1, -1, 0, 0, 0);
+
     /**
      * Données des barres. Chaque entré est constitué d'une paire
      * (<em>étiquette</em>, <em>tableau de données</em>). Le tableau de
@@ -170,6 +193,12 @@ public class RangeBars extends ZoomPane
     private final boolean horizontal;
 
     /**
+     * <code>true</code> if labels should be vertical as well when the
+     * <code>RangeBars</code> component is vertical.
+     */
+    private final boolean verticalLabels;
+
+    /**
      * Indique si la méthode {@link #reset} a été appelée
      * sur cet objet avec une dimension valide de la fenêtre.
      */
@@ -201,7 +230,7 @@ public class RangeBars extends ZoomPane
      * Empirical value (in pixels) to add to <code>labelBounds.width</code>
      * after painting vertical bars. I cant' understand why it is needed!
      */
-    private static final int VERTICAL_ADJUSTMENT = 4;
+    private static final int XOFFSET_FOR_VERTICAL_BARS = 4;
 
     /**
      * The background color for the zoomable area (default to white).
@@ -228,7 +257,7 @@ public class RangeBars extends ZoomPane
     /**
      * The border to paint around the zoomable area.
      */
-    private final Border border=BorderFactory.createEtchedBorder();
+    private final Border border = BorderFactory.createEtchedBorder();
 
     /**
      * Plage de valeurs présentement sélectionnée par l'utilisateur. Cette
@@ -261,8 +290,9 @@ public class RangeBars extends ZoomPane
      * nombres sans unités. Des données pourront être ajoutées avec
      * la méthode {@link #addRange} pour faire apparaître des barres.
      */
-    public RangeBars()
-    {this((Unit)null, SwingConstants.HORIZONTAL);}
+    public RangeBars() {
+        this((Unit)null, HORIZONTAL);
+    }
 
     /**
      * Construit un paneau initialement vide qui représentera des
@@ -271,11 +301,13 @@ public class RangeBars extends ZoomPane
      * apparaître des barres.
      *
      * @param unit Unit of measure, or <code>null</code>.
-     * @param orientation Either {@link SwingConstants#HORIZONTAL}
-     *                        or {@link SwingConstants#VERTICAL}.
+     * @param orientation Either {@link #HORIZONTAL}, {@link #VERTICAL} or {@link #VERTICAL_BARS}.
      */
-    public RangeBars(final Unit unit, final int orientation)
-    {this(new NumberGraduation(unit), isHorizontal(orientation));}
+    public RangeBars(final Unit unit, final int orientation) {
+        this(new NumberGraduation(unit),
+             isHorizontal    (orientation),
+             isVerticalLabels(orientation));
+    }
 
     /**
      * Construit un paneau initialement vide qui représentera des
@@ -284,22 +316,27 @@ public class RangeBars extends ZoomPane
      * apparaître des barres.
      *
      * @param timezone The timezone.
-     * @param orientation Either {@link SwingConstants#HORIZONTAL}
-     *                        or {@link SwingConstants#VERTICAL}.
+     * @param orientation Either {@link #HORIZONTAL}, {@link #VERTICAL} or {@link #VERTICAL_BARS}.
      */
-    public RangeBars(final TimeZone timezone, final int orientation)
-    {this(new DateGraduation(timezone), isHorizontal(orientation));}
+    public RangeBars(final TimeZone timezone, final int orientation) {
+        this(new DateGraduation(timezone),
+             isHorizontal    (orientation),
+             isVerticalLabels(orientation));
+    }
 
     /**
      * Construit un paneau initialement vide. Des données pourront
      * être ajoutées avec la méthode {@link #addRange} pour faire
      * apparaître des barres.
      */
-    private RangeBars(final AbstractGraduation graduation, final boolean horizontal)
+    private RangeBars(final AbstractGraduation graduation,
+                      final boolean horizontal,
+                      final boolean verticalLabels)
     {
         super(horizontal ? (TRANSLATE_X|SCALE_X|RESET) : (TRANSLATE_Y|SCALE_Y|RESET));
-        this.horizontal = horizontal;
-        axis=new Axis(graduation);
+        this.horizontal     = horizontal;
+        this.verticalLabels = verticalLabels;
+        axis = new Axis(graduation);
         axis.setLabelClockwise(horizontal);
         axis.setLabelFont(new Font("SansSerif", Font.BOLD,  11));
         axis.setFont     (new Font("SansSerif", Font.PLAIN, 10));
@@ -311,12 +348,11 @@ public class RangeBars extends ZoomPane
          * horizontal bars are aligned on minimal Y (top aligned). It is easier
          * to simply clear the cache on component resize.
          */
-        if (!horizontal)
-        {
-            addComponentListener(new ComponentAdapter()
-            {
-                public void componentResized(final ComponentEvent event)
-                {clearCache();}
+        if (!horizontal) {
+            addComponentListener(new ComponentAdapter() {
+                public void componentResized(final ComponentEvent event) {
+                    clearCache();
+                }
             });
         }
         setPaintingWhileAdjusting(true);
@@ -325,15 +361,27 @@ public class RangeBars extends ZoomPane
     /**
      * Check the orientation.
      *
-     * @param orientation Either {@link SwingConstants#HORIZONTAL}
-     *        or {@link SwingConstants#VERTICAL}.
+     * @param orientation Either {@link #HORIZONTAL}, {@link #VERTICAL} or {@link #VERTICAL_BARS}.
      */
-    private static boolean isHorizontal(final int orientation)
-    {
-        switch (orientation)
-        {
-            case SwingConstants.HORIZONTAL: return true;
-            case SwingConstants.VERTICAL:   return false;
+    private static boolean isHorizontal(final int orientation) {
+        switch (orientation) {
+            case HORIZONTAL:    return true;
+            case VERTICAL:      return false;
+            case VERTICAL_BARS: return false;
+            default: throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * Check the labels orientation.
+     *
+     * @param orientation Either {@link #HORIZONTAL}, {@link #VERTICAL} or {@link #VERTICAL_BARS}.
+     */
+    private static boolean isVerticalLabels(final int orientation) {
+        switch (orientation) {
+            case HORIZONTAL:    return false;
+            case VERTICAL:      return true ;
+            case VERTICAL_BARS: return false;
             default: throw new IllegalArgumentException();
         }
     }
@@ -349,37 +397,33 @@ public class RangeBars extends ZoomPane
      *         not been constructed with the <code>RangeBars(TimeZone)</code>
      *         constructor.
      */
-    public void setTimeZone(final TimeZone timezone)
-    {
+    public void setTimeZone(final TimeZone timezone) {
         final Graduation graduation = axis.getGraduation();
-        if (graduation instanceof DateGraduation)
-        {
+        if (graduation instanceof DateGraduation) {
             final DateGraduation dateGrad = (DateGraduation) graduation;
             final TimeZone    oldTimezone = dateGrad.getTimeZone();
             dateGrad.setTimeZone(timezone);
             clearCache();
             repaint();
             firePropertyChange("timezone", oldTimezone, timezone);
+        } else {
+            throw new IllegalStateException();
         }
-        else throw new IllegalStateException();
     }
 
     /**
      * Efface toutes les barres qui étaient tracées.
      */
-    public synchronized void clear()
-    {
+    public synchronized void clear() {
         ranges.clear();
         clearCache();
         repaint();
     }
 
     /**
-     * Efface les barres correspondant
-     * à l'étiquette spécifiée.
+     * Efface les barres correspondant à l'étiquette spécifiée.
      */
-    public synchronized void remove(final String label)
-    {
+    public synchronized void remove(final String label) {
         ranges.remove(label);
         clearCache();
         repaint();
@@ -410,8 +454,7 @@ public class RangeBars extends ZoomPane
                                       final Comparable last)
     {
         RangeSet rangeSet = ranges.get(label);
-        if (rangeSet==null)
-        {
+        if (rangeSet == null) {
             rangeSet = new RangeSet(first.getClass());
             ranges.put(label, rangeSet);
         }
@@ -428,15 +471,14 @@ public class RangeBars extends ZoomPane
      * @param label     Etiquette pour laquelle définir une plage de valeur.
      * @param newRanges Nouvelle plage de valeurs.
      */
-    public synchronized void setRanges(final String label, final RangeSet newRanges)
-    {
-        if (newRanges!=null)
-        {
+    public synchronized void setRanges(final String label, final RangeSet newRanges) {
+        if (newRanges != null) {
             ranges.put(label, newRanges);
             clearCache();
             repaint();
+        } else {
+            remove(label);
         }
-        else remove(label);
     }
 
     /**
@@ -450,24 +492,22 @@ public class RangeBars extends ZoomPane
      *         necessary but failed for whatever reasons (for example because
      *         there is no intervals in this <code>RangeBars</code>).
      */
-    private boolean update()
-    {
-        if (minimum<maximum) return true;
-        double min=Double.POSITIVE_INFINITY;
-        double max=Double.NEGATIVE_INFINITY;
-        for (final Iterator<RangeSet> it=ranges.values().iterator(); it.hasNext();)
-        {
+    private boolean update() {
+        if (minimum < maximum) {
+            return true;
+        }
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (final Iterator<RangeSet> it=ranges.values().iterator(); it.hasNext();) {
             final RangeSet rangeSet = it.next();
             final int length = rangeSet.getLength();
-            if (length!=0)
-            {
+            if (length != 0) {
                 double tmp;
                 if ((tmp=rangeSet.getDouble(0       )) < min) min=tmp;
                 if ((tmp=rangeSet.getDouble(length-1)) > max) max=tmp;
             }
         }
-        if (min<max)
-        {
+        if (min < max) {
             this.minimum = min;
             this.maximum = max;
             return true;
@@ -480,15 +520,13 @@ public class RangeBars extends ZoomPane
      * peut nécessiter le recalcul d'informations conservées
      * dans une cache interne.
      */
-    private void clearCache()
-    {
-        minimum=Double.NaN;
-        maximum=Double.NaN;
+    private void clearCache() {
+        minimum = Double.NaN;
+        maximum = Double.NaN;
         labelBounds = null;
         axisBounds  = null;
-        if (swingModel!=null)
-        {
-            swingModel.updated=false;
+        if (swingModel != null) {
+            swingModel.updated = false;
         }
     }
 
@@ -497,20 +535,23 @@ public class RangeBars extends ZoomPane
      * méthode avec la valeur <code>false</code> désactivera l'affichage de
      * la légende même si {@link #getLegend} retourne une chaine non-nulle.
      */
-    public void setLegendVisible(final boolean visible)
-    {axis.setLabelVisible(visible);}
+    public void setLegendVisible(final boolean visible) {
+        axis.setLabelVisible(visible);
+    }
 
     /**
      * Spécifie la légende de l'axe.
      */
-    public void setLegend(final String label) // No 'synchronized' needed here
-    {((AbstractGraduation) axis.getGraduation()).setAxisLabel(label);}
+    public void setLegend(final String label) {// No 'synchronized' needed here
+        ((AbstractGraduation) axis.getGraduation()).setAxisLabel(label);
+    }
 
     /**
      * Retourne la légende de l'axe.
      */
-    public String getLegend() // No 'synchronized' needed here
-    {return axis.getGraduation().getAxisLabel();}
+    public String getLegend() { // No 'synchronized' needed here
+        return axis.getGraduation().getAxisLabel();
+    }
 
     /**
      * Retourne la liste des étiquettes en mémoire, dans l'ordre dans lequel
@@ -518,56 +559,59 @@ public class RangeBars extends ZoomPane
      * internes. En conséquence, les changements faits sur ce tableau n'auront
      * pas de répercussions sur <code>this</code>.
      */
-    public synchronized String[] getLabels()
-    {return ranges.keySet().toArray(new String[ranges.size()]);}
+    public synchronized String[] getLabels() {
+        return ranges.keySet().toArray(new String[ranges.size()]);
+    }
 
     /**
      * Retourne la valeur minimale mémorisée. Si plusieurs étiquettes ont été
      * spécifiées, elles seront tous prises en compte. Si aucune valeur n'a été
      * mémorisée dans cet objet, alors cette méthode retourne <code>null</code>.
      */
-    public synchronized Comparable getMinimum()
-    {return getMinimum(getLabels());}
+    public synchronized Comparable getMinimum() {
+        return getMinimum(getLabels());
+    }
 
     /**
      * Retourne la valeur maximale mémorisée. Si plusieurs étiquettes ont été
      * spécifiées, elles seront tous prises en compte. Si aucune valeur n'a été
      * mémorisée dans cet objet, alors cette méthode retourne <code>null</code>.
      */
-    public synchronized Comparable getMaximum()
-    {return getMaximum(getLabels());}
+    public synchronized Comparable getMaximum() {
+        return getMaximum(getLabels());
+    }
 
     /**
      * Retourne la valeur minimale mémorisée sous l'étiquette spécifiée. Si aucune
      * donnée n'a été mémorisée sous cette étiquette, retourne <code>null</code>.
      */
-    public Comparable getMinimum(final String label)
-    {return getMinimum(new String[] {label});}
+    public Comparable getMinimum(final String label) {
+        return getMinimum(new String[] {label});
+    }
 
     /**
      * Retourne la valeur maximale mémorisée sous l'étiquette spécifiée. Si aucune
      * donnée n'a été mémorisée sous cette étiquette, retourne <code>null</code>.
      */
-    public Comparable getMaximum(final String label)
-    {return getMaximum(new String[] {label});}
+    public Comparable getMaximum(final String label) {
+        return getMaximum(new String[] {label});
+    }
 
     /**
      * Retourne la valeur minimale mémorisée sous les étiquettes spécifiées.
      * Si aucune donnée n'a été mémorisée sous ces étiquettes, retourne
      * <code>null</code>.
      */
-    public synchronized Comparable getMinimum(final String labels[])
-    {
-        Comparable xmin=null;
-        for (int i=0; i<labels.length; i++)
-        {
+    public synchronized Comparable getMinimum(final String labels[]) {
+        Comparable xmin = null;
+        for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);
             final int length = rangeSet.getLength();
-            if (length!=0)
-            {
+            if (length != 0) {
                 final Comparable tmp = rangeSet.get(0);
-                if (xmin==null || xmin.compareTo(tmp)>0)
+                if (xmin==null || xmin.compareTo(tmp)>0) {
                     xmin = tmp;
+                }
             }
         }
         return xmin;
@@ -578,18 +622,16 @@ public class RangeBars extends ZoomPane
      * Si aucune donnée n'a été mémorisée sous ces étiquettes, retourne
      * <code>null</code>.
      */
-    public synchronized Comparable getMaximum(final String labels[])
-    {
-        Comparable xmax=null;
-        for (int i=0; i<labels.length; i++)
-        {
+    public synchronized Comparable getMaximum(final String labels[]) {
+        Comparable xmax = null;
+        for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);
             final int length = rangeSet.getLength();
-            if (length!=0)
-            {
+            if (length != 0) {
                 final Comparable tmp = rangeSet.get(length-1);
-                if (xmax==null || xmax.compareTo(tmp)<0)
+                if (xmax==null || xmax.compareTo(tmp)<0) {
                     xmax = tmp;
+                }
             }
         }
         return xmax;
@@ -601,16 +643,22 @@ public class RangeBars extends ZoomPane
      * sera créée et positionnée. Si on n'avait pas assez d'informations pour
      * positionner la visière, sa création sera annulée.
      */
-    private void ensureSliderCreated()
-    {
-        if (slider!=null) return;
-        slider = new MouseReshapeTracker()
-        {
-            protected void stateChanged(final boolean isAdjusting)
-            {if (swingModel!=null) swingModel.fireStateChanged(isAdjusting);}
+    private void ensureSliderCreated() {
+        if (slider != null) {
+            return;
+        }
+        slider = new MouseReshapeTracker() {
+            /** Invoked after the position and size of the visor has changed. */
+            protected void stateChanged(final boolean isAdjusting) {
+                if (swingModel != null) {
+                    swingModel.fireStateChanged(isAdjusting);
+                }
+            }
 
-            protected void clipChangeRequested(double xmin, double xmax, double ymin, double ymax)
-            {setVisibleRange(xmin, xmax, ymin, ymax);}
+            /** Invoked when a change in the clip is required (e.g. user edited a field). */
+            protected void clipChangeRequested(double xmin, double xmax, double ymin, double ymax) {
+                setVisibleRange(xmin, xmax, ymin, ymax);
+            }
         };
         addMouseListener(slider);
         addMouseMotionListener(slider);
@@ -619,32 +667,29 @@ public class RangeBars extends ZoomPane
          * définir la position initiale de la visière.
          * Sinon, on construira un nouveau modèle.
          */
-        if (swingModel==null)
-        {
-            if (update())
-            {
-                final double min=this.minimum;
-                final double max=this.maximum;
-                if (horizontal)
-                {
+        if (swingModel == null) {
+            if (update()) {
+                final double min = this.minimum;
+                final double max = this.maximum;
+                if (horizontal) {
                     slider.setX(min, min+0.25*(max-min));
-                }
-                else
-                {
+                } else {
                     slider.setY(min, min+0.25*(max-min));
                 }
             }
+        } else {
+            swingModel.synchronize();
         }
-        else swingModel.synchronize();
     }
 
     /**
      * Retourne la valeur au centre de la
      * plage sélectionnée par l'utilisateur.
      */
-    public double getSelectedValue()
-    {
-        if (slider==null) return Double.NaN;
+    public double getSelectedValue() {
+        if (slider == null) {
+            return Double.NaN;
+        }
         return horizontal ? slider.getCenterX() : slider.getCenterY();
     }
 
@@ -652,9 +697,10 @@ public class RangeBars extends ZoomPane
      * Retourne la valeur au début de la
      * plage sélectionnée par l'utilisateur.
      */
-    public double getMinSelectedValue()
-    {
-        if (slider==null) return Double.NaN;
+    public double getMinSelectedValue() {
+        if (slider == null) {
+            return Double.NaN;
+        }
         return horizontal ? slider.getMinX() : slider.getMinY();
     }
 
@@ -662,9 +708,10 @@ public class RangeBars extends ZoomPane
      * Retourne la valeur à la fin de la
      * plage sélectionnée par l'utilisateur.
      */
-    public double getMaxSelectedValue()
-    {
-        if (slider==null) return Double.NaN;
+    public double getMaxSelectedValue() {
+        if (slider == null) {
+            return Double.NaN;
+        }
         return horizontal ? slider.getMaxX() : slider.getMaxY();
     }
 
@@ -673,16 +720,12 @@ public class RangeBars extends ZoomPane
      * Cette plage de valeurs apparaîtra comme un
      * rectangle transparent superposé aux barres.
      */
-    public void setSelectedRange(final double min, final double max)
-    {
+    public void setSelectedRange(final double min, final double max) {
         ensureSliderCreated();
         repaint(slider.getBounds());
-        if (horizontal)
-        {
+        if (horizontal) {
             slider.setX(min, max);
-        }
-        else
-        {
+        } else {
             slider.setY(min, max);
         }
         /*
@@ -691,8 +734,7 @@ public class RangeBars extends ZoomPane
          * prévenu du changement
          */
         repaint(slider.getBounds());
-        if (swingModel!=null)
-        {
+        if (swingModel != null) {
             swingModel.fireStateChanged(false);
         }
     }
@@ -707,14 +749,10 @@ public class RangeBars extends ZoomPane
      * @param xmin Valeur minimale de <var>x</var>.
      * @param xmax Valeur maximale de <var>x</var>.
      */
-    public void setVisibleRange(final double xmin, final double xmax)
-    {
-        if (horizontal)
-        {
+    public void setVisibleRange(final double xmin, final double xmax) {
+        if (horizontal) {
             setVisibleRange(xmin, xmax, Double.NaN, Double.NaN);
-        }
-        else
-        {
+        } else {
             setVisibleRange(Double.NaN, Double.NaN, xmin, xmax);
         }
     }
@@ -726,10 +764,8 @@ public class RangeBars extends ZoomPane
      * méthode décalera et/ou zoomera l'intervale spécifié de façon à
      * l'inclure dans la plage des valeurs en mémoire.
      */
-    private void setVisibleRange(double xmin, double xmax, double ymin, double ymax)
-    {
-        if (update())
-        {
+    private void setVisibleRange(double xmin, double xmax, double ymin, double ymax) {
+        if (update()) {
             final double minimim = this.minimum;
             final double maximum = this.maximum;
             final Insets insets  = this.insets = getInsets(this.insets);
@@ -737,8 +773,7 @@ public class RangeBars extends ZoomPane
             final int    left    = insets.left;
             final int    bottom  = insets.bottom;
             final int    right   = insets.right;
-            if (horizontal)
-            {
+            if (horizontal) {
                 /*
                  * Note: "xmax -= (xmin-minimum)" is an abreviation of
                  *       "xmax  = (xmax-xmin) + minimum".  Setting new
@@ -748,27 +783,23 @@ public class RangeBars extends ZoomPane
                  */
                 if (xmin<minimum && maximum<(xmax -= xmin-(xmin=minimum))) xmax=maximum;
                 if (xmax>maximum && minimum>(xmin -= xmax-(xmax=maximum))) xmin=minimum;
-                if (xmin<xmax)
-                {
-                    setVisibleArea(new Rectangle2D.Double(xmin, top, xmax-xmin, Math.max(bottom-top, barThickness)));
-                    if (slider!=null)
-                    {
+                if (xmin < xmax) {
+                    setVisibleArea(new Rectangle2D.Double(xmin, top, xmax-xmin,
+                                                          Math.max(bottom-top, barThickness)));
+                    if (slider != null) {
                         final int height = Math.max(barThickness, (labelBounds!=null) ?
                                                                    labelBounds.height :
                                                                    getHeight());
                         slider.setClipMinMax(xmin, xmax, top, top+height);
                     }
                 }
-            }
-            else
-            {
+            } else {
                 if (ymin<minimum && maximum<(ymax -= ymin-(ymin=minimum))) ymax=maximum;
                 if (ymax>maximum && minimum>(ymin -= ymax-(ymax=maximum))) ymin=minimum;
-                if (ymin<ymax)
-                {
-                    setVisibleArea(new Rectangle2D.Double(left, ymin, Math.max(right-left, barThickness), ymax-ymin));
-                    if (slider!=null)
-                    {
+                if (ymin < ymax) {
+                    setVisibleArea(new Rectangle2D.Double(left, ymin,
+                                                   Math.max(right-left, barThickness), ymax-ymin));
+                    if (slider != null) {
                         final int width = Math.max(barThickness, (labelBounds!=null) ?
                                                                   labelBounds.width  :
                                                                   getWidth());
@@ -785,19 +816,14 @@ public class RangeBars extends ZoomPane
      * then the user can change the slider's location but not
      * its dimension.
      */
-    public boolean isRangeAdjustable()
-    {
-        if (slider==null)
-        {
+    public boolean isRangeAdjustable() {
+        if (slider == null) {
             return false;
         }
-        if (horizontal)
-        {
+        if (horizontal) {
             return slider.isAdjustable(SwingConstants.EAST) ||
                    slider.isAdjustable(SwingConstants.WEST);
-        }
-        else
-        {
+        } else {
             return slider.isAdjustable(SwingConstants.NORTH) ||
                    slider.isAdjustable(SwingConstants.SOUTH);
         }
@@ -809,16 +835,12 @@ public class RangeBars extends ZoomPane
      * dimension and location. If <code>false</code>, then the user is allowed
      * to change slider's location only.
      */
-    public void setRangeAdjustable(final boolean b)
-    {
+    public void setRangeAdjustable(final boolean b) {
         ensureSliderCreated();
-        if (horizontal)
-        {
+        if (horizontal) {
             slider.setAdjustable(SwingConstants.EAST, b);
             slider.setAdjustable(SwingConstants.WEST, b);
-        }
-        else
-        {
+        } else {
             slider.setAdjustable(SwingConstants.NORTH, b);
             slider.setAdjustable(SwingConstants.SOUTH, b);
         }
@@ -829,8 +851,7 @@ public class RangeBars extends ZoomPane
      * to labels. However, graduations will use a slightly smaller and plain
      * font, even if the specified font was in bold or italic.
      */
-    public void setFont(final Font font)
-    {
+    public void setFont(final Font font) {
         super.setFont(font);
         axis.setLabelFont(font);
         final int size = font.getSize();
@@ -849,8 +870,7 @@ public class RangeBars extends ZoomPane
      * @param  insets Objet à réutiliser si possible, ou <code>null</code>.
      * @return Les marges à laisser de chaque côté de la zone de traçage.
      */
-    public Insets getInsets(Insets insets)
-    {
+    public Insets getInsets(Insets insets) {
         insets = super.getInsets(insets);
         insets.top    += top;
         insets.left   += left;
@@ -866,8 +886,7 @@ public class RangeBars extends ZoomPane
      * étiquettes de l'axe. Notez que {@link #getInsets} ne va pas
      * obligatoirement retourner exactement ces marges.
      */
-    public void setInsets(final Insets insets)
-    {
+    public void setInsets(final Insets insets) {
         top    = (short) insets.top;
         left   = (short) insets.left;
         bottom = (short) insets.bottom;
@@ -887,40 +906,35 @@ public class RangeBars extends ZoomPane
      * @return The bounding box of the zoomable area, in pixel coordinates
      *         relative to this <code>RangeBars</code> widget.
      */
-    protected Rectangle getZoomableBounds(Rectangle bounds)
-    {
+    protected Rectangle getZoomableBounds(Rectangle bounds) {
         bounds = super.getZoomableBounds(bounds);
         /*
          * 'labelBounds' is the rectangle (in pixels) where legends are going
          * to be displayed.   If this rectangle has not been computed yet, it
          * can be computed now with 'paintComponent(null)'.
          */
-        if (labelBounds==null)
-        {
-            if (!valid)
-            {
+        if (labelBounds == null) {
+            if (!valid) {
                 reset(bounds);
             }
             paintComponent(null, bounds.width  + (left+right),
                                  bounds.height + (top+bottom));
-            if (labelBounds==null)
-            {
+            if (labelBounds == null) {
                 return bounds;
             }
         }
-        if (horizontal)
-        {
+        if (horizontal) {
             bounds.x     += labelBounds.width;
             bounds.width -= labelBounds.width;
             bounds.height = labelBounds.height;
             // No changes to bounds.y: align on top.
-        }
-        else
-        {
+        } else {
+            final int width = (verticalLabels) ? labelBounds.width :
+                              (barThickness+lineSpacing)*ranges.size() + XOFFSET_FOR_VERTICAL_BARS;
             bounds.y       += labelBounds.height;
             bounds.height  -= labelBounds.height;
-            bounds.x       += bounds.width - labelBounds.width; // Align right.
-            bounds.width    = labelBounds.width;
+            bounds.x       += bounds.width - width; // Align right.
+            bounds.width    = width;
         }
         return bounds;
     }
@@ -932,18 +946,15 @@ public class RangeBars extends ZoomPane
      *
      * @return The default size for this component.
      */
-    protected Dimension getDefaultSize()
-    {
+    protected Dimension getDefaultSize() {
         final Insets insets = this.insets = getInsets(this.insets);
         final int top    = insets.top;
         final int left   = insets.left;
         final int bottom = insets.bottom;
         final int right  = insets.right;
         final Dimension size=super.getDefaultSize();
-        if (labelBounds==null || axisBounds==null)
-        {
-            if (!valid)
-            {
+        if (labelBounds==null || axisBounds==null) {
+            if (!valid) {
                 /*
                  * Force immediate computation of an approximative affine
                  * transform (for the zoom). A more precise affine transform
@@ -954,20 +965,16 @@ public class RangeBars extends ZoomPane
                                     size.height - (top+bottom)));
             }
             paintComponent(null, size.width, size.height);
-            if (labelBounds==null || axisBounds==null)
-            {
+            if (labelBounds==null || axisBounds==null) {
                 size.width  = 280;
                 size.height =  60;
                 return size;
             }
         }
-        if (horizontal)
-        {
+        if (horizontal) {
             // height = [bottom of axis] - [top of labels] + [margin].
             size.height = (axisBounds.y + axisBounds.height) - labelBounds.y + (bottom + top);
-        }
-        else
-        {
+        } else {
             // width = [right of labels] - [left of axis] + [margin].
             size.width = (labelBounds.x + labelBounds.width) - axisBounds.x + (right + left);
         }
@@ -981,8 +988,7 @@ public class RangeBars extends ZoomPane
      *
      * @param graphics The paint context to draw to.
      */
-    protected void paintNodata(final Graphics2D graphics)
-    {
+    protected void paintNodata(final Graphics2D graphics) {
         graphics.setColor(getForeground());
         final Resources  resources = Resources.getResources(getLocale());
         final String       message = resources.getString(ResourceKeys.NO_DATA_TO_DISPLAY);
@@ -999,8 +1005,7 @@ public class RangeBars extends ZoomPane
      *
      * @param graphics The paint context to draw to.
      */
-    protected void paintComponent(final Graphics2D graphics)
-    {
+    protected void paintComponent(final Graphics2D graphics) {
         paintComponent(graphics, getWidth(), getHeight());
     }
 
@@ -1025,27 +1030,25 @@ public class RangeBars extends ZoomPane
                                 final int componentHeight)
     {
         final int rangeCount = ranges.size();
-        if (rangeCount==0 || !update())
-        {
-            if (graphics!=null)
-            {
+        if (rangeCount==0 || !update()) {
+            if (graphics != null) {
                 paintNodata(graphics);
             }
             return;
         }
-        final Insets insets  =  this.insets = getInsets(this.insets);
-        final int                       top = insets.top;
-        final int                      left = insets.left;
-        final int                    bottom = insets.bottom;
-        final int                     right = insets.right;
+        final Insets borderInsets = (border!=null) ? border.getBorderInsets(this) : null;
+        final Insets insets = this.insets = getInsets(this.insets);
+        final int    top = insets.top;
+        final int   left = insets.left;
+        final int bottom = insets.bottom;
+        final int  right = insets.right;
         final AbstractGraduation graduation = (AbstractGraduation) axis.getGraduation();
-        final GlyphVector[]          glyphs = new GlyphVector[rangeCount];
-        final double[]          labelAscent = new double     [rangeCount];
-        final Font                     font = getFont();
-        final Shape                    clip;
-        final FontRenderContext          fc;
-        if (graphics==null)
-        {
+        final GlyphVector[] glyphs = new GlyphVector[rangeCount];
+        final double[] labelAscent = new double     [rangeCount];
+        final double[]  labelWidth = (!horizontal && !verticalLabels) ? new double[rangeCount] : null;
+        final Shape           clip;
+        final FontRenderContext fc;
+        if (graphics == null) {
             clip = null;
             fc   = new FontRenderContext(null, false, false);
             /*
@@ -1053,10 +1056,10 @@ public class RangeBars extends ZoomPane
              * been executed in order to compute this component's size,
              * i.e. this method has probably been invoked by reset() itself!
              */
-        }
-        else
-        {
-            if (!valid) reset();
+        } else {
+            if (!valid) {
+                reset();
+            }
             clip = graphics.getClip();
             fc   = graphics.getFontRenderContext();
         }
@@ -1068,74 +1071,89 @@ public class RangeBars extends ZoomPane
          */
         double labelSlotWidth;
         double labelSlotHeight;
-        if (clip==null || labelBounds==null || clip.intersects(labelBounds))
-        {
-            final Font labelFont;
-            if (horizontal)
-            {
-                labelFont       = font;
-                labelSlotWidth  = 0;
-                labelSlotHeight = barThickness;
-            }
-            else
-            {
-                // Rotate font 90°
-                labelFont = font.deriveFont(new AffineTransform(0, 1, -1, 0, 0, 0));
-                labelSlotWidth  = barThickness;
-                labelSlotHeight = 0;
-            }
-            final Iterator<String> it=ranges.keySet().iterator();
-            for (int i=0; i<rangeCount; i++)
-            {
-                final String label=it.next();
-                if (label!=null)
-                {
-                    glyphs[i] = labelFont.createGlyphVector(fc, label);
-                    final Rectangle2D rect = glyphs[i].getVisualBounds();
-                    final double    height = rect.getHeight();
-                    final double     width = rect.getWidth();
-                    if (width >labelSlotWidth ) labelSlotWidth =width;
-                    if (height>labelSlotHeight) labelSlotHeight=height;
-                    labelAscent[i] = horizontal ? height : width;
+        if (clip==null || labelBounds==null || clip.intersects(labelBounds)) {
+            Font font = getFont();
+            if (font == null) {
+                font = UIManager.getFont("Panel.font");
+                if (font == null) {
+                    throw new IllegalStateException();
                 }
             }
-            if (it.hasNext())
-            {
+            if (horizontal) {
+                labelSlotWidth  = 0;
+                labelSlotHeight = barThickness;
+            } else if (verticalLabels) {
+                // Rotate font 90°
+                font = font.deriveFont(ROTATE_90);
+                labelSlotWidth  = barThickness;
+                labelSlotHeight = 0;
+            } else {
+                labelSlotWidth  = 0;
+                labelSlotHeight = 0;
+            }
+            final Iterator<String> it = ranges.keySet().iterator();
+            for (int i=0; i<rangeCount; i++) {
+                final String label = it.next();
+                if (label != null) {
+                    glyphs[i] = font.createGlyphVector(fc, label);
+                    Rectangle2D rect = glyphs[i].getVisualBounds();
+                    double    height = rect.getHeight();
+                    double     width = rect.getWidth();
+                    if (horizontal) {
+                        labelAscent[i] = height;
+                    } else if (verticalLabels) {
+                        labelAscent[i] = width;
+                    } else {
+                        labelWidth [i] = width;
+                        labelAscent[i] = height;
+                        width += i*(barThickness + lineSpacing);
+                    }
+                    if (width >labelSlotWidth ) labelSlotWidth =width;
+                    if (height>labelSlotHeight) labelSlotHeight=height;
+                }
+            }
+            if (it.hasNext()) {
                 // Should not happen
                 throw new ConcurrentModificationException();
             }
-            if (labelBounds==null)
-            {
-                labelBounds=new Rectangle();
+            if (labelBounds == null) {
+                labelBounds = new Rectangle();
             }
-            if (horizontal)
-            {
+            if (horizontal) {
                 labelSlotWidth  += barOffset;
                 labelSlotHeight += lineSpacing;
                 labelBounds.setBounds(left, top,
                                       (int)Math.ceil(labelSlotWidth),
                                       (int)Math.ceil(labelSlotHeight*rangeCount));
-            }
-            else
-            {
+            } else if (verticalLabels) {
                 labelSlotHeight += barOffset;
                 labelSlotWidth  += lineSpacing;
                 labelBounds.setBounds(componentWidth-right, top,
                                       (int)Math.ceil(labelSlotWidth*rangeCount),
                                       (int)Math.ceil(labelSlotHeight));
-                labelBounds.width += VERTICAL_ADJUSTMENT; // Empirical adjustement
+                labelBounds.width += XOFFSET_FOR_VERTICAL_BARS; // Empirical adjustement
+                labelBounds.x -= labelBounds.width;
+            } else {
+                labelSlotHeight += lineSpacing/2;
+                labelBounds.setBounds(componentWidth-right, top,
+                                      (int)Math.ceil(labelSlotWidth),
+                                      (int)Math.ceil(labelSlotHeight*rangeCount));
+                labelBounds.width += XOFFSET_FOR_VERTICAL_BARS; // Empirical adjustement
                 labelBounds.x -= labelBounds.width;
             }
         }
+        double barSlotSize;
         labelSlotWidth  = labelBounds.getWidth();
         labelSlotHeight = labelBounds.getHeight();
-        if (horizontal)
-        {
+        if (horizontal) {
             labelSlotHeight /= rangeCount;
-        }
-        else
-        {
-            labelSlotWidth = (labelSlotWidth-VERTICAL_ADJUSTMENT) / rangeCount;
+            barSlotSize = labelSlotHeight;
+        } else if (verticalLabels) {
+            labelSlotWidth = (labelSlotWidth-XOFFSET_FOR_VERTICAL_BARS) / rangeCount;
+            barSlotSize = labelSlotWidth;
+        } else {
+            labelSlotHeight /= rangeCount;
+            barSlotSize = (barThickness + lineSpacing);
         }
         /*
          * Now, we know the space needed for all labels.  It is time to compute
@@ -1143,15 +1161,11 @@ public class RangeBars extends ZoomPane
          * right of vertical bars.   We also calibrate the axis for its minimum
          * and maximum values, which are zoom dependent.
          */
-        try
-        {
+        try {
             Point2D.Double point = this.point;
-            if (point==null)
-            {
+            if (point == null) {
                 this.point = point = new Point2D.Double();
-            }
-            if (horizontal)
-            {
+            } if (horizontal) {
                 double y  = labelBounds.getMaxY();
                 double x1 = labelBounds.getMaxX();
                 double x2 = componentWidth - right;
@@ -1162,11 +1176,10 @@ public class RangeBars extends ZoomPane
                 point.setLocation(x1, y);
                 zoom.inverseTransform(point, point);
                 graduation.setMinimum(point.x);
-                if (point.x<minimum)
-                {
+                if (point.x < minimum) {
                     graduation.setMinimum(point.x=minimum);
                     zoom.transform(point, point);
-                    x1=point.x;
+                    x1 = point.x;
                 }
                 /*
                  * Compute the maximal logical value,
@@ -1175,19 +1188,20 @@ public class RangeBars extends ZoomPane
                 point.setLocation(x2, y);
                 zoom.inverseTransform(point, point);
                 graduation.setMaximum(point.x);
-                if (point.x>maximum)
-                {
+                if (point.x > maximum) {
                     graduation.setMaximum(point.x=maximum);
                     zoom.transform(point, point);
-                    x2=point.x;
+                    x2 = point.x;
                 }
                 axis.setLine(x1, y, x2, y);
-            }
-            else
-            {
-                double x  = labelBounds.getMinX();
+            } else {
+                double x  = verticalLabels ? labelBounds.getMinX() :
+                            labelBounds.getMaxX() - (rangeCount*barSlotSize + XOFFSET_FOR_VERTICAL_BARS);
                 double y1 = componentHeight - bottom;
                 double y2 = labelBounds.getMaxY();
+                if (borderInsets != null) {
+                    x -= borderInsets.left;
+                }
                 /*
                  * Compute the minimal logical value,
                  * which is at the bottom of the axis.
@@ -1195,11 +1209,10 @@ public class RangeBars extends ZoomPane
                 point.setLocation(x, y1);
                 zoom.inverseTransform(point, point);
                 graduation.setMinimum(point.y);
-                if (point.y<minimum)
-                {
+                if (point.y < minimum) {
                     graduation.setMinimum(point.y=minimum);
                     zoom.transform(point, point);
-                    y1=point.y;
+                    y1 = point.y;
                 }
                 /*
                  * Compute the maximal logical value,
@@ -1208,17 +1221,14 @@ public class RangeBars extends ZoomPane
                 point.setLocation(x, y2);
                 zoom.inverseTransform(point, point);
                 graduation.setMaximum(point.y);
-                if (point.y>maximum)
-                {
+                if (point.y > maximum) {
                     graduation.setMaximum(point.y=maximum);
                     zoom.transform(point, point);
-                    y2=point.y;
+                    y2 = point.y;
                 }
                 axis.setLine(x, y1, x, y2);
             }
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             // Should not happen
             ExceptionMonitor.paintStackTrace(graphics, getBounds(), exception);
             return;
@@ -1228,37 +1238,40 @@ public class RangeBars extends ZoomPane
          * then paint all labels. Paint bars next, and
          * paint axis last.
          */
-        if (graphics!=null)
-        {
+        if (graphics != null) {
             final Color         foreground = getForeground();
             final double       clipMinimum = graduation.getMinimum();
             final double       clipMaximum = graduation.getMaximum();
             final Rectangle zoomableBounds = getZoomableBounds(null);
-            if (border!=null)
-            {
-                final Insets borderInsets=border.getBorderInsets(this);
-                border.paintBorder(this, graphics, zoomableBounds.x-borderInsets.left,
-                                                   zoomableBounds.y-borderInsets.top,
-                                                   zoomableBounds.width+(borderInsets.left+borderInsets.right),
-                                                   zoomableBounds.height+(borderInsets.top+borderInsets.bottom));
+            if (border != null) {
+                border.paintBorder(this, graphics,
+                                   zoomableBounds.x-borderInsets.left,
+                                   zoomableBounds.y-borderInsets.top,
+                                   zoomableBounds.width+(borderInsets.left+borderInsets.right),
+                                   zoomableBounds.height+(borderInsets.top+borderInsets.bottom));
             }
             graphics.setColor(foreground);
-            for (int i=0; i<rangeCount; i++)
-            {
-                if (glyphs[i]!=null)
-                {
-                    final float x,y;
-                    if (horizontal)
-                    {
+            for (int i=0; i<rangeCount; i++) {
+                if (glyphs[i] != null) {
+                    float x,y;
+                    if (horizontal) {
                         x = labelBounds.x;
                         y = (float) (labelBounds.y + i*labelSlotHeight +
                                      0.5*(labelSlotHeight+labelAscent[i]));
-                    }
-                    else
-                    {
+                    } else if (verticalLabels) {
                         y = labelBounds.y;
                         x = (float) (labelBounds.x + i*labelSlotWidth +
                                      0.5*labelAscent[i]);
+                    } else {
+                        x = (float) (labelBounds.x + labelBounds.width - (rangeCount-i)*barSlotSize);
+                        y = (float) (labelBounds.y + labelBounds.height - i*labelSlotHeight -
+                                     0.5*(labelSlotHeight+labelAscent[i]));
+                        final int ox = Math.round((float) (x + 0.5*barSlotSize));
+                        final int oy = Math.round((float) (y - 0.5*labelAscent[i]));
+                        graphics.drawLine(Math.round(x)+3, oy, ox, oy);
+                        graphics.drawLine(ox, oy, ox,
+                                Math.round((float) (labelBounds.y + labelBounds.height))-3);
+                        x -= labelWidth[i];
                     }
                     graphics.drawGlyphVector(glyphs[i], x, y);
                 }
@@ -1270,41 +1283,33 @@ public class RangeBars extends ZoomPane
             final Iterator<RangeSet> it=ranges.values().iterator();
             final Rectangle2D.Double bar = new Rectangle2D.Double();
             final double scale, translate;
-            if (horizontal)
-            {
+            if (horizontal) {
                 scale      = zoom.getScaleX();
                 translate  = zoom.getTranslateX();
-                bar.y      = labelBounds.y + 0.5*(labelSlotHeight-barThickness);
+                bar.y      = labelBounds.y + 0.5*(barSlotSize-barThickness);
                 bar.height = barThickness;
-            }
-            else
-            {
+            } else {
+                assert axis.getX1() == axis.getX2();
                 scale     = zoom.getScaleY();
                 translate = zoom.getTranslateY();
-                bar.x     = labelBounds.x + 0.5*barThickness;
+                bar.x     = axis.getX1() + 0.5*barThickness;
                 bar.width = barThickness;
             }
-            for (int i=0; i<rangeCount; i++)
-            {
+            for (int i=0; i<rangeCount; i++) {
                 final RangeSet rangeSet = it.next();
                 final int        length = rangeSet.getLength();
-                for (int j=0; j<length;)
-                {
+                for (int j=0; j<length;) {
                     final double bar_min = rangeSet.getDouble(j++);
                     final double bar_max = rangeSet.getDouble(j++);
                     if (bar_min > clipMaximum) break; // Slight optimization
-                    if (bar_max > clipMinimum)
-                    {
-                        if (horizontal)
-                        {
+                    if (bar_max > clipMinimum) {
+                        if (horizontal) {
                             bar.x      = bar_min;
                             bar.width  = bar_max-bar_min;
                             bar.width *= scale;
                             bar.x     *= scale;
                             bar.x     += translate;
-                        }
-                        else
-                        {
+                        } else {
                             bar.y       = bar_max;
                             bar.height  = bar_min-bar_max;
                             bar.height *= scale;
@@ -1314,17 +1319,13 @@ public class RangeBars extends ZoomPane
                         graphics.fill(bar);
                     }
                 }
-                if (horizontal)
-                {
-                    bar.y += labelSlotHeight;
-                }
-                else
-                {
-                    bar.x += labelSlotWidth;
+                if (horizontal) {
+                    bar.y += barSlotSize;
+                } else {
+                    bar.x += barSlotSize;
                 }
             }
-            if (it.hasNext())
-            {
+            if (it.hasNext()) {
                 // Should not happen
                 throw new ConcurrentModificationException();
             }
@@ -1336,21 +1337,16 @@ public class RangeBars extends ZoomPane
              * the slider on top of everything else. The slider must always been
              * painted, no matter what 'MouseReshapeTracker.isEmpty()' said.
              */
-            if (slider!=null)
-            {
-                if (swingModel!=null)
-                {
+            if (slider != null) {
+                if (swingModel != null) {
                     swingModel.synchronize();
                 }
-                if (horizontal)
-                {
+                if (horizontal) {
                     final double ymin = labelBounds.getMinY();
                     final double ymax = labelBounds.getMaxY();
                     slider.setClipMinMax(clipMinimum, clipMaximum, ymin, ymax);
                     slider.setY         (                          ymin, ymax);
-                }
-                else
-                {
+                } else {
                     final double xmin = labelBounds.getMinX();
                     final double xmax = labelBounds.getMaxX();
                     slider.setClipMinMax(xmin, xmax, clipMinimum, clipMaximum);
@@ -1368,7 +1364,7 @@ public class RangeBars extends ZoomPane
          * increase its size to avoid unpainted zones after {@link #repaint}
          * calls.
          */
-        axisBounds=axis.getBounds();
+        axisBounds = axis.getBounds();
         axisBounds.height++;
     }
 
@@ -1383,15 +1379,13 @@ public class RangeBars extends ZoomPane
      *         contains an unsupported transformation, for example a vertical
      *         translation while this component is drawing only horizontal bars.
      */
-    public void transform(final AffineTransform change) throws UnsupportedOperationException
-    {
+    public void transform(final AffineTransform change) throws UnsupportedOperationException {
         /*
          * First, make sure that the transformation is a supported one.
          * Shear and rotation are not allowed. Scale is allowed only
          * along the main axis direction.
          */
-        if (change.getShearX()==0 && change.getShearY()==0)
-        {
+        if (change.getShearX()==0 && change.getShearY()==0) {
             if (horizontal ? (change.getScaleY()==1 && change.getTranslateY()==0) :
                              (change.getScaleX()==1 && change.getTranslateX()==0))
             {
@@ -1402,36 +1396,29 @@ public class RangeBars extends ZoomPane
                  */
                 final Rectangle labelBounds = this.labelBounds;
                 final Rectangle  axisBounds = this. axisBounds;
-                if (update() && labelBounds!=null && axisBounds!=null)
-                {
+                if (update() && labelBounds!=null && axisBounds!=null) {
                     Point2D.Double point = this.point;
-                    if (point==null)
-                    {
+                    if (point == null) {
                         this.point = point = new Point2D.Double();
                     }
-                    if (horizontal)
-                    {
+                    if (horizontal) {
                         final int xLeft   = labelBounds.x + labelBounds.width;
                         final int xRight  = Math.max(getWidth()-right, xLeft);
                         final int margin = (xRight-xLeft)/4;
                         final double x1, x2, y=labelBounds.getCenterY();
                         point.x=minimum; point.y=y; change.transform(point,point); zoom.transform(point,point); x1=point.x;
                         point.x=maximum; point.y=y; change.transform(point,point); zoom.transform(point,point); x2=point.x;
-                        if (Math.min(x1,x2)>(xRight-margin) || Math.max(x1,x2)<(xLeft+margin) || Math.abs(x2-x1)<margin)
-                        {
+                        if (Math.min(x1,x2)>(xRight-margin) || Math.max(x1,x2)<(xLeft+margin) || Math.abs(x2-x1)<margin) {
                             return;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         final int yTop    = labelBounds.y + labelBounds.height;
                         final int yBottom = Math.max(getHeight()-bottom, yTop);
                         final int margin  = (yBottom-yTop)/4;
                         final double y1, y2, x=labelBounds.getCenterX();
                         point.y=minimum; point.x=x; change.transform(point,point); zoom.transform(point,point); y1=point.y;
                         point.y=maximum; point.x=x; change.transform(point,point); zoom.transform(point,point); y2=point.y;
-                        if (Math.min(y1,y2)>(yBottom-margin) || Math.max(y1,y2)<(yTop+margin) || Math.abs(y2-y1)<margin)
-                        {
+                        if (Math.min(y1,y2)>(yBottom-margin) || Math.max(y1,y2)<(yTop+margin) || Math.abs(y2-y1)<margin) {
                             return;
                         }
                     }
@@ -1441,8 +1428,12 @@ public class RangeBars extends ZoomPane
                  * de la visière et redessine l'axe en plus du graphique.
                  */
                 super.transform(change);
-                if (slider!=null) slider.setTransform(zoom);
-                if (axisBounds!=null) repaint(axisBounds);
+                if (slider != null) {
+                    slider.setTransform(zoom);
+                }
+                if (axisBounds != null) {
+                    repaint(axisBounds);
+                }
                 return;
             }
         }
@@ -1453,25 +1444,23 @@ public class RangeBars extends ZoomPane
      * Réinitialise le zoom de façon à ce que tous
      * les intervalles apparaissent dans la fenêtre.
      */
-    public void reset()
-    {
+    public void reset() {
         reset(getZoomableBounds(null));
-        if (getWidth()>0 && getHeight()>0) valid=true;
+        if (getWidth()>0 && getHeight()>0) {
+            valid = true;
+        }
     }
 
     /**
      * Reset the zoom in such a way that
      * every bars fit in the display area.
      */
-    private void reset(final Rectangle zoomableBounds)
-    {
+    private void reset(final Rectangle zoomableBounds) {
         reset(zoomableBounds, !horizontal);
-        if (slider!=null)
-        {
+        if (slider != null) {
             slider.setTransform(zoom);
         }
-        if (axisBounds!=null)
-        {
+        if (axisBounds != null) {
             repaint(axisBounds);
         }
     }
@@ -1479,34 +1468,27 @@ public class RangeBars extends ZoomPane
     /**
      * Returns logical coordinates for the display area.
      */
-    public Rectangle2D getArea()
-    {
+    public Rectangle2D getArea() {
         final Insets insets = this.insets = getInsets(this.insets);
         final int top    = insets.top;
         final int left   = insets.left;
         final int bottom = insets.bottom;
         final int right  = insets.right;
-        if (update())
-        {
+        if (update()) {
             final double min=this.minimum;
             final double max=this.maximum;
-            if (horizontal)
-            {
+            if (horizontal) {
                 int height = getHeight();
-                if (height==0)
-                {
+                if (height==0) {
                     height = getMinimumSize().height;
                     // Height doesn't need to be exact,
                     // since it will be ignored anyway...
                 }
                 return new Rectangle2D.Double(min, top, max-min,
                                               Math.max(height-(top+bottom),16));
-            }
-            else
-            {
+            } else {
                 int width = getWidth();
-                if (width==0)
-                {
+                if (width==0) {
                     width = getMinimumSize().width;
                     // Width doesn't need to be exact,
                     // since it will be ignored anyway...
@@ -1552,12 +1534,10 @@ public class RangeBars extends ZoomPane
      * <p>{@link BoundedRangeModel#setValue} / {@link BoundedRangeModel#setExtent}<br>
      *    Modifie la position du bord gauche de la visière ou sa largeur.</p>
      */
-    public synchronized LogicalBoundedRangeModel getModel()
-    {
-        if (swingModel==null)
-        {
+    public synchronized LogicalBoundedRangeModel getModel() {
+        if (swingModel == null) {
             ensureSliderCreated();
-            swingModel=new SwingModel();
+            swingModel = new SwingModel();
         }
         return swingModel;
     }
@@ -1621,16 +1601,15 @@ public class RangeBars extends ZoomPane
          * Construit un model avec par défaut une plage allant de 0 à 100. Les valeurs
          * de cette plage sont toujours indépendantes de celles de {@link RangeBars}.
          */
-        public SwingModel()
-        {}
+        public SwingModel() {
+        }
 
         /**
          * Spécifie les minimum et maximum des valeurs entières.
          * Une valeur {@link Double#NaN} signifie de prendre une
          * valeur par défaut.
          */
-        public void setLogicalRange(final double minimum, final double maximum)
-        {
+        public void setLogicalRange(final double minimum, final double maximum) {
             this.minimum = minimum;
             this.maximum = maximum;
             updated = false;
@@ -1639,32 +1618,29 @@ public class RangeBars extends ZoomPane
         /**
          * Convertit une valeur entière en nombre réel.
          */
-        public double toLogical(final int integer)
-        {return (integer-offset)/scale;}
+        public double toLogical(final int integer) {
+            return (integer-offset)/scale;
+        }
 
         /**
          * Convertit un nombre réel en valeur entière.
          */
-        public int toInteger(final double logical)
-        {return (int) Math.round(logical*scale + offset);}
+        public int toInteger(final double logical) {
+            return (int) Math.round(logical*scale + offset);
+        }
 
         /**
          * Positionne de la visière en fonction
          * de la valeur de ce model.
          */
-        public void synchronize()
-        {
+        public void synchronize() {
             ensureUpdated();
-            if (lastAdjustFromModel)
-            {
+            if (lastAdjustFromModel) {
                 setSliderPosition();
-            }
-            else
-            {
+            } else {
                 final int value  = (int) Math.round(slider.getMinX()*scale+offset);
                 final int extent = (int) Math.round(slider.getWidth()*scale);
-                if (value!=super.getValue() || extent!=super.getExtent())
-                {
+                if (value!=super.getValue() || extent!=super.getExtent()) {
                     super.setRangeProperties(value, extent, super.getMinimum(), super.getMaximum(), false);
                 }
             }
@@ -1676,8 +1652,9 @@ public class RangeBars extends ZoomPane
          * de la responsabilité du programmeur de mettre à jour ces propriétés si
          * c'est nécessaire.
          */
-        private void ensureUpdated()
-        {update(super.getMinimum(), super.getMaximum());}
+        private void ensureUpdated() {
+            update(super.getMinimum(), super.getMaximum());
+        }
 
         /**
          * Met à jour les champs {@link #offset} et {@link #scale} en fonction
@@ -1687,29 +1664,25 @@ public class RangeBars extends ZoomPane
          * position de la visière pourra être convertie en valeur entière par
          * <code>int_x=x*scale+offset</code>.
          */
-        private void update(final int lower, final int upper)
-        {
-            double minimum=this.minimum;
-            if (Double.isNaN(minimum))
-            {
-                final Comparable min=RangeBars.this.getMinimum();
-                if (min instanceof Number)
+        private void update(final int lower, final int upper) {
+            double minimum = this.minimum;
+            if (Double.isNaN(minimum)) {
+                final Comparable min = RangeBars.this.getMinimum();
+                if (min instanceof Number) {
                     minimum = ((Number)min).doubleValue();
+                }
             }
             double maximum=this.maximum;
-            if (Double.isNaN(maximum))
-            {
+            if (Double.isNaN(maximum)) {
                 final Comparable max=RangeBars.this.getMaximum();
-                if (max instanceof Number)
+                if (max instanceof Number) {
                     maximum = ((Number)max).doubleValue();
+                }
             }
-            if (!Double.isNaN(minimum) && !Double.isNaN(maximum))
-            {
+            if (!Double.isNaN(minimum) && !Double.isNaN(maximum)) {
                 scale  = (upper-lower)/(maximum-minimum);
                 offset = lower-minimum*scale;
-            }
-            else
-            {
+            } else {
                 scale  = 1;
                 offset = 0;
             }
@@ -1722,10 +1695,8 @@ public class RangeBars extends ZoomPane
          * visière a changée. Cette méthode est appellée à partir
          * de {@link RangeBars} seulement.
          */
-        protected void fireStateChanged(final boolean isAdjusting)
-        {
-            if (!ignoreEvent)
-            {
+        protected void fireStateChanged(final boolean isAdjusting) {
+            if (!ignoreEvent) {
                 ensureUpdated();
                 lastAdjustFromModel=false;
                 boolean adjustSlider=false;
@@ -1733,23 +1704,23 @@ public class RangeBars extends ZoomPane
                 int upper  = super.getMaximum();
                 int value  = (int) Math.round(slider.getMinX()*scale+offset);
                 int extent = (int) Math.round(slider.getWidth()*scale);
-                if (value<lower)
-                {
+                if (value < lower) {
+                    final int range = upper-lower;
+                    if (extent>range) {
+                        extent = range;
+                    }
+                    value = lower;
+                    adjustSlider = true;
+                } else if (value > upper-extent) {
                     final int range=upper-lower;
-                    if (extent>range) extent=range;
-                    value=lower;
-                    adjustSlider=true;
-                }
-                else if (value>upper-extent)
-                {
-                    final int range=upper-lower;
-                    if (extent>range) extent=range;
-                    value=upper-extent;
-                    adjustSlider=true;
+                    if (extent > range) {
+                        extent=range;
+                    }
+                    value = upper-extent;
+                    adjustSlider = true;
                 }
                 super.setRangeProperties(value, extent, lower, upper, isAdjusting);
-                if (adjustSlider)
-                {
+                if (adjustSlider) {
                     setSliderPosition();
                 }
             }
@@ -1760,16 +1731,12 @@ public class RangeBars extends ZoomPane
          * évènement prevenant que la position ou la largeur de la
          * visière a changée.
          */
-        private void setRangeProperties(final int lower, final int upper, final boolean isAdjusting)
-        {
+        private void setRangeProperties(final int lower, final int upper, final boolean isAdjusting) {
             update(lower, upper);
-            if (lastAdjustFromModel)
-            {
+            if (lastAdjustFromModel) {
                 super.setRangeProperties(super.getValue(), super.getExtent(), lower, upper, isAdjusting);
                 setSliderPosition();
-            }
-            else
-            {
+            } else {
                 super.setRangeProperties((int) Math.round(slider.getMinX()*scale+offset),
                                          (int) Math.round(slider.getWidth()*scale),
                                          lower, upper, isAdjusting);
@@ -1782,8 +1749,9 @@ public class RangeBars extends ZoomPane
          * qu'elle corresponde à la position de la visière dans les
          * nouvelles limites.
          */
-        public void setMinimum(final int minimum)
-        {setRangeProperties(minimum, super.getMaximum(), false);}
+        public void setMinimum(final int minimum) {
+            setRangeProperties(minimum, super.getMaximum(), false);
+        }
 
         /**
          * Modifie la valeur maximale retournée par {@link #getValue}.
@@ -1791,16 +1759,15 @@ public class RangeBars extends ZoomPane
          * qu'elle corresponde à la position de la visière dans les
          * nouvelles limites.
          */
-        public void setMaximum(final int maximum)
-        {setRangeProperties(super.getMinimum(), maximum, false);}
+        public void setMaximum(final int maximum) {
+            setRangeProperties(super.getMinimum(), maximum, false);
+        }
 
         /**
          * Retourne la position de la visière.
          */
-        public int getValue()
-        {
-            if (!updated && !lastAdjustFromModel)
-            {
+        public int getValue() {
+            if (!updated && !lastAdjustFromModel) {
                 ensureUpdated();
                 super.setValue((int) Math.round(slider.getMinX()*scale+offset));
             }
@@ -1810,8 +1777,7 @@ public class RangeBars extends ZoomPane
         /**
          * Modifie la position de la visière.
          */
-        public void setValue(final int value)
-        {
+        public void setValue(final int value) {
             lastAdjustFromModel=true;
             super.setValue(value);
             setSliderPosition();
@@ -1820,10 +1786,8 @@ public class RangeBars extends ZoomPane
         /**
          * Retourne l'étendu de la visière.
          */
-        public int getExtent()
-        {
-            if (!updated && !lastAdjustFromModel)
-            {
+        public int getExtent() {
+            if (!updated && !lastAdjustFromModel) {
                 ensureUpdated();
                 super.setExtent((int) Math.round(slider.getWidth()*scale));
             }
@@ -1833,9 +1797,8 @@ public class RangeBars extends ZoomPane
         /**
          * Modifie la largeur de la visière.
          */
-        public void setExtent(final int extent)
-        {
-            lastAdjustFromModel=true;
+        public void setExtent(final int extent) {
+            lastAdjustFromModel = true;
             super.setExtent(extent);
             setSliderPosition();
         }
@@ -1848,7 +1811,7 @@ public class RangeBars extends ZoomPane
                                        final boolean isAdjusting)
         {
             update(lower, upper);
-            lastAdjustFromModel=true;
+            lastAdjustFromModel = true;
             super.setRangeProperties(value, extent, lower, upper, isAdjusting);
             setSliderPosition();
         }
@@ -1857,16 +1820,12 @@ public class RangeBars extends ZoomPane
          * Modifie la position de la visière en fonction
          * des valeurs actuelles du modèle.
          */
-        private void setSliderPosition()
-        {
-            final double x=(super.getValue()-offset)/scale;
-            try
-            {
-                ignoreEvent=true;
+        private void setSliderPosition() {
+            final double x = (super.getValue()-offset)/scale;
+            try {
+                ignoreEvent = true;
                 slider.setX(x, x+super.getExtent()/scale);
-            }
-            finally
-            {
+            } finally {
                 ignoreEvent=false;
             }
             repaint();
@@ -1906,8 +1865,7 @@ public class RangeBars extends ZoomPane
          * labels first. Then add the editors.
          */
         c.gridx=0;
-        if (minLabel!=null || maxLabel!=null)
-        {
+        if (minLabel!=null || maxLabel!=null) {
             c.anchor = c.EAST;
             c.gridy=0; panel.add(new JLabel(horizontal ? minLabel : maxLabel), c);
             c.gridy=1; panel.add(new JLabel(horizontal ? maxLabel : minLabel), c);
@@ -1962,14 +1920,11 @@ public class RangeBars extends ZoomPane
         c.gridy=0; c.weighty=1;
         c.fill = c.BOTH;
         panel.add(horizontal ? this : createScrollPane(), c);
-        if (horizontal)
-        {
+        if (horizontal) {
             c.gridx  =1;
             c.weightx=0;
             c.insets.right = 6;
-        }
-        else
-        {
+        } else {
             c.gridy  =1;
             c.weighty=0;
             c.insets.top = 6;
@@ -1984,34 +1939,27 @@ public class RangeBars extends ZoomPane
      * calculés au hasard. Cette méthode sert à vérifier le
      * bon fonctionnement de la classe <code>RangeBars</code>.
      */
-    public static void main(final String[] args)
-    {
-        int orientation = SwingConstants.HORIZONTAL;
-        if (args.length!=0)
-        {
+    public static void main(final String[] args) {
+        int orientation = HORIZONTAL;
+        if (args.length != 0) {
             final String arg = args[0];
-            if (arg.equalsIgnoreCase("horizontal"))
-            {
-                orientation = SwingConstants.HORIZONTAL;
-            }
-            else if (arg.equalsIgnoreCase("vertical"))
-            {
-                orientation = SwingConstants.VERTICAL;
-            }
-            else
-            {
+            if (arg.equalsIgnoreCase("horizontal")) {
+                orientation = HORIZONTAL;
+            } else if (arg.equalsIgnoreCase("vertical")) {
+                orientation = VERTICAL;
+            } else if (arg.equalsIgnoreCase("vertical_bars")) {
+                orientation = VERTICAL_BARS;
+            } else {
                 System.err.print("Unknow argument: ");
                 System.err.println(arg);
                 return;
             }
         }
-        final JFrame frame=new JFrame("RangeBars");
-        final RangeBars ranges=new RangeBars((Unit)null, orientation);
-        for (int série=1; série<=4; série++)
-        {
+        final JFrame frame = new JFrame("RangeBars");
+        final RangeBars ranges = new RangeBars((Unit)null, orientation);
+        for (int série=1; série<=4; série++) {
             final String clé="Série #"+série;
-            for (int i=0; i<100; i++)
-            {
+            for (int i=0; i<100; i++) {
                 final double x = 1000*Math.random();
                 final double w =   30*Math.random();
                 ranges.addRange(clé, new Double(x), new Double(x+w));
@@ -2020,8 +1968,12 @@ public class RangeBars extends ZoomPane
         ranges.setSelectedRange(12, 38);
         ranges.setRangeAdjustable(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(ranges.createCombinedPanel(null,"Min:","Max:"));
-        frame.pack();
+        frame.getContentPane().add(ranges.createCombinedPanel(null, "Min:", "Max:"));
+        if (ranges.horizontal) {
+            frame.setSize(500, 150);
+        } else {
+            frame.pack(); // For an unknow reason, application freeze here for horizontal bars.
+        }
         frame.show();
     }
 }

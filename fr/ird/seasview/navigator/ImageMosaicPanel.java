@@ -46,7 +46,6 @@ import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
-import javax.swing.SwingConstants;
 import fr.ird.awt.RangeSet;
 import fr.ird.awt.RangeBars;
 
@@ -111,7 +110,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * afficher en faisant glisser une visière sur ce graphique.
      */
     private final RangeBars rangeBars = new RangeBars(TimeZone.getDefault(),
-                                                      SwingConstants.VERTICAL);
+                                                      RangeBars.VERTICAL_BARS);
 
     /**
      * Connection avec la base de données d'images.
@@ -245,14 +244,9 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
             newSeries = table.getSeries();
             table.getRanges(null, null, ranges, entries);
         }
-        final String name = newSeries.getName();
-        final int  length = name.length();
-        int i=0;
-        while (i<length && !Character.isSpaceChar(name.charAt(i))) i++;
-        final String reducedName = name.substring(0, i);
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                rangeBars.setRanges(reducedName, ranges);
+                rangeBars.setRanges(newSeries.getName(), ranges);
                 series.add(newSeries);
             }
         });

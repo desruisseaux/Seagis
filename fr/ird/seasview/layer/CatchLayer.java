@@ -56,7 +56,6 @@ import java.awt.geom.GeneralPath;
 // Graphics
 import java.awt.Color;
 import java.awt.Graphics2D;
-import javax.media.jai.GraphicsJAI;
 
 // Miscellaneous
 import org.geotools.units.Unit;
@@ -484,7 +483,7 @@ public class CatchLayer extends RenderedMarks {
      * @param shape    The shape to draw, in pixel coordinates.
      * @param index    The index of the catch to draw.
      */
-    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index) {
+    protected void paint(final Graphics2D graphics, final Shape shape, final int index) {
         switch (markType) {
             case POSITIONS_ONLY: // fall through
             case GEAR_COVERAGES: {

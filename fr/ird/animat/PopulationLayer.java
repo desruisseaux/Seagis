@@ -38,7 +38,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.media.jai.GraphicsJAI;
 
 // Utilitaires
 import java.util.Date;
@@ -249,7 +248,7 @@ final class PopulationLayer extends RenderedMarks
      * @param shape    Forme géométrique représentant l'animal à tracer.
      * @param index    Index de l'animal à tracer.
      */
-    protected void paint(final GraphicsJAI graphics, final Shape shape, final int index) {
+    protected void paint(final Graphics2D graphics, final Shape shape, final int index) {
         Species species;
         species = animals[index].getSpecies();
         Species.Icon icon = icons.get(species);

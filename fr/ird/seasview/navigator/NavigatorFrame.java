@@ -95,20 +95,20 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * d'état servira aussi à informer l'utilisateur des progrès de
      * la lecture.
      */
-    private final StatusBar statusBar=new StatusBar();
+    private final StatusBar statusBar = new StatusBar();
 
     /**
      * Composante qui contiendra les onglets pour chaque types d'images.
      * Les composantes de ce paneau seront pour la plupart de la classe
      * <code>ImagePanel</code>.
      */
-    private final JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+    private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
 
     /**
      * Objet à utiliser pour dessiner les cellules des tables.
      * Toutes les tables de cette fenêtre partageront le même objet.
      */
-    private final TableCellRenderer renderer=new ImageTableModel.CellRenderer();
+    private final TableCellRenderer renderer = new ImageTableModel.CellRenderer();
 
     /**
      * Construit une fenêtre d'images.
@@ -133,8 +133,9 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         if (chooser != null) {
             series = chooser.getSeries();
             chooser.setSeriesVisible(false);
+        } else {
+            series = new SeriesEntry[0];
         }
-        else series = new SeriesEntry[0];
         table = database.getImageTable(series.length!=0 ? series[0] : null);
         configureTable();
 
@@ -159,7 +160,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      */
     private ImageMosaicPanel getMosaicPanel() {
         final Component[] tabs=this.tabs.getComponents();
-        for (int i=0; i<tabs.length; i++) {
+        for (int i=tabs.length; --i>=0;) {
             final Component c=tabs[i];
             if (c instanceof ImageMosaicPanel) {
                 return ((ImageMosaicPanel) c);
@@ -302,7 +303,7 @@ loop:       for (int j=0; j<series.length; j++) {
                 panel = createPanel(model, database);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                        tabs.addTab(name, panel);
+                        tabs.insertTab(name, null, panel, null, tabs.getTabCount()-1);
                     }
                 });
             }
@@ -613,7 +614,8 @@ loop:       for (int j=0; j<series.length; j++) {
             for (int i=0; i<models.length; i++) {
                 final ImageTableModel model = models[i];
                 final SeriesEntry    series = model.getSeries();
-                frame.tabs.addTab((series!=null) ? series.getName() : Resources.format(ResourceKeys.UNNAMED), frame.createPanel(model, database));
+                frame.tabs.addTab((series!=null) ? series.getName() :
+                        Resources.format(ResourceKeys.UNNAMED), frame.createPanel(model, database));
             }
             show(frame);
         }

@@ -39,7 +39,6 @@ import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 import javax.swing.ToolTipManager;
-import javax.swing.SwingConstants;
 import javax.swing.tree.TreeModel;
 
 // Time
@@ -96,7 +95,7 @@ public class CatalogFrame extends InternalFrame
      * The time ranges.
      */
     private final RangeBars times = new RangeBars(TimeZone.getDefault(),
-                                                  SwingConstants.HORIZONTAL);
+                                                  RangeBars.HORIZONTAL);
 
     /**
      * The coordinate chooser. Global time range and geographic
