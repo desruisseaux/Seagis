@@ -169,8 +169,8 @@ public class MathTransformFactory
      * @param matrix The matrix used to define the affine transform.
      * @return The affine transform.
      */
-    public MathTransform createAffineTransform(final AffineTransform matrix)
-    {return (MathTransform) pool.intern(new AffineTransform2D(matrix));}
+    public MathTransform2D createAffineTransform(final AffineTransform matrix)
+    {return (MathTransform2D) pool.intern(new AffineTransform2D(matrix));}
 
     /**
      * Creates an affine transform from a matrix.

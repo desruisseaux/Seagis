@@ -37,6 +37,7 @@ import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
+import java.awt.image.RenderedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.ComponentColorModel;
 import javax.media.jai.RasterFactory;
@@ -77,7 +78,7 @@ import net.seagis.resources.gcs.ResourceKeys;
  * have his own equation. <code>CategoryList</code> is responsible for selecting the
  * right category from a sample value, and consequently the right transformation equation.
  * <br><br>
- * Note: this class will extends <code>AbstractList<Category></code> when generic
+ * Note: this class will extends <code>AbstractList&lt;Category&gt;</code> when generic
  *       type will be available (in JDK 1.5).
  *
  * @version 1.0
@@ -292,6 +293,29 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
     }
 
     /**
+     * Get the <code>CategoryList</code>'s name.
+     * This string may be <code>null</code> if no description is present.
+     * The default implementation returns the name of what seems to be the
+     * "main" category,  i.e. the quantitative category (if there is one)
+     * with the widest sample range.
+     *
+     * @param  locale The locale, or <code>null</code> for the default one.
+     * @return The localized description. If no description was available
+     *         in the specified locale, a default locale is used.
+     */
+    public String getName(final Locale locale)
+    {
+        final Category category = getMain();
+        if (category!=null)
+        {
+            final StringBuffer buffer = new StringBuffer(category.getName(locale));
+            buffer.append(' ');
+            return String.valueOf(formatRange(buffer, locale));
+        }
+        return null;
+    }
+
+    /**
      * Returns the number of categories in this list.
      */
     public int size()
@@ -347,29 +371,6 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
             }
         }
         return category;
-    }
-
-    /**
-     * Get the <code>CategoryList</code>'s name.
-     * This string may be <code>null</code> if no description is present.
-     * The default implementation returns the name of what seems to be the
-     * "main" category,  i.e. the quantitative category (if there is one)
-     * with the widest sample range.
-     *
-     * @param  locale The locale, or <code>null</code> for the default one.
-     * @return The localized description. If no description was available
-     *         in the specified locale, a default locale is used.
-     */
-    public String getName(final Locale locale)
-    {
-        final Category category = getMain();
-        if (category!=null)
-        {
-            final StringBuffer buffer = new StringBuffer(category.getName(locale));
-            buffer.append(' ');
-            return String.valueOf(formatRange(buffer, locale));
-        }
-        return null;
     }
 
     /**
@@ -429,6 +430,88 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
             }
         }
         return null;
+    }
+
+    /**
+     * Format a geophysics value. If <code>value</code> is a real number, then the value is
+     * formatted with the appropriate number of digits and the units symbol.  Otherwise, if
+     * <code>value</code> is <code>NaN</code>, then the category name is returned.
+     *
+     * @param  value  The geophysics value (may be <code>NaN</code>).
+     * @param  locale Locale to use for formatting, or <code>null</code>
+     *                for the default locale.
+     * @return A string representation of the geophysics value.
+     */
+    public String format(final double value, final Locale locale)
+    {
+        if (Double.isNaN(value))
+        {
+            final Category category = getEncoder(value, lastCategory);
+            if (category!=null)
+            {
+                lastCategory = category;
+                return category.getName(locale);
+            }
+        }
+        return format(value, true, locale, new StringBuffer()).toString();
+    }
+
+    /**
+     * Formatte la valeur spécifiée selon les conventions locales. Le nombre sera
+     * écrit avec un nombre de chiffres après la virgule approprié pour cette catégorie.
+     * Le symbole des unités sera ajouté après le nombre si <code>writeUnit</code>
+     * est <code>true</code>.
+     *
+     * @param  value Valeur du paramètre géophysique à formatter.
+     * @param  writeUnit Indique s'il faut écrire le symbole des unités après le nombre.
+     *         Cet argument sera ignoré si aucune unité n'avait été spécifiée au constructeur.
+     * @param  locale Conventions locales à utiliser, ou <code>null</code> pour les conventions par défaut.
+     * @param  buffer Le buffer dans lequel écrire la valeur.
+     * @return Le buffer <code>buffer</code> dans lequel auront été écrit la valeur et les unités.
+     */
+    private synchronized StringBuffer format(final double value, final boolean writeUnits, final Locale locale, StringBuffer buffer)
+    {
+        if (format==null || !Utilities.equals(this.locale, locale))
+        {
+            this.locale = locale;
+            format=(locale!=null) ? NumberFormat.getNumberInstance(locale) : NumberFormat.getNumberInstance();
+            format.setMinimumFractionDigits(ndigits);
+            format.setMaximumFractionDigits(ndigits);
+            dummy=new FieldPosition(0);
+        }
+        buffer = format.format(value, buffer, dummy);
+        if (writeUnits && unit!=null)
+        {
+            final int position = buffer.length();
+            buffer.append('\u00A0'); // No-break space
+            buffer.append(unit);
+            if (buffer.length()==position+1)
+            {
+                buffer.setLength(position);
+            }
+        }
+        return buffer;
+    }
+
+    /**
+     * Format the range of geophysics values.
+     */
+    private StringBuffer formatRange(StringBuffer buffer, final Locale locale)
+    {
+        final Range range = getRange(true);
+        buffer.append('[');
+        if (range!=null)
+        {
+            buffer=format(((Number)range.getMinValue()).doubleValue(), false, locale, buffer);
+            buffer.append("..");
+            buffer=format(((Number)range.getMaxValue()).doubleValue(), true,  locale, buffer);
+        }
+        else if (unit!=null)
+        {
+            buffer.append(unit);
+        }
+        buffer.append(']');
+        return buffer;
     }
 
     /**
@@ -567,6 +650,8 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
      *         to differenciate among many qualitative categories.
      *
      * @see Category#toValue
+     * @see #toValues
+     * @see #toIndex
      */
     public double toValue(final int index)
     {
@@ -592,6 +677,8 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
      * @return The sample value.
      *
      * @see Category#toIndex
+     * @see #toIndexed
+     * @see #toValue
      */
     public int toIndex(final double value)
     {
@@ -605,86 +692,44 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
     }
 
     /**
-     * Format a geophysics value. If <code>value</code> is a real number, then the value is
-     * formatted with the appropriate number of digits and the units symbol.  Otherwise, if
-     * <code>value</code> is <code>NaN</code>, then the category name is returned.
+     * Returns a view of an image in which all pixels have been transformed into
+     * floating-point values as with the {@link #toValue(int)} method. The resulting
+     * image usually represents some geophysics parameter in "real world" scientific
+     * and engineering units (e.g. temperature in °C).
      *
-     * @param  value  The geophysics value (may be <code>NaN</code>).
-     * @param  locale Locale to use for formatting, or <code>null</code>
-     *                for the default locale.
-     * @return A string representation of the geophysics value.
+     * @param image      Image to convert. This image usually store pixel values as integers.
+     * @param categories The list of categories to use for transforming pixel values into
+     *                   geophysics parameters. This array's length must matches the number
+     *                   of bands in <code>image</code>.
+     * @return           The converted image. This image store geophysics values as floating-point
+     *                   numbers. This method returns <code>null</code> if <code>image</code> was null.
+     *
+     * @see #toValue
+     * @see #toIndexed
      */
-    public String format(final double value, final Locale locale)
-    {
-        if (Double.isNaN(value))
-        {
-            final Category category = getEncoder(value, lastCategory);
-            if (category!=null)
-            {
-                lastCategory = category;
-                return category.getName(locale);
-            }
-        }
-        return format(value, true, locale, new StringBuffer()).toString();
-    }
+    public static RenderedImage toValues(final RenderedImage image, final CategoryList[] categories)
+    {return NumericImage.getInstance(image, categories);}
 
     /**
-     * Formatte la valeur spécifiée selon les conventions locales. Le nombre sera
-     * écrit avec un nombre de chiffres après la virgule approprié pour cette catégorie.
-     * Le symbole des unités sera ajouté après le nombre si <code>writeUnit</code>
-     * est <code>true</code>.
+     * Returns a view of an image in which all geophysics values have been transformed
+     * into indexed pixel as with the {@link #toIndex(double)} method.   The resulting
+     * image is more suitable for rendering than the geophysics image (since Java2D do
+     * a better job with integer pixels than floating-point pixels).
      *
-     * @param  value Valeur du paramètre géophysique à formatter.
-     * @param  writeUnit Indique s'il faut écrire le symbole des unités après le nombre.
-     *         Cet argument sera ignoré si aucune unité n'avait été spécifiée au constructeur.
-     * @param  locale Conventions locales à utiliser, ou <code>null</code> pour les conventions par défaut.
-     * @param  buffer Le buffer dans lequel écrire la valeur.
-     * @return Le buffer <code>buffer</code> dans lequel auront été écrit la valeur et les unités.
+     * @param image      Image to convert. This image usually represents some geophysics
+     *                   parameter in "real world" scientific and engineering units (e.g.
+     *                   temperature in °C).
+     * @param categories The list of categories to use for transforming floating-point values
+     *                   into pixel index. This array's length must matches the number of bands
+     *                   in <code>image</code>.
+     * @return           The converted image. This image store pixel index as integer.
+     *                   This method returns <code>null</code> if <code>image</code> was null.
+     *
+     * @see #toIndex
+     * @see #toValues
      */
-    private synchronized StringBuffer format(final double value, final boolean writeUnits, final Locale locale, StringBuffer buffer)
-    {
-        if (format==null || !Utilities.equals(this.locale, locale))
-        {
-            this.locale = locale;
-            format=(locale!=null) ? NumberFormat.getNumberInstance(locale) : NumberFormat.getNumberInstance();
-            format.setMinimumFractionDigits(ndigits);
-            format.setMaximumFractionDigits(ndigits);
-            dummy=new FieldPosition(0);
-        }
-        buffer = format.format(value, buffer, dummy);
-        if (writeUnits && unit!=null)
-        {
-            final int position = buffer.length();
-            buffer.append('\u00A0'); // No-break space
-            buffer.append(unit);
-            if (buffer.length()==position+1)
-            {
-                buffer.setLength(position);
-            }
-        }
-        return buffer;
-    }
-
-    /**
-     * Format the range of geophysics values.
-     */
-    private StringBuffer formatRange(StringBuffer buffer, final Locale locale)
-    {
-        final Range range = getRange(true);
-        buffer.append('[');
-        if (range!=null)
-        {
-            buffer=format(((Number)range.getMinValue()).doubleValue(), false, locale, buffer);
-            buffer.append("..");
-            buffer=format(((Number)range.getMaxValue()).doubleValue(), true,  locale, buffer);
-        }
-        else if (unit!=null)
-        {
-            buffer.append(unit);
-        }
-        buffer.append(']');
-        return buffer;
-    }
+    public static RenderedImage toIndexed(final RenderedImage image, final CategoryList[] categories)
+    {return ThematicImage.getInstance(image, categories);}
 
     /**
      * Returns a color model for this category list. The default implementation
