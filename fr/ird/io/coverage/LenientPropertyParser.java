@@ -286,7 +286,7 @@ class LenientPropertyParser extends PropertyParser {
      */
     public CoordinateSystem getCoordinateSystem() throws PropertyException {
         final CoordinateSystem cs = super.getCoordinateSystem();
-        return new CompoundCoordinateSystem(cs.getName(null), cs, UTC);
+        return new CompoundCoordinateSystem(cs.getName().getCode(), cs, UTC);
     }
 
     /**

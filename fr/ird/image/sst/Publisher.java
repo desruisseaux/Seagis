@@ -42,9 +42,9 @@ import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import org.geotools.pt.AngleFormat;
-import org.geotools.pt.Longitude;
-import org.geotools.pt.Latitude;
+import org.geotools.measure.Latitude;
+import org.geotools.measure.Longitude;
+import org.geotools.measure.AngleFormat;
 
 // Graphisme
 import java.awt.Font;

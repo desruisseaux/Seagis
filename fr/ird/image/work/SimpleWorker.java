@@ -85,12 +85,11 @@ public abstract class SimpleWorker extends Worker {
             if (index<0 || index>=entries.length) continue;
             final CoverageEntry entry = entries[index];
             entries = XArray.remove(entries, index, 1);
-            setDescription(entry.getName());
-
-            Result result=null;
-            String operation="run";
-            final File outputFile=getOutputFile(entry);
+            Result result = null;
+            String operation = "run";
             try {
+                setDescription(entry.getName());
+                final File outputFile=getOutputFile(entry);
                 operation="load"; if (outputFile.exists()) result=Result.load(outputFile);
                 operation="run";  result=run(entry, result);
                 operation="save"; if (result!=null) result.save(outputFile);

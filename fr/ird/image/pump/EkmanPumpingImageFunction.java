@@ -65,7 +65,7 @@ import org.opengis.referencing.operation.TransformException;
 // Geotools
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Arguments;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 
 // SEAS
 import fr.ird.io.image.Utilities;

@@ -208,13 +208,19 @@ public class Result implements Serializable {
      * de cet objet.
      */
     protected synchronized void add(final CoverageEntry image) {
-        final int ID = image.getID();
-        if (imageIDs != null) {
-            final int last = imageIDs.length;
-            imageIDs = XArray.resize(imageIDs, last+1);
-            imageIDs[last] = ID;
-        } else {
-            imageIDs = new int[] {ID};
+        try {
+            final int ID = image.getID();
+            if (imageIDs != null) {
+                final int last = imageIDs.length;
+                imageIDs = XArray.resize(imageIDs, last+1);
+                imageIDs[last] = ID;
+            } else {
+                imageIDs = new int[] {ID};
+            }
+        } catch (java.rmi.RemoteException e) {
+            // TODO: handle this exception
+            org.geotools.resources.Utilities.unexpectedException(
+                    "fr.ird.image.work", "Result", "add", e);
         }
     }
 
@@ -223,13 +229,17 @@ public class Result implements Serializable {
      * ont été prises en compte dans le calcul des résultats.
      */
     protected synchronized boolean contains(final CoverageEntry image) {
-        if (imageIDs != null) {
+        if (imageIDs != null) try {
             final int ID = image.getID();
             for (int i=0; i<imageIDs.length; i++) {
                 if (imageIDs[i]==ID) {
                     return true;
                 }
             }
+        } catch (java.rmi.RemoteException e) {
+            // TODO: handle this exception
+            org.geotools.resources.Utilities.unexpectedException(
+                    "fr.ird.image.work", "Result", "add", e);
         }
         return false;
     }

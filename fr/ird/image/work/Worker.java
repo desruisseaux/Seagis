@@ -27,9 +27,9 @@ package fr.ird.image.work;
 
 // Base de données et images
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.awt.image.RenderedImage;
+import java.rmi.RemoteException;
 import javax.imageio.ImageIO;
 
 // Géométrie
@@ -204,9 +204,9 @@ public abstract class Worker implements Runnable {
      *                 <li>Chlorophylle-a (Réunion)</li>
      *               </ul>
      *
-     * @throws SQLException si la connection à la base de données a échouée.
+     * @throws RemoteException si la connection à la base de données a échouée.
      */
-    public void setCoverages(final String series) throws SQLException {
+    public void setCoverages(final String series) throws RemoteException {
         setCoverages(series, null, null, null);
     }
 
@@ -222,10 +222,10 @@ public abstract class Worker implements Runnable {
      *                       pour aller jusqu'à la dernière image de la série.
      * @param geographicArea Coordonnnées géographiques de la région à prendre en compte,
      *                       ou <code>null</code> pour ne pas imposer de limites géographiques.
-     * @throws SQLException si la connection à la base de données a échouée.
+     * @throws RemoteException si la connection à la base de données a échouée.
      */
     public synchronized void setCoverages(String series, Date startTime, Date endTime,
-                                          final Rectangle2D geographicArea) throws SQLException
+                                          final Rectangle2D geographicArea) throws RemoteException
     {
         final CoverageDataBase database = new fr.ird.database.coverage.sql.CoverageDataBase();
         if (series == null) {
@@ -267,7 +267,7 @@ public abstract class Worker implements Runnable {
             } catch (IOException exception) {
                 exceptionOccurred("getCoverages", exception);
             }
-        } catch (SQLException exception) {
+        } catch (RemoteException exception) {
             /*
              * Si la connection avec la base de données a échouée, essaie d'utiliser
              * les images par défauts qui avaient été sauvegardées en binaires lors

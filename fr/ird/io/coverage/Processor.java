@@ -389,7 +389,7 @@ public class Processor extends Arguments {
             CoordinateSystem sourceCS = coverage.getCoordinateSystem();
             CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
             if (sourceCS instanceof CompoundCoordinateSystem) {
-                targetCS = new CompoundCoordinateSystem(targetCS.getName(null), targetCS,
+                targetCS = new CompoundCoordinateSystem(targetCS.getName().getCode(), targetCS,
                                       ((CompoundCoordinateSystem) sourceCS).getTailCS());
             }
             if (processor == null) {

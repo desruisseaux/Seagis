@@ -47,7 +47,7 @@ import ncsa.hdf.hdflib.HDFException;
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 import org.geotools.resources.Arguments;
 
 // Miscellaneous

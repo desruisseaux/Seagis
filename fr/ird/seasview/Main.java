@@ -482,8 +482,7 @@ public final class Main {
      * </ul>
      */
     public static void main(final String[] args) {
-        org.geotools.resources.Geotools.init();
-        org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.util.MonolineFormatter.init("fr.ird");
         org.geotools.resources.image.ImageUtilities.allowNativeCodec("png", false, false);
         org.geotools.resources.image.ImageUtilities.allowNativeCodec("png", true , false);
         final Arguments arguments = new Arguments(args);
