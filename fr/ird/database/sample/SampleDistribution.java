@@ -53,6 +53,9 @@ import javax.swing.JFrame;
 import javax.imageio.ImageIO;
 import java.io.File;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.gui.swing.MapPane;
 import org.geotools.renderer.j2d.Renderer;
@@ -62,7 +65,6 @@ import org.geotools.renderer.j2d.RenderedGeometries;
 import org.geotools.renderer.j2d.RenderingContext;
 import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.gc.GridGeometry;
 import org.geotools.resources.Arguments;
 

@@ -71,11 +71,13 @@ import java.awt.geom.NoninvertibleTransformException;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools dependencies
 import org.geotools.gp.Operation;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.SampleDimension;
-import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.ct.MissingParameterException;
 import org.geotools.cs.GeographicCoordinateSystem;

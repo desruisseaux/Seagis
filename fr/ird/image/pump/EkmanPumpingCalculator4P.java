@@ -28,7 +28,9 @@ package fr.ird.image.pump;
 
 // Miscellaneous
 import java.awt.geom.AffineTransform;
-import org.geotools.ct.TransformException;
+
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
 
 
 /**

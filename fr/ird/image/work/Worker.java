@@ -71,7 +71,7 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
 import org.geotools.util.ProgressListener;
-import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.geometry.XAffineTransform;
 import org.geotools.gui.headless.ProgressMailer;
 import org.geotools.gui.headless.ProgressPrinter;
 

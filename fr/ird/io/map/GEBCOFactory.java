@@ -32,8 +32,10 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
-import org.geotools.ct.TransformException;
 import org.geotools.renderer.geom.GeometryCollection;
 
 

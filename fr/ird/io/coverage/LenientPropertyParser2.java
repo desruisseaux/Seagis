@@ -25,13 +25,15 @@
  */
 package fr.ird.io.coverage;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools dependencies
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.CoordinateTransformationFactory;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.MathTransform;
 
 import org.geotools.units.Unit;

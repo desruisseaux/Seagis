@@ -25,9 +25,11 @@
  */
 package fr.ird.seasview.layer;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.ct.TransformException;
 import org.geotools.renderer.j2d.RenderedGridMarks;
 
 

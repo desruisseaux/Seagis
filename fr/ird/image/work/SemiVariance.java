@@ -50,13 +50,15 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Resources
 import org.geotools.gc.GridCoverage;
 import org.geotools.cs.Ellipsoid;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.geometry.XAffineTransform;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XMath;
 

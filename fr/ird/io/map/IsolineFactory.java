@@ -63,6 +63,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Resources
 import fr.ird.resources.XArray;
 import fr.ird.resources.experimental.Resources;
@@ -74,7 +77,8 @@ import org.geotools.resources.Utilities;
 import org.geotools.util.ProgressListener;
 import org.geotools.renderer.geom.CompressionLevel;
 import org.geotools.renderer.geom.GeometryCollection;
-import org.geotools.ct.TransformException;
+import org.geotools.cs.LocalCoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
 
 
 /**
@@ -473,7 +477,12 @@ public abstract class IsolineFactory {
     private void process(GeometryCollection[] all, final String sourceMethodName)
             throws TransformException
     {
-        final GeometryCollection allGeo = new GeometryCollection();
+        CoordinateSystem cs = LocalCoordinateSystem.CARTESIAN;
+        if (all.length != 0) {
+            // TODO: find a better CS (for example the most used one?).
+            cs = all[0].getCoordinateSystem();
+        }
+        final GeometryCollection allGeo = new GeometryCollection(cs);
         for (int i=0; i<all.length; i++) {
             allGeo.add(all[i]);
         }

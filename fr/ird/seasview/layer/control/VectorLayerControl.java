@@ -36,9 +36,11 @@ import javax.swing.JComponent;
 import java.sql.SQLException;
 import java.io.IOException;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.gc.GridCoverage;
-import org.geotools.ct.TransformException;
 import org.geotools.renderer.geom.Arrow2D;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedGridMarks;

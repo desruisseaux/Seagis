@@ -47,9 +47,9 @@ import org.geotools.pt.Envelope;
 import org.geotools.gc.GridCoverage;
 import org.geotools.util.NumberRange;
 import org.geotools.resources.Arguments;
-import org.geotools.resources.XDimension2D;
-import org.geotools.resources.ImageUtilities;
+import org.geotools.resources.image.ImageUtilities;
 import org.geotools.resources.MonolineFormatter;
+import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.cv.PointOutsideCoverageException;
 
 // SEAGIS dependencies

@@ -69,7 +69,7 @@ import java.util.logging.LogManager;
 import org.geotools.cs.Ellipsoid;
 import org.geotools.resources.XMath;
 import org.geotools.resources.Utilities;
-import org.geotools.resources.XRectangle2D;
+import org.geotools.resources.geometry.XRectangle2D;
 import org.geotools.util.ProgressListener;
 import org.geotools.gui.headless.ProgressPrinter;
 import org.geotools.gui.headless.ProgressMailer;

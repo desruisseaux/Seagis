@@ -59,9 +59,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
-// Geotools dependencies
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
+// Geotools
 import org.geotools.gc.GridCoverage;
-import org.geotools.ct.TransformException;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.MonolineFormatter;
 

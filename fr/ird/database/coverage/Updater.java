@@ -61,17 +61,17 @@ public class Updater {
     private static void reOrderWritersReadersPNG() 
     { 
         final IIORegistry registry = IIORegistry.getDefaultInstance();        
-        final Object GoodWriter = registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageWriterSpi.class),
-                     BadWriter  = registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);                 
+        final ImageWriterSpi goodWriter = (ImageWriterSpi) registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageWriterSpi.class);
+        final ImageWriterSpi  badWriter = (ImageWriterSpi) registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);                 
         
-        if((GoodWriter != null) && (BadWriter != null))  
-            registry.setOrdering(ImageWriterSpi.class, GoodWriter, BadWriter);            
+        if ((goodWriter != null) && (badWriter != null))  
+            registry.setOrdering(ImageWriterSpi.class, goodWriter, badWriter);            
         
-        final Object GoodReader = registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageReaderSpi.class),
-                     BadReader  = registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi.class);                 
+        final ImageReaderSpi goodReader = (ImageReaderSpi) registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageReaderSpi.class);
+        final ImageReaderSpi  badReader = (ImageReaderSpi) registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi.class);                 
         
-        if((GoodReader != null) && (BadReader != null))  
-            registry.setOrdering(ImageReaderSpi.class, GoodReader, BadReader);                    
+        if ((goodReader != null) && (badReader != null))  
+            registry.setOrdering(ImageReaderSpi.class, goodReader, badReader);                    
     }        
     
 

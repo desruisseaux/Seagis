@@ -58,6 +58,9 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.File;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.gui.swing.MapPane;
 import org.geotools.gui.swing.ColorBar;
@@ -68,7 +71,6 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.renderer.j2d.RenderingContext;
 import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gc.GridGeometry;
 import org.geotools.pt.Envelope;

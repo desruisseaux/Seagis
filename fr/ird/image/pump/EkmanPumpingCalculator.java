@@ -29,9 +29,11 @@ package fr.ird.image.pump;
 // Coordinates
 import java.awt.geom.Point2D;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools dependencies
 import org.geotools.ct.MathTransform2D;
-import org.geotools.ct.TransformException;
 
 
 /**
