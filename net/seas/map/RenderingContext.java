@@ -27,12 +27,20 @@ import net.seas.opengis.cs.CoordinateSystem;
 import net.seas.opengis.ct.TransformException;
 import net.seas.opengis.ct.CoordinateTransform;
 import net.seas.opengis.ct.CannotCreateTransformException;
+import net.seas.util.OpenGIS;
 
 // Geometry
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
+import net.seas.util.XAffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+
+// Miscellaneous
+import java.util.List;
+import net.seas.resources.Resources;
+import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -47,10 +55,10 @@ import java.awt.geom.AffineTransform;
  *           vers le système de coordonnées de l'afficheur {@link MapPanel}. Le résultat est
  *           encore en coordonnées logiques (par exemple en véritables mètres sur le terrain
  *           ou encore en degrés de longitude ou de latitude).</td></tr>
- *   <tr><td><code>{@link #getAffineTransform getAffineTransform}({@link #FROM_WORLD_TO_POINT}).transform(point, point)</code></td>
+ *   <tr><td><code>{@link #getAffineTransform getAffineTransform}({@link #WORLD_TO_POINT}).transform(point, point)</code></td>
  *       <td>pour transformer les mètres en des unités proches de 1/72 de pouce. Avec cette transformation,
  *           nous passons des "mètres" sur le terrain en "points" sur l'écran (ou l'imprimante).</td></tr>
- *   <tr><td><code>{@link #getAffineTransform getAffineTransform}({@link #FROM_POINT_TO_PIXEL}).transform(point, point)</code></td>
+ *   <tr><td><code>{@link #getAffineTransform getAffineTransform}({@link #POINT_TO_PIXEL}).transform(point, point)</code></td>
  *       <td>pour passer des 1/72 de pouce vers des unités qui dépendent du périphérique.</td></tr>
  * </table></blockquote>
  *
@@ -60,19 +68,35 @@ import java.awt.geom.AffineTransform;
  * @see Layer#paint
  * @see MapPanel#paintComponent
  */
-public final class MapPaintContext
+public final class RenderingContext
 {
+    /**
+     * Expansion factor for clip. When a clip for some rectangle is requested, a bigger
+     * clip will be computed in order to avoid recomputing a new one if user zoom up or
+     * apply translation. A scale of 2 means that rectangle two times wider and heigher
+     * will be computed.
+     *
+     * DEBUGGING TIPS: Set this scale to a value below 1 to <em>see</em> the clipping's
+     *                 effect in the window area.
+     */
+    private static final double CLIP_SCALE = 0.75;
+
     /**
      * Constante désignant la transformation affine qui permet de
      * passer des coordonnées logiques vers des unités de points.
      */
-    public static final int FROM_WORLD_TO_POINT = 1;
+    public static final int WORLD_TO_POINT = 1;
 
     /**
      * Constante désignant la transformation affine qui permet de
      * passer des des unités de points vers des coordonnées pixels.
      */
-    public static final int FROM_POINT_TO_PIXEL = 2;
+    public static final int POINT_TO_PIXEL = 2;
+
+    /**
+     * Indique si le traçage se fait vers l'imprimante plutôt qu'à l'écran.
+     */
+    private final boolean isPrinting;
 
     /**
      * Transformation (généralement une projection cartographique) servant à convertir les
@@ -112,12 +136,19 @@ public final class MapPaintContext
     private final Rectangle bounds;
 
     /**
-     * Indique si le traçage se fait vers l'imprimante plutôt qu'à l'écran.
+     * The {@link #bounds} rectangle transformed into logical
+     * coordinates (according {@link #getViewCoordinateSystem}).
      */
-    private final boolean isPrinting;
+    private transient Rectangle2D logicalClip;
 
     /**
-     * Construit un objet <code>MapPaintContext</code> avec les paramètres spécifiés.
+     * Objet à utiliser pour découper les polygones. Cet objet
+     * ne sera créé que la première fois où il sera demandé.
+     */
+    private transient Clipper clipper;
+
+    /**
+     * Construit un objet <code>RenderingContext</code> avec les paramètres spécifiés.
      * Ce constructeur ne fait pas de clones.
      *
      * @param transform  Transformation (généralement une projection cartographique) servant à convertir les
@@ -132,8 +163,7 @@ public final class MapPaintContext
      * @param bounds     Position et dimension de la région de la fenêtre dans lequel se fait le traçage.
      * @param isPrinting Indique si le traçage se fait vers l'imprimante plutôt qu'à l'écran.
      */
-    MapPaintContext(final CoordinateTransform transform, final AffineTransform fromWorld, final AffineTransform fromPoints,
-                    final Rectangle bounds, final boolean isPrinting)
+    RenderingContext(final CoordinateTransform transform, final AffineTransform fromWorld, final AffineTransform fromPoints, final Rectangle bounds, final boolean isPrinting)
     {
         if (transform!=null && fromWorld!=null && fromPoints!=null)
         {
@@ -177,12 +207,12 @@ public final class MapPaintContext
      * Retourne une transformation affine. Deux types de transformations sont d'intéret:
      *
      * <ul>
-     *   <li>{@link #FROM_WORLD_TO_POINT}:
+     *   <li>{@link #WORLD_TO_POINT}:
      *       Transformation affine convertissant les mètres vers les unités de texte (1/72 de pouce).
      *       Ces unités de textes pourront ensuite être converties en unités du périphérique avec la
-     *       transformation {@link #FROM_POINT_TO_PIXEL}. Cette transformation peut varier en fonction
+     *       transformation {@link #POINT_TO_PIXEL}. Cette transformation peut varier en fonction
      *       de l'échelle de la carte.</li>
-     *   <li>{@link #FROM_POINT_TO_PIXEL}:
+     *   <li>{@link #POINT_TO_PIXEL}:
      *       Transformation affine convertissant des unités de texte (1/72 de pouce) en unités dépendantes
      *       du périphérique. Lors des sorties vers l'écran, cette transformation est généralement la matrice
      *       identité. Pour les écritures vers l'imprimante, il s'agit d'une matrice configurée d'une façon
@@ -197,8 +227,8 @@ public final class MapPaintContext
     {
         switch (type)
         {
-            case FROM_WORLD_TO_POINT: return fromWorld;
-            case FROM_POINT_TO_PIXEL: return fromPoints;
+            case WORLD_TO_POINT: return fromWorld;
+            case POINT_TO_PIXEL: return fromPoints;
             default: throw new IllegalArgumentException(Integer.toString(type));
         }
     }
@@ -213,8 +243,144 @@ public final class MapPaintContext
     {return bounds;}
 
     /**
+     * Clip a contour to the current widget's bounds. The clip is only approximative
+     * in that the resulting contour may extends outside the widget's area. However,
+     * it is garanteed that the resulting contour will contains at least the interior
+     * of the widget's area (providing that the first contour in the supplied list
+     * cover this area).
+     *
+     * This method is used internally by some layers (like {@link net.seas.map.layer.IsolineLayer})
+     * when computing and drawing a clipped contour may be faster than drawing the full contour
+     * (especially if clipped contours are cached for reuse).
+     * <br><br>
+     * This method expect a <em>modifiable</em> list of {@link Contour} objects as argument.
+     * The first element in this list must be the "master" contour (the contour to clip) and
+     * will never be modified.  Elements at index greater than 0 may be added and removed at
+     * this method's discression, so that the list is actually used as a cache for clipped
+     * <code>Contour</code> objects.
+     *
+     * <br><br>
+     * <strong>WARNING: This method is not yet debugged</strong>
+     *
+     * @param  contours A modifiable list with the contour to clip at index 0.
+     * @return A possibly clipped contour. May be any element of the list or a new contour.
+     *         May be <code>null</code> if the "master" contour doesn't intercept the clip.
+     */
+    public Contour clip(final List<Contour> contours)
+    {
+        if (contours.isEmpty())
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.EMPTY_LIST));
+        }
+        if (isPrinting)
+        {
+            return contours.get(0);
+        }
+        /*
+         * Gets the clip area expressed in MapPanel's coordinate system
+         * (i.e. gets bounds in "logical visual coordinates").
+         */
+        if (logicalClip==null) try
+        {
+            logicalClip = XAffineTransform.inverseTransform(fromWorld, bounds, logicalClip);
+        }
+        catch (NoninvertibleTransformException exception)
+        {
+            // (should not happen) Clip failed: conservatively returns the whole contour.
+            ExceptionMonitor.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
+            return contours.get(0);
+        }
+        final CoordinateSystem targetCS = getViewCoordinateSystem();
+        /*
+         * Iterate through the list (starting from the last element)
+         * until we found a contour capable to handle the clip area.
+         */
+        Contour contour;
+        Rectangle2D clip;
+        Rectangle2D bounds;
+        Rectangle2D temporary=null;
+        int index=contours.size();
+        do
+        {
+            contour = contours.get(--index);
+            clip    = logicalClip;
+            /*
+             * First, we need to know the clip in contour's coordinates.
+             * The {@link net.seas.map.layer.IsolineLayer} usually keeps
+             * isoline in the same coordinate system than the MapPanel's
+             * one. But a user could invoke this method in a more unusual
+             * way, so we are better to check...
+             */
+            final CoordinateSystem sourceCS;
+            synchronized (contour)
+            {
+                bounds   = contour.getCachedBounds();
+                sourceCS = contour.getCoordinateSystem();
+            }
+            if (!targetCS.equivalents(sourceCS)) try
+            {
+                CoordinateTransform transform = this.transform;
+                if (!transform.getSourceCS().equivalents(sourceCS))
+                {
+                    transform = Contour.TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
+                }
+                clip = temporary = OpenGIS.transform(transform, clip, temporary);
+            }
+            catch (TransformException exception)
+            {
+                ExceptionMonitor.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
+                continue; // A contour seems invalid. It will be ignored (and probably garbage collected soon).
+            }
+            /*
+             * Now that both rectangles are using the same coordinate system,
+             * test if the clip fall completly inside the contour. If yes,
+             * then we should use this contour for clipping.
+             */
+            if (Layer.contains(bounds, clip, true)) break;
+        }
+        while (index!=0);
+        /*
+         * A clipped contour has been found (or we reached the begining
+         * of the list). Check if the requested clip is small enough to
+         * worth a clipping.
+         */
+        final double ratio2 = (bounds.getWidth()*bounds.getHeight()) / (clip.getWidth()*clip.getHeight());
+        if (ratio2 >= CLIP_SCALE*CLIP_SCALE)
+        {
+            if (clipper==null)
+            {
+                clipper = new Clipper(scale(logicalClip, CLIP_SCALE), targetCS);
+            }
+            // Remove the last part of the list, which is likely to be invalide.
+            contours.subList(index+1, contours.size()).clear();
+            contour=contour.getClipped(clipper);
+            if (contour!=null)
+            {
+                contours.add(contour);
+                Contour.logger.finer("Clip performed"); // TODO: give more precision
+            }
+        }
+        return contour;
+    }
+
+    /**
+     * Expand or shrunk a rectangle by some factor. A scale of 1 lets the rectangle
+     * unchanged. A scale of 2 make the rectangle two times wider and heigher. In
+     * any case, the rectangle's center doesn't move.
+     */
+    private static Rectangle2D scale(final Rectangle2D rect, final double scale)
+    {
+        final double trans  = 0.5*(scale-1);
+        final double width  = rect.getWidth();
+        final double height = rect.getHeight();
+        return new Rectangle2D.Double(rect.getX()-trans*width,
+                                      rect.getY()-trans*height,
+                                      scale*width, scale*height);
+    }
+
+    /**
      * Indique si le traçage se fait vers l'imprimante
-     * (ou un autre périphique) plutôt qu'à l'écran.
+     * (ou un autre périphérique) plutôt qu'à l'écran.
      */
     public boolean isPrinting()
     {return isPrinting;}
