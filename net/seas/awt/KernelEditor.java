@@ -32,6 +32,7 @@ import java.awt.GridBagConstraints;
 
 // Graphical user interface (Swing)
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JSpinner;
@@ -43,6 +44,8 @@ import javax.swing.ComboBoxModel;
 import javax.swing.table.AbstractTableModel;
 
 // Events
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ChangeListener;
@@ -78,19 +81,24 @@ public class KernelEditor extends JComponent
     private final Model model = new Model();
 
     /**
-     * The list of available filters.
+     * The list of available filter's categories.
      */
-    private final JComboBox filters = new JComboBox(model);
+    private final JComboBox categorySelector = new JComboBox();
+
+    /**
+     * The list of available kernels.
+     */
+    private final JComboBox kernelSelector = new JComboBox(model);
 
     /**
      * The matrix width.
      */
-    private final JSpinner width = new JSpinner();
+    private final JSpinner widthSelector = new JSpinner();
 
     /**
      * The matrix height.
      */
-    private final JSpinner height = new JSpinner();
+    private final JSpinner heightSelector = new JSpinner();
 
     /**
      * Construct a new kernel editor.
@@ -99,40 +107,77 @@ public class KernelEditor extends JComponent
     {
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
+        final Resources resources = Resources.getResources(null);
 
-        width.addChangeListener(model);
-        height.addChangeListener(model);
+        categorySelector.addItem(resources.getString(ResourceKeys.ALL)); // Must be the first category.
+        categorySelector.addItemListener(model);
+        widthSelector.   addChangeListener(model);
+        heightSelector.  addChangeListener(model);
+
         final JTable matrixView = new JTable(model);
         matrixView.setTableHeader(null);
         matrixView.setRowSelectionAllowed(false);
         matrixView.setColumnSelectionAllowed(false);
 
-        final Resources resources = Resources.getResources(null);
         final GridBagConstraints c = new GridBagConstraints();
+        final JPanel predefinedKernels = new JPanel(new GridBagLayout());
 
-        // Add labels in the two first rows
-        c.fill=c.HORIZONTAL; c.gridx=0;
-        c.gridy=0; add(new JLabel(resources.getLabel(ResourceKeys.KERNEL), JLabel.RIGHT ), c);
-        c.gridy=1; add(new JLabel(resources.getLabel(ResourceKeys.SIZE  ), JLabel.RIGHT ), c);
+        ////////////////////////////////////////////////////
+        ////                                            ////
+        ////    Put combo box for predefined kernels    ////
+        ////                                            ////
+        ////////////////////////////////////////////////////
+        c.gridx=0; c.fill=c.HORIZONTAL;
+        c.gridy=0; predefinedKernels.add(new JLabel(resources.getLabel(ResourceKeys.CATEGORY), JLabel.RIGHT ), c);
+        c.gridy=1; predefinedKernels.add(new JLabel(resources.getLabel(ResourceKeys.KERNEL),   JLabel.RIGHT ), c);
+
+        c.gridx=1; c.weightx=1; c.insets.left=0;
+        c.gridy=0; predefinedKernels.add(categorySelector, c);
+        c.gridy=1; predefinedKernels.add(kernelSelector,   c);
+
+        c.gridx=0; c.gridy=0; c.gridwidth=c.REMAINDER; add(predefinedKernels, c);
+        predefinedKernels.setBorder(BorderFactory.createCompoundBorder(
+                                    BorderFactory.createTitledBorder(resources.getString(ResourceKeys.PREDEFINED_KERNELS)),
+                                    BorderFactory.createEmptyBorder(/*top*/3,/*left*/9,/*bottom*/6,/*right*/6)));
+
+
+        //////////////////////////////////////////////
+        ////                                      ////
+        ////    Put spinners for kernel's size    ////
+        ////                                      ////
+        //////////////////////////////////////////////
+        c.weightx=0; c.gridwidth=1; c.insets.top=18;
+        c.gridy=1; add(new JLabel(resources.getLabel(ResourceKeys.SIZE), JLabel.RIGHT), c);
         c.gridx=2; add(new JLabel(' '+resources.getString(ResourceKeys.LINES).toLowerCase()+" \u00D7 ", JLabel.CENTER), c);
         c.gridx=4; add(new JLabel(' '+resources.getString(ResourceKeys.COLUMNS).toLowerCase(), JLabel.LEFT),  c);
 
-        // Add controlers (kernel name and size)
         c.weightx=1;
-        c.gridx=1; add(height, c);
-        c.gridx=3; add(width,  c);
+        c.gridx=1; add(heightSelector, c);
+        c.gridx=3; add(widthSelector,  c);
 
-        c.gridy=0; c.gridx=1; c.gridwidth=c.REMAINDER;
-        add(filters, c);
 
-        // Add table for kernel coefficients
-        c.gridy=2; c.gridx=0;                  c.insets.top=9; add(new JLabel(resources.getString(ResourceKeys.COEFFICIENTS)), c);
-        c.gridy=3; c.weighty=1; c.fill=c.BOTH; c.insets.top=0; add(new JScrollPane(matrixView), c);
-        setPreferredSize(new Dimension(300,180));
+        /////////////////////////////////////////////////
+        ////                                         ////
+        ////    Put table for kernel coefficients    ////
+        ////                                         ////
+        /////////////////////////////////////////////////
+        c.gridx=0; c.gridwidth=c.REMAINDER; c.fill=c.BOTH;
+        c.gridy=3; c.weighty=1; c.insets.top=6; add(new JScrollPane(matrixView), c);
+        setPreferredSize(new Dimension(300,220));
 
-        addKernel("Floyd & Steinberg (1975)",      KernelJAI.ERROR_FILTER_FLOYD_STEINBERG);
-        addKernel("Jarvis, Judice & Ninke (1976)", KernelJAI.ERROR_FILTER_JARVIS);
-        addKernel("Stucki (1981)",                 KernelJAI.ERROR_FILTER_STUCKI);
+
+        //////////////////////////////////////////////////
+        ////                                          ////
+        ////    Add predefined kernels to the list    ////
+        ////                                          ////
+        //////////////////////////////////////////////////
+        final String ERROR_FILTERS  = resources.getString(ResourceKeys.ERROR_FILTERS);
+        final String GRADIENT_MASKS = resources.getString(ResourceKeys.GRADIENT_MASKS);
+        addKernel(ERROR_FILTERS,  "Floyd & Steinberg (1975)",      KernelJAI.ERROR_FILTER_FLOYD_STEINBERG);
+        addKernel(ERROR_FILTERS,  "Jarvis, Judice & Ninke (1976)", KernelJAI.ERROR_FILTER_JARVIS);
+        addKernel(ERROR_FILTERS,  "Stucki (1981)",                 KernelJAI.ERROR_FILTER_STUCKI);
+        addKernel(GRADIENT_MASKS, "Sobel horizontal", KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL);
+        addKernel(GRADIENT_MASKS, "Sobel vertical",   KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL);
 
         addKernel("Sharp 1",   new float[] { 0.0f, -1.0f,  0.0f,
                                             -1.0f,  5.0f, -1.0f,
@@ -176,18 +221,37 @@ public class KernelEditor extends JComponent
         for (int i=0; i<data.length; i++) sum += data[i];
         if (sum!=0)
             for (int i=0; i<data.length; i++) data[i] /= sum;
-        addKernel(name, new KernelJAI(3,3,data));
+        addKernel(null, name, new KernelJAI(3,3,data));
     }
 
     /**
      * Add a kernel to the list of available kernels.
      *
+     * @param category The kernel's category name, or <code>null</code> if none.
      * @param name The kernel name. Kernel will be displayed in alphabetic order.
      * @param kernel The kernel. If an other kernel was registered with the same
      *        name, the previous kernel will be discarted.
      */
-    public void addKernel(final String name, final KernelJAI kernel)
-    {model.addKernel(name, kernel);}
+    public void addKernel(String category, final String name, final KernelJAI kernel)
+    {
+        if (category==null)
+        {
+            category = Resources.getResources(getLocale()).getString(ResourceKeys.OTHERS);
+        }
+        model.addKernel(category, name, kernel);
+    }
+
+    /**
+     * Add a new category if not already present.
+     */
+    private void addCategory(final String category)
+    {
+        final ComboBoxModel categories = categorySelector.getModel();
+        for (int i=categories.getSize(); --i>=0;)
+            if (category.equals(categories.getElementAt(i)))
+                return;
+        categorySelector.addItem(category);
+    }
 
     /**
      * Set the kernel. The table size will be set to the
@@ -210,8 +274,8 @@ public class KernelEditor extends JComponent
      */
     public void setKernel(final String name)
     {
-        filters.setSelectedItem(name);
-        filters.repaint();
+        kernelSelector.setSelectedItem(name);
+        kernelSelector.repaint();
     }
 
     /**
@@ -235,6 +299,7 @@ public class KernelEditor extends JComponent
     public void setKernelSize(final int width, final int height)
     {
         model.setKernelSize(height, width); // Inverse argument order.
+        model.findKernelName();
     }
 
     /**
@@ -246,12 +311,17 @@ public class KernelEditor extends JComponent
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Model extends AbstractTableModel implements ComboBoxModel, ChangeListener
+    private final class Model extends AbstractTableModel implements ComboBoxModel, ChangeListener, ItemListener
     {
         /**
          * Dictionnary of kernel by their names.
          */
         private final Map<String,KernelJAI> kernels = new HashMap<String,KernelJAI>();
+
+        /**
+         * List of categories by kernel's name.
+         */
+        private final Map<String,String> categories = new HashMap<String,String>();
 
         /**
          * List of kernel names in alphabetical order.
@@ -342,6 +412,7 @@ public class KernelEditor extends JComponent
                 // is the "Personalized" kernel name.
                 final KernelJAI kernel = kernels.get(newName);
                 if (kernel!=null) setKernel(kernel);
+                categorySelector.setSelectedItem(categories.get(newName));
                 this.name = newName;
             }
         }
@@ -395,16 +466,20 @@ public class KernelEditor extends JComponent
                     fireTableRowsInserted(oldRowCount, rowCount-1);
                 else if (rowCount < oldRowCount)
                     fireTableRowsDeleted(rowCount, oldRowCount-1);
-                width .setValue(new Integer(colCount));
-                height.setValue(new Integer(rowCount));
+                widthSelector .setValue(new Integer(colCount));
+                heightSelector.setValue(new Integer(rowCount));
             }
         }
 
         /**
          * Add a kernel.
          */
-        public void addKernel(final String name, final KernelJAI kernel)
+        public void addKernel(final String category, final String name, final KernelJAI kernel)
         {
+            if (!category.equals(categories.put(name, category)))
+            {
+                addCategory(category);
+            }
             if (kernels.put(name, kernel)==null)
             {
                 names = null;
@@ -420,11 +495,24 @@ public class KernelEditor extends JComponent
         {
             if (names==null)
             {
-                final int size = kernels.size();
-                names = kernels.keySet().toArray(new String[size]);
+                // Get the category name. Category at index 0
+                // is "all", which need a special handling.
+                final String category = categorySelector.getSelectedIndex()<=0 ? null :
+                                        (String) categorySelector.getSelectedItem();
+                int count = 0;
+                names = new String[kernels.size()];
+                for (final Iterator<Map.Entry<String,String>> it=categories.entrySet().iterator(); it.hasNext();)
+                {
+                    final Map.Entry<String,String> entry = it.next();
+                    if (category==null || category.equals(entry.getValue()))
+                    {
+                        names[count++] = entry.getKey();
+                    }
+                }
+                names = XArray.resize(names, count);
                 Arrays.sort(names);
-                names = XArray.resize(names, size+1);
-                names[size] = getString(ResourceKeys.PERSONALIZED);
+                names = XArray.resize(names, count+1);
+                names[count] = getString(ResourceKeys.PERSONALIZED);
             }
             return names;
         }
@@ -459,8 +547,9 @@ public class KernelEditor extends JComponent
                 // Set the name now in order to avoid that
                 // setSelectedItem invokes setKernel again.
                 this.name = newName;
-                filters.setSelectedItem(newName);
-                filters.repaint(); // JComboBox doesn't seems to repaint by itself.
+                categorySelector.setSelectedItem(categories.get(newName));
+                kernelSelector.setSelectedItem(newName);
+                kernelSelector.repaint(); // JComboBox doesn't seems to repaint by itself.
             }
         }
         
@@ -471,9 +560,23 @@ public class KernelEditor extends JComponent
          */
         public void stateChanged(final ChangeEvent event)
         {
-            final int rowCount = ((Number) height.getValue()).intValue();
-            final int colCount = ((Number) width. getValue()).intValue();
+            final int rowCount = ((Number) heightSelector.getValue()).intValue();
+            final int colCount = ((Number) widthSelector. getValue()).intValue();
             setKernelSize(rowCount, colCount);
+            findKernelName();
+        }
+
+        /**
+         * Invoked when the user selected a new kernel category.
+         * The category list must be cleared and reconstructed.
+         */
+        public void itemStateChanged(final ItemEvent event)
+        {
+            if (event.getStateChange() == ItemEvent.SELECTED)
+            {
+                names = null;
+                fireListChanged(0, categories.size());
+            }
         }
 
         /**
@@ -513,17 +616,5 @@ public class KernelEditor extends JComponent
                 }
             }
         }
-    }
-
-    /**
-     * Test this kernel editor.
-     */
-    public static void main(String[] args)
-    {
-        final KernelEditor test = new KernelEditor();
-        final JFrame frame = new JFrame("KernelEditor");
-        frame.getContentPane().add(test);
-        frame.pack();
-        frame.show();
     }
 }
