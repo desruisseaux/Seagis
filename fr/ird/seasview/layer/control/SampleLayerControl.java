@@ -83,10 +83,10 @@ public final class SampleLayerControl extends LayerControl {
 
     /**
      * The display type for marks. May be one of the following constants:
-     * {@link SampleLayer#POSITIONS_ONLY}, {@link SampleLayer#GEAR_COVERAGES}
-     * or {@link SampleLayer#CATCH_AMOUNTS}.
+     * {@link SampleLayer#SAMPLE_POSITIONS}, {@link SampleLayer#SAMPLE_COVERAGES}
+     * or {@link SampleLayer#SAMPLE_VALUES}.
      */
-    private int markType = SampleLayer.GEAR_COVERAGES;
+    private int markType = SampleLayer.SAMPLE_COVERAGES;
 
     /**
      * Construit une couche des pêches.
@@ -164,13 +164,13 @@ public final class SampleLayerControl extends LayerControl {
                     final int oldMarkType = markType;
                     final int newMarkType;
                     if (controler.isCatchAmountSelected()) {
-                        newMarkType = SampleLayer.CATCH_AMOUNTS;
+                        newMarkType = SampleLayer.SAMPLE_VALUES;
                         tmpSpecies = new LinkedHashSet<Species>(2*icons.length);
                         for (int i=0; i<icons.length; i++) {
                             tmpSpecies.add(icons[i].getSpecies());
                         }
                     } else {
-                        newMarkType = SampleLayer.GEAR_COVERAGES;
+                        newMarkType = SampleLayer.SAMPLE_COVERAGES;
                         tmpSpecies = database.getSpecies();
                     }
                     sampleTable.setSpecies(tmpSpecies);
