@@ -31,10 +31,11 @@ package net.seagis.ct;
 // Geometry
 import java.awt.Shape;
 import java.awt.geom.Point2D;
-import net.seagis.pt.Matrix;
 
 // Miscellaneous
 import java.io.Serializable;
+import net.seagis.pt.Matrix;
+import net.seagis.pt.CoordinatePoint;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.XAffineTransform;
 
@@ -77,6 +78,28 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     {matrix.transform(srcPts, srcOff, dstPts, dstOff, numPts);}
 
     /**
+     * Gets the derivative of this transform at a point.
+     * For a matrix transform, the derivative is the
+     * same everywhere.
+     */
+    public Matrix derivative(final Point2D point)
+    {return derivative((CoordinatePoint)null);}
+
+    /**
+     * Gets the derivative of this transform at a point.
+     * For a matrix transform, the derivative is the
+     * same everywhere.
+     */
+    public Matrix derivative(final CoordinatePoint point)
+    {
+        final int rows = matrix.getNumRows()-1;
+        final int cols = matrix.getNumColumns()-1;
+        final Matrix deriv = new Matrix(rows, cols);
+        matrix.copySubMatrix(0,0,rows,cols,0,0,deriv);
+        return deriv;
+    }
+
+    /**
      * Returns the matrix.
      */
     public Matrix getMatrix()
@@ -86,13 +109,13 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
      * Gets the dimension of input points.
      */
     public int getDimSource()
-    {return matrix.getSize()-1;}
+    {return matrix.getNumColumns()-1;}
 
     /**
      * Gets the dimension of output points.
      */
     public int getDimTarget()
-    {return matrix.getSize()-1;}
+    {return matrix.getNumRows()-1;}
 
     /**
      * Tests whether this transform does not move any points.

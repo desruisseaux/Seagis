@@ -186,9 +186,9 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         final CoordinatePoint subPoint = new CoordinatePoint(transDim);
         System.arraycopy(point.ord, firstAffectedOrdinate, subPoint.ord, 0, transDim);
         final Matrix subMatrix = transform.derivative(subPoint);
-        final int     nRows = subMatrix.getSize(); // TODO!!! Implement non-square matrix
-        final int     nCols = subMatrix.getSize(); // TODO!!! Implement non-square matrix
-        final Matrix matrix = new Matrix(nSkipped+nRows /*, nSkipped+nCols*/); // TODO!!! Implement non-square matrix
+        final int     nRows = subMatrix.getNumRows();
+        final int     nCols = subMatrix.getNumColumns();
+        final Matrix matrix = new Matrix(nSkipped+nRows, nSkipped+nCols);
 
         //  Set UL part to 1:   [ 1  0             ]
         //                      [ 0  1             ]
@@ -203,9 +203,7 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [ 0  0  ?  ?  ?  0 ]
         //                      [                  ]
-        for (int j=0; j<nRows; j++)
-            for (int i=0; i<nCols; i++)
-                matrix.set(j+firstAffectedOrdinate, i+firstAffectedOrdinate, subMatrix.get(i,j));
+        subMatrix.copySubMatrix(0,0,nRows,nCols,firstAffectedOrdinate,firstAffectedOrdinate, matrix);
 
         //  Set LR part to 1:   [ 1  0  0  0  0  0 ]
         //                      [ 0  1  0  0  0  0 ]

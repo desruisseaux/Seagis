@@ -35,6 +35,7 @@ import org.opengis.ct.CT_MathTransform;
 import org.opengis.ct.CT_DomainFlags;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seagis.pt.Matrix;
 import net.seagis.ct.DomainFlags;
 import net.seagis.pt.CoordinatePoint;
 import net.seagis.ct.TransformException;
@@ -157,6 +158,32 @@ class MathTransformAdapter extends AbstractMathTransform implements Serializable
             array = transform.transformList(array);
             for (int i=array.length; --i>=0;) dstPts[i+dstOff] = (float)array[i];
             Arrays.fill(dstPts, array.length, numPts*dimTarget, Float.NaN);
+        }
+        catch (RemoteException exception)
+        {
+            throw new TransformException(exception.getLocalizedMessage(), exception);
+        }
+    }
+
+    /**
+     * Gets the derivative of this transform at a point.
+     *
+     * @param  point The coordinate point where to evaluate the derivative.
+     * @return The derivative at the specified point (never <code>null</code>).
+     * @throws TransformException if the derivative can't be evaluated at the specified point.
+     */
+    public Matrix derivative(final CoordinatePoint point) throws TransformException
+    {
+        try
+        {
+            final PT_CoordinatePoint ogPoint;
+            if (point!=null)
+            {
+                ogPoint = new PT_CoordinatePoint();
+                ogPoint.ord = point.ord;
+            }
+            else ogPoint = null;
+            return new Matrix(transform.derivative(ogPoint).elt);
         }
         catch (RemoteException exception)
         {

@@ -67,8 +67,8 @@ import net.seagis.resources.css.ResourceKeys;
  * for the methods in the {@link MathTransform2D} interfaces, but is
  * <strong>not</strong> declared to implements {@link MathTransform2D}.
  * This is up to subclasses to add the <code>implements MathTransform2D</code>
- * declaration if the know that the transform is mapping two-dimensional
- * coordinate systems.
+ * declaration if the the transform is know to maps two-dimensional coordinate
+ * systems.
  *
  * @version 1.0
  * @author Martin Desruisseaux

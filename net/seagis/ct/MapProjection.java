@@ -33,6 +33,7 @@
 package net.seagis.ct;
 
 // Coordinates
+import net.seagis.pt.Matrix;
 import net.seagis.pt.Latitude;
 import net.seagis.pt.Longitude;
 import net.seagis.cs.Projection;

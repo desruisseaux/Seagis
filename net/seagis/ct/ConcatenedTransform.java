@@ -32,6 +32,7 @@
 package net.seagis.ct;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seagis.pt.Matrix;
 import net.seagis.pt.CoordinatePoint;
 
 // Resources
@@ -189,6 +190,20 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
             }
         }
         return inverse;
+    }
+
+    /**
+     * Gets the derivative of this transform at a point.
+     *
+     * @param  point The coordinate point where to evaluate the derivative.
+     * @return The derivative at the specified point (never <code>null</code>).
+     * @throws TransformException if the derivative can't be evaluated at the specified point.
+     */
+    public Matrix derivative(final CoordinatePoint point) throws TransformException
+    {
+        final Matrix matrix1 = transform1.derivative(point);
+        final Matrix matrix2 = transform2.derivative(transform1.transform(point, null));
+        return matrix2.multiply(matrix1);
     }
 
     /**

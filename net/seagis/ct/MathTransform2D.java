@@ -90,7 +90,7 @@ public interface MathTransform2D extends MathTransform
      * the point.
      *
      * @param  point The coordinate point where to evaluate the derivative.
-     * @return The derivative at the specified point as a 2x2 matrix.
+     * @return The derivative at the specified point as a 2&times;2 matrix.
      * @throws TransformException if the derivative can't be evaluated at the specified point.
      */
     public abstract Matrix derivative(final Point2D point) throws TransformException;

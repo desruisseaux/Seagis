@@ -197,9 +197,9 @@ public interface MathTransform
      * the point. The matrix will have dimensions corresponding to the source
      * and target coordinate systems. If the input dimension is <var>M</var>,
      * and the output dimension is <var>N</var>, then the matrix will have size
-     * <code>[N,M]</code>. The elements of the matrix {e<sub>n,m</sub> : n=0..(N-1)}
+     * <code>N&times;M</code>. The elements of the matrix <code>{e<sub>n,m</sub> : n=0..(N-1)}</code>
      * form a vector in the output space which is parallel to the displacement
-     * caused by a small change in the m'th ordinate in the input space.
+     * caused by a small change in the <var>m</var>'th ordinate in the input space.
      * <br><br>
      * For example, if the input dimension is 4 and the output dimension is 3, then a small displacement
      * <code>(x<sub>0</sub>,&nbsp;x<sub>1</sub>,&nbsp;x<sub>2</sub>,&nbsp;x<sub>3</sub>)</code> in the
