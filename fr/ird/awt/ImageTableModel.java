@@ -153,7 +153,12 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
-    // private static final long serialVersionUID = 2242910505113530632L; // TODO
+    private static final long serialVersionUID = 6723633134014245147L;
+
+    /**
+     * Indique s'il faut inverser l'ordre des enregistrements.
+     */
+    private static final boolean REVERSE_ORDER = true;
 
     /** Numéro de colonne des noms de fichiers.   */ private static final int NAME     = 0;
     /** Numéro de colonne des dates des images.   */ private static final int DATE     = 1;
@@ -284,6 +289,21 @@ public class ImageTableModel extends AbstractTableModel
         this(table.getSeries());
         final List<ImageEntry> entryList = table.getEntries();
         entries = entryList.toArray(new ImageEntry[entryList.size()]);
+        if (REVERSE_ORDER) reverse(entries);
+    }
+
+    /**
+     * Renverse l'ordre des éléments du tableau spécifié.
+     */
+    private static void reverse(final ImageEntry[] entries)
+    {
+        for (int i=entries.length/2; --i>=0;)
+        {
+            final int j = entries.length-1-i;
+            final ImageEntry tmp = entries[i];
+            entries[i] = entries[j];
+            entries[j] = tmp;
+        }
     }
 
     /**
@@ -299,6 +319,8 @@ public class ImageTableModel extends AbstractTableModel
     {
         final List<ImageEntry> entryList = table.getEntries();
         final ImageEntry[] newEntries = entryList.toArray(new ImageEntry[entryList.size()]);
+        if (REVERSE_ORDER) reverse(newEntries);
+
         synchronized (this)
         {
             final ImageEntry[] oldEntries = entries;
@@ -499,7 +521,7 @@ public class ImageTableModel extends AbstractTableModel
         remove(singleton);
 
 //  TODO: the following line should have been enough,
-//        in the Collections class was generic...
+//        if the Collections class was generic...
 //      remove(Collections.singleton(unwrap(toRemove)));
     }
 
@@ -831,7 +853,7 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Numéro de série (pour compatibilité avec des versions antérieures).
          */
-    //  private static final long serialVersionUID = -183552598222098253L; // TODO
+        private static final long serialVersionUID = 8398851451224196337L;
 
         /** Drapeau indiquant qu'une image a été vue.        */ public static final byte VIEWED    = 1;
         /** Drapeau indiquant qu'un fichier est introuvable. */ public static final byte MISSING   = 2;

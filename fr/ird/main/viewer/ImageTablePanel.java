@@ -58,8 +58,6 @@ import fr.ird.awt.StatusBar;
 import net.seas.awt.ColorRamp;
 
 // Models and events
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.undo.UndoManager;
@@ -100,7 +98,7 @@ import fr.ird.resources.ResourceKeys;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class ImageTablePanel extends JSplitPane
+final class ImageTablePanel extends ImagePanel
 {
     /**
      * Nombre maximal d'images à afficher. En imposant un maximum,
@@ -131,21 +129,9 @@ final class ImageTablePanel extends JSplitPane
     private final JTable tableView;
 
     /**
-     * Mosaïque affichant les images sélectionnées.
-     */
-    private final MosaicPanel mosaic;
-
-    /**
      * Echelle de couleurs.
      */
     private final ColorRamp colorRamp=new ColorRamp();
-
-    /**
-     * Liste d'éléments {@link LayerControl} qui
-     * représentent les couches que l'utilisateur
-     * peut choisir et configurer.
-     */
-    private final LayerControl[] layers;
 
     /**
      * Dernier répertoire à avoir été choisit
@@ -160,14 +146,7 @@ final class ImageTablePanel extends JSplitPane
     private final ThreadGroup workers;
 
     /**
-     * Objet à utiliser pour annuler les éditions de la table. Cet objet écoutera
-     * les événements {@link javax.swing.event.UndoableEditEvent} que produira la
-     * table.
-     */
-    private final UndoManager undoManager=new UndoManager();
-
-    /**
-     * Objet écoutant les événements d'intéret pour ce paneau.
+     * Objet écoutant les événements d'intéret pour ce panneau.
      */
     private final Listener listeners=new Listener();
 
@@ -187,56 +166,28 @@ final class ImageTablePanel extends JSplitPane
     public ImageTablePanel(final ImageTableModel table, final TableCellRenderer renderer,
                            final StatusBar statusBar,   final ThreadGroup readers, final LayerControl[] layers)
     {
-        super(HORIZONTAL_SPLIT);
-        this.table   = table;
-        this.workers = readers.getParent();
-        this.layers  = layers;
+        super(statusBar, readers, layers);
+        this.table     = table;
+        this.workers   = readers.getParent();
+        this.tableView = new JTable(table);
 
-        mosaic    = new MosaicPanel(statusBar, readers);
-        tableView = new JTable(table);
-        final Icon            propertyIcon = InternalFrame.getIcon("toolbarButtonGraphics/general/Properties16.gif");
         final ListSelectionModel selection = tableView.getSelectionModel();
         final JComponent       tableScroll = new JScrollPane(tableView);
-        final JComponent        layerPanel = LayerControl.getPanel(layers, propertyIcon);
-        final JSplitPane         controler = new JSplitPane(VERTICAL_SPLIT, true, tableScroll, layerPanel);
+        final JSplitPane         controler = (JSplitPane) getLeftComponent();
         final JPanel                images = new JPanel(new BorderLayout());
-        if (layers!=null)
-        {
-            for (int i=0; i<layers.length; i++)
-            {
-                final LayerControl layer=layers[i];
-                synchronized (layer)
-                {
-                    layer.addChangeListener      (listeners);
-                    layer.addUndoableEditListener(undoManager);
-                }
-            }
-        }
 
         images.add(mosaic,    BorderLayout.CENTER);
         images.add(colorRamp, BorderLayout.SOUTH );
 
-        controler.setResizeWeight(1); // La composante du haut reçoit tout l'espace.
-        controler.setOneTouchExpandable(true);
-
-        tableScroll.setMinimumSize  (new Dimension(260,100));
-        controler  .setMinimumSize  (new Dimension(260, 80));
-        mosaic     .setMinimumSize  (new Dimension(100,100));
-
-        setLeftComponent     (controler);
-        setRightComponent    (images);
-        setResizeWeight      (0); // La composante de droite reçoit tout l'espace.
-        setOneTouchExpandable(true);
-        setDividerLocation   (260);
-        undoManager.setLimit (20);
-
-        tableView.setColumnSelectionAllowed(false);
-        tableView.setDefaultRenderer       (String.class, renderer);
-        tableView.setDefaultRenderer       (  Date.class, renderer);
-        selection.addListSelectionListener (listeners);
-        table    .addTableModelListener    (listeners);
-        table    .addUndoableEditListener  (undoManager);
-        this     .addComponentListener     (listeners);
+        this       .setRightComponent(images);
+        controler  .setTopComponent(tableScroll);
+        tableScroll.setMinimumSize(new Dimension(260,100));
+        tableView  .setColumnSelectionAllowed(false);
+        tableView  .setDefaultRenderer       (String.class, renderer);
+        tableView  .setDefaultRenderer       (  Date.class, renderer);
+        selection  .addListSelectionListener (listeners);
+        table      .addTableModelListener    (listeners);
+        table      .addUndoableEditListener  (undoManager);
 
         updateStatusBar();
     }
@@ -244,24 +195,15 @@ final class ImageTablePanel extends JSplitPane
     /**
      * Met à jour le texte de la barre d'état.
      */
-    private void updateStatusBar()
+    protected final void updateStatusBar()
     {
-        if (isShowing()) // Si c'est un autre paneau qui est visible,
+        if (isShowing()) // Si c'est un autre panneau qui est visible,
         {                // alors la barre d'état ne nous appartient pas.
             mosaic.statusBar.setText(Resources.format(ResourceKeys.IMAGES_COUNT_$2,
                                      new Integer(table.getRowCount()),
                                      new Integer(tableView.getSelectedRowCount())));
             fireStateChanged();
         }
-    }
-
-    /**
-     * Reset divider locations.
-     */
-    final void resetDividerLocation()
-    {
-        ((JSplitPane) getLeftComponent()).setDividerLocation(-1);
-        setDividerLocation(-1);
     }
 
     /**
@@ -274,16 +216,12 @@ final class ImageTablePanel extends JSplitPane
     {
         switch (clé)
         {
-            case ResourceKeys.UNDO:             return undoManager.canUndo();
-            case ResourceKeys.REDO:             return undoManager.canRedo();
             case ResourceKeys.COPY:             // fall through
             case ResourceKeys.DELETE:           // fall through
             case ResourceKeys.INVERT_SELECTION: return tableView.getSelectedRowCount()!=0;
             case ResourceKeys.SELECT_ALL:       // fall through
             case ResourceKeys.EXPORT:           return table.getRowCount()!=0;
-            case ResourceKeys.RESET_VIEW:       return mosaic.getImageCount()!=0;
-            case ResourceKeys.DEBUG:            return true;
-            default:                            return false;
+            default:                            return super.canProcess(clé);
         }
     }
 
@@ -300,6 +238,8 @@ final class ImageTablePanel extends JSplitPane
     {
         switch (clé)
         {
+            default: return super.process(clé);
+
             ///////////////////////////
             ///  Fichier - Exporter ///
             ///////////////////////////
@@ -339,7 +279,7 @@ final class ImageTablePanel extends JSplitPane
             case ResourceKeys.COPY:
             {
                 final Transferable content=table.copy(tableView.getSelectedRows());
-                getToolkit().getSystemClipboard().setContents(content, listeners);
+                getToolkit().getSystemClipboard().setContents(content, this);
                 return true;
             }
             ////////////////////////////
@@ -371,16 +311,7 @@ final class ImageTablePanel extends JSplitPane
                 inverseSelect(selected);
                 return true;
             }
-            //////////////////////////
-            ///  Rétablir le zoom  ///
-            //////////////////////////
-            case ResourceKeys.RESET_VIEW:
-            {
-                mosaic.reset();
-                return true;
-            }
         }
-        return false;
     }
 
     /**
@@ -424,14 +355,14 @@ final class ImageTablePanel extends JSplitPane
         synchronized (getTreeLock())
         {
             final LayerControl[] selectedLayers = (layers!=null) ? getSelectedLayers() : null;
-            final ImagePanel[] images=new ImagePanel[selection.length];
+            final ImageCanvas[] images=new ImageCanvas[selection.length];
             /*
              * Recherche les images qui existaient déjà. Ces images
              * seront placées directement dans 'images', sans faire
              * de nouvelles lectures inutiles.
              */
             int i=this.selection.length;
-            final Map<ImageEntry,ImagePanel> old=new HashMap<ImageEntry,ImagePanel>(Math.max(2*i, 11));
+            final Map<ImageEntry,ImageCanvas> old=new HashMap<ImageEntry,ImageCanvas>(Math.max(2*i, 11));
             while (--i>=0)
             {
                 old.put(this.selection[i], mosaic.getImage(i));
@@ -443,23 +374,23 @@ final class ImageTablePanel extends JSplitPane
             /*
              * Procède maintenant à la lecture des images qui n'étaient
              * pas déjà en mémoire. On tentera de réutiliser les objets
-             * 'ImagePanel' qui étaient en trop.
+             * 'ImageCanvas' qui étaient en trop.
              */
             this.selection=selection;
-            final Iterator<ImagePanel> it=old.values().iterator();
+            final Iterator<ImageCanvas> it=old.values().iterator();
             for (i=0; i<selection.length; i++)
             {
                 if (images[i]==null)
                 {
                     final ImageEntry entry = selection[i];
-                    final ImagePanel panel;
+                    final ImageCanvas panel;
                     if (it.hasNext())
                     {
                         panel = it.next();
                     }
                     else
                     {
-                        panel = new ImagePanel();
+                        panel = new ImageCanvas();
                         panel.addImageChangeListener(listeners);
                     }
                     images[i]=panel;
@@ -474,7 +405,7 @@ final class ImageTablePanel extends JSplitPane
              */
             while (it.hasNext())
             {
-                final ImagePanel panel = it.next();
+                final ImageCanvas panel = it.next();
                 panel.removeImageChangeListener(listeners);
                 panel.dispose();
             }
@@ -516,21 +447,6 @@ final class ImageTablePanel extends JSplitPane
     {return new ImageTableModel(table);}
 
     /**
-     * Retourne les couches sélectionnées par l'utilisateur. Le tableau
-     * retourné peut avoir une longueur de 0, mais ne sera jamais nul.
-     */
-    public LayerControl[] getSelectedLayers()
-    {
-        final int length = (layers!=null) ? layers.length : 0;
-        final LayerControl[] selected=new LayerControl[length];
-        int count=0;
-        for (int i=0; i<length; i++)
-            if (layers[i].isSelected())
-                selected[count++]=layers[i];
-        return XArray.resize(selected, count);
-    }
-
-    /**
      * Retourne les entrés des images sélectionnées par l'utilisateur.
      * Le tableau retourné peut avoir une longueur de 0, mais ne sera
      * jamais <code>null</code>.
@@ -570,26 +486,9 @@ final class ImageTablePanel extends JSplitPane
      * bases de données accédées par cette fenêtre.
      */
     protected void setTimeZone(final TimeZone timezone)
-    {table.setTimeZone(timezone);}
-
-    /**
-     * Modifie la synchronisation des images. La valeur <code>true</code>
-     * indique que tout zoom ou translation appliqué sur une image d'une
-     * mosaïque doit être répliqué sur les autres.
-     */
-    protected void setImagesSynchronized(final boolean s)
-    {mosaic.setImagesSynchronized(s);}
-
-    /**
-     * Spécifie si les cartes doivent être redessinées
-     * durant les glissements des ascenceurs. Spécifier
-     * <code>true</code> demandera plus de puissance de
-     * la part de l'ordinateur.
-     */
-    protected void setPaintingWhileAdjusting(final boolean s)
     {
-        mosaic.setPaintingWhileAdjusting(s);
-        setContinuousLayout(s);
+        super.setTimeZone(timezone);
+        table.setTimeZone(timezone);
     }
 
     /**
@@ -611,58 +510,16 @@ final class ImageTablePanel extends JSplitPane
     {listenerList.remove(ChangeListener.class, listener);}
 
     /**
-     * Signale tous les objets intéressés qu'un changement est survenu
-     * dans cette table. Les changements signalés sont les changements
-     * dans le contenu de la table,  dans les images sélectionnées par
-     * l'utilisateur ou dans la visibilité de la table par exemple.
-     */
-    private void fireStateChanged()
-    {
-        ChangeEvent event=null;
-        final Object[] listeners=listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;)
-        {
-            if (listeners[i]==ChangeListener.class)
-            {
-                if (event==null) event=new ChangeEvent(this);
-                ((ChangeListener) listeners[i+1]).stateChanged(event);
-            }
-        }
-    }
-
-    /**
-     * Libère les ressources utilisées par cette fenêtre.
-     * Cette méthode est appelée automatiquement lorsque
-     * la fenêtre est fermée.
-     *
-     * @throws SQLException si un accès à une base de
-     *         données était nécessaire et a échoué.
-     */
-    public synchronized void dispose() throws SQLException
-    {
-        mosaic.dispose();
-        for (int i=layers.length; --i>=0;)
-            layers[i].dispose();
-    }
-
-    /**
-     * Classe de l'objet qui écoutera les événements d'intéret pour ce paneau.
+     * Classe de l'objet qui écoutera les événements d'intéret pour ce panneau.
      * On s'intéresse aux changements des données dans la table d'images, aux
      * changements de la sélection de l'utilisateur ainsi qu'aux changements
-     * de la visibilité du paneau.
+     * de la visibilité du panneau.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Listener extends ComponentAdapter implements TableModelListener, ListSelectionListener, ChangeListener, ImageChangeListener, ClipboardOwner
+    private final class Listener implements TableModelListener, ListSelectionListener, ImageChangeListener
     {
-        /**
-         * Méthode appelée automatiquement chaque fois
-         * que l'onglet de ce paneau est sélectionné.
-         */
-        public void componentShown(final ComponentEvent event)
-        {updateStatusBar();}
-
         /**
          * Méthode appelée automatiquement chaque
          * fois que le contenu du tableau change.
@@ -687,32 +544,12 @@ final class ImageTablePanel extends JSplitPane
         }
 
         /**
-         * Méthode appelée automatiquement lorsque la configuration
-         * d'au moins une couche a changée. Cette méthode recharge
-         * les images afin de prendre en compte le changement.
-         */
-        public void stateChanged(final ChangeEvent event)
-        {
-            mosaic.reload((layers!=null) ? getSelectedLayers() : null);
-            fireStateChanged();
-        }
-
-        /**
          * Méthode appelée automatiquement chaque fois qu'une des images affichées a changée.
          * Cette méthode n'est appelée qu'après que le chargement ait été complétée.
          */
         public void imageChanged(final ImageChangeEvent event)
         {
-            synchronized (ImageTablePanel.this)
-            {ImageTablePanel.this.imageChanged(mosaic.getGridCoverages());}
-        }
-
-        /**
-         * Méthode appelée automatiquement lorsque cette table
-         * ne possède plus le contenu du presse-papier.
-         */
-        public void lostOwnership(final Clipboard clipboard, final Transferable contents)
-        {
+            ImageTablePanel.this.imageChanged(mosaic.getGridCoverages());
         }
     }
 }

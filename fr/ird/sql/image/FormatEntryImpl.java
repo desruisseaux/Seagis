@@ -65,7 +65,6 @@ import net.seas.awt.tree.MutableTreeNode;
 import net.seas.awt.tree.DefaultMutableTreeNode;
 
 // Divers
-import javax.units.Unit;
 import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;

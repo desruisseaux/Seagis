@@ -549,7 +549,7 @@ final class DateIterator implements TickIterator
             final int lastDay =calendar.get(Calendar.DAY_OF_YEAR);
             final int lastYear=calendar.get(Calendar.YEAR);
 
-            final int dateFormat = (firstYear==lastYear && firstDay==lastDay) ? -1 : DateFormat.SHORT;
+            final int dateFormat = (firstYear==lastYear && firstDay==lastDay) ? -1 : DateFormat.MEDIUM;
             final int timeFormat;
 
             if      (increment >= DAY) timeFormat= -1;

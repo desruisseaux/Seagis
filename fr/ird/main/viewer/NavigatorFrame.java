@@ -93,7 +93,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     /**
      * Composante qui contiendra les onglets pour chaque types d'images.
      * Les composantes de ce paneau seront pour la plupart de la classe
-     * <code>ImageTablePanel</code>.
+     * <code>ImagePanel</code>.
      */
     private final JTabbedPane tabs=new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
 
@@ -134,9 +134,30 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         panel.add(statusBar, BorderLayout.SOUTH );
         tabs.setOpaque(true);
 
+        final ThreadGroup readers = database.getThreadGroup();
+        final LayerControl[] ctrl = database.getLayerControls();
+        final ImageMosaicPanel mosaic = new ImageMosaicPanel(table, statusBar, readers, ctrl);
+        tabs.addTab(Resources.format(ResourceKeys.MOSAIC), /*icon, */ mosaic);
+
         configureTable();
         addSeries(database, series);
         setFrameIcon(getIcon("org/javalobby/icons/20x20/Sheet.gif"));
+    }
+
+    /**
+     * Retourne le paneau représentant les mosaïques
+     * d'images, ou <code>null</code> s'il n'y en a pas.
+     */
+    private ImageMosaicPanel getMosaicPanel()
+    {
+        final Component[] tabs=this.tabs.getComponents();
+        for (int i=0; i<tabs.length; i++)
+        {
+            final Component c=tabs[i];
+            if (c instanceof ImageMosaicPanel)
+                return ((ImageMosaicPanel) c);
+        }
+        return null;
     }
 
     /**
@@ -150,8 +171,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         for (int i=tabs.length; --i>=0;)
         {
             final Component c = tabs[i];
-            if (c instanceof ImageTablePanel)
-                ((ImageTablePanel) c).resetDividerLocation();
+            if (c instanceof ImagePanel)
+                ((ImagePanel) c).resetDividerLocation();
         }
     }
 
@@ -192,7 +213,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * région qu'il a demandé à voir. Cette méthode peut être appelée à partir
      * de n'importe quel thread (pas nécessairement celui de <i>Swing</i>).
      *
-     * @param  tabs Liste des paneau. Seul les paneaux de la classe {@link ImageTablePanel}
+     * @param  tabs Liste des paneau. Seul les paneaux de la classe {@link ImagePanel}
      *         seront pris en compte. Bien que la méthode {@link Container#getComponents}
      *         soit thread-safe, elle devrait avoir été appelée dans le thread de Swing
      *         pour plus de sécurité.
@@ -214,6 +235,11 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                     final ImageTablePanel panel = (ImageTablePanel) tabs[i];
                     table.setSeries(panel.getSeries());
                     panel.setEntries(table);
+                }
+                else if (tabs[i] instanceof ImageMosaicPanel)
+                {
+                    final ImageMosaicPanel panel = (ImageMosaicPanel) tabs[i];
+                    panel.refresh();
                 }
             }
         }
@@ -241,16 +267,28 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                     if (série.equals(((ImageTablePanel) c).getSeries()))
                         return;
             }
+            final String           name;
+            final ImageTablePanel  panel;
+            final ImageMosaicPanel mosaic;
+            final ImageTableModel  model;
             synchronized (table)
             {
                 table.setSeries(série);
-                final String name=série.getName();
-                final ImageTablePanel panel=createPanel(new ImageTableModel(table), database);
-                EventQueue.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {tabs.addTab(name, panel);}
-                });
+                name  = série.getName();
+                model = new ImageTableModel(table);
+            }
+            // Do not invokes following code inside the
+            // synchronized block: it cause deadlock.
+            panel = createPanel(model, database);
+            EventQueue.invokeLater(new Runnable()
+            {
+                public void run()
+                {tabs.addTab(name, panel);}
+            });
+            mosaic = getMosaicPanel();
+            if (mosaic!=null)
+            {
+                mosaic.addSeries(série);
             }
         }
     }
@@ -289,15 +327,31 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     }
 
     /**
+     * Retourne le nombre de séries affichées dans cette fenêtre.
+     */
+    private int getSeriesCount()
+    {
+        final Component[] tabs=this.tabs.getComponents();
+        int count=0;
+        for (int i=0; i<tabs.length; i++)
+        {
+            final Component c=tabs[i];
+            if (c instanceof ImageTablePanel)
+                count++;
+        }
+        return count;
+    }
+
+    /**
      * Supprime l'onglet à l'index spécifié.
      */
     private final void removeTabAt(final int index)
     {
         final Component tab=tabs.getComponent(index);
         tabs.removeTabAt(index);
-        if (tab instanceof ImageTablePanel) try
+        if (tab instanceof ImagePanel) try
         {
-            ((ImageTablePanel) tab).dispose();
+            ((ImagePanel) tab).dispose();
         }
         catch (SQLException exception)
         {
@@ -314,17 +368,17 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     protected boolean canProcess(final int clé)
     {
         final Component c=tabs.getSelectedComponent();
-        if (c instanceof ImageTablePanel)
-            if (((ImageTablePanel) c).canProcess(clé))
+        if (c instanceof ImagePanel)
+            if (((ImagePanel) c).canProcess(clé))
                 return true;
 
         switch (clé)
         {
             default:                              return super.canProcess(clé);
-            case ResourceKeys.CLOSE_SERIES:       return tabs.getTabCount()>=2; // On veut laisser au moins un onglet.
+            case ResourceKeys.CLOSE_SERIES:       return (c instanceof ImageTablePanel);
             case ResourceKeys.ADD_SERIES:         // fall through
             case ResourceKeys.CHANGE_COORDINATES: return true;
-            case ResourceKeys.COUPLING:           return tabs.getTabCount()!=0;
+            case ResourceKeys.COUPLING:           return getSeriesCount()!=0;
         }
     }
 
@@ -339,8 +393,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     protected Task process(final int clé) throws SQLException
     {
         final Component c=tabs.getSelectedComponent();
-        if (c instanceof ImageTablePanel)
-            if (((ImageTablePanel) c).process(clé))
+        if (c instanceof ImagePanel)
+            if (((ImagePanel) c).process(clé))
                 return null;
 
         final Resources resources = Resources.getResources(getLocale());
@@ -429,8 +483,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         for (int i=tabs.length; --i>=0;)
         {
             final Component c = tabs[i];
-            if (c instanceof ImageTablePanel)
-                ((ImageTablePanel) c).setTimeZone(timezone);
+            if (c instanceof ImagePanel)
+                ((ImagePanel) c).setTimeZone(timezone);
         }
     }
 
@@ -439,15 +493,15 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * indique que tout zoom ou translation appliqué sur une image d'une
      * mosaïque doit être répliqué sur les autres.
      */
-    protected synchronized void setImagesSynchronized(final boolean s)
+    protected void setImagesSynchronized(final boolean s)
     {
         super.setImagesSynchronized(s);
         final Component[] tabs=this.tabs.getComponents();
         for (int i=tabs.length; --i>=0;)
         {
             final Component c = tabs[i];
-            if (c instanceof ImageTablePanel)
-                ((ImageTablePanel) c).setImagesSynchronized(s);
+            if (c instanceof ImagePanel)
+                ((ImagePanel) c).setImagesSynchronized(s);
         }
     }
 
@@ -457,15 +511,15 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    protected synchronized void setPaintingWhileAdjusting(final boolean s)
+    protected void setPaintingWhileAdjusting(final boolean s)
     {
         super.setPaintingWhileAdjusting(s);
         final Component[] tabs=this.tabs.getComponents();
         for (int i=tabs.length; --i>=0;)
         {
             final Component c = tabs[i];
-            if (c instanceof ImageTablePanel)
-                ((ImageTablePanel) c).setPaintingWhileAdjusting(s);
+            if (c instanceof ImagePanel)
+                ((ImagePanel) c).setPaintingWhileAdjusting(s);
         }
     }
     
@@ -490,16 +544,16 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Cette méthode est appelée automatiquement lorsque
      * la fenêtre est fermée.
      */
-    public synchronized void dispose()
+    public void dispose()
     {
         SQLException exception=null;
         final Component[] tabs=this.tabs.getComponents();
         for (int i=tabs.length; --i>=0;)
         {
             final Component c = tabs[i];
-            if (c instanceof ImageTablePanel) try
+            if (c instanceof ImagePanel) try
             {
-                ((ImageTablePanel) c).dispose();
+                ((ImagePanel) c).dispose();
             }
             catch (SQLException e)
             {

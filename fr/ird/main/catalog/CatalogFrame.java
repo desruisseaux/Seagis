@@ -31,6 +31,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.BorderLayout;
 import java.awt.geom.Rectangle2D;
+import javax.swing.SwingConstants;
 
 // Time
 import java.util.Date;
@@ -84,7 +85,8 @@ public class CatalogFrame extends InternalFrame
     /**
      * The time ranges.
      */
-    private final RangeBars times = new RangeBars(TimeZone.getDefault());
+    private final RangeBars times = new RangeBars(TimeZone.getDefault(),
+                                                  SwingConstants.HORIZONTAL);
 
     /**
      * The coordinate chooser. Global time range and geographic

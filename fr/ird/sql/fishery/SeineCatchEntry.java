@@ -55,6 +55,11 @@ import fr.ird.animat.Species;
 final class SeineCatchEntry extends AbstractCatchEntry
 {
     /**
+     * Unités des captures.
+     */
+    private static final Unit TON = Unit.KILOGRAM.scale(1000);
+
+    /**
      * Date et heure de la capture, en nombre de
      * millisecondes écoulées depuis le 1 janvier 1970.
      */
@@ -156,7 +161,7 @@ final class SeineCatchEntry extends AbstractCatchEntry
      * Retourne les unités des captures.
      */
     public Unit getUnit()
-    {return Unit.TON;}
+    {return TON;}
 
     /**
      * Vérifie si cette capture est

@@ -285,7 +285,6 @@ public class CatchLayer extends MarkLayer
      */
     private void validate()
     {
-        assert Thread.holdsLock(this);
         hasShape = false;
         colors   = new Color[catchs.size()];
         useFill  = new boolean[colors.length];
