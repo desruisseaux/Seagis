@@ -1,0 +1,18 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>package net.seas.opengis.cs</TITLE>
+  </HEAD>
+  <BODY>
+    <P ALIGN="justify">Coordinate Systems implementation.</P>
+
+    <P>&nbsp;</P>
+    <H2>Differences with OpenGIS specification</H2>
+    <UL>
+      <LI>{@link net.seas.opengis.cs.Ellipsoid#getInverseFlattening} returns
+          {@link java.lang.Double#POSITIVE_INFINITY} instead of 0 for
+          perfect spheres. Infinity is the mathematically correct value.</LI>
+    </UL>
+  </BODY>
+</HTML>
