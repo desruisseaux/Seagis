@@ -43,6 +43,7 @@ import net.seas.opengis.ct.CoordinateTransform;
 
 // Images
 import java.awt.image.RenderedImage;
+import java.awt.image.WritableRenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 
 // Java Advanced Imaging
@@ -52,10 +53,6 @@ import javax.media.jai.Histogram;
 import javax.media.jai.ImageMIPMap;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.GraphicsJAI;
-import javax.media.jai.Interpolation;
-import javax.media.jai.InterpolationNearest;
-import javax.media.jai.iterator.RectIterFactory;
-import javax.media.jai.iterator.RectIter;
 import javax.media.jai.util.Range;
 
 // Geometry
@@ -183,7 +180,7 @@ public class GridCoverage extends Coverage
     private final GridGeometry gridGeometry;
 
     /**
-     * Coordonnées de la région couverte par l'image. Cette envelope
+     * Coordonnées de la région couverte par l'image. Cette enveloppe
      * a au moins deux dimensions. Elle peut toutefois en avoir plus
      * pour mémoriser, par exemple, la date de début et de fin ou la
      * profondeur de l'image. Le nombre de dimensions de cette image
@@ -219,7 +216,47 @@ public class GridCoverage extends Coverage
     };
 
     /**
+     * Construct a new grid coverage with the same parameter
+     * than the specified coverage.
+     */
+    protected GridCoverage(final GridCoverage coverage)
+    {
+        super(coverage);
+        numeric          = coverage.numeric;
+        image            = coverage.image;
+        images           = coverage.images; // TODO: Should we clone?
+        maxLevel         = coverage.maxLevel;
+        gridGeometry     = coverage.gridGeometry;
+        envelope         = coverage.envelope;
+        sampleDimensions = coverage.sampleDimensions;
+    }
+
+    /**
      * Construct a grid coverage with the specified envelope.
+     *
+     * @param name         The grid coverage name.
+     * @param image        The image.
+     * @param cs           The coordinate system. This specifies the coordinate system used
+     *                     when accessing a grid coverage with the “evaluate” methods.  The
+     *                     number of dimensions must matches the number of dimensions for
+     *                     <code>envelope</code>.
+     * @param envelope     The grid coverage cordinates. This envelope must have at least two
+     *                     dimensions.   The two first dimensions describe the image location
+     *                     along <var>x</var> and <var>y</var> axis. The other dimensions are
+     *                     optional and may be used to locate the image on a vertical axis or
+     *                     on the time axis.
+     *
+     * @throws MismatchedDimensionException If the envelope's dimension
+     *         is not the same than the coordinate system's dimension.
+     */
+    public GridCoverage(final String         name, final RenderedImage  image,
+                        final CoordinateSystem cs, final Envelope    envelope) throws MismatchedDimensionException
+    {
+        this(name, image, cs, envelope, null, false);
+    }
+
+    /**
+     * Construct a grid coverage with the specified envelope and category lists.
      *
      * @param name         The grid coverage name.
      * @param image        The image.
@@ -248,7 +285,7 @@ public class GridCoverage extends Coverage
                         final CoordinateSystem cs,       final Envelope    envelope,
                         final CategoryList[] categories, final boolean isGeophysics) throws MismatchedDimensionException
     {
-        this(name, image, cs, envelope.clone(), null, categories, isGeophysics);
+        this(name, PlanarImage.wrapRenderedImage(image), cs, envelope.clone(), null, categories, isGeophysics);
     }
 
     // TODO: In a future version, we will provide a constructor expecting
@@ -261,18 +298,18 @@ public class GridCoverage extends Coverage
      * of those argument should be null.   The null argument will be computed from
      * the non-null argument.
      */
-    private GridCoverage(final String         name,       final RenderedImage image,
+    private GridCoverage(final String         name,       final PlanarImage image,
                          final CoordinateSystem cs,       Envelope envelope, MathTransform transform,
                          final CategoryList[] categories, final boolean isGeophysics) throws MismatchedDimensionException
     {
-        super(name, cs);
+        super(name, cs, image);
 
         /*
          * Check category lists. The number of lists
          * must match the number of image's bands.
          */
         final int numBands = image.getSampleModel().getNumBands();
-        if (numBands != categories.length)
+        if (categories!=null && numBands!=categories.length)
         {
             throw new IllegalArgumentException(Resources.format(Clé.NUMBER_OF_BANDS_MISMATCH¤2, new Integer(numBands), new Integer(categories.length)));
         }
@@ -334,16 +371,21 @@ public class GridCoverage extends Coverage
         final SampleDimension[] dimensions = new SampleDimension[numBands];
         for (int i=0; i<numBands; i++)
         {
-            dimensions[i] = new GridSampleDimension(categories[i]);
+            dimensions[i] = new GridSampleDimension(categories!=null ? categories[i] : null);
         }
-        if (isGeophysics)
+        if (categories==null)
         {
-            this.numeric = PlanarImage.wrapRenderedImage(image);
+            this.image   = image;
+            this.numeric = image;
+        }
+        else if (isGeophysics)
+        {
+            this.numeric = image;
             this.image   = PlanarImage.wrapRenderedImage(toThematic(this.numeric, categories));
         }
         else
         {
-            this.image   = PlanarImage.wrapRenderedImage(image);
+            this.image   = image;
             this.numeric = PlanarImage.wrapRenderedImage(toNumeric(this.image, categories));
         }
         this.images           = USE_PYRAMID ? new ImageMIPMap(image, AffineTransform.getScaleInstance(DOWN_SAMPLER, DOWN_SAMPLER), null) : null;
@@ -377,10 +419,9 @@ public class GridCoverage extends Coverage
 
     /**
      * Returns <code>true</code> if grid data can be edited.
-     * The default implementation returns <code>false</code>.
      */
     public boolean isDataEditable()
-    {return false;}
+    {return (numeric instanceof WritableRenderedImage);}
 
     /**
      * Returns information for the grid coverage geometry. Grid geometry
@@ -414,11 +455,29 @@ public class GridCoverage extends Coverage
      * @return An array containing values.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-//  public int[] evaluate(final CoordinatePoint coord, final int[] dest) throws PointOutsideCoverageException
-//  {
-        // TODO
-//      return null;
-//  }
+    public int[] evaluate(final CoordinatePoint coord, final int[] dest) throws PointOutsideCoverageException
+    {
+        setPoint(coord);
+        final int x = pixel.x;
+        final int y = pixel.y;
+        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
+    }
+
+    /**
+     * Return an sequence of float values for a given point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public synchronized float[] evaluate(final CoordinatePoint coord, final float[] dest) throws PointOutsideCoverageException
+    {
+        setPoint(coord);
+        final int x = pixel.x;
+        final int y = pixel.y;
+        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
+    }
 
     /**
      * Return an sequence of double values for a given point in the coverage.
@@ -430,14 +489,10 @@ public class GridCoverage extends Coverage
      */
     public synchronized double[] evaluate(final CoordinatePoint coord, final double[] dest) throws PointOutsideCoverageException
     {
-        final Point2D point = new Point2D.Double(coord.ord[0], coord.ord[1]);
-        if (setPoint(point))
-        {
-            final int x = pixel.x;
-            final int y = pixel.y;
-            return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
-        }
-        else throw new PointOutsideCoverageException(coord);
+        setPoint(coord);
+        final int x = pixel.x;
+        final int y = pixel.y;
+        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
     }
 
     /*
@@ -454,12 +509,16 @@ public class GridCoverage extends Coverage
      * @return Description du pixel, ou <code>null</code> si le pixel demandé est en
      *         dehors des limites de l'image ou ne correspond pas à un thème connu.
      */
-//  public synchronized String getLabel(final Point2D point)
+//  public synchronized String getLabel(final CoordinatePoint coord)
 //  {
-//      if (!setPoint(point)) return null;
-//      final int x = pixel.x;
-//      final int y = pixel.y;
-//      return themes.getLabel(image.getTile(image.XToTileX(x), image.YToTileY(y)), x, y);
+//      if (setPoint(coord))
+//      {
+//          final int x = pixel.x;
+//          final int y = pixel.y;
+//          final double value = numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getSampleDouble(x, y, 0);
+//          return sampleDimensions.get(0).getCategoryList().format(value, null);
+//      }
+//      else throw new PointOutsideCoverageException(coord);
 //  }
 
     /**
@@ -469,23 +528,28 @@ public class GridCoverage extends Coverage
      * a échouée ou si les coordonnées résultantes sont en dehors des limites de
      * l'image.
      */
-    private boolean setPoint(Point2D point)
+    private void setPoint(final CoordinatePoint coord) throws PointOutsideCoverageException
     {
         try
         {
+            Point2D point = new Point2D.Double(coord.ord[0], coord.ord[1]);
             point=gridGeometry.getGridToCoordinateJAI().inverseTransform(point, pixel);
             assert(point==pixel);
             final int x    = pixel.x;
             final int y    = pixel.y;
             final int xmin = image.getMinX();
             final int ymin = image.getMinY();
-            return x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight();
+            if (!(x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight()))
+            {
+                throw new PointOutsideCoverageException(coord);
+            }
         }
         catch (NoninvertibleTransformException exception)
         {
-            unexpectedException("getValue", exception);
+            final PointOutsideCoverageException e = new PointOutsideCoverageException(coord);
+            if (Version.MINOR>=4) e.initCause(exception);
+            throw e;
         }
-        return false;
     }
 
     /**
@@ -611,17 +675,10 @@ public class GridCoverage extends Coverage
         }
         catch (NoninvertibleTransformException exception)
         {
-            unexpectedException("prefetch", exception);
             // Si on n'a pas pu calculer les coordonnées pixels de la
             // région à préparer, on laisse tomber. Tout simplement.
             // Ca n'a pas d'impact grave car cette méthode n'est que
             // facultative.
         }
     }
-
-    /**
-     * Appelée lorsqu'une exception inatendue est survenue.
-     */
-    private static void unexpectedException(final String method, final NoninvertibleTransformException exception)
-    {ExceptionMonitor.unexpectedException("net.seas.opengis", "GridCoverage", method, exception);}
 }

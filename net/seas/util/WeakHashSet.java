@@ -183,6 +183,21 @@ public class WeakHashSet<Element>
     private int threshold;
 
     /**
+     * Date de la dernière fois or {@link #rehash} a été appelée.
+     * Si on a demandé une réduction de capacité, cette réduction
+     * ne sera faite qu'à la condition que la dernière opération
+     * remonte à plus de 20 secondes. On veut ainsi éviter l'efft
+     * "rebondissement" ou la capacité de la table est constamment
+     * agrandit puis diminuée...
+     */
+    private long lastRehashTime;
+
+    /**
+     * Nombre de millisecondes à attendre avant de réduire une table.
+     */
+    private static final long HOLD_TIME = 20*1000L;
+
+    /**
      * Construit un ensemble avec une
      * capacité initiale par défaut.
      */
@@ -190,6 +205,7 @@ public class WeakHashSet<Element>
     {
         table=new WeakElement<Element>[MIN_CAPACITY];
         threshold=Math.round(table.length*LOAD_FACTOR);
+        lastRehashTime = System.currentTimeMillis();
     }
 
     /**
@@ -249,12 +265,15 @@ public class WeakHashSet<Element>
             assert Thread.holdsLock(this);
             assert valid();
         }
+        final long currentTime = System.currentTimeMillis();
         final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
         if (Version.MINOR>=4) assert (capacity>=MIN_CAPACITY) : capacity;
-        if (augmentation ? capacity<=table.length : capacity>=table.length)
+        if (augmentation ? (capacity<=table.length) :
+                           (capacity>=table.length || currentTime-lastRehashTime<HOLD_TIME))
         {
             return;
         }
+        lastRehashTime = currentTime;
         final WeakElement<Element>[] oldTable = table;
         table     = new WeakElement<Element>[capacity];
         threshold = Math.round(capacity*LOAD_FACTOR);

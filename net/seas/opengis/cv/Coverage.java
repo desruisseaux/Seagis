@@ -66,6 +66,7 @@ import java.util.Locale;
 import net.seas.resources.Resources;
 import net.seas.util.Version;
 import net.seas.util.XArray;
+import net.seas.util.XClass;
 
 
 /**
@@ -79,16 +80,20 @@ import net.seas.util.XArray;
  *   <li><code>getDimension();</code></li>
  * </ul>
  *
- * All those methods should returns the same number. Note that the dimension of grid coverage
- * <strong>is not the same</strong> than the number of sample dimension
- * (<code>getSampleDimensions().size()</code>). The later may be better
- * understood as the number of bands for 2D grid coverage.
+ * All those methods should returns the same number.   Note that the dimension
+ * of grid coverage <strong>is not the same</strong> than the number of sample
+ * dimensions  (<code>getSampleDimensions().size()</code>).   The later may be
+ * better understood as the number of bands for 2D grid coverage.
+ * <br><br>
+ * There is no <code>getMetadataValue(...)</code> method in this implementation.
+ * OpenGIS's metadata are called "Properties" in <em>Java Advanced Imaging</em>.
+ * Use {@link #getProperty} instead.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public abstract class Coverage implements Dimensioned, PropertySource
+public abstract class Coverage extends PropertySourceImpl implements Dimensioned
 {
     /**
      * The coverage name.
@@ -109,6 +114,18 @@ public abstract class Coverage implements Dimensioned, PropertySource
     private final String[] dimensionNames;
 
     /**
+     * Construct a new coverage with the same
+     * parameters than the specified coverage.
+     */
+    protected Coverage(final Coverage coverage)
+    {
+        super(null, coverage);
+        this.name             = coverage.name;
+        this.coordinateSystem = coverage.coordinateSystem;
+        this.dimensionNames   = coverage.dimensionNames;
+    }
+
+    /**
      * Construct a coverage with no coordinate system.
      *
      * @param name The coverage name.
@@ -117,9 +134,14 @@ public abstract class Coverage implements Dimensioned, PropertySource
      *        are typically 2D (x,y) while other coverages may be 3D (x,y,z)
      *        or 4D (x,y,z,t). The array's length will determine the number
      *        of dimensions of the coverage.
+     * @param properties The set of properties for this coverage, or <code>null</code>
+     *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
+     *        OpenGIS calls "Metadata". There is non <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead.
      */
-    public Coverage(final String name, final String[] dimensionNames)
+    public Coverage(final String name, final String[] dimensionNames, final PropertySource properties)
     {
+        super(null, properties);
         this.name             = name;
         this.coordinateSystem = null;
         this.dimensionNames   = (String[]) dimensionNames.clone();
@@ -134,9 +156,14 @@ public abstract class Coverage implements Dimensioned, PropertySource
      * @param coordinateSystem The coordinate system. This specifies
      *        the coordinate system used when accessing a coverage or
      *        grid coverage with the “evaluate” methods.
+     * @param properties The set of properties for this coverage, or <code>null</code>
+     *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
+     *        OpenGIS calls "Metadata". There is non <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead.
      */
-    public Coverage(final String name, final CoordinateSystem coordinateSystem)
+    public Coverage(final String name, final CoordinateSystem coordinateSystem, final PropertySource properties)
     {
+        super(null, properties);
         this.name             = name;
         this.coordinateSystem = coordinateSystem;
         this.dimensionNames   = new String[coordinateSystem.getDimension()];
@@ -278,6 +305,31 @@ public abstract class Coverage implements Dimensioned, PropertySource
     }
 
     /**
+     * Return an sequence of float values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence. The default interpolation
+     * type used when accessing grid values for points which fall between grid cells is
+     * nearest neighbor. The coordinate system of the point is the same as the grid coverage
+     * coordinate system.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws PointOutsideCoverageException
+    {
+        final double[] result = evaluate(coord, (double[])null);
+        if (dest==null)  dest = new float[result.length];
+        for (int i=0; i<result.length; i++)
+        {
+            dest[i] = (float)result[i];
+        }
+        return dest;
+    }
+
+    /**
      * Return an sequence of double values for a given point in the coverage.
      * A value for each sample dimension is included in the sequence. The default interpolation
      * type used when accessing grid values for points which fall between grid cells is
@@ -303,56 +355,6 @@ public abstract class Coverage implements Dimensioned, PropertySource
      */
     public RenderableImage getRenderableImage(final int xAxis, final int yAxis)
     {return new Renderable(xAxis, yAxis);}
-
-    /**
-     * Returns an array of metadata keywords for this coverage.
-     * If no properties are available, <code>null</code> will be
-     * returned.
-     */
-    public String[] getPropertyNames()
-    {return null;}
-
-    /**
-     * Returns an array of strings recognized as names that begin with the
-     * supplied prefix. If no property names match, <code>null</code> will
-     * be returned. The comparison is done in a case-independent manner.
-     */
-    public String[] getPropertyNames(final String prefix)
-    {
-        int count=0;
-        final int length = prefix.length();
-        final String[] names = getPropertyNames();
-        if (names!=null)
-        {
-            for (int i=0; i<names.length; i++)
-            {
-                final String name = names[i];
-                if (name!=null && name.length()>=length && prefix.equalsIgnoreCase(name.substring(0, length)))
-                {
-                    names[count++] = name;
-                }
-            }
-            return (count!=0) ? XArray.resize(names, count) : null;
-        }
-        return names;
-    }
-
-    /**
-     * Returns the class expected to be returned by a request for
-     * the property with the specified name.  If this information
-     * is unavailable, <code>null</code> will be returned
-     */
-    public Class getPropertyClass(final String propertyName)
-    {return null;}
-
-    /**
-     * Retrieve the metadata value for a given metadata name. If the metadata name
-     * is not recognized, {@link Image#UndefinedProperty} will be returned.
-     *
-     * @param name Metadata keyword for which to retrieve metadata.
-     */
-    public Object getProperty(final String name)
-    {return Image.UndefinedProperty;}
 
     /**
      * Base class for renderable image of a grid coverage.
@@ -589,14 +591,54 @@ public abstract class Coverage implements Dimensioned, PropertySource
     }
 
     /**
-     * Temporary method (will be moved elsewhere in a future version).
+     * Returns a view of an image in which all pixels have been transformed into
+     * floating-point values with the {@link CategoryList#toValue} method.  The
+     * resulting image usually represents some geophysics parameter in "real
+     * world" scientific and engineering units (e.g. temperature in °C).
+     *
+     * @param image      Image to convert. This image usually store pixel values as integers.
+     * @param categories The list of categories to use for transforming pixel values into
+     *                   geophysics parameters. This array's length must matches the number
+     *                   of bands in <code>image</code>.
+     * @return           The converted image. This image store geophysics values as floating-point
+     *                   numbers. This method returns <code>null</code> if <code>image</code> was null.
+     *
+     * @see #toThematic
      */
     protected static RenderedImage toNumeric(final RenderedImage image, final CategoryList[] categories)
     {return NumericImage.getInstance(image, categories);}
 
     /**
-     * Temporary method (will be moved elsewhere in a future version).
+     * Returns a view of an image in which all geophysics values have been transformed
+     * into indexed pixel with the {@link CategoryList#toIndex} method.  The resulting
+     * image is more suitable for rendering than the geophysics image (since Java2D do
+     * a better job with integer pixels than floating-point pixels).
+     *
+     * @param image      Image to convert. This image usually represents some geophysics
+     *                   parameter in "real world" scientific and engineering units (e.g.
+     *                   temperature in °C).
+     * @param categories The list of categories to use for transforming floating-point values
+     *                   into pixel index. This array's length must matches the number of bands
+     *                   in <code>image</code>.
+     * @return           The converted image. This image store pixel index as integer.
+     *                   This method returns <code>null</code> if <code>image</code> was null.
+     *
+     * @see #toNumeric
      */
     protected static RenderedImage toThematic(final RenderedImage image, final CategoryList[] categories)
     {return ThematicImage.getInstance(image, categories);}
+
+    /**
+     * Returns a string représentation of this coverage.
+     */
+    public String toString()
+    {
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        buffer.append(name);
+        buffer.append(": ");
+        buffer.append(getEnvelope());
+        buffer.append(']');
+        return buffer.toString();
+    }
 }

@@ -586,35 +586,6 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
-     * Convert a sample index into a geophysics value, and format it. If <code>sample</code>
-     * belong to a quantitative category, then the value is formatted as a number with the
-     * appropriate number of digits and the units symbol. Otherwise, if <code>sample</code>
-     * belong to a qualitative category, then the category name is returned. Otherwise,
-     * <code>null</code> is returned.
-     *
-     * @param  sample The sample value, usually (but not always) an integer.
-     * @param  locale Locale to use for formatting, or <code>null</code>
-     *                for the default locale.
-     * @return A string representation of the geophysics value, or <code>null</code>
-     *         if the sample don't belong to a known category.
-     */
-    final String formatConverted(final int index, final Locale locale)
-    {
-        final Category category = getDecoder(index, lastCategory);
-        if (category!=null)
-        {
-            lastCategory = category;
-            final double value = category.toValue(index);
-            if (Double.isNaN(value))
-            {
-                return category.getName(locale);
-            }
-            return format(value, true, locale, new StringBuffer()).toString();
-        }
-        else return null;
-    }
-
-    /**
      * Formatte la valeur spécifiée selon les conventions locales. Le nombre sera
      * écrit avec un nombre de chiffres après la virgule approprié pour cette catégorie.
      * Le symbole des unités sera ajouté après le nombre si <code>writeUnit</code>
