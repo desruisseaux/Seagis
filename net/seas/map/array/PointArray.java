@@ -27,6 +27,7 @@ import java.awt.geom.Point2D;
 import java.io.Serializable;
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -111,8 +112,8 @@ public abstract class PointArray implements Serializable
      */
     static void checkRange(final float[] array, final int lower, final int upper) throws IllegalArgumentException
     {
-        if (upper < lower)         throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper)));
-        if (((upper-lower)&1) !=0) throw new IllegalArgumentException(Resources.format(Clé.ODD_ARRAY_LENGTH¤1, new Integer(upper-lower)));
+        if (upper < lower)         throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RANGE_$2, new Integer(lower), new Integer(upper)));
+        if (((upper-lower)&1) !=0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ODD_ARRAY_LENGTH_$1, new Integer(upper-lower)));
         if (lower < 0)             throw new ArrayIndexOutOfBoundsException(lower);
         if (upper >  array.length) throw new ArrayIndexOutOfBoundsException(upper);
     }

@@ -28,6 +28,7 @@ package fr.ird.sql.image;
 // Divers
 import java.sql.SQLException;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -82,6 +83,6 @@ public class IllegalRecordException extends SQLException
         final String table   = getTable();
         final String message = super.getLocalizedMessage();
         if (table==null) return message;
-        return Resources.format(Clé.TABLE_ERROR¤2, table, message);
+        return Resources.format(ResourceKeys.TABLE_ERROR_$2, table, message);
     }
 }

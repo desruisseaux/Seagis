@@ -42,6 +42,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import net.seas.util.XArray;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -402,9 +403,9 @@ public final class Buffer implements Serializable
                 assert(isOrdered());
 
                 // Prépare un enregistrement qui sera ajouté au journal des événements.
-                logBuffer.append(Resources.format(Clé.KEEP¤3, dateFormat.format(getStartTime()),
-                                                              dateFormat.format(getEndTime()),
-                                                              new Double((double)recordCount/(double)oldRecordCount)));
+                logBuffer.append(Resources.format(ResourceKeys.KEEP_DATA_$3, dateFormat.format(getStartTime()),
+                                                  dateFormat.format(getEndTime()),
+                                                  new Double((double)recordCount/(double)oldRecordCount)));
                 if (recordCount < copyCount)
                 {
                     // L'utilisateur a rapproché la date de fin.
@@ -462,7 +463,7 @@ public final class Buffer implements Serializable
                 }
                 if (time<lastTime) // Accept identical time
                 {
-                    throw new IOException(Resources.format(Clé.DATES_NOT_INCREASING));
+                    throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_NOT_INCREASING));
                 }
                 lastTime = time;
                 final int longitude = parser.getField(Parser.LONGITUDE); if (longitude==Parser.LONGITUDE_OVER_LAND) continue;
@@ -506,13 +507,13 @@ public final class Buffer implements Serializable
 
         if (firstTime < lastTime)
         {
-            logBuffer.append(Resources.format(Clé.LOAD¤2,
+            logBuffer.append(Resources.format(ResourceKeys.LOADING_$2,
                                               dateFormat.format(new Date(firstTime)),
                                               dateFormat.format(new Date( lastTime))));
         }
         else if (logBuffer.length()==0)
         {
-            logBuffer.append(Resources.format(Clé.NO_DATA_BETWEEN¤2,
+            logBuffer.append(Resources.format(ResourceKeys.ERROR_NO_DATA_BETWEEN_$2,
                                               dateFormat.format(startTime),
                                               dateFormat.format(  endTime)));
         }
@@ -530,7 +531,7 @@ public final class Buffer implements Serializable
     {
         final int oldCapacity = data.length;
         data = XArray.resize(data, capacity);
-        log("setTimeRange", Resources.format(Clé.RESIZE¤2, new Integer(oldCapacity/1024), new Integer(capacity/1024)));
+        log("setTimeRange", Resources.format(ResourceKeys.RESIZE_$2, new Integer(oldCapacity/1024), new Integer(capacity/1024)));
         return data;
     }
 

@@ -50,6 +50,7 @@ import java.util.Locale;
 import java.io.Serializable;
 import net.seagis.cv.CategoryList;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -209,7 +210,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
             while (resultSet.next())
             {
                 if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2)))
-                    throw new IllegalRecordException(SERIES, Resources.format(Clé.DUPLICATE_SERIES¤1, name));
+                {
+                    throw new IllegalRecordException(SERIES, Resources.format(ResourceKeys.ERROR_DUPLICATE_SERIES_$1, name));
+                }
             }
         }
         return entry;
@@ -263,7 +266,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
         final String[]      names = new String[colIDs.length];
         final int[]           ids = new int   [colIDs.length];
         final int     branchCount = ids.length - (leafType>=GROUP_LEAF ? 0 : 1);
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(Clé.SERIES));
+        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.SERIES));
         /*
          * Balaye la liste de tous les groupes, et place ces groupes
          * dans une arborescence au fur et à mesure qu'ils sont trouvés.

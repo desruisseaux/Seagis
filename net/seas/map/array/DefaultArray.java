@@ -25,6 +25,7 @@ package net.seas.map.array;
 // Divers
 import java.awt.geom.Point2D;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -58,7 +59,9 @@ class DefaultArray extends PointArray
     {
         this.array=array;
         if ((array.length & 1)!=0)
-            throw new IllegalArgumentException(Resources.format(Clé.ODD_ARRAY_LENGTH¤1, new Integer(array.length)));
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ODD_ARRAY_LENGTH_$1, new Integer(array.length)));
+        }
     }
 
     /**

@@ -25,6 +25,7 @@ package net.seas.map.array;
 // Divers
 import java.awt.geom.Point2D;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -110,7 +111,9 @@ class CompressedArray extends PointArray
     {
         checkRange(coord, lower, upper);
         if (upper-lower < 2)
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper)));
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RANGE_$2, new Integer(lower), new Integer(upper)));
+        }
         /*
          * Calcule les plus grands écarts de longitude (<var>dx</var>)
          * et de latitude (<var>dy</var>) entre deux points.

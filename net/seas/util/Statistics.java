@@ -26,6 +26,7 @@ package net.seas.util;
 import java.io.Serializable;
 import net.seagis.io.TableWriter;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -367,7 +368,7 @@ public class Statistics implements Cloneable, Serializable
      */
     public String toString(final boolean tabulations)
     {
-        String text=Resources.format(Clé.STATISTICS_TOSTRING¤6, new Number[]
+        String text=Resources.format(ResourceKeys.STATISTICS_TOSTRING_$6, new Number[]
         {
             new Integer(count()),
             new Double(minimum()),

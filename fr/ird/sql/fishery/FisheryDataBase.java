@@ -48,7 +48,7 @@ import java.util.LinkedHashSet;
 // Divers
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
-import java.util.prefs.Preferences;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -96,8 +96,8 @@ public class FisheryDataBase extends DataBase
      */
     private static final int[] PROPERTY_NAMES=
     {
-        Clé.SQL_SPECIES,
-        Clé.SQL_LONGLINES
+        ResourceKeys.SQL_SPECIES,
+        ResourceKeys.SQL_LONGLINES
     };
 
     /**
@@ -223,7 +223,7 @@ public class FisheryDataBase extends DataBase
     {
         assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(Clé.EDIT_SQL_IMAGES_OR_FISHERIES¤1, new Integer(1)), Table.logger)
+        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(1)), Table.logger)
         {
             public String getProperty(final String name)
             {return getPreference(name);}

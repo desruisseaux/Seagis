@@ -81,6 +81,7 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.TimeZone;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -120,14 +121,14 @@ public final class SpeciesChooser extends JPanel
      * Si ce bouton est sélectionné, l'utilisateur demande à afficher
      * les positions des captures plutôt que les quantités pêchées.
      */
-    private final JToggleButton showPositionOnly = new JRadioButton(Resources.format(Clé.SHOW_POSITION_ONLY), true);
+    private final JToggleButton showPositionOnly = new JRadioButton(Resources.format(ResourceKeys.SHOW_POSITION_ONLY), true);
 
     /**
      * Si ce bouton est sélectionné, l'utilisateur demande à afficher
      * les captures par espèces plutôt que seulement les positions de
      * pêches.
      */
-    private final JToggleButton showCatchAmount = new JRadioButton(Resources.format(Clé.SHOW_CATCH_AMOUNT));
+    private final JToggleButton showCatchAmount = new JRadioButton(Resources.format(ResourceKeys.SHOW_CATCH_AMOUNT));
 
     /**
      * Liste des espèces sélectionnables.
@@ -177,8 +178,9 @@ public final class SpeciesChooser extends JPanel
     public SpeciesChooser()
     {
         super(new BorderLayout());
-        final Listener listener=new Listener();
-        final Renderer renderer=new Renderer();
+        final Resources resources = Resources.getResources(null);
+        final Listener   listener = new Listener();
+        final Renderer   renderer = new Renderer();
         ////////////////////
         ////  Espèces  /////
         ////////////////////
@@ -198,7 +200,7 @@ public final class SpeciesChooser extends JPanel
             c.gridy=2; c.insets.bottom=3; c.insets.left+=15; c.weighty=1; c.fill=c.BOTH; panel.add(scrollList, c);
 
             c.gridy=3; c.insets.bottom=9; c.fill=c.NONE;
-            c.gridwidth=1; c.weighty=0; c.anchor=c.EAST; panel.add(new JLabel(Resources.label(Clé.LANGUAGE)), c);
+            c.gridwidth=1; c.weighty=0; c.anchor=c.EAST; panel.add(new JLabel(resources.getLabel(ResourceKeys.LANGUAGE)), c);
             c.gridx=1;     c.weightx=0; c.insets.left=0; panel.add(localeBox, c);
             if (locales.getSize()!=0)
             {
@@ -215,7 +217,7 @@ public final class SpeciesChooser extends JPanel
             list.setCellRenderer  (renderer);
             list.addMouseListener (listener);
             list.setEnabled       (false);
-            tabs.addTab(Resources.format(Clé.SPECIES), panel);
+            tabs.addTab(resources.getString(ResourceKeys.SPECIES), panel);
         }
         /////////////////////
         ////  Couleurs  /////
@@ -229,7 +231,7 @@ public final class SpeciesChooser extends JPanel
             c.gridx=0; c.fill=c.HORIZONTAL;
             c.gridy=0; c.weightx=1;                panel.add(list,         c);
             c.gridy=1; c.weighty=1; c.fill=c.BOTH; panel.add(colorChooser, c);
-            tabs.addTab(Resources.format(Clé.COLOR), panel);
+            tabs.addTab(Resources.format(ResourceKeys.COLOR), panel);
             list.addItemListener(listener);
             list.setRenderer    (renderer);
         }
@@ -310,7 +312,7 @@ public final class SpeciesChooser extends JPanel
                 for (int j=locales.getSize(); --j>=0;)
                     if (((LocaleEntry) locales.getElementAt(j)).locale==locale)
                         continue check;
-                name = Resources.format(Clé.FAO_CODE);
+                name = Resources.format(ResourceKeys.FAO_CODE);
             }
             locales.addElement(new LocaleEntry(locale, name));
         }
@@ -394,7 +396,7 @@ public final class SpeciesChooser extends JPanel
         for (int i=colors.length; --i>=0;)
             colors[i] = ((Species.Icon) speciesIcons.getElementAt(i)).getColor();
 
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(Clé.SPECIES_SELECTION)))
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.SPECIES_SELECTION)))
         {
             saveChanges(tabs.getSelectedIndex());
             return true;

@@ -24,6 +24,7 @@ package net.seas.map.array;
 
 // Divers
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -62,8 +63,8 @@ final class SubCompressedArray extends CompressedArray
         this.lower  = lower;
         this.upper  = upper;
 
-        if (upper-lower < 2)       throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper)));
-        if (((upper-lower)&1) !=0) throw new IllegalArgumentException(Resources.format(Clé.ODD_ARRAY_LENGTH¤1, new Integer(upper-lower)));
+        if (upper-lower < 2)       throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RANGE_$2, new Integer(lower), new Integer(upper)));
+        if (((upper-lower)&1) !=0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ODD_ARRAY_LENGTH_$1, new Integer(upper-lower)));
         if (lower < 0)                   throw new ArrayIndexOutOfBoundsException(lower);
         if (upper >= other.array.length) throw new ArrayIndexOutOfBoundsException(upper);
     }

@@ -24,7 +24,7 @@ package net.seas.resources;
 
 
 /**
- * Ressources en langue anglaise.
+ * English language resource.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -32,12 +32,12 @@ package net.seas.resources;
 public class Resources_en extends Resources
 {
     /**
-     * Nom du fichier dans lequel sont enregistrées les données.
+     * The resource file, using UTF-8 encoding.
      */
-    static final String FILEPATH = "net/seas/resources/resources_en.serialized";
+    static final String FILEPATH = "net/seas/resources/resources_en.utf";
 
     /**
-     * Initialise les ressources anglaises.
+     * Construct resources for English.
      */
     public Resources_en()
     {super(FILEPATH);}

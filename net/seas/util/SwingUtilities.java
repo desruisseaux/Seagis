@@ -42,6 +42,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import javax.swing.Action;
 import java.awt.event.ActionListener;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -112,6 +113,7 @@ public final class SwingUtilities
         int okChoice = JOptionPane.OK_OPTION;
         if (reset!=null)
         {
+            final Resources resources = Resources.getResources(owner!=null ? owner.getLocale() : null);
             final JButton button;
             if (reset instanceof Action)
             {
@@ -119,13 +121,13 @@ public final class SwingUtilities
             }
             else
             {
-                button = new JButton(Resources.format(Clé.RESET));
+                button = new JButton(resources.getString(ResourceKeys.RESET));
                 button.addActionListener(reset);
             }
             options=new Object[]
             {
-                Resources.format(Clé.OK),
-                Resources.format(Clé.CANCEL),
+                resources.getString(ResourceKeys.OK),
+                resources.getString(ResourceKeys.CANCEL),
                 button
             };
             initialValue = options[okChoice=0];

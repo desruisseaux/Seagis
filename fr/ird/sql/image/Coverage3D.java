@@ -77,6 +77,7 @@ import java.util.logging.LogRecord;
 import java.util.Date;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import fr.ird.sql.coupling.AreaEvaluator;
 
 
@@ -183,7 +184,7 @@ public class Coverage3D extends Coverage
         this.categories = (entries.length!=0) ? entries[0].getCategoryLists() : new CategoryList[0];
         for (int i=1; i<entries.length; i++)
             if (!Arrays.equals(categories, entries[i].getCategoryLists()))
-                throw new SQLException(Resources.format(Clé.CATEGORIES_MITMATCH));
+                throw new SQLException(Resources.format(ResourceKeys.ERROR_CATEGORIES_MITMATCH));
         Arrays.sort(entries, COMPARATOR);
     }
 
@@ -386,7 +387,7 @@ public class Coverage3D extends Coverage
     private void load(final int index) throws IOException
     {
         final ImageEntry entry = entries[index];
-        log(Clé.LOAD_IMAGE¤1, new Object[]{entry});
+        log(ResourceKeys.LOADING_IMAGE_$1, new Object[]{entry});
         lower = upper = entry.getGridCoverage(listeners);
         timeLower = timeUpper = getTime(entry);
     }
@@ -400,7 +401,7 @@ public class Coverage3D extends Coverage
     {
         final long timeLower = getTime(entryLower);
         final long timeUpper = getTime(entryUpper);
-        log(Clé.LOAD_IMAGES¤2, new Object[]{entryLower, entryUpper});
+        log(ResourceKeys.LOADING_IMAGES_$2, new Object[]{entryLower, entryUpper});
         final GridCoverage lower = entryLower.getGridCoverage(listeners);
         final GridCoverage upper = entryUpper.getGridCoverage(listeners);
         this.lower     = lower; // Set only when BOTH images are OK.
@@ -514,7 +515,7 @@ public class Coverage3D extends Coverage
             e.initCause(exception);
             throw e;
         }
-        throw new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
+        throw new PointOutsideCoverageException(Resources.format(ResourceKeys.ERROR_DATE_OUTSIDE_COVERAGE_$1, date));
     }
 
     /**

@@ -50,6 +50,7 @@ import java.awt.Shape;
 import java.util.Arrays;
 import java.util.Iterator;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -199,7 +200,7 @@ final class FileParser extends Parser
         this.in=in;
         this.filename=filename;
         origine=in.getStreamPosition();
-        log("<init>", getResource(Clé.OPEN¤1));
+        log("<init>", getResource(ResourceKeys.OPEN_$1));
     }
 
     /**
@@ -207,7 +208,7 @@ final class FileParser extends Parser
      * "(sans nom)" s'il n'a pas été nommé.
      */
     private final String getFilename()
-    {return (filename!=null) ? filename : Resources.format(Clé.UNNAMED);}
+    {return (filename!=null) ? filename : Resources.format(ResourceKeys.UNNAMED);}
 
     /**
      * Retourne la ressource identifiée par la clé spécifiée.
@@ -372,7 +373,7 @@ final class FileParser extends Parser
                                 continue nextPass;
                             }
                             recordLeft = cpRecordCount-lower;
-                            log("seek", getResource(Clé.SEEK_TO_DATE¤2, new Date(endTime)));
+                            log("seek", getResource(ResourceKeys.SEEK_TO_DATE_$2, new Date(endTime)));
                             return;
                         }
                     }
@@ -460,13 +461,13 @@ final class FileParser extends Parser
             recordLeft = cpRecordCount-nRecord;
             assert(selectedDate.getTime() >= time);
             assert(isBlank() || getDate().getTime() < time);
-            log("seek", getResource(Clé.SEEK_TO_DATE¤2, selectedDate));
+            log("seek", getResource(ResourceKeys.SEEK_TO_DATE_$2, selectedDate));
             return;
         }
         while (nextRecordOrHeader());
         Arrays.fill(record, (byte)0);
         in.seek(origine);
-        throw new EOFException(Resources.format(Clé.DATE_TOO_LATE¤3, getFilename(), date, new Date(endTime)));
+        throw new EOFException(Resources.format(ResourceKeys.ERROR_DATE_TOO_LATE_$3, getFilename(), date, new Date(endTime)));
     }
 
     /**
@@ -484,7 +485,7 @@ final class FileParser extends Parser
         {
             case -1:            return false;
             case RECORD_LENGTH: return true;
-            default: throw new EOFException(getResource(Clé.MISSING_FIELDS¤1));
+            default: throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_FIELDS_$1));
         }
     }
 
@@ -495,7 +496,7 @@ final class FileParser extends Parser
      */
     private final void nextRecordMandatory() throws IOException
     {
-        if (!nextRecordOrHeader()) throw new EOFException(getResource(Clé.MISSING_RECORDS¤1));
+        if (!nextRecordOrHeader()) throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
         recordLeft--; // On n'utilise pas de 'assert' car 'seek' peut utiliser des valeurs momentanément invalides.
     }
 
@@ -525,7 +526,7 @@ final class FileParser extends Parser
             recordLeft = getField(RECORD_COUNT);
             if (recordLeft < 0)
             {
-                throw new IOException(Resources.format(Clé.BAD_RECORD_COUNT¤1, new Integer(recordLeft)));
+                throw new IOException(Resources.format(ResourceKeys.ERROR_BAD_RECORD_COUNT_$1, new Integer(recordLeft)));
             }
         }
         nextRecordMandatory();
@@ -645,7 +646,7 @@ final class FileParser extends Parser
         {
             count();
             if (startTime==Long.MAX_VALUE)
-                throw new EOFException(getResource(Clé.MISSING_RECORDS¤1));
+                throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
         }
         return new Date(startTime);
     }
@@ -666,7 +667,7 @@ final class FileParser extends Parser
         {
             count();
             if (endTime==Long.MIN_VALUE)
-                throw new EOFException(getResource(Clé.MISSING_RECORDS¤1));
+                throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
         }
         return new Date(endTime);
     }
@@ -766,9 +767,9 @@ final class FileParser extends Parser
             recordLeft -= (int)(skipped/RECORD_LENGTH);
             assert(recordLeft >= 0) : recordLeft;
             if ((skipped % RECORD_LENGTH)!=0)
-                throw new EOFException(getResource(Clé.MISSING_FIELDS¤1));
+                throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_FIELDS_$1));
             if (skipped != toSkip)
-                throw new EOFException(getResource(Clé.MISSING_RECORDS¤1));
+                throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
         }
         else throw new IllegalArgumentException(Long.toString(n));
     }
@@ -783,7 +784,7 @@ final class FileParser extends Parser
     {
         Arrays.fill(record, (byte)0);
         in.close();
-        log("close", getResource(Clé.CLOSE¤1));
+        log("close", getResource(ResourceKeys.CLOSE_$1));
     }
 
     /**

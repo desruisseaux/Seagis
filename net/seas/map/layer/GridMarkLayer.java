@@ -45,6 +45,7 @@ import javax.media.jai.GraphicsJAI;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -238,8 +239,8 @@ public abstract class GridMarkLayer extends MarkLayer
      */
     public synchronized void setDecimation(final int decimateX, final int decimateY)
     {
-        if (decimateX <=0) throw new IllegalArgumentException(Resources.format(Clé.NOT_GREATER_THAN_ZERO¤1, new Integer(decimateX)));
-        if (decimateY <=0) throw new IllegalArgumentException(Resources.format(Clé.NOT_GREATER_THAN_ZERO¤1, new Integer(decimateY)));
+        if (decimateX <=0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NOT_GREATER_THAN_ZERO_$1, new Integer(decimateX)));
+        if (decimateY <=0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NOT_GREATER_THAN_ZERO_$1, new Integer(decimateY)));
         if (decimateX!=this.decimateX || decimateY!=this.decimateY)
         {
             autoDecimate   = false;
@@ -261,8 +262,8 @@ public abstract class GridMarkLayer extends MarkLayer
      */
     public synchronized void setAutoDecimation(final int spaceX, final int spaceY)
     {
-        if (spaceX < 0) throw new IllegalArgumentException(Resources.format(Clé.BAD_NUMBER¤1, new Integer(spaceX)));
-        if (spaceY < 0) throw new IllegalArgumentException(Resources.format(Clé.BAD_NUMBER¤1, new Integer(spaceY)));
+        if (spaceX < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_NUMBER_$1, new Integer(spaceX)));
+        if (spaceY < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_NUMBER_$1, new Integer(spaceY)));
         if (spaceX!=this.spaceX || spaceY!=this.spaceY)
         {
             this.spaceX  = spaceX;

@@ -44,6 +44,7 @@ import javax.imageio.event.IIOReadProgressListener;
 import java.util.Arrays;
 import net.seas.util.XArray;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import net.seas.awt.ExceptionMonitor;
 
 
@@ -166,7 +167,7 @@ public final class StatusBar extends JComponent
      *        Ce nom servira à écrire automatiquement un texte lorsque la lecture commencera.
      */
     public synchronized IIOReadProgressListener getIIOReadProgressListener(final String name)
-    {return new ProgressListener(Resources.format(Clé.LOADING¤1, name));}
+    {return new ProgressListener(Resources.getResources(getLocale()).getString(ResourceKeys.LOADING_$1, name));}
 
     /**
      * Classe chargée de réagir

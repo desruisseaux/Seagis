@@ -58,6 +58,7 @@ import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -172,7 +173,7 @@ final class ImageTableUpdate extends Table
                 return;
             }
         }
-        throw new SQLException(Resources.format(Clé.ILLEGAL_COORDINATE_SYSTEM));
+        throw new SQLException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
     }
 
     /**
@@ -212,7 +213,7 @@ final class ImageTableUpdate extends Table
                 final int nextID = result.getInt(1);
                 if (hasFound)
                 {
-                    warning(Clé.DUPLICATED_AREA¤1, new Integer(nextID));
+                    warning(ResourceKeys.ERROR_DUPLICATED_AREA_$1, new Integer(nextID));
                 }
                 else
                 {

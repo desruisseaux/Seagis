@@ -57,7 +57,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 
 // Divers
-import net.seas.resources.Resources;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;
@@ -224,7 +225,7 @@ final class Parameters implements Serializable
                                                          ccs, newGeographicArea, newResolution,
                                                          dateFormat);
 
-            Table.logger.fine(Resources.format(Clé.TRANSFORMATION_TO_CS¤1, cs.getName(null)));
+            Table.logger.fine(Resources.format(ResourceKeys.TRANSFORMATION_TO_CS_$1, cs.getName(null)));
             return (Parameters) Table.pool.intern(parameters);
         }
         return this;

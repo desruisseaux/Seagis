@@ -24,16 +24,14 @@ package fr.ird.resources;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.IOException;
 import java.util.MissingResourceException;
-import net.seas.resources.ResourceBundle;
+import net.seagis.resources.ResourceBundle;
 
 
 /**
- * Liste de ressources qui dépendront de la langue de l'utilisateur. L'usager ne devrait
- * pas créer lui-même des instances de cette classe. Une instance statique sera créée une
- * fois pour toute lors du chargement de cette classe, et les divers resources seront mises
- * à la disposition du développeur via les méthodes statiques.
+ * Base class for local-dependent resources. Instances of this class should
+ * never been created directly. Use the factory method {@link #getResources}
+ * or use static methods instead.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -41,22 +39,28 @@ import net.seas.resources.ResourceBundle;
 public class Resources extends ResourceBundle
 {
     /**
-     * Initialise les ressources par défaut. Ces ressources ne seront pas forcément dans
-     * la langue de l'utilisateur. Il s'agit plutôt de ressources à utiliser par défaut
-     * si aucune n'est disponible dans la langue de l'utilisateur. Ce constructeur est
-     * réservé à un usage interne et ne devrait pas être appellé directement.
+     * Construct a resource bundle using english language.
+     * This is the default when no resource are available
+     * in user language.
      */
     public Resources()
-    {super(Resources_fr.FILEPATH);}
+    {
+        super(Resources_fr.FILEPATH);
+    }
 
     /**
-     * Initialise les ressources en
-     * utilisant le fichier spécifié.
-     *
-     * @param  filename Nom du fichier binaire contenant les ressources.
+     * Construct a resource bundle
+     * using the specified UTF8 file.
      */
-    protected Resources(final String filepath)
+    Resources(final String filepath)
     {super(filepath);}
+
+    /**
+     * Returns the name of the logger to use,
+     * which is <code>net.seagis.css</code>.
+     */
+    protected String getLoggerName()
+    {return "net.seas";}
 
     /**
      * Returns resources in the given locale.
@@ -75,100 +79,82 @@ public class Resources extends ResourceBundle
     }
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée.
+     * Gets a string for the given key from this resource bundle or one of its parents.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @return The string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key) throws MissingResourceException
     {return getResources(null).getString(key);}
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée en remplaçant
-     * toutes les occurences de "{0}" par la valeur de <code>arg0</code>.
+     * Gets a string for the given key are replace all occurence of "{0}"
+     * with values of <code>arg0</code>.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @param  arg0 Value to substitute to "{0}".
+     * @return The formatted string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key, final Object arg0) throws MissingResourceException
     {return getResources(null).getString(key, arg0);}
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée en remplaçant toutes
-     * les occurences de "{0}" et "{1}" par la valeur de <code>arg0</code>
-     * et <code>arg1</code> respectivement.
+     * Gets a string for the given key are replace all occurence of "{0}",
+     * "{1}", with values of <code>arg0</code>, <code>arg1</code>.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
-     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @param  arg0 Value to substitute to "{0}".
+     * @param  arg1 Value to substitute to "{1}".
+     * @return The formatted string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key, final Object arg0, final Object arg1) throws MissingResourceException
     {return getResources(null).getString(key, arg0, arg1);}
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée en remplaçant
-     * toutes les occurences de "{0}", "{1}" et "{2}" par la valeur de
-     * <code>arg0</code>, <code>arg1</code> et <code>arg2</code> respectivement.
+     * Gets a string for the given key are replace all occurence of "{0}",
+     * "{1}", with values of <code>arg0</code>, <code>arg1</code>, etc.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
-     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
-     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @param  arg0 Value to substitute to "{0}".
+     * @param  arg1 Value to substitute to "{1}".
+     * @param  arg2 Value to substitute to "{2}".
+     * @return The formatted string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException
     {return getResources(null).getString(key, arg0, arg1, arg2);}
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée en remplaçant
-     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
-     * <code>arg0</code>, <code>arg1</code>, etc.
+     * Gets a string for the given key are replace all occurence of "{0}",
+     * "{1}", with values of <code>arg0</code>, <code>arg1</code>, etc.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
-     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
-     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
-     * @param  arg3 Objet dont la valeur remplacera toutes les occurences de "{3}"
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @param  arg0 Value to substitute to "{0}".
+     * @param  arg1 Value to substitute to "{1}".
+     * @param  arg2 Value to substitute to "{2}".
+     * @param  arg3 Value to substitute to "{3}".
+     * @return The formatted string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException
     {return getResources(null).getString(key, arg0, arg1, arg2, arg3);}
 
     /**
-     * Renvoie la ressource associée à la clé spécifiée en remplaçant
-     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
-     * <code>arg0</code>, <code>arg1</code>, etc.
+     * Gets a string for the given key are replace all occurence of "{0}",
+     * "{1}", with values of <code>arg0</code>, <code>arg1</code>, etc.
      *
-     * @param  key Clé désignant la ressource désirée.
-     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
-     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
-     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
-     * @param  arg3 Objet dont la valeur remplacera toutes les occurences de "{3}"
-     * @param  arg4 Objet dont la valeur remplacera toutes les occurences de "{4}"
-     * @return Ressource dans la langue de l'utilisateur.
-     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     * @param  key The key for the desired string.
+     * @param  arg0 Value to substitute to "{0}".
+     * @param  arg1 Value to substitute to "{1}".
+     * @param  arg2 Value to substitute to "{2}".
+     * @param  arg3 Value to substitute to "{3}".
+     * @param  arg4 Value to substitute to "{4}".
+     * @return The formatted string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
     {return getResources(null).getString(key, arg0, arg1, arg2, arg3, arg4);}
-
-    /**
-     * Retourne la ressource associée à la clé spécifiée
-     * en la terminant par les caractères ":&nbsp;".
-     */
-    public static String label(final int key)
-    {return getResources(null).getLabel(key);}
-
-    /**
-     * Retourne la ressource associée à la clé spécifiée
-     * en la terminant par les caractères "...".
-     */
-    public static String trailing(final int key)
-    {return getResources(null).getTrailing(key);}
 }

@@ -100,8 +100,9 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
-import fr.ird.resources.Resources;
 import javax.media.jai.util.Range;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -163,9 +164,9 @@ public class ImageTableModel extends AbstractTableModel
      */
     private final String[] titles=new String[]
     {
-        /*[0]*/ Resources.format(Clé.NAME),
-        /*[1]*/ Resources.format(Clé.END_TIME),
-        /*[2]*/ Resources.format(Clé.DURATION)
+        /*[0]*/ Resources.format(ResourceKeys.NAME),
+        /*[1]*/ Resources.format(ResourceKeys.END_TIME),
+        /*[2]*/ Resources.format(ResourceKeys.DURATION)
     };
 
     /**
@@ -217,12 +218,12 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Mot "jour" dans la langue de l'utilisateur.
      */
-    private static final String DAY=Resources.format(Clé.DAY);
+    private static final String DAY=Resources.format(ResourceKeys.DAY);
 
     /**
      * Mot "jours" dans la langue de l'utilisateur.
      */
-    private static final String DAYS=Resources.format(Clé.DAYS);
+    private static final String DAYS=Resources.format(ResourceKeys.DAYS);
 
     /**
      * Construit une table initialement vide. Des images pourront
@@ -315,14 +316,14 @@ public class ImageTableModel extends AbstractTableModel
             if (EventQueue.isDispatchThread())
             {
                 fireTableDataChanged();
-                commitEdit(oldEntries, newEntries, Clé.DEFINE);
+                commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
             }
             else EventQueue.invokeLater(new Runnable()
             {
                 public void run()
                 {
                     fireTableDataChanged();
-                    commitEdit(oldEntries, newEntries, Clé.DEFINE);
+                    commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
                 }
             });
         }
@@ -587,7 +588,7 @@ public class ImageTableModel extends AbstractTableModel
             }
         }
         this.entries = XArray.resize(entries, entriesLength);
-        commitEdit(oldEntries, this.entries, Clé.DELETE);
+        commitEdit(oldEntries, this.entries, ResourceKeys.DELETE);
     }
 
     /**
@@ -607,7 +608,12 @@ public class ImageTableModel extends AbstractTableModel
     {
         if (fieldPosition==null) fieldPosition=new FieldPosition(0);
         final StringBuffer buffer = new StringBuffer(256); // On n'utilise pas le buffer des cellules.
-        final int[] clés = new int[] {Clé.NAME, Clé.START_TIME, Clé.END_TIME};
+        final int[] clés = new int[]
+        {
+            ResourceKeys.NAME,
+            ResourceKeys.START_TIME,
+            ResourceKeys.END_TIME
+        };
         for (int i=0; i<clés.length;)
         {
             buffer.append(Resources.format(clés[i++]));

@@ -47,11 +47,7 @@ import javax.units.Unit;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import javax.media.jai.util.Range;
-
-// Divers
 import fr.ird.animat.Species;
-import fr.ird.resources.Resources;
-import fr.ird.resources.Clé;
 
 
 /**

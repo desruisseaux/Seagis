@@ -47,6 +47,7 @@ import java.util.ArrayList;
 // Divers
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import javax.media.jai.util.Range;
 
 
@@ -364,7 +365,7 @@ final class LonglineCatchTable extends AbstractCatchTable
         }
         if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+value+" WHERE ID="+capture.getID())==0)
         {
-            throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
         }
     }
 
@@ -389,7 +390,7 @@ final class LonglineCatchTable extends AbstractCatchTable
         // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
         if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID())==0)
         {
-            throw new SQLException(Resources.format(Clé.CATCH_NOT_FOUND¤1, capture));
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
         }
     }
 

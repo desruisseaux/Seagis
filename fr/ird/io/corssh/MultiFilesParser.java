@@ -49,6 +49,7 @@ import java.util.NoSuchElementException;
 // Divers
 import java.awt.Shape;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -125,11 +126,11 @@ final class MultiFilesParser extends Parser implements Serializable
         {
             if (files[i-1].endTime >= files[i].startTime)
             {
-                throw new IOException(Resources.format(Clé.DATES_OVERLAP¤3, files[i-1].file.getName(), files[i].file.getName(),
+                throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_OVERLAP_$3, files[i-1].file.getName(), files[i].file.getName(),
                                       getDateTimeInstance().format(new Date(files[i].startTime))));
             }
         }
-        log("<init>", Resources.format(Clé.BUILD_INDEX¤1, new Integer(files.length)));
+        log("<init>", Resources.format(ResourceKeys.BUILD_INDEX_$1, new Integer(files.length)));
     }
 
     /**
@@ -179,7 +180,7 @@ final class MultiFilesParser extends Parser implements Serializable
                 else if (file.isFile()) files.add(file);
             }
         }
-        else throw new FileNotFoundException(Resources.format(Clé.DIRECTORY_NOT_FOUND¤1, directory.getPath()));
+        else throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_DIRECTORY_NOT_FOUND_$1, directory.getPath()));
     }
 
     /**
@@ -224,7 +225,7 @@ final class MultiFilesParser extends Parser implements Serializable
         if (index != parserIndex)
         {
             if (index >= files.length)
-                throw new EOFException(Resources.format(Clé.NO_DATA_AFTER_DATE¤1, date));
+                throw new EOFException(Resources.format(ResourceKeys.ERROR_NO_DATA_AFTER_DATE_$1, date));
             setParser(index);
         }
         parser.seek(date, new Iterator<File>()
@@ -364,7 +365,7 @@ final class MultiFilesParser extends Parser implements Serializable
      * Retourne une chaîne de caractères représentant l'enregistrement courant.
      */
     public String toString()
-    {return (parser!=null) ? parser.toString() : Resources.format(Clé.BLANK);}
+    {return (parser!=null) ? parser.toString() : Resources.format(ResourceKeys.BLANK);}
 
     /**
      * Nom d'un fichier CORSSH et date de son premier enregistrement.

@@ -20,6 +20,7 @@ package net.seas.neural;
 import java.io.Serializable;
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -394,7 +395,7 @@ public class FeedForwardNet implements Serializable
         }
         else
         {
-            throw new IllegalArgumentException(Resources.format(Clé.INPUT_LENGTH_MISMATCH));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_INPUT_LENGTH_MISMATCH));
         }
     }
 
@@ -493,7 +494,7 @@ public class FeedForwardNet implements Serializable
                 final double[] targetOutputs = training.getTestOutputs(null);
                 if (targetOutputs.length != layer.length)
                 {
-                    throw new IllegalArgumentException(Resources.format(Clé.OUTPUT_LENGTH_MISMATCH));
+                    throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_OUTPUT_LENGTH_MISMATCH));
                 }
                 for (int i=0; i<layer.length; i++)
                 {
@@ -569,7 +570,7 @@ public class FeedForwardNet implements Serializable
     {
         final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
-        buffer.append(Resources.format(Clé.NEURAL_NETWORK_SUMMARY¤5, new Object[] {
+        buffer.append(Resources.format(ResourceKeys.NEURAL_NETWORK_SUMMARY_$5, new Object[] {
                       new Integer(getNumInputs()),
                       new Integer(getNumOutputs()),
                       new Integer(getNumConnections()),

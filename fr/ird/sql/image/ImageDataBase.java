@@ -57,6 +57,7 @@ import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -123,16 +124,16 @@ public class ImageDataBase extends DataBase
      */
     private static final int[] PROPERTY_NAMES=
     {
-        Clé.SQL_IMAGE_COUNT,
-        Clé.SQL_SERIES_TREE,
-        Clé.SQL_SERIES_BY_ID,
-        Clé.SQL_SERIES,
-        Clé.SQL_IMAGES,
-        Clé.SQL_FORMAT,
-        Clé.SQL_FORMAT_FOR_GROUP_ID,
-        Clé.SQL_BANDS,
-        Clé.SQL_CATEGORIES,
-        Clé.SQL_AREA
+        ResourceKeys.SQL_IMAGE_COUNT,
+        ResourceKeys.SQL_SERIES_TREE,
+        ResourceKeys.SQL_SERIES_BY_ID,
+        ResourceKeys.SQL_SERIES,
+        ResourceKeys.SQL_IMAGES,
+        ResourceKeys.SQL_FORMAT,
+        ResourceKeys.SQL_FORMAT_FOR_GROUP_ID,
+        ResourceKeys.SQL_BANDS,
+        ResourceKeys.SQL_CATEGORIES,
+        ResourceKeys.SQL_AREA
     };
 
     /**
@@ -333,7 +334,7 @@ public class ImageDataBase extends DataBase
             table.close();
             if (series==null)
             {
-                throw new IllegalRecordException(Table.SERIES, Resources.format(Clé.NO_SERIES));
+                throw new IllegalRecordException(Table.SERIES, Resources.format(ResourceKeys.ERROR_NO_SERIES));
             }
         }
         return getImageTable(series);
@@ -388,7 +389,7 @@ public class ImageDataBase extends DataBase
         final SeriesEntry entry = table.getSeries(series);
         table.close();
         if (entry!=null) return getImageTable(entry);
-        else throw new SQLException(Resources.format(Clé.SERIES_NOT_FOUND¤1, series));
+        else throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, series));
     }
 
     /**
@@ -406,7 +407,7 @@ public class ImageDataBase extends DataBase
         final SeriesEntry entry = table.getSeries(seriesID);
         table.close();
         if (entry!=null) return getImageTable(entry);
-        else throw new SQLException(Resources.format(Clé.SERIES_NOT_FOUND¤1, new Integer(seriesID)));
+        else throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, new Integer(seriesID)));
     }
 
     /**
@@ -497,7 +498,7 @@ public class ImageDataBase extends DataBase
     {
         assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(Clé.EDIT_SQL_IMAGES_OR_FISHERIES¤1, new Integer(0)), Table.logger)
+        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(0)), Table.logger)
         {
             public String getProperty(final String name)
             {return Table.getPreference(name);}

@@ -81,8 +81,9 @@ import java.util.logging.LogRecord;
 import java.io.File;
 import net.seas.plot.RangeSet;
 import fr.ird.resources.Resources;
-import javax.media.jai.util.Range;
+import fr.ird.resources.ResourceKeys;
 import javax.media.jai.ParameterList;
+import javax.media.jai.util.Range;
 
 
 /**
@@ -352,7 +353,7 @@ final class ImageTableImpl extends Table implements ImageTable
             statement.setInt(ARG_SERIES, series.getID());
             this.series=series;
 
-            log("setSeries", Level.CONFIG, Clé.SET_SERIES¤1, series.getName());
+            log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
         }
     }
 
@@ -431,7 +432,7 @@ final class ImageTableImpl extends Table implements ImageTable
 
             final String startText = dateFormat.format(startTime);
             final String   endText = dateFormat.format(  endTime);
-            log("setTimeRange", Level.CONFIG, Clé.SET_TIME_RANGE¤2, new String[]{startText, endText});
+            log("setTimeRange", Level.CONFIG, ResourceKeys.SET_TIME_RANGE_$2, new String[]{startText, endText});
         }
     }
 
@@ -465,7 +466,7 @@ final class ImageTableImpl extends Table implements ImageTable
             statement.setDouble(ARG_YMAX, rect.getMaxY());
             geographicArea = new XRectangle2D(rect);
 
-            log("setGeographicArea", Level.CONFIG, Clé.SET_GEOGRAPHIC_AREA¤1, getStringArea());
+            log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$1, getStringArea());
         }
     }
 
@@ -497,13 +498,13 @@ final class ImageTableImpl extends Table implements ImageTable
             if (pixelSize!=null)
             {
                 resolution = (Dimension2D)pixelSize.clone();
-                clé = Clé.SET_RESOLUTION¤2;
+                clé = ResourceKeys.SET_RESOLUTION_$2;
                 param = new Double[]{new Double(resolution.getWidth()),new Double(resolution.getHeight())};
             }
             else
             {
                 resolution = null;
-                clé = Clé.UNSET_RESOLUTION;
+                clé = ResourceKeys.UNSET_RESOLUTION;
                 param = null;
             }
             log("setPreferredResolution", Level.CONFIG, clé, param);
@@ -547,13 +548,13 @@ final class ImageTableImpl extends Table implements ImageTable
         {
             opParam = operation.getParameterList();
             name    = operation.getName();
-            clé     = Clé.SET_OPERATION¤1;
+            clé     = ResourceKeys.SET_OPERATION_$1;
         }
         else
         {
             opParam = null;
             name    = null;
-            clé     = Clé.UNSET_OPERATION;
+            clé     = ResourceKeys.UNSET_OPERATION;
         }
         log("setOperation", Level.CONFIG, clé, name);
         return opParam;
@@ -618,7 +619,7 @@ final class ImageTableImpl extends Table implements ImageTable
          */
         final ImageEntry[] entries = list.toArray(new ImageEntry[list.size()]);
         ImageEntryImpl.intern(entries);
-        log("getEntries", Level.FINE, Clé.FOUND_IMAGES¤1, new Integer(entries.length));
+        log("getEntries", Level.FINE, ResourceKeys.FOUND_IMAGES_$1, new Integer(entries.length));
         return Arrays.asList(entries);
     }
 
@@ -709,7 +710,7 @@ final class ImageTableImpl extends Table implements ImageTable
             {
                 final ImageEntry check = new ImageEntryImpl(this, result);
                 if (!entry.equals(check))
-                    throw new IllegalRecordException(IMAGES, Resources.format(Clé.DUPLICATE_IMAGE¤2, entry.getName(), check.getName()));
+                    throw new IllegalRecordException(IMAGES, Resources.format(ResourceKeys.ERROR_DUPLICATE_IMAGE_$2, entry.getName(), check.getName()));
             }
         }
         result.close();
@@ -885,7 +886,7 @@ final class ImageTableImpl extends Table implements ImageTable
     {
         if (seriesID != series.getID())
         {
-            throw new SQLException(Resources.format(Clé.WRONG_SERIES¤1, series.getName()));
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
         }
         if (cs==null)
         {
@@ -928,7 +929,7 @@ final class ImageTableImpl extends Table implements ImageTable
         }
         catch (TransformException exception)
         {
-            final SQLException e = new SQLException(Resources.format(Clé.INCOMPATIBLE_COORDINATES¤1, getStringArea()));
+            final SQLException e = new SQLException(Resources.format(ResourceKeys.ERROR_INCOMPATIBLE_COORDINATES_$1, getStringArea()));
             e.initCause(exception);
             throw e;
         }

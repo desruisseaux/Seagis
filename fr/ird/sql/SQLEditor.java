@@ -58,6 +58,7 @@ import java.util.logging.Logger;
 import java.util.List;
 import java.util.ArrayList;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -272,7 +273,7 @@ public class SQLEditor extends JPanel
         //       que l'on ajoute sur la barre des boutons (en plus de "Ok" et "Annuler").
         //       Pour afficher le bouton "Rétablir" malgré ces défauts, ne pas mettre
         //       'model' en commentaire.
-        final boolean ok = SwingUtilities.showOptionDialog(owner, this, Resources.format(Clé.SQL_QUERIES)/*, model*/);
+        final boolean ok = SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.SQL_QUERIES)/*, model*/);
         model.commit();
         if (ok) save();
         return ok;
@@ -336,12 +337,12 @@ public class SQLEditor extends JPanel
                     if (value.equals(record[DEFAULT].trim()))
                     {
                         preferences.remove(key);
-                        clé = Clé.REMOVE_QUERY¤1;
+                        clé = ResourceKeys.REMOVE_QUERY_$1;
                     }
                     else
                     {
                         preferences.put(key, value);
-                        clé = Clé.DEFINE_QUERY¤1;
+                        clé = ResourceKeys.DEFINE_QUERY_$1;
                     }
                     if (logger!=null)
                     {

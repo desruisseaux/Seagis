@@ -42,6 +42,7 @@ import java.util.ArrayList;
 // Divers
 import javax.units.Unit;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -142,7 +143,8 @@ final class BandTable extends Table
              */
             if (band-1 != lastBand)
             {
-                throw new IllegalRecordException(BANDS, Resources.format(Clé.NON_CONSECUTIVE_BANDS¤2, new Integer(lastBand), new Integer(band)));
+                throw new IllegalRecordException(BANDS, Resources.format(ResourceKeys.ERROR_NON_CONSECUTIVE_BANDS_$2,
+                                                        new Integer(lastBand), new Integer(band)));
             }
             lastBand = band;
             mappers.add((CategoryList)pool.intern(mapper));

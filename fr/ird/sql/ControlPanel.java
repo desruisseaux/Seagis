@@ -59,6 +59,7 @@ import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.ArrayList;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -90,25 +91,25 @@ public class ControlPanel extends JPanel
      */
     private static final int[] titles=
     {
-        Clé.IMAGES,
-        Clé.FISHERIES
+        ResourceKeys.IMAGES,
+        ResourceKeys.FISHERIES
     };
 
     /**
      * Champs contenant les pilotes JDBC pour chaque base de données.
-     * Ce tableau doit avoir la même longueur que {@link #editors}.
+     * Ce tableau doit avoir la même longueur que <code>editors<code>.
      */
     private final JTextField[] drivers = new JTextField[editors.length];
 
     /**
      * Champs contenant les source des données pour chaque base de données.
-     * Ce tableau doit avoir la même longueur que {@link #editors}.
+     * Ce tableau doit avoir la même longueur que <code>editors<code>.
      */
     private final JTextField[] sources = new JTextField[editors.length];
 
     /**
      * Champs contenant les fuseaux horaires pour chaque base de données.
-     * Ce tableau doit avoir la même longueur que {@link #editors}.
+     * Ce tableau doit avoir la même longueur que <code>editors<code>.
      */
     private final JComboBox[] timezones = new JComboBox[editors.length];
 
@@ -127,12 +128,12 @@ public class ControlPanel extends JPanel
         super(new GridBagLayout());
         final GridBagConstraints    c = new GridBagConstraints();
         final Resources     resources = Resources.getResources(null);
-        final String   sqlQueriesText = resources.getTrailing(Clé.SQL_QUERIES);
-        final String       driverText = resources.getLabel(Clé.JDBC_DRIVER);
-        final String       sourceText = resources.getLabel(Clé.DATABASE);
-        final String     timezoneText = resources.getLabel(Clé.TIME_ZONE);
+        final String   sqlQueriesText = resources.getMenuLabel(ResourceKeys.SQL_QUERIES);
+        final String       driverText = resources.getLabel(ResourceKeys.JDBC_DRIVER);
+        final String       sourceText = resources.getLabel(ResourceKeys.DATABASE);
+        final String     timezoneText = resources.getLabel(ResourceKeys.TIME_ZONE);
         final String[]    timezoneIDs = TimeZone.getAvailableIDs();
-        final JLabel   directoryLabel = new JLabel(resources.getLabel(Clé.ROOT_DIRECTORY));
+        final JLabel   directoryLabel = new JLabel(resources.getLabel(ResourceKeys.ROOT_DIRECTORY));
         directory.setText(ImageDataBase.getDefaultDirectory().getPath());
         directoryLabel.setLabelFor(directory);
         Arrays.sort(timezoneIDs);
@@ -169,7 +170,7 @@ public class ControlPanel extends JPanel
             if (i==0)
             {
                 c.gridy=0; c.weighty=1; c.insets.left=0;
-                add(SwingUtilities.getMultilineLabelFor(panel, resources.getString(Clé.EDIT_DATABASES_CONFIGURATION)), c);
+                add(SwingUtilities.getMultilineLabelFor(panel, resources.getString(ResourceKeys.EDIT_DATABASES_CONFIGURATION)), c);
             }
             c.gridy=i+1; c.weighty=0; c.insets.left=45; c.insets.bottom=9;
             add(panel, c);
@@ -221,7 +222,7 @@ public class ControlPanel extends JPanel
      */
     public boolean showDialog(final Component owner)
     {
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(Clé.DATABASES)))
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.DATABASES)))
         {
             final File directory = new File(this.directory.getText());
             ImageDataBase.setDefaultDirectory(directory);

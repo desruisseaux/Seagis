@@ -34,6 +34,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import javax.media.jai.util.Range;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.ClassChanger;
 
@@ -151,7 +152,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         }
         if (!Comparable.class.isAssignableFrom(type))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.NOT_COMPARABLE_CLASS¤1, Utilities.getShortClassName(type)));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NOT_COMPARABLE_CLASS_$1, Utilities.getShortClassName(type)));
         }
         Class elementType = ClassChanger.getTransformedClass(type); // e.g. change Date --> Double
         useClassChanger   = (elementType!=type);
@@ -230,7 +231,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         }
         if (first.compareTo(last) > 0)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, first, last));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RANGE_$2, first, last));
         }
         if (useClassChanger) try
         {

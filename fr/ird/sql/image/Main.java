@@ -57,6 +57,7 @@ import java.util.Iterator;
 import java.awt.Rectangle;
 import net.seas.util.Console;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -197,7 +198,7 @@ final class Main extends Console
     private void formats() throws SQLException
     {
         final Connection connection = getConnection();
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(Clé.FORMATS));
+        final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.FORMATS));
         final String        query = "SELECT ID FROM "+Table.FORMATS;
         final Statement statement = connection.createStatement();
         final ResultSet resultSet = statement.executeQuery(query);
@@ -245,7 +246,7 @@ final class Main extends Console
         imageTable .close();
         seriesTable.close();
 
-        final JFrame frame = new JFrame(Resources.format(Clé.DATABASE));
+        final JFrame frame = new JFrame(Resources.format(ResourceKeys.DATABASE));
         frame.setContentPane(splitPane);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();

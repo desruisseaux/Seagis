@@ -71,6 +71,7 @@ import java.util.Iterator;
 import net.seas.util.XArray;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -255,7 +256,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         if (reader==null)
         {
             final Iterator readers=ImageIO.getImageReadersByMIMEType(mimeType);
-            if (!readers.hasNext()) throw new IIOException(Resources.format(Clé.NO_IMAGE_DECODER¤1, mimeType));
+            if (!readers.hasNext()) throw new IIOException(Resources.format(ResourceKeys.ERROR_NO_IMAGE_DECODER_$1, mimeType));
             reader = (ImageReader) readers.next();
         }
         return reader;
@@ -364,7 +365,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
             }
             if (inputObject==null)
             {
-                throw new FileNotFoundException(Resources.format(Clé.FILE_NOT_FOUND¤1, file.getPath()));
+                throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
             }
             /*
              * Configure maintenant le décodeur
@@ -463,7 +464,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     {
         if (expected.width!=imageWidth || expected.height!=imageHeight)
         {
-            throw new IIOException(Resources.format(Clé.IMAGE_SIZE_MISMATCH¤5, file.getName(),
+            throw new IIOException(Resources.format(ResourceKeys.ERROR_IMAGE_SIZE_MISMATCH_$5, file.getName(),
                                    new Integer(    imageWidth), new Integer(    imageHeight),
                                    new Integer(expected.width), new Integer(expected.height)));
         }

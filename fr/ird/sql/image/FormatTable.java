@@ -34,6 +34,7 @@ import java.sql.PreparedStatement;
 
 // Divers
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -155,7 +156,7 @@ final class FormatTable extends Table
         if (!result.next())
         {
             result.close();
-            throw new IllegalRecordException(FORMATS, Resources.format(Clé.NO_IMAGE_FORMAT¤1, key));
+            throw new IllegalRecordException(FORMATS, Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
         }
         final int      formatID  = result.getInt    (ID);
         final String       name  = result.getString (NAME);
@@ -171,7 +172,7 @@ final class FormatTable extends Table
                geophysics !=     result.getBoolean(GEOPHYSICS))
             {
                 result.close();
-                throw new IllegalRecordException(FORMATS, Resources.format(Clé.TOO_MANY_IMAGE_FORMATS¤1, key));
+                throw new IllegalRecordException(FORMATS, Resources.format(ResourceKeys.ERROR_TOO_MANY_IMAGE_FORMATS_$1, key));
             }
         }
         result.close();
@@ -180,7 +181,7 @@ final class FormatTable extends Table
             bands = new BandTable(statement.getConnection());
         }
         final FormatEntryImpl entry = new FormatEntryImpl(formatID, name, mimeType, extension, geophysics, bands.getCategoryList(formatID));
-        logger.fine(Resources.format(Clé.CONSTRUCTED_DECODER¤1, name));
+        logger.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
         return entry;
     }
 
@@ -205,6 +206,6 @@ final class FormatTable extends Table
             bands = null;
         }
         statement.close();
-        logger.fine(Resources.format(Clé.CLOSE_FORMAT_TABLE));
+        logger.fine(Resources.format(ResourceKeys.CLOSE_FORMAT_TABLE));
     }
 }

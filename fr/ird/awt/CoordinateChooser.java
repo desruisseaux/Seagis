@@ -58,6 +58,7 @@ import java.util.Date;
 import net.seas.util.XArray;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 // SEAGIS dependencies
 import net.seagis.resources.XDimension2D;
@@ -246,8 +247,8 @@ public class CoordinateChooser extends net.seas.awt.CoordinateChooser
     private void showMessageDialog(final Component owner)
     {
         final Resources resources = Resources.getResources(getLocale());
-        final String    message   = resources.getString(Clé.NO_SERIES_SELECTION);
-        final String    title     = resources.getString(Clé.BAD_ENTRY);
+        final String    message   = resources.getString(ResourceKeys.ERROR_NO_SERIES_SELECTION);
+        final String    title     = resources.getString(ResourceKeys.ERROR_BAD_ENTRY);
         SwingUtilities.showMessageDialog(owner, message, title, JOptionPane.ERROR_MESSAGE);
     }
 }

@@ -35,6 +35,7 @@ import java.sql.DriverManager;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
 
 
@@ -168,7 +169,7 @@ public abstract class DataBase
         try
         {
             final Driver driver = (Driver)Class.forName(driverClassName).newInstance();
-            record = Resources.getResources(null).getLogRecord(Level.CONFIG, Clé.LOADED_JDBC_DRIVER¤3);
+            record = Resources.getResources(null).getLogRecord(Level.CONFIG, ResourceKeys.LOADED_JDBC_DRIVER_$3);
             record.setParameters(new Object[]
             {
                 driver.getClass().getName(),

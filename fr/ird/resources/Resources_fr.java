@@ -27,7 +27,7 @@ package fr.ird.resources;
 
 
 /**
- * Ressources en langue française.
+ * French language resource.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -35,14 +35,12 @@ package fr.ird.resources;
 public class Resources_fr extends Resources
 {
     /**
-     * Nom du fichier dans lequel sont enregistrées les données.
+     * The resource file, using UTF-8 encoding.
      */
-    static final String FILEPATH = "fr/ird/resources/resources_fr.serialized";
+    static final String FILEPATH = "fr/ird/resources/resources_fr.utf";
 
     /**
-     * Initialise les ressources françaises.
-     * @throws IOException si les ressources
-     *         n'ont pas pu être ouvertes.
+     * Construct resources for French.
      */
     public Resources_fr()
     {super(FILEPATH);}

@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.prefs.Preferences;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -155,7 +156,7 @@ public class Console
             case 1:  return new Locale(s[0]);
             case 2:  return new Locale(s[0], s[1]);
             case 3:  return new Locale(s[0], s[1], s[2]);
-            default: throw new IllegalArgumentException(Resources.format(Clé.BAD_LOCALE¤1, locale));
+            default: throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_LOCALE_$1, locale));
         }
     }
 
@@ -207,7 +208,8 @@ public class Console
                         }
                         split = 0;
                     }
-                    throw new IllegalArgumentException(Resources.format(Clé.MISSING_ARGUMENT_VALUE¤1, arg));
+                    throw new IllegalArgumentException(Resources.getResources(locale).
+                              getString(ResourceKeys.ERROR_MISSING_ARGUMENT_VALUE_$1, arg));
                 }
             }
         }
@@ -256,7 +258,8 @@ public class Console
             {
                 if (count>=max)
                 {
-                    throw new IllegalArgumentException(Resources.format(Clé.UNKNOW_OPTION¤1, arguments[i]));
+                    throw new IllegalArgumentException(Resources.getResources(locale).
+                              format(ResourceKeys.ERROR_UNKNOW_OPTION_$1, arguments[i]));
                 }
                 left[count++] = arg;
             }

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.io.Serializable;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -185,7 +186,7 @@ final class InterleavedParser extends Parser implements Serializable
                     final Date start2 = parser2.getStartTime();
                     if (start1==null && start2==null)
                     {
-                        throw new EOFException(Resources.format(Clé.NO_DATA_AFTER_DATE¤1, date));
+                        throw new EOFException(Resources.format(ResourceKeys.ERROR_NO_DATA_AFTER_DATE_$1, date));
                     }
                     if (start2==null || (start1!=null && start1.before(start2)))
                     {
@@ -224,7 +225,7 @@ final class InterleavedParser extends Parser implements Serializable
             current = parser2;
             return;
         }
-        throw new EOFException(Resources.format(Clé.NO_DATA_AFTER_DATE¤1, date));
+        throw new EOFException(Resources.format(ResourceKeys.ERROR_NO_DATA_AFTER_DATE_$1, date));
     }
 
     /**
@@ -399,5 +400,5 @@ final class InterleavedParser extends Parser implements Serializable
      * Retourne une chaîne de caractères représentant cet enregistrement.
      */
     public String toString()
-    {return (current!=null) ? current.toString() : Resources.format(Clé.BLANK);}
+    {return (current!=null) ? current.toString() : Resources.format(ResourceKeys.BLANK);}
 }

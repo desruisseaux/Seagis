@@ -70,7 +70,8 @@ public class Canarias_RAW extends RawBinaryImageReader.Spi
         protected double transform(final double value)
         {
             if (value<=00.0) return Double.NaN;
-            if (value>=99.0) return Double.NaN; // 29.5?
+            if (value>=99.0) return Double.NaN;
+            if (value>=25.5) return Double.NaN; // TODO: temporary patch.
             return value;
         }
     }

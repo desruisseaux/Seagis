@@ -41,6 +41,7 @@ import java.awt.Color;
 import java.util.Locale;
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -128,7 +129,7 @@ final class SpeciesTable extends Table
             species = new FishSpecies(locales, names, Color.black);
             if (lastSpecies!=null && !lastSpecies.equals(species))
             {
-                throw new SQLException(Resources.format(Clé.DUPLICATE_RECORD¤1, species.getName()));
+                throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATE_RECORD_$1, species.getName()));
             }
         }
         result.close();
