@@ -26,6 +26,7 @@
 package fr.ird.n1b.image.sst;
 
 // SEAGIS.
+import fr.ird.n1b.io.Channel;
 import fr.ird.n1b.io.Bulletin;
 import fr.ird.n1b.io.Metadata;
 import fr.ird.n1b.io.Satellite;
@@ -121,24 +122,27 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.renderer.j2d.Hints;
 
 /**
- * Calcul une image Sea Surface Temperature (S.S.T.) à partir d'une image N1B.<BR><BR>
+ * Calcul une image Sea Surface Temperature (SST) depuis un fichier N1B.<BR><BR>
  *
- * La suite de traitement de cette classe produit à partir d'un fichier N1B :
+ * Ce traitement produit :
  * <UL>
- *  <LI>Image S.S.T. dans le système géographique avec une résolution de 1/100°.</LI>
- *  <LI>Fichier <i>header</i> contenant des informations de localisation de l'image.<LI>
- *  <LI>Masque contenant l'état des pixels lors de leur acquisition. Ce masque indique les 
- *      pixels acquis de jour ou de nuit.</LI>
- *  <LI>Fichier de statistique de température des pixels par latitude. <LI>
+ *  <LI>Une image SST projeté dans le système géographique avec une résolution de 1/100°.</LI>
+ *  <LI>Un fichier de type <i>header</i> contenant des informations de localisation de l'image SST.</LI>
+ *  <LI>Une image dite masque contenant l'état des pixels lors de leur acquisition 
+ *      (acquisition de jour, de nuit, entre les deux) à laquelle sont superposés les 
+ *      masques de nuages, ...</LI>
+ *  <LI>Un fichier de statistiques. Ce fichier contient les statistiques de température 
+ *      des pixels par latitude et selon l'état des pixels (pixel acquis de jour ou de 
+ *      nuit).</LI>
  * </UL><BR><BR>
  *
- * Suite de traitements appliqués au cours du calcul(résumé) :<BR>
+ * La suite de calculs appliqués au cours de ce traitement sont résumé comme suit :<BR>
  * <UL>
  *  <LI>Calcul de la température de brillance des canaux 4 et 5.</LI>
- *  <LI>Calcul de la matrice jour/nuit (identifie les pixels acquis de jour, de nuit ou 
- *      dans une période transitoire jour/nuit).</LI>
+ *  <LI>Calcul de la matrice jour/nuit (identifie les pixels acquis de jour, de nuit 
+ *      ou dans une période transitoire jour/nuit).</LI>
  *  <LI>Calcul de la SST.</LI>
- *  <LI>Calcul des masques nuages et superposition à la S.S.T..</LI>
+ *  <LI>Calcul des masques nuages et superposition à la SST.</LI>
  *  <LI>Exclusion des pixels trop éloignés du nadir.</LI>
  *  <LI>Projection dans le système géographique.</LI>
  *  <LI>Superposition du masque Terre.</LI> 
@@ -146,19 +150,19 @@ import org.geotools.renderer.j2d.Hints;
  *   
  * // TODO :<BR>
  * <UL>
- *  <LI> Dans ce calcul qui fait intervenir de nombreuses images, nous travaillons avec 
- *       des images en tuiles pour minimiser la mémoire utilisée. Cependant, la classe 
- *       <CODE>ImageReader</CODE> permettant de lire les fichiers N1B extrait l'image 
- *       d'un bloc. Il serait intéressant d'utiliser la méthode 
- *       <CODE>JAI.create("ImageRead", block);</CODE> qui extrait par tuile dans un 
- *       fichier. Cela permettrait d'optimiser la mémoire. <BR>
- *       De même, il serait intéréssant d'écrire dans un fichier en utilisant le principe 
- *       des tuiles.</LI>
- * <LI>  Pour superposer le masque terre sur l'image SST, nous utilisons la méthode 
- *       <CODE>createGrphics()</CODE> Hors cette méthode fait appel au serveur X sous 
- *       linux. Il est alors impossible de calculer la SST sur un terminal  X. Il faudrait 
- *       implémenter cette partie différement pour permettre à la chaîne de fonctionner 
- *       sous terminal X.</LI>
+ *  <LI>Dans ce calcul qui fait intervenir de nombreuses images, nous travaillons avec 
+ *      des images en tuiles pour minimiser la mémoire utilisée. Cependant, la classe 
+ *     <CODE>ImageReader</CODE> permettant de lire les fichiers N1B extrait l'image 
+ *     d'un bloc. Il serait intéressant d'utiliser la méthode 
+ *     <CODE>JAI.create("ImageRead", block);</CODE> qui extrait par tuile dans un 
+ *     fichier. Cela permettrait d'optimiser la mémoire. <BR>
+ *     De même, il serait intéréssant d'écrire dans un fichier en utilisant le principe 
+ *     des tuiles.</LI>
+ *  <LI>Pour superposer le masque terre sur l'image SST, nous utilisons la méthode 
+ *      <CODE>createGrphics()</CODE> Hors cette méthode fait appel au serveur X sous 
+ *      linux. Il est alors impossible de calculer la SST sur un terminal  X. Il faudrait 
+ *      implémenter cette partie différement pour permettre à la chaîne de fonctionner 
+ *      sous terminal X.</LI>
  * </UL>
  *
  * @author Remi EVE
@@ -170,7 +174,7 @@ public final class SST
     public static final String SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients",
                                THERMAL_COEFFICIENT         = "Thermal calibration coefficient",
                                WAVE_LENGTH                 = "Central wave length",
-                               TEMPERATURE_CONSTANT        = "Constant for temperature computation (A, B, and C)";
+                               TEMPERATURE_CONSTANT        = "Temperature constant";   
     
     /** Catégorie de l'image S.S.T.. */ 
     private static final SampleDimension[] SAMPLE_SST_GEOPHYSIC = Utilities.SAMPLE_SST_GEOPHYSIC;
@@ -219,10 +223,8 @@ public final class SST
     private final AffineTransform[] FILTER_SST_SLOPE_INTERCEPT;
 
     /** Variables simplifiant la lecture du code. */
-    private static final int CANAL_4_AJ  = 3,
-                             CANAL_5_AJ  = 4,
-                             CANAL_4_KLM = 4,
-                             CANAL_5_KLM = 5;
+    private static final int CHANNEL_4 = 3,
+                             CHANNEL_5 = 4;
 
     /** Variables simplifiant la lecture du code. */
     final int INTERVAL_NEXT_CONTROL_POINT = ImageReaderN1B.INTERVAL_NEXT_CONTROL_POINT,
@@ -252,43 +254,70 @@ public final class SST
         tileCache.setMemoryCapacity(JAI_MEMORY_CACHE*1024*1024);
         jai.setDefaultTileSize(new Dimension(TILE_W, TILE_H));            
     }
+
+    /**
+     * Retourne le système de coordonnées de l'image.
+     *
+     * @param grid  Grille de localisation.
+     * @return le système de coordonnées de l'image.
+     */
+     private FittedCoordinateSystem getCoordinateSystem(final LocalizationGridN1B grid)
+     {
+        try
+        {
+            final AffineTransform at = new AffineTransform(INTERVAL_NEXT_CONTROL_POINT, 
+                                                           0, 
+                                                           0, 
+                                                           1, 
+                                                           OFFSET_FIRST_CONTROL_POINT-1, 
+                                                           0);        
+            final MathTransformFactory defaultMT = MathTransformFactory.getDefault();        
+            final MathTransform gridToGeo = grid.getMathTransform();  
+            final MathTransform imToGrid  = defaultMT.createAffineTransform(at).inverse();                            
+            final MathTransform imToGeo   = defaultMT.createConcatenatedTransform(imToGrid, 
+                                                                                  gridToGeo);        
+            final AxisInfo[] AXIS = {new AxisInfo("colonne", AxisOrientation.OTHER),
+                                     new AxisInfo("ligne"  , AxisOrientation.OTHER)};                                           
+            return new FittedCoordinateSystem("N1B", GeographicCoordinateSystem.WGS84, imToGeo, AXIS);                        
+        }
+        catch (org.geotools.ct.NoninvertibleTransformException e)
+        {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+     }
     
     /**
-     * Génère un fichier "texte" de données statistiques. Le fichier généré permettra dans 
-     * le futur de corriger les différences de température entre les pixels acquis de nuit 
-     * et ceux acquis de jour pour une latitude donnée. Ainsi, les températures calculées 
-     * de nuit et de jour pourront être ajustée.<BR><BR>
+     * Génère un fichier de données statistiques. Le fichier généré permet de constater
+     * la différence de température à une latitude donnée entre des pixels acquis de nuit 
+     * et des pixels acquis de jour.<BR><BR>
      *
      * Le fichier de statistique est de la forme : <i>LAT  STAT_JOUR   STAT_NUIT</i><BR>
      * ou <i>STAT_JOUR</i> est de la forme : <i>NB_PIX_JOUR   MOYENNE     ECART_TYPE</i><BR>
      * et <i>STAT_NUIT</i> est de la forme : <i>NB_PIX_NUIT   MOYENNE     ECART_TYPE</i><BR>
      *
-     * @param sst       GridCoverage contenant la S.S.T.
-     * @param matrix    GridCoverage contenant la matrice.
+     * @param sst       GridCoverage contenant la SST.
+     * @param matrix    GridCoverage contenant le mask.
      * @param origine   Coordonnées (x,y) dans le système géographique du pixel coin haut 
      *                  gauche de l'image.
-     * @param file      Fichier de sortie texte.
+     * @param target    Fichier de sortie texte.
      */    
     private void generateStatisticMatrix(final GridCoverage sst,
                                          final GridCoverage matrix,
                                          final Point2D      origine,
-                                         final File         fileTxt) throws IOException
+                                         final File         target) throws IOException
     {                       
-        final Category catSSTTemperature = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
-                                                                 Utilities.TEMPERATURE);
-        final Range rTemperature   = catSSTTemperature.getRange();        
+        final Category catSSTTemperature = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, Utilities.TEMPERATURE);
+        final Range rTemperature   = catSSTTemperature.getRange();                
         final RenderedImage source = sst.getRenderedImage();
         final Rectangle     bound  = new Rectangle(source.getMinX(),  source.getMinY(),
                                                    source.getWidth(), source.getHeight());
-
-        final RectIter iSST    = RectIterFactory.create(sst.getRenderedImage(), bound),
-                       iMatrix = RectIterFactory.create(matrix.getRenderedImage(), bound);
+        final double minLat = origine.getY() - (source.getHeight()-1)*RESOLUTION,
+                     maxLat = origine.getY();
+        final StatisticGrid stat = new StatisticGrid(minLat, maxLat);        
         
-        final StatisticGrid stat = new StatisticGrid(origine.getY() - (source.getHeight()-1)*RESOLUTION, 
-                                                     origine.getY(), 
-                                                     RESOLUTION);        
-        
-        // Parcours des fichiers SST et Matrice.
+        // Parcours des fichiers SST et du mask.
+        final RectIter iSST        = RectIterFactory.create(sst.getRenderedImage(),    bound),
+                       iMatrix     = RectIterFactory.create(matrix.getRenderedImage(), bound);        
         iSST.startBands();
         iMatrix.startBands();
         iSST.startLines();
@@ -383,37 +412,29 @@ public final class SST
         }           
         
         // Ecriture sur disque.
-        Utilities.writeStat(stat, fileTxt);
+        Utilities.writeStat(stat, target);
     }
     
     /**
-     * Retourne un GridCoverage.
+     * Retourne un <CODE>GridCoverage</CODE>.
      *
-     * @param source        Une image source.
-     * @param cs            Un système de coordonnée.
-     * @param sample        Tableau de category.
-     * @return un grid coverage.
+     * @param source        Image source.
+     * @param cs            Système de coordonnée.
+     * @param sample        Sample.
+     * @return un <CODE>GridCoverage</CODE>.
      */
-    private static final GridCoverage createGridCoverage (final RenderedImage      source, 
-                                                          final CoordinateSystem   cs,
-                                                          final SampleDimension[]  sample) 
+    private static final GridCoverage createGridCoverage(final RenderedImage     source, 
+                                                         final CoordinateSystem  cs,
+                                                         final SampleDimension[] sample) 
     {
-        for (int i=0;i<sample.length ; i++)
-            sample[i] = sample[i].geophysics(true);                
-        final Envelope envelope = new Envelope(new Rectangle(0, 0, source.getWidth(), source.getHeight()));            
-        return new GridCoverage("cs", 
-                                source, 
-                                cs,                                     
-                                envelope,
-                                sample,
-                                (GridCoverage[])null,
-                                (Map)null);         
+        final Rectangle bound = new Rectangle(0, 0, source.getWidth(), source.getHeight());
+        final Envelope envelope = new Envelope(bound);            
+        return new GridCoverage("", source, cs, envelope, sample, null, null);         
     }
 
     /**
-     * Génère le fichier <i>header</i> associé à l'image S.S.T. PNG. Ce fichier contient
-     * des informations permettant de localiser l'image S.S.T. générée dans le système
-     * géographique.
+     * Génère le fichier <i>header</i> associé à l'image SST. Ce fichier contient
+     * des informations géographique permettant de localiser l'image SST.
      *
      * @param header        Fichier header.
      * @param n1B           Fichier N1B.
@@ -421,7 +442,7 @@ public final class SST
      * @param width         Largeur de l'image N1B.
      * @param height        Hauteur de l'image N1B.
      * @param origine       Coordonnées (longitude, latitude) du pixel coin haut gauche de 
-     *                      l'image S.S.T..
+     *                      l'image SST.
      * @param time          Temps de calcul en seconde.
      */
     private void createHeader(final File            header,
@@ -433,33 +454,45 @@ public final class SST
                               final Point2D         origine,
                               final double          time) throws IOException
     {
-        final DateFormat dateFormat  = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss",   Locale.FRANCE);
+        final DateFormat dateFormat  = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.FRANCE);
         final StringBuffer bStart = new StringBuffer(),
                            bEnd   = new StringBuffer();
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         dateFormat.format(start, bStart, new FieldPosition(0));        
-        dateFormat.format(end,   bEnd, new FieldPosition(0));        
+        dateFormat.format(end,     bEnd, new FieldPosition(0));        
         
         final BufferedWriter info = new BufferedWriter(new FileWriter(header));                                                                
-        info.write("ORIGINE        \t" + origine.getX() + "\t" + origine.getY() + "\n");
-        info.write("RESOLUTION     \t" + RESOLUTION     + "\t" + RESOLUTION     + "\n\n\n\n");
+        info.write("ORIGINE        \t" + 
+                   origine.getX()      + "\t" + 
+                   origine.getY()      + "\n");
+        info.write("RESOLUTION     \t" + 
+                   RESOLUTION          + "\t" + 
+                   RESOLUTION          + "\n\n\n\n");
         info.write("# RESUME DU TRAITEMENT\n");            
-        info.write("SOURCE         \t\""  + n1b.getPath()    + "\"\n");
-        info.write("START_TIME     \t"    + bStart           + "\n");
-        info.write("END_TIME       \t"    + bEnd             + "\n");
-        info.write("WIDTH          \t"    + width            + "\n");
-        info.write("HEIGHT         \t"    + height           + "\n");        
-        info.write("PROCESSING     \t"    + time             + " secondes.\n\n");            
-        info.write("EXCLUSION_ANGLE     \t\t\t" + SENSOR_EXCLUSION_ANGLE + "\n");
-        info.write("TRANSITION_DAY_NIGHT\t\t\t" + TRANSITION_AUBE        + TRANSITION_CREPUSCULE + "\n");            
-        info.write("FILTER_TEMPERATURE_SST\t\t"   + FILTER_TEMPERATURE_SST + "\n");            
+        info.write("SOURCE         \t\"" + 
+                   n1b.getPath()         + "\"\n");
+        info.write("START_TIME     \t"   + 
+                   bStart                + "\n");
+        info.write("END_TIME       \t"   + 
+                   bEnd                  + "\n");
+        info.write("WIDTH          \t"   + 
+                   width                 + "\n");
+        info.write("HEIGHT         \t"   + 
+                   height                + "\n");        
+        info.write("PROCESSING     \t"   + 
+                   time                  + " secondes.\n\n");            
+        info.write("EXCLUSION_ANGLE     \t\t\t" + 
+                   SENSOR_EXCLUSION_ANGLE       + "\n");
+        info.write("TRANSITION_DAY_NIGHT\t\t\t" + 
+                   TRANSITION_AUBE              + 
+                   TRANSITION_CREPUSCULE        + "\n");            
+        info.write("FILTER_TEMPERATURE_SST\t\t" + 
+                   FILTER_TEMPERATURE_SST       + "\n");            
         
         for (int i=0; i<FILTER_SST_SLOPE_INTERCEPT.length ; i++)
-        {
             info.write("FILTER_SST_SLOPE_INTERCEPT  \t\t" + 
                        FILTER_SST_SLOPE_INTERCEPT[i].getScaleX()     + "\t" + 
                        FILTER_SST_SLOPE_INTERCEPT[i].getTranslateX() + "\n");        
-        }
         
         for (int i=0 ; i<LATITUDINAL.length ; i++)
         {
@@ -469,11 +502,15 @@ public final class SST
             {
                 latitude = ((Double)(LATITUDINAL[i].getRange().getMaxValue())).doubleValue();
                 seuil    = LATITUDINAL[i].getThresold2();
-                info.write("FILTRE_LATITUDINAL\t\t\t"      + latitude + "\t" + seuil + "\n");
+                info.write("FILTRE_LATITUDINAL\t\t\t" + 
+                           latitude + 
+                           "\t"     + seuil + "\n");
             }                                
             latitude = ((Double)(LATITUDINAL[i].getRange().getMinValue())).doubleValue();
             seuil    = LATITUDINAL[i].getThresold1();
-            info.write("FILTRE_LATITUDINAL\t\t\t"      + latitude + "\t" + seuil + "\n");
+            info.write("FILTRE_LATITUDINAL\t\t\t" + 
+                       latitude + "\t" + 
+                       seuil    + "\n");
         }
         info.close();                                                        
     }        
@@ -500,7 +537,7 @@ public final class SST
     /**
      * Retourne un masque des valeurs considérées comme aberrantes. 
      * 
-     * @param sst               Image S.S.T. source.
+     * @param sst               Image SST source.
      * @param configuration     Configuration du traitement réalisé par le JAI.
      * @return un masque des valeurs considérées comme aberrantes. 
      */ 
@@ -555,6 +592,20 @@ public final class SST
             final Filter filter = FilterSST.get(parameter);
             final RenderedImage[] array    = {t4, t5, sst};
             final RenderedImage maskSST = Mask.get(array, filter, configuration);                                            
+		
+            if (false)
+            {
+                try
+                {
+                    Utilities.writeImage(createGridCoverage(maskSST, WGS84, SAMPLE_SST_GEOPHYSIC).geophysics(false),
+                                         "png", "C:/Partages/SST/Test/SST/mask_sst_" + i + ".png");            
+                }
+                catch (Exception e)
+                {
+                    System.err.println(e);
+                }
+            }
+                        
             if (maskCloud == null)
             {
                 maskCloud = maskSST;
@@ -610,6 +661,19 @@ public final class SST
         final Filter filter = FilterLatitudinal.get(parameter);        
         final RenderedImage[] array = {sst};        
         final RenderedImage maskLat = Mask.get(array, filter, configuration);
+
+        if (false)
+        {
+            try
+            {                
+                Utilities.writeImage(createGridCoverage(maskLat, WGS84, SAMPLE_SST_GEOPHYSIC).geophysics(false),
+                                     "png", "C:/Partages/SST/Test/SST/mask_Lat.png");            
+            }
+            catch (Exception e)
+            {
+                System.err.println(e);
+            }
+        }
         
         // Ajout des masques nuages "maskCloud" et "maskLat". 
         ParameterBlock block = new ParameterBlock();
@@ -623,19 +687,21 @@ public final class SST
      * <CODE>channel</CODE>.
      *
      * @param reader         Lecteur de fichier N1B.
-     * @param channel        Numéro de la bande sur laquelle calculer la température de 
+     * @param bande          Numéro de la bande sur laquelle calculer la température de 
      *                       brillance.
+     * @param channel        Canal correspondant à la bande.
      * @param configuration  Configuration du JAI pour la gestion des tuiles lors du calcul.
      * @return une image contenant la température de brillance correspondant à la bande 
      *         <CODE>channel</CODE>.
      */
     private RenderedImage computeTemperature(final ImageReaderN1B  reader,
-                                            final int              channel,
-                                            final Map              configuration) 
-                                            throws IOException
+                                             final Channel         channel,
+                                             final int             band,
+                                             final Map             configuration) 
+                                             throws IOException
     {
         final ImageReadParam paramReader = new ImageReadParam();                
-        final int[] bandeSrc = {channel};
+        final int[] bandeSrc = {band};
 
         // Extraction du satellite. 
         final Metadata metadata   = (Metadata)reader.getImageMetadata(0);
@@ -647,36 +713,29 @@ public final class SST
         // Paramètres de calibration du fichier de configuration. 
         final ParameterList parameterInConf = ParseSatellite.getInputDefaultParameterList();
         parameterInConf.setParameter(ParseSatellite.SATELLITE, satellite);
-        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(channel));
+        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(band));
         final ParameterList parameterOutConf = ParseSatellite.parse(parameterInConf);                     
         
         // Paramètres de configuration de la radiance. 
         final ParameterList parameterInRadiance = Radiance.getInputParameterList(satellite);        
         if (!satellite.isKLM())
-            parameterInRadiance.setParameter(SLOPE_INTERCEPT_COEFFICIENT,
-                             paramCalibN1B.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT));
+            parameterInRadiance.setParameter(SLOPE_INTERCEPT_COEFFICIENT, paramCalibN1B.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT));
         else
-            parameterInRadiance.setParameter(THERMAL_COEFFICIENT,
-                                    paramCalibN1B.getObjectParameter(THERMAL_COEFFICIENT));
+            parameterInRadiance.setParameter(THERMAL_COEFFICIENT, paramCalibN1B.getObjectParameter(THERMAL_COEFFICIENT));
         
         // Extraction de l'image count. 
         paramReader.setSourceBands(bandeSrc);              
         final RenderedImage count = reader.read(0, paramReader);
         
         // Calcul de la radiance.
-        final RenderedImage radiance = Radiance.get(satellite, 
-                                                    count, 
-                                                    parameterInRadiance, 
-                                                    configuration);                            
+        final RenderedImage radiance = Radiance.get(satellite, count, parameterInRadiance, configuration);                            
         
         // Paramètres de configuration de la radiance. 
         final ParameterList parameterInTemperature = Temperature.getInputParameterList(satellite);                
         if (!satellite.isKLM())
-            parameterInTemperature.setParameter(WAVE_LENGTH,
-                                        parameterOutConf.getObjectParameter(WAVE_LENGTH));
+            parameterInTemperature.setParameter(WAVE_LENGTH, parameterOutConf.getObjectParameter(WAVE_LENGTH));
         else
-            parameterInTemperature.setParameter(TEMPERATURE_CONSTANT,            
-                                parameterOutConf.getObjectParameter(TEMPERATURE_CONSTANT));
+            parameterInTemperature.setParameter(TEMPERATURE_CONSTANT, parameterOutConf.getObjectParameter(TEMPERATURE_CONSTANT));
 
         // JAI.
         final TileCache tileCache = JAI.getDefaultInstance().getTileCache();
@@ -684,32 +743,11 @@ public final class SST
         tileCache.removeTiles(radiance);
         
         // Calcul de la température. 
-        return Temperature.get(satellite, 
-                               radiance, 
-                               parameterInTemperature, 
-                               configuration); 
+        return Temperature.get(satellite, radiance, parameterInTemperature, configuration); 
     }
     
     /**
-     * Retourne le nom du fichier généré sans l'extension.
-     * format  : "N12YYYYJJJHHMMSS"
-     *
-     * @param start         Date de début de l'acquisition.
-     * Retourne le nom du fichier généré sans l'extension.
-     */
-    private static String getOutputName(final Date      start,
-                                        final Satellite satellite) 
-    {
-        final DateFormat dateFormat  = new SimpleDateFormat("yyyyDDDHHmmss",   Locale.FRANCE);
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        final StringBuffer buffer = new StringBuffer("N" + satellite.getID());
-        dateFormat.format(start, buffer, new FieldPosition(0));
-        return buffer.toString();
-    }
-    
-    /**
-     * Calcul l'image S.S.T. à partir d'un fichier N1B.
+     * Calcul l'image SST à partir d'un fichier N1B.
      *
      * @param source        Fichier source.
      * @param directory     Répertoire de destination des fichiers.
@@ -721,37 +759,29 @@ public final class SST
     {           
         // Contrôle de la validité des paramètres. 
         if (source == null)
-            throw new IllegalArgumentException("File source is null.");
-        if (!source.isFile())
-            throw new IllegalArgumentException("Source is not a file.");                        
+            throw new IllegalArgumentException("Le fichier source est null.");
         if (!source.exists())
-            throw new IllegalArgumentException("File doesn't exist : " + 
-                                               source.getPath() + ".");            
+            throw new IllegalArgumentException("Le fichier source n'existe pas.");            
+        if (!source.isFile())
+            throw new IllegalArgumentException("Source n'est pas un fichier.");                        
         if (!source.canRead())
-            throw new IllegalArgumentException("Can not read file : " + 
-                                               source.getPath() + ".");                    
-        
+            throw new IllegalArgumentException("Impossible de lire le fichier source.");                            
         if (directory == null)
-            throw new IllegalArgumentException("Directory is null.");        
-        if (!directory.isDirectory())
-            throw new IllegalArgumentException("Directory is not a directory.");        
+            throw new IllegalArgumentException("Le répertoire de destination est null.");        
         if (!directory.exists())
-                throw new IllegalArgumentException("Directory doesn't exist : " + 
-                                                   directory.getPath() + ".");            
+            throw new IllegalArgumentException("Le répertoire de destination est introuvable.");            
+        if (!directory.isDirectory())
+            throw new IllegalArgumentException("Le fichier de destination n'est pas un répertoire.");        
         if (!directory.canWrite())
-            throw new IllegalArgumentException("Can not write in directory : " + 
-                                               directory.getPath() + ".");
+            throw new IllegalArgumentException("Ecriture interdite dans le répertoire de destination.");
         
-        // Instant de début des calculs. 
-        final long START_COMPUTATION = System.currentTimeMillis();
-
-        // Création de la configuration du JAI utilisé par les images lors des traitements. 
+        // Création de la configuration à utiliser pour le traitement des images. 
         final Map configuration   = new HashMap();
         final TileCache tileCache = JAI.getDefaultInstance().getTileCache();
         configuration.put(JAI.KEY_TILE_CACHE, tileCache);                
         tileCache.flush();
         
-        // Ouverture du fichier N1B.
+        // Ouverture du fichier N1B source.
         final FileImageInputStream stream = new FileImageInputStream(source);
         final ImageReaderN1B reader       = (ImageReaderN1B)ImageReaderN1B.get(stream);                
         final LocalizationGridN1B grid    = reader.getGridLocalization();
@@ -760,48 +790,25 @@ public final class SST
         final int width  = reader.getWidth(0),
                   height = reader.getHeight(0);
         final Date start = metadata.getStartTime(),
-                   end   = metadata.getEndTime();
-                
-        // Zone couverte par l'image.
-        Rectangle bound = new Rectangle(0, 0, width, height);            
-
-        // Noms des fichiers générés.
-        final String name    = directory.getPath() + 
-                               File.separatorChar  +
-                               getOutputName(start, satellite);        
-        final File fImageSST    = new File(name + ".sst." + format),    // image S.S.T.
-                   fImageMatrix = new File(name + ".msk." + format),    // masque
-                   fHeader      = new File(name + ".sst.hdr"),          // header
-                   fStatTxt     = new File(name + ".msk.sta"),          // statistique
-                   fTmp         = new File(name + ".tmp");              // temporaire
-                
-        // Système de coordonnées du fichier N1B. 
-        final AffineTransform at1 = new AffineTransform(INTERVAL_NEXT_CONTROL_POINT, 0, 
-                                                        0, 1, 
-                                                        OFFSET_FIRST_CONTROL_POINT-1, 0);        
-        final MathTransformFactory defaultMT = MathTransformFactory.getDefault();        
-        final MathTransform gridToGeo = grid.getMathTransform();  
-        final MathTransform imToGrid;
-        final MathTransform imToGeo;
-        try
-        {
-            imToGrid  = defaultMT.createAffineTransform(at1).inverse();                            
-            imToGeo   = defaultMT.createConcatenatedTransform(imToGrid, gridToGeo);        
-        }
-        catch (org.geotools.ct.NoninvertibleTransformException e)
-        {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+                   end   = metadata.getEndTime();                
         
-        // Axes du systeme N1B.
-        final AxisInfo[] AXIS = {new AxisInfo("colonne", AxisOrientation.OTHER),
-                                 new AxisInfo("ligne"  , AxisOrientation.OTHER)};                                           
-                                 
-        // Système de coordonnée de l'image.
-        final FittedCoordinateSystem cs = new FittedCoordinateSystem(
-                                                        "N1B",   
-                                                        GeographicCoordinateSystem.WGS84, 
-                                                        imToGeo, AXIS);                        
+        final Rectangle bound           = new Rectangle(0, 0, width, height);            
+        final long START_COMPUTATION    = System.currentTimeMillis();
+        final FittedCoordinateSystem cs = getCoordinateSystem(grid);
+        final MathTransform imToGeo     = cs.getToBase();
+
+        // Fichiers générés.
+        final DateFormat dateFormat  = new SimpleDateFormat("yyyyDDDHHmmss", Locale.FRANCE);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        final StringBuffer buffer = new StringBuffer("N" + satellite.getID());
+        dateFormat.format(start, buffer, new FieldPosition(0));
+        final String name = directory.getPath() + File.separatorChar  + buffer.toString();
+        final File fileSST    = new File(name + ".sst." + format),    // Image SST
+                   fileMask   = new File(name + ".msk." + format),    // Masque
+                   fileHeader = new File(name + ".sst.hdr"),          // Header
+                   fileStat   = new File(name + ".msk.sta"),          // Statistique
+                   fileTmp    = new File(name + ".tmp");              // Temporaire
+
         // Informations sur les palettes couleurs.
         final Category catSSTCloud       = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
                                                                  Utilities.CLOUD),
@@ -818,68 +825,51 @@ public final class SST
                        catMatrixLand     = Utilities.getCategory(SAMPLE_MASK_GEOPHYSIC, 
                                                                  Utilities.LAND_BACKGROUND);                
         if (catSSTCloud == null)
-            throw new IllegalArgumentException("Category \""   + 
-                                               Utilities.CLOUD + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.CLOUD + "\" n'est pas définie.");
         if (catSSTNoData == null)
-            throw new IllegalArgumentException("Category \""     + 
-                                               Utilities.NO_DATA + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.NO_DATA + "\" n'est pas définie.");
         if (catSSTLandBg == null)
-            throw new IllegalArgumentException("Category \"" + 
-                                               Utilities.LAND_BACKGROUND + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.LAND_BACKGROUND + "\" n'est pas définie.");
         if (catSSTLandContour == null)
-            throw new IllegalArgumentException("Category \"" + 
-                                               Utilities.LAND_CONTOUR + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.LAND_CONTOUR + "\" n'est pas définie.");
         if (catMatrixCloud == null)
-            throw new IllegalArgumentException("Category \"" + 
-                                               Utilities.CLOUD + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La Catégorie \"" + Utilities.CLOUD + "\" n'est pas définie.");
         if (catMatrixNoData == null)
-            throw new IllegalArgumentException("Category \"" + 
-                                               Utilities.NO_DATA + 
-                                               "\" is not define.");
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.NO_DATA + "\" n'est pas définie.");
         if (catMatrixLand == null)
-            throw new IllegalArgumentException("Category \"" + 
-                                               Utilities.LAND_BACKGROUND + 
-                                               "\" is not define.");        
-        final double geoSSTCloud     = ((Double)catSSTCloud.getRange().getMaxValue()).doubleValue(),
-                     geoSSTNoData    = ((Double)catSSTNoData.getRange().getMaxValue()).doubleValue(),
-                     geoMatrixNoData = ((Double)catMatrixNoData.getRange().getMaxValue()).doubleValue(),
-                     geoMatrixCloud  = ((Double)catMatrixCloud.getRange().getMaxValue()).doubleValue();                
+            throw new IllegalArgumentException("La catégorie \"" + Utilities.LAND_BACKGROUND + "\" n'est pas définie.");
+        
+        final double geoSSTCloud      = ((Double)catSSTCloud.getRange().getMaxValue()).doubleValue(),
+                     geoSSTNoData     = ((Double)catSSTNoData.getRange().getMaxValue()).doubleValue(),
+                     geoMatrixNoData  = ((Double)catMatrixNoData.getRange().getMaxValue()).doubleValue(),
+                     geoMatrixCloud   = ((Double)catMatrixCloud.getRange().getMaxValue()).doubleValue();                
         final Color geoSSTLandBg      = catSSTLandBg.getColors()[0],
                     geoSSTLandContour = catSSTLandContour.getColors()[0],
                     geoMatrixLand     = catMatrixLand.getColors()[0];
-                
+                        
         // Calcul de la Température de brillance du canal 4.
-        final int canal4 = satellite.isKLM() ? CANAL_4_KLM : CANAL_4_AJ;
-        final RenderedImage t4 = computeTemperature(reader, canal4, configuration);
-
+        final RenderedImage t4 = computeTemperature(reader, Channel.CHANNEL_4, CHANNEL_4, configuration);
+        
         // Calcul de la Température de brillance du canal 5.
-        final int canal5 = satellite.isKLM() ? CANAL_5_KLM : CANAL_5_AJ;
-        final RenderedImage t5 = computeTemperature(reader, canal5, configuration);
+        final RenderedImage t5 = computeTemperature(reader, Channel.CHANNEL_5, CHANNEL_5, configuration);
         
         // Calcul de la matrice jour / nuit. 
-        final RenderedImage elevation = SolarElevation.get(grid, bound, configuration);        
+        final RenderedImage elevation = SolarElevation.get(grid, imToGeo, bound, configuration);                
         RenderedImage matrix = MatrixDayNight.get(elevation, grid, TRANSITION_AUBE, 
                                                   TRANSITION_CREPUSCULE, configuration);        
         tileCache.removeTiles(elevation);
         
         // Calcul de l'angle zenithal du satellite. 
-        final RenderedImage zenithAngle = SatelliteZenithAngle.get(grid, bound, configuration);
+        final RenderedImage zenithAngle = SatelliteZenithAngle.get(grid, imToGeo, bound, configuration);
         
         // Calcul de la S.S.T. 
-        ParameterList paramProcess = reader.getCalibrationParameter(canal5);        
+        ParameterList paramProcess = reader.getCalibrationParameter(Channel.CHANNEL_5);        
         final ParameterList parameterInConf = ParseSatellite.getInputDefaultParameterList();
         parameterInConf.setParameter(ParseSatellite.SATELLITE, satellite);
-        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(canal5));
+        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(CHANNEL_5));
         final ParameterList parameterOutConf = ParseSatellite.parse(parameterInConf);                             
-        double[] coeffDay   = (double[])parameterOutConf.getObjectParameter(
-                                                    ParseSatellite.LINEAR_SPLIT_WINDOW_DAY),
-                 coeffNight = (double[])parameterOutConf.getObjectParameter(
-                                                    ParseSatellite.LINEAR_SPLIT_WINDOW_NIGHT);
+        double[] coeffDay   = (double[])parameterOutConf.getObjectParameter(ParseSatellite.LINEAR_SPLIT_WINDOW_DAY),
+                 coeffNight = (double[])parameterOutConf.getObjectParameter(ParseSatellite.LINEAR_SPLIT_WINDOW_NIGHT);
         RenderedImage sst = fr.ird.n1b.op.SST.get(t4, t5, zenithAngle, matrix, 
                                                   coeffDay, coeffNight,configuration);
         tileCache.removeTiles(zenithAngle);
@@ -897,18 +887,14 @@ public final class SST
         tileCache.removeTiles(maskNoData);
         
         // Exclusion des pixels trop éloignés du nadir. 
-        final RenderedImage sensorAngle = SensorAngle.get(grid, bound, configuration);        
-        sst = AngleExclusion.get(sst, sensorAngle,  SENSOR_EXCLUSION_ANGLE, false,
-                                 geoSSTNoData, configuration);        
-        matrix = AngleExclusion.get(matrix, sensorAngle, SENSOR_EXCLUSION_ANGLE, false,
-                                    geoMatrixNoData, configuration);     
+        final RenderedImage sensorAngle = SensorAngle.get(grid, imToGeo, bound, configuration);        
+        sst = AngleExclusion.get(sst, sensorAngle,  SENSOR_EXCLUSION_ANGLE, false, geoSSTNoData, configuration);        
+        matrix = AngleExclusion.get(matrix, sensorAngle, SENSOR_EXCLUSION_ANGLE, false, geoMatrixNoData, configuration);     
         tileCache.removeTiles(sensorAngle);
         
         // projection dans le système géographique. 
-        GridCoverage gridSST = projectToGeographic(
-                        createGridCoverage(sst, cs, SAMPLE_SST_GEOPHYSIC).geophysics(false));
-        GridCoverage gridMatrix = projectToGeographic(
-                        createGridCoverage(matrix, cs, SAMPLE_MASK_GEOPHYSIC).geophysics(false));
+        GridCoverage gridSST = projectToGeographic(createGridCoverage(sst, cs, SAMPLE_SST_GEOPHYSIC).geophysics(false));
+        GridCoverage gridMatrix = projectToGeographic(createGridCoverage(matrix, cs, SAMPLE_MASK_GEOPHYSIC).geophysics(false));
 
         // Superposition du masque Terre. 
         final Isoline isoline = Utilities.loadSerializedIsoline(ISOLINE_PATH);
@@ -921,36 +907,35 @@ public final class SST
         matrix = gridMatrix.geophysics(false).getRenderedImage();        
         
         // Coordonnées de l'origine.
-        final Point2D origine = new Point2D.Double((double)((int)(sst.getMinX()*
-                                                   RESOLUTION*100.0))/100.0, 
-                                                   (double)((int)(sst.getMinY()*
-                                                   RESOLUTION*100.0*-1))/100.0);                 
-        
+        final Point2D origine = new Point2D.Double((double)((int)(sst.getMinX()*RESOLUTION*100.0))/100.0, 
+                                                   (double)((int)(sst.getMinY()*RESOLUTION*100.0*-1))/100.0);                 
+       
         // Ecriture de l'image S.S.T.
-        Utilities.writeImage(sst, fImageSST, fTmp);
+        Utilities.writeImage(sst, fileSST, fileTmp);
         
         // Ecriture de la matrice. 
-        Utilities.writeImage(matrix, fImageMatrix, fTmp);
+        Utilities.writeImage(matrix, fileMask, fileTmp);
 
         // Création du fichier de statistiques. 
         generateStatisticMatrix(gridSST.geophysics(true), gridMatrix.geophysics(true),
-                                origine, fStatTxt);
+                                origine, fileStat);
        
         // Création du fichier Header.
         final double time = ((System.currentTimeMillis() - START_COMPUTATION)/1000.0);        
-        createHeader(fHeader, source, width, height, start, end, origine, time);
+        createHeader(fileHeader, source, width, height, start, end, origine, time);
     }
      
     /**
-     * Lancement du traitement. Ce programme calcul la S.S.T. projetée dans le système 
-     * géographique de l'image N1B avec une résolution de 1/100°. Le fichier S.S.T. est
-     * généré au <CODE>format</CODE> dans le repertoire <CODE>directory</CODE>. Outre
-     * le fichier S.S.T., un fichier <i>header</i> est généré contenant des informations
-     * de localisation de l'image dans le système géographique. <BR><BR>
+     * Lancement du traitement. Ce programme calcul une image SST projetée dans le système 
+     * géographique de l'image N1B avec une résolution de 1/100°. L'image SST est
+     * généré au <CODE>format</CODE> dans le répertoire <CODE>directory</CODE>. Outre
+     * le fichier SST, un fichier <i>header</i> est généré contenant des informations
+     * de localisation de l'image dans le système géographique ainsi qu'un fichier de 
+     * statistiques. <BR><BR>
      *
-     * @param source        Le fichier source.
+     * @param source        Fichier source.
      * @param directory     Répertoire de destination des fichiers.
-     * @param format        Le format du fichier de sortie (png, ...);
+     * @param format        Format de l'image SST (png, ...);
      */
     public static void main(String[] args)
     {        

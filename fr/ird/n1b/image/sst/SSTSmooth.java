@@ -82,19 +82,18 @@ final class SSTSmooth {
     private static final CoordinateSystem WGS84 = Utilities.WGS84;
 
     /**
-     * Retourne un GridCoverage.
+     * Retourne un <CODE>GridCoverage</CODE>.
      *
-     * @param source        Une image source.
-     * @param cs            Un système de coordonnée.
-     * @param sample        Tableau de category.
-     * @return un grid coverage.
+     * @param source        Image source.
+     * @param cs            Système de coordonnée.
+     * @param sample        Sample.
+     * @return un <CODE>GridCoverage</CODE>
      */
     private static final GridCoverage createGridCoverage (final RenderedImage      source, 
                                                           final CoordinateSystem   cs,
                                                           final SampleDimension[]  sample) 
     {        
-        final Envelope envelope = new Envelope(new Rectangle(0, 
-                                                             0, 
+        final Envelope envelope = new Envelope(new Rectangle(0, 0, 
                                                              source.getWidth(), 
                                                              source.getHeight()));            
         return new GridCoverage("", 
@@ -107,7 +106,8 @@ final class SSTSmooth {
     }
     
     /**
-     * Génère une image S.S.T. dont les températures sont lissée par un filtre.
+     * Génère une image SST dont les températures sont lissée. Le lissage est réalisé sur
+     * une fenêtre dont on garde la température maximale.
      *
      * @param args[0]   Fichier SST source.
      * @param args[1]   Fichier SST destination.
@@ -116,21 +116,37 @@ final class SSTSmooth {
      * @param args[4]   xKey.
      * @param args[5]   yKey.
      */
-    public void compute(final File  src, 
-                        final File  tgt, 
+    public void compute(final File  fileSrc, 
+                        final File  fileTgt, 
                         final int   width,
                         final int   height,
                         final int   xKey,
-                        final int   yKey) throws IOException {
-    
-        // Parametre JAI. 
+                        final int   yKey) throws IOException 
+    {
+        // Contrôle de la validité des paramètres. 
+        if (fileSrc == null)
+            throw new IllegalArgumentException("Le fichier source est null.");
+        if (!fileSrc.isFile())
+            throw new IllegalArgumentException("Source n'est pas un fichier.");                                   
+        if (!fileSrc.canRead())
+            throw new IllegalArgumentException("Source n'est pas autorisé en lecture.");                                   
+                            
+        // Paramètre JAI. 
         final Map configuration   = new HashMap();
         final TileCache tileCache = JAI.getDefaultInstance().getTileCache();
         configuration.put(JAI.KEY_TILE_CACHE, tileCache);        
         tileCache.flush();
                             
+        // Fichiers nécessaires.
+        final String nameTgt = fileTgt.getPath().substring(0, fileTgt.getPath().length()-4);
+        final String nameSrc = fileSrc.getPath();
+        final File fileTmp          = new File(nameTgt + ".tmp");
+        final File fileHeaderTgt    = new File(nameTgt + ".hdr");        
+        final File fileHeaderSrc    = new File(nameSrc.substring(0, nameSrc.length()-3).toString() + "hdr");        
+        
         // Ouverture du fichier source.
-        final GridCoverage gridSrc = Utilities.getGridCoverage(src,
+        final GridCoverage gridSrc = Utilities.getGridCoverage(fileSrc,
+                                                               fileHeaderSrc, 
                                                                "source",
                                                                WGS84,
                                                                SAMPLE_SST_INDEXED,
@@ -150,18 +166,17 @@ final class SSTSmooth {
                                                         SAMPLE_SST_INDEXED);
         
         // Ecriture du fichier cible.        
-        final String outTgt = tgt.getPath().substring(0, tgt.getPath().length()-4);
-        final String outSrc = src.getPath().substring(0, src.getPath().length()-4);
-        final File tmp      = new File(outTgt + ".tmp");
-        final File hdrTgt   = new File(outTgt + ".hdr");
-        final File hdrSrc   = new File(outSrc + ".hdr");
-        Utilities.writeImage(gridTgt.geophysics(false).getRenderedImage(), tgt, tmp);
-        Utilities.copy(hdrSrc, hdrTgt);
+        Utilities.writeImage(gridTgt.geophysics(false).getRenderedImage(), fileTgt, fileTmp);
+        if (fileHeaderTgt.exists())
+            if (!fileHeaderTgt.delete())
+                throw new IOException("Impossible d'effacer le fichier \"" + 
+                                      fileHeaderTgt + "\"");
+        Utilities.copy(fileHeaderSrc, fileHeaderTgt);
     }
     
-     /**
-     * Construit un objet SmoothTemperature capable de lisser les temperatures sur une image
-     * SST. 
+    /**
+     * Construit un objet <CODE>SmoothTemperature</CODE> permettant de lisser 
+     * les températures sur une image SST. 
      */
     public SSTSmooth() throws IOException
     {   
@@ -182,7 +197,7 @@ final class SSTSmooth {
      * Lisse les temperatures d'une image SST. Pour cela, le programme utilise une fenêtre 
      * qu'il déplace sur l'image source afin de calculer la valeur des pixels de sortie.
      * La valeur du pixel de sortie est égale à la température maximale des pixels de
-     * température apparteneant à la fenêtre.<BR><BR>
+     * température appartenant à la fenêtre.<BR><BR>
      *
      * Exemple : SSTSmooth  IMG_SOURCE  IMG_DESTINATION WIDTH HEIGHT XKEY YKEY<BR><BR>
      *      
@@ -218,6 +233,7 @@ final class SSTSmooth {
         catch (IOException e)
         {
             System.err.println(e);
+            System.exit(-1);
         }
     }
 }
