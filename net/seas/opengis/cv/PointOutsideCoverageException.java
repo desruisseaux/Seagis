@@ -23,6 +23,7 @@
 package net.seas.opengis.cv;
 
 // Miscellaneous
+import java.awt.geom.Point2D;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import net.seas.resources.Resources;
@@ -49,6 +50,12 @@ public class PointOutsideCoverageException extends RuntimeException
      */
     public PointOutsideCoverageException(final String message)
     {super(message);}
+
+    /**
+     * Construct an exception with a message for the specified point.
+     */
+    public PointOutsideCoverageException(final Point2D point)
+    {this(new CoordinatePoint(point));}
 
     /**
      * Construct an exception with a message for the specified point.

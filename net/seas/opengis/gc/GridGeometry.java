@@ -302,7 +302,7 @@ public class GridGeometry implements Dimensioned, Serializable
      */
     public AffineTransform getGridToCoordinateSystem2D()
     {
-        if (gridToCoordinateJAI==null)
+        if (gridToCoordinateJAI!=null)
         {
             final AffineTransform transform = new AffineTransform(gridToCoordinateJAI);
             transform.translate(0.5, 0.5); // Map to pixel's center.

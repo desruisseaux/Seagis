@@ -152,14 +152,19 @@ public class GridCoverage extends Coverage
     private static final WeakHashSet<Object> pool=new WeakHashSet<Object>();
 
     /**
-     * Version géophysiques de l'image {@link #image}.
+     * Underlying data as an {@link RenderedImage} object.   This object contains
+     * "real world" (geophysics) measurements, for example temperature in Celsius
+     * degrees. Pixel are usually stored as floating point numbers.
      */
-    private final PlanarImage numeric;
+    protected final PlanarImage data;
 
     /**
-     * Image propre à l'affichage.
+     * A mirror of {@link #data} suitable for rendering.  This image usually store pixels as
+     * integer values.  Transformations from {@link #data} to {@link #image} are computed on
+     * fly using a set a linear equations (specified through {@link Category} objects). This
+     * object may be equals to {@link #data} if no transformation is available or needed.
      */
-    private final PlanarImage image;
+    protected final PlanarImage image;
 
     /**
      * Liste des images. L'image de niveau 0 est l'image spécifiée au constructeur,
@@ -178,7 +183,7 @@ public class GridCoverage extends Coverage
     /**
      * The grid geometry.
      */
-    private final GridGeometry gridGeometry;
+    protected final GridGeometry gridGeometry;
 
     /**
      * Coordonnées de la région couverte par l'image. Cette enveloppe
@@ -200,30 +205,13 @@ public class GridCoverage extends Coverage
     private final List<SampleDimension> sampleDimensions;
 
     /**
-     * Indices d'un pixel de l'image. Ce point est utilisé temporairement pour convertir les
-     * coordonnées logiques en indices de pixels. L'objet utilisé est une sous-classe de
-     * {@link Point} dans laquelle on a redéfinit {@link Point#setLocation(double,double)},
-     * car il nous faut contrôler précisement les arrondissements. Nous devons arrondir vers
-     * le bas plutôt que vers l'entier le plus près. Par exemple la position (4.8, 5.7)
-     * appartient encore au pixel (4,5).
-     */
-    private final transient Point pixel=new Point()
-    {
-        public void setLocation(final double x, final double y)
-        {
-            this.x = (int) Math.floor(x);
-            this.y = (int) Math.floor(y);
-        }
-    };
-
-    /**
      * Construct a new grid coverage with the same parameter
      * than the specified coverage.
      */
     protected GridCoverage(final GridCoverage coverage)
     {
         super(coverage);
-        numeric          = coverage.numeric;
+        data             = coverage.data;
         image            = coverage.image;
         images           = coverage.images; // TODO: Should we clone?
         maxLevel         = coverage.maxLevel;
@@ -376,8 +364,8 @@ public class GridCoverage extends Coverage
         }
         if (categories==null)
         {
-            this.image   = image;
-            this.numeric = image;
+            this.image = image;
+            this.data  = image;
         }
         else if (isGeophysics)
         {
@@ -388,13 +376,13 @@ public class GridCoverage extends Coverage
             final CategoryList[]  reducedCat = new CategoryList[bands.length];
             for (int i=0; i<bands.length; i++) reducedCat[i]=categories[bands[i]];
     
-            this.numeric = image;
-            this.image   = PlanarImage.wrapRenderedImage(toThematic(reducedImage, reducedCat));
+            this.data  = image;
+            this.image = PlanarImage.wrapRenderedImage(toThematic(reducedImage, reducedCat));
         }
         else
         {
-            this.image   = image;
-            this.numeric = PlanarImage.wrapRenderedImage(toNumeric(this.image, categories));
+            this.image = image;
+            this.data  = PlanarImage.wrapRenderedImage(toNumeric(this.image, categories));
         }
         this.images           = USE_PYRAMID ? new ImageMIPMap(image, AffineTransform.getScaleInstance(DOWN_SAMPLER, DOWN_SAMPLER), null) : null;
         this.maxLevel         = Math.max((int) (Math.log((double)MIN_SIZE/(double)Math.max(image.getWidth(), image.getHeight()))/LOG_DOWN_SAMPLER), 0);
@@ -429,7 +417,7 @@ public class GridCoverage extends Coverage
      * Returns <code>true</code> if grid data can be edited.
      */
     public boolean isDataEditable()
-    {return (numeric instanceof WritableRenderedImage);}
+    {return (data instanceof WritableRenderedImage);}
 
     /**
      * Returns information for the grid coverage geometry. Grid geometry
@@ -464,12 +452,7 @@ public class GridCoverage extends Coverage
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
     public int[] evaluate(final CoordinatePoint coord, final int[] dest) throws PointOutsideCoverageException
-    {
-        setPoint(coord);
-        final int x = pixel.x;
-        final int y = pixel.y;
-        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
-    }
+    {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
 
     /**
      * Return an sequence of float values for a given point in the coverage.
@@ -479,13 +462,8 @@ public class GridCoverage extends Coverage
      * @return An array containing values.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public synchronized float[] evaluate(final CoordinatePoint coord, final float[] dest) throws PointOutsideCoverageException
-    {
-        setPoint(coord);
-        final int x = pixel.x;
-        final int y = pixel.y;
-        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
-    }
+    public float[] evaluate(final CoordinatePoint coord, final float[] dest) throws PointOutsideCoverageException
+    {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
 
     /**
      * Return an sequence of double values for a given point in the coverage.
@@ -495,12 +473,94 @@ public class GridCoverage extends Coverage
      * @return An array containing values.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public synchronized double[] evaluate(final CoordinatePoint coord, final double[] dest) throws PointOutsideCoverageException
+    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws PointOutsideCoverageException
+    {return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), dest);}
+
+    /**
+     * Return a sequence of integer values for a given two-dimensional point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public int[] evaluate(final Point2D coord, final int[] dest) throws PointOutsideCoverageException
     {
-        setPoint(coord);
-        final int x = pixel.x;
-        final int y = pixel.y;
-        return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
+        final Point2D pixel = inverseTransform(coord);
+        final int x = (int)Math.floor(pixel.getX());
+        final int y = (int)Math.floor(pixel.getY());
+        final int xmin = image.getMinX();
+        final int ymin = image.getMinY();
+        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        {
+            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+        }
+        else throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
+     * Return an sequence of float values for a given two-dimensional point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public float[] evaluate(final Point2D coord, final float[] dest) throws PointOutsideCoverageException
+    {
+        final Point2D pixel = inverseTransform(coord);
+        final int x = (int)Math.floor(pixel.getX());
+        final int y = (int)Math.floor(pixel.getY());
+        final int xmin = image.getMinX();
+        final int ymin = image.getMinY();
+        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        {
+            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+        }
+        else throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
+     * Return an sequence of double values for a given two-dimensional point in the coverage.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code>.
+     * @return An array containing values.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     */
+    public double[] evaluate(final Point2D coord, final double[] dest) throws PointOutsideCoverageException
+    {
+        final Point2D pixel = inverseTransform(coord);
+        final int x = (int)Math.floor(pixel.getX());
+        final int y = (int)Math.floor(pixel.getY());
+        final int xmin = image.getMinX();
+        final int ymin = image.getMinY();
+        if (x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight())
+        {
+            return data.getTile(data.XToTileX(x), data.YToTileY(y)).getPixel(x, y, dest);
+        }
+        else throw new PointOutsideCoverageException(coord);
+    }
+
+    /**
+     * Convertit les coordonnées logiques <code>point</code> en coordonnées pixel.
+     * Le résultat sera placé dans le champ {@link #pixel}. Cette méthode retourne
+     * <code>true</code> si la conversion a réussie, ou <code>false</code> si elle
+     * a échouée ou si les coordonnées résultantes sont en dehors des limites de
+     * l'image.
+     */
+    private Point2D inverseTransform(final Point2D point) throws PointOutsideCoverageException
+    {
+        try
+        {
+            return gridGeometry.getGridToCoordinateJAI().inverseTransform(point, null);
+        }
+        catch (NoninvertibleTransformException exception)
+        {
+            final PointOutsideCoverageException e = new PointOutsideCoverageException(point);
+            if (Version.MINOR>=4) e.initCause(exception);
+            throw e;
+        }
     }
 
     /**
@@ -516,14 +576,14 @@ public class GridCoverage extends Coverage
      */
     public synchronized String getDebugString(final CoordinatePoint coord) throws PointOutsideCoverageException
     {
-        setPoint(coord);
-        final int                x = pixel.x;
-        final int                y = pixel.y;
+        final Point2D pixel = inverseTransform(new Point2D.Double(coord.ord[0], coord.ord[1]));
+        final int                x = (int)Math.floor(pixel.getX());
+        final int                y = (int)Math.floor(pixel.getY());
         final int    numImageBands = image.getNumBands();
-        final int  numNumericBands = numeric.getNumBands();
+        final int  numNumericBands = data.getNumBands();
         final int         numBands = Math.max(numImageBands, numNumericBands);
-        final Raster   imageRaster = image  .getTile(image  .XToTileX(x), image  .YToTileY(y));
-        final Raster numericRaster = numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y));
+        final Raster   imageRaster = image.getTile(image.XToTileX(x), image.YToTileY(y));
+        final Raster numericRaster = data .getTile(data .XToTileX(x), data .YToTileY(y));
         final StringBuffer  buffer = new StringBuffer();
         buffer.append('(');
         buffer.append(x);
@@ -547,37 +607,6 @@ public class GridCoverage extends Coverage
         }
         buffer.append(']');
         return buffer.toString();
-    }
-
-    /**
-     * Convertit les coordonnées logiques <code>point</code> en coordonnées pixel.
-     * Le résultat sera placé dans le champ {@link #pixel}. Cette méthode retourne
-     * <code>true</code> si la conversion a réussie, ou <code>false</code> si elle
-     * a échouée ou si les coordonnées résultantes sont en dehors des limites de
-     * l'image.
-     */
-    private void setPoint(final CoordinatePoint coord) throws PointOutsideCoverageException
-    {
-        try
-        {
-            Point2D point = new Point2D.Double(coord.ord[0], coord.ord[1]);
-            point=gridGeometry.getGridToCoordinateJAI().inverseTransform(point, pixel);
-            assert(point==pixel);
-            final int x    = pixel.x;
-            final int y    = pixel.y;
-            final int xmin = image.getMinX();
-            final int ymin = image.getMinY();
-            if (!(x>=xmin && y>=ymin && x<xmin+image.getWidth() && y<ymin+image.getHeight()))
-            {
-                throw new PointOutsideCoverageException(coord);
-            }
-        }
-        catch (NoninvertibleTransformException exception)
-        {
-            final PointOutsideCoverageException e = new PointOutsideCoverageException(coord);
-            if (Version.MINOR>=4) e.initCause(exception);
-            throw e;
-        }
     }
 
     /**
@@ -646,7 +675,7 @@ public class GridCoverage extends Coverage
      * argument, then the <code>geophysics</code> parameter has no effect.
      */
     public RenderedImage getRenderedImage(final boolean geophysics)
-    {return geophysics ? numeric : image;}
+    {return geophysics ? data : image;}
 
     /**
      * Dessine l'image vers le graphique spécifié. Il est de la responsabilité du programmeur de s'assurer
