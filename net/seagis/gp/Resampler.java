@@ -45,6 +45,7 @@ import javax.media.jai.Interpolation;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListDescriptor;
 import javax.media.jai.ParameterListDescriptorImpl;
+import javax.media.jai.InterpolationNearest;
 
 // OpenGIS (SEAGIS-GCS) dependencies
 import net.seagis.gc.GridCoverage;
@@ -63,6 +64,7 @@ import net.seagis.ct.CoordinateTransformation;
 import net.seagis.ct.CoordinateTransformationFactory;
 
 // Resources
+import java.util.List;
 import java.util.Locale;
 import net.seagis.resources.Images;
 import net.seagis.resources.OpenGIS;
@@ -106,6 +108,8 @@ final class Resampler extends GridCoverage
      *                            be equals to the source grid coverage coordinate system.
      * @param  targetGridGeometry The target grid geometry, or <code>null</code> for default.
      * @param  interpolation      The interpolation to use.
+     * @param  geophysics         Tells if the projection should be applied on the geophysics image or the
+     *                            indexed image for the specified source coverage and interpolation type.
      * @param  factory            The factory to use for constructing math transforms.
      * @throws TransformException if a transformation failed.
      */
@@ -113,12 +117,13 @@ final class Resampler extends GridCoverage
                       final CoordinateTransformation transformation,
                       final GridGeometry         targetGridGeometry,
                       final Interpolation             interpolation,
+                      final boolean                      geophysics,
                       final MathTransformFactory            factory) throws TransformException
     {
         super(sourceCoverage.getName(null),
-              getRenderedImage(sourceCoverage), transformation.getTargetCS(),
+              getRenderedImage(sourceCoverage, geophysics), transformation.getTargetCS(),
               OpenGIS.transform(transformation.getMathTransform(), sourceCoverage.getEnvelope()),
-              getCategories(sourceCoverage), true, new GridCoverage[] {sourceCoverage}, null);
+              getCategories(sourceCoverage), geophysics, new GridCoverage[] {sourceCoverage}, null);
 
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert sourceCoverage.getCoordinateSystem().equivalents(transformation.getSourceCS());
@@ -137,7 +142,7 @@ final class Resampler extends GridCoverage
             // doesn't map two-dimensional coordinate systems.
             throw new CannotReprojectException("Only 2D transforms are currently implemented");
         }
-        final RenderedOp      operation = (RenderedOp) data;
+        final RenderedOp      operation = (RenderedOp) getRenderedImage(geophysics);
         final RenderedImage sourceImage = operation.getSourceImage(0);
         final Warp                 warp = new WarpTransform(sourceCoverage.getGridGeometry(), (MathTransform2D) transform, gridGeometry, factory);
         final ParameterBlock      param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
@@ -149,12 +154,12 @@ final class Resampler extends GridCoverage
         // operation here.
 
         final RenderingHints hints = operation.getRenderingHints();
-        hints.add(Images.getRenderingHints(data));
+        hints.add(Images.getRenderingHints(operation));
         operation.setRenderingHints(hints);
 
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert sourceImage == sourceCoverage.getRenderedImage(true);
-        assert data.getBounds().equals(PlanarImage.wrapRenderedImage(sourceImage).getBounds());
+        assert sourceImage == sourceCoverage.getRenderedImage(geophysics);
+        assert operation.getBounds().equals(PlanarImage.wrapRenderedImage(sourceImage).getBounds());
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
@@ -188,10 +193,23 @@ final class Resampler extends GridCoverage
         {
             return sourceCoverage;
         }
+        // Tells if the projection should be applied on the geophysics image  or
+        // the indexed image for the specified source coverage and interpolation
+        // type.
+        boolean geophysics = true;
+        if (interpolation instanceof InterpolationNearest)
+        {
+            final List sources = sourceCoverage.getRenderedImage(true).getSources();
+            if (sources!=null)
+            {
+                final RenderedImage indexed = sourceCoverage.getRenderedImage(false);
+                if (sources.contains(indexed)) geophysics = false;
+            }       
+        }
         try
         {
             final CoordinateTransformation transformation = factory.createFromCoordinateSystems(sourceCS, targetCS);
-            return new Resampler(sourceCoverage, transformation, targetGridGeometry, interpolation, factory.getMathTransformFactory());
+            return new Resampler(sourceCoverage, transformation, targetGridGeometry, interpolation, geophysics, factory.getMathTransformFactory());
         }
         catch (TransformException exception)
         {
@@ -204,13 +222,12 @@ final class Resampler extends GridCoverage
     }
 
     /**
-     * Returns a grid coverage rendered image as a {@link RenderedOp}.
-     * This method wrap <code>GridCoverage.getRenderedImage(true)</code>
-     * in a "Null" operation.
+     * Returns a grid coverage rendered image as a {@link RenderedOp}. This method wrap
+     * <code>GridCoverage.getRenderedImage(geophysics)</code> in a "Null" operation.
      */
-    private static RenderedOp getRenderedImage(final GridCoverage sourceCoverage)
+    private static RenderedOp getRenderedImage(final GridCoverage sourceCoverage, final boolean geophysics)
     {
-        final RenderedImage image = sourceCoverage.getRenderedImage(true);
+        final RenderedImage image=sourceCoverage.getRenderedImage(geophysics);
         return JAI.create("Null", image, Images.getRenderingHints(image));
     }
 
