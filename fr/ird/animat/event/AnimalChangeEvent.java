@@ -45,7 +45,7 @@ public class AnimalChangeEvent extends EventObject {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-//    private static final long serialVersionUID = 555996444421587694L;
+    private static final long serialVersionUID = -3863761339872054925L;
 
     /**
      * Construit un nouvel événement.

@@ -127,9 +127,9 @@ public class Species implements fr.ird.animat.Species, Serializable {
     private transient Set<fr.ird.animat.Parameter> parameterSet;
 
     /**
-     * Index du paramètre {@link Parameter#HEADING}, ou -1 si ce paramètre ne fait pas partit
-     * de l'ensemble des paramètres pris en compte. Le paramètre <code>HEADING</code> est
-     * traité d'une manière particulière, étant donné que les coordonnées (x,y) sont mémorisées
+     * Index du paramètre {@link Parameter#HEADING}, ou -1 si ce paramètre ne fait pas parti
+     * de l'ensemble des paramètres pris en compte.  Le paramètre <code>HEADING</code> est
+     * traité d'une manière particulière, étant donné que ses informations sont mémorisées
      * dans l'objet {@link Path} plutôt que dans le tableau interne de {@link Animal}.
      */
     final int headingIndex;
@@ -265,7 +265,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
     private static final int[] getOffsets(final Parameter[] parameters) {
         final int[] offsets = new int[parameters.length + 1];
         for (int i=0; i<parameters.length; i++) {
-            offsets[i+1] = offsets[i] + parameters[i].getRecordLength();
+            offsets[i+1] = offsets[i] + parameters[i].getNumSampleDimensions();
         }
         return offsets;
     }
@@ -278,6 +278,19 @@ public class Species implements fr.ird.animat.Species, Serializable {
     final int getRecordLength() {
         assert offsets.length == parameters.length+1;
         return offsets[parameters.length];
+    }
+
+    /**
+     * Retourne la longueur des enregistrements moins les éléments qui seront stokés dans
+     * {@link Path}. Cette longeur sera utilisé dans le tableau {@link Animal#observations}.
+     */
+    final int getReducedRecordLength() {
+        int length = getRecordLength();
+        if (headingIndex >= 0) {
+            length -= Parameter.HEADING.getNumSampleDimensions();
+        }
+        assert length >= 0 : length;
+        return length;
     }
 
     /**

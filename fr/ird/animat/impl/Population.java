@@ -50,7 +50,7 @@ import fr.ird.animat.event.PopulationChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Population extends RemoteObject implements fr.ird.animat.Population {
+public class Population extends RemoteObject implements fr.ird.animat.Population {
     /**
      * L'environnement dans lequel évolue cette population.
      * Peut être <code>null</code> si la population est "morte".
@@ -119,7 +119,7 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
      * Si cette population n'existe plus (c'est-à-dire si {@link #kill}
      * a été appelée), alors cette méthode retourne <code>null</code>.
      */
-    public Environment getEnvironment() {
+    public final Environment getEnvironment() {
         return environment;
     }
 
@@ -187,17 +187,23 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
     }
 
     /**
-     * Fait évoluer une population en fonction de son environnement.
-     * Cette méthode va typiquement déplacer les {@linkplain Animal animaux}
-     * en appellant des méthodes telles que {@link Animal#moveToward}. Des
-     * individus peuvent aussi naître ou mourrir.
+     * Fait évoluer une population en fonction de son environnement. Cette méthode va
+     * typiquement déplacer les {@linkplain Animal animaux} en appellant des méthodes
+     * telles que {@link Path#moveToward}. Des individus peuvent aussi naître ou mourrir.
+     * L'implémentation par défaut appelle {@link Animal#move} pour chaque animal de cette
+     * population.
      *
-     * @param  duration Durée de l'évolution, en nombre de jours.
-     *         Cette durée est habituellement égale à
-     *         <code>{@link #getEnvironment()}.{@link Environment#getStepSequenceNumber()
+     * @param  duration Durée de l'évolution, en nombre de jours. Cette durée est habituellement
+     *         égale à <code>{@link #getEnvironment()}.{@link Environment#getStepSequenceNumber()
      *         getStepSequenceNumber()}.{@link TimeStep#getStepDuration getStepDuration()}</code>.
      */
-    public abstract void evoluate(float duration);
+    public void evoluate(final float duration) {
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                ((Animal) it.next()).move(duration);
+            }
+        }
+    }
 
     /**
      * Déclare un objet à informer des changements survenant dans cette
@@ -229,6 +235,7 @@ public abstract class Population extends RemoteObject implements fr.ird.animat.P
      * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
      */
     protected void firePopulationChanged() {
+        final Environment environment = getEnvironment();
         if (environment != null) {
             environment.queue.invokeLater(firePopulationChanged);
         } else {

@@ -57,7 +57,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * nécessaire de redéfinir les méthodes suivantes:
  * <ul>
  *   <li>{@link #getParameters}</li>
- *   <li>{@link #getCoverage}</li>
+ *   <li>{@link #getCoverage(Parameter)}</li>
  * </ul>
  *
  * @version $Id$

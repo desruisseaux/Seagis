@@ -26,11 +26,13 @@
 package fr.ird.animat.impl;
 
 // J2SE dependencies
-import java.io.Serializable;
+import java.awt.Shape;
 import java.awt.geom.Point2D;
+import java.io.Serializable;
 
 // Geotools dependencies
 import org.geotools.cv.Coverage;
+import org.geotools.pt.CoordinatePoint;
 
 // Animat dependencies
 import fr.ird.animat.Observation;
@@ -65,7 +67,7 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     /**
      * Construit un nouveau paramètre.
      *
-     * @param name  Le nom du paramètre.
+     * @param name Le nom du paramètre.
      */
     protected Parameter(final String name) {
         this.name = name.trim();
@@ -82,49 +84,40 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne la {@link Observation#value valeur d'une observation}.
-     * L'implémentation par défaut retourne <code>data[0]</code>.
+     * Retourne la valeur de ce paramètre pour l'animal spécifié. Le tableau retourné peut avoir
+     * une longueur de 1 ou 3. Les informations qu'il contient devront obligatoirement être dans
+     * l'ordre suivant:
+     * <ul>
+     *   <li>La valeur du paramètre</li>
+     *   <li>La longitude à laquelle cette valeur a été mesurée.</li>
+     *   <li>La latitude à laquelle cette valeur a été mesurée.</li>
+     * </ul>
+     * Les deux derniers éléments peuvent être absents s'ils ne s'appliquent pas. Le nombre
+     * d'éléments valides que contiendra le tableau est spécifié par {@link #getNumSampleDimensions}.
+     * L'implémentation par défaut obtient la couverture de ce paramètre environnemental avec
+     * {@link Environment#getCoverage(Parameter) Environment.getCoverage(...)} et appelle
+     * {@link Coverage#evaluate(CoordinatePoint, float[]) Coverage.evaluate(...)}.
      *
-     * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
-     *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
-     *         {@link Coverage#evaluate(CoordinatePoint, float[]) evaluate}.
-     * @return La valeur de l'observation, ou {@link Float#NaN} si aucune valeur n'est disponible.
+     * @param animal L'animal pour lequel obtenir la valeur de ce paramètre.
+     * @param coord  La position de cet animal, en degrés de longitude et de latitude.
+     * @param perceptionArea La région jusqu'où s'étend la perception de cet animal.
+     * @param dest Le tableau dans lequel mémoriser les valeurs de ce paramètre, ou <code>null</code>.
+     * @return Le tableau <code>dest</code>, ou un nouveau tableau si <code>dest</code> était nul.
      */
-    protected float getValue(final float[] data) {
-        return data[0];
+    protected float[] evaluate(final Animal         animal,
+                               final CoordinatePoint coord,
+                               final Shape  perceptionArea,
+                               final float[]          dest)
+    {
+        return animal.getPopulation().getEnvironment().getCoverage(this).evaluate(coord, dest);
     }
 
     /**
-     * Retourne la {@linkplain Observation#location position d'une observation}.
-     * L'implémentation par défaut retourne (<code>data[1]</code>,<code>data[2]</code>)
-     *
-     * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
-     *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
-     *         {@link Coverage#evaluate(CoordinatePoint, float[]) evaluate}.
-     * @return La position de l'observation, ou <code>null</code> si aucune position n'est
-     *         disposible ou si cette information ne s'applique pas à ce paramètre.
+     * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
+     * {@link #evaluate evaluate(...)}. Ce nombre sera généralement de 1 ou 3.
      */
-    protected Point2D getLocation(final float[] data) {
-        return new Point2D.Float(data[1],data[2]);
-    }
-
-    /**
-     * Indique si les observations de ce paramètre se font à des positions bien précises.
-     * Si cette méthode retourne <code>false</code>, alors cela signifie que la méthode
-     * {@link #getLocation} ne retournera jamais une position non-nulle. L'implémentation
-     * par défaut retourne toujours <code>true</code>.
-     */
-    protected boolean isLocalized() {
-        return true;
-    }
-
-    /**
-     * Retourne le nombre de valeurs <code>float</code> nécessaires pour mémoriser les
-     * informations représentées par ce paramètre.  Cette longueur sera habituellement
-     * de 3 ou 1, selon que ce paramètre contient une position ou pas.
-     */
-    final int getRecordLength() {
-        return isLocalized() ? Observations.LOCATED_LENGTH : Observations.SCALAR_LENGTH;
+    protected int getNumSampleDimensions() {
+        return 1;
     }
 
     /**

@@ -48,18 +48,19 @@ import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.XRectangle2D;
 
+// Animats
+import fr.ird.animat.Clock;
+
 
 /**
- * Trajectoire suivit par un {@link Animal}. Cette trajectoire contient
- * les coordonnées géographiques (en degrés de longitudes et de latitudes)
- * de toutes les positions visitées par l'animal. Chaque fois que la méthode
- * {@link #setLocation(double,double)} est appelée, la position spécifiée
- * est ajoutée aux positions déjà mémorisées.
- * <br><br>
+ * Trajectoire suivit par un {@link Animal}. Cette trajectoire contient les coordonnées
+ * géographiques (en degrés de longitudes et de latitudes) de toutes les positions visitées
+ * par l'animal à chaque {@linkplain Clock#getStepSequenceNumber(Date) pas de temps}.
+ *
  * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes
- * et de latitudes selon l'ellipsoïde {@link Ellipsoid#WGS84}.
+ * et de latitudes selon l'ellipsoïde {@linkplain Ellipsoid#WGS84 WGS84}.
  * Les déplacements sont exprimées en milles nautiques, et les directions
- * en degrés géographiques (c'est-à-dire par rapport au nord "vrai").
+ * en degrés géographiques (c'est-à-dire par rapport au nord &quot;vrai&quot;).
  * Les déplacements et le cap sont calculés en utilisant une projection
  * de Mercator mobile, toujours centrée sur la position actuelle.
  *
@@ -83,8 +84,10 @@ public final class Path extends Point2D implements Shape, Serializable {
     static final int RECORD_LENGTH = 2;
 
     /**
-     * Longueur valide du tableau {@link #points}. Le nombre
-     * de points sera la moitié de cette longueur.
+     * Longueur valide du tableau {@link #points}.  Le nombre de points sera la moitié
+     * de cette longueur. Le nombre de points valides est habituellement égal à {@link
+     * Clock#getStepSequenceNumber} plus 1,  le "+1" étant nécessaire afin de contenir
+     * la coordonnée du point au pas de temps courant.
      */
     private transient int validLength;
 
@@ -93,7 +96,7 @@ public final class Path extends Point2D implements Shape, Serializable {
      * l'animal, en <u>radians</u> de longitude et de latitude. Le dernier
      * point de ce tableau est la position actuelle de l'animal.
      */
-    private float[] points = new float[8];
+    private float[] points = new float[4*RECORD_LENGTH];
 
     /**
      * Direction actuelle de cet animal, en <u>radians arithmétique</u>.
@@ -111,18 +114,47 @@ public final class Path extends Point2D implements Shape, Serializable {
                   ymax = java.lang.Float.NEGATIVE_INFINITY;
 
     /**
-     * Construit une trajectoire qui commencera à la position spécifiée.
+     * Construit une trajectoire qui commencera à la position spécifiée.  Notez que cette position
+     * initiale n'est pas définitive; on peut la changer à n'importe quel moment par un appel à la
+     * méthode {@link #setLocation}. Elle ne deviendra définitive qu'après avoir appelé la méthode
+     * {@link Animal#observe}.
      *
      * @param position Position initiale de la trajectoire.
      */
-    protected Path(final Point2D position) {
-        setLocation(position);
+    public Path(final Point2D position) {
+        setLocationRadians((float)Math.toRadians(position.getX()),
+                           (float)Math.toRadians(position.getY()));
+        assert getPointCount() == 1 : validLength;
     }
 
     /**
-     * Ajoute les coordonnées <code>x,y</code> (en <u>radians</u>
-     * de longitude et de latitude) à cette trajectoire. Le cap
-     * restera inchangé.
+     * Défini le nombre de points que contiendra ce chemin.  Cette méthode est appelée par {@link
+     * Animal#observe}  pour signaler  qu'il faut mémoriser la position actuelle  dans le tableau
+     * {@link #points} à un indice correspondant au {@linkplain Clock#getStepSequenceNumber() pas
+     * de temps courant}.   En général, cet appel n'aura aucun effet puisque la position actuelle
+     * est déjà au bon endroit dans le tableau {@link #points}.    Elle peut toutefois réduire le
+     * tableau si l'animal a été déplacé plusieurs fois dans le même pas de temps, ou agrandir le
+     * tableau si l'animal n'a pas été déplacé du tout, afin que la longueur valide du tableau
+     * soit cohérent avec le numéro du pas de temps courant. Dans tous les cas, le cap est conservé.
+     */
+    final void setPointCount(int n) {
+        n *= RECORD_LENGTH;
+        if (n == validLength) {
+            return;
+        }
+        if (n >= points.length) {
+            points = XArray.resize(points, Math.max(n + Math.min(n, 1024*RECORD_LENGTH), 4*RECORD_LENGTH));
+        }
+        do {
+            // Copy only once if we are reducing the array.
+            System.arraycopy(points, validLength-RECORD_LENGTH, points, n-RECORD_LENGTH, RECORD_LENGTH);
+        } while ((validLength+=RECORD_LENGTH) < n);
+        validLength = n;
+    }
+
+    /**
+     * Ajoute les coordonnées <code>x,y</code> (en <u>radians</u> de longitude et de latitude)
+     * à cette trajectoire. Le cap restera inchangé.
      *
      * @param x Longitude en radians.
      * @param y Latitude en radians.
@@ -140,8 +172,9 @@ public final class Path extends Point2D implements Shape, Serializable {
     }
 
     /**
-     * Ajoute les coordonnées <code>x,y</code> (en degrés
-     * de longitude et de latitude) à cette trajectoire.
+     * Ajoute les coordonnées <code>x,y</code> (en degrés de longitude et de latitude) à cette
+     * trajectoire. Le {@linkplain #getHeading cap} sera modifié en fonction de la droite
+     * reliant la dernière position à la position spécifiée.
      *
      * @param x Longitude en degrés.
      * @param y Latitude en degrés.
@@ -149,30 +182,15 @@ public final class Path extends Point2D implements Shape, Serializable {
     public void setLocation(double x, double y) {
         setLocationRadians((float) Math.toRadians(x),
                            (float) Math.toRadians(y));
-        // Note: si on veut ajuster la direction, il faudrait
-        //       le faire ici (et non dans la méthode privée
-        //       ci-dessus).
-    }
-
-    /**
-     * Vérifie que la trajectoire contient au moins un point.
-     *
-     * @throws IllegalStateException Si cette trajectoire ne
-     *         contient aucun point.
-     *
-     * @task TODO: Localize this message.
-     */
-    private void ensureNonEmpty() throws IllegalStateException {
-        if (validLength == 0) {
-            throw new IllegalStateException("Aucune position initiale.");
-        }
+        x -= points[validLength - 2*RECORD_LENGTH + 0];
+        y -= points[validLength - 2*RECORD_LENGTH + 1];
+        direction = Math.atan2(y,x);
     }
 
     /**
      * Retourne la longitude de la position actuelle, en degrés.
      */
     public double getX() {
-        ensureNonEmpty();
         return Math.toDegrees(points[validLength-RECORD_LENGTH+0]);
     }
 
@@ -180,13 +198,11 @@ public final class Path extends Point2D implements Shape, Serializable {
      * Retourne la latitude de la position actuelle, en degrés.
      */
     public double getY() {
-        ensureNonEmpty();
         return Math.toDegrees(points[validLength-RECORD_LENGTH+1]);
     }
 
     /**
-     * Retourne le cap actuel, en degrés
-     * géographiques par rapport au nord vrai.
+     * Retourne le cap actuel, en degrés géographiques par rapport au nord vrai.
      */
     public double getHeading() {
         return 90-Math.toDegrees(direction);
@@ -204,8 +220,9 @@ public final class Path extends Point2D implements Shape, Serializable {
      * cet objet. Si seule la position actuelle est désirée, alors
      * on peut utiliser directement <code>this</code>.
      *
-     * @param  index Indice de la position désirée, de 0 inclusivement
-     *         jusqu'à {@link #getPointCount} exclusivement.
+     * @param  index Indice de la position désirée, de 0 inclusivement jusqu'à
+     *         {@link #getPointCount} exclusivement. L'indice du pas de temps
+     *         courant peut être obtenu avec {@link Clock#getStepSequenceNumber}.
      * @return Les coordonnées à la position spécifiée.
      * @throws IndexOutOfBoundsException si <code>index</code> est en dehors des limites permises.
      */
@@ -239,6 +256,29 @@ public final class Path extends Point2D implements Shape, Serializable {
     }
 
     /**
+     * Retourne le cap (en degrés géographiques par rapport au nord vrai) après
+     * le déplacement correspondant à l'index spécifié.
+     *
+     * @param  index Indice du cap désiré, de 0 inclusivement jusqu'à {@link #getPointCount}
+     *         exclusivement. L'indice du pas de temps courant peut être obtenu avec {@link
+     *         Clock#getStepSequenceNumber}.
+     * @return Le cap après le déplacement spécifié.
+     * @throws IndexOutOfBoundsException si <code>index</code> est en dehors des limites permises.
+     */
+    final double getHeading(int index) {
+        index *= RECORD_LENGTH;
+        if (index<0 || index+1>=validLength) {
+            if (index+1 == validLength) {
+                return getHeading();
+            }
+            throw new IndexOutOfBoundsException(String.valueOf(index/RECORD_LENGTH));
+        }
+        final double dx = points[validLength + 0] - points[validLength - RECORD_LENGTH + 0];
+        final double dy = points[validLength + 1] - points[validLength - RECORD_LENGTH + 1];
+        return 90 - Math.toDegrees(Math.atan2(dy,dx));
+    }
+
+    /**
      * Change de cap en tournant d'un certain angle par rapport
      * au cap actuel.
      *
@@ -257,7 +297,6 @@ public final class Path extends Point2D implements Shape, Serializable {
      *        Une valeur négative fera reculer l'animal.
      */
     public void moveForward(final double distance) {
-        ensureNonEmpty();
         double x = points[validLength-RECORD_LENGTH+0];
         double y = points[validLength-RECORD_LENGTH+1];
 
@@ -293,7 +332,6 @@ public final class Path extends Point2D implements Shape, Serializable {
      *         <code>false</code> si on s'est déplacé sans l'atteindre.
      */
     public boolean moveToward(final Point2D point, final double distance) {
-        ensureNonEmpty();
         double x = points[validLength-RECORD_LENGTH+0];
         double y = points[validLength-RECORD_LENGTH+1];
 
@@ -319,7 +357,8 @@ public final class Path extends Point2D implements Shape, Serializable {
         // Compute the new position relative to (0,0).
         final double fc = distance/XMath.hypot(px, py);
         if (java.lang.Double.isInfinite(fc) || fc>=1) {
-            setLocation(point);
+            setLocationRadians((float)Math.toRadians(point.getX()),
+                               (float)Math.toRadians(point.getY()));
             return true;
         }
         px *= fc;
@@ -343,7 +382,6 @@ public final class Path extends Point2D implements Shape, Serializable {
      * @param  shape Forme géométrique à transformer.
      */
     public void relativeToGeographic(final RectangularShape shape) {
-        ensureNonEmpty();
         relativeToGeographic(shape, points[validLength-RECORD_LENGTH+0],
                                     points[validLength-RECORD_LENGTH+1]);
     }
@@ -357,8 +395,9 @@ public final class Path extends Point2D implements Shape, Serializable {
      * latitudes.
      *
      * @param  shape Forme géométrique à transformer.
-     * @param  index Indice de la position désirée, de 0 inclusivement
-     *         jusqu'à {@link #getPointCount} exclusivement.
+     * @param  index Indice de la position désirée, de 0 inclusivement jusqu'à
+     *         {@link #getPointCount} exclusivement. L'indice du pas de temps
+     *         courant peut être obtenu avec {@link Clock#getStepSequenceNumber}.
      * @throws IndexOutOfBoundsException si <code>index</code> est en
      *         dehors des limites permises.
      */
@@ -493,12 +532,11 @@ public final class Path extends Point2D implements Shape, Serializable {
      *       être modifiée.
      */
     private void trimToSize() {
-        points = XArray.resize(points, validLength); // Copy wanted
+        points = XArray.resize(points, validLength); // Copy wanted if length changes.
     }
 
     /**
-     * Réduit la longueur de la chaîne {@link #points}
-     * avant d'enregistrer cet objet.
+     * Réduit la longueur de la chaîne {@link #points} avant d'enregistrer cet objet.
      */
     private void writeObject(final ObjectOutputStream out) throws IOException {
         trimToSize();

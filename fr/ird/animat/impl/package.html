@@ -8,7 +8,12 @@
     <P ALIGN="justify">Implémentation de base des interfaces définies dans
     <CODE>fr.ird.animat</CODE>. Cette implémentation sert de fondation au
     paquet <CODE>fr.ird.animat.seas</CODE>, qui complétera l'implémentation
-    avec un model des déplacements de thons dans le cadre du projet SEAS.</P>
-    </P>
+    avec un model des déplacements de thons dans le cadre du projet SEAS.
+    En général, un modèle devrait redéfinir au moins les méthodes suivantes:</P>
+    <UL>
+      <LI>{@link fr.ird.animat.impl.Environment#getParameters}</LI>
+      <LI>{@link fr.ird.animat.impl.Environment#getCoverage(fr.ird.animat.impl.Parameter)}</LI>
+      <LI>{@link fr.ird.animat.impl.Animal#move}</LI>
+    </UL>
   </BODY>
 </HTML>

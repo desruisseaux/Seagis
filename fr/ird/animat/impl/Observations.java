@@ -83,16 +83,6 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
     static final int Y_OFFSET = 2;
 
     /**
-     * La longueur des enregistrements lorsqu'ils comprennent la position de l'observation.
-     */
-    static final int LOCATED_LENGTH = 3;
-
-    /**
-     * La longueur des enregistrements lorsqu'ils ne comprennent que la valeur de l'observation.
-     */
-    static final int SCALAR_LENGTH = 1;
-
-    /**
      * La liste des paramètres observés. La longeur de ce tableau est le nombre
      * d'éléments de cet objet <code>Map</code>.
      */
@@ -251,7 +241,7 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
             parameter = parameters[index];
             int offset = 0;
             for (int i=index; --i>=0;) {
-                offset += parameters[i].isLocalized() ? LOCATED_LENGTH : SCALAR_LENGTH;
+                offset += parameters[i].getNumSampleDimensions();
                 if (entries[i] != null) {
                     offset += entries[i].offset;
                     break;
@@ -302,7 +292,7 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
          * si elle n'est pas disponible.
          */
         public Point2D location() {
-            if (parameter.isLocalized()) {
+            if (parameter.getNumSampleDimensions() >= 3) {
                 final float x = observations[offset + X_OFFSET];
                 final float y = observations[offset + Y_OFFSET];
                 if (!Float.isNaN(x) || !Float.isNaN(y)) {
@@ -319,7 +309,7 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
             if (object instanceof Entry) {
                 final Entry that = (Entry) object;
                 if (this.offset==that.offset && Utilities.equals(this.parameter, that.parameter)) {
-                    for (int i=parameter.getRecordLength(); --i>=0;) {
+                    for (int i=parameter.getNumSampleDimensions(); --i>=0;) {
                         if (this.value(i) != that.value(i)) {
                             return false;
                         }
@@ -335,7 +325,7 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
          */
         public int hashCode() {
             int code = offset;
-            for (int i=parameter.getRecordLength(); --i>=0;) {
+            for (int i=parameter.getNumSampleDimensions(); --i>=0;) {
                 code = 37*code + value(i);
             }
             return code;
@@ -346,7 +336,7 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
          */
         public String toString() {
             final StringBuffer buffer = new StringBuffer("Observation[");
-            final int stop = parameter.getRecordLength();
+            final int stop = parameter.getNumSampleDimensions();
             for (int i=0; i<stop; i++) {
                 if (i!=0) {
                     buffer.append(", ");

@@ -29,6 +29,7 @@ package fr.ird.animat.impl;
 import java.util.Set;
 import java.util.Map;
 import java.util.Date;
+import java.util.Random;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Collections;
@@ -39,13 +40,18 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 import java.rmi.server.RemoteObject;
+import java.rmi.RemoteException;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import javax.swing.event.EventListenerList;
 
 // Geotools
-import org.geotools.cs.Ellipsoid;
 import org.geotools.cv.Coverage;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.pt.CoordinatePoint;
 
 // Seagis
+import fr.ird.util.XArray;
 import fr.ird.util.ArraySet;
 import fr.ird.animat.event.AnimalChangeEvent;
 import fr.ird.animat.event.AnimalChangeListener;
@@ -61,7 +67,12 @@ import fr.ird.animat.event.AnimalChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Animal extends RemoteObject implements fr.ird.animat.Animal {
+public class Animal extends RemoteObject implements fr.ird.animat.Animal {
+    /**
+     * Générateur de nombre aléatoire utilisé pour l'implémentation par défaut de {@link #move}.
+     */
+    private static final Random random = new Random();
+
     /**
      * La population à laquelle appartient cet animal, ou <code>null</code> si l'animal est mort.
      *
@@ -106,7 +117,11 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     private EventListenerList listenerList;
 
     /**
-     * Construit un animal à la position initiale spécifiée.
+     * Construit un animal à la position initiale spécifiée. Notez que cette position
+     * initiale n'est pas définitive;  on peut la changer à n'importe quel moment par
+     * un appel à la méthode {@link Path#setLocation}.   Elle ne deviendra définitive
+     * (pour le {@linkplain Clock#getStepSequenceNumber pas de temps} 0) qu'après avoir
+     * appelé {@link #observe}.
      *
      * @param species L'espèce de cet animal.
      * @param population La population à laquelle appartient cet animal.
@@ -130,7 +145,7 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *
      * @see #migrate
      */
-    public Population getPopulation() {
+    public final Population getPopulation() {
         return population;
     }
 
@@ -219,16 +234,19 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
         int length = species.getRecordLength();
         final float[] data = new float[length];
         if (species.headingIndex >= 0) {
-            length   -= Path.RECORD_LENGTH;
+            length   -= Parameter.HEADING.getNumSampleDimensions();
             srcOffset = step*length;
-            dstOffset = species.offsets[species.headingIndex] + Observations.SCALAR_LENGTH;
+            dstOffset = species.offsets[species.headingIndex];
             System.arraycopy(observations, srcOffset, data, 0, dstOffset);
-            path.getLocation(step, data, dstOffset);
+            data[dstOffset] = (float)path.getHeading(step);
             srcOffset += dstOffset;
+            dstOffset++;
+            path.getLocation(step, data, dstOffset);
             dstOffset  = species.offsets[species.headingIndex+1];
         } else {
             srcOffset = step*length;
         }
+        assert length == species.getReducedRecordLength() : length;
         assert srcOffset + (data.length-dstOffset) == (step+1)*length : step;
         System.arraycopy(observations, srcOffset, data, dstOffset, data.length-dstOffset);
         return new Observations(species.parameters, data);
@@ -262,13 +280,18 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      * {@linkplain Path#moveForward se déplacer vers ce cap}.  Il peut aussi {@linkplain
      * Path#moveToward se déplacer vers un certain point}, qu'il peut ne pas atteindre si
      * le laps de temps n'est pas suffisant.
+     * <br><br>
+     * L'implémentation par défaut fait subir un déplacement aléatoire à l'animal.
      *
      * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
      *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
      *
      * @see #observe
      */
-    protected abstract void move(float duration);
+    protected void move(float duration) {
+        path.rotate(10*random.nextGaussian());
+        path.moveForward(30 * Math.min(1+random.nextGaussian(), 2) * duration);
+    }
 
     /**
      * Mémorise des observations sur l'environnement actuel de l'animal. Cette méthode doit
@@ -286,14 +309,32 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
                 throw new IllegalStateException("L'animal est mort.");
             }
             final Environment environment = population.getEnvironment();
-            float[] samples = new float[3];
-            final Parameter[] parameters = species.parameters;
+            final CoordinatePoint   coord = new CoordinatePoint(path);
+            final Shape    perceptionArea = getPerceptionArea(null);
+            final Parameter[]  parameters = species.parameters;
+            final int       reducedLength = species.getReducedRecordLength();
+            final int                step = clock.getStepSequenceNumber();
+            float[]               samples = new float[3];
+            if (observations == null) {
+                observations = new float[8*reducedLength];
+            }
+            int offset = reducedLength*step;
+            if (offset >= observations.length) {
+                observations = XArray.resize(observations,
+                                             offset + Math.min(offset, reducedLength*1024));
+            }
             for (int i=0; i<parameters.length; i++) {
                 final Parameter parameter = parameters[i];
-                final Coverage coverage = environment.getCoverage(parameter);
-                samples = coverage.evaluate(null, samples); // TODO
+                if (i != species.headingIndex) {
+                    final int length = parameter.getNumSampleDimensions();
+                    samples = parameter.evaluate(this, coord, perceptionArea, samples);
+                    System.arraycopy(samples, 0, observations, offset, length);
+                    offset += length;
+                } else {
+                    path.setPointCount(step+1);
+                }
             }
-            final int timeStep = clock.getStepSequenceNumber();
+            assert offset == (step+1) * reducedLength;
         }
     }
 
@@ -323,6 +364,7 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
                 oldPopulation.animals.remove(this);
                 this.population = population;
                 population.animals.add(this);
+                fireAnimalChanged();
                 oldPopulation.firePopulationChanged();
                 population.firePopulationChanged();
             }
@@ -330,14 +372,19 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     }
 
     /**
-     * 
+     * Change l'espèce de cet animal.
+     *
+     * @param species La nouvelle espèce de cette animal.
      */
     public void metamorphose(final Species species) {
         synchronized (getTreeLock()) {
             if (!Arrays.equals(this.species.parameters, species.parameters)) {
                 throw new IllegalArgumentException("La nouvelle espèce doit observer les mêmes paramètres.");
             }
-            this.species = species;
+            if (species != this.species) {
+                this.species = species;
+                fireAnimalChanged();
+            }
         }
     }
 
@@ -352,6 +399,7 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
             } finally {
                 population = null;
             }
+            fireAnimalChanged();
         }
     }
 
@@ -383,10 +431,58 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     }
 
     /**
+     * A appeler à chaque fois que l'état de l'animal change.
+     *
+     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
+     * {@link #getTreeLock()}. L'appel de {@link AnimalChangeListener#animalChanged} sera
+     * mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
+     */
+    protected void fireAnimalChanged() {
+        final AnimalChangeEvent event = new AnimalChangeEvent(this);
+        final Runnable fireAnimalChanged = new Runnable() {
+            public void run() {
+                assert Thread.holdsLock(getTreeLock());
+                final EventListenerList listenerList = Animal.this.listenerList;
+                if (listenerList != null) {
+                    final Object[] listeners = listenerList.getListenerList();
+                    for (int i=listeners.length; (i-=2)>=0;) {
+                        if (listeners[i] == AnimalChangeListener.class) try {
+                            ((AnimalChangeListener)listeners[i+1]).animalChanged(event);
+                        } catch (RemoteException exception) {
+                            Environment.listenerException("Animal", "fireAnimalChanged", exception);
+                        }
+                    }
+                }
+            }
+        };
+        final Population population = getPopulation();
+        if (population != null) {
+            final Environment environment = population.getEnvironment();
+            if (environment != null) {
+                environment.queue.invokeLater(fireAnimalChanged);
+                return;
+            }
+        }
+        fireAnimalChanged.run();
+    }
+
+    /**
      * Retourne l'objet sur lequel se synchroniser lors des accès à cet animal.
      */
     protected final Object getTreeLock() {
         final Population population = this.population;
         return (population!=null) ? population.getTreeLock() : this;
+    }
+
+    /**
+     * Enregistre cet objet. Cette méthode va d'abord éliminer la mémoire réservée
+     * en trop afin de réduire la quantité d'informations qui seront enregistrées.
+     */
+    private void writeObject(final ObjectOutputStream out) throws IOException {
+        synchronized (getTreeLock()) {
+            observations = XArray.resize(observations,
+                           species.getReducedRecordLength()*clock.getStepSequenceNumber());
+            out.defaultWriteObject();
+        }
     }
 }
