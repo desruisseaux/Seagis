@@ -64,6 +64,7 @@ import javax.media.jai.Histogram;
 import javax.media.jai.ImageMIPMap;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.GraphicsJAI;
+import javax.media.jai.ImageFunction;
 import javax.media.jai.util.Range;
 import javax.media.jai.util.CaselessStringKey;
 
@@ -238,6 +239,75 @@ public class GridCoverage extends Coverage
     }
 
     /**
+     * Construt a grid coverage from an image function.
+     *
+     * @param name         The grid coverage name.
+     * @param function     The image function.
+     * @param cs           The coordinate system. This specifies the coordinate system used
+     *                     when accessing a grid coverage with the "evaluate" methods.  The
+     *                     number of dimensions must matches the number of dimensions for
+     *                     the grid range in <code>gridGeometry</code>.
+     * @param gridGeometry The grid geometry. The grid range must contains the expected
+     *                     image size (width and height).
+     * @param categories   Category lists which allows for the transformation from pixel
+     *                     values to real world geophysics value. This array's length must
+     *                     matches the number of bands in <code>image</code>. This argument
+     *                     may be <code>null</code> if there is no categories for the image.
+     * @param properties The set of properties for this coverage, or <code>null</code>
+     *        if there is none. "Properties" in <em>Java Advanced Imaging</em> is what
+     *        OpenGIS calls "Metadata".  There is no <code>getMetadataValue(...)</code>
+     *        method in this implementation. Use {@link #getProperty} instead. Keys may
+     *        be {@link String} or {@link CaselessStringKey} objects,  while values may
+     *        be any {@link Object}.
+     *
+     * @throws MismatchedDimensionException If the grid range's dimension
+     *         is not the same than the coordinate system's dimension.
+     */
+    public GridCoverage(final String               name, final ImageFunction    function,
+                        final CoordinateSystem       cs, final GridGeometry gridGeometry,
+                        final CategoryList[] categories, final Map properties) throws MismatchedDimensionException
+    {
+        this(name, getImage(function, gridGeometry), cs, gridGeometry, null, null, categories, true, null, properties);
+    }
+
+    /**
+     * Create an image from an image function.  Translation and scale
+     * factors are fetched from the grid geometry, which must have an
+     * affine transform.
+     */
+    private static PlanarImage getImage(final ImageFunction function, final GridGeometry gridGeometry)
+    {
+        final MathTransform transform = gridGeometry.getGridToCoordinateSystem2D();
+        if (!(transform instanceof AffineTransform))
+        {
+            throw new IllegalArgumentException(net.seagis.resources.css.Resources.format(
+                                               net.seagis.resources.css.ResourceKeys.ERROR_NOT_AN_AFFINE_TRANSFORM));
+        }
+        final AffineTransform at = (AffineTransform) transform;
+        if (at.getShearX()!=0 || at.getShearY()!=0)
+        {
+            // TODO: We may support that in a future version.
+            //       1) Create a copy with shear[X/Y] set to 0. Use the copy.
+            //       2) Compute the residu with createInverse() and concatenate().
+            //       3) Apply the residu with JAI.create("Affine").
+            throw new IllegalArgumentException("Shear and rotation not supported");
+        }
+        final double xScale =  at.getScaleX();
+        final double yScale =  at.getScaleY();
+        final double xTrans = -at.getTranslateX()/xScale;
+        final double yTrans = -at.getTranslateY()/yScale;
+        final GridRange      range = gridGeometry.getGridRange();
+        final ParameterBlock param = new ParameterBlock().add(function)
+              .add(range.getLength(0)) // width
+              .add(range.getLength(1)) // height
+              .add((float) xScale)
+              .add((float) yScale)
+              .add((float) xTrans)
+              .add((float) yTrans);
+        return JAI.create("ImageFunction", param);
+    }
+
+    /**
      * Construct a grid coverage with the specified envelope.
      * Pixels will not be classified in any category.
      *
@@ -302,7 +372,7 @@ public class GridCoverage extends Coverage
                         final CategoryList[] categories, final boolean isGeophysics,
                         final GridCoverage[] sources,    final Map properties) throws MismatchedDimensionException
     {
-        this(name, PlanarImage.wrapRenderedImage(image), cs, (Envelope)envelope.clone(), null, categories, isGeophysics, sources, properties);
+        this(name, PlanarImage.wrapRenderedImage(image), cs, null, (Envelope)envelope.clone(), null, categories, isGeophysics, sources, properties);
     }
 
     /**
@@ -341,21 +411,36 @@ public class GridCoverage extends Coverage
                         final CategoryList[] categories, final boolean   isGeophysics,
                         final GridCoverage[] sources,    final Map properties) throws MismatchedDimensionException
     {
-        this(name, PlanarImage.wrapRenderedImage(image), cs, null, gridToCS, categories, isGeophysics, sources, properties);
+        this(name, PlanarImage.wrapRenderedImage(image), cs, null, null, gridToCS, categories, isGeophysics, sources, properties);
     }
 
     /**
-     * Construct a grid coverage. This private constructor expect both an envelope
-     * (<code>envelope</code>) and a math transform (<code>transform</code>).  One
-     * of those argument should be null.   The null argument will be computed from
-     * the non-null argument.
+     * Construct a grid coverage. This private constructor expect an envelope
+     * (<code>envelope</code>), a math transform (<code>transform</code>) and
+     * a grid geometry (<code>gridGeometry</code>).  <strong>One and only one
+     * of those argument</strong> should be non-null. The null arguments will
+     * be computed from the non-null argument.
      */
-    private GridCoverage(final String         name,       final PlanarImage image,
-                         final CoordinateSystem cs,       Envelope envelope, MathTransform transform,
-                         final CategoryList[] categories, final boolean isGeophysics,
-                         final GridCoverage[] sources,    final Map properties) throws MismatchedDimensionException
+    private GridCoverage(final String               name,
+                         final PlanarImage         image,
+                         final CoordinateSystem       cs,
+                               GridGeometry gridGeometry, // ONE and  only  one of
+                               Envelope         envelope, // those three arguments
+                               MathTransform   transform, // should be non-null.
+                         final CategoryList[] categories,
+                         final boolean      isGeophysics,
+                         final GridCoverage[]    sources,
+                         final Map            properties) throws MismatchedDimensionException
     {
         super(name, cs, image, properties);
+        if ((gridGeometry == null ? 0 : 1) +
+            (envelope     == null ? 0 : 1) +
+            (transform    == null ? 0 : 1) != 1)
+        {
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
+            throw new AssertionError(); // Should not happen
+//----- END OF JDK 1.4 DEPENDENCIES ---
+        }
         if (sources!=null)
         {
             this.sources = (GridCoverage[]) sources.clone();
@@ -374,10 +459,10 @@ public class GridCoverage extends Coverage
         }
 
         /*------------------------------------------------------------
-         * Checks the envelope. The envelope must be non-empty and its
-         * dimension must matches the coordinate system's dimension. A
-         * pool of shared envelopes will be used in order to recycle
-         * existing envelopes.
+         * Construct the envelope if it was not explicitly provided.
+         * This computation require the MathTransform, which may been
+         * directly specified or indirectly via GridGeometry. One and
+         * only one of MathTransform or GridGeometry can be provided.
          */
         if (envelope==null) try
         {
@@ -394,7 +479,11 @@ public class GridCoverage extends Coverage
                 // According OpenGIS specification, GridGeometry maps pixel's center.
                 // We want a bounding box for all pixels, not pixel's centers. Offset by
                 // 0.5 (use -0.5 for maximum too, not +0.5, since maximum is exclusive).
-                envelope.setRange(i, envelope.getMinimum(i)-0.5, envelope.getMaximum(i)-0.5);
+                envelope.setRange(i, min-0.5, max-0.5);
+            }
+            if (transform==null)
+            {
+                transform = gridGeometry.getGridToCoordinateSystem();
             }
             envelope = OpenGIS.transform(transform, envelope);
         }
@@ -406,6 +495,13 @@ public class GridCoverage extends Coverage
 //----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
+
+        /*------------------------------------------------------------
+         * Checks the envelope. The envelope must be non-empty and its
+         * dimension must matches the coordinate system's dimension. A
+         * pool of shared envelopes will be used in order to recycle
+         * existing envelopes.
+         */
         final int dimension = envelope.getDimension();
         if (envelope.isEmpty() || dimension<2)
         {
@@ -423,39 +519,44 @@ public class GridCoverage extends Coverage
          * A pool of shared grid geometries will be used in order to recycle existing
          * objects.
          */
-        final GridRange    gridRange = (GridRange)pool.intern(new GridRange(image, dimension));
-        final GridGeometry gridGeometry;
-        if (transform==null)
+        if (gridGeometry==null)
         {
-            // Should we invert some axis? For example, the 'y' axis is often inversed
-            // (since image use a downward 'y' axis). If all source grid coverages use
-            // the same axis orientations, we will reuse those orientations. Otherwise,
-            // we will use default orientations where only the 'y' axis is inversed.
-            boolean[] inverse = null;
-            if (sources!=null)
+            final GridRange gridRange = (GridRange)pool.intern(new GridRange(image, dimension));
+            if (transform==null)
             {
-                for (int i=0; i<sources.length; i++)
+                // Should we invert some axis? For example, the 'y' axis is often inversed
+                // (since image use a downward 'y' axis). If all source grid coverages use
+                // the same axis orientations, we will reuse those orientations. Otherwise,
+                // we will use default orientations where only the 'y' axis is inversed.
+                boolean[] inverse = null;
+                if (sources!=null)
                 {
-                    final boolean[] check = XArray.resize(sources[i].gridGeometry.areAxisInverted(), dimension);
-                    if (inverse!=null)
+                    for (int i=0; i<sources.length; i++)
                     {
-                        if (!Arrays.equals(check, inverse))
+                        final boolean[] check = XArray.resize(sources[i].gridGeometry.areAxisInverted(), dimension);
+                        if (inverse!=null)
                         {
-                            inverse = null;
-                            break;
+                            if (!Arrays.equals(check, inverse))
+                            {
+                                inverse = null;
+                                break;
+                            }
                         }
+                        else inverse = check;
                     }
-                    else inverse = check;
                 }
+                if (inverse==null)
+                {
+                    inverse = new boolean[dimension];
+                    inverse[1] = true; // Inverse 'y' axis only.
+                }
+                gridGeometry = new GridGeometry(gridRange, envelope, inverse);
             }
-            if (inverse==null)
+            else
             {
-                inverse = new boolean[dimension];
-                inverse[1] = true; // Inverse 'y' axis only.
+                gridGeometry = new GridGeometry(gridRange, transform);
             }
-            gridGeometry = new GridGeometry(gridRange, envelope, inverse);
         }
-        else gridGeometry = new GridGeometry(gridRange, transform);
         this.gridGeometry = (GridGeometry)pool.intern(gridGeometry);
 
         /*-------------------------------------------------------------------------------
