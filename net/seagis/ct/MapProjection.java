@@ -773,20 +773,8 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Inverse extends AbstractMathTransform implements MathTransform2D
+    private final class Inverse extends AbstractMathTransform.Inverse implements MathTransform2D
     {
-        public int getDimSource()
-        {return 2;}
-
-        public int getDimTarget()
-        {return 2;}
-
-        public final MathTransform inverse()
-        {return MapProjection.this;}
-
-        public final boolean isIdentity()
-        {return MapProjection.this.isIdentity();}
-
         public Point2D transform(final Point2D source, final Point2D dest) throws TransformException
         {return MapProjection.this.inverseTransform(source, dest);}
 
@@ -798,23 +786,6 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
 
         public Shape createTransformedShape(final Shape shape) throws TransformException
         {return this.createTransformedShape(shape, null, null, Geometry.HORIZONTAL);}
-
-        public final int hashCode()
-        {return ~MapProjection.this.hashCode();}
-
-        public final boolean equals(final Object object)
-        {
-            if (object==this) return true; // Slight optimization
-            if (object instanceof Inverse)
-            {
-                final Inverse that = (Inverse) object;
-                return Utilities.equals(this.inverse(), that.inverse());
-            }
-            else return false;
-        }
-
-        public final String toString()
-        {return "INVERSE_MT["+MapProjection.this+']';}
     }
 
     /**
