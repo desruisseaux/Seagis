@@ -37,15 +37,17 @@ import org.opengis.cs.CS_Projection;
 import org.opengis.cs.CS_ProjectedCoordinateSystem;
 import org.opengis.cs.CS_GeographicCoordinateSystem;
 
-// Coordinates
+// OpenGIS dependencies (SEAGIS)
 import net.seagis.pt.Envelope;
 import net.seagis.pt.CoordinatePoint;
+import net.seagis.ct.MissingParameterException;
 
 // Miscellaneous
 import java.util.Map;
 import javax.units.Unit;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
+import javax.media.jai.ParameterList;
 
 // Resources
 import net.seagis.resources.Utilities;
@@ -114,13 +116,50 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      *
      * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjectedCoordinateSystem
      */
-    public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
+    public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
     {
         super(name, gcs.getHorizontalDatum(), axis0, axis1);
         ensureNonNull("gcs",        gcs);
         ensureNonNull("projection", projection);
         ensureNonNull("unit",       unit);
         ensureLinearUnit(unit);
+
+        final Ellipsoid ellipsoid = getHorizontalDatum().getEllipsoid();
+        final double    semiMajor = ellipsoid.getSemiMajorAxis();
+        final double    semiMinor = ellipsoid.getSemiMinorAxis();
+        String invalidParameter = null;
+        boolean resetAxisLength = false;
+        try
+        {
+            if (semiMinor != projection.getValue("semi_minor"))
+                invalidParameter = "semi_minor";
+        }
+        catch (MissingParameterException exception)
+        {
+            // Axis length not set.
+            resetAxisLength = true;
+        }
+        try
+        {
+            if (semiMajor != projection.getValue("semi_major"))
+                invalidParameter = "semi_major";
+        }
+        catch (MissingParameterException exception)
+        {
+            // Axis length not set.
+            resetAxisLength = true;
+        }
+        if (invalidParameter != null)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_INCOMPATIBLE_ELLIPSOID_$2, invalidParameter, ellipsoid.getName(null)));
+        }
+        if (resetAxisLength)
+        {
+            final ParameterList parameters = projection.getParameters();
+            parameters.setParameter("semi_major", semiMajor);
+            parameters.setParameter("semi_minor", semiMinor);
+            projection = new Projection(projection.getName(null), projection.getClassName(), parameters);
+        }
         this.gcs        = gcs;
         this.projection = projection;
         this.unit       = unit;
