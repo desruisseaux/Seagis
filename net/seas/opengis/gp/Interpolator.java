@@ -45,6 +45,9 @@ import net.seas.util.Version;
 
 /**
  * A grid coverage using an {@link Interpolation} for evaluating points.
+ * This interpolator <strong>do not work</strong>  for nearest-neighbor
+ * interpolation (use the standard {@link GridCoverage} class for that).
+ * It should work for other kinds of interpolation however.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -102,7 +105,6 @@ public final class Interpolator extends GridCoverage
      *
      * @param coverage The coverage to interpolate.
      * @param type The interpolation type. One of
-     *        {@link Interpolation#INTERP_NEAREST},
      *        {@link Interpolation#INTERP_BILINEAR},
      *        {@link Interpolation#INTERP_BICUBIC} or
      *        {@link Interpolation#INTERP_BICUBIC_2}.
@@ -112,10 +114,11 @@ public final class Interpolator extends GridCoverage
         final Interpolator fallback;
         switch (type)
         {
+            case Interpolation.INTERP_NEAREST  : throw new IllegalArgumentException();
             case Interpolation.INTERP_BICUBIC  : // fall through
             case Interpolation.INTERP_BICUBIC_2: fallback=create(coverage, Interpolation.INTERP_BILINEAR); break;
-            case Interpolation.INTERP_BILINEAR : fallback=create(coverage, Interpolation.INTERP_NEAREST ); break;
-            default:                             fallback=null;                                            break;
+            case Interpolation.INTERP_BILINEAR : // fall through
+            default:                             fallback=null; break;
         }
         return new Interpolator(coverage, Interpolation.getInstance(type), fallback);
     }
@@ -136,12 +139,28 @@ public final class Interpolator extends GridCoverage
         this.fallback      = fallback;
         try
         {
-            // Note: We translate by (-0.5, -0.5) in order to cancel out the 'translate(0.5, 0.5)'
-            //       that appears in 'getGridToCoordinateSystem2D()'. We have to remember that the
-            //       OpenGIS's transform maps pixel CENTER,  while JAI convention maps pixel UPPER
-            //       LEFT corner.
             final AffineTransform transform = gridGeometry.getGridToCoordinateSystem2D();
-            transform.translate(-0.5, -0.5);
+            // Note: If we want nearest-neighbor interpolation,
+            //       we need to add the following line:
+            //
+            //       transform.translate(-0.5, -0.5);
+            //
+            //       This is because we need to cancel the last 'translate(0.5, 0.5)' that appear in
+            //       'getGridToCoordinateSystem2D()' (we must remember that OpenGIS's transform maps
+            //       pixel CENTER, while JAI transforms maps pixel UPPER LEFT corner).   For exemple
+            //       the  (12.4, 18.9)  coordinates still lies on the [12,9] pixel.  Since the JAI's
+            //       nearest-neighbor interpolation use 'Math.floor' operation instead of 'Math.round',
+            //       we must follow this convention.
+            //
+            //       For other kinds of interpolation, we want to maps pixel values to pixel center.
+            //       For example, coordinate (12.5, 18.5) (in floating-point coordinates) lies at the
+            //       center of pixel [12,18] (in integer coordinates);  the evaluated value should be
+            //       the exact pixel's value. On the other hand, coordinate (12.5, 19) (in floating-
+            //       point coordinates) lies exactly at the edge between pixels [12,19] and [12,20];
+            //       the evaluated value should be a mid-value between those two pixels. If we want
+            //       center of mass located at pixel centers, we must keep the (0.5, 0.5) translation
+            //       provided by 'getGridToCoordinateSystem2D()' for interpolation other than nearest-
+            //       neighbor.
             toGrid = transform.createInverse();
         }
         catch (NoninvertibleTransformException exception)

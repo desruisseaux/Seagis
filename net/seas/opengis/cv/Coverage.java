@@ -119,6 +119,9 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
      */
     protected Coverage(final Coverage coverage)
     {
+        // NOTE: This constructor keep a strong reference to the
+        //       source coverage (through 'PropertySourceImpl').
+        //       Is it really wanted?
         super(null, coverage);
         this.name             = coverage.name;
         this.coordinateSystem = coverage.coordinateSystem;

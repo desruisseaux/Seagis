@@ -29,6 +29,7 @@ import net.seas.opengis.pt.MismatchedDimensionException;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cv.Coverage;
+import net.seas.opengis.cv.Category;
 import net.seas.opengis.cv.CategoryList;
 import net.seas.opengis.cv.SampleDimension;
 import net.seas.opengis.cv.PointOutsideCoverageException;
@@ -213,7 +214,7 @@ public class GridCoverage extends Coverage
         super(coverage);
         data             = coverage.data;
         image            = coverage.image;
-        images           = coverage.images; // TODO: Should we clone?
+        images           = coverage.images;
         maxLevel         = coverage.maxLevel;
         gridGeometry     = coverage.gridGeometry;
         envelope         = coverage.envelope;
