@@ -52,8 +52,6 @@ import org.geotools.resources.MonolineFormatter;
 
 // Seagis
 import fr.ird.animat.viewer.Viewer;
-import fr.ird.sql.image.ImageDataBase;
-import fr.ird.sql.fishery.FisheryDataBase;
 
 
 /**
@@ -63,11 +61,6 @@ import fr.ird.sql.fishery.FisheryDataBase;
  * @author Martin Desruisseaux
  */
 public class Simulation extends fr.ird.animat.impl.Simulation {
-    /**
-     * La base de données des pêches.
-     */
-    private final FisheryDataBase fisheries = null; // TODO
-
     /**
      * Le processus qui aura la charge de fermer les connexion aux bases de données.
      */
@@ -104,21 +97,8 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
             throws SQLException, RemoteException
     {
         super(name, new Environment(configuration));
-        this.delay     = (int)configuration.pause;
-        shutdown = new Thread(THREAD_GROUP, "Simulation shutdown") {
-            public void run() {
-                if (fisheries!=null) try {
-                    fisheries.close();
-                    Logger.getLogger("fr.ird.animat.seas").fine("Déconnexion des bases de données");
-                } catch (SQLException exception) {
-                    final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
-                    record.setSourceClassName("Simulation");
-                    record.setSourceMethodName("shutdown");
-                    record.setThrown(exception);
-                    Logger.getLogger("fr.ird.animat.seas").log(record);
-                }
-            }
-        };
+        this.delay = (int)configuration.pause;
+        shutdown = new Thread(THREAD_GROUP, (Environment)getEnvironment(), "Simulation shutdown");
         Runtime.getRuntime().addShutdownHook(shutdown);
         /*
          * Ajoute d'office une première population.
@@ -132,9 +112,7 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
      */
     protected void finalize() throws Throwable {
         Runtime.getRuntime().removeShutdownHook(shutdown);
-        if (fisheries != null) {
-            fisheries.close();
-        }
+        getEnvironment().dispose();
         super.finalize();
     }
 

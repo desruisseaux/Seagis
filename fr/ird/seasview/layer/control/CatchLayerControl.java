@@ -34,9 +34,10 @@ import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.FisheryDataBase;
 
 // Cartographie
-import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.awt.SpeciesChooser;
 import fr.ird.seasview.layer.CatchLayer;
+import fr.ird.seasview.layer.CatchTableLayer;
+import org.geotools.renderer.j2d.RenderedLayer;
 
 // Interface utilisateur
 import java.awt.Color;
@@ -130,16 +131,16 @@ public final class CatchLayerControl extends LayerControl {
                                                      final EventListenerList listeners)
         throws SQLException
     {
-        final CatchLayer layer;
-        if (layers!=null && layers.length==1 && layers[0] instanceof CatchLayer) {
-            layer = (CatchLayer) layers[0];
+        final CatchTableLayer layer;
+        if (layers!=null && layers.length==1 && layers[0] instanceof CatchTableLayer) {
+            layer = (CatchTableLayer) layers[0];
             layer.setTimeRange(entry.getTimeRange());
         } else {
             if (catchTable == null) {
                 catchTable = database.getCatchTable();
             }
             catchTable.setTimeRange(entry.getTimeRange());
-            layer = new CatchLayer(catchTable);
+            layer = new CatchTableLayer(catchTable);
         }
         if (controler != null) {
             layer.defineIcons(controler.getIcons());

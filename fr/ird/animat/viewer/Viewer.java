@@ -73,7 +73,7 @@ public final class Viewer extends JTabbedPane {
      */
     public void addSimulation(final Simulation simulation) throws RemoteException {
         final String     name = simulation.getName();
-        final JComponent pane = new SimulationPane(simulation);
+        final JComponent pane = new RuleSimulationPane(simulation);
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 addTab(name, pane);

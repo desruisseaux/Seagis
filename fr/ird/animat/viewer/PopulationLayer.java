@@ -107,7 +107,8 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     /**
      * Couleurs cycliques à utiliser pour chaque nouvelle population.
      */
-    private static final Color[] COLORS = {Color.YELLOW, Color.RED, Color.CYAN};
+    private static final Color[] COLORS = {Color.YELLOW, Color.RED, Color.BLUE,
+                                           Color.MAGENTA, Color.GREEN.darker()};
 
     /**
      * Couleur des trajectoires, ou <code>null</code> pour ne pas les dessiner.

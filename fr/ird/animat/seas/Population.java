@@ -39,9 +39,7 @@ import javax.media.jai.util.Range;
 // Animats
 import fr.ird.animat.Species;
 import fr.ird.animat.impl.Animal;
-import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.CatchEntry;
-import fr.ird.sql.fishery.FisheryDataBase;
 
 
 /**
@@ -52,13 +50,6 @@ import fr.ird.sql.fishery.FisheryDataBase;
  */
 final class Population extends fr.ird.animat.impl.Population {
     /**
-     * La résolution temporelle des données de pêches. En général, on n'a que la date de la
-     * pêche et peu ou aucune indication sur l'heure.  On considèrera donc que la précision
-     * est de 24 heures.
-     */
-    private static final int TIME_RESOLUTION = 24*60*60*1000;
-
-    /**
      * Construit une population qui contiendra initialement les thons aux positions
      * de pêches du pas de temps courant.
      *
@@ -67,32 +58,9 @@ final class Population extends fr.ird.animat.impl.Population {
      */
     protected Population(final Environment environment) throws RemoteException {
         super(environment);
-        Range timeRange = environment.getClock().getTimeRange();
-        Date  startTime = (Date) timeRange.getMinValue();
-        Date    endTime = (Date) timeRange.getMaxValue();
-        if (endTime.getTime() - startTime.getTime() < TIME_RESOLUTION) {
-            endTime   = new Date(startTime.getTime() + TIME_RESOLUTION);
-            timeRange = new Range(Date.class, startTime,  timeRange.isMinIncluded(),
-                                                endTime, !timeRange.isMinIncluded());
-        }
         final Collection<CatchEntry> entries;
         try {
-            /*
-             * Note: S'il y avait beaucoup de populations à créer, il vaudrait mieux obtenir une
-             *       connexion vers CatchTable une fois pour toute  et la réutiliser pour toutes
-             *       les populations. Mais comme on va typiquement créer une seule (ou très peu)
-             *       population, on va plutôt libérer la connexion rapidement  afin de permettre
-             *       à d'autres machines de se connecter sur cette base de données (Access n'est
-             *       pas terrible  lorsqu'il y plusieurs utilisateurs qui se connectent  en même
-             *       temps).
-             */
-            final FisheryDataBase database = new FisheryDataBase();
-            final Collection<String> species = environment.configuration.species;
-            final CatchTable catchs = database.getCatchTable(species.toArray(new String[species.size()]));
-            catchs.setTimeRange(timeRange);
-            entries = catchs.getEntries();
-            catchs.close();
-            database.close();
+            entries = environment.getCatchs();
         } catch (SQLException exception) {
             throw new ServerException("Échec lors de l'obtention "+
                                       "des positions initiales des animaux", exception);

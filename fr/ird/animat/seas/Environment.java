@@ -28,10 +28,12 @@ package fr.ird.animat.seas;
 // Divers J2SE
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.Iterator;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
@@ -47,14 +49,17 @@ import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.XDimension2D;
+import org.geotools.resources.Utilities;
 import fr.ird.util.XArray;
 
 // Base de données
+import fr.ird.sql.DataBase;
 import fr.ird.sql.image.Coverage3D;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageDataBase;
 import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
+import fr.ird.sql.fishery.CatchEntry;
 import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.FisheryDataBase;
 
@@ -65,7 +70,14 @@ import fr.ird.sql.fishery.FisheryDataBase;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Environment extends fr.ird.animat.impl.Environment {
+final class Environment extends fr.ird.animat.impl.Environment implements Fisheries, Runnable {
+    /**
+     * La résolution temporelle des données de pêches. En général, on n'a que la date de la
+     * pêche et peu ou aucune indication sur l'heure.  On considèrera donc que la précision
+     * est de 24 heures.
+     */
+    private static final int TIME_RESOLUTION = 24*60*60*1000;
+
     /**
      * La configuration de la simulation.
      */
@@ -119,24 +131,38 @@ final class Environment extends fr.ird.animat.impl.Environment {
     private final Range timeRange;
 
     /**
+     * Table des captures. Utilisé lors de la construction des populations.
+     */
+    private final CatchTable catchs;
+
+    /**
+     * Bases de données à fermer lors de la destruction de l'environnement.
+     */
+    private final DataBase[] toClose;
+
+    /**
      * Construit un environnement qui utilisera la configuration spécifiée.
      *
      * @param  config La configuration de la simulation.
      * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
      */
     public Environment(final Configuration config) throws SQLException {
-        this(config, null);
+        this(config, null, null);
     }
 
     /**
      * Construit un environnement qui utilisera la configuration spécifiée.
      *
      * @param  config La configuration de la simulation.
-     * @param  database La base de données à utiliser, ou <code>null</code> pour utiliser
-     *         une base de données par défaut.
+     * @param  database La base de données d'images à utiliser,
+     *         ou <code>null</code> pour utiliser une base de données par défaut.
+     * @param  fisheries La base de données de pêches à utiliser,
+     *         ou <code>null</code> pour utiliser une base de données par défaut.
      * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
      */
-    protected Environment(final Configuration config, ImageDataBase database) throws SQLException {
+    protected Environment(final Configuration config, ImageDataBase database,
+                                                    FisheryDataBase fisheries) throws SQLException
+    {
         super(config.firstTimeStep);
         this.configuration = config;
         ImageTable  images = null;
@@ -198,6 +224,18 @@ final class Environment extends fr.ird.animat.impl.Environment {
             database.close();
         }
         this.timeRange = timeRange;
+        /*
+         * Construction de la table des captures.
+         */
+        if (fisheries == null) {
+            fisheries = new FisheryDataBase();
+            toClose = new DataBase[] {fisheries};
+        } else {
+            toClose = new DataBase[0];
+        }
+        final Collection<String> species = configuration.species;
+        catchs = fisheries.getCatchTable(species.toArray(new String[species.size()]));
+        catchs.setTimeRange(timeRange);
     }
 
     /**
@@ -320,6 +358,37 @@ final class Environment extends fr.ird.animat.impl.Environment {
     }
 
     /**
+     * Retourne toutes les espèces se trouvant dans la table.
+     *
+     * @return Les espèces se trouvant dans la table.
+     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     */
+    public Set<fr.ird.animat.Species> getSpecies() throws SQLException {
+        return catchs.getSpecies();
+    }
+
+    /**
+     * Retourne l'ensemble des captures pour le pas de temps courant.
+     *
+     * @return Les captures pour le pas de temps courant.
+     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     */
+    public List<CatchEntry> getCatchs() throws SQLException {
+        Range timeRange = getClock().getTimeRange();
+        Date  startTime = (Date) timeRange.getMinValue();
+        Date    endTime = (Date) timeRange.getMaxValue();
+        if (endTime.getTime() - startTime.getTime() < TIME_RESOLUTION) {
+            endTime   = new Date(startTime.getTime() + TIME_RESOLUTION);
+            timeRange = new Range(Date.class, startTime,  timeRange.isMinIncluded(),
+                                                endTime, !timeRange.isMinIncluded());
+        }
+        synchronized (catchs) {
+            catchs.setTimeRange(timeRange);
+            return catchs.getEntries();
+        }
+    }
+
+    /**
      * Avance l'horloge d'un pas de temps.
      *
      * @return <code>true</code> si cette méthode a pu avancer au pas de temps suivant,
@@ -349,7 +418,24 @@ final class Environment extends fr.ird.animat.impl.Environment {
     public void dispose() {
         synchronized (getTreeLock()) {
             coverages.clear();
+            try {
+                catchs.close();
+                for (int i=toClose.length; --i>=0;) {
+                    toClose[i].close();
+                }
+            } catch (SQLException exception) {
+                Utilities.unexpectedException("fr.ird.animat.seas", "Environment", "dispose", exception);
+            }
             super.dispose();
         }
+    }
+
+    /**
+     * Libère les ressources utilisées par cet environnement. Cette méthode ne fait qu'appeler
+     * {@link #dispose}. Elle est définie afin de permettre à {@link Simulation} de construire
+     * un "shutdown hook".
+     */
+    public void run() {
+        dispose();
     }
 }

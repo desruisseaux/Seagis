@@ -331,15 +331,21 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
          * Retourne le prochain événement qui se trouvait dans la queue,
          * ou <code>null</code> s'il n'y en a pas.
          */
-        private synchronized EnvironmentChangeEvent next() {
-            if (events.isEmpty()) {
-                return null;
+        private EnvironmentChangeEvent next() {
+            final Coverage coverage;
+            final EnvironmentChangeEvent event;
+            synchronized (this) {
+                if (events.isEmpty()) {
+                    return null;
+                }
+                event = events.removeFirst();
+                coverage = this.coverage;
+                this.coverage = null;
             }
             if (coverage != null) {
                 setCoverage(coverage);
-                coverage = null;
             }
-            return events.removeFirst();
+            return event;
         }
 
         /**
@@ -355,6 +361,11 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
                     final Date oldDate = date;
                     date = event.getEnvironmentDate();
                     listeners.firePropertyChange("date", oldDate, date);
+                    try {
+                        refreshCoverageNames();
+                    } catch (RemoteException exception) {
+                        failed("EnvironmentLayer", "environmentChanged", exception);
+                    }
                 }
                 /*
                  * Signale les changements de populations. Bien que l'on travaille sur des ensembles,
@@ -372,11 +383,6 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
                         listeners.firePropertyChange("population", null, it.next());
                     }
                 }
-            }
-            try {
-                refreshCoverageNames();
-            } catch (RemoteException exception) {
-                failed("EnvironmentLayer", "environmentChanged", exception);
             }
         }
     }

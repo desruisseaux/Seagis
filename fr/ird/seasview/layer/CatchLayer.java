@@ -26,24 +26,23 @@
 package fr.ird.seasview.layer;
 
 // Map components
+import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
 import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.GeoMouseEvent;
 
 // Data bases
-import java.sql.SQLException;
 import fr.ird.animat.Species;
 import fr.ird.sql.fishery.CatchEntry;
-import fr.ird.sql.fishery.CatchTable;
 
 // Collections
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Collection;
+import java.util.Collections;
 
 // Geometry
 import java.awt.Shape;
@@ -65,7 +64,6 @@ import java.awt.font.GlyphVector;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.rmi.RemoteException;
-import javax.media.jai.util.Range;
 import org.geotools.units.Unit;
 import org.geotools.resources.Utilities;
 
@@ -80,14 +78,7 @@ import org.geotools.resources.Utilities;
  */
 public class CatchLayer extends RenderedMarks {
     /**
-     * Connection to the catch table.
-     */
-    private final CatchTable catchTable;
-
-    /**
      * List of {@link CatchEntry} to display on this layer.
-     * This list is changed each time {@link #setTimeRange}
-     * is invoked.
      */
     private List<CatchEntry> catchs;
 
@@ -103,7 +94,7 @@ public class CatchLayer extends RenderedMarks {
      * The display type for marks. May be one of the following constants:
      * {@link #POSITIONS_ONLY}, {@link #GEAR_COVERAGES} or {@link #CATCH_AMOUNTS}.
      */
-    private int markType;
+    private int markType = POSITIONS_ONLY;
 
     /**
      * The mark type for displaying only catch positions. Catchs are drawn
@@ -131,6 +122,11 @@ public class CatchLayer extends RenderedMarks {
     ////    (except 'colors' which is shared with POSITIONS_ONLY)    ////
     ////                                                             ////
     /////////////////////////////////////////////////////////////////////
+    /**
+     * Couleur des coups nuls.
+     */
+    private Color nullColor = Color.BLACK;
+
     /**
      * Colors to use for each catch in the {@link #catchs} list.
      * This is usually the color for the dominant species.
@@ -170,11 +166,11 @@ public class CatchLayer extends RenderedMarks {
     private Ellipse2D circle;
 
     /**
-     * Typical "amplitude" for catchs. This is computed once for ever at
-     * construction time, in order to avoid change in circle size each
-     * time the time range is changed.
+     * Typical "amplitude" for catchs. This is usually computed once for ever at
+     * construction time, in order to avoid change in circle size each time the
+     * time range is changed.
      */
-    private final double typicalAmplitude;
+    private double typicalAmplitude = 1;
 
     /**
      * Arc représentant une portion d'un cercle. Cette forme géométrique est
@@ -208,22 +204,37 @@ public class CatchLayer extends RenderedMarks {
     private transient FieldPosition dummy;
 
     /**
-     * Construct a new layer with the same {@link CatchTable} and
-     * the same icons than the specified layer.
+     * Construct an initially empty layer.
+     */
+    public CatchLayer() {
+        this.catchs = Collections.EMPTY_LIST;
+        this.icons  = new HashMap<Species,Species.Icon>();
+    }
+
+    /**
+     * Construct a new layer with the same data and icons than the specified layer.
      *
      * @param  layer Layer to take data and icons from.
-     * @throws SQLException If a SQL query failed.
      */
-    public CatchLayer(final CatchLayer layer) throws SQLException {
+    public CatchLayer(final CatchLayer layer) {
+        this(layer, layer.getCoordinateSystem());
+    }
+
+    /**
+     * Construct a new layer with the same data and icons than the specified layer.
+     *
+     * @param  layer Layer to take data and icons from.
+     * @param  cs The layer coordinate system.
+     */
+    public CatchLayer(final CatchLayer layer, final CoordinateSystem cs) {
         try {
-            setCoordinateSystem(layer.catchTable.getCoordinateSystem());
+            setCoordinateSystem(cs);
         } catch (TransformException exception) {
-            // PATCH: not really a SQL exception...
-            final SQLException e = new SQLException(exception.getLocalizedMessage());
+            // Should not happen, since we don't have any data yet.
+            IllegalStateException e = new IllegalStateException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
         }
-        this.catchTable       = layer.catchTable;
         this.catchs           = layer.catchs;
         this.colors           = layer.colors;
         this.icons            = layer.icons;
@@ -232,79 +243,43 @@ public class CatchLayer extends RenderedMarks {
     }
 
     /**
-     * Construct a new layer for the specified catch table. This constructor
-     * query <code>catchTable</code> for all catchs in its current time range.
-     * <code>catchTable</code> will be queried again each time the time range
-     * is changed through {@link #setTimeRange}.
-     *
-     * @param  catchTable Connection to a table containing catchs to display.
-     * @throws SQLException If a SQL query failed.
+     * Compute the typical amplitude. This is usually performed once at construction time,
+     * before the list of entries is changed.
      */
-    public CatchLayer(final CatchTable catchTable) throws SQLException {
+    final void updateTypicalAmplitude() {
+        final int oldMarkType = markType;
+        markType = CATCH_AMOUNTS; // Needed for "amplitude" calculations.
         try {
-            setCoordinateSystem(catchTable.getCoordinateSystem());
-        } catch (TransformException exception) {
-            // PATCH: not really a SQL exception...
-            final SQLException e = new SQLException(exception.getLocalizedMessage());
-            e.initCause(exception);
-            throw e;
+            typicalAmplitude = super.getTypicalAmplitude();
+        } finally {
+            markType = oldMarkType;
         }
-        this.catchTable  = catchTable;
-        this.catchs      = catchTable.getEntries();
-        this.icons       = new HashMap<Species,Species.Icon>();
-        markType         = CATCH_AMOUNTS; // Needed for "amplitude" calculations.
-        typicalAmplitude = super.getTypicalAmplitude();
-        markType         = POSITIONS_ONLY;
-        try {
-            validate();
-        } catch (RemoteException exception) {
-            throw new fr.ird.sql.RemoteException(
-                        "L'obtention de l'icône d'une espèce a échouée.", exception);
-        }
+        validate();
     }
 
     /**
-     * Query the underlying {@link CatchTable} for a new set of catchs to display.
-     * This is a convenience method for {@link #setTimeRange(Date,Date)}.
+     * Set the catchs to renderer.
      *
-     * @param  timeRange the time range for catchs to display.
-     * @throws SQLException If a SQL query failed.
+     * @param catchs The catchs, or <code>null</code> if none.
      */
-    public void setTimeRange(final Range timeRange) throws SQLException {
-        setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());
-    }
-
-    /**
-     * Query the underlying {@link CatchTable} for a new set of catchs to display.
-     * This method first invokes {@link FisheryTable#setTimeRange} with the specified
-     * time range, and then query for all catchs in this time range.
-     *
-     * @param  startTime Time of the first catch to display.
-     * @param  startTime Time of the end catch to display.
-     * @throws SQLException If a SQL query failed.
-     */
-    public void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
-        synchronized (catchTable) {
-            catchTable.setTimeRange(startTime, endTime);
-            catchs = catchTable.getEntries();
-        }
-        try {
-            validate();
-        } catch (RemoteException exception) {
-            throw new fr.ird.sql.RemoteException(
-                        "L'obtention de l'icône d'une espèce a échouée.", exception);
-        }
+    public void setCatchs(final List<CatchEntry> catchs) {
+        this.catchs = (catchs!=null) ? catchs : Collections.EMPTY_LIST;
+        invalidate();
+        validate();
         repaint();
+        assert colors.length == catchs.size();
+        assert colors.length == useFill.length;
     }
 
     /**
-     * Validate {@link #colors} after new catch entries have been read.
+     * Validate {@link #colors}, {@link #useFill} and {@link #hasShape}
+     * after new catch entries have been specified.
      */
-    private void validate() throws RemoteException {
+    private void validate() {
         hasShape = false;
         colors   = new Color[catchs.size()];
         useFill  = new boolean[colors.length];
-        Rectangle2D geographicArea=null;
+        Rectangle2D geographicArea = null;
         for (int i=0; i<colors.length; i++) {
             final CatchEntry capture = catchs.get(i);
             final Shape        shape;
@@ -315,17 +290,19 @@ public class CatchLayer extends RenderedMarks {
                 default: throw new IllegalStateException();
             }
             final Species species = capture.getDominantSpecies();
-            colors [i] = (species!=null) ? getIcon(species).getColor() : Color.black;
+            colors [i] = (species!=null) ? getIcon(species).getColor() : nullColor;
             useFill[i] = (shape==null);
             /*
-             * Expand the bounding box by the
-             * catch's geographic extent.
+             * Expand the bounding box by the catch's geographic extent.
              */
             if (!useFill[i]) {
                 hasShape = true;
                 final Rectangle2D bounds = shape.getBounds2D();
-                if (geographicArea==null) geographicArea=bounds;
-                else geographicArea.add(bounds);
+                if (geographicArea == null) {
+                    geographicArea = bounds;
+                } else {
+                    geographicArea.add(bounds);
+                }
             } else {
                 // The geographic extent for this catch is unknow.
                 // Just expand the bounding box by the coordinate point.
@@ -347,11 +324,16 @@ public class CatchLayer extends RenderedMarks {
      * of created icon, in such a way that change to the icon's color are
      * saved.
      */
-    private Species.Icon getIcon(final Species species) throws RemoteException {
+    private Species.Icon getIcon(final Species species) {
         synchronized (icons) {
             Species.Icon icon = icons.get(species);
             if (icon == null) {
-                icon = species.getIcon();
+                try {
+                    icon = species.getIcon();
+                } catch (RemoteException exception) {
+                    Utilities.unexpectedException("fr.ird.animat", "Species", "getIcon", exception);
+                    icon = new fr.ird.animat.impl.Species("(erreur)", Color.BLACK).getIcon();
+                }
                 icons.put(species, icon);
             }
             return icon;
@@ -376,6 +358,21 @@ public class CatchLayer extends RenderedMarks {
      */
     public MarkIterator getMarkIterator() {
         return new Iterator();
+    }
+
+    /**
+     * Change la couleur utilisée pour représenter une espèce.
+     *
+     * @param species L'espèce pour laquelle définir les couleurs, ou <code>null</code>
+     *        pour définir la couleur des coups nuls.
+     * @param color La nouvelle couleur pour l'espèce spécifiée.
+     */
+    public void setColor(final Species species, final Color color) {
+        if (species != null) {
+            getIcon(species).setColor(color);
+        } else {
+            nullColor = color;
+        }
     }
 
     /**
@@ -404,18 +401,7 @@ public class CatchLayer extends RenderedMarks {
         if (type>=POSITIONS_ONLY && type<=CATCH_AMOUNTS) {
             if (markType != type) {
                 this.markType = type;
-                try {
-                    validate();
-                } catch (RemoteException exception) {
-                    /*
-                     * TODO: Envelopper cette exception dans une autre non-vérifiée n'est pas une
-                     *       pratique acceptable.   Pour l'instant, on ne s'en formalise pas trop
-                     *       étant donné qu'on ne vas pas utiliser cette  classe dans un contexte
-                     *       de RMI. Mais dans une version future, il faudra sans doute corriger.
-                     */
-                    throw new RuntimeException(
-                                "L'obtention de l'icône d'une espèce a échouée.", exception);
-                }
+                validate();
                 repaint();
                 listeners.firePropertyChange("markType", new Integer(markType), new Integer(type));
             }
@@ -463,6 +449,8 @@ public class CatchLayer extends RenderedMarks {
          * Moves the iterator to the specified index.
          */
         public void setIteratorPosition(final int n) {
+            assert count == catchs.size();
+            assert n>=-1 && n<count : n;
             index = n;
         }
         
@@ -470,8 +458,8 @@ public class CatchLayer extends RenderedMarks {
          * Moves the iterator a relative number of marks.
          */
         public boolean next() {
-            index++;
-            return index < count;
+            assert count == catchs.size();
+            return ++index < count;
         }
 
         /**
@@ -598,6 +586,8 @@ public class CatchLayer extends RenderedMarks {
                              final GlyphVector     label,
                              final Point2D.Float   labelXY)
         {
+            assert count == catchs.size();
+            assert index < count : index;
             switch (markType) {
                 case POSITIONS_ONLY: // fall through
                 case GEAR_COVERAGES: {
@@ -619,13 +609,7 @@ public class CatchLayer extends RenderedMarks {
                     } else {
                         final ShapeBroker broker = new ShapeBroker(markShape);
                         for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
-                            try {
-                                graphics.setColor(getIcon(it.next()).getColor());
-                            } catch (RemoteException exception) {
-                                // TODO: On garde la même couleur que la dernière fois. Est-ce correct?
-                                Utilities.unexpectedException("fr.ird.seasview", "CatchLayer",
-                                                              "paint", exception);
-                            }
+                            graphics.setColor(getIcon(it.next()).getColor());
                             graphics.fill(broker);
                             if (broker.finished()) {
                                 break;

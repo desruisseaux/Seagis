@@ -434,11 +434,11 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
         synchronized (getTreeLock()) {
             if (population != null) try {
                 population.animals.remove(this);
+                fireAnimalChanged(AnimalChangeEvent.KILLED);
                 population.firePopulationChanged(this, false);
             } finally {
                 population = null;
             }
-            fireAnimalChanged(AnimalChangeEvent.KILLED);
         }
     }
 
