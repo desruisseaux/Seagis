@@ -35,8 +35,13 @@ import java.text.MessageFormat;
 
 // Entrés/sorties
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.DataInputStream;
 import java.io.BufferedInputStream;
+import java.io.FileNotFoundException;
+
+// Journal
+import java.util.logging.Logger;
 
 
 /**
@@ -79,21 +84,32 @@ public class ResourceBundle extends java.util.ResourceBundle
     /**
      * Construit une table des ressources.
      * 
+     * @param  locale {@link Locale} des ressources (à titre informatif).
      * @param  filename Nom du fichier binaire contenant les ressources.
      * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
-    protected ResourceBundle(final String filename) throws IOException
+    protected ResourceBundle(final Locale locale, final String filename) throws IOException
     {
-        final DataInputStream input=new DataInputStream(new BufferedInputStream(getClass().getClassLoader().getResourceAsStream(filename)));
-        values = new String[input.readInt()];
-        for (int i=0; i<values.length; i++)
+        if (filename!=null)
         {
-            values[i] = input.readUTF();
-            if (values[i].length()==0)
-                values[i]=null;
+            final InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
+            if (in==null) throw new FileNotFoundException(filename);
+            final DataInputStream input=new DataInputStream(new BufferedInputStream(in));
+            values = new String[input.readInt()];
+            for (int i=0; i<values.length; i++)
+            {
+                values[i] = input.readUTF();
+                if (values[i].length()==0)
+                    values[i]=null;
+            }
+            input.close();
+            Logger.getLogger("net.seas").config("Loaded resources for {0}.", new String[]{locale.getDisplayName(Locale.UK)});
         }
-        input.close();
+        else values = new String[0];
     }
+
+    int getLoadingKey()
+    {return -1;}
 
     /**
      * Renvoie un énumérateur qui balayera toutes
@@ -236,6 +252,15 @@ public class ResourceBundle extends java.util.ResourceBundle
     }
 
     /**
+     * Retourne la ressource associée à la clé spécifiée.
+     *
+     * @param  keyID Clé de la ressource à utiliser.
+     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
+     */
+    public final String getString(final int keyID) throws MissingResourceException
+    {return getString(String.valueOf(keyID));}
+
+    /**
      * Utilise la ressource désignée par la clé <code>key</code> pour écrire un objet <code>arg0</code>.
      * Un objet {@link java.text.MessageFormat} sera utilisé pour formater l'argument <code>arg0</code>.
      * Ca sera comme si la sortie avait été produite par:
@@ -297,13 +322,66 @@ public class ResourceBundle extends java.util.ResourceBundle
     }
 
     /**
-     * Retourne la ressource associée à la clé spécifiée.
+     * Renvoie la ressource associée à la clé spécifiée en remplaçant
+     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
+     * <code>arg0</code>, <code>arg1</code>, etc.
      *
-     * @param  keyID Clé de la ressource à utiliser.
-     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
+     * @param  key Clé désignant la ressource désirée.
+     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
+     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
+     * @return Ressource dans la langue de l'utilisateur.
+     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
      */
-    public final String getString(final int keyID) throws MissingResourceException
-    {return getString(String.valueOf(keyID));}
+    public final String getString(final int keyID, final Object arg0, final Object arg1) throws MissingResourceException
+    {return getString(keyID, new Object[] {arg0, arg1});}
+
+    /**
+     * Renvoie la ressource associée à la clé spécifiée en remplaçant
+     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
+     * <code>arg0</code>, <code>arg1</code>, etc.
+     *
+     * @param  key Clé désignant la ressource désirée.
+     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
+     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
+     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
+     * @return Ressource dans la langue de l'utilisateur.
+     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     */
+    public final String getString(final int keyID, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException
+    {return getString(keyID, new Object[] {arg0, arg1, arg2});}
+
+    /**
+     * Renvoie la ressource associée à la clé spécifiée en remplaçant
+     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
+     * <code>arg0</code>, <code>arg1</code>, etc.
+     *
+     * @param  key Clé désignant la ressource désirée.
+     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
+     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
+     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
+     * @param  arg3 Objet dont la valeur remplacera toutes les occurences de "{3}"
+     * @return Ressource dans la langue de l'utilisateur.
+     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     */
+    public final String getString(final int keyID, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException
+    {return getString(keyID, new Object[] {arg0, arg1, arg2, arg3});}
+
+    /**
+     * Renvoie la ressource associée à la clé spécifiée en remplaçant
+     * toutes les occurences de "{0}", "{1}", etc. par les valeurs de
+     * <code>arg0</code>, <code>arg1</code>, etc.
+     *
+     * @param  key Clé désignant la ressource désirée.
+     * @param  arg0 Objet dont la valeur remplacera toutes les occurences de "{0}"
+     * @param  arg1 Objet dont la valeur remplacera toutes les occurences de "{1}"
+     * @param  arg2 Objet dont la valeur remplacera toutes les occurences de "{2}"
+     * @param  arg3 Objet dont la valeur remplacera toutes les occurences de "{3}"
+     * @param  arg4 Objet dont la valeur remplacera toutes les occurences de "{4}"
+     * @return Ressource dans la langue de l'utilisateur.
+     * @throws MissingResourceException Si aucune ressource n'est affectée à la clé spécifiée.
+     */
+    public final String getString(final int keyID, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
+    {return getString(keyID, new Object[] {arg0, arg1, arg2, arg3, arg4});}
 
     /**
      * Retourne la ressource associée à la clé spécifiée
