@@ -67,7 +67,7 @@ public interface ResourceKeys
     public static final int LOADING_IMAGE_$1                    =    43;
     public static final int NAME                                =    44;
     public static final int NOT_AVAILABLE                       =    45;
-    public static final int NO_FILTER                           =    46;
+    public static final int NO_OPERATION                        =    46;
     public static final int OPEN_$1                             =    47;
     public static final int OPTIONS                             =    48;
     public static final int OUT_DIRECTORY                       =    49;
