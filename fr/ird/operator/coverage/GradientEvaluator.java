@@ -26,7 +26,6 @@ package fr.ird.operator.coverage;
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.PointOutsideCoverageException;
 
 // Géométrie
 import java.awt.Shape;
@@ -51,8 +50,7 @@ import javax.media.jai.iterator.RectIterFactory;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class GradientEvaluator extends AbstractEvaluator implements Evaluator
-{
+public class GradientEvaluator extends AbstractEvaluator implements Evaluator {
     /**
      * Facteur pour convertir des mètres vers les unités du résultat.
      * Cette classe calcule au départ des gradients en unités du paramètre
@@ -74,24 +72,23 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
     /**
      * Construit un évaluateur par défaut.
      */
-    public GradientEvaluator()
-    {
+    public GradientEvaluator() {
         this(0.8);
     }
 
     /**
      * Retourne le nom de cette opération.
      */
-    public String getName()
-    {return "Gradient";}
+    public String getName() {
+        return "Gradient";
+    }
 
     /**
      * Construit un évaluateur par avec le rang spécifié. Par exemple la valeur
      * 0.8 signifie que le gradient retenu sera celui qui est supérieur à 80%
      * de tous les gradients.
      */
-    public GradientEvaluator(final double percentile)
-    {
+    public GradientEvaluator(final double percentile) {
         this.percentile = percentile;
     }
 
@@ -104,8 +101,7 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
      *        Les coordonnées de cette région doivent être exprimées selon
      *        le système de coordonnées de <code>coverage</code>.
      */
-    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
-    {
+    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area) {
         final RenderedImage         data = coverage.getRenderedImage();
         final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Ellipsoid        ellipsoid = Ellipsoid.WGS84; // TODO: interroger le système de coordonnées!
@@ -115,47 +111,36 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
         final Rectangle           bounds = getBounds(areaBounds, transform, data);
         final int[]                count = new int[data.getSampleModel().getNumBands()];
         final double[][]       gradients = new double[count.length][];
-        for (int i=0; i<gradients.length; i++)
-        {
+        for (int i=0; i<gradients.length; i++) {
             gradients[i] = new double[Math.max(bounds.width*bounds.height, 64)];
         }
         double[] values0 = null;
         double[] values1 = null;
-        if (!bounds.isEmpty())
-        {
+        if (!bounds.isEmpty()) {
             final RectIter iterator0 = RectIterFactory.create(data, bounds);
             final RectIter iterator1 = RectIterFactory.create(data, bounds);
-            for (int y0=bounds.y; !iterator0.finishedLines(); y0++)
-            {
-                for (int x0=bounds.x; !iterator0.finishedPixels(); x0++)
-                {
+            for (int y0=bounds.y; !iterator0.finishedLines(); y0++) {
+                for (int x0=bounds.x; !iterator0.finishedPixels(); x0++) {
                     assert(bounds.contains(x0,y0));
                     coordinate0.x = x0;
                     coordinate0.y = y0;
-                    if (area.contains(transform.transform(coordinate0, coordinate0)))
-                    {
+                    if (area.contains(transform.transform(coordinate0, coordinate0))) {
                         values0 = iterator0.getPixel(values0);
                         iterator1.startLines();
-                        for (int y1=bounds.y; !iterator1.finishedLines(); y1++)
-                        {
-                            for (int x1=bounds.x; !iterator1.finishedPixels(); x1++)
-                            {
+                        for (int y1=bounds.y; !iterator1.finishedLines(); y1++) {
+                            for (int x1=bounds.x; !iterator1.finishedPixels(); x1++) {
                                 assert(bounds.contains(x1,y1));
                                 coordinate1.x = x1;
                                 coordinate1.y = y1;
-                                if (area.contains(transform.transform(coordinate1, coordinate1)))
-                                {
+                                if (area.contains(transform.transform(coordinate1, coordinate1))) {
                                     values1 = iterator1.getPixel(values1);
                                     final double distance = ellipsoid.orthodromicDistance(coordinate0, coordinate1);
-                                    for (int i=Math.min(values0.length, values1.length); --i>=0;)
-                                    {
+                                    for (int i=Math.min(values0.length, values1.length); --i>=0;) {
                                         final double gradient = Math.abs(values0[i]-values1[i])/distance;
-                                        if (!Double.isNaN(gradient) && !Double.isInfinite(gradient))
-                                        {
+                                        if (!Double.isNaN(gradient) && !Double.isInfinite(gradient)) {
                                             final int index = count[i]++;
                                             double[] array = gradients[i];
-                                            if (index >= array.length)
-                                            {
+                                            if (index >= array.length) {
                                                 gradients[i] = array = XArray.resize(array, index*2);
                                             }
                                             array[index] = gradient;
@@ -175,12 +160,10 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
             }
         }
         final ParameterValue[] result = new ParameterValue[gradients.length];
-        for (int i=0; i<gradients.length; i++)
-        {
+        for (int i=0; i<gradients.length; i++) {
             final double[] array = gradients[i] = XArray.resize(gradients[i], count[i]);
             final int index = Math.min((int)(percentile*array.length), array.length-1);
-            if (index>=0)
-            {
+            if (index >= 0) {
                 Arrays.sort(array);
                 result[i] = new ParameterValue.Double(coverage, this);
                 result[i].setValue(array[index]*METERS_BY_UNIT, null);

@@ -25,7 +25,6 @@ package fr.ird.operator.coverage;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.Utilities;
 
@@ -50,19 +49,19 @@ import javax.media.jai.iterator.RectIterFactory;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class MaximumEvaluator extends AbstractEvaluator
-{
+public class MaximumEvaluator extends AbstractEvaluator {
     /**
      * Construit un objet par défaut.
      */
-    public MaximumEvaluator()
-    {}
+    public MaximumEvaluator() {
+    }
 
     /**
      * Retourne le nom de cette opération.
      */
-    public String getName()
-    {return "Maximum";}
+    public String getName() {
+        return "Maximum";
+    }
 
     /**
      * Retourne la position du pixel maximal.
@@ -75,8 +74,7 @@ public class MaximumEvaluator extends AbstractEvaluator
      *         de l'image. Cette méthode retourne une position pour chaque
      *         bande.
      */
-    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
-    {
+    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area) {
         final RenderedImage         data = coverage.getRenderedImage();
         final AffineTransform  transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Point2D.Double  coordinate = new Point2D.Double();
@@ -86,27 +84,20 @@ public class MaximumEvaluator extends AbstractEvaluator
         final double[]          maximums = new double[locations.length];
         Arrays.fill(maximums, Double.NEGATIVE_INFINITY);
         double[] values=null;
-        if (!bounds.isEmpty())
-        {
+        if (!bounds.isEmpty()) {
             final RectIter iterator = RectIterFactory.create(data, bounds);
-            for (int y=bounds.y; !iterator.finishedLines(); y++)
-            {
-                for (int x=bounds.x; !iterator.finishedPixels(); x++)
-                {
+            for (int y=bounds.y; !iterator.finishedLines(); y++) {
+                for (int x=bounds.x; !iterator.finishedPixels(); x++) {
                     assert bounds.contains(x,y);
                     coordinate.x = x;
                     coordinate.y = y;
-                    if (area.contains(transform.transform(coordinate, coordinate)))
-                    {
+                    if (area.contains(transform.transform(coordinate, coordinate))) {
                         values = iterator.getPixel(values);
-                        for (int i=0; i<values.length; i++)
-                        {
+                        for (int i=0; i<values.length; i++) {
                             final double z = values[i];
-                            if (z > maximums[i])
-                            {
+                            if (z > maximums[i]) {
                                 maximums[i] = z;
-                                if (locations[i]==null)
-                                {
+                                if (locations[i] == null) {
                                     locations[i] = new ParameterValue.Double(coverage, this);
                                 }
                                 locations[i].setValue(z, coordinate);

@@ -39,32 +39,32 @@ import javax.media.jai.iterator.RectIterFactory;
 
 /**
  * Utilitaires pour les lectures et écritures d'images. Ces utilitaires
- * sont temporaire. Elles seront peut-être retirée lorsque la prochaine
- * version de Java Advanced Imaging sera disponible.
+ * sont temporaires. Elles seront peut-être retirées lorsque la prochaine
+ * version de Java Advanced Imaging (1.2) sera disponible.
  *
  * @version $Id$
  * @author Laurent Demagistri
  */
-public class Utilities 
+public class Utilities
 {
     /**
      * Enregistre une image en binaire. Chaque pixel sera codé
      * avec le type <code>float</code>.
      *
-     * @param  rendImage L'image à enregistrer.
+     * @param  image L'image à enregistrer.
      * @param  file Le fichier dans lequel écrire l'image.
      * @throws IOException si l'écriture des données a échouée.
      */
-    public static void writeRawFloat( RenderedImage rendImage, File file ) throws IOException
+    public static void writeRawFloat(RenderedImage image, File file) throws IOException
     {
         FileOutputStream fileOutput = new FileOutputStream(file);
         DataOutputStream dataOutput = new DataOutputStream(new BufferedOutputStream(fileOutput));
-        final RectIter rectIter = RectIterFactory.create(rendImage, null);
+        final RectIter rectIter = RectIterFactory.create(image, null);
         rectIter.startLines();
-        while( !rectIter.finishedLines() ){
+        while (!rectIter.finishedLines()) {
             rectIter.startPixels();
-            while( !rectIter.finishedPixels() ){
-                float fValue = rectIter.getSampleFloat() ;
+            while (!rectIter.finishedPixels()) {
+                float fValue = rectIter.getSampleFloat();
                 dataOutput.writeFloat(fValue);
                 rectIter.nextPixel();
             }

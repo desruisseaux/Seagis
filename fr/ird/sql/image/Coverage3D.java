@@ -39,6 +39,7 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.cv.Coverage;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.ColorInterpretation;
+import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.gp.GridCoverageProcessor;
 
@@ -341,9 +342,7 @@ public class Coverage3D extends Coverage {
             coordinate = transform.transform(coordinate, coordinate);
             point.setLocation(coordinate.ord[0], coordinate.ord[1]);
         } catch (TransformException exception) {
-            PointOutsideCoverageException e=new PointOutsideCoverageException(point);
-            e.initCause(exception);
-            throw e;
+            throw new CannotEvaluateException(point, exception);
         }
     }
 
@@ -428,8 +427,10 @@ public class Coverage3D extends Coverage {
      * @return <code>true</code> si les données sont présentes.
      * @throws PointOutsideCoverageException si la date spécifiée est
      *         en dehors de la plage de temps des données disponibles.
+     * @throws CannotEvaluateException Si l'opération a échouée pour
+     *         une autre raison.
      */
-    private boolean seek(final Date date) throws PointOutsideCoverageException {
+    private boolean seek(final Date date) throws CannotEvaluateException {
         /*
          * Check if images currently loaded
          * are valid for the requested date.
@@ -510,9 +511,7 @@ public class Coverage3D extends Coverage {
                 return false; // Missing data.
             }
         } catch (IOException exception) {
-            PointOutsideCoverageException e=new PointOutsideCoverageException(exception.getLocalizedMessage());
-            e.initCause(exception);
-            throw e;
+            throw new CannotEvaluateException(exception.getLocalizedMessage(), exception);
         }
         throw new PointOutsideCoverageException(Resources.format(ResourceKeys.ERROR_DATE_OUTSIDE_COVERAGE_$1, date));
     }
@@ -527,8 +526,9 @@ public class Coverage3D extends Coverage {
      * @return The grid coverage at the specified time, or <code>null</code>
      *         if the requested date fall in a hole in the data.
      * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized GridCoverage getGridCoverage2D(final Date time) throws PointOutsideCoverageException {
+    public synchronized GridCoverage getGridCoverage2D(final Date time) throws CannotEvaluateException {
         if (!seek(time)) {
             // Missing data
             return null;
@@ -566,8 +566,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest) throws PointOutsideCoverageException
+    public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest) throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -608,8 +609,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest) throws PointOutsideCoverageException
+    public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest) throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -650,8 +652,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest) throws PointOutsideCoverageException
+    public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest) throws CannotEvaluateException
     {
         if (!seek(time)) {
             // Missing data
@@ -692,8 +695,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public int[] evaluate(final CoordinatePoint coord, int[] dest) throws PointOutsideCoverageException
+    public int[] evaluate(final CoordinatePoint coord, int[] dest) throws CannotEvaluateException
     {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.
@@ -714,8 +718,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws PointOutsideCoverageException
+    public float[] evaluate(final CoordinatePoint coord, float[] dest) throws CannotEvaluateException
     {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.
@@ -736,8 +741,9 @@ public class Coverage3D extends Coverage {
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
      */
-    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws PointOutsideCoverageException
+    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws CannotEvaluateException
     {
         checkDimension(coord);
         // TODO: Current implementation doesn't check the coordinate system.

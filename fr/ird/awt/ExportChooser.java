@@ -96,12 +96,12 @@ public final class ExportChooser extends JPanel {
     /**
      * Ensemble des images à écrire. L'ordre des éléments doit être préservés.
      */
-    private final Set<ImageEntry> entries=new LinkedHashSet<ImageEntry>(256);
+    private final Set<ImageEntry> entries = new LinkedHashSet<ImageEntry>(256);
 
     /**
      * Etiquette indiquant le nombre d'images à exporter.
      */
-    private final JLabel count=new JLabel();
+    private final JLabel count = new JLabel();
 
     /**
      * Resources pour la construction des étiquettes.
@@ -133,7 +133,7 @@ public final class ExportChooser extends JPanel {
         ///
         /// Ajoute les filtres de fichiers
         ///
-        final ImageFileFilter[] fileFilters=ImageFileFilter.getWriterFilters(null);
+        final ImageFileFilter[] fileFilters = ImageFileFilter.getWriterFilters(null);
         for (int i=0; i<fileFilters.length; i++) {
             chooser.addChoosableFileFilter(fileFilters[i]);
         }
@@ -284,7 +284,8 @@ public final class ExportChooser extends JPanel {
         /**
          * Extension des fichiers d'images. Cette extension remplacera l'extension des
          * fichiers d'images sources. La chaîne de caractères <code>extension</code>
-         * ne doit commencer par un point.
+         * ne doit commencer par un point. Ce champ peut être <code>null</code> s'il
+         * n'y a pas d'extension connue pour le type de fichier à écrire.
          */
         private final String extension;
 
@@ -330,7 +331,7 @@ public final class ExportChooser extends JPanel {
             if (extPos >= 0) {
                 buffer.setLength(extPos);
             }
-            if (extension.length() != 0) {
+            if (extension!=null && extension.length() != 0) {
                 buffer.append('.');
                 buffer.append(extension);
             }

@@ -32,6 +32,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.JAI;
 import javax.imageio.ImageIO;
 
 // Entrés/sorties
@@ -308,7 +309,14 @@ final class EkmanPumpingImageFunction extends WindImageFunction {
             final File outputFile = new File(output);
             RenderedImage outputImage;
             if (type.equalsIgnoreCase("raw")) {
+                /*
+                 * Traitement spécial pour l'enregistrement des données en format RAW:
+                 * On enregistre les valeurs géophysiques (en cm/jour) plutôt que des
+                 * index de pixel. Le facteur 8640000 permet de convertir les valeurs
+                 * des unités m/s vers des cm/jour.
+                 */
                 outputImage = image.geophysics(true).getRenderedImage();
+                outputImage = JAI.create("MultiplyConst", outputImage, new double[] {8640000} );
                 Utilities.writeRawFloat(outputImage, outputFile);
             } else {
                 outputImage = image.geophysics(false).getRenderedImage();

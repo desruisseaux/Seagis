@@ -53,8 +53,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageFileFilter extends FileFilter
-{
+final class ImageFileFilter extends FileFilter {
     /**
      * Format d'image de ce filtre.
      */
@@ -66,8 +65,9 @@ final class ImageFileFilter extends FileFilter
     private final String name;
 
     /**
-     * Liste des extensions des fichiers qu'accepte ce filtre.
-     * Ces extensions ne devraient pas commencer par de point ('.').
+     * Liste des extensions des fichiers qu'accepte ce filtre, ou <code>null</code>
+     * si les extensions ne sont pas connues. Ces extensions ne devraient pas commencer
+     * par de point ('.').
      */
     private final String[] suffix;
 
@@ -77,34 +77,30 @@ final class ImageFileFilter extends FileFilter
      * @param spi    Objet décrivant un format d'image.
      * @param name   Un des noms du format.
      * @param suffix Liste des extensions des fichiers qu'accepte ce filtre.
-     *               Ces extensions ne devraient pas commencer par de point ('.').
+     *               Ces extensions ne devraient pas commencer par le point ('.').
      */
-    private ImageFileFilter(final ImageReaderWriterSpi spi, final String name, final String[] suffix)
-    {
+    private ImageFileFilter(final ImageReaderWriterSpi spi, final String name, final String[] suffix) {
         this.spi    = spi;
         this.suffix = suffix;
-        if (suffix.length>=1)
-        {
-            final String separator=System.getProperty("path.separator", ":");
-            final StringBuffer buffer=new StringBuffer(name);
+        if (suffix!=null && suffix.length>=1) {
+            final String separator = System.getProperty("path.separator", ":");
+            final StringBuffer buffer = new StringBuffer(name);
             buffer.append(" (");
-            for (int i=0; i<suffix.length; i++)
-            {
-                if (suffix[i].startsWith("."))
-                {
+            for (int i=0; i<suffix.length; i++) {
+                if (suffix[i].startsWith(".")) {
                     suffix[i] = suffix[i].substring(1);
                 }
-                if (i!=0)
-                {
+                if (i != 0) {
                     buffer.append(separator);
                 }
                 buffer.append("*.");
                 buffer.append(suffix[i]);
             }
             buffer.append(')');
-            this.name=buffer.toString();
+            this.name = buffer.toString();
+        } else {
+            this.name = name;
         }
-        else this.name=name;
     }
 
     /**
@@ -114,8 +110,9 @@ final class ImageFileFilter extends FileFilter
      * @param locale Langue dans laquelle retourner les descriptions des filtres,
      *               ou <code>null</code> pour utiliser les conventions locales.
      */
-    public static ImageFileFilter[] getReaderFilters(final Locale locale)
-    {return getFilters(ImageReaderSpi.class, locale);}
+    public static ImageFileFilter[] getReaderFilters(final Locale locale) {
+        return getFilters(ImageReaderSpi.class, locale);
+    }
 
     /**
      * Retourne une liste de filtres pour les écritures d'images. Les éléments de la liste apparaîtront dans
@@ -124,8 +121,9 @@ final class ImageFileFilter extends FileFilter
      * @param locale Langue dans laquelle retourner les descriptions des filtres,
      *               ou <code>null</code> pour utiliser les conventions locales.
      */
-    public static ImageFileFilter[] getWriterFilters(final Locale locale)
-    {return getFilters(ImageWriterSpi.class, locale);}
+    public static ImageFileFilter[] getWriterFilters(final Locale locale) {
+        return getFilters(ImageWriterSpi.class, locale);
+    }
 
     /**
      * Retourne une liste de filtres d'images. Les éléments de la liste apparaîtront dans l'ordre
@@ -135,22 +133,20 @@ final class ImageFileFilter extends FileFilter
      * @param loc Langue dans laquelle retourner les descriptions des filtres,
      *            ou <code>null</code> pour utiliser les conventions locales.
      */
-    private static ImageFileFilter[] getFilters(final Class category, final Locale loc)
-    {
+    private static ImageFileFilter[] getFilters(final Class category, final Locale loc) {
         final Locale locale = (loc!=null) ? loc : Locale.getDefault();
         final List<ImageFileFilter> set = new ArrayList<ImageFileFilter>();
-        for (final Iterator it=IIORegistry.getDefaultInstance().getServiceProviders(category, false); it.hasNext();)
-        {
+        for (final Iterator it=IIORegistry.getDefaultInstance().getServiceProviders(category, false); it.hasNext();) {
             final ImageReaderWriterSpi spi = (ImageReaderWriterSpi) it.next();
             final String       description = spi.getDescription(locale);
             final String[]          suffix = spi.getFileSuffixes();
             set.add(new ImageFileFilter(spi, description, suffix));
         }
         final ImageFileFilter[] array = set.toArray(new ImageFileFilter[set.size()]);
-        Arrays.sort(array, new Comparator<ImageFileFilter>()
-        {
-            public int compare(final ImageFileFilter a, final ImageFileFilter b)
-            {return a.name.toLowerCase(locale).compareTo(b.name.toLowerCase(locale));}
+        Arrays.sort(array, new Comparator<ImageFileFilter>() {
+            public int compare(final ImageFileFilter a, final ImageFileFilter b) {
+                return a.name.toLowerCase(locale).compareTo(b.name.toLowerCase(locale));
+            }
         });
         return array;
     }
@@ -163,11 +159,12 @@ final class ImageFileFilter extends FileFilter
      * @return Un décodeur à utiliser pour lire les images.
      * @param  IOException si le décodeur n'a pas pu être construit.
      */
-    public ImageReader getImageReader() throws IOException
-    {
-        if (spi instanceof ImageReaderSpi)
+    public ImageReader getImageReader() throws IOException {
+        if (spi instanceof ImageReaderSpi) {
             return ((ImageReaderSpi) spi).createReaderInstance();
-        else throw new IIOException(spi.toString());
+        } else {
+            throw new IIOException(spi.toString());
+        }
     }
 
     /**
@@ -178,30 +175,32 @@ final class ImageFileFilter extends FileFilter
      * @return Un codeur à utiliser pour écrire les images.
      * @param  IOException si le codeur n'a pas pu être construit.
      */
-    public ImageWriter getImageWriter() throws IOException
-    {
-        if (spi instanceof ImageWriterSpi)
+    public ImageWriter getImageWriter() throws IOException {
+        if (spi instanceof ImageWriterSpi) {
             return ((ImageWriterSpi) spi).createWriterInstance();
-        else throw new IIOException(spi.toString());
+        } else {
+            throw new IIOException(spi.toString());
+        }
     }
 
     /**
      * Retourne une extension par défaut pour les noms de fichiers
      * de ce format d'image. La chaîne retournée ne commencera pas
      * par un point.
+     *
+     * @return L'extension, ou <code>null</code> si l'extension n'est pas connue.
      */
-    public String getExtension()
-    {
-        String ext="";
-        int length=0;
-        for (int i=suffix.length; --i>=0;)
-        {
-            String cmp=suffix[i];
-            final int cmpl=cmp.length();
-            if (cmpl>=length)
-            {
-                length=cmpl;
-                ext=cmp;
+    public String getExtension() {
+        String ext = null;
+        if (suffix != null) {
+            int length = -1;
+            for (int i=suffix.length; --i>=0;) {
+                String cmp = suffix[i];
+                final int cmpl = cmp.length();
+                if (cmpl > length) {
+                    length = cmpl;
+                    ext = cmp;
+                }
             }
         }
         return ext;
@@ -210,23 +209,22 @@ final class ImageFileFilter extends FileFilter
     /**
      * Indique si ce filtre accepte le fichier spécifié.
      */
-    public boolean accept(final File file)
-    {
-        if (file!=null)
-        {
-            final String filename=file.getName();
-            final int length=filename.length();
-            if (length>0 && filename.charAt(0)!='.')
-            {
-                if (file.isDirectory()) return true;
-                int i=filename.lastIndexOf('.');
-                if (i>0 && i<length-1)
-                {
-                    final String extension=filename.substring(i);
-                    for (int j=suffix.length; --j>=0;)
-                    {
-                        if (suffix[j].equalsIgnoreCase(extension))
-                        {
+    public boolean accept(final File file) {
+        if (file != null) {
+            if (suffix == null) {
+                return true;
+            }
+            final String filename = file.getName();
+            final int length = filename.length();
+            if (length>0 && filename.charAt(0)!='.') {
+                if (file.isDirectory()) {
+                    return true;
+                }
+                int i = filename.lastIndexOf('.');
+                if (i>0 && i<length-1) {
+                    final String extension = filename.substring(i);
+                    for (int j=suffix.length; --j>=0;) {
+                        if (suffix[j].equalsIgnoreCase(extension)) {
                             return true;
                         }
                     }
@@ -240,15 +238,17 @@ final class ImageFileFilter extends FileFilter
      * Retourne la description de ce filtre. La description comprendra le
      * nom du format des images acceptées ainsi que leurs extensions.
      */
-    public String getDescription()
-    {return name;}
+    public String getDescription() {
+        return name;
+    }
 
     /**
      * Retourne une chaîne de caractères décrivant ce filtre.
      * Cette information ne sert qu'à des fins de déboguage.
      */
-    public String toString()
-    {return Utilities.getShortClassName(this)+'['+name+']';}
+    public String toString() {
+        return Utilities.getShortClassName(this)+'['+name+']';
+    }
 
     /**
      * Envoie vers le périphérique de sortie standard une
@@ -256,10 +256,10 @@ final class ImageFileFilter extends FileFilter
      * est construites à partir des encodeurs et décodeurs
      * fournit sur le système.
      */
-    public static void main(final String[] args)
-    {
-        final ImageFileFilter[] filters=getReaderFilters(null);
-        for (int i=0; i<filters.length; i++)
+    public static void main(final String[] args) {
+        final ImageFileFilter[] filters = getReaderFilters(null);
+        for (int i=0; i<filters.length; i++) {
             System.out.println(filters[i]);
+        }
     }
 }

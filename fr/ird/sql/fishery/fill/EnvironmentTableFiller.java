@@ -51,7 +51,6 @@ import javax.media.jai.ParameterList;
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.resources.Utilities;
-import org.geotools.cv.PointOutsideCoverageException;
 
 // Requêtes SQL
 import fr.ird.sql.image.Coverage3D;

@@ -25,7 +25,6 @@ package fr.ird.operator.coverage;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.Utilities;
 
@@ -49,19 +48,19 @@ import javax.media.jai.iterator.RectIterFactory;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class AverageEvaluator extends AbstractEvaluator implements Evaluator
-{
+public class AverageEvaluator extends AbstractEvaluator implements Evaluator {
     /**
      * Construit un évaluateur par défaut.
      */
-    public AverageEvaluator()
-    {}
+    public AverageEvaluator() {
+    }
 
     /**
      * Retourne le nom de cette opération.
      */
-    public String getName()
-    {return "Average";}
+    public String getName() {
+        return "Average";
+    }
 
     /**
      * Evalue la fonction pour une zone géographique de la couverture spécifiée.
@@ -72,8 +71,7 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator
      *        Les coordonnées de cette région doivent être exprimées selon
      *        le système de coordonnées de <code>coverage</code>.
      */
-    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
-    {
+    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area) {
         final RenderedImage        data = coverage.getRenderedImage();
         final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Point2D.Double coordinate = new Point2D.Double();
@@ -82,26 +80,20 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator
         final int[]               count = new int[data.getSampleModel().getNumBands()];
         final double[]              sum = new double[count.length];
         double[] values = null;
-        if (!bounds.isEmpty())
-        {
+        if (!bounds.isEmpty()) {
             final RectIter iterator = RectIterFactory.create(data, bounds);
-            for (int y=bounds.y; !iterator.finishedLines(); y++)
-            {
-                for (int x=bounds.x; !iterator.finishedPixels(); x++)
-                {
+            for (int y=bounds.y; !iterator.finishedLines(); y++) {
+                for (int x=bounds.x; !iterator.finishedPixels(); x++) {
                     assert bounds.contains(x,y);
                     coordinate.x = x;
                     coordinate.y = y;
                     // TODO: que faire si 'area' intercepte le pixel mais pas le centre?
                     //       'Shape.intersects' risque de ne pas être assez précis.
-                    if (area.contains(transform.transform(coordinate, coordinate)))
-                    {
+                    if (area.contains(transform.transform(coordinate, coordinate))) {
                         values = iterator.getPixel(values);
-                        for (int i=0; i<values.length; i++)
-                        {
+                        for (int i=0; i<values.length; i++) {
                             final double z = values[i];
-                            if (!Double.isNaN(z))
-                            {
+                            if (!Double.isNaN(z)) {
                                 sum[i] += z;
                                 count[i]++;
                             }
@@ -114,8 +106,7 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator
             }
         }
         final ParameterValue[] result = new ParameterValue[sum.length];
-        for (int i=0; i<result.length; i++)
-        {
+        for (int i=0; i<result.length; i++) {
             result[i] = new ParameterValue.Double(coverage, this);
             result[i].setValue(sum[i]/count[i], null);
         }

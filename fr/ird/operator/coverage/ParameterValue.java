@@ -27,6 +27,7 @@ package fr.ird.operator.coverage;
 import java.awt.geom.Point2D;
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Utilities;
+import fr.ird.animat.Observation;
 
 
 /**
@@ -37,13 +38,11 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class ParameterValue
-{
+public abstract class ParameterValue implements Observation {
     /**
      * Constructeur par défaut.
      */
-    protected void ParameterValue()
-    {
+    protected void ParameterValue() {
     }
 
     /**
@@ -75,8 +74,7 @@ public abstract class ParameterValue
      * Implémentation de {@link ParameterValue} pour
      * des nombres de type {@link java.lang.Double}.
      */
-    public static final class Double extends ParameterValue
-    {
+    public static final class Double extends ParameterValue {
         /**
          * Le nom des données.
          */
@@ -102,8 +100,7 @@ public abstract class ParameterValue
         /**
          * Construit un paramètre du nom spécifié.
          */
-        public Double(final String name)
-        {
+        public Double(final String name) {
             evaluator = name;
             coverage  = null;
         }
@@ -111,8 +108,7 @@ public abstract class ParameterValue
         /**
          * Construit un paramètre pour l'image spécifiée.
          */
-        Double(final GridCoverage coverage, final Evaluator evaluator)
-        {
+        Double(final GridCoverage coverage, final Evaluator evaluator) {
             this.coverage  = coverage.getName(null);
             this.evaluator = evaluator.getName();
         }
@@ -120,10 +116,8 @@ public abstract class ParameterValue
         /**
          * Retourne le nom de ce paramètre.
          */
-        public String getName()
-        {
-            if (coverage==null)
-            {
+        public String getName() {
+            if (coverage == null) {
                 return evaluator;
             }
             return evaluator+" of "+coverage;
@@ -132,8 +126,7 @@ public abstract class ParameterValue
         /**
          * Retourne la valeur évaluée.
          */
-        public double getValue()
-        {
+        public double getValue() {
             return value;
         }
 
@@ -141,10 +134,8 @@ public abstract class ParameterValue
          * Retourne la position de la valeur évaluée, ou <code>null</code>
          * si la valeur n'a pas été évaluée a une position en particulier.
          */
-        public Point2D getLocation()
-        {
-            if (java.lang.Double.isNaN(x) || java.lang.Double.isNaN(y))
-            {
+        public Point2D getLocation() {
+            if (java.lang.Double.isNaN(x) || java.lang.Double.isNaN(y)) {
                 return null;
             }
             return new Point2D.Double(x,y);
@@ -157,11 +148,9 @@ public abstract class ParameterValue
          * @param position Position, ou <code>null</code> si elle n'est pas définie.
          *        Dans ce dernier cas, l'ancienne position ne sera pas modifiée.
          */
-        public void setValue(final double value, final Point2D position)
-        {
+        public void setValue(final double value, final Point2D position) {
             this.value = value;
-            if (position != null)
-            {
+            if (position != null) {
                 this.x = position.getX();
                 this.y = position.getY();
             }
@@ -172,8 +161,7 @@ public abstract class ParameterValue
      * Implémentation de {@link ParameterValue} pour
      * des nombres de type {@link java.lang.Float}.
      */
-    public static final class Float extends ParameterValue
-    {
+    public static final class Float extends ParameterValue {
         /**
          * Le nom des données.
          */
@@ -194,24 +182,21 @@ public abstract class ParameterValue
         /**
          * Construit un paramètre du nom spécifié.
          */
-        public Float(final String name)
-        {
+        public Float(final String name) {
             this.name = name;
         }
 
         /**
          * Retourne le nom de ce paramètre.
          */
-        public String getName()
-        {
+        public String getName() {
             return name;
         }
 
         /**
          * Retourne la valeur évaluée.
          */
-        public double getValue()
-        {
+        public double getValue() {
             return value;
         }
 
@@ -219,10 +204,8 @@ public abstract class ParameterValue
          * Retourne la position de la valeur évaluée, ou <code>null</code>
          * si la valeur n'a pas été évaluée a une position en particulier.
          */
-        public Point2D getLocation()
-        {
-            if (java.lang.Float.isNaN(x) || java.lang.Float.isNaN(y))
-            {
+        public Point2D getLocation() {
+            if (java.lang.Float.isNaN(x) || java.lang.Float.isNaN(y)) {
                 return null;
             }
             return new Point2D.Float(x,y);
@@ -235,11 +218,9 @@ public abstract class ParameterValue
          * @param position Position, ou <code>null</code> si elle n'est pas définie.
          *        Dans ce dernier cas, l'ancienne position ne sera pas modifiée.
          */
-        public void setValue(final double value, final Point2D position)
-        {
+        public void setValue(final double value, final Point2D position)  {
             this.value = (float) value;
-            if (position != null)
-            {
+            if (position != null) {
                 this.x = (float) position.getX();
                 this.y = (float) position.getY();
             }
@@ -248,8 +229,7 @@ public abstract class ParameterValue
         /**
          * Définie la valeur et sa position.
          */
-        public void setValue(final float value, final float x, final float y)
-        {
+        public void setValue(final float value, final float x, final float y) {
             this.value = value;
             this.x = x;
             this.y = y;
@@ -260,16 +240,14 @@ public abstract class ParameterValue
      * Retourne une représentation textuelle
      * de ce paramètre.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append("[\"");
         buffer.append(getName());
         buffer.append("\" = ");
         buffer.append((float)getValue());
         final Point2D location = getLocation();
-        if (location != null)
-        {
+        if (location != null) {
             buffer.append(" at ");
             buffer.append((float)location.getX());
             buffer.append("; ");

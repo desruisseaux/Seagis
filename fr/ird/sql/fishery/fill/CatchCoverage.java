@@ -25,7 +25,6 @@ package fr.ird.sql.fishery.fill;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.cv.PointOutsideCoverageException;
 
 // Divers
 import java.util.Arrays;

@@ -98,8 +98,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class SpeciesChooser extends JPanel
-{
+public final class SpeciesChooser extends JPanel {
     /**
      * Index du paneau servant à sélectionner les espèces à afficher.
      * N'oubliez pas d'ajuster cet index si des éléments sont ajoutés
@@ -123,14 +122,16 @@ public final class SpeciesChooser extends JPanel
      * Si ce bouton est sélectionné, l'utilisateur demande à afficher
      * les positions des captures plutôt que les quantités pêchées.
      */
-    private final JToggleButton showPositionOnly = new JRadioButton(Resources.format(ResourceKeys.SHOW_POSITION_ONLY), true);
+    private final JToggleButton showPositionOnly = new JRadioButton(
+            Resources.format(ResourceKeys.SHOW_POSITION_ONLY), true);
 
     /**
      * Si ce bouton est sélectionné, l'utilisateur demande à afficher
      * les captures par espèces plutôt que seulement les positions de
      * pêches.
      */
-    private final JToggleButton showCatchAmount = new JRadioButton(Resources.format(ResourceKeys.SHOW_CATCH_AMOUNT));
+    private final JToggleButton showCatchAmount = new JRadioButton(
+            Resources.format(ResourceKeys.SHOW_CATCH_AMOUNT));
 
     /**
      * Liste des espèces sélectionnables.
@@ -165,20 +166,25 @@ public final class SpeciesChooser extends JPanel
      * Entrées représentant un objet {@link Locale} et le nom
      * de la langue sous forme de chaîne de caractères.
      */
-    private static final class LocaleEntry
-    {
+    private static final class LocaleEntry {
         public final Locale locale;
         public final String name;
-        public LocaleEntry(final Locale locale, final String name) {this.locale=locale; this.name=name;}
-        public String  toString() {return name;}
+
+        public LocaleEntry(final Locale locale, final String name) {
+            this.locale=locale;
+            this.name=name;
+        }
+
+        public String  toString() {
+            return name;
+        }
     }
 
     /**
      * Construit une boîte de dialogue par défaut.
      * Elle ne contiendra initalement aucune espèce.
      */
-    public SpeciesChooser()
-    {
+    public SpeciesChooser() {
         super(new BorderLayout());
         final Resources resources = Resources.getResources(null);
         final Listener   listener = new Listener();
@@ -186,8 +192,7 @@ public final class SpeciesChooser extends JPanel
         ////////////////////
         ////  Espèces  /////
         ////////////////////
-        if (true)
-        {
+        if (true) {
             final JComboBox   localeBox = new JComboBox(locales);
             final JComponent scrollList = new JScrollPane(list); scrollList.setPreferredSize(new Dimension(80,80));
             final ButtonGroup     group = new ButtonGroup();
@@ -204,8 +209,7 @@ public final class SpeciesChooser extends JPanel
             c.gridy=3; c.insets.bottom=9; c.fill=c.NONE;
             c.gridwidth=1; c.weighty=0; c.anchor=c.EAST; panel.add(new JLabel(resources.getLabel(ResourceKeys.LANGUAGE)), c);
             c.gridx=1;     c.weightx=0; c.insets.left=0; panel.add(localeBox, c);
-            if (locales.getSize()!=0)
-            {
+            if (locales.getSize() != 0) {
                 locale = ((LocaleEntry) locales.getElementAt(0)).locale;
             }
             /*
@@ -224,8 +228,7 @@ public final class SpeciesChooser extends JPanel
         /////////////////////
         ////  Couleurs  /////
         /////////////////////
-        if (true)
-        {
+        if (true) {
             colorChooser.setShape(new Ellipse2D.Float(-24f, -24f, 48f, 48f));
             final JPanel panel=new JPanel(new GridBagLayout());
             final GridBagConstraints c=new GridBagConstraints();
@@ -245,25 +248,20 @@ public final class SpeciesChooser extends JPanel
      * Construit une boîte de dialogue avec les
      * espèces de la base de données spécifiée.
      */
-    public SpeciesChooser(final FisheryDataBase database) throws SQLException
-    {
+    public SpeciesChooser(final FisheryDataBase database) throws SQLException {
         this();
-        if (database!=null)
-        {
+        if (database != null) {
             final Collection<Species> sp = database.getSpecies();
-            for (final Iterator<Species> it=sp.iterator(); it.hasNext();)
-            {
+            for (final Iterator<Species> it=sp.iterator(); it.hasNext();) {
                 add(it.next().getIcon());
             }
         }
         final Locale locale   = Locale.getDefault();
         final String language = locale.getLanguage();
         final int    size     = locales.getSize();
-        for (int i=0; i<size; i++)
-        {
+        for (int i=0; i<size; i++) {
             final LocaleEntry entry = (LocaleEntry) locales.getElementAt(i);
-            if (entry.locale!=null && language.equals(entry.locale.getLanguage()))
-            {
+            if (entry.locale!=null && language.equals(entry.locale.getLanguage())) {
                 locales.setSelectedItem(entry);
                 this.locale=locale;
                 break;
@@ -275,8 +273,7 @@ public final class SpeciesChooser extends JPanel
      * Fait apparaître un paneau proposant de
      * choisir une couleur pour l'entrée spécifiée.
      */
-    private void showControler(final Species.Icon entry)
-    {
+    private void showControler(final Species.Icon entry) {
         speciesIcons.setSelectedItem(entry);
         colorChooser.setColor(entry.getColor());
         tabs.getModel().setSelectedIndex(COLOR_PANE);
@@ -288,32 +285,35 @@ public final class SpeciesChooser extends JPanel
      * une nouvelle langue qui n'avait pas encore été prise en compte, cette
      * langue sera ajoutée dans la boîte déroulante "Langue".
      */
-    public void add(final Species.Icon icon)
-    {
+    public void add(final Species.Icon icon) {
         final Locale[] loc=icon.getSpecies().getLocales();
         StringBuffer buffer=null;
  check: for (int i=0; i<loc.length; i++)
         {
             final String name;
             final Locale locale = loc[i];
-            if (locale!=null)
-            {
-                for (int j=locales.getSize(); --j>=0;)
-                    if (locale.equals(((LocaleEntry) locales.getElementAt(j)).locale))
+            if (locale != null) {
+                for (int j=locales.getSize(); --j>=0;) {
+                    if (locale.equals(((LocaleEntry) locales.getElementAt(j)).locale)) {
                         continue check;
-
-                if (buffer==null) buffer=new StringBuffer();
+                    }
+                }
+                if (buffer==null) {
+                    buffer = new StringBuffer();
+                }
                 buffer.setLength(0);
                 buffer.append(locale.getDisplayLanguage());
-                if (buffer.length()==0) continue check;
+                if (buffer.length() == 0) {
+                    continue check;
+                }
                 buffer.setCharAt(0, Character.toUpperCase(buffer.charAt(0)));
                 name = buffer.toString();
-            }
-            else
-            {
-                for (int j=locales.getSize(); --j>=0;)
-                    if (((LocaleEntry) locales.getElementAt(j)).locale==locale)
+            } else {
+                for (int j=locales.getSize(); --j>=0;) {
+                    if (((LocaleEntry) locales.getElementAt(j)).locale==locale) {
                         continue check;
+                    }
+                }
                 name = Resources.format(ResourceKeys.FAO_CODE);
             }
             locales.addElement(new LocaleEntry(locale, name));
@@ -333,34 +333,29 @@ public final class SpeciesChooser extends JPanel
      *         In the later case, the new icon will not have been added to the list
      *         (you can use {@link #add} instead for that).
      */
-    public boolean replace(final Species.Icon newIcon)
-    {
+    public boolean replace(final Species.Icon newIcon) {
         int insertAt = -1;
         final Species search = newIcon.getSpecies();
-        for (int i=speciesIcons.getSize(); --i>=0;)
-        {
-            if (search.equals(((Species.Icon) speciesIcons.getElementAt(i)).getSpecies()))
-            {
+        for (int i=speciesIcons.getSize(); --i>=0;) {
+            if (search.equals(((Species.Icon) speciesIcons.getElementAt(i)).getSpecies())) {
                 speciesIcons.removeElementAt(i);
                 insertAt = i;
             }
         }
-        if (insertAt >= 0)
-        {
+        if (insertAt >= 0) {
             speciesIcons.insertElementAt(newIcon, insertAt);
             return true;
+        } else {
+            return false;
         }
-        else return false;
     }
 
     /**
      * Returns all icons displayed in this <code>SpeciesChooser</code>.
      */
-    public Species.Icon[] getIcons()
-    {
+    public Species.Icon[] getIcons() {
         final Species.Icon[] list = new Species.Icon[speciesIcons.getSize()];
-        for (int i=list.length; --i>=0;)
-        {
+        for (int i=list.length; --i>=0;) {
             list[i] = (Species.Icon) speciesIcons.getElementAt(i);
         }
         return list;
@@ -369,12 +364,10 @@ public final class SpeciesChooser extends JPanel
     /**
      * Returns all icons currently selected in this <code>SpeciesChooser</code>.
      */
-    public Species.Icon[] getSelectedIcons()
-    {
+    public Species.Icon[] getSelectedIcons() {
         final int[]                  indices = list.getSelectedIndices();
         final Species.Icon[] selectedSpecies = new Species.Icon[indices.length];
-        for (int i=0; i<selectedSpecies.length; i++)
-        {
+        for (int i=0; i<selectedSpecies.length; i++) {
             selectedSpecies[i] = (Species.Icon) speciesIcons.getElementAt(indices[i]);
         }
         return selectedSpecies;
@@ -384,23 +377,22 @@ public final class SpeciesChooser extends JPanel
      * Returns <code>true</code> if the user request catch amounts,
      * or <code>false</code> if he request positions only.
      */
-    public boolean isCatchAmountSelected()
-    {return showCatchAmount.isSelected();}
+    public boolean isCatchAmountSelected() {
+        return showCatchAmount.isSelected();
+    }
 
     /**
      * Fait apparaître la boîte de dialogue demandant à l'utilisateur
      * de choisir des espèces. Cette méthode retourne <code>true</code>
      * si l'utilisateur a cliqué sur "Ok".
      */
-    public boolean showDialog(final Component owner)
-    {
+    public boolean showDialog(final Component owner) {
         final boolean showCatch=showCatchAmount.isSelected();
         final Color[] colors=new Color[speciesIcons.getSize()];
-        for (int i=colors.length; --i>=0;)
+        for (int i=colors.length; --i>=0;) {
             colors[i] = ((Species.Icon) speciesIcons.getElementAt(i)).getColor();
-
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.SPECIES_SELECTION)))
-        {
+        }
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.SPECIES_SELECTION))) {
             saveChanges(tabs.getSelectedIndex());
             return true;
         }
@@ -409,8 +401,7 @@ public final class SpeciesChooser extends JPanel
         else          showPositionOnly.setSelected(true);
         list.setEnabled(showCatch);
 
-        for (int i=colors.length; --i>=0;)
-        {
+        for (int i=colors.length; --i>=0;) {
             ((Species.Icon) speciesIcons.getElementAt(i)).setColor(colors[i]);
         }
         colorChooser.setColor(((Species.Icon) speciesIcons.getSelectedItem()).getColor());
@@ -420,11 +411,9 @@ public final class SpeciesChooser extends JPanel
     /**
      * Sauvegarde les changements faits dans le paneau spécifié.
      */
-    private final void saveChanges(final int paneIndex)
-    {
+    private final void saveChanges(final int paneIndex) {
         final Species.Icon selectedSpecies = (Species.Icon) speciesIcons.getSelectedItem();
-        switch (paneIndex)
-        {
+        switch (paneIndex) {
             case COLOR_PANE: selectedSpecies.setColor(colorChooser.getColor()); break;
         }
     }
@@ -432,8 +421,7 @@ public final class SpeciesChooser extends JPanel
     /**
      * Classe de l'objet chargé de répondre à certains événements.
      */
-    private final class Listener extends MouseAdapter implements ItemListener, ChangeListener, ActionListener
-    {
+    private final class Listener extends MouseAdapter implements ItemListener, ChangeListener, ActionListener {
         /**
          * Index du dernier panneau sélectionné.
          */
@@ -444,12 +432,12 @@ public final class SpeciesChooser extends JPanel
          * sur un item de la liste des espèces. Cette méthode fera apparaître la
          * palette de couleur pour l'espèce double-cliqué.
          */
-        public void mouseClicked(final MouseEvent event)
-        {
-            if (event.getClickCount()==2 && list.isEnabled())
-            {
+        public void mouseClicked(final MouseEvent event) {
+            if (event.getClickCount()==2 && list.isEnabled()) {
                 final int index = list.locationToIndex(event.getPoint());
-                if (index>=0) showControler((Species.Icon) speciesIcons.getElementAt(index));
+                if (index >= 0) {
+                    showControler((Species.Icon) speciesIcons.getElementAt(index));
+                }
             }
         }
 
@@ -457,11 +445,9 @@ public final class SpeciesChooser extends JPanel
          * Méthode appelée automatiquement lorsque l'utilisateur a choisit une
          * autre espèce dans la boîte déroulante au dessus de la palette de couleurs.
          */
-        public void itemStateChanged(final ItemEvent event)
-        {
+        public void itemStateChanged(final ItemEvent event) {
             final Species.Icon icon = (Species.Icon) event.getItem();
-            switch (event.getStateChange())
-            {
+            switch (event.getStateChange()) {
                 case ItemEvent.DESELECTED: icon.setColor(colorChooser.getColor()); break;
                 case ItemEvent.SELECTED:   colorChooser.setColor(icon.getColor()); break;
             }
@@ -471,8 +457,7 @@ public final class SpeciesChooser extends JPanel
          * Méthode appelée automatiquement après que l'utilisateur change le paneau
          * visible. Lorsque cette méthode est appelée, le changement a déjà été fait.
          */
-        public void stateChanged(final ChangeEvent event)
-        {
+        public void stateChanged(final ChangeEvent event) {
             saveChanges(lastPane);
             lastPane = tabs.getSelectedIndex();
         }
@@ -481,15 +466,15 @@ public final class SpeciesChooser extends JPanel
          * Méthode appelée automatiquement lorsque l'utilisateur change la sélection
          * "Afficher les positions seulement" / "Afficher les quantités pêchées".
          */
-        public void actionPerformed(final ActionEvent event)
-        {list.setEnabled(showCatchAmount.isSelected());}
+        public void actionPerformed(final ActionEvent event) {
+            list.setEnabled(showCatchAmount.isSelected());
+        }
     }
 
     /**
      * Classe de l'objet chargé de dessiner les étiquettes des items.
      */
-    private final class Renderer extends DefaultListCellRenderer implements ItemListener
-    {
+    private final class Renderer extends DefaultListCellRenderer implements ItemListener {
         public Component getListCellRendererComponent(final JList list, final Object value, final int index,
                                                       final boolean isSelected, final boolean cellHasFocus)
         {
@@ -504,12 +489,12 @@ public final class SpeciesChooser extends JPanel
          * Méthode appelée automatiquement lorsque l'utilisateur
          * change la langue d'affichage des noms des espèces.
          */
-        public void itemStateChanged(final ItemEvent event)
-        {
-            if (event.getStateChange() == ItemEvent.SELECTED)
-            {
+        public void itemStateChanged(final ItemEvent event) {
+            if (event.getStateChange() == ItemEvent.SELECTED) {
                 final LocaleEntry selected = (LocaleEntry) event.getItem();
-                if (selected!=null) locale = selected.locale;
+                if (selected != null) {
+                    locale = selected.locale;
+                }
                 list.repaint();
             }
         }
@@ -520,20 +505,19 @@ public final class SpeciesChooser extends JPanel
      * une espèce. Cette chaîne dépendra de la langue sélectionnée
      * par l'utilisateur.
      */
-    private String format(final Species species, final boolean isSpeciesList)
-    {
-        if (isSpeciesList || locale==Species.LATIN)
-        {
+    private String format(final Species species, final boolean isSpeciesList) {
+        if (isSpeciesList || locale==Species.LATIN) {
             final String name = species.getName(locale);
             return (name!=null) ? name : species.getName();
         }
         final StringBuffer buffer=new StringBuffer("<HTML>");
         String name = species.getName(locale);
-        if (name==null) name=species.getName();
+        if (name == null) {
+            name=species.getName();
+        }
         buffer.append(name);
-        name=species.getName(Species.LATIN);
-        if (name!=null && name.length()>=2) // Evite "?"
-        {
+        name = species.getName(Species.LATIN);
+        if (name!=null && name.length()>=2) { // Evite "?"
             buffer.append("&nbsp;&nbsp; (<i>");
             buffer.append(name);
             buffer.append("</i>)");

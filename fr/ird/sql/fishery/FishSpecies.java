@@ -35,8 +35,10 @@ import java.awt.image.WritableRaster;
 import java.util.Set;
 import java.util.Locale;
 import java.util.HashSet;
-import fr.ird.animat.Species;
 import javax.vecmath.MismatchedSizeException;
+
+import fr.ird.animat.Species;
+import org.geotools.resources.Utilities;
 
 
 /**
@@ -126,25 +128,19 @@ final class FishSpecies implements Species {
      * nom n'est disponible dans cette langue, retourne <code>null</code>.
      */
     public String getName(final Locale locale) {
-        if (locale==null) {
-            for (int i=0; i<locales.length; i++) {
-                if (locale==locales[i]) {
-                    return names[i];
-                }
-            }
-            return null;
-        }
         for (int i=0; i<locales.length; i++) {
-            if (locale.equals(locales[i])) {
+            if (Utilities.equals(locale, locales[i])) {
                 return names[i];
             }
         }
-        final String language=locale.getLanguage();
-        if (language.length() != 0) {
-            for (int i=0; i<locales.length; i++) {
-                if (locales[i]!=null) {
-                    if (language.equals(locales[i].getLanguage())) {
-                        return names[i];
+        if (locale != null) {
+            final String language = locale.getLanguage();
+            if (language.length() != 0) {
+                for (int i=0; i<locales.length; i++) {
+                    if (locales[i]!=null) {
+                        if (language.equals(locales[i].getLanguage())) {
+                            return names[i];
+                        }
                     }
                 }
             }
@@ -162,7 +158,7 @@ final class FishSpecies implements Species {
             return name;
         }
         for (int i=0; i<names.length; i++) {
-            if (locales[i]!=null) {
+            if (locales[i] != null) {
                 return names[i];
             }
         }
