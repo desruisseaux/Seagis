@@ -75,13 +75,13 @@ import net.seas.util.XMath;
  * exemple une flèche de courant ou une ellipse de marée), la classe dérivée pourra redéfinir une ou
  * plusieurs des méthodes ci-dessous. Redéfinir ces méthodes permet par exemple de dessiner des flèches
  * dont la forme exacte (par exemple une, deux ou trois têtes) et la couleur varie avec l'amplitude, la
- * direction ou d'autres critères à votre choix.
+ * direction ou d'autres critères de votre choix.
  *
  * <ul>
  *   <li>{@link #getTypicalAmplitude}</li>
  *   <li>{@link #getAmplitude}</li>
  *   <li>{@link #getDirection}</li>
- *   <li>{@link #getShape}</li>
+ *   <li>{@link #getMarkShape}</li>
  *   <li>{@link #paint(GraphicsJAI, Shape, int)}</li>
  * </ul>
  *
@@ -189,8 +189,9 @@ public abstract class MarkLayer extends Layer
      * Retourne les coordonnées (<var>x</var>,<var>y</var>) de la marque désignée par l'index
      * spécifié. Les coordonnées doivent être exprimées selon le système de coordonnées spécifié
      * lors de la construction (WGS 1984 par défaut). Cette méthode est autorisée à retourner
-     * <code>null</code> si la position d'une marque n'est pas connue. Dans ce cas, la marque
-     * ne sera pas tracée.
+     * <code>null</code> si la position d'une marque n'est pas connue.
+     *
+     * @see #getGeographicShape
      *
      * @throws IndexOutOfBoundsException Si l'index spécifié n'est pas
      *         dans la plage <code>[0..{@link #getCount}-1]</code>.
@@ -251,8 +252,18 @@ public abstract class MarkLayer extends Layer
     {return 0;}
 
     /**
+     * Retourne l'étendue géographique d'une marque, ou <code>null</code> s'il n'y en a pas.
+     * Cette étendue doit être exprimée selon le système de coordonnées de cette couche. En
+     * général (mais pas obligatoirement), cette étendue contiendra le point retourné par
+     * {@link #getPosition}. L'implémentation par défaut retourne toujours <code>null</code>,
+     * ce qui suppose que cette couche n'affiche que des points sans étendue géographique connue.
+     */
+    public Shape getGeographicShape(int index)
+    {return null;}
+
+    /**
      * Retourne la forme géométrique servant de modèle au traçage des marques. Cette forme peut varier
-     * d'une marque à l'autre, ou être la même pour toutes les marques. Cette forme doit être ancrée à
+     * d'une marque à l'autre, ou être la même pour toutes les marques. Cette forme doit être centrée à
      * l'origine (0,0) et ses coordonnées doivent être exprimées en points (1/72 de pouces). Par exemple
      * pour dessiner des flèches de courants, la forme modèle devrait être une flèche toujours orientée
      * vers l'axe des <var>x</var> positif (le 0° arithmétique), avoir sa base centrée à (0,0) et être
@@ -261,7 +272,7 @@ public abstract class MarkLayer extends Layer
      * marques. L'implémentation par défaut retourne toujours un cercle centré à (0,0) et d'un diamètre de 10
      * points.
      */
-    public Shape getShape(int index)
+    public Shape getMarkShape(int index)
     {return DEFAULT_SHAPE;}
 
     /**
@@ -336,7 +347,7 @@ public abstract class MarkLayer extends Layer
      * @throws TransformException si une projection cartographique était
      *         nécessaire et a échouée.
      *
-     * @see #getShape
+     * @see #getMarkShape
      * @see #paint(GraphicsJAI, Shape, int)
      */
     protected synchronized Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
@@ -415,27 +426,55 @@ public abstract class MarkLayer extends Layer
                  */
                 for (int i=0; i<count; i++)
                 {
-                    Point2D point;
-                    final Shape shape;
-                    if (!isVisible(i, userClip) || (point=getPosition(i))==null || (shape=getShape(i))==null)
+                    if (!isVisible(i, userClip))
                     {
                         transformedShapes[shapeIndex++]=null;
                         continue;
                     }
-                    point=projection.transform(point, point);
-                    matrix[4] = point.getX();
-                    matrix[5] = point.getY();
-                    fromWorld.transform(matrix, 4, matrix, 4, 1);
-                    tr.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
-                    scale = getAmplitude(i)/typicalScale;
-                    tr.scale(scale,scale);
-                    tr.rotate(getDirection(i));
+                    final AffineTransform fromShape;
+                    Shape shape = getGeographicShape(i);
+                    if (shape!=null)
+                    {
+                        /*
+                         * Si l'utilisateur a définit une étendue géographique
+                         * pour cette marque,  alors la forme de cette étendue
+                         * sera transformée et utilisée telle quelle.
+                         */
+                        shape = projection.createTransformedShape(shape);
+                        fromShape = fromWorld;
+                    }
+                    else
+                    {
+                        /*
+                         * Si l'utilisateur a définit la forme d'une marque en pixels,
+                         * alors cette marque sera translatée à la coordonnées voulue,
+                         * puis une rotation sera appliquée en fonction du zoom actuel
+                         * et de l'angle spécifié par {@link #getDirection}.
+                         */
+                        Point2D point;
+                        if ((point=getPosition(i))==null || (shape=getMarkShape(i))==null)
+                        {
+                            transformedShapes[shapeIndex++]=null;
+                            continue;
+                        }
+                        point=projection.transform(point, point);
+                        matrix[4] = point.getX();
+                        matrix[5] = point.getY();
+                        fromWorld.transform(matrix, 4, matrix, 4, 1);
+                        tr.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+                        scale = getAmplitude(i)/typicalScale;
+                        tr.scale(scale,scale);
+                        tr.rotate(getDirection(i));
+                        fromShape = tr;
+                    }
                     /*
-                     * Maintenant que la transformation affine a été définie,
-                     * on créera les formes géométriques transformées des marques.
-                     * Ces formes transformées resteront mémorisées dans une cache
-                     * interne afin d'éviter d'avoir à les recalculer la prochaine
-                     * fois.
+                     * A ce stade, on dispose maintenant 1) De la forme géométrique d'une
+                     * marque et 2) de la transformation affine à appliquer sur la forme.
+                     * Vérifie maintenant si la forme est un polygone (c'est-à-dire si ses
+                     * points sont reliés uniquement par des lignes droites). Si c'est le cas,
+                     * un traitement spécial sera possible. Dans tous les cas, on conservera
+                     * le résultat dans une cache interne afin d'éviter d'avoir à refaire ces
+                     * calculs lors du prochain traçage.
                      */
                     if (shape!=lastShape)
                     {
@@ -480,14 +519,14 @@ public abstract class MarkLayer extends Layer
                         // 'GeneralPath', qui peut convenir mais qui est quand même un peu
                         // lourd. Si possible, on va plutôt utiliser le code du bloc suivant,
                         // qui créera un objet 'Polygon'.
-                        transformedShape = tr.createTransformedShape(shape);
+                        transformedShape = fromShape.createTransformedShape(shape);
                     }
                     else
                     {
                         if (pointIndex > buffer.length)
                             buffer = XArray.resize(buffer, pointIndex);
                         final int length = pointIndex >> 1;
-                        tr.transform(array, 0, buffer, 0, length);
+                        fromShape.transform(array, 0, buffer, 0, length);
                         if (length > X.length) X=XArray.resize(X, length);
                         if (length > Y.length) Y=XArray.resize(Y, length);
                         for (int j=0; j<length; j++)

@@ -81,6 +81,12 @@ public interface CatchEntry extends Entry
     public abstract Range getTimeRange();
 
     /**
+     * Retourne l'espèce la plus pêchée dans cette capture. Si aucune espèce
+     * n'a été capturée, alors cette méthode retourne <code>null</code>.
+     */
+    public abstract Species getDominantSpecies();
+
+    /**
      * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
      * que {@link #getCatch(Species)} retourne une valeur différente de
      * zéro pour chacune de ces espèces.

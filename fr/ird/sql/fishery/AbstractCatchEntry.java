@@ -92,6 +92,25 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
     {return ID;}
 
     /**
+     * Retourne l'espèce la plus pêchée dans cette capture. Si aucune espèce
+     * n'a été capturée, alors cette méthode retourne <code>null</code>.
+     */
+    public Species getDominantSpecies()
+    {
+        Species dominant = null;
+        float max=Float.NEGATIVE_INFINITY;
+        for (int i=amount.length; --i>=0;)
+        {
+            if (amount[i] >= max)
+            {
+                max = amount[i];
+                dominant = species[i];
+            }
+        }
+        return dominant;
+    }
+
+    /**
      * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
      * que {@link #getCatch(Species)} retourne une valeur différente de
      * zéro pour chacune de ces espèces.
