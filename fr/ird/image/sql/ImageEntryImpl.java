@@ -326,6 +326,17 @@ final class ImageEntryImpl implements ImageEntry, Serializable
     }
 
     /**
+     * Retourne les listes de catégories pour toutes les bandes de l'image. Les objets
+     * {@link CategoryList} indiquent comment interpréter les valeurs des pixels.  Par
+     * exemple, ils peuvent indiquer que la valeur 9 désigne des nuages.
+     *
+     * @return La liste des catégories pour chaque bande de l'image.
+     *         La longueur de ce tableau sera égale au nombre de bandes.
+     */
+    public CategoryList[] getCategoryLists()
+    {return parameters.format.getCategoryLists(null);}
+
+    /**
      * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
      * encore été réclamée par le ramasse-miette,   alors l'image existante sera retournée sans qu'une nouvelle lecture
      * du fichier ne soit nécessaire. Si au contraire l'image n'était pas déjà en mémoire, alors un décodage du fichier
@@ -518,7 +529,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
                 image=format.read(getFile(), imageIndex, param, listenerList, new Dimension(width, height), this);
                 if (image==null) return null;
             }
-            categoryLists = format.getCategoryLists(param, image.getSampleModel().getNumBands());
+            categoryLists = format.getCategoryLists(param);
         }
         /*
          * La lecture est maintenant terminée et n'a pas été annulée.

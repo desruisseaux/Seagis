@@ -197,10 +197,10 @@ final class FormatEntry implements Entry, Serializable
      * Cette méthode ne retournera alors que les listes de catégories pertinents
      * pour les bandes lues.
      *
-     * @param param    Paramètres qui ont servit à lire l'image.
-     * @param numBands Nombre de bandes de l'image lue.
+     * @param param    Paramètres qui ont servit à lire l'image, ou
+     *                 <code>null</code> pour les paramètres par défaut.
      */
-    final CategoryList[] getCategoryLists(final ImageReadParam param, final int numBands)
+    final CategoryList[] getCategoryLists(final ImageReadParam param)
     {
         int  bandCount = categories.length;
         int[] srcBands = null;
@@ -212,7 +212,7 @@ final class FormatEntry implements Entry, Serializable
             if (srcBands!=null && srcBands.length<bandCount) bandCount=srcBands.length;
             if (dstBands!=null && dstBands.length<bandCount) bandCount=dstBands.length;
         }
-        final CategoryList[] categoryLists = new CategoryList[numBands];
+        final CategoryList[] categoryLists = new CategoryList[bandCount];
         /*
          * Recherche les objets 'CategoryList'  qui correspondent
          * aux bandes sources demandées. Ces objets seront placés

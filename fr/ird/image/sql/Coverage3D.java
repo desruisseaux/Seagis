@@ -27,10 +27,12 @@ package fr.ird.image.sql;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.pt.Envelope;
-import net.seas.opengis.cv.Coverage;
-import net.seas.opengis.gc.GridCoverage;
-import net.seas.opengis.cv.SampleDimension;
 import net.seas.opengis.pt.CoordinatePoint;
+import net.seas.opengis.gc.GridCoverage;
+import net.seas.opengis.cv.Coverage;
+import net.seas.opengis.cv.CategoryList;
+import net.seas.opengis.cv.SampleDimension;
+import net.seas.opengis.cv.ColorInterpretation;
 import net.seas.opengis.cv.PointOutsideCoverageException;
 
 // Requêtes SQL et entrés/sorties
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Collections;
 import java.awt.geom.Point2D;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
@@ -69,9 +72,46 @@ import fr.ird.resources.Resources;
 public class Coverage3D extends Coverage
 {
     /**
+     * Indique que les méthodes <code>evaluate</code> peuvent
+     * interpoler en utilisant {@link #lower} et {@link #upper}.
+     */
+    private static final int LINEAR = 0;
+
+    /**
+     * Indique que les méthodes <code>evaluate</code> doivent
+     * retourner une valeur en utilisant {@link #lower} seulement.
+     */
+    private static final int LOWER = 1;
+
+    /**
+     * Indique que les méthodes <code>evaluate</code> doivent
+     * retourner une valeur en utilisant {@link #upper} seulement.
+     */
+    private static final int UPPER = 2;
+
+    /**
+     * Indique que les méthodes <code>evaluate</code> ne doivent
+     * pas essayer de retourner une valeur, parce qu'il n'y a pas
+     * d'images à la date demandée.
+     */
+    private static final int MISSING = 3;
+
+    /**
      * Liste des images à prendre en compte.
      */
     private final ImageEntry[] entries;
+
+    /**
+     * Listes de catégories des images.
+     */
+    private final CategoryList[] categories;
+
+    /**
+     * Les {@link SampleDimension} pour cet objet. Cette
+     * liste ne sera construite que la première fois où
+     * elle sera demandée.
+     */
+    private transient List<SampleDimension> dimensions;
 
     /**
      * Enveloppe des données englobées par cet objet.
@@ -136,8 +176,12 @@ public class Coverage3D extends Coverage
     public Coverage3D(final ImageTable table) throws SQLException
     {
         super(table.getSeries().getName(), table.getCoordinateSystem(), null, null);
-        envelope = table.getEnvelope();
-        entries  = table.getEntries();
+        envelope   = table.getEnvelope();
+        entries    = table.getEntries();
+        categories = (entries.length!=0) ? entries[0].getCategoryLists() : new CategoryList[0];
+        for (int i=1; i<entries.length; i++)
+            if (!Arrays.equals(categories, entries[i].getCategoryLists()))
+                throw new SQLException(Resources.format(Clé.CATEGORIES_MITMATCH));
         Arrays.sort(entries, COMPARATOR);
     }
 
@@ -159,9 +203,9 @@ public class Coverage3D extends Coverage
     };
 
     /**
-     * Retourne la date de l'objet spécifiée. L'argument peut être un objet
-     * {@link Date} ou {@link ImageEntry}.  Dans ce dernier cas, la date du
-     * sera extraite avec {@link #getTime}.
+     * Retourne la date de l'objet spécifiée.  L'argument peut être un objet
+     * {@link Date} ou {@link ImageEntry}. Dans ce dernier cas, la date sera
+     * extraite avec {@link #getTime}.
      */
     private static long getObjectTime(final Object object)
     {
@@ -201,22 +245,31 @@ public class Coverage3D extends Coverage
     }
 
     /**
-     * Retourne l'enveloppe des données. Cet envelope donnée les valeurs légales
-     * des coordonnées qui peuvent être passées au différentes méthodes de cette
-     * classe.
+     * Returns The bounding box for the coverage
+     * domain in coordinate system coordinates.
      */
     public Envelope getEnvelope()
     {return envelope.clone();}
 
     /**
-     * Retourne des informations sur les bandes des images. Note: l'appel de
-     * cette méthode peut être très couteuse sur un objet <code>Coverage3D</code>,
-     * étant donné qu'elle peut forcer la lecture de toute les images de la base
-     * de données.
+     * Retrieve sample dimension information for the coverage.
+     * For a grid coverage, a sample dimension is a band. The sample dimension information
+     * include such things as description, data type of the value (bit, byte, integer...),
+     * the no data values, minimum and maximum values and a color table if one is associated
+     * with the dimension.
      */
-    public List<SampleDimension> getSampleDimensions()
+    public synchronized List<SampleDimension> getSampleDimensions()
     {
-        throw new UnsupportedOperationException("Not implemented");
+        if (dimensions==null)
+        {
+            final SampleDimension[] array = new SampleDimension[categories.length];
+            for (int i=0; i<array.length; i++)
+            {
+                array[i] = new Dimension(categories[i]);
+            }
+            dimensions = Collections.unmodifiableList(Arrays.asList(array));
+        }
+        return dimensions;
     }
 
     /**
@@ -232,16 +285,49 @@ public class Coverage3D extends Coverage
     }
 
     /**
+     * Loads a single image at the given index.
+     *
+     * @param  index Index in {@link #entries} for the image to load.
+     * @throws IOException if an error occured while loading image.
+     */
+    private void load(final int index) throws IOException
+    {
+        final ImageEntry entry = entries[index];
+        log(Clé.LOAD_IMAGE¤1, new Object[]{entry});
+        lower = upper = entry.getImage(listeners);
+        timeLower = timeUpper = getTime(entry);
+    }
+
+    /**
+     * Loads images for the given entries.
+     *
+     * @throws IOException if an error occured while loading images.
+     */
+    private void load(final ImageEntry entryLower, final ImageEntry entryUpper) throws IOException
+    {
+        final long timeLower = getTime(entryLower);
+        final long timeUpper = getTime(entryUpper);
+        log(Clé.LOAD_IMAGES¤2, new Object[]{entryLower, entryUpper});
+        final GridCoverage lower = entryLower.getImage(listeners);
+        final GridCoverage upper = entryUpper.getImage(listeners);
+        this.lower     = lower; // Set only when BOTH images are OK.
+        this.upper     = upper;
+        this.timeLower = timeLower;
+        this.timeUpper = timeUpper;
+    }
+
+    /**
      * Procède à la lecture des images nécessaires à l'interpolation
      * des données à la date spécifiée. Les images lues seront pointées
      * par {@link #lower} et {@link #upper}.
      *
      * @param  date La date demandée.
-     * @return <code>true</code> si l'interpolation peut être faite.
+     * @return Une des constantes {@link #LINEAR}, {@link #LOWER},
+     *         {@link #UPPER} ou {@link #MISSING}.
      * @throws PointOutsideCoverageException si la date spécifiée est
      *         en dehors de la plage de temps des données disponibles.
      */
-    private boolean seek(final Date date) throws PointOutsideCoverageException
+    private int seek(final Date date) throws PointOutsideCoverageException
     {
         /*
          * Check if images currently loaded
@@ -250,61 +336,84 @@ public class Coverage3D extends Coverage
         final long time = date.getTime();
         if (time>=timeLower && time<=timeUpper)
         {
-            return true;
+            return LINEAR;
         }
         /*
-         * Recherche l'index de l'image à utiliser
-         * comme borne supérieure ({@link #upper}).
+         * Currently loaded images are not valid for the
+         * requested date. Search for the image to use
+         * as upper bounds ({@link #upper}).
          */
         int index = Arrays.binarySearch(entries, date, COMPARATOR);
         try
         {
             if (index>=0)
             {
-                final ImageEntry entry = entries[index];
-                log(Clé.LOAD_ENTRY¤1, new Object[]{entry});
-                lower = upper = entry.getImage(listeners);
-                timeLower = timeUpper = getTime(entry);
-                return true;
+                /*
+                 * An exact match has been found.
+                 * Load only this image and exit.
+                 */
+                load(index);
+                return LOWER;
             }
             index = ~index; // Insertion point (note: ~ is NOT the minus sign).
             if (index==entries.length)
             {
-                if (--index<=0) return false;
-                final Date endTime = (Date) entries[index].getTimeRange().getMaxValue();
-                if (endTime!=null && endTime.getTime()<time)
+                if (--index>=0) // Does this coverage has at least 1 image?
                 {
-                    throw new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
+                    /*
+                     * The requested date is after the last image's central time.
+                     * Maybe it is not after the last image's *end* time. Check...
+                     */
+                    if (entries[index].getTimeRange().contains(date))
+                    {
+                        load(index);
+                        return UPPER;
+                    }
                 }
+                // fall through the exception at this method's end.
             }
-            if (index==0)
+            else if (index==0)
             {
-                if (++index>=entries.length) return false;
-                final Date startTime = (Date) entries[index-1].getTimeRange().getMinValue();
-                if (startTime!=null && startTime.getTime()>time)
+                /*
+                 * The requested date is before the first image's central time.
+                 * Maybe it is not before the first image's *start* time. Check...
+                 */
+                if (entries[index].getTimeRange().contains(date))
                 {
-                    throw new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
+                    load(index);
+                    return LOWER;
                 }
+                // fall through the exception at this method's end.
             }
-            final ImageEntry entryLower = entries[index-1];
-            final ImageEntry entryUpper = entries[index  ];
-            final long timeLower = getTime(entryLower);
-            final long timeUpper = getTime(entryUpper);
-            if (timeUpper-timeLower > thresold)
+            else
             {
-                // Si l'écart de temps entre les deux dates
-                // est trop grand, on considèrera la donnée
-                // comme manquante.
-                return false;
+                /*
+                 * An interpolation between two image seems possible.
+                 * Checks if there is not a time lag between both.
+                 */
+                final ImageEntry lowerEntry = entries[index-1];
+                final ImageEntry upperEntry = entries[index  ];
+                final Range      lowerRange = lowerEntry.getTimeRange();
+                final Range      upperRange = upperEntry.getTimeRange();
+                final Date lowerEnd   = (Date)lowerRange.getMaxValue();
+                final Date upperStart = (Date)upperRange.getMinValue();
+                if (!lowerEnd.before(upperStart))
+                {
+                    load(lowerEntry, upperEntry);
+                    return LINEAR;
+                }
+                if (lowerRange.contains(date))
+                {
+                    load(index-1);
+                    return LOWER;
+                }
+                if (upperRange.contains(date))
+                {
+                    load(index);
+                    return UPPER;
+                }
+                // fall through the exception at this method's end.
             }
-            log(Clé.LOAD_ENTRY¤2, new Object[]{entryLower, entryUpper});
-            final GridCoverage lower = entryLower.getImage(listeners);
-            final GridCoverage upper = entryUpper.getImage(listeners);
-            this.lower     = lower; // Set only when BOTH images are OK.
-            this.upper     = upper;
-            this.timeLower = timeLower;
-            this.timeUpper = timeUpper;
-            return true;
         }
         catch (IOException exception)
         {
@@ -312,53 +421,66 @@ public class Coverage3D extends Coverage
             e.initCause(exception);
             throw e;
         }
+        throw new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
     }
 
     /**
-     * Retourne les valeurs en un point donné. Une interpolation
-     * sera effectuée à la fois dans l'espace et dans le temps.
+     * Return an sequence of double values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence. The interpolation
+     * type used when accessing grid values for points which fall between grid cells is
+     * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
+     * for temporal axis.
      *
-     * @param  coord Les coordonnées spatiales (horizontales) du
-     *               point où extraire les valeurs.
-     * @param  time  La date et heure du point où extraire les valeurs.
-     * @param  dest  Un tableau dans lequel placer les valeurs, ou
-     *               <code>null</code> pour laisser cette méthode
-     *               créer un nouveau tableau.
-     * @return Le tableau de valeurs.
-     * @throws PointOutsideCoverageException si <code>coord</code>
-     *         est en dehors des plages de coordonnées permises.
+     * @param  coord The coordinate point where to evaluate.
+     * @param  time  The date where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
     public double[] evaluate(final Point2D coord, final Date time, double[] dest) throws PointOutsideCoverageException
     {
-        if (!seek(time))
+        switch (seek(time))
         {
-            if (dest==null) dest=new double[3]; // TODO
-            Arrays.fill(dest, Double.NaN); // TODO
-            return dest;
-        }
-        final long t=time.getTime();
-        if (Math.abs(t-timeLower) < Math.abs(t-timeUpper))
-        {
-            return lower.evaluate(coord, dest);
-        }
-        else
-        {
-            return upper.evaluate(coord, dest);
+            default:    throw new AssertionError(); // Should not happen.
+            case LOWER: return lower.evaluate(coord, dest);
+            case UPPER: return upper.evaluate(coord, dest);
+            case MISSING:
+            {
+                if (dest==null) dest=new double[categories.length];
+                Arrays.fill(dest, 0, categories.length, Double.NaN);
+                return dest;
+            }
+            case LINEAR:
+            {
+                double[] last=null;
+                last = upper.evaluate(coord, last);
+                dest = lower.evaluate(coord, dest);
+                final double ratio = (double)(time.getTime()-timeLower) / (double)(timeUpper-timeLower);
+                for (int i=0; i<last.length; i++)
+                {
+                    dest[i] += ratio*(last[i]-dest[i]);
+                }
+                return dest;
+            }
         }
     }
 
     /**
-     * Retourne les valeurs en un point donné. Une interpolation
-     * sera effectuée à la fois dans l'espace et dans le temps.
+     * Return an sequence of double values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence. The interpolation
+     * type used when accessing grid values for points which fall between grid cells is
+     * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
+     * for temporal axis. The coordinate system of the point is the same as the grid
+     * coverage coordinate system.
      *
-     * @param  coord Les coordonnées spatio-temporelles du point
-     *               où extraire les valeurs.
-     * @param  dest  Un tableau dans lequel placer les valeurs, ou
-     *               <code>null</code> pour laisser cette méthode
-     *               créer un nouveau tableau.
-     * @return Le tableau de valeurs.
-     * @throws PointOutsideCoverageException si <code>coord</code>
-     *         est en dehors des plages de coordonnées permises.
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               <code>{@link #getSampleDimensions()}.size()</code> long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
     public double[] evaluate(final CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException
     {
@@ -392,4 +514,71 @@ public class Coverage3D extends Coverage
      */
     public void removeIIOReadProgressListener(final IIOReadProgressListener listener)
     {listeners.remove(IIOReadProgressListener.class, listener);}
+
+
+
+
+    /**
+     * Sample dimension for {@link Coverage3D}.
+     *
+     * @version 1.00
+     * @author Martin Desruisseaux
+     */
+    private static final class Dimension extends SampleDimension
+    {
+        /**
+         * Construct a sample dimension with a set of categories.
+         *
+         * @param categories The category list for this sample dimension, or
+         *        <code>null</code> if this sample dimension has no category.
+         */
+        public Dimension(final CategoryList categories)
+        {super(categories);}
+
+        /**
+         * Returns the color interpretation of the sample dimension.
+         * Since {@link CategoryList} are designed for indexed color
+         * models, current implementation returns {@link ColorInterpretation#PALETTE_INDEX}.
+         * We need to find a more general way in some future version.
+         */
+        public ColorInterpretation getColorInterpretation()
+        {return ColorInterpretation.PALETTE_INDEX;}
+
+        /**
+         * Returns the minimum value occurring in this sample dimension.
+         */
+        public double getMinimumValue()
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Returns the maximum value occurring in this sample dimension.
+         */
+        public double getMaximumValue()
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Determine the mode grid value in this sample dimension.
+         */
+        public double getModeValue()
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Determine the median grid value in this sample dimension.
+         */
+        public double getMedianValue()
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Determine the mean grid value in this sample dimension.
+         */
+        public double getMeanValue()
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Determine the standard deviation from the mean
+         * of the grid values in this sample dimension.
+         */
+        public double getStandardDeviation()
+        {throw new UnsupportedOperationException("Not implemented");}
+    }
 }

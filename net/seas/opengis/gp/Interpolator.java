@@ -65,6 +65,12 @@ import net.seas.resources.Resources;
 final class Interpolator extends GridCoverage
 {
     /**
+     * The greatest value smaller than 1 representable as a <code>float</code> number.
+     * This value can be obtained with <code>net.seas.util.XMath.previous(1f)</code>.
+     */
+    private static final float ONE_EPSILON = 0.99999994f;
+
+    /**
      * Affine transform from "real world" coordinates to grid coordinates.
      * This transform maps coordinates to pixel <em>centers</em>.
      */
@@ -340,7 +346,7 @@ final class Interpolator extends GridCoverage
      * @param bandUp The last band's index+1 to interpolate.
      * @return <code>false</code> if point is outside grid coverage.
      */
-    private boolean interpolate(final double x, final double y, int[] dest, int band, final int bandUp)
+    private synchronized boolean interpolate(final double x, final double y, int[] dest, int band, final int bandUp)
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
@@ -378,19 +384,19 @@ final class Interpolator extends GridCoverage
         for (; band<bandUp; band++)
         {
             iter.startLines();
-            for (int j=0; j<samples.length; j++)
+            int j=0; do
             {
                 iter.startPixels();
-                final int[] row=samples[j];
-                for (int i=0; i<row.length; i++)
+                final int[] row=samples[j++];
+                int i=0; do
                 {
-                    row[i] = iter.getSample(band);
-                    iter.nextPixel();
+                    row[i++] = iter.getSample(band);
                 }
-                assert(iter.finishedPixels());
-                iter.nextLine();
+                while (!iter.nextPixelDone());
+                assert(i==row.length);
             }
-            assert(iter.finishedLines());
+            while (!iter.nextLineDone());
+            assert(j==samples.length);
             final int xfrac = (int) ((x-x0) * (1 << interpolation.getSubsampleBitsH()));
             final int yfrac = (int) ((y-y0) * (1 << interpolation.getSubsampleBitsV()));
             dest[band] = interpolation.interpolate(samples, xfrac, yfrac);
@@ -410,7 +416,7 @@ final class Interpolator extends GridCoverage
      * @param bandUp The last band's index+1 to interpolate.
      * @return <code>false</code> if point is outside grid coverage.
      */
-    private boolean interpolate(final double x, final double y, float[] dest, int band, final int bandUp)
+    private synchronized boolean interpolate(final double x, final double y, float[] dest, int band, final int bandUp)
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
@@ -448,20 +454,22 @@ final class Interpolator extends GridCoverage
         for (; band<bandUp; band++)
         {
             iter.startLines();
-            for (int j=0; j<samples.length; j++)
+            int j=0; do
             {
                 iter.startPixels();
-                final float[] row=samples[j];
-                for (int i=0; i<row.length; i++)
+                final float[] row=samples[j++];
+                int i=0; do
                 {
-                    row[i] = iter.getSampleFloat(band);
-                    iter.nextPixel();
+                    row[i++] = iter.getSampleFloat(band);
                 }
-                assert(iter.finishedPixels());
-                iter.nextLine();
+                while (!iter.nextPixelDone());
+                assert(i==row.length);
             }
-            assert(iter.finishedLines());
-            final float value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
+            while (!iter.nextLineDone());
+            assert(j==samples.length);
+            float dx = (float)(x-x0); if (dx==1) dx=ONE_EPSILON;
+            float dy = (float)(y-y0); if (dy==1) dy=ONE_EPSILON;
+            final float value=interpolation.interpolate(samples, dx, dy);
             if (Float.isNaN(value))
             {
                 if (fallback==this) continue; // 'dest' was set by 'super.evaluate(...)'.
@@ -491,7 +499,7 @@ final class Interpolator extends GridCoverage
      * @param bandUp The last band's index+1 to interpolate.
      * @return <code>false</code> if point is outside grid coverage.
      */
-    private boolean interpolate(final double x, final double y, double[] dest, int band, final int bandUp)
+    private synchronized boolean interpolate(final double x, final double y, double[] dest, int band, final int bandUp)
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
@@ -529,20 +537,22 @@ final class Interpolator extends GridCoverage
         for (; band<bandUp; band++)
         {
             iter.startLines();
-            for (int j=0; j<samples.length; j++)
+            int j=0; do
             {
                 iter.startPixels();
-                final double[] row=samples[j];
-                for (int i=0; i<row.length; i++)
+                final double[] row=samples[j++];
+                int i=0; do
                 {
-                    row[i] = iter.getSampleDouble(band);
-                    iter.nextPixel();
+                    row[i++] = iter.getSampleDouble(band);
                 }
-                assert(iter.finishedPixels());
-                iter.nextLine();
+                while (!iter.nextPixelDone());
+                assert(i==row.length);
             }
-            assert(iter.finishedLines());
-            final double value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
+            while (!iter.nextLineDone());
+            assert(j==samples.length);
+            float dx = (float)(x-x0); if (dx==1) dx=ONE_EPSILON;
+            float dy = (float)(y-y0); if (dy==1) dy=ONE_EPSILON;
+            final double value=interpolation.interpolate(samples, dx, dy);
             if (Double.isNaN(value))
             {
                 if (fallback==this) continue; // 'dest' was set by 'super.evaluate(...)'.
@@ -582,7 +592,8 @@ final class Interpolator extends GridCoverage
         {
             "NearestNeighbor",
             "Bilinear",
-            "Bicubic"
+            "Bicubic",
+            "Bicubic2"
         };
 
         /**
@@ -593,7 +604,8 @@ final class Interpolator extends GridCoverage
         {
             Interpolation.INTERP_NEAREST,
             Interpolation.INTERP_BILINEAR,
-            Interpolation.INTERP_BICUBIC
+            Interpolation.INTERP_BICUBIC,
+            Interpolation.INTERP_BICUBIC_2
         };
 
         /**

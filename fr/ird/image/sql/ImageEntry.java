@@ -27,6 +27,7 @@ package fr.ird.image.sql;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.pt.Envelope;
+import net.seas.opengis.cv.CategoryList;
 import net.seas.opengis.gc.GridCoverage;
 import net.seas.opengis.gc.GridGeometry;
 import net.seas.opengis.cs.CoordinateSystem;
@@ -128,6 +129,16 @@ public interface ImageEntry extends Entry
     public abstract Rectangle2D getGeographicArea();
 
     /**
+     * Retourne les listes de catégories pour toutes les bandes de l'image. Les objets
+     * {@link CategoryList} indiquent comment interpréter les valeurs des pixels.  Par
+     * exemple, ils peuvent indiquer que la valeur 9 désigne des nuages.
+     *
+     * @return La liste des catégories pour chaque bande de l'image.
+     *         La longueur de ce tableau sera égale au nombre de bandes.
+     */
+    public abstract CategoryList[] getCategoryLists();
+
+    /**
      * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
      * encore été réclamée par le ramasse-miette,   alors l'image existante sera retournée sans qu'une nouvelle lecture
      * du fichier ne soit nécessaire. Si au contraire l'image n'était pas déjà en mémoire, alors un décodage du fichier
@@ -195,6 +206,7 @@ public interface ImageEntry extends Entry
         /** Redirige vers {@link #entry}.  */ public Envelope         getEnvelope()         {return entry.getEnvelope();}
         /** Redirige vers {@link #entry}.  */ public Range            getTimeRange()        {return entry.getTimeRange();}
         /** Redirige vers {@link #entry}.  */ public Rectangle2D      getGeographicArea()   {return entry.getGeographicArea();}
+        /** Redirige vers {@link #entry}.  */ public CategoryList[]   getCategoryLists()    {return entry.getCategoryLists();}
         /** Redirige vers {@link #entry}.  */ public String           toString()            {return entry.toString();}
         /** Redirige vers {@link #entry}.  */ public int              hashCode()            {return entry.hashCode();}
         /** Redirige vers {@link #entry}.  */ public void             abort()               {entry.abort();}
