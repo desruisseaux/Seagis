@@ -184,7 +184,7 @@ public class ResourceBundle extends java.util.ResourceBundle
 
         final Logger    logger;
         final LogRecord record;
-        logger = Logger.getLogger("net.seas");
+        logger = Logger.getLogger("net.seagis");
         record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
         record.setSourceClassName (getClass().getName());
         record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");

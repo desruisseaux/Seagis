@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>package net.seagis.ct</TITLE>
+  </HEAD>
+  <BODY>
+    <P ALIGN="justify">Coordinate Transformations implementation.
+    Transformations (for example map projections) are performed by
+    {@link net.seagis.ct.MathTransform}. Instances of
+    {@link net.seagis.ct.MathTransform} are created by
+    {@link net.seagis.ct.MathTransformFactory}. For example,
+    a mercator cylindrical projection can be created by the following
+    code:</P>
+
+    <BLOCKQUOTE><PRE>
+{@link net.seagis.ct.MathTransform} projection = {@link net.seagis.ct.MathTransformFactory#getDefault()}.createParameterizedTransform("Mercator_1SP", null, null);
+    </PRE></BLOCKQUOTE>
+
+    <P ALIGN="justify">The "Mercator_1SP" string is the classification name for
+    the mercator cylindrical projection. This package support the following
+    classification names:</P>
+
+    <TABLE ALIGN="center" BORDER='2' CELLPADDING='3'>
+      <TR BGCOLOR="#B9DCFF"><TD ALIGN="center">Classification</TD><TD ALIGN="center">EPSG code</TD></TR>
+      <TR><TD><CODE>Lambert_Conformal_Conic_2SP</CODE></TD>       <TD ALIGN="center">9802</TD></TR>
+      <TR><TD><CODE>Mercator_1SP</CODE></TD>                      <TD ALIGN="center">9804</TD></TR>
+      <TR><TD><CODE>Transverse_Mercator</CODE></TD>               <TD ALIGN="center">9807</TD></TR>
+      <TR><TD><CODE>Stereographic</CODE></TD>                     <TD ALIGN="center">&nbsp;</TD></TR>
+      <TR><TD><CODE>Oblique_Stereographic</CODE></TD>             <TD ALIGN="center">9809</TD></TR>
+      <TR><TD><CODE>Polar_Stereographic</CODE></TD>               <TD ALIGN="center">9810</TD></TR>
+      <TR><TD><CODE>Modified_Transverse_Mercator</CODE></TD>      <TD ALIGN="center">&nbsp;</TD></TR>
+    </TABLE>
+  </BODY>
+</HTML>

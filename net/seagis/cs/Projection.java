@@ -25,6 +25,9 @@
  *     CANADA: Observatoire du Saint-Laurent
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
+ *
+ *    This package contains documentation from OpenGIS specifications.
+ *    OpenGIS consortium's work is fully acknowledged here.
  */
 package net.seagis.cs;
 
@@ -36,8 +39,8 @@ import org.opengis.cs.CS_ProjectionParameter;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
-//import net.seagis.ct.MathTransformProvider; // TODO
-//import net.seagis.ct.MissingParameterException; // TODO
+import net.seagis.ct.MissingParameterException;
+import net.seagis.ct.MathTransformProvider;
 
 // Miscellaneous
 import java.util.Map;
@@ -135,8 +138,7 @@ public class Projection extends Info
      */
     static ParameterList getParameterList(final Ellipsoid ellipsoid, final Point2D centre)
     {
-        final ParameterList parameters = new ParameterListImpl(null);
-// TODO final ParameterList parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
+        final ParameterList parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
         if (ellipsoid!=null)
         {
             final Unit axisUnit = ellipsoid.getAxisUnit();
@@ -193,7 +195,7 @@ public class Projection extends Info
      * @return The parameter value.
      * @throws MissingParameterException if parameter <code>name</code> is not found.
      */
-    public double getValue(final String name) // TODO throws MissingParameterException
+    public double getValue(final String name) throws MissingParameterException
     {return getValue(parameters, name, Double.NaN, true);}
 
     /**
@@ -225,7 +227,7 @@ public class Projection extends Info
      * @throws MissingParameterException if <code>required</code> is <code>true</code>
      *         and parameter <code>name</code> is not found.
      */
-    private static double getValue(final ParameterList parameters, final String name, final double defaultValue, final boolean required) // TODO throws MissingParameterException
+    private static double getValue(final ParameterList parameters, final String name, final double defaultValue, final boolean required) throws MissingParameterException
     {
         RuntimeException cause=null;
         if (parameters!=null)
@@ -249,8 +251,7 @@ public class Projection extends Info
             }
         }
         if (!required) return defaultValue;
-        final IllegalArgumentException exception = new IllegalArgumentException(name);
-// TODO final MissingParameterException exception = new MissingParameterException(null, name);
+        final MissingParameterException exception = new MissingParameterException(null, name);
 /* ---- BEGIN JDK 1.4 DEPENDENCIES ----
         if (cause!=null) exception.initCause(cause);
    ---- END OF JDK 1.4 DEPENDENCIES ---- */

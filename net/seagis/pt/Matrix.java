@@ -25,6 +25,9 @@
  *     CANADA: Observatoire du Saint-Laurent
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
+ *
+ *    This package contains documentation from OpenGIS specifications.
+ *    OpenGIS consortium's work is fully acknowledged here.
  */
 package net.seagis.pt;
 
@@ -155,8 +158,8 @@ public final class Matrix implements Cloneable, Serializable
                    final boolean validRegions)
     {
         /*
-         * Arguments check. NOTE: those exceptions are catched by
-         * 'net.seas.opengis.ct.CoordinateTransformationFactory'.
+         * Arguments check. NOTE: those exceptions are catched
+         * by 'net.seagis.ct.CoordinateTransformationFactory'.
          * If exception type change, update the factory class.
          */
         final int dimension = srcAxis.length;
@@ -484,7 +487,7 @@ public final class Matrix implements Cloneable, Serializable
             {
                 return new AffineTransform(elt[0], elt[3], elt[1], elt[4], elt[2], elt[5]);
             }
-            throw new IllegalStateException(Resources.format(ResourceKeys.MATRIX_NOT_AFFINE));
+            throw new IllegalStateException(Resources.format(ResourceKeys.NOT_AN_AFFINE_TRANSFORM));
         }
         throw new IllegalStateException(Resources.format(ResourceKeys.NOT_TWO_DIMENSIONAL_$1, new Integer(size-1)));
     }

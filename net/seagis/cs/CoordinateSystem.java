@@ -25,6 +25,9 @@
  *     CANADA: Observatoire du Saint-Laurent
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
+ *
+ *    This package contains documentation from OpenGIS specifications.
+ *    OpenGIS consortium's work is fully acknowledged here.
  */
 package net.seagis.cs;
 
@@ -211,7 +214,7 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
     /**
      * Returns  <code>true</code> if this coordinate system is equivalents to
      * the specified coordinate system. Two coordinate systems are considered
-     * equivalent if the {@link net.seagis.ct.CoordinateTransform} from
+     * equivalent if the {@link net.seagis.ct.CoordinateTransformation} from
      * <code>this</code> to <code>cs</code> would be the identity transform.
      * The <code>equivalents</code> method is less strict than <code>equals</code>
      * in that it doesn't compare names, alias, authority codes or others similar

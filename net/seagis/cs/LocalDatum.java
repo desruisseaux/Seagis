@@ -25,6 +25,9 @@
  *     CANADA: Observatoire du Saint-Laurent
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
+ *
+ *    This package contains documentation from OpenGIS specifications.
+ *    OpenGIS consortium's work is fully acknowledged here.
  */
 package net.seagis.cs;
 
@@ -81,7 +84,7 @@ public class LocalDatum extends Datum
     /**
      * Gets the type of the datum as an enumerated code.
      *
-     * Note: return type will be changed to {@link DatumType.Locale}
+     * Note: return type will be changed to {@link DatumType.Local}
      *       when we will be able to use generic types (with JDK 1.5).
      *
      * @see org.opengis.cs.CS_LocalDatum#getDatumType()

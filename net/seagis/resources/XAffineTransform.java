@@ -36,25 +36,177 @@ import java.awt.geom.NoninvertibleTransformException;
 
 
 /**
- * Utility methods for affine transforms.
+ * Utility methods for affine transforms. This class provides a set
+ * of public static methods working on any {@link AffineTransform}.
+ * <br><br>
+ * Class <code>XAffineTransform</code>  overrides all mutable methods
+ * of {@link AffineTransform} in order to check for permission before
+ * to change the transform's state. If {@link #checkPermission} is
+ * defined to always thrown an exception, then <code>XAffineTransform</code>
+ * is immutable.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class XAffineTransform
+public abstract class XAffineTransform extends AffineTransform
 {
     /**
-     * Tolérance lors des comparaisons entre
-     * des nombres à virgules flottantes.
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 4891543057571195291L;
+
+    /**
+     * Tolerance value for floating point comparaisons.
      */
     private static final double EPS=1E-6;
 
     /**
-     * Interdit la création
-     * d'objets de cette classe.
+     * Constructs a new <code>XAffineTransform</code> that is a
+     * copy of the specified <code>AffineTransform</code> object.
      */
-    private XAffineTransform()
-    {}
+    protected XAffineTransform(final AffineTransform tr)
+    {super(tr);}
+
+    /**
+     * Check if the caller is allowed to change this
+     * <code>XAffineTransform</code>'s state.
+     */
+    protected abstract void checkPermission();
+
+    /**
+     * Check for permission before translating this transform.
+     */
+    public void translate(double tx, double ty)
+    {
+        checkPermission();
+        super.translate(tx, ty);
+    }
+
+    /**
+     * Check for permission before rotating this transform.
+     */
+    public void rotate(double theta)
+    {
+        checkPermission();
+        super.rotate(theta);
+    }
+
+    /**
+     * Check for permission before rotating this transform.
+     */
+    public void rotate(double theta, double x, double y)
+    {
+        checkPermission();
+        super.rotate(theta, x, y);
+    }
+
+    /**
+     * Check for permission before scaling this transform.
+     */
+    public void scale(double sx, double sy)
+    {
+        checkPermission();
+        super.scale(sx, sy);
+    }
+
+    /**
+     * Check for permission before shearing this transform.
+     */
+    public void shear(double shx, double shy)
+    {
+        checkPermission();
+        super.shear(shx, shy);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToIdentity()
+    {
+        checkPermission();
+        super.setToIdentity();
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToTranslation(double tx, double ty)
+    {
+        checkPermission();
+        super.setToTranslation(tx, ty);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToRotation(double theta)
+    {
+        checkPermission();
+        super.setToRotation(theta);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToRotation(double theta, double x, double y)
+    {
+        checkPermission();
+        super.setToRotation(theta, x, y);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToScale(double sx, double sy)
+    {
+        checkPermission();
+        super.setToScale(sx, sy);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setToShear(double shx, double shy)
+    {
+        checkPermission();
+        super.setToShear(shx, shy);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setTransform(AffineTransform Tx)
+    {
+        checkPermission();
+        super.setTransform(Tx);
+    }
+
+    /**
+     * Check for permission before setting this transform.
+     */
+    public void setTransform(double m00, double m10, double m01, double m11, double m02, double m12)
+    {
+        checkPermission();
+        super.setTransform(m00, m10, m01, m11, m02, m12);
+    }
+
+    /**
+     * Check for permission before concatenating this transform.
+     */
+    public void concatenate(AffineTransform Tx)
+    {
+        checkPermission();
+        super.concatenate(Tx);
+    }
+
+    /**
+     * Check for permission before concatenating this transform.
+     */
+    public void preConcatenate(AffineTransform Tx)
+    {
+        checkPermission();
+        super.preConcatenate(Tx);
+    }
 
     /**
      * Retourne un rectangle qui contient entièrement la transformation directe de <code>bounds</code>.

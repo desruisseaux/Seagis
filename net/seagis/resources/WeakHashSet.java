@@ -293,6 +293,34 @@ public class WeakHashSet
     }
 
     /**
+     * Returns an object equals to the specified object, if present. If
+     * this set doesn't contains any object equals to <code>obj</code>,
+     * then this method returns <code>null</code>.
+     */
+    public synchronized final Object get(final Object obj)
+    {
+/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert thread.isAlive() : thread;
+        assert valid() : count;
+   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+        if (obj!=null)
+        {
+            final int hash = hashCode(obj) & 0x7FFFFFFF;
+            int index = hash % table.length;
+            for (WeakElement e=table[index], prev=null; e!=null; prev=e, e=e.next)
+            {
+                final Object e_obj=e.get();
+                if (e_obj!=null)
+                {
+                    if (equals(obj, e_obj))
+                        return e_obj;
+                }
+            }
+        }
+        return obj;
+    }
+
+    /**
      * Returns an object equals to <code>obj</code> if such an object already
      * exist in this <code>WeakHashSet</code>. Otherwise, add <code>obj</code>
      * to this <code>WeakHashSet</code>. This method is equivalents to the
@@ -318,8 +346,8 @@ public class WeakHashSet
         if (obj!=null)
         {
             /*
-             * Check if <code>obj</code> is not already contained in
-             * this <code>WeakHashSet</code>. If yes, returns the element.
+             * Check if <code>obj</code> is already contained in this
+             * <code>WeakHashSet</code>. If yes, returns the element.
              */
             final int hash = hashCode(obj) & 0x7FFFFFFF;
             int index = hash % table.length;
