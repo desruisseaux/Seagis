@@ -67,23 +67,22 @@ import javax.media.jai.ParameterList;
  * @author Martin Desruisseaux
  * @version $Id$
  */
-final class CategoryTable extends Table
-{
+final class CategoryTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des catégories.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par les
      * constantes [@link #NAME}, [@link #UPPER} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] NAME    */ CATEGORIES+".name, "    +
-                                /*[02] LOWER   */ CATEGORIES+".lower, "   +
-                                /*[03] UPPER   */ CATEGORIES+".upper, "   +
-                                /*[04] C0      */ CATEGORIES+".c0, "      +
-                                /*[05] C1      */ CATEGORIES+".c1, "      +
-                                /*[06] LOG     */ CATEGORIES+".log, "     +
-                                /*[07] COLORS  */ CATEGORIES+".colors\n"  +
+                    "SELECT "+  /*[01] NAME    */ "name, "    +
+                                /*[02] LOWER   */ "lower, "   +
+                                /*[03] UPPER   */ "upper, "   +
+                                /*[04] C0      */ "c0, "      +
+                                /*[05] C1      */ "c1, "      +
+                                /*[06] LOG     */ "log, "     +
+                                /*[07] COLORS  */ "colors\n"  +
         
-                    "FROM "+CATEGORIES+" WHERE "+CATEGORIES+".band=? ORDER BY "+CATEGORIES+".lower";
+                    "FROM "+CATEGORIES+" WHERE band=? ORDER BY lower";
                     // "Note: "band" semble être un opérateur pour Access. En utilisant le nom
                     //        complet (c'est-à-dire en spécifiant la table), ça rêgle le problème.
 
@@ -113,8 +112,9 @@ final class CategoryTable extends Table
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected CategoryTable(final Connection connection) throws SQLException
-    {statement = connection.prepareStatement(preferences.get(CATEGORIES, SQL_SELECT));}
+    protected CategoryTable(final Connection connection) throws SQLException {
+        statement = connection.prepareStatement(preferences.get(CATEGORIES, SQL_SELECT));
+    }
 
     /**
      * Retourne la liste des catégories qui appartiennent à la bande spécifiée.
@@ -123,13 +123,11 @@ final class CategoryTable extends Table
      * @return Les catégories de la bande demandée.
      * @throws SQLException si l'interrogation de la table "Categories" a échoué.
      */
-    public synchronized Category[] getCategories(final int bandID) throws SQLException
-    {
+    public synchronized Category[] getCategories(final int bandID) throws SQLException {
         statement.setInt(ARG_ID, bandID);
         final List<Category> categories = new ArrayList<Category>();
         final ResultSet result = statement.executeQuery();
-        while (result.next())
-        {
+        while (result.next()) {
             boolean isQuantifiable = true;
             final String    name = result.getString (NAME).intern();
             final int      lower = result.getInt    (LOWER);
@@ -144,16 +142,11 @@ final class CategoryTable extends Table
              * uniforme, ou soit l'adresse URL d'une palette de couleurs.
              */
             Color[] colors=null;
-            if (colorID!=null) try
-            {
+            if (colorID != null) try {
                 colors = decode(colorID);
-            }
-            catch (IOException exception)
-            {
+            } catch (IOException exception) {
                 throw new IllegalRecordException(CATEGORIES, exception);
-            }
-            catch (ParseException exception)
-            {
+            } catch (ParseException exception) {
                 throw new IllegalRecordException(CATEGORIES, exception);
             }
             /*
@@ -162,18 +155,13 @@ final class CategoryTable extends Table
              */
             Category category;
             final Range range = new Range(Integer.class, new Integer(lower), new Integer(upper));
-            if (!isQuantifiable)
-            {
+            if (!isQuantifiable) {
                 category = new Category(name, colors, range, (MathTransform1D)null);
-            }
-            else
-            {
+            } else {
                 category = new Category(name, colors, range, c1, c0);
-                if (log)
-                {
+                if (log) {
                     final MathTransformFactory factory = MathTransformFactory.getDefault();
-                    if (exponential == null)
-                    {
+                    if (exponential == null) {
                         final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
                         param.setParameter("Dimension", 1);
                         param.setParameter("Base", 10.0); // Must be a 'double'
@@ -202,32 +190,28 @@ final class CategoryTable extends Table
      *         mais qu'elle contient des caractères qui n'ont pas pus
      *         être interprétés.
      */
-    private static Color[] decode(String colors) throws IOException, ParseException
-    {
+    private static Color[] decode(String colors) throws IOException, ParseException {
         /*
          * Retire les guillements au début et à la fin de la chaîne, s'il y en a.
          * Cette opération vise à éviter des problèmes de compatibilités lorsque
          * l'importation des thèmes dans la base des données s'est senti obligée
          * de placer des guillemets partout (cas de MySQL sous Linux par exemple).
          */
-        if (true)
-        {
+        if (true) {
             colors = colors.trim();
             final int length = colors.length();
-            if (length>=2 && colors.charAt(0)=='\"' && colors.charAt(length-1)=='\"')
+            if (length>=2 && colors.charAt(0)=='\"' && colors.charAt(length-1)=='\"') {
                 colors = colors.substring(1, length-1);
+            }
         }
         /*
          * Vérifie si la chaîne de caractère représente un code de couleurs
          * unique, comme par exemple "#D2C8A0". Si oui, ce code sera retourné
          * dans un tableau de longueur 1.
          */
-        try
-        {
+        try {
             return new Color[] {Color.decode(colors)};
-        }
-        catch (NumberFormatException exception)
-        {
+        } catch (NumberFormatException exception) {
             /*
              * Le décodage de la chaîne a échoué. C'est peut-être
              * parce qu'il s'agit d'un nom de fichier.  On ignore
@@ -246,6 +230,7 @@ final class CategoryTable extends Table
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {statement.close();}
+    public synchronized void close() throws SQLException {
+        statement.close();
+    }
 }

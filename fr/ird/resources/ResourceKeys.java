@@ -172,6 +172,7 @@ public interface ResourceKeys
     public static final int SPECIES_SELECTION                        =   183;
     public static final int SQL_AREA                                 =   184;
     public static final int SQL_BANDS                                =   185;
+    public static final int SQL_CATCHS_UPDATE                        =   259;
     public static final int SQL_CATEGORIES                           =   186;
     public static final int SQL_ENVIRONMENTS                         =   187;
     public static final int SQL_ENVIRONMENTS_INSERT                  =   188;
@@ -181,6 +182,9 @@ public interface ResourceKeys
     public static final int SQL_IMAGES                               =   192;
     public static final int SQL_IMAGE_COUNT                          =   193;
     public static final int SQL_LONGLINES                            =   194;
+    public static final int SQL_OPERATION                            =   256;
+    public static final int SQL_PARAMETER                            =   257;
+    public static final int SQL_PARAMETER_LIST                       =   258;
     public static final int SQL_QUERIES                              =   195;
     public static final int SQL_SEINES                               =   196;
     public static final int SQL_SERIES                               =   197;

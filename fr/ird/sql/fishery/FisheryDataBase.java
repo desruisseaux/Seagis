@@ -64,9 +64,6 @@ import fr.ird.awt.progress.PrintProgress;
  * @author Martin Desruisseaux
  */
 public class FisheryDataBase extends DataBase {
-    /** TODO: Temporary switch */
-    private static final boolean SEINES = true;
-
     /**
      * Retourne une des préférences du système.  Cette méthode définit les
      * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
@@ -74,7 +71,7 @@ public class FisheryDataBase extends DataBase {
      */
     private static String getPreference(final String name) {
         String def=null;
-        if (name!=null)
+        if (name != null)
         {
                  if (name.equalsIgnoreCase(DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
             else if (name.equalsIgnoreCase(SOURCE))   def = "jdbc:odbc:SEAS-Sennes";
@@ -88,14 +85,23 @@ public class FisheryDataBase extends DataBase {
      * des propriétées. Les valeurs aux index impairs sont les valeurs. Par exemple
      * la propriété "Pêches" donne l'instruction SQL à utiliser pour interroger la
      * table des pêches.
+     * <br><br>
+     * Les clés se terminant par {@link Table#CATCHS} sont traitées d'une manière
+     * spéciale par {@link #getCatchTableType}.  Cette méthode testera la requête
+     * correspondantes pour détecter le type de la table des captures.  Le numéro
+     * (à partir de 1) de la première requête à réussir sera retourné.
      */
     private static final String[] DEFAULT_PROPERTIES = {
         Table.SPECIES,                SpeciesTable        .SQL_SELECT,
-        Table.LONGLINES,              LonglineCatchTable  .SQL_SELECT,
-        Table.SEINES,                 SeineCatchTable     .SQL_SELECT,
+        "Palangres."+Table.CATCHS,    LonglineCatchTable  .SQL_SELECT, // CatchTableType #1
+        "Seines."   +Table.CATCHS,    SeineCatchTable     .SQL_SELECT, // CatchTableType #2
+        Table.CATCHS+":UPDATE",       AbstractCatchTable  .SQL_UPDATE,
         Table.ENVIRONMENTS,           EnvironmentTableStep.SQL_SELECT,
-        Table.ENVIRONMENTS+".UPDATE", EnvironmentTableImpl.SQL_UPDATE,
-        Table.ENVIRONMENTS+".INSERT", EnvironmentTableImpl.SQL_INSERT
+        Table.ENVIRONMENTS+":UPDATE", EnvironmentTableImpl.SQL_UPDATE,
+        Table.ENVIRONMENTS+":INSERT", EnvironmentTableImpl.SQL_INSERT,
+        Table.PARAMETERS,             ParameterTable      .SQL_SELECT,
+        Table.PARAMETERS+":LIST",     ParameterTable      .SQL_LIST,
+        Table.OPERATIONS,             ParameterTable      .SQL_SELECT_OPERATION
     };
 
     /**
@@ -108,9 +114,13 @@ public class FisheryDataBase extends DataBase {
         ResourceKeys.SQL_SPECIES,
         ResourceKeys.SQL_LONGLINES,
         ResourceKeys.SQL_SEINES,
+        ResourceKeys.SQL_CATCHS_UPDATE,
         ResourceKeys.SQL_ENVIRONMENTS,
         ResourceKeys.SQL_ENVIRONMENTS_UPDATE,
-        ResourceKeys.SQL_ENVIRONMENTS_INSERT
+        ResourceKeys.SQL_ENVIRONMENTS_INSERT,
+        ResourceKeys.SQL_PARAMETER,
+        ResourceKeys.SQL_PARAMETER_LIST,
+        ResourceKeys.SQL_OPERATION
     };
 
     /**
@@ -120,14 +130,15 @@ public class FisheryDataBase extends DataBase {
      */
     private static String getDefaultURL() {
         Table.logger.log(loadDriver(getPreference(DRIVER)));
-        if (SEINES) return "jdbc:odbc:SEAS-Sennes"; // TODO: temporary patch
         return getPreference(SOURCE);
     }
 
     /**
-     * La table des captures à utiliser.
+     * Type de la table des captures, ou 0 si ce type n'a pas encore été
+     * déterminé. Ce champ est mis à jour par {@link #getCatchTableType}
+     * la première fois qu'il est demandé.
      */
-    private final String catchTable = SEINES ? Table.SEINES : Table.LONGLINES;
+    private int catchTableType;
 
     /**
      * Ouvre une connection avec une base de données par défaut.
@@ -154,16 +165,83 @@ public class FisheryDataBase extends DataBase {
     }
 
     /**
+     * Coupe la requête spécifiée juste après la clause "FROM".
+     *
+     * @param  query Requête à couper après la clause "FROM".
+     * @param  keepSelect <code>true</code> s'il faut conserver le début de la requête
+     *         (habituellement une clause "SELECT"), ou <code>false</code> s'il faut
+     *         retourner seulement la clause "FROM".
+     * @return La requête coupée.
+     */
+    private static String cutAfterFrom(String query, final boolean keepSelect) {
+        final String FROM = "FROM";
+        final int lower = Table.indexOfWord(query, FROM);
+        if (lower >= 0) {
+            int upper = lower + FROM.length();
+            final int length = query.length();
+            boolean skipWS = true;
+            do {
+                while (upper<length && Character.isWhitespace(query.charAt(upper))==skipWS) {
+                    upper++;
+                }
+            } while ((skipWS = !skipWS) == false);
+            query = query.substring(keepSelect ? 0 : lower, upper);
+        }
+        return query;
+    }
+
+    /**
+     * Retourne le type de la table des captures. Cette méthode retourne le numéro (à partir de 1)
+     * de la première requête de la table {@link #DEFAULT_PROPERTIES} que l'on aura réussi à
+     * exécuter. Les requètes dont la clé ne se termine pas par {@link Table#CATCHS} seront
+     * traitées comme si elle n'existait pas.
+     *
+     * @param  Numéro (à partir de 1) de la première requête dont la clé se termine par
+     *         {@link Table#CATCHS} et dont l'exécution a réussi. Si aucune requête n'a
+     *         réussi, alors cette méthode retourne 0.
+     * @throws SQLException si l'interrogation de la base de données a échoué.
+     */
+    private synchronized int getCatchTableType() throws SQLException {
+        if (catchTableType == 0) {
+            int type = catchTableType;
+            final Statement statement = connection.createStatement();
+            for (int i=0; i<DEFAULT_PROPERTIES.length; i+=2) {
+                final String key = DEFAULT_PROPERTIES[i];
+                if (!key.endsWith('.'+Table.CATCHS)) {
+                    continue;
+                }
+                type++;
+                final String query = cutAfterFrom(Table.preferences.get(key, DEFAULT_PROPERTIES[i+1]), true);
+                try {
+                    statement.executeQuery(query).close();
+                    catchTableType = type;
+                    break;
+                } catch (SQLException exception) {
+                    continue;
+                }
+            }
+            statement.close();
+        }
+        return catchTableType;
+    }
+
+    /**
      * Retourne les espèces énumérés dans la base de données.
      *
      * @return Ensemble des espèces répertoriées dans la base de données.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
     public Set<Species> getSpecies() throws SQLException {
-        final SpeciesTable   spTable = new SpeciesTable(connection);
-        final Statement    statement = connection.createStatement();
-        final ResultSet       result = statement.executeQuery("SELECT * FROM "+catchTable);
-        final Set<Species>   species = spTable.getSpecies(result.getMetaData());
+        final String key, def;
+        switch (getCatchTableType()) {
+            case  1: key= "Palangres."+Table.CATCHS; def= LonglineCatchTable.SQL_SELECT; break;
+            default: key=    "Seines."+Table.CATCHS; def=    SeineCatchTable.SQL_SELECT; break;
+        }
+        final String         query = "SELECT * "+cutAfterFrom(Table.preferences.get(key, def), false);
+        final SpeciesTable spTable = new SpeciesTable(connection);
+        final Statement  statement = connection.createStatement();
+        final ResultSet     result = statement.executeQuery(query);
+        final Set<Species> species = spTable.getSpecies(result.getMetaData());
         result   .close();
         statement.close();
         spTable  .close();
@@ -208,10 +286,9 @@ public class FisheryDataBase extends DataBase {
     public CatchTable getCatchTable(final Collection<Species> species) throws SQLException {
         final Set<Species> speciesSet = (species instanceof Set<Species>) ?
               (Set<Species>) species : new LinkedHashSet<Species>(species);
-        if (SEINES) {
-            return new SeineCatchTable(connection, timezone, speciesSet);
-        } else {
-            return new LonglineCatchTable(connection, timezone, speciesSet);
+        switch (getCatchTableType()) {
+            case  1: return new LonglineCatchTable(connection, timezone, speciesSet);
+            default: return new SeineCatchTable   (connection, timezone, speciesSet);
         }
     }
 
@@ -223,8 +300,7 @@ public class FisheryDataBase extends DataBase {
      * @return La table des captures pour les espèces demandées.
      * @throws SQLException si la table n'a pas pu être construite.
      */
-    public CatchTable getCatchTable(final String[] species) throws SQLException
-    {
+    public CatchTable getCatchTable(final String[] species) throws SQLException {
         final List<Species> list = new ArrayList<Species>(species.length);
         final SpeciesTable spSQL = new SpeciesTable(connection);
         for (int i=0; i<species.length; i++) {
@@ -280,13 +356,14 @@ public class FisheryDataBase extends DataBase {
      * interroger les tables de la base de données de pêches.
      */
     public static SQLEditor getSQLEditor() {
-        assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
+        assert 2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length;
         final Resources resources = Resources.getResources(null);
         final SQLEditor editor=new SQLEditor(Table.preferences,
                 resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(1)), Table.logger)
         {
-            public String getProperty(final String name)
-            {return getPreference(name);}
+            public String getProperty(final String name) {
+                return getPreference(name);
+            }
         };
         for (int i=0; i<PROPERTY_NAMES.length; i++) {
             editor.addSQL(resources.getString(PROPERTY_NAMES[i]),

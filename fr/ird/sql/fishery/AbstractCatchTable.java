@@ -75,16 +75,19 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     private static final Range DEFAULT_CATCH_RANGE = new Range(Double.class, new Double(0), null);
 
     /**
+     * Requête utilisé pour mettre à jour un enregistrement.
+     */
+    static final String SQL_UPDATE = "UPDATE "+CATCHS+" SET [?]=? WHERE ID=?";
+
+    /** Numéro d'argument. */ private static final int ARG_VALUE = 1;
+    /** Numéro d'argument. */ private static final int ARG_ID    = 2;
+
+    /**
      * The SQL instruction to use for query fishery data. The "SELECT" clause
      * in this instruction <strong>do not</strong> include species. Species
      * will be added on the fly when needed.
      */
     private final String sqlSelect;
-
-    /**
-     * The table name.
-     */
-    private final String table;
 
     /**
      * The calendar for computing dates. This calendar
@@ -138,7 +141,13 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      * objet ne sera construit que la première fois
      * où il sera nécessaire.
      */
-    private transient Statement update;
+    private transient PreparedStatement update;
+
+    /**
+     * Dernière colonne à avoir été mise à jour. Utilisé pour
+     * déterminer s'il faut reconstruire la requête {@link #update}.
+     */
+    private transient String lastColumnUpdated;
 
     /**
      * Construit une objet qui interrogera la
@@ -146,7 +155,6 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      * spécifiée.
      *
      * @param  connection Connection vers une base de données de pêches.
-     * @param  table Le nom de la table dans laquelle puiser les données.
      * @param  statement Interrogation à soumettre à la base de données.
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
@@ -155,13 +163,11 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      * @throws SQLException si <code>FisheryTable</code> n'a pas pu construire sa requête SQL.
      */
     protected AbstractCatchTable(final Connection   connection,
-                                 final String       table,
                                  final String       statement,
                                  final TimeZone     timezone,
                                  final Set<Species> species) throws SQLException
     {
         super(connection.prepareStatement(completeQuery(statement, species)));
-        this.table     = table;
         this.sqlSelect = statement;
         this.species   = new SpeciesSet(species);
         this.calendar  = new GregorianCalendar(timezone);
@@ -176,8 +182,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
      * Une condition basée sur les captures est aussi ajoutée.
      */
-    private static String completeQuery(String query, final Set<Species> species)
-    {
+    private static String completeQuery(String query, final Set<Species> species) {
         final String[] columns = new String[species.size()];
         int index=0;
         for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
@@ -189,7 +194,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
          * Ajoute une condition "total".
          */
         final String total = "total";
-        index = indexOf(query, total);
+        index = indexOfWord(query, total);
         if (index>0 && index+1<query.length() &&
             !Character.isUnicodeIdentifierPart(query.charAt(index-1)) &&
             !Character.isUnicodeIdentifierPart(query.charAt(index+total.length())))
@@ -426,7 +431,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     public final void setValue(final CatchEntry capture, final String columnName, final float value)
         throws SQLException
     {
-        setValue(capture, "UPDATE "+table+" SET "+columnName+"="+value+" WHERE ID="+capture.getID());
+        setValue(capture, columnName, new Float(value));
     }
 
     /**
@@ -444,28 +449,41 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     public final void setValue(final CatchEntry capture, final String columnName, final boolean value)
         throws SQLException
     {
-        // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
-        setValue(capture, "UPDATE "+table+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID());
+        // Note: PostgreSQL demande que "TRUE" et "FALSE" soient
+        //       en majuscules. MySQL n'a pas de type boolean.
+        setValue(capture, columnName, (value ? Boolean.TRUE : Boolean.FALSE));
     }
 
     /**
      * Execute une requête de mise à jour pour une capture données.
      *
-     * @param  capture Capture à mettre à jour.
-     * @param  sql Requête à exécuter.
-     * @throws Si la mise à jour de la base de données a échouée.
+     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
+     * @param columnName Nom de la colonne à mettre à jour.
+     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
+     *                   <code>capture</code>, colonne <code>columnName</code>.
+     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
+     *         de la base de données a échouée pour une autre raison.
      */
-    private synchronized void setValue(final CatchEntry capture, final String sql) throws SQLException {
-        if (update == null) {
-            update = statement.getConnection().createStatement();
+    private synchronized void setValue(final CatchEntry capture,
+                                       final String columnName,
+                                       final Object value)
+        throws SQLException
+    {
+        if (!columnName.equals(lastColumnUpdated)) {
+            if (update != null) {
+                update.close();
+                update = null;
+                lastColumnUpdated = null;
+            }
+            String query = replaceQuestionMark(preferences.get(CATCHS+":UPDATE", SQL_UPDATE), columnName);
+            update = statement.getConnection().prepareStatement(query);
+            lastColumnUpdated = columnName;
         }
-        if (update.executeUpdate(sql) == 0) {
+        update.setObject(ARG_VALUE, value);
+        update.setInt(ARG_ID, capture.getID());
+        if (update.executeUpdate() == 0) {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
         }
-        final LogRecord record = new LogRecord(DataBase.SQL_UPDATE, sql);
-        record.setSourceClassName ("CatchTable");
-        record.setSourceMethodName("setValue");
-        logger.log(record);
     }
 
     /**
@@ -477,8 +495,9 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      *         lors de la disposition des ressources.
      */
     public final synchronized void close() throws SQLException {
-        if (update!=null) {
+        if (update != null) {
             update.close();
+            lastColumnUpdated = null;
         }
         super.close();
     }

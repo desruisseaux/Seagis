@@ -56,21 +56,20 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SeineCatchTable extends AbstractCatchTable
-{
+final class SeineCatchTable extends AbstractCatchTable {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des pêches.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes [@link #DATE}, [@link #LONGITUDE} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID        */ SEINES+".ID, "      +
-                                /*[02] CALEES    */ SEINES+".nCalees, " +
-                                /*[03] DATE      */ SEINES+".date, "    +
-                                /*[04] LONGITUDE */ SEINES+".x, "       +
-                                /*[05] LATITUDE  */ SEINES+".y "        +
+                    "SELECT "+  /*[01] ID        */ "ID, "      +
+                                /*[02] CALEES    */ "nCalees, " +
+                                /*[03] DATE      */ "date, "    +
+                                /*[04] LONGITUDE */ "x, "       +
+                                /*[05] LATITUDE  */ "y "        +
 
-                    "FROM "+SEINES+"\n"+
+                    "FROM "+CATCHS+"\n"+
                     "WHERE "+
                          " (date>=? AND date<=?) "+
                       "AND (x>=? AND x<=?) "+
@@ -107,9 +106,12 @@ final class SeineCatchTable extends AbstractCatchTable
      * @param  species Espèces à inclure dans l'interrogation de la base de données.
      * @throws SQLException si <code>CatchTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected SeineCatchTable(final Connection connection, final TimeZone timezone, final Set<Species> species) throws SQLException
+    protected SeineCatchTable(final Connection   connection,
+                              final TimeZone     timezone,
+                              final Set<Species> species)
+        throws SQLException
     {
-        super(connection, SEINES, preferences.get(SEINES, SQL_SELECT), timezone, species);
+        super(connection, preferences.get("Seines."+CATCHS, SQL_SELECT), timezone, species);
     }
 
     /**
@@ -121,8 +123,7 @@ final class SeineCatchTable extends AbstractCatchTable
      * @param  rect Coordonnées géographiques de la région, en degrés de longitude et de latitude.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException
-    {
+    public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException {
         statement.setDouble(ARG_XMIN, rect.getMinX());
         statement.setDouble(ARG_XMAX, rect.getMaxX());
         statement.setDouble(ARG_YMIN, rect.getMinY());
@@ -138,8 +139,7 @@ final class SeineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException
-    {
+    public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException {
         final long startTimeMillis = startTime.getTime();
         final long   endTimeMillis =   endTime.getTime();
         final Timestamp time=new Timestamp(startTimeMillis);
@@ -159,8 +159,7 @@ final class SeineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    protected void packEnvelope() throws SQLException
-    {
+    protected void packEnvelope() throws SQLException {
         // TODO:
         // Faire "String CatchTable.getMinMaxQuery(String query)" (qui coupe avant "ORDER BY").
         // Faire "static LonglineCatchTable.setGeographicArea(PreparedStatement statement, Rectangle2D area)"
@@ -173,8 +172,7 @@ final class SeineCatchTable extends AbstractCatchTable
         double ymax = geographicArea.getMaxY();
         long   tmin = startTime;
         long   tmax =   endTime;
-        while (result.next())
-        {
+        while (result.next()) {
             double x=result.getDouble(LONGITUDE); if (result.wasNull()) x=Double.NaN;
             double y=result.getDouble(LATITUDE ); if (result.wasNull()) y=Double.NaN;
             long   t=getTimestamp(DATE, result).getTime();
@@ -186,13 +184,11 @@ final class SeineCatchTable extends AbstractCatchTable
             if (t>tmax) tmax=t;
         }
         result.close();
-        if (tmin<tmax)
-        {
+        if (tmin<tmax) {
             startTime = tmin;
               endTime = tmax;
         }
-        if (xmin<=xmax && ymin<=ymax)
-        {
+        if (xmin<=xmax && ymin<=ymax) {
             geographicArea.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
         }
     }
@@ -214,12 +210,10 @@ final class SeineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized List<CatchEntry> getEntries() throws SQLException
-    {
+    public synchronized List<CatchEntry> getEntries() throws SQLException {
         final ResultSet      result = statement.executeQuery();
         final List<CatchEntry> list = new ArrayList<CatchEntry>();
-        while (result.next())
-        {
+        while (result.next()) {
             list.add(new SeineCatchEntry(this, result));
         }
         result.close();

@@ -51,19 +51,18 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class BandTable extends Table
-{
+final class BandTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des bandes.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes [@link #NAME}, [@link #UPPER} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID      */ BANDS+".ID, "      +
-                                /*[02] BAND    */ BANDS+".band, "    +
-                                /*[04] UNITS   */ BANDS+".units\n"   +
+                    "SELECT "+  /*[01] ID      */ "ID, "      +
+                                /*[02] BAND    */ "band, "    +
+                                /*[04] UNITS   */ "units\n"   +
         
-                    "FROM "+BANDS+" WHERE "+BANDS+".format=? ORDER BY "+BANDS+".band";
+                    "FROM "+BANDS+" WHERE format=? ORDER BY band";
                     // "Note: "band" semble être un opérateur pour Access. En utilisant le nom
                     //        complet (c'est-à-dire en spécifiant la table), ça rêgle le problème.
 
@@ -90,8 +89,9 @@ final class BandTable extends Table
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>BandTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected BandTable(final Connection connection) throws SQLException
-    {statement = connection.prepareStatement(preferences.get(BANDS, SQL_SELECT));}
+    protected BandTable(final Connection connection) throws SQLException {
+        statement = connection.prepareStatement(preferences.get(BANDS, SQL_SELECT));
+    }
 
     /**
      * Retourne les bandes qui se rapportent au format spécifié.
@@ -100,16 +100,14 @@ final class BandTable extends Table
      * @return Les listes des bandes du format demandé.
      * @throws SQLException si l'interrogation de la table "Bands" a échoué.
      */
-    public synchronized SampleDimension[] getSampleDimensions(final int formatID) throws SQLException
-    {
+    public synchronized SampleDimension[] getSampleDimensions(final int formatID) throws SQLException {
         statement.setInt(ARG_ID, formatID);
 
         int                        lastBand = 0;
         final List<SampleDimension> mappers = new ArrayList<SampleDimension>();
         final ResultSet              result = statement.executeQuery();
 
-        while (result.next())
-        {
+        while (result.next()) {
             final int   bandID = result.getInt   (ID);
             final int     band = result.getInt   (BAND); // Comptées à partir de 1.
             final String units = result.getString(UNITS);
@@ -120,18 +118,14 @@ final class BandTable extends Table
             /*
              * Obtient les thèmes de cette bande.
              */
-            if (categories==null)
-            {
+            if (categories==null) {
                 categories = new CategoryTable(statement.getConnection());
             }
             final Category[] categoryArray = categories.getCategories(bandID);
             final SampleDimension mapper;
-            try
-            {
+            try {
                 mapper = new SampleDimension(categoryArray, unit);
-            }
-            catch (IllegalArgumentException exception)
-            {
+            } catch (IllegalArgumentException exception) {
                 throw new IllegalRecordException(CATEGORIES, exception);
                 // L'erreur se trouve bien dans la table CATEGORIES, et non BANDS.
             }
@@ -140,8 +134,7 @@ final class BandTable extends Table
              * été définie, et ajoute cette bande à
              * la liste des bandes.
              */
-            if (band-1 != lastBand)
-            {
+            if (band-1 != lastBand) {
                 throw new IllegalRecordException(BANDS, Resources.format(ResourceKeys.ERROR_NON_CONSECUTIVE_BANDS_$2,
                                                         new Integer(lastBand), new Integer(band)));
             }
@@ -160,10 +153,8 @@ final class BandTable extends Table
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (categories!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (categories != null) {
             categories.close();
             categories=null;
         }

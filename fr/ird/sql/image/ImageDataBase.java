@@ -103,16 +103,16 @@ public class ImageDataBase extends DataBase {
      * table d'images.
      */
     private static final String[] DEFAULT_PROPERTIES = {
-        "IMAGE_COUNT",     SeriesTableImpl.SQL_COUNT,
-        "SERIES_TREE",     SeriesTableImpl.SQL_TREE,
-        "SERIES_BY_ID",    SeriesTableImpl.SQL_SELECT_BY_ID,
-        Table.SERIES,      SeriesTableImpl.SQL_SELECT,
-        Table.IMAGES,       ImageTableImpl.SQL_SELECT,
-        Table.FORMATS,         FormatTable.SQL_SELECT,
-        "FORMAT_FOR_GROUP_ID", FormatTable.SQL_FOR_GROUP_ID,
-        Table.BANDS,             BandTable.SQL_SELECT,
-        Table.CATEGORIES,    CategoryTable.SQL_SELECT,
-        Table.AREAS,                       SQL_AREA,
+        Table.IMAGES+":COUNT", SeriesTableImpl.SQL_COUNT,
+        Table.SERIES+":TREE",  SeriesTableImpl.SQL_TREE,
+        Table.SERIES+":ID",    SeriesTableImpl.SQL_SELECT_BY_ID,
+        Table.SERIES,          SeriesTableImpl.SQL_SELECT,
+        Table.IMAGES,           ImageTableImpl.SQL_SELECT,
+        Table.FORMATS,             FormatTable.SQL_SELECT,
+        Table.FORMATS+":ID",       FormatTable.SQL_FOR_GROUP_ID,
+        Table.BANDS,                 BandTable.SQL_SELECT,
+        Table.CATEGORIES,        CategoryTable.SQL_SELECT,
+        Table.AREAS,                           SQL_AREA
     };
 
     /**
@@ -505,8 +505,9 @@ public class ImageDataBase extends DataBase {
         final SQLEditor editor=new SQLEditor(Table.preferences,
             resources.getString(ResourceKeys.EDIT_SQL_IMAGES_OR_FISHERIES_$1, new Integer(0)), Table.logger)
         {
-            public String getProperty(final String name)
-            {return Table.getPreference(name);}
+            public String getProperty(final String name) {
+                return Table.getPreference(name);
+            }
         };
         for (int i=0; i<PROPERTY_NAMES.length; i++) {
             editor.addSQL(resources.getString(PROPERTY_NAMES[i]),

@@ -43,8 +43,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class FormatTable extends Table
-{
+final class FormatTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir un format à partir d'un groupe.
      */
@@ -55,13 +54,13 @@ final class FormatTable extends Table
      * (par exemple "image/png") dans la table des formats.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID         */ FORMATS+".ID, "         +
-                                /*[02] NAME       */ FORMATS+".name, "       +
-                                /*[03] MIME       */ FORMATS+".mime, "       +
-                                /*[04] EXTENSION  */ FORMATS+".extension, "  +
-                                /*[05] GEOPHYSICS */ FORMATS+".geophysics\n" +
+                    "SELECT "+  /*[01] ID         */ "ID, "         +
+                                /*[02] NAME       */ "name, "       +
+                                /*[03] MIME       */ "mime, "       +
+                                /*[04] EXTENSION  */ "extension, "  +
+                                /*[05] GEOPHYSICS */ "geophysics\n" +
     
-                    "FROM "+FORMATS+" WHERE "+FORMATS+".ID=?";
+                    "FROM "+FORMATS+" WHERE ID=?";
 
     /** Numéro de colonne. */ private static final int ID         = 1;
     /** Numéro de colonne. */ private static final int NAME       = 2;
@@ -92,8 +91,9 @@ final class FormatTable extends Table
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>FormatTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected FormatTable(final Connection connection) throws SQLException
-    {statement = connection.prepareStatement(preferences.get(FORMATS, SQL_SELECT));}
+    protected FormatTable(final Connection connection) throws SQLException {
+        statement = connection.prepareStatement(preferences.get(FORMATS, SQL_SELECT));
+    }
 
     /**
      * Retourne le format correspondant à un groupe d'images.
@@ -103,24 +103,19 @@ final class FormatTable extends Table
      *         groupe identifié par l'ID specifié n'a été trouvé.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized FormatEntry forGroupID(final int ID) throws SQLException
-    {
-        if (selectByGroupID==null)
-        {
-            selectByGroupID = statement.getConnection().prepareStatement(preferences.get("FORMAT_FOR_GROUP_ID", SQL_FOR_GROUP_ID));
+    public synchronized FormatEntry forGroupID(final int ID) throws SQLException {
+        if (selectByGroupID==null) {
+            selectByGroupID = statement.getConnection()
+                    .prepareStatement(preferences.get(FORMATS+":ID", SQL_FOR_GROUP_ID));
         }
         selectByGroupID.setInt(1, ID);
         final ResultSet resultSet = selectByGroupID.executeQuery();
         FormatEntry entry = null;
-        while (resultSet.next())
-        {
+        while (resultSet.next()) {
             final int formatID = resultSet.getInt(1);
-            if (entry==null)
-            {
+            if (entry==null) {
                 entry = getEntry(formatID);
-            }
-            else if (entry.getID() != formatID)
-            {
+            } else if (entry.getID() != formatID) {
                 throw new SQLException();
             }
         }
@@ -137,8 +132,9 @@ final class FormatTable extends Table
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de
      *                      données, ou si le format spécifié n'a pas été trouvé.
      */
-    public FormatEntryImpl getEntry(final int ID) throws SQLException
-    {return getEntry(new Integer(ID));}
+    public FormatEntryImpl getEntry(final int ID) throws SQLException {
+        return getEntry(new Integer(ID));
+    }
 
     /**
      * Retourne l'entré correspondant au format identifié
@@ -149,12 +145,10 @@ final class FormatTable extends Table
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de
      *                      données, ou si le format spécifié n'a pas été trouvé.
      */
-    final synchronized FormatEntryImpl getEntry(final Integer key) throws SQLException
-    {
+    final synchronized FormatEntryImpl getEntry(final Integer key) throws SQLException {
         statement.setInt(ARG_ID, key.intValue());
         ResultSet result=statement.executeQuery();
-        if (!result.next())
-        {
+        if (!result.next()) {
             result.close();
             throw new IllegalRecordException(FORMATS, Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
         }
@@ -163,8 +157,7 @@ final class FormatTable extends Table
         final String   mimeType  = result.getString (MIME);
         final String   extension = result.getString (EXTENSION);
         final boolean geophysics = result.getBoolean(GEOPHYSICS);
-        while (result.next())
-        {
+        while (result.next()) {
             if (formatID  !=     result.getInt    (ID)         ||
               !      name.equals(result.getString (NAME))      ||
               !  mimeType.equals(result.getString (MIME))      ||
@@ -176,8 +169,7 @@ final class FormatTable extends Table
             }
         }
         result.close();
-        if (bands==null)
-        {
+        if (bands == null) {
             bands = new BandTable(statement.getConnection());
         }
         final FormatEntryImpl entry = new FormatEntryImpl(formatID, name, mimeType, extension,
@@ -194,15 +186,12 @@ final class FormatTable extends Table
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (selectByGroupID != null)
-        {
+    public synchronized void close() throws SQLException {
+        if (selectByGroupID != null) {
             selectByGroupID.close();
             selectByGroupID = null;
         }
-        if (bands != null)
-        {
+        if (bands != null) {
             bands.close();
             bands = null;
         }

@@ -77,12 +77,11 @@ import org.geotools.resources.XDimension2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Parameters implements Serializable
-{
+final class Parameters implements Serializable {
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
-//  private static final long serialVersionUID = -3570512426526015662L; // TODO
+    private static final long serialVersionUID = 6418640591318515042L;
 
     /**
      * Objet à utiliser par défaut pour construire des transformations de coordonnées.
@@ -198,17 +197,14 @@ final class Parameters implements Serializable
      * que celui-ci, mais qui utilisera un système de coordonnées horizontales
      * différent.
      */
-    public Parameters createTransformed(final HorizontalCoordinateSystem cs) throws TransformException
-    {
+    public Parameters createTransformed(final HorizontalCoordinateSystem cs) throws TransformException {
         final CoordinateSystem headCS = coordinateSystem.getHeadCS();
-        if (!headCS.equivalents(cs))
-        {
+        if (!headCS.equivalents(cs)) {
             final MathTransform2D transform = (MathTransform2D) TRANSFORMS.createFromCoordinateSystems(headCS, cs).getMathTransform();
             final Rectangle2D newGeographicArea = CTSUtilities.transform(transform, geographicArea, null);
             final Dimension2D newResolution;
 
-            if (resolution!=null)
-            {
+            if (resolution != null) {
                 final double width  = resolution.getWidth();
                 final double height = resolution.getHeight();
                 Rectangle2D   pixel = new Rectangle2D.Double(geographicArea.getCenterX()-0.5*width,
@@ -216,8 +212,9 @@ final class Parameters implements Serializable
                                                              width, height);
                 pixel = CTSUtilities.transform(transform, pixel, pixel);
                 newResolution = new XDimension2D.Double(pixel.getWidth(), pixel.getHeight());
+            } else {
+                newResolution=null;
             }
-            else newResolution=null;
 
             final CompoundCoordinateSystem ccs = new CompoundCoordinateSystem(coordinateSystem.getName(null), cs, coordinateSystem.getTailCS());
             final Parameters parameters = new Parameters(series, format, pathname,
@@ -234,10 +231,8 @@ final class Parameters implements Serializable
     /**
      * Indique si ce bloc de paramètres est identique au bloc spécifié.
      */
-    public boolean equals(final Object o)
-    {
-        if (o instanceof Parameters)
-        {
+    public boolean equals(final Object o) {
+        if (o instanceof Parameters) {
             final Parameters that = (Parameters) o;
             return Utilities.equals(this.series          , that.series          ) &&
                    Utilities.equals(this.format          , that.format          ) &&
@@ -255,10 +250,8 @@ final class Parameters implements Serializable
     /**
      * Formate la date spécifiée.
      */
-    public String format(final Date date)
-    {
-        synchronized (dateFormat)
-        {
+    public String format(final Date date) {
+        synchronized (dateFormat) {
             return dateFormat.format(date);
         }
     }
@@ -266,9 +259,8 @@ final class Parameters implements Serializable
     /**
      * Retourne un code représentant ce bloc de paramètres.
      */
-    public int hashCode()
-    {
-        int code=367891234;
+    public int hashCode() {
+        int code = 367891234;
         if (geographicArea != null) code += geographicArea.hashCode();
         if (resolution     != null) code +=     resolution.hashCode();
         return code;
@@ -278,6 +270,7 @@ final class Parameters implements Serializable
      * Après la lecture binaire, vérifie si
      * l'objet lu existait déjà en mémoire.
      */
-    private Object readResolve() throws ObjectStreamException
-    {return Table.pool.intern(this);}
+    private Object readResolve() throws ObjectStreamException {
+        return Table.pool.intern(this);
+    }
 }

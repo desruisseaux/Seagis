@@ -201,8 +201,9 @@ final class ParameterTable extends Table {
      * @throws SQLException si l'accès à la base de données a échoué.
      */
     static Set<String> list(final Connection connection, final String table) throws SQLException {
+        final String       query = preferences.get(PARAMETERS+":LIST", SQL_LIST);
         final Statement      stm = connection.createStatement();
-        final ResultSet   result = stm.executeQuery(replaceQuestionMark(SQL_LIST, table));
+        final ResultSet   result = stm.executeQuery(replaceQuestionMark(query, table));
         final Set<String>  param = new LinkedHashSet<String>();
         while (result.next()) {
             final String item = result.getString(1);

@@ -72,16 +72,14 @@ import org.geotools.resources.SwingUtilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ControlPanel extends JPanel
-{
+public class ControlPanel extends JPanel {
     /**
      * Editeurs de requêtes SQL. Par convention, le premier éditeur de
      * cette liste devrait être pour la base de données d'images (parce
      * que <code>ControlPanel</code> va y ajouter un champ "Répertoire").
      * L'ordre des autres éléments n'a pas d'importance.
      */
-    private final SQLEditor[] editors=
-    {
+    private final SQLEditor[] editors = {
           ImageDataBase.getSQLEditor(),
         FisheryDataBase.getSQLEditor()
     };
@@ -91,8 +89,7 @@ public class ControlPanel extends JPanel
      * même longueur que {@link #editors}. (Note: statique pour
      * l'instant, peut-être dynamique dans une version future).
      */
-    private static final int[] titles=
-    {
+    private static final int[] titles = {
         ResourceKeys.IMAGES,
         ResourceKeys.FISHERIES
     };
@@ -125,8 +122,7 @@ public class ControlPanel extends JPanel
      * qui apparaîtront dans ce panneau seront puisés dans les
      * préférences du système.
      */
-    public ControlPanel()
-    {
+    public ControlPanel() {
         super(new GridBagLayout());
         final GridBagConstraints    c = new GridBagConstraints();
         final Resources     resources = Resources.getResources(null);
@@ -139,8 +135,7 @@ public class ControlPanel extends JPanel
         directory.setText(ImageDataBase.getDefaultDirectory().getPath());
         directoryLabel.setLabelFor(directory);
         Arrays.sort(timezoneIDs);
-        for (int i=0; i<editors.length; i++)
-        {
+        for (int i=0; i<editors.length; i++) {
             this.drivers  [i]          = new JTextField(20);
             this.sources  [i]          = new JTextField(20);
             this.timezones[i]          = new JComboBox(timezoneIDs);
@@ -169,8 +164,7 @@ public class ControlPanel extends JPanel
             // Add the newly constructed panel
             // -------------------------------
             c.gridx=0; c.insets.right=0; c.insets.top=6; c.fill=c.BOTH;
-            if (i==0)
-            {
+            if (i==0) {
                 c.gridy=0; c.weighty=1; c.insets.left=0;
                 add(SwingUtilities.getMultilineLabelFor(panel, resources.getString(ResourceKeys.EDIT_DATABASES_CONFIGURATION)), c);
             }
@@ -186,18 +180,13 @@ public class ControlPanel extends JPanel
             // -------------
             // Add listeners
             // -------------
-            editSQL.addActionListener(new ActionListener()
-            {
-                public void actionPerformed(final ActionEvent event)
-                {
+            editSQL.addActionListener(new ActionListener() {
+                public void actionPerformed(final ActionEvent event) {
                     final Component source = (Component) event.getSource();
-                    try
-                    {
+                    try {
                         source.setEnabled(false);
                         editor.showDialog(ControlPanel.this);
-                    }
-                    finally
-                    {
+                    } finally {
                         source.setEnabled(true);
                     }
                 }
@@ -222,14 +211,11 @@ public class ControlPanel extends JPanel
      * @param  owner Composante par-dessus laquelle faire apparaître la boîte de dialogue.
      * @return <code>true</code> si l'utilisateur à cliqué sur "Ok", ou <code>false</code> sinon.
      */
-    public boolean showDialog(final Component owner)
-    {
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.DATABASES)))
-        {
+    public boolean showDialog(final Component owner) {
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.DATABASES))) {
             final File directory = new File(this.directory.getText());
             ImageDataBase.setDefaultDirectory(directory);
-            for (int i=0; i<editors.length; i++)
-            {
+            for (int i=0; i<editors.length; i++) {
                 final Preferences preferences = editors[i].preferences;
                 preferences.put(DataBase.DRIVER,   drivers[i].getText());
                 preferences.put(DataBase.SOURCE,   sources[i].getText());
@@ -237,7 +223,7 @@ public class ControlPanel extends JPanel
             }
             return true;
         }
-        else return false;
+        return false;
     }
 
     /**
@@ -245,8 +231,7 @@ public class ControlPanel extends JPanel
      * alors les configurations éditées seront sauvegardées dans les préférences du
      * système.
      */
-    public static void main(final String[] args)
-    {
+    public static void main(final String[] args) {
         new ControlPanel().showDialog(null);
         System.exit(0);
     }

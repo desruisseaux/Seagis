@@ -34,8 +34,7 @@ package fr.ird.sql;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Entry
-{
+public interface Entry {
     /**
      * Retourne un numéro unique identifiant cette entrée.
      */

@@ -83,8 +83,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class FormatEntryImpl implements FormatEntry, Serializable
-{
+final class FormatEntryImpl implements FormatEntry, Serializable {
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
@@ -173,8 +172,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         this.extension  = extension.trim().intern();
         this.geophysics = geophysics;
         this.bands      = bands;
-        for (int i=0; i<bands.length; i++)
-        {
+        for (int i=0; i<bands.length; i++) {
             bands[i] = bands[i].geophysics(geophysics);
         }
     }
@@ -182,20 +180,23 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     /**
      * Retourne un numéro unique identifiant cette entrée.
      */
-    public int getID()
-    {return ID;}
+    public int getID() {
+        return ID;
+    }
 
     /**
      * Retourne le nom de cette entrée.
      */
-    public String getName()
-    {return name;}
+    public String getName() {
+        return name;
+    }
 
     /**
      * Retourne la description de cette entrée.
      */
-    public String getRemarks()
-    {return null;}
+    public String getRemarks() {
+        return null;
+    }
 
     /**
      * Retourne les listes de bandes {@link SampleDimension} qui permettent
@@ -204,8 +205,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public SampleDimension[] getSampleDimensions()
-    {return getSampleDimensions(null);}
+    public SampleDimension[] getSampleDimensions() {
+        return getSampleDimensions(null);
+    }
 
     /**
      * Retourne les bandes {@link SampleDimension} qui permettent de
@@ -220,13 +222,11 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @param param    Paramètres qui ont servit à lire l'image, ou
      *                 <code>null</code> pour les paramètres par défaut.
      */
-    final SampleDimension[] getSampleDimensions(final ImageReadParam param)
-    {
+    final SampleDimension[] getSampleDimensions(final ImageReadParam param) {
         int  bandCount = bands.length;
         int[] srcBands = null;
         int[] dstBands = null;
-        if (param!=null)
-        {
+        if (param != null) {
             srcBands = param.getSourceBands();
             dstBands = param.getDestinationBands();
             if (srcBands!=null && srcBands.length<bandCount) bandCount=srcBands.length;
@@ -238,8 +238,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
          * aux bandes sources demandées. Ces objets seront placés
          * aux index des bandes de destination spécifiées.
          */
-        for (int j=0; j<bandCount; j++)
-        {
+        for (int j=0; j<bandCount; j++) {
             final int srcBand = (srcBands!=null) ? srcBands[j] : j;
             final int dstBand = (dstBands!=null) ? dstBands[j] : j;
             selectedBands[dstBand] = bands[srcBand];
@@ -259,13 +258,13 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @throws IIOException s'il n'y a pas d'objet {@link ImageReader}
      *         pour ce format.
      */
-    private ImageReader getImageReader() throws IIOException
-    {
+    private ImageReader getImageReader() throws IIOException {
         assert Thread.holdsLock(this);
-        if (reader==null)
-        {
-            final Iterator readers=ImageIO.getImageReadersByMIMEType(mimeType);
-            if (!readers.hasNext()) throw new IIOException(Resources.format(ResourceKeys.ERROR_NO_IMAGE_DECODER_$1, mimeType));
+        if (reader == null) {
+            final Iterator readers = ImageIO.getImageReadersByMIMEType(mimeType);
+            if (!readers.hasNext()) {
+                throw new IIOException(Resources.format(ResourceKeys.ERROR_NO_IMAGE_DECODER_$1, mimeType));
+            }
             reader = (ImageReader) readers.next();
         }
         return reader;
@@ -279,8 +278,9 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @throws IIOException s'il n'y a pas d'objet {@link ImageReader}
      *         pour ce format.
      */
-    final synchronized ImageReadParam getDefaultReadParam() throws IIOException
-    {return getImageReader().getDefaultReadParam();}
+    final synchronized ImageReadParam getDefaultReadParam() throws IIOException {
+        return getImageReader().getDefaultReadParam();
+    }
 
     /**
      * Retourne l'objet sur lequel se synchroniser
@@ -290,16 +290,15 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @param  def  Objet par défaut sur lequel se synchroniser.
      * @return Objet sur lequel se synchroniser.
      */
-    private static Object getLock(File file, final Object def) throws IOException
-    {
+    private static Object getLock(File file, final Object def) throws IOException {
         final File[] sync=synchronizedDirectories;
         file = file.getCanonicalFile();
-        while (file!=null)
-        {
-            for (int i=0; i<sync.length; i++)
-            {
+        while (file != null) {
+            for (int i=0; i<sync.length; i++) {
                 final File drive=sync[i];
-                if (file.equals(drive)) return drive;
+                if (file.equals(drive)) {
+                    return drive;
+                }
             }
             file = file.getParentFile();
         }
@@ -341,8 +340,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
          * en parallèle par différents objets 'FormatEntryImpl', mais la méthode 'getLock'
          * peut imposer des restrictions sur les accès en parallèle au même lecteur.
          */
-        synchronized (getLock(file, this))
-        {
+        synchronized (getLock(file, this)) {
             Object           inputObject = null;
             ImageInputStream inputStream = null;
             /*
@@ -352,46 +350,36 @@ final class FormatEntryImpl implements FormatEntry, Serializable
              */
             final ImageReader reader = getImageReader();
             final ImageReaderSpi spi = reader.getOriginatingProvider();
-            if (spi!=null)
-            {
+            if (spi != null) {
                 final Class[] types = spi.getInputTypes();
-                if (contains(types, File.class))
-                {
+                if (contains(types, File.class)) {
                     inputObject = file;
-                }
-                else if (contains(types, URL.class)) try
-                {
-                    inputObject = file.toURL();
-                }
-                catch (MalformedURLException exception)
-                {
-                    // Ignore...
+                } else if (contains(types, URL.class)) {
+                    try {
+                        inputObject = file.toURL();
+                    } catch (MalformedURLException exception) {
+                        // Ignore...
+                    }
                 }
             }
-            if (inputObject==null)
-            {
+            if (inputObject == null) {
                 inputObject = inputStream = ImageIO.createImageInputStream(file);
             }
-            if (inputObject==null)
-            {
+            if (inputObject == null) {
                 throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
             }
             /*
              * Configure maintenant le décodeur
              * et lance la lecture de l'image.
              */
-            try
-            {
-                synchronized (getAbortLock())
-                {
+            try {
+                synchronized (getAbortLock()) {
                     owner = source;
                     aborted = false;
                 }
-                if (listeners!=null)
-                {
+                if (listeners != null) {
                     final Object[] list = listeners.getListenerList();
-                    for (int i=0; i<list.length; i+=2)
-                    {
+                    for (int i=0; i<list.length; i+=2) {
                         if (list[i]==IIOReadWarningListener .class) reader.addIIOReadWarningListener ((IIOReadWarningListener)  list[i+1]);
                         if (list[i]==IIOReadProgressListener.class) reader.addIIOReadProgressListener((IIOReadProgressListener) list[i+1]);
                     }
@@ -402,15 +390,12 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                  * image size. This is necessary since RAW binary files don't
                  * know their image's size.
                  */
-                if (param instanceof RawBinaryImageReadParam)
-                {
+                if (param instanceof RawBinaryImageReadParam) {
                     final RawBinaryImageReadParam rawParam = (RawBinaryImageReadParam) param;
-                    if (rawParam.getStreamImageSize()==null)
-                    {
+                    if (rawParam.getStreamImageSize() == null) {
                         rawParam.setStreamImageSize(expected);
                     }
-                    if (geophysics && rawParam.getDestinationType()==null)
-                    {
+                    if (geophysics && rawParam.getDestinationType() == null) {
                         final int dataType = rawParam.getStreamDataType();
                         if (dataType != DataBuffer.TYPE_FLOAT &&
                             dataType != DataBuffer.TYPE_DOUBLE)
@@ -418,9 +403,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                             rawParam.setDestinationType(DataBuffer.TYPE_FLOAT);
                         }
                     }
-                }
-                else
-                {
+                } else {
                     // Don't perform this check if we are reading a RAW image,
                     // since the RAW image doesn't know its size by itself.
                     checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex), expected, file);
@@ -431,15 +414,14 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                  */
                 final RenderedImage image = reader.readAsRenderedImage(imageIndex, param);
                 return !aborted ? image : null;
-            }
-            finally
-            {
-                synchronized (getAbortLock())
-                {
+            } finally {
+                synchronized (getAbortLock()) {
                     owner = null;
                 }
                 reader.reset(); // Comprend "removeIIOReadProgressListener" et "setInput(null)".
-                if (inputStream!=null) inputStream.close();
+                if (inputStream != null) {
+                    inputStream.close();
+                }
             }
         }
     }
@@ -453,15 +435,14 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      *        l'image en cours de lecture.    Si ce n'est pas le cas, alors
      *        cette méthode <code>abort</code> ne fera rien.
      */
-    final void abort(final ImageEntry source)
-    {
-        synchronized (getAbortLock())
-        {
-            if (owner==source)
-            {
+    final void abort(final ImageEntry source) {
+        synchronized (getAbortLock()) {
+            if (owner == source) {
                 aborted = true;
                 final ImageReader reader=this.reader;
-                if (reader!=null) reader.abort();
+                if (reader != null) {
+                    reader.abort();
+                }
             }
         }
     }
@@ -473,18 +454,20 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * toute la durée de la lecture de l'image. N'importe quel autre objet déclaré
      * <code>final</code> fait l'affaire.
      */
-    private Object getAbortLock()
-    {return mimeType;}
+    private Object getAbortLock() {
+        return mimeType;
+    }
 
     /**
      * Indique si le tableau <code>array</code> contient au moins un
      * exemplaire de la classe <code>item</code> ou d'une super-classe.
      */
-    private static boolean contains(final Class[] array, final Class item)
-    {
-        for (int i=0; i<array.length; i++)
-            if (array[i].isAssignableFrom(item))
+    private static boolean contains(final Class[] array, final Class item) {
+        for (int i=0; i<array.length; i++) {
+            if (array[i].isAssignableFrom(item)) {
                 return true;
+            }
+        }
         return false;
     }
 
@@ -500,10 +483,11 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @param  file         Nom du fichier de l'image à lire.
      * @throws IIOException si l'image n'a pas la largeur et hauteur attendue.
      */
-    private static void checkSize(final int imageWidth, final int imageHeight, final Dimension expected, final File file) throws IIOException
+    private static void checkSize(final int imageWidth, final int imageHeight,
+                                  final Dimension expected, final File file)
+        throws IIOException
     {
-        if (expected.width!=imageWidth || expected.height!=imageHeight)
-        {
+        if (expected.width!=imageWidth || expected.height!=imageHeight) {
             throw new IIOException(Resources.format(ResourceKeys.ERROR_IMAGE_SIZE_MISMATCH_$5, file.getName(),
                                    new Integer(    imageWidth), new Integer(    imageHeight),
                                    new Integer(expected.width), new Integer(expected.height)));
@@ -513,16 +497,15 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     /**
      * Retourne un code représentant cette entrée.
      */
-    public int hashCode()
-    {return ID;}
+    public int hashCode() {
+        return ID;
+    }
 
     /**
      * Indique si cette entrée est identique à l'entrée spécifiée.
      */
-    public boolean equals(final Object o)
-    {
-        if (o instanceof FormatEntryImpl)
-        {
+    public boolean equals(final Object o) {
+        if (o instanceof FormatEntryImpl) {
             final FormatEntryImpl that = (FormatEntryImpl) o;
             return                  this.ID       == that.ID          &&
                    Utilities.equals(this.name,       that.name     )  &&
@@ -539,17 +522,14 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * La racine sera le nom du format, et les branches représenteront
      * les différentes bandes avec leurs catégories.
      */
-    final MutableTreeNode getTree(final Locale locale)
-    {
+    final MutableTreeNode getTree(final Locale locale) {
         final DefaultMutableTreeNode root = new TreeNode(this);
-        for (int i=0; i<bands.length; i++)
-        {
+        for (int i=0; i<bands.length; i++) {
             final SampleDimension band = bands[i];
             final List      categories = band.getCategories();
             final int    categoryCount = categories.size();
             final DefaultMutableTreeNode node = new TreeNode(band, locale);
-            for (int j=0; j<categoryCount; j++)
-            {
+            for (int j=0; j<categoryCount; j++) {
                 node.add(new TreeNode((Category)categories.get(j), locale));
             }
             root.add(node);
@@ -560,8 +540,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     /**
      * Retourne une chaîne de caractères représentant cette entrée.
      */
-    private StringBuffer toString(final StringBuffer buffer)
-    {
+    private StringBuffer toString(final StringBuffer buffer) {
         buffer.append(name);
         buffer.append(" (");
         buffer.append(mimeType);
@@ -572,8 +551,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     /**
      * Retourne une chaîne de caractères représentant cette entrée.
      */
-    public String toString()
-    {
+    public String toString() {
         StringBuffer buffer=new StringBuffer(40);
         buffer.append(Utilities.getShortClassName(this));
         buffer.append('[');
@@ -591,8 +569,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class TreeNode extends DefaultMutableTreeNode
-    {
+    private static final class TreeNode extends DefaultMutableTreeNode {
         /**
          * Le texte à retourner par {@link #toString}.
          */
@@ -601,8 +578,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         /**
          * Construit un noeud pour l'entrée spécifiée.
          */
-        public TreeNode(final FormatEntryImpl entry)
-        {
+        public TreeNode(final FormatEntryImpl entry) {
             super(entry);
             text = String.valueOf(entry.toString(new StringBuffer()));
         }
@@ -611,8 +587,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
          * Construit un noeud pour la liste spécifiée. Ce constructeur ne
          * balaie pas les catégories contenues dans la liste spécifiée.
          */
-        public TreeNode(final SampleDimension band, final Locale locale)
-        {
+        public TreeNode(final SampleDimension band, final Locale locale) {
             super(band);
             text = band.getDescription(locale);
         }
@@ -620,8 +595,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         /**
          * Construit un noeud pour la catégorie spécifiée.
          */
-        public TreeNode(final Category category, final Locale locale)
-        {
+        public TreeNode(final Category category, final Locale locale) {
             super(category, false);
             final StringBuffer buffer = new StringBuffer();
             final Range range = category.geophysics(false).getRange();
@@ -635,18 +609,19 @@ final class FormatEntryImpl implements FormatEntry, Serializable
         /**
          * Append an integer with at least 3 digits.
          */
-        private static void append(final StringBuffer buffer, final Comparable value)
-        {
+        private static void append(final StringBuffer buffer, final Comparable value) {
             final String number = String.valueOf(value);
-            for (int i=3-number.length(); --i>=0;)
+            for (int i=3-number.length(); --i>=0;) {
                 buffer.append('0');
+            }
             buffer.append(number);
         }
 
         /**
          * Retourne le texte de ce noeud.
          */
-        public String toString()
-        {return text;}
+        public String toString() {
+            return text;
+        }
     }
 }

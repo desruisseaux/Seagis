@@ -63,8 +63,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SeriesTableImpl extends Table implements SeriesTable
-{
+final class SeriesTableImpl extends Table implements SeriesTable {
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son nom.
      */
@@ -136,16 +135,14 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * Représente une branche de l'arborescence. Cette
      * classe interne est utilisée par {@link #getTree}.
      */
-    private static final class Branch
-    {
+    private static final class Branch {
         /** Nom de la table.                */ final String table;
         /** Colonne du champ ID.            */ final int    ID;
         /** Colonne du champ 'name'.        */ final int    name;
         /** Colonne du champ 'description'. */ final int    remarks;
 
         /** Construit une branche. */
-        Branch(String table, int ID, int name, int remarks)
-        {
+        Branch(String table, int ID, int name, int remarks) {
             this.table   = table;
             this.ID      = ID;
             this.name    = name;
@@ -158,8 +155,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * Cette liste est utilisée par {@link #getTree} pour construire
      * l'arborescence.
      */
-    private static final Branch[] TREE_STRUCTURE = new Branch[]
-    {
+    private static final Branch[] TREE_STRUCTURE = new Branch[] {
         new Branch(PARAMETERS, PARAMETER_ID, PARAMETER_NAME, PARAMETER_REMARKS),
         new Branch(OPERATIONS, OPERATION_ID, OPERATION_NAME, OPERATION_REMARKS),
         new Branch(SERIES,     SERIES_ID,    SERIES_NAME,    SERIES_REMARKS   ),
@@ -199,8 +195,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>SeriesTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected SeriesTableImpl(final Connection connection) throws SQLException
-    {this.connection = connection;}
+    protected SeriesTableImpl(final Connection connection) throws SQLException {
+        this.connection = connection;
+    }
 
     /**
      * Retourne une référence vers un enregistrement de la table des séries.
@@ -211,11 +208,9 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même ID.
      */
-    public synchronized SeriesEntry getSeries(final int ID) throws SQLException
-    {
-        if (selectByID==null)
-        {
-            selectByID = connection.prepareStatement(preferences.get("SERIES_BY_ID", SQL_SELECT_BY_ID));
+    public synchronized SeriesEntry getSeries(final int ID) throws SQLException {
+        if (selectByID == null) {
+            selectByID = connection.prepareStatement(preferences.get(SERIES+":ID", SQL_SELECT_BY_ID));
         }
         selectByID.setInt(ARG_ID, ID);
         return getSeries(selectByID);
@@ -230,10 +225,8 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même nom.
      */
-    public synchronized SeriesEntry getSeries(final String name) throws SQLException
-    {
-        if (selectByName==null)
-        {
+    public synchronized SeriesEntry getSeries(final String name) throws SQLException {
+        if (selectByName == null) {
             selectByName = connection.prepareStatement(preferences.get(SERIES, SQL_SELECT));
         }
         selectByName.setString(ARG_NAME, name);
@@ -243,23 +236,20 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /**
      * Retourne une référence vers un enregistrement de la table des séries.
      */
-    private static SeriesEntry getSeries(final PreparedStatement statement) throws SQLException
-    {
+    private static SeriesEntry getSeries(final PreparedStatement statement) throws SQLException {
         final ResultSet resultSet = statement.executeQuery();
         SeriesReference entry = null;
-        if (resultSet.next())
-        {
+        if (resultSet.next()) {
             final int ID         = resultSet.getInt   (1);
             final String name    = resultSet.getString(2);
             final String remarks = resultSet.getString(3);
             final double period  = resultSet.getDouble(4);
             entry = new SeriesReference(SERIES, name, ID, remarks,
                        resultSet.wasNull() ? Double.NaN : period);
-            while (resultSet.next())
-            {
-                if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2)))
-                {
-                    throw new IllegalRecordException(SERIES, Resources.format(ResourceKeys.ERROR_DUPLICATED_SERIES_$1, name));
+            while (resultSet.next()) {
+                if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2))) {
+                    throw new IllegalRecordException(SERIES, Resources.format(
+                                ResourceKeys.ERROR_DUPLICATED_SERIES_$1, name));
                 }
             }
         }
@@ -273,21 +263,21 @@ final class SeriesTableImpl extends Table implements SeriesTable
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized List<SeriesEntry> getSeries() throws SQLException
-    {
+    public synchronized List<SeriesEntry> getSeries() throws SQLException {
         final Statement    statement = connection.createStatement();
-        final ResultSet    resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
+        final ResultSet    resultSet = statement.executeQuery(preferences.get(SERIES+":TREE", SQL_TREE));
         final List<SeriesEntry> list = new ArrayList<SeriesEntry>();
         SeriesReference      last = null;
-        while (resultSet.next())
-        {
+        while (resultSet.next()) {
             final int                ID = resultSet.getInt   (SERIES_ID);
             final String           name = resultSet.getString(SERIES_NAME);
             final String        remarks = resultSet.getString(SERIES_REMARKS);
             final double         period = resultSet.getDouble(PERIOD);
             final SeriesReference entry = new SeriesReference(SERIES, name, ID, remarks,
-                                             resultSet.wasNull() ? Double.NaN : period);
-            if (!entry.equals(last)) list.add(last=entry);
+                                              resultSet.wasNull() ? Double.NaN : period);
+            if (!entry.equals(last)) {
+                list.add(last=entry);
+            }
         }
         resultSet.close();
         statement.close();
@@ -305,11 +295,10 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @return Arborescence des séries de la base de données.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized TreeModel getTree(final int leafType) throws SQLException
-    {
+    public synchronized TreeModel getTree(final int leafType) throws SQLException {
         final Locale       locale = null;
         final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
+        final ResultSet resultSet = statement.executeQuery(preferences.get(SERIES+":TREE", SQL_TREE));
         final int     branchCount = TREE_STRUCTURE.length - (leafType>=GROUP_LEAF ? 0 : 1);
         final int[]           ids = new int   [branchCount];
         final String[]      names = new String[branchCount];
@@ -319,28 +308,24 @@ final class SeriesTableImpl extends Table implements SeriesTable
          * Balaye la liste de tous les groupes, et place ces groupes
          * dans une arborescence au fur et à mesure qu'ils sont trouvés.
          */
-        while (resultSet.next())
-        {
+        while (resultSet.next()) {
             /*
              * Mémorise les numéro ID et les noms de toutes les entrées
              * trouvées dans l'enregistrement courant.  Ca comprend les
              * noms et ID des groupes, séries, opérations et paramètres.
              */
-            for (int i=branchCount; --i>=0;)
-            {
+            for (int i=branchCount; --i>=0;) {
                 final Branch branch = TREE_STRUCTURE[i];
                 ids    [i] = resultSet.getInt   (branch.ID     );
                 names  [i] = resultSet.getString(branch.name   );
                 remarks[i] = resultSet.getString(branch.remarks);
             }
             double period = resultSet.getDouble(PERIOD);
-            if (resultSet.wasNull())
-            {
+            if (resultSet.wasNull()) {
                 period = Double.NaN;
             }
             DefaultMutableTreeNode branch=root;
-      scan: for (int i=0; i<branchCount; i++)
-            {
+      scan: for (int i=0; i<branchCount; i++) {
                 /*
                  * Vérifie s'il existe déjà une branche pour le paramètre,
                  * opération où la série de l'enregistrement courant.  Si
@@ -348,24 +333,19 @@ final class SeriesTableImpl extends Table implements SeriesTable
                  * passage.
                  */
                 final int ID=ids[i];
-                for (int j=branch.getChildCount(); --j>=0;)
-                {
+                for (int j=branch.getChildCount(); --j>=0;) {
                     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) branch.getChildAt(j);
                     final Reference reference = (Reference) node.getUserObject();
-                    if (reference.ID == ID)
-                    {
+                    if (reference.ID == ID) {
                         branch=node;
                         continue scan;
                     }
                 }
                 final String tableName = TREE_STRUCTURE[i].table;
                 final Reference ref;
-                if (tableName == SERIES)
-                {
+                if (tableName == SERIES) {
                     ref = new SeriesReference(tableName, names[i], ID, remarks[i], period);
-                }
-                else
-                {
+                } else {
                     ref=new Reference(tableName, names[i], ID, remarks[i]);
                 }
                 /*
@@ -376,22 +356,17 @@ final class SeriesTableImpl extends Table implements SeriesTable
                  */
                 final boolean hasMoreBranchs = i<(branchCount-1);
                 final DefaultMutableTreeNode node;
-                switch (leafType)
-                {
+                switch (leafType) {
                     case SERIES_LEAF: // fall through
-                    case GROUP_LEAF:
-                    {
+                    case GROUP_LEAF: {
                         node=new DefaultMutableTreeNode(ref, hasMoreBranchs);
                         break;
                     }
-                    case CATEGORY_LEAF:
-                    {
+                    case CATEGORY_LEAF: {
                         node=new DefaultMutableTreeNode(ref, true);
-                        if (!hasMoreBranchs)
-                        {
-                            if (formats==null)
-                            {
-                                formats=new FormatTable(statement.getConnection());
+                        if (!hasMoreBranchs) {
+                            if (formats == null) {
+                                formats = new FormatTable(statement.getConnection());
                             }
                             final FormatEntryImpl format = formats.getEntry(resultSet.getInt(GROUPS_FORMAT));
                             node.add(format.getTree(locale));
@@ -413,16 +388,13 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * Retourne le nombre d'images appartenant à la série spécifiée.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized int getImageCount(final SeriesEntry series) throws SQLException
-    {
-        if (count==null)
-        {
-            count = connection.prepareStatement(preferences.get("IMAGE_COUNT", SQL_COUNT));
+    public synchronized int getImageCount(final SeriesEntry series) throws SQLException {
+        if (count == null) {
+            count = connection.prepareStatement(preferences.get(IMAGES+":COUNT", SQL_COUNT));
         }
         count.setInt(1, series.getID());
         final ResultSet resultSet = count.executeQuery();
-        int c=0; while (resultSet.next()) // Should have only 1 record.
-        {
+        int c=0; while (resultSet.next()) { // Should have only 1 record.
             c += resultSet.getInt(1);
         }
         resultSet.close();
@@ -437,10 +409,8 @@ final class SeriesTableImpl extends Table implements SeriesTable
      *         groupe identifié par l'ID specifié n'a été trouvé.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized FormatEntry getFormat(final int groupID) throws SQLException
-    {
-        if (formats==null)
-        {
+    public synchronized FormatEntry getFormat(final int groupID) throws SQLException {
+        if (formats == null) {
             formats=new FormatTable(connection);
         }
         return formats.forGroupID(groupID);
@@ -454,8 +424,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
+    public synchronized void close() throws SQLException {
         if (selectByName != null) {selectByName.close(); selectByName = null;}
         if (selectByID   != null) {selectByID  .close(); selectByID   = null;}
         if (count        != null) {count       .close(); count        = null;}
@@ -489,8 +458,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static class Reference implements Entry, Serializable
-    {
+    private static class Reference implements Entry, Serializable {
         /**
          * Nom de la table qui contient l'enregistrement référencé.
          */
@@ -528,8 +496,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
          * @param ID      Numéro de référence. Ce numéro provient du champ "ID" de la table <code>table</code>.
          * @param remarks Remarques s'appliquant à cette références.
          */
-        protected Reference(final String table, final String name, final int ID, final String remarks)
-        {
+        protected Reference(final String table, final String name, final int ID, final String remarks) {
             this.table   = table.trim();
             this.name    = name.trim();
             this.remarks = remarks; // May be null
@@ -539,15 +506,17 @@ final class SeriesTableImpl extends Table implements SeriesTable
         /**
          * Retourne un numéro unique identifiant cette série.
          */
-        public int getID()
-        {return ID;}
+        public int getID() {
+            return ID;
+        }
 
         /**
          * Retourne le nom de l'enregistrement référencé,
          * c'est-à-dire le champ {@link #name}.
          */
-        public String getName()
-        {return name;}
+        public String getName() {
+            return name;
+        }
 
         /**
          * Retourne des remarques s'appliquant à cette entrée,
@@ -555,32 +524,33 @@ final class SeriesTableImpl extends Table implements SeriesTable
          * sont souvent une chaîne descriptives qui peuvent être
          * affichées comme "tooltip text".
          */
-        public String getRemarks()
-        {return remarks;}
+        public String getRemarks() {
+            return remarks;
+        }
 
         /**
          * Retourne le nom de l'enregistrement référencé, comme {@link #getName}. Cette
          * méthode est appelée par {@link javax.swing.JTree} pour construire les noms
          * des noeuds dans l'arborescence.
          */
-        public String toString()
-        {return name;}
+        public String toString() {
+            return name;
+        }
 
         /**
          * Retourne le numéro de référence,
          * c'est-à-dire le code {@link #getID}.
          */
-        public int hashCode()
-        {return ID;}
+        public int hashCode() {
+            return ID;
+        }
 
         /**
          * Indique si cette référence est
          * identique à l'objet spécifié.
          */
-        public boolean equals(final Object o)
-        {
-            if (o instanceof Reference)
-            {
+        public boolean equals(final Object o) {
+            if (o instanceof Reference) {
                 final Reference that = (Reference) o;
                 return this.ID       ==  that.ID    &&
                        this.name .equals(that.name) &&
@@ -600,8 +570,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * @author Martin Desruisseaux
      * @version $Id$
      */
-    private static final class SeriesReference extends Reference implements SeriesEntry
-    {
+    private static final class SeriesReference extends Reference implements SeriesEntry {
         /**
          * La période "normale" des images de cette série (en nombre
          * de jours), ou {@link Double#NaN} si elle est inconnue.
@@ -622,7 +591,8 @@ final class SeriesTableImpl extends Table implements SeriesTable
          * Retourne la période "normale" des images de cette série (en nombre
          * de jours), ou {@link Double#NaN} si elle est inconnue.
          */
-        public double getPeriod()
-        {return period;}
+        public double getPeriod() {
+            return period;
+        }
     }
 }

@@ -52,18 +52,15 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class Table implements fr.ird.sql.Table
-{
+abstract class Table implements fr.ird.sql.Table {
     /**
      * Retourne une des préférences du système.  Cette méthode définit les
      * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
      * pas défini de préférence pour un paramètre.
      */
-    static String getPreference(final String name)
-    {
+    static String getPreference(final String name) {
         String def=null;
-        if (name!=null)
-        {
+        if (name != null) {
                  if (name.equalsIgnoreCase(DataBase.DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
             else if (name.equalsIgnoreCase(DataBase.SOURCE))   def = "jdbc:odbc:SEAS-Images";
             else if (name.equalsIgnoreCase(DataBase.TIMEZONE)) def = "UTC";
@@ -107,8 +104,7 @@ abstract class Table implements fr.ird.sql.Table
      * Journal des évènements.
      */
     static final Logger logger = Logger.getLogger("fr.ird.sql");
-    static
-    {
+    static {
         fr.ird.util.InterlineFormatter.init(logger);
     }
 
@@ -125,10 +121,11 @@ abstract class Table implements fr.ird.sql.Table
      * répertoire courant.
      */
     static File directory;
-    static
-    {
+    static {
         final String dir = preferences.get(DIRECTORY, null);
-        if (dir!=null) directory = new File(dir);
+        if (dir != null) {
+            directory = new File(dir);
+        }
     }
 
     /**
@@ -137,13 +134,11 @@ abstract class Table implements fr.ird.sql.Table
      * précédant la première clause "WHERE". La clause "WHERE" et tout ce qui suit ne sera
      * pas inclue.
      */
-    static String select(final String query)
-    {
+    static String select(final String query) {
         final String clause="WHERE";
         final int length=clause.length();
         final int stop = query.length()-length;
-        for (int i=1; i<stop; i++)
-        {
+        for (int i=1; i<stop; i++) {
             if (Character.isWhitespace (query.charAt     (i-1))      &&
                 Character.isWhitespace (query.charAt     (i+length)) &&
                 clause.equalsIgnoreCase(query.substring(i,i+length)))
@@ -166,21 +161,20 @@ abstract class Table implements fr.ird.sql.Table
     static Date getTimestamp(final int field, final ResultSet result, final Calendar calendar, final Calendar localCalendar) throws SQLException
     {
         Date date;
-        try
-        {
+        try {
             date=result.getTimestamp(field, localCalendar);
-        }
-        catch (SQLException exception)
-        {
-            if (Utilities.getShortClassName(exception).startsWith("NotImplemented"))
-            {
+        } catch (SQLException exception) {
+            if (Utilities.getShortClassName(exception).startsWith("NotImplemented")) {
                 // Workaround for a bug in MySQL's JDBC:
                 // org.gjt.mm.mysql.jdbc2.NotImplemented
-                date=result.getTimestamp(field);
+                date = result.getTimestamp(field);
+            } else {
+                throw exception;
             }
-            else throw exception;
         }
-        if (date==null) return null;
+        if (date == null) {
+            return null;
+        }
         localCalendar.setTime(date);
         calendar.     setTime(date);
         calendar.set(Calendar.ERA,         localCalendar.get(Calendar.ERA        ));

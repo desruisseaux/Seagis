@@ -53,7 +53,7 @@ final class EnvironmentTableStep extends Table {
      * Requête SQL pour obtenir la table des données environnementales.
      */
     static final String SQL_SELECT=
-                    "SELECT ID FROM "+ENVIRONMENTS+" "+
+                    "SELECT ID FROM "+ENVIRONMENTS+"\n"+
                     "WHERE position=? AND temps=? AND paramètre=? ORDER BY ID";
 
     /** Numéro de colonne. */ private static final int ID            = 1;
@@ -189,7 +189,7 @@ final class EnvironmentTableStep extends Table {
             //
             final String[] columns = getColumns();
             String query = completeSelect(preferences.get(ENVIRONMENTS, SQL_SELECT), columns);
-            int index = indexOf(query, "ORDER");
+            int index = indexOfWord(query, "ORDER");
             if (index >= 0) {
                 final StringBuffer buffer = new StringBuffer(query.substring(0, index));
                 for (int i=0; i<columns.length; i++) {

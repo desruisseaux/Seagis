@@ -45,8 +45,7 @@ import fr.ird.resources.Resources;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class DataBase
-{
+public abstract class DataBase {
     /**
      * The level for logging SELECT instructions.
      */
@@ -104,8 +103,7 @@ public abstract class DataBase
      *         en heure GMT les dates apparaissant dans la base de données.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    protected DataBase(final String url, final TimeZone timezone) throws SQLException
-    {
+    protected DataBase(final String url, final TimeZone timezone) throws SQLException {
         this.connection = DriverManager.getConnection(url);
         this.timezone   = timezone;
         this.source     = url;
@@ -122,7 +120,9 @@ public abstract class DataBase
      * @param  password Mot de passe.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    protected DataBase(final String url, final TimeZone timezone, final String user, final String password) throws SQLException
+    protected DataBase(final String url, final TimeZone timezone,
+                       final String user, final String password)
+        throws SQLException
     {
         this.connection = DriverManager.getConnection(url, user, password);
         this.timezone   = timezone;
@@ -135,10 +135,8 @@ public abstract class DataBase
      * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
-    public String getProperty(final String name)
-    {
-        if (name!=null)
-        {
+    public String getProperty(final String name) {
+        if (name != null) {
             if (name.equalsIgnoreCase(SOURCE))   return source;
             if (name.equalsIgnoreCase(TIMEZONE)) return timezone.getID();
         }
@@ -149,16 +147,18 @@ public abstract class DataBase
      * Retourne le fuseau horaire des dates
      * exprimées dans cette base de données.
      */
-    public TimeZone getTimeZone()
-    {return (TimeZone) timezone.clone();}
+    public TimeZone getTimeZone() {
+        return (TimeZone) timezone.clone();
+    }
 
     /**
      * Ferme la connection avec la base de données.
      * @throws SQLException si un problème est survenu
      *         lors de la fermeture de la connection.
      */
-    public synchronized void close() throws SQLException
-    {connection.close();}
+    public synchronized void close() throws SQLException {
+        connection.close();
+    }
 
     // PAS DE 'finalize'!!! Des connections sont peut-être encore utilisées par
     // des tables.  On laissera JDBC fermer lui-même les connections lorsque le
@@ -173,22 +173,17 @@ public abstract class DataBase
      *         un message indiquant que le pilote a été chargé (avec le numéro
      *         de version du pilote), ou que son chargement a échoué.
      */
-    protected static LogRecord loadDriver(final String driverClassName)
-    {
+    protected static LogRecord loadDriver(final String driverClassName) {
         LogRecord record;
-        try
-        {
+        try {
             final Driver driver = (Driver)Class.forName(driverClassName).newInstance();
             record = Resources.getResources(null).getLogRecord(Level.CONFIG, ResourceKeys.LOADED_JDBC_DRIVER_$3);
-            record.setParameters(new Object[]
-            {
+            record.setParameters(new Object[] {
                 driver.getClass().getName(),
                 new Integer(driver.getMajorVersion()),
                 new Integer(driver.getMinorVersion())
             });
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
             record.setThrown(exception);
         }

@@ -42,8 +42,7 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class SpeciesSet extends AbstractSet<Species>
-{
+class SpeciesSet extends AbstractSet<Species> {
     /**
      * Espèces visés par cette pêche. En général, on aura un seul exemplaire de
      * ce tableau qui sera partagé par plusieurs objets {@link AbstractCatch}.
@@ -54,8 +53,9 @@ class SpeciesSet extends AbstractSet<Species>
      * Construit un ensemble d'espèces
      * à partir d'un autre ensemble.
      */
-    public SpeciesSet(final Collection<Species> species)
-    {this(species.toArray(new Species[species.size()]));}
+    public SpeciesSet(final Collection<Species> species) {
+        this(species.toArray(new Species[species.size()]));
+    }
 
     /**
      * Construit un ensemble d'espèces.
@@ -64,22 +64,25 @@ class SpeciesSet extends AbstractSet<Species>
      *        <strong>Ce tableau ne sera pas cloné</strong>.
      *        Evitez donc de le modifier après la construction.
      */
-    public SpeciesSet(final Species[] species)
-    {this.species = species;}
+    public SpeciesSet(final Species[] species) {
+        this.species = species;
+    }
 
     /**
      * Returns the number of species in this catch.
      */
-    public final int size()
-    {return species.length;}
+    public final int size() {
+        return species.length;
+    }
 
     /**
      * Returns an iterator over the species in this catch.
      * This iterator <strong>must</strong> returns species
      * always in the same order.
      */
-    public final java.util.Iterator<Species> iterator()
-    {return new Iterator(species);}
+    public final java.util.Iterator<Species> iterator() {
+        return new Iterator(species);
+    }
 
     /**
      * An iterator over the species. The underlying collection
@@ -89,8 +92,7 @@ class SpeciesSet extends AbstractSet<Species>
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Iterator implements java.util.Iterator<Species>
-    {
+    private static final class Iterator implements java.util.Iterator<Species> {
         /**
          * The species.
          */
@@ -104,28 +106,33 @@ class SpeciesSet extends AbstractSet<Species>
         /**
          * Construct an iterator.
          */
-        public Iterator(final Species[] species)
-        {this.species = species;}
+        public Iterator(final Species[] species) {
+            this.species = species;
+        }
 
         /**
          * Returns <code>true</code> if the iteration has more elements.
          */
-        public boolean hasNext()
-        {return index<species.length;}
+        public boolean hasNext() {
+            return index<species.length;
+        }
 
         /**
          * Returns the next element in the iteration.
          */
-        public Species next()
-        {
-            if (index<species.length) return species[index++];
-            else throw new NoSuchElementException();
+        public Species next() {
+            if (index<species.length) {
+                return species[index++];
+            } else {
+                throw new NoSuchElementException();
+            }
         }
 
         /**
          * Unsupported operation, since the underlying set is immutable.
          */
-        public void remove()
-        {throw new UnsupportedOperationException();}
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

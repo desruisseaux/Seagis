@@ -70,8 +70,7 @@ import org.geotools.units.Unit;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class TableFillerImpl extends Table implements TableFiller
-{
+final class TableFillerImpl extends Table implements TableFiller {
     /**
      * The SQL instruction to use when looking for area.
      * Note that an "INSERT" instruction may be generated
@@ -143,8 +142,7 @@ final class TableFillerImpl extends Table implements TableFiller
      * @param connection The connection to the database.
      * @param timezone   The database time zone.
      */
-    public TableFillerImpl(final Connection connection, final TimeZone timezone)
-    {
+    public TableFillerImpl(final Connection connection, final TimeZone timezone) {
         this.connection = connection;
         this.timezone   = timezone;
     }
@@ -159,18 +157,16 @@ final class TableFillerImpl extends Table implements TableFiller
      * @return The ID, or <code>null</code> if none was found.
      * @throws SQLException if an error occured while reading the database.
      */
-    private static Integer executeQuery(final PreparedStatement statement, final int errorKey) throws SQLException
-    {
+    private static Integer executeQuery(final PreparedStatement statement, final int errorKey) throws SQLException {
         Integer ID = null;
         final ResultSet result = statement.executeQuery();
-        while (result.next())
-        {
+        while (result.next()) {
             final Integer nextID = new Integer(result.getInt(1));
-            if (ID != null)
-            {
+            if (ID != null) {
                 log(Resources.getResources(null).getLogRecord(Level.WARNING, errorKey, nextID));
+            } else {
+                ID = nextID;
             }
-            else ID = nextID;
         }
         result.close();
         return ID;
@@ -182,8 +178,7 @@ final class TableFillerImpl extends Table implements TableFiller
      * by {@link ImageTable#addGridCoverage} only, we will set source
      * class and method name according.
      */
-    private static void log(final LogRecord record)
-    {
+    private static void log(final LogRecord record) {
         record.setSourceClassName ("ImageTable");
         record.setSourceMethodName("addGridCoverage");
         logger.log(record);
@@ -193,8 +188,7 @@ final class TableFillerImpl extends Table implements TableFiller
      * Returns the date for the specified value. We assume that
      * the temporal axis use the UTC datum (this is not checked).
      */
-    private static Date getDate(final TemporalCoordinateSystem cs, double value)
-    {
+    private static Date getDate(final TemporalCoordinateSystem cs, double value) {
         value = Unit.DAY.convert(value, cs.getUnits(0)) * (24*60*60*1000);
         final Date date = cs.getEpoch();
         date.setTime(date.getTime() + Math.round(value));
@@ -209,9 +203,9 @@ final class TableFillerImpl extends Table implements TableFiller
      *         ID that will be copied in the "groupe" column.
      * @throws SQLException if the operation failed.
      */
-    public synchronized void setGroup(final int ID) throws SQLException
-    {this.groupID = ID;}
-
+    public synchronized void setGroup(final int ID) throws SQLException {
+        this.groupID = ID;
+    }
 
     /**
      * Add an entry to the <code>Images</code> table.
@@ -226,8 +220,7 @@ final class TableFillerImpl extends Table implements TableFiller
      *         updated and a information message is logged.
      * @throws SQLException if the operation failed.
      */
-    public synchronized boolean addImage(final GridCoverage coverage, final String filename) throws SQLException
-    {
+    public synchronized boolean addImage(final GridCoverage coverage, final String filename) throws SQLException {
         /*
          * Gets the geographic (mandatory) and the temporal (optional)
          * coordinate systems. If there is no temporal coordinate CS,
@@ -236,22 +229,16 @@ final class TableFillerImpl extends Table implements TableFiller
         final CoordinateSystem cs = coverage.getCoordinateSystem();
         final GeographicCoordinateSystem geoCS;
         final TemporalCoordinateSystem  timeCS;
-        try
-        {
-            if (cs instanceof CompoundCoordinateSystem)
-            {
+        try {
+            if (cs instanceof CompoundCoordinateSystem) {
                 final CompoundCoordinateSystem ccs = (CompoundCoordinateSystem) cs;
                 geoCS  = (GeographicCoordinateSystem) ccs.getHeadCS();
                 timeCS = (TemporalCoordinateSystem)   ccs.getTailCS();
-            }
-            else
-            {
+            } else {
                 geoCS  = (GeographicCoordinateSystem) cs;
                 timeCS = null;
             }
-        }
-        catch (ClassCastException exception)
-        {
+        } catch (ClassCastException exception) {
             SQLException e = new SQLException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
             e.initCause(exception);
             throw e;
@@ -262,8 +249,7 @@ final class TableFillerImpl extends Table implements TableFiller
          * in the database.
          */
         final Ellipsoid ellipsoid = geoCS.getHorizontalDatum().getEllipsoid();
-        if (!Ellipsoid.WGS84.equals(ellipsoid) || !TemporalDatum.UTC.equals(timeCS.getTemporalDatum()))
-        {
+        if (!Ellipsoid.WGS84.equals(ellipsoid) || !TemporalDatum.UTC.equals(timeCS.getTemporalDatum())) {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_BAD_COORDINATE_SYSTEM));
         }
         /*
@@ -283,15 +269,13 @@ final class TableFillerImpl extends Table implements TableFiller
          * with the same name for the same group, log an information message
          * and return from this method.
          */
-        if (selectImage==null)
-        {
+        if (selectImage==null) {
             selectImage = connection.prepareStatement(SELECT_IMAGE);
         }
         selectImage.setInt   (1, groupID);
         selectImage.setString(2, filename);
         Integer ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_IMAGE_$1);
-        if (ID!=null)
-        {
+        if (ID != null) {
             log(Resources.getResources(null).getLogRecord(Level.INFO, ResourceKeys.ERROR_IMAGE_ALREADY_EXIST_$1, filename));
             return false;
         }
@@ -299,16 +283,13 @@ final class TableFillerImpl extends Table implements TableFiller
          * The image is not already present. Insert the image,
          * and log an information message with the SQL statement.
          */
-        if (insertImage==null)
-        {
+        if (insertImage == null) {
             insertImage = connection.createStatement();
         }
-        if (insertImage.executeUpdate(sqlInsertImage(null, filename, startTime, endTime, areaID))==1)
-        {
+        if (insertImage.executeUpdate(sqlInsertImage(null, filename, startTime, endTime, areaID)) == 1) {
             ID = executeQuery(selectImage, ResourceKeys.ERROR_DUPLICATED_IMAGE_$1);
             log(new LogRecord(DataBase.SQL_UPDATE, sqlInsertImage(ID, filename, startTime, endTime, areaID)));
-            if (ID!=null)
-            {
+            if (ID != null) {
                 return true;
             }
         }
@@ -326,10 +307,8 @@ final class TableFillerImpl extends Table implements TableFiller
      * @return The ID for the area (either an existing one or a new one).
      * @throws SQLException if the operation failed.
      */
-    private int addArea(final Rectangle2D area, final Dimension size) throws SQLException
-    {
-        if (selectArea==null)
-        {
+    private int addArea(final Rectangle2D area, final Dimension size) throws SQLException {
+        if (selectArea == null) {
             selectArea = connection.prepareStatement(SELECT_AREA);
         }
         selectArea.setDouble(1, area.getMinX());
@@ -340,20 +319,16 @@ final class TableFillerImpl extends Table implements TableFiller
         selectArea.setInt   (6, size.height);
 
         Integer ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_AREA_$1);
-        if (ID!=null)
-        {
+        if (ID != null) {
             return ID.intValue();
         }
-        if (insertArea==null)
-        {
+        if (insertArea == null) {
             insertArea = connection.createStatement();
         }
-        if (insertArea.executeUpdate(sqlInsertArea(null, area, size))==1)
-        {
+        if (insertArea.executeUpdate(sqlInsertArea(null, area, size)) == 1) {
             ID = executeQuery(selectArea, ResourceKeys.ERROR_DUPLICATED_AREA_$1);
             log(new LogRecord(DataBase.SQL_UPDATE, sqlInsertArea(ID, area, size)));
-            if (ID!=null)
-            {
+            if (ID != null) {
                 return ID.intValue();
             }
         }
@@ -367,21 +342,18 @@ final class TableFillerImpl extends Table implements TableFiller
     private String sqlInsertImage(final Integer ID, final String filename,
                                   final Date startTime, final Date endTime, final int areaID)
     {
-        if (dateFormat==null)
-        {
+        if (dateFormat==null) {
             dateFormat = new SimpleDateFormat("#MM/dd/yyyy HH:mm:ss#", Locale.US);
             dateFormat.setTimeZone(timezone);
         }
         final StringBuffer buffer = new StringBuffer("INSERT INTO ");
         buffer.append(IMAGES);
         buffer.append(" (");
-        if (ID!=null)
-        {
+        if (ID != null) {
             buffer.append("ID, ");
         }
         buffer.append("groupe, filename, start_time, end_time, area) VALUES(");
-        if (ID!=null)
-        {
+        if (ID != null) {
             buffer.append(ID);
             buffer.append(", ");
         }
@@ -396,18 +368,15 @@ final class TableFillerImpl extends Table implements TableFiller
     /**
      * Construct an SQL string for updating the AREA table.
      */
-    private static String sqlInsertArea(final Integer ID, final Rectangle2D area, final Dimension size)
-    {
+    private static String sqlInsertArea(final Integer ID, final Rectangle2D area, final Dimension size) {
         final StringBuffer buffer=new StringBuffer("INSERT INTO ");
         buffer.append(AREAS);
         buffer.append(" (");
-        if (ID!=null)
-        {
+        if (ID != null) {
             buffer.append("ID, ");
         }
         buffer.append("ellipsoid, xmin, xmax, ymin, ymax, width, height) VALUES(");
-        if (ID!=null)
-        {
+        if (ID != null) {
             buffer.append(ID);
             buffer.append(", ");
         }
@@ -429,25 +398,20 @@ final class TableFillerImpl extends Table implements TableFiller
      * @throws SQLException si un problème est survenu
      *        lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (insertImage!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (insertImage != null) {
             insertImage.close();
             insertImage=null;
         }
-        if (insertArea!=null)
-        {
+        if (insertArea != null) {
             insertArea.close();
             insertArea=null;
         }
-        if (selectImage!=null)
-        {
+        if (selectImage != null) {
             selectImage.close();
             selectImage=null;
         }
-        if (selectArea!=null)
-        {
+        if (selectArea != null) {
             selectArea.close();
             selectArea=null;
         }

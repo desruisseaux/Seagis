@@ -44,8 +44,7 @@ abstract class Table implements fr.ird.sql.Table {
     /* Nom de table. */ static final String ENVIRONMENTS = "Environnements";
     /* Nom de table. */ static final String PARAMETERS   = "Paramètres";
     /* Nom de table. */ static final String OPERATIONS   = "Opérations";
-    /* Nom de table. */ static final String LONGLINES    = "Captures";
-    /* Nom de table. */ static final String SEINES       = "Captures";
+    /* Nom de table. */ static final String CATCHS       = "Captures";
     /* Nom de table. */ static final String SPECIES      = "Espèces";
 
     /**
@@ -89,7 +88,7 @@ abstract class Table implements fr.ird.sql.Table {
      * @return La requête modifiée.
      */
     static String completeSelect(String query, final String[] columns) {
-        int index = indexOf(query, "FROM");
+        int index = indexOfWord(query, "FROM");
         if (index >= 0) {
             while (index>=1 && Character.isWhitespace(query.charAt(index-1))) index--;
             final StringBuffer buffer = new StringBuffer(query.substring(0, index));
@@ -116,7 +115,7 @@ abstract class Table implements fr.ird.sql.Table {
     static String replaceQuestionMark(final String query, final String value) {
         final String PARAM = "[?]";
         final StringBuffer buffer = new StringBuffer(query);
-        for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;) {
+        for (int index=-1; (index=buffer.indexOf(PARAM, index+1))>=0;) {
             buffer.replace(index, index+PARAM.length(), value);
         }
         return buffer.toString();
@@ -126,13 +125,21 @@ abstract class Table implements fr.ird.sql.Table {
      * Recherche une sous-chaîne dans une chaîne en ignorant les différences entre majuscules et
      * minuscules. Les racourcis du genre <code>text.toUpperCase().indexOf("SEARCH FOR")</code>
      * ne fonctionne pas car <code>toUpperCase()</code> et <code>toLowerCase()</code> peuvent
-     * changer le nombre de caractères de la chaîne.
+     * changer le nombre de caractères de la chaîne. De plus, cette méthode vérifie que le mot
+     * est délimité par des espaces ou de la ponctuation.
      */
-    static int indexOf(final String text, final String searchFor) {
+    static int indexOfWord(final String text, final String searchFor) {
         final int searchLength = searchFor.length();
         final int length = text.length();
         for (int i=0; i<length; i++) {
             if (text.regionMatches(true, i, searchFor, 0, searchLength)) {
+                if (i!=0 && Character.isUnicodeIdentifierPart(text.charAt(i-1))) {
+                    continue;
+                }
+                final int upper = i+length;
+                if (upper<length && Character.isUnicodeIdentifierPart(text.charAt(upper))) {
+                    continue;
+                }
                 return i;
             }
         }

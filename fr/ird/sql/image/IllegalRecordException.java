@@ -38,8 +38,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class IllegalRecordException extends SQLException
-{
+public class IllegalRecordException extends SQLException {
     /**
      * Nom de la table qui contient l'enregistrement invalide.
      */
@@ -50,8 +49,7 @@ public class IllegalRecordException extends SQLException
      * @param table Nom de la table qui contient l'enregistrement invalide.
      * @param message Message décrivant l'erreur.
      */
-    public IllegalRecordException(final String table, final String message)
-    {
+    public IllegalRecordException(final String table, final String message) {
         super(message);
         this.table=table;
     }
@@ -61,8 +59,7 @@ public class IllegalRecordException extends SQLException
      * @param table Nom de la table qui contient l'enregistrement invalide.
      * @param exception Exception rencontré lors de l'analyse de l'enregistrement.
      */
-    public IllegalRecordException(final String table, final Exception exception)
-    {
+    public IllegalRecordException(final String table, final Exception exception) {
         this(table, exception.getLocalizedMessage());
         initCause(exception);
     }
@@ -71,18 +68,20 @@ public class IllegalRecordException extends SQLException
      * Retourne le nom de la table qui
      * contient un mauvais enregistrement.
      */
-    public String getTable()
-    {return table;}
+    public String getTable() {
+        return table;
+    }
 
     /**
      * Retourne une chaîne de caractère qui contiendra le
      * nom de la table et un message décrivant l'erreur.
      */
-    public String getLocalizedMessage()
-    {
+    public String getLocalizedMessage() {
         final String table   = getTable();
         final String message = super.getLocalizedMessage();
-        if (table==null) return message;
+        if (table == null) {
+            return message;
+        }
         return Resources.format(ResourceKeys.TABLE_ERROR_$2, table, message);
     }
 }

@@ -74,8 +74,7 @@ import java.util.Comparator;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ImageComparator implements Comparator<ImageEntry>
-{
+public class ImageComparator implements Comparator<ImageEntry> {
     /**
      * Object à utiliser pour construire des transformations de coordonnées.
      */
@@ -126,8 +125,9 @@ public class ImageComparator implements Comparator<ImageEntry>
      *
      * @param table Table qui a produit les images qui seront à comparer.
      */
-    public ImageComparator(final ImageTable table)
-    {this(table.getCoordinateSystem(), table.getEnvelope());}
+    public ImageComparator(final ImageTable table) {
+        this(table.getCoordinateSystem(), table.getEnvelope());
+    }
 
     /**
      * Construit un comparateur avec les plages spatio-temporelles spécifiées.
@@ -137,13 +137,11 @@ public class ImageComparator implements Comparator<ImageEntry>
      *        Ces coordonnées doivent être exprimées selon le système de coordonnées
      *        <code>coordinateSystem</code>.
      */
-    public ImageComparator(final CoordinateSystem cs, final Envelope envelope)
-    {
+    public ImageComparator(final CoordinateSystem cs, final Envelope envelope) {
         int xDim = -1;
         int yDim = -1;
         int tDim = -1;
-        for (int i=cs.getDimension(); --i>=0;)
-        {
+        for (int i=cs.getDimension(); --i>=0;) {
             final AxisOrientation orientation = cs.getAxis(i).orientation.absolute();
             if (orientation.equals(AxisOrientation.EAST  )) xDim = i;
             if (orientation.equals(AxisOrientation.NORTH )) yDim = i;
@@ -162,8 +160,7 @@ public class ImageComparator implements Comparator<ImageEntry>
      * Retourne une estimation de la superficie occupée par
      * la composante horizontale de l'envelope spécifiée.
      */
-    private double getArea(final Envelope envelope)
-    {
+    private double getArea(final Envelope envelope) {
         if (xDim<0 || yDim<0) return Double.NaN;
         return getArea(envelope.getMinimum(xDim), envelope.getMinimum(yDim),
                        envelope.getMaximum(xDim), envelope.getMaximum(yDim));
@@ -173,23 +170,22 @@ public class ImageComparator implements Comparator<ImageEntry>
      * Retourne une estimation de la superficie occupée par
      * un rectangle délimitée par les coordonnées spécifiées.
      */
-    private double getArea(double xmin, double ymin, double xmax, double ymax)
-    {
+    private double getArea(double xmin, double ymin, double xmax, double ymax) {
         final Unit xUnit = coordinateSystem.getUnits(xDim);
         final Unit yUnit = coordinateSystem.getUnits(yDim);
         xmin = Unit.DEGREE.convert(xmin, xUnit);
         xmax = Unit.DEGREE.convert(xmax, xUnit);
         ymin = Unit.DEGREE.convert(ymin, yUnit);
         ymax = Unit.DEGREE.convert(ymax, yUnit);
-        if (xmin<xmax && ymin<ymax)
-        {
+        if (xmin<xmax && ymin<ymax) {
             final double centerX = 0.5*(xmin+xmax);
             final double centerY = 0.5*(ymin+ymax);
             final double   width = ellipsoid.orthodromicDistance(xmin, centerY, xmax, centerY);
             final double  height = ellipsoid.orthodromicDistance(centerX, ymin, centerX, ymax);
             return width*height;
+        } else {
+            return 0;
         }
-        else return 0;
     }
 
     /**
@@ -201,8 +197,7 @@ public class ImageComparator implements Comparator<ImageEntry>
      *         -1 si l'image <code>entry2</code> représente le plus grand intérêt, ou
      *          0 si les deux images représentent le même intérêt.
      */
-    public int compare(final ImageEntry entry1, final ImageEntry entry2)
-    {
+    public int compare(final ImageEntry entry1, final ImageEntry entry2) {
         final Evaluator ev1 = evaluator(entry1);
         final Evaluator ev2 = evaluator(entry2);
         if (ev1==null) return (ev2==null) ? 0 : +1;
@@ -238,14 +233,10 @@ public class ImageComparator implements Comparator<ImageEntry>
      * pour comparer les images. Si cette méthode n'a pas pu construire un
      * <code>Evaluator</code>, alors elle retourne <code>null</code>.
      */
-    protected Evaluator evaluator(final ImageEntry entry)
-    {
-        try
-        {
+    protected Evaluator evaluator(final ImageEntry entry) {
+        try {
             return new Evaluator(entry);
-        }
-        catch (TransformException exception)
-        {
+        } catch (TransformException exception) {
             Utilities.unexpectedException("fr.ird.image.sql", "ImageComparator", "evaluator", exception);
             return null;
         }
@@ -262,8 +253,7 @@ public class ImageComparator implements Comparator<ImageEntry>
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    protected class Evaluator
-    {
+    protected class Evaluator {
         /**
          * Coordonnées spatio-temporelle d'une image. Il s'agit des coordonnées de l'objet
          * {@link ImageEntry} en cours de comparaison.   Ces coordonnées doivent avoir été
@@ -284,20 +274,16 @@ public class ImageComparator implements Comparator<ImageEntry>
          * @throws TransformException si une transformation était
          *         nécessaire et n'a pas pu être effectuée.
          */
-        public Evaluator(final ImageEntry entry) throws TransformException
-        {
+        public Evaluator(final ImageEntry entry) throws TransformException {
             Envelope   envelope = entry.getEnvelope();
             CoordinateSystem cs = entry.getCoordinateSystem();
             GridRange     range = entry.getGridGeometry().getGridRange();
-            if (!coordinateSystem.equivalents(cs))
-            {
-                if (transformation==null || !transformation.getSourceCS().equivalents(cs))
-                {
+            if (!coordinateSystem.equivalents(cs)) {
+                if (transformation==null || !transformation.getSourceCS().equivalents(cs)) {
                     transformation = factory.createFromCoordinateSystems(cs, coordinateSystem);
                 }
                 final MathTransform transform = transformation.getMathTransform();
-                if (!transform.isIdentity())
-                {
+                if (!transform.isIdentity()) {
                     envelope = CTSUtilities.transform(transform, envelope);
                 }
             }
@@ -305,8 +291,7 @@ public class ImageComparator implements Comparator<ImageEntry>
 
             int xDim = -1;
             int yDim = -1;
-            for (int i=cs.getDimension(); --i>=0;)
-            {
+            for (int i=cs.getDimension(); --i>=0;) {
                 final AxisOrientation orientation = cs.getAxis(i).orientation.absolute();
                 if (orientation.equals(AxisOrientation.EAST  )) xDim = i;
                 if (orientation.equals(AxisOrientation.NORTH )) yDim = i;
@@ -322,8 +307,7 @@ public class ImageComparator implements Comparator<ImageEntry>
          * que l'image ne couvre pas toute la plage demandée,   où qu'elle couvre aussi du temps
          * en dehors de la plage demandée.
          */
-        public double uncoveredTime()
-        {
+        public double uncoveredTime() {
             if (tDim<0) return Double.NaN;
             final double srcMin = source.getMinimum(tDim);
             final double srcMax = source.getMaximum(tDim);
@@ -342,9 +326,10 @@ public class ImageComparator implements Comparator<ImageEntry>
          * dates demandée. Une valeur supérieure à 0 indique que le centre de l'image
          * est décalée.
          */
-        public double timeOffset()
-        {
-            if (tDim<0) return Double.NaN;
+        public double timeOffset() {
+            if (tDim<0) {
+                return Double.NaN;
+            }
             return Math.abs(source.getCenter(tDim)-target.getCenter(tDim));
         }
 
@@ -354,8 +339,7 @@ public class ImageComparator implements Comparator<ImageEntry>
          * l'image couvre au moins la totalité de la région demandée, tandis qu'une valeur
          * supérieure à 0 indique que certaines régions ne sont pas couvertes.
          */
-        public double uncoveredArea()
-        {
+        public double uncoveredArea() {
             if (xDim<0 || yDim<0) return Double.NaN;
             return area - getArea(Math.max(source.getMinimum(xDim), target.getMinimum(xDim)),
                                   Math.max(source.getMinimum(yDim), target.getMinimum(yDim)),
@@ -367,8 +351,7 @@ public class ImageComparator implements Comparator<ImageEntry>
          * Retourne une estimation de la superficie occupée par les pixels.
          * Une valeur de 0 signifierait qu'une image à une précision infinie...
          */
-        public double resolution()
-        {
+        public double resolution() {
             final int num = width*height;
             return (num>0) ? getArea(source)/num : Double.NaN;
         }

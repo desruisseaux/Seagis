@@ -35,8 +35,7 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Table
-{
+public interface Table {
     /**
      * Libère les ressources utilisées par cette table.
      * Appelez cette méthode lorsque vous n'aurez plus

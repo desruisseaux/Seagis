@@ -57,12 +57,12 @@ final class SpeciesTable extends Table {
      * les constantes [@link #FRENCH}, [@link #LATIN} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ SPECIES+".ID, "        +
-                                /*[02] DATE            */ SPECIES+".anglais, "   +
-                                /*[03] START_LONGITUDE */ SPECIES+".français, "  +
-                                /*[04] START_LATITUDE  */ SPECIES+".latin\n"     +
+                    "SELECT "+  /*[01] ID              */ "ID, "        +
+                                /*[02] DATE            */ "anglais, "   +
+                                /*[03] START_LONGITUDE */ "français, "  +
+                                /*[04] START_LATITUDE  */ "latin\n"     +
 
-                    "FROM "+SPECIES+" WHERE "+SPECIES+".ID LIKE ?";
+                    "FROM "+SPECIES+" WHERE ID=?";
 
     /** Numéro d'argument. */ private static final int ID_ARG =  1;
 

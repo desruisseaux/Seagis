@@ -63,15 +63,15 @@ final class LonglineCatchTable extends AbstractCatchTable {
      * les constantes [@link #DATE}, [@link #START_LONGITUDE} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ LONGLINES+".ID, "          +
-                                /*[02] DATE            */ LONGLINES+".date, "        +
-                                /*[03] START_LONGITUDE */ LONGLINES+".x1, "          +
-                                /*[04] START_LATITUDE  */ LONGLINES+".y1, "          +
-                                /*[05] END_LONGITUDE   */ LONGLINES+".x2, "          +
-                                /*[06] END_LATITUDE    */ LONGLINES+".y2, "          +
-                                /*[07] EFFORT_UNIT     */ LONGLINES+".nb_hameçons\n" +
+                    "SELECT "+  /*[01] ID              */ "ID, "         +
+                                /*[02] DATE            */ "date, "       +
+                                /*[03] START_LONGITUDE */ "x1, "         +
+                                /*[04] START_LATITUDE  */ "y1, "         +
+                                /*[05] END_LONGITUDE   */ "x2, "         +
+                                /*[06] END_LATITUDE    */ "y2, "         +
+                                /*[07] EFFORT_UNIT     */ "nb_hameçons " +
 
-                    "FROM "+LONGLINES+"\n"+
+                    "FROM "+CATCHS+"\n"+
                     "WHERE valid=TRUE "+
                       "AND (date>=? AND date<=?) "+
                       "AND (total>=?) "+
@@ -108,7 +108,7 @@ final class LonglineCatchTable extends AbstractCatchTable {
                                  final TimeZone     timezone,
                                  final Set<Species> species) throws SQLException
     {
-        super(connection, LONGLINES, preferences.get(LONGLINES, SQL_SELECT), timezone, species);
+        super(connection, preferences.get("Palangres."+CATCHS, SQL_SELECT), timezone, species);
     }
 
     /**
