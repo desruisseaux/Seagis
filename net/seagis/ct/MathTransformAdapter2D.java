@@ -92,10 +92,4 @@ final class MathTransformAdapter2D extends MathTransformAdapter implements MathT
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
-
-    /**
-     * Transform the specified shape.
-     */
-    public Shape createTransformedShape(final Shape shape) throws TransformException
-    {return MathTransform2D.Abstract.createTransformedShape(shape, null, this, null, Geometry.PARALLEL);}
 }

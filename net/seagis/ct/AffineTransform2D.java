@@ -30,6 +30,7 @@ package net.seagis.ct;
 
 // OpenGIS (SEAS) dependencies
 //import net.seagis.pt.ConvexHull;
+import net.seagis.pt.Matrix;
 import net.seagis.pt.CoordinatePoint;
 
 // Geometry
@@ -101,6 +102,29 @@ final class AffineTransform2D extends XAffineTransform implements MathTransform2
         transform(ptSrc.ord, 0, ptDst.ord, 0, 1);
         return ptDst;
     }
+
+    /**
+     * Gets the derivative of this transform at a point.
+     * For an affine transform, the derivative is the
+     * same everywhere.
+     */
+    public Matrix derivative(final Point2D point)
+    {
+        final Matrix matrix = new Matrix(2);
+        matrix.set(0,0, getScaleX());
+        matrix.set(1,1, getScaleY());
+        matrix.set(0,1, getShearX());
+        matrix.set(1,0, getShearY());
+        return matrix;
+    }
+
+    /**
+     * Gets the derivative of this transform at a point.
+     * For an affine transform, the derivative is the
+     * same everywhere.
+     */
+    public Matrix derivative(final CoordinatePoint point)
+    {return derivative((Point2D) null);}
 
     /**
      * Creates the inverse transform of this object.

@@ -31,6 +31,11 @@
  */
 package net.seagis.ct;
 
+// OpenGIS dependencies (SEAGIS)
+import net.seagis.pt.Matrix;
+import net.seagis.pt.CoordinatePoint;
+import net.seagis.pt.MismatchedDimensionException;
+
 // Miscellaneous
 import java.io.Serializable;
 import net.seagis.resources.Utilities;
@@ -47,7 +52,7 @@ import net.seagis.resources.Utilities;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-final class PassThroughTransform extends MathTransform.Abstract implements Serializable
+final class PassThroughTransform extends AbstractMathTransform implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.
@@ -164,6 +169,54 @@ final class PassThroughTransform extends MathTransform.Abstract implements Seria
             srcOff += srcStep;
             dstOff += dstStep;
         }
+    }
+
+    /**
+     * Gets the derivative of this transform at a point.
+     */
+    public Matrix derivative(final CoordinatePoint point) throws TransformException
+    {
+        final int nSkipped = firstAffectedOrdinate + numTrailingOrdinates;
+        final int transDim = transform.getDimSource();
+        final int pointDim = point.getDimension();
+        if (pointDim != transDim+nSkipped)
+        {
+            throw new MismatchedDimensionException(pointDim, transDim+nSkipped);
+        }
+        final CoordinatePoint subPoint = new CoordinatePoint(transDim);
+        System.arraycopy(point.ord, firstAffectedOrdinate, subPoint.ord, 0, transDim);
+        final Matrix subMatrix = transform.derivative(subPoint);
+        final int     nRows = subMatrix.getSize(); // TODO!!! Implement non-square matrix
+        final int     nCols = subMatrix.getSize(); // TODO!!! Implement non-square matrix
+        final Matrix matrix = new Matrix(nSkipped+nRows /*, nSkipped+nCols*/); // TODO!!! Implement non-square matrix
+
+        //  Set UL part to 1:   [ 1  0             ]
+        //                      [ 0  1             ]
+        //                      [                  ]
+        //                      [                  ]
+        //                      [                  ]
+        for (int j=0; j<firstAffectedOrdinate; j++)
+            matrix.set(j,j,1);
+
+        //  Set central part:   [ 1  0  0  0  0  0 ]
+        //                      [ 0  1  0  0  0  0 ]
+        //                      [ 0  0  ?  ?  ?  0 ]
+        //                      [ 0  0  ?  ?  ?  0 ]
+        //                      [                  ]
+        for (int j=0; j<nRows; j++)
+            for (int i=0; i<nCols; i++)
+                matrix.set(j+firstAffectedOrdinate, i+firstAffectedOrdinate, subMatrix.get(i,j));
+
+        //  Set LR part to 1:   [ 1  0  0  0  0  0 ]
+        //                      [ 0  1  0  0  0  0 ]
+        //                      [ 0  0  ?  ?  ?  0 ]
+        //                      [ 0  0  ?  ?  ?  0 ]
+        //                      [ 0  0  0  0  0  1 ]
+        final int offset = nCols-nRows;
+        for (int j=pointDim-numTrailingOrdinates; j<pointDim; j++)
+            matrix.set(j, j+offset, 1);
+
+        return matrix;
     }
 
     /**

@@ -57,7 +57,7 @@ import net.seagis.resources.Utilities;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-class MathTransformAdapter extends MathTransform.Abstract implements Serializable
+class MathTransformAdapter extends AbstractMathTransform implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.

@@ -118,8 +118,8 @@ public class Adapters
         Object exported = MATH_EXPORTS.get(transform);
         if (exported==null)
         {
-            if (transform instanceof MathTransform.Abstract)
-                exported = ((MathTransform.Abstract) transform).toOpenGIS(this);
+            if (transform instanceof AbstractMathTransform)
+                exported = ((AbstractMathTransform) transform).toOpenGIS(this);
             else
                 exported = new MathTransformExport(this, transform);
             exported = MATH_EXPORTS.intern(exported);

@@ -50,7 +50,7 @@ import java.io.Serializable;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-class ConcatenedTransform extends MathTransform.Abstract implements Serializable
+class ConcatenedTransform extends AbstractMathTransform implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.
@@ -99,9 +99,9 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
      */
     private static final String getName(final MathTransform transform)
     {
-        if (transform instanceof MathTransform.Abstract)
+        if (transform instanceof AbstractMathTransform)
         {
-            String name = ((MathTransform.Abstract) transform).getName(null);
+            String name = ((AbstractMathTransform) transform).getName(null);
             if (name!=null && (name=name.trim()).length()!=0) return name;
         }
         return Utilities.getShortClassName(transform);

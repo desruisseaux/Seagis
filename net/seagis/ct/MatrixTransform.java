@@ -46,7 +46,7 @@ import net.seagis.resources.XAffineTransform;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-final class MatrixTransform extends MathTransform.Abstract implements Serializable
+final class MatrixTransform extends AbstractMathTransform implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.

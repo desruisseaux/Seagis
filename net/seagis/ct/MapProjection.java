@@ -63,7 +63,7 @@ import net.seagis.resources.css.ResourceKeys;
  * @author André Gosselin
  * @author Martin Desruisseaux
  */
-abstract class MapProjection extends MathTransform2D.Abstract
+abstract class MapProjection extends AbstractMathTransform implements MathTransform2D
 {
     /**
      * Erreur maximale (en mètres) tolérées lorsque l'on fait une
@@ -173,6 +173,18 @@ abstract class MapProjection extends MathTransform2D.Abstract
      * Returns a human readable name localized for the specified locale.
      */
     public abstract String getName(final Locale locale);
+
+    /**
+     * Gets the dimension of input points.
+     */
+    public final int getDimSource()
+    {return 2;}
+
+    /**
+     * Gets the dimension of output points.
+     */
+    public final int getDimTarget()
+    {return 2;}
 
     /**
      * Convertit en radians une longitude exprimée en degrés. Au passage, cette méthode vérifiera
@@ -450,7 +462,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
      * @throws TransformException si une transformation a échouée.
      */
     public final Shape createTransformedShape(final Shape shape) throws TransformException
-    {return createTransformedShape(shape, null, this, null, Geometry.HORIZONTAL);}
+    {return createTransformedShape(shape, null, null, Geometry.HORIZONTAL);}
 
 
 
@@ -762,8 +774,14 @@ abstract class MapProjection extends MathTransform2D.Abstract
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Inverse extends MathTransform2D.Abstract
+    private final class Inverse extends AbstractMathTransform implements MathTransform2D
     {
+        public int getDimSource()
+        {return 2;}
+
+        public int getDimTarget()
+        {return 2;}
+
         public final MathTransform inverse()
         {return MapProjection.this;}
 
@@ -780,7 +798,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
         {MapProjection.this.inverseTransform(source, srcOffset, dest, dstOffset, length);}
 
         public Shape createTransformedShape(final Shape shape) throws TransformException
-        {return super.createTransformedShape(shape, null, this, null, Geometry.HORIZONTAL);}
+        {return this.createTransformedShape(shape, null, null, Geometry.HORIZONTAL);}
 
         public final int hashCode()
         {return ~MapProjection.this.hashCode();}

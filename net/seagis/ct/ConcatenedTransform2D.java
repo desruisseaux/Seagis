@@ -38,9 +38,7 @@ import net.seagis.resources.Geometry;
 
 
 /**
- * Concatened transform where the resulting transform is two-dimensional. New
- * methods in this class are basically copy of {@link MathTransform#Abstract}
- * implementation.
+ * Concatened transform in which the resulting transform is two-dimensional.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -64,36 +62,4 @@ final class ConcatenedTransform2D extends ConcatenedTransform implements MathTra
      */
     protected boolean isValid()
     {return super.isValid() && getDimSource()==2 && getDimTarget()==2;}
-
-    /**
-     * Transforms the specified <code>ptSrc</code>
-     * and stores the result in <code>ptDst</code>.
-     */
-    public Point2D transform(final Point2D ptSrc, final Point2D ptDst) throws TransformException
-    {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-        // Basically a copy of MathTransform2D.Abstract implementation
-        final double[] ord = new double[] {ptSrc.getX(), ptSrc.getY()};
-        this.transform(ord, 0, ord, 0, 1);
-        if (ptDst!=null)
-        {
-            ptDst.setLocation(ord[0], ord[1]);
-            return ptDst;
-        }
-        else return new Point2D.Double(ord[0], ord[1]);
-    }
-
-    /**
-     * Transform the specified shape.
-     */
-    public Shape createTransformedShape(final Shape shape) throws TransformException
-    {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-        // Basically a copy of MathTransform2D.Abstract implementation
-        return MathTransform2D.Abstract.createTransformedShape(shape, null, this, null, Geometry.PARALLEL);
-    }
 }

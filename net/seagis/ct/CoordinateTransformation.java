@@ -173,8 +173,8 @@ public class CoordinateTransformation extends Info
         final String name = super.getName(locale);
         if (name.length()!=0)
             return name;
-        else if (transform instanceof MathTransform.Abstract)
-            return ((MathTransform.Abstract) transform).getName(locale);
+        else if (transform instanceof AbstractMathTransform)
+            return ((AbstractMathTransform) transform).getName(locale);
         else
             return sourceCS.getName(locale)+"\u00A0\u21E8\u00A0"+targetCS.getName(locale);
     }

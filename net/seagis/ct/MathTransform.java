@@ -39,19 +39,15 @@ import org.opengis.ct.CT_DomainFlags;
 
 // OpenGIS (SEAS) dependencies
 //import net.seagis.pt.ConvexHull;
+import net.seagis.pt.Matrix;
 import net.seagis.pt.CoordinatePoint;
 import net.seagis.pt.MismatchedDimensionException;
 
 // Remote Method Invocation
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
-// Miscellaneous
-import java.util.Locale;
-
 // Resources
-import net.seagis.resources.Utilities;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
@@ -79,6 +75,7 @@ import javax.media.jai.PerspectiveTransform;
  * @see AffineTransform
  * @see PerspectiveTransform
  * @see Transform3D
+ * @see MathTransform2D
  */
 public interface MathTransform
 {
@@ -195,6 +192,37 @@ public interface MathTransform
     public abstract void transform(float[] srcPts, int srcOff, float[] dstPts, int dstOff, int numPts) throws TransformException;
 
     /**
+     * Gets the derivative of this transform at a point. The derivative is the
+     * matrix of the non-translating portion of the approximate affine map at
+     * the point. The matrix will have dimensions corresponding to the source
+     * and target coordinate systems. If the input dimension is <var>M</var>,
+     * and the output dimension is <var>N</var>, then the matrix will have size
+     * <code>[N,M]</code>. The elements of the matrix {e<sub>n,m</sub> : n=0..(N-1)}
+     * form a vector in the output space which is parallel to the displacement
+     * caused by a small change in the m'th ordinate in the input space.
+     * <br><br>
+     * For example, if the input dimension is 4 and the output dimension is 3, then a small displacement
+     * <code>(x<sub>0</sub>,&nbsp;x<sub>1</sub>,&nbsp;x<sub>2</sub>,&nbsp;x<sub>3</sub>)</code> in the
+     * input space will result in a displacement <code>(y<sub>0</sub>,&nbsp;y<sub>1</sub>,&nbsp;y<sub>2</sub>)</code>
+     * in the output space computed as below (<code>e<sub>n,m</sub></code> are the matrix's elements):
+     *
+     * <pre>
+     * [ y<sub>0</sub> ]     [ e<sub>00</sub>  e<sub>01</sub>  e<sub>02</sub>  e<sub>03</sub> ] [ x<sub>0</sub> ]
+     * [ y<sub>1</sub> ]  =  [ e<sub>10</sub>  e<sub>11</sub>  e<sub>12</sub>  e<sub>13</sub> ] [ x<sub>1</sub> ]
+     * [ y<sub>2</sub> ]     [ e<sub>20</sub>  e<sub>21</sub>  e<sub>22</sub>  e<sub>23</sub> ] [ x<sub>2</sub> ]
+     *    <sub> </sub>          <sub>  </sub>   <sub>  </sub>   <sub>  </sub>   <sub>  </sub>   [ x<sub>3</sub> ]
+     * </pre>
+     *
+     * @param  point The coordinate point where to evaluate the derivative.
+     * @return The derivative at the specified point (never <code>null</code>).
+     * @throws MismatchedDimensionException if <code>point</code> doesn't have the expected dimension.
+     * @throws TransformException if the derivative can't be evaluated at the specified point.
+     *
+     * @see org.opengis.ct.CT_MathTransform#derivative
+     */
+    public abstract Matrix derivative(final CoordinatePoint point) throws TransformException;
+
+    /**
      * Creates the inverse transform of this object. The target of the inverse transform
      * is the source of the original. The source of the inverse transform is the target
      * of the original. Using the original transform followed by the inverse's transform
@@ -218,131 +246,9 @@ public interface MathTransform
      * @see org.opengis.ct.CT_MathTransform#isIdentity
      */
     public abstract boolean isIdentity();
-
-    /**
-     * Default implementation of {@link MathTransform}.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     */
-    public static abstract class Abstract implements MathTransform
-    {
-        /**
-         * Construct a math transform.
-         */
-        public Abstract()
-        {}
-
-        /**
-         * Returns a human readable name, if available. If no name is available in
-         * the specified locale,   then this method returns a name in an arbitrary
-         * locale. If no name is available in any locale, then this method returns
-         * <code>null</code>. The default implementation always returns <code>null</code>.
-         *
-         * @param  locale The desired locale, or <code>null</code> for a default locale.
-         * @return The transform name localized in the specified locale if possible, or
-         *         <code>null</code> if no name is available in any locale.
-         */
-        protected String getName(final Locale locale)
-        {return null;}
-
-        /**
-         * Transforms the specified <code>ptSrc</code> and stores the result
-         * in <code>ptDst</code>. The default implementation invokes
-         * {@link #transform(double[],int,double[],int,int)}.
-         */
-        public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
-        {
-            final int  pointDim = ptSrc.getDimension();
-            final int sourceDim = getDimSource();
-            final int targetDim = getDimTarget();
-            if (pointDim != sourceDim)
-            {
-                throw new MismatchedDimensionException(pointDim, sourceDim);
-            }
-            if (ptDst==null)
-            {
-                ptDst = new CoordinatePoint(targetDim);
-            }
-            else if (ptDst.getDimension()!=targetDim)
-            {
-                throw new MismatchedDimensionException(ptDst.getDimension(), targetDim);
-            }
-            transform(ptSrc.ord, 0, ptDst.ord, 0, 1);
-            return ptDst;
-        }
-
-        /**
-         * Transforms a list of coordinate point ordinal values. The default implementation
-         * invokes {@link #transform(double[],int,double[],int,int)} using a temporary array
-         * of doubles.
-         */
-        public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts) throws TransformException
-        {
-            final int dimSource = getDimSource();
-            final int dimTarget = getDimTarget();
-            final double[] tmpPts = new double[numPts*Math.max(dimSource, dimTarget)];
-            for (int i=numPts*dimSource; --i>=0;)
-                tmpPts[i] = srcPts[srcOff+i];
-            transform(tmpPts, 0, tmpPts, 0, numPts);
-            for (int i=numPts*dimTarget; --i>=0;)
-                dstPts[dstOff+i] = (float)tmpPts[i];
-        }
-
-        /**
-         * Creates the inverse transform of this object.
-         * The default implementation returns <code>this</code> if this transform is an identity
-         * transform, and throws a {@link NoninvertibleTransformException} otherwise. Subclasses
-         * should override this method.
-         */
-        public MathTransform inverse() throws NoninvertibleTransformException
-        {
-            if (isIdentity()) return this;
-            throw new NoninvertibleTransformException(Resources.format(ResourceKeys.ERROR_NONINVERTIBLE_TRANSFORM));
-        }
-
-        /**
-         * Returns a hash value for this transform.
-         */
-        public int hashCode()
-        {return getDimSource() + 37*getDimTarget();}
-
-        /**
-         * Compares the specified object with
-         * this math transform for equality.
-         */
-        public boolean equals(final Object object)
-        {
-            // Do not check 'object==this' here, since this
-            // optimization is usually done in subclasses.
-            return (object!=null && getClass().equals(object.getClass()));
-        }
-
-        /**
-         * Returns a string représentation of this transform.
-         */
-        public String toString()
-        {
-            final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
-            buffer.append('[');
-            buffer.append(getDimSource());
-            buffer.append("D \u2192 "); // Arrow -->
-            buffer.append(getDimTarget());
-            buffer.append("D]");
-            return buffer.toString();
-        }
-
-        /**
-         * Returns an OpenGIS interface for this math transform.
-         * The returned object is suitable for RMI use.
-         *
-         * Note: The returned type is a generic {@link Object} in order
-         *       to avoid too early class loading of OpenGIS interface.
-         */
-        Object toOpenGIS(final Object adapters)
-        {return new MathTransformExport(adapters, this);}
-    }
 }
+
+
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -478,7 +384,16 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
      * Gets the derivative of this transform at a point.
      */
     public PT_Matrix derivative(PT_CoordinatePoint cp) throws RemoteException
-    {throw new UnsupportedOperationException("Matrix derivative not yet implemented");}
+    {
+        try
+        {
+            return adapters.PT.export(transform.derivative(adapters.PT.wrap(cp)));
+        }
+        catch (TransformException exception)
+        {
+            throw new RemoteException(exception.getLocalizedMessage(), exception);
+        }
+    }
 
     /**
      * Creates the inverse transform of this object.
