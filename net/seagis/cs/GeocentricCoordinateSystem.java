@@ -39,6 +39,7 @@ import org.opengis.cs.CS_GeocentricCoordinateSystem;
 
 // Miscellaneous
 import java.util.Map;
+import java.util.Arrays;
 import javax.units.Unit;
 import java.rmi.RemoteException;
 
@@ -71,6 +72,29 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
     private static final long serialVersionUID = -6577810243397267703L;
 
     /**
+     * The set of default axis orientation.
+     * The <var>X</var> axis points towards the prime meridian.
+     * The <var>Y</var> axis points East.
+     * The <var>Z</var> axis points North.
+     */
+    private static final AxisInfo[] DEFAULT_AXIS = new AxisInfo[]
+    {
+        new AxisInfo("x", AxisOrientation.OTHER),
+        new AxisInfo("y", AxisOrientation.EAST ),
+        new AxisInfo("z", AxisOrientation.NORTH)
+    };
+
+    /**
+     * The default geocentric coordinate system. Prime meridian is Greenwich,
+     * horizontal datum in WGS84 and linear units are metre.
+     * The <var>X</var> axis points towards the prime meridian.
+     * The <var>Y</var> axis points East.
+     * The <var>Z</var> axis points North.
+     */
+    public static final GeocentricCoordinateSystem DEFAULT = new GeocentricCoordinateSystem("WGS84",
+                          Unit.METRE, HorizontalDatum.WGS84, PrimeMeridian.GREENWICH, DEFAULT_AXIS);
+
+    /**
      * The linear unit.
      */
     private final Unit unit;
@@ -89,6 +113,20 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
      * The axis infos.
      */
     private final AxisInfo[] axis;
+
+    /**
+     * Construct a geocentric coordinate system with default axis.
+     * The <var>X</var> axis points towards the prime meridian.
+     * The <var>Y</var> axis points East.
+     * The <var>Z</var> axis points North.
+     *
+     * @param name     The coordinate system name.
+     * @param unit     The linear unit.
+     * @param datum    The horizontal datum.
+     * @param meridian The prime meridian.
+     */
+    public GeocentricCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
+    {this(name, unit, datum, meridian, DEFAULT_AXIS);}
 
     /**
      * Construct a geocentric coordinate system.
@@ -110,7 +148,7 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
         ensureNonNull("datum",    datum);
         ensureNonNull("meridian", meridian);
         ensureLinearUnit(unit);
-        this.axis = (AxisInfo[]) axis.clone();
+        this.axis = clone(axis);
     }
 
     /**
@@ -128,8 +166,14 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
         this.unit     = unit;
         this.datum    = datum;
         this.meridian = meridian;
-        this.axis     = (AxisInfo[]) axis.clone();
+        this.axis     = clone(axis);
     }
+
+    /**
+     * Clone the specified axis array.
+     */
+    private static AxisInfo[] clone(final AxisInfo[] axis)
+    {return Arrays.equals(axis, DEFAULT_AXIS) ? DEFAULT_AXIS : (AxisInfo[]) axis.clone();}
 
     /**
      * Returns the dimension of this coordinate system, which is usually 3.
