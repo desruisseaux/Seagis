@@ -68,6 +68,13 @@ public interface CatchEntry extends Entry
     public abstract Shape getShape();
 
     /**
+     * Retourne une date représentative de la pêche. Dans le cas des pêches
+     * qui s'étendent sur une certaine période de temps, ça pourrait être par
+     * exemple la date du milieu.
+     */
+    public abstract Date getTime();
+
+    /**
      * Retourne la plage de temps pendant laquelle a été faite la capture.
      * Les éléments de la plage retournée seront du type {@link Date}.
      */

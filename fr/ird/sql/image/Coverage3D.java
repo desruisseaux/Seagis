@@ -28,7 +28,18 @@ package fr.ird.sql.image;
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
+import net.seas.opengis.pt.MismatchedDimensionException;
+
+// OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.ct.MathTransform;
+import net.seas.opengis.ct.TransformException;
+
+// OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.gc.GridRange;
+import net.seas.opengis.gc.GridGeometry;
 import net.seas.opengis.gc.GridCoverage;
+
+// OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cv.Coverage;
 import net.seas.opengis.cv.CategoryList;
 import net.seas.opengis.cv.SampleDimension;
@@ -254,6 +265,89 @@ public class Coverage3D extends Coverage
     }
 
     /**
+     * Snap the specified coordinate point and date to the closest point available in
+     * this coverage. First, this method locate the image at or near the specified date
+     * (if no image was available at the specified date, the closest one is selected).
+     * The <code>date</code> argument is then set to this date. Then, this method locate
+     * the pixel under the <code>point</code> coordinate on this image. The <code>point</code>
+     * argument is then set to this pixel center.
+     * <br><br>
+     * Calling any <code>evaluate</code> method with snapped coordinates will
+     * returns non-interpolated value.
+     *
+     * @param point The point to snap (may be null).
+     * @param date  The date to snap (can not be null, since we need to
+     *              know the image's date before to snap the point).
+     */
+    public void snap(final Point2D point, final Date date) // No synchronization needed.
+    {
+        int index = Arrays.binarySearch(entries, date, COMPARATOR);
+        if (index<0)
+        {
+            /*
+             * There is no exact match for the date.
+             * Snap the date to the closest image.
+             */
+            index = ~index;
+            if (index==entries.length)
+            {
+                if (index==0) return; // No entries in this coverage!
+                index--;
+            }
+            long time;
+            if (index>=1)
+            {
+                time = date.getTime();
+                final long lowerTime = getTime(entries[index-1]);
+                final long upperTime = getTime(entries[index])-1; // Long.MIN_VALUE-1 == Long.MAX_VALUE
+                assert(time>lowerTime && time<upperTime);
+                if (time-lowerTime < upperTime-time)
+                {
+                    index--;
+                    time = lowerTime;
+                }
+                else time = upperTime+1;
+            }
+            else
+            {
+                time = getTime(entries[index]);
+            }
+            if (time!=Long.MIN_VALUE && time!=Long.MAX_VALUE)
+            {
+                date.setTime(time);
+            }
+        }
+        /*
+         * Now that we know the image entry,
+         * snap the spatial coordinate point.
+         */
+        if (point!=null) try
+        {
+            // TODO: Next line assume we are using the default table implementation.
+            assert(coordinateSystem.equivalents(entries[index].getCoordinateSystem()));
+            CoordinatePoint    coordinate = new CoordinatePoint(point.getX(), point.getY(), ImageTableImpl.toJulian(date.getTime()));
+            final GridGeometry   geometry = entries[index].getGridGeometry();
+            final GridRange         range = geometry.getGridRange();
+            final MathTransform transform = geometry.getGridToCoordinateSystem();
+            coordinate = transform.inverse().transform(coordinate, coordinate);
+            for (int i=coordinate.getDimension(); --i>=0;)
+            {
+                coordinate.ord[i] = Math.max(range.getLower(i),
+                                    Math.min(range.getUpper(i)-1,
+                                    (int)Math.rint(coordinate.ord[i])));
+            }
+            coordinate = transform.transform(coordinate, coordinate);
+            point.setLocation(coordinate.ord[0], coordinate.ord[1]);
+        }
+        catch (TransformException exception)
+        {
+            PointOutsideCoverageException e=new PointOutsideCoverageException(point);
+            e.initCause(exception);
+            throw e;
+        }
+    }
+
+    /**
      * Enregistre un évènements dans le journal.
      */
     private static void log(final int clé, final Object[] parameters)
@@ -412,15 +506,15 @@ public class Coverage3D extends Coverage
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
      * for temporal axis.
      *
-     * @param  coord The coordinate point where to evaluate.
+     * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      */
-    public synchronized int[] evaluate(final Point2D coord, final Date time, int[] dest) throws PointOutsideCoverageException
+    public synchronized int[] evaluate(final Point2D point, final Date time, int[] dest) throws PointOutsideCoverageException
     {
         if (!seek(time))
         {
@@ -429,14 +523,16 @@ public class Coverage3D extends Coverage
             Arrays.fill(dest, 0, categories.length, 0);
             return dest;
         }
+        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
+        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(coord, dest);
+            return lower.evaluate(point, dest);
         }
 
         int[] last=null;
-        last = upper.evaluate(coord, last);
-        dest = lower.evaluate(coord, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -454,15 +550,15 @@ public class Coverage3D extends Coverage
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
      * for temporal axis.
      *
-     * @param  coord The coordinate point where to evaluate.
+     * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      */
-    public synchronized float[] evaluate(final Point2D coord, final Date time, float[] dest) throws PointOutsideCoverageException
+    public synchronized float[] evaluate(final Point2D point, final Date time, float[] dest) throws PointOutsideCoverageException
     {
         if (!seek(time))
         {
@@ -471,14 +567,16 @@ public class Coverage3D extends Coverage
             Arrays.fill(dest, 0, categories.length, Float.NaN);
             return dest;
         }
+        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
+        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(coord, dest);
+            return lower.evaluate(point, dest);
         }
 
         float[] last=null;
-        last = upper.evaluate(coord, last);
-        dest = lower.evaluate(coord, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -496,15 +594,15 @@ public class Coverage3D extends Coverage
      * inherited from {@link ImageTable}: usually bicubic for spatial axis, and linear
      * for temporal axis.
      *
-     * @param  coord The coordinate point where to evaluate.
+     * @param  point The coordinate point where to evaluate.
      * @param  time  The date where to evaluate.
      * @param  dest  An array in which to store values, or <code>null</code> to
      *               create a new array. If non-null, this array must be at least
      *               <code>{@link #getSampleDimensions()}.size()</code> long.
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
-     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
+     * @throws PointOutsideCoverageException if <code>point</code> or <code>time</code> is outside coverage.
      */
-    public synchronized double[] evaluate(final Point2D coord, final Date time, double[] dest) throws PointOutsideCoverageException
+    public synchronized double[] evaluate(final Point2D point, final Date time, double[] dest) throws PointOutsideCoverageException
     {
         if (!seek(time))
         {
@@ -513,14 +611,16 @@ public class Coverage3D extends Coverage
             Arrays.fill(dest, 0, categories.length, Double.NaN);
             return dest;
         }
+        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
+        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return lower.evaluate(coord, dest);
+            return lower.evaluate(point, dest);
         }
 
         double[] last=null;
-        last = upper.evaluate(coord, last);
-        dest = lower.evaluate(coord, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -548,8 +648,9 @@ public class Coverage3D extends Coverage
      */
     public int[] evaluate(final CoordinatePoint coord, int[] dest) throws PointOutsideCoverageException
     {
-        // TODO
-        return null;
+        checkDimension(coord);
+        // TODO: Current implementation doesn't check the coordinate system.
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
     }
 
     /**
@@ -569,8 +670,9 @@ public class Coverage3D extends Coverage
      */
     public float[] evaluate(final CoordinatePoint coord, float[] dest) throws PointOutsideCoverageException
     {
-        // TODO
-        return null;
+        checkDimension(coord);
+        // TODO: Current implementation doesn't check the coordinate system.
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
     }
 
     /**
@@ -588,10 +690,23 @@ public class Coverage3D extends Coverage
      * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public double[] evaluate(final CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException
+    public double[] evaluate(final CoordinatePoint coord, final double[] dest) throws PointOutsideCoverageException
     {
-        // TODO
-        return null;
+        checkDimension(coord);
+        // TODO: Current implementation doesn't check the coordinate system.
+        return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
+    }
+
+    /**
+     * Vérifie que le point spécifié a bien la dimension attendue.
+     *
+     * @param  coord Coordonnée du point dont on veut vérifier la dimension.
+     * @throws MismatchedDimensionException si le point n'a pas la dimension attendue.
+     */
+    private final void checkDimension(final CoordinatePoint coord) throws MismatchedDimensionException
+    {
+        if (coord.getDimension()!=coordinateSystem.getDimension())
+            throw new MismatchedDimensionException(coord, coordinateSystem);
     }
 
     /**

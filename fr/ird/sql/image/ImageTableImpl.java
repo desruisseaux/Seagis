@@ -165,6 +165,12 @@ final class ImageTableImpl extends Table implements ImageTable
     private static final double DAY = 24*60*60*1000;
 
     /**
+     * Convertit un jour julien en date.
+     */
+    static Date toDate(final double t)
+    {return new Date(Math.round(t*DAY)+EPOCH);}
+
+    /**
      * Convertit une date en nombre de jours écoulés depuis le 1er janvier 1950.
      * Les valeurs <code>[MIN/MAX]_VALUE</code> sont converties en infinies.
      */
@@ -380,8 +386,7 @@ final class ImageTableImpl extends Table implements ImageTable
         // No coordinate transformation needed for this implementation.
         setGeographicArea(new Rectangle2D.Double(envelope.getMinimum(0), envelope.getMinimum(1),
                                                  envelope.getLength (0), envelope.getLength (1)));
-        setTimeRange(new Date(Math.round(envelope.getMinimum(2)*DAY)+EPOCH),
-                     new Date(Math.round(envelope.getMaximum(2)*DAY)+EPOCH));
+        setTimeRange(toDate(envelope.getMinimum(2)), toDate(envelope.getMaximum(2)));
     }
 
     /**

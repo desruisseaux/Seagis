@@ -167,7 +167,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
         if (!Float.isNaN(value))
         {
             int timeLag = 0;
-            final Date catchTime = getCentralTime(capture.getTimeRange());
+            final Date catchTime = capture.getTime();
             if (catchTime!=null && valueTime!=null)
             {
                 // Les dates de la base de données ne contiennent pas d'heure.
@@ -195,29 +195,6 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
             n=update.executeUpdate("INSERT INTO "+ENVIRONMENTS+" (ID,position,écart_temps,"+parameter+") "+
                                    "VALUES("+capture.getID()+","+position+","+timeLag+","+value+")");
         }
-    }
-
-    /**
-     * Returns the date in the middle of the specified range,
-     * or <code>null</code> if there is none.
-     */
-    private static Date getCentralTime(final Range timeRange)
-    {
-        if (timeRange!=null)
-        {
-            final Date startTime = (Date) timeRange.getMinValue();
-            final Date   endTime = (Date) timeRange.getMaxValue();
-            if (startTime!=null)
-            {
-                if (endTime!=null)
-                {
-                    return new Date((endTime.getTime()+startTime.getTime())/2);
-                }
-                else return startTime;
-            }
-            else return endTime;
-        }
-        else return null;
     }
 
     /**
