@@ -4,8 +4,9 @@
 package javax.units;
 
 // Miscellaneous
+import java.util.Map;
+import java.util.HashMap;
 import java.io.Serializable;
-import net.seas.util.WeakHashSet;
 
 
 /**
@@ -22,27 +23,27 @@ public final class Unit implements Serializable
     /**
      * Pool of units.
      */
-    private static final WeakHashSet<Unit> pool=new WeakHashSet<Unit>();
+    private static final Map pool=new HashMap();
 
     /**
      * Unit of angle.
      */
-    public static final Unit DEGREE = pool.intern(new Unit("°"));
+    public static final Unit DEGREE = new Unit("°");
 
     /**
      * Base unit of length.
      */
-    public static final Unit METRE = pool.intern(new Unit("m"));
+    public static final Unit METRE = new Unit("m");
 
     /**
      * Base unit of time.
      */
-    public static final Unit SECOND = pool.intern(new Unit("s"));
+    public static final Unit SECOND = new Unit("s");
 
     /**
      * Base unit of time.
      */
-    public static final Unit DAY = pool.intern(new Unit("day", 24*60*60, SECOND));
+    public static final Unit DAY = new Unit("day", 24*60*60, SECOND);
 
     /**
      * The unit's symbol.
@@ -63,7 +64,16 @@ public final class Unit implements Serializable
      * Returns an unit instance.
      */
     public static Unit get(final String symbol)
-    {return pool.intern(new Unit(symbol));}
+    {
+        synchronized (pool)
+        {
+            final Unit unit    = new Unit(symbol);
+            final Unit current = (Unit) pool.get(unit);
+            if (current!=null) return current;
+            pool.put(unit, unit);
+            return unit;
+        }
+    }
 
     /**
      * Unit constructor. Don't allow user creation,
