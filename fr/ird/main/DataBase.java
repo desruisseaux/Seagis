@@ -68,8 +68,8 @@ public final class DataBase
     /**
      * Nom de la table des données de SLA.
      */
-    private static final String SLA_TABLE = "SLA (Méditerranée)";
-//  private static final String SLA_TABLE = "SLA (Réunion)";
+//  private static final String SLA_TABLE = "SLA (Méditerranée - NRT)";
+    private static final String SLA_TABLE = "SLA (Réunion)";
 
     /**
      * Connexion vers la base de données d'images.

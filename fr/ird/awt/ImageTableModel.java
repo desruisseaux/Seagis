@@ -317,38 +317,51 @@ public class ImageTableModel extends AbstractTableModel
      */
     public void setEntries(final ImageTable table) throws SQLException
     {
-        final List<ImageEntry> entryList = table.getEntries();
+        final List<ImageEntry> entryList;
+        synchronized (table)
+        {
+            entryList = table.getEntries();
+            series    = table.getSeries();
+        }
+        setEntries(entryList);
+    }
+
+    /**
+     * Remplace tous les enregistrements courants par les enregistrements
+     * spécifiés. Cette méthode peut être appelée de n'importe quel thread
+     * (pas nécessairement celui de <i>Swing</i>).
+     *
+     * @param entryList Liste des nouvelles entrées.
+     */
+    public synchronized void setEntries(final List<ImageEntry> entryList)
+    {
         final ImageEntry[] newEntries = entryList.toArray(new ImageEntry[entryList.size()]);
         if (REVERSE_ORDER) reverse(newEntries);
 
-        synchronized (this)
+        final ImageEntry[] oldEntries = entries;
+        this.entries = newEntries;
+        final Map<ImageEntry,ProxyEntry> proxies = getProxies(oldEntries, null);
+        if (proxies!=null)
         {
-            final ImageEntry[] oldEntries = entries;
-            this.entries = newEntries;
-            this.series  = table.getSeries();
-            final Map<ImageEntry,ProxyEntry> proxies = getProxies(oldEntries, null);
-            if (proxies!=null)
+            for (int i=newEntries.length; --i>=0;)
             {
-                for (int i=newEntries.length; --i>=0;)
-                {
-                    final ProxyEntry proxy = proxies.get(newEntries[i]);
-                    if (proxy!=null) newEntries[i] = proxy;
-                }
+                final ProxyEntry proxy = proxies.get(newEntries[i]);
+                if (proxy!=null) newEntries[i] = proxy;
             }
-            if (EventQueue.isDispatchThread())
+        }
+        if (EventQueue.isDispatchThread())
+        {
+            fireTableDataChanged();
+            commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
+        }
+        else EventQueue.invokeLater(new Runnable()
+        {
+            public void run()
             {
                 fireTableDataChanged();
                 commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
             }
-            else EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {
-                    fireTableDataChanged();
-                    commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
-                }
-            });
-        }
+        });
     }
 
     /**
@@ -366,14 +379,17 @@ public class ImageTableModel extends AbstractTableModel
      */
     private static Map<ImageEntry,ProxyEntry> getProxies(final ImageEntry[] entries, Map<ImageEntry,ProxyEntry> proxies)
     {
-        for (int i=entries.length; --i>=0;)
+        if (entries!=null)
         {
-            final ImageEntry entry=entries[i];
-            if (entry instanceof ProxyEntry)
+            for (int i=entries.length; --i>=0;)
             {
-                if (proxies==null) proxies=new HashMap<ImageEntry,ProxyEntry>();
-                final ProxyEntry proxy = (ProxyEntry) entry;
-                proxies.put(proxy.getEntry(), proxy);
+                final ImageEntry entry=entries[i];
+                if (entry instanceof ProxyEntry)
+                {
+                    if (proxies==null) proxies=new HashMap<ImageEntry,ProxyEntry>();
+                    final ProxyEntry proxy = (ProxyEntry) entry;
+                    proxies.put(proxy.getEntry(), proxy);
+                }
             }
         }
         return proxies;

@@ -37,6 +37,11 @@ package fr.ird.sql;
 public interface Entry
 {
     /**
+     * Retourne un numéro unique identifiant cette entrée.
+     */
+    public abstract int getID();
+
+    /**
      * Retourne le nom de cette entrée. Ce nom peut être arbitraire.
      * Dans le cas d'une image (par exemple), il s'agira le plus souvent
      * du nom du fichier de l'image.
@@ -44,7 +49,10 @@ public interface Entry
     public abstract String getName();
 
     /**
-     * Retourne un numéro unique identifiant cette entrée.
+     * Retourne des remarques s'appliquant à cette entrée,
+     * ou <code>null</code> s'il n'y en a pas. Ces remarques
+     * sont souvent une chaîne descriptives qui peuvent être
+     * affichées comme "tooltip text".
      */
-    public abstract int getID();
+    public abstract String getRemarks();
 }

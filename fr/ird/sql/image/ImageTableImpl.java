@@ -602,44 +602,17 @@ final class ImageTableImpl extends Table implements ImageTable
      * @return Liste d'images qui interceptent la plage de temps et la région géographique d'intérêt.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized List<ImageEntry> getEntries() throws SQLException
+    public List<ImageEntry> getEntries() throws SQLException
     {
-        final ResultSet          result = statement.executeQuery();
-        final List<ImageEntryImpl> list = new ArrayList<ImageEntryImpl>();
-  loop: while (result.next())
-        {
-            final ImageEntryImpl newEntry=new ImageEntryImpl(this, result);
-            for (int i=list.size(); --i>=0;)
-            {
-                final ImageEntryImpl olderEntry = list.get(i);
-                if (!olderEntry.compare(newEntry)) break;
-                final ImageEntryImpl lowestResolution=olderEntry.getLowestResolution(newEntry);
-                if (lowestResolution!=null)
-                {
-                    if (lowestResolution.hasEnoughResolution(resolution, coordinateSystem))
-                    {
-                        list.set(i, lowestResolution);
-                    }
-                    else if (lowestResolution == olderEntry)
-                    {
-                        list.set(i, newEntry);
-                    }
-                    continue loop;
-                }
-            }
-            list.add(newEntry);
-        }
-        result.close();
         /*
          * On construit un tableau d'ImageEntry ET NON d'ImageEntryImpl
          * parce que certains utilisateurs (par exemple ImageTableModel)
          * voudront remplacer certains éléments de ce tableau sans que
          * ça ne lance un {@link java.lang.ArrayStoreException}.
          */
-        final ImageEntry[] entries = list.toArray(new ImageEntry[list.size()]);
-        ImageEntryImpl.intern(entries);
-        log("getEntries", Level.FINE, ResourceKeys.FOUND_IMAGES_$1, new Integer(entries.length));
-        return Arrays.asList(entries);
+        final List<ImageEntry> entries = new ArrayList<ImageEntry>();
+        getRanges(null, null, null, entries);
+        return entries;
     }
 
     /**
@@ -746,16 +719,93 @@ final class ImageTableImpl extends Table implements ImageTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    public synchronized void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException
+    public void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException
     {
-        long lastEndTime = Long.MIN_VALUE;
-        final ResultSet result = statement.executeQuery();
-        while (result.next())
+        getRanges(x, y, t, null);
+    }
+
+    /**
+     * Obtient les plages de temps et de coordonnées des images, ainsi que la
+     * liste des entrées correspondantes. Cette méthode peut être vue comme une
+     * combinaison des méthodes {@link #getRanges(RangeSet,RangeSet,RangeSet)}
+     * et {@link #getEntries()}.
+     *
+     * @param x Objet dans lequel ajouter les plages de longitudes, ou <code>null</code> pour ne pas extraire ces plages.
+     * @param y Objet dans lequel ajouter les plages de latitudes,  ou <code>null</code> pour ne pas extraire ces plages.
+     * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
+     * @param entryList Liste dans laquelle ajouter les images qui auront été
+     *        lues, ou <code>null</code> pour ne pas construire cette liste.
+     *
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public synchronized void getRanges(final RangeSet x, final RangeSet y, final RangeSet t, final List<ImageEntry> entryList) throws SQLException
+    {
+        ImageEntryImpl newEntry = null;
+        long        lastEndTime = Long.MIN_VALUE;
+        final int    startIndex = (entryList!=null) ? entryList.size() : 0;
+        final ResultSet  result = statement.executeQuery();
+  loop: while (result.next())
         {
+            /*
+             * Add the new entry to the list.  If many entries have the same
+             * spatio-temporal coordinates but different resolution, then an
+             * entry with a resolution close to the requested resolution will
+             * be selected.
+             */
+            if (entryList!=null)
+            {
+                newEntry = new ImageEntryImpl(this, result);
+                for (int i=entryList.size(); --i>=0;)
+                {
+                    final ImageEntryImpl olderEntry = (ImageEntryImpl) entryList.get(i);
+                    if (!olderEntry.compare(newEntry))
+                    {
+                        // Entry not equals according the "ORDER BY" clause.
+                        break;
+                    }
+                    final ImageEntryImpl lowestResolution = olderEntry.getLowestResolution(newEntry);
+                    if (lowestResolution!=null)
+                    {
+                        // Two entries has the same spatio-temporal coordinates.
+                        if (lowestResolution.hasEnoughResolution(resolution, coordinateSystem))
+                        {
+                            // The entry with the lowest resolution is enough.
+                            entryList.set(i, lowestResolution);
+                        }
+                        else if (lowestResolution == olderEntry)
+                        {
+                            // No entry has enough resolution;
+                            // keep the one with the finest resolution.
+                            entryList.set(i, newEntry);
+                        }
+                        continue loop;
+                    }
+                }
+                entryList.add(newEntry);
+            }
+            /*
+             * Compute ranges if it has been requested.  If we have previously
+             * constructed an ImageEntry, fetch the data from this entry since
+             * some JDBC driver doesn't allow to get data from the same column
+             * twice. Furthermore, this is faster...       The "continue loop"
+             * statement above may have hidden some rows, but since those rows
+             * have the same spatio-temporal coordinates than one visible row,
+             * it should not have any effect except improving performance.
+             */
             if (t!=null)
             {
-                final Date startTime = getTimestamp(START_TIME, result);
-                final Date   endTime = getTimestamp(  END_TIME, result);
+                final Date startTime;
+                final Date   endTime;
+                if (newEntry!=null)
+                {
+                    startTime = newEntry.getStartTime();
+                      endTime = newEntry.getEndTime();
+                }
+                else
+                {
+                    startTime = getTimestamp(START_TIME, result);
+                      endTime = getTimestamp(  END_TIME, result);
+                }
                 if (startTime!=null && endTime!=null)
                 {
                     final long    period = Math.round(result.getDouble(PERIOD)*DAY); // 0 si le champ est blanc.
@@ -772,10 +822,47 @@ final class ImageTableImpl extends Table implements ImageTable
                     t.add(startTime, endTime);
                 }
             }
-            if (x!=null) x.add(result.getFloat(XMIN), result.getFloat(XMAX));
-            if (y!=null) y.add(result.getFloat(YMIN), result.getFloat(YMAX));
+            if (x!=null)
+            {
+                final float xmin;
+                final float xmax;
+                if (newEntry!=null)
+                {
+                    xmin = newEntry.xmin;
+                    xmax = newEntry.xmax;
+                }
+                else
+                {
+                    xmin = result.getFloat(XMIN);
+                    xmax = result.getFloat(XMAX);
+                }
+                x.add(xmin, xmax);
+            }
+            if (y!=null)
+            {
+                final float ymin;
+                final float ymax;
+                if (newEntry!=null)
+                {
+                    ymin = newEntry.ymin;
+                    ymax = newEntry.ymax;
+                }
+                else
+                {
+                    ymin = result.getFloat(YMIN);
+                    ymax = result.getFloat(YMAX);
+                }
+                y.add(ymin, ymax);
+            }
         }
         result.close();
+        if (entryList!=null)
+        {
+            final List<ImageEntry> newEntries = entryList.subList(startIndex, entryList.size());
+            final int size = newEntries.size();
+            ImageEntryImpl.intern(newEntries.toArray(new ImageEntry[size]));
+            log("getEntries", Level.FINE, ResourceKeys.FOUND_IMAGES_$1, new Integer(size));
+        }
     }
 
     /**

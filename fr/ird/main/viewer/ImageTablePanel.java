@@ -77,6 +77,7 @@ import java.awt.datatransfer.ClipboardOwner;
 
 // Collections
 import java.util.Map;
+import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -459,6 +460,14 @@ final class ImageTablePanel extends ImagePanel
             selection[i]=table.getEntryAt(rows[i]);
         return selection;
     }
+
+    /**
+     * Remplace tous les enregistrements courants par ceux de la liste
+     * spécifiée. Cette méthode peut être appelée de n'importe quel thread
+     * (pas nécessairement celui de <i>Swing</i>).
+     */
+    public void setEntries(final List<ImageEntry> entries)
+    {this.table.setEntries(entries);}
 
     /**
      * Remplace tous les enregistrements courants par ceux de la table <code>table</code>.

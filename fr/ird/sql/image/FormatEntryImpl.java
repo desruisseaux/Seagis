@@ -177,16 +177,22 @@ final class FormatEntryImpl implements FormatEntry, Serializable
     }
 
     /**
+     * Retourne un numéro unique identifiant cette entrée.
+     */
+    public int getID()
+    {return ID;}
+
+    /**
      * Retourne le nom de cette entrée.
      */
     public String getName()
     {return name;}
 
     /**
-     * Retourne un numéro unique identifiant cette entrée.
+     * Retourne la description de cette entrée.
      */
-    public int getID()
-    {return ID;}
+    public String getRemarks()
+    {return null;}
 
     /**
      * Retourne les listes de catégories {@link CategoryList} qui permettent
@@ -399,6 +405,15 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                     if (rawParam.getStreamImageSize()==null)
                     {
                         rawParam.setStreamImageSize(expected);
+                    }
+                    if (geophysics && rawParam.getDestinationType()==null)
+                    {
+                        final int dataType = rawParam.getStreamDataType();
+                        if (dataType != DataBuffer.TYPE_FLOAT &&
+                            dataType != DataBuffer.TYPE_DOUBLE)
+                        {
+                            rawParam.setDestinationType(DataBuffer.TYPE_FLOAT);
+                        }
                     }
                 }
                 else

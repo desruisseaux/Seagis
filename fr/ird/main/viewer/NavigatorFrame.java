@@ -28,6 +28,7 @@ package fr.ird.main.viewer;
 // Image et base de données
 import java.sql.SQLException;
 import fr.ird.sql.image.ImageTable;
+import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.image.SeriesEntry;
 
 // Interface utilisateur
@@ -53,7 +54,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellRenderer;
 
 // Divers
+import java.util.Map;
+import java.util.List;
 import java.util.TimeZone;
+
 import net.seas.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
@@ -127,6 +131,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         }
         else series = new SeriesEntry[0];
         table = database.getImageTable(series.length!=0 ? series[0] : null);
+        configureTable();
 
         final Container panel=getContentPane();
         panel.setLayout(new BorderLayout());
@@ -139,7 +144,6 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         final ImageMosaicPanel mosaic = new ImageMosaicPanel(table, statusBar, readers, ctrl);
         tabs.addTab(Resources.format(ResourceKeys.MOSAIC), /*icon, */ mosaic);
 
-        configureTable();
         addSeries(database, series);
         setFrameIcon(getIcon("org/javalobby/icons/20x20/Sheet.gif"));
     }
@@ -200,9 +204,12 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     {
         if (chooser!=null)
         {
-            table.setTimeRange          (chooser.getStartTime(), chooser.getEndTime());
-            table.setGeographicArea     (chooser.getGeographicArea());
-            table.setPreferredResolution(chooser.getPreferredResolution());
+            synchronized (table)
+            {
+                table.setTimeRange          (chooser.getStartTime(), chooser.getEndTime());
+                table.setGeographicArea     (chooser.getGeographicArea());
+                table.setPreferredResolution(chooser.getPreferredResolution());
+            }
         }
     }
 
@@ -228,18 +235,29 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         //       de la position des 'synchronized(table)'.
         synchronized (table)
         {
+            Map<SeriesEntry,List<ImageEntry>> entries = null;
+            final ImageMosaicPanel mosaic = getMosaicPanel();
+            if (mosaic!=null)
+            {
+                entries = mosaic.refresh(table);
+            }
             for (int i=0; i<tabs.length; i++)
             {
                 if (tabs[i] instanceof ImageTablePanel)
                 {
                     final ImageTablePanel panel = (ImageTablePanel) tabs[i];
-                    table.setSeries(panel.getSeries());
+                    final SeriesEntry    series = panel.getSeries();
+                    if (entries!=null)
+                    {
+                        final List<ImageEntry> images = entries.get(series);
+                        if (images!=null)
+                        {
+                            panel.setEntries(images);
+                            continue;
+                        }
+                    }
+                    table.setSeries(series);
                     panel.setEntries(table);
-                }
-                else if (tabs[i] instanceof ImageMosaicPanel)
-                {
-                    final ImageMosaicPanel panel = (ImageMosaicPanel) tabs[i];
-                    panel.refresh();
                 }
             }
         }
@@ -255,7 +273,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      */
     private void addSeries(final DataBase database, final SeriesEntry[] series) throws SQLException
     {
-        for (int j=0; j<series.length; j++)
+  loop: for (int j=0; j<series.length; j++)
         {
             final SeriesEntry série=series[j];
             final JTabbedPane tabs=this.tabs;
@@ -265,17 +283,24 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                 final Component c=cmps[i];
                 if (c instanceof ImageTablePanel)
                     if (série.equals(((ImageTablePanel) c).getSeries()))
-                        return;
+                        continue loop;
             }
-            final String           name;
+            final String           name   = série.getName();
+            final ImageMosaicPanel mosaic = getMosaicPanel();
             final ImageTablePanel  panel;
-            final ImageMosaicPanel mosaic;
             final ImageTableModel  model;
             synchronized (table)
             {
                 table.setSeries(série);
-                name  = série.getName();
-                model = new ImageTableModel(table);
+                if (mosaic!=null)
+                {
+                    model = new ImageTableModel(série);
+                    model.setEntries(mosaic.addSeries(table));
+                }
+                else
+                {
+                    model = new ImageTableModel(table);
+                }
             }
             // Do not invokes following code inside the
             // synchronized block: it cause deadlock.
@@ -285,11 +310,6 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                 public void run()
                 {tabs.addTab(name, panel);}
             });
-            mosaic = getMosaicPanel();
-            if (mosaic!=null)
-            {
-                mosaic.addSeries(série);
-            }
         }
     }
 
@@ -415,6 +435,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                 final SeriesEntry[] series = chooser.showSeriesDialog(this, resources.getString(ResourceKeys.ADD_SERIES));
                 if (series!=null)
                 {
+                    configureTable();
                     final DataBase database = getDataBase();
                     task=new Task(resources.getString(ResourceKeys.ADD_SERIES))
                     {

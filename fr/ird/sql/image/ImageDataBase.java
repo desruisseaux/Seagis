@@ -75,6 +75,7 @@ public class ImageDataBase extends DataBase
     static
     {
         final IIORegistry registry = IIORegistry.getDefaultInstance();
+        registry.registerServiceProvider(new fr.ird.io.image.MSLA_RAW());
         registry.registerServiceProvider(new fr.ird.io.image.Aviso_ASC());
         registry.registerServiceProvider(new fr.ird.io.image.USRelaxed_ASC());
         registry.registerServiceProvider(new net.seagis.io.image.RawBinaryImageReader.Spi());

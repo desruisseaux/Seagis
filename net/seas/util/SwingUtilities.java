@@ -280,14 +280,17 @@ public final class SwingUtilities
     }
 
     /**
-     * Causes runnable to have its run method called in the dispatch thread of the event queue.
-     * This will happen after all pending events are processed. The call blocks until this has
-     * happened. This method will throw an {@link java.lang.Error} if called from the event
-     * dispatcher thread.
+     * Causes runnable to have its run method called in the dispatch thread of
+     * the event queue. This will happen after all pending events are processed.
+     * The call blocks until this has happened.
      */
     public static void invokeAndWait(final Runnable runnable)
     {
-        try
+        if (EventQueue.isDispatchThread())
+        {
+            runnable.run();
+        }
+        else try
         {
             EventQueue.invokeAndWait(runnable);
         }

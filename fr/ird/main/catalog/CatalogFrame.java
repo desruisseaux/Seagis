@@ -25,13 +25,22 @@
  */
 package fr.ird.main.catalog;
 
-// Graphics and geometry
+// Graphics, geometry and AWT
 import java.awt.Font;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
+
+// User interface
+import javax.swing.JTree;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.BorderFactory;
+import javax.swing.ToolTipManager;
 import javax.swing.SwingConstants;
+import javax.swing.tree.TreeModel;
 
 // Time
 import java.util.Date;
@@ -95,22 +104,42 @@ public class CatalogFrame extends InternalFrame
 //  private final CoordinateChooser chooser = new CoordinateChooser();
 
     /**
+     * The tree of all series, format and their bands.
+     */
+    private final TreeModel tree;
+
+    /**
      * Construct a catalog frame.
      *
-     * @param  database The database to connect to.
+     * @param  databases The database to connect to.
      * @param  owner Composante propriétaire (pour l'affichage d'une boîte des progrès).
      * @throws SQLException If access to the database failed.
      */
-    public CatalogFrame(final DataBase database, final Component owner) throws SQLException
+    public CatalogFrame(final DataBase databases, final Component owner) throws SQLException
     {
         super(Resources.format(ResourceKeys.IMAGES_CATALOG));
-        this.database = database.getImageDataBase();
+        final SeriesTable series;
+
+        database = databases.getImageDataBase();
+        series   = database.getSeriesTable();
+        tree     = series.getTree(SeriesTable.CATEGORY_LEAF);
+        series.close();
+
         times.setFont(new Font("SansSerif", Font.BOLD, 12));
         times.setLegendVisible(true);
-        final Container pane = getContentPane();
-        pane.setLayout(new BorderLayout());
-        pane.add(times,   BorderLayout.NORTH);
-//      pane.add(chooser, BorderLayout.WEST);
+
+        final JTree        treeView = new JTree(tree);
+        final JComponent scrollView = new JScrollPane(treeView);
+        scrollView.setBorder(BorderFactory.createCompoundBorder(
+                             BorderFactory.createEmptyBorder(/*top*/12, /*left*/12, /*bottom*/12, /*right*/12),
+                             scrollView.getBorder()));
+
+        final Container       pane = getContentPane();
+        final GridBagConstraints c = new GridBagConstraints();
+        pane.setLayout(new GridBagLayout());
+        c.gridx=0; c.weightx=1; c.weighty=1; c.fill=c.BOTH;
+        c.gridy=0; pane.add(times,      c);
+        c.gridy=1; pane.add(scrollView, c);
         update(owner);
     }
 
@@ -158,6 +187,7 @@ public class CatalogFrame extends InternalFrame
             progress.exceptionOccurred(exception);
             progress.complete();
         }
+        times.invalidate();
     }
 
     /**

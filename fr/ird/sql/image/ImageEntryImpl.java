@@ -153,10 +153,10 @@ final class ImageEntryImpl implements ImageEntry, Serializable
     /** Nom du fichier.                  */ private final String filename;
     /** Date du début de l'acquisition.  */ private final   long startTime;
     /** Date de la fin de l'acquisition. */ private final   long endTime;
-    /** Longitude minimale.              */ private final  float xmin;
-    /** Longitude maximale.              */ private final  float xmax;
-    /** Latitude minimale.               */ private final  float ymin;
-    /** Latitude maximale.               */ private final  float ymax;
+    /** Longitude minimale.              */         final  float xmin;
+    /** Longitude maximale.              */         final  float xmax;
+    /** Latitude minimale.               */         final  float ymin;
+    /** Latitude maximale.               */         final  float ymax;
     /** Nombre de pixels en largeur.     */ private final  short width;
     /** Nombre de pixels en hauteur.     */ private final  short height;
 
@@ -174,7 +174,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * afin d'éviter de charger inutilement une autre fois l'image si elle est déjà
      * en mémoire.
      */
-    private transient Reference gridCoverage;
+    private transient Reference<GridCoverage> gridCoverage;
 
     /**
      * Référence molle vers l'image {@link RenderedImage} qui a été retournée lors
@@ -182,7 +182,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * afin d'éviter de charger inutilement une autre fois l'image si elle est déjà
      * en mémoire.
      */
-    private transient Reference renderedImage;
+    private transient Reference<RenderedImage> renderedImage;
 
     /**
      * Construit une entré contenant des informations sur une image.
@@ -242,6 +242,13 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      */
     public String getName()
     {return filename;}
+
+    /**
+     * Retourne <code>null</code>, étant donné que les images ne sont pas
+     * accompagnées de description.
+     */
+    public String getRemarks()
+    {return null;}
 
     /**
      * Retourne le nom complet du fichier
@@ -318,11 +325,21 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * si nécessaire.
      */
     public Range getTimeRange()
-    {
-        return new Range(Date.class,
-                         (startTime!=Long.MIN_VALUE) ? new Date(startTime) : null, true,
-                         (  endTime!=Long.MAX_VALUE) ? new Date(  endTime) : null, false);
-    }
+    {return new Range(Date.class, getStartTime(), true, getEndTime(), false);}
+
+    /**
+     * Retourne la date de début d'échantillonage de l'image,
+     * ou <code>null</code> si elle n'est pas connue.
+     */
+    public Date getStartTime()
+    {return (startTime!=Long.MIN_VALUE) ? new Date(startTime) : null;}
+
+    /**
+     * Retourne la date de fin d'échantillonage de l'image,
+     * ou <code>null</code> si elle n'est pas connue.
+     */
+    public Date getEndTime()
+    {return (endTime!=Long.MAX_VALUE) ? new Date(endTime) : null;}
 
     /**
      * Retourne les listes de catégories pour toutes les bandes de l'image. Les objets
@@ -397,8 +414,11 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          */
         if (gridCoverage!=null)
         {
-            final GridCoverage image = (GridCoverage) gridCoverage.get();
-            if (image!=null) return image;
+            final GridCoverage image = gridCoverage.get();
+            if (image!=null)
+            {
+                return image;
+            }
         }
         gridCoverage=null;
         /*
@@ -509,8 +529,11 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         RenderedImage image=null;
         if (renderedImage!=null)
         {
-            image = (RenderedImage) renderedImage.get();
-            if (image==null) renderedImage=null;
+            image = renderedImage.get();
+            if (image==null)
+            {
+                renderedImage=null;
+            }
         }
         /*
          * A ce stade, nous disposons maintenant des coordonnées en pixels
@@ -562,8 +585,8 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * résultat dans une cache et retourne le résultat.
          */
         coverage  = processor.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
-        renderedImage = new WeakReference(image);
-        gridCoverage  = new SoftReference(coverage);
+        renderedImage = new WeakReference<RenderedImage>(image);
+        gridCoverage  = new SoftReference<GridCoverage>(coverage);
         return coverage;
     }
 

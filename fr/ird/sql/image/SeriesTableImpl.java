@@ -68,12 +68,12 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son nom.
      */
-    static final String SQL_SELECT = "SELECT ID, name FROM "+SERIES+" WHERE name LIKE ?";
+    static final String SQL_SELECT = "SELECT ID, name, description FROM "+SERIES+" WHERE name LIKE ?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son numéro ID.
      */
-    static final String SQL_SELECT_BY_ID = "SELECT ID, name FROM "+SERIES+" WHERE ID=?";
+    static final String SQL_SELECT_BY_ID = "SELECT ID, name, description FROM "+SERIES+" WHERE ID=?";
 
     /**
      * Requête SQL pour compter le nombre
@@ -88,38 +88,81 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes [@link #GROUPS_ID}, [@link #GROUPS_NAME} et compagnie.
      */
-    static final String SQL_TREE = "SELECT "+  /*[01] GROUPS_ID      */     GROUPS+".ID, "        +
-                                               /*[02] GROUPS_NAME    */     GROUPS+".name, "      +
-                                               /*[03] SERIES_ID      */     GROUPS+".series, "    +
-                                               /*[04] SERIES_NAME    */     SERIES+".name, "      +
-                                               /*[05] OPERATION_ID   */     SERIES+".operation, " +
-                                               /*[06] OPERATION_NAME */ OPERATIONS+".name, "      +
-                                               /*[07] PARAMETER_ID   */     SERIES+".parameter, " +
-                                               /*[08] PARAMETER_NAME */ PARAMETERS+".name, "      +
-                                               /*[09] GROUPS_FORMAT  */     GROUPS+".format\n"    +
-                                   "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
-                                               OPERATIONS + ", " +
-                                               SERIES     + ", " +
-                                               GROUPS     + "\n" +
-                                   "WHERE "  + PARAMETERS + ".ID=" + SERIES     + ".parameter AND " +
-                                               OPERATIONS + ".ID=" + SERIES     + ".operation AND " +
-                                               SERIES     + ".ID=" + GROUPS     + ".series    AND " +
-                                               GROUPS     + ".visible=" + TRUE  + "\n"              +
-                                   "ORDER BY "+PARAMETERS+".name, "+OPERATIONS+".name, "+SERIES+".name, "+GROUPS+".name";
+    static final String SQL_TREE =
+           "SELECT "+  /*[01] GROUPS_ID         */     GROUPS+".ID, "          +
+                       /*[02] GROUPS_NAME       */     GROUPS+".name, "        +
+                       /*[03] GROUPS_REMARKS    */     GROUPS+".description, " +
+                       /*[04] SERIES_ID         */     GROUPS+".series, "      +
+                       /*[05] SERIES_NAME       */     SERIES+".name, "        +
+                       /*[06] SERIES_REMARKS    */     SERIES+".description, " +
+                       /*[07] OPERATION_ID      */     SERIES+".operation, "   +
+                       /*[08] OPERATION_NAME    */ OPERATIONS+".name, "        +
+                       /*[09] OPERATION_REMARKS */ OPERATIONS+".description, " +
+                       /*[10] PARAMETER_ID      */     SERIES+".parameter, "   +
+                       /*[11] PARAMETER_NAME    */ PARAMETERS+".name, "        +
+                       /*[12] PARAMETER_REMARKS */ PARAMETERS+".description, " +
+                       /*[13] GROUPS_FORMAT     */     GROUPS+".format\n"      +
+           "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
+                       OPERATIONS + ", " +
+                       SERIES     + ", " +
+                       GROUPS     + "\n" +
+           "WHERE "  + PARAMETERS + ".ID=" + SERIES     + ".parameter AND " +
+                       OPERATIONS + ".ID=" + SERIES     + ".operation AND " +
+                       SERIES     + ".ID=" + GROUPS     + ".series    AND " +
+                       GROUPS     + ".visible=" + TRUE  + "\n"              +
+           "ORDER BY "+PARAMETERS+".name, "+OPERATIONS+".name, "+SERIES+".name, "+GROUPS+".name";
 
 
-    /** Numéro de colonne. */ private static final int GROUPS_ID      = 1;
-    /** Numéro de colonne. */ private static final int GROUPS_NAME    = 2;
-    /** Numéro de colonne. */ private static final int SERIES_ID      = 3;
-    /** Numéro de colonne. */ private static final int SERIES_NAME    = 4;
-    /** Numéro de colonne. */ private static final int OPERATION_ID   = 5;
-    /** Numéro de colonne. */ private static final int OPERATION_NAME = 6;
-    /** Numéro de colonne. */ private static final int PARAMETER_ID   = 7;
-    /** Numéro de colonne. */ private static final int PARAMETER_NAME = 8;
-    /** Numéro de colonne. */ private static final int GROUPS_FORMAT  = 9;
+    /** Numéro de colonne. */ private static final int GROUPS_ID         =  1;
+    /** Numéro de colonne. */ private static final int GROUPS_NAME       =  2;
+    /** Numéro de colonne. */ private static final int GROUPS_REMARKS    =  3;
+    /** Numéro de colonne. */ private static final int SERIES_ID         =  4;
+    /** Numéro de colonne. */ private static final int SERIES_NAME       =  5;
+    /** Numéro de colonne. */ private static final int SERIES_REMARKS    =  6;
+    /** Numéro de colonne. */ private static final int OPERATION_ID      =  7;
+    /** Numéro de colonne. */ private static final int OPERATION_NAME    =  8;
+    /** Numéro de colonne. */ private static final int OPERATION_REMARKS =  9;
+    /** Numéro de colonne. */ private static final int PARAMETER_ID      = 10;
+    /** Numéro de colonne. */ private static final int PARAMETER_NAME    = 11;
+    /** Numéro de colonne. */ private static final int PARAMETER_REMARKS = 12;
+    /** Numéro de colonne. */ private static final int GROUPS_FORMAT     = 13;
 
     /** Numéro d'argument. */ private static final int ARG_ID     = 1;
     /** Numéro d'argument. */ private static final int ARG_NAME   = 1;
+
+    /**
+     * Représente une branche de l'arborescence. Cette
+     * classe interne est utilisée par {@link #getTree}.
+     */
+    private static final class Branch
+    {
+        /** Nom de la table.                */ final String table;
+        /** Colonne du champ ID.            */ final int    ID;
+        /** Colonne du champ 'name'.        */ final int    name;
+        /** Colonne du champ 'description'. */ final int    remarks;
+
+        /** Construit une branche. */
+        Branch(String table, int ID, int name, int remarks)
+        {
+            this.table   = table;
+            this.ID      = ID;
+            this.name    = name;
+            this.remarks = remarks;
+        }
+    }
+
+    /**
+     * Liste des branches à inclure dans l'arborescence, dans l'ordre.
+     * Cette liste est utilisée par {@link #getTree} pour construire
+     * l'arborescence.
+     */
+    private static final Branch[] TREE_STRUCTURE = new Branch[]
+    {
+        new Branch(PARAMETERS, PARAMETER_ID, PARAMETER_NAME, PARAMETER_REMARKS),
+        new Branch(OPERATIONS, OPERATION_ID, OPERATION_NAME, OPERATION_REMARKS),
+        new Branch(SERIES,     SERIES_ID,    SERIES_NAME,    SERIES_REMARKS   ),
+        new Branch(GROUPS,     GROUPS_ID,    GROUPS_NAME,    GROUPS_REMARKS   )
+    };
 
     /**
      * Connection avec la base de données.
@@ -204,9 +247,10 @@ final class SeriesTableImpl extends Table implements SeriesTable
         SeriesReference entry = null;
         if (resultSet.next())
         {
-            final int ID      = resultSet.getInt   (1);
-            final String name = resultSet.getString(2);
-            entry=new SeriesReference(SERIES, name, ID);
+            final int ID         = resultSet.getInt   (1);
+            final String name    = resultSet.getString(2);
+            final String remarks = resultSet.getString(3);
+            entry=new SeriesReference(SERIES, name, ID, remarks);
             while (resultSet.next())
             {
                 if (resultSet.getInt(1)!=ID || !name.equals(resultSet.getString(2)))
@@ -235,7 +279,8 @@ final class SeriesTableImpl extends Table implements SeriesTable
         {
             final int                ID = resultSet.getInt   (SERIES_ID);
             final String           name = resultSet.getString(SERIES_NAME);
-            final SeriesReference entry = new SeriesReference(SERIES, name, ID);
+            final String        remarks = resultSet.getString(SERIES_REMARKS);
+            final SeriesReference entry = new SeriesReference(SERIES, name, ID, remarks);
             if (!entry.equals(last)) list.add(last=entry);
         }
         resultSet.close();
@@ -259,13 +304,10 @@ final class SeriesTableImpl extends Table implements SeriesTable
         final Locale       locale = null;
         final Statement statement = connection.createStatement();
         final ResultSet resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
-        final int    SERIES_INDEX = 2; // Index des séries dans les tableaux ci-dessous.
-        final int[]        colIDs = new int[]    {PARAMETER_ID,   OPERATION_ID,   SERIES_ID,   GROUPS_ID  }; // Doit être décroissant!
-        final int[]      colNames = new int[]    {PARAMETER_NAME, OPERATION_NAME, SERIES_NAME, GROUPS_NAME}; // Doit être décroissant!
-        final String[] tableNames = new String[] {PARAMETERS,     OPERATIONS,     SERIES,      GROUPS     };
-        final String[]      names = new String[colIDs.length];
-        final int[]           ids = new int   [colIDs.length];
-        final int     branchCount = ids.length - (leafType>=GROUP_LEAF ? 0 : 1);
+        final int     branchCount = TREE_STRUCTURE.length - (leafType>=GROUP_LEAF ? 0 : 1);
+        final int[]           ids = new int   [branchCount];
+        final String[]      names = new String[branchCount];
+        final String[]    remarks = new String[branchCount];
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode(Resources.getResources(locale).getString(ResourceKeys.SERIES));
         /*
          * Balaye la liste de tous les groupes, et place ces groupes
@@ -278,10 +320,12 @@ final class SeriesTableImpl extends Table implements SeriesTable
              * trouvées dans l'enregistrement courant.  Ca comprend les
              * noms et ID des groupes, séries, opérations et paramètres.
              */
-            for (int i=colIDs.length; --i>=0;)
+            for (int i=branchCount; --i>=0;)
             {
-                ids  [i] = resultSet.getInt   (colIDs  [i]);
-                names[i] = resultSet.getString(colNames[i]);
+                final Branch branch = TREE_STRUCTURE[i];
+                ids    [i] = resultSet.getInt   (branch.ID     );
+                names  [i] = resultSet.getString(branch.name   );
+                remarks[i] = resultSet.getString(branch.remarks);
             }
             DefaultMutableTreeNode branch=root;
       scan: for (int i=0; i<branchCount; i++)
@@ -303,11 +347,15 @@ final class SeriesTableImpl extends Table implements SeriesTable
                         continue scan;
                     }
                 }
+                final String tableName = TREE_STRUCTURE[i].table;
                 final Reference ref;
-                switch (i)
+                if (tableName == SERIES)
                 {
-                    case SERIES_INDEX: ref=new SeriesReference(tableNames[i], names[i], ID); break;
-                    default:           ref=new       Reference(tableNames[i], names[i], ID); break;
+                    ref=new SeriesReference(tableName, names[i], ID, remarks[i]);
+                }
+                else
+                {
+                    ref=new Reference(tableName, names[i], ID, remarks[i]);
                 }
                 /*
                  * Construit le noeud. Si les catégories  ont
@@ -445,6 +493,11 @@ final class SeriesTableImpl extends Table implements SeriesTable
         public final String name;
 
         /**
+         * Remarques s'appliquant à cette entrée.
+         */
+        public final String remarks;
+
+        /**
          * Numéro de référence. Ce numéro provient du champ "ID" de la table {@link #table}.
          * Il sert à obtenir l'enregistrement référencé avec une instruction SQL comme suit:
          *
@@ -459,15 +512,17 @@ final class SeriesTableImpl extends Table implements SeriesTable
          * L'enregistrement référencé peut être un format, un groupe, une série, un paramètre,
          * une opération, etc.
          *
-         * @param table Nom de la table qui contient l'enregistrement référencé.
-         * @param name  Nom de la référence. Ce nom provient du champ "name" de la table <code>table</code>.
-         * @param ID    Numéro de référence. Ce numéro provient du champ "ID" de la table <code>table</code>.
+         * @param table   Nom de la table qui contient l'enregistrement référencé.
+         * @param name    Nom de la référence. Ce nom provient du champ "name" de la table <code>table</code>.
+         * @param ID      Numéro de référence. Ce numéro provient du champ "ID" de la table <code>table</code>.
+         * @param remarks Remarques s'appliquant à cette références.
          */
-        protected Reference(final String table, final String name, final int ID)
+        protected Reference(final String table, final String name, final int ID, final String remarks)
         {
-            this.table = table.trim();
-            this.name  = name.trim();
-            this.ID    = ID;
+            this.table   = table.trim();
+            this.name    = name.trim();
+            this.remarks = remarks; // May be null
+            this.ID      = ID;
         }
 
         /**
@@ -482,6 +537,15 @@ final class SeriesTableImpl extends Table implements SeriesTable
          */
         public String getName()
         {return name;}
+
+        /**
+         * Retourne des remarques s'appliquant à cette entrée,
+         * ou <code>null</code> s'il n'y en a pas. Ces remarques
+         * sont souvent une chaîne descriptives qui peuvent être
+         * affichées comme "tooltip text".
+         */
+        public String getRemarks()
+        {return remarks;}
 
         /**
          * Retourne le nom de l'enregistrement référencé, comme {@link #getName}. Cette
@@ -527,7 +591,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     private static final class SeriesReference extends Reference implements SeriesEntry
     {
-        protected SeriesReference(final String table, final String name, final int ID)
-        {super(table, name, ID);}
+        protected SeriesReference(final String table, final String name, final int ID, final String remarks)
+        {super(table, name, ID, remarks);}
     }
 }

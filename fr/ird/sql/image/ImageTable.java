@@ -279,4 +279,20 @@ public interface ImageTable extends Table
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
     public abstract void getRanges(final RangeSet x, final RangeSet y, final RangeSet t) throws SQLException;
+
+    /**
+     * Obtient les plages de temps et de coordonnées des images, ainsi que la
+     * liste des entrées correspondantes. Cette méthode peut être vue comme une
+     * combinaison des méthodes {@link #getRanges(RangeSet,RangeSet,RangeSet)}
+     * et {@link #getEntries()}.
+     *
+     * @param x Objet dans lequel ajouter les plages de longitudes, ou <code>null</code> pour ne pas extraire ces plages.
+     * @param y Objet dans lequel ajouter les plages de latitudes,  ou <code>null</code> pour ne pas extraire ces plages.
+     * @param t Objet dans lequel ajouter les plages de temps,      ou <code>null</code> pour ne pas extraire ces plages.
+     * @param entryList Liste dans laquelle ajouter les images qui auront été
+     *        lues, ou <code>null</code> pour ne pas construire cette liste.
+     *
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public void getRanges(final RangeSet x, final RangeSet y, final RangeSet t, final List<ImageEntry> entryList) throws SQLException;
 }

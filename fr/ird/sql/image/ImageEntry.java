@@ -202,6 +202,7 @@ public interface ImageEntry extends Entry
         /** Redirige vers {@link #entry}.  */ public int              getID()               {return entry.getID();}
         /** Redirige vers {@link #entry}.  */ public SeriesEntry      getSeries()           {return entry.getSeries();}
         /** Redirige vers {@link #entry}.  */ public String           getName()             {return entry.getName();}
+        /** Redirige vers {@link #entry}.  */ public String           getRemarks()          {return entry.getRemarks();}
         /** Redirige vers {@link #entry}.  */ public File             getFile()             {return entry.getFile();}
         /** Redirige vers {@link #entry}.  */ public GridGeometry     getGridGeometry()     {return entry.getGridGeometry();}
         /** Redirige vers {@link #entry}.  */ public CoordinateSystem getCoordinateSystem() {return entry.getCoordinateSystem();}

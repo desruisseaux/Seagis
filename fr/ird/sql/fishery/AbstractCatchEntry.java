@@ -98,6 +98,16 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
     }
 
     /**
+     * Retourne un numéro identifiant cette capture. Ce numéro doit être
+     * unique pour une même base de données  (il peut être nécessaire de
+     * redéfinir cette méthode pour ça,  en particulier pour les données
+     * des senneurs  qui  peuvent combiner le numéro de la marée avec un
+     * numéro de la capture dans cette marée).
+     */
+    public int getID()
+    {return ID;}
+
+    /**
      * Retourne un nom par défaut pour cette entrée. L'implémentation par défaut
      * retourne le numéro {@link #ID}. Les classes dérivées pourraient redéfinir
      * cette méthode pour retourner par exemple le numéro de marée suivit du
@@ -107,14 +117,10 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
     {return String.valueOf(ID);}
 
     /**
-     * Retourne un numéro identifiant cette capture. Ce numéro doit être
-     * unique pour une même base de données  (il peut être nécessaire de
-     * redéfinir cette méthode pour ça,  en particulier pour les données
-     * des senneurs  qui  peuvent combiner le numéro de la marée avec un
-     * numéro de la capture dans cette marée).
+     * Retourne toujours <code>null</code>.
      */
-    public int getID()
-    {return ID;}
+    public String getRemarks()
+    {return null;}
 
     /**
      * Retourne l'espèce la plus pêchée dans cette capture. Si aucune espèce

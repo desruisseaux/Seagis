@@ -102,10 +102,13 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
-        {"SLA (Réunion)",            "grSLA", "grU", "grV"},
-        {"SST (synthèse)",           "grSST"},
-        {"Chlorophylle-a (Réunion)", "grCHL"},
-        {"Bathymétrie",              "grZ"}
+        {"Pompage d'Ekman",                   "EKP"},
+//      {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
+//      {"SLA (Réunion)",                     "SLA", "U", "V"},
+//      {"SST (synthèse)",                    "SST"},
+//      {"Chlorophylle-a (Réunion)",          "CHL"},
+        {"Bathymétrie de Sandwell (Réunion)", "Z"},
+        {"Bathymétrie de Baudry (Réunion)",   "Z"}
     };
 
     /**

@@ -42,6 +42,7 @@ import fr.ird.awt.StatusBar;
 // User interface
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JOptionPane;
@@ -49,6 +50,7 @@ import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 import net.seas.plot.RangeSet;
 import net.seas.plot.RangeBars;
+import net.seas.util.SwingUtilities;
 import net.seas.awt.ExceptionMonitor;
 
 // Events and models
@@ -61,7 +63,10 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Formats
 import java.text.DateFormat;
@@ -169,93 +174,127 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
     }
 
     /**
-     * Remet à jour toutes les données de cette composante.
-     */
-    public void refresh() throws SQLException
-    {
-        setSeries(series.toArray(new SeriesEntry[series.size()]));
-    }
-
-    /**
-     * Définit les séries à afficher. Les séries spécifiées remplaceront
-     * toutes les séries précédemment affichées.
+     * Remet à jour toutes les données de cette composante. Cette méthode
+     * peut être appelée de n'importe quel thread (pas nécessairement celui
+     * de Swing).
      *
-     * @param  series Series à afficher.
+     * @param  table Table à utiliser. Toutes les coordonnées spatio-temporelles
+     *         de cette table doivent correspondre à la zone d'intérêt. La série
+     *         active sera écrasée.
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public void setSeries(final SeriesEntry[] series) throws SQLException
+    public Map<SeriesEntry,List<ImageEntry>> refresh(final ImageTable table) throws SQLException
     {
-        synchronized (rangeBars)
+        final Map<SeriesEntry,List<ImageEntry>> entries;
+        entries = new HashMap<SeriesEntry,List<ImageEntry>>();
+        SwingUtilities.invokeAndWait(new Runnable()
         {
-            rangeBars.clear();
-            this.series.clear();
-            mosaic.removeAllImages();
-            for (int i=0; i<series.length; i++)
-                addSeriesImpl(series[i]);
-        }
-        // Fixe une fois pour toute le nombre de
-        // lignes et de colonnes de la mosaïque.
-        int i = this.series.size()*2;
-        if (i<SIZE.length)
-        {
-            mosaic.setGridSize(SIZE[i],SIZE[i+1]);
-        }
-        mosaic.setImageCount(series.length);
-        resetSlidderPosition();
-    }
-
-    /**
-     * Ajoute une série à la liste des séries déjà en mémoire.
-     *
-     * @param  series Serie à ajouter.
-     * @throws SQLException si une erreur est survenue lors de l'accès à la
-     *         base de données.
-     */
-    private void addSeriesImpl(final SeriesEntry series) throws SQLException
-    {
+            public void run()
+            {
+                series.clear();
+                rangeBars.clear();
+                mosaic.removeAllImages();
+            }
+        });
         synchronized (table)
         {
-            final RangeSet ranges = new RangeSet(Date.class);
-            table.setSeries(series);
-            table.getRanges(null, null, ranges);
-            this.series.add(series);
-
-            final String name = series.getName();
-            final int  length = name.length();
-            int i=0;
-            while (i<length && !Character.isSpaceChar(name.charAt(i))) i++;
-            rangeBars.setRanges(name.substring(0, i), ranges);
+            for (final Iterator<SeriesEntry> it=series.iterator(); it.hasNext();)
+            {
+                final SeriesEntry series = it.next();
+                table.setSeries(series);
+                entries.put(series, addSeriesImpl(table));
+            }
         }
+        layoutMosaic();
+        return entries;
     }
 
     /**
-     * Ajoute une série à la liste des séries déjà en mémoire.
+     * Ajoute une série à la liste des séries déjà en mémoire. Cette méthode
+     * peut être appelée de n'importe quel thread (pas nécessairement celui
+     * de Swing).
      *
-     * @param  series Serie à ajouter.
+     * @param  table Table à utiliser. Toutes les coordonnées spatio-temporelles
+     *         de cette table doivent correspondre à la zone d'intérêt. La série
+     *         active de la table doit correspondre à la série à ajouter.
+     * @return Liste des entrées qui ont été ajoutées.
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public void addSeries(final SeriesEntry series) throws SQLException
+    public List<ImageEntry> addSeries(final ImageTable table) throws SQLException
     {
-        addSeriesImpl(series);
+        final List<ImageEntry> entries = addSeriesImpl(table);
         // Fixe une fois pour toute le nombre de
         // lignes et de colonnes de la mosaïque.
-        final int size = this.series.size();
-        final int i = size*2;
-        if (i<SIZE.length)
-        {
-            mosaic.setGridSize(SIZE[i],SIZE[i+1]);
-        }
-        mosaic.setImageCount(size);
-        final int check;
-        assert size == (check=mosaic.getImageCount()) :
-                       "series="+size+" images="+check;
+        layoutMosaic();
+        return entries;
+    }
 
-        if (size==1)
+    /**
+     * Ajoute une série à la liste des séries déjà en mémoire. Cette méthode
+     * peut être appelée de n'importe quel thread (pas nécessairement celui
+     * de Swing).
+     *
+     * @param  table Table à utiliser. Toutes les coordonnées spatio-temporelles
+     *         de cette table doivent correspondre à la zone d'intérêt. La série
+     *         active de la table doit correspondre à la série à ajouter.
+     * @return Liste des entrées qui ont été ajoutées.
+     * @throws SQLException si une erreur est survenue lors de l'accès à la
+     *         base de données.
+     */
+    private List<ImageEntry> addSeriesImpl(final ImageTable table) throws SQLException
+    {
+        final SeriesEntry    newSeries;
+        final RangeSet          ranges = new RangeSet(Date.class);
+        final List<ImageEntry> entries = new ArrayList<ImageEntry>();
+        synchronized (table)
         {
-            resetSlidderPosition();
+            newSeries = table.getSeries();
+            table.getRanges(null, null, ranges, entries);
         }
+        final String name = newSeries.getName();
+        final int  length = name.length();
+        int i=0;
+        while (i<length && !Character.isSpaceChar(name.charAt(i))) i++;
+        final String reducedName = name.substring(0, i);
+        EventQueue.invokeLater(new Runnable()
+        {
+            public void run()
+            {
+                rangeBars.setRanges(reducedName, ranges);
+                series.add(newSeries);
+            }
+        });
+        return entries;
+    }
+
+    /**
+     * Réarrange la mosaïque d'images. Cette méthode peut être appelée
+     * de n'importe quel thread (pas nécessairement celui de Swing).
+     */
+    private void layoutMosaic()
+    {
+        EventQueue.invokeLater(new Runnable()
+        {
+            public void run()
+            {
+                final int size = series.size();
+                final int i = size*2;
+                if (i<SIZE.length)
+                {
+                    mosaic.setGridSize(SIZE[i],SIZE[i+1]);
+                }
+                mosaic.setImageCount(size);
+                final int check;
+                assert size == (check=mosaic.getImageCount()) :
+                               "series="+size+" images="+check;
+                if (size==1)
+                {
+                    resetSlidderPosition();
+                }
+            }
+        });
     }
 
     /**

@@ -218,7 +218,7 @@ public class CoordinateChooser extends net.seas.awt.CoordinateChooser
          * If series still attached to the coordinate chooser
          * (as the "accessory"), invoke the usual method.
          */
-        if (treeView.getParent()!=null)
+        if (getAccessory() == treeView)
         {
             while (showDialog(owner, title))
             {
