@@ -909,8 +909,14 @@ public class CoordinateTransformationFactory
         for (int i=0; i<dimension; i++)
         {
             // TODO: check if units conversion is really linear.
+            //       We use here a temporary patch, just checking DMS unit.
             final Unit sourceUnit = sourceCS.getUnits(i);
             final Unit targetUnit = targetCS.getUnits(i);
+            if (sourceUnit==Unit.DMS || targetUnit==Unit.DMS)
+            {
+                // We should create an UnitTransform object instead.
+                throw new javax.units.UnitException("Not implemented");
+            }
             final double offset = targetUnit.convert(0, sourceUnit);
             final double scale  = targetUnit.convert(1, sourceUnit)-offset;
             matrix.setElement(i,i,         scale*matrix.getElement(i,i));
