@@ -167,6 +167,18 @@ final class Resampler extends GridCoverage
             return sourceCoverage;
         }
         /*
+         * We use the next two lines mostly as an argument check. If a coordinate system
+         * can't be reduced to a two-dimensional one,   then an IllegalArgumentException
+         * will be thrown.  Note that a less rigourous check is performed later (compare
+         * envelopes), so we could comment out this block in order to accept a wider
+         * range of (possibly incorrect) coordinate systems.
+         */
+        if (true)
+        {
+            OpenGIS.getCoordinateSystem2D(sourceCS);
+            OpenGIS.getCoordinateSystem2D(targetCS);
+        }
+        /*
          * Gets the category lists from the source coverage. We will
          * use exactly the same categories for the transformed coverage.
          */
