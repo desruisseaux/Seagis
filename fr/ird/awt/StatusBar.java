@@ -42,9 +42,9 @@ import javax.imageio.event.IIOReadProgressListener;
 
 // Divers
 import java.util.Arrays;
-import net.seas.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.util.XArray;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.gui.swing.ExceptionMonitor;

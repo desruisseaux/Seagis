@@ -45,8 +45,8 @@ import fr.ird.awt.MarkColorChooser;
 // Miscellaneous
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import java.awt.image.RenderedImage;
 
 // Events
@@ -61,7 +61,7 @@ import org.geotools.resources.SwingUtilities;
 
 /**
  * Boite de dialogue proposant à l'utilisateur d'ajuster la densité des marques sur une grille.
- * Cet objet sert typiquement à paramétrer un objet {@link net.seas.map.layer.GridMarkLayer}.
+ * Cet objet sert typiquement à paramétrer un objet {@link fr.ird.map.layer.GridMarkLayer}.
  *
  * @version 1.0
  * @author Martin Desruisseaux

@@ -39,9 +39,9 @@ import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
 import fr.ird.awt.StatusBar;
 import fr.ird.awt.ImageTableModel;
-import fr.ird.awt.CoordinateChooser;
-import net.seas.awt.progress.Progress;
-import net.seas.awt.progress.WindowProgress;
+import fr.ird.awt.CoordinateChooserDB;
+import fr.ird.awt.progress.Progress;
+import fr.ird.awt.progress.WindowProgress;
 
 // Main framework
 import fr.ird.main.Task;
@@ -60,7 +60,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.TimeZone;
 
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -89,7 +89,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * l'utilisateur la plage de coordonnées qui
      * l'intéresse.
      */
-    private CoordinateChooser chooser;
+    private CoordinateChooserDB chooser;
 
     /**
      * Barre d'état à placer dans le bas de la fenêtre. Cette barre
@@ -124,9 +124,9 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * @param  owner La composante parente (pour affichage des progrès).
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
-    public NavigatorFrame(final DataBase         database,
-                          final CoordinateChooser chooser,
-                          final JComponent          owner) throws SQLException
+    public NavigatorFrame(final DataBase           database,
+                          final CoordinateChooserDB chooser,
+                          final JComponent            owner) throws SQLException
     {
         super(Resources.format(ResourceKeys.IMAGES_LIST));
         final SeriesEntry[] series;
@@ -188,14 +188,14 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     }
 
     /**
-     * Construit le paneau {@link CoordinateChooser}
+     * Construit le paneau {@link CoordinateChooserDB}
      * si ce paneau n'existait pas déjà.
      */
     private void buildChooser() throws SQLException
     {
         if (chooser==null)
         {
-            chooser = new CoordinateChooser(getDataBase().getImageDataBase());
+            chooser = new CoordinateChooserDB(getDataBase().getImageDataBase());
             chooser.setSeriesVisible(false);
         }
     }

@@ -47,7 +47,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
-import net.seas.awt.geom.Arrow2D;
+import fr.ird.awt.geom.Arrow2D;
 
 
 /**

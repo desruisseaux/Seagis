@@ -41,9 +41,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
-import fr.ird.awt.CoordinateChooser;
-import net.seas.awt.TimeZoneChooser;
-import net.seas.awt.About;
+import fr.ird.awt.CoordinateChooserDB;
+import fr.ird.awt.TimeZoneChooser;
+import fr.ird.awt.About;
 
 // Viewers
 import fr.ird.main.catalog.CatalogFrame;
@@ -537,7 +537,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
                     protected void run() throws SQLException
                     {
                         final DataBase database = getDataBase();
-                        final CoordinateChooser chooser=new CoordinateChooser(database.getImageDataBase());
+                        final CoordinateChooserDB chooser=new CoordinateChooserDB(database.getImageDataBase());
                         chooser.setMultiSeriesAllowed(true);
                         chooser.setTimeZone(getTimeZone());
                         setWaitCursor(false);

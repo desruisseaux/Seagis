@@ -54,8 +54,8 @@ import javax.imageio.event.IIOReadWarningListener;
 // Images et progrès
 import fr.ird.sql.image.ImageEntry;
 import org.geotools.gc.GridCoverage;
-import net.seas.awt.progress.Progress;
-import net.seas.awt.progress.WindowProgress;
+import fr.ird.awt.progress.Progress;
+import fr.ird.awt.progress.WindowProgress;
 
 // Collections
 import java.util.Set;
@@ -65,8 +65,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 // Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import javax.swing.event.EventListenerList;
 
 // Geotools dependencies

@@ -57,7 +57,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Collection;
 import java.util.Collections;
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 
 // Tables et évenements
 import java.awt.EventQueue;
@@ -100,8 +100,8 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import javax.media.jai.util.Range;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**
