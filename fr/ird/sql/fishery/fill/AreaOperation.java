@@ -58,7 +58,7 @@ final class AreaOperation extends Operation {
      * Fonction à utiliser pour calculer les valeurs
      * à l'intérieur d'une région géographique.
      */
-    private Evaluator evaluator = new GradientEvaluator(0.95);
+    private Evaluator evaluator = new GradientEvaluator(null, 0.95);
 
     /**
      * Construit une nouvelle operation.
