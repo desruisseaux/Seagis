@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // Divers
+import java.util.Set;
 import java.util.Date;
 import java.util.Arrays;
 import javax.media.jai.util.Range;
@@ -125,7 +126,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                                    final String     parameter,
                                    final String     column) throws SQLException
     {
-        super(connection.prepareStatement(replace(preferences.get(ENVIRONMENTS, SQL_SELECT), column)));
+        super(connection.prepareStatement(replaceQuestionMark(preferences.get(ENVIRONMENTS, SQL_SELECT), column)));
         this.column = column;
         setParameter(parameter);
         setPosition(CENTER);
@@ -133,25 +134,27 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     }
 
     /**
-     * Replace substring "[?]" by a column name.
+     * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
+     * environnementaux sont représentés par des noms courts tels que "CHL" ou "SST".
+     *
+     * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
      */
-    private static String replace(final String query, final String column) {
-        final String PARAM = "[?]";
-        final StringBuffer buffer=new StringBuffer(query);
-        for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;) {
-            buffer.replace(index, index+PARAM.length(), column);
-        }
-        return buffer.toString();
+    public Set<String> getAvailableParameters() throws SQLException {
+        return ParameterTable.list(statement.getConnection(), PARAMETERS);
     }
 
     /**
-     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
-     * être spécifié en argument à la méthode {@link #setParameter}.
+     * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
+     * des paramètres environnementaux. Par exemple les opérations "valeur" et "sobel3"
+     * correspondent à la valeur d'un paramètre environnemental et son gradient calculé
+     * par l'opérateur de Sobel, respectivement.
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @return L'ensemble des opérations disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public String[] getAvailableParameters() throws SQLException {
-        return ParameterTable.getAvailableParameters(statement.getConnection());
+    public Set<String> getAvailableOperations() throws SQLException {
+        return ParameterTable.list(statement.getConnection(), OPERATIONS);
     }
 
     /**
@@ -163,7 +166,8 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized void setParameter(final String parameter) throws SQLException {
-        final ParameterTable table = new ParameterTable(statement.getConnection(), true);
+        final ParameterTable table = new ParameterTable(statement.getConnection(),
+                                         ParameterTable.PARAMETER_BY_NAME);
         final int code = table.getParameterID(parameter);
         table.close();
 
@@ -302,7 +306,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 position = ((AbstractCatchEntry) capture).clampPosition(position);
             }
             if (update==null) {
-                update = statement.getConnection().prepareStatement(replace(
+                update = statement.getConnection().prepareStatement(replaceQuestionMark(
                          preferences.get(ENVIRONMENTS+".UPDATE", SQL_UPDATE), column));
                 update.setInt(1+ARG_PARAMETER, parameter);
             }
@@ -313,7 +317,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             int n=update.executeUpdate();
             if (n == 0) {
                 if (insert==null) {
-                    insert = statement.getConnection().prepareStatement(replace(
+                    insert = statement.getConnection().prepareStatement(replaceQuestionMark(
                              preferences.get(ENVIRONMENTS+".INSERT", SQL_INSERT), column));
                     insert.setInt(ARG_PARAMETER, parameter);
                 }

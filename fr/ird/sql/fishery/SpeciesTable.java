@@ -50,8 +50,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SpeciesTable extends Table
-{
+final class SpeciesTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des espèces.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
@@ -59,9 +58,9 @@ final class SpeciesTable extends Table
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] ID              */ SPECIES+".ID, "        +
-                                /*[02] DATE            */ SPECIES+".Anglais, "   +
-                                /*[03] START_LONGITUDE */ SPECIES+".Français, "  +
-                                /*[04] START_LATITUDE  */ SPECIES+".Latin\n"     +
+                                /*[02] DATE            */ SPECIES+".anglais, "   +
+                                /*[03] START_LONGITUDE */ SPECIES+".français, "  +
+                                /*[04] START_LATITUDE  */ SPECIES+".latin\n"     +
 
                     "FROM "+SPECIES+" WHERE "+SPECIES+".ID LIKE ?";
 
@@ -72,8 +71,7 @@ final class SpeciesTable extends Table
      * Ces langues doivent apparaître dans le même ordre que les colonnes de
      * la requête SQL.
      */
-    private static final Locale[] locales=new Locale[]
-    {
+    private static final Locale[] locales=new Locale[] {
         null,                // Code FAO
         Locale.ENGLISH,      // Anglais
         Locale.FRENCH,       // Français
@@ -83,8 +81,7 @@ final class SpeciesTable extends Table
     /**
      * Couleurs par défaut à utiliser comme marques devant les pêches.
      */
-    private static final Color[] COLORS=new Color[]
-    {
+    private static final Color[] COLORS=new Color[] {
         Color.blue,
         Color.red,
         Color.orange,
@@ -103,8 +100,9 @@ final class SpeciesTable extends Table
      * @param  connection Connection avec la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public SpeciesTable(final Connection connection) throws SQLException
-    {super(connection.prepareStatement(preferences.get(SPECIES, SQL_SELECT)));}
+    public SpeciesTable(final Connection connection) throws SQLException {
+        super(connection.prepareStatement(preferences.get(SPECIES, SQL_SELECT)));
+    }
 
     /**
      * Retourne l'espèce correspondant au code spécifié.
@@ -113,23 +111,19 @@ final class SpeciesTable extends Table
      * @return L'espèce demandée.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    final synchronized Species getSpecies(final String code, int index) throws SQLException
-    {
+    final synchronized Species getSpecies(final String code, int index) throws SQLException {
         Species species=null;
         statement.setString(ID_ARG, code);
         final ResultSet result=statement.executeQuery();
-        while (result.next())
-        {
+        while (result.next()) {
             final Species lastSpecies = species;
             final String[] names = new String[locales.length];
-            for (int i=0; i<names.length; i++)
-            {
+            for (int i=0; i<names.length; i++) {
                 names[i] = result.getString(i+1);
             }
             index %= COLORS.length;
             species = new FishSpecies(locales, names, COLORS[index]);
-            if (lastSpecies!=null && !lastSpecies.equals(species))
-            {
+            if (lastSpecies!=null && !lastSpecies.equals(species)) {
                 throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, species.getName()));
             }
         }
@@ -147,19 +141,15 @@ final class SpeciesTable extends Table
      *         non-reconnues seront ignorés.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public synchronized Set<Species> getSpecies(final ResultSetMetaData info) throws SQLException
-    {
+    public synchronized Set<Species> getSpecies(final ResultSetMetaData info) throws SQLException {
         final int count=info.getColumnCount();
         final List<Species> species=new ArrayList<Species>(count);
-        for (int j=1; j<=count; j++)
-        {
+        for (int j=1; j<=count; j++) {
             statement.setString(ID_ARG, info.getColumnName(j));
             final ResultSet result=statement.executeQuery();
-            while (result.next())
-            {
+            while (result.next()) {
                 final String[] names = new String[locales.length];
-                for (int i=0; i<names.length; i++)
-                {
+                for (int i=0; i<names.length; i++) {
                     names[i] = result.getString(i+1);
                 }
                 final Species sp = new FishSpecies(locales, names, COLORS[species.size() % COLORS.length]);

@@ -31,24 +31,26 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import javax.sql.RowSet;
 
-// Entrés/sorties et formattage
+// Collections
+import java.util.Map;
+import java.util.List;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+// Entrés/sorties et divers
 import java.io.Writer;
 import java.io.IOException;
 import java.text.NumberFormat;
-
-// Divers
-import java.util.List;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 // Geotools
 import org.geotools.resources.Utilities;
 
 // Resources
 import fr.ird.util.XArray;
-import fr.ird.sql.DataBase;
+import fr.ird.awt.progress.Progress;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
@@ -66,50 +68,18 @@ import fr.ird.resources.gui.ResourceKeys;
  */
 final class CouplingTableImpl extends Table implements CouplingTable {
     /**
-     * Requête SQL pour obtenir la table des données environnementales.
+     * Liste des paramètres et des opérations à prendre en compte. Les clés sont des
+     * objets  {@link EnvironmentTableStep}  représentant le paramètre ainsi que sa
+     * position spatio-temporelle.
      */
-    static final String SQL_SELECT=
-                    "SELECT ID FROM "+ENVIRONMENTS+" "+
-                    "WHERE position=? AND temps=? AND paramètre=? ORDER BY ID";
-
-    /** Numéro de colonne. */ private static final int ID            = 1;
-    /** Numéro d'argument. */ private static final int ARG_POSITION  = 1;
-    /** Numéro d'argument. */ private static final int ARG_TIMELAG   = 2;
-    /** Numéro d'argument. */ private static final int ARG_PARAMETER = 3;
+    private final Map<EnvironmentTableStep, EnvironmentTableStep> parameters =
+                  new LinkedHashMap<EnvironmentTableStep, EnvironmentTableStep>();
 
     /**
-     * Abréviation à utiliser à la place des noms de colonnes.
-     * @task TODO: Devrait apparaître dans la base de données.
+     * Table des paramètres et des opérations. Cette table est construite
+     * automatiquement la première fois où elle est nécessaire.
      */
-    private static final String[] ALIAS = {"pixel",  "\u225E",  // Mesured by
-                                           "valeur", "",
-                                           "sobel3", "\u2207\u2083",   // Nabla 3
-                                           "sobel5", "\u2207\u2085",   // Nabla 5
-                                           "sobel7", "\u2207\u2087",   // Nabla 7
-                                           "sobel9", "\u2207\u2089"};  // Nabla 9
-
-    /**
-     * Position sur la ligne de pêche.
-     */
-    private int position;
-
-    /**
-     * Décalages de temps, en jours. La valeur par défaut
-     * ne contient que le décalage de 0 jours.
-     */
-    private int[] timeLags = new int[] {0};
-
-    /**
-     * Numéros des paramètres d'intérêt.
-     */
-    private int[] parameters;
-
-    /**
-     * Noms des colonnes à utiliser. Chaque colonne correspond à une opération
-     * appliquée sur les images (par exemple des interpollations ou des calculs
-     * de gradients).
-     */
-    private final String[] operations;
+    private transient ParameterTable parameterTable;
 
     /**
      * La connection vers la base de données.
@@ -119,148 +89,134 @@ final class CouplingTableImpl extends Table implements CouplingTable {
     private final Connection connection;
 
     /**
-     * Liste des objets {@link PreparedStatements} construits, ou <code>null</code>
-     * si aucun n'a été construit pour l'instant.
-     */
-    private transient PreparedStatement[] statements;
-
-    /**
-     * Construit une table pour le paramètre spécifié.
+     * Construit une table.
      *
      * @param  connection Connection vers une base de données de pêches.
-     * @param  parameters Paramètres (exemple "SST" ou "EKP"). La liste des paramètres
-     *         disponibles peut être obtenu avec {@link #getAvailableParameters()}.
-     * @param  operations Opérations (exemple "valeur" ou "sobel"). Ces opérations
-     *         correspondent à des noms de colonnes de la table "Environnement".
      * @throws SQLException si <code>CouplingTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected CouplingTableImpl(final Connection connection,
-                                final String[]   parameters, 
-                                final String[]   operations)
-        throws SQLException
-    {
+    protected CouplingTableImpl(final Connection connection) throws SQLException {
         super(null);
         this.connection = connection;
-        // Note: if we change 'operations', then 'statements' must be set to 'null'.
-        this.operations = (String[]) operations.clone();
-        setPosition(EnvironmentTable.CENTER);
-        setParameters(parameters);
     }
 
     /**
-     * Complète la requète SQL en ajoutant les noms de colonnes
-     * ainsi que les clauses "IS NOT NULL".
-     */
-    private static String completeQuery(String query, final String[] columns) {
-        query = completeSelect(query, columns);
-        int index = indexOf(query, "ORDER");
-        if (index >= 0) {
-            final StringBuffer buffer = new StringBuffer(query.substring(0, index));
-            for (int i=0; i<columns.length; i++) {
-                buffer.append("AND ");
-                buffer.append('(');
-                buffer.append(columns[i]);
-                buffer.append(" IS NOT NULL) ");
-            }
-            buffer.append(query.substring(index));
-            query = buffer.toString();
-        }
-        final LogRecord record = new LogRecord(DataBase.SQL_SELECT, query);
-        record.setSourceClassName ("CouplingTable");
-        record.setSourceMethodName("<init>");
-        logger.log(record);
-        return query;
-    }
-
-    /**
-     * Définit la position relative sur la ligne de pêche où l'on veut les valeurs.
-     * Les principales valeurs permises sont {@link #START_POINT}, {@link #CENTER}
-     * et {@link #END_POINT}.
+     * Oublie tous les paramètres qui ont été déclarés avec {@link #addParameter}.
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    private void setPosition(final int position) throws SQLException {
-        if (position>=EnvironmentTable.START_POINT && position<=EnvironmentTable.END_POINT) {
-            this.position = position;
+    public synchronized void clear() throws SQLException {
+        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
+            it.next().close();
         }
-        else throw new IllegalArgumentException(String.valueOf(position));
+        parameters.clear();
     }
 
     /**
-     * Définit les paramètres examinées par cette table. Les paramètres doivent être des
-     * noms de la table "Paramètres". Des exemples de valeurs sont "SST", "CHL", "SLA",
-     * "U", "V" et "EKP".
+     * Ajoute un paramètre à la sélection. Ce paramètre sera pris en compte
+     * lors du prochain appel de la méthode {@link #getRowSet}.
      *
-     * @param parameter Les paramètres à définir (exemple: "SST").
+     * @param  operation Opération (exemple "valeur" ou "sobel"). Ces opérations
+     *         correspondent à des noms des colonnes de la table "Environnement".
+     *         La liste des opérations disponibles peut être obtenu avec {@link
+     *         #getAvailableOperations()}.
+     * @param  parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
+     *         disponibles peut être obtenu avec {@link #getAvailableParameters()}.
+     * @param  position Position position relative sur la ligne de pêche où l'on veut
+     *         les valeurs. Les principales valeurs permises sont {@link #START_POINT},
+     *         {@link #CENTER} et {@link #END_POINT}.
+     * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
+     *         en nombre de jours.
+     *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized void setParameters(final String[] parameters) throws SQLException {
-        final ParameterTable table = new ParameterTable(connection, true);
-        final int[]  newParameters = new int[parameters.length];
-        for (int i=0; i<parameters.length; i++) {
-            newParameters[i] = table.getParameterID(parameters[i]);
+    public synchronized void addParameter(final String operation,
+                                          final String parameter,
+                                          final int    position,
+                                          final int    timeLag) throws SQLException
+    {
+        if (parameterTable == null) {
+            parameterTable = new ParameterTable(connection, ParameterTable.PARAMETER_BY_NAME);
         }
-        table.close();
-        this.parameters = newParameters;
+        final int           paramID = parameterTable.getParameterID(parameter);
+        EnvironmentTableStep search = new EnvironmentTableStep(paramID, position, timeLag);
+        EnvironmentTableStep step   = parameters.get(search);
+        if (step == null) {
+            step = search;
+            parameters.put(step, step);
+        }
+        step.addColumn(operation);
     }
 
     /**
-     * Définit les décalages de temps (en jours).
+     * Retire un paramètre à la sélection.
      *
-     * @parm   timeLags Décalages de temps en jours.
+     * @param  operation Opération (exemple "valeur" ou "sobel").
+     * @param  parameter Paramètre (exemple "SST" ou "EKP").
+     * @param  position Position position relative sur la ligne de pêche où l'on veut
+     *         les valeurs.
+     * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
+     *         en nombre de jours.
+     *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized void setTimeLags(final int[] timeLags) throws SQLException {
-        this.timeLags = (int[])timeLags.clone();
-    }
-
-    /**
-     * Returns the alias for a column name.
-     */
-    private static final String getAlias(final String operation) {
-        for (int i=0; i<ALIAS.length; i+=2) {
-            if (ALIAS[i].equalsIgnoreCase(operation)) {
-                return ALIAS[i+1];
+    public synchronized void removeParameter(final String operation,
+                                             final String parameter,
+                                             final int    position,
+                                             final int    timeLag) throws SQLException
+    {
+        if (parameterTable == null) {
+            parameterTable = new ParameterTable(connection, ParameterTable.PARAMETER_BY_NAME);
+        }
+        final int paramID = parameterTable.getParameterID(parameter);
+        EnvironmentTableStep step = new EnvironmentTableStep(paramID, position, timeLag);
+        step = parameters.get(step);
+        if (step != null) {
+            step.removeColumn(operation);
+            if (step.isEmpty()) {
+                step.close();
+                parameters.remove(step);
             }
         }
-        return operation + '_';
     }
 
     /**
-     * Retourne les colonnes de titres pour cette table.
+     * Retourne les nom des colonnes pour cette table. Ces noms de colonnes sont identiques
+     * à ceux que retourne <code>getRowSet(null).getMetaData().getColumnLabel(...)</code>.
+     * Cette méthode permet toutefoit d'obtenir ces noms sans passer par la coûteuse création
+     * d'un objet {@link RowSet}.
      *
+     * @return Les noms de colonnes.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized String[] getColumnTitles() throws SQLException {
-        final ParameterTable table = new ParameterTable(connection, false);
-        final String[]      titles = new String[operations.length * parameters.length * timeLags.length + 1];
-        final StringBuffer  buffer = new StringBuffer();
-        int count = 0;
-        titles[count++] = "Capture";
-        for (int k=0; k<operations.length; k++) {
+    public synchronized String[] getColumnLabels() throws SQLException {
+        if (parameterTable == null) {
+            parameterTable = new ParameterTable(connection, ParameterTable.OPERATION_BY_NAME);
+        }
+        final List<String> titles = new ArrayList<String>();
+        final StringBuffer buffer = new StringBuffer();
+        titles.add("Capture");
+
+        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
+            final EnvironmentTableStep step = it.next();
+            int t = step.timeLag;
             buffer.setLength(0);
-            buffer.append(getAlias(operations[k]));
-            final int opOffset = buffer.length();
-            for (int i=0; i<parameters.length; i++) {
-                buffer.setLength(opOffset);
-                buffer.append(table.getParameterName(parameters[i]));
-                final int offset = buffer.length();
-                for (int j=0; j<timeLags.length; j++) {
-                    buffer.setLength(offset);
-                    int t = timeLags[j];
-                    buffer.append(t<0 ? '-' : '+');
-                    t = Math.abs(t);
-                    if (t<10) {
-                        buffer.append(0);
-                    }
-                    buffer.append(t);
-                    titles[count++] = buffer.toString();
-                }
+            buffer.append(parameterTable.getParameterName(step.parameter));
+            buffer.append(t<0 ? '-' : '+');
+            t = Math.abs(t);
+            if (t<10) {
+                buffer.append(0);
+            }
+            buffer.append(t);
+            int prefixLength = 0;
+            final String[] columns = step.getColumns();
+            for (int i=0; i<columns.length; i++) {
+                final String prefix = parameterTable.getOperationPrefix(columns[i]);
+                buffer.replace(0, prefixLength, prefix);
+                titles.add(buffer.toString());
+                prefixLength = prefix.length();
             }
         }
-        table.close();
-        assert count == titles.length;
-        return titles;
+        return titles.toArray(new String[titles.size()]);
     }
 
     /**
@@ -272,49 +228,27 @@ final class CouplingTableImpl extends Table implements CouplingTable {
      * Note: si cette méthode est appelée plusieurs fois, alors chaque nouvel
      *       appel fermera le {@link ResultSet} de l'appel précédent.
      *
+     * @param  progress Objet à utiliser pour informer des progrès de l'initialisation,
+     *         ou <code>null</code> si aucun.
      * @return Les données environnementales pour les captures.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public synchronized ResultSet getData() throws SQLException {
-        /*
-         * Construct an array of PreparedStatement.
-         * If an array already existed, reuse this array.
-         */
-        int i;
-        final ResultSet[] results = new ResultSet[parameters.length * timeLags.length];
-        if (statements == null) {
-            statements = new PreparedStatement[results.length];
-            i = 0;
-        } else {
-            for (i=results.length; i<statements.length; i++) {
-                statements[i].close();
-            }
-            statements = XArray.resize(statements, results.length);
-            // Keep current value of 'i'
+    public synchronized RowSet getRowSet(final Progress progress) throws SQLException {
+        if (progress != null) {
+            progress.setDescription("Initialisation");
         }
-        final String query = completeQuery(SQL_SELECT, operations);
-        while (i<results.length) {
-            statements[i++] = connection.prepareStatement(query);
-        }
-        /*
-         * Gets the ResultSet for each PreparedStatement.
-         */
-        i = 0;
-        for (int p=0; p<parameters.length; p++) {
-            for (int t=0; t<timeLags.length; t++) {
-                final PreparedStatement statement = statements[i];
-                statement.setInt(ARG_POSITION,  position);
-                statement.setInt(ARG_PARAMETER, parameters[p]);
-                statement.setInt(ARG_TIMELAG,   timeLags  [t]);
-                results[i++] = statement.executeQuery();
+        int i=0;
+        final ResultSet[]   results = new ResultSet[parameters.size()];
+        final Connection connection = this.connection;
+        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
+            EnvironmentTableStep step = it.next();
+            results[i++] = step.getResultSet(connection);
+            if (progress != null) {
+                progress.progress((100f/results.length) * i);
             }
         }
         assert i == results.length;
-        switch (results.length) {
-            case 0:  return null;
-            case 1:  return results[0];
-            default: return new CouplingResultSet(results, operations.length);
-        }
+        return new EnvironmentRowSet(results, getColumnLabels());
     }
 
     /**
@@ -328,7 +262,7 @@ final class CouplingTableImpl extends Table implements CouplingTable {
      */
     public synchronized void print(final Writer out, int max) throws SQLException, IOException {
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        final String[] titles = getColumnTitles();
+        final String[] titles = getColumnLabels();
         final int[] width = new int[titles.length];
         for (int i=0; i<titles.length; i++) {
             out.write(titles[i]);
@@ -340,7 +274,7 @@ final class CouplingTableImpl extends Table implements CouplingTable {
         final NumberFormat format = NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(2);
         format.setMaximumFractionDigits(2);
-        final ResultSet result = getData();
+        final ResultSet result = getRowSet(null);
         while (--max>=0 && result.next()) {
             for (int i=0; i<width.length; i++) {
                 final String value;
@@ -368,15 +302,11 @@ final class CouplingTableImpl extends Table implements CouplingTable {
      *         lors de la disposition des ressources.
      */
     public synchronized void close() throws SQLException {
-        final PreparedStatement[] toClose = statements;
-        if (toClose != null) {
-            statements = null;
-            for (int i=toClose.length; --i>=0;) {
-                if (toClose[i] != null) {
-                    toClose[i].close();
-                }
-            }
+        if (parameterTable != null) {
+            parameterTable.close();
+            parameterTable = null;
         }
+        clear();
         super.close();
     }
 }

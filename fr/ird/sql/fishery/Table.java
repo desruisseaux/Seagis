@@ -43,6 +43,7 @@ import java.util.prefs.Preferences;
 abstract class Table implements fr.ird.sql.Table {
     /* Nom de table. */ static final String ENVIRONMENTS = "Environnements";
     /* Nom de table. */ static final String PARAMETERS   = "Paramètres";
+    /* Nom de table. */ static final String OPERATIONS   = "Opérations";
     /* Nom de table. */ static final String LONGLINES    = "Captures";
     /* Nom de table. */ static final String SEINES       = "Captures";
     /* Nom de table. */ static final String SPECIES      = "Espèces";
@@ -103,6 +104,22 @@ abstract class Table implements fr.ird.sql.Table {
             query = buffer.toString();
         }
         return query;
+    }
+
+    /**
+     * Replace substring "[?]" by the specified value.
+     *
+     * @param  query The string where to look for "[?]".
+     * @param  The value to substitute to "[?]".
+     * @return The modified string.
+     */
+    static String replaceQuestionMark(final String query, final String value) {
+        final String PARAM = "[?]";
+        final StringBuffer buffer = new StringBuffer(query);
+        for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;) {
+            buffer.replace(index, index+PARAM.length(), value);
+        }
+        return buffer.toString();
     }
 
     /**

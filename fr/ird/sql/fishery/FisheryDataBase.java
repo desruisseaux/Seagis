@@ -169,6 +169,33 @@ public class FisheryDataBase extends DataBase {
     }
 
     /**
+     * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
+     * environnementaux sont représentés par des noms courts tels que "CHL" ou "SST".
+     * Ces paramètres peuvent être spécifiés en argument à la méthode
+     * {@link #getEnvironmentTable}.
+     *
+     * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public Set<String> getParameters() throws SQLException {
+        return ParameterTable.list(connection, Table.PARAMETERS);
+    }
+
+    /**
+     * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
+     * des paramètres environnementaux. Par exemple les opérations "valeur" et "sobel3"
+     * correspondent à la valeur d'un paramètre environnemental et son gradient calculé
+     * par l'opérateur de Sobel, respectivement. Ces opérations peuvent être spécifiés
+     * en argument à la méthode {@link #getEnvironmentTable}.
+     *
+     * @return L'ensemble des opérations disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public Set<String> getOperations() throws SQLException {
+        return ParameterTable.list(connection, Table.OPERATIONS);
+    }
+
+    /**
      * Construit et retourne un objet qui interrogera la table des pêches de la base de données.
      * Lorsque cette table ne sera plus nécessaire, il faudra appeler {@link CatchTable#close}.
      *
@@ -252,24 +279,9 @@ public class FisheryDataBase extends DataBase {
      * <strong>NOTE: dans une version future, on pourrait probablement fusionner
      *         <code>EnvironmentTable</code> et <code>CouplingTable</code> en une
      *         seule interface.</strong>
-     *
-     * @param parameters Paramètres (exemple "SST" ou "EKP"). La liste des paramètres
-     *        disponibles peut être obtenu avec {@link #getAvailableParameters()}.
-     * @param operations Opérations (exemple "valeur" ou "sobel"). Ces opérations
-     *        correspondent à des noms des colonnes de la table "Environnement".
      */
-    public CouplingTable getCouplingTable(final String[] parameters, final String[] operations) throws SQLException {
-        return new CouplingTableImpl(connection, parameters, operations);
-    }
-
-    /**
-     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
-     * être spécifié en argument à la méthode {@link #getEnvironmentTable}.
-     *
-     * @throws SQLException si l'accès à la base de données a échouée.
-     */
-    public String[] getAvailableParameters() throws SQLException {
-        return ParameterTable.getAvailableParameters(connection);
+    public CouplingTable getCouplingTable() throws SQLException {
+        return new CouplingTableImpl(connection);
     }
 
     /**
@@ -337,8 +349,13 @@ public class FisheryDataBase extends DataBase {
         if (columns.length != 0) {
             final String[] parameters = new String[] {"SST", "CHL", "SLA"};
             final FisheryDataBase database = new FisheryDataBase();
-            final CouplingTable table = database.getCouplingTable(parameters, columns);
-            table.setTimeLags(new int[] {-5, 0});
+            final CouplingTable table = database.getCouplingTable();
+            for (int i=0; i<parameters.length; i++) {
+                for (int j=0; j<columns.length; j++) {
+                    table.addParameter(columns[j], parameters[i], 0, 0);
+                    table.addParameter(columns[j], parameters[i], 0, -5);
+                }
+            }
             table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
             table.close();
             database.close();

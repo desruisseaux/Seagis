@@ -49,8 +49,7 @@ import javax.vecmath.MismatchedSizeException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class FishSpecies implements Species
-{
+final class FishSpecies implements Species {
     /**
      * Default width for icons, in pixels.
      */
@@ -96,20 +95,20 @@ final class FishSpecies implements Species
      * @throws IllegalArgumentException Si un des éléments du tableau
      *         <code>locales</code> apparaît plus d'une fois.
      */
-    public FishSpecies(final Locale[] locales, final String[] names, final Color color) throws IllegalArgumentException
-    {
+    public FishSpecies(final Locale[] locales, final String[] names, final Color color) throws IllegalArgumentException {
         this.locales = locales;
         this.names   = names;
-        if (locales.length!=names.length)
+        if (locales.length!=names.length) {
             throw new MismatchedSizeException();
-
+        }
         final Set<Locale> set = new HashSet<Locale>();
-        for (int i=0; i<locales.length; i++)
-        {
-            if (!set.add(locales[i])) // Accepte null
+        for (int i=0; i<locales.length; i++) {
+            if (!set.add(locales[i])) {// Accepte null
                 throw new IllegalArgumentException();
-            if (names[i]==null)
+            }
+            if (names[i] == null) {
                 throw new NullPointerException();
+            }
         }
         defaultColor = color;
     }
@@ -118,34 +117,37 @@ final class FishSpecies implements Species
      * Retourne les langues dans lesquelles peuvent
      * être exprimées le nom de cette espèce.
      */
-    public Locale[] getLocales()
-    {return (Locale[]) locales.clone();}
+    public Locale[] getLocales() {
+        return (Locale[]) locales.clone();
+    }
 
     /**
      * Retourne le nom de cette espèce dans la langue spécifiée. Si aucun
      * nom n'est disponible dans cette langue, retourne <code>null</code>.
      */
-    public String getName(final Locale locale)
-    {
-        if (locale==null)
-        {
-            for (int i=0; i<locales.length; i++)
-                if (locale==locales[i])
+    public String getName(final Locale locale) {
+        if (locale==null) {
+            for (int i=0; i<locales.length; i++) {
+                if (locale==locales[i]) {
                     return names[i];
+                }
+            }
             return null;
         }
-
-        for (int i=0; i<locales.length; i++)
-            if (locale.equals(locales[i]))
+        for (int i=0; i<locales.length; i++) {
+            if (locale.equals(locales[i])) {
                 return names[i];
-
+            }
+        }
         final String language=locale.getLanguage();
-        if (language.length()!=0)
-        {
-            for (int i=0; i<locales.length; i++)
-                if (locales[i]!=null)
-                    if (language.equals(locales[i].getLanguage()))
+        if (language.length() != 0) {
+            for (int i=0; i<locales.length; i++) {
+                if (locales[i]!=null) {
+                    if (language.equals(locales[i].getLanguage())) {
                         return names[i];
+                    }
+                }
+            }
         }
         return null;
     }
@@ -154,28 +156,33 @@ final class FishSpecies implements Species
      * Retourne le nom de cette espèce. Le nom sera retourné
      * de préférence dans la langue par défaut du système.
      */
-    public String getName()
-    {
+    public String getName() {
         final String name = getName(Locale.getDefault());
-        if (name!=null) return name;
-        for (int i=0; i<names.length; i++)
-            if (locales[i]!=null)
+        if (name != null) {
+            return name;
+        }
+        for (int i=0; i<names.length; i++) {
+            if (locales[i]!=null) {
                 return names[i];
+            }
+        }
         return names.length!=0 ? names[0] : null;
     }
 
     /**
      * Retourne un icone représentant cette espèce.
      */
-    public Species.Icon getIcon()
-    {return new Icon();}
+    public Species.Icon getIcon() {
+        return new Icon();
+    }
 
     /**
      * Retourne le nom de cette espèce. Le nom sera retourné
      * de préférence dans la langue par défaut du système.
      */
-    public String toString()
-    {return getName();}
+    public String toString() {
+        return getName();
+    }
 
     /**
      * Icone de l'espèce.
@@ -183,8 +190,7 @@ final class FishSpecies implements Species
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Icon extends ImageIcon implements Species.Icon
-    {
+    private final class Icon extends ImageIcon implements Species.Icon {
         /**
          * Couleur de l'icône.
          */
@@ -193,8 +199,7 @@ final class FishSpecies implements Species
         /**
          * Construit un icône.
          */
-        public Icon()
-        {
+        public Icon() {
             super(prepare(null, defaultColor));
             this.color = defaultColor;
         }
@@ -202,20 +207,21 @@ final class FishSpecies implements Species
         /**
          * Retourne l'espèce associé à cet icône.
          */
-        public Species getSpecies()
-        {return FishSpecies.this;}
+        public Species getSpecies() {
+            return FishSpecies.this;
+        }
 
         /**
          * Retourne la couleur de cet icône.
          */
-        public Color getColor()
-        {return color;}
+        public Color getColor() {
+            return color;
+        }
 
         /**
          * Change la couleur de cet icône.
          */
-        public synchronized void setColor(final Color color)
-        {
+        public synchronized void setColor(final Color color) {
             setImage(prepare((BufferedImage) getImage(), color));
             this.color = color;
         }
@@ -223,8 +229,9 @@ final class FishSpecies implements Species
         /**
          * Retourne une chaîne de caractères représentant cet objet.
          */
-        public String toString()
-        {return FishSpecies.this.toString()+'['+color+']';}
+        public String toString() {
+            return FishSpecies.this.toString()+'['+color+']';
+        }
     }
 
     /**
@@ -234,22 +241,21 @@ final class FishSpecies implements Species
      * @param  color The color to use for icon.
      * @return <code>image</code>, or a new image if <code>image</code> was null.
      */
-    private static BufferedImage prepare(BufferedImage image, final Color color)
-    {
-        if (image==null)
-        {
+    private static BufferedImage prepare(BufferedImage image, final Color color) {
+        if (image==null) {
             image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         }
-        final int[] components = new int[]
-        {
+        final int[] components = new int[] {
             color.getRed(),
             color.getGreen(),
             color.getBlue()
         };
         final WritableRaster raster = image.getWritableTile(0,0);
-        for (int y=raster.getHeight(); --y>=0;)
-            for (int x=raster.getWidth(); --x>=0;)
+        for (int y=raster.getHeight(); --y>=0;) {
+            for (int x=raster.getWidth(); --x>=0;) {
                 raster.setPixel(x,y,components);
+            }
+        }
         image.releaseWritableTile(0,0);
         return image;
     }

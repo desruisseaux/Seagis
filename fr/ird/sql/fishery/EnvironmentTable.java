@@ -26,6 +26,7 @@
 package fr.ird.sql.fishery;
 
 // Divers
+import java.util.Set;
 import java.util.Date;
 import java.sql.SQLException;
 import fr.ird.sql.Table;
@@ -55,12 +56,24 @@ public interface EnvironmentTable extends Table {
     public static final int END_POINT = 100;
 
     /**
-     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
-     * être spécifié en argument à la méthode {@link #setParameter}.
+     * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
+     * environnementaux sont représentés par des noms courts tels que "CHL" ou "SST".
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public String[] getAvailableParameters() throws SQLException;
+    public Set<String> getAvailableParameters() throws SQLException;
+
+    /**
+     * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
+     * des paramètres environnementaux. Par exemple les opérations "valeur" et "sobel3"
+     * correspondent à la valeur d'un paramètre environnemental et son gradient calculé
+     * par l'opérateur de Sobel, respectivement.
+     *
+     * @return L'ensemble des opérations disponibles dans la base de données.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public Set<String> getAvailableOperations() throws SQLException;
 
     /**
      * Définit le paramètre examinée par cette table. Le paramètre doit être un nom

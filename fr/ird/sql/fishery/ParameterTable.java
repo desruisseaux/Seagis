@@ -1,6 +1,6 @@
 /*
  * Remote sensing images: database and visualisation
- * Copyright (C) 2000 Institut de Recherche pour le Développement
+ * Copyright (C) 2002 Institut de Recherche pour le Développement
  *
  *
  *    This library is free software; you can redistribute it and/or
@@ -36,70 +36,103 @@ import java.sql.PreparedStatement;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
+// Geotools
+import org.geotools.resources.Utilities;
+
 // Resources
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
 
 /**
- * Interrogation de la table des paramètres.
+ * Interrogation de la table "Paramètres" et de la table "Opérations". Ces deux tables
+ * sont utilisées conjointement  pour  fabriquer les noms de colonnes qui apparaîtront
+ * dans les tableaux de données environnementales.  Par exemple le paramètre "SST" sur
+ * lequel on applique l'opération "sobel3", évalué 5 jours avant la pêche,  donnera le
+ * nom de colonne <code>"grSST-05"</code>.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 final class ParameterTable extends Table {
     /**
-     * Requête SQL pour obtenir le code d'un paramètre environnemental.
+     * Requête SQL pour obtenir le code d'un paramètre environnemental
+     * ou d'une opération.
      */
-    static final String SQL_LIST=
-                    "SELECT name FROM "+PARAMETERS+" ORDER BY name";
+    static final String SQL_LIST =
+                    "SELECT nom FROM [?] ORDER BY nom";
 
     /**
      * Requête SQL pour obtenir le code d'un paramètre environnemental.
      */
-    static final String SQL_SELECT=
-                    "SELECT ID, name FROM "+PARAMETERS+" WHERE ID=?";
+    static final String SQL_SELECT =
+                    "SELECT ID, nom FROM "+PARAMETERS+" WHERE ID=?";
+    /**
+     * Requête SQL pour obtenir le code d'une opération.
+     */
+    static final String SQL_SELECT_OPERATION =
+                    "SELECT nom, préfix, operation FROM "+OPERATIONS+" WHERE nom=?";
 
-    /** Numéro de colonne. */ private static final int ID     = 1;
-    /** Numéro de colonne. */ private static final int NAME   = 2;
-    /** Numéro d'argument. */ private static final int ARG_ID = 1;
+    /** Numéro de colonne.                 */ private static final int KEY       = 1;
+    /** Numéro de colonne de "Paramètres". */ private static final int NAME      = 2;
+    /** Numéro de colonne de "Opérations". */ private static final int PREFIX    = 2;
+    /** Numéro de colonne de "Opérations". */ private static final int OPERATION = 3;
+    /** Numéro d'argument.                 */ private static final int ARG_KEY   = 1;
+
+    /** Indique que cet objet servira à obtenir des paramètres à partir de leur numéro ID. */
+    static final int PARAMETER_BY_ID = 0;
+
+    /** Indique que cet objet servira à obtenir des paramètres à partir de leur nom. */
+    static final int PARAMETER_BY_NAME = 1;
+
+    /** Indique que cet objet servira à obtenir des opérations à partir de leur nom. */
+    static final int OPERATION_BY_NAME = 2;
 
     /**
-     * Construit une table des paramètres.
+     * Le type de la requête courante. Une des constantes {@link #PARAMETER_BY_ID},
+     * {@link #PARAMETER_BY_NAME} ou {@link #OPERATION_BY_NAME}.
+     */
+    private int type;
+
+    /**
+     * Construit une table des paramètres/opérations.
      *
      * @param  connection Connection vers une base de données de pêches.
-     * @param  byName <code>true</code> si les paramètres devront être recherché par nom plutôt
-     **        que par leur numéro ID.
+     * @param  type Le type de la requête. Une des constantes {@link #PARAMETER_BY_ID},
+     *         {@link #PARAMETER_BY_NAME} ou {@link #OPERATION_BY_NAME}.
      * @throws SQLException si <code>ParameterTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected ParameterTable(final Connection connection, final boolean byName) throws SQLException {
-        super(connection.prepareStatement(replace(preferences.get(PARAMETERS, SQL_SELECT), byName)));
+    ParameterTable(final Connection connection, final int type) throws SQLException {
+        super(connection.prepareStatement(getQuery(type)));
     }
 
     /**
-     * Remplace le "ID" de la clause WHERE par "name". Cette méthode fonctionne même si
-     * l'utilisateur a changé les noms des colonnes "ID" et "name". Elle procède comme suit:
+     * Retourne la requête SQL du type spécifié.
      *
-     * 1) Recherche dans la requête les deux premières colonnees après la clause SELECT.
-     * 2) Recherche le premier nom dans la clause WHERE, et remplace le par le deuxième nom.
-     *
-     * @param  query La requête à traiter.
-     * @param  <code>byName</code> Si <code>false</code>, alors cette méthode ne fait rien.
-     *         Cet argument n'existe que par commodité pour le constructeur.
-     * @return La requête modifiée.
-     * @throws SQLException si la requête n'a pas pu être traitée.
+     * @param  type Le type de la requête. Une des constantes {@link #PARAMETER_BY_ID},
+     *         {@link #PARAMETER_BY_NAME} ou {@link #OPERATION_BY_NAME}.
+     * @return La requête à utiliser pour la construction d'un objet {@link PreparedStatement}.
+     * @throws SQLException si la requête n'a pas pu être construite.
      */
-    private static String replace(String query, final boolean byName) throws SQLException {
-        query = query.trim();
-        if (!byName) {
-            return query;
+    private static String getQuery(final int type) throws SQLException {
+        switch (type) {
+            default:                throw new IllegalArgumentException(String.valueOf(type));
+            case OPERATION_BY_NAME: return preferences.get(OPERATIONS, SQL_SELECT_OPERATION);
+            case PARAMETER_BY_ID:   return preferences.get(PARAMETERS, SQL_SELECT);
+            case PARAMETER_BY_NAME: break;
         }
-        // The name for "ID" and "name" column (should be "ID"
-        // and "name"... but the following code will make it sure.
-        String id=null, name=null;
-
-        int step  = 0;
-        int lower = 0;
+        String query = preferences.get(PARAMETERS, SQL_SELECT);
+        /*
+         * Remplace le "ID" de la clause WHERE par "nom". Ce code fonctionne même si
+         * l'utilisateur a changé les noms des colonnes "ID" et "nom". Il procède comme suit:
+         *
+         * 1) Recherche dans la requête les deux premières colonnees après la clause SELECT.
+         * 2) Recherche le premier nom dans la clause WHERE, et le remplacer par le deuxième nom.
+         */
+        String  id       = null;
+        String  name     = null;
+        int     step     = 0;
+        int     lower    = 0;
         boolean scanword = true;
         final int length = query.length();
         for (int index=0; index<length; index++) {
@@ -142,14 +175,33 @@ final class ParameterTable extends Table {
     }
 
     /**
-     * Retourne la liste des paramètres disponibles.
+     * Définit le type de requête SQL de cet objet. Cette méthode affecte une nouvelle
+     * valeur à {@link #statement} si la requête courante n'est pas déjà du type spécifié.
      *
-     * @param connection La connection à utiliser.
+     * @param  type Le type de la requête. Une des constantes {@link #PARAMETER_BY_ID},
+     *         {@link #PARAMETER_BY_NAME} ou {@link #OPERATION_BY_NAME}.
+     * @throws SQLException si <code>ParameterTable</code> n'a pas pu construire sa requête SQL.
+     */
+    private void setType(final int type) throws SQLException {
+        if (type != this.type) {
+            final Connection connection = statement.getConnection();
+            statement.close();
+            statement = connection.prepareStatement(getQuery(type));
+            this.type = type;
+        }
+    }
+
+    /**
+     * Retourne la liste des paramètres ou des opérations disponibles.
+     *
+     * @param  connection La connection à utiliser.
+     * @param  table La table à interroger. Devrait être une des constantes
+     *         {@link #PARAMETERS} ou {@link #OPERATIONS}.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    static String[] getAvailableParameters(final Connection connection) throws SQLException {
+    static Set<String> list(final Connection connection, final String table) throws SQLException {
         final Statement      stm = connection.createStatement();
-        final ResultSet   result = stm.executeQuery(SQL_LIST);
+        final ResultSet   result = stm.executeQuery(replaceQuestionMark(SQL_LIST, table));
         final Set<String>  param = new LinkedHashSet<String>();
         while (result.next()) {
             final String item = result.getString(1);
@@ -159,35 +211,38 @@ final class ParameterTable extends Table {
         }
         result.close();
         stm.close();
-        return param.toArray(new String[param.size()]);
+        return param;
     }
 
     /**
-     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
-     * être spécifié en argument à la méthode {@link #setParameter}.
+     * Retourne la valeur d'une colonne sous forme d'un objet Java. Cette méthode
+     * examine toutes les lignes de la requête, et vérifie que tous les objets de
+     * la colonne spécifiée sont identique.  En général, il n'y aura qu'une seule
+     * ligne. L'objet retourné sera typiquement de la classe {@link String} ou
+     * {@link Number}.
      *
-     * @throws SQLException si l'accès à la base de données a échoué.
+     * @param  statement La requête à exécuter. Cette requête doit
+     *         être déjà configurée, prête à être exécutée.
+     * @param  column Le numéro de colonne dans laquelle extraire la valeur.
+     * @param  key Un nom de paramètre qui a servit à configurer la requête
+     *         <code>statement</code>. Cette information sert uniquement à
+     *         formatter un message d'erreur si cette méthode a échoué.
+     * @return La valeur trouvée à la colonne spécifiée.
+     * @throws SQLException si l'accès à la base de données a échoué, si
+     *         aucune valeur n'a été trouvée ou si plusieurs valeurs différentes
+     *         ont été trouvées.
      */
-    public String[] getAvailableParameters() throws SQLException {
-        return getAvailableParameters(statement.getConnection());
-    }
-
-    /**
-     * Retourne le numéro identifiant un paramètre.
-     *
-     * @param  parameter Le paramètre.
-     * @return Le code du paramètre spécifié.
-     * @throws SQLException si l'accès à la base de données a échoué.
-     */
-    public synchronized int getParameterID(final String parameter) throws SQLException {
-        statement.setString(ARG_ID, parameter);
-        final ResultSet result = statement.executeQuery();
-        int code=0, count=0;
+    private static Object getObject(final PreparedStatement statement, final int column, final Object key)
+        throws SQLException
+    {
+        ResultSet result = statement.executeQuery();
+        Object     value = null;
+        int        count = 0;
         while (result.next()) {
-            final int candidate = result.getInt(ID);
-            if (count==0) {
-                code = candidate;
-            } else if (code == candidate) {
+            final String candidate = result.getString(column);
+            if (count == 0) {
+                value = candidate;
+            } else if (Utilities.equals(value, candidate)) {
                 continue;
             }
             if (++count >= 2) {
@@ -199,41 +254,47 @@ final class ParameterTable extends Table {
         if (count != 1) {
             final int messageKey = (count==0) ? ResourceKeys.ERROR_NO_PARAMETER_$1 :
                                                 ResourceKeys.ERROR_DUPLICATED_RECORD_$1;
-            throw new SQLException(Resources.format(messageKey, parameter));
+            throw new SQLException(Resources.format(messageKey, key));
         }
-        return code;
+        return value;
+    }
+
+    /**
+     * Retourne le numéro ID d'un paramètre à partir de son nom.
+     *
+     * @param  parameter Le nom du paramètre.
+     * @return Le numéro ID du paramètre spécifié.
+     * @throws SQLException si l'accès à la base de données a échoué.
+     */
+    public synchronized int getParameterID(final String parameter) throws SQLException {
+        setType(PARAMETER_BY_NAME);
+        statement.setString(ARG_KEY, parameter);
+        return ((Number) getObject(statement, KEY, parameter)).intValue();
     }
 
     /**
      * Retourne le nom identifiant un paramètre.
      *
-     * @param  parameter Le numéro du paramètre.
+     * @param  parameter Numéro ID du paramètre.
      * @return Le nom du paramètre spécifié.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized String getParameterName(final int parameter) throws SQLException {
-        statement.setInt(ARG_ID, parameter);
-        final ResultSet result = statement.executeQuery();
-        String code=null;
-        int count=0;
-        while (result.next()) {
-            final String candidate = result.getString(NAME);
-            if (count==0) {
-                code = candidate;
-            } else if (code.equals(candidate)) {
-                continue;
-            }
-            if (++count >= 2) {
-                // No needs to continue; we know we have failed.
-                break;
-            }
-        }
-        result.close();
-        if (count != 1) {
-            final int messageKey = (count==0) ? ResourceKeys.ERROR_NO_PARAMETER_$1 :
-                                                ResourceKeys.ERROR_DUPLICATED_RECORD_$1;
-            throw new SQLException(Resources.format(messageKey, new Integer(parameter)));
-        }
-        return code;
+        setType(PARAMETER_BY_ID);
+        statement.setInt(ARG_KEY, parameter);
+        return getObject(statement, NAME, new Integer(parameter)).toString();
+    }
+
+    /**
+     * Retourne le prefix d'une opération.
+     *
+     * @param  name Le nom court idenfifiant l'opération.
+     * @return Le prefix de l'opération.
+     * @throws SQLException si l'accès à la base de données a échoué.
+     */
+    public synchronized String getOperationPrefix(final String name) throws SQLException {
+        setType(OPERATION_BY_NAME);
+        statement.setString(ARG_KEY, name);
+        return getObject(statement, PREFIX, name).toString();
     }
 }
