@@ -55,7 +55,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
 // Resources
-import net.seagis.resources.Utilities;
 import net.seagis.resources.WeakHashSet;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
@@ -225,7 +224,7 @@ public class MathTransformFactory
     {
         if (tr2 instanceof AbstractMathTransform.Inverse)
         {
-            return Utilities.equals(tr1, ((AbstractMathTransform.Inverse) tr2).inverse());
+            return tr1.equals(((AbstractMathTransform.Inverse) tr2).inverse());
             // TODO: we could make this test more general (just compare with tr2.inverse(),
             //       no matter if it is an instance of AbstractMathTransform.Inverse or not,
             //       and catch the exception if one is thrown). Would it be too expensive to
@@ -494,7 +493,7 @@ public class MathTransformFactory
      * dimension. Created affine transforms will have a size of
      * <code>numRow&nbsp;&times;&nbsp;numCol</code>.
      * <br><br>
-     * <table align="center" border='2'>
+     * <table align="center" border='1' cellpadding='3' bgcolor="F4F8FF">
      *   <tr bgcolor="#B9DCFF"><th>Parameter</th> <th>Description</th></tr>
      *   <tr><td><code>Num_row</code></td> <td>Number of rows in matrix</td></tr>
      *   <tr><td><code>Num_col</code></td> <td>Number of columns in matrix</td></tr>

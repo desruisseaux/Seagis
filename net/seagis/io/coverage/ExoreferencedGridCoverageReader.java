@@ -181,7 +181,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     /**
      * Returns the coordinate system for the {@link GridCoverage} to be read.
      * The default implementation invokes
-     * <code>{@link #properties}.{@link #getCoordinateSystem() getCoordinateSystem()}</code>.
+     * <code>{@link #properties}.{@link PropertyParser#getCoordinateSystem() getCoordinateSystem()}</code>.
      *
      * @param  index The index of the image to be queried.
      * @return The coordinate system for the {@link GridCoverage} at the specified index.
@@ -209,7 +209,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     /**
      * Returns the envelope for the {@link GridCoverage} to be read.
      * The default implementation invokes
-     * <code>{@link #properties}.{@link #getEnvelope() getEnvelope()}</code>.
+     * <code>{@link #properties}.{@link PropertyParser#getEnvelope() getEnvelope()}</code>.
      *
      * @param  index The index of the image to be queried.
      * @return The envelope for the {@link GridCoverage} at the specified index.
@@ -237,7 +237,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     /**
      * Returns the grid range for the {@link GridCoverage} to be read.
      * The default implementation try to invoke
-     * <code>{@link #properties}.{@link #getGridRange() getGridRange()}</code>,
+     * <code>{@link #properties}.{@link PropertyParser#getGridRange() getGridRange()}</code>,
      * and fallback to <code>super.getGridRange(index)</code> if the later fails.
      *
      * @param  index The index of the image to be queried.
@@ -277,7 +277,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
      * Returns the category lists for each band of the {@link GridCoverage}
      * to be read. If there is no category lists, then this method returns
      * <code>null</code>. The default implementation invokes
-     * <code>{@link #properties}.{@link #getCategoryLists() getCategoryLists()}</code>.
+     * <code>{@link #properties}.{@link PropertyParser#getCategoryLists() getCategoryLists()}</code>.
      *
      * @param  index The index of the image to be queried.
      * @return The category lists for the {@link GridCoverage} at the specified index.
@@ -305,7 +305,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
 
     /**
      * Tells if pixel values map directly geophysics values. The default implementation
-     * invokes <code>{@link #properties}.{@link #isGeophysics() isGeophysics()}</code>.
+     * invokes <code>{@link #properties}.{@link PropertyParser#isGeophysics() isGeophysics()}</code>.
      *
      * @param  index The index of the image to be queried.
      * @return <code>true</code> if pixel values map directly geophysics values.

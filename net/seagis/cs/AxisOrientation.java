@@ -243,20 +243,20 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
      * <code>EAST</code>, <code>UP</code>, <code>FUTURE</code>). More specifically, the
      * following conversion table is applied.
      * <br>&nbsp;
-     * <table align="center" border="1">
-     *   <tr>
-     *     <td align="center" bgcolor="#C4ECFF">&nbsp;&nbsp;<strong>Orientation</strong>&nbsp;&nbsp;</td>
-     *     <td align="center" bgcolor="#C4ECFF">&nbsp;&nbsp;<strong>Absolute value</strong>&nbsp;&nbsp;</td>
+     * <table align="center" cellpadding="3" border="1" bgcolor="F4F8FF">
+     *   <tr bgcolor="#B9DCFF">
+     *     <th>&nbsp;&nbsp;Orientation&nbsp;&nbsp;</th>
+     *     <th>&nbsp;&nbsp;Absolute value&nbsp;&nbsp;</th>
      *   </tr>
-     *   <tr><td align="center">NORTH</td> <td align="center">NORTH</td> </tr>
-     *   <tr><td align="center">SOUTH</td> <td align="center">NORTH</td> </tr>
-     *   <tr><td align="center">EAST</td>  <td align="center">EAST</td>  </tr>
-     *   <tr><td align="center">WEST</td>  <td align="center">EAST</td>  </tr>
-     *   <tr><td align="center">UP</td>    <td align="center">UP</td>    </tr>
-     *   <tr><td align="center">DOWN</td>  <td align="center">UP</td>    </tr>
-     *   <tr><td align="center">FUTURE</td><td align="center">FUTURE</td></tr>
-     *   <tr><td align="center">PAST</td>  <td align="center">FUTURE</td></tr>
-     *   <tr><td align="center">OTHER</td> <td align="center">OTHER</td> </tr>
+     *   <tr align="center"><td>NORTH</td> <td>NORTH</td> </tr>
+     *   <tr align="center"><td>SOUTH</td> <td>NORTH</td> </tr>
+     *   <tr align="center"><td>EAST</td>  <td>EAST</td>  </tr>
+     *   <tr align="center"><td>WEST</td>  <td>EAST</td>  </tr>
+     *   <tr align="center"><td>UP</td>    <td>UP</td>    </tr>
+     *   <tr align="center"><td>DOWN</td>  <td>UP</td>    </tr>
+     *   <tr align="center"><td>FUTURE</td><td>FUTURE</td></tr>
+     *   <tr align="center"><td>PAST</td>  <td>FUTURE</td></tr>
+     *   <tr align="center"><td>OTHER</td> <td>OTHER</td> </tr>
      * </table>
      */
     public AxisOrientation absolute()

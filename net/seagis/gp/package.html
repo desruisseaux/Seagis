@@ -55,8 +55,14 @@
     <H1><U>Supported operations</U></H1>
     <P ALIGN="justify">The default {@link net.seagis.gp.GridCoverageProcessor}
     supports the following operations:</P>
+
+    <UL>
+      <LI><A HREF="#interpolate">Interpolate</A></LI>
+      <LI><A HREF="#resample">Resample</A></LI>
+    </UL>
+
     <P>&nbsp;</P>
-    <H2>Interpolate</H2>
+    <H2><A NAME="interpolate">Interpolate</A></H2>
     <P ALIGN="justify">This operation specifies the interpolation type to be
     used to interpolate values for points which fall between grid cells. The
     default value is nearest neighbor. The new interpolation type operates
@@ -64,13 +70,13 @@
 
     <P><STRONG>Name:</STRONG>&nbsp;<CODE>"Interpolate"</CODE><BR>
        <STRONG>Parameters:</STRONG></P>
-    <table border=1 cellpadding=9>
-      <tr>
-        <td align="center" bgcolor="#F0F0F0"><strong>Name</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Class</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Default value</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Minimum value</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Maximum value</strong></td>
+    <table border='3' cellpadding='6' bgcolor='F4F8FF'>
+      <tr bgcolor='#B9DCFF'>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Default value</th>
+        <th>Minimum value</th>
+        <th>Maximum value</th>
       </tr>
       <tr>
         <td>"Source"</td>
@@ -110,7 +116,7 @@
     <code>new String[]{"Bicubic", "Bilinear", "NearestNeighbor"}</code>.</P>
 
     <P>&nbsp;</P>
-    <H2>Resample</H2>
+    <H2><A NAME="resample">Resample</A></H2>
     <P ALIGN="justify">Resample a grid coverage using a different grid geometry.
     This operation provides the following functionality:</P>
     <UL>
@@ -133,13 +139,13 @@
 
     <P><STRONG>Name:</STRONG>&nbsp;<CODE>"Resample"</CODE><BR>
        <STRONG>Parameters:</STRONG></P>
-    <table border=1 cellpadding=9>
-      <tr>
-        <td align="center" bgcolor="#F0F0F0"><strong>Name</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Class</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Default value</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Minimum value</strong></td>
-        <td align="center" bgcolor="#F0F0F0"><strong>Maximum value</strong></td>
+    <table border='3' cellpadding='6' bgcolor='F4F8FF'>
+      <tr bgcolor='#B9DCFF'>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Default value</th>
+        <th>Minimum value</th>
+        <th>Maximum value</th>
       </tr>
       <tr>
         <td>"Source"</td>
