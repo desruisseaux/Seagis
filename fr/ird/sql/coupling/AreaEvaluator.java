@@ -41,6 +41,12 @@ import net.seas.opengis.ct.TransformException;
 public interface AreaEvaluator
 {
     /**
+     * Une fonction calculant la valeur moyenne des
+     * pixels se trouvant dans la région géographique.
+     */
+    public static final AreaEvaluator MAIN = new AreaAverage();
+
+    /**
      * Evalue la fonction pour une zone géographique de la couverture spécifiée.
      * Cette fonction est évaluée pour chaque bande de la couverture (ou image).
      *

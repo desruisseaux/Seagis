@@ -46,6 +46,17 @@ import net.seas.opengis.cv.SampleDimension;
 import net.seas.opengis.cv.ColorInterpretation;
 import net.seas.opengis.cv.PointOutsideCoverageException;
 
+// Géométrie
+import java.awt.Shape;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+// Collections
+import java.util.List;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Collections;
+
 // Requêtes SQL et entrés/sorties
 import java.sql.SQLException;
 import java.io.IOException;
@@ -63,14 +74,10 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 // Divers
-import java.util.List;
 import java.util.Date;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Collections;
-import java.awt.geom.Point2D;
 import javax.media.jai.util.Range;
 import fr.ird.resources.Resources;
+import fr.ird.sql.coupling.AreaEvaluator;
 
 
 /**
@@ -504,11 +511,61 @@ public class Coverage3D extends Coverage
         }
         catch (IOException exception)
         {
-            PointOutsideCoverageException e=new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
+            PointOutsideCoverageException e=new PointOutsideCoverageException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
         }
         throw new PointOutsideCoverageException(Resources.format(Clé.DATE_OUTSIDE_COVERAGE¤1, date));
+    }
+
+    /**
+     * Returns a sequence of double values for a given geographic area in the coverage.
+     * A value for each sample dimension is included in the sequence. The first argument
+     * ({@link AreaEvaluator}) specify how to perform the computation for each grid coverage.
+     * For example, {@link AreaEvaluator#MAIN} compute the average value of pixels inside the
+     * area.
+     *
+     * @param  evaluator The computation to perform on the area.
+     * @param  area  The geographic area to evaluate.
+     * @param  time  The date where to evaluate.
+     * @return The values.
+     */
+    public synchronized double[] evaluate(final AreaEvaluator evaluator, final Shape area, final Date time) throws PointOutsideCoverageException
+    {
+        if (!seek(time))
+        {
+            // Missing data
+            final double[] dest=new double[categories.length];
+            Arrays.fill(dest, 0, categories.length, Double.NaN);
+            return dest;
+        }
+        assert(coordinateSystem.equivalents(lower.getCoordinateSystem())) : lower;
+        assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
+        try
+        {
+            if (lower==upper)
+            {
+                return evaluator.evaluate(lower, area);
+            }
+            final double[]   last = evaluator.evaluate(upper, area);
+            final double[]   dest = evaluator.evaluate(lower, area);
+            final long timeMillis = time.getTime();
+            assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+            final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+            for (int i=0; i<last.length; i++)
+            {
+                dest[i] += ratio*(last[i]-dest[i]);
+            }
+            return dest;
+        }
+        catch (TransformException exception)
+        {
+            final Rectangle2D bounds = area.getBounds2D();
+            final Point2D point = new Point2D.Double(bounds.getCenterX(), bounds.getCenterY());
+            PointOutsideCoverageException e = new PointOutsideCoverageException(point);
+            e.initCause(exception);
+            throw e;
+        }
     }
 
     /**
@@ -539,12 +596,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return evaluate(lower, point, dest);
+            return lower.evaluate(point, dest);
         }
 
         int[] last=null;
-        last = evaluate(upper, point, last);
-        dest = evaluate(lower, point, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -583,12 +640,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return evaluate(lower, point, dest);
+            return lower.evaluate(point, dest);
         }
 
         float[] last=null;
-        last = evaluate(upper, point, last);
-        dest = evaluate(lower, point, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -627,12 +684,12 @@ public class Coverage3D extends Coverage
         assert(coordinateSystem.equivalents(upper.getCoordinateSystem())) : upper;
         if (lower==upper)
         {
-            return evaluate(lower, point, dest);
+            return lower.evaluate(point, dest);
         }
 
         double[] last=null;
-        last = evaluate(upper, point, last);
-        dest = evaluate(lower, point, dest);
+        last = upper.evaluate(point, last);
+        dest = lower.evaluate(point, dest);
         final long timeMillis = time.getTime();
         assert(timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
@@ -708,30 +765,6 @@ public class Coverage3D extends Coverage
         // TODO: Current implementation doesn't check the coordinate system.
         return evaluate(new Point2D.Double(coord.ord[0], coord.ord[1]), ImageTableImpl.toDate(coord.ord[2]), dest);
     }
-
-    /**
-     * Returns a sequence of integer values for a giver point in the specified grid coverage.
-     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
-     * may override this method for performing a more sophesticated computation.
-     */
-    protected int[] evaluate(final GridCoverage coverage, final Point2D coord, final int[] dest)
-    {return coverage.evaluate(coord, dest);}
-
-    /**
-     * Returns a sequence of integer values for a giver point in the specified grid coverage.
-     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
-     * may override this method for performing a more sophesticated computation.
-     */
-    protected float[] evaluate(final GridCoverage coverage, final Point2D coord, final float[] dest)
-    {return coverage.evaluate(coord, dest);}
-
-    /**
-     * Returns a sequence of integer values for a giver point in the specified grid coverage.
-     * Default implementation invokes <code>coverage.evaluate(coord, dest)</code>. Subclasses
-     * may override this method for performing a more sophesticated computation.
-     */
-    protected double[] evaluate(final GridCoverage coverage, final Point2D coord, final double[] dest)
-    {return coverage.evaluate(coord, dest);}
 
     /**
      * Vérifie que le point spécifié a bien la dimension attendue.

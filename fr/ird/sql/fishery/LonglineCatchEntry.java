@@ -134,6 +134,10 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      */
     final int clampPosition(final int pos)
     {
+        if (pos<EnvironmentTable.START_POINT || pos>EnvironmentTable.END_POINT)
+        {
+            return pos;
+        }
         int missing = 0;
         if (Float.isNaN(x1) || Float.isNaN(y1)) missing |= 1;
         if (Float.isNaN(x2) || Float.isNaN(y2)) missing |= 2;

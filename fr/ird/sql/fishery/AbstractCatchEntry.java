@@ -130,6 +130,16 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
     }
 
     /**
+     * Si cette capture ne contient pas les coordonnées de début
+     * et de fin de la ligne, ramène la position spécifiée à une
+     * des valeurs {@link EnvironmentTable#START_POINT} ou
+     * {@link EnvironmentTable#END_POINT} en fonction de la
+     * coordonnée disponible.
+     */
+    int clampPosition(final int pos)
+    {return pos;}
+
+    /**
      * Retourne un code représentant cette capture.
      */
     public final int hashCode()

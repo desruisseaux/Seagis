@@ -147,24 +147,9 @@ class AreaAverage implements AreaEvaluator
                 iterator.nextLine();
             }
         }
-        /*
-         * Compute average. If count[i]==0, fallback
-         * on pixel value at the shape center.
-         */
-        boolean fallback=false;
         for (int i=0; i<sum.length; i++)
         {
-            if (Double.isNaN(sum[i] /= count[i]))
-            {
-                if (!fallback)
-                {
-                    coordinate.x = areaBounds.getCenterX();
-                    coordinate.y = areaBounds.getCenterY();
-                    values = coverage.evaluate(coordinate, values);
-                    fallback = true;
-                }
-                sum[i] = values[i];
-            }
+            sum[i] /= count[i];
         }
         return sum;
     }

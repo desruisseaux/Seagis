@@ -118,7 +118,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      */
     public synchronized void setPosition(final int position) throws SQLException
     {
-        if (position>=START_POINT && position<=END_POINT)
+        if ((position>=START_POINT && position<=END_POINT) || position==AREA)
         {
             statement.setInt(ARG_POSITION, position);
             this.position = position;
@@ -177,9 +177,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
                 timeLag = (int)Math.floor((valueTime.getTime()-catchTime.getTime()) / (24.0*60*60*1000));
             }
             int position = this.position;
-            if (capture instanceof LonglineCatchEntry)
+            if (capture instanceof AbstractCatchEntry)
             {
-                position = ((LonglineCatchEntry) capture).clampPosition(position);
+                position = ((AbstractCatchEntry) capture).clampPosition(position);
             }
             // NOTE: This implementation is highly inefficient,
             //       but it seems to be the only one working with
