@@ -57,14 +57,24 @@ public class ResourceBundle extends java.util.ResourceBundle
     private static final int MAX_STRING_LENGTH = 128;
 
     /**
-     * Nom du fichier contenant les ressources.
-     */
-    private final String filename;
-
-    /**
      * Tableau des valeurs.
      */
     private final String[] values;
+
+    /**
+     * Objet utiliser pour écrire une chaîne de caractères qui
+     * contient des arguments. Cet objet ne sera construit que
+     * la première fois où il sera nécessaire.
+     */
+    private transient MessageFormat format;
+
+    /**
+     * Clé de la dernière resources qui avait été demandée et
+     * formatée avec {@link #format}. Si la même ressource est
+     * demandée plusieurs fois de suite, on évitera d'appeler
+     * la couteuse méthode {@link MessageFormat#applyPattern}.
+     */
+    private transient int lastKey;
 
     /**
      * Construit une table des ressources.
@@ -74,7 +84,6 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     protected ResourceBundle(final String filename) throws IOException
     {
-        this.filename=filename;
         final DataInputStream input=new DataInputStream(new BufferedInputStream(getClass().getClassLoader().getResourceAsStream(filename)));
         values = new String[input.readInt()];
         for (int i=0; i<values.length; i++)
@@ -227,41 +236,16 @@ public class ResourceBundle extends java.util.ResourceBundle
     }
 
     /**
-     * Retourne la ressource associée à la clé spécifiée.
-     * @param  keyID Clé de la ressource à utiliser.
-     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
-     */
-    public final String getString(final int keyID) throws MissingResourceException
-    {return getString(String.valueOf(keyID));}
-
-    /**
      * Utilise la ressource désignée par la clé <code>key</code> pour écrire un objet <code>arg0</code>.
-     * Cette ressource peut être soit un objet d'une classe dérivée de {@link java.text.Format}, ou soit
-     * une chaîne de caractères.
+     * Un objet {@link java.text.MessageFormat} sera utilisé pour formater l'argument <code>arg0</code>.
+     * Ca sera comme si la sortie avait été produite par:
      *
-     * <blockquote>
-     *     Si la ressource désigné par <code>key</code> est un objet d'une classe dérivée
-     *     de {@link java.text.Format}, alors elle sera utilisée pour formater l'argument
-     *     <code>arg0</code>. Ce sera comme si la sortie avait été produite par:
+     * <blockquote><pre>
+     *     String pattern = getString(key);
+     *     Format f = new MessageFormat(pattern);
+     *     return f.format(arg0);
+     * </pre></blockquote>
      *
-     *         <blockquote>
-     *         <pre>Format f = (Format) getObject(key);
-     *              return f.format(arg0);</pre>
-     *         </blockquote>
-     *
-     *     Si la ressource désignée par <code>key</code> est une chaîne de caractères, alors
-     *     un objet {@link java.text.MessageFormat} sera utilisé pour formater l'argument
-     *     <code>arg0</code> d'après la chaîne de caractères. Ce sera comme si la sortie avait
-     *     été produite par:
-     *
-     *         <blockquote>
-     *         <pre>String pattern = getString(key);
-     *              Format f = new MessageFormat(pattern);
-     *              return f.format(arg0);</pre>
-     *         </blockquote>
-     * </blockquote>
-     *
-     * Dans le dernier cas (lorsque la ressource désignée par la clé est une chaîne de caractères),
      * Cette méthode n'exige pas que l'on double les appostrophes ('') chaque fois que l'on veut
      * écrire un simple appostrophe, contrairement à la classe {@link java.text.MessageFormat}
      * standard du Java. L'argument <code>arg0</code> peut aussi être un tableau d'objets
@@ -278,41 +262,66 @@ public class ResourceBundle extends java.util.ResourceBundle
      * @see #getString(String,Object,Object,Object)
      * @see java.text.MessageFormat
      */
-    public final String getString(final int keyID, final Object arg0) throws MissingResourceException
+    public final synchronized String getString(final int keyID, final Object arg0) throws MissingResourceException
     {
-        /*
-         * Obtient la ressource demandée. Si cette ressource est de la classe
-         * {@link Format}, alors on laissera ce format se charger de formater
-         * l'argument <code>arg0</code>.
-         */
-        final String key=String.valueOf(keyID);
-        final Object object=getObject(key);
-        if (object instanceof Format)
-        {
-            final Format format=(Format) object;
-            if (format instanceof MessageFormat)
-                return format.format(toArray(arg0));
-            else return format.format(arg0);
-        }
-        else
+        final Object      object = getObject(String.valueOf(keyID));
+        final Object[] arguments = toArray(arg0);
+        if (format == null)
         {
             /*
-             * Crée un objet MessageFormat pour le formatage des arguments. Cet
-             * objet MessageFormat utilisera normalement les conventions locales
-             * de l'utilisateur. Cela permettra par exemple d'écrire les dates
-             * selon les conventions du Canada Français (si on se trouve au Canada)
-             * même si les ressources sont celles du français de France. Si toutefois
-             * la langue utilisée n'est pas la même, alors un utilisera les conventions
-             * des ressources actuelles plutôt que celles de l'utilisateur.
+             * Crée un objet {@link MessageFormat} pour l'écriture des arguments. Cet objet {@link MessageFormat}
+             * utilisera normalement les conventions locales de l'utilisateur. Ca permettra par exemple d'écrire
+             * les dates selon les conventions du Canada Français (si on se trouve au Canada) même si les ressources
+             * sont celles du français de France. Si toutefois la langue utilisée n'est pas la même, alors un utilisera
+             * les conventions des ressources actuelles plutôt que celles de l'utilisateur, afin d'être cohérent avec
+             * la langue du texte à afficher.
              */
-            final Object[] arguments=toArray(arg0);
-            final MessageFormat format=new MessageFormat(object.toString());
-            final Locale locale=getLocale();
-            if (!Locale.getDefault().getLanguage().equalsIgnoreCase(locale.getLanguage()))
+            Locale locale = Locale.getDefault();
+            final Locale resourceLocale = getLocale();
+            if (!locale.getLanguage().equalsIgnoreCase(resourceLocale.getLanguage()))
             {
-                format.setLocale(locale);
+                locale = resourceLocale;
             }
-            return format.format(arguments);
+            format = new MessageFormat(object.toString(), locale);
         }
+        else if (keyID != lastKey)
+        {
+            /*
+             * La méthode {@link MessageFormat#applyPattern} est coûteuse. On évitera
+             * de l'appeller si {@link #format} contient déjà le bon pattern.
+             */
+            format.applyPattern(object.toString());
+            lastKey = keyID;
+        }
+        return format.format(arguments);
     }
+
+    /**
+     * Retourne la ressource associée à la clé spécifiée.
+     *
+     * @param  keyID Clé de la ressource à utiliser.
+     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
+     */
+    public final String getString(final int keyID) throws MissingResourceException
+    {return getString(String.valueOf(keyID));}
+
+    /**
+     * Retourne la ressource associée à la clé spécifiée
+     * en la terminant par les caractères ":&nbsp;".
+     *
+     * @param  keyID Clé de la ressource à utiliser.
+     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
+     */
+    public final String getLabel(final int key) throws MissingResourceException
+    {return getString(key)+": ";}
+
+    /**
+     * Retourne la ressource associée à la clé spécifiée
+     * en la terminant par les caractères "...".
+     *
+     * @param  keyID Clé de la ressource à utiliser.
+     * @throws MissingResourceException si aucune ressource n'est associée à la clé spécifiée.
+     */
+    public final String getTrailing(final int key) throws MissingResourceException
+    {return getString(key)+"...";}
 }
