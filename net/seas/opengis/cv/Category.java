@@ -33,7 +33,7 @@ import net.seas.resources.Resources;
 
 
 /**
- * <FONT COLOR="#FF6633">A category delimited by a range of pixel values.</FONT>
+ * <FONT COLOR="#FF6633">A category delimited by a range of sample values.</FONT>
  * A category may represent qualitative or quantitative information, for
  * example geomorphologic structures or geophysics parameters. Some image
  * mixes both qualitative and quantitative categories. For example, images
@@ -43,7 +43,7 @@ import net.seas.resources.Resources;
  * <br><br>
  * All categories must have a human readable name. In addition, some quantitative
  * categories may define a linear equation <code>y=C<sub>0</sub>+C<sub>1</sub>*x</code>
- * converting pixel values <var>x</var> into geophysics values <var>y</var>.
+ * converting sample values <var>x</var> into geophysics values <var>y</var>.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -56,19 +56,24 @@ public class Category implements Serializable
     // private static final long serialVersionUID = ?; // TODO
 
     /**
+     * A default category for no data.
+     */
+    static final Category NODATA = new Category(Resources.format(Clé.NODATA), Color.black, 0);
+
+    /**
      * The category name.
      */
     private final String name;
 
     /**
-     * The lower pixel value range, inclusive. This category is made of
-     * all pixels in the range {@link #lower} to {@link #upper} inclusive.
+     * The lower sample value range, inclusive. This category is made of
+     * all samples in the range {@link #lower} to {@link #upper} inclusive.
      */
     protected final float lower;
 
     /**
-     * The upper pixel value range, inclusive. This category is made of
-     * all pixels in the range {@link #lower} to {@link #upper} inclusive.
+     * The upper sample value range, inclusive. This category is made of
+     * all samples in the range {@link #lower} to {@link #upper} inclusive.
      */
     protected final float upper;
 
@@ -111,28 +116,21 @@ public class Category implements Serializable
     private static final int[] DEFAULT = {0xFF000000, 0xFFFFFFFF};
 
     /**
-     * Construct a qualitative category for pixel values
-     * ranging from <code>lower</code> to <code>upper</code>.
+     * Construct a qualitative category for sample value <code>ID</code>.
      *
      * @param  name    The category name.
-     * @param  colors  A set of colors for this category. The array's length don't need to
-     *                 be equals to <code>upper-lower</code>.  Colors will be interpolated
-     *                 as needed. An array of length 1 means that an uniform color should be
-     *                 used for all values range. An array of length 0 or a <code>null</code>
-     *                 array means that a default color set should be used (usually a gradient
-     *                 from opaque black to opaque white).
-     * @param  lower   The lower pixel value range, inclusive.
-     * @param  upper   The upper pixel value range, inclusive.
+     * @param  color   This category color.
+     * @param  ID      The category number, from 0 to 4194303 inclusive. Real numbers
+     *                 are usually in the range 0 to 255 however.
      *
      * @throws IllegalArgumentException if <code>lower</code> is greater than <code>upper</code>.
      */
-    public Category(final String name, final Color[] colors, final float lower, final float upper) throws IllegalArgumentException
-    {this(name, colors, lower, upper, Float.NaN, Float.NaN, false);}
+    public Category(final String name, final Color color, final int ID) throws IllegalArgumentException
+    {this(name, new Color[] {color}, ID, ID, toNaN(ID));}
 
     /**
-     * Construct a quantitative category for pixel values ranging from <code>lower</code>
-     * to <code>upper</code>. Pixel values (usually integer) will be converted into
-     * geophysics values (usually floating-point) through a linear equation.
+     * Construct a qualitative category for sample values ranging
+     * from <code>lower</code> to <code>upper</code> inclusive.
      *
      * @param  name    The category name.
      * @param  colors  A set of colors for this category. The array's length don't need to
@@ -141,8 +139,35 @@ public class Category implements Serializable
      *                 used for all values range. An array of length 0 or a <code>null</code>
      *                 array means that a default color set should be used (usually a gradient
      *                 from opaque black to opaque white).
-     * @param  lower   The lower pixel value range, inclusive.
-     * @param  upper   The upper pixel value range, inclusive.
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, inclusive.
+     * @param  ID      The category number, from 0 to 4194303 inclusive.
+     *
+     * @throws IllegalArgumentException if <code>lower</code> is greater than <code>upper</code>.
+     */
+    public Category(final String name, final Color[] colors, final float lower, final float upper, final int ID) throws IllegalArgumentException
+    {this(name, colors, lower, upper, toNaN(ID));}
+
+    /**
+     * Construct a qualitative category with the specified NaN value.
+     */
+    private Category(final String name, final Color[] colors, final float lower, final float upper, final float NaN) throws IllegalArgumentException
+    {this(name, colors, lower, upper, NaN, NaN, false);}
+
+    /**
+     * Construct a quantitative category for sample values ranging from <code>lower</code>
+     * to <code>upper</code> inclusive. Sample values (usually integer) will be converted
+     * into geophysics values (usually floating-point) through a linear equation.
+     *
+     * @param  name    The category name.
+     * @param  colors  A set of colors for this category. The array's length don't need to
+     *                 be equals to <code>upper-lower</code>.  Colors will be interpolated
+     *                 as needed. An array of length 1 means that an uniform color should be
+     *                 used for all values range. An array of length 0 or a <code>null</code>
+     *                 array means that a default color set should be used (usually a gradient
+     *                 from opaque black to opaque white).
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, inclusive.
      * @param  C0      The C0 coefficient in the linear equation <code>y=C0+C1*x</code>.
      * @param  C1      The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
      *
@@ -153,10 +178,10 @@ public class Category implements Serializable
     {this(name, colors, lower, upper, C0, C1, true);}
 
     /**
-     * Construct a qualitative or quantitative category for pixel values
-     * ranging from <code>lower</code> to <code>upper</code>. Pixel values
-     * (usually integer) can be converted into geophysics values (usually
-     * floating-point) through a linear equation.
+     * Construct a qualitative or quantitative category for sample values
+     * ranging from <code>lower</code> to <code>upper</code> inclusive.
+     * Sample values (usually integer) can be converted into geophysics
+     * values (usually floating-point) through a linear equation.
      *
      * @param  name    The category name.
      * @param  colors  A set of colors for this category. The array's length don't need to
@@ -165,8 +190,8 @@ public class Category implements Serializable
      *                 used for all values range. An array of length 0 or a <code>null</code>
      *                 array means that a default color set should be used (usually a gradient
      *                 from opaque black to opaque white).
-     * @param  lower   The lower pixel value range, inclusive.
-     * @param  upper   The upper pixel value range, inclusive.
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, inclusive.
      * @param  C0      The C0 coefficient in the linear equation <code>y=C0+C1*x</code>.
      * @param  C1      The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
      * @param  isQuantitative <code>true</code> if this category is a quantitative one.
@@ -215,6 +240,22 @@ public class Category implements Serializable
     }
 
     /**
+     * Returns a NaN number for the specified category number.
+     * Valid NaN numbers have bit fields ranging from
+     * <code>0x7f800001</code> through <code>0x7fffffff</code> or
+     * <code>0xff800001</code> through <code>0xffffffff</code>.
+     * The standard {@link Float#NaN} has bit fields <code>0x7fc00000</code>.
+     */
+    private static float toNaN(final int ID) throws IllegalArgumentException
+    {
+        if (ID>=0 && ID<=0x3FFFFF)
+        {
+            return Float.intBitsToFloat(0x7fC00000 + ID);
+        }
+        else throw new IllegalArgumentException(String.valueOf(ID));
+    }
+
+    /**
      * Returns the category name in the specified locale. If no name is available
      * for the specified locale, then an arbitrary locale may be used. The default
      * implementation returns the category name as specified to the constructor.
@@ -224,7 +265,10 @@ public class Category implements Serializable
 
     /**
      * Returns the set of colors for this category.
-     * Change to the returned array will not change this category.
+     * Change to the returned array will not affect
+     * this category.
+     *
+     * @see CategoryList#getColorModel
      */
     public Color[] getColors()
     {
@@ -235,29 +279,33 @@ public class Category implements Serializable
     }
 
     /**
-     * Compute the geophysics value from a pixel value. This method don't
-     * need to check if <code>pixel</code> lies in this category's range
+     * Compute the geophysics value from a sample value. This method doesn't
+     * need to check if <code>sample</code> lies in this category's range
      * (<code>[{@link #lower}..{@link #upper}]</code>). Values out of range
      * may lead to extrapolation, which may or may not have a physical maining.
+     *
+     * @see CategoryList#toValue
      */
-    protected float toValue(final float pixel)
-    {return C0+C1*pixel;}
+    protected float toValue(final float sample)
+    {return C0+C1*sample;}
 
     /**
-     * Compute the pixel value from a geophysics value. If the resulting value is
+     * Compute the sample value from a geophysics value. If the resulting value is
      * outside this category's range (<code>[{@link #lower}..{@link #upper}]</code>),
      * then it will be clamp to <code>lower</code> or <code>upper</code> as necessary.
      * By convention, {@link Float#NaN} values are clamped to {@link #lower}.
      * This method never returns infinity or NaN.
+     *
+     * @see CategoryList#toSample
      */
-    protected float toPixel(final float value)
+    protected float toSample(final float value)
     {
-        final float pixel = (value-C0)/C1;
-        return (pixel>=lower) ? ((pixel<=upper) ? pixel : upper) : lower;
+        final float sample = (value-C0)/C1;
+        return (sample>=lower) ? ((sample<=upper) ? sample : upper) : lower;
     }
 
     /**
-     * Returns a hash value for this envelope.
+     * Returns a hash value for this category.
      * This value need not remain consistent between
      * different implementations of the same class.
      */
