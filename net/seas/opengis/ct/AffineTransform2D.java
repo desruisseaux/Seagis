@@ -49,11 +49,6 @@ final class AffineTransform2D extends MathTransform implements Serializable
     private static final long serialVersionUID = -7260613547208966035L;
 
     /**
-     * The identity transform for 2D coordinate systems.
-     */
-    public static final MathTransform IDENTITY = new AffineTransform2D(new AffineTransform());
-
-    /**
      * The affine transform.
      */
     private final AffineTransform transform;

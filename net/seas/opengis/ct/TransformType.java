@@ -124,6 +124,23 @@ public final class TransformType extends EnumeratedParameter
     {return Resources.getResources(locale).getString(clé);}
 
     /**
+     * <FONT COLOR="#FF6633">Concatenate this transform type with the specified transform
+     * type.</FONT> If at least one transform type is {@link #OTHER}, then {@link #OTHER}
+     * is returned. Otherwise, transform type values are combined as with the logical "OR"
+     * operand.
+     */
+    public TransformType concatenate(final TransformType type)
+    {
+        final int thisValue = this.getValue();
+        final int thatValue = type.getValue();
+        if (thisValue==0 || thatValue==0)
+        {
+            return OTHER;
+        }
+        return getEnum(thisValue | thatValue);
+    }
+
+    /**
      * Use a single instance of {@link TransformType} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.

@@ -160,10 +160,10 @@ public class Adapters
         {
             return (CoordinateTransform) ((CoordinateTransform.Export)transform).unwrap();
         }
-        return new CoordinateTransformProxy(wrap(transform.getTransformType()),
+        return new CoordinateTransformProxy(wrap(transform.getMathTransform()),
+                                            wrap(transform.getTransformType()),
                                          CS.wrap(transform.getSourceCS()),
-                                         CS.wrap(transform.getTargetCS()),
-                                            wrap(transform.getMathTransform()));
+                                         CS.wrap(transform.getTargetCS()));
     }
 
     /**

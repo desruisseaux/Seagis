@@ -145,7 +145,9 @@ public final class Matrix implements Cloneable, Serializable
                    final boolean validRegions)
     {
         /*
-         * Arguments check.
+         * Arguments check. NOTE: those exceptions are catched by
+         * 'net.seas.opengis.ct.CoordinateTransformationFactory'.
+         * If exception type change, update the factory class.
          */
         final int dimension = srcAxis.length;
         if (dstAxis.length != dimension)

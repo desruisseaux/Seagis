@@ -22,39 +22,45 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS dependences (SEAGIS)
+import net.seas.opengis.cs.Datum;
+import net.seas.opengis.cs.CoordinateSystem;
+
+// Miscellaneous
+import net.seas.resources.Resources;
+
 
 /**
- * <FONT COLOR="#FF6633">Common superclass for a number of transformation-related
- * exceptions.</FONT> It may be thrown by {@link MathTransform} when a coordinate
- * can't be transformed. It may also be thrown when a coordinate transformation
- * can't be created or inverted.
+ * <FONT COLOR="#FF6633">Thrown when a coordinate transformation can't be created.</FONT>
+ * It may be because there is no known path between source and coordinate systems,
+ * or because the requested transformation is not available in the environment.
  *
  * @version 1.0
- * @author André Gosselin
  * @author Martin Desruisseaux
  */
-public class TransformException extends Exception
+public class CannotCreateTransformException extends TransformException
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 688199915603567723L;
+    // private static final long serialVersionUID = ?;
 
     /**
-     * Constructs a new exception with no detail message.
+     * Construct an exception with no detail message.
      */
-    public TransformException()
+    public CannotCreateTransformException()
     {}
 
     /**
-     * Constructs a new exception with the specified detail message.
+     * Construct an exception with the specified detail message.
      */
-    public TransformException(final String message)
+    public CannotCreateTransformException(final String message)
     {super(message);}
 
     /**
-     * Constructs a new exception with the specified detail message and cause.
+     * Construct an exception with a message stating that no transformation
+     * path has been found between the specified coordinate system.
      */
-    public TransformException(final String message, final Throwable cause)
-    {super(message, cause);}
+    public CannotCreateTransformException(final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
+    {this(Resources.format(Clé.NO_TRANSFORMATION_PATH¤2, sourceCS.getName(null), targetCS.getName(null)));}
 }

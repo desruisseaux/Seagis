@@ -76,22 +76,20 @@ final class CoordinateTransformProxy extends CoordinateTransform
     /**
      * Construct a coordinate transformation.
      *
+     * @param transform The math transform.
      * @param type      The transform type.
      * @param sourceCS  The source coordinate system.
      * @param targetCS  The destination coordinate system.
-     * @param transform The math transform.
      */
-    public CoordinateTransformProxy(final TransformType type, final CoordinateSystem sourceCS, final CoordinateSystem targetCS, final MathTransform transform)
+    public CoordinateTransformProxy(final MathTransform transform, final TransformType type, final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
     {
         super(getName(sourceCS, targetCS, null));
+        ensureNonNull("type",      type);
+        ensureNonNull("transform", transform);
         this.type      = type;
         this.sourceCS  = sourceCS;
         this.targetCS  = targetCS;
-        this.transform = transform;
-        ensureNonNull("type",      type);
-        ensureNonNull("sourceCS",  sourceCS);
-        ensureNonNull("targetCS",  targetCS);
-        ensureNonNull("transform", transform);
+        this.transform = transform.getMathTransform();
         if (transform.getDimSource() != sourceCS.getDimension())
         {
             throw new IllegalArgumentException("sourceCS");
@@ -111,7 +109,11 @@ final class CoordinateTransformProxy extends CoordinateTransform
      *                  the default locale.
      */
     private static String getName(final CoordinateSystem sourceCS, final CoordinateSystem targetCS, final Locale locale)
-    {return sourceCS.getName(locale)+" \u21E8 "+targetCS.getName(locale);}
+    {
+        ensureNonNull("sourceCS", sourceCS);
+        ensureNonNull("targetCS", targetCS);
+        return sourceCS.getName(locale)+" \u21E8 "+targetCS.getName(locale);
+    }
 
     /**
      * Gets the name of this coordinate transformation.
@@ -181,7 +183,7 @@ final class CoordinateTransformProxy extends CoordinateTransform
      * Creates the inverse transform of this object.
      */
     public MathTransform inverse() throws NoninvertibleTransformException
-    {return new CoordinateTransformProxy(type, targetCS, sourceCS, transform.inverse());}
+    {return new CoordinateTransformProxy(transform.inverse(), type, targetCS, sourceCS);}
     
     /**
      * Tests whether this transform does not move any points.

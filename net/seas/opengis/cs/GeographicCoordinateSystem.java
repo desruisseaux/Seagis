@@ -95,10 +95,10 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private final PrimeMeridian meridian;
 
     /**
-     * Creates a geographic coordinate system. This coordinate system will use
+     * Creates a geographic coordinate system.  This coordinate system will use
      * <var>longitude</var>/<var>latitude</var> ordinates with longitude values
-     * increasing north and latitude values increasing east. Angular units are degrees
-     * and prime meridian is Greenwich.
+     * increasing east and latitude values increasing north.  Angular units are
+     * degrees and prime meridian is Greenwich.
      *
      * @param name      Name to give new object.
      * @param datum     Horizontal datum for created coordinate system.

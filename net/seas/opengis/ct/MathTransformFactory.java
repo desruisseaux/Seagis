@@ -130,6 +130,28 @@ public class MathTransformFactory
     {return new AffineTransform2D(matrix);}
 
     /**
+     * Creates an affine transform from a matrix.
+     *
+     * @param matrix The matrix used to define the affine transform.
+     * @return The affine transform.
+     */
+    final MathTransform createAffineTransform(final Matrix matrix)
+    {
+        /*
+         * If the user is requesting a 2D transform, delegate to the
+         * highly optimized java.awt.geom.AffineTransform class.
+         */
+        if (matrix.getSize()==3)
+        {
+            return createAffineTransform(matrix.toAffineTransform2D());
+        }
+        /*
+         * General case (not yet implemented).
+         */
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    /**
      * Creates a transform by concatenating two existing transforms.
      * A concatenated transform acts in the same way as applying two
      * transforms, one after the other. The dimension of the output
@@ -281,21 +303,7 @@ public class MathTransformFactory
          * Creates an affine transform from a matrix.
          */
         public CT_MathTransform createAffineTransform(final PT_Matrix matrix) throws RemoteException
-        {
-            final Matrix m = adapters.PT.wrap(matrix);
-            /*
-             * If the user is requesting a 2D transform, delegate to the
-             * highly optimized java.awt.geom.AffineTransform class.
-             */
-            if (m.getSize()==3)
-            {
-                return adapters.export(MathTransformFactory.this.createAffineTransform(m.toAffineTransform2D()));
-            }
-            /*
-             * General case (not yet implemented).
-             */
-            throw new UnsupportedOperationException("Not implemented");
-        }
+        {return adapters.export(MathTransformFactory.this.createAffineTransform(adapters.PT.wrap(matrix)));}
 
         /**
          * Creates a transform by concatenating two existing transforms.

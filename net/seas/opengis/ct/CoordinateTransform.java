@@ -38,7 +38,9 @@ import java.rmi.server.RemoteObject;
 
 // Miscellaneous
 import java.util.Locale;
+import java.io.Serializable;
 import net.seas.util.XClass;
+import net.seas.resources.Resources;
 
 
 /**
@@ -105,6 +107,99 @@ public abstract class CoordinateTransform extends MathTransform
     {return getTargetCS().getDimension();}
 
     /**
+     * Creates the inverse transform of this object. The target of the inverse transform
+     * is the source of the original. The source of the inverse transform is the target
+     * of the original. Using the original transform followed by the inverse's transform
+     * will result in an identity map on the source coordinate space, when allowances for
+     * error are made. This method may fail if the transform is not one to one. However,
+     * all cartographic projections should succeed.
+     *
+     * @return The inverse transform.
+     * @throws NoninvertibleTransformException if the transform can't be inversed.
+     */
+//  public CoordinateTransform inverse() throws NoninvertibleTransformException
+//  {return (CoordinateTransform) super.inverse();}
+//  TODO: This is legal according Generic Type, but a compiler bug prevent it to compile.
+
+    /**
+     * Base class for inverse {@link CoordinateTransform}. This class is serializable
+     * if the underlying {@link CoordinateTransform} is serializable too.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    abstract class Inverse extends CoordinateTransform implements Serializable
+    {
+        /**
+         * Serial number for interoperability with different versions.
+         */
+    //  private static final long serialVersionUID = 2370521414804482480L; // TODO
+
+        /**
+         * Default constructor.
+         */
+        protected Inverse()
+        {super(Resources.format(Clé.INVERSE_OF¤1, CoordinateTransform.super.getName(null)));}
+
+        /**
+         * Returns a human readable name localized for the specified locale.
+         */
+        public final String getName(final Locale locale)
+        {return Resources.format(Clé.INVERSE_OF¤1, CoordinateTransform.this.getName(locale));}
+
+        /**
+         * Gets the semantic type of transform.
+         */
+        public TransformType getTransformType()
+        {return CoordinateTransform.this.getTransformType();}
+
+        /**
+         * Gets the source coordinate system.
+         */
+        public CoordinateSystem getSourceCS()
+        {return CoordinateTransform.this.getTargetCS();}
+
+        /**
+         * Gets the target coordinate system.
+         */
+        public CoordinateSystem getTargetCS()
+        {return CoordinateTransform.this.getSourceCS();}
+
+        /**
+         * Returns the inverse transform of this object.
+         */
+        public final MathTransform inverse()
+        {return CoordinateTransform.this;}
+
+        /**
+         * Tests whether this transform does not move any points.
+         */
+        public final boolean isIdentity()
+        {return CoordinateTransform.this.isIdentity();}
+
+        /**
+         * Returns a hash value for this transform.
+         */
+        public final int hashCode()
+        {return ~CoordinateTransform.this.hashCode();}
+
+        /**
+         * Compares the specified object with
+         * this math transform for equality.
+         */
+        public final boolean equals(final Object object)
+        {
+            if (object==this) return true;
+            if (object instanceof Inverse)
+            {
+                final Inverse that = (Inverse) object;
+                return this.inverse().equals(that.inverse());
+            }
+            else return false;
+        }
+    }
+
+    /**
      * Returns a hash value for this
      * coordinate transformation.
      */
@@ -142,6 +237,7 @@ public abstract class CoordinateTransform extends MathTransform
      */
     Object toOpenGIS(final Object adapters)
     {return new Export(adapters);}
+
 
 
 

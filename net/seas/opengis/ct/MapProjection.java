@@ -788,7 +788,7 @@ abstract class MapProjection extends CoordinateTransform
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Inverse extends MathTransform.Inverse
+    private final class Inverse extends CoordinateTransform.Inverse
     {
         public Point2D transform(final Point2D source, final Point2D dest) throws TransformException
         {return MapProjection.this.inverseTransform(source, dest);}
