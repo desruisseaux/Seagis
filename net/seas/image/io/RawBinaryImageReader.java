@@ -91,7 +91,7 @@ import net.seas.resources.Resources;
  * <ul>
  *   <li>Call {@link RawBinaryImageReadParam#setPadValue}.</li>
  *   <li>Define a <code>RawBinaryImageReader</code> subclass
- *       overriding {@link #isPadValue}.</li>
+ *       overriding {@link #transform(double)}.</li>
  *   <li>Define a <code>RawBinaryImageReader.Spi</code>
  *       subclass setting the <code>padValue</code> field.</li>
  * </ul>
@@ -110,9 +110,9 @@ public class RawBinaryImageReader extends SimpleImageReader
 
     /**
      * The pad value. If a single pad value is not enough, more
-     * control can be gained by overriding {@link #isPädValue}.
+     * control can be gained by overriding {@link #transform}.
      */
-    private final long padValue;
+    private final double padValue;
 
     /**
      * The expected image size, or <code>null</code> if unknow.   Setting this field to a
@@ -136,12 +136,12 @@ public class RawBinaryImageReader extends SimpleImageReader
         if (provider instanceof Spi)
         {
             final Spi spi = (Spi) provider;
-            padValue  = Double.doubleToLongBits(spi.padValue);
+            padValue  = spi.padValue;
             imageSize = spi.imageSize;
         }
         else
         {
-            padValue  = Double.doubleToLongBits(Double.NaN);
+            padValue  = Double.NaN;
             imageSize = null;
         }
     }
@@ -173,21 +173,6 @@ public class RawBinaryImageReader extends SimpleImageReader
     }
 
     /**
-     * Convenience method returning the destination band for the
-     * specified source band. If the specified source band is not
-     * to be read, then this method returns -1.
-     */
-    private static int sourceToDestBand(final int[] sourceBands, final int[] destinationBands, final int srcBand)
-    {
-        if (sourceBands==null)
-            return (destinationBands!=null) ? destinationBands[srcBand] : srcBand;
-        for (int i=0; i<sourceBands.length; i++)
-            if (sourceBands[i] == srcBand)
-                return (destinationBands!=null) ? destinationBands[i] : i;
-        return -1;
-    }
-
-    /**
      * Returns a default color space.
      */
     private ColorSpace getColorSpace(final int imageIndex, final int[] sourceBands, final int[] destinationBands) throws IOException
@@ -213,8 +198,8 @@ public class RawBinaryImageReader extends SimpleImageReader
 
     /**
      * Retourne quelques types d'images qui pourront contenir les données.
-     * Le premier objet retourné sera celui qui convient le mieux pour un
-     * affichage à l'écran.
+     * Le premier type retourné sera celui qui se rapprochera le plus du
+     * type des données à lire.
      *
      * @param  imageIndex Index de l'image dont on veut les types.
      * @return Itérateur balayant les types de l'image.
@@ -397,7 +382,7 @@ public class RawBinaryImageReader extends SimpleImageReader
         final ImageInputStream   input = (ImageInputStream) getInput();
         final WritableRaster dstRaster = image.getRaster();
         final WritableRaster srcRaster = isDirect ? dstRaster : WritableRaster.createWritableRaster(streamModel.createCompatibleSampleModel(streamWidth, Math.min(4, streamHeight)), null);
-        final double          padValue = (param instanceof RawBinaryImageReadParam) ? ((RawBinaryImageReadParam) param).getPadValue() : Double.NaN;
+        final double      userPadValue = (param instanceof RawBinaryImageReadParam) ? ((RawBinaryImageReadParam) param).getPadValue() : Double.NaN;
         final DataBuffer        buffer = srcRaster.getDataBuffer();
         final int         bufferHeight = srcRaster.getHeight();
         final int             dataType = buffer.getDataType();
@@ -481,8 +466,10 @@ public class RawBinaryImageReader extends SimpleImageReader
                     final int stop = offset+validLength;
                     for (int i=offset; i<stop; i++)
                     {
-                        final double value = buffer.getElemDouble(srcBand, i);
-                        if (value==padValue || !isPadValue(value))
+                        double value = buffer.getElemDouble(srcBand, i);
+                        if (value==userPadValue) value=Double.NaN;
+                        value = transform(value);
+                        if (!Double.isNaN(value))
                         {
                             if (value<minimum[srcBand]) minimum[srcBand]=value;
                             if (value>maximum[srcBand]) maximum[srcBand]=value;
@@ -500,17 +487,22 @@ public class RawBinaryImageReader extends SimpleImageReader
                     for (int srcBand=lowerSrcBand; srcBand<upperSrcBand; srcBand++)
                     {
                         final int dstBand = sourceToDestBand(sourceBands, destinationBands, srcBand);
-                        if (dstBand < 0) continue;
-                        for (int y=lowerY; y<upperY; y++)
+                        if (dstBand >= 0)
                         {
-                            final int srcY = (y-destinationYOffset)*sourceYSubsampling + subsamplingYOffset;
-                            assert(srcY>=sy && srcY<sy+validHeight);
-                            for (int x=dstXMin; x<dstXMax; x++)
+                            assert(destToSourceBand(sourceBands, destinationBands, dstBand)==srcBand);
+                            int srcY = srcRegion.y + (lowerY-dstYMin)*sourceYSubsampling;
+                            for (int y=lowerY; y<upperY; y++)
                             {
-                                final int srcX = (x-destinationXOffset)*sourceXSubsampling + subsamplingXOffset;
-                                assert(srcX>=0 && srcX<streamWidth);
-                                final double value = srcRaster.getSampleDouble(srcX, srcY, srcBand);
-                                dstRaster.setSample(x, y, dstBand, value);
+                                assert(srcY < srcRegion.y+srcRegion.height);
+                                int srcX = srcRegion.x;
+                                for (int x=dstXMin; x<dstXMax; x++)
+                                {
+                                    assert(srcX < srcRegion.x+srcRegion.width);
+                                    final double value = srcRaster.getSampleDouble(srcX, srcY, srcBand);
+                                    dstRaster.setSample(x, y, dstBand, value);
+                                    srcX += sourceXSubsampling;
+                                }
+                                srcY += sourceYSubsampling;
                             }
                         }
                     }
@@ -610,12 +602,15 @@ public class RawBinaryImageReader extends SimpleImageReader
     }
 
     /**
-     * Indique si la donnée spécifiée représente une donnée
-     * manquante. L'implémentation par défaut compare cette
-     * valeur à la valeur {@link Spi#padValue}.
+     * Transform a value. This method is invoked automatically for every pixel
+     * value during reading, in order to give subclasses a chance to perform
+     * some data conversion on the fly. The default implementation compare
+     * <code>value</code> to the pad value (as specified in {@link Spi#padValue})
+     * and returns {@link Double#NaN} if both values are equals. Otherwise,
+     * <code>value</code> is returned unchanged.
      */
-    protected boolean isPadValue(final double value)
-    {return Double.doubleToLongBits(value)==padValue;}
+    protected double transform(final double value)
+    {return value==padValue ? Double.NaN : value;}
 
     /**
      * Service provider interface (SPI) for {@link RawBinaryImageReader}s.
@@ -746,6 +741,19 @@ public class RawBinaryImageReader extends SimpleImageReader
         {return false;}
 
         /**
+         * Returns an instance of the image reader implementation associated
+         * with this service provider. The default implementation returns a new
+         * {@link RawBinaryImageReader} instance. Subclasses should override this
+         * method instead of {@link #createReaderInstance(Object)} for constructing
+         * {@link RawBinaryImageReader} subclass.
+         *
+         * @return An image reader instance.
+         * @throws IOException if the attempt to instantiate the reader fails.
+         */
+        public ImageReader createReaderInstance() throws IOException
+        {return new RawBinaryImageReader(this);}
+
+        /**
          * Returns an instance of the ImageReader implementation associated
          * with this service provider. The optional <code>extension</code>
          * argument may be one of the following classes:
@@ -754,16 +762,24 @@ public class RawBinaryImageReader extends SimpleImageReader
          *   <li>{@link Dimension} for specifying the image size.</li>
          * </ul>
          *
+         * The default implementation call {@link #createReaderInstance()}
+         * and set the resulting object's internal fields according the
+         * <code>extension</code> argument.
+         *
          * @param  extension An optional extension object, which may be null.
          * @return An image reader instance.
          * @throws IOException if the attempt to instantiate the reader fails.
          */
         public ImageReader createReaderInstance(final Object extension) throws IOException
         {
-            final RawBinaryImageReader reader=new RawBinaryImageReader(this);
-            if (extension instanceof Dimension)
+            final ImageReader reader=createReaderInstance();
+            if (reader instanceof RawBinaryImageReader)
             {
-                reader.imageSize = new Dimension((Dimension) extension);
+                final RawBinaryImageReader rawReader = (RawBinaryImageReader) reader;
+                if (extension instanceof Dimension)
+                {
+                    rawReader.imageSize = new Dimension((Dimension) extension);
+                }
             }
             return reader;
         }

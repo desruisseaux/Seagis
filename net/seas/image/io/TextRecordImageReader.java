@@ -45,9 +45,11 @@ import java.awt.geom.AffineTransform;
 
 // Ensembles
 import java.util.Set;
+import java.util.List;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Arrays;
+import java.util.ArrayList;
 
 // Entrés/sorties
 import java.io.IOException;
@@ -127,7 +129,7 @@ public class TextRecordImageReader extends TextImageReader
      * lire. La valeur <code>false</code> permettra de conserver les anciens pixels dans
      * les régions ou le fichier ne définit pas de nouvelles valeurs.
      */
-    private static final boolean CLEAR = false;
+    private static final boolean CLEAR = true;
 
     /**
      * Numéro de colonne des <var>x</var>, compté à partir de 0.
@@ -390,7 +392,7 @@ public class TextRecordImageReader extends TextImageReader
      *
      * @param line   Ligne à décoder.
      * @param values Dernières valeurs à avoir été lues, ou <code>null</code> si cette ligne
-     *               est la première à être décodée. Se buffer peut être réutiliser en écrasant
+     *               est la première à être décodée. Ce buffer peut être réutilisé en écrasant
      *               les anciennes valeurs par les nouvelles valeurs de la ligne <code>line</code>.
      * @return Les valeurs lues, ou <code>null</code> si la fin de l'image a été atteinte. Le
      *         tableau retourné sera habituellement le même que <code>values</code>, mais pas
@@ -551,19 +553,11 @@ public class TextRecordImageReader extends TextImageReader
         final int              width = records.getPointCount(xColumn, EPS);
         final int             height = records.getPointCount(yColumn, EPS);
         final int        numSrcBands = records.getColumnCount() - (xColumn==yColumn ? 1 : 2);
-        final BufferedImage    image = getDestination(param, getImageTypes(imageIndex), width, height);
-        final int        numDstBands = image.getSampleModel().getNumBands();
-        checkReadParamBandSettings(param, numSrcBands, numDstBands);
         /*
          * Extract user's parameters
          */
-        final Rectangle sourceRegion = getSourceRegion(param, width, height);
-        final int         sourceXMin = sourceRegion.x;
-        final int         sourceYMin = sourceRegion.y;
-        final int         sourceXMax = sourceRegion.width  + sourceXMin;
-        final int         sourceYMax = sourceRegion.height + sourceYMin;
-        final int[]      sourceBands;
-        final int[]        destBands;
+        final int[]         srcBands;
+        final int[]         dstBands;
         final int sourceXSubsampling;
         final int sourceYSubsampling;
         final int subsamplingXOffset;
@@ -572,8 +566,8 @@ public class TextRecordImageReader extends TextImageReader
         final int destinationYOffset;
         if (param != null)
         {
-            sourceBands        = param.getSourceBands();
-            destBands          = param.getDestinationBands();
+            srcBands           = param.getSourceBands();
+            dstBands           = param.getDestinationBands();
             final Point offset = param.getDestinationOffset();
             sourceXSubsampling = param.getSourceXSubsampling();
             sourceYSubsampling = param.getSourceYSubsampling();
@@ -584,8 +578,8 @@ public class TextRecordImageReader extends TextImageReader
         }
         else
         {
-            sourceBands = null;
-            destBands   = null;
+            srcBands    = null;
+            dstBands    = null;
             sourceXSubsampling = 1;
             sourceYSubsampling = 1;
             subsamplingXOffset = 0;
@@ -596,6 +590,18 @@ public class TextRecordImageReader extends TextImageReader
         /*
          * Initialize...
          */
+        final int numDstBands = (dstBands!=null) ? dstBands.length : (srcBands!=null) ? srcBands.length : numSrcBands;
+        final BufferedImage image = getDestination(param, getImageTypes(imageIndex, numDstBands), width, height);
+        checkReadParamBandSettings(param, numSrcBands, image.getSampleModel().getNumBands());
+
+        final Rectangle    srcRegion = new Rectangle();
+        final Rectangle    dstRegion = new Rectangle();
+        computeRegions(param, width, height, image, srcRegion, dstRegion);
+        final int         sourceXMin = srcRegion.x;
+        final int         sourceYMin = srcRegion.y;
+        final int         sourceXMax = srcRegion.width  + sourceXMin;
+        final int         sourceYMax = srcRegion.height + sourceYMin;
+
         final WritableRaster  raster = image.getRaster();
         final int        rasterWidth = raster.getWidth();
         final int       rasterHeigth = raster.getHeight();
@@ -609,23 +615,34 @@ public class TextRecordImageReader extends TextImageReader
         final double          scaleX = (width -1)/(xmax-xmin);
         final double          scaleY = (height-1)/(ymax-ymin);
         /*
-         * Procède à la création de l'image. Si l'image a été spécifiée explicitement par
-         * l'utilisateur, alors il faut d'abord effacer toute la région dans laquelle on
-         * va écrire.
+         * Clear the image area. All values are set to NaN.
          */
-        if (CLEAR && param!=null && param.getDestination()!=null)
+        if (CLEAR)
         {
-            final int[] sample=new int[raster.getNumBands()];
-            final int maxX = Math.min(destinationXOffset +  sourceRegion.width/sourceXSubsampling, raster.getMinX()+raster.getWidth());
-            final int maxY = Math.min(destinationYOffset + sourceRegion.height/sourceYSubsampling, raster.getMinY()+raster.getHeight());
-            for (int y=destinationYOffset; y<maxY; y++)
-                for (int x=destinationXOffset; x<maxX; x++)
-                    raster.setPixel(x, y, sample);
+            final int minX = dstRegion.x;
+            final int minY = dstRegion.y;
+            final int maxX = dstRegion.width  + minX;
+            final int maxY = dstRegion.height + minY;
+            for (int b=(dstBands!=null) ? dstBands.length : numDstBands; --b>=0;)
+            {
+                final int band = (dstBands!=null) ? dstBands[b] : b;
+                for (int y=minY; y<maxY; y++)
+                    for (int x=minX; x<maxX; x++)
+                        raster.setSample(x, y, band, Float.NaN);
+            }
+        }
+        /*
+         * Compute column numbers corresponding to source bands,
+         * and start storing values into the image.
+         */
+        final int[] columns = new int[(srcBands!=null) ? srcBands.length : numDstBands];
+        for (int i=0; i<columns.length; i++)
+        {
+            columns[i] = getColumn(imageIndex, srcBands!=null ? srcBands[i] : i);
         }
         for (int i=0; i<dataCount; i+=columnCount)
         {
             /*
-             * A ce stade, nous disposons de toutes les valeurs d'une ligne du fichier ASCII.
              * On convertit maintenant la coordonnée (x,y) logique en coordonnée pixel. Cette
              * coordonnée pixel se réfère à l'image "source";  elle ne se réfère pas encore à
              * l'image destination. Elle doit obligatoirement être entière. Plus loin, nous
@@ -647,25 +664,38 @@ public class TextRecordImageReader extends TextImageReader
                     y = y/sourceYSubsampling + (destinationYOffset-sourceYMin);
                     if (x<rasterWidth && y<rasterHeigth)
                     {
-                        for (int j=(sourceBands!=null) ? sourceBands.length : numSrcBands; --j>=0;)
+                        for (int j=0; j<columns.length; j++)
                         {
-                            // TODO
-                        }
-                        int band = 0;
-                        for (int j=0; j<columnCount; j++)
-                        {
-                            if (j!=xColumn && j!=yColumn)
-                            {
-                                // TODO: tenir compte de sourceBands.
-                                raster.setSample(x, y, (destBands!=null) ? destBands[band] : band, data[i+j]);
-                                band++;
-                            }
+                            raster.setSample(x, y, (dstBands!=null ? dstBands[j] : j), data[i+columns[j]]);
                         }
                     }
                 }
             }
         }
         return image;
+    }
+
+    /**
+     * Retourne quelques types d'images qui pourront contenir les données.
+     * Le premier type retourné sera celui qui se rapprochera le plus du
+     * type des données à lire.
+     *
+     * @param  imageIndex Index de l'image dont on veut les types.
+     * @param  numBanfd Nombre de bandes.
+     * @return Itérateur balayant les types de l'image.
+     * @throws IndexOutOfBoundsException si <code>imageIndex</code> est invalide.
+     * @throws IllegalStateException si aucune source n'a été spécifiée avec {@link #setInput}.
+     * @throws IIOException si l'opération a échoué pour une autre raison.
+     */
+    private Iterator getImageTypes(final int imageIndex, final int numBands) throws IOException
+    {
+        final List<ImageTypeSpecifier> list = new ArrayList<ImageTypeSpecifier>();
+        list.add(getRawImageType(imageIndex, numBands));
+        for (final Iterator it=getImageTypes(imageIndex); it.hasNext();)
+        {
+            list.add((ImageTypeSpecifier) it.next());
+        }
+        return list.iterator();
     }
 
     /**

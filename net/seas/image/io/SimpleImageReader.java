@@ -209,7 +209,7 @@ public abstract class SimpleImageReader extends ImageReader
     /**
      * Returns a collection of {@link ImageTypeSpecifier} containing possible image
      * types to which the given image may be decoded. The default implementation
-     * returns a singleton containing {@link #getRawImageType}.
+     * returns a singleton containing {@link #getRawImageType(int)}.
      *
      * @param  imageIndex The index of the image to be retrieved.
      * @return A set of suggested image types for decoding the current given image.
@@ -229,9 +229,21 @@ public abstract class SimpleImageReader extends ImageReader
      * @throws IOException If an error occurs reading the format information from the input source.
      */
     public ImageTypeSpecifier getRawImageType(final int imageIndex) throws IOException
+    {return getRawImageType(imageIndex, getNumBands(imageIndex));}
+
+    /**
+     * Returns an image type specifier indicating the {@link SampleModel} and
+     * {@link ColorModel} which most closely represents the "raw" internal
+     * format of the image.
+     *
+     * @param  imageIndex The index of the image to be queried.
+     * @param  numBands   The number of bands.
+     * @return The image type (never <code>null</code>).
+     * @throws IOException If an error occurs reading the format information from the input source.
+     */
+    final ImageTypeSpecifier getRawImageType(final int imageIndex, final int numBands) throws IOException
     {
         final int dataType = getRawDataType(imageIndex);
-        final int numBands = getNumBands(imageIndex);
         final int[] bankIndices = new int[numBands];
         final int[] bandOffsets = new int[numBands];
         for (int i=numBands; --i>=0;) bankIndices[i]=i;
@@ -319,6 +331,35 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
+     * Convenience method returning the destination band for the
+     * specified source band. If the specified source band is not
+     * to be read, then this method returns -1.
+     */
+    static int sourceToDestBand(final int[] sourceBands, final int[] destinationBands, final int srcBand)
+    {
+        if (sourceBands==null)
+            return (destinationBands!=null) ? destinationBands[srcBand] : srcBand;
+        for (int i=0; i<sourceBands.length; i++)
+            if (sourceBands[i] == srcBand)
+                return (destinationBands!=null) ? destinationBands[i] : i;
+        return -1;
+    }
+
+    /**
+     * Convenience method returning the source
+     * band for the specified destination band.
+     */
+    static int destToSourceBand(final int[] sourceBands, final int[] destinationBands, final int destBand)
+    {
+        if (destinationBands==null)
+            return (sourceBands!=null) ? sourceBands[destBand] : destBand;
+        for (int i=0; i<destinationBands.length; i++)
+            if (destinationBands[i] == destBand)
+                return (sourceBands!=null) ? sourceBands[i] : i;
+        throw new IllegalArgumentException(String.valueOf(destBand));
+    }
+
+    /**
      * Retourne la longueur (en nombre d'octets) des données à lire, ou <code>-1</code> si cette longueur
      * n'est pas connue.  Cette méthode examine le type d'entré (@link #getInput}) et appelle une méthode
      * {@link File#length()}, {@link ImageInputStream#length()} ou {@link URLConnection#getContentLength()}
@@ -326,7 +367,7 @@ public abstract class SimpleImageReader extends ImageReader
      *
      * @throws IOException si une erreur est survenue.
      */
-    protected long getStreamLength() throws IOException
+    final long getStreamLength() throws IOException
     {
         final Object input=getInput();
         if (input instanceof ImageInputStream)
@@ -364,7 +405,7 @@ public abstract class SimpleImageReader extends ImageReader
      *         du flot.
      * @throws IOException si une erreur est survenue lors de la lecture du flot.
      */
-    protected long getStreamLength(final int fromImage, int toImage) throws IOException
+    final long getStreamLength(final int fromImage, int toImage) throws IOException
     {
         long length = getStreamLength();
         if (length > 0)

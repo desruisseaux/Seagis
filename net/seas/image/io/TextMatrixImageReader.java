@@ -342,15 +342,20 @@ public class TextMatrixImageReader extends TextImageReader
         final int dstYMin = dstRegion.y;
         final int dstXMax = dstRegion.width  + dstXMin;
         final int dstYMax = dstRegion.height + dstYMin;
+
+        int srcY = srcRegion.y;
         for (int y=dstYMin; y<dstYMax; y++)
         {
-            final int srcY = (y-destinationYOffset)*sourceYSubsampling + subsamplingYOffset;
+            assert(srcY < srcRegion.y+srcRegion.height);
+            int srcX = srcRegion.x;
             for (int x=dstXMin; x<dstXMax; x++)
             {
-                final int srcX = (x-destinationXOffset)*sourceXSubsampling + subsamplingXOffset;
-                final float value = data[y*width+x];
+                assert(srcX < srcRegion.x+srcRegion.width);
+                final float value = data[srcY*width+srcX];
                 dstRaster.setSample(x, y, dstBand, value);
+                srcX += sourceXSubsampling;
             }
+            srcY += sourceYSubsampling;
         }
         return image;
     }
