@@ -43,7 +43,7 @@ import net.seas.resources.Resources;
  * @see Point2D
  * @see org.opengis.pt.PT_CoordinatePoint
  */
-public final class CoordinatePoint implements Cloneable, Serializable
+public final class CoordinatePoint implements Dimensioned, Cloneable, Serializable
 {
     /**
      * Serial number for interoperability with different versions.

@@ -65,7 +65,7 @@ public final class Matrix implements Cloneable, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -3301877120221179009L;
 
     /**
      * Elements of the matrix. Column indice vary fastest.

@@ -48,7 +48,7 @@ import net.seas.resources.Resources;
  * @see Rectangle2D
  * @see org.opengis.pt.PT_Envelope
  */
-public final class Envelope implements Cloneable, Serializable
+public final class Envelope implements Dimensioned, Cloneable, Serializable
 {
     /**
      * Serial number for interoperability with different versions.
