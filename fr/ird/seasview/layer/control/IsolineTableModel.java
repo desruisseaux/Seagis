@@ -295,7 +295,7 @@ final class IsolineTableModel extends AbstractTableModel {
      * for undoing or redoing action.
      */
     final Object mark() {
-        final Entry[] array = entries.toArray(new Entry[entries.size()]);
+        final Entry[] array = (Entry[]) entries.toArray(new Entry[entries.size()]);
         for (int i=0; i<array.length; i++) {
             array[i] = (Entry) array[i].clone();
         }

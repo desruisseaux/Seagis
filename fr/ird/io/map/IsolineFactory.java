@@ -478,7 +478,7 @@ public abstract class IsolineFactory {
             allGeo.add(all[i]);
         }
         allGeo.assemble(progress);
-        all = allGeo.getGeometries().toArray(all);
+        all = (GeometryCollection[]) allGeo.getGeometries().toArray(all);
 
         final Resources resources = Resources.getResources(null);
         int        pointCount = 0;

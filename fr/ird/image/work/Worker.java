@@ -343,8 +343,9 @@ public abstract class Worker implements Runnable {
          * enregistre cette image au format PNG.
          */
         if (result != null) {
-            final List<SampleDimension>[] lists = sortByFrequency(this.bands);
-            final List<SampleDimension> bands = (lists!=null && lists.length!=0) ? lists[0] : null;
+            final List[] lists = sortByFrequency(this.bands);
+            final List<SampleDimension> bands = (List<SampleDimension>)
+                                               ((lists!=null && lists.length!=0) ? lists[0] : null);
             final RenderedImage image = result.getImage(bands.toArray(new SampleDimension[bands.size()]));
             if (image != null) try {
                 ImageIO.write(image, "png", imageFile);
@@ -448,9 +449,9 @@ public abstract class Worker implements Runnable {
      * décroissant de fréquence d'utilisation. Cela signifie que le premier élément de la liste
      * sera le <code>SampleDimension[]</code> le plus utilisé par le plus grand nombre d'images.
      */
-    private static List<SampleDimension>[] sortByFrequency(final Map<List<SampleDimension>,Integer> bands) {
+    private static List[] sortByFrequency(final Map<List<SampleDimension>,Integer> bands) {
         final Set<List<SampleDimension>> listSet = bands.keySet();
-        final List<SampleDimension>[] listArray = listSet.toArray(new List<SampleDimension>[listSet.size()]);
+        final List[] listArray = listSet.toArray(new List[listSet.size()]);
         Arrays.sort(listArray, new Comparator<List<SampleDimension>>() {
             public int compare(final List<SampleDimension> list1, final List<SampleDimension> list2) {
                 final Integer c1 = bands.get(list1);
