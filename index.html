@@ -1,3 +1,5 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <HTML>
 <HEAD>
   <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -6,45 +8,28 @@
 
 <BODY BGCOLOR="#FFFFFF">
 
-<TABLE cellpadding="12"><TR><TD nowrap valign="top" bgcolor="#FEF7DE">
+<TABLE WIDTH="100%">
+  <TR>
+    <TD ALIGN="left"><FONT FACE="Arial Black" SIZE='6'><A HREF="http://sourceforge.net/projects/seagis">SEAGIS project</A></FONT>
+    &nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="#0000C0">An OpenSource implementation of OpenGIS® CTS and GCS specifications</FONT></TD>
+    <TD ALIGN="right"><A HREF="http://sourceforge.net"><IMG SRC="http://sourceforge.net/sflogo.php?group_id=31798&type=4" ALT="SourceForge"></A></TD>
+  </TR>
+</TABLE>
+<TABLE WIDTH="100%" BGCOLOR="#B9DCFF"><TR><TD>
+<TABLE>
+  <TR>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Summary">Summary</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Requirements">Requirements</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Download">Download</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Contacts">Contacts</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Links">Links</A>&nbsp;&nbsp;&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD></TR></TABLE>
 
 <P>&nbsp;</P>
-<P><FONT FACE="Arial Narrow"><B>
-&nbsp;<A HREF="javadoc/index.html">Browse&nbsp;the&nbsp;JavaDoc</A><BR>
-&nbsp;<A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/">Browse&nbsp;the&nbsp;CVS&nbsp;repository</A><BR>
-&nbsp;<A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=70242">Download&nbsp;sources&nbsp;and&nbsp;binaries</A><BR>
-&nbsp;<A HREF="demo/index.html">Demos&nbsp;for&nbsp;developers</A><BR>
-&nbsp;<A HREF="http://sourceforge.net/projects/seagis">SourceForge&nbsp;project&nbsp;page</A><BR>
-&nbsp;<A HREF="http://lists.sourceforge.net/lists/listinfo/seagis-discuss">Discussion&nbsp;list</A><BR>
-&nbsp;<A HREF="http://sourceforge.net/sendmessage.php?touser=194261">Contact&nbsp;us</A></B></FONT></P>
 <P>&nbsp;</P>
-<table align="center" cellspacing='6' bgcolor="#E0E0C0" width=250>
-  <tr><td align="center"><font face="Arial Black" color="#FF8000">Help wanted</font></td></tr>
-  <tr><td><P>This project is in an early stage. API may change and some design
-          decision may be revised in future versions until we reach a stable
-          release. We welcome comments about current design and suggestions
-          for improvement. If you are working on a similar project, we
-          specially welcome discussion about how we could merge efforts.</P>
-
-          <P>A technical discussion is underway in the mailing list. If you
-          are interested, please take a look to the archives and join to the
-          discussion! The discussion has a good foundation, since there is
-          already an existing SEAGIS implementation. This is good time to make
-          your point and maybe change some design decisions before we freeze
-          the API.
-          <A HREF="http://lists.sourceforge.net/lists/listinfo/seagis-discuss">Link here</A>.</P>
-          <P>Note: As of December 2001, CVS statistics are broken of SourceForge
-          for more than one month. Statistics show 0 commit, while works on SEAGIS
-          had been done.</P>
-  </td></tr>
-</table>
-<P>&nbsp;</P>
-<P ALIGN="center"><A HREF="http://sourceforge.net"><IMG SRC="http://sourceforge.net/sflogo.php?group_id=31798&type=1" ALT="SourceForge"></A></P>
-
-</TD><TD>
-
-
-<H1>Summary</H1>
+<H2><A NAME="Summary">Summary</A></H2>
 <P ALIGN="justify"><FONT FACE="Verdana">SEAGIS is an open source project implementing a subset
 of <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Coordinate Transformation Services
 Specification</A> and <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Grid Coverages
@@ -73,40 +58,121 @@ under LGPL license, which is similar but somewhat less restrictive than GPL
 <A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL code be
 incorporated into the Communicator code base?</A>).</FONT></P>
 
-
 <P>&nbsp;</P>
-<H2>Requirements</H2>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Requirements">Requirements</A></H2>
 <P ALIGN="justify">The SEAGIS download requires the following software:</P>
 <UL>
-    <LI><A HREF="http://java.sun.com/j2se/1.3/">J2SE 1.3</A> or later.</LI>
+    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.3 or later</A> (1.4 recommended).</LI>
     <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging 1.1</A> or later.</LI>
+    <LI>The <CODE>vecmath</CODE> package from <A HREF="http://java.sun.com/products/java-media/3D/">Java3D</A>.<BR>
+        In our understanding of <A HREF="http://jcp.org/jsr/detail/148.jsp">JSR-148 (3D Media Utilities)</A>,
+        the requirement for Java3D may be removed in a future version since it will retrofit into a
+        requirement for JAI 1.2.</LI>
 </UL>
-<P ALIGN="justify">In addition, an <STRONG>optional</STRONG> experimental package
-can be downloaded separately. This experimental package contains modules not part
+<P ALIGN="justify">In addition, an <STRONG>optional</STRONG> experimental package can
+be downloaded separately. This experimental package contains modules that are not part
 of OpenGIS's specification, but related to geographic information. The experimental
 package has higher requirement than the SEAGIS package, as noted below. Note that
 you <STRONG>do not</STRONG> need those requirements if you download only the SEAGIS
 package.</P>
 <UL>
-    <LI><A HREF="http://java.sun.com/j2se/1.4/">J2SE 1.4.0-beta3</A> (mandatory)</LI>
-    <LI><A HREF="http://developer.java.sun.com/developer/earlyAccess/adding_generics/">Prototype compiler for JSR014:
-        Adding Generics to the Java Programming Language</A> (optional)</LI>
+    <LI><A HREF="http://java.sun.com/j2se/1.4/">J2SE 1.4</A></LI>
+    <LI><A HREF="http://developer.java.sun.com/developer/earlyAccess/adding_generics/">Prototype
+        compiler for JSR014: Adding Generics to the Java Programming Language</A></LI>
 </UL>
+
 
 <P>&nbsp;</P>
-<H2>References</H2>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Download">Browse contents and download</A></H2>
+<P ALIGN="justify">This project has two main modules: an "official" one
+(SEAGIS) and an experimental one. The SEAGIS module contains a copy of
+OpenGIS interfaces. <EM>Those interfaces are slightly different from the
+ones currently available on <A HREF="http://www.opengis.org/techno/specs/">OpenGIS
+web site</A>, in that most methods are declared to throw <code>RemoteException</code>.</EM>
+This detail seems to have been forgotten in the original OpenGIS's interfaces,
+but we don't know if and when it will be fixed.</P>
+
+
+<TABLE ALIGN="center" BORDER="3" CELLPADDING="6" BGCOLOR="F4F8FF" WIDTH="90%">
+  <TR ALIGN="center">
+    <TD nowrap>OpenGIS specification</TD>
+    <TD nowrap><A HREF="javadoc/opengis">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/seagis/org/opengis">Browse CVS</A></TD>
+    <TD nowrap>&nbsp;</TD>
+  </TR>
+  <TR ALIGN="center" BGCOLOR="#B9DCFF">
+    <TD nowrap>SEAGIS implementation</TD>
+    <TD nowrap><A HREF="javadoc/seagis">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/seagis/net/seagis">Browse CVS</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=78300">Download sources and binaries</A></TD>
+  </TR>
+  <TR ALIGN="center">
+    <TD nowrap>Experimental package</TD>
+    <TD nowrap><A HREF="javadoc/seas">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/experimental">Browse CVS</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=78319">Download sources and binaries</A></TD>
+  </TR>
+</TABLE>
+
+<P ALIGN="justify">Changes since last version (alpha-0.4) include bug fixes,
+a more capable <CODE>CoordinateTransformationFactory</CODE>, implementation
+of <CODE>GeocentricCoordinateSystem</CODE> and related transformations,
+implementation of the "Resample" operation in <CODE>GridCoverageProcessor</CODE>,
+and more Well Know Text (WKT) formatting.</P>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Contacts">Discussion list and contact email</A></H2>
+<P ALIGN="justify">We welcome comments about current design and suggestions
+for improvement. If you are working on a similar project, we specially welcome
+discussion about how we could merge efforts. If you are interested, please take
+a look to the archives and join to the discussion. Help wanted!</P>
+
+<P ALIGN="center">
+<A HREF="http://lists.sourceforge.net/lists/listinfo/seagis-discuss">Browse
+archives / subscribe to the discussion list</A></P>
+
+<P ALIGN="justify">Alternatively, you can send an email to the maintainer
+<A HREF="http://sourceforge.net/sendmessage.php?touser=194261">here</A>.</P>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Links">Links and references</A></H2>
 <UL>
-    <LI><A HREF="http://www.opengis.org/public/abstract/99-102r1.pdf">Topic
-        2 - Spatial Reference Systems</A> give a general overview.</LI>
-    <LI><A HREF="http://www.opengis.org/techno/specs/01-009.pdf">OpenGIS®
-        Coordinate Transformation Services Implementation
-        Specification</A> is our primary working material
-        for CS, CT and PT packages.</LI>
-    <LI><A HREF="http://www.opengis.org/techno/specs/01-004.pdf">OpenGIS®
-        Grid Coverages Implementation Specification</A> is our primary
-        working material for CV, GC and GP packages.</LI>
+  <LI><P><A HREF="http://www.opengis.org/public/abstract/99-102r1.pdf">OpenGIS®
+      Topic 2 - Spatial Reference Systems</A>: An abstract specification for
+      coordinate transformations.</P></LI>
+
+  <LI><P><A HREF="http://www.opengis.org/techno/specs/01-009.pdf">OpenGIS®
+      Coordinate Transformation Services Implementation Specification</A>: The
+      main reference for CS, CT and PT packages.</P></LI>
+
+  <LI><P><A HREF="http://www.opengis.org/techno/specs/01-004.pdf">OpenGIS®
+      Grid Coverages Implementation Specification</A>: The main reference for
+      CV, GC and GP packages.</P></LI>
+
+  <LI><P><A HREF="http://www.remotesensing.org/proj/">PROJ.4 -
+      Cartographic Projections Library</A>: The source for most projection
+      formulas used in SEAGIS.</P></LI>
+
+  <LI><P><A HREF="http://katla.giub.uni-bonn.de/jago/">JaGO</A>: A Java
+      framework for geospatially-enabled solutions.</P></LI>
+
+  <LI><P><A HREF="http://www.openmap.org/">OpenMap</A>: An OpenSource GIS
+      supported by BBN Technologies.</P></LI>
+
+  <LI><P><A HREF="http://www.geotools.org/">GeoTools</A>: An Open source
+      mapping toolkit.</P></LI>
+
+  <LI><P><A HREF="http://www.freegis.org/">FreeGIS</A>:
+      A list of OpenSource GIS.</P></LI>
 </UL>
 
-</TD></TR></TABLE>
 </BODY>
 </HTML>
