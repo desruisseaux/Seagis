@@ -217,6 +217,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         formatID   = result.getInt      (ImageTableImpl.FORMAT);
         parameters = table .getParameters(seriesID, formatID, pathname, null);
         // TODO: le dernier argument (null) devrait être le système de coordonnées.
+        // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
         this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
         this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
     }

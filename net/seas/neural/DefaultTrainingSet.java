@@ -37,6 +37,11 @@ import java.util.NoSuchElementException;
 public class DefaultTrainingSet implements TrainingSet, Serializable
 {
     /**
+     * Serial number for compatibility with previous versions.
+     */
+    private static final long serialVersionUID = -1506517850821210260L;
+
+    /**
      * Number of inputs values per instance.
      */
     private int numInputs;
@@ -147,7 +152,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      */
     public double[] getTestInputs(double[] dest)
     {
-        if (position >= count)
+        if (position<0 || position>=count)
         {
             throw new NoSuchElementException();
         }
@@ -172,7 +177,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      */
     public double[] getTestOutputs(double[] dest)
     {
-        if (position >= count)
+        if (position<0 || position>=count)
         {
             throw new NoSuchElementException();
         }
@@ -183,6 +188,42 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
         }
         System.arraycopy(data, toIndex(position)+numInputs, dest, 0, numOutputs);
         return dest;
+    }
+
+    /**
+     * Changes the current vector of values associated with each input node.
+     *
+     * @param  inputs The new inputs values for the current training instance.
+     */
+    public void updateTestInputs(final double[] inputs)
+    {
+        if (position<0 || position>=count)
+        {
+            throw new NoSuchElementException();
+        }
+        if (inputs.length != numInputs)
+        {
+            throw new IllegalArgumentException(); // TODO
+        }
+        System.arraycopy(inputs, 0, data, toIndex(position), numInputs);
+    }
+
+    /**
+     * Changes the current vector of values associated with each output node.
+     *
+     * @param  inputs The new outputs values for the current training instance.
+     */
+    public void updateTestOutputs(final double[] outputs)
+    {
+        if (position<0 || position>=count)
+        {
+            throw new NoSuchElementException();
+        }
+        if (outputs.length != numOutputs)
+        {
+            throw new IllegalArgumentException(); // TODO
+        }
+        System.arraycopy(outputs, 0, data, toIndex(position)+numInputs, numOutputs);
     }
     
     /**
@@ -206,15 +247,6 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
             System.arraycopy(data, index1, data, index0, buffer.length);
             System.arraycopy(buffer,    0, data, index1, buffer.length);
         }
-    }
-
-    /**
-     * Trim this training set before to save it.
-     */
-    private void writeObject(final ObjectOutputStream out) throws IOException
-    {
-        trimToSize();
-        out.defaultWriteObject();
     }
 
     /**
@@ -242,5 +274,14 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
         }
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Trim this training set before to save it.
+     */
+    private void writeObject(final ObjectOutputStream out) throws IOException
+    {
+        trimToSize();
+        out.defaultWriteObject();
     }
 }

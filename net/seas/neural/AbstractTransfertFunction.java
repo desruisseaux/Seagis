@@ -30,6 +30,11 @@ import java.io.Serializable;
 abstract class AbstractTransfertFunction implements TransfertFunction, Serializable
 {
     /**
+     * Serial number for compatibility with previous versions.
+     */
+    private static final long serialVersionUID = 371334752349159959L;
+
+    /**
      * The transfert function name.
      */
     private final String name;

@@ -32,6 +32,11 @@ import net.seas.resources.Resources;
 public class FeedForwardNet implements Serializable
 {
     /**
+     * Serial number for compatibility with previous versions.
+     */
+    private static final long serialVersionUID = 3890607020215623718L;
+
+    /**
      * Array of neurons in all layers. <code>neurons[0]</code> is the array of
      * neurons in the input layer. <code>neurons[neurons.length-1]</code> is the
      * array of neurons in the output layer. Other arrays are hidden layers.
@@ -41,7 +46,7 @@ public class FeedForwardNet implements Serializable
     /**
      * The transfert function for all neurons in this network.
      */
-    private final TransfertFunction transfertFunction = TransfertFunction.SIGMOID;
+    private TransfertFunction transfertFunction = TransfertFunction.SIGMOID;
 
     /**
      * The train algorithm to use for training this network.
@@ -131,6 +136,22 @@ public class FeedForwardNet implements Serializable
     }
 
     /**
+     * Returns the transfert function for this neural network.
+     */
+    public TransfertFunction getTransfertFunction()
+    {return transfertFunction;}
+
+    /**
+     * Sets the transfert function for this neural network.
+     */
+    public void setTransfertFunction(final TransfertFunction function)
+    {
+        if (function==null)
+            throw new IllegalArgumentException();
+        transfertFunction = function;
+    }
+
+    /**
      * Returns the training algorithm for this neural network.
      * This method do not clone the returned algorithm. Change
      * to the returned object will change the underlying algorithm
@@ -144,8 +165,9 @@ public class FeedForwardNet implements Serializable
      */
     public void setTrainingAlgorithm(final TrainingAlgorithm algorithm)
     {
-        if (algorithm!=null) this.trainingAlgorithm = algorithm;
-        else throw new NullPointerException();
+        if (algorithm==null)
+            throw new IllegalArgumentException();
+        this.trainingAlgorithm = algorithm;
     }
 
     /**

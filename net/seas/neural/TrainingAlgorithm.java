@@ -17,6 +17,7 @@
 package net.seas.neural;
 
 // Miscellaneous
+import java.io.Serializable;
 import net.seas.util.XArray;
 
 
@@ -27,8 +28,13 @@ import net.seas.util.XArray;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-public abstract class TrainingAlgorithm
+public abstract class TrainingAlgorithm implements Serializable
 {
+    /**
+     * Serial number for compatibility with previous versions.
+     */
+    //private static final long serialVersionUID = ?; // TODO
+
     /**
      * Tolerance to train network to (mean error across
      * all the outputs accross a training set).

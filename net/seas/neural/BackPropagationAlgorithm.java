@@ -29,7 +29,12 @@ package net.seas.neural;
  */
 final class BackPropagationAlgorithm extends TrainingAlgorithm
 {
-    /*
+    /**
+     * Serial number for compatibility with previous versions.
+     */
+    //private static final long serialVersionUID = ?; // TODO
+
+    /**
      * The learning factor (between 0 and 1) used for network training.
      * For best results, the learning factor should change with increasing
      * iterations. The {@link #train} routines below make not attempt to do

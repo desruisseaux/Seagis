@@ -32,6 +32,11 @@ import net.seas.util.XClass;
 public class Neuron implements Serializable
 {
     /**
+     * Serial number for compatibility with previous versions.
+     */
+    private static final long serialVersionUID = 8346736340453997858L;
+
+    /**
      * A default random number generator.
      */
     private static final Random random = new Random();
