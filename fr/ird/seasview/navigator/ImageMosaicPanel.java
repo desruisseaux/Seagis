@@ -110,7 +110,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * afficher en faisant glisser une visière sur ce graphique.
      */
     private final RangeBars rangeBars = new RangeBars(TimeZone.getDefault(),
-                                                      RangeBars.VERTICAL_BARS);
+                                                      RangeBars.VERTICAL_EXCEPT_LABELS);
 
     /**
      * Connection avec la base de données d'images.
@@ -151,7 +151,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
         controler.setTopComponent(bars);
         bars     .setMinimumSize(size);
         rangeBars.setLegendVisible(false);
-        rangeBars.setRangeAdjustable(true);
+        rangeBars.setRangeAdjustable(false);
         rangeBars.getModel().addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent event) {
                 slidderChanged((BoundedRangeModel) event.getSource());
@@ -269,7 +269,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
                 final int check;
                 assert size == (check=mosaic.getImageCount()) : "series="+size+" images="+check;
                 if (size==1) {
-                    resetSlidderPosition();
+                    resetSliderPosition();
                 }
             }
         });
@@ -278,7 +278,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
     /**
      * Reset the slidder position.
      */
-    private void resetSlidderPosition() {
+    private void resetSliderPosition() {
         final Date minimum = (Date) rangeBars.getMinimum();
         final Date maximum = (Date) rangeBars.getMaximum();
         if (minimum!=null && maximum!=null) {

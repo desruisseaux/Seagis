@@ -223,12 +223,11 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
     private transient double mouseDX, mouseDY;
 
     /**
-     * <code>x</code>, <code>y</code>, <code>width</code>
-     * and <code>height</code> coordinates of a box which completely 
-     * encloses {@link #rectangle}. These coordinates must be expressed in
-     * <strong>pixels</strong>. If need be, the affine transform
-     * {@link #getTransform} can be used to change pixel coordinates into
-     * logical coordinates and vice versa.
+     * <code>x</code>, <code>y</code>, <code>width</code> and <code>height</code>
+     * coordinates of a box which completely encloses {@link #drawnShape}. These
+     * coordinates must be expressed in <strong>pixels</strong>. If need be, the
+     * affine transform {@link #getTransform} can be used to change pixel coordinates
+     * into logical coordinates and vice versa.
      */
     private transient int x, y, width, height;
 
@@ -277,7 +276,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
     /**
      * Indicates if the geometric shape can be moved.
      */
-    private boolean moveable=true;
+    private boolean moveable = true;
 
     /**
      * When the position of the left or right-hand edge of the rectangle
@@ -295,10 +294,10 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
      */
     private boolean synchronizeY;
 
-    /** Bit representing north  */ private static final int NORTH = 1;
-    /** Bit representing south   */ private static final int SOUTH = 2;
-    /** Bit representing east   */ private static final int EAST  = 4;
-    /** Bit representing west */ private static final int WEST  = 8;
+    /** Bit representing north. */ private static final int NORTH = 1;
+    /** Bit representing south. */ private static final int SOUTH = 2;
+    /** Bit representing east.  */ private static final int EAST  = 4;
+    /** Bit representing west.  */ private static final int WEST  = 8;
 
     /**
      * Cursor codes corresponding to a given {@link adjustingSides} value.
@@ -1161,22 +1160,35 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
                  * all practical...)
                  */
                 if ((adjustingLogicalSides & (NORTH | SOUTH)) != 0 &&
-                    (adjustingLogicalSides & (EAST | WEST)) == 0)
+                    (adjustingLogicalSides & (EAST  |  WEST)) == 0)
                 {
                     x0 = drawnShape.getX();
                     dx = drawnShape.getWidth();
                 }
                 if ((adjustingLogicalSides & (NORTH | SOUTH)) == 0 &&
-                    (adjustingLogicalSides & (EAST | WEST)) != 0)
+                    (adjustingLogicalSides & (EAST  |  WEST)) != 0)
                 {
                     y0 = drawnShape.getY();
                     dy = drawnShape.getHeight();
                 }
                 /*
+                 * If the user didn't adjusted any side, then make sure
+                 * that the logical size is conserved (i.e. discard the
+                 * "drawing" size if it was different).
+                 */
+                if (adjustingLogicalSides == 0) {
+                    final double old_dx = logicalShape.getWidth();
+                    final double old_dy = logicalShape.getHeight();
+                    x0 += (dx-old_dx)/2;
+                    y0 += (dy-old_dy)/2;
+                    dx = old_dx;
+                    dy = old_dy;
+                }
+                /*
                  * Modifies the rectangle's coordinates and signals that the
                  * component needs redrawing.
                  * Note: 'repaint' should be called before and after
-                 *        'setFrame' because the coordinates change.
+                 *       'setFrame' because the coordinates change.
                  */
                 source.repaint(x, y, width, height);
                 try {

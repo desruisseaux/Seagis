@@ -66,7 +66,7 @@ public final class DataBase {
      * <code>false</code> pour compiler la version "Océan Indien". Ce drapeau n'est
      * qu'un bricolage temporaire en attendant de trouver une solution plus générale.
      */
-    public static final boolean MEDITERRANEAN_VERSION = true;
+    public static final boolean MEDITERRANEAN_VERSION = false;
 
     /**
      * Flot de sortie standard.

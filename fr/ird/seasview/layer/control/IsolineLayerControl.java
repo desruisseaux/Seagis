@@ -44,6 +44,7 @@ import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
 
 // Geotools dependencies
+import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Miscellaneous
@@ -67,7 +68,7 @@ public final class IsolineLayerControl extends LayerControl {
         try {
             FACTORIES = new IsolineFactory[] {
                 new IsolineFactory(DataBase.MEDITERRANEAN_VERSION ? "Méditerranée"
-                                                                  : "Océan Indien")
+                                                                  : "Océan_Indien")
             };
         } catch (FileNotFoundException exception) {
             throw new ExceptionInInitializerError(exception);
@@ -132,7 +133,15 @@ public final class IsolineLayerControl extends LayerControl {
             }
         }
         IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
-        final Isoline[]          isolines = factory.get(values);
+        final ProgressWindow progress = new ProgressWindow(null);
+        final Isoline[] isolines;
+        try {
+            factory.setProgressListener(progress);
+            isolines = factory.get(values);
+        } finally {
+            factory.setProgressListener(null);
+            progress.dispose();
+        }
         final RenderedIsoline[] isoLayers = new RenderedIsoline[isolines.length];
         for (int i=0; i<isoLayers.length; i++) {
             final RenderedIsoline isoLayer = new RenderedIsoline(isolines[i]);
@@ -154,12 +163,22 @@ public final class IsolineLayerControl extends LayerControl {
         synchronized (this) {
             if (controler == null) {
                 controler = new IsolineControlPanel();
-                for (int i=0; i<FACTORIES.length; i++) {
-                    try {
-                        controler.addValues(FACTORIES[i].getAvailableValues());
-                    } catch (IOException exception) {
-                        ExceptionMonitor.show(owner, exception);
+                final ProgressWindow progress = new ProgressWindow(owner);
+                try {
+                    for (int i=0; i<FACTORIES.length; i++) {
+                        final IsolineFactory factory = FACTORIES[i];
+                        try {
+                            factory.setProgressListener(progress);
+                            controler.addValues(factory.getAvailableValues());
+                        } catch (IOException exception) {
+                            factory.setProgressListener(null);
+                            ExceptionMonitor.show(owner, exception);
+                        } finally {
+                            factory.setProgressListener(null);
+                        }
                     }
+                } finally {
+                    progress.dispose();
                 }
                 controler.setSelectedValues(DEFAULT_VALUES); // Must be last.
             }

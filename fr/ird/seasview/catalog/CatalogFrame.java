@@ -29,13 +29,12 @@ package fr.ird.seasview.catalog;
 import java.awt.Font;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
 
 // User interface
 import javax.swing.JTree;
 import javax.swing.JComponent;
+import javax.swing.JSplitPane;
 import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 import javax.swing.ToolTipManager;
@@ -78,14 +77,12 @@ import fr.ird.resources.ResourceKeys;
 
 
 /**
- * Window displaying a graph of available data. The upper half
- * will display a chart of time.
+ * Window displaying a graph of available data. The upper half will display a chart of time.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class CatalogFrame extends InternalFrame
-{
+public class CatalogFrame extends InternalFrame {
     /**
      * The image database.
      */
@@ -96,6 +93,11 @@ public class CatalogFrame extends InternalFrame
      */
     private final RangeBars times = new RangeBars(TimeZone.getDefault(),
                                                   RangeBars.HORIZONTAL);
+
+    /**
+     * The split pane.
+     */
+    private final JSplitPane pane;
 
     /**
      * The coordinate chooser. Global time range and geographic
@@ -115,8 +117,7 @@ public class CatalogFrame extends InternalFrame
      * @param  owner Composante propriétaire (pour l'affichage d'une boîte des progrès).
      * @throws SQLException If access to the database failed.
      */
-    public CatalogFrame(final DataBase databases, final Component owner) throws SQLException
-    {
+    public CatalogFrame(final DataBase databases, final Component owner) throws SQLException {
         super(Resources.format(ResourceKeys.IMAGES_CATALOG));
         final SeriesTable series;
 
@@ -133,13 +134,9 @@ public class CatalogFrame extends InternalFrame
         scrollView.setBorder(BorderFactory.createCompoundBorder(
                              BorderFactory.createEmptyBorder(/*top*/12, /*left*/12, /*bottom*/12, /*right*/12),
                              scrollView.getBorder()));
-
-        final Container       pane = getContentPane();
-        final GridBagConstraints c = new GridBagConstraints();
-        pane.setLayout(new GridBagLayout());
-        c.gridx=0; c.weightx=1; c.weighty=1; c.fill=c.BOTH;
-        c.gridy=0; pane.add(times,      c);
-        c.gridy=1; pane.add(scrollView, c);
+        pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, times, scrollView);
+        pane.setDividerLocation(330);
+        getContentPane().add(pane);
         update(owner);
     }
 
@@ -149,13 +146,11 @@ public class CatalogFrame extends InternalFrame
      * @param  owner Composante propriétaire (pour l'affichage d'une boîte des progrès).
      * @throws SQLException If access to the database failed.
      */
-    private void update(final Component owner)
-    {
+    private void update(final Component owner) {
         final ProgressWindow progress = new ProgressWindow(owner);
         progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
         progress.started();
-        try
-        {
+        try {
 //          final Date     startTime = chooser.getStartTime();
 //          final Date       endTime = chooser.getEndTime();
 //          final Rectangle2D   area = chooser.getGeographicArea();
@@ -163,8 +158,7 @@ public class CatalogFrame extends InternalFrame
             final Collection<SeriesEntry> list = series.getSeries();
             final float factor = 100f/list.size();
             int index = 0;
-            for (final Iterator<SeriesEntry> it=list.iterator(); it.hasNext();)
-            {
+            for (final Iterator<SeriesEntry> it=list.iterator(); it.hasNext();) {
                 final SeriesEntry entry = it.next();
                 final String name = entry.getName();
                 progress.setDescription(name);
@@ -173,17 +167,14 @@ public class CatalogFrame extends InternalFrame
                 final RangeSet timeRanges = new RangeSet(Date.class);
                 images.getRanges(null, null, timeRanges);
                 images.close();
-                if (!timeRanges.isEmpty())
-                {
+                if (!timeRanges.isEmpty()) {
                     times.setRanges(name, timeRanges);
                 }
             }
             progress.complete();
             series.close();
             progress.dispose();
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             progress.exceptionOccurred(exception);
             progress.complete();
         }
@@ -195,6 +186,14 @@ public class CatalogFrame extends InternalFrame
      * Cette modification n'affecte pas le fuseau horaire des éventuelles
      * bases de données accédées par cette fenêtre.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {times.setTimeZone(timezone);}
+    protected void setTimeZone(final TimeZone timezone) {
+        times.setTimeZone(timezone);
+    }
+
+    /**
+     * Spécifie si le retraçage de la séparation doit doit être continu.
+     */
+    protected void setPaintingWhileAdjusting(final boolean s) {
+        pane.setContinuousLayout(s);
+    }
 }

@@ -107,7 +107,7 @@ final class ImageCanvas extends JPanel {
      * d'une image. On attend ce laps de temps au cas où l'utilisateur
      * changerait d'idée.
      */
-    private static final int TIMELAG = 250; // 1/4 de seconde
+    private static final int TIMELAG = 500; // 1/2 de seconde
 
     /**
      * The date format to use for formatting date in image's title.
