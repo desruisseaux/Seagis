@@ -36,7 +36,7 @@ import java.sql.PreparedStatement;
 
 // Images et couleurs
 import java.awt.Color;
-import net.seagis.io.image.PaletteFactory;
+import fr.ird.image.Utilities;
 
 // Collections
 import java.util.List;
@@ -65,17 +65,6 @@ import java.text.ParseException;
  */
 final class CategoryTable extends Table
 {
-    /**
-     * Objet à utiliser pour construire les palettes de couleurs.
-     */
-    private static final PaletteFactory FACTORY = new PaletteFactory(
-            /* parent factory */ null,
-            /* class loader   */ CategoryTable.class.getClassLoader(),
-            /* root directory */ null, // TODO new File("applicationData/colors"),
-            /* extension      */ ".pal",
-            /* character set  */ Charset.forName("ISO-8859-1"),
-            /* locale         */ Locale.US);
-
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des catégories.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par les
@@ -216,7 +205,7 @@ final class CategoryTable extends Table
              */
         }
         final URL url=new URL(colors);
-        return FACTORY.getColors(url.getPath());
+        return Utilities.getPaletteFactory().getColors(url.getPath());
     }
 
     /**

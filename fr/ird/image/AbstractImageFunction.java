@@ -25,17 +25,28 @@
  */
 package fr.ird.image;
 
-// Miscellaneous
-import java.util.Arrays;
-import java.io.IOException;
+// Image, colors and geometry
+import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.ImageFunction;
 import java.awt.image.ImagingOpException;
 
+// Miscellaneous
+import java.util.Arrays;
+import java.io.IOException;
+
 // Seagis dependencies
 import net.seagis.cs.Ellipsoid;
+import net.seagis.cs.HorizontalDatum;
+import net.seagis.cs.CoordinateSystem;
+import net.seagis.cv.Category;
+import net.seagis.cv.CategoryList;
+import net.seagis.gc.GridGeometry;
+import net.seagis.gc.GridCoverage;
 import net.seagis.resources.XMath;
+import net.seagis.resources.OpenGIS;
 
 
 /**
@@ -55,11 +66,10 @@ import net.seagis.resources.XMath;
 public abstract class AbstractImageFunction implements ImageFunction
 {
     /**
-     * The ellipsoid to use for distance calculation, or <code>null</code>
-     * if the phytagore relation is to be used. <code>null</code> is the
-     * appropriate value for cartesian coordinate systems.
+     * The coordinate system, or <code>null</code> for a default
+     * cartesien coordinate system.
      */
-    private final Ellipsoid ellipsoid;
+    private final CoordinateSystem coordinateSystem;
 
     /**
      * Geographic envelope for all data, or <code>null</code>
@@ -83,13 +93,11 @@ public abstract class AbstractImageFunction implements ImageFunction
     /**
      * Construct an {@link ImageFunction}.
      *
-     * @param ellipsoid The ellipsoid to use for distance calculation,
-     *        or <code>null</code> if the phytagore relation is to be
-     *        used. <code>null</code> is the appropriate value for
-     *        cartesian coordinate systems.
+     * @param cs The coordinate system, or <code>null</code> for a default
+     *           cartesien coordinate system..
      */
-    protected AbstractImageFunction(final Ellipsoid ellipsoid)
-    {this.ellipsoid = ellipsoid;}
+    protected AbstractImageFunction(final CoordinateSystem cs)
+    {this.coordinateSystem = cs;}
 
     /**
      * Positionne le curseur au début du flot de données. Lorsque <code>ImageFunction</code>
@@ -215,6 +223,8 @@ public abstract class AbstractImageFunction implements ImageFunction
 
     /**
      * Retourne les coordonnées géographique couvertes.
+     * Les coordonnées sont exprimées selon le système
+     * de coordonnées {@link #getCoordinateSystem}.
      *
      * @throws IOException si une lecture des données a été
      *         nécessaire et que cette opération a échouée.
@@ -223,6 +233,16 @@ public abstract class AbstractImageFunction implements ImageFunction
     {
         ensureValid();
         return (geographicArea!=null) ? (Rectangle2D) geographicArea.clone() : new Rectangle2D.Double();
+    }
+
+    /**
+     * Returns the underlying coordinate systems.
+     * This coordinate system is usually set at
+     * construction time.
+     */
+    public CoordinateSystem getCoordinateSystem()
+    {
+        return coordinateSystem;
     }
 
     /**
@@ -369,6 +389,9 @@ public abstract class AbstractImageFunction implements ImageFunction
                                       final int    countX, final int    countY,
                                       final double[] sumValues, final double[] sumWeight) throws ImagingOpException
     {
+        final HorizontalDatum datum = OpenGIS.getHorizontalDatum(coordinateSystem);
+        final Ellipsoid ellipsoid = (datum!=null) ? datum.getEllipsoid() : null;
+
         final int    length = countX*countY;
         final double scaleX = countX / (deltaX*countX);
         final double scaleY = countY / (deltaY*countY);
@@ -421,6 +444,33 @@ public abstract class AbstractImageFunction implements ImageFunction
             e.initCause(exception);
             throw e;
         }
+    }
+
+    /**
+     * Returns a grid coverage for this image function.
+     * A default color palette is used.
+     *
+     * @param  name  The grid coverage name.
+     * @param  width The desired image width.
+     * @param  width The desired image height.
+     * @return The grid coverage.
+     * @throws IOException if an error occured while reading file.
+     */
+    public synchronized GridCoverage getGridCoverage(final String name, final int width, final int height) throws IOException
+    {
+        final double          minimum = getMinimum();
+        final double          maximum = getMaximum();
+        final double            scale = (maximum-minimum)/255;
+        final Rectangle2D coordBounds = getGeographicArea();
+        final Rectangle   pixelBounds = new Rectangle(0, 0, width, height);
+        final GridGeometry   geometry = new GridGeometry(pixelBounds, coordBounds);
+        final CategoryList categories = new CategoryList(new Category[]
+        {
+            new Category("Donnée manquante", Color.black, 0),
+            new Category("Valeur", Utilities.getPaletteFactory().getColors("Rainbow"), 1, 256, minimum-scale, scale)
+        });
+        return new GridCoverage(name, this, getCoordinateSystem(), geometry,
+                                new CategoryList[] {categories}, null);
     }
 
     /**
