@@ -327,13 +327,30 @@ public class CoordinateFormat extends Format
      * @param  toAppendTo Buffer dans lequel écrire la coordonnée.
      * @param  pos Champ (latitude, longitude ou altitude) dont on veut connaître les index dans la chaîne.
      * @return Le buffer dans lequel a été ecrit la coordonnée (habituellement <code>toAppendTo</code>).
-     * @throws ClassCastException si <code>obj</code> n'est pas de la classe {@link CoordinatePoint}.
+     * @throws IllegalArgumentException si <code>obj</code> n'est pas de la classe {@link CoordinatePoint}.
      */
-    public StringBuffer format(final Object obj, StringBuffer toAppendTo, final FieldPosition pos) throws ClassCastException
+    public StringBuffer format(final Object obj, StringBuffer toAppendTo, final FieldPosition pos) throws IllegalArgumentException
+    {
+        if (obj instanceof CoordinatePoint)
+        {
+            return format((CoordinatePoint)obj, toAppendTo, pos);
+        }
+        else throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(1), XClass.getShortClassName(obj)));
+    }
+
+    /**
+     * Procède à l'écriture d'une coordonnée.
+     *
+     * @param  coord Coordonnée à écrire..
+     * @param  toAppendTo Buffer dans lequel écrire la coordonnée.
+     * @param  pos Champ (latitude, longitude ou altitude) dont on veut connaître les index dans la chaîne.
+     * @return Le buffer dans lequel a été ecrit la coordonnée (habituellement <code>toAppendTo</code>).
+     * @throws IllegalArgumentException si <code>obj</code> n'est pas de la classe {@link CoordinatePoint}.
+     */
+    public StringBuffer format(final CoordinatePoint coord, StringBuffer toAppendTo, final FieldPosition pos) throws IllegalArgumentException
     {
         synchronized (angleFormat)
         {
-            final CoordinatePoint coord = (CoordinatePoint) obj;
             toAppendTo=format(coord.getX(), coord.getY(), toAppendTo, pos);
             if (dimension!=2)
             {

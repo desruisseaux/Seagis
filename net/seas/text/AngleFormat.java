@@ -39,6 +39,7 @@ import net.seas.opengis.pt.Longitude;
 
 // Miscellaneous
 import net.seas.util.XMath;
+import net.seas.util.XClass;
 import net.seas.util.XString;
 import net.seas.resources.Resources;
 
@@ -628,12 +629,13 @@ public class AngleFormat extends Format
      *                    peut être nul si cette information n'est pas désirée.
      *
      * @return Le buffer <code>toAppendTo</code> par commodité.
-     * @throws ClassCastException si <code>obj</code> n'est pas de la classe {@link Angle} ou {@link Number}.
+     * @throws IllegalArgumentException si <code>obj</code> n'est pas de la classe {@link Angle} ou {@link Number}.
      */
-    public synchronized StringBuffer format(final Object obj, StringBuffer toAppendTo, final FieldPosition pos) throws ClassCastException
+    public synchronized StringBuffer format(final Object obj, StringBuffer toAppendTo, final FieldPosition pos) throws IllegalArgumentException
     {
         if (obj instanceof Latitude ) return format( ((Latitude) obj).degrees(), toAppendTo, pos, NORTH, SOUTH);
         if (obj instanceof Longitude) return format(((Longitude) obj).degrees(), toAppendTo, pos, EAST,  WEST );
+        if (obj instanceof Angle    ) return format(    ((Angle) obj).degrees(), toAppendTo, pos);
         if (obj instanceof Number)
         {
             numberFormat.setMinimumIntegerDigits (1);
@@ -641,7 +643,7 @@ public class AngleFormat extends Format
             numberFormat.setMaximumFractionDigits(2);
             return numberFormat.format(obj, toAppendTo, (pos!=null) ? pos : dummy);
         }
-        return format(((Angle) obj).degrees(), toAppendTo, pos);
+        throw new IllegalArgumentException(Resources.format(Clé.NOT_AN_ANGLE_OBJECT¤2, new Integer(0), XClass.getShortClassName(obj)));
     }
 
     /**
@@ -1307,5 +1309,5 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      * méthode n'est utile qu'à des fins de déboguage.
      */
     public String toString()
-    {return "AngleFormat["+toPattern()+']';}
+    {return XClass.getShortClassName(this)+'['+toPattern()+']';}
 }
