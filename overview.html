@@ -5,56 +5,173 @@
     <TITLE>SEAGIS API overview</TITLE>
   </HEAD>
   <BODY>
-    <P ALIGN="justify">Provides interfaces for general positioning, coordinate
-    systems, and coordinate transformations.</P>
+    <P ALIGN="justify">Provides implementation for general positioning, coordinate
+    systems, and coordinate transformations. SEAGIS is an open source implementation
+    of a subset of <A HREF="http://www.opengis.org/techno/specs/">OpenGIS® Coordinate
+    Transformation Services Specification</A>. Being OpenGIS-compliant should allow
+    developers to switch between this free implementation and any commercial implementation
+    with no code change (providing that commercial implementations are OpenGIS compliant).</P>
 
+    <P>&nbsp;</P>
     <H2><A NAME="packages_organization">Packages organization</A></H2>
+    <P ALIGN="justify">A SEAGIS's goal is to ensure interoperability with standard
+    Java packages like <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A> and
+    <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>.
+    However, it is not always possible to leverage Java classes and be OpenGIS-compliant
+    in the same time. SEAGIS workaround the problem by providing two sets of packages:</P>
+
     <UL>
-    <LI>Package <CODE>org.opengis</CODE> package contains only
-        <A HREF="http://www.opengis.org">OpenGIS</A> specifications.
-        This package should not contain any public classes not cited
-        in <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS
-        specifications</A>.<BR>
-        </LI>
-    <LI>Package <CODE>net.seas.opengis</CODE> contains classes and interfaces partially compliant with
-        the <A HREF="http://www.opengis.org">OpenGIS</A> specification. Our <CODE>net.seas.opengis</CODE>
-        package tries to match closely the OpenGIS specification. However, we do not provide a perfect
-        match. Some compromises must be done between OpenGIS conformance and Java integration.
-        For example, the <CODE>org.opengis</CODE> packages are more adapted than <CODE>net.seas.opengis</CODE>
-        for RMI use, while our <CODE>net.seas.opengis</CODE> packages are more convenient for local use
-        and for interoperability with legacy Java libraries
-        (<A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>,
-         <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>, etc.).
-        For a list of differences, see:
-        <UL>
-          <LI><A HREF="net/seas/opengis/cs/package-summary.html#differences">Differences in the CS package</A></LI>
-          <LI><A HREF="net/seas/opengis/ct/package-summary.html#differences">Differences in the CT package</A></LI>
-          <LI><A HREF="net/seas/opengis/pt/package-summary.html#differences">Differences in the PT package</A></LI>
-        </UL><BR>
-        </LI>
-    <LI>Others package <CODE>net.seas</CODE> contains some classes implemented on
-        top of <CODE>net.seas.opengis</CODE>. Those classes do not belong to any standard
-        and are provided as optional package. Some classes will provide facilities
-        for images processing and will require
-        <A HREF="http://java.sun.com/products/java-media/jai/">Java
-        Advanced Imaging</A>.<BR>
-        </LI>
+      <LI>The <CODE>org.opengis</CODE> package is the standard OpenGIS specification. Classes
+          in this package are mostly interfaces, with no implementation. Interfaces defined
+          there are well suited for RMI use, which implies that every method is declared to
+          throws {@link java.rmi.RemoteException}. <FONT color="#008040">Developers looking
+          for strict OpenGIS compliance and/or RMI use should look at this <CODE>org.opengis</CODE>
+          package.</FONT><BR>&nbsp;</LI>
+
+      <LI>The <CODE>net.seas.opengis</CODE> package is an <CODE>org.opengis</CODE> mirror tuned
+          for Java and local use. It contains concrete classes (not interfaces). There is generally
+          a 1 to 1 correspondence between OpenGIS interfaces and SEAGIS classes, so developers
+          familiar with one package should be familiar with the other. SEAGIS methods do not thrown
+          <CODE>RemoteException</CODE>, which make them easier for local use but is not suitable for
+          RMI use. <FONT color="#008040">Developers looking for
+          <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A> interoperability and/or
+          local use may look at this <CODE>net.seas.opengis</CODE> package.</FONT><BR>&nbsp;</LI>
     </UL>
 
+    <P ALIGN="justify">Factory classes allow the creation of OpenGIS objects (RMI enabled)
+    backed by SEAGIS classes. Internally, interoperability between OpenGIS interfaces and
+    SEAGIS classes is assured through a set of RMI-aware adapters. Classes not related to
+    any OpenGIS API appear in separated packages (e.g. <CODE>net.seas.image.io</CODE>).</P>
+
     <P>&nbsp;</P>
-    <P>&nbsp;</P>
-    <HR>
-    <P>&nbsp;</P>
-    <H1>References</H1>
+    <H2><A NAME="differences">Differences between SEAGIS and the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
     <UL>
-    <LI><A HREF="http://www.opengis.org/public/abstract/99-102r1.pdf">Topic
-        2 - Spatial Reference Systems</A> give a general overview.<BR>
-        </LI>
-    <LI><A HREF="http://www.opengis.org/techno/specs/01-009.pdf">OpenGIS®
-        Coordinate Transformation Services Implementation
-        Specification</A> is our primary working material
-        for the <CODE>org.opengis</CODE> package.<BR>
-        </LI>
+      <LI><P ALIGN="justify">The OpenGIS specification requires that every
+          class and interface name begin with a two letters prefix (e.g.
+          {@link org.opengis.cs.CS_CoordinateSystem},
+          {@link org.opengis.ct.CT_CoordinateTransformation}, etc.).
+          Those prefix are redundant with package name and are omitted
+          in SEAS classes.</P></LI>
+
+      <LI><P ALIGN="justify">Made all enumeration classes immutable. Enumeration
+          constants are instances of the actual enumeration class instead of
+          integers. Names are uppercase, with no prefix like <CODE>CT_TT</CODE>,
+          <CODE>CT_DF</CODE> or <CODE>CS_AO</CODE>.</P></LI>
+
+      <LI><P ALIGN="justify">Provide various methods and constructors to ease interoperability
+          with the <A HREF="http://java.sun.com/products/java-media/2D">Java2D</A> geometric
+          package.</P></LI>
+
+      <LI><P ALIGN="justify">Changed signature of various <CODE>transform(...)</CODE>
+          methods in {@link net.seas.opengis.ct.MathTransform}. New signatures are
+          similar to {@link java.awt.geom.AffineTransform}'s transform methods, which
+          should be familiar to many Java programmers. They offer better performance
+          for local use (as opposed to RMI use). Note that the OpenGIS's signatures
+          are better suited for RMI use.</P></LI>
+
+      <LI><P ALIGN="justify">SEAGIS provides localization support. Methods
+          defined as <CODE>getName()</CODE> by OpenGIS are redifined as
+          <CODE>getName({@link java.util.Locale})</CODE> by SEAGIS.</P></LI>
+
+      <LI><P ALIGN="justify">{@link net.seas.opengis.cs.Ellipsoid#getInverseFlattening}
+          returns {@link java.lang.Double#POSITIVE_INFINITY} instead of 0 for
+          perfect spheres. Infinity is the mathematically correct value.</P></LI>
+
+      <LI><P ALIGN="justify">{@link net.seas.opengis.ct.CoordinateTransform} is
+          set as a {@link net.seas.opengis.ct.MathTransform}'s subclass. Renamed
+          <CODE>CoordinateTransformation</CODE> to <CODE>CoordinateTransform</CODE>
+          for consistency.</P></LI>
+
+      <LI><P ALIGN="justify">Some OpenGIS interfaces have been omitted in
+          order to avoid redundancies with standard Java classes or other
+          OpenGIS classes:<BR>&nbsp;
+          <TABLE cellpadding="6" border="1" bgcolor=lightgoldenrodyellow>
+            <TR>
+              <TD align="center" bgcolor=bisque><STRONG>Omitted class</STRONG></TD>
+              <TD align="center" bgcolor=bisque><STRONG>Replacement</STRONG></TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.pt.PT_Matrix}</TD>
+              <TD nowrap>Not yet choosen. Maybe <A HREF="http://math.nist.gov/javanumerics/jama/"><CODE>Jama.Matrix</CODE></A>.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.cs.CS_Unit} and subclass</TD>
+              <TD nowrap>{@link javax.units.Unit} from <A HREF="http://jcp.org/jsr/detail/108.jsp">JSR-108</A>.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.cs.CS_ProjectionParameter}</TD>
+              <TD nowrap>{@link net.seas.opengis.ct.Parameter}.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.gp.GP_GridAnalysis}</TD>
+              <TD nowrap>{@link net.seas.opengis.cv.SampleDimension}.</TD>
+            </TR>
+          </TABLE></P></LI>
+
+      <LI><P ALIGN="justify">Some convenient classes and methods have been added:<BR>&nbsp;
+          <TABLE cellpadding="6" border="1" bgcolor=lightgoldenrodyellow>
+            <TR>
+              <TD align="center" bgcolor=bisque><STRONG>Added class or method</STRONG></TD>
+              <TD align="center" bgcolor=bisque><STRONG>Purpose</STRONG></TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.ConvexHull}</TD>
+              <TD nowrap>Type safety (OpenGIS use a generic <CODE>double[]</CODE>).</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.Angle}</TD>
+              <TD nowrap>Parsing and formatting with {@link net.seas.text.AngleFormat}.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.Latitude}</TD>
+              <TD nowrap>Parsing and formatting with {@link net.seas.text.AngleFormat}.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.Longitude}</TD>
+              <TD nowrap>Parsing and formatting with {@link net.seas.text.AngleFormat}.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.Envelope#add(net.seas.opengis.pt.CoordinatePoint)}</TD>
+              <TD nowrap>Convenience method.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.pt.Envelope#contains(net.seas.opengis.pt.CoordinatePoint)}</TD>
+              <TD nowrap>Convenience method.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.cs.Ellipsoid#getEccentricity}</TD>
+              <TD nowrap>Convenience method.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.cs.Ellipsoid#orthodromicDistance}</TD>
+              <TD nowrap>Convenience method.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.ct.MathTransform#transform(java.awt.geom.Point2D,java.awt.geom.Point2D)}</TD>
+              <TD nowrap>Interoperability with Java2D.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link net.seas.opengis.ct.MathTransform#transform(java.awt.Shape)}</TD>
+              <TD nowrap>Interoperability with Java2D.</TD>
+            </TR>
+          </TABLE></P></LI>
+
+      <LI><P ALIGN="justify">The following classes and methods are curently not
+          implemented. They may be implemented in a future version:<BR>&nbsp;
+          <UL>
+             <LI><CODE><STRONG>CoordinateTransformationFactory</STRONG></CODE></LI>
+             <LI><CODE><STRONG>CoordinateTransformationAuthorityFactory</STRONG></CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>derivative</STRONG>(CoordinatePoint)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getDomainFlags</STRONG>(ConvexHull)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getCodomainConvexHull</STRONG>(ConvexHull)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getWKT</STRONG>()</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getXML</STRONG>()</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createAffineTransform</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createPassThroughTransform</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createFromWKT</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>isParameterAngular</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>isParameterLinear</STRONG>(...)</CODE></LI>
+          </UL></P></LI>
     </UL>
   </BODY>
 </HTML>
