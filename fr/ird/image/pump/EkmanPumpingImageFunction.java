@@ -64,6 +64,9 @@ import org.geotools.ct.TransformException;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.MonolineFormatter;
 
+// SEAS
+import fr.ird.io.image.Utilities;
+
 
 /**
  * Classe construisant une image représentant le pompage d'Ekman
@@ -302,15 +305,15 @@ final class EkmanPumpingImageFunction extends WindImageFunction {
             image = function.getGridCoverage(title, width, height);
             final int extensionIndex = output.lastIndexOf('.');
             final String type = (extensionIndex>=0) ? output.substring(extensionIndex+1) : "png";
+            final File outputFile = new File(output);
             RenderedImage outputImage;
             if (type.equalsIgnoreCase("raw")) {
                 outputImage = image.geophysics(true).getRenderedImage();
-                outputImage = PlanarImage.wrapRenderedImage(outputImage).getAsBufferedImage();
-                // Convert to BufferedImage in order to make sure we have only one tile.
+                Utilities.writeRawFloat(outputImage, outputFile);
             } else {
                 outputImage = image.geophysics(false).getRenderedImage();
+                ImageIO.write(outputImage, type, outputFile);
             }
-            ImageIO.write(outputImage, type, new File(output));
         } else {
             image = function.show(title, width, height);
         }
