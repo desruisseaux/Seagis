@@ -27,4 +27,18 @@ import fr.ird.database.Entry;
  * @author Martin Desruisseaux
  */
 public interface CruiseEntry extends Entry {
+    /**
+     * Retourne le numéro de la campagne d'échantillonage.
+     */
+    public abstract int getID();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
 }

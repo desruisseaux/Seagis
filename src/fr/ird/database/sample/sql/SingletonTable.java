@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -39,12 +29,13 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 
 // Seagis
+import fr.ird.database.Entry;
 import fr.ird.database.CatalogException;
+import fr.ird.database.NoSuchRecordException;
+import fr.ird.database.IllegalRecordException;
+import fr.ird.database.sample.SampleDataBase;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
-import fr.ird.database.IllegalRecordException;
-import fr.ird.database.NoSuchRecordException;
-import fr.ird.database.Entry;
 
 
 /**
@@ -146,8 +137,11 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      *        <code>null</code> si aucune. Si cet argument est nul, alors {@link #getConnection}
      *        <strong>doit</strong> être redéfinie.
      */
-    protected SingletonTable(final PreparedStatement statement) throws RemoteException {
-        super(statement);
+    protected SingletonTable(final SampleDataBase    database,
+                             final PreparedStatement statement)
+            throws RemoteException
+    {
+        super(database, statement);
     }
 
     /**
@@ -161,15 +155,13 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      *         si c'est le cas.
      * @throws SQLException si <code>SingletonTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected SingletonTable(final Connection connection, final int type) throws RemoteException {
-        super(null);
-        this.type = type;
-        
-        try {
-            this.statement = connection.prepareStatement(getQuery(type));
-        } catch (SQLException e) {
-            throw new CatalogException(e);
-        }
+    protected SingletonTable(final SampleDataBase database,
+                             final Connection     connection,
+                             final int            type)
+            throws RemoteException, SQLException
+    {
+        super(database, null);
+        this.statement = connection.prepareStatement(getQuery(type));
     }
 
     /**
@@ -352,7 +344,7 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      * @return L'entré pour l'enregistrement courant de <code>results</code>
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    protected abstract Timpl createEntry(final ResultSet results) throws RemoteException;
+    protected abstract Timpl createEntry(final ResultSet results) throws SQLException;
 
     /**
      * Complète la construction de l'entré spécifiée. Cette méthode est appelée à la fin de la
@@ -362,17 +354,9 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      * pilotes JDBC. L'implémentation par défaut ne fait rien.
      *
      * @param  entry L'entré à initialiser.
-     * @throws SQLException si l'initialisation a échouée.
+     * @throws CatalogException si l'initialisation a échouée.
      */
-    protected void postCreateEntry(final Timpl entry) throws RemoteException {
-    }
-
-    /**
-     * Workaround for being unable to cast T to Timpl in list().
-     *
-     * @task TODO: try to get ride of this workaround if possible.
-     */
-    void _postCreateEntry(final T entry) throws RemoteException {
+    protected void postCreateEntry(final Timpl entry) throws CatalogException {
     }
 
     /**
@@ -386,43 +370,39 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      * @return L'entré pour la clé spécifiée et l'état courant de {@link #statement}.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    private Timpl executeQuery(final Object key) throws RemoteException {
-        try {
-            assert Thread.holdsLock(this);
-            assert !pool.containsKey(key);
-            Timpl entry = null;
-            final ResultSet results = statement.executeQuery();
-            while (results.next()) {
-                final Timpl candidate = createEntry(results);
-                if (entry == null) {
-                    entry = candidate;
-                } else if (!entry.equals(candidate)) {
-                    results.close();
-                    throw new IllegalRecordException(getTableName(),
-                            Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, key));
-                }
-            }
-            results.close();
+    private Timpl executeQuery(final Object key) throws SQLException, CatalogException {
+        assert Thread.holdsLock(this);
+        assert !pool.containsKey(key);
+        Timpl entry = null;
+        final ResultSet results = statement.executeQuery();
+        while (results.next()) {
+            final Timpl candidate = createEntry(results);
             if (entry == null) {
-                final String table = getTableName();
-                throw new NoSuchRecordException(table, Resources.format(
-                                                ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
+                entry = candidate;
+            } else if (!entry.equals(candidate)) {
+                results.close();
+                throw new IllegalRecordException(getTableName(),
+                        Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, key));
             }
-            final Timpl check = pool.put(key, entry);
-            assert check==null : check;
-            try {
-                postCreateEntry(entry);
-            } catch (RemoteException exception) {
-                pool.remove(key);
-                throw exception;
-            } catch (RuntimeException exception) {
-                pool.remove(key);
-                throw exception;
-            }
-            return entry;
-        } catch (SQLException e) {
-            throw new CatalogException(e);
         }
+        results.close();
+        if (entry == null) {
+            final String table = getTableName();
+            throw new NoSuchRecordException(table, Resources.format(
+                                            ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
+        }
+        final Timpl check = pool.put(key, entry);
+        assert check==null : check;
+        try {
+            postCreateEntry(entry);
+        } catch (CatalogException exception) {
+            pool.remove(key);
+            throw exception;
+        } catch (RuntimeException exception) {
+            pool.remove(key);
+            throw exception;
+        }
+        return entry;
     }
 
     /**
@@ -430,17 +410,17 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      *
      * @param  name Le nom de l'entré désiré.
      * @return L'entré demandé.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation de la base de données a échouée.
      */
     public synchronized final Timpl getEntry(final String name) throws RemoteException {
+        if (name == null) {
+            return null;
+        }
+        Timpl entry = pool.get(name);
+        if (entry != null) {
+            return entry;
+        }
         try {
-            if (name == null) {
-                return null;
-            }
-            Timpl entry = pool.get(name);
-            if (entry != null) {
-                return entry;
-            }
             setType(BY_NAME);
             statement.setString(1, name);
             return executeQuery(name);
@@ -454,15 +434,15 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      *
      * @param  name Le numéro de l'entré désiré.
      * @return L'entré demandé.
-     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws RemoteException si l'interrogation de la base de données a échouée.
      */
     public synchronized final Timpl getEntry(final int ID) throws RemoteException {
+        final Integer key = new Integer(ID);
+        Timpl entry = pool.get(key);
+        if (entry != null) {
+            return entry;
+        }
         try {
-            final Integer key = new Integer(ID);
-            Timpl entry = pool.get(key);
-            if (entry != null) {
-                return entry;
-            }
             setType(BY_ID);
             statement.setInt(1, ID);
             return executeQuery(key);        
@@ -475,9 +455,9 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
      * Retourne toutes les entrés disponibles dans la base de données.
      */
     public synchronized final Set<T> list() throws RemoteException {
+        pool.clear(); // Make sure to take in account latest database updates.
+        final Set<T> set = new LinkedHashSet<T>();
         try {
-            pool.clear(); // Make sure to take in account latest database updates.
-            final Set<T> set = new LinkedHashSet<T>();
             setType(LIST);
             final ResultSet results = statement.executeQuery();
             while (results.next()) {
@@ -489,22 +469,13 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
                 }
             }
             results.close();
-            // TODO: The 'for (T entry : set)' syntax crash the compiler here.
-            for (final java.util.Iterator<T> it=set.iterator(); it.hasNext();) {
-                final T entry = it.next();
-                _postCreateEntry(entry);
-                /*
-                 * Should really be
-                 *
-                 * postCreateEntry((Timpl) entry);
-                 *
-                 * but the compiler doesn't allow this cast.
-                 */
-            }
-            return set;
         } catch (SQLException e) {
             throw new CatalogException(e);
         }
+        for (final T entry : set) {
+            postCreateEntry((Timpl) entry);
+        }
+        return set;
     }
 
     /**

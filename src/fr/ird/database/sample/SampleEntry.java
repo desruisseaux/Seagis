@@ -43,6 +43,16 @@ import fr.ird.animat.Species;
  */
 public interface SampleEntry extends Entry {
     /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
+    /**
      * Retourne la campagne d'échantillonage pendant laquelle a été pris cet échantillon.
      * Peut retourner <code>null</code> si ne s'applique pas.
      */

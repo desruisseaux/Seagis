@@ -15,9 +15,6 @@
  */
 package fr.ird.database.coverage;
 
-// J2SE
-import java.rmi.RemoteException;
-
 // Base de données
 import fr.ird.database.Entry;
 
@@ -30,8 +27,18 @@ import fr.ird.database.Entry;
  */
 public interface SeriesEntry extends Entry {
     /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
+    /**
      * Retourne la période "normale" des images de cette série
      * (en nombre de jours), ou {@link Double#NaN} si elle est inconnue.
      */
-    public abstract double getPeriod() throws RemoteException;
+    public abstract double getPeriod();
 }

@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -57,21 +47,21 @@ final class CruiseEntry implements fr.ird.database.sample.CruiseEntry, Serializa
     }
 
     /**
-     * Retourne le numéro de la campagne d'échantillonage.
+     * {@inheritDoc}
      */
     public int getID() {
         return ID;
     }
 
     /**
-     * Retourne le nom de la campagne d'échantillonage.
+     * {@inheritDoc}
      */
     public String getName() {
         return String.valueOf(ID);
     }
 
     /**
-     * Retourne les remarques, ou <code>null</code> s'il n'y en a pas.
+     * {@inheritDoc}
      */
     public String getRemarks() {
         return null;

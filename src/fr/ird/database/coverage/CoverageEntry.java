@@ -21,6 +21,7 @@ import java.net.URL;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
@@ -49,7 +50,7 @@ import fr.ird.database.Entry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface CoverageEntry extends Entry {
+public interface CoverageEntry extends Entry, Remote {
     /**
      * Clé sous laquelle mémoriser l'objet <code>CoverageEntry</code> source
      * dans les propriétés de {@link GridCoverage}. Cette propriétés permet de retrouver

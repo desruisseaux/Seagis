@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -34,8 +24,10 @@ import java.rmi.server.RemoteObject;
 import java.rmi.server.UnicastRemoteObject;
 
 // Seagis
+import fr.ird.database.ConfigurationKey;
 import fr.ird.database.CatalogException;
 import fr.ird.database.sample.SampleDataBase;
+import fr.ird.resources.seagis.Resources;
 
 
 /**
@@ -56,18 +48,9 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
     /** Nom de table. */ static final String SPECIES       = "Espèces";
 
     /**
-     * Clé à utiliser pour mémoriser le fichier de configuration permettant de se connecter 
-     * et d'interroger la base.
+     * The database where this table come from.
      */
-    static final String DATABASE = "Database";
-    
-    /**
-     * Propriétés de la base de données. Ces propriétés peuvent contenir
-     * notamment les instructions SQL à utiliser pour interroger la base
-     * de données d'images.
-     */
-    public static final Preferences preferences = Preferences.systemNodeForPackage(SampleDataBase.class);
-    public static final Configuration configuration = Configuration.getInstance();
+    protected final SampleDataBase database;
 
     /**
      * Requète SQL à utiliser pour obtenir les données.
@@ -80,7 +63,10 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
      * @param statement Interrogation à soumettre à la base de données, ou <code>null</code> si
      *        aucune.
      */
-    protected Table(final PreparedStatement statement) throws RemoteException {
+    protected Table(final SampleDataBase    database,
+                    final PreparedStatement statement) throws RemoteException
+    {
+        this.database  = database;
         this.statement = statement;
     }
 
@@ -157,6 +143,28 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
     }
 
     /**
+     * Create a configuration key for the specified attributes.
+     */
+    static ConfigurationKey createKey(final String name, final int text, final String SQL) {
+        return new ConfigurationKey(name, Resources.formatInternational(text), SQL);
+    }
+
+    /**
+     * Returns a property value for the specified key. This method work for a null database,
+     * which is convenient for testing purpose.
+     */
+    protected final String getProperty(final ConfigurationKey key) throws RemoteException {
+        return (database!=null) ? database.getProperty(key) : key.defaultValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public final SampleDataBase getDataBase() {
+        return database;
+    }
+
+    /**
      * Libère les ressources utilisées par cette table.
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
@@ -165,11 +173,9 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
      *         lors de la disposition des ressources.
      */
     public synchronized void close() throws RemoteException {
-        try {
-            if (statement != null) {
-                statement.close();
-                statement = null;
-            }
+        if (statement != null) try {
+            statement.close();
+            statement = null;
         } catch (SQLException e) {
             throw new CatalogException(e);
         }

@@ -16,7 +16,6 @@
 package fr.ird.database;
 
 // J2SE dependencies
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 
@@ -25,14 +24,21 @@ import java.rmi.RemoteException;
  * Une entrée peut représenter une série d'images ou une
  * image individuelle par exemple.
  *
+ * <P>Quelques interfaces sont conçues pour fonctionner avec les RMI.
+ * C'est pourquoi toutes les méthodes peuvent lancer une exception de
+ * type <code>RemoteException</code>.</P>
+ *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Entry extends Remote {
+public interface Entry {
     /**
      * Retourne le nom de cette entrée. Ce nom peut être arbitraire.
      * Dans le cas d'une image (par exemple), il s'agira le plus souvent
      * du nom du fichier de l'image.
+     *
+     * @throws RemoteException si cette méthode nécessitait un appel sur un objet
+     *         distant, et que cet appel a échoué.
      */
     public abstract String getName() throws RemoteException;
 
@@ -41,6 +47,9 @@ public interface Entry extends Remote {
      * ou <code>null</code> s'il n'y en a pas. Ces remarques
      * sont souvent une chaîne descriptives qui peuvent être
      * affichées comme "tooltip text".
+     *
+     * @throws RemoteException si cette méthode nécessitait un appel sur un objet
+     *         distant, et que cet appel a échoué.
      */
     public abstract String getRemarks() throws RemoteException;
 }

@@ -11,15 +11,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
- *
- * Contacts:
- *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
- *             Institut de Recherche pour le Développement
- *             mailto:seasnet@teledetection.fr
- *
- *     CANADA: Observatoire du Saint-Laurent
- *             Institut Maurice-Lamontagne
- *             mailto:osl@osl.gc.ca
  */
 package fr.ird.database.sample;
 
@@ -27,7 +18,6 @@ package fr.ird.database.sample;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
-//import java.sql.SQLException;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.Arrays;
@@ -47,6 +37,7 @@ import org.geotools.cs.CoordinateSystem;
 import fr.ird.operator.coverage.Evaluator;
 import fr.ird.database.coverage.SeriesEntry;   // Pour Javadoc
 import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.GridCoverage3D;
 
 
 /**
@@ -59,7 +50,7 @@ import fr.ird.database.coverage.CoverageTable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D implements Coverage3D {
+public class Environment3D extends GridCoverage3D implements Coverage3D {
     /**
      * Incertitude dans la détermination de la date des échantillons, en nombre de millisecondes.
      * Afin de réduire les interpolations temporelles, les dates des échantillons sont "calées"
@@ -109,7 +100,7 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
      * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table) throws RemoteException, TransformException {
+    public Environment3D(final CoverageTable table) throws RemoteException, TransformException {
         this(table, table.getCoordinateSystem());
     }
 
@@ -122,19 +113,18 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
      * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
-    public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
-            throws RemoteException, TransformException
+    public Environment3D(final CoverageTable table, final CoordinateSystem cs) throws RemoteException, TransformException
     {
         super(table, cs);
-        isDefaultImplementation = SeriesCoverage3D.class.equals(getClass());
+        isDefaultImplementation = Environment3D.class.equals(getClass());
     }
 
     /**
      * Construit une couverture utilisant les mêmes paramètres que la couverture spécifiée.
      */
-    protected SeriesCoverage3D(final fr.ird.database.coverage.SeriesCoverage3D source) {
+    protected Environment3D(final GridCoverage3D source) {
         super(source);
-        isDefaultImplementation = SeriesCoverage3D.class.equals(getClass());
+        isDefaultImplementation = Environment3D.class.equals(getClass());
     }
 
     /**
@@ -290,8 +280,8 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
 
     /**
      * Enregistre un message vers le journal des événements. Cette méthode redéfinie celle de
-     * {@link fr.ird.database.coverage.SeriesCoverage3D} de façon à n'enregistrer que le premier
-     * et dernier message d'une succession de points en dehors de la région spatio-temporelle.
+     * {@link GridCoverage3D} de façon à n'enregistrer que le premier et dernier message d'une
+     * succession de points en dehors de la région spatio-temporelle.
      */
     protected void log(final LogRecord record) {
         if (lastWarning != null) {

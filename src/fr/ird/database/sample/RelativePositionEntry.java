@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -42,6 +32,21 @@ import fr.ird.database.Entry;
  * @see SampleDataBase#getRelativePositions
  */
 public interface RelativePositionEntry extends Entry {
+    /**
+     * Retourne un numéro unique identifiant cette procédure.
+     */
+    public abstract int getID();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
     /**
      * Retourne la date à laquelle évaluer l'environnement relativement à l'échantillon
      * spécifié. On pourrait par exemple être intéressés à la hauteur de l'eau 15 jours

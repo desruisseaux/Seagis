@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -51,7 +41,7 @@ public interface SampleDataBase extends DataBase {
      * @see #SQL_SELECT
      * @see #SQL_UPDATE
      */
-    public static final Logger LOGGER = Logger.getLogger("fr.ird.database");
+    public static final Logger LOGGER = Logger.getLogger("fr.ird.database.sample");
 
     /**
      * Retourne les espèces énumérés dans la base de données.

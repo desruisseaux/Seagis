@@ -302,15 +302,6 @@ final class ParameterTable
     }
 
     /**
-     * Workaround for being unable to cast T to Timpl in list().
-     *
-     * @task TODO: try to get ride of this workaround if possible.
-     */
-    void _postCreateEntry(final fr.ird.database.sample.ParameterEntry entry) throws RemoteException {
-        postCreateEntry((ParameterEntry) entry);
-    }
-
-    /**
      * Retourne la table des modèle linéaires associée à cette table des paramètres. Cette
      * table est utilisée par {@link #postCreateEntry} afin de terminer la construction des
      * objets {@link ParameterEntry}. Elle est aussi utilisée pour obtenir de manière indirecte

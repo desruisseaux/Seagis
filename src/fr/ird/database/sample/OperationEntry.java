@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -47,6 +37,21 @@ import fr.ird.database.coverage.CoverageTable;
  * @see SampleDataBase#getOperations
  */
 public interface OperationEntry extends Entry {
+    /**
+     * Retourne un numéro unique identifiant cette opération.
+     */
+    public abstract int getID();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
     /**
      * Retourne le nom de colonne de l'opération. Cette colonne apparaît dans la table
      * "Environnement", par exemple "pixel" ou "sobel3".
@@ -101,13 +106,13 @@ public interface OperationEntry extends Entry {
             this.parent = parent;
         }
 
-        /** Délègue l'appel au parent. */ public int    getID       () throws RemoteException {return parent.getID();}
-        /** Délègue l'appel au parent. */ public String getName     () throws RemoteException {return parent.getName();}
+        /** Délègue l'appel au parent. */ public int    getID       ()            {return parent.getID();}
+        /** Délègue l'appel au parent. */ public String getName     ()            {return parent.getName();}
         /** Délègue l'appel au parent. */ public String getPrefix   ()            {return parent.getPrefix();}
         /** Délègue l'appel au parent. */ public String getColumn   ()            {return parent.getColumn();}
         /** Délègue l'appel au parent. */ public String getProcessorOperation()   {return parent.getProcessorOperation();}
         /** Délègue l'appel au parent. */ public Object getParameter(String name) {return parent.getParameter(name);}
-        /** Délègue l'appel au parent. */ public String getRemarks  () throws RemoteException {return parent.getRemarks();}
+        /** Délègue l'appel au parent. */ public String getRemarks  ()            {return parent.getRemarks();}
         /** Délègue l'appel au parent. */ public String toString    ()            {return parent.toString();}
         /** Délègue l'appel au parent. */ public int    hashCode    ()            {return parent.hashCode();}
 

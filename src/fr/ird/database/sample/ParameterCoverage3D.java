@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -40,7 +30,6 @@ import java.text.DateFormat;
 import java.io.IOException;
 import java.awt.Color;
 import java.rmi.RemoteException;
-import java.sql.SQLException;
 
 // JAI
 import javax.media.jai.JAI;
@@ -74,6 +63,7 @@ import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.database.coverage.GridCoverage3D;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.resources.seagis.Resources;
 
@@ -369,7 +359,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * Obtient les données sous forme d'objet {@link Coverage3D} pour le paramètre spécifié.
      * Cette méthode est appelée automatiquement par {@link #setParameter setParameter} pour
      * obtenir les données qui composent un paramètre. L'implémentation par défaut construit
-     * un objet {@link SeriesCoverage3D}. Les classes dérivées peuvent redéfinir cette méthode
+     * un objet {@link Environment3D}. Les classes dérivées peuvent redéfinir cette méthode
      * pour construire un autre type de couverture, incluant un autre {@link ParameterCoverage3D}.
      *
      * @param parameter Le paramètre environnemental pour lequel on veut les données.
@@ -382,7 +372,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             throws RemoteException
     {
         try {
-            return new SeriesCoverage3D(table, getCoordinateSystem());
+            return new Environment3D(table, getCoordinateSystem());
         } catch (TransformException e) {
             // Ne devrait pas se produire, puisque le système de coordonnées
             // est en principe le même que celui de la table.
@@ -393,12 +383,12 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     /**
      * Retourne une clone de la couverture spécifiée, si possible. L'utilisation de clones
      * pour la même série d'images à des positions relatives différentes permet d'éviter que
-     * la même image soit rechargée plusieurs fois, puisque chaque {@link SeriesCoverage3D}
+     * la même image soit rechargée plusieurs fois, puisque chaque {@link Environment3D}
      * gardera une référence forte vers la dernière image lue.
      */
     private static Coverage3D clone(Coverage3D coverage) {
-        if (coverage instanceof fr.ird.database.coverage.SeriesCoverage3D) {
-            coverage = new SeriesCoverage3D((fr.ird.database.coverage.SeriesCoverage3D) coverage);
+        if (coverage instanceof GridCoverage3D) {
+            coverage = new Environment3D((GridCoverage3D) coverage);
         }
         return coverage;
     }
@@ -833,7 +823,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                 int seriesIndex = 0;
                 do {
                     /*
-                     * Obtient la couverture spatio-temporelle SeriesCoverage3D correspondant à la
+                     * Obtient la couverture spatio-temporelle GridCoverage3D correspondant à la
                      * série principale de la composante courante.  Si aucune valeur n'est trouvée
                      * pour cette série, alors seulement on examinera les séries "de secours".
                      */

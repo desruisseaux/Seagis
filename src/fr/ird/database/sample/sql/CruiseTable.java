@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -34,6 +24,7 @@ import java.rmi.RemoteException;
 
 // Seagis
 import fr.ird.database.sample.CruiseEntry;
+import fr.ird.database.sample.SampleDataBase;
 
 
 /**
@@ -60,10 +51,12 @@ final class CruiseTable extends Table {
      * @param  connection Connexion vers la base de données.
      * @throws SQLException si cette table n'a pas pu construire sa requête SQL.
      */
-    protected CruiseTable(final Connection connection) throws RemoteException {
+    protected CruiseTable(final SampleDataBase database,
+                          final Connection   connection) throws RemoteException
+    {
         // Pour l'instant, on ignore la connexion. Elle sera prise en compte dans une version
         // future si on ajoute réellement une table des campagnes dans la base des données.
-        super(null);
+        super(database, null);
     }
 
     /**

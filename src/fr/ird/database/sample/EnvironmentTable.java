@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -54,6 +44,11 @@ import org.geotools.util.ProgressListener;
  * @author Martin Desruisseaux
  */
 public interface EnvironmentTable extends Table {
+    /**
+     * {@inheritDoc}
+     */
+    public abstract SampleDataBase getDataBase() throws RemoteException;
+
     /**
      * Spécifie le nom d'une table des échantillons à joindre avec les paramètres environnementaux
      * retournés par {@link #getRowSet}. Il ne s'agit pas nécessairement de la table
@@ -195,7 +190,7 @@ public interface EnvironmentTable extends Table {
      */
     public abstract int getParameterCount(final ParameterEntry       parameter,
                                           final OperationEntry       operation,
-                                          final RelativePositionEntry position);
+                                          final RelativePositionEntry position) throws RemoteException;
 
     /**
      * Retourne les nom des colonnes pour cette table. Ces noms de colonnes sont identiques
@@ -241,7 +236,7 @@ public interface EnvironmentTable extends Table {
      * @throws RemoteException si l'interrogation du catalogue a échoué.
      * @throws IOException si une erreur est survenue lors de l'écriture.
      */
-    public abstract int print(final Writer out, int max) throws RemoteException;/*, IOException;*/
+    public abstract int print(final Writer out, int max) throws IOException;
 
     /**
      * Copie toutes les données de {@link #getRowSet} vers une table du nom
@@ -253,7 +248,7 @@ public interface EnvironmentTable extends Table {
      * @param  tableName Nom de la table à créer.
      * @param  progress Objet à utiliser pour informer des progrès, ou <code>null</code> si aucun.
      * @return Le nombre d'enregistrement copiés dans la nouvelle table.
-     * @throws Si un problème est survenu lors des accès aux bases de données.
+     * @throws RemoteException Si un problème est survenu lors des accès aux bases de données.
      */
     public abstract int copyToTable(final Connection     connection,
                                     final String          tableName,

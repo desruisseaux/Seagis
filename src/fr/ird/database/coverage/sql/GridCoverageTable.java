@@ -292,7 +292,7 @@ class GridCoverageTable extends Table implements CoverageTable {
      * {@inheritDoc}
      */
     public final synchronized void setSeries(final SeriesEntry series)
-            throws RemoteException
+            throws CatalogException
     {
         if (!series.equals(this.series)) {
             final boolean toLog = (this.series != null);
@@ -332,7 +332,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setEnvelope(final Envelope envelope) throws RemoteException {
+    public final synchronized void setEnvelope(final Envelope envelope) throws CatalogException {
         // No coordinate transformation needed for this implementation.
         setGeographicArea(new Rectangle2D.Double(envelope.getMinimum(0), envelope.getMinimum(1),
                                                  envelope.getLength (0), envelope.getLength (1)));
@@ -350,7 +350,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final void setTimeRange(final Range range) throws RemoteException {
+    public final void setTimeRange(final Range range) throws CatalogException {
         Date startTime = (Date) range.getMinValue();
         Date   endTime = (Date) range.getMaxValue();
         if (!range.isMinIncluded()) {
@@ -366,7 +366,7 @@ class GridCoverageTable extends Table implements CoverageTable {
      * {@inheritDoc}
      */
     public final synchronized void setTimeRange(final Date startTime, final Date endTime)
-            throws RemoteException
+            throws CatalogException
     {
         final long newStartTime = startTime.getTime();
         final long newEndTime   =   endTime.getTime();
@@ -403,7 +403,7 @@ class GridCoverageTable extends Table implements CoverageTable {
      * {@inheritDoc}
      */
     public final synchronized void setGeographicArea(final Rectangle2D rect)
-            throws RemoteException
+            throws CatalogException
     {
         if (!rect.equals(geographicArea)) try {
             parameters = null;
@@ -414,7 +414,7 @@ class GridCoverageTable extends Table implements CoverageTable {
             geographicArea = new XRectangle2D(rect);
         } catch (SQLException cause) {
             throw new CatalogException(cause);
-        }            
+        }
         if (series != null) {
             // Don't log if this object is configured by CoverageDataBase.
             log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$2,
@@ -432,9 +432,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final synchronized void setPreferredResolution(final Dimension2D pixelSize)
-            throws RemoteException
-    {
+    public final synchronized void setPreferredResolution(final Dimension2D pixelSize) {
         if (!Utilities.equals(resolution, pixelSize)) {
             parameters = null;
             final int clé;
@@ -466,9 +464,9 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final synchronized ParameterList setOperation(final Operation operation) throws RemoteException {
+    public final synchronized ParameterList setOperation(final Operation operation) {
         this.parameters = null;
-        this.operation=operation;
+        this.operation  = operation;
         final int clé;
         final Object param;
         if (operation != null) {
@@ -487,7 +485,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     /**
      * {@inheritDoc}
      */
-    public final ParameterList setOperation(final String operation) throws RemoteException, OperationNotFoundException {
+    public final ParameterList setOperation(final String operation) throws OperationNotFoundException {
         return setOperation(operation!=null ? GridCoverageEntry.PROCESSOR.getOperation(operation) : null);
     }
 
@@ -827,15 +825,9 @@ class GridCoverageTable extends Table implements CoverageTable {
      * Retourne une chaîne de caractères décrivant cette table.
      */
     public final String toString() {
-        String name;
-        try {
-            name = series.getName();
-        } catch (RemoteException e) {
-            name = "<error>";
-        }
         final StringBuilder buffer = new StringBuilder(Utilities.getShortClassName(this));
         buffer.append("[\"");
-        buffer.append(name);
+        buffer.append(series.getName());
         buffer.append("\": ");
         buffer.append(getStringArea());
         buffer.append(']');

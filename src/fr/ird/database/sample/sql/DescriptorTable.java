@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -30,6 +20,7 @@ import java.util.Set;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.rmi.RemoteException;
 
 // Seagis
@@ -114,19 +105,8 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @param  La connexion vers la base de données.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    protected DescriptorTable(final Connection connection) throws RemoteException {
-        super(getPreparedStatement(connection));
-    }
-
-    /**
-     * Retourne un PreparedStatement.
-     */
-    private static final java.sql.PreparedStatement getPreparedStatement(final Connection connection) throws RemoteException {
-        try {
-            return connection.prepareStatement(SQL_SELECT);
-        } catch (SQLException e) {
-            throw new CatalogException(e);
-        }        
+    protected DescriptorTable(final Connection connection) throws RemoteException, SQLException {
+        super(connection.prepareStatement(SQL_SELECT));
     }
     
     /**

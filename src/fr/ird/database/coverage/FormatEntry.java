@@ -15,12 +15,8 @@
  */
 package fr.ird.database.coverage;
 
-// J2SE dependencies
-import java.rmi.RemoteException;
-
 // Geotools
 import org.geotools.cv.SampleDimension;
-import org.geotools.resources.Utilities;
 
 // Seagis
 import fr.ird.database.Entry;
@@ -34,6 +30,16 @@ import fr.ird.database.Entry;
  */
 public interface FormatEntry extends Entry {
     /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
+    /**
      * Retourne les listes des bandes {@link SampleDimension} qui permettent
      * de décoder les valeurs des paramètres géophysiques. Cette méthode peut
      * retourner plusieurs objets {@link SampleDimension}, un par bande. Leur
@@ -44,8 +50,6 @@ public interface FormatEntry extends Entry {
      * peuvent être des nombres réels
      * (<code>{@link SampleDimension#geophysics geophysics}(true)</code>)
      * si l'image est enregistrée dans un format brut ou ASCII.
-     *
-     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public abstract SampleDimension[] getSampleDimensions() throws RemoteException;
+    public abstract SampleDimension[] getSampleDimensions();
 }

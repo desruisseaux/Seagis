@@ -16,8 +16,7 @@
 package fr.ird.database.coverage.sql;
 
 // J2SE dependencies
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
+import java.io.Serializable;
 
 // Geotools dependencies
 import org.geotools.resources.Utilities;
@@ -42,7 +41,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class Entry extends UnicastRemoteObject implements fr.ird.database.Entry {
+class Entry implements fr.ird.database.Entry, Serializable {
     /**
      * Numéro de séries pour compatibilités entre différentes versions.
      */
@@ -77,7 +76,6 @@ class Entry extends UnicastRemoteObject implements fr.ird.database.Entry {
     protected Entry(final String     table,
                     final Comparable identifier,
                     final String     remarks)
-            throws RemoteException
     {
         this.table      = table.trim();
         this.identifier = identifier;

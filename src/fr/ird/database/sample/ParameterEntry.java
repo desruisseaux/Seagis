@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -45,6 +35,21 @@ import fr.ird.database.coverage.SeriesEntry;
  * @see SampleDataBase#getParameters
  */
 public interface ParameterEntry extends Entry {
+    /**
+     * Retourne un numéro unique identifiant ce paramètre.
+     */
+    public abstract int getID();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getName();
+
+    /**
+     * {@inheritDoc}
+     */
+    public abstract String getRemarks();
+
     /**
      * Retourne <code>true</code> si ce paramètre est le <cite>paramètre identité</cite>.
      * Le "paramètre identité" est un paramètre artificiel représentant une image

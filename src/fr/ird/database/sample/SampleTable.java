@@ -12,27 +12,16 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
 // J2SE et JAI
-import java.rmi.RemoteException;
 import java.util.Set;
 import java.util.Date;
 import java.util.Collection;
-//import java.sql.SQLException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
+import java.rmi.RemoteException;
 
 // Geotools
 import org.geotools.cs.CoordinateSystem;
@@ -51,6 +40,11 @@ import fr.ird.animat.Species;
  * @author Martin Desruisseaux
  */
 public interface SampleTable extends Table {
+    /**
+     * {@inheritDoc}
+     */
+    public abstract SampleDataBase getDataBase() throws RemoteException;
+
     /**
      * Retourne l'ensemble des espèces comprises dans la requête de cette table.
      *

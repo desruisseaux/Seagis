@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample;
 
@@ -38,7 +28,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
-import java.sql.SQLException;
 import java.rmi.RemoteException;
 
 // Geotools
@@ -270,12 +259,12 @@ public class SampleTableFiller implements Table {
         final Rectangle2D bounds = coast.getBounds2D();
         final PathIterator  iter = coast.getPathIterator(null, ShapeUtilities.getFlatness(coast));
         double smallestDistance  = Double.POSITIVE_INFINITY;
-        double x0=Double.NaN;
-        double y0=Double.NaN;
-        double x1=Double.NaN;
-        double y1=Double.NaN;
-        double x2=Double.NaN;
-        double y2=Double.NaN;
+        double x0 = Double.NaN;
+        double y0 = Double.NaN;
+        double x1 = Double.NaN;
+        double y1 = Double.NaN;
+        double x2 = Double.NaN;
+        double y2 = Double.NaN;
         for (; !iter.isDone(); iter.next()) {
             switch (iter.currentSegment(coords)) {
                 case PathIterator.SEG_MOVETO: {

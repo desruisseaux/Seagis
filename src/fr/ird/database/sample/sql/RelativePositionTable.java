@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.sample.sql;
 
@@ -33,6 +23,7 @@ import java.rmi.RemoteException;
 
 // Seagis.
 import fr.ird.database.CatalogException;
+
 
 /**
  * Table des positions spatio-temporelles relatives aux positions des données de pêches.
@@ -89,14 +80,10 @@ final class RelativePositionTable
     /**
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected RelativePositionEntry createEntry(final ResultSet results) throws RemoteException {
-        try {
-            return new RelativePositionEntry(results.getInt    (ID),
-                                             results.getString (NAME),
-                                  Math.round(results.getDouble (TIME_LAG)*DAY),
-                                             results.getBoolean(DEFAULT));
-        } catch (SQLException e) {
-            throw new CatalogException(e);
-        }
+    protected RelativePositionEntry createEntry(final ResultSet results) throws SQLException {
+        return new RelativePositionEntry(results.getInt    (ID),
+                                         results.getString (NAME),
+                              Math.round(results.getDouble (TIME_LAG)*DAY),
+                                         results.getBoolean(DEFAULT));
     }
 }

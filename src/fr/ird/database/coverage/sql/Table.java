@@ -140,14 +140,14 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
      * Returns a property value for the specified key. This method work for a null database,
      * which is convenient for testing purpose.
      */
-    protected String getProperty(final ConfigurationKey key) throws RemoteException {
+    protected final String getProperty(final ConfigurationKey key) throws RemoteException {
         return (database!=null) ? database.getProperty(key) : key.defaultValue;
     }
 
     /**
      * {@inheritDoc}
      */
-    public final CoverageDataBase getDataBase() throws RemoteException {
+    public final CoverageDataBase getDataBase() {
         return database;
     }
 }
