@@ -277,6 +277,9 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         return sampleTableType;
     }
 
+    protected java.util.logging.Logger getLogger() {
+    }
+    
     /**
      * {@inheritDoc}
      */

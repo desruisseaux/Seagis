@@ -133,4 +133,11 @@ public class Configuration extends fr.ird.database.Configuration {
     {
         return new Configuration();
     }
+    
+    public String getDescription() {
+    }
+    
+    protected java.util.logging.Logger getLogger() {
+    }
+    
     }

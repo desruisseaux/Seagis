@@ -57,7 +57,7 @@ import org.geotools.cs.GeographicCoordinateSystem;
 import fr.ird.database.CatalogException;
 import fr.ird.animat.Species;
 import fr.ird.database.sample.SampleDataBase;
-import fr.ird.database.ServerException;
+import fr.ird.database.CatalogException;
 import fr.ird.database.sample.SampleEntry;
 import fr.ird.database.sample.CruiseEntry;
 import fr.ird.resources.seagis.Resources;
@@ -218,11 +218,7 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
         final String[] columns = new String[species.size()];
         int index=0;
         for (final Species sp : species) {
-            try {
-                columns[index++] = sp.getName(Species.FAO);
-            } catch (RemoteException exception) {
-                throw new ServerException("L'obtention du code de la FAO a échouée.", exception);
-            }
+            columns[index++] = sp.getName(Species.FAO);
         }
         assert index == columns.length;
         query = completeSelect(query, columns);

@@ -12,21 +12,10 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database;
 
 // Divers
-import java.sql.SQLException;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 
@@ -37,7 +26,7 @@ import fr.ird.resources.seagis.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class NoSuchRecordException extends SQLException {
+public class NoSuchRecordException extends CatalogException {
     /**
      * Nom de la table qui contient l'enregistrement invalide.
      */

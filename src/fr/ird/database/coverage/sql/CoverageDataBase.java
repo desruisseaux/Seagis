@@ -577,4 +577,8 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         }
         console.run();
     }
+    
+    protected java.util.logging.Logger getLogger() {
+    }
+    
 }

@@ -12,22 +12,13 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database;
 
-// J2SE.
+// J2SE dependencies
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
 
 /**
  * Interface de base des entrées dans la base de données.
@@ -38,11 +29,6 @@ import java.rmi.RemoteException;
  * @author Martin Desruisseaux
  */
 public interface Entry extends Remote {
-    /**
-     * Retourne un numéro unique identifiant cette entrée.
-     */
-    public abstract int getID() throws RemoteException;
-
     /**
      * Retourne le nom de cette entrée. Ce nom peut être arbitraire.
      * Dans le cas d'une image (par exemple), il s'agira le plus souvent
