@@ -182,12 +182,22 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         if (lower >= 0) {
             int upper = lower + FROM.length();
             final int length = query.length();
-            boolean skipWS = true;
-            do {
-                while (upper<length && Character.isWhitespace(query.charAt(upper))==skipWS) {
-                    upper++;
+            while (upper<length && Character.isWhitespace(query.charAt(upper))) {
+                upper++;
+            }
+            boolean insideQuotes = false;
+            while (upper < length) {
+                final char c = query.charAt(upper);
+                switch (c) {
+                    case '"': insideQuotes = !insideQuotes; break;
+                    case '[': insideQuotes = true;          break;
+                    case ']': insideQuotes = false;         break;
                 }
-            } while ((skipWS = !skipWS) == false);
+                if (!insideQuotes && Character.isWhitespace(c)) {
+                    break;
+                }
+                upper++;
+            }
             query = query.substring(keepSelect ? 0 : lower, upper);
         }
         return query;
