@@ -702,7 +702,11 @@ final class Interpolator extends GridCoverage
             {
                 return (Interpolation) type;
             }
-            else if (type instanceof String) // Should be CharSequence with JDK 1.4.
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            else if (type instanceof CharSequence)
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            else if (type instanceof String)
+//----- END OF JDK 1.3 FALLBACK -------
             {
                 final String name=type.toString();
                 for (int i=0; i<NAMES.length; i++)
