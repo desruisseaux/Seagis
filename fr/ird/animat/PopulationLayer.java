@@ -36,6 +36,8 @@ import java.awt.BasicStroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
+import java.awt.image.RenderedImage;
+import java.awt.font.GlyphVector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -43,7 +45,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Collection;
 
 // Logging
@@ -51,19 +52,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
-// Composantes cartographiques
-import fr.ird.map.RepaintManager;
+// Geotools dependencies
+import org.geotools.renderer.geom.Arrow2D;
+import org.geotools.ct.TransformException;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.RenderingContext;
 
 // Animats
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
-
-// Geotools dependencies
-import org.geotools.renderer.geom.Arrow2D;
-import org.geotools.ct.TransformException;
-import org.geotools.resources.XAffineTransform;
 
 
 /**
@@ -132,33 +131,13 @@ final class PopulationLayer extends RenderedMarks
     private final Map<Species,Species.Icon> icons = new HashMap<Species,Species.Icon>();
 
     /**
-     * L'objet à utiliser pour synchroniser les retraçaces.
-     */
-    private final RepaintManager manager;
-
-    /**
-     * Dernière position à avoir été retournée.
-     * Ce champ n'existe qu'à des fins d'optimisation.
-     */
-    private transient double[] lastPosition;
-
-    /**
-     * Index de l'animal qui a retourné la dernière observation.
-     * Ce champ n'existe qu'à des fins d'optimisation.
-     */
-    private transient int indexLastPosition;
-
-    /**
      * Construit une couche pour la population spécifiée.
      *
      * @param  population Population à afficher.
      *         Elle peut provenir d'une machine distante.
      * @param  manager Objet à utiliser pour redessiner les cartes.
      */
-    public PopulationLayer(final Population population,
-                           final RepaintManager manager)
-    {
-        this.manager = manager;
+    public PopulationLayer(final Population population) {
         refresh(population);
         population.addPopulationChangeListener(this);
     }
@@ -182,89 +161,16 @@ final class PopulationLayer extends RenderedMarks
     }
 
     /**
-     * Retourne le nombre d'animaux mémorisées dans cette couche.
-     *
-     * @see #getPosition
-     * @see #getAmplitude
-     * @see #getDirection
+     * Retourne un itérateur balayant les positions des animaux.
      */
-    public int getCount() {
-        return animals.length;
-    }
-
-    /**
-     * Retourne l'observation qui correspond à la position à l'index spécifié.
-     */
-    private double[] getPositionObs(final int index) {
-        if (index!=indexLastPosition || lastPosition==null) {
-            final Map<Parameter,double[]> observations;
-            observations = animals[index].getObservations(date);
-            if (observations == null) {
-                return null;
-            }
-            lastPosition = observations.get(Parameter.HEADING);
-            indexLastPosition = index;
-        }
-        return lastPosition;
-    }
-
-    /**
-     * Retourne les coordonnées (<var>x</var>,<var>y</var>) de l'animal
-     * désignée par l'index spécifié. Cette méthode est autorisée à retourner
-     * <code>null</code> si la position d'une marque n'est pas connue.
-     *
-     * @see #getGeographicShape
-     *
-     * @throws IndexOutOfBoundsException Si l'index spécifié n'est pas
-     *        dans la plage <code>[0..{@link #getCount}-1]</code>.
-     */
-    public Point2D getPosition(final int index) throws IndexOutOfBoundsException {
-        return Parameter.HEADING.getLocation(getPositionObs(index));
-    }
-
-    /**
-     * Retourne la direction à la position d'un animal, en radians arithmétiques.
-     */
-    public double getDirection(final int index) {
-        double theta = Parameter.HEADING.getValue(getPositionObs(index));
-        theta = Math.toRadians(90-theta);
-        return Double.isNaN(theta) ? 0 : theta;
-    }
-
-    /**
-     * Retourne la forme géométrique servant de modèle au traçage d'un animal.
-     * Cette forme peut varier d'un animal à l'autre. Cette méthode retourne
-     * une flèche dont la queue se trouve à l'origine (0,0).
-     */
-    public Shape getMarkShape(final int index) {
-        return DEFAULT_SHAPE;
-    }
-
-    /**
-     * Dessine la forme géométrique spécifiée. Cette méthode dessine l'animal
-     * en choisissant une couleur en fonction de son espèce.
-     *
-     * @param graphics Graphique à utiliser pour tracer l'animal.
-     * @param shape    Forme géométrique représentant l'animal à tracer.
-     * @param index    Index de l'animal à tracer.
-     */
-    protected void paint(final Graphics2D graphics, final Shape shape, final int index) {
-        Species species;
-        species = animals[index].getSpecies();
-        Species.Icon icon = icons.get(species);
-        if (icon == null) {
-            icon = species.getIcon();
-            icon.setColor(Color.red);
-            icons.put(species, icon);
-        }
-        graphics.setColor(icon.getColor());
-        graphics.fill(shape);
+    public MarkIterator getMarkIterator() {
+        return new Iterator();
     }
 
     /**
      * Dessine les trajectoires des animaux, puis les animaux eux-mêmes.
      */
-    protected Shape paint(final RenderingContext context) throws TransformException {
+    protected void paint(final RenderingContext context) throws TransformException {
         final Graphics2D graphics = context.getGraphics();
         final Paint      oldPaint = graphics.getPaint();
         final Stroke    oldStroke = graphics.getStroke();
@@ -316,7 +222,7 @@ final class PopulationLayer extends RenderedMarks
             for (int i=0; i<animals.length; i++) {
                 final Map<Parameter,double[]> observations = animals[i].getObservations(date);
                 if (observations != null) {
-                    for (final Iterator<Map.Entry<Parameter,double[]>> it=observations.entrySet().iterator(); it.hasNext();) {
+                    for (final java.util.Iterator<Map.Entry<Parameter,double[]>> it=observations.entrySet().iterator(); it.hasNext();) {
                         final Map.Entry<Parameter,double[]> obs = it.next();
                         final Parameter param = obs.getKey();
                         final double[] values = obs.getValue();
@@ -338,15 +244,14 @@ final class PopulationLayer extends RenderedMarks
         ///////////////////////////////////
         ////    Dessine les animaux    ////
         ///////////////////////////////////
-        final Shape        shape = super.paint(graphics, context);
+        super.paint(context);
         final AffineTransform at = context.getAffineTransform(context.mapCS, context.textCS);
         final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
-        pxBounds.add(shape.getBounds());
         pxBounds.x      -= ARROW_LENGTH;
         pxBounds.y      -= ARROW_LENGTH;
         pxBounds.width  += ARROW_LENGTH*2;
         pxBounds.height += ARROW_LENGTH*2;
-        return pxBounds;
+        context.addPaintedArea(pxBounds, context.textCS);
     }
 
     /**
@@ -357,17 +262,134 @@ final class PopulationLayer extends RenderedMarks
      */
     public void populationChanged(final PopulationChangeEvent event) {
         refresh(event.getSource());
-        manager.repaint(this);
+        repaint();
     }
 
     /**
-     * Appelée quand une propriété de {@link EnvironmentLayer}
-     * a changée.
+     * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
      */
     public void propertyChange(final PropertyChangeEvent event) {
         if (event.getPropertyName().equalsIgnoreCase("date")) {
             date = (Date) event.getNewValue();
-            manager.repaint(this);
+            repaint();
+        }
+    }
+
+    /**
+     * Iterateur balayant les positions des animaux.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
+     */
+    private final class Iterator extends MarkIterator {
+        /**
+         * Index de l'animal qui a retourné la dernière observation.
+         */
+        private int index = -1;
+
+        /**
+         * Observations de l'animal courant.
+         */
+        private Map<Parameter,double[]> observations;
+
+        /**
+         * Position de l'animal courant, ou <code>null</code> si aucune.
+         */
+        private double[] position;
+
+        /**
+         * Construit un itérateur par défaut.
+         */
+        public Iterator() {
+        }
+
+        /**
+         * Retourne la position courange de l'itérateur.
+         */
+        public int getIteratorPosition() {
+            return index;
+        }
+
+        /**
+         * Positionne l'itérateur sur l'animal spécifié.
+         */
+        public void setIteratorPosition(final int index) {
+            this.index = index;
+            update();
+        }
+
+        /**
+         * Avance l'itérateur à l'animal suivant.
+         */
+        public boolean next() {
+            if (++index >= animals.length) {
+                observations = null;
+                position = null;
+                return false;
+            }
+            update();
+            return true;
+        }
+
+        /**
+         * Obtient des observations qui correspondent à l'animal courant.
+         */
+        private void update() {
+            observations = animals[index].getObservations(date);
+            position = (observations!=null) ? observations.get(Parameter.HEADING) : null;
+        }
+
+        /**
+         * Retourne les coordonnées (<var>x</var>,<var>y</var>) de l'animal
+         * désignée par l'index spécifié. Cette méthode est autorisée à retourner
+         * <code>null</code> si la position d'une marque n'est pas connue.
+         *
+         * @see #geographicArea
+         */
+        public Point2D position() {
+            return Parameter.HEADING.getLocation(position);
+        }
+
+        /**
+         * Retourne la direction à la position d'un animal, en radians arithmétiques.
+         */
+        public double direction() {
+            double theta = Parameter.HEADING.getValue(position);
+            theta = Math.toRadians(90-theta);
+            return Double.isNaN(theta) ? 0 : theta;
+        }
+
+        /**
+         * Retourne la forme géométrique servant de modèle au traçage d'un animal.
+         * Cette forme peut varier d'un animal à l'autre. Cette méthode retourne
+         * une flèche dont la queue se trouve à l'origine (0,0).
+         */
+        public Shape markShape() {
+            return DEFAULT_SHAPE;
+        }
+
+        /**
+         * Dessine la forme géométrique spécifiée. Cette méthode dessine l'animal
+         * en choisissant une couleur en fonction de son espèce.
+         */
+        protected void paint(final Graphics2D      graphics,
+                             final Shape           geographicArea,
+                             final Shape           markShape,
+                             final RenderedImage   markIcon,
+                             final AffineTransform iconXY,
+                             final GlyphVector     label,
+                             final Point2D.Float   labelXY)
+        {
+            Species species;
+            species = animals[index].getSpecies();
+            Species.Icon icon = icons.get(species);
+            if (icon == null) {
+                icon = species.getIcon();
+                icon.setColor(Color.red);
+                icons.put(species, icon);
+            }
+            graphics.setColor(icon.getColor());
+            graphics.fill(markShape);
         }
     }
 }

@@ -36,7 +36,6 @@ import fr.ird.sql.image.ImageEntry;
 // Map components
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
-import fr.ird.operator.coverage.Operation;
 
 // Graphical user interface
 import java.awt.Color;

@@ -45,7 +45,7 @@ import fr.ird.resources.ResourceKeys;
 
 /**
  * Représentation de l'environnement dans lequel évolueront les animaux. Cet environnement peut
- * contenir un nombre arbitraire de {@linkplain Population population}, mais ne contient aucun
+ * contenir un nombre arbitraire de {@linkplain Population populations}, mais ne contient aucun
  * paramètre. Pour ajouter des paramètre à cet environnement, il est nécessaire de redéfinir les
  * méthodes suivantes:
  * <ul>
@@ -79,6 +79,28 @@ public class Environment {
     private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
 
     /**
+     * Classe à exécuter lorsque l'environnement a changé.
+     *
+     * @see #fireEnvironmentChanged()
+     */
+    private final Runnable fireEnvironmentChanged = new Runnable() {
+        public void run() {
+            assert Thread.holdsLock(getTreeLock());
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length; (i-=2)>=0;) {
+                if (listeners[i] == EnvironmentChangeListener.class) {
+                    ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
+                }
+            }
+        }
+    };
+
+    /**
+     * The event queue.
+     */
+    final EventQueue queue;
+
+    /**
      * Pas de temps courant des données.
      */
     private TimeStep time;
@@ -94,10 +116,11 @@ public class Environment {
                                            "startTime", startTime));
         }
         time = startTime;
+        queue = new EventQueue(this);
     }
 
     /**
-     * Ajoute une population à cet environment. Si la population appartient déjà à cet
+     * Ajoute une population à cet environnement. Si la population appartient déjà à cet
      * environnement, rien ne sera fait. Sinon, si la population appartenait à un autre
      * environnement, alors elle sera retirée de son ancien environnement avant d'être
      * ajouté à celui-ci.
@@ -108,16 +131,18 @@ public class Environment {
      * @see Population#kill
      */
     public void addPopulation(final Population population) {
-        final Environment oldEnvironment = population.environment;
-        if (oldEnvironment != this) {
-            if (oldEnvironment != null) {
-                oldEnvironment.populations.remove(this);
-                population.environment = null;
-                oldEnvironment.fireEnvironmentChanged();
+        synchronized (getTreeLock()) {
+            final Environment oldEnvironment = population.environment;
+            if (oldEnvironment != this) {
+                if (oldEnvironment != null) {
+                    oldEnvironment.populations.remove(this);
+                    population.environment = null;
+                    oldEnvironment.fireEnvironmentChanged();
+                }
+                populations.add(population);
+                population.environment = this;
+                fireEnvironmentChanged();
             }
-            populations.add(population);
-            population.environment = this;
-            fireEnvironmentChanged();
         }
     }
 
@@ -126,6 +151,7 @@ public class Environment {
      * uniquement parce que l'ensemble {@link #populations} est privé.
      */
     final void kill(final Population population) {
+        assert Thread.holdsLock(getTreeLock());
         populations.remove(population);
     }
 
@@ -177,8 +203,10 @@ public class Environment {
      * de nouvelles données et lancer un événement {@link EnvironmentChangeEvent}.
      */
     public void nextTimeStep() {
-        time = time.next();
-        fireEnvironmentChanged();
+        synchronized (getTreeLock()) {
+            time = time.next();
+            fireEnvironmentChanged();
+        }
     }
 
     /**
@@ -187,28 +215,38 @@ public class Environment {
      * appel de {@link #nextTimeStep}.
      */
     public void addEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        listenerList.add(EnvironmentChangeListener.class, listener);
+        synchronized (getTreeLock()) {
+            listenerList.add(EnvironmentChangeListener.class, listener);
+        }
     }
 
     /**
      * Retire un objet à informer des changements survenant dans cet environnement.
      */
     public void removeEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        listenerList.remove(EnvironmentChangeListener.class, listener);
+        synchronized (getTreeLock()) {
+            listenerList.remove(EnvironmentChangeListener.class, listener);
+        }
     }
 
     /**
      * Préviens tous les objets intéressés que des données ont changés.
      * Cette méthode peut être appelée par les classes dérivées suite à
      * un chargement de nouvelles données.
+     *
+     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
+     * {@link #getTreeLock()}. L'appel de {@link EnvironmentChangeListener#environmentChanged}
+     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
      */
     protected void fireEnvironmentChanged() {
-        final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;) {
-            if (listeners[i] == EnvironmentChangeListener.class) {
-                ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
-            }
-        }
+        queue.invokeLater(fireEnvironmentChanged);
+    }
+
+    /**
+     * Retourne l'objet sur lequel se synchroniser lors des accès à l'environnement.
+     */
+    protected final Object getTreeLock() {
+        return queue.lock;
     }
 
     /**
@@ -218,24 +256,26 @@ public class Environment {
      * fermées.
      */
     public void dispose() {
-        /*
-         * On ne peut pas utiliser Iterator, parce que les appels
-         * de Population.kill() vont modifier l'ensemble.
-         */
-        final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
-        for (int i=0; i<pop.length; i++) {
-            pop[i].kill();
+        synchronized (getTreeLock()) {
+            /*
+             * On ne peut pas utiliser Iterator, parce que les appels
+             * de Population.kill() vont modifier l'ensemble.
+             */
+            final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
+            for (int i=0; i<pop.length; i++) {
+                pop[i].kill();
+            }
+            assert populations.isEmpty() : populations.size();
+            populations.clear(); // Par précaution.
+            /*
+             * Retire tous les 'listeners'.
+             */
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length; (i-=2)>=0;) {
+                listenerList.remove((Class)         listeners[i  ],
+                                    (EventListener) listeners[i+1]);
+            }
+            assert listenerList.getListenerCount() == 0;
         }
-        assert populations.isEmpty() : populations.size();
-        populations.clear(); // Par précaution.
-        /*
-         * Retire tous les 'listeners'.
-         */
-        final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;) {
-            listenerList.remove((Class)         listeners[i  ],
-                                (EventListener) listeners[i+1]);
-        }
-        assert listenerList.getListenerCount() == 0;
     }
 }

@@ -65,8 +65,10 @@ public final class DataBase {
      * <code>true</code> pour compiler la version "Méditerranée" de l'application, or
      * <code>false</code> pour compiler la version "Océan Indien". Ce drapeau n'est
      * qu'un bricolage temporaire en attendant de trouver une solution plus générale.
+     *
+     * Ce drapeau est initialisé au moment du démarrage de l'application par {@link Main}.
      */
-    public static final boolean MEDITERRANEAN_VERSION = false;
+    public static boolean MEDITERRANEAN_VERSION = false;
 
     /**
      * Flot de sortie standard.

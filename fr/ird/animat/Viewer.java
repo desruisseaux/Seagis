@@ -28,10 +28,8 @@ package fr.ird.animat;
 // J2SE dependencies
 import java.awt.Graphics2D;
 import javax.swing.JComponent;
-import java.rmi.RemoteException;
 
-// Other dependencies
-import fr.ird.map.RepaintManager;
+// Geotools dependencies
 import org.geotools.gui.swing.MapPane;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
@@ -65,24 +63,12 @@ public final class Viewer {
     /**
      * Construit un afficheur.
      *
-     * @param environment L'environemment à afficher.
      * @param population  La population à afficher.
-     * @param lock Objet sur lequel synchronizer les traçages. La méthode
-     *        {@link MapPane#paintComponent(Graphics2D)} sera appelée
-     *        à l'intérieur d'un block <code>synchronized(lock)</code>.
-     *
-     * @throws RemoteException si au moins une partie de l'exécution
-     *         devait se faire sur un serveur et que cette exécution
-     *         a échoué.
      */
-    public Viewer(final Environment environment,
-                  final Population  population,
-                  final Object      lock)
-        throws RemoteException
+    public Viewer(final Population population)
     {
-        final RepaintManager manager = new RepaintManager(lock);
-        this.environment = new EnvironmentLayer(environment, manager);
-        this.population  = new  PopulationLayer(population,  manager);
+        this.environment = new EnvironmentLayer(population.getEnvironment());
+        this.population  = new  PopulationLayer(population);
         this.environment.addPropertyChangeListener(this.population);
         map.setPaintingWhileAdjusting(true);
         map.getRenderer().addLayer(this.environment);

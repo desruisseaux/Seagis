@@ -46,6 +46,7 @@ import org.geotools.resources.XArray;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.gui.swing.CoordinateChooser;
+import org.geotools.gui.swing.GradientKernelEditor;
 import org.geotools.gui.swing.LoggingPanel;
 
 // Base de données SEAS
@@ -53,7 +54,6 @@ import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
 
 // Divers
-import fr.ird.awt.KernelEditor;
 import fr.ird.awt.DisjointLists;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
@@ -95,7 +95,7 @@ public class EnvironmentControlPanel extends JPanel {
      * Matrices à appliquer sur les données pour calculer les
      * magnitudes des grandients.
      */
-    private final KernelEditor kernelH, kernelV;
+    private final GradientKernelEditor kernels;
 
     /**
      * L'objet à utiliser pour remplir la base de données des captures.
@@ -135,10 +135,9 @@ public class EnvironmentControlPanel extends JPanel {
         column      = new JTextField();
         coordinates = new CoordinateChooser();
         timeLags    = new JList();
-        kernelV     = new KernelEditor();
-        kernelH     = new KernelEditor();
+        kernels     = new GradientKernelEditor();
 
-        final Resources resources = Resources.getResources(null);
+        final Resources resources = Resources.getResources(getDefaultLocale());
         series     .setToolTipText("Paramètres environnementaux à utiliser");
         operation  .setToolTipText("Opération à appliquer sur les images");
         column     .setToolTipText("Colonne de destination dans la base de données");
@@ -201,31 +200,8 @@ public class EnvironmentControlPanel extends JPanel {
         ////////    Onglet Operateurs de Sobel    ////////
         //////////////////////////////////////////////////
         if (true) {
-            final String GRADIENT_MASKS = resources.getString(ResourceKeys.GRADIENT_MASKS);
-            final float cos45 = (float)Math.cos(Math.toRadians(45));
-            kernelH.removeKernel(KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL);
-            kernelV.removeKernel(KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL);
-            kernelH.addKernel(GRADIENT_MASKS, "Sobel 7\u00D77", getSobel(7, true ));
-            kernelV.addKernel(GRADIENT_MASKS, "Sobel 7\u00D77", getSobel(7, false));
-            kernelH.addKernel(GRADIENT_MASKS, "Sobel 5\u00D75", getSobel(5, true ));
-            kernelV.addKernel(GRADIENT_MASKS, "Sobel 5\u00D75", getSobel(5, false));
-            kernelH.addKernel(GRADIENT_MASKS, "Sobel 3\u00D73", KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL);
-            kernelV.addKernel(GRADIENT_MASKS, "Sobel 3\u00D73", KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL);
-
-            kernelH.removeKernel(KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL);
-            kernelV.removeKernel(KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL);
-            kernelH.setKernel   (KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL);
-            kernelV.setKernel   (KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL);
-            final JPanel panel = new JPanel(new GridBagLayout());
-            final GridBagConstraints c = new GridBagConstraints();
-            c.insets.top = c.insets.bottom = c.insets.left = c.insets.right = 6;
-            c.gridy=0; c.weightx=1; c.gridwidth=1; c.gridheight=1; c.fill=c.BOTH;
-            c.gridx=0; panel.add(new JLabel("Composante verticale",   JLabel.CENTER), c);
-            c.gridx=1; panel.add(new JLabel("Composante horizontale", JLabel.CENTER), c);
-            c.gridy=1; c.weighty=1;
-            c.gridx=0; panel.add(kernelH, c); // Note: les étiquettes sont inversées: 
-            c.gridx=1; panel.add(kernelV, c); // SOBEL_HORIZONTAL semble calculer la
-            tabs.addTab("Gradient", panel);  // composante verticale du gradient, et vis-versa.
+            kernels.addDefaultKernels();
+            tabs.addTab("Gradient", kernels);
             final int tabIndex = tabs.getTabCount()-1;
             operation.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent event) {
@@ -234,50 +210,6 @@ public class EnvironmentControlPanel extends JPanel {
             });
             operationSelected(tabs, tabIndex);
         }
-    }
-
-    /**
-     * Retourne une extension de l'opérateur de Sobel. Pour chaque élément dont la position
-     * par rapport à l'élément central est (x,y),  on calcul la composante horizontale avec
-     * le cosinus de l'angle divisé par la distance. On peut l'écrire comme suit:
-     *
-     * <blockquote><pre>
-     *     cos(atan(y/x)) / sqrt(x²+y²)
-     * </pre></blockquote>
-     *
-     * En utilisant l'identité 1/cos² = (1+tan²), on peut réécrire l'équation comme suit:
-     *
-     * <blockquote><pre>
-     *     1 / sqrt( (x²+y²) * (1 + y²/x²) )
-     * </pre></blockquote>
-     *
-     * @param size Taille de la matrice. Doit être un nombre positif et impair.
-     * @param horizontal <code>true</code> pour l'opérateur horizontal,
-     *        or <code>false</code> pour l'opérateur vertical.
-     */
-    private static KernelJAI getSobel(final int size, final boolean horizontal) {
-        final int key = size/2;
-        final float[] data = new float[size*size];
-        for (int y=key; y>=0; y--) {
-            int row1 = (key-y)*size + key;
-            int row2 = (key+y)*size + key;
-            final int y2 = y*y;
-            for (int x=key; x!=0; x--) {
-                final int x2 = x*x;
-                final float v = (float) (2/Math.sqrt((x2+y2)*(1+y2/(double)x2)));
-                if (!horizontal) {
-                    data[row1-x] = data[row2-x] = -v;
-                    data[row1+x] = data[row2+x] = +v;
-                } else {
-                    // Swap x and y.
-                    row1 = (key-x)*size + key;
-                    row2 = (key+x)*size + key;
-                    data[row1-y] = data[row1+y] = -v;
-                    data[row2-y] = data[row2+y] = +v;
-                }
-            }
-        }
-        return new KernelJAI(size, size, key, key, data);
     }
 
     /**
@@ -317,8 +249,8 @@ public class EnvironmentControlPanel extends JPanel {
             logging.show(owner);
 
             final Map<String,Object> arguments = new HashMap<String,Object>();
-            arguments.put("mask1", kernelH.getKernel());
-            arguments.put("mask2", kernelV.getKernel());
+            arguments.put("mask1", kernels.getHorizontalEditor().getKernel());
+            arguments.put("mask2", kernels.getVerticalEditor().getKernel());
 
             filler.getSeries().retainAll(series.getSelectedElements());
             filler.setTimeRange(coordinates.getStartTime(), coordinates.getEndTime());

@@ -77,6 +77,23 @@ public abstract class Population {
     private final PopulationChangeEvent event = new PopulationChangeEvent(this);
 
     /**
+     * Classe à exécuter lorsque l'environnement a changé.
+     *
+     * @see #fireEnvironmentChanged()
+     */
+    private final Runnable firePopulationChanged = new Runnable() {
+        public void run() {
+            assert Thread.holdsLock(getTreeLock());
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length; (i-=2)>=0;) {
+                if (listeners[i] == PopulationChangeListener.class) {
+                    ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
+                }
+            }
+        }
+    };
+
+    /**
      * Construit une population initialement vide.
      *
      * @param  environment L'environnement dans lequel évoluera cette population.
@@ -110,16 +127,18 @@ public abstract class Population {
      * @see Animal#kill
      */
     public void addAnimal(final Animal animal) {
-        final Population oldPopulation = animal.population;
-        if (oldPopulation != this) {
-            if (oldPopulation != null) {
-                oldPopulation.animals.remove(this);
-                animal.population = null;
-                oldPopulation.firePopulationChanged();
+        synchronized (getTreeLock()) {
+            final Population oldPopulation = animal.population;
+            if (oldPopulation != this) {
+                if (oldPopulation != null) {
+                    oldPopulation.animals.remove(this);
+                    animal.population = null;
+                    oldPopulation.firePopulationChanged();
+                }
+                animals.add(animal);
+                animal.population = this;
+                firePopulationChanged();
             }
-            animals.add(animal);
-            animal.population = this;
-            firePopulationChanged();
         }
     }
 
@@ -128,6 +147,7 @@ public abstract class Population {
      * uniquement parce que l'ensemble {@link #animals} est privé.
      */
     final void kill(final Animal animal) {
+        assert Thread.holdsLock(getTreeLock());
         animals.remove(animal);
     }
 
@@ -143,29 +163,31 @@ public abstract class Population {
      * la population de l'{@link Environment environnement}.
      */
     public void kill() {
-        /*
-         * On ne peut pas utiliser Iterator, parce que les appels
-         * de Animals.kill() vont modifier l'ensemble.
-         */
-        final Animal[] pop = (Animal[]) animals.toArray(new Animal[animals.size()]);
-        for (int i=0; i<pop.length; i++) {
-            pop[i].kill();
+        synchronized (getTreeLock()) {
+            /*
+             * On ne peut pas utiliser Iterator, parce que les appels
+             * de Animals.kill() vont modifier l'ensemble.
+             */
+            final Animal[] pop = (Animal[]) animals.toArray(new Animal[animals.size()]);
+            for (int i=0; i<pop.length; i++) {
+                pop[i].kill();
+            }
+            assert animals.isEmpty() : animals.size();
+            animals.clear(); // Par précaution.
+            if (environment != null) {
+                environment.kill(this);
+                environment = null;
+            }
+            /*
+             * Retire tous les 'listeners'.
+             */
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length; (i-=2)>=0;) {
+                listenerList.remove((Class)         listeners[i  ],
+                                    (EventListener) listeners[i+1]);
+            }
+            assert listenerList.getListenerCount() == 0;
         }
-        assert animals.isEmpty() : animals.size();
-        animals.clear(); // Par précaution.
-        if (environment != null) {
-            environment.kill(this);
-            environment = null;
-        }
-        /*
-         * Retire tous les 'listeners'.
-         */
-        final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;) {
-            listenerList.remove((Class)         listeners[i  ],
-                                (EventListener) listeners[i+1]);
-        }
-        assert listenerList.getListenerCount() == 0;
     }
 
     /**
@@ -188,7 +210,9 @@ public abstract class Population {
      * animaux.
      */
     public void addPopulationChangeListener(PopulationChangeListener listener) {
-        listenerList.add(PopulationChangeListener.class, listener);
+        synchronized (getTreeLock()) {
+            listenerList.add(PopulationChangeListener.class, listener);
+        }
     }
 
     /**
@@ -196,18 +220,31 @@ public abstract class Population {
      * population.
      */
     public void removePopulationChangeListener(final PopulationChangeListener listener) {
-        listenerList.remove(PopulationChangeListener.class, listener);
+        synchronized (getTreeLock()) {
+            listenerList.remove(PopulationChangeListener.class, listener);
+        }
     }
 
     /**
      * A appeler à chaque fois que la population change.
+     *
+     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
+     * {@link #getTreeLock()}. L'appel de {@link PopulationChangeListener#populationChanged}
+     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
      */
     protected void firePopulationChanged() {
-        final Object[] listeners = listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;) {
-            if (listeners[i] == PopulationChangeListener.class) {
-                ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
-            }
+        if (environment != null) {
+            environment.queue.invokeLater(firePopulationChanged);
+        } else {
+            firePopulationChanged.run();
         }
+    }
+
+    /**
+     * Retourne l'objet sur lequel se synchroniser lors des accès à la population.
+     */
+    protected final Object getTreeLock() {
+        final Environment environment = this.environment;
+        return (environment!=null) ? environment.getTreeLock() : this;
     }
 }

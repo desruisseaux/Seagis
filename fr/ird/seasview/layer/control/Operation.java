@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.operator.coverage;
+package fr.ird.seasview.layer.control;
 
 // Collections
 import java.util.Map;
@@ -49,7 +49,7 @@ import org.geotools.util.WeakValueHashMap;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Operation {
+abstract class Operation {
     /**
      * The operation name.
      */
@@ -122,6 +122,15 @@ public abstract class Operation {
      */
     public String toString() {
         return name;
+    }
+
+    /**
+     * Supprime les images qui avaient été conservées dans la cache.
+     */
+    protected final void clearCache() {
+        if (filtered != null) {
+            filtered.clear();
+        }
     }
 
     /**

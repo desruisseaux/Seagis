@@ -31,21 +31,25 @@ import java.awt.Insets;
 import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 // User interface (Swing)
+import javax.swing.Icon;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
 import javax.swing.DefaultListModel;
 import javax.swing.ListSelectionModel;
-import fr.ird.awt.KernelEditor;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 // Miscellaneous
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import fr.ird.operator.coverage.Operation;
-import fr.ird.operator.coverage.ProcessorOperation;
 
 // Geotools dependencies
 import org.geotools.gp.GridCoverageProcessor;
@@ -53,14 +57,13 @@ import org.geotools.resources.SwingUtilities;
 
 
 /**
- * A control panel for configuring an image. This control panel
- * allows to select an operation, a convolution kernel, etc.
+ * Paneau de configuration des images. Ce paneau fournit des options permettant de
+ * sélectionner une opération, une convolution, etc.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageControlPanel extends JPanel
-{
+final class ImageControlPanel extends JPanel implements ListSelectionListener, ActionListener {
     /**
      * Chaîne de caractères indiquant qu'aucune opération ne sera
      * appliquée sur les images. Cette chaîne de caractères sera
@@ -69,15 +72,24 @@ final class ImageControlPanel extends JPanel
     private final String NO_OPERATION;
 
     /**
+     * L'icône pour le bouton "Configurer".
+     */
+    private static Icon configIcon;
+
+    /**
      * Liste des opérations pouvant être appliqués sur les images.
      */
     private final JList operations;
 
     /**
+     * Le bouton permettant de configurer une opération.
+     */
+    private final JButton config;
+
+    /**
      * Construit un controleur.
      */
-    public ImageControlPanel()
-    {
+    public ImageControlPanel() {
         super(new GridBagLayout());
         final Resources resources = Resources.getResources(null);
         NO_OPERATION = resources.getString(ResourceKeys.NO_OPERATION);
@@ -85,12 +97,21 @@ final class ImageControlPanel extends JPanel
         model.addElement(NO_OPERATION);
         operations = new JList(model);
         operations.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        operations.addListSelectionListener(this);
+        if (configIcon == null) {
+            configIcon = new ImageIcon(getClass().getClassLoader()
+                                .getResource("toolbarButtonGraphics/general/Properties16.gif"));
+        }
+        config = new JButton("Configurer...", configIcon);
+        config.addActionListener(this);
         /*
          * Construit l'interface utilisateur.
          */
         final GridBagConstraints c = new GridBagConstraints();
         c.fill=c.BOTH; c.weightx=1; c.weighty=1;
         c.gridx=0; c.gridy=0; add(new JScrollPane(operations), c);
+        c.gridy=1; c.fill=c.HORIZONTAL; c.weighty=0;
+        add(config, c);
         setSelectedOperation(null);
     }
 
@@ -99,12 +120,11 @@ final class ImageControlPanel extends JPanel
      *
      * @param processor Processeur à utiliser pour ajouter des opérations.
      */
-    protected void addDefaultOperations()
-    {
+    protected void addDefaultOperations() {
         final Resources             resources = Resources.getResources(null);
         final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
-        if (true) addOperation(new ProcessorOperation(processor, "Recolor",           resources.getString(ResourceKeys.GRAY_SCALE    )));
-        if (true) addOperation(new ProcessorOperation(processor, "GradientMagnitude", resources.getString(ResourceKeys.GRADIENT_SOBEL)));
+        if (true) addOperation(new ProcessorOperation        (processor, "Recolor",           resources.getString(ResourceKeys.GRAY_SCALE    )));
+        if (true) addOperation(new GradientMagnitudeOperation(processor, "GradientMagnitude", resources.getString(ResourceKeys.GRADIENT_SOBEL)));
 //      if (true ) for (int i=0; i<=10; i++) addImageOperation(new Convolution(i)); // TODO (JUST A TRY)
 //      if (false) addImageOperation(new ColorSmoother(ColorSmoother.KEEP_UPPER_COLOR));
 //      if (false) addImageOperation(new ThemeEraser("Quadrillage", 1));
@@ -115,27 +135,28 @@ final class ImageControlPanel extends JPanel
      * L'utilisateur peut choisir l'opération de son choix dans la
      * boîte "combo box".
      */
-    public void addOperation(final Operation operation)
-    {((DefaultListModel) operations.getModel()).addElement(operation);}
+    public void addOperation(final Operation operation) {
+        ((DefaultListModel) operations.getModel()).addElement(operation);
+    }
 
     /**
      * Retire une opération qui pouvait être appliquée sur les images.
      */
-    public void removeOperation(final Operation operation)
-    {((DefaultListModel) operations.getModel()).removeElement(operation);}
+    public void removeOperation(final Operation operation) {
+        ((DefaultListModel) operations.getModel()).removeElement(operation);
+    }
 
     /**
      * Retourne la liste des opérations qui ont été spécifiées.
      */
-    public Operation[] getOperations()
-    {
+    public Operation[] getOperations() {
         final DefaultListModel list = (DefaultListModel) operations.getModel();
         final Operation[] ops=new Operation[list.getSize()];
-        int c=0; for (int i=0; i<ops.length; i++)
-        {
+        int c=0; for (int i=0; i<ops.length; i++) {
             final Object op=list.getElementAt(i);
-            if (op instanceof Operation)
+            if (op instanceof Operation) {
                 ops[c++] = (Operation) op;
+            }
         }
         return XArray.resize(ops, c);
     }
@@ -144,8 +165,7 @@ final class ImageControlPanel extends JPanel
      * Retourne l'opération présentement sélectionnée,
      * ou <code>null</code> s'il n'y en a pas.
      */
-    public Operation getSelectedOperation()
-    {
+    public Operation getSelectedOperation() {
         final Object op = operations.getSelectedValue();
         return (op instanceof Operation) ? (Operation) op : null;
     }
@@ -156,21 +176,38 @@ final class ImageControlPanel extends JPanel
      * <code>null</code> signifie qu'aucune opération ne doit être appliquée
      * sur les images.
      */
-    public void setSelectedOperation(final Operation operation)
-    {operations.setSelectedValue(operation!=null ? (Object)operation : (Object)NO_OPERATION, true);}
+    public void setSelectedOperation(final Operation operation) {
+        operations.setSelectedValue(operation!=null ? (Object)operation : (Object)NO_OPERATION, true);
+        config.setEnabled(operation instanceof Configurable);
+    }
 
     /**
      * Fait apparaître le controleur. Si l'utilisateur a cliqué
      * sur "Ok", alors cette méthode retourne <code>true</code>.
      */
-    public boolean showDialog(final Component owner)
-    {
+    public boolean showDialog(final Component owner) {
         final Operation operation = getSelectedOperation();
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.IMAGES)))
-        {
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.IMAGES))) {
             return true;
         }
         setSelectedOperation(operation);
         return false;
+    }
+    
+    /**
+     * Appelée automatiquement lorsque l'utilisateur a choisi une nouvelle opération.
+     */
+    public void valueChanged(ListSelectionEvent e) {
+        config.setEnabled(getSelectedOperation() instanceof Configurable);
+    }
+    
+    /**
+     * Appelée lorsque l'utilisateur a appuyé sur le bouton "Configurer".
+     */
+    public void actionPerformed(ActionEvent e) {
+        final Operation operation = getSelectedOperation();
+        if (operation instanceof Configurable) {
+            ((Configurable) operation).showControler(this);
+        }
     }
 }

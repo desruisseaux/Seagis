@@ -39,9 +39,16 @@ import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 import javax.swing.event.EventListenerList;
 
+// Formattage
+import java.util.Date;
+import java.util.Locale;
+
 // Entrés/sorties
 import java.io.File;
+import java.io.Writer;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.BufferedWriter;
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.imageio.IIOImage;
@@ -60,13 +67,16 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 // Geotools dependencies
+import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.io.coverage.PropertyParser;
 import org.geotools.util.ProgressListener;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
@@ -284,8 +294,8 @@ public final class ExportChooser extends JPanel {
         /**
          * Extension des fichiers d'images. Cette extension remplacera l'extension des
          * fichiers d'images sources. La chaîne de caractères <code>extension</code>
-         * ne doit commencer par un point. Ce champ peut être <code>null</code> s'il
-         * n'y a pas d'extension connue pour le type de fichier à écrire.
+         * ne doit pas commencer par un point. Ce champ peut être <code>null</code>
+         * s'il n'y a pas d'extension connue pour le type de fichier à écrire.
          */
         private final String extension;
 
@@ -301,6 +311,12 @@ public final class ExportChooser extends JPanel {
          * chacun des noms de fichier de destination des images.
          */
         private final StringBuffer buffer = new StringBuffer();
+
+        /**
+         * Objet {@link PropertyParser} à utiliser pour écrire les propriétés d'un
+         * {@link GridCoverage}.
+         */
+        private transient PropertyParser propertyParser;
 
         /**
          * Construit un objet qui procèdera aux écritures des images en arrière plan.
@@ -324,6 +340,14 @@ public final class ExportChooser extends JPanel {
          * de destination pour l'image spécifiée.
          */
         private File getDestinationFile(final int index) {
+            return getDestinationFile(index, extension);
+        }
+
+        /**
+         * Retourne le nom et le chemin du fichier
+         * de destination pour l'image spécifiée.
+         */
+        private File getDestinationFile(final int index, final String extension) {
             final String filename = entries[index].getFile().getName();
             buffer.setLength(0);
             buffer.append(filename);
@@ -427,6 +451,7 @@ public final class ExportChooser extends JPanel {
                     writer.setOutput(output);
                     writer.write(image.getRenderedImage());
                     output.close();
+                    writeProperties(image, getDestinationFile(i, "txt"));
                 } catch (Exception exception) {
                     String message = exception.getLocalizedMessage();
                     if (message == null) {
@@ -450,6 +475,49 @@ public final class ExportChooser extends JPanel {
                 final ImageEntry entry=current;
                 progress.warningOccurred((entry!=null) ? entry.getName() : null, null, warning);
             }
+        }
+
+        /**
+         * Ecrit les propriétés de l'image spécifiée. L'implémentation par défaut écrit les coordonnées
+         * géographiques des quatres coins de l'image, sa taille, nombre de bandes, etc.
+         *
+         * @param coverage L'image pour laquelle écrire les propriétés.
+         * @param file Le fichier de destination. Ca sera généralement un fichier avec l'extension
+         *             <code>".txt"</code>.
+         */
+        protected void writeProperties(final GridCoverage coverage, final File file) throws IOException {
+            if (propertyParser == null) {
+                propertyParser = new PropertyParser();
+                propertyParser.setFormatPattern(Date.class, "yyyy/MM/dd HH:mm zz");
+                propertyParser.setFormatPattern(Number.class, "#0.######");
+                propertyParser.addAlias(PropertyParser.Z_MINIMUM,    "Date de début");
+                propertyParser.addAlias(PropertyParser.Z_MAXIMUM,    "Date de fin");
+                propertyParser.addAlias(PropertyParser.PROJECTION,   "Projection");
+                propertyParser.addAlias(PropertyParser.ELLIPSOID,    "Ellipsoïde");
+                propertyParser.addAlias(PropertyParser.Y_MAXIMUM,    "Limite Nord");
+                propertyParser.addAlias(PropertyParser.Y_MINIMUM,    "Limite Sud");
+                propertyParser.addAlias(PropertyParser.X_MAXIMUM,    "Limite Est");
+                propertyParser.addAlias(PropertyParser.X_MINIMUM,    "Limite Ouest");
+                propertyParser.addAlias(PropertyParser.Y_RESOLUTION, "Résolution en latitude");
+                propertyParser.addAlias(PropertyParser.X_RESOLUTION, "Résolution en longitude");
+                propertyParser.addAlias(PropertyParser.WIDTH,        "Largeur (en pixels)");
+                propertyParser.addAlias(PropertyParser.HEIGHT,       "Hauteur (en pixels)");
+            }
+            final Locale locale        = Locale.getDefault();
+            final String lineSeparator = System.getProperty("line.separator", "\n");
+            final Writer out           = new BufferedWriter(new FileWriter(file));
+            out.write("#"); out.write(lineSeparator);
+            out.write("# Description du format de l'image \"");
+            out.write(coverage.getName(locale));
+            out.write('"');
+            out.write(lineSeparator);
+            out.write("#"); out.write(lineSeparator);
+            out.write(lineSeparator);
+            propertyParser.clear();
+            propertyParser.add(coverage);
+            propertyParser.listProperties(out);
+            propertyParser.clear();
+            out.close();
         }
     }
 }

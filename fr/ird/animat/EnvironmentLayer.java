@@ -31,15 +31,16 @@ import java.util.Date;
 import java.util.Collections;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 
 // Geotools dependencies
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
+import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.cs.GeographicCoordinateSystem;
-
-// Cartes
-import fr.ird.map.RepaintManager;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Animats
@@ -83,30 +84,13 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     private Parameter parameter;
 
     /**
-     * L'objet à utiliser pour synchroniser les retraçaces.
-     */
-    private final RepaintManager manager;
-
-    /**
-     * <code>true</code> si on se trouve à l'intérieur de la méthode {@link #environmentChanged}.
-     * Dans ces conditions, on reportera l'appel de {@link Layer#repaint} jusqu'à ce que la mise
-     * à jour de toutes les couches soient terminées. Ce report se fait à l'aide de la classe
-     * {@link RepaintManager}.
-     */
-    private transient boolean processingEvent;
-
-    /**
      * Construit une couche pour l'environnement spécifié.
      *
      * @param  environment Environnement à afficher.
      *         Il peut provenir d'une machine distante.
-     * @param  manager Objet à utiliser pour redessiner les cartes.
      */
-    public EnvironmentLayer(final Environment environment,
-                            final RepaintManager manager)
-    {
-        super(GeographicCoordinateSystem.WGS84);
-        this.manager = manager;
+    public EnvironmentLayer(final Environment environment) {
+        super(null);
         environment.addEnvironmentChangeListener(this);
         setCoverage(environment.getCoverage(parameter));
     }
@@ -119,14 +103,8 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
         final Environment environment = event.getSource();
         final Date oldDate = date;
         date = environment.getTimeStep().getStartTime();
-        try {
-            processingEvent = true;
-            setCoverage(environment.getCoverage(parameter));
-        } finally {
-            processingEvent = false;
-        }
-        manager.repaint(this);
-        firePropertyChange("date", oldDate, date);
+        setCoverage(environment.getCoverage(parameter));
+        listeners.firePropertyChange("date", oldDate, date);
     }
 
     /**
@@ -139,33 +117,23 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
         } else {
             grid = null;
         }
-        setCoverage(grid);
+        try {
+            setGridCoverage(grid);
+        } catch (TransformException exception) {
+            LogRecord record = new LogRecord(Level.WARNING, "Systèmes de coordonnées incompatibles");
+            record.setSourceClassName("EnvironmentLayer");
+            record.setSourceMethodName("setCoverage");
+            record.setThrown(exception);
+            Logger.getLogger("fr.ird.animat").log(record);
+        }
     }
 
     /**
      * Set the grid coverage. A <code>null</code> value
      * will remove the current grid coverage.
      */
-    public void setCoverage(GridCoverage coverage) {
+    public void setGridCoverage(GridCoverage coverage) throws TransformException {
         coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
-        super.setCoverage(coverage);
-    }
-
-    /**
-     * Redessine sette composante.
-     */
-    public void repaint() {
-        if (!processingEvent) {
-            super.repaint();
-        }
-    }
-
-    /**
-     * Redessine sette composante.
-     */
-    protected void repaint(final Rectangle bounds) {
-        if (!processingEvent) {
-            super.repaint(bounds);
-        }
+        super.setGridCoverage(coverage);
     }
 }

@@ -489,6 +489,7 @@ public final class Main {
         final Arguments arguments = new Arguments(args);
         final String    tilecache = arguments.getOptionalString("-tilecache");
         final boolean    nativeLF = arguments.getFlag("-native");
+        DataBase.MEDITERRANEAN_VERSION = arguments.getFlag("-Méditerranée");
         arguments.getRemainingArguments(0);
         if (tilecache != null) {
             final long value = Long.parseLong(tilecache)*(1024*1024);

@@ -47,7 +47,7 @@ import org.geotools.cs.Ellipsoid;
  * et de latitudes selon l'ellipsoïde {@link Ellipsoid#WGS84}.
  * Les déplacements sont exprimées en milles nautiques, et les directions
  * en degrés géographiques (c'est-à-dire par rapport au nord "vrai").
- * Les durées sont exprimées en nombre de jours.
+ * Les intervalles de temps sont exprimées en nombre de jours.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -102,7 +102,7 @@ public abstract class Animal {
     }
 
     /**
-     * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@link Parameter
+     * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@linkplain Parameter
      * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
      * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
      * A l'inverse, un animal peut aussi faire quelques observations "internes" (par exemple la
@@ -154,9 +154,19 @@ public abstract class Animal {
      * Tue l'animal. L'animal n'appartiendra plus à aucune population.
      */
     public void kill() {
-        if (population != null) {
-            population.kill(this);
-            population = null;
+        synchronized (getTreeLock()) {
+            if (population != null) {
+                population.kill(this);
+                population = null;
+            }
         }
+    }
+
+    /**
+     * Retourne l'objet sur lequel se synchroniser lors des accès à cet animal.
+     */
+    protected final Object getTreeLock() {
+        final Population population = this.population;
+        return (population!=null) ? population.getTreeLock() : this;
     }
 }

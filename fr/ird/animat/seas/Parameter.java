@@ -76,7 +76,7 @@ final class Parameter extends fr.ird.animat.Parameter {
      *   <li>Chlorophylle-a (Réunion)</li>
      * </ul>
      */
-    final String series;
+    public final String series;
 
     /**
      * Nom de l'opération à appliquer, ou <code>null</code> si aucune.
@@ -85,10 +85,10 @@ final class Parameter extends fr.ird.animat.Parameter {
      *   <li>GradientMagnitude</li>
      * </ul>
      */
-    final String operation;
+    public final String operation;
 
     /**
-     * Nom de l'{@link Evaluator évaluateur} à utiliser.
+     * Nom de l'{@linkplain Evaluator évaluateur} à utiliser.
      * Exemples:
      * <ul>
      *   <li>Maximum</li>
@@ -97,7 +97,7 @@ final class Parameter extends fr.ird.animat.Parameter {
      *   <li>Gradient:0.75</li>
      * </ul>
      */
-    final String evaluator;
+    public final String evaluator;
 
     /**
      * Les arguments de l'évaluateur.
@@ -164,7 +164,7 @@ final class Parameter extends fr.ird.animat.Parameter {
      */
     private static String toString(final String series, final String operation, final String evaluator) {
         final StringBuffer buffer = new StringBuffer(evaluator);
-        buffer.append(" de ");
+        buffer.append(" de \"");
         if (operation != null) {
             buffer.append(operation);
             buffer.append('[');
@@ -173,6 +173,7 @@ final class Parameter extends fr.ird.animat.Parameter {
         if (operation != null) {
             buffer.append(']');
         }
+        buffer.append('"');
         return buffer.toString();
     }
 

@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.operator.coverage;
+package fr.ird.seasview.layer.control;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
@@ -40,7 +40,7 @@ import javax.media.jai.ParameterList;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ProcessorOperation extends Operation {
+class ProcessorOperation extends Operation {
     /**
      * Le processeur.
      */
@@ -49,26 +49,25 @@ public class ProcessorOperation extends Operation {
     /**
      * Le nom de l'opération.
      */
-    private final String operation;
+    protected final String operation;
 
     /**
      * Les paramètres, ou <code>null</code> si aucun.
      */
-    private final ParameterList parameters;
+    protected final ParameterList parameters;
 
     /**
      * Construit une opération sans paramètres.
      *
      * @param processor   Le processeur.
      * @param operation   Le nom de l'opération.
-     * @param parameters  Les paramètres, ou <code>null</code> si aucun.
      * @param description Une description à faire apparaître dans le menu.
      */
     public ProcessorOperation(final GridCoverageProcessor processor,
                               final String                operation,
                               final String              description)
     {
-        this(processor, operation, null, description);
+        this(processor, operation, processor.getOperation(operation).getParameterList(), description);
     }
 
     /**
