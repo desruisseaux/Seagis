@@ -97,8 +97,7 @@ import javax.media.jai.util.CaselessStringKey;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageEntryImpl implements ImageEntry, Serializable
-{
+final class ImageEntryImpl implements ImageEntry, Serializable {
     /**
      * Clé sous laquelle mémoriser l'objet {@link ImageEntry}
      * source dans les propriétés de {@link GridCoverage}.
@@ -109,8 +108,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * Compare deux entrées selon le même critère que celui qui a apparait dans
      * l'instruction "ORDER BY" dans la réquête SQL de {@link ImageTableImpl}).
      */
-    boolean compare(final ImageEntryImpl other)
-    {return endTime==other.endTime;}
+    boolean compare(final ImageEntryImpl other) {
+        return endTime==other.endTime;
+    }
 
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
@@ -122,8 +122,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * interpolation bicubique. Si elle échoue, une interpolation bilinéaire.
      * Si cette dernière échoue aussi, alors le plus proche voisin.
      */
-    private static final String[] INTERPOLATIONS=
-    {
+    private static final String[] INTERPOLATIONS = {
         "Bicubic",
         "Bilinear",
         "NearestNeighbor"
@@ -193,8 +192,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * @param  result Prochain enregistrement à lire.
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    ImageEntryImpl(final ImageTableImpl table, final ResultSet result) throws SQLException
-    {
+    ImageEntryImpl(final ImageTableImpl table, final ResultSet result) throws SQLException {
         final int    seriesID;
         final int    formatID;
         final String pathname;
@@ -227,43 +225,44 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * base de données. Dans une même base de données,
      * chaque image porte un numéro unique.
      */
-    public int getID()
-    {return ID;}
+    public int getID() {
+        return ID;
+    }
 
     /**
      * Retourne la série à laquelle
      * appartient cette image.
      */
-    public SeriesEntry getSeries()
-    {return parameters.series;}
+    public SeriesEntry getSeries() {
+        return parameters.series;
+    }
 
     /**
      * Retourne un nom désignant cette image. Le choix du nom est arbitraire,
      * mais il s'agira le plus souvent du nom du fichier (avec ou sans son
      * extension).
      */
-    public String getName()
-    {return filename;}
+    public String getName() {
+        return filename;
+    }
 
     /**
      * Retourne <code>null</code>, étant donné que les images ne sont pas
      * accompagnées de description.
      */
-    public String getRemarks()
-    {return null;}
+    public String getRemarks() {
+        return null;
+    }
 
     /**
      * Retourne le nom complet du fichier
      * de l'image avec son chemin complet.
      */
-    public File getFile()
-    {
-        final File file=new File(parameters.pathname, filename+'.'+parameters.format.extension);
-        if (!file.isAbsolute())
-        {
+    public File getFile() {
+        final File file = new File(parameters.pathname, filename+'.'+parameters.format.extension);
+        if (!file.isAbsolute()) {
             final File directory = Table.directory;
-            if (directory!=null)
-            {
+            if (directory != null) {
                 return new File(directory, file.getPath());
             }
         }
@@ -277,8 +276,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * coordonnées du système {@link #getCoordinateSystem}. Cette dernière sera
      * le plus souvent une transformation affine.
      */
-    public GridGeometry getGridGeometry()
-    {
+    public GridGeometry getGridGeometry() {
         final GridRange gridRange = new GridRange(new int[3], new int[]{width,height,1});
         return new GridGeometry(gridRange, getEnvelope(), new boolean[]{false,true,false});
     }
@@ -293,15 +291,15 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      *   <li>Le temps, en jours juliens depuis le 01/01/1950 00:00 UTC.</li>
      * </ul>
      */
-    public CoordinateSystem getCoordinateSystem()
-    {return parameters.coordinateSystem;}
+    public CoordinateSystem getCoordinateSystem() {
+        return parameters.coordinateSystem;
+    }
 
     /**
      * Retourne les coordonnées spatio-temporelles de l'image. Le système de
      * coordonnées utilisé est celui retourné par {@link #getCoordinateSystem}.
      */
-    public Envelope getEnvelope()
-    {
+    public Envelope getEnvelope() {
         final double[] min = new double[] {xmin, ymin, ImageTableImpl.toJulian(startTime)};
         final double[] max = new double[] {xmax, ymax, ImageTableImpl.toJulian(  endTime)};
         return new Envelope(min, max);
@@ -314,8 +312,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * que la partie horizontale de  {@link #getEnvelope}  et à transformer les
      * coordonnées si nécessaire.
      */
-    public Rectangle2D getGeographicArea()
-    {
+    public Rectangle2D getGeographicArea() {
         // No transformation needed for current implementation.
         return new Rectangle2D.Float(xmin, ymin, xmax-xmin, ymax-ymin);
     }
@@ -326,22 +323,25 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * la partie temporelle de {@link #getEnvelope} et à transformer les coordonnées
      * si nécessaire.
      */
-    public Range getTimeRange()
-    {return new Range(Date.class, getStartTime(), true, getEndTime(), false);}
+    public Range getTimeRange() {
+        return new Range(Date.class, getStartTime(), true, getEndTime(), false);
+    }
 
     /**
      * Retourne la date de début d'échantillonage de l'image,
      * ou <code>null</code> si elle n'est pas connue.
      */
-    public Date getStartTime()
-    {return (startTime!=Long.MIN_VALUE) ? new Date(startTime) : null;}
+    public Date getStartTime() {
+        return (startTime!=Long.MIN_VALUE) ? new Date(startTime) : null;
+    }
 
     /**
      * Retourne la date de fin d'échantillonage de l'image,
      * ou <code>null</code> si elle n'est pas connue.
      */
-    public Date getEndTime()
-    {return (endTime!=Long.MAX_VALUE) ? new Date(endTime) : null;}
+    public Date getEndTime() {
+        return (endTime!=Long.MAX_VALUE) ? new Date(endTime) : null;
+    }
 
     /**
      * Retourne les listes des bandes de l'image. Les objets {@link SampleDimension}
@@ -351,8 +351,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * @return La liste des catégories pour chaque bande de l'image.
      *         La longueur de ce tableau sera égale au nombre de bandes.
      */
-    public SampleDimension[] getSampleDimensions()
-    {return parameters.format.getSampleDimensions(null);}
+    public SampleDimension[] getSampleDimensions() {
+        return parameters.format.getSampleDimensions(null);
+    }
 
     /**
      * Retourne l'image correspondant à cette entrée.     Si l'image avait déjà été lue précédemment et qu'elle n'a pas
@@ -384,8 +385,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties est survenue.
      * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est pas valide.
      */
-    public synchronized GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
-    {
+    public synchronized GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
         /*
          * NOTE SUR LES SYNCHRONISATIONS: Cette méthode est synchronisée à plusieurs niveau:
          *
@@ -414,11 +414,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * Vérifie d'abord si l'image demandée se trouve déjà en mémoire. Si
          * oui, elle sera retournée et la méthode se termine immédiatement.
          */
-        if (gridCoverage!=null)
-        {
+        if (gridCoverage!=null) {
             final GridCoverage image = gridCoverage.get();
-            if (image!=null)
-            {
+            if (image!=null) {
                 return image;
             }
         }
@@ -451,21 +449,17 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         Rectangle   clipPixel   = null;
         final int xSubsampling;
         final int ySubsampling;
-        if (resolution!=null)
-        {
+        if (resolution != null) {
             /*
              * Conversion [résolution logique désirée] --> [fréquence d'échantillonage des pixels].
              */
             xSubsampling = Math.max(1, Math.min(width >>8, (int)Math.round(width  * (resolution.getWidth () / clipLogical.getWidth ()))));
             ySubsampling = Math.max(1, Math.min(height>>8, (int)Math.round(height * (resolution.getHeight() / clipLogical.getHeight()))));
-        }
-        else
-        {
+        } else {
             xSubsampling = 1;
             ySubsampling = 1;
         }
-        if (clipArea!=null)
-        {
+        if (clipArea != null) {
             /*
              * Vérifie si le rectangle demandé (clipArea) intercepte la région géographique couverte par l'image.
              * On utilise un code spécial plutôt que de faire appel à {@link Rectangle2D#intersects} parce qu'on
@@ -486,13 +480,11 @@ final class ImageEntryImpl implements ImageEntry, Serializable
                                     (int)Math.floor(scaleY*(ymax-clipLogical.getMaxY())+EPS),
                                     (int)Math.ceil (scaleX*clipLogical.getWidth()      -EPS),
                                     (int)Math.ceil (scaleY*clipLogical.getHeight()     -EPS));
-            if (clipPixel.width < MIN_SIZE)
-            {
+            if (clipPixel.width < MIN_SIZE) {
                 clipPixel.x    -= (MIN_SIZE-clipPixel.width)/2;
                 clipPixel.width = MIN_SIZE;
             }
-            if (clipPixel.height < MIN_SIZE)
-            {
+            if (clipPixel.height < MIN_SIZE) {
                 clipPixel.y     -= (MIN_SIZE-clipPixel.height)/2;
                 clipPixel.height = MIN_SIZE;
             }
@@ -529,11 +521,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * plus si, par exemple, l'image est entrée dans une chaîne d'opérations de JAI.
          */
         RenderedImage image=null;
-        if (renderedImage!=null)
-        {
+        if (renderedImage!=null) {
             image = renderedImage.get();
-            if (image==null)
-            {
+            if (image == null) {
                 renderedImage=null;
             }
         }
@@ -543,15 +533,15 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          */
         final FormatEntryImpl format = parameters.format;
         final SampleDimension[] bands;
-        synchronized (format)
-        {
+        synchronized (format) {
             final ImageReadParam param = format.getDefaultReadParam();
             if (clipPixel!=null) param.setSourceRegion(clipPixel);
             param.setSourceSubsampling(xSubsampling, ySubsampling, xSubsampling>>1, ySubsampling>>1);
-            if (image==null)
-            {
+            if (image == null) {
                 image=format.read(getFile(), imageIndex, param, listenerList, new Dimension(width, height), this);
-                if (image==null) return null;
+                if (image==null) {
+                    return null;
+                }
             }
             bands = format.getSampleDimensions(param);
         }
@@ -563,8 +553,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         CoordinateSystem coordinateSystem = parameters.coordinateSystem;
         double[] min = new double[] {clipLogical.getMinX(), clipLogical.getMinY(), ImageTableImpl.toJulian(startTime)};
         double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
-        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2]))
-        {
+        if (Double.isInfinite(min[2]) && Double.isInfinite(max[2])) {
             // No time range specified.
             min = XArray.resize(min, 2);
             max = XArray.resize(max, 2);
@@ -583,22 +572,27 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          */
         GridCoverageProcessor processor = parameters.PROCESSOR;
         Operation             operation = parameters.operation;
-        if (operation!=null) synchronized (operation)
-        {
-            try
-            {
-                coverage = processor.doOperation(operation, parameters.parameters.setParameter("Source", coverage));
-            }
-            finally
-            {
-                parameters.parameters.setParameter("Source", null);
+        boolean       interpolationDone = false;
+        if (operation != null) {
+            synchronized (operation) {
+                try {
+                    ParameterList param = parameters.parameters.setParameter("Source", coverage);
+                    coverage = processor.doOperation(operation, param);
+                } finally {
+                    parameters.parameters.setParameter("Source", null);
+                }
+                if (operation.getName().equalsIgnoreCase("Interpolate")) {
+                    interpolationDone = true;
+                }
             }
         }
         /*
          * Applique l'interpolation bicubique, conserve le
          * résultat dans une cache et retourne le résultat.
          */
-        coverage  = processor.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
+        if (!interpolationDone) {
+            coverage  = processor.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
+        }
         renderedImage = new WeakReference<RenderedImage>(image);
         gridCoverage  = new SoftReference<GridCoverage>(coverage);
         return coverage;
@@ -609,20 +603,19 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * thread.  Si la méthode {@link #getGridCoverage} était en train de lire une image dans un
      * autre thread, elle s'arrêtera et retournera <code>null</code>.
      */
-    public void abort()
-    {parameters.format.abort(this);}
+    public void abort() {
+        parameters.format.abort(this);
+    }
 
     /**
      * Retourne une chaîne de caractères représentant cette entrée.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringBuffer buffer=new StringBuffer(40);
         buffer.append("ImageEntry"); // Pour ne pas avoir le "Impl" à la fin...
         buffer.append('[');
         buffer.append(getName());
-        if (startTime!=Long.MIN_VALUE && endTime!=Long.MAX_VALUE)
-        {
+        if (startTime!=Long.MIN_VALUE && endTime!=Long.MAX_VALUE) {
             buffer.append(" (");
             buffer.append(parameters.format(new Date((startTime+endTime)/2)));
             buffer.append(')');
@@ -643,8 +636,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * cette dernière solution n'est valide que si les deux objets <code>ImageEntry</code>
      * proviennent bien de la même base de données.
      */
-    public boolean equals(final Object o)
-    {return (o instanceof ImageEntryImpl) && equalsStrict((ImageEntryImpl) o);}
+    public boolean equals(final Object o) {
+        return (o instanceof ImageEntryImpl) && equalsStrict((ImageEntryImpl) o);
+    }
 
     /**
      * Indique si cette entrée est strictement égale à l'entrée spécifiée. Tous
@@ -652,8 +646,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * la base de données (comme les coordonnées de la région désirée par
      * l'utilisateur).
      */
-    private boolean equalsStrict(final ImageEntryImpl that)
-    {
+    private boolean equalsStrict(final ImageEntryImpl that) {
         return             this.ID       == that.ID          &&
           Utilities.equals(this.filename,   that.filename  ) &&
           Utilities.equals(this.parameters, that.parameters) &&
@@ -667,8 +660,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * deux entrés peuvent toutefois appartenir à
      * des séries différentes.
      */
-    private boolean sameCoordinates(final ImageEntryImpl that)
-    {
+    private boolean sameCoordinates(final ImageEntryImpl that) {
         return this.startTime == that.startTime && this.endTime == that.endTime   &&
                Float.floatToIntBits(this.xmin) == Float.floatToIntBits(that.xmin) &&
                Float.floatToIntBits(this.xmax) == Float.floatToIntBits(that.xmax) &&
@@ -682,21 +674,24 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * spécifiée. Cette méthode ne vérifie pas si les deux images couvrent
      * la même région géographique.
      */
-    private boolean sameSize(final ImageEntryImpl that)
-    {return (this.width==that.width) && (this.height==that.height);}
+    private boolean sameSize(final ImageEntryImpl that) {
+        return (this.width==that.width) && (this.height==that.height);
+    }
 
     /**
      * Retourne un code représentant cette entrée.
      */
-    public int hashCode()
-    {return ID;}
+    public int hashCode() {
+        return ID;
+    }
 
     /**
      * Après la lecture binaire, vérifie si
      * l'entrée lue existait déjà en mémoire.
      */
-    private Object readResolve() throws ObjectStreamException
-    {return intern();}
+    private Object readResolve() throws ObjectStreamException {
+        return intern();
+    }
 
     /**
      * Retourne un exemplaire unique de cette entrée. Une banque d'entrées, initialement
@@ -711,15 +706,17 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * la condition <code>u.intern()==v.intern()</code> sera vrai si et seulement si
      * <code>u.equals(v)</code> est vrai.
      */
-    final ImageEntryImpl intern()
-    {return (ImageEntryImpl) pool.intern(this);}
+    final ImageEntryImpl intern() {
+        return (ImageEntryImpl) pool.intern(this);
+    }
 
     /**
      * Applique {@link #intern()} sur un tableau d'entrées.
      * Ce tableau peut contenir des éléments nuls.
      */
-    static void intern(final ImageEntry[] entries)
-    {pool.intern(entries);}
+    static void intern(final ImageEntry[] entries) {
+        pool.intern(entries);
+    }
 
     /**
      * Si les deux images couvrent les mêmes coordonnées spatio-temporelles,
@@ -727,10 +724,8 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      * couvrent pas les mêmes coordonnées ou si leurs résolutions sont
      * incompatibles, alors cette méthode retourne <code>null</code>.
      */
-    final ImageEntryImpl getLowestResolution(final ImageEntryImpl that)
-    {
-        if (Utilities.equals(this.parameters.series, that.parameters.series) && sameCoordinates(that))
-        {
+    final ImageEntryImpl getLowestResolution(final ImageEntryImpl that) {
+        if (Utilities.equals(this.parameters.series, that.parameters.series) && sameCoordinates(that)) {
             if (this.width<=that.width && this.height<=that.height) return this;
             if (this.width>=that.width && this.height>=that.height) return that;
         }
@@ -748,17 +743,14 @@ final class ImageEntryImpl implements ImageEntry, Serializable
      *         résolution demandée. Cette méthode retourne <code>false</code> si <code>resolution</code>
      *         était nul ou si une projection cartographique a échouée.
      */
-    final boolean hasEnoughResolution(final Dimension2D resolution, final CoordinateSystem sourceCS)
-    {
-        if (resolution!=null)
-        {
+    final boolean hasEnoughResolution(final Dimension2D resolution, final CoordinateSystem sourceCS) {
+        if (resolution != null) {
             double  width  = resolution.getWidth();
             double  height = resolution.getHeight();
             final float dx = (xmax-xmin);
             final float dy = (ymax-ymin);
             final CoordinateSystem targetCS = getCoordinateSystem();
-            if (!sourceCS.equivalents(targetCS))
-            {
+            if (!sourceCS.equivalents(targetCS)) {
                 throw new UnsupportedOperationException(); // Not implemented
             }
             if ((1+EPS)*width  >= dx/this.width &&

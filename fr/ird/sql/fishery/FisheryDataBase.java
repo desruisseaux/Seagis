@@ -237,11 +237,22 @@ public class FisheryDataBase extends DataBase
      * environmental de la base de données. Lorsque cette table ne
      * sera plus nécessaire, il faudra appeler {@link EnvironmentTable#close}.
      *
-     * @param parameter Paramètre (exemple "SST" ou "EKP").
+     * @param parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
+     *        disponibles peut être obtenu avec {@link #getAvailableParameters()}.
      * @param operation Opération (exemple "valeur" ou "sobel").
      */
     public EnvironmentTable getEnvironmentTable(final String parameter, final String operation) throws SQLException
     {return new EnvironmentTableImpl(connection, parameter, operation);}
+
+    /**
+     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
+     * être spécifié en argument à la méthode {@link #getEnvironmentTable}.
+     *
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public String[] getAvailableParameters() throws SQLException {
+        return EnvironmentTableImpl.getAvailableParameters(connection);
+    }
 
     /**
      * Construit et retourne un panneau qui permet à l'utilisateur de modifier

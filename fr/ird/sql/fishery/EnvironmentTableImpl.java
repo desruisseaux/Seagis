@@ -34,7 +34,10 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // Divers
+import java.util.Set;
 import java.util.Date;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import javax.media.jai.util.Range;
 
 // Resources
@@ -49,8 +52,13 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EnvironmentTableImpl extends Table implements EnvironmentTable
-{
+final class EnvironmentTableImpl extends Table implements EnvironmentTable {
+    /**
+     * Requête SQL pour obtenir le code d'un paramètre environnemental.
+     */
+    private static final String SQL_LIST_PARAMETERS=
+                    "SELECT name FROM "+PARAMETERS+" SORTED BY name";
+
     /**
      * Requête SQL pour obtenir le code d'un paramètre environnemental.
      */
@@ -81,7 +89,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
 
     /** Numéro d'argument. */ private static final int ARG_ID        = 1;
     /** Numéro d'argument. */ private static final int ARG_POSITION  = 2;
-    /** Numéro d'argument. */ private static final int ARG_TEMPS     = 3;
+    /** Numéro d'argument. */ private static final int ARG_TIMELAG   = 3;
     /** Numéro d'argument. */ private static final int ARG_PARAMETER = 4;
     /** Numéro d'argument. */ private static final int ARG_VALUE     = 5;
 
@@ -93,7 +101,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     /**
      * Décalage de temps, en jours.
      */
-    private int time;
+    private int timeLag;
 
     /**
      * Numéro du paramètre.
@@ -101,9 +109,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     private int parameter;
 
     /**
-     * Nom de l'opération examiné par cette table.
+     * Nom de la colonne dans laquelle lire ou écrire les valeurs (exemple "value" ou "sobel").
      */
-    private final String operation;
+    private final String column;
 
     /**
      * Instruction à utiliser pour les mises à jour.
@@ -124,71 +132,96 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      *
      * @param  connection Connection vers une base de données de pêches.
      * @param  parameter Le paramètre à mettre à jour (exemple: "SST").
-     * @param  operation L'opération (exemple "value" ou "sobel").
+     * @param  column La colonne dans laquelle lire ou écrire les valeurs (exemple "value" ou "sobel").
      * @throws SQLException si <code>EnvironmentTable</code> n'a pas pu construire sa requête SQL.
      */
     protected EnvironmentTableImpl(final Connection connection,
                                    final String     parameter,
-                                   final String     operation) throws SQLException
+                                   final String     column) throws SQLException
     {
-        super(connection.prepareStatement(replace(preferences.get(ENVIRONMENTS, SQL_SELECT), operation)));
-        this.operation = operation;
+        super(connection.prepareStatement(replace(preferences.get(ENVIRONMENTS, SQL_SELECT), column)));
+        this.column = column;
         setParameter(parameter);
         setPosition(CENTER);
-        setTime(0);
+        setTimeLag(0);
     }
 
     /**
-     * Replace substring "[?]" by an operation name.
+     * Replace substring "[?]" by a column name.
      */
-    private static String replace(final String query, final String operation)
-    {
+    private static String replace(final String query, final String column) {
         final String PARAM = "[?]";
         final StringBuffer buffer=new StringBuffer(query);
-        for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;)
-        {
-            buffer.replace(index, index+PARAM.length(), operation);
+        for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;) {
+            buffer.replace(index, index+PARAM.length(), column);
         }
         return buffer.toString();
     }
 
     /**
-     * Définit le paramètre examinée par cette table.
+     * Retourne la liste des paramètres disponibles.
+     *
+     * @param connection La connection à utiliser.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    static String[] getAvailableParameters(final Connection connection) throws SQLException {
+        final Statement      stm = connection.createStatement();
+        final ResultSet   result = stm.executeQuery(SQL_LIST_PARAMETERS);
+        final Set<String>  param = new LinkedHashSet<String>();
+        while (result.next()) {
+            final String item = result.getString(0);
+            if (item != null) {
+                param.add(item);
+            }
+        }
+        result.close();
+        stm.close();
+        return param.toArray(new String[param.size()]);
+    }
+
+    /**
+     * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
+     * être spécifié en argument à la méthode {@link #setParameter}.
+     *
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public String[] getAvailableParameters() throws SQLException {
+        return getAvailableParameters(statement.getConnection());
+    }
+
+    /**
+     * Définit le paramètre examinée par cette table. Le paramètre doit être un nom
+     * de la table "Paramètres". Des exemples de valeurs sont "SST", "CHL", "SLA",
+     * "U", "V" et "EKP".
      *
      * @param parameter Le paramètre à définir (exemple: "SST").
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public synchronized void setParameter(final String parameter) throws SQLException
-    {
+    public synchronized void setParameter(final String parameter) throws SQLException {
         final PreparedStatement stm = statement.getConnection().prepareStatement(SQL_MAP_PARAMETER);
         stm.setString(1, parameter);
         final ResultSet result = stm.executeQuery();
         int lastParameter=0, count=0;
-        while (result.next())
-        {
+        while (result.next()) {
             final int code = result.getInt(1);
-            if (count==0 || code!=lastParameter)
-            {
+            if (count==0 || code!=lastParameter) {
                 lastParameter = code;
                 if (++count >= 2) break;
             }
         }
         result.close();
         stm.close();
-        if (count!=1)
-        {
+        if (count != 1) {
             throw new SQLException(Resources.format(count==0 ?
                             ResourceKeys.ERROR_NO_PARAMETER_$1 : 
                             ResourceKeys.ERROR_DUPLICATED_RECORD_$1, parameter));
         }
         statement.setInt(ARG_PARAMETER, lastParameter);
         this.parameter = lastParameter;
-        if (update != null)
-        {
+        if (update != null) {
             update.setInt(ARG_PARAMETER+1, lastParameter);
         }
-        if (insert != null)
-        {
+        if (insert != null) {
             insert.setInt(ARG_PARAMETER, lastParameter);
         }
     }
@@ -200,18 +233,14 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      *
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public synchronized void setPosition(final int position) throws SQLException
-    {
-        if (position>=START_POINT && position<=END_POINT)
-        {
+    public synchronized void setPosition(final int position) throws SQLException {
+        if (position>=START_POINT && position<=END_POINT) {
             statement.setInt(ARG_POSITION, position);
             this.position = position;
-            if (update != null)
-            {
+            if (update != null) {
                 update.setInt(ARG_POSITION+1, position);
             }
-            if (insert != null)
-            {
+            if (insert != null) {
                 insert.setInt(ARG_POSITION, position);
             }
         }
@@ -219,44 +248,50 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     }
 
     /**
-     * Définit le décalage de temps (en jours).
+     * Définit le décalage de temps (en jours). La valeur par défaut est 0.
      *
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public synchronized void setTime(final int time) throws SQLException
-    {
-        statement.setInt(ARG_TEMPS, time);
-        this.time = time;
-        if (update != null)
-        {
-            update.setInt(ARG_TEMPS+1, time);
+    public synchronized void setTimeLag(final int timeLag) throws SQLException {
+        statement.setInt(ARG_TIMELAG, timeLag);
+        this.timeLag = timeLag;
+        if (update != null) {
+            update.setInt(ARG_TIMELAG+1, timeLag);
         }
-        if (insert != null)
-        {
-            insert.setInt(ARG_TEMPS, time);
+        if (insert != null) {
+            insert.setInt(ARG_TIMELAG, timeLag);
         }
     }
 
     /**
-     * Retourne le paramètre correspondant à une capture. S'il
-     * y a plusieurs valeurs pour la capture spécifié (ce qui
-     * ne devrait pas se produire), retourne la moyenne.
+     * Retourne le paramètre correspondant à une capture. Cette méthode retourne la valeur
+     * de la colonne <code>column</code> (spécifiée lors de la construction) à la ligne qui
+     * répond aux critères suivants:
+     * <ul>
+     *   <li>La capture est l'argument <code>capture</code> spécifié à cette méthode.</li>
+     *   <li>Le nom du paramètre ("SST", "CHL", etc.) est celui qui a été spécifié lors du
+     *       dernier appel de {@link #setParameter}.</li>
+     *   <li>La position ({@link #START_POINT}, {@link #CENTER}, {@link #END_POINT}, etc.)
+     *       est celle qui a été spécifiée lors du dernier appel de {@link #setPosition}.</li>
+     *   <li>L'écart de temps être la pêche et la mesure environnementale est celui qui a
+     *       été spécifié lors du dernier appel de {@link #setTimeLag}.</li>
+     * </ul>
+     *
+     * S'il y a plusieurs valeurs pour la capture spécifié (ce qui ne devrait pas se produire),
+     * alors cette méthode retourne la valeur moyenne.
      *
      * @param  capture La capture.
      * @param  value Valeur du paramètre.
      * @throws SQLException si un problème est survenu lors de l'accès à la base de données.
      */
-    public synchronized float get(final CatchEntry capture) throws SQLException
-    {
+    public synchronized float get(final CatchEntry capture) throws SQLException {
         statement.setInt(ARG_ID, capture.getID());
         int n = 0;
         double sum = 0;
         final ResultSet result=statement.executeQuery();
-        while (result.next())
-        {
+        while (result.next()) {
             final double value = result.getDouble(1);
-            if (!result.wasNull() && !Double.isNaN(value))
-            {
+            if (!result.wasNull() && !Double.isNaN(value)) {
                 sum += value;
                 n++;
             }
@@ -265,22 +300,46 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     }
 
     /**
-     * Met à jour le paramètre correspondant à une capture.
-     * Rien ne sera fait si <code>value</code> et une valeur NaN.
+     * Met à jour le paramètre correspondant à une capture. Cette méthode met à jour la colonne
+     * <code>column</code> (spécifiée lors de la construction) de la ligne qui répond aux mêmes
+     * critères que pour la méthode {@link #get}, à quelques exceptions près:
+     * <ul>
+     *   <li>Si la capture a été prise à un seul point (c'est-à-dire si {@link CatchEntry#getShape}
+     *       retourne <code>null</code>), alors cette méthode met à jour la ligne correspondant à
+     *       la position {@link #CENTER}, quelle que soit la position spécifiée lors du dernier
+     *       appel de {@link #setPosition}.</li>
+     * </ul>
+     *
+     * @param  capture La capture.
+     * @param  value La valeur du paramètre. Si cette valeur est <code>NaN</code>,
+     *         alors cette méthode ne fait rien. L'ancien paramètre environnemental
+     *         sera conservé.
+     * @throws SQLException si un problème est survenu lors de la mise à jour.
+     */
+    public void set(final CatchEntry capture, final float value) throws SQLException {
+        set(capture, value, null);
+    }
+
+    /**
+     * Met à jour le paramètre correspondant à une capture. Cette méthode est similaire à
+     * {@link #set(CatchEntry, float)}, excepté que l'écart de temps sera calculée à partir
+     * de la date spécifiée. Ce décalage sera utilisé à la place de la dernière valeur spécifiée
+     * à {@link #setTimeLag}.
      *
      * @param  capture La capture.
      * @param  value La valeur du paramètre.
-     * @param  valueTime La date à laquelle a été évaluée la valeur <code>value</code>.
+     * @param  time La date à laquelle a été évaluée la valeur <code>value</code>.
+     *         Si cet argument est non-nul, alors l'écart de temps entre cette date
+     *         et la date de la capture sera calculée et utilisé à la place de la valeur
+     *         spécifiée lors du dernier appel de {@link #setTimeLag}.
      * @throws SQLException si un problème est survenu lors de la mise à jour.
      */
     public synchronized void set(final CatchEntry capture, final float value, final Date valueTime) throws SQLException
     {
-        if (!Float.isNaN(value))
-        {
-            int timeLag = 0;
+        if (!Float.isNaN(value)) {
+            int timeLag = this.timeLag;
             final Date catchTime = capture.getTime();
-            if (catchTime!=null && valueTime!=null)
-            {
+            if (catchTime!=null && valueTime!=null) {
                 // Les dates de la base de données ne contiennent pas d'heure.
                 // La date du "21/01/1999 00:00" peut très bien signifier que
                 // la ligne a été mouillée à 18h00. Dans ce cas, une image datée
@@ -288,37 +347,32 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
                 timeLag = (int)Math.floor((valueTime.getTime()-catchTime.getTime()) / (24.0*60*60*1000));
             }
             int position = this.position;
-            if (capture instanceof AbstractCatchEntry)
-            {
+            if (capture instanceof AbstractCatchEntry) {
                 position = ((AbstractCatchEntry) capture).clampPosition(position);
             }
-            if (update==null)
-            {
+            if (update==null) {
                 update = statement.getConnection().prepareStatement(replace(
-                         preferences.get(ENVIRONMENTS+".UPDATE", SQL_UPDATE), operation));
+                         preferences.get(ENVIRONMENTS+".UPDATE", SQL_UPDATE), column));
                 update.setInt(1+ARG_PARAMETER, parameter);
             }
             update.setInt   (1+ARG_ID,        capture.getID());
             update.setInt   (1+ARG_POSITION,  position);
-            update.setInt   (1+ARG_TEMPS,     timeLag);
+            update.setInt   (1+ARG_TIMELAG,   timeLag);
             update.setDouble(1,               value); // Note: Should be 'float', but Access doesn't like.
             int n=update.executeUpdate();
-            if (n==0)
-            {
-                if (insert==null)
-                {
+            if (n == 0) {
+                if (insert==null) {
                     insert = statement.getConnection().prepareStatement(replace(
-                             preferences.get(ENVIRONMENTS+".INSERT", SQL_INSERT), operation));
+                             preferences.get(ENVIRONMENTS+".INSERT", SQL_INSERT), column));
                     insert.setInt(ARG_PARAMETER, parameter);
                 }
                 insert.setInt   (ARG_ID,        capture.getID());
                 insert.setInt   (ARG_POSITION,  position);
-                insert.setInt   (ARG_TEMPS,     timeLag);
+                insert.setInt   (ARG_TIMELAG,   timeLag);
                 insert.setDouble(ARG_VALUE,     value); // Note: Should be 'float', but Access doesn't like.
                 n=insert.executeUpdate();
             }
-            if (n!=1)
-            {
+            if (n != 1) {
                 throw new SQLWarning(Resources.format(ResourceKeys.ERROR_UNEXPECTED_UPDATE_$1, new Integer(n)));
             }
         }
@@ -332,15 +386,12 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (update!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (update != null) {
             update.close();
             update=null;
         }
-        if (insert!=null)
-        {
+        if (insert != null) {
             insert.close();
             insert=null;
         }
