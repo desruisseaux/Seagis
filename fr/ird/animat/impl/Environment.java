@@ -155,10 +155,13 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * @return La couverture spatiale des données pour le paramètre spécifié.
      *
      * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
+     * @throws RemoteException si la couverture n'a pas pu être exportée.
      *
      * @see Animal#getObservations
      */
-    public CV_Coverage getCoverage(fr.ird.animat.Parameter parameter) throws NoSuchElementException {
+    public CV_Coverage getCoverage(fr.ird.animat.Parameter parameter)
+            throws NoSuchElementException, RemoteException
+    {
         if (parameter instanceof Parameter) {
             return Adapters.getDefault().export(getCoverage((Parameter)parameter));
         }
@@ -209,6 +212,9 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     public boolean nextTimeStep() {
         synchronized (getTreeLock()) {
             clock.nextTimeStep();
+            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
+                ((Population) it.next()).observe();
+            }
             fireEnvironmentChanged(new EnvironmentChangeEvent(this, EnvironmentChangeEvent.DATE_CHANGED,
                                                               clock.getTime(), null, null));
         }

@@ -26,11 +26,7 @@
 package fr.ird.animat.impl;
 
 // Utilitaires
-import java.awt.Color;
-import java.awt.Point;
-import java.util.Date;
 import java.util.Iterator;
-import javax.swing.JFrame;
 
 // Remote Method Invocation (RMI)
 import java.rmi.Naming;
@@ -43,15 +39,7 @@ import java.rmi.RMISecurityManager;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.net.MalformedURLException;
-
-// Geotools
-import org.geotools.resources.Arguments;
-
-// Animats
-import fr.ird.animat.viewer.Viewer;
 
 
 /**
@@ -284,68 +272,5 @@ public class Simulation extends RemoteServer implements fr.ird.animat.Simulation
         } catch (NotBoundException exception) {
             throw new UnknownHostException("Le serveur n'a pas été trouvé ou n'est pas prêt.", exception);
         }
-    }
-
-    /**
-     * Démarre une simulation bidon et affiche son résultat. Cette simulation sert uniquement
-     * à vérifier le bon fonctionnement du paquet <code>fr.ird.animat.impl</code>. Les arguments
-     * acceptés sont:
-     * <ul>
-     *   <li><code>-server</code> Démarre la simulation comme serveur.</li>
-     *   <li><code>-view <var>&lt;nom du serveur&gt;</var></code> Affine la simulation
-     *             en cours sur un autre serveur.</li>
-     * </ul>
-     *
-     * @param  Les arguments transmis sur la ligne de commande.
-     * @throws RemoteException Si un méthode devait être exécutée sur une machine distante
-     *         et que cette exécution a échouée.
-     */
-    public static void main(String[] args) throws RemoteException {
-        final Arguments arguments = new Arguments(args);
-        final boolean server = arguments.getFlag("-server");
-        final String  view = arguments.getOptionalString("-view");
-        args = arguments.getRemainingArguments(0);
-        final fr.ird.animat.Simulation simulation;
-        /*
-         * Construit l'objet 'Simulation'
-         */
-        if (server || view==null) {
-            final Date        startTime   = new Date();
-            final Date        endTime     = new Date(startTime.getTime() + 24L*60*60*1000);
-            final Clock       clock       = Clock.createClock(startTime, endTime);
-            final Environment environment = new Environment(clock);
-            final Population  population  = environment.newPopulation();
-            final Species     species     = new Species("Animat", Color.RED);
-            final Point       point       = new Point();
-            for (int i=0; i<10; i++) {
-                point.x = point.y = i;
-                population.newAnimal(species, point).path.rotate(Math.random()*360);
-            }
-            simulation = new Simulation("Simulation de test", environment);
-            ((Simulation)simulation).delay = 1000;
-            if (server) {
-                if (true) {
-                    // Equivalent au lancement de l'outils 'rmiregistry'
-                    LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-                }
-                ((Simulation)simulation).export(0);
-                arguments.out.println("Serveur démarré.");
-            }
-        } else {
-            simulation = lookup(view);
-            arguments.out.println("Connecté au serveur.");
-        }
-        /*
-         * Construit l'afficheur.
-         */
-        if (view!=null || !server) {
-            final Viewer viewer = new Viewer(simulation);
-            final JFrame  frame = new JFrame("Simulation");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setContentPane(viewer);
-            frame.pack();
-            frame.show();
-        }
-        simulation.start();
     }
 }

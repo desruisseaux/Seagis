@@ -198,7 +198,9 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
      * will remove the current grid coverage.
      */
     public void setGridCoverage(GridCoverage coverage) throws TransformException {
-        coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
+        if (coverage != null) {
+            coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
+        }
         super.setGridCoverage(coverage);
         colors.setColors(coverage);
     }

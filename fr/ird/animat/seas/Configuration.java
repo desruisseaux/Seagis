@@ -155,13 +155,11 @@ final class Configuration {
             ////
             ////    DISTANCE MAXIMALE PARCOURUE PAR JOUR
             ////
-            dailyDistance = (timeStep!=0 ? timeStep*1852 : 1852)*
-                    Double.parseDouble(getProperty(properties, "DAILY_DISTANCE"));
+            dailyDistance = Double.parseDouble(getProperty(properties, "DAILY_DISTANCE"));
             ////
             ////    RAYON DE PERCEPTION DES THONS
             ////
-            perceptionRadius = (timeStep!=0 ? timeStep*1852 : 1852)*
-                    Double.parseDouble(getProperty(properties, "PERCEPTION_RADIUS"));
+            perceptionRadius = Double.parseDouble(getProperty(properties, "PERCEPTION_RADIUS"));
             ////
             ////    ESPECES (CODES DE LA FAO)
             ////

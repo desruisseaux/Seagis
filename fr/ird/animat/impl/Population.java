@@ -161,6 +161,9 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
                         bounds.add(b);
                     }
                 }
+                if (bounds == null) {
+                    return null;
+                }
             }
             return (Shape) bounds.clone();
         }
@@ -215,6 +218,20 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
         synchronized (getTreeLock()) {
             for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
                 ((Animal) it.next()).move(duration);
+            }
+            bounds = null;
+        }
+    }
+
+    /**
+     * Demande à chaque animal d'observer son environnement. Cette méthode est appelée
+     * automatiquement au moment de la création de l'animal ainsi qu'après chaque
+     * {@linkplain Environment#nextTimeStep pas de temps} de l'environnement.
+     */
+    protected void observe() {
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                ((Animal) it.next()).observe();
             }
         }
     }

@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
@@ -131,7 +132,10 @@ final class Environment extends fr.ird.animat.impl.Environment {
             }
             images.setOperation(parameter.operation);
             final Coverage3D coverage = new Coverage3D(images);
-            coverage3D.put(parameter, coverage);
+            if (coverage3D.put(parameter, coverage) != null) {
+                // Should not happen since 'config.parameters' is a Set.
+                Logger.getLogger("fr.ird.animat.seas").warning("Un paramètre est répété plusieurs fois");
+            }
             final Range expand = coverage.getTimeRange();
             if (timeRange == null) {
                 timeRange = expand;
@@ -207,7 +211,9 @@ final class Environment extends fr.ird.animat.impl.Environment {
                 if (coverage3D != null) {
                     final Date time = getClock().getTime();
                     coverage = param.applyEvaluator(coverage3D.getGridCoverage2D(time));
-                    coverage2D.put(param, coverage);
+                    if (coverage2D.put(param, coverage) != null) {
+                        throw new AssertionError();
+                    }
                     return coverage;
                 }
             }

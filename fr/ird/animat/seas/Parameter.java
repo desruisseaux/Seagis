@@ -99,7 +99,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
     public final String operation;
 
     /**
-     * Nom de l'{@linkplain Evaluator évaluateur} à utiliser.
+     * Nom de l'{@linkplain Evaluator évaluateur} à utiliser, or <code>null</code> si aucun.
      * Exemples:
      * <ul>
      *   <li>Maximum</li>
@@ -131,17 +131,22 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * @param weight    Poids à donner à ce paramètre.
      */
     Parameter(String series, String operation, String evaluator, float weight) {
-        super(toString(series=series.trim(), operation, evaluator=evaluator.trim()));
-        final StringTokenizer tokens = new StringTokenizer(evaluator, ":");
+        super(toString(series=series.trim(), operation, evaluator));
         this.weight    = weight;
         this.series    = series;
         this.operation = operation; // May be null.
-        this.evaluator = tokens.nextToken();
-        evaluatorArgs  = new double[tokens.countTokens()];
-        for (int i=0; i<evaluatorArgs.length; i++) {
-            evaluatorArgs[i] = Double.parseDouble(tokens.nextToken());
+        if (evaluator != null) {
+            final StringTokenizer tokens = new StringTokenizer(evaluator, ":");
+            this.evaluator = tokens.nextToken();
+            evaluatorArgs  = new double[tokens.countTokens()];
+            for (int i=0; i<evaluatorArgs.length; i++) {
+                evaluatorArgs[i] = Double.parseDouble(tokens.nextToken());
+            }
+            assert !tokens.hasMoreTokens();
+        } else {
+            this.evaluator     = null;
+            this.evaluatorArgs = null;
         }
-        assert !tokens.hasMoreTokens();
     }
 
     /**
@@ -224,8 +229,11 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * d'opération et d'évaluateur.
      */
     private static String toString(final String series, final String operation, final String evaluator) {
-        final StringBuffer buffer = new StringBuffer(evaluator);
-        buffer.append(" de \"");
+        final StringBuffer buffer = new StringBuffer();
+        if (evaluator != null) {
+            buffer.append(evaluator);
+            buffer.append(" de \"");
+        }
         if (operation != null) {
             buffer.append(operation);
             buffer.append('[');
@@ -234,7 +242,9 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
         if (operation != null) {
             buffer.append(']');
         }
-        buffer.append('"');
+        if (evaluator != null) {
+            buffer.append('"');
+        }
         return buffer.toString();
     }
 

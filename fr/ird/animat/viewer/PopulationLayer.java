@@ -314,13 +314,15 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
             ////    Dessine les animaux    ////
             ///////////////////////////////////
             super.paint(context);
-            final AffineTransform at = context.getAffineTransform(context.mapCS, context.textCS);
-            final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
-            pxBounds.x      -= ARROW_LENGTH;
-            pxBounds.y      -= ARROW_LENGTH;
-            pxBounds.width  += ARROW_LENGTH*2;
-            pxBounds.height += ARROW_LENGTH*2;
-            context.addPaintedArea(pxBounds, context.textCS);
+            if (llBounds != null) {
+                final AffineTransform at = context.getAffineTransform(context.mapCS, context.textCS);
+                final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
+                pxBounds.x      -= ARROW_LENGTH;
+                pxBounds.y      -= ARROW_LENGTH;
+                pxBounds.width  += ARROW_LENGTH*2;
+                pxBounds.height += ARROW_LENGTH*2;
+                context.addPaintedArea(pxBounds, context.textCS);
+            }
         } catch (RemoteException exception) {
             graphics.setColor(Color.BLACK);
             graphics.setStroke(new BasicStroke(0));
@@ -403,7 +405,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
          * Avance l'itérateur à l'animal suivant.
          */
         public boolean next() {
-            while (++index >= animals.length) {
+            while (++index < animals.length) {
                 try {
                     update();
                     return true;
@@ -432,16 +434,24 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
          * @see #geographicArea
          */
         public Point2D position() {
-            return heading.location();
+            if (heading != null) {
+                return heading.location();
+            } else {
+                return null;
+            }
         }
 
         /**
          * Retourne la direction à la position d'un animal, en radians arithmétiques.
          */
         public double direction() {
-            double theta = heading.value();
-            theta = Math.toRadians(90-theta);
-            return Double.isNaN(theta) ? 0 : theta;
+            if (heading != null) {
+                double theta = heading.value();
+                theta = Math.toRadians(90-theta);
+                return Double.isNaN(theta) ? 0 : theta;
+            } else {
+                return 0;
+            }
         }
 
         /**

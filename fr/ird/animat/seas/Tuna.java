@@ -83,8 +83,6 @@ final class Tuna extends Animal {
      *
      * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
      *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
-     *
-     * @see #observe
      */
     protected void move(float duration) {
         double   x = 0;
@@ -112,6 +110,5 @@ final class Tuna extends Animal {
             path.rotate(10*random.nextGaussian());
             path.moveForward(maximumDistance * Math.min(Math.max(0.75 + 0.5*random.nextGaussian(), -1), 1));
         }
-        observe();
     }
 }

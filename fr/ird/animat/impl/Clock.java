@@ -436,7 +436,8 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          * @return Angle d'élévation du soleil, en degrés par rapport à l'horizon.
          */
         public float getSunElevation(final Point2D position) {
-            calculator.compute(position.getX(), position.getY(), new Date(time + duration/2));
+            calculator.setCoordinate(position.getX(), position.getY());
+            calculator.setDate(new Date(time + duration/2));
             return (float) calculator.getElevation();
         }
 

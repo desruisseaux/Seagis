@@ -133,11 +133,7 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
     private EventListenerList listenerList;
 
     /**
-     * Construit un animal à la position initiale spécifiée. Notez que cette position
-     * initiale n'est pas définitive;  on peut la changer à n'importe quel moment par
-     * un appel à la méthode {@link Path#setLocation}.   Elle ne deviendra définitive
-     * (pour le {@linkplain Clock#getStepSequenceNumber pas de temps} 0) qu'après avoir
-     * appelé {@link #observe}.
+     * Construit un animal à la position initiale spécifiée.
      *
      * @param  species L'espèce de cet animal.
      * @param  population La population à laquelle appartient cet animal.
@@ -308,8 +304,6 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      *
      * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
      *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
-     *
-     * @see #observe
      */
     protected void move(float duration) {
         path.rotate(10*random.nextGaussian());
@@ -317,11 +311,13 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
     }
 
     /**
-     * Mémorise des observations sur l'environnement actuel de l'animal. Cette méthode doit
-     * être appelée après chaque {@linkplain #move mouvement} de l'animal. L'implémentation
-     * par défaut puisera les données dans les {@linkplain Environment#getCoverage(Parameter)
-     * couvertures} de chaque {@linkplain Species#getObservedParameters paramètre intéressant
-     * cette espèce}.
+     * Mémorise des observations sur l'environnement actuel de l'animal. Cette méthode est
+     * appelée automatiquement au moment de la création de l'animal ainsi qu'après chaque
+     * {@linkplain Environment#nextTimeStep pas de temps} de l'environnement.
+     *
+     * L'implémentation par défaut puisera les données dans les
+     * {@linkplain Environment#getCoverage(Parameter) couvertures} de chaque
+     * {@linkplain Species#getObservedParameters paramètre intéressant cette espèce}.
      *
      * @throws IllegalStateException si cet animal est mort.
      */

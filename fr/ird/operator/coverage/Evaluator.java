@@ -197,9 +197,9 @@ public abstract class Evaluator extends Coverage {
          * Ajoute des bandes pour chaque axes du système de coordonnées.
          */
         category = new Category[1];
-        for (int i=0; i<bands.length; i++) {
-            category[0] = new Category(dimNames[i], COLORS, SAMPLE_RANGE, new Range(Double.class,
-                                                  new Double(envelope.getMinimum(i)), true,
+        for (int i=0; i<dimNames.length; i++) {
+            category[0] = new Category(dimNames[i], COLORS, SAMPLE_RANGE,
+                          new Range(Double.class, new Double(envelope.getMinimum(i)), true,
                                                   new Double(envelope.getMaximum(i)), false));
             final int k = s.length + numAxisSet*i;
             Arrays.fill(bands, k, k+numAxisSet, new SampleDimension(category, cs.getUnits(i)));
