@@ -1,5 +1,5 @@
 Main-Class: fr.ird.seasview.Main
-Class-Path: geotools-cts.jar geotools-gcs.jar
+Class-Path: geotools.jar application-data.jar
 
 Name: fr/ird/
 Specification-Title: (none)

@@ -132,6 +132,9 @@ public interface ResourceKeys
     public static final int SQL_AREA                            =   107;
     public static final int SQL_BANDS                           =   108;
     public static final int SQL_CATEGORIES                      =   109;
+    public static final int SQL_ENVIRONMENTS                    =   181;
+    public static final int SQL_ENVIRONMENTS_INSERT             =   182;
+    public static final int SQL_ENVIRONMENTS_UPDATE             =   183;
     public static final int SQL_FORMAT                          =   110;
     public static final int SQL_FORMAT_FOR_GROUP_ID             =   111;
     public static final int SQL_IMAGES                          =   112;
@@ -196,10 +199,12 @@ public interface ResourceKeys
     public static final int ERROR_NO_IMAGE_FOR_SELECTION        =   170;
     public static final int ERROR_NO_IMAGE_RECORD_$2            =   171;
     public static final int ERROR_NO_MAIN_THEME                 =   172;
+    public static final int ERROR_NO_PARAMETER_$1               =   179;
     public static final int ERROR_NO_SERIES                     =   173;
     public static final int ERROR_NO_SERIES_SELECTION           =   174;
     public static final int ERROR_OVERFLOW                      =   175;
     public static final int ERROR_SERIES_NOT_FOUND_$1           =   176;
     public static final int ERROR_TOO_MANY_IMAGE_FORMATS_$1     =   177;
+    public static final int ERROR_UNEXPECTED_UPDATE_$1          =   180;
     public static final int ERROR_WRONG_SERIES_$1               =   178;
 }

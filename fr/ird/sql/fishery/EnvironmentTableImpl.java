@@ -29,11 +29,17 @@ package fr.ird.sql.fishery;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
+import java.sql.SQLWarning;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 
 // Divers
 import java.util.Date;
 import javax.media.jai.util.Range;
+
+// Resources
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**
@@ -46,27 +52,38 @@ import javax.media.jai.util.Range;
 final class EnvironmentTableImpl extends Table implements EnvironmentTable
 {
     /**
-     * Requête SQL utilisée par cette classe pour obtenir la table des données
-     * environnementales. L'ordre des colonnes est essentiel. Ces colonnes sont
-     * référencées par les constantes [@link #ID}, [@link #POSITION} et compagnie.
+     * Requête SQL pour obtenir le code d'un paramètre environnemental.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] POSITION  */ ENVIRONMENTS+".position, " +
-                                /*[02] PARAMETER */ ENVIRONMENTS+".[?] "       +
-
-                    "FROM "+ENVIRONMENTS+" "+
-                    "WHERE ID=? AND position=? AND temps=0";
-
-    /** Numéro de colonne. */ static final int POSITION  =  1;
-    /** Numéro de colonne. */ static final int PARAMETER =  2;
-
-    /** Numéro d'argument. */ private static final int ARG_ID       = 1;
-    /** Numéro d'argument. */ private static final int ARG_POSITION = 2;
+    private static final String SQL_MAP_PARAMETER=
+                    "SELECT ID FROM "+PARAMETERS+" WHERE name LIKE ?";
 
     /**
-     * Nom du paramètre examiné par cette table.
+     * Requête SQL pour obtenir la table des données environnementales.
      */
-    private final String parameter;
+    static final String SQL_SELECT=
+                    "SELECT [?] FROM "+ENVIRONMENTS+" "+
+                    "WHERE ID=? AND position=? AND temps=? AND paramètre=?";
+
+    /**
+     * Instruction SQL pour mettre à jour une donnée environnementale.
+     * Note: La valeur est le premier paramètre, et tous les autres sont décalés de 1.
+     */
+    static final String SQL_UPDATE=
+                    "UPDATE "+ENVIRONMENTS+" SET [?]=? "+
+                    "WHERE ID=? AND position=? AND temps=? AND paramètre=?";
+
+    /**
+     * Instruction SQL pour ajouter une donnée environnementale.
+     */
+    static final String SQL_INSERT=
+                    "INSERT INTO "+ENVIRONMENTS+" (ID,position,temps,paramètre,[?]) "+
+                    "VALUES(?,?,?,?,?)";
+
+    /** Numéro d'argument. */ private static final int ARG_ID        = 1;
+    /** Numéro d'argument. */ private static final int ARG_POSITION  = 2;
+    /** Numéro d'argument. */ private static final int ARG_TEMPS     = 3;
+    /** Numéro d'argument. */ private static final int ARG_PARAMETER = 4;
+    /** Numéro d'argument. */ private static final int ARG_VALUE     = 5;
 
     /**
      * Position sur la ligne de pêche.
@@ -74,38 +91,106 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
     private int position;
 
     /**
+     * Décalage de temps, en jours.
+     */
+    private int time;
+
+    /**
+     * Numéro du paramètre.
+     */
+    private int parameter;
+
+    /**
+     * Nom de l'opération examiné par cette table.
+     */
+    private final String operation;
+
+    /**
      * Instruction à utiliser pour les mises à jour.
      * Cette instruction ne sera construite que la
      * première fois où elle sera nécessaire.
      */
-    private transient Statement update;
+    private transient PreparedStatement update;
+
+    /**
+     * Instruction à utiliser pour les insertions.
+     * Cette instruction ne sera construite que la
+     * première fois où elle sera nécessaire.
+     */
+    private transient PreparedStatement insert;
 
     /**
      * Construit une table pour le paramètre spécifié.
      *
      * @param  connection Connection vers une base de données de pêches.
-     * @param  parameter Le paramètre à mettre à jour.
+     * @param  parameter Le paramètre à mettre à jour (exemple: "SST").
+     * @param  operation L'opération (exemple "value" ou "sobel").
      * @throws SQLException si <code>EnvironmentTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected EnvironmentTableImpl(final Connection connection, final String parameter) throws SQLException
+    protected EnvironmentTableImpl(final Connection connection,
+                                   final String     parameter,
+                                   final String     operation) throws SQLException
     {
-        super(connection.prepareStatement(replace(preferences.get(ENVIRONMENTS, SQL_SELECT), parameter)));
-        this.parameter = parameter;
+        super(connection.prepareStatement(replace(preferences.get(ENVIRONMENTS, SQL_SELECT), operation)));
+        this.operation = operation;
+        setParameter(parameter);
         setPosition(CENTER);
+        setTime(0);
     }
 
     /**
-     * Replace substring "[?]" by parameter name.
+     * Replace substring "[?]" by an operation name.
      */
-    private static String replace(final String query, final String parameter)
+    private static String replace(final String query, final String operation)
     {
         final String PARAM = "[?]";
         final StringBuffer buffer=new StringBuffer(query);
         for (int index=-1; (index=buffer.indexOf(PARAM,index+1))>=0;)
         {
-            buffer.replace(index, index+PARAM.length(), parameter);
+            buffer.replace(index, index+PARAM.length(), operation);
         }
         return buffer.toString();
+    }
+
+    /**
+     * Définit le paramètre examinée par cette table.
+     *
+     * @param parameter Le paramètre à définir (exemple: "SST").
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public synchronized void setParameter(final String parameter) throws SQLException
+    {
+        final PreparedStatement stm = statement.getConnection().prepareStatement(SQL_MAP_PARAMETER);
+        stm.setString(1, parameter);
+        final ResultSet result = stm.executeQuery();
+        int lastParameter=0, count=0;
+        while (result.next())
+        {
+            final int code = result.getInt(1);
+            if (count==0 || code!=lastParameter)
+            {
+                lastParameter = code;
+                if (++count >= 2) break;
+            }
+        }
+        result.close();
+        stm.close();
+        if (count!=1)
+        {
+            throw new SQLException(Resources.format(count==0 ?
+                            ResourceKeys.ERROR_NO_PARAMETER_$1 : 
+                            ResourceKeys.ERROR_DUPLICATED_RECORD_$1, parameter));
+        }
+        statement.setInt(ARG_PARAMETER, lastParameter);
+        this.parameter = lastParameter;
+        if (update != null)
+        {
+            update.setInt(ARG_PARAMETER+1, lastParameter);
+        }
+        if (insert != null)
+        {
+            insert.setInt(ARG_PARAMETER, lastParameter);
+        }
     }
 
     /**
@@ -121,8 +206,35 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
         {
             statement.setInt(ARG_POSITION, position);
             this.position = position;
+            if (update != null)
+            {
+                update.setInt(ARG_POSITION+1, position);
+            }
+            if (insert != null)
+            {
+                insert.setInt(ARG_POSITION, position);
+            }
         }
         else throw new IllegalArgumentException(String.valueOf(position));
+    }
+
+    /**
+     * Définit le décalage de temps (en jours).
+     *
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public synchronized void setTime(final int time) throws SQLException
+    {
+        statement.setInt(ARG_TEMPS, time);
+        this.time = time;
+        if (update != null)
+        {
+            update.setInt(ARG_TEMPS+1, time);
+        }
+        if (insert != null)
+        {
+            insert.setInt(ARG_TEMPS, time);
+        }
     }
 
     /**
@@ -142,7 +254,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
         final ResultSet result=statement.executeQuery();
         while (result.next())
         {
-            final double value = result.getDouble(PARAMETER);
+            final double value = result.getDouble(1);
             if (!result.wasNull() && !Double.isNaN(value))
             {
                 sum += value;
@@ -180,19 +292,35 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
             {
                 position = ((AbstractCatchEntry) capture).clampPosition(position);
             }
-            // NOTE: This implementation is highly inefficient,
-            //       but it seems to be the only one working with
-            //       Access's ODBC driver (through Sun's JDBC-ODBC).
             if (update==null)
             {
-                update = statement.getConnection().createStatement();
+                update = statement.getConnection().prepareStatement(replace(
+                         preferences.get(ENVIRONMENTS+".UPDATE", SQL_UPDATE), operation));
+                update.setInt(1+ARG_PARAMETER, parameter);
             }
-            int n;
-            n=update.executeUpdate("UPDATE "+ENVIRONMENTS+" SET "+parameter+"="+value+" "+
-                                   "WHERE ID="+capture.getID()+" AND position="+position+" AND temps="+timeLag);
-            if (n!=0) return;
-            n=update.executeUpdate("INSERT INTO "+ENVIRONMENTS+" (ID,position,temps,"+parameter+") "+
-                                   "VALUES("+capture.getID()+","+position+","+timeLag+","+value+")");
+            update.setInt   (1+ARG_ID,        capture.getID());
+            update.setInt   (1+ARG_POSITION,  position);
+            update.setInt   (1+ARG_TEMPS,     timeLag);
+            update.setDouble(1,               value); // Note: Should be 'float', but Access doesn't like.
+            int n=update.executeUpdate();
+            if (n==0)
+            {
+                if (insert==null)
+                {
+                    insert = statement.getConnection().prepareStatement(replace(
+                             preferences.get(ENVIRONMENTS+".INSERT", SQL_INSERT), operation));
+                    insert.setInt(ARG_PARAMETER, parameter);
+                }
+                insert.setInt   (ARG_ID,        capture.getID());
+                insert.setInt   (ARG_POSITION,  position);
+                insert.setInt   (ARG_TEMPS,     timeLag);
+                insert.setDouble(ARG_VALUE,     value); // Note: Should be 'float', but Access doesn't like.
+                n=insert.executeUpdate();
+            }
+            if (n!=1)
+            {
+                throw new SQLWarning(Resources.format(ResourceKeys.ERROR_UNEXPECTED_UPDATE_$1, new Integer(n)));
+            }
         }
     }
 
@@ -210,6 +338,11 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
         {
             update.close();
             update=null;
+        }
+        if (insert!=null)
+        {
+            insert.close();
+            insert=null;
         }
         super.close();
     }

@@ -107,15 +107,15 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
+        {"Bathymétrie de Sandwell (Réunion)", "FLR"},
+        {"Bathymétrie de Baudry (Réunion)",   "FLR"},
         {"Pompage d'Ekman",                   "EKP"},
-        {"SLA (Monde - TP)",                  "SLA"},
-        {"SLA (Monde - TP/ERS)",              "SLA"},
         {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
         {"SLA (Réunion)",                     "SLA", "U", "V"},
+        {"SLA (Monde - TP)",                  "SLA"},
+        {"SLA (Monde - TP/ERS)",              "SLA"},
         {"SST (synthèse)",                    "SST"},
-        {"Chlorophylle-a (Réunion)",          "CHL"},
-        {"Bathymétrie de Sandwell (Réunion)", "Z"},
-        {"Bathymétrie de Baudry (Réunion)",   "Z"}
+        {"Chlorophylle-a (Réunion)",          "CHL"}
     };
 
     /**
@@ -123,6 +123,13 @@ public final class EnvironmentTableFiller
      * pour n'en appliquer aucune.
      */
     private static final String OPERATION = null; // "GradientMagnitude";
+
+    /**
+     * Colonne de la table "environnement" dans lequel placer le résultat.
+     * Ce nom de colonne est reliée à l'opération. Par exemple "sobel" pour
+     * l'opération "GradientMagnitude".
+     */
+    private static final String COLUMN = "valeur";
 
     /**
      * Fonction à utiliser pour calculer les valeurs
@@ -171,7 +178,7 @@ public final class EnvironmentTableFiller
         final List<CatchEntry>   catchs = pêches.getEntries();
         for (int i=0; i<update.length; i++)
         {
-            update[i] = this.pêches.getEnvironmentTable(series[i+1]);
+            update[i] = this.pêches.getEnvironmentTable(series[i+1], COLUMN);
         }
         images.setOperation(OPERATION);
         final CatchCoverage coverage = new CatchCoverage(images);

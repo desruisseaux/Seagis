@@ -87,9 +87,12 @@ public class FisheryDataBase extends DataBase
      */
     private static final String[] DEFAULT_PROPERTIES=
     {
-        Table.SPECIES,   SpeciesTable      .SQL_SELECT,
-        Table.LONGLINES, LonglineCatchTable.SQL_SELECT,
-        Table.SEINES,    SeineCatchTable   .SQL_SELECT
+        Table.SPECIES,                SpeciesTable        .SQL_SELECT,
+        Table.LONGLINES,              LonglineCatchTable  .SQL_SELECT,
+        Table.SEINES,                 SeineCatchTable     .SQL_SELECT,
+        Table.ENVIRONMENTS,           EnvironmentTableImpl.SQL_SELECT,
+        Table.ENVIRONMENTS+".UPDATE", EnvironmentTableImpl.SQL_UPDATE,
+        Table.ENVIRONMENTS+".INSERT", EnvironmentTableImpl.SQL_INSERT
     };
 
     /**
@@ -102,7 +105,10 @@ public class FisheryDataBase extends DataBase
     {
         ResourceKeys.SQL_SPECIES,
         ResourceKeys.SQL_LONGLINES,
-        ResourceKeys.SQL_SEINES
+        ResourceKeys.SQL_SEINES,
+        ResourceKeys.SQL_ENVIRONMENTS,
+        ResourceKeys.SQL_ENVIRONMENTS_UPDATE,
+        ResourceKeys.SQL_ENVIRONMENTS_INSERT
     };
 
     /**
@@ -230,9 +236,12 @@ public class FisheryDataBase extends DataBase
      * Construit et retourne un objet qui interrogera un paramètre
      * environmental de la base de données. Lorsque cette table ne
      * sera plus nécessaire, il faudra appeler {@link EnvironmentTable#close}.
+     *
+     * @param parameter Paramètre (exemple "SST" ou "EKP").
+     * @param operation Opération (exemple "valeur" ou "sobel").
      */
-    public EnvironmentTable getEnvironmentTable(final String parameter) throws SQLException
-    {return new EnvironmentTableImpl(connection, parameter);}
+    public EnvironmentTable getEnvironmentTable(final String parameter, final String operation) throws SQLException
+    {return new EnvironmentTableImpl(connection, parameter, operation);}
 
     /**
      * Construit et retourne un panneau qui permet à l'utilisateur de modifier
