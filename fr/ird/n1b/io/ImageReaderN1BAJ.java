@@ -58,7 +58,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 import fr.ird.io.text.ParseSatellite;
 import fr.ird.io.text.ParseSatellite;
 
@@ -304,13 +304,13 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
      * @param channel   Canal désiré.
      * @return une grille contenant les coefficients de calibration du <code>channel</code>.
      */
-    private ElementGrid getSlopeInterceptCoef(final int channel) throws IOException 
+    private CoefficientGrid getSlopeInterceptCoef(final int channel) throws IOException 
     {
         final ImageInputStream input = (FileImageInputStream)this.input;
         final double div1 = 2<<29;  
         final double div2 = 2<<21;
         final double[] array = new double[NUM_COEF_SLOPE_INTERCEPT];        
-        final ElementGrid coefficients = new ElementGrid(getHeight(0), NUM_COEF_SLOPE_INTERCEPT);
+        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_COEF_SLOPE_INTERCEPT);
         Field fieldCoeff;
         
         switch (channel) 
@@ -332,7 +332,7 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
             array[0] = (double)input.readUnsignedInt() / div1; 
             // Intercept value.
             array[1] = (double)input.readUnsignedInt() / div2; 
-            coefficients.setElement(indiceLine,  new CoordinatePoint(array));            
+            coefficients.setElement(indiceLine, array);            
         }
         return coefficients;        
     }    
@@ -407,7 +407,7 @@ public class ImageReaderN1BAJ extends ImageReaderN1B
     {
         final String descriptor       = "AVHRR_AJ";
         final String[] paramNames     = {SLOPE_INTERCEPT_COEFFICIENT};
-        final Class[]  paramClasses   = {ElementGrid.class};
+        final Class[]  paramClasses   = {CoefficientGrid.class};
         final Object[]  paramDefaults = {null};
         final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
                                                                                                paramNames,

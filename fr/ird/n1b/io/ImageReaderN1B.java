@@ -57,7 +57,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 
 
 /**

@@ -56,7 +56,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 import fr.ird.n1b.io.Satellite;
 import fr.ird.io.text.ParseSatellite;
 
@@ -286,11 +286,11 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
      * @param channel   Le canal.
      * @return les coefficients thermique du <CODE>channel</CODE> désiré.
      */
-    private ElementGrid getIrOperationalCoef(final int channel) throws IOException     
+    private CoefficientGrid getIrOperationalCoef(final int channel) throws IOException     
     {
         final ImageInputStream input = (FileImageInputStream)this.input;
         final double[] array = new double[NUM_COEFFICIENT_THERMAL_CALIBRATION];        
-        final ElementGrid coefficients = new ElementGrid(getHeight(0), NUM_COEFFICIENT_THERMAL_CALIBRATION);
+        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_COEFFICIENT_THERMAL_CALIBRATION);
         final Field[] field = new Field[NUM_COEFFICIENT_THERMAL_CALIBRATION];
         
         switch (channel) 
@@ -321,7 +321,7 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         {
             for (int i=0 ; i<NUM_COEFFICIENT_THERMAL_CALIBRATION ; i++)
                 array[i] = (double)field[i].getUnsignedInteger(input, base)/1E6;            
-            coefficients.setElement(indiceLine,  new CoordinatePoint(array));            
+            coefficients.setElement(indiceLine,  array);            
         }
         return coefficients;        
     }
@@ -332,11 +332,11 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
      * @param channel   Le vanal désiré.
      * @return les coeffcients de calibrations de canaux du visible ou proche du visible. 
      */
-    private ElementGrid getSlopeInterceptCoef(final int channel) throws IOException     
+    private CoefficientGrid getSlopeInterceptCoef(final int channel) throws IOException     
     {
         final ImageInputStream input = (FileImageInputStream)this.input;
         final double[] array = new double[NUM_SLOPE_INTERCEPT_COEF];        
-        final ElementGrid coefficients = new ElementGrid(getHeight(0), NUM_SLOPE_INTERCEPT_COEF);
+        final CoefficientGrid coefficients = new CoefficientGrid(getHeight(0), NUM_SLOPE_INTERCEPT_COEF);
         final Field[] field = new Field[NUM_SLOPE_INTERCEPT_COEF];
         
         switch (channel) 
@@ -376,7 +376,7 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
             array[2] = (double)field[2].getUnsignedInteger(input, base)/1E7;            
             array[3] = (double)field[3].getUnsignedInteger(input, base)/1E6;            
             array[4] = (double)field[4].getUnsignedInteger(input, base);            
-            coefficients.setElement(indiceLine,  new CoordinatePoint(array));            
+            coefficients.setElement(indiceLine,  array);            
         }
         return coefficients;        
     }
@@ -454,8 +454,8 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
                                          SLOPE_INTERCEPT_COEFFICIENT,
                                          WAVE_LENGTH,
                                          RADIANCE_CONSTANT};
-        final Class[]  paramClasses   = {ElementGrid.class,
-                                         ElementGrid.class,
+        final Class[]  paramClasses   = {CoefficientGrid.class,
+                                         CoefficientGrid.class,
                                          Double.class, 
                                          double[].class};
         final Object[]  paramDefaults = {null,
