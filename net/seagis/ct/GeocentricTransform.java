@@ -63,7 +63,7 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
     private static final long serialVersionUID = -3352045463953828140L;
 
     /**
-     * Maximal error tolerance in metres during assertions. If assertions
+     * Maximal error tolerance in metres during assertions, in metres. If assertions
      * are enabled (JDK 1.4 only), then every coordinates transformed with
      * {@link #inverseTransform} will be transformed again with {@link #transform}.
      * If the distance between the resulting position and the original position
@@ -180,11 +180,18 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
      * geocentric coordinates (x, y, z) according to the current ellipsoid
      * parameters.
      */
-    public void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    public void transform(double[] srcPts, int srcOff, double[] dstPts, int dstOff, int numPts)
+    {transform(srcPts, srcOff, dstPts, dstOff, numPts, false);}
+
+    /**
+     * Implementation of geodetic to geocentric conversion. This
+     * implementation allows the caller to use height in computation.
+     */
+    private void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts, boolean hasHeight)
     {
         int step = 0;
         final int dimSource = getDimSource();
-        final boolean hasHeight = (dimSource>=3);
+        hasHeight |= (dimSource>=3);
         if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*dimSource>dstOff)
         {
             step = -dimSource;
@@ -257,6 +264,10 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
         int step = 0;
         final int dimSource = getDimSource();
         final boolean hasHeight = (dimSource>=3);
+        boolean   computeHeight = hasHeight;
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert computeHeight=true; // Intentional side effect
+//----- END OF JDK 1.4 DEPENDENCIES ---
         if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*dimSource>dstOff)
         {
             step    = -dimSource;
@@ -289,22 +300,29 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
             final double  sin_p1 = T1 / S1;                         // sin(phi1), phi1 is estimated latitude
             final double  cos_p1 = sum / S1;                        // cos(phi1)
 
-            dstPts[dstOff++] = Math.toDegrees(Math.atan2(y      , x     )); // Longitude
-            dstPts[dstOff++] = Math.toDegrees(Math.atan (sin_p1 / cos_p1)); // Latitude
-            if (hasHeight)                                                  // Height (metres)
+            final double longitude = Math.toDegrees(Math.atan2(y      , x     ));
+            final double  latitude = Math.toDegrees(Math.atan (sin_p1 / cos_p1));
+            final double    height;
+
+            dstPts[dstOff++] = longitude;
+            dstPts[dstOff++] = latitude;
+            if (computeHeight)
             {
-                final double height;
                 final double rn = a/Math.sqrt(1-e2*(sin_p1*sin_p1)); // Earth radius at location
                 if      (cos_p1 >= +COS_67P5) height = W / +cos_p1 - rn;
                 else if (cos_p1 <= -COS_67P5) height = W / -cos_p1 - rn;
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
-                dstPts[dstOff++] = height;
-            }
+                if (hasHeight)
+                {
+                    dstPts[dstOff++] = height;
+                }
 //----- BEGIN JDK 1.4 DEPENDENCIES ----
-            // If assertion are enabled, then transform the
-            // result and compare it with the input array.
-            assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
+                // If assertion are enabled, then transform the
+                // result and compare it with the input array.
+                double distance;
+                assert (distance=checkTransform(new double[] {x,y,z, longitude, latitude, height})) < MAX_ERROR : distance;
 //----- END OF JDK 1.4 DEPENDENCIES ---
+            }
             srcOff += step;
             dstOff += step;
         }
@@ -322,6 +340,10 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
         int step = 0;
         final int dimSource = getDimSource();
         final boolean hasHeight = (dimSource>=3);
+        boolean   computeHeight = hasHeight;
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert computeHeight=true; // Intentional side effect
+//----- END OF JDK 1.4 DEPENDENCIES ---
         if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*dimSource>dstOff)
         {
             step    = -dimSource;
@@ -354,39 +376,46 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
             final double  sin_p1 = T1 / S1;                         // sin(phi1), phi1 is estimated latitude
             final double  cos_p1 = sum / S1;                        // cos(phi1)
 
-            dstPts[dstOff++] = (float) Math.toDegrees(Math.atan2(y      , x     )); // Longitude
-            dstPts[dstOff++] = (float) Math.toDegrees(Math.atan (sin_p1 / cos_p1)); // Latitude
-            if (hasHeight)                                                          // Height (metres)
+            final double longitude = Math.toDegrees(Math.atan2(y      , x     ));
+            final double  latitude = Math.toDegrees(Math.atan (sin_p1 / cos_p1));
+            final double    height;
+
+            dstPts[dstOff++] = (float) longitude;
+            dstPts[dstOff++] = (float) latitude;
+            if (computeHeight)
             {
-                final double height;
                 final double rn = a/Math.sqrt(1-e2*(sin_p1*sin_p1)); // Earth radius at location
                 if      (cos_p1 >= +COS_67P5) height = W / +cos_p1 - rn;
                 else if (cos_p1 <= -COS_67P5) height = W / -cos_p1 - rn;
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
-                dstPts[dstOff++] = (float) height;
-            }
+                if (hasHeight)
+                {
+                    dstPts[dstOff++] = (float) height;
+                }
 //----- BEGIN JDK 1.4 DEPENDENCIES ----
-            // If assertion are enabled, then transform the
-            // result and compare it with the input array.
-            assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
+                // If assertion are enabled, then transform the
+                // result and compare it with the input array.
+                double distance;
+                assert (distance=checkTransform(new double[] {x,y,z, longitude, latitude, height})) < MAX_ERROR : distance;
 //----- END OF JDK 1.4 DEPENDENCIES ---
+            }
             srcOff += step;
             dstOff += step;
         }
     }
 
     /**
-     * Transform the last half if the specified array and compare
-     * it with the first half. Array <code>points</code> must have
-     * a length of 6.
+     * Transform the last half if the specified array and returns
+     * the distance with the first half. Array <code>points</code>
+     * must have a length of 6.
      */
-    private boolean checkTransform(final double[] points)
+    private double checkTransform(final double[] points)
     {
-        transform(points, 3, points, 3, 1);
+        transform(points, 3, points, 3, 1, true);
         final double dx = points[0]-points[3];
         final double dy = points[1]-points[4];
         final double dz = points[2]-points[5];
-        return Math.sqrt(dx*dx + dy*dy + dz*dz) < MAX_ERROR;
+        return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
     /**

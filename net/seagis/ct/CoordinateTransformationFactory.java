@@ -401,8 +401,8 @@ public class CoordinateTransformationFactory
             final GeocentricCoordinateSystem gcs1 = new GeocentricCoordinateSystem(name, sourceDatum);
             final GeocentricCoordinateSystem gcs3 = new GeocentricCoordinateSystem(name, targetDatum);
             final CoordinateTransformation  step1 = createTransformationStep(sourceCS, gcs1);
-            final CoordinateTransformation  step3 = createTransformationStep(targetCS, gcs3).inverse();
             final CoordinateTransformation  step2 = createTransformationStep(gcs1, gcs3);
+            final CoordinateTransformation  step3 = createTransformationStep(targetCS, gcs3).inverse();
             return concatenate(step1, step2, step3);
         }
         catch (TransformException exception)
@@ -734,7 +734,7 @@ public class CoordinateTransformationFactory
      *
      * @param  classification either "Ellipsoid_To_Geocentric" or "Geocentric_To_Ellipsoid".
      * @param  dimGeoCS Dimension of the geographic coordinate system (2 or 3).
-     * @param  ellipsoid The ellpisoid.
+     * @param  ellipsoid The ellipsoid.
      * @return The transformation.
      */
     private MathTransform getGeocentricTransform(final String classification, final int dimGeoCS, final Ellipsoid ellipsoid)
