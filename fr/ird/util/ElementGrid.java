@@ -28,9 +28,6 @@ package fr.ird.util;
 // J2SE.
 import java.util.Arrays;
 
-// GEOTOOLS.
-import org.geotools.pt.CoordinatePoint;
-
 /**
  * Définie une grille d'enregistrements. Chaque enregitrement est composé d'un nombre 
  * fixe d'éléments flottants (tableau à deux dimensions).
@@ -100,13 +97,13 @@ public final class ElementGrid
      * @param  index    Indice de l'enregistrement.
      * @return l'enregistrement désiré.
      */
-    public synchronized CoordinatePoint getRecord(final int index) 
-    {
+    public synchronized double[] getRecord(final int index) 
+    {        
         final int offset = computeOffset(index);
         final double[] tgt = new double[dimension];
         for (int i=0; i<dimension ; i++)
             tgt[i] = grid[offset + i];
-        return new CoordinatePoint(tgt);
+        return tgt;
     }
 
     /**
@@ -115,10 +112,10 @@ public final class ElementGrid
      * @param  index   Index de l'enregistrement dans la grille.
      * @param  record  Enregistrement à affecter.
      */
-    public void setElement(final int index, final CoordinatePoint record) 
+    public void setElement(final int index, final double[] record) 
     {
         final int offset = computeOffset(index);
         for (int i=0 ; i<dimension ; i++)
-            grid[offset + i] = record.getOrdinate(i);
+            grid[offset + i] = record[i];
     }        
 }
