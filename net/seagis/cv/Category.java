@@ -74,14 +74,30 @@ public class Category implements Serializable
      * made of all sample values in the range {@link #lower} inclusive to
      * {@link #upper} exclusive.
      */
-    public final int lower;
+    public final int lower; // TODO: rename "minSample"
 
     /**
      * The upper sample value (exclusive) as an integer. This category is
      * made of all sample values in the range {@link #lower} inclusive to
      * {@link #upper} exclusive.
      */
-    public final int upper;
+    public final int upper; // TODO: rename "maxSample". Inclusive?
+
+    /**
+     * The minimal geophysics value, inclusive. This value is usually (but not
+     * always) equals to <code>{@link #toValue toValue}({@link #lower})</code>.
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
+     */
+    public final double minimum; // TODO: rename "minValue"
+
+    /**
+     * The maximal geophysics value, exclusive. This value is usually (but not
+     * always) equals to <code>{@link #toValue toValue}({@link #upper})</code>.
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
+     */
+    public final double maximum; // TODO: rename "maxValue". Inclusive?
 
     /**
      * Offset is the value to add to grid values for this category.
@@ -100,22 +116,6 @@ public class Category implements Serializable
      * For qualitative categories, this value is <code>NaN</code>.
      */
     protected final double scale;
-
-    /**
-     * The minimal geophysics value, inclusive. This value is usually (but not
-     * always) equals to <code>{@link #toValue toValue}({@link #lower})</code>.
-     *
-     * For qualitative categories, this value is <code>NaN</code>.
-     */
-    protected final double minimum;
-
-    /**
-     * The maximal geophysics value, exclusive. This value is usually (but not
-     * always) equals to <code>{@link #toValue toValue}({@link #upper})</code>.
-     *
-     * For qualitative categories, this value is <code>NaN</code>.
-     */
-    protected final double maximum;
 
     /**
      * Codes ARGB des couleurs de la catégorie. Les couleurs par
@@ -139,14 +139,15 @@ public class Category implements Serializable
     };
 
     /**
-     * Construct a qualitative category for sample value <code>index</code>.
+     * Construct a qualitative category for sample value <code>sample</code>.
      *
      * @param  name    The category name.
      * @param  color   The category color, or <code>null</code> for a default color.
-     * @param  index   The sample value as integer, usually in the range 0 to 255.
+     * @param  sample  The sample value as integer, usually in the range 0 to 255.
      */
-    public Category(final String name, final Color color, final int index)
-    {this(name, new Color[]{(color!=null) ? color : CYCLE[Math.abs(index)%CYCLE.length]}, index, index+1);}
+    public Category(final String name, final Color color, final int sample)
+    {this(name, new Color[]{(color!=null) ? color : CYCLE[Math.abs(sample)%CYCLE.length]}, sample, sample+1);}
+    // TODO: remove +1 if 'maxSample' is inclusive.
 
     /**
      * Construct a qualitative category for sample values ranging
@@ -170,7 +171,7 @@ public class Category implements Serializable
      * Construct a qualitative category with the specified NaN value.
      */
     private Category(final String name, final Color[] colors, final int lower, final int upper, final float NaN) throws IllegalArgumentException
-    {this(name, colors, lower, upper, NaN, NaN, false);}
+    {this(name, toARGB(colors), lower, upper, NaN, NaN, false);}
 
     /**
      * Construct a quantitative category for sample values ranging from <code>lower</code>
@@ -191,14 +192,20 @@ public class Category implements Serializable
      * @throws IllegalArgumentException if <code>lower</code> is not smaller than <code>upper</code>,
      *         or if <code>offset</code> or <code>scale</code> coefficients are illegal.
      */
-    public Category(final String name, final Color[] colors, final int lower, final int upper, final double offset, final double scale) throws IllegalArgumentException
-    {this(name, colors, lower, upper, offset, scale, true);}
+    public Category(final String name,   final Color[] colors,
+                    final int    lower,  final int    upper,
+                    final double offset, final double scale) throws IllegalArgumentException
+    {
+        this(name, toARGB(colors), lower, upper, offset, scale, true);
+    }
+    // TODO: Expect 'minValue' and 'maxValue' instead of 'offset' and 'scale'.
+    //       add a 'createLinear' method expecting 'offset' and 'scale' arguments.
 
     /**
      * Construct a category with the specified scale and offset.
      *
      * @param  name    The category name.
-     * @param  colors  A set of colors for this category.
+     * @param  ARGB    A set of colors for this category, as ARGB values.
      * @param  lower   The lower sample value, inclusive.
      * @param  upper   The upper sample value, exclusive.
      * @param  offset  The <code>offset</code> coefficient in the linear equation <code>v=offset+scale*p</code>.
@@ -208,14 +215,17 @@ public class Category implements Serializable
      * @throws IllegalArgumentException if <code>lower</code> is not smaller than <code>upper</code>,
      *         or if <code>offset</code> or <code>scale</code> coefficients are illegal.
      */
-    private Category(final String name, final Color[] colors, final int lower, final int upper,
-                     final double offset, final double scale, final boolean isQuantitative) throws IllegalArgumentException
+    private Category(final String name,   final int[]  ARGB,
+                     final int    lower,  final int    upper,
+                     final double offset, final double scale,
+                     final boolean isQuantitative) throws IllegalArgumentException
     {
         this.name   = name.trim();
         this.lower  = lower;
         this.upper  = upper;
         this.offset = offset;
         this.scale  = scale;
+        this.ARGB   = ARGB;
         // Use '!' in order to catch NaN (previous version used float type).
         if (!(lower<upper)/* || Float.isInfinite(lower) || Float.isInfinite(upper)*/)
         {
@@ -241,6 +251,19 @@ public class Category implements Serializable
             this.minimum = min;
             this.maximum = max;
         }
+    }
+
+    /**
+     * Convert an array of colors to an array of ARGB values.
+     * If <code>colors</code> is null, than a default array
+     * will be returned.
+     *
+     * @param  colors The array of colors to convert (may be null).
+     * @return The colors as ARGB values. Never null.
+     */
+    private static int[] toARGB(final Color[] colors)
+    {
+        final int[] ARGB;
         if (colors!=null && colors.length!=0)
         {
             ARGB = new int[colors.length];
@@ -248,6 +271,7 @@ public class Category implements Serializable
                 ARGB[i] = colors[i].getRGB();
         }
         else ARGB = DEFAULT;
+        return ARGB;
     }
 
     /**
@@ -295,7 +319,7 @@ public class Category implements Serializable
      *
      * @see CategoryList#toIndex
      */
-    public int toIndex(final double value)
+    public int toIndex(final double value) // TODO: rename "toSample"
     {
         final double index = Math.rint((value-offset)/scale);
         return (index>=lower) ? ((index<upper) ? (int)index : upper-1) : lower;
@@ -320,6 +344,62 @@ public class Category implements Serializable
      */
     public boolean isIdentity()
     {return offset==0 && scale==1;}
+
+    /**
+     * Returns a new category for the same sample values but a different range
+     * of geophysics values.  For example, a map of elevations may be rescaled
+     * from feets to meters. The sample values still the same (no need to copy
+     * all pixels in a new image), but the corresponding geophysics values are
+     * multiplied by 0.3048.
+     *
+     * @param  min The new minimal geophysics value.
+     * @param  max The new maximal geophysics value.
+     * @return A category for the new geophysics range, or <code>this</code>
+     *         if the new range is identical to the current one.
+     * @throws IllegalStateException if this category is not quantitative.
+     */
+    public Category rescale(final double min, final double max) throws IllegalStateException
+    {
+        if (!isQuantitative())
+        {
+            throw new IllegalStateException(Resources.format(
+                      ResourceKeys.ERROR_QUALITATIVE_CATEGORY_$1, getName(null)));
+        }
+        if (minimum==min && maximum==max)
+        {
+            return this;
+        }
+        // TODO 1: remove 'scale' and 'offset' computation if it
+        //         is going to be done inside the constructor.
+        // TODO 2: Override this method in LogarithmicCategory.
+        final double scale  = (max-min) / (upper-lower);
+        final double offset = min - scale*lower;
+        return new Category(name, ARGB, lower, upper, scale, offset, true);
+    }
+
+    /**
+     * Returns a new category for the same sample and geophysics values but
+     * a different color palette.
+     *
+     * @param colors A set of colors for the new category. This array may have
+     *               any length; colors will be interpolated as needed. An array
+     *               of length 1 means that an uniform color should be used for
+     *               all sample values. An array of length 0 or a <code>null</code>
+     *               array means that some default colors should be used (usually
+     *               a gradient from opaque black to opaque white).
+     * @return A category with the new color palette, or <code>this</code>
+     *         if the new colors are identical to the current ones.
+     */
+    public Category recolor(final Color[] colors)
+    {
+        final int[] newARGB = toARGB(colors);
+        if (Arrays.equals(ARGB, newARGB))
+        {
+            return this;
+        }
+        // TODO: replace 'offset' and 'scale' by 'minValue' and 'maxValue'.
+        return new Category(name, newARGB, lower, upper, scale, offset, isQuantitative());
+    }
 
     /**
      * Returns a hash value for this category.

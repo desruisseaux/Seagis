@@ -222,8 +222,12 @@ public class GridCoverage extends Coverage
     private final SampleDimension[] sampleDimensions;
 
     /**
-     * Construct a new grid coverage with the same parameter
-     * than the specified coverage.
+     * Construct a new grid coverage with the same parameter than the specified
+     * coverage. This constructor is useful when creating a coverage with
+     * identical data, but in which some method has been overriden in order to
+     * process data differently (e.g. interpolating them).
+     *
+     * @param coverage The source grid coverage.
      */
     protected GridCoverage(final GridCoverage coverage)
     {
@@ -579,12 +583,21 @@ public class GridCoverage extends Coverage
         {
             final int   band  = 0; // TODO: make available as a parameter.
             final int[] bands = new int[]{band};
-
-            final RenderedImage reducedImage = (bands.length==numBands && isIncreasing(bands)) ?
-                    image : JAI.create("BandSelect", new ParameterBlock().addSource(image).add(bands));
+            final RenderedImage reducedImage;
+            if (bands.length!=numBands || !isIncreasing(bands))
+            {
+                ParameterBlock param = new ParameterBlock().addSource(image).add(bands);
+                reducedImage = JAI.create("BandSelect", param);
+            }
+            else
+            {
+                reducedImage = image;
+            }
             final CategoryList[] reducedCat = new CategoryList[bands.length];
-            for (int i=0; i<bands.length; i++) reducedCat[i]=categories[bands[i]];
-    
+            for (int i=0; i<bands.length; i++)
+            {
+                reducedCat[i]=categories[bands[i]];
+            }
             this.data  = image;
             this.image = PlanarImage.wrapRenderedImage(CategoryList.toIndexed(reducedImage, reducedCat));
         }
@@ -644,6 +657,21 @@ public class GridCoverage extends Coverage
      */
     public Envelope getEnvelope()
     {return (Envelope) envelope.clone();}
+
+    /**
+     * Retrieve category list for every band in this coverage. This is a
+     * convenience method for invoking {@link #getSampleDimensions()}, and
+     * then retrieving the category list for each dimension.
+     */
+    public CategoryList[] getCategoryLists()
+    {
+        final CategoryList[] categories = new CategoryList[sampleDimensions.length];
+        for (int i=0; i<categories.length; i++)
+        {
+            categories[i] = sampleDimensions[i].getCategoryList();
+        }
+        return categories;
+    }
 
     /**
      * Retrieve sample dimension information for the coverage.

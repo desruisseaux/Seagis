@@ -231,7 +231,7 @@ final class Resampler extends GridCoverage
             OpenGIS.getCoordinateSystem2D(sourceCS);
             OpenGIS.getCoordinateSystem2D(targetCS);
         }
-        final CategoryList[] categories = getCategories(sourceCoverage);
+        final CategoryList[] categories = sourceCoverage.getCategoryLists();
         /*
          * The projection are usually applied on floating-point values, in order
          * to gets maximal precision and to handle correctly the special case of
@@ -400,7 +400,7 @@ final class Resampler extends GridCoverage
         envelope.setRange(1, area.getMinY(), area.getMaxY());
         return new GridCoverage(sourceCoverage.getName(null),
                                 image, sourceCoverage.getCoordinateSystem(),
-                                envelope, getCategories(sourceCoverage), true,
+                                envelope, sourceCoverage.getCategoryLists(), true,
                                 new GridCoverage[] {sourceCoverage}, null);
     }
 
@@ -434,21 +434,6 @@ final class Resampler extends GridCoverage
             return false;
         }
         return true;
-    }
-
-    /**
-     * Gets the category lists from the source coverage. We will
-     * use exactly the same categories for the transformed coverage.
-     */
-    private static CategoryList[] getCategories(final GridCoverage coverage)
-    {
-        final SampleDimension[] samplesDim = coverage.getSampleDimensions();
-        final CategoryList[]    categories = new CategoryList[samplesDim.length];
-        for (int i=0; i<categories.length; i++)
-        {
-            categories[i] = samplesDim[i].getCategoryList();
-        }
-        return categories;
     }
 
     /**

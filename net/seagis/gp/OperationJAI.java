@@ -30,35 +30,60 @@ package net.seagis.gp;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.pt.Envelope;
+import net.seagis.cv.Category;
+import net.seagis.cv.CategoryList;
 import net.seagis.gc.GridCoverage;
 import net.seagis.cs.CoordinateSystem;
 
 // Java Advanced Imaging
 import javax.media.jai.JAI;
 import javax.media.jai.util.Range;
+import javax.media.jai.ImageLayout;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.OperationDescriptor;
 import javax.media.jai.ParameterListDescriptor;
 import javax.media.jai.ParameterListDescriptorImpl;
 
-// Image (Java2D)
+// Image (Java2D) and collections
+import java.awt.Color;
+import java.awt.RenderingHints;
+import java.awt.color.ColorSpace;
+import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 
 // Resources
+import javax.units.Unit;
+import net.seagis.resources.Utilities;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
 
 
 /**
  * Wrap an {@link OperationDescriptor} for interoperability with
- * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>.
- * This class help to leverage the rich set of JAI operators in an OpenGIS framework.
- * <code>OperationJAI</code> inherits operation name and argument types  from {@link
- * OperationDescriptor}, except source argument type which is set to {@link GridCoverage}.
- * If there is only one source argument, il will be renamed "Source" for better compliance
- * to OpenGIS usage.
+ * <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced
+ * Imaging</A>. This class help to leverage the rich set of JAI operators
+ * in an OpenGIS framework. <code>OperationJAI</code> inherits operation
+ * name and argument types from {@link OperationDescriptor}, except source
+ * argument type which is set to <code>{@link GridCoverage}.class</code>.
+ * If there is only one source argument, il will be renamed "Source" for
+ * better compliance to OpenGIS usage.
+ * <br><br>
+ * The entry point for applying operation is the usual <code>doOperation</code>
+ * method. The default implementation forward the call to other methods for
+ * different bits of tasks, resulting in the following chain of calls:
+ *
+ * <ol>
+ *   <li>{@link #doOperation(ParameterList)}</li>
+ *   <li>{@link #doOperation(GridCoverage[], ParameterBlockJAI)}</li>
+ *   <li>{@link #deriveCategoryList}</li>
+ *   <li>{@link #deriveCategory}</li>
+ *   <li>{@link #deriveUnit}</li>
+ * </ol>
+ *
+ * Subclasses should override the two last <code>derive</code> methods. The
+ * default implementation for other methods should be sufficient in most cases.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -69,6 +94,18 @@ public class OperationJAI extends Operation
      * The rendered mode for JAI operation.
      */
     private static final String RENDERED_MODE = "rendered";
+
+    /**
+     * Index of the source {@link GridCoverage} to use as a model. The
+     * destination grid coverage will reuse the same coordinate system,
+     * envelope and qualitative categories than this "master" source.
+     * <br><br>
+     * For operations expecting only one source, there is no ambiguity.
+     * But for operations expecting more than one source, the choice of
+     * a "master" source is somewhat arbitrary.   This constant is used
+     * merely as a flag for spotting those places in the code.
+     */
+    private static final int MASTER_SOURCE_INDEX = 0;
 
     /**
      * The operation descriptor.
@@ -121,7 +158,9 @@ public class OperationJAI extends Operation
         ensureValid(descriptor.getDestClass(RENDERED_MODE));
         final Class[] sourceClasses = descriptor.getSourceClasses(RENDERED_MODE);
         for (int i=0; i<sourceClasses.length; i++)
+        {
             ensureValid(sourceClasses[i]);
+        }
 
         final ParameterListDescriptor parent = descriptor.getParameterListDescriptor(RENDERED_MODE);
         final String[] sourceNames    = getSourceNames(descriptor);
@@ -130,9 +169,9 @@ public class OperationJAI extends Operation
         final Object[] parentDefaults = parent.getParamDefaults();
 
         final int    numSources = descriptor.getNumSources();
-        final String[]    names = new String[parentNames   .length+numSources];
-        final Class []  classes = new Class [parentClasses .length+numSources];
-        final Object[] defaults = new Object[parentDefaults.length+numSources];
+        final String[]    names = new String[parentNames   .length + numSources];
+        final Class []  classes = new Class [parentClasses .length + numSources];
+        final Object[] defaults = new Object[parentDefaults.length + numSources];
         final Range[]    ranges = new Range [defaults.length];
         for (int i=0; i<ranges.length; i++)
         {
@@ -164,7 +203,10 @@ public class OperationJAI extends Operation
         {
             return new String[] {"Source"};
         }
-        else return descriptor.getSourceNames();
+        else
+        {
+            return descriptor.getSourceNames();
+        }
     }
 
     /**
@@ -181,13 +223,15 @@ public class OperationJAI extends Operation
     }
 
     /**
-     * Apply a process operation to a grid coverage. The default
-     * implementation separate sources from parameters and invokes
+     * Apply a process operation to a grid coverage.  The default implementation
+     * extract the source <code>GridCoverage</code>s from parameters and invokes
      * {@link #doOperation(GridCoverage[], ParameterBlockJAI)}.
      *
      * @param  parameters List of name value pairs for the
      *         parameters required for the operation.
      * @return The result as a grid coverage.
+     *
+     * @see #doOperation(GridCoverage[], ParameterBlockJAI)
      */
     protected GridCoverage doOperation(final ParameterList parameters)
     {
@@ -214,9 +258,12 @@ public class OperationJAI extends Operation
     }
 
     /**
-     * Apply a JAI operation to a grid coverage. The default implementation checks if
-     * all sources use the same coordinate system and have the same envelope, and then
-     * apply the operation using the following line:
+     * Apply a JAI operation to a grid coverage.  The default implementation
+     * ensure that every sources use the same coordinate system and have the
+     * same envelope. Then, it construct a new mapping between sample values
+     * and geophysics values with new units. This mapping is get by invoking
+     * the {@link #deriveCategoryList deriveCategoryList} method. Finally, it
+     * apply the operation using the following code:
      *
      * <blockquote><pre>
      * {@link JAI#create(String,ParameterBlock) JAI.create}({@link #descriptor}.getName(),&nbsp;parameters)
@@ -226,12 +273,21 @@ public class OperationJAI extends Operation
      * @param  parameters List of name value pairs for the
      *         parameters required for the operation.
      * @return The result as a grid coverage.
+     *
+     * @see #doOperation(ParameterList)
+     * @see #deriveCategoryList
+     * @see JAI#create(String, ParameterBlock, RenderingHints)
      */
     protected GridCoverage doOperation(final GridCoverage[] sources, final ParameterBlockJAI parameters)
     {
-        final GridCoverage source = sources[0];
+        final int band = 0; // The band to examine.
+        final GridCoverage source = sources[MASTER_SOURCE_INDEX];
         final CoordinateSystem cs = source.getCoordinateSystem();
         final Envelope   envelope = source.getEnvelope();
+        /*
+         * Ensure that all coverages use the same
+         * coordinate system and has the same envelope.
+         */
         for (int i=1; i<sources.length; i++)
         {
             if (!cs.equivalents(sources[i].getCoordinateSystem()))
@@ -239,14 +295,226 @@ public class OperationJAI extends Operation
             if (!envelope.equals(sources[i].getEnvelope()))
                 throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ENVELOPE_MISMATCH));
         }
-        RenderedImage data = JAI.create(descriptor.getName(), parameters);
+        /*
+         * Get the target category lists. A new color model
+         * will be constructed from the new CategoryList.
+         */
+        final CategoryList[][] list = new CategoryList[sources.length][];
+        for (int i=0; i<list.length; i++)
+        {
+            list[i] = sources[i].getCategoryLists();
+        }
+        final CategoryList[] categories = deriveCategoryList(list, cs, parameters);
+        ImageLayout layout = new ImageLayout();
+        if (categories!=null && categories.length>band)
+        {
+            layout = layout.setColorModel(categories[band].getColorModel(true));
+        }
+        /*
+         * Perform the operation using JAI and
+         * construct the new grid coverage.
+         */
+        final RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+        final RenderedImage   data = JAI.create(descriptor.getName(), parameters, hints);
         return new GridCoverage(source.getName(null), // The grid coverage name
                                 data,                 // The underlying data
                                 cs,                   // The coordinate system.
                                 envelope,             // The coverage envelope.
-                                null,                 // The category lists
+                                categories,           // The category lists
                                 true,                 // Data are geophysics values.
                                 sources,              // The source grid coverages.
                                 null);                // Properties
+    }
+
+    /**
+     * Returns the index of the quantitative category, providing that there
+     * is one and only one quantitative category. If <code>categories</code>
+     * contains 0, 2 or more quantative category, then this method returns
+     * <code>-1</code>.
+     */
+    private static int getQuantitative(final Category[] categories)
+    {
+        int index = -1;
+        for (int i=0; i<categories.length; i++)
+        {
+            if (categories[i].isQuantitative())
+            {
+                if (index >= 0)
+                {
+                    return -1;
+                }
+                index = i;
+            }
+        }
+        return index;
+    }
+
+    /**
+     * Derive the {@link CategoryList}s for the destination image. The
+     * default implementation iterate among all bands  and invokes the
+     * {@link #deriveCategory deriveCategory} and {@link #deriveUnit deriveUnit}
+     * methods for each individual band.
+     *
+     * @param  categoryLists {@link CategoryList}s for each band in each source
+     *         <code>GridCoverage</code>s. For a band (or "sample dimension")
+     *         <code>band</code> in a source coverage <code>source</code>, the
+     *         corresponding <code>CategoryList</code> is
+     *
+     *                 <code>categoryLists[source][band]</code>.
+     *
+     * @param  cs The coordinate system of the destination grid coverage.
+     * @param  parameters The user-supplied parameters.
+     * @return The category lists for each band in the destination image. The
+     *         length of this array must matches the number of bands in the
+     *         destination image. If the <code>CategoryList</code>s are unknow,
+     *         then this method may returns <code>null</code>.
+     *
+     * @see #deriveCategory
+     * @see #deriveUnit
+     */
+    protected CategoryList[] deriveCategoryList(final CategoryList[][] categoryLists,
+                                                final CoordinateSystem cs,
+                                                final ParameterList parameters)
+    {
+        /*
+         * Compute the number of bands. Sources with only 1 band are treated as
+         * a special case:  their unique band is applied to every band in other
+         * sources.   If sources don't have the same number of bands, then this
+         * method returns  <code>null</code>  since we don't know how to handle
+         * those cases.
+         */
+        int numBands = 1;
+        for (int i=0; i<categoryLists.length; i++)
+        {
+            final int nb = categoryLists[i].length;
+            if (nb != 1)
+            {
+                if (numBands!=1 && nb!=numBands)
+                {
+                    return null;
+                }
+                numBands = nb;
+            }
+        }
+        /*
+         * Iterate among all bands. The 'result' array will contains
+         * CategoryLists  constructed during the iteration  for each
+         * individual band. The 'XS' suffix designate temporary arrays
+         * of categories and units accross all sources for one particular
+         * band.
+         */
+        final CategoryList[] result = new CategoryList[numBands];
+        final Category[] categoryXS = new Category[categoryLists.length];
+        final Unit[]         unitXS = new Unit[categoryLists.length];
+        while (--numBands >= 0)
+        {
+            CategoryList categoryList  = null;
+            Category[]   categoryArray = null;
+            int    indexOfQuantitative = 0;
+            assert MASTER_SOURCE_INDEX == 0; // See comment below.
+            for (int i=categoryLists.length; --i>=0;)
+            {
+                /*
+                 * Iterate among all sources (i) for the current band. We iterate
+                 * sources in reverse order because the master source MUST be the
+                 * last one iterated, in order to have proper value for variables
+                 * 'categoryList', 'categoryArray' and 'indexOfQuantitative' after
+                 * the loop.
+                 */
+                final CategoryList[]  allBands = categoryLists[i];
+                categoryList        = allBands[allBands.length==1 ? 0 : numBands];
+                categoryArray       = categoryList.toArray();
+                indexOfQuantitative = getQuantitative(categoryArray);
+                if (indexOfQuantitative < 0)
+                {
+                    return null;
+                }
+                unitXS    [i] = categoryList.getUnits();
+                categoryXS[i] = categoryArray[indexOfQuantitative];
+            }
+            final Category oldCategory = categoryArray[indexOfQuantitative];
+            final Unit     oldUnit     = categoryList.getUnits();
+            final Category newCategory = deriveCategory(categoryXS, cs, parameters);
+            final Unit     newUnit     = deriveUnit(unitXS, cs, parameters);
+            if (newCategory == null)
+            {
+                return null;
+            }
+            if (!oldCategory.equals(newCategory) || !Utilities.equals(oldUnit, newUnit))
+            {
+                categoryArray[indexOfQuantitative] = newCategory;
+                result[numBands] = new CategoryList(categoryArray, newUnit);
+            }
+            else
+            {
+                // Reuse the category list from the master source.
+                result[numBands] = categoryList;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Derive the quantative category for a band in the destination image.
+     * This method is invoked automatically by the {@link #deriveCategoryList
+     * deriveCategoryList} method for each band in the destination image. The
+     * default implementation always returns <code>null</code>.    Subclasses
+     * should override this method in order to compute the destination {@link
+     * Category} from the source categories. For example, the "<code>add</code>"
+     * operation may implement this method as below:
+     *
+     * <blockquote><pre>
+     * double min = categories[0].{@link Category#minimum minimum} + categories[1].minimum;
+     * double max = categories[0].{@link Category#maximum maximum} + categories[1].maximum;
+     * return categories[0].rescale(min, max);
+     * </pre></blockquote>
+     *
+     * @param  categories The quantitative categories from every sources.
+     *         For unary operations like "GradientMagnitude", this array
+     *         as a length of 1. For binary operations like "add" and
+     *         "multiply", this array as a length of 2.
+     * @param  cs The coordinate system of the destination grid coverage.
+     * @param  parameters The user-supplied parameters.
+     * @return The quantative category to use in the destination image.
+     *         or <code>null</code> if unknow. This category should always
+     *         be derived from <code>categories[0]</code>.
+     */
+    protected Category deriveCategory(final Category[] categories,
+                                      final CoordinateSystem cs,
+                                      final ParameterList parameters)
+    {
+        return null;
+    }
+
+    /**
+     * Derive the unit of data for a band in the destination image. This method is
+     * invoked automatically by the {@link #deriveCategoryList deriveCategoryList}
+     * method for each band in the destination image.   The default implementation
+     * always returns <code>null</code>. Subclasses should override this method in
+     * order to compute the destination units from the source units.  For example,
+     * the "<code>multiply</code>" operation may implement this method as below:
+     *
+     * <blockquote><pre>
+     * if (units[0]!=null && units[1]!=null) {
+     *     return units[0].{@link Unit#multiply(Unit) multiply}(units[1]);
+     * } else {
+     *     return super.deriveUnit(units, cs, parameters);
+     * }
+     * </pre></blockquote>
+     *
+     * @param  units The units from every sources. For unary operations like
+     *         "GradientMagnitude", this array as a length of 1.  For binary
+     *         operations like "add" and "multiply",  this array as a length
+     *         of 2.
+     * @param  cs The coordinate system of the destination grid coverage.
+     * @param  parameters The user-supplied parameters.
+     * @return The unit of data in the destination image,
+     *         or <code>null</code> if unknow.
+     */
+    protected Unit deriveUnit(final Unit[] units,
+                              final CoordinateSystem cs,
+                              final ParameterList parameters)
+    {
+        return null;
     }
 }

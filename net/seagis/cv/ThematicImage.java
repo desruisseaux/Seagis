@@ -34,6 +34,7 @@ package net.seagis.cv;
 // Image
 import javax.media.jai.ImageLayout;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.NullOpImage;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.awt.image.ColorModel;
@@ -68,14 +69,31 @@ final class ThematicImage extends ImageAdapter
      * @return Image de valeurs de pixels. Les pixels de cette image
      *         correspondront aux thèmes de <code>categories</code>.
      */
-    public static RenderedImage getInstance(final RenderedImage image, final CategoryList[] categories)
+    public static RenderedImage getInstance(RenderedImage image, final CategoryList[] categories)
     {
-        if (image==null) return null;
+        if (image==null)
+        {
+            return null;
+        }
+        while (image instanceof NullOpImage)
+        {
+            // Optimization for images that doesn't change
+            // pixel value. Such an image may be the result
+            // of a "Colormap" operation.
+            final NullOpImage op = (NullOpImage) image;
+            if (op.getNumSources() != 1)
+            {
+                break;
+            }
+            image = op.getSourceImage(0);
+        }
         if (image instanceof ImageAdapter)
         {
             final ImageAdapter adapter = (ImageAdapter) image;
             if (Arrays.equals(adapter.categories, categories))
+            {
                 return adapter.getThematic();
+            }
         }
         return new ThematicImage(image, categories);
     }

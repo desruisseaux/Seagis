@@ -29,15 +29,24 @@
 package net.seagis.gp;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seagis.cv.Category;
 import net.seagis.gc.GridCoverage;
+import net.seagis.ct.MathTransform2D;
+import net.seagis.cs.CoordinateSystem;
 
-// Geometry
+// Colors and geometry
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import net.seagis.resources.XAffineTransform;
 
 // Java Advanced Imaging
 import javax.media.jai.KernelJAI;
+import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterBlockJAI;
+
+// Miscellaneous
+import javax.units.Unit;
+import javax.units.UnitException;
 
 
 /**
@@ -53,29 +62,33 @@ import javax.media.jai.ParameterBlockJAI;
 final class GradientMagnitude extends OperationJAI
 {
     /**
-     * The default horizontal kernel. Below is a comparaison between
-     * the horizontal Sobel mask and this <code>HORIZONTAL</code> mask:
-     * <pre>
-     *             SOBEL              THIS CLASS
-     *        [ -1   0   1 ]        [ -1/8   0   1/8 ]
-     *        [ -2   0   2 ]        [ -2/8   0   2/8 ]
-     *        [ -1   0   1 ]        [ -1/8   0   1/8 ]
-     * </pre>
-     * RATIONAL: A horizontal gradient can be computed with (V2-V0)/D where
-     *           V2 is the value in the right column, V0 is the value in the
-     *           left column and D is distance between those two column, in
-     *           pixel. We normalize left and right column in such a way that
-     *           their sum is 1 (so we divide by 4). We divide again by 2 because
-     *           the distance between center of rightermost pixels and leftermost
-     *           pixels is two pixel width.
+     * The default scale factor to apply on the range computed by
+     * {@link #deriveCategory}. For example a value of 0.04 means
+     * that only values from 0 to 4% of the maximum will appears
+     * in different colors.
      */
-    private static final KernelJAI HORIZONTAL = divide(KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL, 8);
+    private static final double DEFAULT_RANGE_SCALE = 0.04;
 
     /**
-     * The default vertical kernel. Same rational
-     * than for the horizontal kernel.
+     * The default color palette for the gradients.
      */
-    private static final KernelJAI VERTICAL = divide(KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL, 8);
+    private static final Color[] DEFAULT_COLOR_PALETTE = new Color[]
+    {
+        new Color( 16, 32, 64),
+        new Color(192,224,255)
+    };
+
+    /**
+     * A flag indicating that {@link #getNormalizationFactorSquared}
+     * should test the horizontal gradient computed by the supplied kernel.
+     */
+    private static final int HORIZONTAL = 1;
+
+    /**
+     * A flag indicating that {@link #getNormalizationFactorSquared}
+     * should test the vertical gradient computed by the supplied kernel.
+     */
+    private static final int VERTICAL = 2;
 
     /**
      * Construct a default gradient magnitude operation.
@@ -84,33 +97,113 @@ final class GradientMagnitude extends OperationJAI
     {super("GradientMagnitude");}
 
     /**
-     * Divide a kernel by some number.
+     * Returns a scale factor for the supplied kernel. If <code>kernel</code>
+     * compute horizontal grandient, this method returns <code>scaleX</code>.
+     * Otherwise, if <code>kernel</code> compute vertical gradient, then this
+     * method returns <code>scaleY</code>. Otherwise, returns a geometric
+     * combinaison of both.
      */
-    private static KernelJAI divide(KernelJAI k, final double denominator)
+    private static double getScaleFactor(final KernelJAI kernel, double scaleX, double scaleY)
     {
-        if (denominator!=0 && denominator!=1)
+        scaleX *= scaleX;
+        scaleY *= scaleY;
+        double factorX = getNormalizationFactorSquared(kernel, HORIZONTAL);
+        double factorY = getNormalizationFactorSquared(kernel, VERTICAL);
+        double factor2 = (factorX*scaleX + factorY*scaleY) / (factorX+factorY);
+        return Math.sqrt(factor2);
+    }
+
+    /**
+     * Returns the square of a normalization factor for the supplied kernel.
+     * The kernel can be normalized by invoking {@link #divide(KernelJAI,double)}
+     * with the square root of this value.
+     *
+     * @param  kernel The kernel for which to compute normalization factor.
+     * @param  type Any combinaison of {@link #HORIZONTAL} and {@link #VERTICAL}.
+     * @return The square of a normalization factor that could be applied
+     *         on the kernel.
+     */
+    private static double getNormalizationFactorSquared(final KernelJAI kernel, final int type)
+    {
+        double sumH = 0;
+        double sumV = 0;
+        final int width  = kernel.getWidth();
+        final int height = kernel.getHeight();
+        /*
+         * Test the kernel  with a horizontal gradient       [ -1   0   1 ]
+         * of 1/pixel. For example, we get sumH=8 with       [ -2   0   2 ]
+         * the horizontal Sobel kernel show on right:        [ -1   0   1 ]
+         */
+        if ((type & HORIZONTAL) != 0)
         {
-            final float[] data = k.getKernelData();
-            for (int i=0; i<data.length; i++) data[i] /= denominator;
-            k = new KernelJAI(k.getWidth(), k.getHeight(), k.getXOrigin(), k.getYOrigin(), data);
+            int value = kernel.getYOrigin();
+            for (int y=height; --y>=0;)
+            {
+                for (int x=width; --x>=0;)
+                {
+                    sumH += value * kernel.getElement(x,y);
+                }
+                value--;
+            }
         }
-        return k;
+        /*
+         * Test the kernel  with a vertical gradient of      [ -1  -2  -1 ]
+         * 1/pixel. For example, we get sumV=8 with the      [  0   0   0 ]
+         * vertical Sobel kernel show on right:              [  1   2   1 ]
+         */
+        if ((type & VERTICAL) != 0)
+        {
+            int value = kernel.getXOrigin();
+            for (int x=width; --x>=0;)
+            {
+                for (int y=height; --y>=0;)
+                {
+                    sumV += value * kernel.getElement(x,y);
+                }
+                value--;
+            }
+        }
+        return (sumH*sumH) + (sumV*sumV);
+    }
+
+    /**
+     * Returns the normalization factor for the supplied kernel. The kernel
+     * can be normalized by invoking {@link #divide(KernelJAI,double)} with
+     * this factor.
+     *
+     * @param  mask1 The first kernel for which to compute a normalization factor.
+     * @param  mask2 The second kernel for which to compute a normalization factor.
+     * @return The normalization factor that could be applied on both kernels.
+     */
+    private static double getNormalizationFactor(final KernelJAI mask1, final KernelJAI mask2)
+    {
+        double factor;
+        factor  = getNormalizationFactorSquared(mask1, HORIZONTAL|VERTICAL);
+        factor += getNormalizationFactorSquared(mask2, HORIZONTAL|VERTICAL);
+        factor  = Math.sqrt(factor/2);
+        return factor;
     }
 
     /**
      * Divide a kernel by some number.
      *
-     * @param parameters  The parameter block to look for kernel.
-     * @param name        The parameter name for the kernel.
-     * @param denominator The denominator.
+     * @param  kernel The kernel to divide.
+     * @param  denominator The factor to divide by.
+     * @return The resulting kernel.
      */
-    private static void divide(final ParameterBlockJAI parameters, final String name, final double denominator)
+    private static KernelJAI divide(KernelJAI kernel, final double denominator)
     {
-        final Object kernel = parameters.getObjectParameter(name);
-        if (kernel instanceof KernelJAI)
+        if (denominator != 1)
         {
-            parameters.setParameter(name, divide((KernelJAI) kernel, denominator));
+            final float[] data = kernel.getKernelData();
+            for (int i=0; i<data.length; i++)
+            {
+                data[i] /= denominator;
+            }
+            kernel = new KernelJAI(kernel.getWidth(),   kernel.getHeight(),
+                                   kernel.getXOrigin(), kernel.getYOrigin(), data);
         }
+        return kernel;
     }
 
     /**
@@ -122,13 +215,101 @@ final class GradientMagnitude extends OperationJAI
     {
         if (sources.length!=0)
         {
-            // TODO: need something more general. MathTransform.getMatrix may do the trick.
-            final AffineTransform tr = (AffineTransform) sources[0].getGridGeometry().getGridToCoordinateSystem2D();
-            divide(parameters, "mask1", XAffineTransform.getScaleX0(tr));
-            divide(parameters, "mask2", XAffineTransform.getScaleY0(tr));
+            KernelJAI mask1 = (KernelJAI) parameters.getObjectParameter("mask1");
+            KernelJAI mask2 = (KernelJAI) parameters.getObjectParameter("mask2");
+            /*
+             * Normalize the kernel in such a way that pixel values likes
+             * [-2 -1 0 +1 +2] will give a gradient of about 1 unit/pixel.
+             */
+            double factor = getNormalizationFactor(mask1, mask2);
+            if (!(factor > 0))
+            {
+                // Do not transform if factor is 0 or NaN.
+                factor = 1;
+            }
+            /*
+             * Compute a scale factor taking in account the transformation from
+             * grid to coordinate system. This scale will convert gradient from
+             * 1 unit/pixel to 1 unit/meters or 1 unit/degrees, depending the
+             * coordinate systems axis unit.
+             */
+            double scaleMask1 = 1;
+            double scaleMask2 = 1;
+            final MathTransform2D mtr = sources[0].getGridGeometry().getGridToCoordinateSystem2D();
+            if (mtr instanceof AffineTransform)
+            {
+                final AffineTransform tr = (AffineTransform) mtr;
+                final double  scaleX = XAffineTransform.getScaleX0(tr);
+                final double  scaleY = XAffineTransform.getScaleY0(tr);
+                scaleMask1 = getScaleFactor(mask1, scaleX, scaleY);
+                scaleMask2 = getScaleFactor(mask2, scaleX, scaleY);
+                if (!(scaleMask1>0 && scaleMask2>0))
+                {
+                    // Do not scale if scale is 0 or NaN.
+                    scaleMask1 = 1;
+                    scaleMask2 = 1;
+                }
+            }
+            parameters.setParameter("mask1", divide(mask1, factor/scaleMask1));
+            parameters.setParameter("mask2", divide(mask2, factor/scaleMask2));
         }
         return super.doOperation(sources, parameters);
     }
 
-    // TODO: Set default parameters.
+    /**
+     * Derive the quantitative category for a band in the destination image.
+     * This implementation compute the expected gradient range from the two
+     * masks and the value range in the source grid coverage.
+     */
+    protected Category deriveCategory(final Category[] categories,
+                                      final CoordinateSystem cs,
+                                      final ParameterList parameters)
+    {
+        final Category category = categories[0];
+        final KernelJAI   mask1 = (KernelJAI) parameters.getObjectParameter("mask1");
+        final KernelJAI   mask2 = (KernelJAI) parameters.getObjectParameter("mask2");
+        double factor = getNormalizationFactor(mask1, mask2);
+        if (factor > 0)
+        {
+            factor *= (category.maximum - category.minimum) * DEFAULT_RANGE_SCALE;
+            return category.rescale(0, factor).recolor(DEFAULT_COLOR_PALETTE);
+        }
+        return super.deriveCategory(categories, cs, parameters);
+    }
+
+    /**
+     * Derive the unit of data for a band in the destination image.
+     * This method compute the <code>sample/axis</code> where:
+     *
+     * <ul>
+     *   <li><code>sample</code> is the sample unit in source image.</li>
+     *   <li><code>axis</code> is the coordinate system axis unit.</li>
+     * </ul>
+     */
+    protected Unit deriveUnit(final Unit[] units,
+                              final CoordinateSystem cs,
+                              final ParameterList parameters)
+    {
+        if (units.length==1 && units[0] != null)
+        {
+            final Unit spatialUnit = cs.getUnits(0);
+            for (int i=Math.min(cs.getDimension(), 2); --i>=0;)
+            {
+                if (!spatialUnit.equals(cs.getUnits(i)))
+                {
+                    return super.deriveUnit(units, cs, parameters);
+                }
+            }
+            try
+            {
+                return units[0].divide(spatialUnit);
+            }
+            catch (UnitException exception)
+            {
+                // Can't compute units... We will compute image data
+                // anyway, but the result will have no know unit.
+            }
+        }
+        return super.deriveUnit(units, cs, parameters);
+    }
 }

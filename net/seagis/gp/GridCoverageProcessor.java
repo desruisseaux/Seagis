@@ -147,8 +147,9 @@ public class GridCoverageProcessor
             DEFAULT = new GridCoverageProcessor();
             DEFAULT.addOperation(new Interpolator.Operation());
             DEFAULT.addOperation(new Resampler.Operation(factory));
-            DEFAULT.addOperation(new OperationJAI("GradientMagnitude"));
+            DEFAULT.addOperation(new GradientMagnitude());
             DEFAULT.addOperation(new OperationJAI("Rescale"));
+            DEFAULT.addOperation(new ColormapOperation());
         }
         return DEFAULT;
     }

@@ -770,7 +770,11 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
         // Look in the cache for an existing color model.
         if (colors!=null && cacheIndex<colors.length)
         {
-            return colors[cacheIndex];
+            final ColorModel candidate = colors[cacheIndex];
+            if (candidate != null)
+            {
+                return candidate;
+            }
         }
         final ColorModel model;
         if (geophysicsValue)
@@ -895,6 +899,14 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
             buffer.append(lineSeparator);
         }
         return buffer.toString();
+    }
+
+    /**
+     * Returns all categories in this <code>CategoryList</code>.
+     */
+    public Category[] toArray()
+    {
+        return (Category[]) byIndex.clone();
     }
 
     /**
