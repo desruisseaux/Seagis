@@ -63,7 +63,7 @@ import fr.ird.io.text.ParseHeader;
 import fr.ird.io.text.ParsePalette;
 import fr.ird.io.map.IsolineReader;
 import fr.ird.io.map.GEBCOReader;
-import fr.ird.util.GridStatistics;
+import fr.ird.n1b.util.StatisticGrid;
 
 // GEOTOOLS
 import org.geotools.cv.Category;
@@ -444,7 +444,7 @@ public final class Utilities
      * @param stat  Les statistiques.
      * @param file  Fichier de destination.
      */
-    public static void writeStat(final GridStatistics grid,
+    public static void writeStat(final StatisticGrid  grid,
                                  final File           file) throws IOException
     {
         final BufferedWriter fStatTxt = new BufferedWriter(new FileWriter(file));                                                                                        

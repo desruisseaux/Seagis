@@ -35,7 +35,7 @@ import javax.media.jai.ParameterListDescriptorImpl;
 import javax.media.jai.util.Range;
 
 // SEAGIS
-import fr.ird.util.ThresoldRange;
+import fr.ird.n1b.util.ThresoldRange;
 
 // GEOTOOLS
 import org.geotools.ct.MathTransform2D;

@@ -71,7 +71,7 @@ public final class SatelliteRelativeAngle
     /**
      * Construit un objet de type SatteliteRelativeAngle.
      */
-    public SatelliteRelativeAngle() throws Exception
+    public SatelliteRelativeAngle() 
     {
         /* Construit la transformation du système de coordonnées géographiques vers le 
            système géocentriques. */
@@ -82,7 +82,7 @@ public final class SatelliteRelativeAngle
         }
         catch (CannotCreateTransformException e)
         {
-            throw new Exception(e);
+            throw new IllegalArgumentException(e.getMessage());
         }                                 
     }    
     

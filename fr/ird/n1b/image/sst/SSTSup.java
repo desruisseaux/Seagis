@@ -31,7 +31,7 @@ import fr.ird.io.text.ParseSST;
 import fr.ird.io.text.ParseStat;
 import fr.ird.io.text.ParseHeader;
 import fr.ird.io.text.ParseHeader;
-import fr.ird.util.GridStatistics;
+import fr.ird.n1b.util.StatisticGrid;
 import fr.ird.n1b.image.sst.Utilities;
 import fr.ird.n1b.io.Bulletin;
 import fr.ird.n1b.io.Metadata;
@@ -198,13 +198,13 @@ public final class SSTSup
      * @param name  Nom du fichier de statistiques.
      * @return Ces statistiques sont stockées dans un fichier.
      */
-    private GridStatistics loadStatistics(final File file) throws IOException
+    private StatisticGrid loadStatistics(final File file) throws IOException
     {
         if (file.exists())
         {
             final ParameterList parameter = ParseStat.getInputDefaultParameterList();
             parameter.setParameter(ParseStat.FILE, file);
-            return (GridStatistics)ParseStat.parse(parameter).getObjectParameter(ParseStat.STAT);
+            return (StatisticGrid)ParseStat.parse(parameter).getObjectParameter(ParseStat.STAT);
         }    
         System.err.println("Impossible de trouver le fichier \"" + file.getPath() + "\".");
         return null;        
@@ -287,7 +287,7 @@ public final class SSTSup
                         
         // Fusion des fichiers de statistique.
         boolean isFirstStat = true;
-        GridStatistics stat = null;
+        StatisticGrid stat = null;
         for (int i=0 ; i<length ; i++)
         {
             final File fStat = new File(sources[i].getPath().substring(0, sources[i].getPath().indexOf('.')) + 
@@ -297,7 +297,7 @@ public final class SSTSup
             if (!fStat.exists() || !fStat.canRead())
                 continue;
             
-            final GridStatistics stat_ = loadStatistics(fStat);            
+            final StatisticGrid stat_ = loadStatistics(fStat);            
             if (isFirstStat == true)
                 stat = stat_;
             else

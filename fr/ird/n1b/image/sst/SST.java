@@ -29,9 +29,9 @@ package fr.ird.n1b.image.sst;
 import fr.ird.n1b.io.Bulletin;
 import fr.ird.n1b.io.Metadata;
 import fr.ird.n1b.io.Satellite;
-import fr.ird.util.ThresoldRange;
-import fr.ird.util.GridStatistics;
-import fr.ird.op.PatternFilter;
+import fr.ird.n1b.util.ThresoldRange;
+import fr.ird.n1b.util.StatisticGrid;
+import fr.ird.image.op.PatternFilter;
 import fr.ird.io.text.ParseSatellite;
 import fr.ird.n1b.io.ImageReaderN1B;
 import fr.ird.n1b.image.sst.Utilities;
@@ -284,9 +284,9 @@ public final class SST
         final RectIter iSST    = RectIterFactory.create(sst.getRenderedImage(), bound),
                        iMatrix = RectIterFactory.create(matrix.getRenderedImage(), bound);
         
-        final GridStatistics stat = new GridStatistics(origine.getY() - (source.getHeight()-1)*RESOLUTION, 
-                                                       origine.getY(), 
-                                                       RESOLUTION);        
+        final StatisticGrid stat = new StatisticGrid(origine.getY() - (source.getHeight()-1)*RESOLUTION, 
+                                                     origine.getY(), 
+                                                     RESOLUTION);        
         
         // Parcours des fichiers SST et Matrice.
         iSST.startBands();
@@ -678,6 +678,11 @@ public final class SST
             parameterInTemperature.setParameter(TEMPERATURE_CONSTANT,            
                                 parameterOutConf.getObjectParameter(TEMPERATURE_CONSTANT));
 
+        // JAI.
+        final TileCache tileCache = JAI.getDefaultInstance().getTileCache();
+        tileCache.removeTiles(count);
+        tileCache.removeTiles(radiance);
+        
         // Calcul de la température. 
         return Temperature.get(satellite, 
                                radiance, 
@@ -860,7 +865,8 @@ public final class SST
         final RenderedImage elevation = SolarElevation.get(grid, bound, configuration);        
         RenderedImage matrix = MatrixDayNight.get(elevation, grid, TRANSITION_AUBE, 
                                                   TRANSITION_CREPUSCULE, configuration);        
-
+        tileCache.removeTiles(elevation);
+        
         // Calcul de l'angle zenithal du satellite. 
         final RenderedImage zenithAngle = SatelliteZenithAngle.get(grid, bound, configuration);
         
@@ -876,16 +882,19 @@ public final class SST
                                                     ParseSatellite.LINEAR_SPLIT_WINDOW_NIGHT);
         RenderedImage sst = fr.ird.n1b.op.SST.get(t4, t5, zenithAngle, matrix, 
                                                   coeffDay, coeffNight,configuration);
+        tileCache.removeTiles(zenithAngle);
         
         // Calcul des masques nuages.  
         final RenderedImage maskCloud = computeMaskCloud(t4, t5, sst, imToGeo, configuration);
         sst = SuperposeMask.get(sst,maskCloud, Mask.FILTERED,geoSSTCloud, configuration);                        
         matrix = SuperposeMask.get(matrix, maskCloud,Mask.FILTERED, geoMatrixCloud, configuration);        
+        tileCache.removeTiles(maskCloud);
         
         // Calcul du masque sur la SST. 
         final RenderedImage maskNoData = computeMaskNoData(sst, configuration);
         sst = SuperposeMask.get(sst, maskNoData, Mask.FILTERED, geoSSTNoData, configuration);                
         matrix = SuperposeMask.get(matrix, maskNoData, Mask.FILTERED, geoMatrixNoData, configuration);        
+        tileCache.removeTiles(maskNoData);
         
         // Exclusion des pixels trop éloignés du nadir. 
         final RenderedImage sensorAngle = SensorAngle.get(grid, bound, configuration);        
@@ -893,6 +902,7 @@ public final class SST
                                  geoSSTNoData, configuration);        
         matrix = AngleExclusion.get(matrix, sensorAngle, SENSOR_EXCLUSION_ANGLE, false,
                                     geoMatrixNoData, configuration);     
+        tileCache.removeTiles(sensorAngle);
         
         // projection dans le système géographique. 
         GridCoverage gridSST = projectToGeographic(
