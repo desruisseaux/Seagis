@@ -94,6 +94,11 @@ final class Field
         this.size   = size;
     }
         
+    ////////////////    
+    ////////////////
+    // ACCESSEURS //
+    ////////////////
+    ////////////////        
     /**  
      * Retourne la valeur d'un champ sous forme de cha?ne de caract?res.
      *
@@ -200,126 +205,6 @@ final class Field
     }    
 
     /**  
-     * Retourne la valeur d'un champ TimeCodeDate sous forme d'une date.
-     * <UL>
-     * La date est contenue dans 6 bytes et composee de la maniere 
-     * suivante :     
-     *   <LI>7 bits for years </LI>
-     *   <LI>9 bits for julian day </LI>
-     *   <LI>5 bits unused </LI>
-     *   <LI>27 bits for milisec (UTC time of day) </LI>
-     * </UL>
-     *
-     * @param  in Le flot ? lire.
-     * @param  base Indice du curseur dans le flux.
-     * @return Une date contenant la valeur du champ.
-     * @throws IOException si une input ou output exception survient.
-     */
-    public Date getDateFormatv4(final ImageInputStream in, final long base) throws IOException 
-    {        
-        int year       = 2000;
-        int dayOfYear  = 0;
-        long milisec   = 0;
-        int hour       = 0;
-        int minute     = 0;
-        int sec        = 0;
-        int msec       = 0;
-        in.seek(base + offset);        
-        
-        // An        
-        for (int i=0; i<7 ; i++)
-            year += in.readBit() * (int)(Math.pow(2.0,6-i));
-        
-        // Jour julien
-        for (int i=0; i<9 ; i++)
-            dayOfYear += in.readBit() * (int)(Math.pow(2.0,8 - i));
-        
-        // On passe les bits inutilises
-        for (int i=0; i<5 ; i++)
-            in.readBit();
-        
-        // Milisec
-        for (int i=0; i<27 ; i++)         
-            milisec += in.readBit() * (int)(Math.pow(2.0,26 - i));
-
-        // calcule des autres valeurs de temps 
-        hour    = (int) Math.floor(milisec / (1000*3600));       
-        minute  = (int) Math.floor((milisec / 1000 - hour * 3600) / 60);
-        sec     = (int) Math.floor(milisec / 1000 - hour * 3600 - minute * 60);        
-        msec    = (int) Math.floor(milisec - hour*3600*1000 - minute*60*1000 - sec*1000);        
-        
-        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);        
-        calendar.set(Calendar.SECOND, sec);
-        calendar.set(Calendar.MILLISECOND, msec);
-        return calendar.getTime();
-    }    
-
-    /**  
-     * Retourne la valeur d'un champ TimeCodeDate sous forme d'une date.
-     * <UL>
-     * La date est contenue dans 6 bytes et composee de la maniere 
-     * suivante :     
-     *   <LI>7 bits for years </LI>
-     *   <LI>9 bits for julian day </LI>
-     *   <LI>5 bits unused </LI>
-     *   <LI>27 bits for milisec (UTC time of day) </LI>
-     * </UL>
-     *
-     * @param  in Le flot ? lire.
-     * @param  base Indice du curseur dans le flux.
-     * @return Une date contenant la valeur du champ.
-     * @throws IOException si une input ou output exception survient.
-     */
-    public Date getDateFormatv3(final ImageInputStream in, final long base) throws IOException 
-    {        
-        int year       = 1900;
-        int dayOfYear  = 0;
-        long milisec   = 0;
-        int hour       = 0;
-        int minute     = 0;
-        int sec        = 0;
-        int msec       = 0;
-        in.seek(base + offset);        
-        
-        // An        
-        for (int i=0; i<7 ; i++)
-            year += in.readBit() * (int)(Math.pow(2.0,6-i));
-        
-        // Jour julien
-        for (int i=0; i<9 ; i++)
-            dayOfYear += in.readBit() * (int)(Math.pow(2.0,8 - i));
-        
-        // On passe les bits inutilises
-        for (int i=0; i<5 ; i++)
-            in.readBit();
-        
-        // Milisec
-        for (int i=0; i<27 ; i++)         
-            milisec += in.readBit() * (int)(Math.pow(2.0,26 - i));
-
-        // calcule des autres valeurs de temps 
-        hour    = (int) Math.floor(milisec / (1000*3600));       
-        minute  = (int) Math.floor((milisec / 1000 - hour * 3600) / 60);
-        sec     = (int) Math.floor(milisec / 1000 - hour * 3600 - minute * 60);        
-        msec    = (int) Math.floor(milisec - hour*3600*1000 - minute*60*1000 - sec*1000);        
-        
-        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);        
-        calendar.set(Calendar.SECOND, sec);
-        calendar.set(Calendar.MILLISECOND, msec);
-        return calendar.getTime();
-    }    
-    
-    /**  
      * Retourne la valeur d'un champ sous forme d'une date.
      * <UL>
      * La date est contenue dans 8 bytes et composee de la maniere 
@@ -418,7 +303,192 @@ final class Field
         calendar.set(Calendar.MILLISECOND, msec);
         return calendar.getTime();
     }            
-    
+
+    /**  
+     * Retourne la valeur d'un champ TimeCodeDate sous forme d'une date.
+     * <UL>
+     * La date est contenue dans 6 bytes et composee de la maniere 
+     * suivante :     
+     *   <LI>7 bits for years </LI>
+     *   <LI>9 bits for julian day </LI>
+     *   <LI>5 bits unused </LI>
+     *   <LI>27 bits for milisec (UTC time of day) </LI>
+     * </UL>
+     *
+     * @param  in Le flot ? lire.
+     * @param  base Indice du curseur dans le flux.
+     * @return Une date contenant la valeur du champ.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public Date getDateFormatv3(final ImageInputStream in, final long base) throws IOException 
+    {        
+        int year       = 1900;
+        int dayOfYear  = 0;
+        long milisec   = 0;
+        int hour       = 0;
+        int minute     = 0;
+        int sec        = 0;
+        int msec       = 0;
+        in.seek(base + offset);        
+        
+        // An        
+        for (int i=0; i<7 ; i++)
+            year += in.readBit() * (int)(Math.pow(2.0,6-i));
+        
+        // Jour julien
+        for (int i=0; i<9 ; i++)
+            dayOfYear += in.readBit() * (int)(Math.pow(2.0,8 - i));
+        
+        // On passe les bits inutilises
+        for (int i=0; i<5 ; i++)
+            in.readBit();
+        
+        // Milisec
+        for (int i=0; i<27 ; i++)         
+            milisec += in.readBit() * (int)(Math.pow(2.0,26 - i));
+
+        // calcule des autres valeurs de temps 
+        hour    = (int) Math.floor(milisec / (1000*3600));       
+        minute  = (int) Math.floor((milisec / 1000 - hour * 3600) / 60);
+        sec     = (int) Math.floor(milisec / 1000 - hour * 3600 - minute * 60);        
+        msec    = (int) Math.floor(milisec - hour*3600*1000 - minute*60*1000 - sec*1000);        
+        
+        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        calendar.clear();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);        
+        calendar.set(Calendar.SECOND, sec);
+        calendar.set(Calendar.MILLISECOND, msec);
+        return calendar.getTime();
+    }    
+
+    /**  
+     * Retourne la valeur d'un champ TimeCodeDate sous forme d'une date.
+     * <UL>
+     * La date est contenue dans 6 bytes et composee de la maniere 
+     * suivante :     
+     *   <LI>7 bits for years </LI>
+     *   <LI>9 bits for julian day </LI>
+     *   <LI>5 bits unused </LI>
+     *   <LI>27 bits for milisec (UTC time of day) </LI>
+     * </UL>
+     *
+     * @param  in Le flot ? lire.
+     * @param  base Indice du curseur dans le flux.
+     * @return Une date contenant la valeur du champ.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public Date getDateFormatv4(final ImageInputStream in, final long base) throws IOException 
+    {        
+        int year       = 2000;
+        int dayOfYear  = 0;
+        long milisec   = 0;
+        int hour       = 0;
+        int minute     = 0;
+        int sec        = 0;
+        int msec       = 0;
+        in.seek(base + offset);        
+        
+        // An        
+        for (int i=0; i<7 ; i++)
+            year += in.readBit() * (int)(Math.pow(2.0,6-i));
+        
+        // Jour julien
+        for (int i=0; i<9 ; i++)
+            dayOfYear += in.readBit() * (int)(Math.pow(2.0,8 - i));
+        
+        // On passe les bits inutilises
+        for (int i=0; i<5 ; i++)
+            in.readBit();
+        
+        // Milisec
+        for (int i=0; i<27 ; i++)         
+            milisec += in.readBit() * (int)(Math.pow(2.0,26 - i));
+
+        // calcule des autres valeurs de temps 
+        hour    = (int) Math.floor(milisec / (1000*3600));       
+        minute  = (int) Math.floor((milisec / 1000 - hour * 3600) / 60);
+        sec     = (int) Math.floor(milisec / 1000 - hour * 3600 - minute * 60);        
+        msec    = (int) Math.floor(milisec - hour*3600*1000 - minute*60*1000 - sec*1000);        
+        
+        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        calendar.clear();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);        
+        calendar.set(Calendar.SECOND, sec);
+        calendar.set(Calendar.MILLISECOND, msec);
+        return calendar.getTime();
+    }    
+
+    ////////////////    
+    ////////////////
+    // Modifieurs //
+    ////////////////
+    ////////////////            
+   /**  
+     * Ecrit la valeur sous forme d'un integer.
+     *
+     * @param  out   Le flot ? ecrire.
+     * @param  base  Indice du curseur dans le flux.
+     * @param  value Un integer contenant la valeur du champ.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public void setInteger(final ImageOutputStream out, final long base, final int value) 
+                                                                                throws IOException 
+    {       
+        out.seek(base + offset);
+        out.writeInt(value);
+    }        
+
+    /**  
+     * Ecrit la chaîne dans le flot.
+     *
+     * @param  out Le flot ? écrire.
+     * @param  base Indice du curseur dans le flux.
+     * @param  value La chaîne de caracteres à écrire.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public void setByte(final ImageOutputStream out, final long base, final String value) 
+                                                                throws IOException 
+    {       
+        out.seek(base + offset);
+        out.writeBytes(value);
+    }   
+
+    /**  
+     * Ecrit la valeur sous forme d'un short.
+     *
+     * @param  out   Le flot ? ecrire.
+     * @param  base  Indice du curseur dans le flux.
+     * @param  value Un short contenant la valeur du champ.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public void setShort(final ImageOutputStream out, final long base, final int value) 
+                                                                                throws IOException 
+    {       
+        out.seek(base + offset);
+        out.writeShort(value);
+    }        
+
+   /**  
+     * Ecrit le tableau de byte dans le flux.
+     *
+     * @param  out   Le flot ? ecrire.
+     * @param  base  Indice du curseur dans le flux.
+     * @param  value Un tableau de byte.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public void setByte(final ImageOutputStream out, final long base, final byte[] value) 
+                                                                        throws IOException 
+    {               
+        out.seek(base + offset);        
+        out.write(value);
+    }        
+
     /**  
      * Ecrit la date.
      * <UL>
@@ -453,6 +523,61 @@ final class Field
         out.writeInt(timeOfDay);
     }        
 
+    /**  
+     * Ecrit la date.
+     * <UL>
+     * La date est contenue dans 8 bytes et composee de la maniere 
+     * suivante :     
+     *   <LI>2 bytes pour l'annee</LI>
+     *   <LI>2 bytes pour le jour de l'annee</LI>
+     *   <LI>2 bytes inutile</LI>
+     *   <LI>4 bytes pour le temps en millisecond dans la journee</LI>
+     * </UL>
+     *
+     * @param  out Le flot ? lire.
+     * @param  base Indice du curseur dans le flux.
+     * @param  date La date à écrire.
+     * @throws IOException si une input ou output exception survient.
+     */
+    public void setDateFormatv2(final ImageOutputStream out, 
+                                final long              base,
+                                final Date              date) throws IOException 
+    {                         
+        out.seek(base + offset);                      
+         final Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+         calendar.setTime(date);
+         int year      = calendar.get(Calendar.YEAR) - 1900;
+         int julianDay = calendar.get(Calendar.DAY_OF_YEAR);         
+         long msec     = calendar.get(Calendar.HOUR_OF_DAY) * 3600 * 1000 + 
+                         calendar.get(Calendar.MINUTE) * 60 * 1000 +
+                         calendar.get(Calendar.SECOND) * 1000 +
+                         calendar.get(Calendar.MILLISECOND);
+
+         for (int i=0; i<16 ; i++)
+         {
+            final int flag = year / (int)(Math.pow(2.0,15-i));            
+            out.writeBit(flag);            
+            year -= flag*(int)(Math.pow(2.0,15-i));
+         }                
+        
+         for (int i=0; i<16 ; i++)
+         {
+            final int flag = julianDay / (int)(Math.pow(2.0,15-i));            
+            out.writeBit(flag);            
+            julianDay -= flag*(int)(Math.pow(2.0,15-i));
+         }                
+        
+        for (int i=0 ; i<16 ; i++)
+            out.writeBit(0);
+
+         for (int i=0; i<32 ; i++)
+         {
+            final int flag = (int)(msec / (Math.pow(2.0,15-i)));            
+            out.writeBit(flag);            
+            msec -= flag*(int)(Math.pow(2.0,15-i));
+         }                        
+    }            
+    
     /**
      * Ecrit un tableau de byte equivalent a la date au format.<BR><BR>
      *
@@ -510,50 +635,4 @@ final class Field
             msec -= flag*(int)(Math.pow(2.0,26-i));
         }
     }
-    
-   /**  
-     * Ecrit la valeur sous forme d'un integer.
-     *
-     * @param  out   Le flot ? ecrire.
-     * @param  base  Indice du curseur dans le flux.
-     * @param  value Un integer contenant la valeur du champ.
-     * @throws IOException si une input ou output exception survient.
-     */
-    public void setInteger(final ImageOutputStream out, final long base, final int value) 
-                                                                                throws IOException 
-    {       
-        out.seek(base + offset);
-        out.writeInt(value);
-    }        
-
-    /**  
-     * Ecrit la valeur sous forme d'un short.
-     *
-     * @param  out   Le flot ? ecrire.
-     * @param  base  Indice du curseur dans le flux.
-     * @param  value Un short contenant la valeur du champ.
-     * @throws IOException si une input ou output exception survient.
-     */
-    public void setShort(final ImageOutputStream out, final long base, final int value) 
-                                                                                throws IOException 
-    {       
-        out.seek(base + offset);
-        out.writeShort(value);
-    }        
-    
-   /**  
-     * Ecrit la valeur sous forme d'un unsigned short.
-     *
-     * @param  out   Le flot ? ecrire.
-     * @param  base  Indice du curseur dans le flux.
-     * @param  value Un short contenant la valeur du champ.
-     * @throws IOException si une input ou output exception survient.
-     */
-    public void setUnsignedShort(final ImageOutputStream out, final long base, final int value) 
-                                                                                throws IOException 
-    {               
-        out.seek(base + offset);        
-        out.write(value & 0xFF);
-        out.write((value>>8) & 0xFF );        
-    }        
 }
