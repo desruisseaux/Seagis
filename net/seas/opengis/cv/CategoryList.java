@@ -75,14 +75,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Liste des thèmes constituant cet objet <code>IndexedThemeMapper</code>.
-     * Cette liste doit être en ordre croissant de {@link Category#minimum},
-     * c'est-à-dire classée selon le comparateur {@link CategoryComparator#BY_VALUES}.
+     * Cette liste doit être en ordre croissant de <code>Category.minimum</code>,
+     * c'est-à-dire classée selon le comparateur <code>CategoryComparator.BY_VALUES</code>.
      */
     private final Category[] byValues;
 
     /**
-     * Tableau des index {@link Category#lower} ou {@link Category#minimum}
-     * des tableaux {@link #byIndex} et {@link #byValues} respectivement.
+     * Tableau des index {@link Category#lower} ou <code>Category.minimum</code>
+     * des tableaux <code>byIndex</code> et <code>byValues</code> respectivement.
      */
     private final float[] index, values;
 

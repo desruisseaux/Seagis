@@ -24,6 +24,7 @@ package net.seas.opengis.cv;
 
 // Miscellaneous
 import java.awt.Color;
+import java.lang.Double; // For JavaDoc
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Comparator;
