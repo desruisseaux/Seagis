@@ -29,6 +29,8 @@ package fr.ird.animat.impl;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
+import java.awt.geom.RectangularShape;
+import java.awt.geom.Ellipse2D;
 
 import java.util.Set;
 import java.util.Arrays;
@@ -40,10 +42,16 @@ import javax.vecmath.MismatchedSizeException;
 
 // Divers
 import org.geotools.resources.Utilities;
+import fr.ird.util.ArraySet;
 
 
 /**
- * Implémentation par défaut d'une espèce animale.
+ * Implémentation par défaut d'une espèce animale.   Le nom de l'espèce peut être spécifiée en
+ * plusieurs langues, incluant un {@linkplain #FAO code de la FAO}. L'icône représentant cette
+ * espèce sera par défaut un simple rectangle de la couleur spécifiée au constructeur.  Chaque
+ * objet <code>Species</code> peut aussi déclarer la liste de tous les paramètres susceptibles
+ * d'intéresser les animaux de cette espèce.  Par défaut, la liste ne comprend que {@linkplain
+ * Parameter#HEADING le cap et la position} de l'animal.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -53,6 +61,13 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * Numéro de série pour compatibilité entre différentes versions.
      */
     private static final long serialVersionUID = 1428323484284560694L;
+
+    /**
+     * Valeur par défaut du rayon de perception de l'animal, en mètres.
+     *
+     * @see #getPerceptionArea
+     */
+    private static final double PERCEPTION_RADIUS = 10000;
 
     /**
      * Liste des paramètres par défaut observés par les animaux de cette espèce.
@@ -65,9 +80,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * Liste des index par défaut auxquels trouver les valeurs des observations
      * dans le tableau {@link Observations#observations} pour chaque paramètre.
      */
-    private static final int[] DEFAULT_OFFSETS = new int[] {
-        0, Observations.LOCATED_LENGTH
-    };
+    private static final int[] DEFAULT_OFFSETS = getOffsets(DEFAULT_PARAMETERS);
 
     /**
      * Largeur par défaut des icônes, en pixels.
@@ -92,12 +105,12 @@ public class Species implements fr.ird.animat.Species, Serializable {
     /**
      * Couleur par défaut des icône.
      */
-    private final Color defaultColor;
+    private final Color color;
 
     /**
      * Liste des paramètres observés par les animaux de cette espèce.
      */
-    final Parameter[] parameters = DEFAULT_PARAMETERS;
+    final Parameter[] parameters;
 
     /**
      * Liste des index auxquels trouver les valeurs des observations dans le tableau
@@ -105,33 +118,119 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * ce tableau doit être égale à la longueur du tableau <code>parameters</code>
      * plus 1.
      */
-    final int[] observationOffsets = DEFAULT_OFFSETS;
+    final int[] offsets;
+
+    /**
+     * Les paramètres représentés comme un ensemble de type {@link Set}.
+     * Cet ensemble ne sera construit que la première fois où il sera demandé.
+     */
+    private transient Set<fr.ird.animat.Parameter> parameterSet;
+
+    /**
+     * Index du paramètre {@link Parameter#HEADING}, ou -1 si ce paramètre ne fait pas partit
+     * de l'ensemble des paramètres pris en compte. Le paramètre <code>HEADING</code> est
+     * traité d'une manière particulière, étant donné que les coordonnées (x,y) sont mémorisées
+     * dans l'objet {@link Path} plutôt que dans le tableau interne de {@link Animal}.
+     */
+    final int headingIndex;
 
     /**
      * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
-     * selon plusieurs langues. A chaque nom ({@link String}) est associé une
+     * selon plusieurs langues.  A chaque nom ({@link String}) est associé une
      * langue ({@link Locale}).
      *
-     * @param locales Langues des noms de cette espèces. Ce tableau doit avoir
+     * @param locales Langues des noms de cette espèce.  Ce tableau doit avoir
      *        la même longueur que l'argument <code>names</code>. <strong>NOTE:
      *        Ce tableau n'est pas cloné</strong>.  Evitez donc de le modifier
      *        après la construction.
-     * @param names  Nom de cette espèce selon chacune des langues énumérées dans
+     * @param names Nom de cette espèce selon chacune des langues énumérées dans
      *        l'argument <code>locales</code>. <strong>NOTE: Ce tableau n'est pas
      *        cloné</strong>. Evitez donc de le modifier après la construction.
-     * @param color Couleur par défaut à utiliser pour les icônes représentant cette
-     *        espèce.
+     * @param color Couleur par défaut à utiliser pour les icônes représentant cette espèce.
      *
+     * @throws MismatchedSizeException si les tableaux <code>locales</code> et <code>names</code>
+     *         n'ont pas la même longueur.
      * @throws IllegalArgumentException Si un des éléments du tableau
      *         <code>locales</code> apparaît plus d'une fois.
      */
     public Species(final Locale[] locales,
                    final String[] names,
                    final Color    color)
-            throws IllegalArgumentException
+            throws MismatchedSizeException, IllegalArgumentException
     {
-        this.locales = locales;
-        this.names   = names;
+        this(locales, names, color, DEFAULT_PARAMETERS, DEFAULT_OFFSETS);
+    }
+
+    /**
+     * Construit une nouvelle espèce d'animaux qui s'intéresseront aux paramètres spécifiés.
+     * <strong>Note: aucun tableau n'est cloné</strong>, afin de faciliter la réutilisation
+     * de tableaux déjà existants. Evitez donc de modifier un tableau après la construction
+     * de cet objet <code>Species</code>.
+     *
+     * @param locales Langues des noms de cette espèce. Ce tableau doit avoir
+     *        la même longueur que l'argument <code>names</code>.
+     * @param names Nom de cette espèce selon chacune des langues énumérées dans
+     *        l'argument <code>locales</code>.
+     * @param color Couleur par défaut à utiliser pour les icônes représentant cette espèce.
+     * @param parameters Paramètres susceptibles d'intéresser les animaux de cette espèce.
+     *
+     * @throws MismatchedSizeException si les tableaux <code>locales</code> et <code>names</code>
+     *         n'ont pas la même longueur.
+     * @throws IllegalArgumentException Si un des éléments du tableau
+     *         <code>locales</code> apparaît plus d'une fois.
+     */
+    public Species(final Locale[]    locales,
+                   final String[]    names,
+                   final Color       color,
+                   final Parameter[] parameters)
+            throws MismatchedSizeException, IllegalArgumentException
+    {
+        this(locales, names, color, parameters, getOffsets(parameters));
+    }
+
+    /**
+     * Construit une espèce avec des paramètres identiques à ceux de l'espèce spécifiée.
+     * Ce constructeur est utile pour les sous-classes qui veulent modifier une espèce
+     * existante en redéfinissant quelques methodes telle que {@link #getPerceptionArea}.
+     */
+    protected Species(final Species parent) {
+        this(parent.locales, parent.names, parent.color, parent.parameters, parent.offsets);
+    }
+
+    /**
+     * Procède à la construction d'une espèce.
+     * <strong>Note: aucun tableau n'est cloné</strong>, afin de faciliter la réutilisation
+     * de tableaux déjà existants. Evitez donc de modifier un tableau après la construction
+     * de cet objet <code>Species</code>.
+     *
+     * @param locales Langues des noms de cette espèce. Ce tableau doit avoir
+     *        la même longueur que l'argument <code>names</code>.
+     * @param names Nom de cette espèce selon chacune des langues énumérées dans
+     *        l'argument <code>locales</code>.
+     * @param color Couleur par défaut à utiliser pour les icônes représentant cette espèce.
+     * @param parameters Paramètres susceptibles d'intéresser les animaux de cette espèce.
+     * @param offsets Liste des index auxquels trouver les valeurs des observations dans le
+     *        tableau <code>Observations.observations</code> pour chaque paramètre. La longueur
+     *        de ce tableau doit être égale à la longueur du tableau <code>parameters</code>
+     *        plus 1.
+     *
+     * @throws MismatchedSizeException si les tableaux <code>locales</code> et <code>names</code>
+     *         n'ont pas la même longueur.
+     * @throws IllegalArgumentException Si un des éléments du tableau
+     *         <code>locales</code> apparaît plus d'une fois.
+     */
+    private Species(final Locale[]    locales,
+                    final String[]    names,
+                    final Color       color,
+                    final Parameter[] parameters,
+                    final int[]       offsets)
+            throws MismatchedSizeException, IllegalArgumentException
+    {
+        this.locales    = locales;
+        this.names      = names;
+        this.color      = color;
+        this.parameters = parameters;
+        this.offsets    = offsets;
         if (locales.length != names.length) {
             throw new MismatchedSizeException();
         }
@@ -144,7 +243,31 @@ public class Species implements fr.ird.animat.Species, Serializable {
                 throw new NullPointerException();
             }
         }
-        defaultColor = color;
+        int headingIndex = -1;
+        for (int i=0; i<parameters.length; i++) {
+            if (Parameter.HEADING.equals(parameters[i])) {
+                headingIndex = i;
+                break;
+            }
+        }
+        this.headingIndex = headingIndex;
+        assert getObservedParameters().size() == parameters.length;
+    }
+
+    /**
+     * Retourne la liste des index auxquels trouver les valeurs des observations dans le tableau
+     * <code>Observations.observations</code> pour chaque paramètre. La longueur de ce tableau
+     * sera égale à la longueur du tableau <code>parameters</code> plus 1.
+     *
+     * @param parameters Paramètres susceptibles d'intéresser les animaux de cette espèce.
+     * @return Index auxquels trouver les valeurs des observations pour chaque paramètre.
+     */
+    private static final int[] getOffsets(final Parameter[] parameters) {
+        final int[] offsets = new int[parameters.length + 1];
+        for (int i=0; i<parameters.length; i++) {
+            offsets[i+1] = offsets[i] + parameters[i].getRecordLength();
+        }
+        return offsets;
     }
 
     /**
@@ -153,12 +276,11 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * <code>float[]</code> qui contiendra les données d'observations.
      */
     final int getRecordLength() {
-        return observationOffsets[parameters.length];
+        return offsets[parameters.length];
     }
 
     /**
-     * Retourne les langues dans lesquelles peuvent
-     * être exprimées le nom de cette espèce.
+     * Retourne les langues dans lesquelles peuvent être exprimées le nom de cette espèce.
      */
     public Locale[] getLocales() {
         return (Locale[]) locales.clone();
@@ -205,49 +327,43 @@ public class Species implements fr.ird.animat.Species, Serializable {
     }
 
     /**
-     * Retourne le nom de cette espèce. Le nom sera retourné
-     * de préférence dans la langue par défaut du système.
-     */
-    public String toString() {
-        return getName(null);
-    }
-
-    /**
-     * Compare cette espèce avec l'objet spécifié.
-     */
-    public boolean equals(final Object object) {
-        if (object == this) {
-            return true;
-        }
-        if (object!=null && object.getClass().equals(getClass())) {
-            final Species that = (Species) object;
-            return Arrays.equals(locales, locales) &&
-                   Arrays.equals(names,   names)   &&
-                   Utilities.equals(defaultColor, defaultColor);
-        }
-        return false;
-    }
-
-    /**
-     * Retourne un code pour cette espèce.
-     */
-    public int hashCode() {
-        int code = names.length;
-        for (int i=0; i<names.length; i++) {
-            code = code*37 + names[i].hashCode();
-        }
-        return code;
-    }
-
-    /**
      * Retourne un nouvel icône représentant cette espèce.
      */
-    public Species.Icon getIcon() {
+    public fr.ird.animat.Species.Icon getIcon() {
         return new Icon();
     }
 
     /**
-     * Icone de l'espèce.
+     * Retourne tous les {@linkplain Parameter paramètres} susceptibles d'intéresser les
+     * {@linkplain Animal animaux} de cette espèce. L'ensemble retourné est immutable.
+     */
+    public Set<fr.ird.animat.Parameter> getObservedParameters() {
+        if (parameterSet == null) {
+            parameterSet = new ArraySet<fr.ird.animat.Parameter>(parameters);
+        }
+        return parameterSet;
+    }
+
+    /**
+     * Retourne la région de perception par défaut des animaux de cette espèce. Il s'agit de la
+     * région dans laquelle  l'animal peut percevoir les paramètres de son environnement autour
+     * de lui. Les coordonnées de cette forme doivent être en <strong>mètres</strong> et la forme
+     * doit être centrée sur la position de l'animal, sans rotation.  En d'autres mots, l'origine
+     * (0,0) est définie comme étant la position de l'animal, tandis que le cap de l'animal est
+     * défini comme pointant dans la direction des <var>x</var> positifs.  La rotation de cette
+     * forme (pour tenir compte du cap), sa translation (pour tenir compte de la position) et sa
+     * transformation en coordonnées géographiques pour une date donnée seront prises en compte
+     * par la méthode {@link Animal#getPerceptionArea}.
+     */
+    protected RectangularShape getPerceptionArea() {
+        return new Ellipse2D.Double(-PERCEPTION_RADIUS,
+                                    -PERCEPTION_RADIUS,
+                                   2*PERCEPTION_RADIUS,
+                                   2*PERCEPTION_RADIUS);
+    }
+
+    /**
+     * Implémentation par défaut de l'icône de l'espèce.
      *
      * @version $Id$
      * @author Martin Desruisseaux
@@ -262,8 +378,8 @@ public class Species implements fr.ird.animat.Species, Serializable {
          * Construit un icône.
          */
         public Icon() {
-            super(prepare(null, defaultColor));
-            this.color = defaultColor;
+            super(prepare(null, Species.this.color));
+            this.color = Species.this.color;
         }
 
         /**
@@ -320,5 +436,40 @@ public class Species implements fr.ird.animat.Species, Serializable {
         }
         image.releaseWritableTile(0,0);
         return image;
+    }
+
+    /**
+     * Retourne le nom de cette espèce. Le nom sera retourné
+     * de préférence dans la langue par défaut du système.
+     */
+    public String toString() {
+        return getName(null);
+    }
+
+    /**
+     * Compare cette espèce avec l'objet spécifié.
+     */
+    public boolean equals(final Object object) {
+        if (object == this) {
+            return true;
+        }
+        if (object!=null && object.getClass().equals(getClass())) {
+            final Species that = (Species) object;
+            return Arrays.equals(this.locales, that.locales) &&
+                   Arrays.equals(this.names,   that.names)   &&
+                Utilities.equals(this.color,   that.color);
+        }
+        return false;
+    }
+
+    /**
+     * Retourne un code pour cette espèce.
+     */
+    public int hashCode() {
+        int code = names.length;
+        for (int i=0; i<names.length; i++) {
+            code = code*37 + names[i].hashCode();
+        }
+        return code;
     }
 }

@@ -35,7 +35,9 @@ import java.util.Collections;
 import java.io.Serializable;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RectangularShape;
 import java.rmi.server.RemoteObject;
 import javax.swing.event.EventListenerList;
 
@@ -169,23 +171,40 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *         pendant la durée de vie de cet animal.
      */
     public Map<fr.ird.animat.Parameter,fr.ird.animat.Observation> getObservations(Date time) {
-        final int length = species.getRecordLength();
+        final int step = clock.computeStepSequenceNumber(time);
+        if (step < 0) {
+            return null;
+        }
+        int offset = 0;
+        int length = species.getRecordLength();
         final float[] data = new float[length];
-        System.arraycopy(observations, clock.getStepSequenceNumber(time)*length, data, 0, length);
+//        if (species.containsHeading) {
+//            path.getLocation(step, data);
+//            length -= (offset=2);
+//        }
+        System.arraycopy(observations, step*length, data, offset, length);
         return new Observations(species.parameters, data);
     }
 
     /**
-     * Retourne la région jusqu'où s'étend la perception de cet
-     * animal. Il peut s'agir par exemple d'un cercle centré sur
-     * la position de l'animal.
+     * Retourne la région jusqu'où s'étend la perception de cet animal. L'implémentation par
+     * défaut retourne un cercle d'un rayon de 10 kilomètres centré autour de la position de
+     * l'animal.
      *
      * @param  time La date pour laquelle on veut la région perçue,
      *         ou <code>null</code> pour la région actuelle.
      * @param  La région perçue, ou <code>null</code> si la date
      *         spécifiée n'est pas pendant la durée de vie de cet animal.
      */
-    public abstract Shape getPerceptionArea(Date time);
+    public Shape getPerceptionArea(final Date time) {
+        final int step = clock.computeStepSequenceNumber(time);
+        if (step < 0) {
+            return null;
+        }
+        final RectangularShape area = species.getPerceptionArea();
+        path.relativeToGeographic(area, step);
+        return area;
+    }
 
     /**
      * Fait avancer l'animal pendant le laps de temps spécifié. La vitesse à laquelle se

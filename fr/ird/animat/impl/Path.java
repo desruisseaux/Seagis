@@ -202,16 +202,35 @@ public final class Path extends Point2D implements Shape, Serializable {
      * @param  index Indice de la position désirée, de 0 inclusivement
      *         jusqu'à {@link #getPointCount} exclusivement.
      * @return Les coordonnées à la position spécifiée.
-     * @throws IndexOutOfBoundsException si <code>index</code> est en
-     *         dehors des limites permises.
+     * @throws IndexOutOfBoundsException si <code>index</code> est en dehors des limites permises.
      */
     public Point2D getLocation(int index) throws IndexOutOfBoundsException {
         index *= 2;
         if (index<0 || index>=validLength) {
             throw new IndexOutOfBoundsException(String.valueOf(index/2));
         }
-        return new Point2D.Double(Math.toDegrees(points[index  ]),
+        return new Point2D.Double(Math.toDegrees(points[index+0]),
                                   Math.toDegrees(points[index+1]));
+    }
+
+    /**
+     * Mémorise dans le buffer spécifié une des positions visitées depuis la création de cet
+     * objet.
+     *
+     * @param  index  Indice de la position désirée.
+     * @param  buffer Buffer dans lequel mémoriser les coordonnées.
+     * @param  offset Index à partir d'où placer la coordonnée (x,y) dans le buffer.
+     * @throws IndexOutOfBoundsException si <code>index</code> est en dehors des limites permises.
+     */
+    final void getLocation(int index, final float[] buffer, final int offset)
+            throws IndexOutOfBoundsException
+    {
+        index *= 2;
+        if (index<0 || index>=validLength) {
+            throw new IndexOutOfBoundsException(String.valueOf(index/2));
+        }
+        buffer[offset+0] = (float) Math.toDegrees(points[index+0]);
+        buffer[offset+1] = (float) Math.toDegrees(points[index+1]);
     }
 
     /**

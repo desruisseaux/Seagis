@@ -51,7 +51,7 @@ final class FishSpecies extends Species {
     /**
      * Ensemble des espèces déjà créée.
      */
-    private static final WeakHashSet<Species> pool = new WeakHashSet<Species>();
+    private static final WeakHashSet<FishSpecies> pool = new WeakHashSet<FishSpecies>();
 
     /**
      * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
@@ -84,7 +84,7 @@ final class FishSpecies extends Species {
      * cette méthode retourne <code>this</code>. Cette méthode est
      * habituellement appelée après la construction.
      */
-    public Species intern() {
+    public FishSpecies intern() {
         return pool.intern(this);
     }
 

@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Collection;
 import java.util.AbstractSet;
 import java.util.NoSuchElementException;
 import java.io.Serializable;
@@ -54,22 +55,38 @@ public class ArraySet<Element> extends AbstractSet<Element> implements Serializa
     private final Element[] elements;
 
     /**
-     * Construct a set initialized with the specified array. This array is not cloned.
-     * Consequently, it should not be modified externally after this object is constructed.
-     * Note that null elements in this array may be changed later if the method {@link #create}
-     * has been overrided.
+     * Construct a set from an arbitrary collection. This is the caller responsability
+     * to ensure that this collection do not contains any duplicated elements. It will
+     * be checked only if assertions are enabled.
      */
-    public ArraySet(final Element[] elements) {
-        this.elements = elements;
-        assert removeNull(new HashSet(Arrays.asList(elements))).size() == elements.length;
+    public ArraySet(final Collection<Element> elements) {
+        this(elements.toArray(new Element[elements.size()]));
     }
 
     /**
-     * Used for assertion only.
+     * Construct a set initialized with the specified array. <strong>This array is not
+     * cloned</strong>.  Consequently, it should not be modified externally after this
+     * object is constructed. Note that null elements in this array may be changed later
+     * if the {@link #create} method has been overrided.
      */
-    private static Set removeNull(final Set set) {
-        set.remove(null);
-        return set;
+    public ArraySet(final Element[] elements) {
+        this.elements = elements;
+        assert !hasDuplicated(elements);
+    }
+
+    /**
+     * Returns <code>true</code> if the specified array contains duplicated elements.
+     * If the array contains one or more <code>null</code> elements, then this method
+     * conservatively returns <code>false</code>  since the creation of null elements
+     * may be differed at a later time with the {@link #create} method.   This method
+     * is used for assertions only.
+     */
+    private static boolean hasDuplicated(final Object[] elements) {
+        final Set set = new HashSet(Arrays.asList(elements));
+        if (set.remove(null)) {
+            return false;
+        }
+        return set.size() != elements.length;
     }
 
     /**

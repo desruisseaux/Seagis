@@ -91,6 +91,20 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
     protected abstract void nextTimeStep();
 
     /**
+     * Calcule le numéro séquentiel du pas de temps correspondant à la date spécifiée. Les
+     * numéros valides sont compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
+     * Si la date spécifiée est antérieure à la date initiale de l'horloge ou ultérieure à
+     * la date de fin du pas de temps courant, alors cette méthode signale ce fait en
+     * retournant un numéro négatif.
+     *
+     * @param  time Date pour laquelle on veut le pas de temps.
+     * @return Le numéro séquentiel du pas de temps à la date spécifiée, ou un nombre négatif
+     *         si la date spécifiée est antérieure à la date initiale de l'horloge ou ultérieure
+     *         à la date de fin du pas de temps courant.
+     */
+    protected abstract int computeStepSequenceNumber(final Date time);
+
+    /**
      * Retourne le numéro séquentiel du pas de temps correspondant à la date spécifiée.
      * Ce numéro sera compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
      *
@@ -99,7 +113,14 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
      * @throws IllegalArgumentException si la date spécifiée est antérieure à la date initiale
      *         de l'horloge ou ultérieure à la date de fin du pas de temps courant.
      */
-    public abstract int getStepSequenceNumber(final Date time) throws IllegalArgumentException;
+    public final int getStepSequenceNumber(final Date time) throws IllegalArgumentException {
+        final int n = computeStepSequenceNumber(time);
+        if (n >= 0) {
+            return n;
+        }
+        throw new IllegalArgumentException(Resources.format(
+                  ResourceKeys.ERROR_DATE_OUTSIDE_COVERAGE_$1, time));
+    }
 
     /**
      * Retourne le numéro séquentiel du pas de temps courant. Ce numéro commence à 0 et est
@@ -211,7 +232,7 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
         /**
          * Retourne le numéro séquentiel du pas de temps correspondant à la date spécifiée.
          */
-        public int getStepSequenceNumber(final Date time) throws IllegalArgumentException {
+        protected int computeStepSequenceNumber(final Date time) {
             return Clock.this.getStepSequenceNumber(time) - offset;
         }
 
@@ -359,7 +380,7 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          * Retourne le numéro séquentiel du pas de temps correspondant à la date spécifiée.
          * Ce numéro sera compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
          */
-        public int getStepSequenceNumber(final Date time) throws IllegalArgumentException {
+        protected int computeStepSequenceNumber(final Date time) {
             long delta = time.getTime();
             if (delta < this.time + duration) {
                 delta -= initialTime;
@@ -367,8 +388,7 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
                     return (int) (delta/duration);
                 }
             }
-            throw new IllegalArgumentException(Resources.format(
-                      ResourceKeys.ERROR_DATE_OUTSIDE_COVERAGE_$1, time));
+            return -1;
         }
 
         /**

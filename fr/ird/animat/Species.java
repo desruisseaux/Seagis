@@ -129,5 +129,5 @@ public interface Species {
      *         durant les pas de temps passés, pendant le pas de temps courant ou dans un pas
      *         de temps futur.
      */
-    //Set<Parameter> getParameters();
+    Set<Parameter> getObservedParameters();
 }

@@ -67,11 +67,15 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
 
     /**
      * Index (relatif au début d'un enregistrement) de la longitude d'une observation.
+     * Note: pour le fonctionnement correct de {@link Animal#getObservations}, les
+     *       coordonnées (x,y) doivent toujours être les deux derniers éléments.
      */
     static final int X_OFFSET = 1;
 
     /**
      * Index (relatif au début d'un enregistrement) de la latitude d'une observation.
+     * Note: pour le fonctionnement correct de {@link Animal#getObservations}, les
+     *       coordonnées (x,y) doivent toujours être les deux derniers éléments.
      */
     static final int Y_OFFSET = 2;
 

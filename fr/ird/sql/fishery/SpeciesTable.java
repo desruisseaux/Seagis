@@ -112,7 +112,7 @@ final class SpeciesTable extends Table {
      * @throws SQLException si l'accès à la base de données a échouée.
      */
     final synchronized Species getSpecies(final String code, int index) throws SQLException {
-        Species species = null;
+        FishSpecies species = null;
         statement.setString(ID_ARG, code);
         final ResultSet result=statement.executeQuery();
         while (result.next()) {
@@ -129,6 +129,9 @@ final class SpeciesTable extends Table {
             }
         }
         result.close();
+        if (species != null) {
+            species = species.intern();
+        }
         return species;
     }
 
@@ -153,7 +156,9 @@ final class SpeciesTable extends Table {
                 for (int i=0; i<names.length; i++) {
                     names[i] = result.getString(i+1);
                 }
-                final Species sp = new FishSpecies(locales, names, COLORS[species.size() % COLORS.length]);
+                FishSpecies sp;
+                sp = new FishSpecies(locales, names, COLORS[species.size() % COLORS.length]);
+                sp = sp.intern();
                 species.add(sp);
             }
             result.close();

@@ -119,6 +119,15 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
+     * Retourne le nombre de valeurs <code>float</code> nécessaires pour mémoriser les
+     * informations représentées par ce paramètre.  Cette longueur sera habituellement
+     * de 3 ou 1, selon que ce paramètre contient une position ou pas.
+     */
+    final int getRecordLength() {
+        return isLocalized() ? Observations.LOCATED_LENGTH : Observations.SCALAR_LENGTH;
+    }
+
+    /**
      * Retourne le nom de ce paramètre. Cette méthode ne retourne que le nom afin de
      * permettre aux objets <code>Parameter</code> de s'insérer plus facilement dans
      * des composantes graphiques de <cite>Swing</cite> tel que des menus déroulants.
