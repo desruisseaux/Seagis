@@ -94,7 +94,7 @@ final class ThematicImage extends ImageAdapter
         switch (categories.length)
         {
             default: throw new UnsupportedOperationException(String.valueOf(categories.length));
-            case 1:  colors = categories[0].getColorModel(); break;
+            case 1:  colors = categories[0].getIndexColorModel(); break;
             // TODO: support 2, 3, 4... bands
         }
         ImageLayout layout = new ImageLayout(image);
@@ -144,10 +144,10 @@ final class ThematicImage extends ImageAdapter
             {
                 for (int x=xmin; x<xmax; x++)
                 {
-                    final float value=iterator.getSampleFloat();
+                    final double value=iterator.getSampleDouble();
                     category = categories.getEncoder(value, category);
                     if (category==null) category = blank;
-                    dest.setSample(x,y,band, (int)Math.floor(category.toSample(value)));
+                    dest.setSample(x,y,band, category.toIndex(value));
                     iterator.nextPixel();
                 }
                 assert(iterator.finishedPixels());

@@ -158,7 +158,7 @@ final class NumericImage extends ImageAdapter
             {
                 for (int x=xmin; x<xmax; x++)
                 {
-                    final float sample=iterator.getSampleFloat();
+                    final int sample=iterator.getSample();
                     category = categories.getDecoder(sample, category);
                     if (category==null) category = blank;
                     dest.setSample(x,y,band, category.toValue(sample));

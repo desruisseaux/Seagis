@@ -40,7 +40,7 @@ import net.seas.resources.Resources;
 
 
 /**
- * A list of categories. A category is a range of sample
+ * An immutable list of categories. A category is a range of sample
  * values reserved for a structure or a geophysics parameter.  For example, an image
  * may use some sample values for clouds, lands and ices, and a range of sample values
  * for sea surface temperature. Such an image may be build of four categories: three
@@ -64,7 +64,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 6541392455379362454L;
+    private static final long serialVersionUID = 7181649286626139819L;
 
     /**
      * Liste des catégories constituant cet objet <code>CategoryList</code>.
@@ -81,10 +81,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     private final Category[] byValues;
 
     /**
-     * Tableau des index {@link Category#lower} ou <code>Category.minimum</code>
-     * des tableaux <code>byIndex</code> et <code>byValues</code> respectivement.
+     * Tableau des index {@link Category#lower} du tableau <code>byIndex</code>.
      */
-    private final float[] index, values;
+    private final int[] index;
+
+    /**
+     * Tableau des index {@link Category#minimum} du tableau <code>byValues</code>.
+     */
+    private final double[] values;
 
     /**
      * Unités des mesures géophysiques représentées par les catégories.
@@ -204,10 +208,15 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {
         this.unit     = units;
         this.ndigits  = ndigits;
-        this.byIndex  = (Category[]) categories.clone();
-        this.byValues = (Category[])    byIndex.clone();
-        this.index    = CategoryComparator.BY_INDEX .sort(byIndex );
-        this.values   = CategoryComparator.BY_VALUES.sort(byValues);
+        this.byIndex  = CategoryComparator.BY_INDEX .sort(categories);
+        this.byValues = CategoryComparator.BY_VALUES.sort(byIndex);
+        this.index    = new int   [byIndex .length];
+        this.values   = new double[byValues.length];
+        for (int i=byIndex.length; --i>=0;)
+        {
+            index [i] = byIndex [i].lower;
+            values[i] = byValues[i].minimum;
+        }
         /*
          * Vérifie que les thèmes ne se chevauchent pas.
          */
@@ -219,13 +228,13 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                 final Category check = byIndex[i];
                 if (!(categ.lower>=check.upper || categ.upper<check.lower)) // Do not accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
-                                                       new Float(categ.lower), new Float(categ.upper),
-                                                       new Float(check.lower), new Float(check.upper)));
+                                                       new Integer(categ.lower), new Integer(categ.upper),
+                                                       new Integer(check.lower), new Integer(check.upper)));
 
                 if (categ.minimum<check.maximum && categ.maximum>=check.minimum) // Accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
-                                                       new Float(categ.minimum), new Float(categ.maximum),
-                                                       new Float(check.minimum), new Float(check.maximum)));
+                                                       new Double(categ.minimum), new Double(categ.maximum),
+                                                       new Double(check.minimum), new Double(check.maximum)));
             }
         }
         assert(CategoryComparator.BY_INDEX .isSorted(byIndex ));
@@ -245,8 +254,8 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         for (int i=0; i<categories.length; i++)
         {
             final Category category = categories[i];
-            final double ln = XMath.log10(((double)category.maximum - (double)category.minimum)/
-                                          ((double)category.upper   - (double)category.lower));
+            final double ln = XMath.log10((category.maximum - category.minimum)/
+                                          (category.upper   - category.lower));
             if (!Double.isNaN(ln))
             {
                 final int n = -(int)(Math.floor(ln+1E-6));
@@ -280,10 +289,10 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     final Category getBlank()
     {
         for (int i=0; i<byIndex.length; i++)
-            if (Float.floatToRawIntBits(byIndex[i].minimum) == Float.floatToRawIntBits(Float.NaN))
+            if (Double.doubleToRawLongBits(byIndex[i].minimum) == Double.doubleToRawLongBits(Double.NaN))
                 return byIndex[i];
         for (int i=0; i<byIndex.length; i++)
-            if (Float.isNaN(byIndex[i].minimum))
+            if (Double.isNaN(byIndex[i].minimum))
                 return byIndex[i];
         if (byIndex.length!=0)
             return byIndex[0];
@@ -302,40 +311,44 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * Returns the minimal geophysics value (inclusive) allowed for this
      * category list. This value is expressed in {@link #getUnits} units.
      */
-    final float getMinimumValue()
+    final double getMinimumValue()
     {
         assert(CategoryComparator.BY_VALUES.isSorted(byValues));
-        return (byValues.length!=0) ? byValues[0].minimum : Float.NaN;
+        return (byValues.length!=0) ? byValues[0].minimum : Double.NaN;
     }
 
     /**
      * Returns the maximal geophysics value (exclusive) allowed for this
      * category list. This value is expressed in {@link #getUnits} units.
      */
-    final float getMaximumValue()
+    final double getMaximumValue()
     {
         assert(CategoryComparator.BY_VALUES.isSorted(byValues));
-        return (byValues.length!=0) ? byValues[byValues.length-1].maximum : Float.NaN;
+        int max = byValues.length;
+        if (max!=0)
+        {
+            while (--max!=0 && Double.isNaN(byValues[max].maximum));
+            return byValues[max].maximum;
+        }
+        return Double.NaN;
     }
 
     /**
-     * Returns the minimal sample value (inclusive) allowed for this
-     * category list.
+     * Returns the minimal index value (inclusive) allowed for this category list.
      */
-    final float getMinimumSample()
+    final int getMinimumSample()
     {
         assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-        return (byIndex.length!=0) ? byIndex[0].lower : Float.NaN;
+        return (byIndex.length!=0) ? byIndex[0].lower : 0;
     }
 
     /**
-     * Returns the maximal sample value (exclusive) allowed for this
-     * category list.
+     * Returns the maximal sample value (exclusive) allowed for this category list.
      */
-    final float getMaximumSample()
+    final int getMaximumSample()
     {
         assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-        return (byIndex.length!=0) ? byIndex[byIndex.length-1].upper : Float.NaN;
+        return (byIndex.length!=0) ? byIndex[byIndex.length-1].upper : 0;
     }
 
     /**
@@ -343,26 +356,28 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * spécifié en valeur géophysique. Si aucune catégorie ne convient,
      * alors cette méthode retourne <code>null</code>.
      *
-     * @param  sample Valeur à transformer.
+     * @param  index Valeur à transformer.
      * @param  category Catégorie présumée du pixel, ou <code>null</code>.
      *         Il n'est pas nécessaire que cette information soit exacte,
      *         mais cette méthode sera plus rapide si elle l'est.
      * @return La catégorie du pixel, ou <code>null</code>.
      */
-    final Category getDecoder(final float sample, Category category)
+    final Category getDecoder(final int index, Category category)
     {
-        if (category==null || !(sample>=category.lower && sample<category.upper)) // Le '!' est important à cause des NaN.
+        // Le '!' ci-dessous est un reliquat du temps où on utilisait
+        // le type 'float'. Il était important à cause des NaN.
+        if (category==null || !(index>=category.lower && index<category.upper))
         {
             /*
              * Si la catégorie n'est pas la même que la dernière fois,
              * recherche à quelle autre catégorie pourrait appartenir le pixel.
              */
-            int i=Arrays.binarySearch(index, sample);
+            int i=Arrays.binarySearch(this.index, index);
             if ((i>=0 || (i=~i-1)>=0) && i<byIndex.length)
             {
                 category=byIndex[i];
-                assert(index[i]==category.lower);
-                if (!(sample>=category.lower && sample<category.upper))
+                assert(this.index[i]==category.lower);
+                if (!(index>=category.lower && index<category.upper))
                 {
                     return null;
                 }
@@ -383,10 +398,11 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      *         cette méthode sera plus rapide si elle l'est.
      * @return La catégorie de la valeur, ou <code>null</code>.
      */
-    final Category getEncoder(final float value, Category category)
+    final Category getEncoder(final double value, Category category)
     {
-        if (category==null || (!(value>=category.minimum && value<category.maximum)) && // Le '!' est important à cause des NaN
-                               Float.floatToRawIntBits(value)!=Float.floatToRawIntBits(category.minimum))
+        if (category==null ||
+            (!(value>=category.minimum && value<category.maximum)) && // Le '!' est important à cause des NaN
+             Double.doubleToRawLongBits(value)!=Double.doubleToRawLongBits(category.minimum))
         {
             /*
              * Si la catégorie n'est pas la même que la dernière fois,
@@ -404,7 +420,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             }
             else
             {
-                if (Float.isNaN(value))
+                if (Double.isNaN(value))
                 {
                     return null; // 'value' est un NaN inconnu.
                 }
@@ -413,7 +429,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                 {
                     if (byValues.length==0) return null;
                     category = byValues[0];
-                    if (Float.isNaN(category.minimum)) return null;
+                    if (Double.isNaN(category.minimum)) return null;
                     // 'value' est inférieure à la plus petite valeur représentable.
                 }
                 else
@@ -436,14 +452,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         }
         // assert: after converting geophysics value to sample
         //         value, it should stay in the same category.
-        assert(category==null || category==getDecoder(category.toSample(value), category));
+        assert(category==null || category==getDecoder(category.toIndex(value), category));
         return category;
     }
 
     /**
-     * Convert a sample value into a geophysics value.
+     * Convert a sample index into a geophysics value.
      *
-     * @param  sample The sample value, usually (but not always) an integer.
+     * @param  index The sample index.
      * @return The geophysics value, in the units {@link #getUnits}. This
      *         value may be one of the many <code>NaN</code> values if the
      *         sample do not belong to a quantative category. Many
@@ -452,19 +468,19 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      *
      * @see Category#toValue
      */
-    public float toValue(final float sample)
+    public double toValue(final int index)
     {
-        final Category category = getDecoder(sample, lastCategory);
+        final Category category = getDecoder(index, lastCategory);
         if (category!=null)
         {
             lastCategory = category;
-            return category.toValue(sample);
+            return category.toValue(index);
         }
-        return Float.NaN;
+        return Double.NaN;
     }
 
     /**
-     * Convert a geophysics value into a sample value. <code>value</code> must be
+     * Convert a geophysics value into a sample index. <code>value</code> must be
      * in the units {@link #getUnits}. If <code>value</code> is <code>NaN</code>,
      * then this method returns the sample value for one of the qualitative categories.
      * Many different <code>NaN</code> are alowed, which make it possible to differenciate
@@ -475,17 +491,17 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      *               minimal or the maximal value.
      * @return The sample value.
      *
-     * @see Category#toSample
+     * @see Category#toIndex
      */
-    public float toSample(final float value)
+    public int toIndex(final double value)
     {
         final Category category = getEncoder(value, lastCategory);
         if (category!=null)
         {
             lastCategory = category;
-            return category.toSample(value);
+            return category.toIndex(value);
         }
-        return Float.NaN;
+        return 0;
     }
 
     /**
@@ -498,9 +514,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      *                for the default locale.
      * @return A string representation of the geophysics value.
      */
-    public String format(final float value, final Locale locale)
+    public String format(final double value, final Locale locale)
     {
-        if (Float.isNaN(value))
+        if (Double.isNaN(value))
         {
             final Category category = getEncoder(value, lastCategory);
             if (category!=null)
@@ -513,7 +529,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
-     * Convert a sample value into a geophysics value, and format it. If <code>sample</code>
+     * Convert a sample index into a geophysics value, and format it. If <code>sample</code>
      * belong to a quantitative category, then the value is formatted as a number with the
      * appropriate number of digits and the units symbol. Otherwise, if <code>sample</code>
      * belong to a qualitative category, then the category name is returned. Otherwise,
@@ -525,14 +541,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * @return A string representation of the geophysics value, or <code>null</code>
      *         if the sample don't belong to a known category.
      */
-    final String formatConverted(final float sample, final Locale locale)
+    final String formatConverted(final int index, final Locale locale)
     {
-        final Category category = getDecoder(sample, lastCategory);
+        final Category category = getDecoder(index, lastCategory);
         if (category!=null)
         {
             lastCategory = category;
-            final float value = category.toValue(sample);
-            if (Float.isNaN(value))
+            final double value = category.toValue(index);
+            if (Double.isNaN(value))
             {
                 return category.getName(locale);
             }
@@ -554,7 +570,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * @param  buffer Le buffer dans lequel écrire la valeur.
      * @return Le buffer <code>buffer</code> dans lequel auront été écrit la valeur et les unités.
      */
-    private synchronized StringBuffer format(final float value, final boolean writeUnits, final Locale locale, StringBuffer buffer)
+    private synchronized StringBuffer format(final double value, final boolean writeUnits, final Locale locale, StringBuffer buffer)
     {
         if (format==null || !XClass.equals(this.locale, locale))
         {
@@ -662,25 +678,11 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      */
     public String toString()
     {
-        assert(CategoryComparator.BY_VALUES.isSorted(byValues));
-        assert(CategoryComparator.BY_INDEX .isSorted(byIndex ));
-        final float minimum;
-        final float maximum;
-        if (byValues.length!=0)
-        {
-            int max = byValues.length;
-            while (--max >= 1  &&  Float.isNaN(byValues[max].maximum));
-            minimum = byValues[0  ].minimum;
-            maximum = byValues[max].maximum;
-        }
-        else
-        {
-            minimum = Float.NaN;
-            maximum = Float.NaN;
-        }
         final String lineSeparator = System.getProperty("line.separator", "\n");
         StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
+        final double minimum = getMinimumValue();
+        final double maximum = getMaximumValue();
         if (minimum < maximum)
         {
             buffer=format(minimum, false, null, buffer);
@@ -707,25 +709,25 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Effectue une recherche bi-linéaire de la valeur spécifiée. Cette
-     * méthode est identique à {@link Arrays#binarySearch(float[],float)},
+     * méthode est identique à {@link Arrays#binarySearch(double[],double)},
      * excepté qu'elle distingue les différentes valeurs NaN.
      */
-    private static int binarySearch(final float[] array, final float key)
+    private static int binarySearch(final double[] array, final double key)
     {
         int low  = 0;
         int high = array.length-1;
         while (low <= high)
         {
             final int mid = (low + high)/2;
-            final float midVal = array[mid];
+            final double midVal = array[mid];
 
             final int cmp;
             if      (midVal < key) cmp = -1; // Neither val is NaN, thisVal is smaller
             else if (midVal > key) cmp = +1; // Neither val is NaN, thisVal is larger
             else
             {
-                final int midBits = Float.floatToRawIntBits(midVal);
-                final int keyBits = Float.floatToRawIntBits(key);
+                final long midBits = Double.doubleToRawLongBits(midVal);
+                final long keyBits = Double.doubleToRawLongBits(key);
                 cmp = (midBits == keyBits ?  0 :  // Values are equal
                       (midBits  < keyBits ? -1 :  // (-0.0, 0.0) or (!NaN, NaN)
                                             +1)); // (0.0, -0.0) or (NaN, !NaN)

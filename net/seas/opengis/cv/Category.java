@@ -26,10 +26,10 @@ package net.seas.opengis.cv;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Comparator;
 import java.io.Serializable;
+
+// Miscellaneous
 import net.seas.util.XClass;
-import net.seas.util.XMath;
 import net.seas.resources.Resources;
 
 
@@ -42,9 +42,10 @@ import net.seas.resources.Resources;
  * temperature with values ranging from –2 to 35°C, and three qualitative
  * categories for cloud, land and ice.
  * <br><br>
- * All categories must have a human readable name. In addition, some quantitative
- * categories may define a linear equation <code>v=C<sub>0</sub>+C<sub>1</sub>*p</code>
- * converting sample values <var>p</var> into geophysics values <var>v</var>.
+ * All categories must have a human readable name. In addition, quantitative
+ * categories may define a transformation between sample values <var>p</var>
+ * and geophysics values <var>v</var>. This transformation is usually (but
+ * not always) a linear equation in the form <code>v=offset+scale*p</code>.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -54,7 +55,7 @@ public class Category implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -4387326509458680963L;
+    private static final long serialVersionUID = -1137150703730727699L;
 
     /**
      * The category name (may not be localized).
@@ -62,50 +63,52 @@ public class Category implements Serializable
     private final String name;
 
     /**
-     * The lower sample value, inclusive. The category is made of all samples in the
-     * range {@link #lower} inclusive to {@link #upper} exclusive. Those numbers are
-     * usually (but not always) integers.
+     * The lower sample value (inclusive) as an integer. This category is
+     * made of all sample values in the range {@link #lower} inclusive to
+     * {@link #upper} exclusive.
      */
-    protected final float lower;
+    protected final int lower;
 
     /**
-     * The upper sample value, exclusive. The category is made of all samples in the
-     * range {@link #lower} inclusive to {@link #upper} exclusive. Those numbers are
-     * usually (but not always) integers.
+     * The upper sample value (exclusive) as an integer. This category is
+     * made of all sample values in the range {@link #lower} inclusive to
+     * {@link #upper} exclusive.
      */
-    protected final float upper;
+    protected final int upper;
 
     /**
-     * The upper sample value, <strong>inclusive</strong>.
-     * This is needed by {@link #toSample} for clamping values.
+     * Offset is the value to add to grid values for this category.
+     * This attribute is typically used when the category represents
+     * elevation data (or any other geophysics parameter).
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
      */
-    final float upperInclusive;
+    protected final double offset;
+
+    /**
+     * Scale is the value which is multiplied to grid values for this
+     * category.  This attribute is typically used when the category
+     * represents elevation data (or any other geophysics parameter).
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
+     */
+    protected final double scale;
 
     /**
      * The minimal geophysics value, inclusive. This value is usually (but not
      * always) equals to <code>{@link #toValue toValue}({@link #lower})</code>.
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
      */
-    final float minimum;
+    protected final double minimum;
 
     /**
      * The maximal geophysics value, exclusive. This value is usually (but not
      * always) equals to <code>{@link #toValue toValue}({@link #upper})</code>.
+     *
+     * For qualitative categories, this value is <code>NaN</code>.
      */
-    final float maximum;
-
-    /**
-     * The C0 coefficient in the linear equation <code>y=C0+C1*x</code>.
-     * This coefficient is {@link Double#NaN} if this category is not a
-     * quantitative one.
-     */
-    final float C0;
-
-    /**
-     * The C1 coefficient in the linear equation <code>y=C0+C1*x</code>.
-     * This coefficient is {@link Double#NaN} if this category is not a
-     * quantitative one.
-     */
-    final float C1;
+    protected final double maximum;
 
     /**
      * Codes ARGB des couleurs de la catégorie. Les couleurs par
@@ -120,150 +123,107 @@ public class Category implements Serializable
     private static final int[] DEFAULT = {0xFF000000, 0xFFFFFFFF};
 
     /**
-     * Construct a list of categories.
+     * A set of default category colors.
      */
-    static Category[] list(final String[] names)
+    private static final Color[] CYCLE =
     {
-        final Color[] colors = new Color[names.length];
-        final double scale = 255.0/colors.length;
-        for (int i=0; i<colors.length; i++)
-        {
-            final int r = (int)Math.round(scale*i);
-            colors[i] = new Color(r,r,r);
-        }
-        return list(names, colors);
-    }
-
-    /**
-     * Construct a list of categories.
-     */
-    static Category[] list(final String[] names, final Color[] colors)
-    {
-        if (names.length!=colors.length)
-        {
-            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_ARRAY_LENGTH));
-        }
-        final Category[] categories = new Category[names.length];
-        for (int i=0; i<categories.length; i++)
-            categories[i] = new Category(names[i], colors[i], i);
-        return categories;
-    }
+        Color.blue,    Color.red,   Color.orange, Color.yellow,    Color.pink,
+        Color.magenta, Color.green, Color.cyan,   Color.lightGray, Color.gray
+    };
 
     /**
      * Construct a qualitative category for sample value <code>index</code>.
      *
      * @param  name    The category name.
-     * @param  color   This category color.
-     * @param  index   The category number, from 0 to 4194303 inclusive. This number
-     *                 is also the sample value for this category. Common values are
-     *                 usually in the range 0 to 255.
+     * @param  color   The category color, or <code>null</code> for a default color.
+     * @param  index   The sample value as integer, usually in the range 0 to 255.
      */
     public Category(final String name, final Color color, final int index)
-    {this(name, new Color[] {color}, index, index+1, toNaN(index));}
+    {this(name, new Color[]{(color!=null) ? color : CYCLE[Math.abs(index)%CYCLE.length]}, index, index+1);}
 
     /**
-     * Construct a qualitative category for sample values ranging from
-     * <code>lower</code> inclusive to <code>upper</code> exclusive.
+     * Construct a qualitative category for sample values ranging
+     * from <code>lower</code> to <code>upper</code>.
      *
      * @param  name    The category name.
-     * @param  colors  A set of colors for this category. The array's length don't need to
-     *                 be equals to <code>upper-lower</code>.  Colors will be interpolated
-     *                 as needed. An array of length 1 means that an uniform color should be
-     *                 used for all values range. An array of length 0 or a <code>null</code>
-     *                 array means that a default color set should be used (usually a gradient
-     *                 from opaque black to opaque white).
-     * @param  lower   The lower sample value, inclusive. This is usually an integer.
-     * @param  upper   The upper sample value, exclusive. This is usually an integer.
-     * @param  index   The category number, from 0 to 4194303 inclusive.  This number doesn't
-     *                 need to matches sample values. Differents categories don't need to use
-     *                 increasing, different or contiguous numbers. This is up to the user to
-     *                 manage his category numbers. It is recommended to reserve number 0 for
-     *                 "no data". Others numbers may be anything like 1 for "cloud", 2 for
-     *                 "ice", 3 for "land", etc.
+     * @param  colors  A set of colors for this category. This array may have any length;
+     *                 colors will be interpolated as needed. An array of length 1 means
+     *                 that an uniform color should be used for all sample values. An array
+     *                 of length 0 or a <code>null</code> array means that some default colors
+     *                 should be used (usually a gradient from opaque black to opaque white).
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, exclusive.
      *
-     * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to <code>upper</code>.
+     * @throws IllegalArgumentException if <code>lower</code> is not smaller than <code>upper</code>.
      */
-    public Category(final String name, final Color[] colors, final float lower, final float upper, final int index) throws IllegalArgumentException
-    {this(name, colors, lower, upper, toNaN(index));}
+    public Category(final String name, final Color[] colors, final int lower, final int upper) throws IllegalArgumentException
+    {this(name, colors, lower, upper, toNaN(lower));}
 
     /**
      * Construct a qualitative category with the specified NaN value.
      */
-    private Category(final String name, final Color[] colors, final float lower, final float upper, final float NaN) throws IllegalArgumentException
+    private Category(final String name, final Color[] colors, final int lower, final int upper, final float NaN) throws IllegalArgumentException
     {this(name, colors, lower, upper, NaN, NaN, false);}
 
     /**
      * Construct a quantitative category for sample values ranging from <code>lower</code>
-     * inclusive to <code>upper</code> exclusive.  Sample values (usually integer) will be
-     * converted into geophysics values (usually floating-point) through a linear equation.
+     * to <code>upper</code>. Integer sample values will be converted into geophysics values
+     * (usually floating-point) through a linear equation.
      *
      * @param  name    The category name.
-     * @param  colors  A set of colors for this category. The array's length don't need to
-     *                 be equals to <code>upper-lower</code>.  Colors will be interpolated
-     *                 as needed. An array of length 1 means that an uniform color should be
-     *                 used for all values range. An array of length 0 or a <code>null</code>
-     *                 array means that a default color set should be used (usually a gradient
-     *                 from opaque black to opaque white).
-     * @param  lower   The lower sample value, inclusive. This is usually an integer.
-     * @param  upper   The upper sample value, exclusive. This is usually an integer.
-     * @param  C0      The C0 coefficient in the linear equation <code>v=C0+C1*p</code>.
-     * @param  C1      The C1 coefficient in the linear equation <code>v=C0+C1*p</code>.
+     * @param  colors  A set of colors for this category. This array may have any length;
+     *                 colors will be interpolated as needed. An array of length 1 means
+     *                 that an uniform color should be used for all sample values. An array
+     *                 of length 0 or a <code>null</code> array means that some default colors
+     *                 should be used (usually a gradient from opaque black to opaque white).
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, exclusive.
+     * @param  offset  The <code>offset</code> coefficient in the linear equation <code>v=offset+scale*p</code>.
+     * @param  scale   The <code>scale</code>  coefficient in the linear equation <code>v=offset+scale*p</code>.
      *
-     * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to <code>upper</code>,
-     *         or if <code>C0</code> or <code>C1</code> coefficients are illegal.
+     * @throws IllegalArgumentException if <code>lower</code> is not smaller than <code>upper</code>,
+     *         or if <code>offset</code> or <code>scale</code> coefficients are illegal.
      */
-    public Category(final String name, final Color[] colors, final float lower, final float upper, final float C0, final float C1) throws IllegalArgumentException
-    {this(name, colors, lower, upper, C0, C1, true);}
+    public Category(final String name, final Color[] colors, final int lower, final int upper, final double offset, final double scale) throws IllegalArgumentException
+    {this(name, colors, lower, upper, offset, scale, true);}
 
     /**
-     * Construct a qualitative or quantitative category for sample values ranging from
-     * <code>lower</code> inclusive to <code>upper</code> exclusive. Sample values
-     * (usually integer) can be converted into geophysics values (usually floating-point)
-     * through a linear equation.
+     * Construct a category with the specified scale and offset.
      *
      * @param  name    The category name.
-     * @param  colors  A set of colors for this category. The array's length don't need to
-     *                 be equals to <code>upper-lower</code>.  Colors will be interpolated
-     *                 as needed. An array of length 1 means that an uniform color should be
-     *                 used for all values range. An array of length 0 or a <code>null</code>
-     *                 array means that a default color set should be used (usually a gradient
-     *                 from opaque black to opaque white).
-     * @param  lower   The lower sample value, inclusive. This is usually an integer.
-     * @param  upper   The upper sample value, exclusive. This is usually an integer.
-     * @param  C0      The C0 coefficient in the linear equation <code>v=C0+C1*p</code>.
-     * @param  C1      The C1 coefficient in the linear equation <code>v=C0+C1*p</code>.
+     * @param  colors  A set of colors for this category.
+     * @param  lower   The lower sample value, inclusive.
+     * @param  upper   The upper sample value, exclusive.
+     * @param  offset  The <code>offset</code> coefficient in the linear equation <code>v=offset+scale*p</code>.
+     * @param  scale   The <code>scale</code>  coefficient in the linear equation <code>v=offset+scale*p</code>.
      * @param  isQuantitative <code>true</code> if this category is a quantitative one.
      *
-     * @throws IllegalArgumentException if <code>lower</code> is greater than or equals to
-     *         <code>upper</code>, or if <code>C0</code> and/or <code>C1</code> coefficients
-     *         are illegal.
+     * @throws IllegalArgumentException if <code>lower</code> is not smaller than <code>upper</code>,
+     *         or if <code>offset</code> or <code>scale</code> coefficients are illegal.
      */
-    private Category(final String name, final Color[] colors, final float lower, final float upper, final float C0, final float C1, boolean isQuantitative) throws IllegalArgumentException
+    private Category(final String name, final Color[] colors, final int lower, final int upper,
+                     final double offset, final double scale, final boolean isQuantitative) throws IllegalArgumentException
     {
-        this.name  = name.trim();
-        this.lower = lower;
-        this.upper = upper;
-        this.C0    = C0;
-        this.C1    = C1;
-        if (!(lower<upper && !Float.isInfinite(lower) && !Float.isInfinite(upper)))
+        this.name   = name.trim();
+        this.lower  = lower;
+        this.upper  = upper;
+        this.offset = offset;
+        this.scale  = scale;
+        // Use '!' in order to catch NaN (previous version used float type).
+        if (!(lower<upper)/* || Float.isInfinite(lower) || Float.isInfinite(upper)*/)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Float(lower), new Float(upper)));
+            throw new IllegalArgumentException(Resources.format(Clé.BAD_RANGE¤2, new Integer(lower), new Integer(upper)));
         }
-        if (Float.isNaN(C0)==isQuantitative || Float.isInfinite(C0))
+        if (Double.isNaN(offset)==isQuantitative || Double.isInfinite(offset))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_COEFFICIENT¤2, "C0", new Float(C0)));
+            throw new IllegalArgumentException(Resources.format(Clé.BAD_COEFFICIENT¤2, "offset", new Double(offset)));
         }
-        if (Float.isNaN(C1)==isQuantitative || Float.isInfinite(C1))
+        if (Double.isNaN(scale)==isQuantitative || Double.isInfinite(scale))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_COEFFICIENT¤2, "C1", new Float(C1)));
+            throw new IllegalArgumentException(Resources.format(Clé.BAD_COEFFICIENT¤2, "scale", new Double(scale)));
         }
-        // Default computation for 'upperInclusive'.
-        upperInclusive = previousFloat(upper);
-        assert(upperInclusive>=lower && upperInclusive<upper);
-
-        // Finish construction.
-        final float min = toValue(lower);
-        final float max = toValue(upper);
+        final double min = toValue(lower);
+        final double max = toValue(upper);
         if (min > max)
         {
             this.minimum = max;
@@ -281,22 +241,6 @@ public class Category implements Serializable
                 ARGB[i] = colors[i].getRGB();
         }
         else ARGB = DEFAULT;
-    }
-
-    /**
-     * Returns a NaN number for the specified category number.
-     * Valid NaN numbers have bit fields ranging from
-     * <code>0x7f800001</code> through <code>0x7fffffff</code> or
-     * <code>0xff800001</code> through <code>0xffffffff</code>.
-     * The standard {@link Float#NaN} has bit fields <code>0x7fc00000</code>.
-     */
-    private static float toNaN(final int index) throws IndexOutOfBoundsException
-    {
-        if (index>=0 && index<=0x3FFFFF)
-        {
-            return Float.intBitsToFloat(0x7FC00000 + index);
-        }
-        else throw new IndexOutOfBoundsException(String.valueOf(index));
     }
 
     /**
@@ -327,6 +271,30 @@ public class Category implements Serializable
     }
 
     /**
+     * Compute the geophysics value from an index value. The <code>index</code>
+     * value should be in the range <code>[{@link #lower}..{@link #upper}]</code>.
+     * However, this methods will not performs range check. Index out of range
+     * may lead to extrapolation, which may or may not have a physical maining.
+     *
+     * @see CategoryList#toValue
+     */
+    protected double toValue(final int index)
+    {return offset + scale*index;}
+
+    /**
+     * Compute the index value from a geophysics value.  If the resulting index is outside
+     * this category's range (<code>[{@link #lower}..{@link #upper}]</code>), then it will
+     * be clamp to <code>lower</code> or <code>upper-1</code> as necessary.
+     *
+     * @see CategoryList#toIndex
+     */
+    protected int toIndex(final double value)
+    {
+        final double index = Math.rint((value-offset)/scale);
+        return (index>=lower) ? ((index<upper) ? (int)index : upper-1) : lower;
+    }
+
+    /**
      * Returns <code>true</code> if this category is quantitative. The
      * method {@link #toValue} returns real numbers for quantitative
      * categories and <code>NaN</code> for qualitative categories.
@@ -335,7 +303,7 @@ public class Category implements Serializable
      *         <code>false</code> if this category is qualitative.
      */
     public boolean isQuantitative()
-    {return !Float.isNaN(C0) && !Float.isNaN(C1);}
+    {return !Double.isNaN(offset) && !Double.isNaN(scale);}
 
     /**
      * Returns <code>true</code> if {@link #toValue} just returns his argument with no change.
@@ -344,35 +312,7 @@ public class Category implements Serializable
      * values.
      */
     public boolean isIdentity()
-    {return C0==0 && C1==1;}
-
-    /**
-     * Compute the geophysics value from a sample value. This method doesn't
-     * need to check if <code>sample</code> lies in this category's range
-     * (<code>[{@link #lower}..{@link #upper}]</code>). Values out of range
-     * may lead to extrapolation, which may or may not have a physical maining.
-     *
-     * @see CategoryList#toValue
-     */
-    protected float toValue(final float sample)
-    {return C0+C1*sample;}
-
-    /**
-     * Compute the sample value from a geophysics value. If the resulting value is outside this category's
-     * range (<code>[{@link #lower}..{@link #upper}]</code>), then it will be clamp to <code>lower</code>
-     * or <code>{@link #previousFloat previousFloat}(upper)</code> as necessary. This method never returns
-     * infinity or NaN.
-     * <br><br>
-     * If an integer value is desired, we suggest rounding toward negative infinity
-     * (as <code>{@link Math#floor Math.floor}(sample))</code>).
-     *
-     * @see CategoryList#toSample
-     */
-    protected float toSample(final float value)
-    {
-        final float sample = (value-C0)/C1;
-        return (sample>=lower) ? ((sample<=upperInclusive) ? sample : upperInclusive) : lower;
-    }
+    {return offset==0 && scale==1;}
 
     /**
      * Returns a hash value for this category.
@@ -392,12 +332,12 @@ public class Category implements Serializable
         if (object!=null && object.getClass().equals(getClass()))
         {
             final Category that = (Category) object;
-            return Float.floatToRawIntBits(this.lower  ) == Float.floatToRawIntBits(that.lower  ) &&
-                   Float.floatToRawIntBits(this.upper  ) == Float.floatToRawIntBits(that.upper  ) &&
-                   Float.floatToRawIntBits(this.minimum) == Float.floatToRawIntBits(that.minimum) &&
-                   Float.floatToRawIntBits(this.maximum) == Float.floatToRawIntBits(that.maximum) &&
-                   Float.floatToRawIntBits(this.C0     ) == Float.floatToRawIntBits(that.C0     ) &&
-                   Float.floatToRawIntBits(this.C1     ) == Float.floatToRawIntBits(that.C1     ) &&
+            return Double.doubleToRawLongBits(this.lower  ) == Double.doubleToRawLongBits(that.lower  ) &&
+                   Double.doubleToRawLongBits(this.upper  ) == Double.doubleToRawLongBits(that.upper  ) &&
+                   Double.doubleToRawLongBits(this.offset ) == Double.doubleToRawLongBits(that.offset ) &&
+                   Double.doubleToRawLongBits(this.scale  ) == Double.doubleToRawLongBits(that.scale  ) &&
+                   Double.doubleToRawLongBits(this.minimum) == Double.doubleToRawLongBits(that.minimum) &&
+                   Double.doubleToRawLongBits(this.maximum) == Double.doubleToRawLongBits(that.maximum) &&
                    XClass.equals(this.name, that.name) &&
                    Arrays.equals(this.ARGB, that.ARGB);
         }
@@ -412,9 +352,9 @@ public class Category implements Serializable
     public String toString()
     {
         final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
+        buffer.append("[\"");
         buffer.append(name);
-        buffer.append(":[");
+        buffer.append("\":[");
         final int lo = (int)lower;
         final int up = (int)upper;
         if (lo==lower && up==upper)
@@ -434,116 +374,59 @@ public class Category implements Serializable
     }
 
     /**
-     * Finds the least float greater than <var>f</var>. If <code>NaN</code>, returns same
-     * value.  This method may be used at construction time for excluding the lower bound
-     * or including the upper bound.
+     * Returns a NaN number for the specified category number. Valid NaN numbers have
+     * bit fields ranging from <code>0x7f800001</code> through <code>0x7fffffff</code>
+     * or <code>0xff800001</code> through <code>0xffffffff</code>. The standard {@link
+     * Float#NaN} has bit fields <code>0x7fc00000</code>.
      *
-     * @see java.text.ChoiceFormat#nextDouble
+     * @param  index The category number, from -2097152 to 2097151 inclusive. This number
+     *               doesn't need to matches sample values.    Different categories don't
+     *               need to use increasing,  different or contiguous numbers. This is up
+     *               to the user to manage his category numbers.  Category numbers may be
+     *               anything like 1 for "cloud", 2 for "ice", 3 for "land", etc.
+     * @return       The NaN value as a float. We limit ourself to the float type instead
+     *               of double because the underlying image storage type way be float.
+     * @throws IndexOutOfBoundsException if the specified index is out of bounds.
      */
-    public static final float nextFloat(final float f)
-    {return nextFloat(f, true);}
-
-    /**
-     * Finds the greatest float less than <var>f</var>.
-     * If <code>NaN</code>, returns same value.
-     *
-     * @see java.text.ChoiceFormat#previousDouble
-     */
-    public static final float previousFloat(final float f)
-    {return nextFloat(f, false);}
-
-    /**
-     * Finds the least float greater than d (if positive == true),
-     * or the greatest float less than d (if positive == false).
-     * If NaN, returns same value. This code is an adaptation of
-     * {@link java.text.ChoiceFormat#nextDouble}.
-     */
-    private static float nextFloat(final float f, final boolean positive)
+    private static float toNaN(int index) throws IndexOutOfBoundsException
     {
-        final int SIGN             = 0x80000000;
-        final int POSITIVEINFINITY = 0x7F800000;
-
-        // Filter out NaN's
-        if (Float.isNaN(f)) return f;
-
-        // Zero's are also a special case
-        if (f == 0.0)
+        index += 0x200000;
+        if (index>=0 && index<=0x3FFFFF)
         {
-            final float smallestPositiveFloat = Float.intBitsToFloat(1);
-            return (positive) ? smallestPositiveFloat : -smallestPositiveFloat;
+            final float value = Float.intBitsToFloat(0x7FC00000 + index);
+            assert(Float.isNaN(value));
+            return value;
         }
-
-        // If entering here, d is a nonzero value.
-        // Hold all bits in a int for later use.
-        final int bits = Float.floatToIntBits(f);
-
-        // Strip off the sign bit.
-        int magnitude = bits & ~SIGN;
-
-        // If next float away from zero, increase magnitude.
-        // Else decrease magnitude
-        if ((bits > 0) == positive)
-        {
-            if (magnitude != POSITIVEINFINITY)
-            {
-                magnitude++;
-            }
-        }
-        else
-        {
-            magnitude--;
-        }
-
-        // Restore sign bit and return.
-        final int signbit = bits & SIGN;
-        return Float.intBitsToFloat(magnitude | signbit);
+        else throw new IndexOutOfBoundsException(String.valueOf(index));
     }
 
-
-
+    /**
+     * Construct a list of categories.
+     */
+    static Category[] list(final String[] names)
+    {
+        final Color[] colors = new Color[names.length];
+        final double scale = 255.0/colors.length;
+        for (int i=0; i<colors.length; i++)
+        {
+            final int r = (int)Math.round(scale*i);
+            colors[i] = new Color(r,r,r);
+        }
+        return list(names, colors);
+    }
 
     /**
-     * A quantitative category converting converting geophysics values
-     * into sample values through a logarithmic equation. The reverse operation
-     * (convert sample values into geophysics values) is done through the following equation:
-     * <code>v=10^(C<sub>0</sub>+C<sub>1</sub>*p)</code> where <var>p</var> is the (usually
-     * integer) pixel value and <var>v</var> is the (usually floating-point) geophysics value.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
+     * Construct a list of categories.
      */
-    public static class Logarithmic extends Category
+    static Category[] list(final String[] names, final Color[] colors)
     {
-        /**
-         * Serial number for interoperability with different versions.
-         */
-        private static final long serialVersionUID = -8013388870292811110L;
-
-        /**
-         * Construct a logarithmic category.
-         */
-        public Logarithmic(final String name, final Color[] colors, final float lower, final float upper, final float C0, final float C1) throws IllegalArgumentException
-        {super(name, colors, lower, upper, C0, C1);}
-
-        /**
-         * Returns <code>false</code>, since {@link #toValue} always change some values.
-         */
-        public boolean isIdentity()
-        {return false;}
-
-        /**
-         * Compute the geophysics value from a sample value.
-         */
-        protected float toValue(final float sample)
-        {return (float)XMath.pow10(C0+C1*sample);}
-
-        /**
-         * Compute the pixel value from the geophysics value.
-         */
-        protected float toSample(final float value)
+        if (names.length!=colors.length)
         {
-            final float sample = (float) ((XMath.log10(value)-C0)/C1);
-            return (sample>=lower) ? ((sample<=upperInclusive) ? sample : upperInclusive) : lower;
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_ARRAY_LENGTH));
         }
+        final Category[] categories = new Category[names.length];
+        for (int i=0; i<categories.length; i++)
+            categories[i] = new Category(names[i], colors[i], i);
+        return categories;
     }
 }

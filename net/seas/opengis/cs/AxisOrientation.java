@@ -150,7 +150,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     {
         for (int i=0; i<ENUMS.length; i++)
             if (ENUMS[i].getValue()!=i)
-                throw new ExceptionInInitializerError(String.valueOf(ENUMS[i]));
+                throw new AssertionError(ENUMS[i]);
     }
 
     /**

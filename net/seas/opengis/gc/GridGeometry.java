@@ -51,7 +51,7 @@ public class GridGeometry implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 398116590319460364L; // TODO
+    private static final long serialVersionUID = 256746343396114708L;
 
     /**
      * The valid coordinate range of a grid coverage. The lowest
@@ -164,11 +164,11 @@ public class GridGeometry implements Serializable
     {return gridToCoordinateJAI;} // No clone for performance raisons.
 
     /**
-     * Returns an estimation of pixel size, in user coordinates.
+     * Returns an estimation of cell size, in user coordinates.
      * Note: the returned dimension is an <em>estimation only</em>,
      *       and may be improved in future version.
      */
-    public Dimension2D getPixelSize()
+    public Dimension2D getCellSize2D()
     {
         if (gridToCoordinateJAI!=null)
         {

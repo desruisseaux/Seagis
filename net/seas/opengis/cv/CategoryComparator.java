@@ -44,8 +44,8 @@ abstract class CategoryComparator implements Comparator<Category>
      */
     public static final CategoryComparator BY_INDEX=new CategoryComparator()
     {
-        protected float getLower(final Category category) {return category.lower;}
-        protected float getUpper(final Category category) {return category.upper;}
+        protected double getLower(final Category category) {return category.lower;}
+        protected double getUpper(final Category category) {return category.upper;}
     };
 
     /**
@@ -54,23 +54,25 @@ abstract class CategoryComparator implements Comparator<Category>
      */
     public static final CategoryComparator BY_VALUES=new CategoryComparator()
     {
-        protected float getLower(final Category category) {return category.minimum;}
-        protected float getUpper(final Category category) {return category.maximum;}
+        protected double getLower(final Category category) {return category.minimum;}
+        protected double getUpper(final Category category) {return category.maximum;}
     };
 
     /**
-     * Retourne la valeur du champ à comparer. Cette méthode retournera
-     * {@link Category#lower} ou {@link Category#minimum} selon
-     * l'implémentation utilisée.
+     * Retourne la valeur inférieure du champ à comparer. Cette méthode retournera
+     * {@link Category#lower} ou {@link Category#minimum} selon l'implémentation
+     * utilisée. Notez que le type 'double' utilise 52 bits pour sa mantise, ce
+     * qui est amplement suffisant pour les 32 bits du type 'int'.
      */
-    protected abstract float getLower(final Category category);
+    protected abstract double getLower(final Category category);
 
     /**
-     * Retourne la valeur du champ à comparer. Cette méthode retournera
-     * {@link Category#upper} ou {@link Category#maximum} selon
-     * l'implémentation utilisée.
+     * Retourne la valeur supérieure du champ à comparer. Cette méthode retournera
+     * {@link Category#upper} ou {@link Category#maximum} selon l'implémentation
+     * utilisée. Notez que le type 'double' utilise 52 bits pour sa mantise, ce
+     * qui est amplement suffisant pour les 32 bits du type 'int'.
      */
-    protected abstract float getUpper(final Category category);
+    protected abstract double getUpper(final Category category);
 
     /**
      * Compare deux objets {@link Category}. Cette méthode sert à
@@ -79,14 +81,14 @@ abstract class CategoryComparator implements Comparator<Category>
      */
     public final int compare(final Category o1, final Category o2)
     {
-        final float v1 = getLower(o1);
-        final float v2 = getLower(o2);
-        final int cmp=Float.compare(v1, v2);
+        final double v1 = getLower(o1);
+        final double v2 = getLower(o2);
+        final int cmp=Double.compare(v1, v2);
         if (cmp==0)
         {
             // Special test for NaN
-            final int bits1 = Float.floatToRawIntBits(v1);
-            final int bits2 = Float.floatToRawIntBits(v2);
+            final long bits1 = Double.doubleToRawLongBits(v1);
+            final long bits2 = Double.doubleToRawLongBits(v2);
             if (bits1 < bits2) return -1;
             if (bits1 > bits2) return +1;
         }
@@ -94,18 +96,16 @@ abstract class CategoryComparator implements Comparator<Category>
     }
 
     /**
-     * Classe le tableau <code>category</code>, puis retourne uu tableau
-     * qui contiendra tous les index {@link Category#upper} ou
-     * {@link Category#maximum} du tableau.
+     * Classe les éléments du tableau <code>category</code>.
+     * Le classement est fait dans une copie du tableau, qui
+     * est retourné. Le tableau original n'est pas modifié.
      */
-    public final float[] sort(final Category[] categories)
+    public final Category[] sort(Category[] categories)
     {
+        categories = (Category[]) categories.clone();
         Arrays.sort(categories, this);
         assert(isSorted(categories));
-        final float[] index=new float[categories.length];
-        for (int i=0; i<index.length; i++)
-            index[i] = getLower(categories[i]);
-        return index;
+        return categories;
     }
 
     /**
