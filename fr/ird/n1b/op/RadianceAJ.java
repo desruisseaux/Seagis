@@ -80,7 +80,7 @@ final class RadianceAJ extends Radiance
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients";
+    public static final String SLOPE_INTERCEPT_COEFFICIENT = "SLOPE INTERCEPT COEFFICIENTS";
     
     /**
      * Grille contenant les coefficients de calibration.

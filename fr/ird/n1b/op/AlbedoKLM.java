@@ -91,7 +91,7 @@ final class AlbedoKLM extends Albedo
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients";
+    public static final String SLOPE_INTERCEPT_COEFFICIENT = "SLOPE INTERCEPT COEFFICIENTS";
     /**
      * Grille contenant les coefficients de calibration utile lors de la conversion.
      */

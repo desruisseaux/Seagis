@@ -80,7 +80,7 @@ final class RadianceKLM extends Radiance
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String THERMAL_COEFFICIENT = "Thermal calibration coefficient";
+    public static final String THERMAL_COEFFICIENT = "THERMAL CALIBRATION COEFFICIENT";
     
     /**
      * Grille contenant les coefficients de calibration.

@@ -72,7 +72,7 @@ final class TemperatureKLM extends Temperature
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String TEMPERATURE_CONSTANT      = "Constant for temperature computation (A, B, and C)";
+    public static final String TEMPERATURE_CONSTANT      = "Temperature constant";
     
     /** 
      * Constantes de radiation utilisees pour le calcul de la temperature de brillance. 

@@ -75,7 +75,7 @@ final class TemperatureAJ extends Temperature
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String WAVE_LENGTH = "Central wave length";
+    public static final String WAVE_LENGTH = "CENTRAL WAVE LENGHT";
     
     /** 
      * Constantes de radiation utilisees pour le calcul de la temperature de brillance. 
