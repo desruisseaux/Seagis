@@ -195,11 +195,6 @@ import net.seas.util.XString;
 public abstract class ZoomPane extends JComponent
 {
     /**
-     * Journal vers lequel envoyer des informations sur les opérations effectuées.
-     */
-    private static final Logger logger = Logger.getLogger("net.seas.awt");
-
-    /**
      * Largeur et hauteur minimale de cette composante.
      */
     private static final int MINIMUM_SIZE=10;
@@ -749,7 +744,7 @@ public abstract class ZoomPane extends JComponent
                  */
                 repaint(zoomableBounds);
                 zoomIsReset=true;
-                verbose("reset", visibleArea);
+                log("reset", visibleArea);
             }
         }
     }
@@ -813,7 +808,7 @@ public abstract class ZoomPane extends JComponent
                 else oldArea=preferredArea.clone();
                 preferredArea.setRect(area);
                 firePropertyChange("preferredArea", oldArea, area);
-                verbose("setPreferredArea", area);
+                log("setPreferredArea", area);
             }
             else throw new IllegalArgumentException(Resources.format(Clé.BAD_RECTANGLE¤1, area));
         }
@@ -862,7 +857,7 @@ public abstract class ZoomPane extends JComponent
      */
     public final void setVisibleArea(final Rectangle2D logicalBounds) throws IllegalArgumentException
     {
-        verbose("setVisibleArea", logicalBounds);
+        log("setVisibleArea", logicalBounds);
         transform(setVisibleArea(logicalBounds, getZoomableBounds()));
     }
 
@@ -2058,8 +2053,6 @@ public abstract class ZoomPane extends JComponent
      */
     protected final void paintComponent(final Graphics graphics)
     {
-        final String className=getClass().getName();
-        logger.entering(className, "paintComponent");
         flag=IS_PAINTING;
         super.paintComponent(graphics);
         /*
@@ -2072,12 +2065,9 @@ public abstract class ZoomPane extends JComponent
          */
         if (magnifier!=null)
         {
-            logger.entering(className, "paintMagnifier");
             flag=IS_PAINTING_MAGNIFIER;
             super.paintComponent(graphics);
-            logger.exiting(className, "paintMagnifier");
         }
-        logger.exiting(className, "paintComponent");
     }
 
     /**
@@ -2165,16 +2155,30 @@ public abstract class ZoomPane extends JComponent
      * Cette méthode est appelée par {@link #setPreferredArea} et
      * {@link #setVisibleArea}.
      */
-    private static void verbose(final String method, final Rectangle2D area)
+    private static void log(final String methodName, final Rectangle2D area)
+    {log("net.seas.awt", "ZoomPane", methodName, area);}
+
+    /**
+     * Convenience method for logging events related to area setting. <code>ZoomPane</code>
+     * use this method for logging any [@link #setPreferredArea} and {@link #setVisibleArea}
+     * invocations with {@link Level#FINE}. Subclasses may use it for logging some other
+     * kinds of changes.
+     *
+     * @param packageName The caller's package (e.g. <code>"net.seas.awt"</code>).
+     * @param   className The caller's short class name (e.g. <code>"ZoomPane"</code>).
+     * @param  methodName The caller's short class name (e.g. <code>"setArea"</code>).
+     * @param        area The coordinates to log.
+     */
+    protected static void log(final String packageName, final String className, final String methodName, final Rectangle2D area)
     {
         if (Version.MINOR>=4)
         {
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
                                          new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
                                                        new Double(area.getMinY()), new Double(area.getMaxY())});
-            record.setSourceClassName("ZoomPane");
-            record.setSourceMethodName(method);
-            logger.log(record);
+            record.setSourceClassName ( className);
+            record.setSourceMethodName(methodName);
+            Logger.getLogger(packageName).log(record);
         }
     }
 

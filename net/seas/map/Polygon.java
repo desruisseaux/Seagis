@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 // Formatting and logging
+import java.util.Locale;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.util.logging.Level;
@@ -80,6 +81,7 @@ import net.seas.util.XMath;
 import net.seas.util.XArray;
 import net.seas.util.XClass;
 import net.seas.util.XString;
+import net.seas.util.Console;
 import net.seas.util.Version;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
@@ -87,9 +89,11 @@ import net.seas.awt.ExceptionMonitor;
 
 
 /**
- * Classe représentant un polyligne. Les points du polyligne sont exprimés selon un certain
- * système de coordonnées, spécifié lors de la création de l'objet. Ces points peuvent
- * former une forme géométrique fermée (un polygone) ou ouvert (un polyligne).
+ * A polyline or a polygon. A polyline is built from straight lines with no discontinuity.
+ * A polygon is a closed polyline (i.e. {@link #isClosed} returns <code>true</code>).
+ * Polygons way have two interior states: interior may be an elevation (for example
+ * the polygon may be an island in the middle of a sea), or a depression (for example
+ * a lake in the middle of a continent).
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -107,7 +111,7 @@ public class Polygon extends Contour
      * Projection à utiliser pour les calculs qui
      * exigent un système de coordonnées cartésien.
      */
-    private static final String INTERNAL = "Stereographic";
+    private static final String CARTESIAN = "Stereographic";
 
     /**
      * Cache vers des objets déjà créés. Cette cache utilise des références faibles pour ne
@@ -155,7 +159,8 @@ public class Polygon extends Contour
     /**
      * Constant indicating that the polyline
      * defined by this object represents neither
-     * a lake or an island.
+     * a lake or an island. Such a polyline may
+     * not be closed.
      *
      * @see #DEPRESSION
      * @see #ELEVATION
@@ -174,9 +179,9 @@ public class Polygon extends Contour
      * Transformation permettant de passer du système de coordonnées des points <code>data</code>
      * vers le système de coordonnées de ce polyligne. {@link CoordinateTransform#getSourceCS}
      * doit obligatoirement être le système de coordonnées de <code>data</code>, tandis que
-     * {@link CoordinateTransform#getTargetCS} doit être le système de coordonnées
-     * du polyligne. Lorsque ce polyligne utilise le même système de coordonnées que <code>data</code>
-     * (ce qui est le cas la plupart du temps), alors ce champ contiendra une transformation identité.
+     * {@link CoordinateTransform#getTargetCS} doit être le système de coordonnées du polyligne.
+     * Lorsque ce polyligne utilise le même système de coordonnées que <code>data</code> (ce qui
+     * est le cas la plupart du temps), alors ce champ contiendra une transformation identité.
      * Ce champ peut être nul si le système de coordonnées de <code>data</code> n'est pas connu.
      */
     private CoordinateTransform coordinateTransform;
@@ -184,7 +189,7 @@ public class Polygon extends Contour
     /**
      * Rectangle englobant complètement tous les points de <code>data</code>. Ce
      * rectangle est une information très utile pour repérer plus rapidement les
-     * traits qui n'ont pas besoin d'être redessiné (par exemple sous l'effet d'un zoom).
+     * traits qui n'ont pas besoin d'être redessinés (par exemple sous l'effet d'un zoom).
      * <strong>Le rectangle {@link Rectangle2D} référencé par ce champ ne doit jamais être
      * modifié</strong>, car il peut être partagé par plusieurs objets {@link Polygon}.
      */
@@ -261,21 +266,40 @@ public class Polygon extends Contour
     {this.coordinateTransform = coordinateTransform;}
 
     /**
-     * Construit un polyligne initialement vide. Tous les points de ce polyligne
-     * devront obligatoirement être exprimés selon le système de coordonnées
-     * spécifié.
+     * Construct an empty polyline.
+     * Use {@link #append} to add points.
+     *
+     * @param coordinateSystem The coordinate system to use for all
+     *        points in this polygon, or <code>null</code> if unknow.
      */
     public Polygon(final CoordinateSystem coordinateSystem)
     {this(getIdentityTransform(coordinateSystem));}
 
     /**
-     * Construit un polygone fermé représentant le rectangle spécifié. Le rectangle
-     * construit ne contiendra aucun point si le rectangle spécifié est vide ou
-     * contient des valeurs <code>NaN</code>.
+     * Construct a new polyline with the same data than the specified
+     * polyline. The new polyline will have a copy semantic. However,
+     * implementation try to share as much internal data as possible
+     * in order to reduce memory footprint.
+     */
+    public Polygon(final Polygon polygon)
+    {
+        super(polygon);
+        data                = Segment.clone(polygon.data);
+        coordinateTransform = polygon.coordinateTransform;
+        dataBounds          = polygon.dataBounds;
+        bounds              = polygon.bounds;
+        resolution          = polygon.resolution;
+        interiorSign        = polygon.interiorSign;
+    }
+
+    /**
+     * Construct a closed polygon with the specified rectangle.
+     * The new polygon will be empty if the rectangle was empty
+     * of contains <code>NaN</code> values.
      *
-     * @param  shape Rectangle à copier dans un polygone.
-     * @param  coordinateSystem Système de coordonnées des points du rectangle.
-     *         Cet argument peut être nul si le système de coordonnées n'est pas connu.
+     * @param rectangle Rectangle to copy in the new polygon.
+     * @param coordinateSystem The rectangle's coordinate system,
+     *        or <code>null</code> if unknow.
      */
     public Polygon(final Rectangle2D rectangle, final CoordinateSystem coordinateSystem)
     {
@@ -425,9 +449,7 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne le système de coordonnées utilisé pour représenter les points de
-     * ce polyligne. Cette méthode peut retourner <code>null</code> si le système
-     * de coordonnées utilisé n'est pas connu.
+     * Returns the polyline's coordinate system, or <code>null</code> if unknow.
      */
     public CoordinateSystem getCoordinateSystem()
     {
@@ -458,14 +480,15 @@ public class Polygon extends Contour
     }
 
     /**
-     * Spécifie le système de coordonnées dans lequel retourner les points du polyligne.
-     * Appeller cette méthode est équivalent à projeter tous les points du polyligne de
-     * l'ancien système de coordonnées vers le nouveau.
+     * Set the polyline's coordinate system. Calling this method is equivalents
+     * to reproject all polyline's points from the old coordinate system to the
+     * new one.
      *
-     * @param  coordinateSystem Système de coordonnées dans lequel exprimer les points
-     *         du polyligne. La valeur <code>null</code> restaurera le système de
-     *         coordonnées d'origine des points du polyligne.
-     * @throws TransformException si une projection cartographique a échouée.
+     * @param  The new coordinate system. A <code>null</code> value reset the
+     *         coordinate system given at construction time.
+     * @throws TransformException If a transformation failed. In case of failure,
+     *         the state of this object will stay unchanged (as if this method has
+     *         never been invoked).
      */
     public synchronized void setCoordinateSystem(CoordinateSystem coordinateSystem) throws TransformException
     {
@@ -489,7 +512,8 @@ public class Polygon extends Contour
          * only after projection succeded.
          */
         this.coordinateTransform = transformCandidate;
-        cache = null;
+        this.resolution = Float.NaN;
+        this.cache = null;
     }
 
     /**
@@ -501,14 +525,14 @@ public class Polygon extends Contour
     {return coordinateTransform==null || coordinateTransform.isIdentity();}
 
     /**
-     * Test if this polyline is empty. A polyline
-     * is empty if it contains no point.
+     * Test if this polyline is empty. An
+     * empty polyline contains no point.
      */
     public synchronized boolean isEmpty()
     {return Segment.getPointCount(data)==0;}
 
     /**
-     * Return the bounding box of this polylines, including its possible
+     * Return the bounding box of this polyline, including its possible
      * borders. This method uses a cache, such that after a first calling,
      * the following calls should be fairly quick.
      *
@@ -519,13 +543,11 @@ public class Polygon extends Contour
     {return (Rectangle2D) getCachedBounds().clone();}
 
     /**
-     * Retourne le plus petit rectangle englobant la totalité de ce contour.
-     * Un tel rectangle n'existe que si les coordonnées de ce contour sont
-     * dans les limites des valeurs représentables par des entiers.
+     * Returns the smallest bounding box containing {@link #getBounds2D}.
      *
-     * @deprecated Cette méthode n'est définie que pour satisfaire l'interface
-     *             {@link Shape}. Utilisez plutôt {@link #getBounds2D()} pour
-     *             plus de précision.
+     * @deprecated This method is required by the {@link Shape} interface,
+     *             but it doesn't provides enough precision for most cases.
+     *             Use {@link #getBounds2D()} instead.
      */
     public synchronized Rectangle getBounds()
     {
@@ -852,9 +874,9 @@ public class Polygon extends Contour
     {return contains(pt.getX(), pt.getY());}
 
     /**
-     * Indique si ce contour contient entièrement le rectangle spécifié.
-     * Le rectangle doit être exprimé selon le système de coordonnées de
-     * ce contour, soit {@link #getCoordinateSystem()}.
+     * Test if the interior of this contour entirely contains the given rectangle.
+     * The rectangle's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public synchronized boolean contains(final Rectangle2D rect)
     {return containsPolygon(new Polygon(rect, getCoordinateSystem()));}
@@ -961,16 +983,17 @@ public class Polygon extends Contour
     }
 
     /**
-     * Indique si ce polygone intercepte au moins en partie le rectangle spécifié.
-     * Le rectangle doit être exprimé selon le système de coordonnées du polygone,
-     * soit {@link #getCoordinateSystem()}.
+     * Tests if the interior of the contour intersects the interior of a specified rectangle.
+     * The rectangle's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public synchronized boolean intersects(final Rectangle2D rect)
     {return intersectsPolygon(new Polygon(rect, getCoordinateSystem()));}
 
     /**
-     * Indique si ce contour intercepte au
-     * moins en partie la forme spécifiée.
+     * Tests if the interior of the contour intersects the interior of a specified shape.
+     * The shape's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public synchronized boolean intersects(final Shape shape)
     {
@@ -1059,9 +1082,7 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne un itérateur balayant les coordonnées de ce contour.
-     * Les points seront exprimés selon le système de coordonnées de
-     * ce polyligne, soit {@link #getCoordinateSystem()}.
+     * Returns a path iterator for this polyline.
      */
     public PathIterator getPathIterator(final AffineTransform transform)
     {
@@ -1073,9 +1094,7 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne un itérateur balayant les coordonnées de ce contour.
-     * Les points seront exprimés selon le système de coordonnées de
-     * ce polyligne, soit {@link #getCoordinateSystem()}.
+     * Returns a path iterator for this polyline.
      */
     public PathIterator getPathIterator(final AffineTransform transform, final double flatness)
     {return getPathIterator(transform);}
@@ -1091,8 +1110,14 @@ public class Polygon extends Contour
      */
     final synchronized float[] getDrawingArray(AffineTransform transform)
     {
-        if (transform==null) transform=IDENTITY;
-        else transform=pool.intern(new AffineTransform(transform));
+        if (transform!=null)
+        {
+            transform=pool.intern(new AffineTransform(transform));
+            // TODO: This line may fill 'pool' with a lot of entries
+            //       (>100) when the user change zoom often (e.g. is
+            //       scrolling). Should we look for an other way?
+        }
+        else transform=IDENTITY;
         /*
          * Tente de récupérer le tableau de points qui a été utilisé la dernière fois. Si la transformation
          * affine n'a pas changé depuis la dernière fois, alors on pourra retourner le tableau directement.
@@ -1117,7 +1142,7 @@ public class Polygon extends Contour
                     change.preConcatenate(transform);
                     change.transform(array, 0, array, 0, array.length/2);
                     cache.transform = transform;
-                    cache.lockCount=1;
+                    cache.lockCount = 1;
                     return array;
                 }
                 catch (NoninvertibleTransformException exception)
@@ -1144,18 +1169,18 @@ public class Polygon extends Contour
         assert((array.length & 1) == 0);
         final int pointCount = array.length/2;
         transform.transform(array, 0, array, 0, pointCount);
-        if (Version.MINOR>=4 && pointCount>=500) // Log only big arrays
+        if (Version.MINOR>=4 && pointCount*drawingDecimation>=500) // Log only big arrays
         {
             // FINER is the default level for entering, returning, or throwing an exception.
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.REBUILD_CACHE_ARRAY¤3,
-                                     getName(), new Integer(pointCount), new Integer(drawingDecimation));
+                                     getName(null), new Integer(pointCount), new Integer(drawingDecimation));
             record.setSourceClassName ("Polygon");
             record.setSourceMethodName("getDrawingArray");
             logger.log(record);
         }
         cache = new Cache(array);
         cache.transform = transform;
-        cache.lockCount=1;
+        cache.lockCount = 1;
         return array;
     }
 
@@ -1195,15 +1220,12 @@ public class Polygon extends Contour
     {return Segment.getPointCount(data);}
 
     /**
-     * Retourne l'ensemble des points de ce polyligne. Chaque point sera représenté
-     * par un objet {@link Point2D} selon le système de coordonnées de ce polyligne
-     * ({@link #getCoordinateSystem}).   L'ensemble retourné sera immutable; il ne
-     * sera pas affecté par d'éventuelles modifications apportées au polyligne après
-     * l'appel de cette méthode.
-     * <br><br>
-     * Implementation note: Despite this method has a copy semantic, both objects
-     * will share many internal structures in such a way that memory consumption
-     * should be low.
+     * Returns all polyline's points. Point coordinates are stored in {@link Point2D}
+     * objects using this polyline's coordinate system ({@link #getCoordinateSystem}).
+     * This method returns an immutable collection: changes done to <code>Polygon</code>
+     * after calling this method will not affect the collection. Despite this method has
+     * a copy semantic, the collection will share many internal structures in such a way
+     * that memory consumption should stay low.
      */
     public synchronized Collection<Point2D> getPoints()
     {return new Segment.Collection(Segment.clone(data), coordinateTransform);}
@@ -1261,11 +1283,11 @@ public class Polygon extends Contour
     }
 
     /**
-     * Donne aux coordonnées spécifiées les valeurs des derniers points.
+     * Stores the values of <code>points.length</code> first points into the specified array.
      *
-     * @param points Tableau dans lequel mémoriser les dernières coordonnées. <code>points[length-1]</code>
-     *               contiendra la dernière coordonnée, <code>points[length-2]</code> l'avant dernière, etc.
-     *               Si un élément de ce tableau est nul, un objet {@link Point2D} sera automatiquement créé.
+     * @param points An array to fill with first polyline's points. <code>points[0]</code>
+     *               will contains the first point, <code>points[1]</code> the second point,
+     *               etc.
      *
      * @throws NoSuchElementException If this polylines doesn't contain enough points.
      */
@@ -1287,11 +1309,11 @@ public class Polygon extends Contour
     }
 
     /**
-     * Donne aux coordonnées spécifiées les valeurs des premiers points.
+     * Stores the values of <code>points.length</code> last points into the specified array.
      *
-     * @param points Tableau dans lequel mémoriser les dernières coordonnées. <code>points[length-1]</code>
-     *               contiendra la dernière coordonnée, <code>points[length-2]</code> l'avant dernière, etc.
-     *               Si un élément de ce tableau est nul, un objet {@link Point2D} sera automatiquement créé.
+     * @param points An array to fill with last polyline's points. <code>points[points.length-1]</code>
+     *               will contains the last point, <code>points[points.length-2]</code> the point before
+     *               the last one, etc.
      *
      * @throws NoSuchElementException If this polylines doesn't contain enough points.
      */
@@ -1416,7 +1438,7 @@ public class Polygon extends Contour
     }
 
     /**
-     * Renverse l'ordre des points de ce polyligne.
+     * Reverse point order in this polyline.
      */
     public synchronized void reverse()
     {
@@ -1425,11 +1447,12 @@ public class Polygon extends Contour
     }
 
     /**
-     * Ferme le polygone (si possible) et déclare que les données ne vont plus changer.
+     * Close and freeze this polygon. After closing it,
+     * no more points can be added to this polygon.
      *
-     * @param interiorSign Indique si l'intérieur du polygone représente une élévation ou une
-     *        dépression. Les constantes valides sont {@link #ELEVATION}, {@link #DEPRESSION}
-     *        ou {@link #UNKNOW}. Dans ce dernier cas, le polyligne ne sera pas fermé.
+     * @param interiorSign Tells if this polygon is an elevation (e.g. an island in the middle of
+     *        the sea) or a depression (e.g. a lake in the middle of a continent). Valid constants
+     *        are {@link #ELEVATION}, {@link #DEPRESSION} or {@link #UNKNOW}.
      */
     public synchronized void close(final int interiorSign)
     {
@@ -1445,8 +1468,8 @@ public class Polygon extends Contour
     }
 
     /**
-     * Indique si le polygone est fermé. S'il n'est
-     * pas fermé, c'est objet sera plutôt un polyligne.
+     * Returns wether the polyline is closed or not.
+     * A closed polyline is named a polygon.
      */
     public boolean isClosed()
     {return interiorSign!=UNKNOW;}
@@ -1478,34 +1501,38 @@ public class Polygon extends Contour
     }
 
     /**
-     * Renvoie la résolution moyenne de ce polyligne. Cette résolution sera la distance moyenne
-     * (en mètres) entre deux points du polyligne, mais sans prendre en compte les "points de
-     * bordure" (par exemple les points qui suivent le bord d'une carte plutôt que de représenter
-     * une structure géographique réelle). Cette méthode conserve la résolution dans une cache
-     * interne, de sorte qu'après avoir été appelée une fois, les appels suivants devraient être
-     * rapides.
+     * Returns the polyline's mean resolution. This resolution is the mean distance between
+     * every pair of consecutive points in this polyline  (ignoring "extra" points used for
+     * drawing a border, if there is one). This method try to returns linear units (usually
+     * meters) no matter if the coordinate systems is actually a {@link ProjectedCoordinateSystem}
+     * or a {@link GeographicCoordinateSystem}.
      *
-     * @return La résolution moyenne en mètres, ou {@link Float#NaN} si ce polyligne ne contient pas de points.
+     * @return The mean resolution, or {@link Float#NaN} if this polyline doesn't have any point.
      */
     public synchronized float getResolution()
     {
-        if (!(resolution > 0)) // '!' take NaN in account
+        if (!(resolution > 0)) try // '!' take NaN in account
         {
-            final Statistics stats = Segment.getResolution(data, getSourceCS());
+            final Statistics stats = Segment.getResolution(data, coordinateTransform);
             resolution = (stats!=null) ? (float)stats.mean() : Float.NaN;
+        }
+        catch (TransformException exception)
+        {
+            // Should not happen, since {@link #setCoordinateSystem}
+            // has already successfully projected every points.
+            unexpectedException("getResolution", exception);
         }
         return resolution;
     }
 
     /**
-     * Modifie la résolution de cette carte. Cette méthode procèdera en interpolant les données de façon
-     * à ce que chaque point soit séparé du précédent par la distance spécifiée.   Cela peut se traduire
-     * par des économies importante de mémoire si une trop grande résolution n'est pas nécessaire. Notez
-     * que cette opération est irreversible.  Appeler cette méthode une seconde fois avec une résolution
-     * plus fine gonflera la taille des tableaux internes, mais sans amélioration réelle de la précision.
+     * Set the polyline's resolution. This method try to interpolate new points in such a way
+     * that every point is spaced by exactly <code>resolution</code> units (usually meters)
+     * from the previous one.
      *
-     * @param  resolution Résolution désirée (en mètres).
-     * @throws TransformException Si une erreur est survenue lors d'une projection cartographique.
+     * @param  resolution Desired resolution, in the same units than {@link #getResolution}.
+     * @throws TransformException If some coordinate transformations were needed and failed.
+     *         There is no guaranteed on contour's state in case of failure.
      */
     public synchronized void setResolution(final double resolution) throws TransformException
     {
@@ -1522,7 +1549,7 @@ public class Polygon extends Contour
             final Rectangle2D    bounds = getCachedBounds();
             final Point2D        center = new Point2D.Double(bounds.getCenterX(), bounds.getCenterY());
             final Ellipsoid   ellipsoid = geoCS.getHorizontalDatum().getEllipsoid();
-            final Projection projection = new Projection("Generated", INTERNAL, ellipsoid, center);
+            final Projection projection = new Projection("Generated", CARTESIAN, ellipsoid, center);
             targetCS = new ProjectedCoordinateSystem("Generated", geoCS, projection);
         }
         Segment.setResolution(data, getCoordinateTransform(targetCS), resolution);
@@ -1547,7 +1574,7 @@ public class Polygon extends Contour
      */
     public synchronized float compress(final float factor) throws TransformException
     {
-        final Statistics stats = Segment.getResolution(data, getSourceCS());
+        final Statistics stats = Segment.getResolution(data, coordinateTransform);
         if (stats!=null)
         {
             final float resolution = (float)stats.mean();
@@ -1604,18 +1631,18 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne le texte à afficher dans une bulle lorsque la souris
-     * traîne à la coordonnée spécifiée. L'implémentation par défaut
-     * retourne {@link #getName()} si la souris pointe à l'intérieur
-     * de ce polygone et <code>null</code> sinon.
+     * Returns the string to be used as the tooltip for the given location.
+     * If there is no such tooltip, returns <code>null</code>.
      *
-     * @param point Coordonnées pointées par la souris. Ces coordonnées
-     *        doivent être exprimées selon le système de coordonnées de
-     *        ce polygone ({@link #getCoordinateSystem}).
+     * @param  point Coordinates (usually mouse coordinates). Must be
+     *         specified in this polyline's coordinate system
+     *         (as returned by {@link #getCoordinateSystem}).
+     * @return The tooltip text for the given location,
+     *         or <code>null</code> if there is none.
      */
     public String getToolTipText(final Point2D point)
     {
-        final String name=getName();
+        final String name=getName(null);
         return (name!=null && interiorSign!=UNKNOW && contains(point)) ? name : null;
     }
 
@@ -1653,18 +1680,13 @@ public class Polygon extends Contour
     }
 
     /**
-     * Retourne un code représentant ce polyligne. Le code sera
-     * calculé en utilisant seulement quelques points. Les points
-     * utilisés peuvent varier d'une implémentation à l'autre.
+     * Returns a hash value for this polyline.
      */
     public synchronized int hashCode()
     {return Segment.hashCode(data);}
 
     /**
-     * Indique si ce polyligne est identique à l'objet spécifié. Cette méthode
-     * retourne <code>true</code> si <code>object</code> est de la même classe
-     * que <code>this</code>, si les deux polylignes ont le même nom, utilisent
-     * le même système de coordonnées et ont des points identiques.
+     * Compare the specified object with this polyline for equality.
      */
     public synchronized boolean equals(final Object object)
     {
@@ -1685,7 +1707,7 @@ public class Polygon extends Contour
      * will not affect the clone,  and vis-versa   (any change to the clone
      * will not affect the current polyline). However, the two polylines will
      * share many internal structures in such a way that memory consumption
-     * for polyline's clones should be kept very low.
+     * for polyline's clones should be kept low.
      */
     public synchronized Polygon clone()
     {
@@ -1726,61 +1748,69 @@ public class Polygon extends Contour
     }
 
     /**
-     * Ecrit tous les points du polyligne vers le flot spécifié. Cette méthode
-     * est utile pour vérifier l'exactitude des points du polyligne.
+     * Write all point coordinates to the specified stream.
+     * This method is usefull for debugging purpose.
      *
-     * @param  out Flot vers où écrire les points.
-     * @throws IOException si une erreur d'écriture est survenue.
+     * @param  out The destination stream, or <code>null</code> for the standard output.
+     * @param  locale Desired locale, or <code>null</code> for a default one.
+     * @throws IOException If an error occured while writting to the destination stream.
      */
-    public void print(final Writer out) throws IOException
-    {print(new String[]{getName()}, new Collection<Point2D>[]{getPoints()}, out);}
+    public void print(final Writer out, final Locale locale) throws IOException
+    {print(new String[]{getName(locale)}, new Collection<Point2D>[]{getPoints()}, out, locale);}
 
     /**
-     * Ecrit côte-à-côte tous les points d'une liste de polygone.
-     * Cette méthode est utile pour vérifier l'exactitude des points
-     * de quelques petits polygones.
+     * Write side-by-side all point coordinates of many polylines.
+     * This method is usefull for checking the result of a coordinate
+     * transformation; one could write side-by-side the original and
+     * transformed polylines. Note that this method may require unicode
+     * support for proper output.
      *
-     * @param  polygons Liste de polygones à écrire.
-     * @param  out Flot vers où écrire les points.
-     * @throws IOException si une erreur d'écriture est survenue.
+     * @param  polygons The set of polylines. Polylines may have different length.
+     * @param  out The destination stream, or <code>null</code> for the standard output.
+     * @param  locale Desired locale, or <code>null</code> for a default one.
+     * @throws IOException If an error occured while writting to the destination stream.
      */
-    public static void print(final Polygon[] polygons, final Writer out) throws IOException
+    public static void print(final Polygon[] polygons, final Writer out, final Locale locale) throws IOException
     {
         final String[]              titles = new String[polygons.length];
         final Collection<Point2D>[] arrays = new Collection<Point2D>[polygons.length];
         for (int i=0; i<polygons.length; i++)
         {
             final Polygon polygon = polygons[i];
-            titles[i] = polygon.getName();
+            titles[i] = polygon.getName(locale);
             arrays[i] = polygon.getPoints();
         }
-        print(titles, arrays, out);
+        print(titles, arrays, out, locale);
     }
 
     /**
-     * Ecrit des tableaux de points vers le flot spécifié.
+     * Write side-by-side all points from arbitrary collections.
+     * Note that this method may require unicode support for proper output.
      *
-     * @param  titles Titres des colonnes.
-     * @param  arrays Ensembles de points. Il n'est pas obligatoire que tous les
-     *         ensembles <code>arrays[i]</code> aient le même nombre de points.
-     * @param  out Flot vers où écrire les tableaux de points.
-     * @throws IOException si une erreur d'écriture est survenue.
+     * @param  titles The column's titles. Should have the same length than <code>points</code>.
+     * @param  points Array of points collections. Collections may have different size.
+     * @param  out The destination stream, or <code>null</code> for the standard output.
+     * @param  locale Desired locale, or <code>null</code> for a default one.
+     * @throws IOException If an error occured while writting to the destination stream.
      */
-    private static void print(final String[] titles, final Collection<Point2D>[] arrays, final Writer out) throws IOException
+    public static void print(final String[] titles, final Collection<Point2D>[] points, Writer out, Locale locale) throws IOException
     {
+        if (locale == null) locale = Locale.getDefault();
+        if (out    == null)    out = Console.getWriter(System.out);
+
         final int            width = 8; // Columns width.
         final int        precision = 3; // Significant digits.
         final String     separator = "  \u2502  "; // Vertical bar.
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        final NumberFormat  format = NumberFormat.getNumberInstance();
+        final NumberFormat  format = NumberFormat.getNumberInstance(locale);
         final FieldPosition  dummy = new FieldPosition(0);
         final StringBuffer  buffer = new StringBuffer();
         format.setMinimumFractionDigits(precision);
         format.setMaximumFractionDigits(precision);
         format.setGroupingUsed(false);
 
-        final Iterator<Point2D>[] iterators = new Iterator<Point2D>[arrays.length];
-        for (int i=0; i<arrays.length; i++)
+        final Iterator<Point2D>[] iterators = new Iterator<Point2D>[points.length];
+        for (int i=0; i<points.length; i++)
         {
             if (i!=0) out.write(separator);
             int length=0;
@@ -1793,7 +1823,7 @@ public class Polygon extends Contour
                 length += spaces;
             }
             out.write(XString.spaces(1+2*width-length));
-            iterators[i]=arrays[i].iterator();
+            iterators[i]=points[i].iterator();
         }
         out.write(lineSeparator);
         boolean hasNext; do

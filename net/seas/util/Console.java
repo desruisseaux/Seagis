@@ -23,8 +23,10 @@
 package net.seas.util;
 
 // Input/output
+import java.io.Writer;
 import java.io.PrintWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -35,6 +37,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.prefs.Preferences;
 import net.seas.resources.Resources;
+import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -45,6 +48,11 @@ import net.seas.resources.Resources;
  */
 public class Console
 {
+    /**
+     * The preference name for default encoding.
+     */
+    private static final String ENCODING = "Console encoding";
+
     /**
      * Command-line arguments. Elements are set to
      * <code>null</code> after they have been processed.
@@ -75,7 +83,7 @@ public class Console
         boolean prefEnc = false;
         if (Version.MINOR>=4 && encoding==null)
         {
-            encoding = Preferences.userRoot().node("net/seas/util").get("Console encoding", null);
+            encoding = Preferences.userRoot().node("net/seas/util").get(ENCODING, null);
             prefEnc  = true;
         }
         if (encoding!=null) try
@@ -83,7 +91,7 @@ public class Console
             out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
             if (Version.MINOR>=4 && !prefEnc)
             {
-                Preferences.userRoot().node("net/seas/util").put("Console encoding", encoding);
+                Preferences.userRoot().node("net/seas/util").put(ENCODING, encoding);
             }
         }
         catch (UnsupportedEncodingException exception)
@@ -226,5 +234,22 @@ public class Console
             }
         }
         return XArray.resize(left, count);
+    }
+
+    /**
+     * Gets a writer for the specified output stream.
+     */
+    public static Writer getWriter(final OutputStream out)
+    {
+        if (Version.MINOR>=4) try
+        {
+            final String encoding = Preferences.userRoot().node("net/seas/util").get(ENCODING, null);
+            if (encoding!=null) return new OutputStreamWriter(out, encoding);
+        }
+        catch (UnsupportedEncodingException exception)
+        {
+            ExceptionMonitor.unexpectedException("net.seas.util", "Console", "getWriter", exception);
+        }
+        return new OutputStreamWriter(out);
     }
 }

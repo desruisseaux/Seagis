@@ -79,7 +79,7 @@ final class PathIterator implements java.awt.geom.PathIterator
         this.polygons  = null;
         this.transform = transform;
         this.array     = polygon.getDrawingArray(transform);
-        if (array!=null && array.length==0)
+        if (array==null || array.length==0)
         {
             polygon.releaseDrawingArray(array);
             array=null;
@@ -123,7 +123,7 @@ final class PathIterator implements java.awt.geom.PathIterator
     {
         if (array!=null && (index+=2) >= array.length)
         {
-            if (index!=array.length || polygon.isClosed())
+            if (index!=array.length || !polygon.isClosed())
             {
                 polygon.releaseDrawingArray(array);
                 array = null;

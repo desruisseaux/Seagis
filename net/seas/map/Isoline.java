@@ -56,7 +56,7 @@ import net.seas.util.Version;
 
 
 /**
- * Une ligne de contour.
+ * An isoline built from a set of polylines.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -102,30 +102,45 @@ public class Isoline extends Contour
     private Rectangle2D bounds;
 
     /**
-     * Construit un isoligne initialement vide.
+     * Construct an initialy empty isoline.
      *
-     * @param coordinateSystem Système de coordonnées de l'isoligne.
+     * @param coordinateSystem The coordinate system to use for all
+     *        points in this isoline, or <code>null</code> if unknow.
      */
     public Isoline(final CoordinateSystem coordinateSystem)
     {this.coordinateSystem = coordinateSystem;}
 
     /**
-     * Retourne le système de coordonnées de cet isoligne.
-     * Cette méthode peut retourner <code>null</code> s'il
-     * n'est pas connu.
+     * Construct an isoline with the same data than
+     * the specified isoline. The new isoline will
+     * have a copy semantic.
+     */
+    public Isoline(final Isoline isoline)
+    {
+        this.coordinateSystem = isoline.coordinateSystem;
+        this.polygonCount     = isoline.polygonCount;
+        this.sorted           = isoline.sorted;
+        this.bounds           = isoline.bounds;
+        this.polygons         = new Polygon[polygonCount];
+        for (int i=0; i<polygonCount; i++)
+            polygons[i] = isoline.polygons[i].clone();
+    }
+
+    /**
+     * Returns the polyline's coordinate system, or <code>null</code> if unknow.
      */
     public synchronized CoordinateSystem getCoordinateSystem()
     {return coordinateSystem;}
 
     /**
-     * Spécifie le système de coordonnées dans lequel retourner les points de l'isoligne.
-     * Appeller cette méthode est équivalent à projeter tous les points du contour de
-     * l'ancien système de coordonnées vers le nouveau.
+     * Set the isoline's coordinate system. Calling this method is equivalents
+     * to reproject all polyline from the old coordinate system to the new one.
      *
-     * @param  coordinateSystem Système de coordonnées dans lequel exprimer les points
-     *         de l'isoligne. La valeur <code>null</code> restaurera le système "natif".
-     * @throws TransformException si une projection cartographique a échouée. Dans
-     *         ce cas, cet isobath sera laissé dans son ancien système de coordonnées.
+     * @param  The new coordinate system. A <code>null</code> value reset the
+     *         coordinate system given at construction time.
+     * @throws TransformException If a transformation failed. In case of failure,
+     *         the state of this object will stay unchanged (as if this method has
+     *         never been invoked).
      */
     public synchronized void setCoordinateSystem(final CoordinateSystem coordinateSystem) throws TransformException
     {
@@ -193,13 +208,22 @@ public class Isoline extends Contour
     }
 
     /**
-     * Return the bounding box of this isoline.
+     * Return the bounding box of this isoline, including its possible
+     * borders. This method uses a cache, such that after a first calling,
+     * the following calls should be fairly quick.
+     *
+     * @return A bounding box of this polylines. Changes to the
+     *         fields of this rectangle will not affect the cache.
      */
     public synchronized Rectangle2D getBounds2D()
     {return (Rectangle2D) getCachedBounds().clone();}
 
     /**
-     * Return the bounding box of this isoline.
+     * Returns the smallest bounding box containing {@link #getBounds2D}.
+     *
+     * @deprecated This method is required by the {@link Shape} interface,
+     *             but it doesn't provides enough precision for most cases.
+     *             Use {@link #getBounds2D()} instead.
      */
     public synchronized Rectangle getBounds()
     {
@@ -362,14 +386,15 @@ public class Isoline extends Contour
     }
 
     /**
-     * Retourne le texte à afficher dans une bulle lorsque la souris
-     * traîne à la coordonnée spécifiée. L'implémentation par défaut
-     * retourne le nom du polygone qui se trouve sous la souris, ou
-     * <code>null</code> s'il n'y en a pas ou si son nom est inconnu.
+     * Returns the string to be used as the tooltip for the given location.
+     * If there is no such tooltip, returns <code>null</code>. The default
+     * implementation search for a polygon's tooltip at the given location.
      *
-     * @param point Coordonnées pointées par la souris. Cette coordonnées
-     *        doit être exprimée selon le système de coordonnées de cet
-     *        isoligne ({@link #getCoordinateSystem}).
+     * @param  point Coordinates (usually mouse coordinates). Must be
+     *         specified in this isoline's coordinate system
+     *         (as returned by {@link #getCoordinateSystem}).
+     * @return The tooltip text for the given location,
+     *         or <code>null</code> if there is none.
      */
     public synchronized String getToolTipText(final Point2D point)
     {
@@ -393,7 +418,7 @@ public class Isoline extends Contour
      *
      * @param  graphics Graphiques dans lequel dessiner cet isoligne.
      * @param  resolution Résolution approximative désirée à l'affichage,
-     *         selon les unités de {@link #getCoordinateSystem}. Une
+     *         selon les unités de {@link Polygon#getResolution}. Une
      *         résolution plus grossière (un nombre plus élevé) peut
      *         rendre le traçage plus rapide au détriment de la qualité.
      * @param  renderer An optional renderer for polygons,
@@ -431,17 +456,13 @@ public class Isoline extends Contour
     }
 
     /**
-     * Retourne un itérateur balayant les coordonnées de cet isoligne.
-     * Les points seront exprimés selon le système de coordonnées de
-     * cet isoligne, soit {@link #getCoordinateSystem()}.
+     * Returns a path iterator for this isoline.
      */
     public synchronized PathIterator getPathIterator(final AffineTransform transform)
     {return new net.seas.map.PathIterator(getPolygonList(true).iterator(), transform);}
 
     /**
-     * Retourne un itérateur balayant les coordonnées de cet isoligne.
-     * Les points seront exprimés selon le système de coordonnées de
-     * cet isoligne, soit {@link #getCoordinateSystem()}.
+     * Returns a path iterator for this isoline.
      */
     public PathIterator getPathIterator(final AffineTransform transform, final double flatness)
     {return getPathIterator(transform);}
@@ -577,9 +598,9 @@ public class Isoline extends Contour
     }
 
     /**
-     * Add a polygon to this isoline.
+     * Add a polyline to this isoline.
      *
-     * @param  toAdd Polylines to add.
+     * @param  toAdd Polyline to add.
      * @throws TransformException if the specified polygon can't
      *         be transformed in this isoline's coordinate system.
      */
@@ -603,7 +624,7 @@ public class Isoline extends Contour
     }
 
     /**
-     * Add a polygon to this isoline. This method do not clone
+     * Add a polyline to this isoline. This method do not clone
      * the polygon and doesn't set the coordinate system.
      */
     private void addImpl(final Polygon toAdd)
@@ -620,8 +641,8 @@ public class Isoline extends Contour
     }
 
     /**
-     * Remove a polylines from this isobath.
-     * @return <code>true</code> if the polygon has been removed.
+     * Remove a polyline from this isobath.
+     * @return <code>true</code> if the polyline has been removed.
      */
     public synchronized boolean remove(final Polygon toRemove)
     {
@@ -639,7 +660,7 @@ public class Isoline extends Contour
     }
 
     /**
-     * Remote the polygon at the specified index.
+     * Remote the polyline at the specified index.
      */
     private void remove(final int index)
     {
@@ -649,13 +670,13 @@ public class Isoline extends Contour
     }
 
     /**
-     * Renvoie la résolution moyenne de cet isoligne. Cette résolution sera la distance moyenne
-     * (en mètres) entre deux points du polyligne, mais sans prendre en compte les "points de
-     * bordure" (par exemple les points qui suivent le bord d'une carte plutôt que de représenter
-     * une structure géographique réelle).
+     * Returns the isoline's mean resolution. This resolution is the mean distance between
+     * every pair of consecutive points in this isoline (ignoring "extra" points used for
+     * drawing a border, if there is one). This method try to returns linear units (usually
+     * meters) no matter if the coordinate systems is actually a {@link ProjectedCoordinateSystem}
+     * or a {@link GeographicCoordinateSystem}.
      *
-     * @return La résolution moyenne en mètres, ou {@link Float#NaN}
-     *         si cet isoligne ne contient pas de points.
+     * @return The mean resolution, or {@link Float#NaN} if this isoline doesn't have any point.
      */
     public synchronized float getResolution()
     {
@@ -668,7 +689,7 @@ public class Isoline extends Contour
             if (!Float.isNaN(resolution))
             {
                 final int count = polygon.getPointCount();
-                sumResolution += count*resolution;
+                sumResolution += count*(double)resolution;
                 sumCount      += count;
             }
         }
@@ -676,14 +697,13 @@ public class Isoline extends Contour
     }
 
     /**
-     * Modify the resolution of this isobath. This method will proceed
-     * by decimating the data of this isobath such that each point will
-     * be separated from the previous point by a distance equal to the
-     * value specified in the argument. This could be translated by
-     * important memory economy if a large resolution is not necessary.
+     * Set the polyline's resolution. This method try to interpolate new points in such a way
+     * that every point is spaced by exactly <code>resolution</code> units (usually meters)
+     * from the previous one.
      *
-     * @param  resolution Desired resolution (in metres).
-     * @throws TransformException If a map projection failed.
+     * @param  resolution Desired resolution, in the same units than {@link #getResolution}.
+     * @throws TransformException If some coordinate transformations were needed and failed.
+     *         There is no guaranteed on contour's state in case of failure.
      */
     public synchronized void setResolution(final double resolution) throws TransformException
     {
@@ -762,12 +782,26 @@ public class Isoline extends Contour
         if (changed)
         {
              final Isoline isoline = new Isoline(coordinateSystem);
-             isoline.setName(getName());
+             isoline.setName(getName(null));
              isoline.polygons = XArray.resize(clipPolygons, clipPolygonCount);
              isoline.polygonCount = clipPolygonCount;
              return isoline;
         }
         else return this;
+    }
+
+    /**
+     * Returns a hash value for this isoline.
+     */
+    public synchronized int hashCode()
+    {
+        int code = 4782135;
+        for (int i=0; i<polygonCount; i++)
+        {
+            // Must be insensitive to order.
+            code += polygons[i].hashCode();
+        }
+        return code;
     }
 
     /**
@@ -791,7 +825,8 @@ public class Isoline extends Contour
     }
 
     /**
-     * Return a copy of this isoline.
+     * Return a copy of this isoline. The clone has a deep copy semantic,
+     * but will shares many internal arrays with the original isoline.
      */
     public synchronized Isoline clone()
     {

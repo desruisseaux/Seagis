@@ -25,6 +25,8 @@ package net.seas.map;
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cs.Ellipsoid;
 import net.seas.opengis.cs.CoordinateSystem;
+import net.seas.opengis.cs.CompoundCoordinateSystem;
+import net.seas.opengis.cs.ProjectedCoordinateSystem;
 import net.seas.opengis.cs.GeographicCoordinateSystem;
 import net.seas.opengis.ct.CoordinateTransform;
 import net.seas.opengis.ct.TransformException;
@@ -755,28 +757,63 @@ final class Segment implements Serializable
     }
 
     /**
-     * Renvoie des statistiques sur la résolution de ce segment. Si un système de coordonnées
-     * a été spécifiée en argument, il sera utilisée pour calculer les distances entre chaque
-     * points géographiques. Les "points de bordure" ne seront pas pris en compte. Les
-     * statistiques retournées comprendront la distance minimale, maximale et moyenne
-     * entre deux points.
+     * Renvoie des statistiques sur la résolution d'un polyligne. Cette résolution sera
+     * la distance moyenne entre deux points du polyligne,  mais sans prendre en compte
+     * les "points de bordure"  (par exemple les points qui suivent le bord d'une carte
+     * plutôt que de représenter une structure géographique réelle).
+     * <br><br>
+     * La résolution est calculée en utilisant le système de coordonnées spécifié. Les
+     * unités du résultat seront donc  les unités des deux premiers axes de ce système
+     * de coordonnées,  <strong>sauf</strong>  si les deux premiers axes utilisent des
+     * coordonnées géographiques angulaires  (c'est le cas notamment des objets {@link
+     * GeographicCoordinateSystem}).  Dans ce dernier cas,  le calcul utilisera plutôt
+     * les distances orthodromiques sur l'ellipsoïde ({@link Ellipsoid}) du système de
+     * coordonnées.   En d'autres mots, pour les systèmes cartographiques, le résultat
+     * de cette méthode sera toujours exprimé en unités linéaires (souvent des mètres)
+     * peu importe que le système de coordonnées soit {@link ProjectedCoordinateSystem}
+     * ou {@link GeographicCoordinateSystem}.
      *
      * @param  scan Segment. Cet argument peut être n'importe quel maillon d'une chaîne,
      *         mais cette méthode sera plus rapide si c'est le premier maillon.
-     * @param  coordinateSystem Système de coordonnées des points. Ce système de coordonnées
-     *         sera utilisé pour calculer les distances entre les points. Cet argument peut
-     *         être nul.
+     * @param  coordinateTransform Systèmes de coordonnées source et destination.
+     *         <code>getSourceCS()</code> doit être le système interne des points
+     *         des segments,  tandis que  <code>getTargetCS()</code> doit être le
+     *         système dans lequel faire le calcul. C'est <code>getTargetCS()</code>
+     *         qui déterminera les unités du résultat. Cet argument peut être nul
+     *         si aucune transformation n'est nécessaire. Dans ce cas, le système
+     *         de coordonnées <code>getTargetCS()</code> sera supposé cartésien.
      * @return Statistiques sur la résolution. L'objet retourné ne sera jamais nul, mais les
-     *         statistiques seront tous à NaN si cette courbe de niveau ne contenait aucun point.
+     *         statistiques seront tous à NaN si cette courbe de niveau ne contenait aucun
+     *         point. Voir la description de cette méthode pour les unités.
+     * @throws TransformException Si une transformation de coordonnées a échouée.
      */
-    public static Statistics getResolution(Segment scan, final CoordinateSystem coordinateSystem)
+    public static Statistics getResolution(Segment scan, CoordinateTransform transform) throws TransformException
     {
-        final HorizontalDatum datum = OpenGIS.getHorizontalDatum(coordinateSystem);
-        final Ellipsoid ellipsoid = (datum!=null) ? datum.getEllipsoid() : null;
-
+        /*
+         * Checks the coordinate system validity. If valid and if geographic,
+         * gets the ellipsoid to use for orthodromic distance computations.
+         */
+        final Ellipsoid ellipsoid;
+        if (transform!=null)
+        {
+            final CoordinateSystem targetCS = transform.getTargetCS();
+            if (!XClass.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
+            {
+                throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
+            }
+            if (transform.isIdentity())
+            {
+                transform = null;
+            }
+            ellipsoid = getEllipsoid(targetCS);
+        }
+        else ellipsoid=null;
+        /*
+         * Compute statistics...
+         */
         final Statistics stats = new Statistics();
-        Point2D.Float    point = new Point2D.Float();
-        Point2D.Float     last = new Point2D.Float();
+        Point2D          point = new Point2D.Double();
+        Point2D           last = new Point2D.Double();
         for (scan=getFirst(scan); scan!=null; scan=scan.next)
         {
             final PointArray array=scan.array;
@@ -785,14 +822,13 @@ final class Segment implements Serializable
             final PointIterator it=array.iterator(0);
             if (it.hasNext())
             {
-                last.x = it.nextX();
-                last.y = it.nextY();
+                last.setLocation(it.nextX(), it.nextY());
                 while (it.hasNext())
                 {
-                    point.x = it.nextX();
-                    point.y = it.nextY();
+                    point.setLocation(it.nextX(), it.nextY());
+                    if (transform!=null) point=transform.transform(point, point);
                     stats.add(ellipsoid!=null ? ellipsoid.orthodromicDistance(last, point) : last.distance(point));
-                    final Point2D.Float swap=last;
+                    final Point2D swap=last;
                     last=point;
                     point=swap;
                 }
@@ -813,13 +849,17 @@ final class Segment implements Serializable
      * @param  transform Transformation permettant de convertir les coordonnées des segments vers
      *         des coordonnées cartésiennes. Cet argument peut être nul si les coordonnées de
      *         <code>this</code> sont déjà exprimées selon un système de coordonnées cartésiennes.
-     * @param  resolution Résolution désirée (en mètres).
+     * @param  resolution Résolution désirée, selon les mêmes unités que {@link #getResolution}.
      * @throws TransformException Si une erreur est survenue lors d'une projection cartographique.
      *
      * @see #getResolution
      */
     public static void setResolution(Segment scan, CoordinateTransform transform, double resolution) throws TransformException
     {
+        /*
+         * Checks arguments validity. This method do not support latitude/longitude
+         * coordinates. Coordinates must be projected in some linear units.
+         */
         if (!(resolution>0))
         {
             throw new IllegalArgumentException(String.valueOf(resolution));
@@ -827,7 +867,7 @@ final class Segment implements Serializable
         if (transform!=null)
         {
             final CoordinateSystem targetCS = transform.getTargetCS();
-            if (targetCS instanceof GeographicCoordinateSystem)
+            if (getEllipsoid(targetCS)!=null || !XClass.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
             {
                 throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
             }
@@ -837,7 +877,10 @@ final class Segment implements Serializable
             }
         }
         final MathTransform inverseTransform = (transform!=null) ? transform.inverse() : null;
-
+        /*
+         * Performs the linear interpolations, assuming
+         * that we are using a cartesian coordinate system.
+         */
         for (scan=getFirst(scan); scan!=null; scan=scan.next)
         {
             final PointArray points=scan.array;
@@ -916,6 +959,32 @@ final class Segment implements Serializable
             }
             scan.array = PointArray.getInstance(array);
         }
+    }
+
+    /**
+     * Returns the ellipsoid used by the specified coordinate system,
+     * providing that the two first dimensions use an instance of
+     * {@link GeographicCoordinateSystem}. Otherwise (i.e. if the
+     * two first dimensions are not geographic), returns <code>null</code>.
+     */
+    static Ellipsoid getEllipsoid(final CoordinateSystem coordinateSystem)
+    {
+        if (coordinateSystem instanceof GeographicCoordinateSystem)
+        {
+            final HorizontalDatum datum = ((GeographicCoordinateSystem) coordinateSystem).getHorizontalDatum();
+            if (datum!=null)
+            {
+                final Ellipsoid ellipsoid = datum.getEllipsoid();
+                if (ellipsoid!=null) return ellipsoid;
+            }
+            return Ellipsoid.WGS84; // Should not happen with a valid coordinate system.
+        }
+        if (coordinateSystem instanceof CompoundCoordinateSystem)
+        {
+            // Check only head CS. Do not check tail CS!
+            return getEllipsoid(((CompoundCoordinateSystem) coordinateSystem).getHeadCS());
+        }
+        return null;
     }
 
     /**

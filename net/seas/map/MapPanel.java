@@ -71,23 +71,25 @@ import java.util.Comparator;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 
 
 /**
- * Dessine une carte dans une composante <i>Swing</i>.
- * Cette carte peut comprendre le tracé d'une côte ainsi que toute sa bathymétrie. De
- * façon optionnelle, on peut aussi placer une image satellitaire sous la bathymétrie
- * tracée. N'importe quelle image convient, pourvu qu'on en connaisse les coordonnées.
- * Le tout forme un ensemble dans lequel l'usager peut naviguer à l'aide des touches
- * du clavier ou de la souris.
+ * A <i>Swing</i> component for displaying geographic informations.  A newly constructed
+ * <code>MapPanel</code> is initially empty. To make something appears, user must create
+ * a {@link Layer} object and add it to this <code>MapPanel</code> with the {@link #addLayer}
+ * méthod. The layer content depends of the layer subclass. It may be
  *
- * <p>Notez que la classe <code>MapPanel</code> gère les barres de défilements
- * d'une manière particulière. Il ne faut donc pas placer d'objet <code>MapPanel</code> dans
- * un objet {@link javax.swing.JScrollPane}.    Pour construire et faire apparaître un objet
- * <code>MapPanel</code> avec ses barres de défilements,  il faut utiliser la méthode {@link
- * #createScrollPane}.</p>
+ * a set of isobaths forming a bathymetry ({@link net.seas.map.layer.IsolineLayer}),
+ * a remote sensing image ({@link net.seas.map.layer.GridCoverageLayer}),
+ * a set of arbitrary shapes marking locations ({@link net.seas.map.layer.MarkLayer}),
+ * a map scale ({@link net.seas.map.layer.MapScaleLayer}), etc.
+ * <br><br>
+ * Since this class extends {@link ZoomPane},  the user can use mouse and keyboard
+ * to zoom, translate and rotate around the map (Remind: <code>MapPanel</code> has
+ * no scrollbar. To display scrollbars, use {@link #createScrollPane}).
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -115,9 +117,9 @@ public class MapPanel extends ZoomPane
      * Système de coordonnées utilisé pour l'affichage à l'écran. Les données des différentes
      * couches devront être converties selon ce système de coordonnées avant d'être affichées.
      * La transformation la plus courante utilisée à cette fin peut être conservée dans le
-     * champ <code>commonestCoordinateTransform</code> à des fins de performances.
+     * champ <code>commonestTransform</code> à des fins de performances.
      */
-    private final CoordinateSystem displayCoordinateSystem;
+    private final CoordinateSystem coordinateSystem;
 
     /**
      * Transformation de coordonnées (généralement une projection cartographique) utilisée
@@ -125,7 +127,7 @@ public class MapPanel extends ZoomPane
      * Ce champ n'est conservé qu'à des fins de performances. Si ce champ est nul, ça signifie
      * qu'il a besoin d'être reconstruit.
      */
-    private transient CoordinateTransform commonestCoordinateTransform;
+    private transient CoordinateTransform commonestTransform;
 
     /**
      * Rectangle englobant les coordonnées de l'ensemble des couches à tracer. Les coordonnées de
@@ -227,14 +229,14 @@ public class MapPanel extends ZoomPane
      * Le panneau ne contiendra initialement aucune couche. Les couches
      * pourront être ajoutées par des appels à {@link #addLayer}.
      *
-     * @param displayCoordinateSystem Système de coordonnées utilisé pour l'affichage
+     * @param coordinateSystem Système de coordonnées utilisé pour l'affichage
      *        de toutes les couches. Cet argument ne doit pas être nul.
      */
-    public MapPanel(final CoordinateSystem displayCoordinateSystem)
+    public MapPanel(final CoordinateSystem coordinateSystem)
     {
         super(TRANSLATE_X | TRANSLATE_Y | UNIFORM_SCALE | DEFAULT_ZOOM | ROTATE | RESET);
-        if (displayCoordinateSystem==null) throw new NullPointerException();
-        this.displayCoordinateSystem = displayCoordinateSystem;
+        if (coordinateSystem==null) throw new NullPointerException();
+        this.coordinateSystem = coordinateSystem;
         addZoomChangeListener(listeners);
         addComponentListener (listeners);
         addMouseListener     (listeners);
@@ -247,14 +249,79 @@ public class MapPanel extends ZoomPane
      * lors de l'affichage.
      */
     public CoordinateSystem getCoordinateSystem()
-    {return displayCoordinateSystem;}
+    {return coordinateSystem;}
 
     /**
-     * Retourne un rectangle englobant les coordonnées de l'ensemble des couches à tracer.
-     * Les coordonnées de ce rectangle seront exprimées selon le système de coordonnées
-     * retourné par {@link #getCoordinateSystem}. Si ces coordonnées sont inconnues (par
-     * exemple si <code>MapPanel</code> ne contient aucune couche), alors cette méthode
-     * retourne <code>null</code>.
+     * Retourne une transformation permettant de convertir les coordonnées exprimées selon
+     * le système <code>source</code> vers le système d'affichage {@link #coordinateSystem}.
+     */
+    private CoordinateTransform getTransform(final CoordinateSystem source) throws CannotCreateTransformException
+    {
+        final CoordinateTransform transform=commonestTransform;
+        if (transform!=null && transform.getSourceCS().equivalents(source))
+        {
+            return transform;
+        }
+        else return Contour.TRANSFORMS.createFromCoordinateSystems(source, coordinateSystem);
+    }
+
+    /**
+     * Retourne la transformation la plus couramment utilisée pour convertir les coordonnées
+     * des couches en coordonnées d'affichage. Cette transformation sera conservée dans une
+     * cache interne pour améliorer les performances.
+     */
+    final CoordinateTransform getCommonestTransform() throws CannotCreateTransformException
+    {
+        if (commonestTransform==null)
+        {
+            int n=0;
+            final CoordinateSystem[] cs=new CoordinateSystem[layerCount];
+            final int[]           count=new int             [layerCount];
+            /*
+             * Compte le nombre d'occurences de
+             * chaque systèmes de coordonnées.
+             */
+      scan: for (int i=0; i<layerCount; i++)
+            {
+                final CoordinateSystem sys=layers[i].getCoordinateSystem();
+                for (int j=0; j<n; j++)
+                {
+                    if (sys.equivalents(cs[j]))
+                    {
+                        count[n]++;
+                        continue scan;
+                    }
+                }
+                cs[n++] = sys;
+            }
+            /*
+             * Recherche dans la liste le
+             * système le plus souvent utilisé.
+             */
+            CoordinateSystem sourceCS = coordinateSystem;
+            int maxCount = 0;
+            while (--n>=0)
+            {
+                if (count[n] >= maxCount)
+                {
+                    maxCount = n;
+                    sourceCS = cs[n];
+                }
+            }
+            commonestTransform = Contour.TRANSFORMS.createFromCoordinateSystems(sourceCS, coordinateSystem);
+        }
+        return commonestTransform;
+    }
+
+    /**
+     * Returns a bounding box that completely encloses all layer's preferred area.
+     * This bounding box should be representative of the geographic area to drawn.
+     * User wanting to set the default rendering to a different area should use
+     * <code>get/setPreferredArea</code>. Coordinates are expressed in this
+     * <code>MapPanel</code>'s coordinate system (see {@link #getCoordinateSystem}).
+     *
+     * @return The enclosing area computed from available data, or <code>null</code>
+     *         if this area can't be computed.
      */
     public Rectangle2D getArea()
     {
@@ -263,8 +330,9 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Modifie les coordonnées du rectangle qui englobe les coordonnées de l'ensemble
-     * des couches à tracer.
+     * Set the geographic area. This is method is invoked as a result of internal
+     * computation. User should not call this method himself; he/she should calls
+     * <code>get/setPreferredArea</code> instead.
      */
     private void setArea(final Rectangle2D newArea)
     {
@@ -273,15 +341,22 @@ public class MapPanel extends ZoomPane
         {
             this.area=newArea;
             firePropertyChange("area", oldArea, newArea);
-            if (oldArea==null && newArea!=null)
+            if (super.getToolTipText()==null)
             {
-                ToolTipManager.sharedInstance().registerComponent(this);
-            }
-            else if (newArea==null && super.getToolTipText()==null)
-            {
-                ToolTipManager.sharedInstance().unregisterComponent(this);
+                if (oldArea==null)
+                {
+                    if (newArea!=null)
+                    {
+                        ToolTipManager.sharedInstance().registerComponent(this);
+                    }
+                }
+                else if (newArea==null)
+                {
+                    ToolTipManager.sharedInstance().unregisterComponent(this);
+                }
             }
             fireZoomChanged(new AffineTransform()); // Update scrollbars
+            log("net.seas.map", "MapPanel", "setArea", newArea);
         }
     }
 
@@ -297,7 +372,7 @@ public class MapPanel extends ZoomPane
         CoordinateTransform transform = null;
         for (int i=layerCount; --i>=0;)
         {
-            final Layer layer=layers[i];
+            final Layer  layer=layers[i];
             Rectangle2D bounds=layer.getPreferredArea();
             if (bounds!=null)
             {
@@ -306,7 +381,7 @@ public class MapPanel extends ZoomPane
                 {
                     if (lastSystem==null || !lastSystem.equivalents(system))
                     {
-                        transform  = getTransformFrom(system);
+                        transform  = getTransform(system);
                         lastSystem = system;
                     }
                     bounds = OpenGIS.transform(transform, bounds, null);
@@ -315,7 +390,7 @@ public class MapPanel extends ZoomPane
                 }
                 catch (TransformException exception)
                 {
-                    handleException("MapPanel", "addLayer", exception);
+                    handleException("MapPanel", "computeArea", exception);
                 }
             }
         }
@@ -333,7 +408,7 @@ public class MapPanel extends ZoomPane
     {
         try
         {
-            final CoordinateTransform transform = getTransformFrom(system);
+            final CoordinateTransform transform = getTransform(system);
             oldSubArea=OpenGIS.transform(transform, oldSubArea, null);
             newSubArea=OpenGIS.transform(transform, newSubArea, null);
         }
@@ -349,69 +424,6 @@ public class MapPanel extends ZoomPane
             setArea(expandedArea);
         }
         else computeArea();
-    }
-
-    /**
-     * Retourne une transformation permettant de convertir les coordonnées exprimées selon le
-     * système <code>source</code> vers le système d'affichage {@link #displayCoordinateSystem}.
-     */
-    private CoordinateTransform getTransformFrom(final CoordinateSystem source) throws CannotCreateTransformException
-    {
-        final CoordinateTransform transform=commonestCoordinateTransform;
-        if (transform!=null && transform.getSourceCS().equivalents(source))
-        {
-            return transform;
-        }
-        else return Contour.TRANSFORMS.createFromCoordinateSystems(source, displayCoordinateSystem);
-    }
-
-    /**
-     * Retourne la transformation la plus couramment utilisée pour convertir les coordonnées
-     * des couches en coordonnées d'affichage. Cette transformation sera conservée dans une
-     * cache interne pour améliorer les performances.
-     */
-    final CoordinateTransform getCommonestCoordinateTransform() throws CannotCreateTransformException
-    {
-        if (commonestCoordinateTransform==null)
-        {
-            int count=0;
-            final CoordinateSystem[] systems=new CoordinateSystem[layerCount];
-            final int[]          equalsCount=new int             [layerCount];
-            final int[]      equivalentCount=new int             [layerCount];
-            /*
-             * Compte le nombre d'occurences de
-             * chaque systèmes de coordonnées.
-             */
-            for (int i=layerCount; --i>=0;)
-            {
-                boolean found=false;
-                final CoordinateSystem sys=layers[i].getCoordinateSystem();
-                for (int j=0; j<count; j++)
-                {
-                    if (sys.equals     (systems[j])) {    equalsCount[j]++; found=true;}
-                    if (sys.equivalents(systems[j])) {equivalentCount[j]++;}
-                }
-                if (!found)
-                {
-                    systems[count++] = sys;
-                }
-            }
-            /*
-             * Recherche dans la liste le
-             * système le plus souvent utilisé.
-             */
-            int max=layerCount-1;
-            for (int i=max; --i>=0;)
-            {
-                if ((equivalentCount[i]> equivalentCount[max]) ||
-                    (equivalentCount[i]==equivalentCount[max] && equalsCount[i]>=equalsCount[max]))
-                {
-                    max=i;
-                }
-            }
-            commonestCoordinateTransform = Contour.TRANSFORMS.createFromCoordinateSystems((max>=0) ? systems[max] : displayCoordinateSystem, displayCoordinateSystem);
-        }
-        return commonestCoordinateTransform;
     }
 
     /**
@@ -461,8 +473,8 @@ public class MapPanel extends ZoomPane
             changeArea(null, layer.getPreferredArea(), layer.getCoordinateSystem());
             layer.addPropertyChangeListener(listeners);
 
-            commonestCoordinateTransform = null;
-            stroke                       = null;
+            commonestTransform = null;
+            stroke             = null;
         }
         if (layerCount==1)
         {
@@ -515,8 +527,8 @@ public class MapPanel extends ZoomPane
             }
             changeArea(layer.getPreferredArea(), null, layer.getCoordinateSystem());
 
-            commonestCoordinateTransform = null;
-            stroke                       = null;
+            commonestTransform = null;
+            stroke             = null;
         }
     }
 
@@ -539,8 +551,8 @@ public class MapPanel extends ZoomPane
             layers[i]=null;
         }
         layerCount=0;
-        commonestCoordinateTransform = null;
-        stroke                       = null;
+        commonestTransform = null;
+        stroke             = null;
         setArea(null);
     }
 
@@ -785,8 +797,10 @@ public class MapPanel extends ZoomPane
     }
 
     /**
-     * Retourne la dimension logique préférée
-     * des pixels lors d'un zoom rapproché.
+     * Returns the preferred pixel size for a close zoom. The default implementation
+     * invoke {@link Layer#getPreferredPixelSize()} for each layer and returns the
+     * finest resolution (transformed in this <code>MapPanel</code>'s coordinate
+     * system).
      */
     protected Dimension2D getPreferredPixelSize()
     {
@@ -794,13 +808,29 @@ public class MapPanel extends ZoomPane
         double minHeight = Double.POSITIVE_INFINITY;
         for (int i=layerCount; --i>=0;)
         {
-            final Dimension2D size=layers[i].getPreferredPixelSize();
-            if (size!=null)
+            final Layer layer = layers[i];
+            final Dimension2D size=layer.getPreferredPixelSize();
+            if (size!=null) try
             {
-                final double width  = size.getWidth();
-                final double height = size.getHeight();
+                double width  = size.getWidth();
+                double height = size.getHeight();
+                final CoordinateTransform transform=getTransform(layer.getCoordinateSystem());
+                if (!transform.isIdentity())
+                {
+                    Rectangle2D area = layer.getPreferredArea();
+                    if (area==null) area = new Rectangle2D.Double();
+                    area.setRect(area.getCenterX()-0.5*width, area.getCenterY()-0.5*height, width, height);
+                    area   = OpenGIS.transform(transform, area, area);
+                    width  = area.getWidth();
+                    height = area.getHeight();
+                }
                 if (width  < minWidth ) minWidth =width;
                 if (height < minHeight) minHeight=height;
+            }
+            catch (TransformException exception)
+            {
+                handleException("MapPanel", "getPreferredPixelSize", exception);
+                // Not a big deal. Continue...
             }
         }
         if (!Double.isInfinite(minWidth) && !Double.isInfinite(minHeight))
@@ -853,6 +883,8 @@ public class MapPanel extends ZoomPane
             point=XAffineTransform.inverseDeltaTransform(zoom, point, point);
             double t; t=Math.sqrt((t=point.getX())*t + (t=point.getY())*t);
             stroke=new BasicStroke((float) (4*t));
+
+            stroke = new BasicStroke(0); // TODO
         }
         catch (NoninvertibleTransformException exception)
         {
@@ -865,7 +897,7 @@ public class MapPanel extends ZoomPane
         final MapPaintContext context;
         try
         {
-            context = new MapPaintContext(getCommonestCoordinateTransform(), new AffineTransform(zoom), graphics.getTransform(), getZoomableBounds(null), isPrinting);
+            context = new MapPaintContext(getCommonestTransform(), new AffineTransform(zoom), graphics.getTransform(), getZoomableBounds(null), isPrinting);
         }
         catch (CannotCreateTransformException exception)
         {
@@ -873,8 +905,8 @@ public class MapPanel extends ZoomPane
             handleException("MapPanel", "paintComponent", exception);
             return;
         }
-        graphics.setStroke(stroke);
         graphics.transform(zoom);
+        graphics.setStroke(stroke);
         /*
          * Dessine les couches en commençant par
          * celles qui ont un <var>z</var> le plus bas.

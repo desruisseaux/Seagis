@@ -24,6 +24,7 @@ package net.seas.util;
 
 // Collections
 import java.util.List;
+import java.util.Arrays;
 import java.util.ArrayList;
 
 // References
@@ -108,44 +109,6 @@ public class WeakHashSet<Element>
     }
 
     /**
-     * Lance un thread en arrière-plan qui supprimera
-     * les références réclamées par le ramasse-miettes.
-     */
-    static
-    {
-        final Thread thread = new Thread("WeakHashSet")
-        {
-            public void run()
-            {
-                while (true) try
-                {
-                    referenceQueue.remove().clear();
-                }
-                catch (InterruptedException exception)
-                {
-                    // Somebody doesn't want to lets
-                    // us sleep... Go back to work.
-                }
-                catch (Exception exception)
-                {
-                    ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
-                }
-                catch (AssertionError exception)
-                {
-                    ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
-                }
-            }
-        };
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    /**
-     * Liste des références qui viennent d'être détruites par le ramasse-miettes.
-     */
-    private static final ReferenceQueue referenceQueue=new ReferenceQueue();
-
-    /**
      * Capacité minimale de la table {@link #table}.
      */
     private static final int MIN_CAPACITY = 7;
@@ -156,6 +119,46 @@ public class WeakHashSet<Element>
      * reconstruite.
      */
     private static final float LOAD_FACTOR = 0.75f;
+
+    /**
+     * Liste des références qui viennent d'être détruites par le ramasse-miettes.
+     */
+    private static final ReferenceQueue referenceQueue=new ReferenceQueue();
+
+    /**
+     * Lance un thread en arrière-plan qui supprimera
+     * les références réclamées par le ramasse-miettes.
+     */
+    private static final Thread thread = new Thread("WeakHashSet")
+    {
+        public void run()
+        {
+            while (true) try
+            {
+                referenceQueue.remove().clear();
+            }
+            catch (InterruptedException exception)
+            {
+                // Somebody doesn't want to lets
+                // us sleep... Go back to work.
+            }
+            catch (Exception exception)
+            {
+                ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
+            }
+            catch (AssertionError exception)
+            {
+                ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
+                // Do not kill the thread on assertion failure, in order to
+                // keep the same behaviour as if assertions were turned off.
+            }
+        }
+    };
+    static
+    {
+        thread.setDaemon(true);
+        thread.start();
+    }
 
     /**
      * La liste des entrés de cette table. Cette
@@ -197,7 +200,7 @@ public class WeakHashSet<Element>
     {
         if (Version.MINOR>=4)
         {
-            assert(count==count()) : count;
+            assert(valid()) : count;
             // Note: With JDK 1.4beta2, this assertion fails under heavy use of WeakHashSet.
             //       The strange thing is that  it seems to fail after an exception occured
             //       in Sun's Java2D code. Is it a synchronization problem in WeakHashSet?
@@ -217,6 +220,7 @@ public class WeakHashSet<Element>
                     count--;
                     if (prev!=null) prev.next=e.next;
                     else table[i]=e.next;
+                    if (Version.MINOR>=4) assert(valid());
 
                     // Si le nombre d'éléments dans la table a diminué de
                     // façon significative, on réduira la longueur de la table.
@@ -224,14 +228,13 @@ public class WeakHashSet<Element>
 
                     // Il ne faut pas continuer la boucle courante,
                     // car la variable 'e' n'est plus valide.
-                    if (Version.MINOR>=4) assert(count==count());
                     return;
                 }
                 prev=e;
                 e=e.next;
             }
         }
-        if (Version.MINOR>=4) assert(count==count());
+        if (Version.MINOR>=4) assert(valid());
         // Si on atteint ce point, c'est que la référence n'a pas été trouvée.
         // Ca peut arriver si l'élément a déjà été supprimé par {@link #rehash}.
     }
@@ -245,6 +248,7 @@ public class WeakHashSet<Element>
      */
     private void rehash(final boolean augmentation)
     {
+        if (Version.MINOR>=4) assert(valid());
         final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
         if (Version.MINOR>=4) assert(capacity>=MIN_CAPACITY) : capacity;
         if (augmentation ? capacity<=table.length : capacity>=table.length)
@@ -253,7 +257,7 @@ public class WeakHashSet<Element>
         }
         final WeakElement<Element>[] oldTable = table;
         table     = new WeakElement<Element>[capacity];
-        threshold = Math.min(Math.round(capacity*LOAD_FACTOR), capacity-7);
+        threshold = Math.round(capacity*LOAD_FACTOR);
         for (int i=0; i<oldTable.length; i++)
         {
             for (WeakElement<Element> old=oldTable[i]; old!=null;)
@@ -278,7 +282,7 @@ public class WeakHashSet<Element>
             record.setSourceClassName("WeakHashSet");
             record.setSourceMethodName(augmentation ? "intern" : "remove");
             Logger.getLogger("net.seas.util").log(record);
-            assert(count==count());
+            assert(valid());
         }
     }
 
@@ -299,6 +303,7 @@ public class WeakHashSet<Element>
      */
     private Element intern0(final Element obj)
     {
+        if (Version.MINOR>=4) assert(thread.isAlive());
         if (obj!=null)
         {
             /*
@@ -315,7 +320,7 @@ public class WeakHashSet<Element>
                     count--;
                     if (prev!=null) prev.next=e.next;
                     else table[index]=e.next;
-                    if (Version.MINOR>=4) assert(count==count());
+                    if (Version.MINOR>=4) assert(valid());
                 }
                 else if (equals(obj, e_obj)) return e_obj;
             }
@@ -336,7 +341,7 @@ public class WeakHashSet<Element>
             table[index]=new WeakElement<Element>(this, obj, table[index], index);
             count++;
         }
-        if (Version.MINOR>=4) assert(count==count());
+        if (Version.MINOR>=4) assert(valid());
         return obj;
     }
 
@@ -381,22 +386,40 @@ public class WeakHashSet<Element>
      */
     public synchronized int size()
     {
-        if (Version.MINOR>=4)
-            assert(count==count());
+        if (Version.MINOR>=4) assert(valid());
         return count;
     }
 
     /**
-     * Count the number of elements. This number
-     * should be equals to {@link #count}.
+     * Removes all of the elements from this set.
      */
-    private int count()
+    public synchronized void clear()
+    {
+        Arrays.fill(table, null);
+        count=0;
+    }
+
+    /**
+     * Check if this <code>WeakHashSet</code> is valid. This method counts the
+     * number of elements and compare it to {@link #count}. If the check fails,
+     * the number of elements is corrected (if we didn't, an {@link AssertionError}
+     * would be thrown for every operations after the first error,  which make
+     * debugging more difficult). The set is otherwise unchanged, which should
+     * help to get similar behaviour as if assertions hasn't been turned on.
+     */
+    private boolean valid()
     {
         int n=0;
         for (int i=0; i<table.length; i++)
             for (WeakElement<Element> e=table[i]; e!=null; e=e.next)
                 n++;
-        return n;
+
+        if (n!=count)
+        {
+            count=n;
+            return false;
+        }
+        else return true;
     }
 
     /**
@@ -406,7 +429,7 @@ public class WeakHashSet<Element>
      */
     public synchronized Element[] toArray()
     {
-        if (Version.MINOR>=4) assert(count==count());
+        if (Version.MINOR>=4) assert(valid());
         final Element[] elements = new Element[count];
         int index = 0;
         for (int i=0; i<table.length; i++)

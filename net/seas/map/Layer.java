@@ -208,8 +208,8 @@ public abstract class Layer implements Serializable
     }
 
     /**
-     * Retourne la dimension préférée des pixels pour un zoom rapproché. Une
-     * valeur nulle signifie qu'aucune dimension préférée n'a été spécifiée.
+     * Returns the preferred pixel size for a close
+     * zoom, or <code>null</code> if there is none.
      */
     public final Dimension2D getPreferredPixelSize()
     {
@@ -218,13 +218,16 @@ public abstract class Layer implements Serializable
     }
 
     /**
-     * Modifie la dimension préférée des pixels pour un zoom rapproché.
-     * Une valeur nulle signifie qu'aucune dimension n'est préférée.
+     * Set the preferred pixel size for a close zoom. For image layers, the preferred pixel
+     * size is the image's pixel size (in units of {@link #getCoordinateSystem}). For other
+     * kind of layer, this "pixel" size should be some raisonable resolution matching layer's
+     * capability. For example for a layer drawing an isoline, it may be set to the isoline's
+     * resolution.
+     *
+     * @param size The preferred pixel size, or <code>null</code> if there is none.
      */
     public synchronized void setPreferredPixelSize(final Dimension2D size)
-    {
-        firePropertyChange("preferredPixelSize", preferredPixelSize, preferredPixelSize=(size!=null) ? (Dimension2D) size.clone() : null);
-    }
+    {firePropertyChange("preferredPixelSize", preferredPixelSize, preferredPixelSize=(size!=null) ? (Dimension2D)size.clone() : null);}
 
     /**
      * Retourne l'ordre <var>z</var> à laquelle cette couche devrait être dessinée.
@@ -596,7 +599,9 @@ public abstract class Layer implements Serializable
                     {
                         painting = Resources.format(Clé.PAINTING¤1, getName());
                     }
-                    Contour.logger.fine(painting);
+                    Contour.logger.finest(painting);
+                    // Use FINEST level since this event is
+                    // likely to generate a lot of records.
                 }
                 final Shape shape=paint(graphics, context);
                 if (!context.isPrinting())

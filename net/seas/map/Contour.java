@@ -23,10 +23,12 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.cs.Ellipsoid;
 import net.seas.opengis.cs.CoordinateSystem;
-import net.seas.opengis.ct.TransformException;
-import net.seas.opengis.ct.CoordinateTransformFactory;
+import net.seas.opengis.cs.ProjectedCoordinateSystem;
 import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seas.opengis.ct.CoordinateTransformFactory;
+import net.seas.opengis.ct.TransformException;
 
 // Geometry
 import java.awt.Shape;
@@ -45,15 +47,23 @@ import net.seas.text.AngleFormat;
 import java.util.logging.Logger;
 
 // Miscellaneous
+import java.util.Locale;
 import java.io.Serializable;
 import net.seas.util.XClass;
 import net.seas.util.Version;
 
 
 /**
- * Lignes de contour à un seul niveau. Ces lignes de contours peuvent être un isobath
- * (par exemple le tracé des côtes d'un archipel) ou un polygone seul (par exemple le
- * tracé de la côte d'une seule île d'un archipel).
+ * A contour line. A contour line may be a single polygon ({@link Polygon})
+ * or a set of polygons at the same altitude value ({@link Isoline}). This
+ * class implements the {@link Shape} interface  for interoperability with
+ * <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>.   But
+ * it provides also some more capabilities. For example, <code>contains</code>
+ * and <code>intersects</code> methods accepts arbitrary shapes instead of
+ * rectangles only. <code>Contour</code> objects can have arbitrary two-dimensional
+ * coordinate systems, which can be changed dynamically (i.e. contours can
+ * be reprojected). Futhermore, contours can compress and share their data
+ * in order to reduce memory footprint.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -78,41 +88,67 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     private String name;
 
     /**
-     * Construit un contour initialement vide.
+     * Construct an empty contour.
      */
     public Contour()
     {}
 
     /**
-     * Donne un nom à ce contour. Ce nom peut-être un nom de lieu,
-     * par exemple si ce contour représente une île ou un lac. Ce
-     * nom peut être nul si ce contour n'est pas nommé.
+     * Returns a contour with the same
+     * data than the specified contour.
+     */
+    public Contour(final Contour contour)
+    {this.name = contour.name;}
+
+    /**
+     * Set a default name for this contour. For example, a polygon
+     * may have the name of a lake or an island. This name may be
+     * <code>null</code> if this contour is unnamed.
      */
     public void setName(final String name)
     {this.name = name;}
 
     /**
-     * Retourne le nom de ce contour. Ce nom peut
-     * être nul si ce contour n'est pas nommé.
+     * Returns the localized name for this contour. The default
+     * implementation ignore the locale and returns the last name
+     * set by {@link #setName}.
+     *
+     * @param  locale The desired locale. If no name is available
+     *         for this locale, a default locale will be used.
+     * @return The contour's name, localized if possible.
      */
-    public String getName()
+    public String getName(final Locale locale)
     {return name;}
 
     /**
-     * Retourne le système de coordonnées de ce contour.
-     * Cette méthode peut retourner <code>null</code> s'il
-     * n'est pas connu.
+     * Convenience method returning the {@link GeographicCoordinateSystem}'s ellipsoid.
+     * If the coordinate system is not geographic (for example if it is an instance of
+     * {@link ProjectedCoordinateSystem}), then this method returns <code>null</code>.
+     * Use this method to determine how to compute distances. If <code>getEllipsoid()</code>
+     * returns a non-null value, one can use {@link Ellipsoid#orthodromicDistance}.
+     * Otherwise, one can use the Pythagoras's formula (assuming that the coordinate
+     * system is cartesian).
+     */
+    public Ellipsoid getEllipsoid()
+    {return Segment.getEllipsoid(getCoordinateSystem());}
+
+    /**
+     * Returns the contour's coordinate system,
+     * or <code>null</code> if unknow.
      */
     public abstract CoordinateSystem getCoordinateSystem();
 
     /**
-     * Spécifie le système de coordonnées dans lequel retourner les points du contour.
-     * Appeller cette méthode est équivalent à projeter tous les points du contour de
-     * l'ancien système de coordonnées vers le nouveau.
+     * Set the contour's coordinate system. Calling this method is equivalents
+     * to reproject all contour's points from the old coordinate system to the
+     * new one.
      *
-     * @param  coordinateSystem Système de coordonnées dans lequel exprimer les points
-     *         du contour. La valeur <code>null</code> restaurera le système "natif".
-     * @throws TransformException si une projection cartographique a échouée.
+     * @param  The new coordinate system. A <code>null</code> value way reset
+     *         some default coordinate system (usually the one that best fits
+     *         some internal data).
+     * @throws TransformException If a transformation failed. In case of failure,
+     *         the state of this object will stay unchanged (as if this method has
+     *         never been invoked).
      */
     public abstract void setCoordinateSystem(final CoordinateSystem coordinateSystem) throws TransformException;
 
@@ -122,55 +158,51 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     public abstract boolean isEmpty();
 
     /**
-     * Indique si ce contour contient entièrement le rectangle spécifié.
-     * Le rectangle doit être exprimé selon le système de coordonnées de
-     * ce contour, soit {@link #getCoordinateSystem()}.
+     * Test if the interior of this contour entirely contains the given rectangle.
+     * The rectangle's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public boolean contains(final double x, final double y, final double width, final double height)
     {return contains(new Rectangle2D.Double(x, y, width, height));}
 
     /**
-     * Test if the interior of this contour
-     * entirely contains the given shape.
+     * Test if the interior of this contour entirely contains the given shape.
+     * The shape's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public abstract boolean contains(final Shape shape);
 
     /**
-     * Indique si ce contour intercepte au moins en partie le rectangle spécifié.
-     * Le rectangle doit être exprimé selon le système de coordonnées du polygone,
-     * soit {@link #getCoordinateSystem()}.
+     * Tests if the interior of the contour intersects the interior of a specified rectangle.
+     * The rectangle's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public boolean intersects(final double x, final double y, final double width, final double height)
     {return intersects(new Rectangle2D.Double(x, y, width, height));}
 
     /**
-     * Indique si ce contour intercepte au
-     * moins en partie la forme spécifiée.
+     * Tests if the interior of the contour intersects the interior of a specified shape.
+     * The shape's coordinates must expressed in this contour's coordinate
+     * system (as returned by {@link #getCoordinateSystem}).
      */
     public abstract boolean intersects(final Shape shape);
 
     /**
-     * Renvoie la résolution moyenne de ce contour. Cette résolution sera la distance moyenne
-     * (en mètres) entre deux points du contour, mais sans prendre en compte les "points de
-     * bordure" (par exemple les points qui suivent le bord d'une carte plutôt que de représenter
-     * une structure géographique réelle).
+     * Returns the string to be used as the tooltip for the given location.
+     * If there is no such tooltip, returns <code>null</code>. This method
+     * is usually invoked as result of mouse events. Default implementation
+     * returns the name that has been set with {@link #setName} if the
+     * specified coordinates is contained inside this contour, or
+     * <code>null</code> otherwise.
      *
-     * @return La résolution moyenne en mètres, ou {@link Float#NaN}
-     *         si ce contour ne contient pas de points.
+     * @param  point Coordinates (usually mouse coordinates). Must be
+     *         specified in this contour's coordinate system (as returned
+     *         by {@link #getCoordinateSystem}).
+     * @return The tooltip text for the given location, or <code>null</code>
+     *         if there is none.
      */
-    public abstract float getResolution();
-
-    /**
-     * Modifie la résolution de ce contour. Cette méthode procèdera en interpolant les données de façon
-     * à ce que chaque point soit séparé du précédent par la distance spécifiée.   Cela peut se traduire
-     * par des économies importante de mémoire si une trop grande résolution n'est pas nécessaire. Notez
-     * que cette opération est irreversible.  Appeler cette méthode une seconde fois avec une résolution
-     * plus fine gonflera la taille des tableaux internes, mais sans amélioration réelle de la précision.
-     *
-     * @param  resolution Résolution désirée (en mètres).
-     * @throws TransformException Si une erreur est survenue lors d'une projection cartographique.
-     */
-    public abstract void setResolution(final double resolution) throws TransformException;
+    public String getToolTipText(final Point2D point)
+    {return (name!=null && contains(point)) ? name : null;}
 
     /**
      * Return the number of points in this contour.
@@ -178,14 +210,38 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     public abstract int getPointCount();
 
     /**
-     * Retourne le texte à afficher dans une bulle lorsque la souris
-     * traîne à la coordonnée spécifiée.
+     * Returns the contour's mean resolution. This resolution is the mean distance between
+     * every pair of consecutive points in this contour  (ignoring "extra" points used for
+     * drawing a border, if there is one). Resolution's units are the same than {@link #getCoordinateSystem}'s
+     * units, <strong>except</strong> if the later use angular units (this is the case for
+     * {@link GeographicCoordinateSystem}). In the later case, this method will compute
+     * orthodromic distances using the coordinate system's {@link Ellipsoid} (as returned
+     * by {@link #getEllipsoid}). In other words, this method try to returns linear units
+     * (usually meters) no matter if the coordinate systems is actually a
+     * {@link ProjectedCoordinateSystem} or a {@link GeographicCoordinateSystem}.
      *
-     * @param point Coordonnées pointées par la souris. Ces coordonnées
-     *        doivent être exprimées selon le système de coordonnées de
-     *        ce contour ({@link #getCoordinateSystem}).
+     * @return The mean resolution, or {@link Float#NaN} if this contour doesn't have any point.
+     *         If {@link #getEllipsoid} returns a non-null value, the resolution is expressed in
+     *         ellipsoid's axis units. Otherwise, resolution is expressed in coordinate system
+     *         units.
      */
-    public abstract String getToolTipText(final Point2D point);
+    public abstract float getResolution();
+
+    /**
+     * Set the contour's resolution. This method try to interpolate new points in such a way
+     * that every point is spaced by exactly <code>resolution</code> units (usually meters)
+     * from the previous one. Calling this method with a lower resolution may help to reduce
+     * memory footprint if a high resolution is not needed (note that {@link Isoline#compress}
+     * provides an alternative way to reduce memory footprint).
+     * <br><br>
+     * This method is irreversible. Invoking <code>setResolution</code> with a finner
+     * resolution will increase memory consumption with no real resolution improvement.
+     *
+     * @param  resolution Desired resolution, in the same units than {@link #getResolution}.
+     * @throws TransformException If some coordinate transformations were needed and failed.
+     *         There is no guaranteed on contour's state in case of failure.
+     */
+    public abstract void setResolution(final double resolution) throws TransformException;
 
     /**
      * Return a string representation of this contour for debugging purpose.
@@ -213,7 +269,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
             maxY=new Float((float) bounds.getMaxY());
             format=NumberFormat.getNumberInstance();
         }
-        final String         name=getName();
+        final String         name=getName(null);
         final FieldPosition dummy=new FieldPosition(0);
         final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
@@ -233,28 +289,31 @@ public abstract class Contour implements Shape, Cloneable, Serializable
 
     /**
      * Returns an hash code for this contour. Subclasses should
-     * redefined this method to provide a more appropriate value.
+     * overrides this method to provide a more appropriate value.
      */
     public int hashCode()
     {return (name!=null) ? name.hashCode() : 0;}
 
     /**
-     * Indique si ce contour est identique à l'objet spécifié. Cette méthode retourne <code>true</code>
-     * si <code>object</code> est de la même classe que <code>this</code> et si les deux contours ont le
-     * même nom. Les classes dérivées devront redéfinir cette méthode pour vérifier aussi les coordonnées
-     * des points.
+     * Compare the specified object with this contour for equality.
+     * Default implementation tests if the two objects are instances
+     * of the same class and compare their name. Subclasses should
+     * overrides this method for checking contour's points.
      */
     public boolean equals(final Object object)
     {
         if (object!=null && object.getClass().equals(getClass()))
         {
-            return XClass.equals(getName(), ((Contour) object).getName());
+            return XClass.equals(name, ((Contour) object).name);
         }
         else return false;
     }
 
     /**
-     * Return a clone of this contour.
+     * Return a clone of this contour. The returned contour will have
+     * a deep copy semantic. However, subclasses should overrides this
+     * method in such a way that both contours will share as much internal
+     * arrays as possible, even if they use differents coordinate systems.
      */
     public Contour clone()
     {

@@ -165,7 +165,7 @@ public final class GeoMouseEvent extends MouseEvent
         {
             if (projection==null)
             {
-                projection=mapPanel.getCommonestCoordinateTransform();
+                projection=mapPanel.getCommonestTransform();
             }
             /*
              * Si le système de coordonnées spécifié n'est pas
@@ -233,7 +233,7 @@ public final class GeoMouseEvent extends MouseEvent
     {
         if (projection==null)
         {
-            projection=mapPanel.getCommonestCoordinateTransform();
+            projection=mapPanel.getCommonestTransform();
         }
         final CoordinateSystem source=projection.getSourceCS();
         if (cached.getSourceCS().equivalents(source))

@@ -23,6 +23,7 @@
 package net.seas.map.layer;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.cs.Ellipsoid;
 import net.seas.opengis.cs.CoordinateSystem;
 import net.seas.opengis.ct.TransformException;
 
@@ -45,6 +46,7 @@ import java.awt.Paint;
 import java.awt.Color;
 import java.awt.Stroke;
 import java.awt.Graphics2D;
+import javax.swing.UIManager;
 import javax.media.jai.GraphicsJAI;
 
 
@@ -66,17 +68,22 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     /**
      * Paint for contour lines.
      */
-    private Paint contour = Color.black;
+    private Paint contour = UIManager.getColor("panel.foreground");
 
     /**
      * Paint for filling holes.
      */
-    private Paint background = Color.white;
+    private Paint background = UIManager.getColor("panel.background");
 
     /**
      * Paint for filling elevations.
      */
-    private Paint fill = Color.blue;
+    private Paint fill = UIManager.getColor("panel.foreground");
+
+    /**
+     * The desired rendering resolution in points.
+     */
+    private int resolution = 2;
 
     /**
      * Construct a layer for the specified isoline.
@@ -84,6 +91,7 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     public IsolineLayer(Isoline isoline)
     {
         super((isoline=isoline.clone()).getCoordinateSystem());
+        setPreferredArea(isoline.getBounds2D());
         this.isoline = isoline;
     }
 
@@ -128,6 +136,28 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
     {return background;}
 
     /**
+     * Sets the rendering resolution in points. A value of 2 means that <code>IsolineLayer</code>
+     * will try to render polygons with line of about 2 points long. Higher values can speed up
+     * rendering and reduce memory footprint at the expense of quality. The actual number of points
+     * used for rendering will be dynamically computed from the zoom active at drawing time.
+     *
+     * @param resolution The desired rendering resolution in points. When rendering on
+     *        screen, a point is a pixel.  When rendering on printer, a point is about
+     *        1/72 of inch.
+     */
+    public void setRenderingResolution(final int resolution)
+    {
+        if (resolution>0) this.resolution=resolution;
+        else throw new IllegalArgumentException(String.valueOf(resolution));
+    }
+
+    /**
+     * Returns the rendering resolution in points.
+     */
+    public int getRenderingResolution()
+    {return resolution;}
+
+    /**
      * Draw or fill a polygon. The rendering is usually done with <code>graphics.draw(polygon)</code>
      * or <code>graphics.fill(polygon)</code>. This method may change the paint and stroke attributes
      * of <code>graphics</code> before to perform the rendering. However, it should not make any change
@@ -145,12 +175,14 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
             {
                 graphics.setPaint(fill);
                 graphics.fill(polygon);
+                if (contour.equals(fill)) return;
                 break;
             }
             case Polygon.DEPRESSION:
             {
                 graphics.setPaint(background);
                 graphics.fill(polygon);
+                if (contour.equals(background)) return;
                 break;
             }
         }
@@ -170,17 +202,30 @@ public class IsolineLayer extends Layer implements Polygon.Renderer
      */
     protected Shape paint(final GraphicsJAI graphics, final MapPaintContext context) throws TransformException
     {
-        final Paint     oldPaint = graphics.getPaint();
-        final Stroke   oldStroke = graphics.getStroke();
-        final AffineTransform tr = context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT);
-        double t; t=Math.sqrt((t=tr.getScaleX())*t + (t=tr.getScaleY())*t + (t=tr.getShearX())*t + (t=tr.getShearY())*t);
+        final Paint      oldPaint = graphics.getPaint();
+        final Stroke    oldStroke = graphics.getStroke();
+        final Rectangle2D  bounds = isoline.getBounds2D();
+        final AffineTransform  tr = context.getAffineTransform(MapPaintContext.FROM_WORLD_TO_POINT);
+        final Ellipsoid ellipsoid = isoline.getEllipsoid();
+        double r; // Desired resolution (a lower resolution will lead to faster rendering)
+        if (ellipsoid!=null)
+        {
+            final double  x = bounds.getCenterX();
+            final double  y = bounds.getCenterY();
+            final double dx = 0.5/XAffineTransform.getScaleX0(tr);
+            final double dy = 0.5/XAffineTransform.getScaleY0(tr);
+            r = ellipsoid.orthodromicDistance(x-dx, y-dy, x+dy, y+dy);
+        }
+        else
+        {
+            r = 1/Math.sqrt((r=tr.getScaleX())*r + (r=tr.getScaleY())*r +
+                            (r=tr.getShearX())*r + (r=tr.getShearY())*r);
+        }
 
         isoline.setCoordinateSystem(context.getViewCoordinateSystem());
-        isoline.paint(graphics, (float)(1/t), this);
+        isoline.paint(graphics, (float)(resolution*r), this);
         graphics.setStroke(oldStroke);
         graphics.setPaint (oldPaint);
-
-        final Rectangle2D bounds = isoline.getBounds2D();
         return XAffineTransform.transform(tr, bounds, bounds);
     }
 
