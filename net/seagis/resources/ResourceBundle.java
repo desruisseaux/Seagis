@@ -120,6 +120,17 @@ public class ResourceBundle extends java.util.ResourceBundle
     {this.filename = filename;}
 
     /**
+     * Returns the name of the logger to use. Default
+     * implementation returns the package name.
+     */
+    protected String getLoggerName()
+    {
+        final String name = getClass().getName();
+        final int index = name.lastIndexOf('.');
+        return (index>=0) ? name.substring(0, index) : "net.seagis";
+    }
+
+    /**
      * List resources to the specified stream. If a resource has
      * more than one line, only the first line will be written.
      * This method is used mostly for debugging purpose.
@@ -183,7 +194,7 @@ public class ResourceBundle extends java.util.ResourceBundle
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
         final Logger    logger;
         final LogRecord record;
-        logger = Logger.getLogger("net.seagis");
+        logger = Logger.getLogger(getLoggerName());
         record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
         record.setSourceClassName (getClass().getName());
         record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");

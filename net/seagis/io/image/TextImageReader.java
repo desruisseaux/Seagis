@@ -255,7 +255,8 @@ public abstract class TextImageReader extends SimpleImageReader
             }
             catch (IOException exception)
             {
-                Utilities.unexpectedException("net.seagis.io", "TextImageReader", "close", exception);
+                // Images I/O are usually part of Grid Coverage Implementation (GCS)
+                Utilities.unexpectedException("net.seagis.gcs", "TextImageReader", "close", exception);
             }
         }
         reader = null;

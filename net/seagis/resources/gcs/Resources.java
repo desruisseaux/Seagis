@@ -65,6 +65,13 @@ public class Resources extends ResourceBundle
     {super(filepath);}
 
     /**
+     * Returns the name of the logger to use,
+     * which is <code>net.seagis.gcs</code>.
+     */
+    protected String getLoggerName()
+    {return "net.seagis.gcs";}
+
+    /**
      * Returns resources in the given locale.
      *
      * @param  local The locale, or <code>null</code> for the default locale.

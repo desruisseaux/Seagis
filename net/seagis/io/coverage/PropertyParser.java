@@ -620,7 +620,7 @@ public class PropertyParser
                 final LogRecord record = new LogRecord(Level.WARNING, message);
                 record.setSourceMethodName(source);
                 record.setSourceClassName("PropertyParser");
-                Logger.getLogger("net.seagis").log(record);
+                Logger.getLogger("net.seagis.gcs").log(record);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
                 System.err.println(message);
 //----- END OF JDK 1.3 FALLBACK -------

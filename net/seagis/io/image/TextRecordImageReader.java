@@ -224,7 +224,8 @@ public class TextRecordImageReader extends TextImageReader
         clear();
         if (rawImageType == DataBuffer.TYPE_DOUBLE)
         {
-            Logger.getLogger("net.seagis.io").warning("Type double is deprecated.");
+            // Images I/O are usually part of Grid Coverage Implementation (GCS)
+            Logger.getLogger("net.seagis.gcs").warning("Type double is deprecated.");
         }
     }
 

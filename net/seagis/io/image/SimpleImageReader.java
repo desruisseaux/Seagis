@@ -119,7 +119,8 @@ public abstract class SimpleImageReader extends ImageReader
         catch (IOException exception)
         {
             streamOrigin = 0;
-            Utilities.unexpectedException("net.seagis.io", "SimpleImageReader", "setInput", exception);
+            Utilities.unexpectedException("net.seagis.gcs", "SimpleImageReader", "setInput", exception);
+            // Images I/O are usually part of Grid Coverage Implementation (GCS)
         }
     }
 
