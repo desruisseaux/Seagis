@@ -6,8 +6,9 @@
   </HEAD>
   <BODY>
     <P ALIGN="justify">Provides interfaces for general positioning, coordinate
-    systems, and coordinate transformations.
+    systems, and coordinate transformations.</P>
 
+    <H2><A NAME="packages_organization">Packages organization</A></H2>
     <UL>
     <LI>Package <CODE>org.opengis</CODE> package contains only
         <A HREF="http://www.opengis.org">OpenGIS</A> specifications.
@@ -15,193 +16,30 @@
         in <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS
         specifications</A>.<BR>
         </LI>
-    <LI>Package <CODE>net.seas.opengis</CODE> contains classes and interfaces
-        partially compliant with the <A HREF="http://www.opengis.org">OpenGIS</A>
-        specification. Our <code>net.seas.opengis</code> package tries to match
-        closely the OpenGIS specification. However, we do not provide a perfect match.
-        Some compromises must be done between OpenGIS conformance and Java integration.
-        (see <A HREF="#issues">Issues with OpenGIS interfaces 1.00</A> below).<BR>
+    <LI>Package <CODE>net.seas.opengis</CODE> contains classes and interfaces partially compliant with
+        the <A HREF="http://www.opengis.org">OpenGIS</A> specification. Our <CODE>net.seas.opengis</CODE>
+        package tries to match closely the OpenGIS specification. However, we do not provide a perfect
+        match. Some compromises must be done between OpenGIS conformance and Java integration.
+        For example, the <CODE>org.opengis</CODE> packages are more adapted than <CODE>net.seas.opengis</CODE>
+        for RMI use, while our <CODE>net.seas.opengis</CODE> packages are more convenient for local use
+        and for interoperability with legacy Java libraries
+        (<A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>,
+         <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>, etc.).
+        For a list of differences, see:
+        <UL>
+          <LI><A HREF="net/seas/opengis/cs/package-summary.html#differences">Differences in the CS package</A></LI>
+          <LI><A HREF="net/seas/opengis/ct/package-summary.html#differences">Differences in the CT package</A></LI>
+          <LI><A HREF="net/seas/opengis/pt/package-summary.html#differences">Differences in the PT package</A></LI>
+        </UL><BR>
         </LI>
     <LI>Others package <CODE>net.seas</CODE> contains some classes implemented on
-        top of <CODE>org.opengis</CODE>. Those classes do not belong to any standard
+        top of <CODE>net.seas.opengis</CODE>. Those classes do not belong to any standard
         and are provided as optional package. Some classes will provide facilities
         for images processing and will require
         <A HREF="http://java.sun.com/products/java-media/jai/">Java
         Advanced Imaging</A>.<BR>
         </LI>
     </UL>
-
-    <P>&nbsp;</P>
-    <A NAME="issues"><H1>Issues with OpenGIS interfaces 1.00</H1></A>
-    <P ALIGN="justify">We are not authorized to modify OpenGIS Java interfaces in anyway,
-    in order to allow co-existence between different implementations. However, it may be
-    hard (or impossible) to implements fully those Java interfaces without modification.
-    For example <A HREF="http://java.sun.com/j2se/1.3.0/docs/guide/rmi/spec/rmiTOC.html">Remote
-    Method Invocation (RMI)</A> <STRONG>will not work</STRONG> with current interfaces, even if
-    they extend the {@link java.rmi.Remote} interface, because no method are declared to throw
-    {@link java.rmi.RemoteException}. Trying to serialize <CODE>CS_AxisInfo</CODE> will fail,
-    even if <CODE>CS_AxisInfo</CODE> implements {@link java.io.Serializable}, because it contains
-    a <CODE>CS_AxisOrientationEnum</CODE> that do not implements <CODE>Serializable</CODE> (this
-    is a second raison why RMI will not work with current interfaces). Other classes are workable
-    without modification, but not in the way a Java developer would expect. Our main concerns are
-    listed below.</P>
-
-    <BLOCKQUOTE>
-    <P>&nbsp;</P>
-    <H2>Remote Method Invocation (RMI)</H2>
-    <P ALIGN="justify">The OpenGIS interfaces seem to be intended for use with RMI
-    (Remote Method Invocation). They complied partially, but not fully to Sun's
-    <A HREF="http://java.sun.com/j2se/1.3.0/docs/guide/rmi/spec/rmiTOC.html">RMI specification</A>.
-    More specifically, they extend the {@link java.rmi.Remote} interface but none of their methods
-    are declared to throws {@link java.rmi.RemoteException}. This declaration is a mandatory part
-    of <A HREF="http://java.sun.com/j2se/1.3.0/docs/guide/rmi/spec/rmi-objmodel5.html">RMI specification</A>.
-    Since <CODE>RemoteException</CODE> is a checked exception, it is not possible to add a throws clause
-    in any concrete implementation of those interfaces. Consequently, the methods declared in those interfaces
-    can't be invoked remotely. Trying to compile any concrete implementation of <CODE>CS_Ellipsoid</CODE> with
-    <A HREF="http://java.sun.com/j2se/1.3.0/docs/tooldocs/tools.html#rmi"><CODE>rmic</CODE></A> yield the
-    following message:</P>
-
-<BLOCKQUOTE><PRE><FONT COLOR="#C00000">
-error: org.opengis.cs.CS_Ellipsoid is not a valid remote interface: method void getSemiMajorAxis() must throw java.rmi.RemoteException.
-<FONT FACE="Arial"><I>(same for all others methods)</I></FONT>
-5 errors
-</FONT></PRE></BLOCKQUOTE>
-
-    <P>&nbsp;</P>
-    <H2>Serialization</H2>
-    <P ALIGN="justify">It is not enough to implement {@link java.io.Serializable} in order to make a
-    class serializable. Every field inside the class must be serializable too. Some OpenGIS classes
-    do not currently respect this condition. For example trying to serialize <CODE>CS_AxisInfo</CODE>
-    yield the following exception:</P>
-
-<BLOCKQUOTE><PRE><FONT COLOR="#C00000">
-Exception in thread "main" java.io.NotSerializableException: org.opengis.cs.CS_AxisOrientationEnum
-        at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1048)
-        at java.io.ObjectOutputStream.defaultWriteFields(ObjectOutputStream.java:1324)
-        at java.io.ObjectOutputStream.writeSerialData(ObjectOutputStream.java:1296)
-        at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1239)
-        at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1046)
-        at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:277)
-        <FONT FACE="Arial"><I>(etc...)</I></FONT>
-</FONT></PRE></BLOCKQUOTE>
-
-    <P>&nbsp;</P>
-    <H2>Enumeration classes</H2>
-    <P ALIGN="justify">It is a good design in Java to replace enumeration constants by classes for type safety.
-    OpenGIS follow such a guideline, but unfortunately make only half of the way to enumeration classes.
-    Enumeration classes should be declared final and immutable. More generally, they should follow Sun's
-    guide <A HREF="http://developer.java.sun.com/developer/Books/shiftintojava/page1.html#replaceenums">Replace
-    enums with classes</A>. For example, the following code is an extract from <CODE>org.opengis.cs.CS_AxisOrientationEnum</CODE>
-    source code:</P>
-
-<BLOCKQUOTE><PRE><FONT COLOR="#004080">public class CS_AxisOrientationEnum
-{
-    public int value;
-
-    /** Increasing ordinates values go North. */
-    public static final int CS_AO_North=1;
-
-    /** Increasing ordinates values go South. */
-    public static final int CS_AO_South=2;
-
-    /** Increasing ordinates values go East. */
-    public static final int CS_AO_East=3;
-
-    /** Increasing ordinates values go West. */
-    public static final int CS_AO_West=4;
-}
-</FONT></PRE></BLOCKQUOTE>
-
-    <P ALIGN="justify">The following code shows the same enumeration class in a more Java-like way. Note that enumerations
-    are now <CODE>AxisOrientation</CODE> objects (which is the whole raison why we are creating an enumeration class!), not
-    integers.</P>
-
-
-<BLOCKQUOTE><PRE><FONT COLOR="#004080">public final class AxisOrientation implements Serializable
-{
-    /**
-     * Serial number for compatibility across different versions.
-     */
-    private static final long serialVersionUID = 5789613256971;
-
-    /** The enum value. */
-    private final int value;
-
-    private AxisOrientation(final int value)
-    {this.value = value;}
-
-    /** Increasing ordinates values go North. */
-    public static final AxisOrientation NORTH=new AxisOrientation(1);
-
-    /** Increasing ordinates values go South. */
-    public static final AxisOrientation SOUTH=new AxisOrientation(2);
-
-    /** Increasing ordinates values go East. */
-    public static final AxisOrientation EAST=new AxisOrientation(3);
-
-    /** Increasing ordinates values go West. */
-    public static final AxisOrientation WEST=new AxisOrientation(4);
-
-    public boolean equals(final Object object)
-    {return (object instanceof AxisOrientation) && ((AxisOrientation) value)==value;}
-
-    public int hashCode()
-    {return value;}
-
-    private Object readResolve() throws ObjectStreamException
-    {
-        return <FONT FACE="Arial"><I>(implementation omitted for simplicity)</I></FONT>; // Canonicalize
-    }
-}
-</FONT></PRE></BLOCKQUOTE>
-
-
-    <P>&nbsp;</P>
-    <H2>Structures classes</H2>
-    <P ALIGN="justify">Every mutable structures implemented with classes should implements
-    {@link java.lang.Cloneable} and define {@link java.lang.Object#clone}, {@link java.lang.Object#equals},
-    {@link java.lang.Object#hashCode} and {@link java.lang.Object#toString} methods. Additionally,
-    {@link java.io.Serializable} classes should declare a <CODE>serialVersionUID</CODE> field for
-    compatibility across different versions. Currently, no OpenGIS's classes do that.</P>
-
-    <P>&nbsp;</P>
-    <H2>Naming convention</H2>
-    <P ALIGN="justify">The OpenGIS specification requires that "<CITE>All interfaces, structures and
-    enumerations start with a two letter prefix indicating their package. For example, all interfaces
-    in the Coordinate System package start with the prefix <CODE>CS_</CODE></CITE>". Similar conventions
-    are fairly common in the C/C++ world, but are somewhat unusual in Java. It is redundant with the package
-    name and do not conform to <A HREF="http://java.sun.com/docs/codeconv/html/CodeConventions.doc8.html">Java
-    naming convention</A>. Issues raised by OpenGIS ("<CITE>This convention both makes client code easier to
-    understand, and resolves issues with re-using common names, e.g. <CODE>Parameter</CODE></CITE>") are more
-    relevant to C/C++ than Java, since proper use of <CODE>import</CODE> statement resolve most cases. When a
-    conflict can't be solved with an <CODE>import</CODE> declaration, one can always use the fully qualified
-    name (e.g. <CODE>org.opengis.cs.Parameter</CODE>). Name like "<CODE>org.opengis.cs.CS_AxisOrientationEnum.CS_AO_North</CODE>"
-    are fairly unconventional in Java. A more correct name (according Java naming convention) would be
-    <CODE>org.opengis.cs.AxisOrientation.NORTH</CODE>.</P>
-
-    <P>&nbsp;</P>
-    <H2>Leverage existing JDK classes</H2>
-    <P ALIGN="justify">Because OpenGIS assume a low common denominator between Java, COM and CORBA, it ignores
-    most of the JDK except {@link java.lang.String}, {@link java.io.Serializable} and {@link java.rmi.Remote}.
-    We feel that a GIS system in Java should (to the greatest possible extent) leverage existing Java classes,
-    specially the <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A> geometric package. Units
-    would also be better handled with the upcoming <A HREF="http://www.jcp.org/jsr/detail/108.jsp">Java Units
-    Specification (JSR-108)</A> than with <CODE>CS_Unit</CODE>.</P>
-
-    </BLOCKQUOTE>
-    <P>&nbsp;</P>
-    <P ALIGN="justify">With the OpenGIS approval, those interfaces have meet a fundamental step for a wide adoption.
-    But this step alone is not enough. The OpenGIS consortium has the needed authority for specifying the requirements
-    for a GIS API in Java, but it doesn't have the mandate to take care of Java specific issues. To be frank, the
-    currents Java interfaces don't seem to have be a finished work: <STRONG>some part of them are broken</STRONG>
-    and should be repair before they become too widely distributed. It seems necessary to take a closer look to
-    the Java interfaces by a group of Java developers. The <A HREF="http://www.jcp.org">Java Community Process</A> is
-    the formal process for establishing specification in Java. I strongly believe that the OpenGIS's interfaces now need
-    to go through the Java Community Process before to be declared "an official specification".</P>
-
-    <P ALIGN="justify">Considering the above-mentioned issues, I suggest to position the currents Java interfaces
-    as a "work in progress". I don't think they should be declared a specification before we got a "proof of concept":
-    a working reference implementation from the Java Community Process.</P>
 
     <P>&nbsp;</P>
     <P>&nbsp;</P>
@@ -218,39 +56,5 @@ Exception in thread "main" java.io.NotSerializableException: org.opengis.cs.CS_A
         for the <CODE>org.opengis</CODE> package.<BR>
         </LI>
     </UL>
-
-    <H2>Related link</H2>
-    <P><STRONG>OpenMap</STRONG>  (<A HREF="http://www.openmap.org/">http://www.openmap.org/</A>)<BR>
-       <STRONG>GeoTools</STRONG> (<A HREF="http://geotools.sourceforge.net/docs.php">http://geotools.sourceforge.net/docs.php</A>)<BR>
-    </P>
-    <P><STRONG>NOTES:</STRONG></P>
-    <UL>
-    <LI>Creators of those projects are OpenGIS members. However,
-        their API depart significantly from OpenGIS specification
-        (maybe because those projects started before OpenGIS
-        specification was available).<BR>
-        </LI>
-    <LI>Although latest versions require JDK 1.2 or higher, early
-        versions was JDK 1.1 compatible. Consequently, those
-        projects have some amount of legacy code duplicating
-        recent Java's standard library (specially the Java2D
-        geometric package). For example, the Sun's
-        <A HREF="http://java.sun.com/j2se/1.3.0/docs/api/java/awt/geom/AffineTransform.html">AffineTransform</A>
-        class is highly optimized and should be more extensively used.<BR>
-        </LI>
-    <LI>GeoTools is under GPL license, which is similar but
-        somewhat stronger than LGPL (see
-        <A HREF="http://www.mozilla.org/MPL/FAQ.html#7">What is the LGPL?</A>,
-        <A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL
-        code be incorporated into the Communicator code base?</A>).<BR>
-        </LI>
-    </UL>
-
-    <P ALIGN="justify">The current <CODE>SEAGIS</CODE> project is an attempt
-    to address those issues. We certainly do not claim to be better than
-    <A HREF="http://www.openmap.org/">OpenMap</A> or
-    <A HREF="http://geotools.sourceforge.net/docs.php">GeoTools</A>.
-    Hopefully, those different projects will ultimately converge to a
-    similar API and share some amout of code.</P>
   </BODY>
 </HTML>
