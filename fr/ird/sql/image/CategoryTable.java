@@ -44,6 +44,7 @@ import java.util.ArrayList;
 
 // Entrés/sorties
 import java.net.URL;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.BufferedReader;
@@ -52,6 +53,7 @@ import java.io.FileNotFoundException;
 
 // Formatage
 import java.util.Locale;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 
 
@@ -69,10 +71,10 @@ final class CategoryTable extends Table
     private static final PaletteFactory FACTORY = new PaletteFactory(
             /* parent factory */ null,
             /* class loader   */ CategoryTable.class.getClassLoader(),
-            /* root directory */ null,
+            /* root directory */ new File("applicationData/colors"),
             /* extension      */ null, // TODO: Should be ".pal"
-            /* character set  */ null,
-            /* locale         */ Locale.FRANCE);
+            /* character set  */ Charset.forName("ISO-8859-1"),
+            /* locale         */ Locale.US);
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des catégories.

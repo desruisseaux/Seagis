@@ -79,7 +79,7 @@ public class ImageComparator implements Comparator<ImageEntry>
     /**
      * Object à utiliser pour construire des transformations de coordonnées.
      */
-    private final CoordinateTransformFactory factory = CoordinateTransformFactory.DEFAULT;
+    private final CoordinateTransformFactory factory = CoordinateTransformFactory.getDefault();
 
     /**
      * Système de coordonnées dans lequel faire les comparaisons. Il s'agit

@@ -85,7 +85,7 @@ final class Parameters implements Serializable
     /**
      * Objet à utiliser par défaut pour construire des transformations de coordonnées.
      */
-    public static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.DEFAULT;
+    public static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.getDefault();
 
     /**
      * L'objet à utiliser pour appliquer
