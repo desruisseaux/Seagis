@@ -183,10 +183,17 @@ public class Coverage3D extends Coverage {
     private transient GridCoverage upper;
 
     /**
+     * L'image interpolée lors du dernier appel de {@link #getGridCoverage2D}. Mémorisée ici
+     * afin d'éviter de reconstruire cette image plusieurs fois lors d'appels successifs de
+     * {@link #getGridCoverage2D} avec la même date.
+     */
+    private transient GridCoverage interpolated;
+
+    /**
      * Date et heure du milieu des données {@link #lower} et {@link #upper},
      * en nombre de millisecondes écoulées depuis le 1er janvier 1970 UTC.
      */
-    private transient long timeLower=Long.MAX_VALUE, timeUpper=Long.MIN_VALUE;
+    private transient long lowerTime=Long.MAX_VALUE, upperTime=Long.MIN_VALUE;
 
     /**
      * La date et heure (en nombre de millisecondes depuis le 1er janvier 1970 UTC)
@@ -195,11 +202,9 @@ public class Coverage3D extends Coverage {
     private transient long timeInterpolated = Long.MIN_VALUE;
 
     /**
-     * L'image interpolée lors du dernier appel de {@link #getGridCoverage2D}. Mémorisée ici
-     * afin d'éviter de reconstruire cette image plusieurs fois lors d'appels successifs de
-     * {@link #getGridCoverage2D} avec la même date.
+     * Plage de temps des données {@link #lower} et {@link #upper}.
      */
-    private transient GridCoverage interpolated;
+    private transient Range lowerTimeRange, upperTimeRange;
 
     /**
      * L'objet à utiliser pour effectuer des opérations sur les images
@@ -213,8 +218,8 @@ public class Coverage3D extends Coverage {
      */
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        timeLower = Long.MAX_VALUE;
-        timeUpper = Long.MIN_VALUE;
+        lowerTime = Long.MAX_VALUE;
+        upperTime = Long.MIN_VALUE;
         timeInterpolated = Long.MIN_VALUE;
     }
 
@@ -312,9 +317,10 @@ public class Coverage3D extends Coverage {
     }
 
     /**
-     * Comparateur à utiliser pour classer les images et effectuer
-     * des recherches rapides. Ce comparateur utilise la date du
-     * milieu comme critère.
+     * Comparateur à utiliser pour classer les images et effectuer des recherches rapides.
+     * Ce comparateur utilise la date du milieu comme critère. Il doit accepter aussi bien
+     * des objets {@link Date} que {@link CoverageEntry} étant donné que les recherches
+     * combineront ces deux types d'objets.
      */
     private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
         public int compare(final Object entry1, final Object entry2) {
@@ -327,9 +333,8 @@ public class Coverage3D extends Coverage {
     };
 
     /**
-     * Retourne la date de l'objet spécifiée.  L'argument peut être un objet
-     * {@link Date} ou {@link CoverageEntry}. Dans ce dernier cas, la date
-     * sera extraite avec {@link #getTime}.
+     * Retourne la date de l'objet spécifiée. Si l'argument est un objet
+     * {@link Date}, alors la date sera extraite avec {@link #getTime}.
      */
     private static long getTime(final Object object) {
         if (object instanceof Date) {
@@ -347,17 +352,24 @@ public class Coverage3D extends Coverage {
      * temps, comme la bathymétrie), alors cette méthode retourne {@link Long#MIN_VALUE}.
      */
     private static long getTime(final CoverageEntry entry) {
-        final Range timeRange = entry.getTimeRange();
-        if (timeRange!=null) {
+        return getTime(entry.getTimeRange());
+    }
+
+    /**
+     * Retourne la date du milieu de la plage spécifiée. Si la plage de temps
+     * est nul, alors cette méthode retourne {@link Long#MIN_VALUE}.
+     */
+    private static long getTime(final Range timeRange) {
+        if (timeRange != null) {
             final Date startTime = (Date) timeRange.getMinValue();
             final Date   endTime = (Date) timeRange.getMaxValue();
-            if (startTime!=null) {
-                if (endTime!=null) {
+            if (startTime != null) {
+                if (endTime != null) {
                     return (endTime.getTime()+startTime.getTime())/2;
                 } else {
                     return startTime.getTime();
                 }
-            } else if (endTime!=null) {
+            } else if (endTime != null) {
                 return endTime.getTime();
             }
         }
@@ -430,8 +442,10 @@ public class Coverage3D extends Coverage {
              */
             index = ~index;
             long time;
-            if (index==entries.length) {
-                if (index==0) return; // No entries in this coverage!
+            if (index == entries.length) {
+                if (index == 0) {
+                    return; // No entries in this coverage
+                }
                 time = getTime(entries[--index]);
             } else if (index>=1) {
                 time = date.getTime();
@@ -521,9 +535,11 @@ public class Coverage3D extends Coverage {
             System.runFinalization();
         }
         final CoverageEntry entry = entries[index];
+        final Range timeRange = entry.getTimeRange();
         log(ResourceKeys.LOADING_IMAGE_$1, new Object[]{entry});
-        lower = upper = load(entry);
-        timeLower = timeUpper = getTime(entry);
+        lower          = upper          = load(entry);
+        lowerTime      = upperTime      = getTime(timeRange);
+        lowerTimeRange = upperTimeRange = timeRange;
     }
 
     /**
@@ -531,23 +547,26 @@ public class Coverage3D extends Coverage {
      *
      * @throws IOException if an error occured while loading images.
      */
-    private void load(final CoverageEntry entryLower,
-                      final CoverageEntry entryUpper)
+    private void load(final CoverageEntry lowerEntry,
+                      final CoverageEntry upperEntry)
             throws IOException
     {
         if (RUN_GC) {
             System.gc();
             System.runFinalization();
         }
-        final long timeLower = getTime(entryLower);
-        final long timeUpper = getTime(entryUpper);
-        log(ResourceKeys.LOADING_IMAGES_$2, new Object[]{entryLower, entryUpper});
-        final GridCoverage lower = load(entryLower);
-        final GridCoverage upper = load(entryUpper);
-        this.lower     = lower; // Set only when BOTH images are OK.
-        this.upper     = upper;
-        this.timeLower = timeLower;
-        this.timeUpper = timeUpper;
+        log(ResourceKeys.LOADING_IMAGES_$2, new Object[]{lowerEntry, upperEntry});
+        final Range lowerTimeRange = lowerEntry.getTimeRange();
+        final Range upperTimeRange = upperEntry.getTimeRange();
+        final GridCoverage   lower = load(lowerEntry);
+        final GridCoverage   upper = load(upperEntry);
+
+        this.lower          = lower; // Set only when BOTH images are OK.
+        this.upper          = upper;
+        this.lowerTime      = getTime(lowerTimeRange);
+        this.upperTime      = getTime(upperTimeRange);
+        this.lowerTimeRange = lowerTimeRange;
+        this.upperTimeRange = upperTimeRange;
     }
 
     /**
@@ -569,7 +588,7 @@ public class Coverage3D extends Coverage {
          * are valid for the requested date.
          */
         final long time = date.getTime();
-        if (time>=timeLower && time<=timeUpper) {
+        if (time>=lowerTime && time<=upperTime) {
             return true;
         }
         /*
@@ -625,7 +644,7 @@ public class Coverage3D extends Coverage {
                     if (interpolationAllowed) {
                         load(lowerEntry, upperEntry);
                     } else {
-                        if (Math.abs(getTime(upperEntry)-time) > Math.abs(time-getTime(lowerEntry))) {
+                        if (Math.abs(getTime(upperRange)-time) > Math.abs(time-getTime(lowerRange))) {
                             index--;
                         }
                         load(index);
@@ -670,18 +689,18 @@ public class Coverage3D extends Coverage {
         assert coordinateSystem.equals(upper.getCoordinateSystem(), false) : upper;
 
         final long timeMillis = time.getTime();
-        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        assert (timeMillis>=lowerTime && timeMillis<=upperTime) : time;
         if (timeMillis==timeInterpolated && interpolated!=null) {
             return interpolated;
         }
-        final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+        final double ratio = (double)(timeMillis-lowerTime) / (double)(upperTime-lowerTime);
         if (interpolationAllowed) {
             final GridCoverageProcessor processor = getGridCoverageProcessor();
             final Operation operation = processor.getOperation("Combine");
             final ParameterList param = operation.getParameterList();
             param.setParameter("source0", lower);
             param.setParameter("source1", upper);
-            param.setParameter("matrix", new double[][]{{1-ratio, ratio}});
+            param.setParameter("matrix", new double[][]{{1-ratio, ratio, 0}});
             interpolated = processor.doOperation(operation, param);
             timeInterpolated = timeMillis; // Set only if previous line has been successfull.
             return interpolated;
@@ -744,8 +763,8 @@ public class Coverage3D extends Coverage {
         last = upper.evaluate(project(point, upper), last);
         dest = lower.evaluate(project(point, lower), dest);
         final long timeMillis = time.getTime();
-        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
-        final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+        assert (timeMillis>=lowerTime && timeMillis<=upperTime) : time;
+        final double ratio = (double)(timeMillis-lowerTime) / (double)(upperTime-lowerTime);
         for (int i=0; i<last.length; i++) {
             dest[i] = (int)Math.round(dest[i] + ratio*(last[i]-dest[i]));
         }
@@ -788,8 +807,8 @@ public class Coverage3D extends Coverage {
         last = upper.evaluate(project(point, upper), last);
         dest = lower.evaluate(project(point, lower), dest);
         final long timeMillis = time.getTime();
-        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
-        final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+        assert (timeMillis>=lowerTime && timeMillis<=upperTime) : time;
+        final double ratio = (double)(timeMillis-lowerTime) / (double)(upperTime-lowerTime);
         for (int i=0; i<last.length; i++) {
             final float lower = dest[i];
             final float upper = last[i];
@@ -797,10 +816,14 @@ public class Coverage3D extends Coverage {
             if (Float.isNaN(value)) {
                 if (!Float.isNaN(lower)) {
                     assert Float.isNaN(upper) : upper;
-                    value = lower;
+                    if (lowerTimeRange.contains(time)) {
+                        value = lower;
+                    }
                 } else if (!Float.isNaN(upper)) {
                     assert Float.isNaN(lower) : lower;
-                    value = upper;
+                    if (upperTimeRange.contains(time)) {
+                        value = upper;
+                    }
                 }
             }
             dest[i] = value;
@@ -844,8 +867,8 @@ public class Coverage3D extends Coverage {
         last = upper.evaluate(project(point, upper), last);
         dest = lower.evaluate(project(point, lower), dest);
         final long timeMillis = time.getTime();
-        assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
-        final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
+        assert (timeMillis>=lowerTime && timeMillis<=upperTime) : time;
+        final double ratio = (double)(timeMillis-lowerTime) / (double)(upperTime-lowerTime);
         for (int i=0; i<last.length; i++) {
             final double lower = dest[i];
             final double upper = last[i];
@@ -853,10 +876,14 @@ public class Coverage3D extends Coverage {
             if (Double.isNaN(value)) {
                 if (!Double.isNaN(lower)) {
                     assert Double.isNaN(upper) : upper;
-                    value = lower;
+                    if (lowerTimeRange.contains(time)) {
+                        value = lower;
+                    }
                 } else if (!Double.isNaN(upper)) {
                     assert Double.isNaN(lower) : lower;
-                    value = upper;
+                    if (upperTimeRange.contains(time)) {
+                        value = upper;
+                    }
                 }
             }
             dest[i] = value;
@@ -953,8 +980,8 @@ public class Coverage3D extends Coverage {
     public synchronized void setInterpolationAllowed(final boolean flag) {
         lower     = null;
         upper     = null;
-        timeLower = Long.MAX_VALUE;
-        timeUpper = Long.MIN_VALUE;
+        lowerTime = Long.MAX_VALUE;
+        upperTime = Long.MIN_VALUE;
         interpolationAllowed = flag;
     }
 

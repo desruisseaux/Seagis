@@ -27,6 +27,7 @@ package fr.ird.database.coverage;
 
 // J2SE dependencies
 import java.util.Date;
+import java.util.Arrays;
 import java.util.Locale;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -112,6 +113,43 @@ public class Coverage3DTest extends TestCase {
         assertEquals( 20.4f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
         assertEquals(-10.9f, evaluate(61.7800,  -3.5100, "06/01/1997"), 0.0001f);
         assertEquals( 20.5f, evaluate(49.6000,  -5.8600, "03/03/1993"), 0.0001f);
+
+        // Valeurs puisées dans les fichiers textes.
+        assertEquals(  4.1f, evaluate(12.00+.25/2, -61.50+.25/2, "30/02/1996"), 0.0001f);
+        assertEquals( 11.7f, evaluate(17.00+.25/2, -52.25+.25/2, "30/02/1996"), 0.0001f);
+        assertEquals( 15.0f, evaluate(20.00+.25/2, -41.25+.25/2, "30/02/1996"), 0.0001f);
+        assertEquals( -0.1f, evaluate(22.50+.25/2,  75.25+.25/2, "30/02/1996"), 0.0001f);
+
+        // Valeurs puisées dans les fichiers textes aux même positions deux jours consécutifs.
+        assertEquals(  4.5f, evaluate( 6.75+.25/2,  77.00+.25/2, "04/07/1999"), 0.0001f);
+        assertEquals(-18.1f, evaluate(15.25+.25/2,  35.00+.25/2, "04/07/1999"), 0.0001f);
+        assertEquals(-40.0f, evaluate(17.25+.25/2, -40.75+.25/2, "04/07/1999"), 0.0001f);
+        assertEquals( 13.9f, evaluate(21.25+.25/2, -45.50+.25/2, "04/07/1999"), 0.0001f);
+
+        assertEquals(  3.5f, evaluate( 6.75+.25/2,  77.00+.25/2, "14/07/1999"), 0.0001f);
+        assertEquals(-13.5f, evaluate(15.25+.25/2,  35.00+.25/2, "14/07/1999"), 0.0001f);
+        assertEquals(-38.1f, evaluate(17.25+.25/2, -40.75+.25/2, "14/07/1999"), 0.0001f);
+        assertEquals(  8.3f, evaluate(21.25+.25/2, -45.50+.25/2, "14/07/1999"), 0.0001f);
+
+        coverage.setInterpolationAllowed(true);
+        // Utilise une tolérance égale à la pente de la droite reliant les deux points
+        // dans le temps: (SLA2 - SLA1) / 10 jours.  Autrement dit, accepte une erreur
+        // de 24 heures dans la date.
+        assertEquals(  4.5f, evaluate( 6.75+.25/2,  77.00+.25/2, "04/07/1999"), 0.10f);
+        assertEquals(-18.1f, evaluate(15.25+.25/2,  35.00+.25/2, "04/07/1999"), 0.46f);
+        assertEquals(-40.0f, evaluate(17.25+.25/2, -40.75+.25/2, "04/07/1999"), 0.19f);
+        assertEquals( 13.9f, evaluate(21.25+.25/2, -45.50+.25/2, "04/07/1999"), 0.56f);
+
+        assertEquals(  3.5f, evaluate( 6.75+.25/2,  77.00+.25/2, "14/07/1999"), 0.10f);
+        assertEquals(-13.5f, evaluate(15.25+.25/2,  35.00+.25/2, "14/07/1999"), 0.46f);
+        assertEquals(-38.1f, evaluate(17.25+.25/2, -40.75+.25/2, "14/07/1999"), 0.19f);
+        assertEquals(  8.3f, evaluate(21.25+.25/2, -45.50+.25/2, "14/07/1999"), 0.56f);
+
+        assertEquals(  4.0f, evaluate( 6.75+.25/2,  77.00+.25/2, "09/07/1999"), 0.10f);
+        assertEquals(-15.8f, evaluate(15.25+.25/2,  35.00+.25/2, "09/07/1999"), 0.46f);
+        assertEquals(-39.1f, evaluate(17.25+.25/2, -40.75+.25/2, "09/07/1999"), 0.19f);
+        assertEquals( 11.1f, evaluate(21.25+.25/2, -45.50+.25/2, "09/07/1999"), 0.56f);
+
         table.close();
     }
 
@@ -122,8 +160,10 @@ public class Coverage3DTest extends TestCase {
     private float evaluate(final double x, final double y, final String date) throws ParseException {
         final Point2D coord = new Point2D.Double(x,y);
         final Date    time  = dateFormat.parse(date);
-        float[] array = null;
-        array = coverage.evaluate(coord, time, array); //       <--- Break point ici
+        float[] array=null, compare=null;
+        array   = coverage.evaluate(coord, time, array); //       <--- Break point ici
+        compare = coverage.getGridCoverage2D(time).evaluate(coord, compare);
+        assertTrue(Arrays.equals(array, compare));
         return array[0];
     }
 
