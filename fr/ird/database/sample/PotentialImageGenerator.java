@@ -76,7 +76,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
     /**
      * Le pas de temps entre deux images.
      */
-    private static final int TIME_STEP = 7*DAY;
+    private static final int TIME_STEP = 5*DAY;
 
     /**
      * Région geographique d'intérêt. Par défaut de 30°E à 80°E et 30°S à 10°N.
@@ -159,8 +159,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
      *
      * <ul>
      *   <li><code>-parameter=<var>P</var></code> où <var>P</var> est un des paramètre énuméré
-     *       dans la table &quot;Paramètre&quot; de la base de données des échantillons (par
-     *       exemple &quot;PP1&quot;).</li>
+     *       dans la table "Paramètre" de la base de données des échantillons (par exemple "PP1").</li>
      *   <li><code>-directory=<var>D</var></code> où var>D</var> est le répertoire dans
      *       lequel enregistrer les images.</li>
      * </ul>
@@ -198,11 +197,11 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
         try {
             coverage3D.setParameter(parameter);
             coverage3D.setOutputRange(new NumberRange(1*scale+offset, 255*scale+offset));
-            final DateFormat   df = new SimpleDateFormat("'PP'yyDDD'.png'", Locale.FRANCE);
+            final DateFormat   df = new SimpleDateFormat("'PP'yyyyMMdd'.png'", Locale.FRANCE);
             final Range timeRange = coverage3D.getTimeRange();
             final Date       time = (Date) timeRange.getMinValue();
             final Date    endTime = (Date) timeRange.getMaxValue();
-            time   .setTime( ceil(   time.getTime(), DAY) + DAY_TIME);
+            time   .setTime( ceil(   time.getTime(), TIME_STEP) + DAY_TIME);
             endTime.setTime(floor(endTime.getTime(), DAY));
             while (!time.after(endTime)) {
                 final String filename = df.format(time);

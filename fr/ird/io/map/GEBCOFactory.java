@@ -39,8 +39,8 @@ import org.geotools.renderer.geom.GeometryCollection;
 
 /**
  * An isoline factory backed by the GEBCO reader. This factory expect ASCII files
- * to be in the &quot;<code>application-data/maps/gebco/&quot; directory and
- * serialized files in the &quot;<code>application-data/maps/serialized/&quot; directory.
+ * to be in the "<code>application-data/maps/gebco/" directory and serialized files
+ * in the "<code>application-data/maps/serialized/" directory.
  *
  * @version $Id$
  * @author Martin Desruisseaux

@@ -531,7 +531,16 @@ public final class SpeciesChooser extends JPanel {
             if (name == null) {
                 name = species.getName(null);
             }
-            buffer.append(name);
+            final int length = name.length();
+            for (int i=0; i<length; i++) {
+                final char c = name.charAt(i);
+                switch (c) {
+                    case '<': buffer.append("&lt;");    break;
+                    case '>': buffer.append("&gt;");    break;
+                    case '&': buffer.append("&amp;");   break;
+                    default : buffer.append(c);         break;
+                }
+            }
             name = species.getName(Species.LATIN);
             if (name!=null && name.length()>=2) { // Evite "?"
                 buffer.append("&nbsp;&nbsp; (<i>");
