@@ -82,9 +82,10 @@ import net.seas.resources.Resources;
 public class Adapters
 {
     /**
-     * Default adapters.
+     * Default adapters. Will be constructed
+     * only when first requested.
      */
-    public static final Adapters DEFAULT = new Adapters(net.seas.opengis.pt.Adapters.DEFAULT);
+    private static Adapters DEFAULT;
 
     /**
      * The underlying adapters for the <code>net.seas.opengis.pt</code> package.
@@ -98,6 +99,18 @@ public class Adapters
      */
     protected Adapters(final net.seas.opengis.pt.Adapters PT)
     {this.PT = PT;}
+
+    /**
+     * Gets the default adapters.
+     */
+    public static synchronized Adapters getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new Adapters(net.seas.opengis.pt.Adapters.getDefault());
+        }
+        return DEFAULT;
+    }
 
     /**
      * Returns an OpenGIS interface for a coordinate system factory.

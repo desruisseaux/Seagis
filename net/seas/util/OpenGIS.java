@@ -256,7 +256,7 @@ public final class OpenGIS
         {
             if (!GeographicCoordinateSystem.WGS84.equivalents(cs))
             {
-                bounds = transform(CoordinateTransformFactory.DEFAULT.createFromCoordinateSystems(cs, GeographicCoordinateSystem.WGS84), bounds, null);
+                bounds = transform(CoordinateTransformFactory.getDefault().createFromCoordinateSystems(cs, GeographicCoordinateSystem.WGS84), bounds, null);
             }
             final AngleFormat fmt=new AngleFormat("DD°MM.m'");
             buffer=fmt.format(new  Latitude(bounds.getMinY()), buffer, null); buffer.append('-');

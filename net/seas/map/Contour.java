@@ -79,7 +79,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
     /**
      * Objet à utiliser pour fabriquer des transformations.
      */
-    static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.DEFAULT;
+    static final CoordinateTransformFactory TRANSFORMS = CoordinateTransformFactory.getDefault();
 
     /**
      * The logger for map operations.

@@ -209,7 +209,7 @@ public class GridGeometry implements Dimensioned, Serializable
                 case 1: scaleY=scale; transY=trans; break;
             }
         }
-        this.gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(matrix);
+        this.gridToCoordinateSystem = MathTransformFactory.getDefault().createAffineTransform(matrix);
         this.gridToCoordinateJAI    = new AffineTransform(scaleX, 0, 0, scaleY, transX, transY);
     }
     
@@ -279,7 +279,7 @@ public class GridGeometry implements Dimensioned, Serializable
                 // transformation specified by gridToCoordinateJAI().
                 final AffineTransform tr = new AffineTransform(gridToCoordinateJAI);
                 tr.translate(0.5, 0.5);
-                gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(tr);
+                gridToCoordinateSystem = MathTransformFactory.getDefault().createAffineTransform(tr);
             }
         }
         return gridToCoordinateSystem;

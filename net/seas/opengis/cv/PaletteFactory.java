@@ -89,11 +89,6 @@ public class PaletteFactory
     private static final double EPS = 1E-6;
 
     /**
-     * The default palette factory.
-     */
-    public static final PaletteFactory DEFAULT = new PaletteFactory(null, null, new File("applicationData/colors"), ".pal", Charset.forName("ISO-8859-1"), Locale.US);
-
-    /**
      * The parent factory, or <code>null</code> if there is none.
      * The parent factory will be queried if a palette was not
      * found in current factory.

@@ -39,15 +39,28 @@ import org.opengis.pt.PT_CoordinatePoint;
 public class Adapters
 {
     /**
-     * Default adapters.
+     * Default adapters. Will be constructed
+     * only when first requested.
      */
-    public static final Adapters DEFAULT = new Adapters();
+    private static Adapters DEFAULT;
 
     /**
      * Default constructor.
      */
     protected Adapters()
     {}
+
+    /**
+     * Returns the default adapters.
+     */
+    public static synchronized Adapters getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new Adapters();
+        }
+        return DEFAULT;
+    }
 
     /**
      * Returns an OpenGIS structure for a coordinate point.

@@ -83,8 +83,9 @@ public class CoordinateSystemFactory
 {
     /**
      * Default coordinate system factory.
+     * Will be constructed only when first needed.
      */
-    public static final CoordinateSystemFactory DEFAULT = new CoordinateSystemFactory();
+    private static CoordinateSystemFactory DEFAULT;
 
     /**
      * Set of weak references to existing coordinate systems.
@@ -98,6 +99,18 @@ public class CoordinateSystemFactory
      */
     protected CoordinateSystemFactory()
     {}
+
+    /**
+     * Returns the default coordinate system factory.
+     */
+    public static synchronized CoordinateSystemFactory getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new CoordinateSystemFactory();
+        }
+        return DEFAULT;
+    }
 
     /**
      * Creates a geographic coordinate system.  This coordinate system will use

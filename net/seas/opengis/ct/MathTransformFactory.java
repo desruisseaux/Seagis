@@ -97,18 +97,10 @@ import net.seas.resources.Resources;
 public class MathTransformFactory
 {
     /**
-     * The default math transform factory.
+     * The default math transform factory. This factory
+     * will be constructed only when first needed.
      */
-    public static final MathTransformFactory DEFAULT = new MathTransformFactory(new MathTransformProvider[]
-    {
-        new           MercatorProjection.Provider(),
-        new   LambertConformalProjection.Provider(),
-        new      StereographicProjection.Provider(),      // Automatic
-        new      StereographicProjection.Provider(true),  // Polar
-        new      StereographicProjection.Provider(false), // Oblique
-        new TransverseMercatorProjection.Provider(false), // Universal
-        new TransverseMercatorProjection.Provider(true)   // Modified
-    });
+    private static MathTransformFactory DEFAULT;
 
     /**
      * A pool of math transform. This pool is used in order to
@@ -126,6 +118,27 @@ public class MathTransformFactory
      */
     public MathTransformFactory(final MathTransformProvider[] providers)
     {this.providers = (MathTransformProvider[]) providers.clone();}
+
+    /**
+     * Returns the default math transform factory.
+     */
+    public static synchronized MathTransformFactory getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new MathTransformFactory(new MathTransformProvider[]
+            {
+                new           MercatorProjection.Provider(),
+                new   LambertConformalProjection.Provider(),
+                new      StereographicProjection.Provider(),      // Automatic
+                new      StereographicProjection.Provider(true),  // Polar
+                new      StereographicProjection.Provider(false), // Oblique
+                new TransverseMercatorProjection.Provider(false), // Universal
+                new TransverseMercatorProjection.Provider(true)   // Modified
+            });
+        }
+        return DEFAULT;
+    }
 
     /**
      * Creates an identity transform of the specified dimension.

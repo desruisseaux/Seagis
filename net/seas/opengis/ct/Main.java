@@ -92,7 +92,7 @@ final class Main extends Console
     private Main(final String[] args)
     {
         super(args);
-        this.factory = MathTransformFactory.DEFAULT;
+        this.factory = MathTransformFactory.getDefault();
         this.metaLocale = locale;
     }
 

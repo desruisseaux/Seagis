@@ -52,9 +52,10 @@ import net.seas.util.XArray;
 public class Adapters
 {
     /**
-     * Default adapters.
+     * Default adapters. Will be constructed
+     * only when first requested.
      */
-    public static final Adapters DEFAULT = new Adapters(net.seas.opengis.cs.Adapters.DEFAULT);
+    private static Adapters DEFAULT;
 
     /**
      * The underlying adapters for the <code>net.seas.opengis.cs</code> package.
@@ -75,6 +76,18 @@ public class Adapters
     {
         this.CS = CS;
         this.PT = CS.PT;
+    }
+
+    /**
+     * Gets the default adapters.
+     */
+    public static synchronized Adapters getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new Adapters(net.seas.opengis.cs.Adapters.getDefault());
+        }
+        return DEFAULT;
     }
 
     /**

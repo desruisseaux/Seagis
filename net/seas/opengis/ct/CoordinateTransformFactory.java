@@ -52,8 +52,9 @@ public class CoordinateTransformFactory
 {
     /**
      * The default coordinate transformation factory.
+     * Will be constructed only when first needed.
      */
-    public static final CoordinateTransformFactory DEFAULT = new CoordinateTransformFactory(MathTransformFactory.DEFAULT);
+    private static CoordinateTransformFactory DEFAULT;
 
     /**
      * The underlying math transform factory.
@@ -73,6 +74,18 @@ public class CoordinateTransformFactory
      */
     public MathTransformFactory getMathTransformFactory()
     {return factory;}
+
+    /**
+     * Returns the default coordinate transformation factory.
+     */
+    public static synchronized CoordinateTransformFactory getDefault()
+    {
+        if (DEFAULT==null)
+        {
+            DEFAULT = new CoordinateTransformFactory(MathTransformFactory.getDefault());
+        }
+        return DEFAULT;
+    }
 
     /**
      * Create a coordinate transform from a math transform.
