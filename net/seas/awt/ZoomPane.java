@@ -41,6 +41,8 @@ import javax.swing.ActionMap;
 import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import net.seas.awt.event.ZoomChangeEvent;
 import net.seas.awt.event.ZoomChangeListener;
 
@@ -954,27 +956,44 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Retourne un rectangle délimitant la région de cette composante dans laquelle se feront les zooms.
-     * Cette méthode est appelée par toutes les opérations qui ont besoin de connaître les dimensions en
-     * pixels de <code>ZoomPanel</code>. <strong>Note: cette méthode retourne un rectangle caché en
-     * mémoire. Le rectangle retourné ne devrait <u>pas</u> être modifié</strong>.
+     * Returns the bounding box (in pixel coordinates) of the zoomable area.
+     * <strong>For performance reason, this method reuse an internal cache.
+     * Never modify the returned rectangle!</strong>. This internal method
+     * is invoked by every method looking for this <code>ZoomPane</code>
+     * dimension.
      *
-     * @return Coordonnées en pixels de la région de la composante où se feront les zooms.
+     * @return The bounding box of the zoomable area, in pixel coordinates
+     *         relative to this <code>ZoomPane</code> widget. <strong>Do not
+     *         change the returned rectangle!</strong>
      */
     private final Rectangle getZoomableBounds()
-    {return cachedBounds=getZoomableBounds(cachedBounds);}
+    {return cachedBounds = getZoomableBounds(cachedBounds);}
     
     /**
-     * Retourne un rectangle délimitant la région de cette composante dans laquelle seront déssinés les zooms.
-     * Cette méthode peut être appelée à l'intérieur de la méthode {@link #paintComponent(Graphics2D)} pour
-     * définir le clip, comme suit:
+     * Returns the bounding box (in pixel coordinates) of the zoomable area.
+     * This method is similar to {@link #getBounds(Rectangle)}, except that
+     * the zoomable area may be smaller than the whole widget area. For example,
+     * a chart need to keep some space for axis around the zoomable area. An
+     * other difference is that pixel coordinates are relative to the widget,
+     * i.e. the (0,0) coordinate lies on the <code>ZoomPane</code> upper left
+     * corner, no matter its location on screen.<br>
+     * <br>
+     * <code>ZoomPane</code> invokes <code>getZoomableBounds</code> when it
+     * needs to setup an initial {@link #zoom} value. Subclasses should also
+     * set the clip area to this bounding box in their
+     * {@link #paintComponent(Graphics2D)} method <em>before</em> setting the
+     * graphics transform. For example:
      *
      * <blockquote><pre>
      * graphics.clip(getZoomableBounds(null));
+     * graphics.transform({@link #zoom});
      * </pre></blockquote>
      *
-     * @param  bounds Rectangle dans lequel placer le résultat, ou <code>null</code> pour en créer un nouveau.
-     * @return Coordonnées en pixels de la région de <code>ZoomPanel</code> dans laquelle dessiner les zooms.
+     * @param  bounds An optional pre-allocated rectangle, or <code>null</code>
+     *                to create a new one. This argument is useful if the caller
+     *                wants to avoid allocating a new object on the heap.
+     * @return The bounding box of the zoomable area, in pixel coordinates
+     *         relative to this <code>ZoomPane</code> widget.
      */
     protected Rectangle getZoomableBounds(Rectangle bounds)
     {
@@ -997,7 +1016,9 @@ public abstract class ZoomPane extends JComponent
     /**
      * Returns the default size for this component.  This is the size
      * returned by {@link #getPreferredSize} if no preferred size has
-     * been explicitly set.
+     * been explicitly set with {@link #setPreferredSize}.
+     *
+     * @return The default size for this component.
      */
     protected Dimension getDefaultSize()
     {return getViewSize();}
@@ -1692,95 +1713,147 @@ public abstract class ZoomPane extends JComponent
     {return new ScrollPane();}
 
     /**
-     * Classe ayant la charge de gérer les barres de défilements pour un
-     * objet {@link ZoomPane}. La classe {@link JScrollPane} standard n'est pas utilisée,
-     * car nous ne voulons pas que {@link JViewport} vienne se méler des translations que
-     * gère déjà {@link ZoomPane}.
+     * The scroll panel for {@link ZoomPane}. The standard {@link JScrollPane}
+     * class is not used because it is difficult to get {@link JViewport} to
+     * cooperate with transformation already handled by {@link ZoomPane#zoom}.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class ScrollPane extends JComponent
+    private final class ScrollPane extends JComponent implements PropertyChangeListener
     {
         /**
-         * Barre de défilement horizontale.
+         * The horizontal scrolling bar, or <code>null</code> if none.
          */
-        private final BoundedRangeModel rangeModelX;
+        private final JScrollBar scrollbarX;
 
         /**
-         * Barre de défilement verticale.
+         * The vertical scrolling bar, or <code>null</code> if none.
          */
-        private final BoundedRangeModel rangeModelY;
+        private final JScrollBar scrollbarY;
 
         /**
-         * Construit un objet zoomable avec
-         * des barres de défilements.
+         * Construct a scroll pane for the enclosing {@link ZoomPane}.
          */
         public ScrollPane()
         {
             setOpaque(false);
             setLayout(new GridBagLayout());
-
-            final JScrollBar scrollbarX;
+            /*
+             * Setup the scroll bars.
+             */
             if ((type & TRANSLATE_X)!=0)
             {
                 scrollbarX=new JScrollBar(JScrollBar.HORIZONTAL);
                 scrollbarX.setUnitIncrement ((int) (AMOUNT_TRANSLATE));
                 scrollbarX.setBlockIncrement((int) (AMOUNT_TRANSLATE*ENHANCEMENT_FACTOR));
-                rangeModelX=scrollbarX.getModel();
             }
             else
             {
                 scrollbarX  = null;
-                rangeModelX = null;
             }
-
-            final JScrollBar scrollbarY;
             if ((type & TRANSLATE_Y)!=0)
             {
                 scrollbarY=new JScrollBar(JScrollBar.VERTICAL);
                 scrollbarY.setUnitIncrement ((int) (AMOUNT_TRANSLATE));
                 scrollbarY.setBlockIncrement((int) (AMOUNT_TRANSLATE*ENHANCEMENT_FACTOR));
-                rangeModelY=scrollbarY.getModel();
             }
             else
             {
                 scrollbarY  = null;
-                rangeModelY = null;
             }
-
-            final GridBagConstraints c=new GridBagConstraints();
-            final JComponent corner=new JPanel();
-            corner.setOpaque(true);
-
-            c.gridx=1; c.gridy=0; c.weighty=1;              c.fill=c.VERTICAL;   if (scrollbarY!=null) add(scrollbarY, c);
-            c.gridx=0; c.gridy=1; c.weighty=0; c.weightx=1; c.fill=c.HORIZONTAL; if (scrollbarX!=null) add(scrollbarX, c);
-            c.gridx=1;                         c.weightx=0; c.fill=c.BOTH;       if (scrollbarX!=null && scrollbarY!=null) add(corner, c);
-
-            c.weightx=c.weighty=1;
-            c.gridx=0; c.gridy=0; add(ZoomPane.this, c);
+            /*
+             * Add the scroll bars in the scroll pane.
+             */
+            final GridBagConstraints c = new GridBagConstraints();
+            if (scrollbarX!=null)
+            {
+                c.gridx=0; c.weightx=1;
+                c.gridy=1; c.weighty=0;
+                c.fill=c.HORIZONTAL;
+                add(scrollbarX, c);
+            }
+            if (scrollbarY!=null)
+            {
+                c.gridx=1; c.weightx=0;
+                c.gridy=0; c.weighty=1;
+                c.fill=c.VERTICAL;
+                add(scrollbarY, c);
+            }
+            if (scrollbarX!=null && scrollbarY!=null)
+            {
+                final JComponent corner = new JPanel();
+                corner.setOpaque(true);
+                c.gridx=1; c.weightx=0;
+                c.gridy=1; c.weighty=0;
+                c.fill=c.BOTH;
+                add(corner, c);
+            }
+            c.fill=c.BOTH;
+            c.gridx=0; c.weightx=1;
+            c.gridy=0; c.weighty=1;
+            add(ZoomPane.this, c);
         }
 
         /**
-         * Méthode appelée automatiquement lorsque cet objet est ajouté
-         * dans un containeur. Cette méthode construira à ce moment les
-         * listeners qui lieront les zooms aux barres de défilements.
+         * Convenience method fetching a scroll bar model.
+         */
+        private BoundedRangeModel getModel(final JScrollBar bar)
+        {return (bar!=null) ? bar.getModel() : null;}
+
+        /**
+         * Invoked when this <code>ScrollPane</code>  is added in
+         * a {@link Container}. This method register all required
+         * listeners.
          */
         public void addNotify()
         {
             super.addNotify();
-            tieModels(rangeModelX, rangeModelY);
+            tieModels(getModel(scrollbarX), getModel(scrollbarY));
+            ZoomPane.this.addPropertyChangeListener("zoom.insets", this);
         }
 
         /**
-         * Méthode appelée automatiquement lorsque cet objet est retiré
-         * dans un containeur. Cette méthode détruira à ce moment les
-         * listeners qui liaient les zooms aux barres de défilements.
+         * Invoked when this <code>ScrollPane</code> is removed from
+         * a {@link Container}. This method unregister all listeners.
          */
         public void removeNotify()
         {
-            untieModels(rangeModelX, rangeModelY);
+            ZoomPane.this.removePropertyChangeListener("zoom.insets", this);
+            untieModels(getModel(scrollbarX), getModel(scrollbarY));
             super.removeNotify();
+        }
+
+        /**
+         * Invoked when the zoomable area changed. This method will adjust
+         * scroll bar's insets in order to keep scroll bars aligned in front
+         * of the zoomable area.
+         *
+         * Note: in current version, this is an undocumented capability.
+         *       Class {@link RangeBar} use it, but it is experimental.
+         *       It may change in a future version.
+         */
+        public void propertyChange(final PropertyChangeEvent event)
+        {
+            final Insets old    = (Insets) event.getOldValue();
+            final Insets insets = (Insets) event.getNewValue();
+            final GridBagLayout layout = (GridBagLayout) getLayout();
+            if (scrollbarX!=null && (old.left!=insets.left || old.right!=insets.right))
+            {
+                final GridBagConstraints c = layout.getConstraints(scrollbarX);
+                c.insets.left  = insets.left;
+                c.insets.right = insets.right;
+                layout.setConstraints(scrollbarX, c);
+                scrollbarX.invalidate();
+            }
+            if (scrollbarY!=null && (old.top!=insets.top || old.bottom!=insets.bottom))
+            {
+                final GridBagConstraints c = layout.getConstraints(scrollbarY);
+                c.insets.top    = insets.top;
+                c.insets.bottom = insets.bottom;
+                layout.setConstraints(scrollbarY, c);
+                scrollbarY.invalidate();
+            }
         }
     }
 
@@ -1856,6 +1929,12 @@ public abstract class ZoomPane extends JComponent
         private transient boolean isAdjusting;
 
         /**
+         * Cached <code>ZoomPane</code> bounds. Used in order
+         * to avoid two many object allocation on the heap.
+         */
+        private transient Rectangle bounds;
+
+        /**
          * Construit un objet qui synchronisera une paire de
          * {@link BoundedRangeModel} avec {@link ZoomPane}.
          */
@@ -1883,17 +1962,26 @@ public abstract class ZoomPane extends JComponent
                         double x=area.getX();
                         double y=area.getY();
                         double width, height;
-                        if (xm!=null) {x+=xm.getValue();  width=xm.getExtent();} else  width=area.getWidth();
-                        if (ym!=null) {y+=ym.getValue(); height=ym.getExtent();} else height=area.getHeight();
+                        if (xm!=null)
+                        {
+                            x    += xm.getValue();
+                            width = xm.getExtent();
+                        }
+                        else width=area.getWidth();
+                        if (ym!=null)
+                        {
+                            y     += ym.getValue();
+                            height = ym.getExtent();
+                        }
+                        else height=area.getHeight();
                         area.setRect(x, y, width, height);
                         try
                         {
-                            area=XAffineTransform.inverseTransform(zoom, area, area);
+                            area = XAffineTransform.inverseTransform(zoom, area, area);
                             try
                             {
                                 isAdjusting=true;
-                                transform(setVisibleArea(area, getZoomableBounds()));
-                                // Invoke private version in order to avoid logging.
+                                transform(setVisibleArea(area, bounds=getBounds(bounds)));
                             }
                             finally
                             {
@@ -1930,8 +2018,8 @@ public abstract class ZoomPane extends JComponent
                     try
                     {
                         isAdjusting=true;
-                        setRangeProperties(xm, (int) Math.round(-area.getX()),  getWidth(), 0, (int) Math.round(area.getWidth()),  false);
-                        setRangeProperties(ym, (int) Math.round(-area.getY()), getHeight(), 0, (int) Math.round(area.getHeight()), false);
+                        setRangeProperties(xm, area.getX(), getWidth(),  area.getWidth());
+                        setRangeProperties(ym, area.getY(), getHeight(), area.getHeight());
                     }
                     finally
                     {
@@ -1943,12 +2031,24 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Procède à l'ajustement des valeurs d'un model. Les minimums et maximums seront ajustés au besoin afin d'inclure la valeur
-     * et son étendu. Cet ajustement est nécessaire pour éviter un comportement chaotique lorsque l'utilisateur fait glisser
-     * l'ascensceur pendant qu'une partie du graphique est en dehors de la zone qui était initialement prévue par {@link #getArea}.
+     * Procède à l'ajustement des valeurs d'un model. Les minimums et maximums
+     * seront ajustés au besoin afin d'inclure la valeur et son étendu. Cet
+     * ajustement est nécessaire pour éviter un comportement chaotique lorsque
+     * l'utilisateur fait glisser l'ascensceur pendant qu'une partie du
+     * graphique est en dehors de la zone qui était initialement prévue par
+     * {@link #getArea}.
      */
-    private static void setRangeProperties(final BoundedRangeModel model, final int value, final int extent, final int min, final int max, final boolean isAdjusting)
-    {if (model!=null) model.setRangeProperties(value, extent, Math.min(min, value), Math.max(max, value+extent), isAdjusting);}
+    private static void setRangeProperties(final BoundedRangeModel model,
+                                           final double value, final int extent,
+                                           final double max)
+    {
+        if (model!=null)
+        {
+            final int pos = (int) Math.round(-value);
+            model.setRangeProperties(pos, extent, Math.min(0, pos),
+                                     Math.max((int) Math.round(max), pos+extent), false);
+        }
+    }
 
     /**
      * Modifie la position en pixels de la partie visible de <code>ZoomPanel</code>. Soit
