@@ -25,6 +25,9 @@
  */
 package fr.ird.database.coverage.sql;
 
+// J2SE dependencies
+import java.util.Arrays;
+
 
 /**
  * Référence vers une série.
@@ -36,18 +39,7 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
     /**
      * Numéro de séries pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -8066761678115148515L;
-
-    /**
-     * Numéro ID du format.
-     */
-    final int format;
-
-    /**
-     * Numéro ID de la séries des aperçus. S'il n'y en a pas, alors ce numéro
-     * doit être le même que {@link #getID}.
-     */
-    final int quicklook;
+    private static final long serialVersionUID = -6345332433214206310L;
 
     /**
      * La période "normale" des images de cette série (en nombre
@@ -56,20 +48,21 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
     private final double period;
 
     /**
+     * Les sous-séries, ou <code>null</code> si cette information n'a pas encore été définie.
+     */
+    Entry[] subseries;
+
+    /**
      * Construit une nouvelle référence.
      */
     protected SeriesEntry(final String table,
                           final String name,
                           final int    ID,
                           final String remarks,
-                          final int    format,
-                          final double period,
-                          final int    quicklook)
+                          final double period)
     {
         super(table, name, ID, remarks);
-        this.format    = format;
-        this.period    = period;
-        this.quicklook = quicklook;
+        this.period = period;
     }
 
     /**
@@ -88,8 +81,8 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
         }
         if (super.equals(object)) {
             final SeriesEntry that = (SeriesEntry) object;
-            return format == that.format &&
-                   Double.doubleToLongBits(period) == Double.doubleToLongBits(that.period);
+            return Double.doubleToLongBits(period) == Double.doubleToLongBits(that.period) &&
+                   Arrays.equals(subseries, that.subseries);
         }
         return false;
     }

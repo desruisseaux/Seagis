@@ -28,7 +28,9 @@ package fr.ird.database.coverage.sql;
 // J2SE
 import java.util.Locale;
 import java.util.Set;
+import java.util.List;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -60,16 +62,29 @@ import fr.ird.database.IllegalRecordException;
  */
 final class SeriesTable extends Table implements fr.ird.database.coverage.SeriesTable {
     /**
+     * Argument pour {@link #getEntry}.
+     */
+    private static final int FORMAT_LEAF = 6;
+
+    /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son nom.
+     *
+     * @task TODO: Pourrait être dérivée de la requête suivante (SQL_SELECT_BY_ID).
      */
     static final String SQL_SELECT =
-        "SELECT ID, name, description, format, period, quicklook FROM "+SERIES+" WHERE name LIKE ?";
+        "SELECT ID, name, description, period FROM "+SERIES+" WHERE name LIKE ?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son numéro ID.
      */
     static final String SQL_SELECT_BY_ID =
-        "SELECT ID, name, description, format, period, quicklook FROM "+SERIES+" WHERE ID=?";
+        "SELECT ID, name, description, period FROM "+SERIES+" WHERE ID=?";
+
+    /**
+     * Requête SQL utilisée par cette classe pour obtenir les sous-séries d'une série.
+     */
+    private static final String SQL_SELECT_SUBSERIES =
+        "SELECT ID, name, description, format FROM "+SUBSERIES+" WHERE series=?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des séries.
@@ -77,39 +92,45 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * les constantes {@link #SERIES_ID}, {@link #SERIES_NAME} et compagnie.
      */
     static final String SQL_TREE =
-           "SELECT "+  /*[01] SERIES_ID         */     SERIES+".ID, "          +
-                       /*[02] SERIES_NAME       */     SERIES+".name, "        +
-                       /*[03] SERIES_REMARKS    */     SERIES+".description, " +
-                       /*[04] OPERATION_ID      */             "operation, "   +
-                       /*[05] OPERATION_NAME    */ OPERATIONS+".name, "        +
-                       /*[06] OPERATION_REMARKS */ OPERATIONS+".description, " +
-                       /*[07] PARAMETER_ID      */             "parameter, "   +
-                       /*[08] PARAMETER_NAME    */ PARAMETERS+".name, "        +
-                       /*[09] PARAMETER_REMARKS */ PARAMETERS+".description, " +
-                       /*[10] FORMAT            */             "format,"       +
-                       /*[11] PERIOD            */             "period,"       +
-                       /*[12] QUICKLOOK         */             "quicklook\n"   +
+           "SELECT "+  /*[01] SUBSERIES_ID      */  SUBSERIES+".ID, "          +
+                       /*[02] SUBSERIES_NAME    */  SUBSERIES+".name, "        +
+                       /*[03] SUBSERIES_REMARKS */  SUBSERIES+".description, " +
+                       /*[04] SERIES_ID         */     SERIES+".ID, "          +
+                       /*[05] SERIES_NAME       */     SERIES+".name, "        +
+                       /*[06] SERIES_REMARKS    */     SERIES+".description, " +
+                       /*[07] OPERATION_ID      */ OPERATIONS+".ID, "          +
+                       /*[08] OPERATION_NAME    */ OPERATIONS+".name, "        +
+                       /*[09] OPERATION_REMARKS */ OPERATIONS+".description, " +
+                       /*[10] PARAMETER_ID      */ PARAMETERS+".ID, "          +
+                       /*[11] PARAMETER_NAME    */ PARAMETERS+".name, "        +
+                       /*[12] PARAMETER_REMARKS */ PARAMETERS+".description, " +
+                       /*[13] FORMAT            */  SUBSERIES+".format,"       +
+                       /*[14] PERIOD            */     SERIES+".period\n"      +
            "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
                        OPERATIONS + ", " +
-                       SERIES     + "\n" +
+                       SERIES     + ", " +
+                       SUBSERIES  + "\n" +
            "WHERE "  + PARAMETERS + ".ID=parameter AND " +
                        OPERATIONS + ".ID=operation AND " +
+                       SERIES     + ".ID=series    AND " +
                                         "visible=TRUE\n" +
            "ORDER BY "+PARAMETERS+".name, "+OPERATIONS+".name, "+SERIES+".name";
 
 
-    /** Numéro de colonne. */ private static final int SERIES_ID         =  1;
-    /** Numéro de colonne. */ private static final int SERIES_NAME       =  2;
-    /** Numéro de colonne. */ private static final int SERIES_REMARKS    =  3;
-    /** Numéro de colonne. */ private static final int OPERATION_ID      =  4;
-    /** Numéro de colonne. */ private static final int OPERATION_NAME    =  5;
-    /** Numéro de colonne. */ private static final int OPERATION_REMARKS =  6;
-    /** Numéro de colonne. */ private static final int PARAMETER_ID      =  7;
-    /** Numéro de colonne. */ private static final int PARAMETER_NAME    =  8;
-    /** Numéro de colonne. */ private static final int PARAMETER_REMARKS =  9;
-    /** Numéro de colonne. */ private static final int FORMAT            = 10;
-    /** Numéro de colonne. */ private static final int PERIOD            = 11;
-    /** Numéro de colonne. */ private static final int QUICKLOOK         = 12;
+    /** Numéro de colonne. */ private static final int SUBSERIES_ID      =  1;
+    /** Numéro de colonne. */ private static final int SUBSERIES_NAME    =  2;
+    /** Numéro de colonne. */ private static final int SUBSERIES_REMARKS =  3;
+    /** Numéro de colonne. */ private static final int SERIES_ID         =  4;
+    /** Numéro de colonne. */ private static final int SERIES_NAME       =  5;
+    /** Numéro de colonne. */ private static final int SERIES_REMARKS    =  6;
+    /** Numéro de colonne. */ private static final int OPERATION_ID      =  7;
+    /** Numéro de colonne. */ private static final int OPERATION_NAME    =  8;
+    /** Numéro de colonne. */ private static final int OPERATION_REMARKS =  9;
+    /** Numéro de colonne. */ private static final int PARAMETER_ID      = 10;
+    /** Numéro de colonne. */ private static final int PARAMETER_NAME    = 11;
+    /** Numéro de colonne. */ private static final int PARAMETER_REMARKS = 12;
+    /** Numéro de colonne. */ private static final int FORMAT            = 13;
+    /** Numéro de colonne. */ private static final int PERIOD            = 14;
 
     /** Numéro d'argument. */ private static final int ARG_ID     = 1;
     /** Numéro d'argument. */ private static final int ARG_NAME   = 1;
@@ -141,7 +162,8 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
     private static final Branch[] TREE_STRUCTURE = new Branch[] {
         new Branch(PARAMETERS, PARAMETER_ID, PARAMETER_NAME, PARAMETER_REMARKS),
         new Branch(OPERATIONS, OPERATION_ID, OPERATION_NAME, OPERATION_REMARKS),
-        new Branch(SERIES,     SERIES_ID,    SERIES_NAME,    SERIES_REMARKS   )
+        new Branch(    SERIES,    SERIES_ID,    SERIES_NAME,    SERIES_REMARKS),
+        new Branch(SUBSERIES,  SUBSERIES_ID, SUBSERIES_NAME, SUBSERIES_REMARKS)
     };
 
     /**
@@ -158,6 +180,11 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * Requète SQL retournant une série à partir de son numéro ID.
      */
     private transient PreparedStatement selectByID;
+
+    /**
+     * Requête SQL retournant les sous-séries d'une série.
+     */
+    private transient PreparedStatement selectSubSeries;
 
     /**
      * Requête utilisée pour compter le nombre d'images appartenant à une série.
@@ -208,22 +235,40 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * @throws SQLException si la base de données n'a pas pu être interrogée.
      * @throws IllegalRecordException Si plusieurs séries portent le même nom ou même ID.
      */
-    private static SeriesEntry getEntry(final PreparedStatement statement) throws SQLException {
+    private SeriesEntry getEntry(final PreparedStatement statement) throws SQLException {
         final ResultSet resultSet = statement.executeQuery();
         SeriesEntry entry = null;
         while (resultSet.next()) {
             int    ID      = resultSet.getInt   (1);
             String name    = resultSet.getString(2);
             String remarks = resultSet.getString(3);
-            int    format  = resultSet.getInt   (4);
-            double  period = resultSet.getDouble(5); if (resultSet.wasNull()) period=Double.NaN;
-            int  quicklook = resultSet.getInt   (6); if (resultSet.wasNull()) quicklook=ID;
-            final SeriesEntry candidate = new SeriesEntry(SERIES, name, ID, remarks, format, period, quicklook);
+            double  period = resultSet.getDouble(4); if (resultSet.wasNull()) period=Double.NaN;
+            final SeriesEntry candidate = new SeriesEntry(SERIES, name, ID, remarks, period);
+            if (true) {
+                /*
+                 * Recherche les sous-séries (note: si ce bloc est retiré,
+                 * alors la méthode peut être statique).
+                 */
+                if (selectSubSeries == null) {
+                    selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
+                }
+                selectSubSeries.setInt(1, ID);
+                final List<Entry> subseries = new ArrayList<Entry>();
+                final ResultSet subResults = selectSubSeries.executeQuery();
+                while (subResults.next()) {
+                    ID      = subResults.getInt   (1);
+                    name    = subResults.getString(2);
+                    remarks = subResults.getString(3);
+                    subseries.add(new Entry(SUBSERIES, name, ID, remarks));
+                }
+                subResults.close();
+                candidate.subseries = (Entry[]) subseries.toArray(new Entry[subseries.size()]);
+            }
             if (entry == null) {
                 entry = candidate;
             } else if (!entry.equals(candidate)) {
                 throw new IllegalRecordException(SERIES, Resources.format(
-                            ResourceKeys.ERROR_DUPLICATED_SERIES_$1, name));
+                            ResourceKeys.ERROR_DUPLICATED_SERIES_$1, candidate.getName()));
             }
         }
         resultSet.close();
@@ -242,10 +287,8 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
             int            ID = resultSet.getInt   (SERIES_ID);
             String       name = resultSet.getString(SERIES_NAME);
             String    remarks = resultSet.getString(SERIES_REMARKS);
-            int        format = resultSet.getInt   (FORMAT);
             double     period = resultSet.getDouble(PERIOD); if (resultSet.wasNull()) period=Double.NaN;
-            int     quicklook = resultSet.getInt(QUICKLOOK); if (resultSet.wasNull()) quicklook=ID;
-            final SeriesEntry entry = new SeriesEntry(SERIES, name, ID, remarks, format, period, quicklook);
+            final SeriesEntry entry = new SeriesEntry(SERIES, name, ID, remarks, period);
             set.add(entry);
         }
         resultSet.close();
@@ -287,10 +330,6 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
             if (resultSet.wasNull()) {
                 period = Double.NaN;
             }
-            int quicklook = resultSet.getInt(QUICKLOOK);
-            if (resultSet.wasNull()) {
-                quicklook = ids[SERIES_LEAF-1];
-            }
             DefaultMutableTreeNode branch=root;
       scan: for (int i=0; i<branchCount; i++) {
                 /*
@@ -311,7 +350,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
                 final String tableName = TREE_STRUCTURE[i].table;
                 final Entry ref;
                 if (tableName == SERIES) {
-                    ref = new SeriesEntry(tableName, names[i], ID, remarks[i], format, period, quicklook);
+                    ref = new SeriesEntry(tableName, names[i], ID, remarks[i], period);
                 } else {
                     ref = new Entry(tableName, names[i], ID, remarks[i]);
                 }
@@ -324,7 +363,8 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
                 final boolean hasMoreBranchs = i<(branchCount-1);
                 final DefaultMutableTreeNode node;
                 switch (leafType) {
-                    case SERIES_LEAF: {
+                    case SERIES_LEAF: // Fall through
+                    case SUBSERIES_LEAF: {
                         node = new DefaultMutableTreeNode(ref, hasMoreBranchs);
                         break;
                     }
@@ -355,24 +395,36 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
     public synchronized FormatEntry getFormat(final fr.ird.database.coverage.SeriesEntry series)
             throws SQLException
     {
-        final SeriesEntry cast;
-        if (series instanceof SeriesEntry) {
-            cast = (SeriesEntry) series;
-        } else {
-            cast = getEntry(series.getID());
+        if (selectSubSeries == null) {
+            selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
         }
-        if (formats == null) {
-            formats = new FormatTable(connection);
+        selectSubSeries.setInt(1, series.getID());
+        final ResultSet results = selectSubSeries.executeQuery();
+        FormatEntry result = null;
+        while (results.next()) {
+            final FormatEntry candidate;
+            final int formatID = results.getInt(4);
+            if (formats == null) {
+                formats = new FormatTable(connection);
+            }
+            candidate = formats.getEntry(formatID);
+            if (result == null) {
+                result = candidate;
+            } else if (!result.equals(candidate)) {
+                throw new IllegalRecordException(SUBSERIES,
+                          Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, series.getName()));
+            }
         }
-        return formats.getEntry(cast.format);
+        return result;
     }
 
     /**
      * {@inheritDoc}
      */
     public synchronized void close() throws SQLException {
-        if (selectByName != null) {selectByName.close(); selectByName = null;}
-        if (selectByID   != null) {selectByID  .close(); selectByID   = null;}
-        if (formats      != null) {formats     .close(); formats      = null;}
+        if (selectByName    != null) {selectByName   .close(); selectByName    = null;}
+        if (selectByID      != null) {selectByID     .close(); selectByID      = null;}
+        if (selectSubSeries != null) {selectSubSeries.close(); selectSubSeries = null;}
+        if (formats         != null) {formats        .close(); formats         = null;}
     }
 }

@@ -59,7 +59,7 @@ final class GridGeometryTable extends Table {
                    "Max("+GRID_GEOMETRIES+".xmax) AS xmax, "+
                    "Max("+GRID_GEOMETRIES+".ymax) AS ymax\n"+
             "FROM ("+GRID_COVERAGES+' '+
-            "INNER JOIN "+SERIES         +" ON "+GRID_COVERAGES+".series="  +SERIES         +".ID) "+
+            "INNER JOIN "+SUBSERIES      +" ON "+GRID_COVERAGES+".subseries="+SUBSERIES     +".ID) "+
             "INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID\n"+
             "WHERE (visible=TRUE)";
 

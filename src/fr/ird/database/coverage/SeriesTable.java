@@ -54,11 +54,17 @@ public interface SeriesTable extends Table {
      */
     public static final int SERIES_LEAF = 3;
 
+   /**
+     * Argument pour {@link #getTree} indiquant que l'arborescence
+     * ne doit pas aller plus loin que les sous-séries (après les séries).
+     */
+    public static final int SUBSERIES_LEAF = 4;
+
     /**
      * Argument pour {@link #getTree} indiquant que l'arborescence
-     * ne doit pas aller plus loin que les catégories (après les séries).
+     * ne doit pas aller plus loin que les catégories (après les sous-séries).
      */
-    public static final int CATEGORY_LEAF = 6;
+    public static final int CATEGORY_LEAF = 7;
 
     /**
      * Retourne une référence vers un enregistrement de la table des séries.
@@ -97,7 +103,8 @@ public interface SeriesTable extends Table {
      * retournera un objet {@link Entry} (ou {@link SeriesEntry} pour les noeuds qui représentent des
      * séries).
      *
-     * @param  leafType Un des arguments {@link #SERIES_LEAF} ou {@link #CATEGORY_LEAF}.
+     * @param  leafType Un des arguments {@link #SERIES_LEAF}, {@link #SUBSERIES_LEAF} ou
+     *         {@link #CATEGORY_LEAF}.
      * @return Arborescence des séries de la base de données.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */

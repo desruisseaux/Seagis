@@ -36,10 +36,14 @@ import java.text.SimpleDateFormat;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
 
+// JAI dependencies
+import javax.media.jai.util.Range;
+
 // JUnit dependencies
 import junit.framework.*;
 
 // Geotools dependencies
+import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.MonolineFormatter;
 
@@ -111,6 +115,22 @@ public class SeriesCoverageTest extends TestCase {
      */
     public void testSLA() throws Exception {
         final CoverageTable table = database.getCoverageTable("SLA (Monde - TP/ERS)");
+        //
+        // Teste l'extraction de valeurs en obtenant directement les images.
+        //
+        final Range oldRange = table.getTimeRange();
+        table.setTimeRange(dateFormat.parse("01/03/1996"), dateFormat.parse("02/03/1996"));
+        CoverageEntry entry = table.getEntry();
+        GridCoverage  grid  = entry.getGridCoverage(null); // Déclanche la lecture maintenant.
+        double[]     output = null;
+        assertEquals(  4.1f, (output=grid.evaluate(new Point2D.Double(12.00+.25/2, -61.50+.25/2), output))[0], 0.0001f);
+        assertEquals( 11.7f, (output=grid.evaluate(new Point2D.Double(17.00+.25/2, -52.25+.25/2), output))[0], 0.0001f);
+        assertEquals( 15.0f, (output=grid.evaluate(new Point2D.Double(20.00+.25/2, -41.25+.25/2), output))[0], 0.0001f);
+        assertEquals( -0.1f, (output=grid.evaluate(new Point2D.Double(22.50+.25/2,  75.25+.25/2), output))[0], 0.0001f);
+        table.setTimeRange(oldRange);
+        //
+        // Teste l'extraction de valeurs via une vue 3D.
+        //
         coverage = new SeriesCoverage3D(table);
         coverage.setInterpolationAllowed(false);
         assertEquals( 20.4f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
@@ -118,10 +138,10 @@ public class SeriesCoverageTest extends TestCase {
         assertEquals( 20.5f, evaluate(49.6000,  -5.8600, "03/03/1993"), 0.0001f);
 
         // Valeurs puisées dans les fichiers textes.
-        assertEquals(  4.1f, evaluate(12.00+.25/2, -61.50+.25/2, "30/02/1996"), 0.0001f);
-        assertEquals( 11.7f, evaluate(17.00+.25/2, -52.25+.25/2, "30/02/1996"), 0.0001f);
-        assertEquals( 15.0f, evaluate(20.00+.25/2, -41.25+.25/2, "30/02/1996"), 0.0001f);
-        assertEquals( -0.1f, evaluate(22.50+.25/2,  75.25+.25/2, "30/02/1996"), 0.0001f);
+        assertEquals(  4.1f, evaluate(12.00+.25/2, -61.50+.25/2, "01/03/1996"), 0.0001f);
+        assertEquals( 11.7f, evaluate(17.00+.25/2, -52.25+.25/2, "01/03/1996"), 0.0001f);
+        assertEquals( 15.0f, evaluate(20.00+.25/2, -41.25+.25/2, "01/03/1996"), 0.0001f);
+        assertEquals( -0.1f, evaluate(22.50+.25/2,  75.25+.25/2, "01/03/1996"), 0.0001f);
 
         // Valeurs puisées dans les fichiers textes aux même positions deux jours consécutifs.
         assertEquals(  4.5f, evaluate( 6.75+.25/2,  77.00+.25/2, "04/07/1999"), 0.0001f);

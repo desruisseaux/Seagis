@@ -120,14 +120,14 @@ class GridCoverageTable extends Table implements CoverageTable {
                                 /*[14] FORMAT     */                 "format\n"      +
 
                     "FROM ("+GRID_COVERAGES+
-                    " INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID)"+
-                    " INNER JOIN "+Table.SERIES+" ON "+GRID_COVERAGES+".series="+Table.SERIES+".ID\n"+
+                    " INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID)" +
+                    " INNER JOIN "+SUBSERIES+      " ON "+GRID_COVERAGES+".subseries="     +SUBSERIES+".ID\n"+
 
                     "WHERE (xmax>? AND xmin<? AND ymax>? AND ymin<?) "+
                       "AND (((end_time Is Null) OR end_time>=?) AND ((start_time Is Null) OR start_time<=?)) "+
-                      "AND (series=? OR series=?)\n"+
-                      "ORDER BY end_time"; // DOIT être en ordre chronologique.
-                                           // Voir {@link GridCoverageEntry#compare}.
+                      "AND series=?\n"+
+                      "ORDER BY end_time, subseries"; // DOIT être en ordre chronologique.
+                                                      // Voir {@link GridCoverageEntry#compare}.
 
     /** Numéro de colonne. */ static final int ID                =  1;
     /** Numéro de colonne. */ static final int SERIES            =  2;
@@ -151,7 +151,6 @@ class GridCoverageTable extends Table implements CoverageTable {
     /** Numéro d'argument. */ private static final int ARG_START_TIME = 5;
     /** Numéro d'argument. */ private static final int ARG_END_TIME   = 6;
     /** Numéro d'argument. */ private static final int ARG_SERIES     = 7;
-    /** Numéro d'argument. */ private static final int ARG_QUICKLOOK  = 8;
 
     /**
      * Réference vers la série d'images. Cette référence
@@ -307,12 +306,7 @@ class GridCoverageTable extends Table implements CoverageTable {
         if (!series.equals(this.series)) {
             final boolean toLog = (this.series!=null);
             parameters = null;
-            int ID = series.getID();
-            statement.setInt(ARG_SERIES, ID);
-            if (series instanceof SeriesEntry) {
-                ID = ((SeriesEntry) series).quicklook;
-            }
-            statement.setInt(ARG_QUICKLOOK, ID);
+            statement.setInt(ARG_SERIES, series.getID());
             this.series = series;
             if (toLog) {
                 // Don't log if this object is configured by CoverageDataBase.
@@ -760,12 +754,7 @@ class GridCoverageTable extends Table implements CoverageTable {
         throws SQLException
     {
         if (seriesID != series.getID()) {
-            if (!(series instanceof SeriesEntry) || ((SeriesEntry)series).quicklook!=seriesID) {
-                throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1,
-                                                        series.getName()));
-            }
-            // TODO: L'image est un aperçu. Est-ce correct de la traiter comme si elle faisait
-            //       partie de la série principale? Probablement pas...
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_WRONG_SERIES_$1, series.getName()));
         }
         /*
          * Si les paramètres spécifiés sont identiques à ceux qui avaient été

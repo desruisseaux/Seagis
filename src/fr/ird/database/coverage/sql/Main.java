@@ -166,6 +166,7 @@ final class Main extends Arguments {
                     "Options disponibles:\n"+
                     "  -help            Affiche cette liste des options\n"+
                     "  -series          Affiche l'arborescence des séries\n"+
+                    "  -subseries       Affiche l'arborescence des sous-séries\n"+
                     "  -formats         Affiche la table des formats\n"+
                     "  -config          Configure la base de données (interface graphique)\n"+
                     "  -browse          Affiche le contenu de toute la base de données (interface graphique)\n"+
@@ -256,13 +257,15 @@ final class Main extends Arguments {
      * Exécute tout.
      */
     public void run() throws SQLException {
-        final boolean formats = getFlag("-formats");
-        final boolean  series = getFlag("-series");
-        final boolean  browse = getFlag("-browse");
-        final boolean    help = getFlag("-help") || (!series && !formats && !config && !browse);
+        final boolean   formats = getFlag("-formats");
+        final boolean subseries = getFlag("-subseries");
+        final boolean    series = getFlag("-series") || subseries;
+        final boolean    browse = getFlag("-browse");
+        final boolean      help = getFlag("-help") || (!series && !formats && !config && !browse);
 
         getRemainingArguments(0);
         if (formats && series) series(SeriesTable.CATEGORY_LEAF);
+        else if (subseries) series(SeriesTable.SUBSERIES_LEAF);
         else if (series)  series(SeriesTable.SERIES_LEAF);
         else if (formats) formats();
         if (browse)       browse();

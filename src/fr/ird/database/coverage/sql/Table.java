@@ -74,6 +74,7 @@ abstract class Table implements fr.ird.database.Table {
     /* Nom de table dans les instructions SQL. */ static final String OPERATIONS        = "Operations";
     /* Nom de table dans les instructions SQL. */ static final String PARAMETERS        = "Parameters";
     /* Nom de table dans les instructions SQL. */ static final String SERIES            = "Series";
+    /* Nom de table dans les instructions SQL. */ static final String SUBSERIES         = "SubSeries";
     /* Nom de table dans les instructions SQL. */ static final String GRID_COVERAGES    = "GridCoverages";
     /* Nom de table dans les instructions SQL. */ static final String GRID_GEOMETRIES   = "GridGeometries";
     /* Nom de table dans les instructions SQL. */ static final String FORMATS           = "Formats";
