@@ -96,20 +96,37 @@ import org.geotools.cs.AxisInfo;
 import org.geotools.cs.AxisOrientation;
 
 /**
- * Calcul le SUP sur des images S.S.T. appartenant à une même journèe d'acquisition. 
- * Elle génère une image contenant le SUP des images S.S.T. ainsi qu'un fichier 
- * <i>header</i> contenant des informations sur l'image et le traitement réalisé.<BR><BR>
+ * Calcul le SUP sur des images SST. L'objectif de ce traitement est de générer une image 
+ * SST couvrant une zone plus importante par l'association de différentes images SST et 
+ * aussi d'avoir un maximum d'informations pertinentes sur l'image produite (c'est à 
+ * dire essayer lorsque cela est possible de remplacer les pixels nuageux par des pixels 
+ * de température par exemple).<BR><BR>
  *
- * L'objectif de cette image S.S.T. est de couvrir une zone plus importante par l'association 
- * des différents passages et aussi d'avoir un maximum d'informations pertinentes sur 
- * l'image produite (c'est à dire essayer lorsque cela est possible de remplacer les pixels 
- * nuageux par des pixels température par exemple).
+ * Deux algorithmes sont proposés : 
+ * <UL>
+ *  <LI>Un premier algorithme détermine automatique quelles images doivent participer au 
+ *      traitement en de l'année et du jour dans l'année.</LI>
+ *  <LI>Un second algorithme permet de préciser en paramètre l'ensemble des images 
+ *      participants au traitement.</LI>
+ * </LU><BR><BR>
+ *
+ * Ces algorithmes génère une image SST contenant le SUP des images SST participant au 
+ * traitement ainsi qu'un <i>header</i> contenant des informations géographique sur 
+ * l'image SST générée.<BR><BR>
+ *
+ * Remarque : actuellement un traitement suplémentaire est appliqué sur les images lors
+ * de leur chargement. Ce traitement consiste à corriger les pixels acquis de jour par un 
+ * delta de sorte que la moyenne des pixels acquis de jour à une latitude donnée soit 
+ * la même que la moyenne des pixels acquis de nuit à cette même latitude.
  *
  * @author Remi EVE
  * @version $Id$
  */
 public final class SSTSup
 {
+    /** Boolean : true pour corriger les pixels acquis de jour lorsque cela est possible. */
+    private final boolean CORRECTION = true;
+    
     /** Système de coordonnée des images S.S.T.. */  
     private final CoordinateSystem WGS84 = Utilities.WGS84;
 
@@ -195,26 +212,35 @@ public final class SSTSup
     }
     
     /**
-     * Retourne les statistiques associées à une image. Ces statistiques sont stockées dans 
-     * un fichier.
+     * Retourne les statistiques associées à une image. Ces statistiques sont 
+     * stockées dans un fichier.
      *
-     * @param name  Nom du fichier de statistiques.
-     * @return Ces statistiques sont stockées dans un fichier.
+     * @param file  Fichier contenant les statistiques.
+     * @return les statistiques associées à une image. Ces statistiques sont 
+     * stockées dans un fichier.
      */
     private StatisticGrid loadStatistics(final File file) throws IOException
     {
-        if (file.exists())
+        if (!file.exists())
         {
+            System.err.println("Le fichier de statistique \"" + file.getPath() + 
+                               "\" est introuvable.");
+            return null;
+        } else if (!file.canRead())
+        {
+            System.err.println("Fichier de statistique \"" + file.getPath() + 
+                               "\" non autorisé en lecture.");
+            return null;        
+        } else
+        {        
             final ParameterList parameter = ParseStat.getInputDefaultParameterList();
             parameter.setParameter(ParseStat.FILE, file);
             return (StatisticGrid)ParseStat.parse(parameter).getObjectParameter(ParseStat.STAT);
         }    
-        System.err.println("Impossible de trouver le fichier \"" + file.getPath() + "\".");
-        return null;        
     }
     
     /**
-     * Construit un objet SSTSup.
+     * Construit un objet <CODE>SSTSup</CODE>.
      */
     public SSTSup() throws IOException
     {   
@@ -236,18 +262,16 @@ public final class SSTSup
     }
     
     /**
-     * Calcul le SUP des S.S.T. sur une journée depuis un ensemble de S.S.T.. 
+     * Calcul le SUP sur l'ensemble des images sources.
      *
      * @param sources         Fichiers sources.
-     * @param taregt          Fichier de destination.
+     * @param target          Fichier de destination.
      */
-    public void compute(final File[] sources,
-                        final File   target) throws IOException
+    public void compute(final File[] src,
+                        final File   tgt) throws IOException
     {
-        if (target == null)
-            throw new IllegalArgumentException("Target file is null.");
-        if (target.isDirectory())
-            throw new IllegalArgumentException("Target is a directory.");
+        if (tgt == null)
+            throw new IllegalArgumentException("Le fichier cible est null.");
         
         // Paramètre du JAI. 
         final Map configuration   = new HashMap();
@@ -255,31 +279,30 @@ public final class SSTSup
         configuration.put(JAI.KEY_TILE_CACHE, tileCache);        
         tileCache.flush();
 
-        // Instant de debut des calculs. 
+        // Déebut des calculs. 
         final long START_COMPUTATION = System.currentTimeMillis();
         
         // Nom des fichiers créés.
-        final String name       = target.getPath().substring(0, target.getPath().length()-4);
-        final File fImage       = new File(name + ".png"),       // Image générée
-                   fHeader      = new File(name + ".hdr"),       // Header
-                   fStatTxt     = new File(name + ".msk.sta"),   // Statistiques
-                   fHeaderInter = new File(name + "_inter.hdr"), // Header intermediaire
-                   fImageInter  = new File(name + "_inter.png"), // Image générée intermediaire
-                   fImageTemp   = new File(name + ".tmp");       // fichier temporaire
+        final String nameTgt       = tgt.getPath().substring(0, tgt.getPath().length()-4);
+        final File fileImage       = new File(nameTgt + ".png"),       // Image générée
+                   fileHeader      = new File(nameTgt + ".hdr"),       // Header
+                   fileHeaderInter = new File(nameTgt + "_inter.hdr"), // Header                   
+                   fileStatTgt     = new File(nameTgt + ".msk.sta"),   // Statistiques
+                   fileImageInter  = new File(nameTgt + "_inter.png"), // Image générée intermediaire
+                   fileImageTmp    = new File(nameTgt + ".tmp");       // fichier temporaire
                         
         // Extraction des images participant au SUP.
-        final int length   = sources.length;        
+        final int length   = src.length;        
         if (length == 0)
         {
-            final BufferedWriter info = new BufferedWriter(new FileWriter(fHeader));                                                                
-            info.write("# Aucun fichier a traiter.");
+            final BufferedWriter info = new BufferedWriter(new FileWriter(fileHeader));                                                                
+            info.write("# Aucun fichier à traiter.");
             info.close();
             return;
         }
-
-        // Zone couverte par l'image générée.
-        /* Si bound vaut <i>null</i>, l'image couvrira une zone égale à l'union des images 
-           participant au SUP. */
+        
+        /* Zone couverte par l'image générée : Si bound vaut <i>null</i>, l'image 
+           couvrira une zone égale à l'union des images participant au SUP. */
         Rectangle bound = null;
         if (SST_ONE_DAY_LIMITED_AREA == true) 
         {
@@ -289,19 +312,23 @@ public final class SSTSup
                                   (int)(SST_ONE_DAY_AREA.getHeight()/RESOLUTION));
         }       
                         
-        // Fusion des fichiers de statistique.
+        /* Fusion des fichiers de statistique : on obtient ainsi un fichier contenant
+           l'ensemble des statistiques des fichiers participants au traitement. */
         boolean isFirstStat = true;
-        StatisticGrid stat = null;
+        StatisticGrid stat  = null;        
         for (int i=0 ; i<length ; i++)
         {
-            final File fStat = new File(sources[i].getPath().substring(0, sources[i].getPath().indexOf('.')) + 
-                                        ".msk.sta");
+            final File fileStat = new File(src[i].getPath().substring(0, src[i].getPath().indexOf('.')) + ".msk.sta");
             
             // On passe les fichiers inexistant ou interdit en lecture.
-            if (!fStat.exists() || !fStat.canRead())
+            if (!fileStat.exists()   || 
+                !fileStat.canRead())
+            {
+                System.err.println("Impossible de lire le fichier \"" + fileStat + "\"");
                 continue;
+            }
             
-            final StatisticGrid stat_ = loadStatistics(fStat);            
+            final StatisticGrid stat_ = loadStatistics(fileStat);            
             if (isFirstStat == true)
                 stat = stat_;
             else
@@ -311,18 +338,39 @@ public final class SSTSup
         
         // Ecriture du fichier de statistique.
         if (stat != null)
-            Utilities.writeStat(stat, fStatTxt);        
+            Utilities.writeStat(stat, fileStatTgt);        
         
-        // Traitement de l'ensemble des images SST des passages. 
-        // Les images sont traitées deux par deux pour économiser de la mémoire. 
+        /* Traitement de l'ensemble des images SST. Les images sont traitées deux par 
+           deux pour économiser de la mémoire. */
         boolean isFirstImage = true;
         for (int i=0 ; i<length ; i++)
         {
-            final GridCoverage currentGridCoverage = Utilities.getGridCoverage(sources[i],
-                                                                               "SST passage " + i,
-                                                                               WGS84,
-                                                                               SAMPLE_SST_INDEXED,
-                                                                               configuration);
+            final File fileHeaderSrc = new File(src[i].getPath().substring(0, src[i].getPath().length()-3).toString() + "hdr");
+            GridCoverage currentGridCoverage = Utilities.getGridCoverage(src[i],
+                                                                         fileHeaderSrc, 
+                                                                         "",
+                                                                         WGS84,
+                                                                         SAMPLE_SST_INDEXED,
+                                                                         configuration);
+            
+            
+            if (stat!=null && CORRECTION)
+            {
+                // Correction des pixels de jours.
+                final File fileMask = new File(src[i].getPath().substring(0, src[i].getPath().length()-7).toString() + "msk.png");                                                
+                final GridCoverage gridMask = Utilities.getGridCoverage(fileMask,
+                                                                        fileHeaderSrc, 
+                                                                        "",
+                                                                        WGS84,
+                                                                        Utilities.SAMPLE_MATRIX_INDEXED,
+                                                                        configuration).geophysics(true);
+                
+                currentGridCoverage = fr.ird.n1b.op.SSTDayPixelCorrection.get(currentGridCoverage.geophysics(true), 
+                                                                              gridMask.geophysics(true), 
+                                                                              stat, 
+                                                                              configuration).geophysics(false);                                
+            }
+            
             GridCoverage[] arrayCoverage;            
             if (isFirstImage == true)
             {
@@ -332,7 +380,9 @@ public final class SSTSup
             else
             {
                 arrayCoverage    = new GridCoverage[2];
-                arrayCoverage[0] = Utilities.getGridCoverage(fImageInter,
+                final File fileHeaderInterSrc = new File(fileImageInter.getPath().substring(0, fileImageInter.getPath().length()-3).toString() + "hdr");                
+                arrayCoverage[0] = Utilities.getGridCoverage(fileImageInter,
+                                                             fileHeaderInterSrc, 
                                                              "SST passage " + i,
                                                              WGS84,
                                                              SAMPLE_SST_INDEXED,
@@ -371,8 +421,8 @@ public final class SSTSup
 
             // Ecriture dans un fichier temporaire du SUP. 
             final RenderedImage image = sstSUP.geophysics(false).getRenderedImage();
-            final String format = fImageInter.getName().substring(fImageInter.getName().indexOf('.') + 1);
-            ImageIO.write(image, format, fImageTemp);                                  
+            final String format = fileImageInter.getName().substring(fileImageInter.getName().length()-3);
+            ImageIO.write(image, format, fileImageTmp);                                  
 
             // Libération des ressources mémoires. 
             for (int j=0 ; j<arrayCoverage.length ; j++)
@@ -383,58 +433,69 @@ public final class SSTSup
             isFirstImage = false;            
             
             // Renome le fichier temporaire du SUP en fichier Intermediaire.
-            if (fImageInter.exists())
+            if (fileImageInter.exists())
             {
-                if (!fImageInter.delete())
+                if (!fileImageInter.delete())
                 {
                     throw new IOException("Impossible d'effacer le fichier \"" + 
-                                          fImageInter + "\"");
+                                          fileImageInter + "\"");
                 }
             }
-            if (!fImageTemp.renameTo(fImageInter))
+            if (!fileImageTmp.renameTo(fileImageInter))
             {
                 throw new IOException("Impossible de renommer le fichier \"" + 
-                                      fImageTemp  + 
-                                      "\" en \""  + 
-                                      fImageInter + "\"");
+                                      fileImageTmp  + "\" en \""  + 
+                                      fileImageInter + "\"");
             }
             
             // Création du fichier d'information intermédiaire.
-            final BufferedWriter info = new BufferedWriter(new FileWriter(fHeaderInter));                                                                
+            final BufferedWriter info = new BufferedWriter(new FileWriter(fileHeaderInter));                                                                
             info.write("ORIGINE        \t" + image.getMinX()*RESOLUTION + "\t" + 
                                           -1*image.getMinY()*RESOLUTION + "\n");
             info.write("RESOLUTION     \t" + RESOLUTION + "\t" + RESOLUTION + "\n\n\n\n");
             info.write("# RESUME DU TRAITEMENT SST DAY\n");            
             for (int j=0 ; j<length; j++)
-                info.write("PROCESSING FILE \t" + "\"" + sources[j].getPath() + "\"\n");                        
+                info.write("PROCESSING FILE \t" + "\"" + src[j].getPath() + "\"\n");                        
             info.write("PROCESSING     \t" + ((System.currentTimeMillis() 
                                             - START_COMPUTATION)/1000.0) + " secondes.\n\n");                        
             info.close();                        
         }        
         
         // Renomme les derniers fichiers intermédiaire en fichiers finaux.
-        fImageInter.renameTo(fImage);
-        fHeaderInter.renameTo(fHeader);        
+        if (fileImage.exists())
+        {
+            if (!fileImage.delete())
+            {
+                throw new IOException("Impossible d'effacer le fichier \"" + 
+                                      fileImage + "\"");            
+            }
+        }        
+        fileImageInter.renameTo(fileImage);                        
+        
+        if (fileHeader.exists())
+        {
+            if (!fileHeader.delete())
+            {
+                throw new IOException("Impossible d'effacer le fichier \"" + 
+                                      fileHeader + "\"");                        
+            }
+        }
+        fileHeaderInter.renameTo(fileHeader);        
     }
     
     
     /**
-     * Ce programme lance la synthèse SUP d'images SST. <BR><BR>
+     * Ce programme lance le traitement SUP sur des images SST. <BR><BR>
      * 
-     * Deux traitements peuvent être lancés : 
+     * Deux algorithmes sont disponibles : 
      * <UL>
-     *  <LI>Un traitement semi-automatisé permettant de calculer le SUP sur des images SST
+     *  <LI>Un premier semi-automatisé permettant de calculer le SUP sur des images SST
      *      acquise le jour J. Dans ce traitement, les fichiers participants au traitement
      *      sont déterminés par le programme en fonction de la date de début d'acquisition
      *      des données.</LI>
-     *  <LI>Un traitement plus génréique permettant de lancer le traitement SUP sur des
-     *      fichiers donnés en paramètres.</LI>
+     *  <LI>Un second permettant de lancer le traitement SUP sur des fichiers donnés en 
+     *      paramètres.</LI>
      * </UL><BR><BR>
-     *
-     * @param args[0]    La chaîne "-auto".
-     * @param args[1]    Répertoire source des SST par passage.
-     * @param args[2]    Répertoire de destination du fichier SST.
-     * @param args[3]    La date de la synthèse à calculer (YYYYJJJ).
      *
      * Les paramètres du traitement semi-automatisé sont : 
      * <UL>
@@ -446,6 +507,10 @@ public final class SSTSup
      *  <BR><i>Exemple : 2003017</i></LI>
      * </UL><BR><BR>
      * 
+     * @param args[0]    La chaîne "-auto".
+     * @param args[1]    Répertoire source des SST par passage.
+     * @param args[2]    Répertoire de destination du fichier SST.
+     * @param args[3]    La date de la synthèse à calculer (YYYYJJJ).
      * <i>Exemple : ComputeSSTDay "C:/Partages/SST/Test/SST"  
      *                            "C:/Partages/SST/Test/SST_1_DAY"  
      *                            2003017</i><BR><BR>
@@ -486,6 +551,9 @@ public final class SSTSup
                 if (count != 4)
                 {
                     System.err.println("SSTSup -auto DIRECTORY_SRC DIRECTORY_TGT YYYYJJJ");                    
+                    System.err.println("DIRECTORY_SRC   --> Répertoire contenant les images SST sources");                
+                    System.err.println("DIRECTORY_TGT   --> Répertoire de destination");                                   
+                    System.err.println("YYYYJJJ         --> Année et Jour (depuis le debut de l'année) d'acquisition des images participants au traitement");                                                        
                     System.err.println("Exemple : SSTSup -auto \"c:\\SST\\SOURCE\" " + 
                                        "\"c:\\SST\\TARGET\" 2003017");
                     System.exit(-1);
@@ -522,9 +590,12 @@ public final class SSTSup
                 if (count == 1)
                 {
                     System.err.println("SSTSup FILE_TGT FILE_SRC1 FILE_SRC2 FILESRC3 ...");                    
+                    System.err.println("FILE_TGT    --> Fichier de destination");                                                        
+                    System.err.println("FILE_SRC1   --> Premier fichier SST source");                                                        
+                    System.err.println("FILE_SRC2   --> Second fichier SST source");                                                                           
                     System.err.println("Exemple : SSTSup \"c:\\SST\\TARGET\\SST.png" + 
                                        "\"c:\\SST\\SOURCE\\SST1.png" + 
-                                       "\"c:\\SST\\SOURCE\\SST1.png 2003017");
+                                       "\"c:\\SST\\SOURCE\\SST2.png");
                     System.exit(-1);
                 }               
                 final File target = new File(args[0]);
