@@ -98,6 +98,12 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
     {return 3;}
 
     /**
+     * Override {@link CoordinateSystem#getDatum()}.
+     */
+    final Datum getDatum()
+    {return getHorizontalDatum();}
+
+    /**
      * Returns the horizontal datum.
      * The horizontal datum is used to determine where the center of the Earth
      * is considered to be. All coordinate points will be measured from the

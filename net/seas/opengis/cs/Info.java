@@ -220,8 +220,24 @@ public class Info implements Serializable
      * Returns a string representation of this info.
      * @param the source (usually <code>this</code>).
      */
-    String toString(final Object source)
-    {return XClass.getShortClassName(source)+'['+getName(null)+']';}
+    final String toString(final Object source)
+    {
+        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(source));
+        buffer.append("[\"");
+        buffer.append(getName(null));
+        buffer.append('"');
+        addString(buffer);
+        buffer.append(']');
+        return buffer.toString();
+    }
+
+    /**
+     * Add more information inside the "[...]" part of {@link #toString}.
+     * The default implementation add nothing. Subclasses will override
+     * this method in order to complete string representation.
+     */
+    void addString(final StringBuffer buffer)
+    {}
 
     /**
      * Returns an OpenGIS interface for this info.

@@ -109,6 +109,12 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     {return 2;}
 
     /**
+     * Override {@link CoordinateSystem#getDatum()}.
+     */
+    final Datum getDatum()
+    {return getHorizontalDatum();}
+
+    /**
      * Returns the horizontal datum.
      */
     public HorizontalDatum getHorizontalDatum()

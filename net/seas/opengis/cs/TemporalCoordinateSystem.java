@@ -103,6 +103,12 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     {return 1;}
 
     /**
+     * Override {@link CoordinateSystem#getDatum()}.
+     */
+    final Datum getDatum()
+    {return getTemporalDatum();}
+
+    /**
      * Gets the temporal datum, which indicates the measurement method.
      */
     public TemporalDatum getTemporalDatum()

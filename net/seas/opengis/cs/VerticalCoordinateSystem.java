@@ -112,6 +112,12 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     {return 1;}
 
     /**
+     * Override {@link CoordinateSystem#getDatum()}.
+     */
+    final Datum getDatum()
+    {return getVerticalDatum();}
+
+    /**
      * Gets the vertical datum, which indicates the measurement method.
      */
     public VerticalDatum getVerticalDatum()

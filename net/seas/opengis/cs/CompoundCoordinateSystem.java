@@ -133,7 +133,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
             final int dim = dimension-headDim;
             if (dim < tail.getDimension())
             {
-                return head.getAxis(dim);
+                return tail.getAxis(dim);
             }
         }
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));

@@ -116,11 +116,11 @@ public class AxisInfo implements Serializable
     public String toString()
     {
         final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
+        buffer.append("[\"");
         buffer.append(name);
         if (orientation!=null)
         {
-            buffer.append(',');
+            buffer.append("\",");
             buffer.append(orientation.getName(null));
         }
         buffer.append(']');

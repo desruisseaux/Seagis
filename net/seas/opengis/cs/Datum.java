@@ -122,21 +122,17 @@ public class Datum extends Info
     }
 
     /**
-     * Returns a string representation of this datum.
+     * Add more information inside the "[...]" part of {@link #toString}.
      */
-    String toString(final Object source)
+    void addString(final StringBuffer buffer)
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(source));
-        buffer.append('[');
-        buffer.append(getName(null));
+        super.addString(buffer);
         final DatumType type = getDatumType();
         if (type!=null)
         {
             buffer.append(", ");
             buffer.append(type.getName(null));
         }
-        buffer.append(']');
-        return buffer.toString();
     }
 
     /**

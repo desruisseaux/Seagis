@@ -28,6 +28,7 @@ import org.opengis.cs.CS_LinearUnit;
 
 // Miscellaneous
 import java.util.Map;
+import java.lang.Double; // For JavaDoc
 import javax.units.Unit;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
@@ -317,26 +318,18 @@ public class Ellipsoid extends Info
     }
 
     /**
-     * Returns a string representation of this ellipsoid.
+     * Add more information inside the "[...]" part of {@link #toString}.
      * Output is implementation dependent, but may look like:
      * <pre>
      * Ellipsoid["WGS 1984", semiMajorAxis=6378137.0, inverseFlattening=298.257223563];
      * </pre>
      */
-    String toString(final Object source)
+    final void addString(final StringBuffer buffer)
     {
-        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(source));
-        final String         name = getName(null);
-        final Unit           unit = getAxisUnit();
-        final String   unitSymbol = (unit!=null) ? unit.toString() : "";
-        buffer.append('[');
-        if (name!=null)
-        {
-            buffer.append('"');
-            buffer.append(name);
-            buffer.append("\", ");
-        }
-        buffer.append("semiMajorAxis=");
+        super.addString(buffer);
+        final Unit         unit = getAxisUnit();
+        final String unitSymbol = (unit!=null) ? unit.toString() : "";
+        buffer.append(", semiMajorAxis=");
         buffer.append(getSemiMajorAxis());
         if (unitSymbol.length()!=0)
         {
@@ -359,8 +352,6 @@ public class Ellipsoid extends Info
                 buffer.append(unitSymbol);
             }
         }
-        buffer.append(']');
-        return buffer.toString();
     }
 
     /**

@@ -133,10 +133,15 @@ public class PrimeMeridian extends Info
     }
 
     /**
-     * Returns a string representation of this prime meridian.
+     * Add more information inside the "[...]" part of {@link #toString}.
      */
-    String toString(final Object source)
-    {return XClass.getShortClassName(source)+'['+getName(null)+'='+longitude+unit+']';}
+    final void addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        buffer.append('=');
+        buffer.append(longitude);
+        buffer.append(unit);
+    }
 
     /**
      * Returns an OpenGIS interface for this prime meridian.

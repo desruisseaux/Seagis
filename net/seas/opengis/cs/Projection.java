@@ -268,10 +268,17 @@ public class Projection extends Info
     }
 
     /**
-     * Returns a string representation of this projection.
+     * Add more information inside the "[...]" part of {@link #toString}.
+     * The default implementation add nothing. Subclasses will override
+     * this method in order to complete string representation.
      */
-    String toString(final Object source)
-    {return XClass.getShortClassName(source)+'['+getClassName()+']';}
+    final void addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        buffer.append(", ");
+        buffer.append(getParameters().getParameterListDescriptor().getNumParameters());
+        buffer.append(" parameters");
+    }
 
     /**
      * Returns an OpenGIS interface for this projection.

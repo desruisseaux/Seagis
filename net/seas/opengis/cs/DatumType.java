@@ -387,7 +387,7 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
          */
-        // private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = 4053105964515210660L;
 
         /**
          * Lowest possible value for temporal datum types.

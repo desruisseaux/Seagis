@@ -28,10 +28,13 @@ import org.opengis.cs.CS_AxisInfo;
 import org.opengis.pt.PT_Envelope;
 import org.opengis.cs.CS_CoordinateSystem;
 
+// OpenGIS dependencies (SEAGIS)
+import net.seas.opengis.pt.Envelope;
+import net.seas.opengis.pt.Dimensioned;
+
 // Units and coordinates
 import java.util.Map;
 import javax.units.Unit;
-import net.seas.opengis.pt.Envelope;
 
 // Miscellaneous
 import net.seas.util.XClass;
@@ -64,7 +67,7 @@ import java.rmi.RemoteException;
  *
  * @see org.opengis.cs.CS_CoordinateSystem
  */
-public abstract class CoordinateSystem extends Info
+public abstract class CoordinateSystem extends Info implements Dimensioned
 {
     /**
      * Serial number for interoperability with different versions.
@@ -160,6 +163,12 @@ public abstract class CoordinateSystem extends Info
     }
 
     /**
+     * Returns the datum.
+     */
+    Datum getDatum()
+    {return null;}
+
+    /**
      * Gets default envelope of coordinate system.
      * Coordinate systems which are bounded should return the minimum bounding
      * box of their domain.  Unbounded coordinate systems should return a box
@@ -173,6 +182,20 @@ public abstract class CoordinateSystem extends Info
      */
     public Envelope getDefaultEnvelope()
     {return new Envelope(getDimension());}
+
+    /**
+     * Add more information inside the "[...]" part of {@link #toString}.
+     */
+    void addString(final StringBuffer buffer)
+    {
+        super.addString(buffer);
+        final Datum datum = getDatum();
+        if (datum!=null)
+        {
+            buffer.append(", ");
+            buffer.append(datum);
+        }
+    }
 
     /**
      * Returns an OpenGIS interface for this coordinate

@@ -127,6 +127,12 @@ public class LocalCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Override {@link CoordinateSystem#getDatum()}.
+     */
+    final Datum getDatum()
+    {return getLocalDatum();}
+
+    /**
      * Gets the local datum.
      */
     public LocalDatum getLocalDatum()
