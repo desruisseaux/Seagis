@@ -29,7 +29,9 @@ package fr.ird.animat;
 import java.awt.Paint;
 import java.awt.Color;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.Rectangle;
+import java.awt.BasicStroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
@@ -45,6 +47,7 @@ import net.seas.map.layer.MarkLayer;
 import net.seas.map.RenderingContext;
 
 // Animats
+import fr.ird.operator.coverage.ParameterValue;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
@@ -62,9 +65,14 @@ import org.geotools.resources.XAffineTransform;
 final class PopulationLayer extends MarkLayer implements PopulationChangeListener
 {
     /**
-     * Longueur de la flèche.
+     * Longueur de la flèche représentant les thons.
      */
     private static final int ARROW_LENGTH = 20;
+
+    /**
+     * Le "rayon" des marques représentant la position des observations.
+     */
+    private static final int MARK_RADIUS = 3;
 
     /**
      * Forme géométrique représentant les animaux.
@@ -201,6 +209,9 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
         final Paint oldPaint = graphics.getPaint();
         final Rectangle clip = graphics.getClipBounds();
         Rectangle2D llBounds = (bounds!=null) ? (Rectangle2D) bounds.clone() : null;
+        //////////////////////////////////////
+        ////    Dessine la trajectoire    ////
+        //////////////////////////////////////
         if (pathColor != null)
         {
             graphics.setColor(pathColor);
@@ -213,6 +224,9 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
                 }
             }
         }
+        ///////////////////////////////////////////////
+        ////    Dessine la région de perception    ////
+        ///////////////////////////////////////////////
         if (perceptionColor != null)
         {
             graphics.setColor(perceptionColor);
@@ -237,6 +251,43 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
                 }
             }
         }
+        //////////////////////////////////////////////////////
+        ////    Dessine les positions des observations    ////
+        //////////////////////////////////////////////////////
+        if (true)
+        {
+            final Stroke      oldStroke = graphics.getStroke();
+            final AffineTransform oldTr = graphics.getTransform();
+            final AffineTransform  zoom = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
+            graphics.setTransform(context.getAffineTransform(RenderingContext.POINT_TO_PIXEL));
+            graphics.setStroke(new BasicStroke(0));
+            graphics.setColor(Color.black);
+            for (int i=0; i<animals.length; i++)
+            {
+                final Animal animal = animals[i];
+                for (int j=1; --j>=0;) // TODO
+                {
+                    final ParameterValue param = animal.getObservation(j);
+                    if (param != null)
+                    {
+                        Point2D location = param.getLocation();
+                        if (location != null)
+                        {
+                            location = zoom.transform(location, location);
+                            final int x = (int) Math.round(location.getX());
+                            final int y = (int) Math.round(location.getY());
+                            graphics.drawLine(x-MARK_RADIUS, y, x+MARK_RADIUS, y);
+                            graphics.drawLine(x, y-MARK_RADIUS, x, y+MARK_RADIUS);
+                        }
+                    }
+                }
+            }
+            graphics.setTransform(oldTr);
+            graphics.setStroke(oldStroke);
+        }
+        ///////////////////////////////////
+        ////    Dessine les animaux    ////
+        ///////////////////////////////////
         graphics.setPaint(oldPaint);
         final Shape        shape = super.paint(graphics, context);
         final AffineTransform at = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);

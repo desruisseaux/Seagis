@@ -59,6 +59,12 @@ public class MaximumEvaluator extends AbstractEvaluator
     {}
 
     /**
+     * Retourne le nom de cette opération.
+     */
+    public String getName()
+    {return "Maximum";}
+
+    /**
      * Retourne la position du pixel maximal.
      *
      * @param  coverage La couverture sur laquelle appliquer la fonction.
@@ -101,12 +107,9 @@ public class MaximumEvaluator extends AbstractEvaluator
                                 maximums[i] = z;
                                 if (locations[i]==null)
                                 {
-                                    locations[i] = new ParameterValue(z, coordinate);
+                                    locations[i] = new ParameterValue.Double(coverage, this);
                                 }
-                                else
-                                {
-                                    locations[i].setValue(z, coordinate);
-                                }
+                                locations[i].setValue(z, coordinate);
                             }
                         }
                     }

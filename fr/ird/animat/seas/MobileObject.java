@@ -101,7 +101,7 @@ class MobileObject implements Shape
     {
         if (validLength >= points.length)
         {
-            points = XArray.resize(points, points.length + Math.min(points.length, 512));
+            points = XArray.resize(points, validLength + Math.min(validLength, 512));
         }
         points[validLength++] = x;
         points[validLength++] = y;
@@ -300,6 +300,12 @@ class MobileObject implements Shape
         shape.setFrame(xmin, ymin, xmax-xmin, ymax-ymin);
         return shape;
     }
+
+    /**
+     * Retourne le nombre de points mémorisé jusqu'à maintenant.
+     */
+    public int getPointCount()
+    {return validLength/2;}
 
     /**
      * Retourne le chemin suivit par l'animal jusqu'ici.

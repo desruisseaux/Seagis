@@ -65,8 +65,11 @@ public final class Calendar
      * Jour julien correspondant à l'époch du Java (1er janvier 1970 à minuit).
      * Cette constante est utilisée pour convertir des dates du Java en jour
      * julien.
+     *
+     * La valeur {@link #julianDay}   du 1er janvier 2000 00:00 GMT est 2451544.5 jours.
+     * La valeur {@link Date#getTime} du 1er janvier 2000 00:00 GMT est 10957 jours.
      */
-    private static double JULIAN_DAY_1970 = 2451543.5-10957;
+    private static double JULIAN_DAY_1970 = 2451544.5-10957;
 
     /**
      * Interdit la création de classes <code>Cycles</code> par l'utilisateur.
@@ -76,22 +79,23 @@ public final class Calendar
     }
 
     /**
-     * Retourne le jour julien d'une date. Il ne s'agit pas du jour julien dans une année. Ce jour julien là
-     * (nommé ainsi pour <i>Julius Scaliger<i>, et non <i>Julius Caesar</i>) est le nombre de jours écoulés
-     * depuis midi le 1er janvier 4713 avant Jésus-Christ.
+     * Retourne le jour julien d'une date. Il ne s'agit pas du jour julien dans
+     * une année. Ce jour julien là (nommé ainsi pour <i>Julius Scaliger<i>, et
+     * non <i>Julius Caesar</i>)  est le nombre de jours écoulés depuis midi le
+     * 1er janvier 4713 avant Jésus-Christ.
      */
-    private static double julianDay(final Date time)
+    public static double julianDay(final Date time)
     {
         return (time.getTime()/MILLIS_IN_DAY) + JULIAN_DAY_1970;
     }
 
     /**
-     * Retourne le nombre d'année écoulée depuis le 2 janvier 2000 à midi. Cette information
-     * est utilisée dans les formules de Laskar (1986) pour calculer la longueur d'une année
-     * tropicale, ainsi que par Chapront-Touze et Chapront (1988) pour la longueur d'un mois
-     * synodique.
+     * Retourne le nombre de siècles écoulés depuis le 1 janvier 2000 à midi.
+     * Cette information est utilisée dans les formules de Laskar (1986) pour
+     * calculer la longueur d'une année tropicale, ainsi que par Chapront-Touze
+     * et Chapront (1988) pour la longueur d'un mois synodique.
      */
-    private static double julianYear(final Date time)
+    static double julianCentury(final Date time)
     {
         return ((time.getTime()/MILLIS_IN_DAY) + (JULIAN_DAY_1970-2451545.0))/36525;
     }
@@ -107,7 +111,7 @@ public final class Calendar
      */
     public static double tropicalYearLength(final Date time)
     {
-        final double T=julianYear(time);
+        final double T=julianCentury(time);
         return 365.2421896698 + T*(-0.00000615359 + T*(-7.29E-10 + T*(2.64E-10)));
     }
 
@@ -118,7 +122,7 @@ public final class Calendar
      */
     public static double synodicMonthLength(final Date time)
     {
-        final double T=julianYear(time);
+        final double T=julianCentury(time);
         return 29.5305888531 + T*(0.00000021621 + T*(-3.64E-10));
     }
 
@@ -126,7 +130,7 @@ public final class Calendar
      * Affiche la longueur de l'année tropicale et du mois synodique pour une date donnée.
      * Cette application peut être lancée avec la syntaxe suivante:
      *
-     * <pre>Cycles <var>[date]</var></pre>
+     * <pre>Calendar <var>[date]</var></pre>
      *
      * où <var>date</var> est un argument optionel spécifiant la date (jour, mois et année)
      * d'intérêt. Si cet argument est omis, la date et heure actuelles seront utilisées.

@@ -32,6 +32,9 @@ import java.awt.geom.Point2D;
 // Geotools dependencies
 import org.geotools.cs.Ellipsoid;
 
+// SEAS dependencies
+import fr.ird.operator.coverage.ParameterValue;
+
 
 /**
  * Représentation d'un animal. Chaque animal doit appartenir à une espèce,
@@ -54,17 +57,6 @@ public interface Animal
     public abstract Species getSpecies();
 
     /**
-     * Retourne la région jusqu'où s'étend la perception de cette
-     * animal. Il peut s'agir par exemple d'un cercle centré sur
-     * la position de l'animal.
-     *
-     * @param condition 1 si les conditions environnementales sont optimales
-     *        (eaux des plus transparentes), ou 0 si les conditions sont des
-     *        plus mauvaises (eaux complètement brouillées).
-     */
-    public Shape getPerceptionArea(final double condition);
-
-    /**
      * Retourne la position de cet animal,
      * en degrés de longitude et de latitude.
      */
@@ -77,44 +69,31 @@ public interface Animal
     public abstract double getDirection();
 
     /**
-     * Tourne l'animal d'un certain angle par rapport
-     * à sa direction actuelle.
+     * Retourne une observation de l'animal.
      *
-     * @param angle Angle en degrées, dans le sens des
-     *        aiguilles d'une montre.
+     * @param  index L'index du paramètre, de 0 jusqu'à
+     *         <code>{@link #getNumParameters()}-1</code>.
+     * @return L'observation de l'animal, ou <code>null</code>
+     *         si aucune observation n'a encore été faite à la
+     *         position actuelle de l'animal.
      */
-    public abstract void rotate(final double angle);
+    public ParameterValue getObservation(final int index);
 
     /**
-     * Avance l'animal d'une certaine distance.
+     * Retourne la région jusqu'où s'étend la perception de cette
+     * animal. Il peut s'agir par exemple d'un cercle centré sur
+     * la position de l'animal.
      *
-     * @param distance Distance à avancer, en mètres.
+     * @param condition 1 si les conditions environnementales sont optimales
+     *        (eaux des plus transparentes), ou 0 si les conditions sont des
+     *        plus mauvaises (eaux complètement brouillées).
      */
-    public abstract void move(final double distance);
-
-    /**
-     * Avance l'animal d'une certaine distance dans la direction du point
-     * spécifié. Cet animal peut ne pas atteindre le point si la distance
-     * est trop courte. Si la distance est trop longue, alors l'animal
-     * s'arrêtera à la position du point spécifié. La direction de l'animal
-     * sera modifiée de façon à correspondre à la direction vers le nouveau
-     * point.
-     *
-     * @param distance Distance à parcourir, en mètres. Une valeur négative
-     *                 fera fuir l'animal.
-     * @param point    Point vers lequel avancer, en mètres. Un point identique
-     *                 à <code>this</code> ne fera pas bouger l'animal, quelle
-     *                 que soit la valeur de <code>distance</code>.
-     * @return <code>true</code> si l'animal a atteint le point spécifié, ou
-     *         <code>false</code> s'il s'est déplacé en direction de ce point
-     *         sans l'atteindre.
-     */
-    public boolean moveToward(final double distance, final Point2D point);
+    public Shape getPerceptionArea(final double condition);
 
     /**
      * Déplace l'animal en fonction de son environnement.
      */
-    public abstract void move(final Environment environment);
+    public void move(final Environment environment);
 
     /**
      * Retourne le chemin suivit par l'animal jusqu'ici.

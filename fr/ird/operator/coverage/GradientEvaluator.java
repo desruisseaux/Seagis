@@ -70,6 +70,12 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
     }
 
     /**
+     * Retourne le nom de cette opération.
+     */
+    public String getName()
+    {return "Gradient";}
+
+    /**
      * Construit un évaluateur par avec le rang spécifié. Par exemple la valeur
      * 0.8 signifie que le gradient retenu sera celui qui est supérieur à 80%
      * de tous les gradients.
@@ -166,7 +172,8 @@ public class GradientEvaluator extends AbstractEvaluator implements Evaluator
             if (index>=0)
             {
                 Arrays.sort(array);
-                result[i] = new ParameterValue(array[index] / 1000); // TODO: Unités (/km)
+                result[i] = new ParameterValue.Double(coverage, this);
+                result[i].setValue(array[index]/1000, null); // TODO: Unités (/km)
             }
         }
         return result;

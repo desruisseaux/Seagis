@@ -58,6 +58,12 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator
     {}
 
     /**
+     * Retourne le nom de cette opération.
+     */
+    public String getName()
+    {return "Average";}
+
+    /**
      * Evalue la fonction pour une zone géographique de la couverture spécifiée.
      * Cette fonction est évaluée pour chaque bande de la couverture (ou image).
      *
@@ -110,7 +116,8 @@ public class AverageEvaluator extends AbstractEvaluator implements Evaluator
         final ParameterValue[] result = new ParameterValue[sum.length];
         for (int i=0; i<result.length; i++)
         {
-            result[i] = new ParameterValue(sum[i] / count[i]);
+            result[i] = new ParameterValue.Double(coverage, this);
+            result[i].setValue(sum[i]/count[i], null);
         }
         return result;
     }

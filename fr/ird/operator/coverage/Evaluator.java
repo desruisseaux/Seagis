@@ -41,6 +41,11 @@ import org.geotools.gc.GridCoverage;
 public interface Evaluator
 {
     /**
+     * Retourne le nom de cette opération.
+     */
+    public abstract String getName();
+
+    /**
      * Evalue la fonction dans une région géographique spécifiée.
      * Cette fonction est évaluée pour chaque bande de la couverture (ou image).
      *
