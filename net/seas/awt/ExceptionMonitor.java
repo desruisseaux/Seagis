@@ -76,6 +76,7 @@ import java.util.ArrayList;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
 import net.seas.resources.Resources;
+import net.seas.util.Version;
 import net.seas.util.XClass;
 
 
@@ -173,18 +174,25 @@ public final class ExceptionMonitor
      */
     public static void unexpectedException(final String paquet, final String classe, final String méthode, final Throwable error)
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(error));
-        final String message = error.getLocalizedMessage();
-        if (message!=null)
+        if (Version.MINOR>=4)
         {
-            buffer.append(": ");
-            buffer.append(message);
+            final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(error));
+            final String message = error.getLocalizedMessage();
+            if (message!=null)
+            {
+                buffer.append(": ");
+                buffer.append(message);
+            }
+            final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
+            record.setSourceClassName (classe );
+            record.setSourceMethodName(méthode);
+            record.setThrown          (error);
+            Logger.getLogger(paquet).log(record);
         }
-        final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
-        record.setSourceClassName (classe );
-        record.setSourceMethodName(méthode);
-        record.setThrown          (error);
-        Logger.getLogger(paquet).log(record);
+        else
+        {
+            error.printStackTrace();
+        }
     }
 
     /**

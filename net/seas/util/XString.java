@@ -96,7 +96,7 @@ public final class XString
      * séparateur de ligne. La largeur retournée sera la longueur de la ligne la plus
      * longue.
      */
-    public static Dimension getSize(final CharSequence text)
+    public static Dimension getSize(final /*CharSequence*/String text) // CharSequence: J2SE 1.4
     {
         final int length = text.length();
         int height = 0;

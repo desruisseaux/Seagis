@@ -1,27 +1,24 @@
 /*
- * Map and oceanographical data visualisation
- * Copyright (C) 1999 Pêches et Océans Canada
- *
+ * OpenGIS implementation in Java
  *
  *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Library General Public
+ *    modify it under the terms of the GNU Lesser General Public
  *    License as published by the Free Software Foundation; either
- *    version 2 of the License, or (at your option) any later version.
+ *    version 2.1 of the License, or (at your option) any later version.
  *
  *    This library is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Library General Public License for more details (http://www.gnu.org/).
+ *    Lesser General Public License for more details.
  *
+ * Contacts:
+ *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
+ *             Institut de Recherche pour le Développement
+ *             mailto:seasnet@teledetection.fr
  *
- * Contact: Observatoire du Saint-Laurent
- *          Institut Maurice Lamontagne
- *          850 de la Mer, C.P. 1000
- *          Mont-Joli (Québec)
- *          G5H 3Z4
- *          Canada
- *
- *          mailto:osl@osl.gc.ca
+ *     CANADA: Observatoire du Saint-Laurent
+ *             Institut Maurice-Lamontagne
+ *             mailto:osl@osl.gc.ca
  */
 package net.seas.map.array;
 
@@ -39,9 +36,8 @@ class SubArray extends DefaultArray
 {
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
-     * TODO: serialver
      */
-    // private static final long serialVersionUID = -903700333079078644L;
+    private static final long serialVersionUID = -3842844962545938251L;
 
     /**
      * Plage des données valides

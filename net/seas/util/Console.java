@@ -73,7 +73,7 @@ public class Console
         this.locale     = getLocale(getParameter("-locale"));
         String encoding = getParameter("-encoding");
         boolean prefEnc = false;
-        if (encoding==null)
+        if (Version.MINOR>=4 && encoding==null)
         {
             encoding = Preferences.userRoot().node("net/seas/util").get("Console encoding", null);
             prefEnc  = true;
@@ -81,16 +81,21 @@ public class Console
         if (encoding!=null) try
         {
             out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
-            if (!prefEnc)
+            if (Version.MINOR>=4 && !prefEnc)
             {
                 Preferences.userRoot().node("net/seas/util").put("Console encoding", encoding);
             }
         }
         catch (UnsupportedEncodingException exception)
         {
-            UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
-            e.initCause(exception);
-            throw e;
+            if (Version.MINOR>=4)
+            {
+                UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
+                e.initCause(exception);
+                throw e;
+            }
+            else throw new IllegalArgumentException(exception.getLocalizedMessage());
+            // IllegalArgumentException is the first 1.2 parent of UnsupportedCharsetException
         }
         else
         {

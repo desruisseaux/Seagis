@@ -1,27 +1,24 @@
 /*
- * Map and oceanographical data visualisation
- * Copyright (C) 1999 Pêches et Océans Canada
- *
+ * OpenGIS implementation in Java
  *
  *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Library General Public
+ *    modify it under the terms of the GNU Lesser General Public
  *    License as published by the Free Software Foundation; either
- *    version 2 of the License, or (at your option) any later version.
+ *    version 2.1 of the License, or (at your option) any later version.
  *
  *    This library is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Library General Public License for more details (http://www.gnu.org/).
+ *    Lesser General Public License for more details.
  *
+ * Contacts:
+ *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
+ *             Institut de Recherche pour le Développement
+ *             mailto:seasnet@teledetection.fr
  *
- * Contact: Observatoire du Saint-Laurent
- *          Institut Maurice Lamontagne
- *          850 de la Mer, C.P. 1000
- *          Mont-Joli (Québec)
- *          G5H 3Z4
- *          Canada
- *
- *          mailto:osl@osl.gc.ca
+ *     CANADA: Observatoire du Saint-Laurent
+ *             Institut Maurice-Lamontagne
+ *             mailto:osl@osl.gc.ca
  */
 package net.seas.map.array;
 
@@ -42,9 +39,10 @@ import net.seas.resources.Resources;
  * <strong>Note sur le vocabulaire employé:</strong> Dans la documentation de cette classe,
  * le terme <em>point</em> se réfère à une paire de coordonnées (<var>x</var>,<var>y</var>)
  * tandis que le terme  <em>coordonnée</em>  se réfère à une seule valeur  <var>x</var> ou
- * <var>y</var>. Pour un point situé à l'index <code>i</code>, les coordonnées <var>x</var>
- * et <var>y</var> correspondantes se trouvent aux index <code>2*i</code> et <code>2*i+1</code>
- * respectivement.
+ * <var>y</var>  (en français, "ordonnée" est plutôt utilisé pour la coordonnée le long de
+ * l'axe des <var>y</var>, la coordonnée le long de l'axe des <var>x</var> étant l'abscisse).
+ * Pour un point situé à l'index <code>i</code>, les coordonnées <var>x</var> et <var>y</var>
+ * correspondantes se trouvent aux index <code>2*i</code> et <code>2*i+1</code> respectivement.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -53,9 +51,8 @@ public abstract class PointArray implements Serializable
 {
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
-     * TODO: serialver
      */
-    // private static final long serialVersionUID = -903700333079078644L;
+    private static final long serialVersionUID = -6429742610064152280L;
 
     /**
      * Retourne un tableau de points enveloppant le tableau de coordonnées
@@ -228,7 +225,7 @@ public abstract class PointArray implements Serializable
      *
      * @param  compress <code>true</code> si l'on souhaite aussi comprimer les
      *         données. Cette compression peut se traduire par une plus grande
-     *         lenteur lors des accès aux données.
+     *         lenteur lors des accès aux données, ainsi qu'une perte de précision.
      * @return Tableau immutable et éventuellement compressé, <code>this</code>
      *         si ce tableau répondait déjà aux conditions ou <code>null</code>
      *         si ce tableau ne contient aucune donnée.

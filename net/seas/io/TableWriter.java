@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import net.seas.util.XArray;
 import net.seas.util.XString;
+import net.seas.util.Version;
 import javax.swing.text.StyleConstants;
 
 
@@ -691,7 +692,7 @@ public class TableWriter extends FilterWriter
             {
                 nextColumn(fill);
             }
-            assert(buffer.length()==0);
+            if (Version.MINOR>=4) assert(buffer.length()==0);
             cells.add(!Character.isSpaceChar(fill) ? new Cell(null, alignment, fill) : null);
             column=0;
             row++;
@@ -713,7 +714,8 @@ public class TableWriter extends FilterWriter
             if (buffer.length()!=0)
             {
                 nextLine();
-                assert(buffer.length()==0);
+                if (Version.MINOR>=4)
+                    assert(buffer.length()==0);
             }
             flushTo(out);
             row=column=0;
@@ -827,7 +829,7 @@ public class TableWriter extends FilterWriter
                      */
                     if (currentCount==0)
                     {
-                        assert(textLength==0);
+                        if (Version.MINOR>=4) assert(textLength==0);
                         final int verticalBorder;
                         if      (cellIndex==0)           verticalBorder = -1;
                         else if (cellIndex>=cellCount-1) verticalBorder = +1;
@@ -937,9 +939,14 @@ public class TableWriter extends FilterWriter
             catch (IOException exception)
             {
                 // Should not happen
-                final AssertionError error = new AssertionError(exception.getLocalizedMessage());
-                error.initCause(exception);
-                throw error;
+                if (Version.MINOR>=4)
+                {
+                    final AssertionError error = new AssertionError(exception.getLocalizedMessage());
+                    error.initCause(exception);
+                    throw error;
+                }
+                else throw new Error(exception.getLocalizedMessage());
+                // Error is the first 1.2 parent of AssertionError.
             }
             return writer.toString();
         }

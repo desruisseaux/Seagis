@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.io.IOException;
 import java.io.FilterWriter;
 import net.seas.util.XArray;
+import net.seas.util.Version;
 
 
 /**
@@ -97,7 +98,7 @@ public class LineWriter extends FilterWriter
      */
     private void writeEOL() throws IOException
     {
-        assert(count==0);
+        if (Version.MINOR>=4) assert(count==0);
         // Do NOT call super.write(String).
         out.write(lineSeparator);
     }
@@ -123,7 +124,8 @@ public class LineWriter extends FilterWriter
      */
     private void flushBuffer() throws IOException
     {
-        assert(bufferBlank());
+        if (Version.MINOR>=4)
+            assert(bufferBlank());
         if (count!=0)
         {
             out.write(buffer, 0, count);
@@ -140,7 +142,8 @@ public class LineWriter extends FilterWriter
         while (upper!=lower)
         {
             final char c=cbuf[upper-1];
-            assert(c!='\r' && c!='\n');
+            if (Version.MINOR>=4)
+                assert(c!='\r' && c!='\n');
             if (Character.isSpaceChar(c))
             {
                 upper--;
@@ -150,7 +153,8 @@ public class LineWriter extends FilterWriter
             out.write(cbuf, lower, upper-lower);
             break;
         }
-        assert(bufferBlank());
+        if (Version.MINOR>=4)
+            assert(bufferBlank());
         count=0;
     }
 
@@ -163,7 +167,8 @@ public class LineWriter extends FilterWriter
         while (upper!=lower)
         {
             final char c=str.charAt(upper-1);
-            assert(c!='\r' && c!='\n');
+            if (Version.MINOR>=4)
+                assert(c!='\r' && c!='\n');
             if (Character.isSpaceChar(c))
             {
                 upper--;
@@ -173,7 +178,8 @@ public class LineWriter extends FilterWriter
             out.write(str, lower, upper-lower);
             break;
         }
-        assert(bufferBlank());
+        if (Version.MINOR>=4)
+            assert(bufferBlank());
         count=0;
     }
 
@@ -190,7 +196,8 @@ public class LineWriter extends FilterWriter
             {
                 case '\r':
                 {
-                    assert(bufferBlank());
+                    if (Version.MINOR>=4)
+                        assert(bufferBlank());
                     count=0; // Discard whitespaces
                     writeEOL();
                     skipCR=true;
@@ -200,7 +207,8 @@ public class LineWriter extends FilterWriter
                 {
                     if (!skipCR)
                     {
-                        assert(bufferBlank());
+                        if (Version.MINOR>=4)
+                            assert(bufferBlank());
                         count=0; // Discard whitespaces
                         writeEOL();
                     }
@@ -376,7 +384,8 @@ public class LineWriter extends FilterWriter
             }
             while (--length>=0)
                 buffer[count++] = string.charAt(offset++);
-            assert(count == newCount);
+            if (Version.MINOR>=4)
+                assert(count == newCount);
         }
     }
 }

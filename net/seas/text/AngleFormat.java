@@ -1255,12 +1255,12 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
      */
     public synchronized int hashCode()
     {
-        int c=0;
+        int c=78236951;
         if (decimalSeparator)        c^= 0xFF;
-        if (prefix           !=null) c^=  prefix.hashCode();
-        if (suffix0          !=null) c^= suffix0.hashCode();
-        if (suffix1          !=null) c^= suffix1.hashCode();
-        if (suffix2          !=null) c^= suffix2.hashCode();
+        if (prefix           !=null) c^=        prefix.hashCode();
+        if (suffix0          !=null) c = c*37 + suffix0.hashCode();
+        if (suffix1          !=null) c^= c*37 + suffix1.hashCode();
+        if (suffix2          !=null) c^= c*37 + suffix2.hashCode();
         return c ^ (((((width0 << 8) ^ width1) << 8) ^ width2) << 8) ^ widthDecimal;
     }
     

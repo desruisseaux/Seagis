@@ -46,7 +46,9 @@ import java.io.CharArrayWriter;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 
+// Divers
 import net.seas.util.XClass;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 
 
@@ -197,11 +199,15 @@ public class MailProgress extends Progress
         }
         catch (MessagingException exception)
         {
-            final LogRecord warning = new LogRecord(Level.WARNING, "CATCH "+XClass.getShortClassName(exception));
-            warning.setSourceClassName(getClass().getName());
-            warning.setSourceMethodName(method);
-            warning.setThrown(exception);
-            Logger.getLogger("net.seas.awt").log(warning);
+            if (Version.MINOR>=4)
+            {
+                final LogRecord warning = new LogRecord(Level.WARNING, "CATCH "+XClass.getShortClassName(exception));
+                warning.setSourceClassName(getClass().getName());
+                warning.setSourceMethodName(method);
+                warning.setThrown(exception);
+                Logger.getLogger("net.seas.awt").log(warning);
+            }
+            else exception.printStackTrace();
         }
     }
 

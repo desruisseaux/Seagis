@@ -224,7 +224,11 @@ public final class SwingUtilities
             if (exception instanceof Error)
                 throw (Error) exception;
             // Should not happen, since {@link Runnable#run} do not allow checked exception.
-            throw new UndeclaredThrowableException(exception, exception.getLocalizedMessage());
+            if (Version.MINOR>=3)
+                throw new UndeclaredThrowableException(exception, exception.getLocalizedMessage());
+            else
+                throw new RuntimeException(exception.getLocalizedMessage());
+                // RuntimeException is the first 1.2 parent of UndeclaredThrowableException.
         }
     }
 }

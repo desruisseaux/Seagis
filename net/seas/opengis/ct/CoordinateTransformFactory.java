@@ -184,7 +184,7 @@ public class CoordinateTransformFactory
         }
 
         // Convert units (Optimized case where the conversion
-        // can be applied write into the AffineTransform).
+        // can be applied right into the AffineTransform).
         final int dimension = matrix.getSize()-1;
         for (int i=0; i<dimension; i++)
         {
@@ -239,8 +239,8 @@ public class CoordinateTransformFactory
     /**
      * Creates a transformation between two projected coordinate systems.
      * This method is automatically invoked by <code>createFromCoordinateSystems</code>. The default
-     * implementation can adjust axis order and orientation and performs units conversion if this is
-     * the only change needed. Otherwise, it performs three steps:
+     * implementation can adjust axis order and orientation. It also performs units conversion if it
+     * is the only extra change needed. Otherwise, it performs three steps:
      *
      * <ol>
      *   <li>Unproject <code>sourceCS</code>.</li>

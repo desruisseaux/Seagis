@@ -102,6 +102,7 @@ import java.awt.GridBagConstraints;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import net.seas.resources.Resources;
+import net.seas.util.Version;
 import net.seas.util.XString;
 
 
@@ -2160,12 +2161,15 @@ public abstract class ZoomPane extends JComponent
      */
     private static void verbose(final String method, final Rectangle2D area)
     {
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
-                                     new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
-                                                   new Double(area.getMinY()), new Double(area.getMaxY())});
-        record.setSourceClassName("ZoomPane");
-        record.setSourceMethodName(method);
-        logger.log(record);
+        if (Version.MINOR>=4)
+        {
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
+                                         new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
+                                                       new Double(area.getMinY()), new Double(area.getMaxY())});
+            record.setSourceClassName("ZoomPane");
+            record.setSourceMethodName(method);
+            logger.log(record);
+        }
     }
 
     /**

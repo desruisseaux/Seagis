@@ -456,13 +456,13 @@ public class Arrow2D extends RectangularShape
      */
     public int hashCode()
     {
-        final long code=Double.doubleToLongBits(height) ^
-                        Double.doubleToLongBits(length) ^
-                        Double.doubleToLongBits(  x   ) ^
-                        Double.doubleToLongBits(  y   ) ^
-                        Double.doubleToLongBits(  sx  ) ^
-                        Double.doubleToLongBits(  sy0 ) ^
-                        Double.doubleToLongBits(  sy1 );
+        final long code=Double.doubleToLongBits(height) + 37*
+                       (Double.doubleToLongBits(length) + 37*
+                       (Double.doubleToLongBits(  x   ) + 37*
+                       (Double.doubleToLongBits(  y   ) + 37*
+                       (Double.doubleToLongBits(  sx  ) + 37*
+                       (Double.doubleToLongBits(  sy0 ) + 37*
+                       (Double.doubleToLongBits(  sy1 )))))));
         return (int) code + (int) (code >>> 32);
     }
 }

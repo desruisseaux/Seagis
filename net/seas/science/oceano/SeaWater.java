@@ -22,6 +22,7 @@
  */
 package net.seas.science.oceano;
 
+
 /**
  * Sea water properties as a function of salinity, temperature and pressure.
  * Density is computed using the 1980 definition of Equation of State (EOS80).
@@ -179,7 +180,7 @@ public final class SeaWater
     /**
      * Default constructor.
      */
-        private SeaWater()
+    private SeaWater()
     {}
 
     /**

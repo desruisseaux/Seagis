@@ -195,7 +195,8 @@ public class WeakHashSet<Element>
      */
     private synchronized void remove(final WeakElement<Element> toRemove)
     {
-        assert(count == count());
+        if (Version.MINOR>=4)
+            assert(count==count());
         final int i=toRemove.index;
         // L'index 'i' peut ne pas être valide si la référence
         // 'toRemove' est un "cadavre" abandonné par 'rehash'.
@@ -217,7 +218,7 @@ public class WeakHashSet<Element>
 
                     // Il ne faut pas continuer la boucle courante,
                     // car la variable 'e' n'est plus valide.
-                    assert(count == count());
+                    if (Version.MINOR>=4) assert(count==count());
                     return;
                 }
                 prev=e;
@@ -238,7 +239,7 @@ public class WeakHashSet<Element>
     private void rehash(final boolean augmentation)
     {
         final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
-        assert(capacity>=MIN_CAPACITY);
+        if (Version.MINOR>=4) assert(capacity>=MIN_CAPACITY);
         if (augmentation ? capacity<table.length : capacity>table.length)
         {
             return;
@@ -263,11 +264,14 @@ public class WeakHashSet<Element>
                 else count--;
             }
         }
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
-        record.setSourceClassName("WeakHashSet");
-        record.setSourceMethodName(augmentation ? "intern" : "remove");
-        Logger.getLogger("net.seas.util").log(record);
-        assert(count == count());
+        if (Version.MINOR>=4)
+        {
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
+            record.setSourceClassName("WeakHashSet");
+            record.setSourceMethodName(augmentation ? "intern" : "remove");
+            Logger.getLogger("net.seas.util").log(record);
+            assert(count==count());
+        }
     }
 
     /**
@@ -323,7 +327,7 @@ public class WeakHashSet<Element>
             table[index]=new WeakElement<Element>(this, obj, table[index], index);
             count++;
         }
-        assert(count == count());
+        if (Version.MINOR>=4) assert(count==count());
         return obj;
     }
 
@@ -368,7 +372,8 @@ public class WeakHashSet<Element>
      */
     public synchronized int size()
     {
-        assert(count == count());
+        if (Version.MINOR>=4)
+            assert(count==count());
         return count;
     }
 
@@ -392,7 +397,7 @@ public class WeakHashSet<Element>
      */
     public synchronized Element[] toArray()
     {
-        assert(count==count());
+        if (Version.MINOR>=4) assert(count==count());
         final Element[] elements = new Element[count];
         int index = 0;
         for (int i=0; i<table.length; i++)

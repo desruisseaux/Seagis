@@ -37,6 +37,7 @@ import java.text.BreakIterator;
 
 // Divers
 import net.seas.util.XString;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 import java.util.prefs.Preferences;
 
@@ -171,9 +172,14 @@ public class PrintProgress extends Progress
         }
         catch (UnsupportedEncodingException exception)
         {
-            UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
-            e.initCause(exception);
-            throw e;
+            if (Version.MINOR>=4)
+            {
+                UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
+                e.initCause(exception);
+                throw e;
+            }
+            else throw new IllegalArgumentException(exception.getLocalizedMessage());
+            // IllegalArgumentException is the first 1.2 parent of UnsupportedCharsetException.
         }
     }
 

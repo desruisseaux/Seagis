@@ -2,25 +2,28 @@
 
 <HTML>
   <HEAD>
-    <TITLE>package fr.ird.map.array</TITLE>
+    <TITLE>package net.seas.map.array</TITLE>
   </HEAD>
   <BODY>
-    <P ALIGN="justify">Mémorise un tableau de coordonnées (<var>x</var>,<var>y</var>) sous
-    forme de nombres réels à simple précision. Un objet {@link fr.ird.map.array.FloatArray}
-    peut correspondre en fait à deux tableaux <code>float</code>: un pour les coordonnées
-    <var>x</var> et un pour les coordonnées <var>y</var>. Mais la façon exacte dont sont
-    représentées les données est laissée à la discretion des classes de ce paquet.
-    En particulier, certaines classes compresseront les données afin de minimiser la
-    consommation de mémoire.</P>
+    <P ALIGN="justify">Private package for storing arrays of two-dimensional
+    coordinates points as floating point numbers. <STRONG>This package is for
+    internal use only</STRONG>; it should not be used directly.</P>
 
-    <P ALIGN="justify">Bien que les classes de ce paquet imitent des tableaux
-    <code>float[]</code>, elles ne permettent pas de faire des accès aléatoires.
-    Les accès aux éléments des tableaux devront obligatoirement se faire de façon
-    séquentielle. Cette limitation est volontaire, car elle simplifie considérablement
-    l'implémentation de certains algorithmes de compression.</P>
+    <P ALIGN="justify">In its simplest form, {@link net.seas.map.array.PointArray}
+    objects just wrap <CODE>float[]</CODE> arrays containing (<var>x</var>,<var>y</var>)
+    coordinates. More sophisticated subclasses can compress data in order to store
+    big coordinate arrays with less memory. This package is designed to work with
+    vectorial map. For example, a {@link net.seas.map.array.PointArray} object may
+    be used for storing one polygon representing a land contour or an isobath. A
+    {@link net.seas.map.array.PointArray} may be compressed by invoking its
+    {@link net.seas.map.array.PointArray#getFinal} method with a <CODE>true</CODE>
+    argument. <STRONG>Note that compression is destructive</STRONG>: it will
+    result in a lost of coordinates precision. The lost is minimized if every
+    point is equally spaced.</P>
 
-    <P ALIGN="justify"><STRONG>Ce paquet est réservé à un usage interne par le
-    paquet <code>fr.ird.map</code></STRONG>; il n'a normalement pas besoin d'être
-    utilisé directement.</P>
+    <P ALIGN="justify">{@link net.seas.map.array.PointArray} has an iterator
+    allowing forward-only iteration through coordinate points. It does not
+    allow random access or backward iteration. This limitation makes it easier
+    to implements compression algorithms.</P>
   </BODY>
 </HTML>

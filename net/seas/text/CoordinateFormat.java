@@ -38,6 +38,7 @@ import net.seas.opengis.pt.CoordinatePoint;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 
 
@@ -494,7 +495,7 @@ public class CoordinateFormat extends Format
                 pos.setIndex(px);
                 pos.setErrorIndex(px);
                 ParseException e=new ParseException(exception.getLocalizedMessage(), px);
-                e.initCause(exception);
+                if (Version.MINOR>=4) e.initCause(exception);
                 throw e;
             }
         }
@@ -630,7 +631,7 @@ public class CoordinateFormat extends Format
      * value" pour cet objet.
      */
     public synchronized int hashCode()
-    {return (dimension ^ order) ^ angleFormat.hashCode();}
+    {return (dimension + 37*order)*37 + angleFormat.hashCode();}
     
     /**
      * Vérifie si ce format est égal au format <code>obj</code> spécifié.
