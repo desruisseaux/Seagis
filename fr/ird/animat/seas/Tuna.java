@@ -76,8 +76,8 @@ final class Tuna extends MobileObject implements Animal
     private static final int RECORD_LENGTH = 3;
 
     /**
-     * Les valeurs des paramètres mesurés. Chaque pas de temps peux mesurer
-     * plusieurs paramètres, et chaque paramètres contient trois éléments:
+     * Les valeurs des paramètres mesurés. Chaque pas de temps peut mesurer
+     * plusieurs paramètres, et chaque paramètre contient trois éléments:
      * la position (<var>x</var>,<var>y</var>) en coordonnées géographiques
      * ainsi que la valeur <var>value</var> du paramètre.
      */
@@ -90,9 +90,11 @@ final class Tuna extends MobileObject implements Animal
     private int validLength;
 
     /**
-     * Nombre de paramètres.
+     * Nombre de paramètres. Sa valeur sera déterminée lorsque la lecture des paramètres
+     * aura commencée. En attendant, il est initialisé à 1 pour éviter des divisions par
+     * zéro dans le reste du code (par exemple {@link #getObservationCount}.
      */
-    private static final int paramCount = 2;
+    private int paramCount = 1;
 
     /**
      * Espèce à laquelle appartient cet animal.
@@ -168,7 +170,7 @@ final class Tuna extends MobileObject implements Animal
                 final float x = parameters[pos + LONGITUDE];
                 final float y = parameters[pos +  LATITUDE];
                 final float z = parameters[pos +     VALUE];
-                final ParameterValue.Float param = new ParameterValue.Float("param #1"); // TODO
+                final ParameterValue.Float param = new ParameterValue.Float("param #"+(i+1)); // TODO
                 param.setValue(z,x,y);
                 values[i] = param;
                 pos += RECORD_LENGTH;
@@ -180,13 +182,22 @@ final class Tuna extends MobileObject implements Animal
 
     /**
      * Observe l'environnement de l'animal. Cette méthode doit être appelée
-     * avant {@link #move}, sans quoi l'animal ne sera pas comment se déplacer.
+     * avant {@link #move}, sans quoi l'animal ne saura pas comment se déplacer.
      *
      * @param environment L'environment à observer.
      */
     public void observe(final Environment environment)
     {
         final ParameterValue[] perceptions = environment.getParameters(this);
+        if (validLength == 0)
+        {
+            paramCount = perceptions.length;
+        }
+        else if (paramCount != perceptions.length)
+        {
+            throw new IllegalStateException("Attendait "+paramCount+" paramètres, "+
+                                            "mais en a trouvés "+perceptions.length);
+        }
         final int requiredLength = getPointCount()*(paramCount*RECORD_LENGTH);
         if (requiredLength > parameters.length)
         {

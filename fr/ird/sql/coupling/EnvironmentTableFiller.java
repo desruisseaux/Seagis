@@ -96,7 +96,7 @@ public final class EnvironmentTableFiller
      * Jours où extraire des données, avant,
      * pendant et après le jour de la pêche.
      */
-    private static final int[] DAYS_TO_EVALUATE = {-15, -10, -5, 0, 5};
+    private static final int[] DAYS_TO_EVALUATE = {-30, -25, -20, /*-15, -10, -5, 0, 5*/};
 
     /**
      * Séries de données à utiliser pour le remplissage des colonnes.
@@ -107,15 +107,15 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
-        {"SST (synthèse)",                    "SST"},
+//        {"SST (synthèse)",                    "SST"},
         {"Chlorophylle-a (Réunion)",          "CHL"},
         {"Pompage d'Ekman",                   "EKP"},
         {"SLA (Réunion - NRT)",               "SLA", "U", "V"},
         {"SLA (Réunion)",                     "SLA", "U", "V"},
         {"SLA (Monde - TP)",                  "SLA"},
         {"SLA (Monde - TP/ERS)",              "SLA"},
-        {"Bathymétrie de Sandwell (Réunion)", "FLR"},
-        {"Bathymétrie de Baudry (Réunion)",   "FLR"}
+//        {"Bathymétrie de Sandwell (Réunion)", "FLR"},
+//        {"Bathymétrie de Baudry (Réunion)",   "FLR"}
     };
 
     /**

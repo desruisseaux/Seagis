@@ -176,7 +176,7 @@ final class CategoryTable extends Table
                     {
                         final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
                         param.setParameter("Dimension", 1);
-                        param.setParameter("Base", 10);
+                        param.setParameter("Base", 10.0); // Must be a 'double'
                         exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
                     }
                     MathTransform1D tr = category.getSampleToGeophysics();
