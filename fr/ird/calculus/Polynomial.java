@@ -74,6 +74,13 @@ public final class Polynomial extends Element {
     }
 
     /**
+     * Returns the monomials at the given index.
+     */
+    final Polynomial getMonomial(final int index) {
+        return new Polynomial(monomials[index]);
+    }
+
+    /**
      * Add the given polynomial to this one.
      *
      * @param  term The polynomial to add to this one.
@@ -120,7 +127,7 @@ public final class Polynomial extends Element {
     /**
      * Multiply this polynomial by the given one.
      *
-     * @param  term The polynomial to multiply by this one.
+     * @param  term The polynomial to multiply to this one.
      * @return The result of the multiplication.
      */
     public Polynomial multiply(final Polynomial term) {
@@ -136,20 +143,35 @@ public final class Polynomial extends Element {
     }
 
     /**
+     * Multiply this polynomial by the given one.
+     * Note: current implementation work only if the divider is a monomial.
+     *
+     * @param  term The divider.
+     * @return The result of the division.
+     */
+    public Polynomial divide(final Polynomial divider) {
+        return multiply(divider.simplify().power(-1));
+    }
+
+    /**
      * Raise this polynomial to a power.
      *
      * @param  power The power.
      * @return The polynomial raised to the given power.
      */
     public Polynomial power(int power) {
+        switch (monomials.length) {
+            case 0: return this;
+            case 1: return new Polynomial(monomials[0].power(power));
+        }
         if (power >= 1) {
             Polynomial p = this;
             while (--power != 0) {
-                p = p.multiply(p);
+                p = multiply(p);
             }
             return p;
         }
-        throw new UnsupportedOperationException();
+        throw new ArithmeticException("Not yet implemented");
     }
 
     /**
@@ -199,6 +221,64 @@ public final class Polynomial extends Element {
         }
         simplified = XArray.resize(simplified, length);
         return new Polynomial(simplified);
+    }
+
+    /**
+     * Factorize the given variable. The given variable will be removed from
+     * this polynomial and the result stored elements of the returned array,
+     * at an index equals to the variable power. For example if the variable
+     * <var>x</var> is factorized in <code>4 + 2xy² + 3x²y</code>, then the
+     * returned array will contains:
+     * <pre>
+     *   [0]  =  4
+     *   [1]  =  2y²
+     *   [2]  =  3y
+     * </pre>
+     */
+    public Polynomial[] factor(final Variable variable) {
+        Polynomial[] polynoms = new Polynomial[4];
+        for (int i=0; i<monomials.length; i++) {
+            final Monomial[] factors = monomials[i].factor(variable);
+            if (factors.length > polynoms.length) {
+                polynoms = XArray.resize(polynoms, factors.length);
+            }
+            for (int p=0; p<factors.length; p++) {
+                final Monomial m = factors[p];
+                if (m != null) {
+                    final Polynomial pm = new Polynomial(m);
+                    if (polynoms[p] == null) {
+                        polynoms[p] = pm;
+                    } else {
+                        polynoms[p] = polynoms[p].add(pm);
+                    }
+                }
+            }
+        }
+        int length = polynoms.length;
+        while (length != 0) {
+            if (polynoms[length-1] != null) {
+                break;
+            }
+            length--;
+        }
+        polynoms = XArray.resize(polynoms, length);
+        return polynoms;
+    }
+
+    /**
+     * Substitute the specified variable by the given polynomial.
+     */
+    public Polynomial substitute(final Variable variable, final Polynomial polynomial) {
+        final Polynomial[] parts = factor(variable);
+        Polynomial subst  = polynomial;
+        Polynomial result = parts[0];
+        for (int i=1; i<parts.length; i++) {
+            if (i != 1) {
+                subst = subst.multiply(polynomial);
+            }
+            result = result.add(parts[i].multiply(subst));
+        }
+        return result;
     }
 
     /**

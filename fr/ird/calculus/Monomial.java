@@ -48,6 +48,7 @@ final class Monomial extends Element {
 
     /**
      * Creates a new monomial with the given coefficient.
+     * Example: <code>6</code>.
      *
      * @param The coefficient.
      */
@@ -57,6 +58,7 @@ final class Monomial extends Element {
     
     /**
      * Creates a new monomial with a coefficient of 1.
+     * Example: <code>xy²</code>.
      *
      * @param The factors. Must be non-null.
      */
@@ -66,6 +68,7 @@ final class Monomial extends Element {
 
     /**
      * Creates a new monomial.
+     * Example: <code>6xy²</code>.
      *
      * @param The coefficient.
      * @param The factors. Must be non-null.
@@ -79,6 +82,7 @@ final class Monomial extends Element {
 
     /**
      * Multiply this monomial by a constant.
+     * Example: <code>6&times;3xy² = 18xy²</code>.
      *
      * @param  constant The constant to multiply by.
      * @return The result of the multiplication.
@@ -92,6 +96,8 @@ final class Monomial extends Element {
 
     /**
      * Multiply this monomial by the given one.
+     * Example: <code>3x&times;2yx² = 6xyx² = 6x³y</code>.
+     * The later simplification is performed only if {@link #simplify} is invoked.
      *
      * @param  term The monomial to multiply by this one.
      * @return The result of the multiplication.
@@ -105,6 +111,7 @@ final class Monomial extends Element {
 
     /**
      * Raise this monomial to a power.
+     * Example: <code>(2y)² = 4y²</code>.
      *
      * @param  power The power.
      * @return The monomial raised to the given power.
@@ -121,8 +128,8 @@ final class Monomial extends Element {
     }
 
     /**
-     * Returns the partial derivative, or <code>null</code> if the result
-     * is zero.
+     * Returns the partial derivative, or <code>null</code> if the result is zero.
+     * Example: <code>d/dx 2yx² = 4yx</code>.
      */
     public Monomial derivate(final Variable variable) {
         int power =  0;
@@ -142,7 +149,8 @@ final class Monomial extends Element {
     }
 
     /**
-     * Simplify this monomial.
+     * Simplify this monomial. Each {@linkplain Variable variable} will
+     * appears only once with its associated power.
      *
      * @return The simplified monomial.
      */
@@ -161,7 +169,7 @@ final class Monomial extends Element {
                 }
             }
         }
-        simplified = XArray.resize(simplified, length);
+        simplified = resize(simplified, length);
         final Monomial m;
         if (Arrays.equals(factors, simplified)) {
             m = this;
@@ -193,6 +201,47 @@ final class Monomial extends Element {
             }
         }
         return checkNullElements(f1, true) && checkNullElements(f2, true);
+    }
+
+    /**
+     * Factorize the given variable. The given variable will be removed from
+     * this monomial and the result stored in <em>one</em> element of the
+     * returned array, at an index equals to the variable power. For example
+     * if the variable <var>x</var> is factorized in <code>3x²y</code>, then
+     * the monomial <code>3y</code> will be stored at index 2 in the returned
+     * array, All others elements will be <code>null</code>.
+     */
+    public Monomial[] factor(final Variable variable) {
+        int power = 0;
+        int length = 0;
+        Factor[] rest = new Factor[factors.length];
+        for (int i=0; i<factors.length; i++) {
+            final Factor f = factors[i];
+            if (variable.equals(f.variable)) {
+                power += f.power;
+            } else {
+                rest[length++] = f;
+            }
+        }
+        rest = resize(rest, length);
+        if (power >= 0) {
+            final Monomial[] m = new Monomial[power+1];
+            if (length == factors.length) {
+                assert Arrays.equals(rest, factors);
+                m[power] = this;
+            } else {
+                m[power] = new Monomial(coefficient, rest);
+            }
+            return m;
+        }
+        throw new ArithmeticException("Not yet implemented");
+    }
+
+    /**
+     * Resize the specified array to the given length.
+     */
+    private static Factor[] resize(final Factor[] factors, final int length) {
+        return (length!=0) ? XArray.resize(factors, length) : EMPTY_ARRAY;
     }
 
     /**

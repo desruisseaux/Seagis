@@ -48,7 +48,7 @@ final class Factor extends Element {
      * Raise this factor to a power.
      */
     public Factor power(final int p) {
-        if (power == 1) {
+        if (p == 1) {
             return this;
         }
         return new Factor(variable, power * p);
