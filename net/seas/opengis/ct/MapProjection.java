@@ -737,6 +737,8 @@ abstract class MapProjection extends CoordinateTransform
      */
     public boolean equals(final Object object)
     {
+        // Do not check 'object==this' here, since this
+        // optimization is usually done in subclasses.
         if (super.equals(object))
         {
             final MapProjection that = (MapProjection) object;

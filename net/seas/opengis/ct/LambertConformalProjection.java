@@ -243,6 +243,7 @@ final class LambertConformalProjection extends ConicProjection
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true; // Slight optimization
         if (super.equals(object))
         {
             final LambertConformalProjection that = (LambertConformalProjection) object;

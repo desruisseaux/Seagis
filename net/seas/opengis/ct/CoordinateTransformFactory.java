@@ -97,7 +97,7 @@ public class CoordinateTransformFactory
                 return ct;
             }
         }
-        return new CoordinateTransformProxy(transform, type, sourceCS, targetCS);
+        return (CoordinateTransform) MathTransformFactory.pool.intern(new CoordinateTransformProxy(transform, type, sourceCS, targetCS));
     }
 
     /**

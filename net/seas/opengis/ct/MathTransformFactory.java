@@ -30,6 +30,7 @@ import org.opengis.ct.CT_MathTransformFactory;
 
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.pt.Matrix;
+import net.seas.opengis.cs.Ellipsoid;
 import net.seas.opengis.cs.Projection;
 
 // Miscellaneous
@@ -46,8 +47,8 @@ import java.rmi.server.RemoteObject;
 
 // Miscellaneous
 import net.seas.util.XArray;
+import net.seas.util.WeakHashSet;
 import net.seas.resources.Resources;
-import net.seas.opengis.cs.Ellipsoid;
 
 
 /**
@@ -110,6 +111,12 @@ public class MathTransformFactory
     });
 
     /**
+     * A pool of math transform. This pool is used in order to
+     * returns instance of existing math transforms when possible.
+     */
+    static final WeakHashSet<MathTransform> pool = new WeakHashSet<MathTransform>();
+
+    /**
      * List of registered math transforms.
      */
     private final MathTransformProvider[] providers;
@@ -127,7 +134,7 @@ public class MathTransformFactory
      * @return The affine transform.
      */
     public MathTransform createAffineTransform(final AffineTransform matrix)
-    {return new AffineTransform2D(matrix);}
+    {return pool.intern(new AffineTransform2D(matrix));}
 
     /**
      * Creates an affine transform from a matrix.
@@ -150,7 +157,7 @@ public class MathTransformFactory
         /*
          * General case (slower).
          */
-        return new MatrixTransform(matrix);
+        return pool.intern(new MatrixTransform(matrix));
     }
 
     /**
@@ -168,7 +175,7 @@ public class MathTransformFactory
      * @see org.opengis.ct.CT_MathTransformFactory#createConcatenatedTransform
      */
     public MathTransform createConcatenatedTransform(final MathTransform transform1, final MathTransform transform2)
-    {return transform1.concatenate(transform2);}
+    {return pool.intern(transform1.concatenate(transform2));}
 
     /**
      * Creates a transform from a classification name and parameters.
@@ -188,7 +195,7 @@ public class MathTransformFactory
      * @see org.opengis.ct.CT_MathTransformFactory#createParameterizedTransform
      */
     public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
-    {return getProvider(classification).create(parameters);}
+    {return pool.intern(getProvider(classification).create(parameters));}
 
     /**
      * Convenience method for creating a transform from a projection.

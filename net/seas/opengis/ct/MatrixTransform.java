@@ -104,6 +104,7 @@ final class MatrixTransform extends MathTransform implements Serializable
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true; // Slight optimization
         if (super.equals(object))
         {
             final MatrixTransform that = (MatrixTransform) object;

@@ -520,7 +520,11 @@ public abstract class MathTransform extends Info
      * this math transform for equality.
      */
     public boolean equals(final Object object)
-    {return (object!=null && getClass().equals(object.getClass()));}
+    {
+        // Do not check 'object==this' here, since this
+        // optimization is usually done in subclasses.
+        return (object!=null && getClass().equals(object.getClass()));
+    }
 
     /**
      * Returns a string représentation of this transform.

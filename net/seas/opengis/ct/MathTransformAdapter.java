@@ -181,5 +181,12 @@ final class MathTransformAdapter extends MathTransform implements Serializable
      * this math transform for equality.
      */
     public boolean equals(final Object object)
-    {return super.equals(object) && XClass.equals(((MathTransformAdapter) object).transform, transform);}
+    {
+        if (object==this) return true; // Slight optimization
+        if (super.equals(object))
+        {
+            return XClass.equals(((MathTransformAdapter) object).transform, transform);
+        }
+        return false;
+    }
 }

@@ -441,6 +441,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true; // Slight optimization
         if (super.equals(object))
         {
             final TransverseMercatorProjection that = (TransverseMercatorProjection) object;

@@ -132,6 +132,7 @@ final class AffineTransform2D extends MathTransform implements Serializable
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true; // Slight optimization
         if (super.equals(object))
         {
             final AffineTransform2D that = (AffineTransform2D) object;

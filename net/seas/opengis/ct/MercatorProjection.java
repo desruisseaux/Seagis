@@ -198,6 +198,7 @@ final class MercatorProjection extends CylindricalProjection
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true; // Slight optimization
         if (super.equals(object))
         {
             final MercatorProjection that = (MercatorProjection) object;

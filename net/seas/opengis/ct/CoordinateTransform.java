@@ -201,7 +201,7 @@ public abstract class CoordinateTransform extends MathTransform
          */
         public final boolean equals(final Object object)
         {
-            if (object==this) return true;
+            if (object==this) return true; // Slight optimization
             if (object instanceof AbstractInverse)
             {
                 final AbstractInverse that = (AbstractInverse) object;
@@ -230,6 +230,8 @@ public abstract class CoordinateTransform extends MathTransform
      */
     public boolean equals(final Object object)
     {
+        // Do not check 'object==this' here, since this
+        // optimization is usually done in subclasses.
         if (super.equals(object))
         {
             final CoordinateTransform that = (CoordinateTransform) object;
