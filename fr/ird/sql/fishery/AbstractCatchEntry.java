@@ -51,8 +51,7 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
-{
+abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry {
     /**
      * Objet à utiliser par défaut pour les écritures des dates.
      */
@@ -90,8 +89,7 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      *        <strong>Ce tableau ne sera pas cloné</strong>.
      *        Evitez donc de le modifier après la construction.
      */
-    protected AbstractCatchEntry(final int ID, final Species[] species)
-    {
+    protected AbstractCatchEntry(final int ID, final Species[] species) {
         super(species);
         this.ID     = ID;
         this.amount = new float[species.length];
@@ -104,8 +102,9 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      * des senneurs  qui  peuvent combiner le numéro de la marée avec un
      * numéro de la capture dans cette marée).
      */
-    public int getID()
-    {return ID;}
+    public int getID() {
+        return ID;
+    }
 
     /**
      * Retourne un nom par défaut pour cette entrée. L'implémentation par défaut
@@ -113,27 +112,26 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      * cette méthode pour retourner par exemple le numéro de marée suivit du
      * numéro de la capture dans cette marée.
      */
-    public String getName()
-    {return String.valueOf(ID);}
+    public String getName() {
+        return String.valueOf(ID);
+    }
 
     /**
      * Retourne toujours <code>null</code>.
      */
-    public String getRemarks()
-    {return null;}
+    public String getRemarks() {
+        return null;
+    }
 
     /**
      * Retourne l'espèce la plus pêchée dans cette capture. Si aucune espèce
      * n'a été capturée, alors cette méthode retourne <code>null</code>.
      */
-    public Species getDominantSpecies()
-    {
+    public Species getDominantSpecies() {
         Species dominant = null;
         float max=Float.NEGATIVE_INFINITY;
-        for (int i=amount.length; --i>=0;)
-        {
-            if (amount[i] >= max)
-            {
+        for (int i=amount.length; --i>=0;) {
+            if (amount[i] >= max) {
                 max = amount[i];
                 dominant = species[i];
             }
@@ -146,24 +144,26 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      * que {@link #getCatch(Species)} retourne une valeur différente de
      * zéro pour chacune de ces espèces.
      */
-    public final Set<Species> getSpecies()
-    {return this;}
+    public final Set<Species> getSpecies() {
+        return this;
+    }
 
     /**
      * Retourne la quantité de poissons pêchés pour une espèce donnée.
      */
-    public final float getCatch(final Species species)
-    {
+    public final float getCatch(final Species species) {
         // Fast check (slight optimization)
         final Species[] array=this.species;
         if (++last == array.length) last=0;
-        if (array[last]==species)
+        if (array[last]==species) {
             return amount[last];
-
+        }
         // Normal (slower) check.
-        for (int i=0; i<array.length; i++)
-            if (array[i].equals(species))
+        for (int i=0; i<array.length; i++) {
+            if (array[i].equals(species)) {
                 return amount[last=i];
+            }
+        }
         return 0;
     }
 
@@ -173,11 +173,11 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      * <code>{@link #getCatch getCatch}(i)</code> où <var>i</var> varie de 0
      * inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code> exclusivement.
      */
-    public final float getCatch()
-    {
+    public final float getCatch() {
         double total=0;
-        for (int i=amount.length; --i>=0;)
+        for (int i=amount.length; --i>=0;) {
             total += amount[i];
+        }
         return (float) total;
     }
 
@@ -188,21 +188,22 @@ abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
      * {@link EnvironmentTable#END_POINT} en fonction de la
      * coordonnée disponible.
      */
-    int clampPosition(final int pos)
-    {return pos;}
+    int clampPosition(final int pos) {
+        return pos;
+    }
 
     /**
      * Retourne un code représentant cette capture.
      */
-    public final int hashCode()
-    {return ID;}
+    public final int hashCode() {
+        return ID;
+    }
 
     /**
      * Retourne une chaîne de caractères
      * représentant cette capture.
      */
-    public String toString()
-    {
+    public String toString() {
         if (dateFormat ==null)  dateFormat=DateFormat.getDateInstance();
         if (angleFormat==null) angleFormat=new AngleFormat();
         final FieldPosition dummy = new FieldPosition(0);

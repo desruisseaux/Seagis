@@ -51,7 +51,6 @@ import org.geotools.gui.swing.LoggingPanel;
 // Base de données SEAS
 import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
-import fr.ird.sql.fishery.EnvironmentTable;
 
 // Divers
 import fr.ird.awt.KernelEditor;

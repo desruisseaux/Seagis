@@ -52,8 +52,7 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class LonglineCatchEntry extends AbstractCatchEntry
-{
+final class LonglineCatchEntry extends AbstractCatchEntry {
     /**
      * Date et heure de la capture, en nombre de
      * millisecondes écoulées depuis le 1 janvier 1970.
@@ -79,8 +78,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * @param  result Résultat de la requête SQL.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public LonglineCatchEntry(final LonglineCatchTable table, final ResultSet result) throws SQLException
-    {
+    public LonglineCatchEntry(final LonglineCatchTable table, final ResultSet result) throws SQLException {
         super(result.getInt(LonglineCatchTable.ID), table.species.species);
         final float efu;
 
@@ -91,8 +89,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
         y2   = getFloat(result,   LonglineCatchTable.END_LATITUDE   );
         efu  = getFloat(result,   LonglineCatchTable.EFFORT_UNIT    )/1000;
 
-        for (int i=0; i<amount.length; i++)
-        {
+        for (int i=0; i<amount.length; i++) {
             amount[i] = getFloat(result, LonglineCatchTable.CATCH_AMOUNT + i)/efu;
         }
     }
@@ -101,8 +98,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * Retourne le nombre réel de la colonne spécifié, ou
      * <code>NaN</code> si ce nombre réel n'est pas spécifié.
      */
-    private static float getFloat(final ResultSet result, final int column) throws SQLException
-    {
+    private static float getFloat(final ResultSet result, final int column) throws SQLException {
         final float value = result.getFloat(column);
         return result.wasNull() ? Float.NaN : value;
     }
@@ -114,17 +110,14 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * {@link EnvironmentTable#END_POINT} en fonction de la
      * coordonnée disponible.
      */
-    final int clampPosition(final int pos)
-    {
-        if (pos<EnvironmentTable.START_POINT || pos>EnvironmentTable.END_POINT)
-        {
+    final int clampPosition(final int pos) {
+        if (pos<EnvironmentTable.START_POINT || pos>EnvironmentTable.END_POINT) {
             return pos;
         }
         int missing = 0;
         if (Float.isNaN(x1) || Float.isNaN(y1)) missing |= 1;
         if (Float.isNaN(x2) || Float.isNaN(y2)) missing |= 2;
-        switch (missing)
-        {
+        switch (missing) {
             case 0:  return pos;
             case 1:  return EnvironmentTable.END_POINT;
             case 2:  return EnvironmentTable.START_POINT;
@@ -138,8 +131,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * est NaN, l'autre sera retourné. Si les deux nombres sont NaN, alors NaN
      * sera retourné.
      */
-    private static float mean(final float x1, final float x2)
-    {
+    private static float mean(final float x1, final float x2) {
         if (Float.isNaN(x1)) return x2;
         if (Float.isNaN(x2)) return x1;
         return (x1+x2)*0.5f;
@@ -149,19 +141,22 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * Retourne une coordonnée représentative de la
      * capture, en degrés de longitude et latitude.
      */
-    public Point2D getCoordinate()
-    {return new Point2D.Float(mean(x1,x2), mean(y1,y2));}
+    public Point2D getCoordinate() {
+        return new Point2D.Float(mean(x1,x2), mean(y1,y2));
+    }
 
     /**
      * Retourne une forme représentant le filage. Si les informations
      * disponibles ne permettent pas de connaître le filage, retourne
      * <code>null</code>.
      */
-    public Shape getShape()
-    {
+    public Shape getShape() {
         if (Float.isNaN(x1) || Float.isNaN(x2) ||
             Float.isNaN(y1) || Float.isNaN(y2) ||
-            (x1==x2 && y1==y2)) return null;
+            (x1==x2 && y1==y2))
+        {
+            return null;
+        }
         return new Line2D.Float(x1,y1, x2,y2);
     }
 
@@ -170,8 +165,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * Cette méthode suppose que la palangre a été mouillée en
      * ligne droite.
      */
-    public boolean intersects(final Rectangle2D rect)
-    {
+    public boolean intersects(final Rectangle2D rect) {
         if (Float.isNaN(x1) || Float.isNaN(y1)) return rect.contains(x2, y2);
         if (Float.isNaN(x2) || Float.isNaN(y2)) return rect.contains(x1, y1);
         return rect.intersectsLine(x1, y1, x2, y2);
@@ -182,15 +176,15 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      * qui s'étendent sur une certaine période de temps, ça pourrait être par
      * exemple la date du milieu.
      */
-    public Date getTime()
-    {return new Date(date);}
+    public Date getTime() {
+        return new Date(date);
+    }
 
     /**
      * Retourne la plage de temps pendant laquelle a été faite la capture.
      * Les éléments de la plage retournée seront du type {@link Date}.
      */
-    public Range getTimeRange()
-    {
+    public Range getTimeRange() {
         final Date date = new Date(this.date);
         return new Range(Date.class, date, date);
     }
@@ -198,17 +192,16 @@ final class LonglineCatchEntry extends AbstractCatchEntry
     /**
      * Retourne les unités des captures.
      */
-    public Unit getUnit()
-    {return null;} // TODO: dimensionless
+    public Unit getUnit() {
+        return null; // TODO: dimensionless
+    }
 
     /**
      * Vérifie si cette capture est
      * identique à l'objet spécifié.
      */
-    public boolean equals(final Object other)
-    {
-        if (other instanceof LonglineCatchEntry)
-        {
+    public boolean equals(final Object other) {
+        if (other instanceof LonglineCatchEntry) {
             final LonglineCatchEntry that = (LonglineCatchEntry) other;
             return this.ID   == that.ID   &&
                    this.date == that.date &&
@@ -217,6 +210,6 @@ final class LonglineCatchEntry extends AbstractCatchEntry
                    Float.floatToIntBits(this.x2) == Float.floatToIntBits(that.x2) &&
                    Float.floatToIntBits(this.y2) == Float.floatToIntBits(that.y2);
         }
-        else return false;
+        return false;
     }
 }

@@ -52,8 +52,7 @@ import fr.ird.animat.Species;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SeineCatchEntry extends AbstractCatchEntry
-{
+final class SeineCatchEntry extends AbstractCatchEntry {
     /**
      * Tableau vide d'espèces (utilisée lorsqu'il n'y a eu aucune calée).
      */
@@ -82,8 +81,7 @@ final class SeineCatchEntry extends AbstractCatchEntry
      * @param  result Résultat de la requête SQL.
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    public SeineCatchEntry(final SeineCatchTable table, final ResultSet result) throws SQLException
-    {
+    public SeineCatchEntry(final SeineCatchTable table, final ResultSet result) throws SQLException {
         super(result.getInt(SeineCatchTable.ID),
               result.getInt(SeineCatchTable.CALEES)!=0 ? table.species.species : EMPTY);
 
@@ -91,8 +89,7 @@ final class SeineCatchEntry extends AbstractCatchEntry
         x    = getFloat(result,   SeineCatchTable.LONGITUDE);
         y    = getFloat(result,   SeineCatchTable.LATITUDE );
 
-        for (int i=0; i<amount.length; i++)
-        {
+        for (int i=0; i<amount.length; i++) {
             amount[i] = getFloat(result, SeineCatchTable.CATCH_AMOUNT + i);
         }
     }
@@ -101,8 +98,7 @@ final class SeineCatchEntry extends AbstractCatchEntry
      * Retourne le nombre réel de la colonne spécifié, ou
      * <code>NaN</code> si ce nombre réel n'est pas spécifié.
      */
-    private static float getFloat(final ResultSet result, final int column) throws SQLException
-    {
+    private static float getFloat(final ResultSet result, final int column) throws SQLException {
         final float value = result.getFloat(column);
         return result.wasNull() ? Float.NaN : value;
     }
@@ -112,10 +108,8 @@ final class SeineCatchEntry extends AbstractCatchEntry
      * étant donné que la base de données des senneurs ne contient pas
      * de coordonnées de début et de fin.
      */
-    final int clampPosition(final int pos)
-    {
-        if (pos<EnvironmentTable.START_POINT || pos>EnvironmentTable.END_POINT)
-        {
+    final int clampPosition(final int pos) {
+        if (pos<EnvironmentTable.START_POINT || pos>EnvironmentTable.END_POINT) {
             return pos;
         }
         return EnvironmentTable.CENTER;
@@ -125,39 +119,42 @@ final class SeineCatchEntry extends AbstractCatchEntry
      * Retourne une coordonnée représentative de la
      * capture, en degrés de longitude et latitude.
      */
-    public Point2D getCoordinate()
-    {return new Point2D.Float(x,y);}
+    public Point2D getCoordinate() {
+        return new Point2D.Float(x,y);
+    }
 
     /**
      * Retourne une forme représentant le filage. Si les informations
      * disponibles ne permettent pas de connaître le filage, retourne
      * <code>null</code>.
      */
-    public Shape getShape()
-    {return null;}
+    public Shape getShape() {
+        return null;
+    }
 
     /**
      * Verifie si cette capture intercepte le rectangle spécifié.
      * Cette méthode vérifie simplement si la coordonnées de la
      * capture se trouve à l'intérieur du rectangle.
      */
-    public boolean intersects(final Rectangle2D rect)
-    {return rect.contains(x,y);}
+    public boolean intersects(final Rectangle2D rect) {
+        return rect.contains(x,y);
+    }
 
     /**
      * Retourne une date représentative de la pêche. Dans le cas des pêches
      * qui s'étendent sur une certaine période de temps, ça pourrait être par
      * exemple la date du milieu.
      */
-    public Date getTime()
-    {return new Date(date);}
+    public Date getTime() {
+        return new Date(date);
+    }
 
     /**
      * Retourne la plage de temps pendant laquelle a été faite la capture.
      * Les éléments de la plage retournée seront du type {@link Date}.
      */
-    public Range getTimeRange()
-    {
+    public Range getTimeRange() {
         final Date date = new Date(this.date);
         return new Range(Date.class, date, date);
     }
@@ -165,23 +162,22 @@ final class SeineCatchEntry extends AbstractCatchEntry
     /**
      * Retourne les unités des captures.
      */
-    public Unit getUnit()
-    {return TON;}
+    public Unit getUnit() {
+        return TON;
+    }
 
     /**
      * Vérifie si cette capture est
      * identique à l'objet spécifié.
      */
-    public boolean equals(final Object other)
-    {
-        if (other instanceof SeineCatchEntry)
-        {
+    public boolean equals(final Object other) {
+        if (other instanceof SeineCatchEntry) {
             final SeineCatchEntry that = (SeineCatchEntry) other;
             return this.ID   == that.ID   &&
                    this.date == that.date &&
                    Float.floatToIntBits(this.x) == Float.floatToIntBits(that.x) &&
                    Float.floatToIntBits(this.y) == Float.floatToIntBits(that.y);
         }
-        else return false;
+        return false;
     }
 }

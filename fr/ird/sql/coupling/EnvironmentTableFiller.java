@@ -353,7 +353,8 @@ public final class EnvironmentTableFiller {
             final String[]       parameters = series.getValue();
             final EnvironmentTable[] update = new EnvironmentTable[TEST_ONLY ? 0 : parameters.length];
             for (int i=0; i<update.length; i++) {
-                update[i] = pêches.getEnvironmentTable(parameters[i], column);
+                update[i] = pêches.getEnvironmentTable();
+                update[i].addParameter(column, parameters[i]);
             }
             operation.compute(tasks, coverage, update);
             for (int i=0; i<update.length; i++) {

@@ -69,7 +69,7 @@ final class AreaOperation extends Operation {
 
     /**
      * Calcule les données de la table "Environnement" sur une surface.
-     * Cette méthode est appelée automatiquement par {@link EnvironmentTable#run}.
+     * Cette méthode est appelée automatiquement par {@link EnvironmentTableFiller#run}.
      *
      * @param  tasks Liste des captures à prendre en compte.
      * @param  coverage Couverture des données environnementales.
@@ -78,7 +78,8 @@ final class AreaOperation extends Operation {
      *         lors des accès à la base de données.
      */
     protected void compute(final Task[] tasks, final CatchCoverage coverage, final EnvironmentTable[] update) throws SQLException {
-        final Date time = new Date();
+        final Date     time = new Date();
+        final float[] value = new float[1];
         for (int i=0; i<tasks.length; i++) {
             final CatchEntry capture = tasks[i].capture;
             final Shape area = coverage.getShape(capture);
@@ -93,8 +94,8 @@ final class AreaOperation extends Operation {
                 continue;
             }
             for (int c=0; c<update.length; c++) {
-                update[c].setPosition(EnvironmentTable.CENTER);
-                update[c].set(capture, (float)values[c], time);
+                value[0] = (float)values[c];
+                update[c].set(capture, EnvironmentTable.CENTER, time, value);
             }
         }
     }

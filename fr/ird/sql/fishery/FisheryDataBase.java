@@ -75,7 +75,7 @@ public class FisheryDataBase extends DataBase {
         if (name!=null)
         {
                  if (name.equalsIgnoreCase(DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
-            else if (name.equalsIgnoreCase(SOURCE))   def = "jdbc:odbc:SEAS-Pêches";
+            else if (name.equalsIgnoreCase(SOURCE))   def = "jdbc:odbc:SEAS-Sennes";
             else if (name.equalsIgnoreCase(TIMEZONE)) def = "Indian/Reunion";
         }
         return Table.preferences.get(name, def);
@@ -91,7 +91,7 @@ public class FisheryDataBase extends DataBase {
         Table.SPECIES,                SpeciesTable        .SQL_SELECT,
         Table.LONGLINES,              LonglineCatchTable  .SQL_SELECT,
         Table.SEINES,                 SeineCatchTable     .SQL_SELECT,
-        Table.ENVIRONMENTS,           EnvironmentTableImpl.SQL_SELECT,
+        Table.ENVIRONMENTS,           EnvironmentTableStep.SQL_SELECT,
         Table.ENVIRONMENTS+".UPDATE", EnvironmentTableImpl.SQL_UPDATE,
         Table.ENVIRONMENTS+".INSERT", EnvironmentTableImpl.SQL_INSERT
     };
@@ -259,29 +259,17 @@ public class FisheryDataBase extends DataBase {
     }
 
     /**
-     * Construit et retourne un objet qui interrogera un paramètre
-     * environmental de la base de données. Lorsque cette table ne
-     * sera plus nécessaire, il faudra appeler {@link EnvironmentTable#close}.
+     * Construit et retourne un objet qui interrogera la table des paramètres environnementaux.
+     * Ces paramètres peuvent être mesurés aux coordonnées spatio-temporelles des captures, ou
+     * dans son voisinage (par exemple quelques jours avant ou après la pêche). Chaque paramètre
+     * apparaîtra dans une colonne. Ces colonnes doivent être ajoutées en appelant la méthode
+     * {@link EnvironmentTable#addParameter} autant de fois que nécessaire.
      *
-     * @param parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
-     *        disponibles peut être obtenu avec {@link #getAvailableParameters()}.
-     * @param operation Opération (exemple "valeur" ou "sobel"). Ces opérations
-     *        correspondent à des noms des colonnes de la table "Environnement".
+     * @return La table des paramètres environnementaux pour toute les captures.
+     * @throws SQLException si la table n'a pas pu être construite.
      */
-    public EnvironmentTable getEnvironmentTable(final String parameter, final String operation) throws SQLException {
-        return new EnvironmentTableImpl(connection, parameter, operation);
-    }
-
-    /**
-     * Construit et retourne un objet qui associera des valeurs environnementales
-     * à chaque captures.
-     *
-     * <strong>NOTE: dans une version future, on pourrait probablement fusionner
-     *         <code>EnvironmentTable</code> et <code>CouplingTable</code> en une
-     *         seule interface.</strong>
-     */
-    public CouplingTable getCouplingTable() throws SQLException {
-        return new CouplingTableImpl(connection);
+    public EnvironmentTable getEnvironmentTable() throws SQLException {
+        return new EnvironmentTableImpl(connection);
     }
 
     /**
@@ -349,14 +337,18 @@ public class FisheryDataBase extends DataBase {
         if (columns.length != 0) {
             final String[] parameters = new String[] {"SST", "CHL", "SLA"};
             final FisheryDataBase database = new FisheryDataBase();
-            final CouplingTable table = database.getCouplingTable();
+            final EnvironmentTable table = database.getEnvironmentTable();
             for (int i=0; i<parameters.length; i++) {
                 for (int j=0; j<columns.length; j++) {
-                    table.addParameter(columns[j], parameters[i], 0, 0);
-                    table.addParameter(columns[j], parameters[i], 0, -5);
+                    table.addParameter(columns[j], parameters[i], EnvironmentTable.CENTER,  0);
+                    table.addParameter(columns[j], parameters[i], EnvironmentTable.CENTER, -5);
                 }
             }
-            table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
+            if (false) {
+                table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
+            } else {
+                table.copyToTable("Test", new fr.ird.awt.progress.PrintProgress(console.out));
+            }
             table.close();
             database.close();
         }

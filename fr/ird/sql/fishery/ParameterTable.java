@@ -71,7 +71,7 @@ final class ParameterTable extends Table {
      * Requête SQL pour obtenir le code d'une opération.
      */
     static final String SQL_SELECT_OPERATION =
-                    "SELECT nom, préfix, operation FROM "+OPERATIONS+" WHERE nom=?";
+                    "SELECT nom, préfix, opération FROM "+OPERATIONS+" WHERE nom=?";
 
     /** Numéro de colonne.                 */ private static final int KEY       = 1;
     /** Numéro de colonne de "Paramètres". */ private static final int NAME      = 2;
@@ -104,6 +104,7 @@ final class ParameterTable extends Table {
      */
     ParameterTable(final Connection connection, final int type) throws SQLException {
         super(connection.prepareStatement(getQuery(type)));
+        this.type = type;
     }
 
     /**
@@ -239,7 +240,7 @@ final class ParameterTable extends Table {
         Object     value = null;
         int        count = 0;
         while (result.next()) {
-            final String candidate = result.getString(column);
+            final Object candidate = result.getObject(column);
             if (count == 0) {
                 value = candidate;
             } else if (Utilities.equals(value, candidate)) {

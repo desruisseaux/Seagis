@@ -122,7 +122,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
             columnCount[i] = c;
             count += c;
         }
-        if (count != labels.length) {
+        if (count != labels.length-1) {
             throw new IllegalArgumentException();
         }
         resultMap = new ResultSet[count];

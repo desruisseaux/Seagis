@@ -25,16 +25,29 @@
  */
 package fr.ird.sql.fishery;
 
-// Divers
-import java.util.Set;
-import java.util.Date;
+// SQL database
+import javax.sql.RowSet;
 import java.sql.SQLException;
+
+// J2SE dependencies
+import java.util.Set;
+import java.util.List;
+import java.util.Date;
+import java.io.Writer;
+import java.io.IOException;
+
+// SEAS dependencies
 import fr.ird.sql.Table;
+import fr.ird.awt.progress.Progress;
 
 
 /**
- * Interface interrogeant ou modifiant un paramètre
- * de la base de données d'environnement.
+ * Table faisant le lien entre les captures et les paramètres environnementaux aux
+ * positions de cette capture. Les paramètres environnementaux sont enregistrées dans
+ * la table <code>Environnement</code>. Cette classe interroge cette table en la réarangeant
+ * d'une façon plus appropriée pour l'analyse avec des logiciels statistiques classiques.
+ * Les paramètres environnementaux correspondant à une même capture (SST 5 jours avant, 10
+ * jours avant, etc.) sont juxtaposés sur une même ligne.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -62,7 +75,7 @@ public interface EnvironmentTable extends Table {
      * @return L'ensemble des paramètres environnementaux disponibles dans la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public Set<String> getAvailableParameters() throws SQLException;
+    public abstract Set<String> getAvailableParameters() throws SQLException;
 
     /**
      * Retourne la liste des opérations disponibles. Les opérations sont appliquées sur
@@ -73,86 +86,179 @@ public interface EnvironmentTable extends Table {
      * @return L'ensemble des opérations disponibles dans la base de données.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public Set<String> getAvailableOperations() throws SQLException;
+    public abstract Set<String> getAvailableOperations() throws SQLException;
 
     /**
-     * Définit le paramètre examinée par cette table. Le paramètre doit être un nom
-     * de la table "Paramètres". Des exemples de valeurs sont "SST", "CHL", "SLA",
-     * "U", "V" et "EKP".
+     * Ajoute un paramètre à la sélection. Le paramètre sera mesuré aux coordonnées
+     * spatio-temporelles exacte de la capture.  Cette méthode est équivalente à un
+     * appel de <code>{@linkplain #addParameter(String,String,int,int) addParameter}(operation,
+     * parameter, {@linkplain #CENTER}, 0)</code>.
      *
-     * @param parameter Le paramètre à définir (exemple: "SST").
-     * @throws SQLException si l'accès à la base de données a échoué.
-     */
-    public abstract void setParameter(final String parameter) throws SQLException;
-
-    /**
-     * Définit la position relative sur la ligne de pêche où l'on veut les valeurs.
-     * Les principales valeurs permises sont {@link #START_POINT}, {@link #CENTER}
-     * et {@link #END_POINT}.
+     * @param  operation Opération (exemple "valeur" ou "sobel"). Ces opérations
+     *         correspondent à des noms des colonnes de la table "Environnement".
+     *         La liste des opérations disponibles peut être obtenu avec {@link
+     *         #getAvailableOperations()}.
+     * @param  parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
+     *         disponibles peut être obtenu avec {@link #getAvailableParameters()}.
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public abstract void setPosition(final int position) throws SQLException;
+    public abstract void addParameter(final String operation,
+                                      final String parameter) throws SQLException;
 
     /**
-     * Définit le décalage de temps (en jours). La valeur par défaut est 0.
+     * Ajoute un ensemble de paramètres à la sélection. Chaque objet <code>EnvironmentTable</code>
+     * nouvellement créé ne contient initialement qu'une seule colonne: le numéro ID des captures.
+     * Chaque appel à <code>addParameter</code> ajoute une colonne. Chaque colonne correspondra à
+     * un paramètre environnemental (<code>parameter</code>) à une certaine coordonnée
+     * spatio-temporelle relative à la capture (<code>position</code>, <code>timeLag</code>), et
+     * sur lequel on applique une certaine opération (<code>operation</code>). Cette colonne sera
+     * prise en compte lors du prochain appel de la méthode {@link #getRowSet}.
+     *
+     * @param  operation Opération (exemple "valeur" ou "sobel"). Ces opérations
+     *         correspondent à des noms des colonnes de la table "Environnement".
+     *         La liste des opérations disponibles peut être obtenu avec {@link
+     *         #getAvailableOperations()}.
+     * @param  parameter Paramètre (exemple "SST" ou "EKP"). La liste des paramètres
+     *         disponibles peut être obtenu avec {@link #getAvailableParameters()}.
+     * @param  position Position position relative sur la ligne de pêche où l'on veut
+     *         les valeurs. Les principales valeurs permises sont {@link #START_POINT},
+     *         {@link #CENTER} et {@link #END_POINT}.
+     * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
+     *         en nombre de jours.
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public abstract void setTimeLag(final int timeLag) throws SQLException;
+    public abstract void addParameter(final String operation,
+                                      final String parameter,
+                                      final int    position,
+                                      final int    timeLag) throws SQLException;
 
     /**
-     * Retourne le paramètre correspondant à une capture. Cette méthode retourne la valeur
-     * de la colonne <code>column</code> (spécifiée lors de la construction) à la ligne qui
-     * répond aux critères suivants:
-     * <ul>
-     *   <li>La capture est l'argument <code>capture</code> spécifié à cette méthode.</li>
-     *   <li>Le nom du paramètre ("SST", "CHL", etc.) est celui qui a été spécifié lors du
-     *       dernier appel de {@link #setParameter}.</li>
-     *   <li>La position ({@link #START_POINT}, {@link #CENTER}, {@link #END_POINT}, etc.)
-     *       est celle qui a été spécifiée lors du dernier appel de {@link #setPosition}.</li>
-     *   <li>L'écart de temps être la pêche et la mesure environnementale est celui qui a
-     *       été spécifié lors du dernier appel de {@link #setTimeLag}.</li>
-     * </ul>
+     * Retire un ensemble de paramètres de la sélection. Cette méthode permet de retirer une
+     * colonne qui aurait été ajoutée précédement par un appel à
      *
-     * @param  capture La capture.
-     * @param  value Valeur du paramètre.
-     * @throws SQLException si un problème est survenu lors de l'accès à la base de données.
+     * <code>{@linkplain #addParameter(String,String,int,int) addParameter}(operation,
+     * parameter, position, timeLag)</code>. Cette méthode ne fait rien
+     * si aucune colonne ne correspond au bloc de paramètres spécifiés.
+     *
+     * @param  operation Opération (exemple "valeur" ou "sobel").
+     * @param  parameter Paramètre (exemple "SST" ou "EKP").
+     * @param  position Position position relative sur la ligne de pêche où l'on veut les valeurs.
+     * @param  timeLag Décalage temporel entre la capture et le paramètre environnemental,
+     *         en nombre de jours.
+     *
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public abstract float get(final CatchEntry capture) throws SQLException;
+    public abstract void removeParameter(final String operation,
+                                         final String parameter,
+                                         final int    position,
+                                         final int    timeLag) throws SQLException;
 
     /**
-     * Met à jour le paramètre correspondant à une capture. Cette méthode met à jour la colonne
-     * <code>column</code> (spécifiée lors de la construction) de la ligne qui répond aux mêmes
-     * critères que pour la méthode {@link #get}, à quelques exceptions près:
-     * <ul>
-     *   <li>Si la capture a été prise à un seul point (c'est-à-dire si {@link CatchEntry#getShape}
-     *       retourne <code>null</code>), alors cette méthode met à jour la ligne correspondant à
-     *       la position {@link #CENTER}, quelle que soit la position spécifiée lors du dernier
-     *       appel de {@link #setPosition}.</li>
-     * </ul>
+     * Retourne les nom des colonnes pour cette table. Ces noms de colonnes sont identiques
+     * à ceux que retourne <code>getRowSet(null).getMetaData().getColumnLabel(...)</code>.
+     * Cette méthode permet toutefoit d'obtenir ces noms sans passer par la coûteuse création
+     * d'un objet {@link RowSet}.
      *
-     * @param  capture La capture.
-     * @param  value La valeur du paramètre. Si cette valeur est <code>NaN</code>,
-     *         alors cette méthode ne fait rien. L'ancien paramètre environnemental
-     *         sera conservé.
+     * @return Les noms de colonnes.
+     * @throws SQLException si l'accès à la base de données a échoué.
+     */
+    public abstract String[] getColumnLabels() throws SQLException;
+
+    /**
+     * Retourne un itérateur qui baleyera l'ensemble des données sélectionnées. La première
+     * colonne du tableau {@link RowSet} contiendra le numéro identifiant les captures (ID).
+     * Toutes les colonnes suivantes contiendront les paramètres environnementaux qui auront
+     * été demandé par des appels de {@link #addParameter(String,String,int,int)}. Le nombre
+     * total de colonnes est égal à la longueur du tableau retournée par {@link #getColumnLabels}.
+     * <br><br>
+     * Note: <strong>Chaque objet <code>EnvironmentTable</code> ne mantient qu'un seul objet
+     *       <code>RowSet</code> à la fois.</strong>  Si cette méthode est appelée plusieurs
+     *       fois, alors chaque nouvel appel fermera le {@link RowSet} de l'appel précédent.
+     *
+     * @param  progress Objet à utiliser pour informer des progrès de l'initialisation, ou
+     *         <code>null</code> si aucun. Cette méthode appelle {@link Progress#started},
+     *         mais n'appelle <strong>pas</strong> {@link Progress#complete} étant donné
+     *         qu'on voudra probablement continuer à l'utiliser pour informer des progrès
+     *         de la lecture du {@link RowSet}.
+     * @return Les données environnementales pour les captures.
+     * @throws SQLException si l'interrogation de la base de données a échoué.
+     */
+    public abstract RowSet getRowSet(final Progress progress) throws SQLException;
+
+    /**
+     * Affiche les enregistrements vers le flot spécifié.
+     * Cette méthode est surtout utile à des fins de vérification.
+     *
+     * @param  out Flot de sortie.
+     * @param  max Nombre maximal d'enregistrements à écrire.
+     * @return Nombre d'enregistrement écrits.
+     * @throws SQLException si l'interrogation de la base de données a échoué.
+     * @throws IOException si une erreur est survenue lors de l'écriture.
+     */
+    public abstract int print(final Writer out, int max) throws SQLException, IOException;
+
+    /**
+     * Copie toutes les données de {@link #getRowSet} vers une table du nom
+     * spécifiée. Aucune table ne doit exister sous ce nom avant l'appel de
+     * cette méthode. Cette méthode construira elle-même la table nécessaire.
+     *
+     * @param  tableName Nom de la table à créer.
+     * @param  progress Objet à utiliser pour informer des progrès, ou <code>null</code> si aucun.
+     * @return Le nombre d'enregistrement copiés dans la nouvelle table.
+     * @throws Si un problème est survenu lors des accès aux bases de données.
+     */
+    public abstract int copyToTable(final String tableName, final Progress progress) throws SQLException;
+
+    /**
+     * Définit la valeur des paramètres environnementaux pour une capture. Cette méthode
+     * affecte la valeur de chacune des colonnes qui ont été ajoutées avec {@link #addPatameter}.
+     *
+     * @param  capture La capture pour laquelle on veut définir les valeurs des paramètres
+     *         environnementaux.
+     * @param  value Les valeurs des paramètres environnementaux. Ce tableau doit avoir
+     *         la même longueur que le nombre de paramètres ajoutés avec la méthode
+     *         {@link #addParameter(String,String,int,int)} (c'est-à-dire la longueur de
+     *         {@link #getColumnLabels} moins 1). Les valeurs <code>NaN</code> seront ignorées
+     *         (c'est-à-dire que les valeurs déjà présentes dans la base de données ne seront
+     *         pas écrasées).
      * @throws SQLException si un problème est survenu lors de la mise à jour.
      */
-    public abstract void set(final CatchEntry capture, final float value) throws SQLException;
+    public abstract void set(final CatchEntry capture, final float[] values) throws SQLException;
 
     /**
-     * Met à jour le paramètre correspondant à une capture. Cette méthode est similaire à
-     * {@link #set(CatchEntry, float)}, excepté que l'écart de temps sera calculée à partir
-     * de la date spécifiée. Ce décalage sera utilisé à la place de la dernière valeur spécifiée
-     * à {@link #setTimeLag}.
+     * Définit la valeur des paramètres environnementaux pour une capture. Cette méthode fonctionne
+     * comme {@link #set(CatchEntry, float[]),  excepté qu'elle permet de spécifier des coordonnées
+     * spatio-temporelles différentes de celles qui avaient été spécifiées avec {@link #addPatameter}.
      *
-     * @param  capture La capture.
-     * @param  value La valeur du paramètre.
+     * @param  capture La capture pour laquelle on veut définir les valeurs des paramètres
+     *         environnementaux.
+     * @param  position Position relative de la valeur <code>value</code>. Si la capture est
+     *         représentée par un seul point (c'est-à-dire si {@link CatchEntry#getShape}
+     *         retourne <code>null</code>), alors cette méthode met à jour la l'enregistrement
+     *         correspondant à la position {@link #CENTER}, quelle que soit la valeur de cet
+     *         argument <code>position</code>.
      * @param  time La date à laquelle a été évaluée la valeur <code>value</code>.
      *         Si cet argument est non-nul, alors l'écart de temps entre cette date
-     *         et la date de la capture sera calculée et utilisé à la place de la valeur
-     *         spécifiée lors du dernier appel de {@link #setTimeLag}.
+     *         et la date de la capture sera calculée et utilisée.
+     * @param  value Les valeurs des paramètres environnementaux. Ce tableau doit avoir
+     *         la même longueur que le nombre de paramètres ajoutés avec la méthode {@link
+     *         #addParameter(String,String)} (c'est-à-dire la longueur de {@link #getColumnLabels}
+     *         moins 1). Les valeurs <code>NaN</code> seront ignorées (c'est-à-dire que les
+     *         valeurs déjà présentes dans la base de données ne seront pas écrasées).
      * @throws SQLException si un problème est survenu lors de la mise à jour.
      */
-    public abstract void set(final CatchEntry capture, final float value, final Date time) throws SQLException;
+    public abstract void set(final CatchEntry capture,
+                             final int        relativePosition,
+                             final Date       valueTime,
+                             final float[]    values) throws SQLException;
+
+    /**
+     * Oublie tous les paramètres qui ont été déclarés avec
+     * {@link #addParameter(String,String,int,int)}.
+     *
+     * @throws SQLException si l'accès à la base de données a échoué.
+     */
+    public abstract void clear() throws SQLException;
 }

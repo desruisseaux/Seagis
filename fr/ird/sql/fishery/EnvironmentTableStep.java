@@ -69,7 +69,7 @@ final class EnvironmentTableStep extends Table {
     /**
      * La position spatiale relativement à l'observation (la pêche).
      */
-    private final int position;
+    final int position;
 
     /**
      * La position temporelle (en jours) relativement à l'observation (la pêche).
@@ -188,7 +188,7 @@ final class EnvironmentTableStep extends Table {
             // colonnes ainsi que les clauses "IS NOT NULL".
             //
             final String[] columns = getColumns();
-            String query = completeSelect(SQL_SELECT, columns);
+            String query = completeSelect(preferences.get(ENVIRONMENTS, SQL_SELECT), columns);
             int index = indexOf(query, "ORDER");
             if (index >= 0) {
                 final StringBuffer buffer = new StringBuffer(query.substring(0, index));
@@ -203,7 +203,7 @@ final class EnvironmentTableStep extends Table {
             }
             final LogRecord record = new LogRecord(DataBase.SQL_SELECT, query);
             record.setSourceClassName ("EnvironmentTable");
-            record.setSourceMethodName("getResultSet");
+            record.setSourceMethodName("getRowSet");
             logger.log(record);
             statement = connection.prepareStatement(query);
         }

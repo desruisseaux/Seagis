@@ -147,6 +147,7 @@ class Operation {
         double[]     values = null;
         final Date     time = new Date();
         final Point2D point = new Point2D.Double();
+        final float[] value = new float[1];
         for (int i=0; i<tasks.length; i++) {
             final CatchEntry capture = tasks[i].capture;
             final Line2D line = (Line2D) capture.getShape();
@@ -168,8 +169,8 @@ class Operation {
                         continue;
                     }
                     for (int c=0; c<update.length; c++) {
-                        update[c].setPosition(p);
-                        update[c].set(capture, (float)values[c], time);
+                        value[0] = (float)values[c];
+                        update[c].set(capture, p, time, value);
                     }
                 }
             } else {
@@ -183,11 +184,9 @@ class Operation {
                 // Si la capture était en un point seulement,
                 // 'EnvironmentTable' se chargera de vérifier
                 // si c'était le début où la fin de la ligne.
-                // On définit tout de même une position pour
-                // éviter qu'elle ne reste 'AREA'.
                 for (int c=0; c<update.length; c++) {
-                    update[c].setPosition(EnvironmentTable.CENTER);
-                    update[c].set(capture, (float)values[c], time);
+                    value[0] = (float)values[c];
+                    update[c].set(capture, EnvironmentTable.CENTER, time, value);
                 }
             }
         }
