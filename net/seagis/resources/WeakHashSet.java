@@ -283,7 +283,7 @@ public class WeakHashSet
             }
         }
 /* ---- BEGIN JDK 1.4 DEPENDENCIES ----
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, ResourceKeys.CAPACITY_CHANGE¤2,
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, ResourceKeys.CAPACITY_CHANGE_$2,
                                                               new Integer(oldTable.length), new Integer(table.length));
         record.setSourceClassName("WeakHashSet");
         record.setSourceMethodName(augmentation ? "intern" : "remove");
