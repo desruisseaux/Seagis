@@ -34,6 +34,7 @@ import org.geotools.gp.Operation;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.OperationNotFoundException;
+import org.geotools.util.RangeSet;
 
 // Coordonnées et projections cartographiques
 import java.util.Date;
@@ -43,7 +44,6 @@ import java.awt.geom.Dimension2D;
 // Divers
 import java.util.List;
 import fr.ird.sql.Table;
-import fr.ird.awt.RangeSet;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 

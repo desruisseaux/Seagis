@@ -49,8 +49,8 @@ import java.util.Iterator;
 import java.util.Collection;
 
 // Ranges and plot
-import fr.ird.awt.RangeSet;
 import fr.ird.awt.RangeBars;
+import org.geotools.util.RangeSet;
 
 // Images database
 import java.sql.SQLException;

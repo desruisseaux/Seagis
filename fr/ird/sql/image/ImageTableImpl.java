@@ -42,6 +42,7 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.gp.Operation;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.OperationNotFoundException;
+import org.geotools.util.RangeSet;
 
 // Geotools dependencies (resources)
 import org.geotools.resources.CTSUtilities;
@@ -75,7 +76,6 @@ import java.util.logging.LogRecord;
 
 // Divers
 import java.io.File;
-import fr.ird.awt.RangeSet;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 import javax.media.jai.ParameterList;

@@ -40,7 +40,6 @@ import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
-import fr.ird.awt.RangeSet;
 import fr.ird.awt.RangeBars;
 import fr.ird.seasview.layer.control.LayerControl;
 
@@ -65,6 +64,7 @@ import java.text.ParseException;
 import javax.media.jai.util.Range;
 
 // Geotools dependencies
+import org.geotools.util.RangeSet;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.SwingUtilities;

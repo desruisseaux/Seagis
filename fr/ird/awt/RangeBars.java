@@ -72,6 +72,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.lang.reflect.Array;
 import java.util.ConcurrentModificationException;
+import javax.media.jai.util.Range;
 
 // Timezone and units
 import java.util.Date;
@@ -93,6 +94,7 @@ import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
 // Geotools dependencies
+import org.geotools.util.RangeSet;
 import org.geotools.gui.swing.ZoomPane;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.resources.ClassChanger;
@@ -522,11 +524,11 @@ public class RangeBars extends ZoomPane {
         double max = Double.NEGATIVE_INFINITY;
         for (final Iterator<RangeSet> it=ranges.values().iterator(); it.hasNext();) {
             final RangeSet rangeSet = it.next();
-            final int length = rangeSet.getLength();
-            if (length != 0) {
+            final int size = rangeSet.size();
+            if (size != 0) {
                 double tmp;
-                if ((tmp=rangeSet.getDouble(0       )) < min) min=tmp;
-                if ((tmp=rangeSet.getDouble(length-1)) > max) max=tmp;
+                if ((tmp=rangeSet.getMinValueAsDouble(0     )) < min) min=tmp;
+                if ((tmp=rangeSet.getMaxValueAsDouble(size-1)) > max) max=tmp;
             }
         }
         if (min < max) {
@@ -620,9 +622,8 @@ public class RangeBars extends ZoomPane {
         Comparable min = null;
         for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);
-            final int length = rangeSet.getLength();
-            if (length != 0) {
-                final Comparable tmp = rangeSet.get(0);
+            if (!rangeSet.isEmpty()) {
+                final Comparable tmp = ((Range)rangeSet.first()).getMinValue();
                 if (min==null || min.compareTo(tmp)>0) {
                     min = tmp;
                 }
@@ -640,9 +641,8 @@ public class RangeBars extends ZoomPane {
         Comparable max = null;
         for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);
-            final int length = rangeSet.getLength();
-            if (length != 0) {
-                final Comparable tmp = rangeSet.get(length-1);
+            if (!rangeSet.isEmpty()) {
+                final Comparable tmp = ((Range)rangeSet.last()).getMaxValue();
                 if (max==null || max.compareTo(tmp)<0) {
                     max = tmp;
                 }
@@ -1326,10 +1326,10 @@ public class RangeBars extends ZoomPane {
             }
             for (int i=0; i<rangeCount; i++) {
                 final RangeSet rangeSet = it.next();
-                final int        length = rangeSet.getLength();
-                for (int j=0; j<length;) {
-                    final double bar_min = rangeSet.getDouble(j++);
-                    final double bar_max = rangeSet.getDouble(j++);
+                final int size = rangeSet.size();
+                for (int j=0; j<size; j++) {
+                    final double bar_min = rangeSet.getMinValueAsDouble(j);
+                    final double bar_max = rangeSet.getMaxValueAsDouble(j);
                     if (bar_min > clipMaximum) break; // Slight optimization
                     if (bar_max > clipMinimum) {
                         if (horizontal) {
