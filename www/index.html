@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+<HEAD>
+  <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <TITLE>SEAGIS home page</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+
+<TABLE WIDTH="100%">
+  <TR>
+    <TD ALIGN="left"><FONT FACE="Arial Black" SIZE='6'><A HREF="http://sourceforge.net/projects/seagis">SEAGIS project</A></FONT>
+    &nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="#0000C0">An OpenSource implementation of OpenGIS® CTS and GCS specifications</FONT></TD>
+    <TD ALIGN="right"><A HREF="http://sourceforge.net"><IMG SRC="http://sourceforge.net/sflogo.php?group_id=31798&type=4" ALT="SourceForge"></A></TD>
+  </TR>
+</TABLE>
+<TABLE WIDTH="100%" BGCOLOR="#B9DCFF"><TR><TD>
+<TABLE>
+  <TR>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Summary">Summary</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Requirements">Requirements</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Download">Download</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="screenshots">Screenshots</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Changes">Changes</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Contacts">Contacts</A>&nbsp;&nbsp;&nbsp;</TD>
+    <TD>&nbsp;&nbsp;&nbsp;<A HREF="#Links">Links</A>&nbsp;&nbsp;&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD></TR></TABLE>
+
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<H2><A NAME="Summary">Summary</A></H2>
+<P ALIGN="justify"><FONT FACE="Verdana">SEAGIS is an open source project implementing a subset
+of <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Coordinate Transformation Services
+Specification</A> and <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Grid Coverages
+Implementation Specification</A>. OpenGIS is a consortium of organizations developing public
+specifications through structured committee programs. Products and services that conform to those
+open interface specifications enable users to freely exchange and apply spatial information,
+applications and services across networks, different platforms and products.</P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">The current SEAGIS library supports Cylindrical Mercator,
+Transverse Mercator, Lambert Conformal Conical and Stereographic projections. Because the API
+closely matches OpenGIS specifications, developers can switch between this free implementation
+and any commercial implementation with no code change (providing that commercial implementations
+are OpenGIS compliant). The learning barrier is also lowered because the API matches a standard
+one.</FONT></P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">A second SEAGIS's goal is to ensure interoperability with
+standard Java packages like <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A> and
+<A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>. SEAGIS extends
+existing Java classes like <A HREF="http://java.sun.com/j2se/1.4/docs/api/java/text/Format.html"><CODE>Format</CODE></A>
+for parsing and formatting angles, and <A HREF="http://java.sun.com/j2se/1.4/docs/api/javax/imageio/ImageReader.html"><CODE>ImageReader</CODE></A>
+for reading ASCII and binary files.</FONT></P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">Full source code is freely available
+under LGPL license, which is similar but somewhat less restrictive than GPL
+(see <A HREF="http://www.mozilla.org/MPL/FAQ.html#7">What is the LGPL?</A>,
+<A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL code be
+incorporated into the Communicator code base?</A>).</FONT></P>
+
+<TABLE WIDTH="80%" ALIGN="center" CELLPADDING="18" BORDER="4" BGCOLOR="#FFE0B0"><TR><TD>
+    <P ALIGN="justify"><STRONG>Note:</STRONG> The &quot;OpenGIS&quot; part of this project moved to
+    <A HREF="http://www.geotools.org">Geotools 2</A>, which aim to support a wider range of OpenGIS
+    specifications. The &quot;SEAGIS&quot; project hosted on this page is now a snapshot of the
+    following Geotools's modules:</P>
+    <UL>
+      <LI><A HREF="http://modules.geotools.org/cts-coordtrans">cts-coordtrans</A>
+          (Coordinate Transformation Services)</LI>
+      <LI><A HREF="http://modules.geotools.org/gcs-coverage">gcs-coverage</A>
+          (Grid Coverage Services)</LI>
+      <LI><A HREF="http://modules.geotools.org/renderer">renderer</A>
+          (a Java2D renderer)</LI>
+      <LI><A HREF="http://modules.geotools.org/gui">gui</A>
+          (Graphics User Interface)</LI>
+      <LI><A HREF="http://modules.geotools.org/resources">resources</A>
+          (Miscellaneous utilities)</LI>
+    </UL>
+</TD></TR></TABLE>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Requirements">Requirements</A></H2>
+<P ALIGN="justify">The SEAGIS download requires the following software:</P>
+<UL>
+    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.4 or later</A>.</LI>
+    <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging 1.1</A> or later.</LI>
+    <LI>The <CODE>vecmath</CODE> package from <A HREF="http://java.sun.com/products/java-media/3D/">Java3D</A>.<BR>
+        In our understanding of <A HREF="http://jcp.org/jsr/detail/148.jsp">JSR-148 (3D Media Utilities)</A>,
+        the requirement for Java3D may be removed in a future version since it will retrofit into a
+        requirement for JAI 1.2.</LI>
+</UL>
+<P ALIGN="justify">In addition, an <STRONG>optional</STRONG> experimental package can
+be downloaded separately. This experimental package contains modules that are not part
+of OpenGIS's specification, but related to geographic information. The experimental
+package has higher requirement than the SEAGIS package, as noted below. Note that
+you <STRONG>do not</STRONG> need those requirements if you download only the SEAGIS
+package.</P>
+<UL>
+    <LI><A HREF="http://java.sun.com/j2se/1.4/">J2SE 1.4</A></LI>
+    <LI><A HREF="http://developer.java.sun.com/developer/earlyAccess/adding_generics/">Prototype
+        compiler for JSR014: Adding Generics to the Java Programming Language</A></LI>
+</UL>
+
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Download">Browse contents and download</A></H2>
+<P ALIGN="justify">This project has two main modules: an "official" one
+(SEAGIS) and an experimental one. The SEAGIS module contains a copy of
+OpenGIS interfaces. <EM>Those interfaces are slightly different from the
+ones currently available on <A HREF="http://www.opengis.org/techno/specs/">OpenGIS
+web site</A>, in that most methods are declared to throw <code>RemoteException</code>.</EM>
+This detail seems to have been forgotten in the original OpenGIS's interfaces,
+but we don't know if and when it will be fixed.</P>
+
+<P ALIGN="justify"><STRONG>Note that Seagis's development has moved to
+<A HREF="http://www.geotools.org">Geotools 2</A>.</STRONG> The current
+Seagis download is just a snapshot of some Geotools 2 modules.</P>
+
+
+<TABLE ALIGN="center" BORDER="3" CELLPADDING="6" BGCOLOR="F4F8FF" WIDTH="90%">
+  <TR ALIGN="center">
+    <TD nowrap>OpenGIS specification</TD>
+    <TD nowrap>&nbsp;</TD>
+    <TD nowrap><A HREF="javadoc/opengis/index.html">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/seagis/org/opengis">Browse CVS</A></TD>
+    <TD nowrap>&nbsp;</TD>
+  </TR>
+  <TR ALIGN="center" BGCOLOR="#B9DCFF">
+    <TD nowrap>SEAGIS implementation</TD>
+    <TD nowrap><A HREF="screenshots/seagis/index.html">Screenshots</A></TD>
+    <TD nowrap><A HREF="javadoc/seagis/index.html">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/geotools/geotools2/geotools-src/">Browse CVS</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=148159">Download sources and binaries</A></TD>
+  </TR>
+  <TR ALIGN="center">
+    <TD nowrap>Experimental package</TD>
+    <TD nowrap><A HREF="screenshots/experimental/index.html">Screenshots</A></TD>
+    <TD nowrap><A HREF="javadoc/experimental/index.html">Browse JavaDoc</A></TD>
+    <TD nowrap><A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/experimental">Browse CVS</A></TD>
+    <TD nowrap><A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=148162">Download sources and binaries</A></TD>
+  </TR>
+</TABLE>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Changes">Changes</A></H2>
+<P ALIGN="justify">Current version is <strong>alpha-0.6.3</strong>.
+Changes since last version include the following:</P>
+
+<UL>
+  <LI>Bug fixes (<STRONG>Note:</STRONG> the <CITE>Coordinate Transformations
+      Services</CITE> are know to not pass fully OpenGIS tests. We are still
+      working on it).</LI>
+
+  <LI>Some packages from the experimental project has moved to Geotools, namely
+      <code>org.geotools.axis</code> and <code>org.geotools.renderer</code>.</LI>
+
+  <LI>New <code>GridCoverage</code> operations (<code>"Recolor"</code>, more
+      complete <code>"Resample"</code>).</LI>
+</UL>
+
+<P ALIGN="justify">Changes between <strong>alpha-0.6.2</strong> and
+<strong>alpha-0.6.0</strong> include:</P>
+
+<UL>
+  <LI><CITE>Well Know Text</CITE> (WKT) parsing has been implemented</LI>.
+
+  <LI>A <CODE>MathTransform</CODE> backed by a localization grid has been
+      added. Localization grid are used in remote sensing for transforming
+      coordinate from a system tied to the spacecraft into geographic
+      coordinates.</LI>
+
+  <LI>The EPSG factory now return coordinate system with fractional degrees
+      even if it was declared as sexagesimal degrees in the EPSG database.
+      Sexagesimal degrees are really unconvenient in any computation process.
+      User still able to use sexagesimal degrees if he really want it.</LI>
+</UL>
+
+<P ALIGN="justify">Changes between <strong>alpha-0.6.0</strong> and
+<strong>alpha-0.5.2</strong> include:</P>
+
+<UL>
+  <LI>Orthodromic distance computation has been improved. The old
+      implementation used an approximation for spherical earth. New
+      implementation use an ellipsoidal model. This a port from Fortran
+      to Java of the code found at
+
+      ftp://ftp.ngs.noaa.gov/pub/pcsoft/for_inv.3d/source/inverse.for.</LI>
+
+  <LI>Special optimizations has been added for MathTransform in 1D case,
+      since the new API in GCS depends heavily on it.</LI>
+
+  <LI>A "Logarithmic" transform has been added. This is needed by GCS, since
+      SeaWiFS images (ocean color) from eosdata.gsfc.nasa.gov use a
+      logarithmic transform.</LI>
+
+  <LI>A first draft of EPSG factory (for Coordinate Systems).</LI>
+
+  <LI>The helper class <CODE>CategoryList</CODE> is no longer public.
+      Its functionalities has been moved into <CODE>SampleDimension</CODE>.</LI>
+
+  <LI>According OpenGIS specification, the <CODE>SampleDimension</CODE> class
+      has two attributes ("scale" and "offset") which allow transforming sample
+      values (usually integers) into geophysics values (for example height
+      in meters) using a linear relation (<CODE>height = offset + scale*sample</CODE>).
+      This is not enough in some cases; for example SeaWiFS images use a
+      logarithmic transformation. In the old GCS API, using a non-linear
+      relation required subclassing Category class and overriding <CODE>toSample</CODE>
+      and <CODE>toGeophysics</CODE> methods. In the new API, methods <CODE>toSample</CODE> and
+      <CODE>toGeophysics</CODE> don't exist anymore. The user can construct categories
+      with arbitrary <CODE>MathTransform1D</CODE> objects instead.</LI>
+
+  <LI>In the old API, some methods expected a boolean argument (e.g.
+      <CODE>Category.getRange(boolean)</CODE>, <CODE>GridCoverage.getRenderedImage(boolean)</CODE>).
+      In the new API, the boolean argument don't exists anymore. A single
+      method, <CODE>geophysics(boolean)</CODE>, returns a "geophysics" view of an object
+      instead. This solution simplify the API (remove the boolean argument
+      from many methods) and is more general.</LI>
+
+  <LI>Methods like <CODE>toGeophysics(RenderedImage, ...)</CODE> has been removed.
+      Instead, a "<CODE>GC_SampleTranscoding</CODE>" operation has been registered
+      through the normal JAI operations registry. This operation is used
+      internally for transcoding an image from sample values to geophysics
+      values (e.g. height in meters) and conversely.</LI>
+</UL>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Contacts">Discussion list and contact email</A></H2>
+<P ALIGN="justify">We welcome comments about current design and suggestions
+for improvement. If you are working on a similar project, we specially welcome
+discussion about how we could merge efforts. If you are interested, please take
+a look to the archives and join to the discussion. Help wanted!</P>
+
+<P ALIGN="center">
+<A HREF="http://lists.sourceforge.net/lists/listinfo/geotools-devel">Browse
+archives / subscribe to the discussion list</A></P>
+
+<P ALIGN="justify">Alternatively, you can send an email to the maintainer
+<A HREF="http://sourceforge.net/sendmessage.php?touser=194261">here</A>.</P>
+
+<P>&nbsp;</P>
+<HR>
+<P>&nbsp;</P>
+<H2><A NAME="Links">Links and references</A></H2>
+<UL>
+  <LI><P><A HREF="http://www.opengis.org/public/abstract/99-102r1.pdf">OpenGIS®
+      Topic 2 - Spatial Reference Systems</A>: An abstract specification for
+      coordinate transformations.</P></LI>
+
+  <LI><P><A HREF="http://www.opengis.org/techno/specs/01-009.pdf">OpenGIS®
+      Coordinate Transformation Services Implementation Specification</A>: The
+      main reference for CS, CT and PT packages.</P></LI>
+
+  <LI><P><A HREF="http://www.opengis.org/techno/specs/01-004.pdf">OpenGIS®
+      Grid Coverages Implementation Specification</A>: The main reference for
+      CV, GC and GP packages.</P></LI>
+
+  <LI><P><A HREF="http://www.remotesensing.org/proj/">PROJ.4 -
+      Cartographic Projections Library</A>: The source for most projection
+      formulas used in SEAGIS.</P></LI>
+
+  <LI><P><A HREF="http://katla.giub.uni-bonn.de/jago/">JaGO</A>: A Java
+      framework for geospatially-enabled solutions.</P></LI>
+
+  <LI><P><A HREF="http://www.openmap.org/">OpenMap</A>: An OpenSource GIS
+      supported by BBN Technologies.</P></LI>
+
+  <LI><P><A HREF="http://www.geotools.org/">GeoTools</A>: An Open source
+      mapping toolkit.</P></LI>
+
+  <LI><P><A HREF="http://www.freegis.org/">FreeGIS</A>:
+      A list of OpenSource GIS.</P></LI>
+</UL>
+
+</BODY>
+</HTML>
