@@ -27,10 +27,6 @@ package fr.ird.seasview.navigator;
 
 // Database
 import java.sql.SQLException;
-import fr.ird.seasview.DataBase;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.image.SeriesEntry;
 
 // User interface
 import java.awt.Component;
@@ -40,8 +36,6 @@ import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
-import fr.ird.awt.RangeBars;
-import fr.ird.seasview.layer.control.LayerControl;
 
 // Events and models
 import javax.swing.BoundedRangeModel;
@@ -69,9 +63,15 @@ import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 
-// Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+// Seagis
+import fr.ird.awt.RangeBars;
+import fr.ird.seasview.DataBase;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.seasview.layer.control.LayerControl;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -111,7 +111,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
     /**
      * Connection avec la base de données d'images.
      */
-    private final ImageTable table;
+    private final CoverageTable table;
 
     /**
      * Liste des séries apparaissant dans cette mosaïque.
@@ -129,7 +129,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @param layers    Couches que l'utilisateur pourra placer sur les images,
      *                  ou <code>null</code> pour n'afficher que les images.
      */
-    public ImageMosaicPanel(final ImageTable    table, final StatusBar statusBar,
+    public ImageMosaicPanel(final CoverageTable table, final StatusBar statusBar,
                             final ThreadGroup readers, final LayerControl[] layers)
     {
         super(statusBar, readers, layers);
@@ -179,9 +179,9 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public Map<SeriesEntry,List<ImageEntry>> refresh(final ImageTable table) throws SQLException {
-        final Map<SeriesEntry,List<ImageEntry>> entries;
-        entries = new HashMap<SeriesEntry,List<ImageEntry>>();
+    public Map<SeriesEntry,List<CoverageEntry>> refresh(final CoverageTable table) throws SQLException {
+        final Map<SeriesEntry,List<CoverageEntry>> entries;
+        entries = new HashMap<SeriesEntry,List<CoverageEntry>>();
         SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
                 series.clear();
@@ -211,8 +211,8 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public List<ImageEntry> addSeries(final ImageTable table) throws SQLException {
-        final List<ImageEntry> entries = addSeriesImpl(table);
+    public List<CoverageEntry> addSeries(final CoverageTable table) throws SQLException {
+        final List<CoverageEntry> entries = addSeriesImpl(table);
         // Fixe une fois pour toute le nombre de
         // lignes et de colonnes de la mosaïque.
         layoutMosaic();
@@ -231,10 +231,10 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    private List<ImageEntry> addSeriesImpl(final ImageTable table) throws SQLException {
-        final SeriesEntry    newSeries;
-        final RangeSet          ranges = new RangeSet(Date.class);
-        final List<ImageEntry> entries = new ArrayList<ImageEntry>();
+    private List<CoverageEntry> addSeriesImpl(final CoverageTable table) throws SQLException {
+        final SeriesEntry       newSeries;
+        final RangeSet             ranges = new RangeSet(Date.class);
+        final List<CoverageEntry> entries = new ArrayList<CoverageEntry>();
         synchronized (table) {
             newSeries = table.getSeries();
             table.getRanges(null, null, ranges, entries);
@@ -315,8 +315,8 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
                         assert length == (check=mosaic.getImageCount()) : "series="+length+" images="+check;
                         for (int i=0; i<length; i++) {
                             table.setSeries(series.get(i));
-                            final ImageEntry   entry = table.getEntry();
-                            final ImageCanvas canvas = mosaic.getImage(i);
+                            final CoverageEntry entry = table.getEntry();
+                            final ImageCanvas  canvas = mosaic.getImage(i);
                             if (canvas != null) {
                                 if (entry != null) {
                                     canvas.setImage(entry, getSelectedLayers(),

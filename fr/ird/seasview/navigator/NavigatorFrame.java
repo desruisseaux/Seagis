@@ -25,28 +25,12 @@
  */
 package fr.ird.seasview.navigator;
 
-// Image et base de données
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.image.SeriesEntry;
-
 // Interface utilisateur
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
-import fr.ird.awt.ImageTableModel;
-import fr.ird.awt.CoordinateChooserDB;
-import org.geotools.util.ProgressListener;
-import org.geotools.gui.swing.ProgressWindow;
-
-// Main framework
-import fr.ird.seasview.Task;
-import fr.ird.seasview.DataBase;
-import fr.ird.seasview.InternalFrame;
-import fr.ird.seasview.layer.control.LayerControl;
 
 // Modèles et événements
 import java.awt.EventQueue;
@@ -58,14 +42,29 @@ import javax.swing.table.TableCellRenderer;
 import java.util.Map;
 import java.util.List;
 import java.util.TimeZone;
+import java.sql.SQLException;
 
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
-// Geotools dependencies
-import org.geotools.gui.swing.StatusBar;
+// Geotools
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.gui.swing.StatusBar;
+
+// Seagis
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageTableModel;
+import fr.ird.database.gui.swing.CoordinateChooser;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
+
+// Seasview
+import fr.ird.seasview.Task;
+import fr.ird.seasview.DataBase;
+import fr.ird.seasview.InternalFrame;
+import fr.ird.seasview.layer.control.LayerControl;
 
 
 /**
@@ -81,14 +80,14 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     /**
      * Connection avec la base de données d'images.
      */
-    private final ImageTable table;
+    private final CoverageTable table;
 
     /**
      * Boîte de dialogue qui servira à demander à
      * l'utilisateur la plage de coordonnées qui
      * l'intéresse.
      */
-    private CoordinateChooserDB chooser;
+    private CoordinateChooser chooser;
 
     /**
      * Barre d'état à placer dans le bas de la fenêtre. Cette barre
@@ -108,7 +107,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Objet à utiliser pour dessiner les cellules des tables.
      * Toutes les tables de cette fenêtre partageront le même objet.
      */
-    private final TableCellRenderer renderer = new ImageTableModel.CellRenderer();
+    private final TableCellRenderer renderer = new CoverageTableModel.CellRenderer();
 
     /**
      * Construit une fenêtre d'images.
@@ -123,9 +122,9 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * @param  owner La composante parente (pour affichage des progrès).
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
-    public NavigatorFrame(final DataBase           database,
-                          final CoordinateChooserDB chooser,
-                          final JComponent            owner) throws SQLException
+    public NavigatorFrame(final DataBase          database,
+                          final CoordinateChooser chooser,
+                          final JComponent        owner) throws SQLException
     {
         super(Resources.format(ResourceKeys.IMAGES_LIST));
         final SeriesEntry[] series;
@@ -136,7 +135,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         } else {
             series = new SeriesEntry[0];
         }
-        table = database.getImageTable(series.length!=0 ? series[0] : null);
+        table = database.getCoverageTable(series.length!=0 ? series[0] : null);
         configureTable();
 
         final Container panel=getContentPane();
@@ -185,12 +184,12 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
     }
 
     /**
-     * Construit le paneau {@link CoordinateChooserDB}
+     * Construit le paneau {@link CoordinateChooser}
      * si ce paneau n'existait pas déjà.
      */
     private void buildChooser() throws SQLException {
         if (chooser == null) {
-            chooser = new CoordinateChooserDB(getDataBase().getImageDataBase());
+            chooser = new CoordinateChooser(getDataBase().getCoverageDataBase());
             chooser.setSeriesVisible(false);
         }
     }
@@ -232,7 +231,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         //       continue. Cette fonctionalité voulue est le résultat
         //       de la position des 'synchronized(table)'.
         synchronized (table) {
-            Map<SeriesEntry,List<ImageEntry>> entries = null;
+            Map<SeriesEntry,List<CoverageEntry>> entries = null;
             final ImageMosaicPanel mosaic = getMosaicPanel();
             if (mosaic != null) {
                 entries = mosaic.refresh(table);
@@ -242,7 +241,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                     final ImageTablePanel panel = (ImageTablePanel) tabs[i];
                     final SeriesEntry    series = panel.getSeries();
                     if (entries != null) {
-                        final List<ImageEntry> images = entries.get(series);
+                        final List<CoverageEntry> images = entries.get(series);
                         if (images != null) {
                             panel.setEntries(images);
                             continue;
@@ -284,18 +283,18 @@ loop:       for (int j=0; j<series.length; j++) {
                         }
                     }
                 }
-                final String           name   = série.getName();
-                final ImageMosaicPanel mosaic = getMosaicPanel();
-                final ImageTablePanel  panel;
-                final ImageTableModel  model;
+                final String              name   = série.getName();
+                final ImageMosaicPanel    mosaic = getMosaicPanel();
+                final ImageTablePanel     panel;
+                final CoverageTableModel  model;
                 progress.setDescription(name);
                 synchronized (table) {
                     table.setSeries(série);
                     if (mosaic != null) {
-                        model = new ImageTableModel(série);
+                        model = new CoverageTableModel(série);
                         model.setEntries(mosaic.addSeries(table));
                     } else {
-                        model = new ImageTableModel(table);
+                        model = new CoverageTableModel(table);
                     }
                 }
                 // Do not invokes following code inside the
@@ -315,10 +314,13 @@ loop:       for (int j=0; j<series.length; j++) {
 
     /**
      * Construit un paneau {@link ImageTablePanel} à partir d'une table
-     * {@link ImageTableModel}. Le paneau construit ne sera pas ajouté
+     * {@link CoverageTableModel}. Le paneau construit ne sera pas ajouté
      * aux onglets; c'est à l'appelant de le faire.
      */
-    private ImageTablePanel createPanel(final ImageTableModel model, final DataBase database) throws SQLException {
+    private ImageTablePanel createPanel(final CoverageTableModel model,
+                                        final DataBase        database)
+            throws SQLException
+    {
         final ThreadGroup readers = database.getThreadGroup();
         final LayerControl[] ctrl = database.getLayerControls();
         final ImageTablePanel panel=new ImageTablePanel(model, renderer, statusBar, readers, ctrl);
@@ -582,7 +584,7 @@ loop:       for (int j=0; j<series.length; j++) {
         /**
          * Tables des images à sauvegarder.
          */
-        private final ImageTableModel[] models;
+        private final CoverageTableModel[] models;
 
         /**
          * Construit un objet binaire pour la fenêtre spécifiée.
@@ -591,8 +593,8 @@ loop:       for (int j=0; j<series.length; j++) {
          */
         public Serializer(final NavigatorFrame frame) {
             super("Serializer");
-            final Component[] tabs=frame.tabs.getComponents();
-            ImageTableModel[] models=new ImageTableModel[tabs.length];
+            final Component[]    tabs   = frame.tabs.getComponents();
+            CoverageTableModel[] models = new CoverageTableModel[tabs.length];
             int count=0;
             for (int i=0; i<tabs.length; i++) {
                 if (tabs[i] instanceof ImageTablePanel) {
@@ -612,8 +614,8 @@ loop:       for (int j=0; j<series.length; j++) {
             final DataBase    database = getDataBase();
             final NavigatorFrame frame = new NavigatorFrame(database, null, null);
             for (int i=0; i<models.length; i++) {
-                final ImageTableModel model = models[i];
-                final SeriesEntry    series = model.getSeries();
+                final CoverageTableModel model = models[i];
+                final SeriesEntry series = model.getSeries();
                 frame.tabs.addTab((series!=null) ? series.getName() :
                         Resources.format(ResourceKeys.UNNAMED), frame.createPanel(model, database));
             }

@@ -29,11 +29,13 @@ package fr.ird.neural;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.BasicStroke;
-import org.geotools.gui.swing.ZoomPane;
 
 // Geometry
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ZoomPane;
 
 
 /**

@@ -48,9 +48,9 @@ import java.util.NoSuchElementException;
 
 // Divers
 import java.awt.Shape;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
 import org.geotools.resources.Utilities;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

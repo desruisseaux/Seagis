@@ -61,7 +61,7 @@ import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XMath;
 
 // Seagis
-import fr.ird.sql.image.ImageEntry;
+import fr.ird.database.coverage.CoverageEntry;
 
 
 /**
@@ -275,7 +275,7 @@ public final class SemiVariance extends Result {
          * Calcule les statistiques de l'image spécifiée, et ajoute les
          * statistiques obtenues à celles qui ont été calculées précédemment.
          */
-        protected Result run(final ImageEntry imageEntry, Result lastResult) throws IOException {
+        protected Result run(final CoverageEntry imageEntry, Result lastResult) throws IOException {
             final SemiVariance result;
             if (lastResult instanceof SemiVariance) {
                 result = (SemiVariance) lastResult;
@@ -557,7 +557,7 @@ public final class SemiVariance extends Result {
             final Worker worker = new Worker(1852, 500000); // 0-500 km avec une résolution de 1 nautique.
             try {
                 worker.setDestination(new File("\\\\ADAGIO\\Analyses\\Semi-variances"));
-            //  worker.setImages("(aucune)");
+            //  worker.setCoverages("(aucune)");
                 worker.setup(args);
                 worker.run();
                 System.exit(0);

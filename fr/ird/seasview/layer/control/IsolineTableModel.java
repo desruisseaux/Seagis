@@ -36,10 +36,12 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collections;
 
-// Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+// Geotools
 import org.geotools.resources.XArray;
+
+// Resources
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

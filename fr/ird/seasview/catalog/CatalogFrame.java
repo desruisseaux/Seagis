@@ -54,15 +54,15 @@ import org.geotools.gui.swing.ExceptionMonitor;
 
 // Seagis
 import fr.ird.awt.RangeBars;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.SeriesTable;
-import fr.ird.sql.image.SeriesEntry;
-import fr.ird.sql.image.ImageDataBase;
+import fr.ird.database.coverage.SeriesTable;
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.seasview.Task;
 import fr.ird.seasview.DataBase;
 import fr.ird.seasview.InternalFrame;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -75,7 +75,7 @@ public class CatalogFrame extends InternalFrame {
     /**
      * The image database.
      */
-    private final ImageDataBase database;
+    private final CoverageDataBase database;
 
     /**
      * The time ranges.
@@ -110,7 +110,7 @@ public class CatalogFrame extends InternalFrame {
         super(Resources.format(ResourceKeys.IMAGES_CATALOG));
         final SeriesTable series;
 
-        database = databases.getImageDataBase();
+        database = databases.getCoverageDataBase();
         series   = database.getSeriesTable();
         tree     = series.getTree(SeriesTable.CATEGORY_LEAF);
         series.close();
@@ -142,15 +142,15 @@ public class CatalogFrame extends InternalFrame {
 //          final Date       endTime = chooser.getEndTime();
 //          final Rectangle2D   area = chooser.getGeographicArea();
             final SeriesTable series = database.getSeriesTable();
-            final Collection<SeriesEntry> list = series.getSeries();
+            final Collection<SeriesEntry> list = series.getEntries();
             final float factor = 100f/list.size();
             int index = 0;
             for (final SeriesEntry entry : list) {
                 final String name = entry.getName();
                 progress.setDescription(name);
                 progress.progress(factor*index++);
-                final ImageTable   images = database.getImageTable(entry);
-                final RangeSet timeRanges = new RangeSet(Date.class);
+                final CoverageTable images = database.getCoverageTable(entry);
+                final RangeSet  timeRanges = new RangeSet(Date.class);
                 images.getRanges(null, null, timeRanges);
                 images.close();
                 if (!timeRanges.isEmpty()) {

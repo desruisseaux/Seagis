@@ -28,14 +28,18 @@ import java.io.ObjectOutputStream;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.ParseException;
-import org.geotools.io.LineFormat;
 
 // Miscellaneous
 import java.util.Random;
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
 import java.util.NoSuchElementException;
+
+// Geotools dependencies
+import org.geotools.io.LineFormat;
 import org.geotools.resources.Utilities;
+
+// Seagis dependencies
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
 
 
 /**

@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-import fr.ird.util.XArray;
+import fr.ird.resources.XArray;
 
 
 /**

@@ -45,23 +45,23 @@ import java.util.logging.LogRecord;
 import javax.media.jai.ImageFunction;
 
 // Geotools dependencies
+import org.geotools.units.Unit;
 import org.geotools.cs.Ellipsoid;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.Category;
 import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
-import org.geotools.resources.XMath;
-import org.geotools.resources.CTSUtilities;
-import org.geotools.units.Unit;
-
-// Miscellaneous
 import org.geotools.gui.swing.MapPane;
 import org.geotools.renderer.j2d.Renderer;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
-import fr.ird.resources.ResourceKeys;
-import fr.ird.resources.Resources;
-import fr.ird.util.Utilities;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.XMath;
+
+// Seagis
+import fr.ird.resources.Utilities;
+import fr.ird.resources.experimental.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
 
 
 /**

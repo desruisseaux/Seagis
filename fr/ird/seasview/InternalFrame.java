@@ -40,8 +40,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.TimeZone;
 import java.sql.SQLException;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+
+// Seagis
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

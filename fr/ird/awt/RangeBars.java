@@ -74,15 +74,19 @@ import java.lang.reflect.Array;
 import java.util.ConcurrentModificationException;
 import javax.media.jai.util.Range;
 
-// Timezone and units
+// Miscellaneous
 import java.util.Date;
 import java.util.TimeZone;
-import org.geotools.units.Unit;
-
-// Formats
 import java.text.Format;
 
+// Geotools dependencies
+import org.geotools.util.RangeSet;
+import org.geotools.gui.swing.ZoomPane;
+import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.resources.ClassChanger;
+
 // Axis and graduation
+import org.geotools.units.Unit;
 import org.geotools.axis.Axis2D;
 import org.geotools.axis.Graduation;
 import org.geotools.axis.DateGraduation;
@@ -90,14 +94,8 @@ import org.geotools.axis.NumberGraduation;
 import org.geotools.axis.AbstractGraduation;
 
 // Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
-// Geotools dependencies
-import org.geotools.util.RangeSet;
-import org.geotools.gui.swing.ZoomPane;
-import org.geotools.gui.swing.ExceptionMonitor;
-import org.geotools.resources.ClassChanger;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

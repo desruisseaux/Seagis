@@ -40,13 +40,10 @@ import javax.swing.JToggleButton;
 import javax.swing.BorderFactory;
 import javax.swing.JColorChooser;
 import javax.swing.SwingConstants;
-import fr.ird.awt.MarkColorChooser;
 
 // Miscellaneous
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
 import java.awt.image.RenderedImage;
 
 // Events
@@ -57,6 +54,11 @@ import javax.swing.event.ChangeListener;
 
 // Geotools dependencies
 import org.geotools.resources.SwingUtilities;
+
+// Seagis
+import fr.ird.awt.MarkColorChooser;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

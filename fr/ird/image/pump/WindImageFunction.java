@@ -53,8 +53,8 @@ import org.geotools.resources.Arguments;
 // Miscellaneous
 import fr.ird.io.hdf4.Parser;
 import fr.ird.io.hdf4.DataSet;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 import fr.ird.operator.image.AbstractImageFunction;
 
 

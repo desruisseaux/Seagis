@@ -75,9 +75,9 @@ import org.geotools.gui.headless.ProgressPrinter;
 import org.geotools.gui.headless.ProgressMailer;
 
 // Seagis
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

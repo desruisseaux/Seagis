@@ -37,7 +37,6 @@ import java.awt.Dimension;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.BorderLayout;
-import fr.ird.sql.ControlPanel;
 
 // Evénements
 import java.awt.event.KeyEvent;
@@ -57,14 +56,15 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.prefs.Preferences;
 
-// Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
-// Geotools dependencies
+// Geotools
 import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
+
+// Seagis
+import fr.ird.database.gui.swing.ControlPanel;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

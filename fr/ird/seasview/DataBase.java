@@ -25,33 +25,31 @@
  */
 package fr.ird.seasview;
 
-// Database
+// J2SE
+import java.util.List;
+import java.util.TimeZone;
+import java.util.ArrayList;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.SeriesEntry;
-import fr.ird.sql.image.ImageDataBase;
-import fr.ird.sql.fishery.FisheryDataBase;
+import java.io.PrintWriter;
+
+// Seagis
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.database.sample.SampleDataBase;
 
 // Layers
 import fr.ird.seasview.layer.control.LayerControl;
-import fr.ird.seasview.layer.control.ImageLayerControl;
-import fr.ird.seasview.layer.control.CatchLayerControl;
+import fr.ird.seasview.layer.control.SampleLayerControl;
 import fr.ird.seasview.layer.control.VectorLayerControl;
 import fr.ird.seasview.layer.control.IsolineLayerControl;
-
-// Logger and preferrences
-import java.io.PrintWriter;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
-
-// Collections
-import java.util.List;
-import java.util.ArrayList;
+import fr.ird.seasview.layer.control.CoverageLayerControl;
 
 // Miscellaneous
-import java.util.TimeZone;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -98,14 +96,14 @@ public final class DataBase {
      * Si <code>null</code>, alors la connexion sera
      * établie la première fois où elle sera demandée.
      */
-    private ImageDataBase images;
+    private CoverageDataBase images;
 
     /**
      * Connexion vers la base de données de pêches.
      * Si <code>null</code>, alors la connexion sera
      * établie la première fois où elle sera demandée.
      */
-    private FisheryDataBase fisheries;
+    private SampleDataBase fisheries;
 
     /**
      * Groupe des threads qui sont en train d'effectuer une opération.
@@ -136,7 +134,7 @@ public final class DataBase {
      * Construit une nouvelle source de données avec des
      * connections vers les bases de données spécifiées.
      */
-    private DataBase(final ImageDataBase images, final FisheryDataBase fisheries) {
+    private DataBase(final CoverageDataBase images, final SampleDataBase fisheries) {
         this.images    = images;
         this.fisheries = fisheries;
         threads.setMaxPriority(Thread.NORM_PRIORITY-3);
@@ -171,7 +169,8 @@ public final class DataBase {
     public DataBase(final String images,    final TimeZone imagesTZ,
                     final String fisheries, final TimeZone fisheriesTZ) throws SQLException
     {
-        this(new ImageDataBase(images, imagesTZ), new FisheryDataBase(fisheries, fisheriesTZ));
+        this(new fr.ird.database.coverage.sql.CoverageDataBase(images, imagesTZ),
+             new fr.ird.database.sample.sql.SampleDataBase(fisheries, fisheriesTZ));
     }
 
     /**
@@ -187,9 +186,9 @@ public final class DataBase {
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized ImageDataBase getImageDataBase() throws SQLException {
+    public synchronized CoverageDataBase getCoverageDataBase() throws SQLException {
         if (images == null) {
-            images = new ImageDataBase();
+            images = new fr.ird.database.coverage.sql.CoverageDataBase();
         }
         return images;
     }
@@ -199,9 +198,9 @@ public final class DataBase {
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    protected synchronized FisheryDataBase getFisheryDataBase() throws SQLException {
+    protected synchronized SampleDataBase getSampleDataBase() throws SQLException {
         if (fisheries == null) {
-            fisheries = new FisheryDataBase();
+            fisheries = new fr.ird.database.sample.sql.SampleDataBase();
         }
         return fisheries;
     }
@@ -212,9 +211,9 @@ public final class DataBase {
      * @param  series La série voulue, ou <code>null</code> pour une série par défaut.
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public ImageTable getImageTable(final SeriesEntry series) throws SQLException {
-        final ImageDataBase images = getImageDataBase();
-        return (series!=null) ? images.getImageTable(series) : images.getImageTable();
+    public CoverageTable getCoverageTable(final SeriesEntry series) throws SQLException {
+        final CoverageDataBase images = getCoverageDataBase();
+        return (series!=null) ? images.getCoverageTable(series) : images.getCoverageTable();
     }
 
     /**
@@ -224,16 +223,16 @@ public final class DataBase {
      * @throws SQLException si les accès à la base de données ont échoués.
      */
     public synchronized LayerControl[] getLayerControls() throws SQLException {
-        final ImageDataBase      images = getImageDataBase();
+        final CoverageDataBase   images = getCoverageDataBase();
         final List<LayerControl> layers = new ArrayList<LayerControl>(3);
-        final ImageTable       currents = images.getImageTable(getGeostrophicCurrentTable());
-        layers.add(new ImageLayerControl());
+        final CoverageTable    currents = images.getCoverageTable(getGeostrophicCurrentTable());
+        layers.add(new CoverageLayerControl());
         if (currents != null) {
             layers.add(new VectorLayerControl(currents, 1, 2));
         }
-        final FisheryDataBase fisheries = getFisheryDataBase();
+        final SampleDataBase fisheries = getSampleDataBase();
         layers.add(new IsolineLayerControl());
-        layers.add(new CatchLayerControl(fisheries));
+        layers.add(new SampleLayerControl(fisheries));
         return (LayerControl[])layers.toArray(new LayerControl[layers.size()]);
     }
 

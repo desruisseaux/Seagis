@@ -48,8 +48,8 @@ import javax.swing.event.ListSelectionListener;
 import org.geotools.resources.SwingUtilities;
 
 // Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

@@ -25,32 +25,28 @@
  */
 package fr.ird.seasview.layer.control;
 
-// Input/output and images
-import java.io.IOException;
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageEntry;
-import java.io.FileNotFoundException;
-
-// Map components
-import org.geotools.renderer.geom.GeometryCollection;
-import org.geotools.renderer.j2d.RenderedGeometries;
-import org.geotools.renderer.j2d.RenderedLayer;
-import fr.ird.seasview.layer.IsolineFactory;
-import fr.ird.seasview.DataBase;
-
-// Graphical user interface
+// J2SE
+import java.util.Date;
 import java.awt.Color;
 import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
+import java.sql.SQLException;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 
-// Geotools dependencies
+// Geotools
 import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGeometries;
+import org.geotools.renderer.geom.GeometryCollection;
 
-// Miscellaneous
-import java.util.Date;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+// Seagis
+import fr.ird.seasview.DataBase;
+import fr.ird.seasview.layer.IsolineFactory;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -122,7 +118,7 @@ public final class IsolineLayerControl extends LayerControl {
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
     public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
-                                        final ImageEntry        entry,
+                                        final CoverageEntry     entry,
                                         final EventListenerList listeners)
         throws SQLException, IOException
     {

@@ -35,8 +35,8 @@ import java.io.InputStreamReader;
 import org.geotools.renderer.geom.GeometryCollection;
 
 // Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

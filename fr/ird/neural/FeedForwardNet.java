@@ -16,11 +16,15 @@
  */
 package fr.ird.neural;
 
-// Miscellaneous
+// J2SE dependencies
 import java.io.Serializable;
+
+// Geotools dependencies
 import org.geotools.resources.Utilities;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+
+// Seagis
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

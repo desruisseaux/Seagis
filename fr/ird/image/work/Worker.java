@@ -25,18 +25,10 @@
  */
 package fr.ird.image.work;
 
-// Geotools dependencies
-import org.geotools.gc.GridRange;
-import org.geotools.gc.GridCoverage;
-import org.geotools.cv.SampleDimension;
-
 // Base de données et images
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.image.ImageDataBase;
 import java.awt.image.RenderedImage;
 import javax.imageio.ImageIO;
 
@@ -45,7 +37,6 @@ import java.awt.Shape;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import org.geotools.resources.XAffineTransform;
 
 // Entrés/sorties
 import java.io.File;
@@ -56,12 +47,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
-
-// Progres et événements
-import org.geotools.util.ProgressListener;
-import org.geotools.gui.headless.ProgressMailer;
-import org.geotools.gui.headless.ProgressPrinter;
-import javax.swing.event.EventListenerList;
 
 // Ensembles
 import java.util.Set;
@@ -78,7 +63,22 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.text.DateFormat;
 import javax.media.jai.util.Range;
+import javax.swing.event.EventListenerList;
+
+// Geotools
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
+import org.geotools.util.ProgressListener;
+import org.geotools.resources.XAffineTransform;
+import org.geotools.gui.headless.ProgressMailer;
+import org.geotools.gui.headless.ProgressPrinter;
+
+// Seagis
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageDataBase;
 
 
 /**
@@ -88,8 +88,8 @@ import org.geotools.resources.Utilities;
  * <ul>
  *   <li>Créer une classe dérivée qui effectue l'opération
  *       souhaitée. Cette classe dérivée doit redéfinir la
- *       méthode {@link #run(ImageEntry[],Result)}.</li>
- *   <li>Appeler une des méthodes <code>setImages(...)</code>
+ *       méthode {@link #run(CoverageEntry[],Result)}.</li>
+ *   <li>Appeler une des méthodes <code>setCoverages(...)</code>
  *       pour spécifier les images sur lesquelles on veut
  *       appliquer l'opération.</li>
  *   <li>Appeler {@link #setDestination} pour spécifier le
@@ -103,7 +103,7 @@ import org.geotools.resources.Utilities;
  */
 public abstract class Worker implements Runnable {
     /**
-     * Liste d'objets {@link ImageEntry} enregistrés sur le disque.
+     * Liste d'objets {@link CoverageEntry} enregistrés sur le disque.
      * Cette liste sera utilisée si on n'a pas réussi à se connecter
      * à la base de données.
      */
@@ -124,7 +124,7 @@ public abstract class Worker implements Runnable {
      * les opérations, ou <code>null</code> si
      * cette information n'a pas encore été spécifiée.
      */
-    private ImageEntry[] entries;
+    private CoverageEntry[] entries;
 
     /**
      * Chaque clé représente une liste <code>List<SampleDimension></code>, c'est-à-dire
@@ -188,8 +188,8 @@ public abstract class Worker implements Runnable {
     /**
      * Spécifie les images à utiliser en entrés pour les opérations.
      */
-    public synchronized void setImages(final List<ImageEntry> entries) {
-        this.entries = (ImageEntry[])entries.toArray(new ImageEntry[entries.size()]);
+    public synchronized void setCoverages(final List<CoverageEntry> entries) {
+        this.entries = (CoverageEntry[])entries.toArray(new CoverageEntry[entries.size()]);
     }
 
     /**
@@ -206,8 +206,8 @@ public abstract class Worker implements Runnable {
      *
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public void setImages(final String series) throws SQLException {
-        setImages(series, null, null, null);
+    public void setCoverages(final String series) throws SQLException {
+        setCoverages(series, null, null, null);
     }
 
     /**
@@ -224,14 +224,14 @@ public abstract class Worker implements Runnable {
      *                       ou <code>null</code> pour ne pas imposer de limites géographiques.
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public synchronized void setImages(String series, Date startTime, Date endTime,
-                                       final Rectangle2D geographicArea) throws SQLException
+    public synchronized void setCoverages(String series, Date startTime, Date endTime,
+                                          final Rectangle2D geographicArea) throws SQLException
     {
-        final ImageDataBase database = new ImageDataBase();
+        final CoverageDataBase database = new fr.ird.database.coverage.sql.CoverageDataBase();
         if (series == null) {
             series = "SST (synthèse)";
         }
-        final ImageTable table = database.getImageTable(series);
+        final CoverageTable table = database.getCoverageTable(series);
         if (startTime!=null || endTime!=null) {
             final Range range = table.getTimeRange();
             if (startTime == null) startTime = (Date) range.getMinValue();
@@ -241,20 +241,20 @@ public abstract class Worker implements Runnable {
         if (geographicArea != null) {
             table.setGeographicArea(geographicArea);
         }
-        setImages(table.getEntries());
+        setCoverages(table.getEntries());
         table.close();
         database.close();
     }
 
     /**
      * Obtient la liste des images à utiliser en entrés. Si aucune image n'a été
-     * spécifiée (c'est-à-dire si aucune méthode <code>setImages(...)</code> n'a
+     * spécifiée (c'est-à-dire si aucune méthode <code>setCoverages(...)</code> n'a
      * été appelée), alors cette méthode retournera les images d'une série par
      * défaut.
      */
-    private synchronized ImageEntry[] getImages() {
+    private synchronized CoverageEntry[] getCoverages() {
         if (entries==null) try {
-            setImages((String)null);
+            setCoverages((String)null);
             if (entries!=null) try {
                 /*
                  * Si des images ont pu être obtenues, sauvegarde la liste des images afin de
@@ -265,7 +265,7 @@ public abstract class Worker implements Runnable {
                 output.writeObject(entries);
                 output.close();
             } catch (IOException exception) {
-                exceptionOccurred("getImages", exception);
+                exceptionOccurred("getCoverages", exception);
             }
         } catch (SQLException exception) {
             /*
@@ -277,18 +277,18 @@ public abstract class Worker implements Runnable {
             if (input != null) {
                 try {
                     final ObjectInputStream objectInput=new ObjectInputStream(new InflaterInputStream(input));
-                    entries = (ImageEntry[]) objectInput.readObject();
+                    entries = (CoverageEntry[]) objectInput.readObject();
                     objectInput.close();
                 } catch (IOException ioexception) {
-                    exceptionOccurred("getImages", ioexception);
+                    exceptionOccurred("getCoverages", ioexception);
                 } catch (ClassNotFoundException ioexception) {
-                    exceptionOccurred("getImages", ioexception);
+                    exceptionOccurred("getCoverages", ioexception);
                 }
             } else {
-                exceptionOccurred("getImages", exception);
+                exceptionOccurred("getCoverages", exception);
             }
         }
-        return (entries!=null) ? (ImageEntry[]) entries.clone() : new ImageEntry[0];
+        return (entries!=null) ? (CoverageEntry[]) entries.clone() : new CoverageEntry[0];
     }
 
     /**
@@ -306,7 +306,7 @@ public abstract class Worker implements Runnable {
      * mais sera dans le répertoire de destination qui aura été spécifié avec
      * {@link #setDestination} plutôt que dans le répertoire de l'image.
      */
-    final File getOutputFile(final ImageEntry image) {
+    final File getOutputFile(final CoverageEntry image) {
         final String filename = image.getFile().getName();
         final int    extIndex = filename.lastIndexOf('.');
         if (extIndex>0 && filename.charAt(extIndex-1)!='.') {
@@ -318,7 +318,7 @@ public abstract class Worker implements Runnable {
 
     /**
      * Démarre le travail. L'implémentation par défaut prévient les objets {@link ProgressListener}
-     * que la lecture commence et appelle ensuite {@link #run(ImageEntry[])}.
+     * que la lecture commence et appelle ensuite {@link #run(CoverageEntry[])}.
      *
      * @see #stop()
      */
@@ -334,7 +334,7 @@ public abstract class Worker implements Runnable {
         for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).started();
         }
-        final Result result = run(getImages(), null); // TODO: sauvegarder le travail?
+        final Result result = run(getCoverages(), null); // TODO: sauvegarder le travail?
         for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).complete();
         }
@@ -362,7 +362,7 @@ public abstract class Worker implements Runnable {
      *                 <code>null</code> si aucun résulat n'avait été précédemment sauvegardé.
      * @return Résultat de ce travail, ou <code>null</code> s'il n'y en a pas.
      */
-    protected abstract Result run(final ImageEntry[] entries, final Result result);
+    protected abstract Result run(final CoverageEntry[] entries, final Result result);
 
     /**
      * Interrompt l'opération. Cette méthode signale aux méthodes <code>run(...)</code>
@@ -375,7 +375,7 @@ public abstract class Worker implements Runnable {
 
     /**
      * Indique si l'utilisateur a demandé l'interruption de l'opération. La méthode
-     * {@link #run(ImageEntry,Result)} devrait interroger cette méthode à intervals
+     * {@link #run(CoverageEntry,Result)} devrait interroger cette méthode à intervals
      * réguliers.
      *
      * @see #run()
@@ -424,13 +424,13 @@ public abstract class Worker implements Runnable {
 
     /**
      * Retourne l'image de l'entré spécifiée. Bien que ce ne soit pas obligatoire, il
-     * est préférable d'appeler cette méthode plutôt que {@link ImageEntry#getGridCoverage}.
+     * est préférable d'appeler cette méthode plutôt que {@link CoverageEntry#getGridCoverage}.
      *
      * @param  entry Entré dont on veut l'image.
      * @return Image de l'entré spécifiée.
      * @throws IOException si une erreur de lecture est survenue.
      */
-    protected GridCoverage getGridCoverage(final ImageEntry entry) throws IOException {
+    protected GridCoverage getGridCoverage(final CoverageEntry entry) throws IOException {
         final GridCoverage image = entry.getGridCoverage(null);
         if (image != null) {
             final List<SampleDimension> list = Arrays.asList(image.getSampleDimensions());
@@ -553,7 +553,7 @@ public abstract class Worker implements Runnable {
             }
         }
         if (series!=null || startTime!=null || endTime!=null) {
-            setImages(series, startTime, endTime, null);
+            setCoverages(series, startTime, endTime, null);
         }
     }
 }

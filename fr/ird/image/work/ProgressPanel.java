@@ -55,8 +55,8 @@ import org.geotools.gui.swing.ExceptionMonitor;
 // Divers
 import java.io.IOException;
 import org.geotools.util.ProgressListener;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

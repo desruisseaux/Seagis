@@ -50,7 +50,7 @@ import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.resources.Utilities;
 
 // Seagis
-import fr.ird.resources.Resources;
+import fr.ird.resources.experimental.Resources;
 
 
 /**

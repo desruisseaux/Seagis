@@ -58,8 +58,8 @@ import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Seagis
-import fr.ird.util.XArray;
-import fr.ird.sql.image.ImageEntry;
+import fr.ird.resources.XArray;
+import fr.ird.database.coverage.CoverageEntry;
 
 
 /**
@@ -207,7 +207,7 @@ public class Result implements Serializable {
      * ont été pris en compte pour la construction
      * de cet objet.
      */
-    protected synchronized void add(final ImageEntry image) {
+    protected synchronized void add(final CoverageEntry image) {
         final int ID = image.getID();
         if (imageIDs != null) {
             final int last = imageIDs.length;
@@ -222,7 +222,7 @@ public class Result implements Serializable {
      * Indique si l'image spécifiée fait partie des images qui
      * ont été prises en compte dans le calcul des résultats.
      */
-    protected synchronized boolean contains(final ImageEntry image) {
+    protected synchronized boolean contains(final CoverageEntry image) {
         if (imageIDs != null) {
             final int ID = image.getID();
             for (int i=0; i<imageIDs.length; i++) {

@@ -45,9 +45,9 @@ import java.util.ConcurrentModificationException;
 import org.geotools.resources.Utilities;
 
 // Seagis
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

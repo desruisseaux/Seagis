@@ -30,8 +30,8 @@ import java.io.File;
 import java.io.IOException;
 
 // Seagis
-import fr.ird.util.XArray;
-import fr.ird.sql.image.ImageEntry;
+import fr.ird.resources.XArray;
+import fr.ird.database.coverage.CoverageEntry;
 
 
 /**
@@ -42,8 +42,8 @@ import fr.ird.sql.image.ImageEntry;
  * <ul>
  *   <li>Créer une classe dérivée qui effectue l'opération
  *       souhaitée. Cette classe dérivée doit redéfinir la
- *       méthode {@link #run(ImageEntry,Result)}.</li>
- *   <li>Appeler une des méthodes <code>setImages(...)</code>
+ *       méthode {@link #run(CoverageEntry,Result)}.</li>
+ *   <li>Appeler une des méthodes <code>setCoverages(...)</code>
  *       pour spécifier les images sur lesquelles on veut
  *       appliquer l'opération.</li>
  *   <li>Appeler {@link #setDestination} pour spécifier le
@@ -68,7 +68,7 @@ public abstract class SimpleWorker extends Worker {
 
     /**
      * Démarre le travail sur une série d'images. L'implémentation par défaut
-     * appelle {@link #run(ImageEntry,Result)} pour chaque image de la série.
+     * appelle {@link #run(CoverageEntry,Result)} pour chaque image de la série.
      * Certaines implémentations peuvent répartir le travail sur plusieurs
      * threads.
      *
@@ -79,11 +79,11 @@ public abstract class SimpleWorker extends Worker {
      *
      * @see #stop()
      */
-    protected Result run(ImageEntry[] entries, final Result ignore) {
+    protected Result run(CoverageEntry[] entries, final Result ignore) {
         while (entries.length != 0) {
             final int index = (int)(entries.length*Math.random());
             if (index<0 || index>=entries.length) continue;
-            final ImageEntry entry = entries[index];
+            final CoverageEntry entry = entries[index];
             entries = XArray.remove(entries, index, 1);
             setDescription(entry.getName());
 
@@ -142,7 +142,7 @@ public abstract class SimpleWorker extends Worker {
      * @see #stop()
      * @see #progress
      */
-    protected abstract Result run(final ImageEntry image, final Result result) throws IOException;
+    protected abstract Result run(final CoverageEntry image, final Result result) throws IOException;
 
     /**
      * Enregistre les données de l'image spécifiée. Cette méthode peut être appelée
@@ -150,7 +150,7 @@ public abstract class SimpleWorker extends Worker {
      * sans être obligé de tout recommencer la prochaine fois que l'on redémarrera
      * le calcul.
      */
-    protected void save(final ImageEntry entry, final Result result) {
+    protected void save(final CoverageEntry entry, final Result result) {
         try {
             if (result != null) {
                 result.save(getOutputFile(entry));

@@ -41,8 +41,8 @@ import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.renderer.geom.GeometryCollection;
 
 // Seagis
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

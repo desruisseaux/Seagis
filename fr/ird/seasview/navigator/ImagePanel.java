@@ -47,15 +47,17 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.ClipboardOwner;
 
+// Geotools
+import org.geotools.gui.swing.StatusBar;
+
 // Map components
 import fr.ird.seasview.InternalFrame;
 import fr.ird.seasview.layer.control.LayerControl;
 
 // Miscellaneous
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-import org.geotools.gui.swing.StatusBar;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

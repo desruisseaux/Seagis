@@ -18,7 +18,7 @@ package fr.ird.neural;
 
 // Miscellaneous
 import java.io.Serializable;
-import fr.ird.util.XArray;
+import fr.ird.resources.XArray;
 
 
 /**

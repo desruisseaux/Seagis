@@ -73,9 +73,9 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.Iterator;
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 // Geotools dependencies
 import org.geotools.resources.Utilities;
@@ -83,7 +83,7 @@ import org.geotools.resources.SwingUtilities;
 
 
 /**
- * A "About" dialog box. This dialog box contains the application's title and some system
+ * An "About" dialog box. This dialog box contains the application's title and some system
  * informations  (Java and OS version,  free memory,  image readers and writers,  running
  * threads, etc.). Those informations are fetched from a {@link Manifest} object, usually
  * build from the <code>META-INF/Manifest.mf</code> file.   This manifest should contains

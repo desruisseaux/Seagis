@@ -25,18 +25,6 @@
  */
 package fr.ird.seasview.navigator;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-
-// Database
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.image.SeriesEntry;
-
-// Map components
-import fr.ird.seasview.layer.control.LayerControl;
-
 // Graphical user inferface
 import java.awt.Component;
 import java.awt.Container;
@@ -51,9 +39,6 @@ import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JScrollPane;
-import fr.ird.seasview.InternalFrame;
-import fr.ird.awt.ImageTableModel;
-import fr.ird.awt.ExportChooser;
 
 // Models and events
 import javax.swing.table.TableCellRenderer;
@@ -65,8 +50,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import fr.ird.awt.event.ImageChangeListener;
-import fr.ird.awt.event.ImageChangeEvent;
 
 // Clipboard
 import java.awt.datatransfer.Clipboard;
@@ -84,11 +67,26 @@ import java.util.Iterator;
 import java.io.File;
 import java.util.Date;
 import java.util.TimeZone;
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import java.sql.SQLException;
+
+// Geotools
+import org.geotools.gc.GridCoverage;
 import org.geotools.gui.swing.ColorBar;
 import org.geotools.gui.swing.StatusBar;
+
+// Seagis
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageTableModel;
+import fr.ird.database.gui.event.CoverageChangeEvent;
+import fr.ird.database.gui.event.CoverageChangeListener;
+import fr.ird.database.gui.swing.CoverageExportChooser;
+import fr.ird.seasview.layer.control.LayerControl;
+import fr.ird.seasview.InternalFrame;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -113,14 +111,14 @@ final class ImageTablePanel extends ImagePanel {
      * change, la nouvelle sélection sera comparée à l'ancienne
      * pour ne lire ou supprimer que les images qui ont changées.
      */
-    private ImageEntry[] selection=new ImageEntry[0];
+    private CoverageEntry[] selection = new CoverageEntry[0];
 
     /**
-     * Table des images spécifiée au constructeur.   Cette table contient
-     * des objets {@link ImageEntry}. Les données de chaque entrée seront
+     * Table des images spécifiée au constructeur. Cette table contient
+     * des objets {@link CoverageEntry}. Les données de chaque entrée seront
      * présentées sur plusieurs colonnes (nom du fichier, date, durée...).
      */
-    private final ImageTableModel table;
+    private final CoverageTableModel table;
 
     /**
      * Composante visuelle qui affiche la table. Cet objet offre des méthodes
@@ -163,8 +161,11 @@ final class ImageTablePanel extends ImagePanel {
      * @param layers    Couches que l'utilisateur pourra placer sur les images,
      *                  ou <code>null</code> pour n'afficher que les images.
      */
-    public ImageTablePanel(final ImageTableModel table, final TableCellRenderer renderer,
-                           final StatusBar statusBar,   final ThreadGroup readers, final LayerControl[] layers)
+    public ImageTablePanel(final CoverageTableModel table,
+                           final TableCellRenderer  renderer,
+                           final StatusBar          statusBar,
+                           final ThreadGroup        readers,
+                           final LayerControl[]     layers)
     {
         super(statusBar, readers, layers);
         this.table     = table;
@@ -242,7 +243,7 @@ final class ImageTablePanel extends ImagePanel {
             ///  Fichier - Exporter ///
             ///////////////////////////
             case ResourceKeys.EXPORT: {
-                final ExportChooser chooser=new ExportChooser(lastDirectory);
+                final CoverageExportChooser chooser = new CoverageExportChooser(lastDirectory);
                 chooser.addEntries(table.getEntries());
                 chooser.showDialogAndStart(this, workers);
                 lastDirectory = chooser.getDestinationDirectory();
@@ -283,7 +284,7 @@ final class ImageTablePanel extends ImagePanel {
             ////////////////////////////
             case ResourceKeys.DELETE: {
                 table.remove(tableView.getSelectedRows());
-                selection=new ImageEntry[0];
+                selection = new CoverageEntry[0];
                 mosaic.removeAllImages();
                 updateStatusBar();
                 return true;
@@ -342,7 +343,7 @@ final class ImageTablePanel extends ImagePanel {
      *
      * @param selection Images sélectionnées.
      */
-    private void imageSelected(final ImageEntry[] selection) {
+    private void imageSelected(final CoverageEntry[] selection) {
         synchronized (getTreeLock()) {
             final LayerControl[] selectedLayers = (layers!=null) ? getSelectedLayers() : null;
             final ImageCanvas[] images=new ImageCanvas[selection.length];
@@ -352,7 +353,7 @@ final class ImageTablePanel extends ImagePanel {
              * de nouvelles lectures inutiles.
              */
             int i=this.selection.length;
-            final Map<ImageEntry,ImageCanvas> old=new HashMap<ImageEntry,ImageCanvas>(Math.max(2*i, 11));
+            final Map<CoverageEntry,ImageCanvas> old=new HashMap<CoverageEntry,ImageCanvas>(Math.max(2*i, 11));
             while (--i >= 0) {
                 old.put(this.selection[i], mosaic.getImage(i));
             }
@@ -368,13 +369,13 @@ final class ImageTablePanel extends ImagePanel {
             final Iterator<ImageCanvas> it=old.values().iterator();
             for (i=0; i<selection.length; i++) {
                 if (images[i] == null) {
-                    final ImageEntry entry = selection[i];
+                    final CoverageEntry entry = selection[i];
                     final ImageCanvas panel;
                     if (it.hasNext()) {
                         panel = it.next();
                     } else {
                         panel = new ImageCanvas();
-                        panel.addImageChangeListener(listeners);
+                        panel.addCoverageChangeListener(listeners);
                     }
                     images[i]=panel;
                     panel.setImage(entry, selectedLayers,
@@ -389,7 +390,7 @@ final class ImageTablePanel extends ImagePanel {
              */
             while (it.hasNext()) {
                 final ImageCanvas panel = it.next();
-                panel.removeImageChangeListener(listeners);
+                panel.removeCoverageChangeListener(listeners);
                 panel.dispose();
             }
             mosaic.setImages(images);
@@ -406,7 +407,7 @@ final class ImageTablePanel extends ImagePanel {
      *
      * @param images Liste des images présentement affichées.
      */
-    private void imageChanged(final GridCoverage[] images) {
+    private void coverageChanged(final GridCoverage[] images) {
         if (images.length != 0) {
             colorBar.setColors(images[0]);
             for (int i=1; i<images.length; i++) {
@@ -423,8 +424,8 @@ final class ImageTablePanel extends ImagePanel {
      * Cette copie pourra être enregistrée en binaire
      * (<i>serialized</i>).
      */
-    public ImageTableModel getModel() {
-        return new ImageTableModel(table);
+    public CoverageTableModel getModel() {
+        return new CoverageTableModel(table);
     }
 
     /**
@@ -432,9 +433,9 @@ final class ImageTablePanel extends ImagePanel {
      * Le tableau retourné peut avoir une longueur de 0, mais ne sera
      * jamais <code>null</code>.
      */
-    public ImageEntry[] getSelectedEntries() {
-        final int[]             rows = tableView.getSelectedRows();
-        final ImageEntry[] selection = new ImageEntry[rows.length];
+    public CoverageEntry[] getSelectedEntries() {
+        final int[] rows = tableView.getSelectedRows();
+        final CoverageEntry[] selection = new CoverageEntry[rows.length];
         for (int i=0; i<rows.length; i++) {
             selection[i]=table.getEntryAt(rows[i]);
         }
@@ -446,20 +447,20 @@ final class ImageTablePanel extends ImagePanel {
      * spécifiée. Cette méthode peut être appelée de n'importe quel thread
      * (pas nécessairement celui de <i>Swing</i>).
      */
-    public void setEntries(final List<ImageEntry> entries) {
+    public void setEntries(final List<CoverageEntry> entries) {
         this.table.setEntries(entries);
     }
 
     /**
      * Remplace tous les enregistrements courants par ceux de la table <code>table</code>.
-     * La série de <code>table</code> (telle que retournée par {@link ImageTable#getSeries})
+     * La série de <code>table</code> (telle que retournée par {@link CoverageTable#getSeries})
      * deviendra la série courante, celle que retourne {@link #getSeries}. Cette méthode
      * peut être appelée de n'importe quel thread (pas nécessairement celui de <i>Swing</i>).
      *
      * @param  table Table dans laquelle puiser la liste des images.
      * @throws SQLException si l'interrogation de la table a échouée.
      */
-    public void setEntries(final ImageTable table) throws SQLException {
+    public void setEntries(final CoverageTable table) throws SQLException {
         this.table.setEntries(table);
     }
 
@@ -511,7 +512,7 @@ final class ImageTablePanel extends ImagePanel {
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Listener implements TableModelListener, ListSelectionListener, ImageChangeListener
+    private final class Listener implements TableModelListener, ListSelectionListener, CoverageChangeListener
     {
         /**
          * Méthode appelée automatiquement chaque
@@ -527,7 +528,7 @@ final class ImageTablePanel extends ImagePanel {
          */
         public void valueChanged(final ListSelectionEvent event) {
             if (!event.getValueIsAdjusting()) {
-                ImageEntry[] entries=getSelectedEntries();
+                CoverageEntry[] entries = getSelectedEntries();
                 if (entries.length>MAX_IMAGES) {
                     entries = XArray.resize(entries, MAX_IMAGES);
                 }
@@ -540,8 +541,8 @@ final class ImageTablePanel extends ImagePanel {
          * Méthode appelée automatiquement chaque fois qu'une des images affichées a changée.
          * Cette méthode n'est appelée qu'après que le chargement ait été complétée.
          */
-        public void imageChanged(final ImageChangeEvent event) {
-            ImageTablePanel.this.imageChanged(mosaic.getGridCoverages());
+        public void coverageChanged(final CoverageChangeEvent event) {
+            ImageTablePanel.this.coverageChanged(mosaic.getGridCoverages());
         }
     }
 }

@@ -25,11 +25,6 @@
  */
 package fr.ird.awt;
 
-// Base de données
-import java.sql.SQLException;
-import fr.ird.animat.Species;
-import fr.ird.sql.fishery.FisheryDataBase;
-
 // Interface utilisateur
 import java.awt.Color;
 import java.awt.Dimension;
@@ -67,9 +62,6 @@ import java.awt.event.ActionListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-// Géométrie
-import java.awt.geom.Ellipse2D;
-
 // Collections
 import java.util.Map;
 import java.util.List;
@@ -77,16 +69,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+// Divers
+import java.util.Locale;
+import java.util.TimeZone;
+import java.sql.SQLException;
+import java.awt.geom.Ellipse2D;
+import java.rmi.RemoteException;
+
 // Geotools dependencies
 import org.geotools.resources.Utilities;
 import org.geotools.resources.SwingUtilities;
 
-// Divers
-import java.util.Locale;
-import java.util.TimeZone;
-import java.rmi.RemoteException;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+// Seagis
+import fr.ird.animat.Species;
+import fr.ird.database.ServerException;
+import fr.ird.database.sample.SampleDataBase;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -255,7 +254,7 @@ public final class SpeciesChooser extends JPanel {
     /**
      * Construit une boîte de dialogue avec les espèces de la base de données spécifiée.
      */
-    public SpeciesChooser(final FisheryDataBase database) throws SQLException {
+    public SpeciesChooser(final SampleDataBase database) throws SQLException {
         this();
         if (database != null) try {
             final Collection<Species> sp = database.getSpecies();
@@ -263,8 +262,8 @@ public final class SpeciesChooser extends JPanel {
                 add(spi.getIcon());
             }
         } catch (RemoteException exception) {
-            throw new fr.ird.sql.RemoteException(
-                        "L'obtention de l'icône d'une espèce a échouée.", exception);
+            // TODO: localize
+            throw new ServerException("L'obtention de l'icône d'une espèce a échouée.", exception);
         }
         final Locale locale   = Locale.getDefault();
         final String language = locale.getLanguage();

@@ -36,12 +36,12 @@ import java.awt.Dimension;
 import java.awt.Component;
 import java.awt.BorderLayout;
 
-// Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
 // Geotools dependencies
 import org.geotools.resources.SwingUtilities;
+
+// Resources
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

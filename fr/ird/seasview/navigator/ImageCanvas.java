@@ -65,19 +65,21 @@ import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.gui.swing.StatusBar;
 import org.geotools.gui.swing.MapPane;
 
+// Seagis
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.gui.event.CoverageChangeEvent;
+import fr.ird.database.gui.event.CoverageChangeListener;
+
 // Main framework
 import fr.ird.seasview.Task;
 import fr.ird.seasview.DataBase;
 import fr.ird.seasview.InternalFrame;
 import fr.ird.seasview.layer.control.LayerControl;
-import fr.ird.awt.event.ImageChangeListener;
-import fr.ird.awt.event.ImageChangeEvent;
-import fr.ird.sql.image.ImageEntry;
 
 // Resources
-import fr.ird.util.XArray;
-import fr.ird.resources.ResourceKeys;
-import fr.ird.resources.Resources;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
 
 
 /**
@@ -143,7 +145,7 @@ final class ImageCanvas extends JPanel {
      * présentement affichée. Ce champ peut
      * être nul si l'entré n'est pas connue.
      */
-    private ImageEntry source;
+    private CoverageEntry source;
 
     /**
      * <code>true</code> si l'échelle de la carte doit être affichée.
@@ -184,7 +186,7 @@ final class ImageCanvas extends JPanel {
      * l'image présentement affichée.
      */
     private void updateTitle() {
-        final ImageEntry entry = source;
+        final CoverageEntry entry = source;
         if (entry != null) {
             final Range timeRange = entry.getTimeRange();
             StringBuffer   buffer = new StringBuffer(entry.getName());
@@ -272,10 +274,10 @@ final class ImageCanvas extends JPanel {
      *                     Cette liste ne doit comprendre que des objets {@link Layers}.
      * @param entry        Entré ayant servit à obtenir l'image, ou <code>null</code> s'il n'y en a pas.
      * @param image        Image affichée. Cette information n'est utilisée que pour informer les objets
-     *                     {@link ImageChangeListener} du changement.
+     *                     {@link CoverageChangeListener} du changement.
      */
     private void setImage(final RenderedLayer[] visualLayers,
-                          final ImageEntry      entry,
+                          final CoverageEntry   entry,
                           final GridCoverage    image) // NO synchronize here!
     {
         if (!EventQueue.isDispatchThread()) {
@@ -349,7 +351,7 @@ final class ImageCanvas extends JPanel {
      * @param progress Objet à informer des progrès de la lecture,
      *                 ou <code>null</code> s'il n'y en a pas.
      */
-    public synchronized void setImage(final ImageEntry     entry,
+    public synchronized void setImage(final CoverageEntry  entry,
                                       final LayerControl[] layers,
                                       final IIOReadProgressListener progress)
     {
@@ -428,31 +430,31 @@ final class ImageCanvas extends JPanel {
      * Inscrit un objet dans la liste des objets intéressés
      * à être informés chaque fois que l'image affichée change.
      */
-    public void addImageChangeListener(final ImageChangeListener listener) {
-        listenerList.add(ImageChangeListener.class, listener);
+    public void addCoverageChangeListener(final CoverageChangeListener listener) {
+        listenerList.add(CoverageChangeListener.class, listener);
     }
 
     /**
      * Retire un objet de la liste des objets intéressés à
      * être informés chaque fois que l'image affichée change.
      */
-    public void removeImageChangeListener(final ImageChangeListener listener) {
-        listenerList.remove(ImageChangeListener.class, listener);
+    public void removeCoverageChangeListener(final CoverageChangeListener listener) {
+        listenerList.remove(CoverageChangeListener.class, listener);
     }
 
     /**
-     * Préviens tous les objets {@link ImageChangeListener}
+     * Préviens tous les objets {@link CoverageChangeListener}
      * que l'image affichée vient de changer.
      */
-    protected void fireImageChanged(final ImageEntry entry, final GridCoverage newImage) {
-        ImageChangeEvent event=null;
+    protected void fireImageChanged(final CoverageEntry entry, final GridCoverage newImage) {
+        CoverageChangeEvent event = null;
         final Object[] listeners = listenerList.getListenerList();
         for (int i=listeners.length-2; i>=0; i-=2) {
-            if (listeners[i] == ImageChangeListener.class) {
+            if (listeners[i] == CoverageChangeListener.class) {
                 if (event == null) {
-                    event=new ImageChangeEvent(this, entry, newImage);
+                    event=new CoverageChangeEvent(this, entry, newImage);
                 }
-                ((ImageChangeListener)listeners[i+1]).imageChanged(event);
+                ((CoverageChangeListener)listeners[i+1]).coverageChanged(event);
             }
         }
     }
@@ -511,7 +513,7 @@ final class ImageCanvas extends JPanel {
          * Image à lire. Ce champ prend la valeur <code>null</code>
          * lorsque la lecture d'une image est terminée.
          */
-        private volatile ImageEntry entry;
+        private volatile CoverageEntry entry;
 
         /**
          * Couches à placer sur l'image, ou <code>null</code>
@@ -580,7 +582,7 @@ final class ImageCanvas extends JPanel {
          * @param progress Objet à informer des progrès de la lecture,
          *                 ou <code>null</code> s'il n'y en a pas.
          */
-        public synchronized void setImage(final ImageEntry     entry,
+        public synchronized void setImage(final CoverageEntry  entry,
                                           final LayerControl[] layers,
                                           final int            delay,
                                           final IIOReadProgressListener progress)
@@ -608,7 +610,7 @@ final class ImageCanvas extends JPanel {
                  * S'il n'y a aucune image à lire, on bloquera ce thread
                  * jusqu'à ce qu'une nouvelle image soit spécifiée.
                  */
-                final ImageEntry              entry;
+                final CoverageEntry           entry;
                 final LayerControl[]          layers;
                 final int                     delay;
                 final IIOReadProgressListener progress;
@@ -758,7 +760,7 @@ final class ImageCanvas extends JPanel {
         public void warningOccurred(final ImageReader source, final String message) {
             final InternalFrame parent = getInternalFrame();
             if (parent != null) {
-                final ImageEntry entry = this.entry;
+                final CoverageEntry entry = this.entry;
                 if (entry != null) {
                     parent.warning(entry.getName(), message);
                     return;

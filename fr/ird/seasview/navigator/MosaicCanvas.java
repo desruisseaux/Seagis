@@ -36,7 +36,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.BorderFactory;
-import fr.ird.seasview.InternalFrame;
 
 // Events
 import java.awt.event.MouseEvent;
@@ -66,8 +65,9 @@ import org.geotools.resources.Utilities;
 
 // Seagis
 import fr.ird.seasview.DataBase;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.seasview.InternalFrame;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 import fr.ird.seasview.layer.control.LayerControl;
 
 

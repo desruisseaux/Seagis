@@ -64,9 +64,9 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Resources
-import fr.ird.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.XArray;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 // Map components
 import org.geotools.math.Statistics;

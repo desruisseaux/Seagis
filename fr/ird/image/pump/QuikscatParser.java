@@ -42,8 +42,8 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
 // Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

@@ -25,34 +25,30 @@
  */
 package fr.ird.seasview.layer.control;
 
-// DataBase
-import java.io.IOException;
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-
-// Images
-import org.geotools.gc.GridCoverage;
-import java.awt.image.RenderedImage;
-
-// Graphical user interface
-import java.awt.Color;
-import java.awt.Paint;
-import javax.swing.JComponent;
-import javax.swing.event.EventListenerList;
-import fr.ird.awt.GridMarkControler;
-
-// Map components
-import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.renderer.j2d.RenderedGridMarks;
-import fr.ird.seasview.layer.VectorLayer;
-import fr.ird.seasview.DataBase;
-
-// Divers
+// J2SE
 import java.util.Date;
 import java.util.List;
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.image.RenderedImage;
+import javax.swing.event.EventListenerList;
+import javax.swing.JComponent;
+import java.sql.SQLException;
+import java.io.IOException;
+
+// Geotools
+import org.geotools.gc.GridCoverage;
 import org.geotools.ct.TransformException;
 import org.geotools.renderer.geom.Arrow2D;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGridMarks;
+
+// Seagis
+import fr.ird.awt.GridMarkControler;
+import fr.ird.seasview.DataBase;
+import fr.ird.seasview.layer.VectorLayer;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageEntry;
 
 
 /**
@@ -65,7 +61,7 @@ public final class VectorLayerControl extends LayerControl {
     /**
      * Données de courants.
      */
-    private final ImageTable table;
+    private final CoverageTable table;
 
     /**
      * Bandes des composantes U et V des courants.
@@ -85,7 +81,7 @@ public final class VectorLayerControl extends LayerControl {
      * @param bandU Bande de la composante U des courants.
      * @param bandV Bande de la composante V des courants.
      */
-    public VectorLayerControl(final ImageTable table, final int bandU, final int bandV) {
+    public VectorLayerControl(final CoverageTable table, final int bandU, final int bandV) {
         super(false);
         this.table = table;
         this.bandU = bandU;
@@ -119,7 +115,7 @@ public final class VectorLayerControl extends LayerControl {
      * @throws TransformException si une transformation était nécessaire et a échouée.
      */
     public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
-                                              ImageEntry        entry,
+                                              CoverageEntry     entry,
                                         final EventListenerList listeners)
         throws SQLException, IOException, TransformException
     {

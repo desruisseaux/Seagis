@@ -93,10 +93,11 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.renderer.geom.GeometryCollection;
 
 // Seagis
-import fr.ird.sql.image.FormatEntry;
-import fr.ird.sql.image.SeriesTable;
-import fr.ird.sql.image.TableFiller;
-import fr.ird.sql.image.ImageDataBase;
+import fr.ird.database.coverage.FormatEntry;
+import fr.ird.database.coverage.SeriesTable;
+import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.io.map.GEBCOReader;
 import fr.ird.io.map.IsolineReader;
 import fr.ird.seasview.layer.IsolineFactory;
@@ -144,13 +145,13 @@ public class Processor extends Arguments {
     /**
      * Base de données d'images.
      */
-    private final ImageDataBase database;
+    private final CoverageDataBase database;
 
     /**
      * Objet à utiliser pour mettre à jour la base de données, ou
      * <code>null</code> s'il ne faut pas faire de mises à jour.
      */
-    private final TableFiller tableFiller;
+    private final CoverageTable coverageTable;
 
     /**
      * Listes des bandes des images à lire.
@@ -216,17 +217,17 @@ public class Processor extends Arguments {
      */
     public Processor(final String[] args) {
         super(args);
-        final String       group;
+        final String    seriesID;
         final String       bathy;
         final SeriesTable series;
+        final SeriesEntry  série;
         final FormatEntry format;
         final String destination;
         final boolean   updateDB;
-        final int        groupID;
         try {
             sources          = getFiles         ("-sources");
             updateDB         = getFlag          ("-updateDB");
-            group            = getOptionalString("-group");
+            seriesID         = getOptionalString("-series");
             bathy            = getOptionalString("-bathy");
             destination      = getOptionalString("-destination");
             interpolation    = getOptionalString("-interpolation");
@@ -244,10 +245,10 @@ public class Processor extends Arguments {
                             "       -destination   [Répertoire de destination]\n"+
                             "       -interpolation [NearestNeighbor (défaut) | Bilinear | Bicubic]\n"+
                             "       -bathy         [profondeurs séparées par des virgules sans espace]\n"+
-                            "       -group         [#ID dans la table \"Group\" de la base de données]\n"+
+                            "       -series        [#ID dans la table \"Séries\" de la base de données]\n"+
                             "       -updateDB\n"+
                             "\n"+
-                            "Les arguments \"-groups\" et \"-sources\" sont obligatoires. Les autres\n"+
+                            "Les arguments \"-series\" et \"-sources\" sont obligatoires. Les autres\n"+
                             "sont facultatifs. Si \"-destination\" est omis, chaque image lue sera\n"+
                             "affichée à l'écran mais ne sera pas enregistrée.  Si \"-destination\"\n"+
                             "est présent, alors les images seront au contraire enregistrées sans\n"+
@@ -273,17 +274,17 @@ public class Processor extends Arguments {
             ////    Open the database connection.    ////
             ////                                     ////
             /////////////////////////////////////////////
-            if (group == null) {
-                throw new MissingParameterException("L'argument -group est obligatoire", "group");
+            if (seriesID == null) {
+                throw new MissingParameterException("L'argument -series est obligatoire", "series");
             }
-            groupID  = Integer.parseInt(group);
-            database = new ImageDataBase();
+            database = new fr.ird.database.coverage.sql.CoverageDataBase();
             series   = database.getSeriesTable();
-            format   = series.getFormat(groupID);
+            série    = series.getEntry(Integer.parseInt(seriesID));
+            format   = series.getFormat(série);
             series.close();
             if (format == null) {
                 database.close();
-                throw new IllegalArgumentException("Code de groupe inconnu: "+groupID);
+                throw new IllegalArgumentException("Code de séries inconnu: "+seriesID);
             }
             bands = format.getSampleDimensions();
             for (int i=0; i<bands.length; i++) {
@@ -291,10 +292,10 @@ public class Processor extends Arguments {
                 bands[i] = bands[i].geophysics(true);
             }
             if (updateDB) {
-                tableFiller = database.getTableFiller();
-                tableFiller.setGroup(groupID);
+                coverageTable = database.getCoverageTable();
+                coverageTable.setSeries(série);
             } else {
-                tableFiller = null;
+                coverageTable = null;
             }
             /////////////////////////////////////////////
             ////                                     ////
@@ -339,9 +340,9 @@ public class Processor extends Arguments {
                     }
                 }
             }
-            methodName="close";
-            if (tableFiller != null) {
-                tableFiller.close();
+            methodName = "close";
+            if (coverageTable != null) {
+                coverageTable.close();
             }
             database.close();
         } catch (Exception exception) {
@@ -516,8 +517,8 @@ public class Processor extends Arguments {
         record.setSourceMethodName("process");
         silentLog(record);
 
-        if (tableFiller != null) {
-            tableFiller.addImage(coverage, filename);
+        if (coverageTable != null) {
+            coverageTable.addGridCoverage(coverage, filename);
         }
         return true;
     }

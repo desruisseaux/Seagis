@@ -37,8 +37,8 @@ import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Seagis
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

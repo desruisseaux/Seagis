@@ -71,21 +71,23 @@ import org.geotools.io.DefaultFileFilter;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Base de données
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.fishery.EnvironmentTable;
-import fr.ird.sql.fishery.fill.EnvironmentTableFiller;
-import fr.ird.sql.fishery.fill.EnvironmentControlPanel;
-import fr.ird.sql.fishery.fill.ExtractorControlPanel;
+import fr.ird.database.coverage.SeriesTable;
+import fr.ird.database.coverage.CoverageTable;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.sample.EnvironmentTable;
+import fr.ird.database.sample.EnvironmentTableFiller;
+import fr.ird.database.gui.swing.ControlPanel;
+import fr.ird.database.gui.swing.CoordinateChooser;
+import fr.ird.database.gui.swing.SampleRowSetChooser;
+import fr.ird.database.gui.swing.EnvironmentSamplingChooser;
 
 // Afficheurs
 import fr.ird.awt.About;
 import fr.ird.awt.TimeZoneChooser;
-import fr.ird.awt.CoordinateChooserDB;
 import fr.ird.seasview.catalog.CatalogFrame;
 import fr.ird.seasview.navigator.NavigatorFrame;
-import fr.ird.resources.ResourceKeys;
-import fr.ird.resources.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
 
 
 /**
@@ -517,7 +519,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                 task=new Task(resources.getString(ResourceKeys.NEW_IMAGES_SERIES)) {
                     protected void run() throws SQLException {
                         final DataBase database = getDataBase();
-                        final CoordinateChooserDB chooser = new CoordinateChooserDB(database.getImageDataBase());
+                        final CoordinateChooser chooser = new CoordinateChooser(database.getCoverageDataBase());
                         chooser.setMultiSeriesAllowed(true);
                         chooser.setTimeZone(getTimeZone());
                         setWaitCursor(false);
@@ -611,9 +613,9 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                 task = new Task(resources.getString(ResourceKeys.FISHERIES_ENVIRONMENT)) {
                     protected void run() throws SQLException {
                         final DataBase database = getDataBase();
-                        final EnvironmentControlPanel panel = new EnvironmentControlPanel(
-                              new EnvironmentTableFiller(database.getImageDataBase(),
-                                                         database.getFisheryDataBase()));
+                        final EnvironmentSamplingChooser panel = new EnvironmentSamplingChooser(
+                              new EnvironmentTableFiller(database.getCoverageDataBase(),
+                                                         database.getSampleDataBase()));
                         setWaitCursor(false);
                         panel.showDialog(Desktop.this);
                     }
@@ -628,11 +630,13 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                 task = new Task(resources.getString(ResourceKeys.EXTRACT_ENVIRONMENT)) {
                     protected void run() throws SQLException {
                         final DataBase database = getDataBase();
-                        final EnvironmentTable table = database.getFisheryDataBase().getEnvironmentTable();
-                        final ExtractorControlPanel panel = new ExtractorControlPanel(table);
+                        final SeriesTable series = database.getCoverageDataBase().getSeriesTable();
+                        final EnvironmentTable table = database.getSampleDataBase().getEnvironmentTable(series);
+                        final SampleRowSetChooser panel = new SampleRowSetChooser(table);
                         setWaitCursor(false);
                         panel.showAndStart(Desktop.this);
                         table.close();
+                        series.close();
                     }
                 };
                 break;
@@ -666,7 +670,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                                       resources.getString(ResourceKeys.WARNING),
                                       JOptionPane.WARNING_MESSAGE, true))
                 {
-                    new fr.ird.sql.ControlPanel().showDialog(this);
+                    new ControlPanel().showDialog(this);
                 }
                 break;
             }

@@ -28,10 +28,8 @@ package fr.ird.seasview.layer.control;
 // Bases de données et images
 import java.io.IOException;
 import java.sql.SQLException;
-import fr.ird.sql.image.ImageEntry;
 
 // Interface utilisateur
-import org.geotools.renderer.j2d.RenderedLayer;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
@@ -62,14 +60,18 @@ import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CannotRedoException;
 
-// Resources
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+// Geotools
+import org.geotools.renderer.j2d.RenderedLayer;
+
+// Seagis
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
  * Classe de base des objets capable de construire et/ou configurer
- * une couche {@link RenderedLayer} pour une image {@link ImageEntry} donnée.
+ * une couche {@link RenderedLayer} pour une image {@link CoverageEntry} donnée.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -232,7 +234,7 @@ public abstract class LayerControl {
      * @throws Exception si l'opération a échouée.
      */
     public abstract RenderedLayer[] configLayers(final RenderedLayer[]   layers,
-                                                 final ImageEntry        entry,
+                                                 final CoverageEntry     entry,
                                                  final EventListenerList listeners)
         throws Exception;
 

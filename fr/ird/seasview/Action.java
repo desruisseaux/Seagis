@@ -36,12 +36,12 @@ import javax.swing.JButton;
 import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
-// Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
 // Geotools dependencies
 import org.geotools.gui.swing.ExceptionMonitor;
+
+// J2SE
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**
@@ -54,8 +54,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Action extends AbstractAction
-{
+final class Action extends AbstractAction {
     /**
      * The property key for icon's name.
      */
@@ -91,8 +90,9 @@ final class Action extends AbstractAction
      * @param clé      Code identifiant l'action pour la méthode {@link #dispatch}.
      * @param trailing <code>true</code> s'il faut placer "..." après l'étiquette du menu.
      */
-    public Action(final Desktop desktop, final int clé, final boolean trailing)
-    {this(desktop, clé, format(desktop, clé, trailing));}
+    public Action(final Desktop desktop, final int clé, final boolean trailing) {
+        this(desktop, clé, format(desktop, clé, trailing));
+    }
 
     /**
      * Construit une action avec le code spécifié.
@@ -101,8 +101,7 @@ final class Action extends AbstractAction
      * @param clé     Code identifiant l'action pour la méthode {@link #dispatch}.
      * @param name    Nom de l'action. Ce nom apparaîtra dans le menu.
      */
-    public Action(final Desktop desktop, final int clé, final String name)
-    {
+    public Action(final Desktop desktop, final int clé, final String name) {
         super(name);
         this.desktop = desktop;
         this.clé     = clé;
@@ -111,8 +110,7 @@ final class Action extends AbstractAction
     /**
      * Returns the resources string for the specified key.
      */
-    private static String format(final Desktop desktop, final int clé, final boolean trailing)
-    {
+    private static String format(final Desktop desktop, final int clé, final boolean trailing) {
         final Resources resources = Resources.getResources(desktop.getLocale());
         return trailing ? resources.getMenuLabel(clé) : resources.getString(clé);
     }
@@ -120,8 +118,9 @@ final class Action extends AbstractAction
     /**
      * Returns an icon.
      */
-    private final Icon getIcon(final String icon, final String suffix)
-    {return new ImageIcon(getClass().getClassLoader().getResource("toolbarButtonGraphics/"+icon+suffix));}
+    private final Icon getIcon(final String icon, final String suffix) {
+        return new ImageIcon(getClass().getClassLoader().getResource("toolbarButtonGraphics/"+icon+suffix));
+    }
 
     /**
      * Définit l'icone de cette action.
@@ -130,8 +129,7 @@ final class Action extends AbstractAction
      *             Ce nom ne comprend pas le chemin "toolbarButtonGraphics/"
      *             ni l'extension "16.gif" ou "24.gif".
      */
-    protected final void setIcon(final String icon)
-    {
+    protected final void setIcon(final String icon) {
         putValue(SMALL_ICON, getIcon(icon, "24.gif"));
         putValue(ICON_NAME, icon);
     }
@@ -140,20 +138,23 @@ final class Action extends AbstractAction
      * Définit le texte à afficher lorsque la souris
      * traine sur le bouton de cette action.
      */
-    protected final void setToolTipText(final int clé)
-    {putValue(SHORT_DESCRIPTION, Resources.getResources(desktop.getLocale()).getString(clé));}
+    protected final void setToolTipText(final int clé) {
+        putValue(SHORT_DESCRIPTION, Resources.getResources(desktop.getLocale()).getString(clé));
+    }
 
     /**
      * Définit la touche activant cette action dans l'ensemble de l'application.
      */
-    protected final void setAccelerator(final int keyCode, final int modifiers)
-    {putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(keyCode, modifiers));}
+    protected final void setAccelerator(final int keyCode, final int modifiers) {
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(keyCode, modifiers));
+    }
 
     /**
      * Définit le caractère à souligner dans le menu.
      */
-    protected final void setMnemonicKey(final int mnemonicKey)
-    {putValue(MNEMONIC_KEY, new Integer(mnemonicKey));}
+    protected final void setMnemonicKey(final int mnemonicKey) {
+        putValue(MNEMONIC_KEY, new Integer(mnemonicKey));
+    }
 
     /**
      * Retourne une des constantes de l'interface {@link ResourceKeys} utilisé pour la construction
@@ -162,8 +163,9 @@ final class Action extends AbstractAction
      * une fenêtre peut gérer cette action. Voyez le code source de {@link MainFrame} pour
      * voir la liste des codes utilisés.
      */
-    public final int getCommandKey()
-    {return clé;}
+    public final int getCommandKey() {
+        return clé;
+    }
 
     /**
      * Retourne le bureau qui exécutera cette action. L'action sera exécutée en
@@ -171,20 +173,19 @@ final class Action extends AbstractAction
      * {@link Task} afin de savoir où placer les fenêtres qui auront éventuellement
      * été créées par cette action.
      */
-    public final Desktop getDesktop()
-    {return desktop;}
+    public final Desktop getDesktop() {
+        return desktop;
+    }
 
     /**
      * Ajoute cette action dans le menu spécifié.
      */
-    final void addTo(final JMenu menu)
-    {
+    final void addTo(final JMenu menu) {
         final JMenuItem item=new JMenuItem(this);
         // On pourrait placer le petit icône (16x16) plutôt que le gros (24x24).
         // Ca parait bien, mais le texte ne reste malheureusement pas aligné.
         final String icon = (String) getValue(ICON_NAME);
-        if (icon!=null)
-        {
+        if (icon != null) {
             item.setIcon(getIcon(icon, "16.gif"));
         }
         menu.add(item);
@@ -194,10 +195,11 @@ final class Action extends AbstractAction
      * Ajoute cette action dans le menu ainsi
      * que dans la barre d'outils spécifiés.
      */
-    final void addTo(final JMenu menu, final JToolBar toolBar)
-    {
-        if (menu!=null) addTo(menu);
-        final JButton button=new JButton(this);
+    final void addTo(final JMenu menu, final JToolBar toolBar) {
+        if (menu != null) {
+            addTo(menu);
+        }
+        final JButton button = new JButton(this);
         button.setText(null);
         toolBar.add(button);
     }
@@ -207,9 +209,10 @@ final class Action extends AbstractAction
      * considéré comme n'étant plus occupée (<code>busy==false</code>). Mais une
      * action désactivée ne sera pas nécessairement considérée comme occupée.
      */
-    public synchronized void setEnabled(final boolean enabled)
-    {
-        if (enabled) busy=false;
+    public synchronized void setEnabled(final boolean enabled) {
+        if (enabled) {
+            busy = false;
+        }
         super.setEnabled(enabled);
     }
 
@@ -220,8 +223,9 @@ final class Action extends AbstractAction
      * Une action est considérée "occupée" pendant au moins la durée de
      * l'exécution de {@link #actionPerformed}.
      */
-    final boolean isBusy()
-    {return busy;}
+    final boolean isBusy() {
+        return busy;
+    }
 
     /**
      * Méthode appelée automatiquement lorsque l'action est exécutée.
@@ -231,22 +235,18 @@ final class Action extends AbstractAction
      * est lancée, elle sera attrapée et affichée dans une boîte de
      * dialogue sur le bureau.
      */
-    public synchronized void actionPerformed(final ActionEvent event)
-    {
-        if (isEnabled()) try
-        {
-            busy=true;
+    public synchronized void actionPerformed(final ActionEvent event)  {
+        if (isEnabled()) try {
+            busy = true;
             setEnabled(false);
-            final Task task=desktop.process(clé);
-            if (task==null)
-            {
+            final Task task = desktop.process(clé);
+            if (task == null) {
                 setEnabled(true);
                 desktop.stateChanged();
+            } else {
+                task.run(this); // Appelera 'setEnabled(true)' plus tard.
             }
-            else task.run(this); // Appelera 'setEnabled(true)' plus tard.
-        }
-        catch (Throwable exception)
-        {
+        } catch (Throwable exception) {
             setEnabled(true);
             desktop.stateChanged();
             ExceptionMonitor.show(desktop, exception);

@@ -47,6 +47,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
+
+// Geotools dependencies
 import org.geotools.renderer.geom.Arrow2D;
 
 

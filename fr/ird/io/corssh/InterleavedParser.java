@@ -35,8 +35,8 @@ import java.io.Serializable;
 import org.geotools.resources.Utilities;
 
 // Seagis
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.experimental.Resources;
+import fr.ird.resources.experimental.ResourceKeys;
 
 
 /**

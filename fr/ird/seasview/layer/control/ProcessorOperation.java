@@ -25,13 +25,13 @@
  */
 package fr.ird.seasview.layer.control;
 
+// Java Advanced Imaging
+import javax.media.jai.ParameterList;
+
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Utilities;
 import org.geotools.gp.GridCoverageProcessor;
-
-// Java Advanced Imaging
-import javax.media.jai.ParameterList;
 
 
 /**

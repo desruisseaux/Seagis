@@ -33,7 +33,6 @@ import java.awt.Graphics2D;
 import java.awt.BasicStroke;
 import java.awt.font.GlyphVector;
 import java.awt.font.FontRenderContext;
-import org.geotools.gui.swing.ZoomPane;
 
 // Geometry
 import java.awt.Point;
@@ -45,6 +44,9 @@ import java.awt.geom.RectangularShape;
 // Collections
 import java.util.Map;
 import java.util.HashMap;
+
+// Geotools dependencies
+import org.geotools.gui.swing.ZoomPane;
 
 
 /**
