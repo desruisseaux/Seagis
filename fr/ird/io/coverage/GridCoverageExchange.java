@@ -52,14 +52,12 @@ import java.util.Locale;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
-{
+public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange {
     /**
      * Register a set of service providers
      * the first time this class is loaded.
      */
-    static
-    {
+    static {
         final IIORegistry registry = IIORegistry.getDefaultInstance();
         registry.registerServiceProvider(new fr.ird.io.image.Canarias_RAW());
         // Note: previous SPIs (Aviso_ASC, etc.) will be discarted, since
@@ -77,15 +75,24 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
     private static final int CHLORO = 1;
 
     /**
+     * The list of prefix in filename for each type.
+     */
+    private static final String[] PREFIX = new String[2];
+    static {
+        PREFIX[SST]    = "SST";
+        PREFIX[CHLORO] = "CHL";
+    }
+
+    /**
      * Grid coverage readers. This array lenght must be long enough
      * to contains all index {@link #SST}, {@link #CHLORO}, etc.
      */
-    private final GridCoverageReader[] readers = new GridCoverageReader[2];
+    private final GridCoverageReader[] readers = new GridCoverageReader[PREFIX.length];
 
     /**
      * The properties parsers to use for images.
      */
-    private final AbstractProperties[] parsers = new AbstractProperties[readers.length];
+    private final LenientPropertyParser[] parsers = new LenientPropertyParser[readers.length];
 
     /**
      * The bands to be used for constructing {@link GridCoverage} objects.
@@ -95,60 +102,59 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
     /**
      * Properties read during the last call to {@link #createFromName}.
      */
-    private transient AbstractProperties lastProperties;
+    private transient LenientPropertyParser lastProperties;
 
     /**
      * Construct a <code>GridCoverageExchange</code> object.
      *
      * @param bands The bands to be used for constructing {@link GridCoverage}s.
      */
-    public GridCoverageExchange(final SampleDimension[] bands)
-    {this.bands = bands;}
+    public GridCoverageExchange(final SampleDimension[] bands) {
+        this.bands = bands;
+    }
 
     /**
      * Create a new {@link GridCoverage} from a grid coverage file.
      *
-     * @param  name File name (including path) from which to create a grid coverage.
+     * @param  filename File name (including path) from which to create a grid coverage.
      * @return The grid coverage.
      * @throws IOException if an error occurs during reading.
      * @throws IIOException if a grid coverage can't be create from the specified name.
      */
-    public synchronized GridCoverage createFromName(final String name) throws IOException
-    {
+    public synchronized GridCoverage createFromName(final String filename) throws IOException {
         IOException error = null;
         lastProperties    = null;
-        Object input      = new File(name);
-        for (int i=0; i<readers.length; i++)
-        {
-            AbstractProperties parser = parsers[i];
-            GridCoverageReader reader = readers[i];
-            if (reader==null)
-            {
-                switch (i)
-                {
-                    case SST:    parser=new ErdasProperties (bands); break;
-                    case CHLORO: parser=new SimpleProperties(bands); break;
-                    default:     throw new AssertionError(i);
-                }
-                reader = new ExoreferencedGridCoverageReader("RAW-Canarias", "raw", parser);
-                reader.setLocale(getLocale());
-                readers[i] = reader;
-                parsers[i] = parser;
+        File   input      = new File(filename);
+        final int type    = getType(input.getName());
+        LenientPropertyParser parser = parsers[type];
+        GridCoverageReader    reader = readers[type];
+        if (reader == null) {
+            switch (type) {
+                case SST:    parser=new LenientPropertyParser(bands, "'SST'yyDDD"); break;
+                case CHLORO: parser=new LenientPropertyParser(bands, "'CHL'yyDDD"); break;
+                default:     throw new AssertionError(type);
             }
-            try
-            {
-                reader.setInput(input, true);
-                lastProperties = parser;
-                return reader.getGridCoverage(0);
-            }
-            catch (IOException exception)
-            {
-                if (error==null)
-                    error=exception;
+            reader = new ExoreferencedGridCoverageReader("RAW-Canarias", "raw", parser);
+            reader.setLocale(getLocale());
+            readers[type] = reader;
+            parsers[type] = parser;
+        }
+        reader.setInput(input, true);
+        lastProperties = parser;
+        return reader.getGridCoverage(0);
+    }
+
+    /**
+     * Returns the image type from its filename.
+     */
+    private static int getType(String filename) throws IIOException {
+        filename = filename.toUpperCase();
+        for (int i=0; i<PREFIX.length; i++) {
+            if (filename.indexOf(PREFIX[i]) >= 0) {
+                return i;
             }
         }
-        if (error!=null) throw error;
-        return super.createFromName(name);
+        throw new IIOException("Type de fichier inconnu: \""+filename+'"');
     }
 
     /**
@@ -156,25 +162,28 @@ public class GridCoverageExchange extends org.geotools.gc.GridCoverageExchange
      * grid coverage read. If no grid coverage has been read, then
      * this method returns <code>null</code>.
      */
-    public synchronized String getLastProperties()
-    {return (lastProperties!=null) ? lastProperties.toString() : null;}
+    public synchronized String getLastProperties() {
+        return (lastProperties!=null) ? lastProperties.toString() : null;
+    }
 
     /**
      * Gets the output filename, or <code>null</code> if none.
      */
-    public synchronized String getOutputFilename()
-    {return (lastProperties!=null) ? lastProperties.getOutputFilename() : null;}
+    public synchronized String getOutputFilename() {
+        return (lastProperties!=null) ? lastProperties.getOutputFilename() : null;
+    }
 
     /**
      * Sets the current {@link Locale} of this <code>GridCoverageExchange</code>
      * to the given value. A value of <code>null</code> removes any previous
      * setting, and indicates that the reader should localize as it sees fit.
      */
-    public synchronized void setLocale(final Locale locale)
-    {
+    public synchronized void setLocale(final Locale locale) {
         super.setLocale(locale);
-        for (int i=0; i<readers.length; i++)
-            if (readers[i]!=null)
+        for (int i=0; i<readers.length; i++) {
+            if (readers[i]!=null) {
                 readers[i].setLocale(locale);
+            }
+        }
     }
 }

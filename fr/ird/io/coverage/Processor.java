@@ -192,7 +192,7 @@ public class Processor extends Arguments
                 args = new String[]
                 {
                     "-group=365245516",
-                    "-sources=E:/Pouponnière/Mediterranee/SST_new/md020117.txt"
+                    "-sources=D:/Pouponnière/Méditerranée/SST_new/sst020807.txt"
                 };
             }
             if (false) // Debug code for Chlorophylle-a
@@ -200,7 +200,7 @@ public class Processor extends Arguments
                 args = new String[]
                 {
                     "-group=2041402270",
-                    "-sources=E:/Pouponnière/Mediterranee/CHLORO_traitées/md_chl011007.txt"
+                    "-sources=D:/Pouponnière/Méditérranee/CHLORO_traitées/md_chl011007.txt"
                 };
             }
         }
@@ -304,6 +304,11 @@ public class Processor extends Arguments
                 throw new IllegalArgumentException("Code de groupe inconnu: "+groupID);
             }
             bands = format.getSampleDimensions();
+            for (int i=0; i<bands.length; i++)
+            {
+                // In images to be read, bands contain already geophysics values.
+                bands[i] = bands[i].geophysics(true);
+            }
             if (updateDB)
             {
                 tableFiller = database.getTableFiller();
@@ -428,7 +433,7 @@ public class Processor extends Arguments
             }
             coverage = processor.doOperation(operation, param);
         }
-        return coverage;
+        return coverage.geophysics(false);
     }
 
     /**
@@ -514,7 +519,7 @@ public class Processor extends Arguments
         out.print(filename);
         out.print(": Projection...\r");
         out.flush();
-        final BufferedImage image = ((PlanarImage) coverage.geophysics(false).getRenderedImage()).getAsBufferedImage();
+        final BufferedImage image = ((PlanarImage) coverage.getRenderedImage()).getAsBufferedImage();
 
         if (isolines!=null) try
         {
