@@ -647,13 +647,9 @@ search: for (int i=0; i<buffer.length(); i++) // Length of 'buffer' will vary.
      */
     public static void main(final String[] args) throws IOException
     {
-        final File file;
-        switch (args.length)
+        for (int i=0; i<args.length; i++)
         {
-            case 0:  file = new File(".");     break;
-            case 1:  file = new File(args[0]); break;
-            default: System.err.println("Unknow arguments"); return;
+            scanForResources(new File(args[i]));
         }
-        scanForResources(file);
     }
 }

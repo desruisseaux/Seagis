@@ -31,7 +31,11 @@
  */
 package net.seagis.cs;
 
+// Properties
+import java.util.Map;
+
 // Miscellaneous
+import javax.units.Unit;
 import java.util.NoSuchElementException;
 
 
@@ -50,11 +54,21 @@ import java.util.NoSuchElementException;
 public abstract class CoordinateSystemAuthorityFactory
 {
     /**
-     * Default constructor. Subclass should
-     * override methods they support.
+     * The underlying factory used for objects creation.
      */
-    protected CoordinateSystemAuthorityFactory()
-    {}
+    protected final CoordinateSystemFactory factory;
+
+    /**
+     * Construct an authority factory using the
+     * specified coordinate system factory.
+     *
+     * @param factory The underlying factory used for objects creation.
+     */
+    public CoordinateSystemAuthorityFactory(final CoordinateSystemFactory factory)
+    {
+        Info.ensureNonNull("factory", factory);
+        this.factory = factory;
+    }
 
     /**
      * Returns the authority name.
@@ -66,10 +80,55 @@ public abstract class CoordinateSystemAuthorityFactory
      *
      * @param  code Value allocated by authority.
      * @return The ellipsoid object.
-     * @throws NoSuchElementException if <code>code</code> is not a known code.
+     * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
      *
      * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createEllipsoid
      */
-    public Ellipsoid createEllipsoid(final String code) throws NoSuchElementException
-    {throw new NoSuchElementException(code);}
+    public Ellipsoid createEllipsoid(final String code) throws NoSuchAuthorityCodeException
+    {throw new NoSuchAuthorityCodeException(code);}
+
+    /**
+     * Returns a {@link Unit} object from a code.
+     *
+     * @param  code Value allocated by authority.
+     * @return The unit object.
+     * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createLinearUnit
+     * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createAngularUnit
+     */
+    public Unit createUnit(final String code) throws NoSuchAuthorityCodeException
+    {throw new NoSuchAuthorityCodeException(code);}
+
+    /**
+     * Set the properties fon an {@link Info} object. This method
+     * should be invoked from all <code>create*</code> methods.
+     *
+     * @param info         The {@link Info} object to set properties.
+     * @param code         The authority code (must not be <code>null</code>).
+     * @param alias        The alias, or <code>null</code> if none.
+     * @param abbreviation The abbreviation, or <code>null</code> if none.
+     * @param remarks      The remarks, or <code>null</code> if none.
+     */
+    final void setProperties(final Info info, final String code, final String alias,
+                             final String abbreviation, final String remarks)
+    {
+        Info.ensureNonNull("code", code);
+        final Map properties = null;  // TODO: Fetch the properties from the Info object.
+        if (properties!=null) return; // TODO
+        properties.put("authority", getAuthority());
+        properties.put("code", code);
+        if (alias!=null)
+        {
+            properties.put("alias", alias);
+        }
+        if (abbreviation!=null)
+        {
+            properties.put("abbreviation", abbreviation);
+        }
+        if (remarks!=null)
+        {
+            properties.put("remarks", remarks);
+        }
+    }
 }

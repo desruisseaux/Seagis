@@ -46,6 +46,9 @@ import javax.media.jai.EnumeratedParameter;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
 
+// OpenGIS dependencies
+import org.opengis.cv.CV_ColorInterpretation;
+
 
 /**
  * Enumeration class specifing the
@@ -54,6 +57,8 @@ import net.seagis.resources.gcs.ResourceKeys;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
+ *
+ * @see org.opengis.cv.CV_ColorInterpretation
  */
 public final class ColorInterpretation extends EnumeratedParameter
 {
@@ -62,50 +67,94 @@ public final class ColorInterpretation extends EnumeratedParameter
      */
     private static final long serialVersionUID = -880153999326204504L;
 
-    /** Band is not associated with a color model component. */
-    public static final ColorInterpretation UNDEFINED       = new ColorInterpretation("UNDEFINED",       0, ResourceKeys.UNDEFINED);
+    /**
+     * Band is not associated with a color model component.
+     * @see CV_ColorInterpretation#CV_Undefined
+     */
+    public static final ColorInterpretation UNDEFINED       = new ColorInterpretation("UNDEFINED",
+                                                              CV_ColorInterpretation.CV_Undefined,      ResourceKeys.UNDEFINED);
+    /**
+     * Band is an index into a lookup table.
+     * @see CV_ColorInterpretation#CV_GrayIndex
+     */
+    public static final ColorInterpretation GRAY_INDEX      = new ColorInterpretation("GRAY_INDEX",
+                                                              CV_ColorInterpretation.CV_GrayIndex,      ResourceKeys.GRAY);
+    /**
+     * Band is a color index into a color table.
+     * @see CV_ColorInterpretation#CV_PaletteIndex
+     */
+    public static final ColorInterpretation PALETTE_INDEX   = new ColorInterpretation("PALETTE_INDEX",
+                                                              CV_ColorInterpretation.CV_PaletteIndex,   ResourceKeys.PALETTE);
 
-    /** Band is an index into a lookup table. */
-    public static final ColorInterpretation GRAY_INDEX      = new ColorInterpretation("GRAY_INDEX",      1, ResourceKeys.GRAY);
-
-    /** Band is a color index into a color table. */
-    public static final ColorInterpretation PALETTE_INDEX   = new ColorInterpretation("PALETTE_INDEX",   2, ResourceKeys.PALETTE);
-
-    /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present. */
-    public static final ColorInterpretation RED_BAND        = new ColorInterpretation("RED_BAND",        3, ResourceKeys.RED);
-
-    /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present. */
-    public static final ColorInterpretation GREEN_BAND      = new ColorInterpretation("GREEN_BAND",      4, ResourceKeys.GREEN);
-
-    /** Bands correspond to RGB color model components.
-        Alpha band may or may not be present. */
-    public static final ColorInterpretation BLUE_BAND       = new ColorInterpretation("BLUE_BAND",       5, ResourceKeys.BLUE);
-
-    /** Bands correspond to RGB color model components. */
-    public static final ColorInterpretation ALPHA_BAND      = new ColorInterpretation("ALPHA_BAND",      6, ResourceKeys.TRANSPARENCY);
-
-    /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation HUE_BAND        = new ColorInterpretation("HUE_BAND",        7, ResourceKeys.HUE);
-
-    /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation SATURATION_BAND = new ColorInterpretation("SATURATION_BAND", 8, ResourceKeys.SATURATION);
-
-    /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation LIGHTNESS_BAND  = new ColorInterpretation("LIGHTNESS_BAND",  9, ResourceKeys.LIGHTNESS);
-
-    /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation CYAN_BAND       = new ColorInterpretation("CYAN_BAND",      10, ResourceKeys.CYAN);
-
-    /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation MAGENTA_BAND    = new ColorInterpretation("MAGENTA_BAND",   11, ResourceKeys.MAGENTA);
-
-    /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation YELLOW_BAND     = new ColorInterpretation("YELLOW_BAND",    12, ResourceKeys.YELLOW);
-
-    /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation BLACK_BAND      = new ColorInterpretation("BLACK_BAND",     13, ResourceKeys.BLACK);
+    /**
+     * Bands correspond to RGB color model components.
+     * Alpha band may or may not be present.
+     * @see CV_ColorInterpretation#CV_RedBand
+     */
+    public static final ColorInterpretation RED_BAND        = new ColorInterpretation("RED_BAND",
+                                                              CV_ColorInterpretation.CV_RedBand,        ResourceKeys.RED);
+    /**
+     * Bands correspond to RGB color model components.
+     * Alpha band may or may not be present.
+     * @see CV_ColorInterpretation#CV_GreenBand
+     */
+    public static final ColorInterpretation GREEN_BAND      = new ColorInterpretation("GREEN_BAND",
+                                                              CV_ColorInterpretation.CV_GreenBand,      ResourceKeys.GREEN);
+    /**
+     * Bands correspond to RGB color model components.
+     * Alpha band may or may not be present.
+     * @see CV_ColorInterpretation#CV_BlueBand
+     */
+    public static final ColorInterpretation BLUE_BAND       = new ColorInterpretation("BLUE_BAND",
+                                                              CV_ColorInterpretation.CV_BlueBand,       ResourceKeys.BLUE);
+    /**
+     * Bands correspond to RGB color model components.
+     * @see CV_ColorInterpretation#CV_AlphaBand
+     */
+    public static final ColorInterpretation ALPHA_BAND      = new ColorInterpretation("ALPHA_BAND",
+                                                              CV_ColorInterpretation.CV_AlphaBand,      ResourceKeys.TRANSPARENCY);
+    /**
+     * Bands correspond to HSL color model.
+     * @see CV_ColorInterpretation#CV_HueBand
+     */
+    public static final ColorInterpretation HUE_BAND        = new ColorInterpretation("HUE_BAND",
+                                                              CV_ColorInterpretation.CV_HueBand,        ResourceKeys.HUE);
+    /**
+     * Bands correspond to HSL color model.
+     * @see CV_ColorInterpretation#CV_SaturationBand
+     */
+    public static final ColorInterpretation SATURATION_BAND = new ColorInterpretation("SATURATION_BAND",
+                                                              CV_ColorInterpretation.CV_SaturationBand, ResourceKeys.SATURATION);
+    /**
+     * Bands correspond to HSL color model.
+     * @see CV_ColorInterpretation#CV_LightnessBand
+     */
+    public static final ColorInterpretation LIGHTNESS_BAND  = new ColorInterpretation("LIGHTNESS_BAND",
+                                                              CV_ColorInterpretation.CV_LightnessBand,  ResourceKeys.LIGHTNESS);
+    /**
+     * Bands correspond to CMYK color model.
+     * @see CV_ColorInterpretation#CV_CyanBand
+     */
+    public static final ColorInterpretation CYAN_BAND       = new ColorInterpretation("CYAN_BAND",
+                                                              CV_ColorInterpretation.CV_CyanBand,        ResourceKeys.CYAN);
+    /**
+     * Bands correspond to CMYK color model.
+     * @see CV_ColorInterpretation#CV_MagentaBand
+     */
+    public static final ColorInterpretation MAGENTA_BAND    = new ColorInterpretation("MAGENTA_BAND",
+                                                              CV_ColorInterpretation.CV_MagentaBand,     ResourceKeys.MAGENTA);
+    /**
+     * Bands correspond to CMYK color model.
+     * @see CV_ColorInterpretation#CV_YellowBand
+     */
+    public static final ColorInterpretation YELLOW_BAND     = new ColorInterpretation("YELLOW_BAND",
+                                                              CV_ColorInterpretation.CV_YellowBand,      ResourceKeys.YELLOW);
+    /**
+     * Bands correspond to CMYK color model.
+     * @see CV_ColorInterpretation#CV_BlackBand
+     */
+    public static final ColorInterpretation BLACK_BAND      = new ColorInterpretation("BLACK_BAND",
+                                                              CV_ColorInterpretation.CV_BlackBand,       ResourceKeys.BLACK);
 
     /**
      * Color interpretation by value. Used to
