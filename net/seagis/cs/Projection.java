@@ -41,12 +41,14 @@ import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
 import net.seagis.ct.MissingParameterException;
 import net.seagis.ct.MathTransformProvider;
+import net.seagis.ct.MathTransformFactory;
 
 // Miscellaneous
 import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
+import java.util.NoSuchElementException;
 import javax.units.Unit;
 
 // Resources
@@ -84,9 +86,9 @@ public class Projection extends Info
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
-     * @param ellipsoid      Ellipsoid parameter. If non-null <code>"semi_major"</code> and
-     *                       <code>"semi_minor"</code> parameters will be set according.
-     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
+     * @param ellipsoid      Ellipsoid parameter. If non-null, then <code>"semi_major"</code>
+     *                       and <code>"semi_minor"</code> parameters will be set according.
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null, then
      *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
      *                       will be set according.
      * @param translation    False easting and northing, in metres. If non-null, then
@@ -96,12 +98,16 @@ public class Projection extends Info
     public Projection(final String name, final String classification,
                       final Ellipsoid ellipsoid, final Point2D centre, final Point2D translation)
     {
-        this(name, classification, getParameterList(ellipsoid, centre, translation));
+        super(name);
+        ensureNonNull("classification", classification);
+        this.classification = classification;
+        this.parameters = init(getParameterList(classification), ellipsoid, centre, translation);
     }
 
     /**
-     * Creates a projection. The set of parameters (<code>parameters</code>) may be
-     * queried with {@link net.seagis.ct.MathTransformFactory#getParameterList}.
+     * Creates a projection. The set of parameters (<code>parameters</code>) may be queried with
+     * <code>{@link MathTransformFactory#getProvider MathTransformFactory.getProvider}(classification).{@link
+     *              MathTransformProvider#getParameterList getParameterList()}</code>.
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
@@ -134,20 +140,39 @@ public class Projection extends Info
     }
 
     /**
-     * Construct a list of parameter from the specified ellipsoid and points.
-     *
-     * @param ellipsoid   Ellipsoid parameter. If non-null <code>"semi_major"</code> and
-     *                    <code>"semi_minor"</code> parameters will be set according.
-     * @param centre      Central meridian and latitude of origin, in degrees. If non-null,
-     *                    <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
-     *                    will be set according.
-     * @param translation False easting and northing, in metres. If non-null, then
-     *                    <code>"false_easting"</code> and <code>"false_northing"</code>
-     *                    will be set according.
+     * Returns a default parameter list for the specified classification name.
+     * <STRONG>Note: This method has a lot of indirect dependencies to the CT
+     * package</STRONG>.
      */
-    static ParameterList getParameterList(final Ellipsoid ellipsoid, final Point2D centre, final Point2D translation)
+    static ParameterList getParameterList(final String classification)
     {
-        final ParameterList parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
+        try
+        {
+            return MathTransformFactory.getDefault().getProvider(classification).getParameterList();
+        }
+        catch (NoSuchElementException exception)
+        {
+            // Ignore: use a default parameters set.
+        }
+        return new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
+    }
+
+    /**
+     * Initialize a list of parameter from the specified ellipsoid and points.
+     *
+     * @param parameters     The parameters to initialize.
+     * @param ellipsoid      Ellipsoid parameter. If non-null, then <code>"semi_major"</code>
+     *                       and <code>"semi_minor"</code> parameters will be set according.
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null, then
+     *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                       will be set according.
+     * @param translation    False easting and northing, in metres. If non-null, then
+     *                       <code>"false_easting"</code> and <code>"false_northing"</code>
+     *                       will be set according.
+     * @return               <code>parameters</code> for convenience.
+     */
+    static ParameterList init(final ParameterList parameters, final Ellipsoid ellipsoid, final Point2D centre, final Point2D translation)
+    {
         if (ellipsoid!=null)
         {
             final Unit axisUnit = ellipsoid.getAxisUnit();

@@ -60,6 +60,7 @@ import org.opengis.cs.CS_WGS84ConversionInfo;
 import javax.units.Unit;
 import java.awt.geom.Point2D;
 import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListImpl;
 import net.seagis.resources.WeakHashSet;
 
 // Remote Method Invocation
@@ -268,11 +269,25 @@ public class CoordinateSystemFactory
     {return (PrimeMeridian) pool.intern(new PrimeMeridian(name, unit, longitude));}
 
     /**
-     * Creates a projection.
+     * Creates a projection. The client must ensure that all the linear parameters are
+     * expressed in meters, and all the angular parameters are expressed in degrees.
+     * Also, they must supply <code>"semi_major"</code> and <code>"semi_minor"</code>
+     * parameters. The set of legal parameters and their default values can be queried
+     * using {@link #createProjectionParameterList}. Example:
+     *
+     * <blockquote><pre>
+     * &nbsp;{link ParameterList} param = {@link #createProjectionParameterList createProjectionParameterList}("Transverse_Mercator")
+     * &nbsp;                                    .setParameter("semi_major", 6378206.4)
+     * &nbsp;                                    .setParameter("semi_minor", 6356583.8);
+     * &nbsp;{@link Projection} proj = createProjection("My projection", "Transverse_Mercator", param);
+     * </pre></blockquote>
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
-     * @param parameters     Parameters to use for projection, in metres or degrees.
+     * @param parameters     Parameters to use for projection. A default set of parameters can
+     *                       be constructed using <code>{@link #createProjectionParameterList
+     *                       createProjectionParameterList}(classification)</code> and initialized
+     *                       using a chain of <code>setParameter(...)</code> calls.
      *
      * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjection
      */
@@ -284,9 +299,9 @@ public class CoordinateSystemFactory
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
-     * @param ellipsoid      Ellipsoid parameter. If non-null <code>"semi_major"</code> and
-     *                       <code>"semi_minor"</code> parameters will be set according.
-     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
+     * @param ellipsoid      Ellipsoid parameter. If non-null, then <code>"semi_major"</code>
+     *                       and <code>"semi_minor"</code> parameters will be set according.
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null, then
      *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
      *                       will be set according.
      * @param translation    False easting and northing, in metres. If non-null, then
@@ -295,7 +310,22 @@ public class CoordinateSystemFactory
      */
     public Projection createProjection(final String name, final String classification, final Ellipsoid ellipsoid,
                                        final Point2D centre, final Point2D translation)
-    {return createProjection(name, classification, Projection.getParameterList(ellipsoid, centre, translation));}
+    {
+        ParameterList param = createProjectionParameterList(classification);
+        param = Projection.init(param, ellipsoid, centre, translation);
+        return createProjection(name, classification, param);
+    }
+
+    /**
+     * Returns a default parameter list for the specified projection.
+     *
+     * @param  classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @return A default parameter list for the supplied projection class.
+     *
+     * @see #createProjection(String, String, ParameterList)
+     */
+    public ParameterList createProjectionParameterList(final String classification)
+    {return Projection.getParameterList(classification);}
 
     /**
      * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
