@@ -5,7 +5,7 @@ Specification-Title: OpenGIS® Grid Coverages
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Grid Coverages
-Implementation-Version: 0.4
+Implementation-Version: 0.4.1
 Implementation-Vendor: SEAGIS OpenSource project
 
 Name: net/seas/opengis/gc/
@@ -13,7 +13,7 @@ Specification-Title: OpenGIS® Grid Coverages
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Grid Coverages
-Implementation-Version: 0.4
+Implementation-Version: 0.4.1
 Implementation-Vendor: SEAGIS OpenSource project
 
 Name: net/seas/opengis/gp/
@@ -21,5 +21,5 @@ Specification-Title: OpenGIS® Grid Coverages
 Specification-Version: 1.0
 Specification-Vendor: OpenGIS Consortium, Inc.
 Implementation-Title: Grid Coverages
-Implementation-Version: 0.4
+Implementation-Version: 0.4.1
 Implementation-Vendor: SEAGIS OpenSource project

@@ -28,8 +28,10 @@
  */
 package net.seagis.resources;
 
-// Miscellaneous
+// Collections
+import java.util.List;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 // Logging
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
@@ -99,11 +101,21 @@ public final class Utilities
     }
 
     /**
-     * Convenience method for testing two objects for
-     * equality. One or both objects may be null.
+     * Returns a short class name for the specified class. This method will
+     * ommit the package name. For exemple, it will returns "String" instead
+     * of "java.lang.String" for a {@link String} object.
+     *
+     * @param  object The object (may be <code>null</code>).
+     * @return A short class name for the specified object.
      */
-    public static boolean equals(final Object object1, final Object object2)
-    {return (object1==object2) || (object1!=null && object1.equals(object2));}
+    public static String getShortName(final Class classe)
+    {
+        if (classe==null) return "<*>";
+        String name = classe.getName();
+        int   lower = name.lastIndexOf('.');
+        int   upper = name.length();
+        return name.substring(lower+1, upper).replace('$','.');
+    }
 
     /**
      * Returns a short class name for the specified object. This method will
@@ -114,13 +126,14 @@ public final class Utilities
      * @return A short class name for the specified object.
      */
     public static String getShortClassName(final Object object)
-    {
-        if (object==null) return "<*>";
-        String name = object.getClass().getName();
-        int   lower = name.lastIndexOf('.');
-        int   upper = name.length();
-        return name.substring(lower+1, upper).replace('$','.');
-    }
+    {return getShortName(object!=null ? object.getClass() : null);}
+
+    /**
+     * Convenience method for testing two objects for
+     * equality. One or both objects may be null.
+     */
+    public static boolean equals(final Object object1, final Object object2)
+    {return (object1==object2) || (object1!=null && object1.equals(object2));}
 
     /**
      * Invoked when an unexpected error occured. The action taken by this method is

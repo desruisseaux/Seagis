@@ -49,6 +49,10 @@ import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
 import javax.media.jai.util.CaselessStringKey;
 
+// Input/output
+import java.io.Writer;
+import java.io.IOException;
+
 // Miscellaneous
 import java.util.Arrays;
 import net.seagis.resources.gcs.Resources;
@@ -233,5 +237,23 @@ public class GridCoverageProcessor
             coverage = Interpolator.create(coverage, interpolations);
         }
         return coverage;
+    }
+
+    /**
+     * Print a description of all operations to the specified stream.
+     * The description include operation names and lists of parameters.
+     *
+     * @param  out The destination stream.
+     * @throws IOException if an error occured will writing to the stream.
+     */
+    public void print(final Writer out) throws IOException
+    {
+        final String  lineSeparator = System.getProperty("line.separator", "\n");
+        final Operation[] operations = getOperations();
+        for (int i=0; i<operations.length; i++)
+        {
+            out.write(lineSeparator);
+            operations[i].print(out);
+        }
     }
 }

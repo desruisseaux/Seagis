@@ -36,8 +36,8 @@ import net.seagis.cs.AxisOrientation;
 
 // Matrix and transforms
 import org.opengis.pt.PT_Matrix;             // For JavaDoc
-//import javax.vecmath.GMatrix;                // For JavaDoc (TODO)
-//import javax.media.j3d.Transform3D;          // For JavaDoc (TODO)
+//import javax.vecmath.GMatrix;                // For JavaDoc
+//import javax.media.j3d.Transform3D;          // For JavaDoc
 import javax.media.jai.PerspectiveTransform; // For JavaDoc
 import java.awt.geom.AffineTransform;
 

@@ -41,10 +41,17 @@ import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
 
+// Input/output
+import java.io.Writer;
+import java.io.IOException;
+import net.seagis.io.TableWriter;
+
 // Miscellaneous
 import java.util.Locale;
 import java.io.Serializable;
 import net.seagis.resources.Utilities;
+import net.seagis.resources.gcs.Resources;
+import net.seagis.resources.gcs.ResourceKeys;
 
 
 /**
@@ -183,8 +190,53 @@ public abstract class Operation implements Serializable
     /**
      * Returns a string représentation of this operation.
      * The returned string is implementation dependent. It
-     * is usually provided for debugging purposes.
+     * is usually provided for debugging purposes only.
      */
     public String toString()
     {return Utilities.getShortClassName(this)+'['+getName()+": "+descriptor.getNumParameters()+']';}
+
+    /**
+     * Print a description of this operation to the specified stream.
+     * The description include operation name and a list of parameters.
+     *
+     * @param  out The destination stream.
+     * @throws IOException if an error occured will writing to the stream.
+     */
+    public void print(final Writer out) throws IOException
+    {
+        final String lineSeparator = System.getProperty("line.separator", "\n");
+        out.write(' ');
+        out.write(getName());
+        out.write(lineSeparator);
+
+        final Resources resources = Resources.getResources(null);
+        final TableWriter table = new TableWriter(out, " \u2502 ");
+        table.writeHorizontalSeparator();
+        table.write(resources.getString(ResourceKeys.NAME));
+        table.nextColumn();
+        table.write(resources.getString(ResourceKeys.CLASS));
+        table.nextColumn();
+        table.write(resources.getString(ResourceKeys.DEFAULT_VALUE));
+        table.nextLine();
+        table.writeHorizontalSeparator();
+
+        final String[]    names = descriptor.getParamNames();
+        final Class []  classes = descriptor.getParamClasses();
+        final Object[] defaults = descriptor.getParamDefaults();
+        final int numParameters = descriptor.getNumParameters();
+        for (int i=0; i<numParameters; i++)
+        {
+            table.write(names[i]);
+            table.nextColumn();
+            table.write(Utilities.getShortName(classes[i]));
+            table.nextColumn();
+            if (defaults[i] != ParameterListDescriptor.NO_PARAMETER_DEFAULT)
+            {
+                table.write(String.valueOf(defaults[i]));
+            }
+            table.nextLine();
+        }
+        table.writeHorizontalSeparator();
+        table.flush();
+    }
 }

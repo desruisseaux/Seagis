@@ -69,7 +69,7 @@ public class GridGeometry implements Dimensioned, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 256746343396114708L;
+    private static final long serialVersionUID = -8740895616121262893L;
 
     /**
      * The valid coordinate range of a grid coverage. The lowest
