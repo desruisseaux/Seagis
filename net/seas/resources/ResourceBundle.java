@@ -41,6 +41,7 @@ import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 
 // Journal
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -103,7 +104,7 @@ public class ResourceBundle extends java.util.ResourceBundle
                     values[i]=null;
             }
             input.close();
-            Logger.getLogger("net.seas").config("Loaded resources for {0}.", new String[]{locale.getDisplayName(Locale.UK)});
+            Logger.getLogger("net.seas").log(Level.CONFIG, "Loaded resources for {0}.", new String[]{locale.getDisplayName(Locale.UK)});
         }
         else values = new String[0];
     }

@@ -59,9 +59,6 @@ import java.util.Comparator;
  * (par exemple) des fichiers <code>Resources_fr.properties</code> et produira en
  * sortie un fichier binaire contenant l'ensemble des ressources.
  *
- * NOTE: Cette classe ne fonctionne pas avec le JDK 1.4-beta1,
- *       à cause d'un bug du JDK. Utilisez plutôt le JDK 1.3.
- *
  * @version 1.0
  * @author Martin Desruisseaux
  */
@@ -179,10 +176,8 @@ final class Compiler implements FileFilter, Comparator<String>
                 continue;
             }
             final int expected=message.getFormats().length;
-            if (argumentCount!=expected && expected!=10)
+            if (argumentCount!=expected)
             {
-                // Le "!=10" est un workaround pour un bug du JDK 1.3.
-                // Il est corrigé dans le JDK 1.4 (TODO).
                 warning(file, key, "La clé devrait déclarer "+expected+" argument(s).");
                 continue;
             }

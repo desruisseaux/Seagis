@@ -188,17 +188,14 @@ public final class SwingUtilities
      */
     public static JComponent getMultilineLabelFor(final JComponent owner, final String text)
     {
-        final JTextArea label=new JTextArea(text)
-        {
-            public boolean isFocusTraversable()
-            {return false;}
-        };
+        final JTextArea label=new JTextArea(text);
         final Dimension size=owner.getPreferredSize();
         size.height=label.getMaximumSize().height;
         label.setMaximumSize  (size);
         label.setWrapStyleWord(true);
         label.setLineWrap     (true);
         label.setEditable    (false);
+        label.setFocusable   (false);
         label.setOpaque      (false);
         label.setBorder       (null); // Certains L&F placent une bordure.
         LookAndFeel.installColorsAndFont(label, "Label.background", "Label.foreground", "Label.font");
