@@ -220,7 +220,7 @@ public class LineWriter extends FilterWriter
                     else
                     {
                         flushBuffer();
-                        super.write(c);
+                        out.write(c);
                     }
                     skipCR=false;
                     break;

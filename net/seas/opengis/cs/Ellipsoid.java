@@ -55,9 +55,9 @@ public abstract class Ellipsoid extends Info implements Serializable
 
     /**
      * WGS 1984 ellipsoid. This ellipsoid is used in GPS system
-     * and is the default one in many places in this package.
+     * and is the default for most <code>net.seas</code> packages.
      */
-    private static final Ellipsoid WGS84 = new FlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE);
+    public static final Ellipsoid WGS84 = new FlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE);
 
     /**
      * Name of this ellipsoid.

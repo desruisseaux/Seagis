@@ -78,7 +78,7 @@ public class XRectangle2D extends Rectangle2D implements Serializable
      * area.
      *
      * @return <code>true</code> if the <code>RectangularShape</code> is empty;
-     *     <code>false</code> otherwise.
+     *      <code>false</code> otherwise.
      */
     public boolean isEmpty()
     {return !(xmin<xmax && ymin<ymax);}

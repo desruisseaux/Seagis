@@ -447,7 +447,7 @@ public class Arrow2D extends RectangularShape
                    Double.doubleToLongBits(  sy0 ) == Double.doubleToLongBits(cast.sy1   ) &&
                    Double.doubleToLongBits(  sy1 ) == Double.doubleToLongBits(cast.sy0   );
         }
-        else return false;    
+        else return false;      
     }
 
     /**

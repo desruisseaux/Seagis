@@ -114,7 +114,7 @@ public class TabExpanderWriter extends FilterWriter
     private void expand() throws IOException
     {
         final int width = tabWidth - (column % tabWidth);
-        super.write(XString.spaces(width));
+        out.write(XString.spaces(width));
         column += width;
     }
     
@@ -134,7 +134,7 @@ public class TabExpanderWriter extends FilterWriter
                 case '\t': expand(); return;
                 default  : column++; break;
             }
-            super.write(c);
+            out.write(c);
         }
     }
     
@@ -161,7 +161,7 @@ public class TabExpanderWriter extends FilterWriter
                     case '\n': column=0;
                                break;
 
-                    case '\t': super.write(buffer, start, end-start);
+                    case '\t': out.write(buffer, start, end-start);
                                start=end+1;
                                expand();
                                break;
@@ -170,7 +170,7 @@ public class TabExpanderWriter extends FilterWriter
                                break;
                 }
             }
-            super.write(buffer, start, length-start);
+            out.write(buffer, start, length-start);
         }
     }
     
@@ -197,7 +197,7 @@ public class TabExpanderWriter extends FilterWriter
                     case '\n': column=0;
                                break;
                     
-                    case '\t': super.write(string, start, end-start);
+                    case '\t': out.write(string, start, end-start);
                                start=end+1;
                                expand();
                                break;
@@ -206,7 +206,7 @@ public class TabExpanderWriter extends FilterWriter
                                break;
                 }
             }
-            super.write(string, start, length-start);
+            out.write(string, start, length-start);
         }
     }
 }

@@ -307,24 +307,24 @@ public abstract class TextImageReader extends SimpleImageReader
          * values:
          *
          * <ul>
-         *   <li>Image format names ({@link #names names}):
+         *   <li>Image format names ({@link #names}):
          *       An array of lenght 1 containing the <code>name</code> argument.
          *
-         *   <li>MIME type ({@link #MIMETypes MIMETypes}):
+         *   <li>MIME type ({@link #MIMETypes}):
          *       An array of length 1 containing the <code>mime</code> argument.
          *
-         *   <li>File suffixes ({@link #suffixes suffixes}):
+         *   <li>File suffixes ({@link #suffixes}):
          *       "<code>.txt</code>", "<code>.asc</code>" et "<code>.dat</code>".</li>
          *
-         *   <li>Input types ({@link #inputTypes inputTypes}):
+         *   <li>Input types ({@link #inputTypes}):
          *       {@link File}, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
          * </ul>
          *
          * Others fields should be set by subclasses
          * (usually in their constructors).
          *
-         * @param name Format name, or <code>null</code> to let {@link #names names} unset.
-         * @param mime MIME type, or <code>null</code> to let {@link #MIMETypes MIMETypes} unset.
+         * @param name Format name, or <code>null</code> to let {@link #names} unset.
+         * @param mime MIME type, or <code>null</code> to let {@link #MIMETypes} unset.
          */
         public Spi(final String name, final String mime)
         {

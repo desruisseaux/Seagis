@@ -95,14 +95,14 @@ public final class CoordinatePoint implements Cloneable, Serializable
 
     /**
      * Returns the ordinate value along the specified dimension.
-     * This is equivalent to <code>{@link #ord ord}[dimension]</code>.
+     * This is equivalent to <code>{@link #ord}[dimension]</code>.
      */
     public final double getOrdinate(final int dimension)
     {return ord[dimension];}
 
     /**
      * The number of ordinates of a <code>CoordinatePoint</code>.
-     * This is equivalent to <code>{@link #ord ord}.length</code>.
+     * This is equivalent to <code>{@link #ord}.length</code>.
      */
     public final int getDimension()
     {return ord.length;}

@@ -303,8 +303,8 @@ public class AngleFormat extends Format
     public AngleFormat(final String pattern, final DecimalFormatSymbols symbols)
     {
         // NOTE: pour cette routine, il ne faut PAS que DecimalFormat
-        //     reconnaisse la notation exponentielle, parce que ça
-        //     risquerait d'être confondu avec le "E" de "Est".
+        //       reconnaisse la notation exponentielle, parce que ça
+        //       risquerait d'être confondu avec le "E" de "Est".
         numberFormat=new DecimalFormat("#0", symbols);
         applyPattern(pattern);
     }
@@ -791,7 +791,7 @@ public class AngleFormat extends Format
      *
      * @param source Chaîne de caractères à lire.
      * @param pos    Position à partir d'où interpréter la chaîne.
-     * @return     L'angle lu.
+     * @return       L'angle lu.
      */
     public Angle parse(final String source, final ParsePosition pos)
     {return parse(source, pos, false);}

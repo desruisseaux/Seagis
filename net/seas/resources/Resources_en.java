@@ -22,10 +22,6 @@
  */
 package net.seas.resources;
 
-// Divers
-import java.util.Locale;
-import java.io.IOException;
-
 
 /**
  * Ressources en langue anglaise.
@@ -38,13 +34,11 @@ public class Resources_en extends Resources
     /**
      * Nom du fichier dans lequel sont enregistrées les données.
      */
-    private static final String FILEPATH = "net/seas/resources/resources_en.serialized";
+    static final String FILEPATH = "net/seas/resources/resources_en.serialized";
 
     /**
      * Initialise les ressources anglaises.
-     * @throws IOException si les ressources
-     *         n'ont pas pu être ouvertes.
      */
-    public Resources_en() throws IOException
-    {super(Locale.UK, FILEPATH);}
+    public Resources_en()
+    {super(FILEPATH);}
 }

@@ -24,7 +24,6 @@ package net.seas.resources;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.IOException;
 import java.util.MissingResourceException;
 
 
@@ -44,22 +43,23 @@ public class Resources extends ResourceBundle
      * la langue de l'utilisateur. Il s'agit plutôt de ressources à utiliser par défaut
      * si aucune n'est disponible dans la langue de l'utilisateur. Ce constructeur est
      * réservé à un usage interne et ne devrait pas être appellé directement.
-     *
-     * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
-    public Resources() throws IOException
-    {super(null, null);}
+    public Resources()
+    {
+        super(// Set 'true' in front of language to use as default.
+              false ? Resources_fr.FILEPATH :
+               true ? Resources_en.FILEPATH :
+               null);
+    }
 
     /**
      * Initialise les ressources en
      * utilisant le fichier spécifié.
      *
-     * @param  locale {@link Locale} des ressources (à titre informatif).
      * @param  filename Nom du fichier binaire contenant les ressources.
-     * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
-    protected Resources(final Locale locale, final String filepath) throws IOException
-    {super(locale, filepath);}
+    protected Resources(final String filepath)
+    {super(filepath);}
 
     /**
      * Returns resources in the given locale.

@@ -34,6 +34,7 @@ import net.seas.io.TableWriter;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.prefs.Preferences;
+import net.seas.resources.Resources;
 
 
 /**
@@ -56,7 +57,7 @@ public abstract class Console
     protected final PrintWriter out;
 
     /**
-     * Locale for projection names, or <code>null</code> for default locale.
+     * The locale.
      */
     protected final Locale locale;
 
@@ -101,19 +102,19 @@ public abstract class Console
      * Returns the specified locale.
      *
      * @param  locale The programmatic locale string (e.g. "fr_CA").
-     * @return The locale, or <code>null</code> if <code>locale</code> was null.
+     * @return The locale, or the default one if <code>locale</code> was null.
      * @throws IllegalArgumentException if the locale string is invalid.
      */
     private static Locale getLocale(final String locale) throws IllegalArgumentException
     {
-        if (locale==null) return null;
+        if (locale==null) return Locale.getDefault();
         final String[] s = Pattern.compile("_").split(locale);
         switch (s.length)
         {
             case 1:  return new Locale(s[0]);
             case 2:  return new Locale(s[0], s[1]);
             case 3:  return new Locale(s[0], s[1], s[2]);
-            default: throw new IllegalArgumentException("Bad local: "+locale);
+            default: throw new IllegalArgumentException(Resources.format(Clé.BAD_LOCALE¤1, locale));
         }
     }
 
@@ -165,7 +166,7 @@ public abstract class Console
                         }
                         split = 0;
                     }
-                    throw new IllegalArgumentException("Missing argument for \""+arg+'"');
+                    throw new IllegalArgumentException(Resources.format(Clé.MISSING_ARGUMENT_VALUE¤1, arg));
                 }
             }
         }
@@ -205,6 +206,6 @@ public abstract class Console
     {
         for (int i=0; i<arguments.length; i++)
             if (arguments[i] != null)
-                throw new IllegalArgumentException("Unknow option: "+arguments[i]);
+                throw new IllegalArgumentException(Resources.format(Clé.UNKNOW_OPTION¤1, arguments[i]));
     }
 }

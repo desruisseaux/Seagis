@@ -63,9 +63,19 @@ public class ResourceBundle extends java.util.ResourceBundle
     private static final int MAX_STRING_LENGTH = 128;
 
     /**
-     * Tableau des valeurs.
+     * Nom du fichier binaire qui contient les ressources.
      */
-    private final String[] values;
+    private final String filename;
+
+    /**
+     * Tableau des valeurs. Ce tableau ne sera initialisé
+     * que la première fois où il sera nécessaire.  Il ne
+     * faut pas l'initialiser trop tôt pour éviter que les
+     * classes parentes (par exemple {@link Resources} qui
+     * est l'ancêtre de {@link Resources_fr}) ne chargent
+     * des ressources qu'ils n'utiliseront pas.
+     */
+    private String[] values;
 
     /**
      * Objet utiliser pour écrire une chaîne de caractères qui
@@ -85,13 +95,21 @@ public class ResourceBundle extends java.util.ResourceBundle
     /**
      * Construit une table des ressources.
      *
-     * @param  locale {@link Locale} des ressources (à titre informatif).
      * @param  filename Nom du fichier binaire contenant les ressources.
-     * @throws IOException si les ressources n'ont pas pu être ouvertes.
      */
-    protected ResourceBundle(final Locale locale, final String filename) throws IOException
+    protected ResourceBundle(final String filename)
+    {this.filename = filename;}
+
+    /**
+     * Vérifie que les ressources ont bien été chargées. Si ce
+     * n'est pas le cas, procède immédiatement à leur chargement.
+     *
+     * @param  key Clé de la ressource désirée, ou <code>null</code> pour charger toutes les ressources.
+     * @throws MissingResourceException si le chargement des ressources a échoué.
+     */
+    private void ensureLoaded(final String key) throws MissingResourceException
     {
-        if (filename!=null)
+        if (values==null) try
         {
             final InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
             if (in==null) throw new FileNotFoundException(filename);
@@ -104,20 +122,27 @@ public class ResourceBundle extends java.util.ResourceBundle
                     values[i]=null;
             }
             input.close();
-            Logger.getLogger("net.seas").log(Level.CONFIG, "Loaded resources for {0}.", new String[]{locale.getDisplayName(Locale.UK)});
+            Logger.getLogger("net.seas").logp(Level.CONFIG,
+                                              ResourceBundle.class.getName(),
+                                              (key!=null) ? "getObject" : "getKeys",
+                                              "Loaded resources for {0}.",
+                                              new String[]{getLocale().getDisplayName(Locale.UK)});
         }
-        else values = new String[0];
+        catch (IOException exception)
+        {
+            final MissingResourceException error = new MissingResourceException(exception.getLocalizedMessage(), getClass().getName(), key);
+            error.initCause(exception);
+            throw error;
+        }
     }
-
-    int getLoadingKey()
-    {return -1;}
 
     /**
      * Renvoie un énumérateur qui balayera toutes
      * les clés que possède cette liste de ressources.
      */
-    public final Enumeration getKeys()
+    public final synchronized Enumeration getKeys()
     {
+        ensureLoaded(null);
         return new Enumeration()
         {
             private int i=0;
@@ -155,6 +180,7 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     protected final synchronized Object handleGetObject(final String key)
     {
+        ensureLoaded(key);
         final int keyID;
         try
         {

@@ -718,7 +718,7 @@ public class TableWriter extends FilterWriter
             flushTo(out);
             row=column=0;
             cells.clear();
-            super.flush();
+            out.flush();
         }
     }
 
@@ -732,7 +732,7 @@ public class TableWriter extends FilterWriter
         synchronized (lock)
         {
             flush();
-            super.close();
+            out.close();
         }
     }
 

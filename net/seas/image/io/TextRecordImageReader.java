@@ -866,9 +866,9 @@ public class TextRecordImageReader extends TextImageReader
          * classe parente.
          *
          * @param name Nom de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #names names}.
+         *             pas initialiser le champ {@link #names}.
          * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #MIMETypes MIMETypes}.
+         *             pas initialiser le champ {@link #MIMETypes}.
          */
         public Spi(final String name, final String mime)
         {this(name, mime, 0, 1);}
@@ -877,9 +877,9 @@ public class TextRecordImageReader extends TextImageReader
          * Construit un descripteur.
          *
          * @param name Nom de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #names names}.
+         *             pas initialiser le champ {@link #names}.
          * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
-         *             pas initialiser le champ {@link #MIMETypes MIMETypes}.
+         *             pas initialiser le champ {@link #MIMETypes}.
          * @param xColumn Numéro de colonne des <var>x</var> (à partir de 0).
          * @param yColumn Numéro de colonne des <var>y</var> (à partir de 0).
          */

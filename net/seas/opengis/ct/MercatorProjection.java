@@ -55,7 +55,7 @@ final class MercatorProjection extends CylindricalProjection
 {
     /**
      * Global scale factor. Value <code>ak0</code>
-     * is equals to <code>{@link #a a}*k0</code>.
+     * is equals to <code>{@link #a}*k0</code>.
      */
     private final double ak0;
 
