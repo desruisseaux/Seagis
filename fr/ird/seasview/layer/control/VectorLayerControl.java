@@ -44,7 +44,9 @@ import fr.ird.awt.GridMarkControler;
 
 // Map components
 import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGridMarks;
 import fr.ird.seasview.layer.VectorLayer;
+import fr.ird.seasview.DataBase;
 
 // Divers
 import java.util.Date;
@@ -132,23 +134,31 @@ public final class VectorLayerControl extends LayerControl {
         final VectorLayer layer;
         if (layers!=null && layers.length==1 && layers[0] instanceof VectorLayer) {
             layer = (VectorLayer) layers[0];
-            layer.setGridCoverage(coverage);
             layer.setBands(new int[]{bandU, bandV});
+            layer.setGridCoverage(coverage);
         } else {
             layer = new VectorLayer(coverage, bandU, bandV);
+            setDecimation(layer, DataBase.preferences.getInt("vectors.decimation", 0));
         }
         synchronized(this) {
             if (controler != null) {
                 layer.setColor(controler.getColor());
-                final int decimation = controler.getDecimation();
-                if (decimation != 0) {
-                    layer.setDecimation(decimation, decimation);
-                } else {
-                    layer.setAutoDecimation(16,16);
-                }
+                setDecimation(layer, controler.getDecimation());
             }
         }
         return new RenderedLayer[] {layer};
+    }
+
+    /**
+     * Applique une décimation la couche spécifiée. Par convention, une décimation de 0
+     * signifie qu'il faut laisser l'application la calculer elle-même.
+     */
+    private static void setDecimation(final RenderedGridMarks layer, final int decimation) {
+        if (decimation != 0) {
+            layer.setDecimation(decimation, decimation);
+        } else {
+            layer.setAutoDecimation(16,16);
+        }
     }
 
     /**
@@ -166,6 +176,7 @@ public final class VectorLayerControl extends LayerControl {
                 controler = new GridMarkControler(getName());
                 controler.setShape(new Arrow2D(-24, -20, 48, 40));
                 controler.setColor(new Color(0, 153, 255, 128));
+                controler.setDecimation(DataBase.preferences.getInt("vectors.decimation", 0));
             }
             if (false) {// TODO
                 final RenderedImage sample = null;
@@ -174,12 +185,13 @@ public final class VectorLayerControl extends LayerControl {
             oldColor      = controler.getColor();
             oldDecimation = controler.getDecimation();
         }
-        final boolean changed=controler.showDialog(owner);
+        final boolean changed = controler.showDialog(owner);
         synchronized(this) {
             controler.setBackground((RenderedImage) null);
             if (changed) {
                 newColor      = controler.getColor();
                 newDecimation = controler.getDecimation();
+                DataBase.preferences.putInt("vectors.decimation", newDecimation);
                 fireStateChanged(new Edit() {
                     protected void edit(final boolean redo) {
                         controler.setColor     (redo ? newColor      : oldColor);

@@ -77,8 +77,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class NavigatorFrame extends InternalFrame implements ChangeListener
-{
+public final class NavigatorFrame extends InternalFrame implements ChangeListener {
     /**
      * Connection avec la base de données d'images.
      */
@@ -131,8 +130,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         super(Resources.format(ResourceKeys.IMAGES_LIST));
         final SeriesEntry[] series;
         this.chooser=chooser;
-        if (chooser!=null)
-        {
+        if (chooser != null) {
             series = chooser.getSeries();
             chooser.setSeriesVisible(false);
         }
@@ -159,14 +157,13 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Retourne le paneau représentant les mosaïques
      * d'images, ou <code>null</code> s'il n'y en a pas.
      */
-    private ImageMosaicPanel getMosaicPanel()
-    {
+    private ImageMosaicPanel getMosaicPanel() {
         final Component[] tabs=this.tabs.getComponents();
-        for (int i=0; i<tabs.length; i++)
-        {
+        for (int i=0; i<tabs.length; i++) {
             final Component c=tabs[i];
-            if (c instanceof ImageMosaicPanel)
+            if (c instanceof ImageMosaicPanel) {
                 return ((ImageMosaicPanel) c);
+            }
         }
         return null;
     }
@@ -175,15 +172,14 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Reset the divider location. This is a workaround
      * for what seems to be a regression bugs in JDK 1.4.0.
      */
-    public void resetDividerLocation()
-    {
+    public void resetDividerLocation() {
         setSize(getWidth()+1, getHeight()+1);
         final Component[] tabs=this.tabs.getComponents();
-        for (int i=tabs.length; --i>=0;)
-        {
+        for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
-            if (c instanceof ImagePanel)
+            if (c instanceof ImagePanel) {
                 ((ImagePanel) c).resetDividerLocation();
+            }
         }
     }
 
@@ -191,10 +187,8 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      * Construit le paneau {@link CoordinateChooserDB}
      * si ce paneau n'existait pas déjà.
      */
-    private void buildChooser() throws SQLException
-    {
-        if (chooser==null)
-        {
+    private void buildChooser() throws SQLException {
+        if (chooser == null) {
             chooser = new CoordinateChooserDB(getDataBase().getImageDataBase());
             chooser.setSeriesVisible(false);
         }
@@ -207,12 +201,9 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
-    private void configureTable() throws SQLException
-    {
-        if (chooser!=null)
-        {
-            synchronized (table)
-            {
+    private void configureTable() throws SQLException {
+        if (chooser != null) {
+            synchronized (table) {
                 table.setTimeRange          (chooser.getStartTime(), chooser.getEndTime());
                 table.setGeographicArea     (chooser.getGeographicArea());
                 table.setPreferredResolution(chooser.getPreferredResolution());
@@ -233,32 +224,25 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *         pour plus de sécurité.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    private void refresh(final Component[] tabs) throws SQLException
-    {
+    private void refresh(final Component[] tabs) throws SQLException {
         // Note: si 'refresh' est appelée en même temps que 'addSeries'
         //       (dans deux threads séparés), toutes les tables seront
         //       remises à jour ('refresh') avant que 'addSeries' ne
         //       continue. Cette fonctionalité voulue est le résultat
         //       de la position des 'synchronized(table)'.
-        synchronized (table)
-        {
+        synchronized (table) {
             Map<SeriesEntry,List<ImageEntry>> entries = null;
             final ImageMosaicPanel mosaic = getMosaicPanel();
-            if (mosaic!=null)
-            {
+            if (mosaic != null) {
                 entries = mosaic.refresh(table);
             }
-            for (int i=0; i<tabs.length; i++)
-            {
-                if (tabs[i] instanceof ImageTablePanel)
-                {
+            for (int i=0; i<tabs.length; i++) {
+                if (tabs[i] instanceof ImageTablePanel) {
                     final ImageTablePanel panel = (ImageTablePanel) tabs[i];
                     final SeriesEntry    series = panel.getSeries();
-                    if (entries!=null)
-                    {
+                    if (entries != null) {
                         final List<ImageEntry> images = entries.get(series);
-                        if (images!=null)
-                        {
+                        if (images != null) {
                             panel.setEntries(images);
                             continue;
                         }
@@ -286,51 +270,43 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         final ProgressWindow progress = new ProgressWindow(owner);
         progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
         progress.started();
-
-        try
-        {
-loop:       for (int j=0; j<series.length; j++)
-            {
+        try {
+loop:       for (int j=0; j<series.length; j++) {
                 final SeriesEntry série=series[j];
                 final JTabbedPane tabs=this.tabs;
                 final Component[] cmps=tabs.getComponents();
-                for (int i=cmps.length; --i>=0;)
-                {
+                for (int i=cmps.length; --i>=0;) {
                     final Component c=cmps[i];
-                    if (c instanceof ImageTablePanel)
-                        if (série.equals(((ImageTablePanel) c).getSeries()))
+                    if (c instanceof ImageTablePanel) {
+                        if (série.equals(((ImageTablePanel) c).getSeries())) {
                             continue loop;
+                        }
+                    }
                 }
                 final String           name   = série.getName();
                 final ImageMosaicPanel mosaic = getMosaicPanel();
                 final ImageTablePanel  panel;
                 final ImageTableModel  model;
                 progress.setDescription(name);
-                synchronized (table)
-                {
+                synchronized (table) {
                     table.setSeries(série);
-                    if (mosaic!=null)
-                    {
+                    if (mosaic != null) {
                         model = new ImageTableModel(série);
                         model.setEntries(mosaic.addSeries(table));
-                    }
-                    else
-                    {
+                    } else {
                         model = new ImageTableModel(table);
                     }
                 }
                 // Do not invokes following code inside the
                 // synchronized block: it cause deadlock.
                 panel = createPanel(model, database);
-                EventQueue.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {tabs.addTab(name, panel);}
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                        tabs.addTab(name, panel);
+                    }
                 });
             }
-        }
-        finally
-        {
+        } finally {
             progress.complete();
             progress.dispose();
         }
@@ -341,8 +317,7 @@ loop:       for (int j=0; j<series.length; j++)
      * {@link ImageTableModel}. Le paneau construit ne sera pas ajouté
      * aux onglets; c'est à l'appelant de le faire.
      */
-    private ImageTablePanel createPanel(final ImageTableModel model, final DataBase database) throws SQLException
-    {
+    private ImageTablePanel createPanel(final ImageTableModel model, final DataBase database) throws SQLException {
         final ThreadGroup readers = database.getThreadGroup();
         final LayerControl[] ctrl = database.getLayerControls();
         final ImageTablePanel panel=new ImageTablePanel(model, renderer, statusBar, readers, ctrl);
@@ -355,16 +330,15 @@ loop:       for (int j=0; j<series.length; j++)
      * peut retourner un tableau de longueur 0, mais ne retournera
      * jamais <code>null</code>.
      */
-    public SeriesEntry[] getSeries()
-    {
-        final Component[] tabs=this.tabs.getComponents();
-        final SeriesEntry[] series=new SeriesEntry[tabs.length];
+    public SeriesEntry[] getSeries() {
+        final Component[] tabs = this.tabs.getComponents();
+        final SeriesEntry[] series = new SeriesEntry[tabs.length];
         int count=0;
-        for (int i=0; i<tabs.length; i++)
-        {
+        for (int i=0; i<tabs.length; i++) {
             final Component c=tabs[i];
-            if (c instanceof ImageTablePanel)
+            if (c instanceof ImageTablePanel) {
                 series[count++] = ((ImageTablePanel) c).getSeries();
+            }
         }
         return XArray.resize(series, count);
     }
@@ -372,15 +346,14 @@ loop:       for (int j=0; j<series.length; j++)
     /**
      * Retourne le nombre de séries affichées dans cette fenêtre.
      */
-    private int getSeriesCount()
-    {
-        final Component[] tabs=this.tabs.getComponents();
+    private int getSeriesCount() {
+        final Component[] tabs = this.tabs.getComponents();
         int count=0;
-        for (int i=0; i<tabs.length; i++)
-        {
+        for (int i=0; i<tabs.length; i++) {
             final Component c=tabs[i];
-            if (c instanceof ImageTablePanel)
+            if (c instanceof ImageTablePanel) {
                 count++;
+            }
         }
         return count;
     }
@@ -388,16 +361,12 @@ loop:       for (int j=0; j<series.length; j++)
     /**
      * Supprime l'onglet à l'index spécifié.
      */
-    private final void removeTabAt(final int index)
-    {
+    private final void removeTabAt(final int index) {
         final Component tab=tabs.getComponent(index);
         tabs.removeTabAt(index);
-        if (tab instanceof ImagePanel) try
-        {
+        if (tab instanceof ImagePanel) try {
             ((ImagePanel) tab).dispose();
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             ExceptionMonitor.show(this, exception);
         }
     }
@@ -408,15 +377,14 @@ loop:       for (int j=0; j<series.length; j++)
      * utilisé pour la construction des menus. Par exemple le code {@link ResourceKeys#EXPORT}
      * désigne le menu "exporter".
      */
-    protected boolean canProcess(final int clé)
-    {
+    protected boolean canProcess(final int clé) {
         final Component c=tabs.getSelectedComponent();
-        if (c instanceof ImagePanel)
-            if (((ImagePanel) c).canProcess(clé))
+        if (c instanceof ImagePanel) {
+            if (((ImagePanel) c).canProcess(clé)) {
                 return true;
-
-        switch (clé)
-        {
+            }
+        }
+        switch (clé) {
             default:                              return super.canProcess(clé);
             case ResourceKeys.CLOSE_SERIES:       return (c instanceof ImageTablePanel);
             case ResourceKeys.ADD_SERIES:         // fall through
@@ -433,81 +401,70 @@ loop:       for (int j=0; j<series.length; j++)
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException
-    {
+    protected Task process(final int clé) throws SQLException {
         final Component c=tabs.getSelectedComponent();
-        if (c instanceof ImagePanel)
-            if (((ImagePanel) c).process(clé))
+        if (c instanceof ImagePanel) {
+            if (((ImagePanel) c).process(clé)) {
                 return null;
-
+            }
+        }
         final Resources resources = Resources.getResources(getLocale());
         Task task=null;
-        switch (clé)
-        {
-            default:
-            {
-                task=super.process(clé);
+        switch (clé) {
+            default: {
+                task = super.process(clé);
                 break;
             }
             ///////////////////////////////////
             ///  Séries - Ajouter une série ///
             ///////////////////////////////////
-            case ResourceKeys.ADD_SERIES:
-            {
+            case ResourceKeys.ADD_SERIES: {
                 buildChooser();
                 final SeriesEntry[] series = chooser.showSeriesDialog(this, resources.getString(ResourceKeys.ADD_SERIES));
-                if (series!=null)
-                {
+                if (series != null) {
                     configureTable();
                     final DataBase database = getDataBase();
-                    task=new Task(resources.getString(ResourceKeys.ADD_SERIES))
-                    {
-                        protected void run() throws SQLException
-                        {addSeries(database, series, NavigatorFrame.this);}
+                    task = new Task(resources.getString(ResourceKeys.ADD_SERIES)) {
+                        protected void run() throws SQLException {
+                            addSeries(database, series, NavigatorFrame.this);
+                        }
                     };
                 }
                 break;
             }
-
             /////////////////////////////////
             ///  Séries - Fermer la série ///
             /////////////////////////////////
-            case ResourceKeys.CLOSE_SERIES:
-            {
+            case ResourceKeys.CLOSE_SERIES: {
                 removeTabAt(tabs.getSelectedIndex());
                 break;
             }
-
             /////////////////////////////////////////
             ///  Séries - Changer les coordonnées ///
             /////////////////////////////////////////
-            case ResourceKeys.CHANGE_COORDINATES:
-            {
+            case ResourceKeys.CHANGE_COORDINATES: {
                 buildChooser();
-                if (chooser.showDialog(this))
-                {
+                if (chooser.showDialog(this)) {
                     configureTable();
                     final Component[] tabs=this.tabs.getComponents();
-                    task=new Task(resources.getString(ResourceKeys.CHANGE_COORDINATES))
-                    {
-                        protected void run() throws SQLException
-                        {refresh(tabs);}
+                    task = new Task(resources.getString(ResourceKeys.CHANGE_COORDINATES)) {
+                        protected void run() throws SQLException {
+                            refresh(tabs);
+                        }
                     };
                 }
                 break;
             }
-
             //////////////////////////////////////////////////////////
             ///  Fichier - Nouveau - Couplage pêche/environnement  ///
             //////////////////////////////////////////////////////////
-//          case ResourceKeys.COUPLING:
-//          {
+//          case ResourceKeys.COUPLING: {
 //              final DataBase    database=getDataBase();
 //              final SeriesEntry[] series=getSeries();
-//              task=new Task(resources.getString(ResourceKeys.COUPLING))
-//              {
-//                  public void run() throws SQLException
-//                  {show(new CouplingFrame(database, series));}
+//              task=new Task(resources.getString(ResourceKeys.COUPLING)) {
+//                  public void run() throws SQLException {
+//                      show(new CouplingFrame(database, series));
+//                  }
 //              };
 //              break;
 //          }
@@ -520,15 +477,14 @@ loop:       for (int j=0; j<series.length; j++)
      * Cette modification n'affecte pas le fuseau horaire des éventuelles
      * bases de données accédées par cette fenêtre.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {
+    protected void setTimeZone(final TimeZone timezone) {
         super.setTimeZone(timezone);
-        final Component[] tabs=this.tabs.getComponents();
-        for (int i=tabs.length; --i>=0;)
-        {
+        final Component[] tabs = this.tabs.getComponents();
+        for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
-            if (c instanceof ImagePanel)
+            if (c instanceof ImagePanel) {
                 ((ImagePanel) c).setTimeZone(timezone);
+            }
         }
     }
 
@@ -537,15 +493,14 @@ loop:       for (int j=0; j<series.length; j++)
      * indique que tout zoom ou translation appliqué sur une image d'une
      * mosaïque doit être répliqué sur les autres.
      */
-    protected void setImagesSynchronized(final boolean s)
-    {
+    protected void setImagesSynchronized(final boolean s) {
         super.setImagesSynchronized(s);
-        final Component[] tabs=this.tabs.getComponents();
-        for (int i=tabs.length; --i>=0;)
-        {
+        final Component[] tabs = this.tabs.getComponents();
+        for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
-            if (c instanceof ImagePanel)
+            if (c instanceof ImagePanel) {
                 ((ImagePanel) c).setImagesSynchronized(s);
+            }
         }
     }
 
@@ -555,15 +510,14 @@ loop:       for (int j=0; j<series.length; j++)
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    protected void setPaintingWhileAdjusting(final boolean s)
-    {
+    protected void setPaintingWhileAdjusting(final boolean s) {
         super.setPaintingWhileAdjusting(s);
-        final Component[] tabs=this.tabs.getComponents();
-        for (int i=tabs.length; --i>=0;)
-        {
+        final Component[] tabs = this.tabs.getComponents();
+        for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
-            if (c instanceof ImagePanel)
+            if (c instanceof ImagePanel) {
                 ((ImagePanel) c).setPaintingWhileAdjusting(s);
+            }
         }
     }
     
@@ -572,48 +526,43 @@ loop:       for (int j=0; j<series.length; j++)
      * a changé. L'implémentation par défaut appele simplement
      * {@link #stateChanged()}.
      */
-    public void stateChanged(final ChangeEvent event)
-    {stateChanged();}
+    public void stateChanged(final ChangeEvent event) {
+        stateChanged();
+    }
 
     /**
      * Retourne un objet qui peut être sauvegardé et lu en binaire. Cet objet
      * peut servir à enregistrer temporairement l'état du bureau ou a envoyer
      * une fenêtre par le réseau avec les RMI.
      */
-    protected Task getSerializable()
-    {return new Serializer(this);}
+    protected Task getSerializable() {
+        return new Serializer(this);
+    }
 
     /**
      * Libère les ressources utilisées par cette fenêtre.
      * Cette méthode est appelée automatiquement lorsque
      * la fenêtre est fermée.
      */
-    public void dispose()
-    {
+    public void dispose() {
         SQLException exception=null;
         final Component[] tabs=this.tabs.getComponents();
-        for (int i=tabs.length; --i>=0;)
-        {
+        for (int i=tabs.length; --i>=0;) {
             final Component c = tabs[i];
-            if (c instanceof ImagePanel) try
-            {
+            if (c instanceof ImagePanel) try {
                 ((ImagePanel) c).dispose();
-            }
-            catch (SQLException e)
-            {
-                if (e!=null) e=exception;
+            } catch (SQLException e) {
+                if (e != null) {
+                    e=exception;
+                }
             }
         }
-        try
-        {
+        try {
             table.close();
-        }
-        catch (SQLException e)
-        {
+        } catch (SQLException e) {
             exception = e;
         }
-        if (exception!=null)
-        {
+        if (exception != null) {
             ExceptionMonitor.show(this, exception);
         }
         super.dispose();
@@ -628,8 +577,7 @@ loop:       for (int j=0; j<series.length; j++)
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Serializer extends Task
-    {
+    private static final class Serializer extends Task {
         /**
          * Tables des images à sauvegarder.
          */
@@ -640,16 +588,13 @@ loop:       for (int j=0; j<series.length; j++)
          * Aucune référence vers la fenêtre <code>frame</code>
          * ne sera retenue.
          */
-        public Serializer(final NavigatorFrame frame)
-        {
+        public Serializer(final NavigatorFrame frame) {
             super("Serializer");
             final Component[] tabs=frame.tabs.getComponents();
             ImageTableModel[] models=new ImageTableModel[tabs.length];
             int count=0;
-            for (int i=0; i<tabs.length; i++)
-            {
-                if (tabs[i] instanceof ImageTablePanel)
-                {
+            for (int i=0; i<tabs.length; i++) {
+                if (tabs[i] instanceof ImageTablePanel) {
                     final ImageTablePanel panel = (ImageTablePanel) tabs[i];
                     models[count++] = panel.getModel();
                     // On obtient une copie du modèle plutôt que le modèle
@@ -662,12 +607,10 @@ loop:       for (int j=0; j<series.length; j++)
         /**
          * Reconstruit une fenêtre.
          */
-        protected void run() throws SQLException
-        {
+        protected void run() throws SQLException {
             final DataBase    database = getDataBase();
             final NavigatorFrame frame = new NavigatorFrame(database, null, null);
-            for (int i=0; i<models.length; i++)
-            {
+            for (int i=0; i<models.length; i++) {
                 final ImageTableModel model = models[i];
                 final SeriesEntry    series = model.getSeries();
                 frame.tabs.addTab((series!=null) ? series.getName() : Resources.format(ResourceKeys.UNNAMED), frame.createPanel(model, database));

@@ -88,16 +88,14 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
-{
+final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
     /**
      * Nombres de lignes et de colonnes à donner à la mosaïque en
      * fonction du nombre d'images.  On fixera ce nombre une fois
      * pour toute lors de la construction afin d'éviter des
      * changements trop fréquents lors des redimmensionnement.
      */
-    private static final byte[] SIZE =
-    {
+    private static final byte[] SIZE = {
         1,1 , 1,2 , 1,3 , 2,2 , 2,3 , 2,3 , 2,4 , 2,4 , 3,3
     };
 
@@ -155,10 +153,10 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
         bars     .setMinimumSize(size);
         rangeBars.setLegendVisible(false);
         rangeBars.setRangeAdjustable(true);
-        rangeBars.getModel().addChangeListener(new ChangeListener()
-        {
-            public void stateChanged(final ChangeEvent event)
-            {slidderChanged((BoundedRangeModel) event.getSource());}
+        rangeBars.getModel().addChangeListener(new ChangeListener() {
+            public void stateChanged(final ChangeEvent event) {
+                slidderChanged((BoundedRangeModel) event.getSource());
+            }
         });
     }
 
@@ -167,10 +165,10 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * appelée automatiquement par exemple lorsque l'onglet de ce
      * panneau a été sélectionné.
      */
-    protected void updateStatusBar()
-    {
-        if (isShowing()) // Si c'est un autre panneau qui est visible,
-        {                // alors la barre d'état ne nous appartient pas.
+    protected void updateStatusBar() {
+        if (isShowing()) {
+            // Si c'est un autre panneau qui est visible,
+            // alors la barre d'état ne nous appartient pas.
             mosaic.statusBar.setText(null);
         }
     }
@@ -186,23 +184,18 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public Map<SeriesEntry,List<ImageEntry>> refresh(final ImageTable table) throws SQLException
-    {
+    public Map<SeriesEntry,List<ImageEntry>> refresh(final ImageTable table) throws SQLException {
         final Map<SeriesEntry,List<ImageEntry>> entries;
         entries = new HashMap<SeriesEntry,List<ImageEntry>>();
-        SwingUtilities.invokeAndWait(new Runnable()
-        {
-            public void run()
-            {
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
                 series.clear();
                 rangeBars.clear();
                 mosaic.removeAllImages();
             }
         });
-        synchronized (table)
-        {
-            for (final Iterator<SeriesEntry> it=series.iterator(); it.hasNext();)
-            {
+        synchronized (table) {
+            for (final Iterator<SeriesEntry> it=series.iterator(); it.hasNext();) {
                 final SeriesEntry series = it.next();
                 table.setSeries(series);
                 entries.put(series, addSeriesImpl(table));
@@ -224,8 +217,7 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    public List<ImageEntry> addSeries(final ImageTable table) throws SQLException
-    {
+    public List<ImageEntry> addSeries(final ImageTable table) throws SQLException {
         final List<ImageEntry> entries = addSeriesImpl(table);
         // Fixe une fois pour toute le nombre de
         // lignes et de colonnes de la mosaïque.
@@ -245,13 +237,11 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * @throws SQLException si une erreur est survenue lors de l'accès à la
      *         base de données.
      */
-    private List<ImageEntry> addSeriesImpl(final ImageTable table) throws SQLException
-    {
+    private List<ImageEntry> addSeriesImpl(final ImageTable table) throws SQLException {
         final SeriesEntry    newSeries;
         final RangeSet          ranges = new RangeSet(Date.class);
         final List<ImageEntry> entries = new ArrayList<ImageEntry>();
-        synchronized (table)
-        {
+        synchronized (table) {
             newSeries = table.getSeries();
             table.getRanges(null, null, ranges, entries);
         }
@@ -260,10 +250,8 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
         int i=0;
         while (i<length && !Character.isSpaceChar(name.charAt(i))) i++;
         final String reducedName = name.substring(0, i);
-        EventQueue.invokeLater(new Runnable()
-        {
-            public void run()
-            {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
                 rangeBars.setRanges(reducedName, ranges);
                 series.add(newSeries);
             }
@@ -275,24 +263,18 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * Réarrange la mosaïque d'images. Cette méthode peut être appelée
      * de n'importe quel thread (pas nécessairement celui de Swing).
      */
-    private void layoutMosaic()
-    {
-        EventQueue.invokeLater(new Runnable()
-        {
-            public void run()
-            {
+    private void layoutMosaic() {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
                 final int size = series.size();
                 final int i = size*2;
-                if (i<SIZE.length)
-                {
+                if (i < SIZE.length) {
                     mosaic.setGridSize(SIZE[i],SIZE[i+1]);
                 }
                 mosaic.setImageCount(size);
                 final int check;
-                assert size == (check=mosaic.getImageCount()) :
-                               "series="+size+" images="+check;
-                if (size==1)
-                {
+                assert size == (check=mosaic.getImageCount()) : "series="+size+" images="+check;
+                if (size==1) {
                     resetSlidderPosition();
                 }
             }
@@ -302,12 +284,10 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
     /**
      * Reset the slidder position.
      */
-    private void resetSlidderPosition()
-    {
+    private void resetSlidderPosition() {
         final Date minimum = (Date) rangeBars.getMinimum();
         final Date maximum = (Date) rangeBars.getMaximum();
-        if (minimum!=null && maximum!=null)
-        {
+        if (minimum!=null && maximum!=null) {
             final long startTime  = minimum.getTime();
             final long   endTime  = maximum.getTime();
             rangeBars.setSelectedRange(Math.max(startTime, endTime-TIME_RANGE), endTime);
@@ -319,16 +299,12 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
      * que l'utilisateur change la position de la
      * visière.
      */
-    private void slidderChanged(final BoundedRangeModel model)
-    {
-        if (!model.getValueIsAdjusting())
-        {
+    private void slidderChanged(final BoundedRangeModel model) {
+        if (!model.getValueIsAdjusting()) {
             final Date startTime=new Date(Math.round(rangeBars.getMinSelectedValue()));
             final Date   endTime=new Date(Math.round(rangeBars.getMaxSelectedValue()));
-            synchronized (table)
-            {
-                try
-                {
+            synchronized (table) {
+                try {
                     table.setTimeRange(startTime, endTime);
                     /*
                      * Pour chaque série, obtient une image qui
@@ -336,41 +312,33 @@ final class ImageMosaicPanel extends ImagePanel //implements ChangeListener
                      */
                     final int length = series.size();
                     final int check;
-                    assert length == (check=mosaic.getImageCount()) :
-                                   "series="+length+" images="+check;
-
-                    for (int i=0; i<length; i++)
-                    {
+                    assert length == (check=mosaic.getImageCount()) :  "series="+length+" images="+check;
+                    for (int i=0; i<length; i++) {
                         table.setSeries(series.get(i));
                         final ImageEntry   entry = table.getEntry();
                         final ImageCanvas canvas = mosaic.getImage(i);
-                        if (canvas!=null)
-                        {
-                            if (entry!=null)
-                            {
+                        if (canvas != null) {
+                            if (entry != null) {
                                 canvas.setImage(entry, getSelectedLayers(),
                                         mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
+                            } else {
+                                canvas.setImage((GridCoverage)null);
                             }
-                            else canvas.setImage((GridCoverage)null);
                         }
                     }
-                }
-                catch (SQLException exception)
-                {
+                } catch (SQLException exception) {
                     ExceptionMonitor.show(this, exception);
                 }
             }
         }
     }
 
-
     /**
      * Modifie le fuseau horaire pour l'affichage et la saisie des dates.
      * Cette modification n'affecte pas le fuseau horaire des éventuelles
      * bases de données accédées par cette fenêtre.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {
+    protected void setTimeZone(final TimeZone timezone) {
         super    .setTimeZone(timezone);
         rangeBars.setTimeZone(timezone);
     }

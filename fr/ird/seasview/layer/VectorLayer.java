@@ -27,6 +27,7 @@ package fr.ird.seasview.layer;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
+import org.geotools.ct.TransformException;
 import org.geotools.renderer.j2d.RenderedGridMarks;
 
 
@@ -47,15 +48,18 @@ public class VectorLayer extends RenderedGridMarks {
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV) {
-        super(coverage);
+    public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV)
+            throws TransformException
+    {
+        super(null);
         setBands(new int[]{bandU, bandV});
+        setGridCoverage(coverage);
     }
 
     /**
      * Retourne l'amplitude typique des données de cette couche.
      */
     public double getTypicalAmplitude() {
-        return 25; // TODO
+        return 15; // TODO
     }
 }

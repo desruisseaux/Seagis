@@ -51,8 +51,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class InternalFrame extends JInternalFrame
-{
+public class InternalFrame extends JInternalFrame {
     /**
      * Ensemble d'icônes qui ont déjà été retournés par cette {@link #getIcon}.
      * Ces icônes sont conservés en mémoire afin de les réutiliser si possible.
@@ -65,8 +64,9 @@ public class InternalFrame extends JInternalFrame
      *
      * @param title titre de la fenêtre.
      */
-    public InternalFrame(final String title)
-    {super(title, /*resizable*/true, /*closable*/true, /*maximizable*/true, /*iconifiable*/true);}
+    public InternalFrame(final String title) {
+        super(title, /*resizable*/true, /*closable*/true, /*maximizable*/true, /*iconifiable*/true);
+    }
 
     /**
      * Indique si cette fenêtre peut traiter l'opération désignée par le code spécifié.
@@ -75,10 +75,8 @@ public class InternalFrame extends JInternalFrame
      * désigne le menu "exporter". Voyez le code source de {@link MainFrame} pour voir
      * la liste des codes utilisés.
      */
-    protected boolean canProcess(final int clé)
-    {
-        switch (clé)
-        {
+    protected boolean canProcess(final int clé) {
+        switch (clé) {
             default:                 return false;
             case ResourceKeys.CLOSE: return true;
             // TODO: VERIFIER SI ON EST AUTORISE A FERMER LA FENETRE!!!!
@@ -105,18 +103,16 @@ public class InternalFrame extends JInternalFrame
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException
-    {
-        switch (clé)
-        {
-            default:
-            {
+    protected Task process(final int clé) throws SQLException {
+        switch (clé) {
+            default: {
                 throw new IllegalArgumentException(String.valueOf(clé));
             }
-            case ResourceKeys.CLOSE:
-            {
-                final JDesktopPane desktop=getDesktopPane();
-                if (desktop!=null) desktop.remove(this);
+            case ResourceKeys.CLOSE: {
+                final JDesktopPane desktop = getDesktopPane();
+                if (desktop != null) {
+                    desktop.remove(this);
+                }
                 dispose();
                 break;
             }
@@ -129,12 +125,13 @@ public class InternalFrame extends JInternalFrame
      * du fuseau horaire local du client, ni du fuseau horaire de la base de
      * données.
      */
-    protected final TimeZone getTimeZone()
-    {
-        final JDesktopPane desktop=getDesktopPane();
-        if (desktop instanceof Desktop)
+    protected final TimeZone getTimeZone() {
+        final JDesktopPane desktop = getDesktopPane();
+        if (desktop instanceof Desktop) {
             return ((Desktop) desktop).getTimeZone();
-        else return TimeZone.getDefault();
+        } else {
+            return TimeZone.getDefault();
+        }
     }
 
     /**
@@ -143,15 +140,14 @@ public class InternalFrame extends JInternalFrame
      * bases de données accédées par cette fenêtre. L'implémentation par
      * défaut ne fait rien.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {}
+    protected void setTimeZone(final TimeZone timezone) {
+    }
 
     /**
      * Indique si les cartes doivent être redessinées
      * durant les glissements des ascenceurs.
      */
-    protected final boolean isPaintingWhileAdjusting()
-    {
+    protected final boolean isPaintingWhileAdjusting() {
         final JDesktopPane desktop=getDesktopPane();
         return (desktop!=null) && (desktop.getDragMode()==JDesktopPane.LIVE_DRAG_MODE);
     }
@@ -162,8 +158,8 @@ public class InternalFrame extends JInternalFrame
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    protected void setPaintingWhileAdjusting(final boolean s)
-    {}
+    protected void setPaintingWhileAdjusting(final boolean s) {
+    }
 
     /**
      * Modifie la synchronisation des images. La valeur <code>true</code>
@@ -171,18 +167,18 @@ public class InternalFrame extends JInternalFrame
      * mosaïque doit être répliqué sur les autres. L'implémentation par
      * défaut ne fait rien.
      */
-    protected void setImagesSynchronized(final boolean s)
-    {}
+    protected void setImagesSynchronized(final boolean s) {
+    }
 
     /**
      * Prévient le bureau que l'état de cette fenêtre a changé.
      * Ca aura pour effet de changer par exemple l'état des boutons.
      */
-    protected final void stateChanged()
-    {
+    protected final void stateChanged() {
         final JDesktopPane desktop=getDesktopPane();
-        if (desktop instanceof Desktop)
+        if (desktop instanceof Desktop) {
             ((Desktop) desktop).stateChanged();
+        }
     }
 
     /**
@@ -194,15 +190,11 @@ public class InternalFrame extends JInternalFrame
      *                par exemple du nom du fichier d'une image.
      * @param message Message à afficher.
      */
-    public final void warning(final String source, final String message)
-    {
+    public final void warning(final String source, final String message) {
         final JDesktopPane desktop=getDesktopPane();
-        if (desktop instanceof Desktop)
-        {
+        if (desktop instanceof Desktop) {
             ((Desktop) desktop).warning(source, message);
-        }
-        else
-        {
+        } else {
             final LogRecord record = new LogRecord(Level.WARNING, message);
             DataBase.logger.log(record);
         }
@@ -214,15 +206,12 @@ public class InternalFrame extends JInternalFrame
      *
      * @param name Nom et chemin de l'icône.
      */
-    public static synchronized Icon getIcon(final String name)
-    {
-        if (icons==null)
-        {
+    public static synchronized Icon getIcon(final String name) {
+        if (icons == null) {
             icons=new HashMap<String,Icon>();
         }
         Icon icon = icons.get(name);
-        if (icon==null)
-        {
+        if (icon == null) {
             icon = new ImageIcon(InternalFrame.class.getClassLoader().getResource(name));
             icons.put(name, icon);
         }
@@ -234,11 +223,11 @@ public class InternalFrame extends JInternalFrame
      * encore été insérée dans un bureau, alors cette méthode retourne
      * <code>null</code>.
      */
-    protected final DataBase getDataBase()
-    {
-        final JDesktopPane desktop=getDesktopPane();
-        if (desktop instanceof Desktop)
+    protected final DataBase getDataBase() {
+        final JDesktopPane desktop = getDesktopPane();
+        if (desktop instanceof Desktop) {
             return ((Desktop) desktop).getDataBase();
+        }
         else return null;
     }
 
@@ -253,6 +242,7 @@ public class InternalFrame extends JInternalFrame
      *         <code>null</code> si cette fenêtre ne contient
      *         pas de données à enregistrer.
      */
-    protected Task getSerializable()
-    {return null;}
+    protected Task getSerializable() {
+        return null;
+    }
 }

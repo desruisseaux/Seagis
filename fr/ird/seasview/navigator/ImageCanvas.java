@@ -76,6 +76,8 @@ import javax.media.jai.util.Range;
 // Geotools dependencies
 import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.Utilities;
+import org.geotools.renderer.j2d.Renderer;
+import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.gui.swing.ExceptionMonitor;
 
 // Resources
@@ -469,6 +471,17 @@ final class ImageCanvas extends JPanel {
         buffer.append('[');
         buffer.append((source!=null) ? (Object)source : (Object)mapPanel);
         buffer.append(']');
+        final Renderer renderer = mapPanel.getRenderer();
+        if (renderer != null) {
+            final RenderedLayer[] layers = renderer.getLayers();
+            if (layers != null) {
+                for (int i=0; i<layers.length; i++) {
+                    buffer.append('\n');
+                    buffer.append(Utilities.spaces(8));
+                    buffer.append(layers[i]);
+                }
+            }
+        }
         return buffer.toString();
     }
 

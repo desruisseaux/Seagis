@@ -66,8 +66,7 @@ import org.geotools.resources.SwingUtilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class GridMarkControler extends JPanel
-{
+public final class GridMarkControler extends JPanel {
     /**
      * Titre de la boîte de dialogue.
      */
@@ -101,8 +100,7 @@ public final class GridMarkControler extends JPanel
      *
      * @param title Titre de la boîte de dialogue.
      */
-    public GridMarkControler(final String title)
-    {
+    public GridMarkControler(final String title) {
         super(new BorderLayout());
         this.title = title;
 
@@ -115,15 +113,13 @@ public final class GridMarkControler extends JPanel
         ///////////////////
         ////  Couleur  ////
         ///////////////////
-        if (true)
-        {
+        if (true) {
             tabs.addTab(resources.getString(ResourceKeys.COLOR), colorChooser);
         }
         ///////////////////
         ////  Densité  ////
         ///////////////////
-        if (true)
-        {
+        if (true) {
             final JPanel panel=new JPanel(new GridBagLayout());
             decimation.setMajorTickSpacing(1);
             decimation.setPaintTicks (true);
@@ -141,10 +137,10 @@ public final class GridMarkControler extends JPanel
             group.add(automatic);
             group.add(manual);
 
-            final ActionListener listener=new ActionListener()
-            {
-                public void actionPerformed(final ActionEvent event)
-                {decimation.setEnabled(manual.isSelected());}
+            final ActionListener listener=new ActionListener() {
+                public void actionPerformed(final ActionEvent event) {
+                    decimation.setEnabled(manual.isSelected());
+                }
             };
             automatic.addActionListener(listener);
             manual   .addActionListener(listener);
@@ -160,8 +156,9 @@ public final class GridMarkControler extends JPanel
      * s'il n'y en a pas. Cette image sera centrée dans la zone "aperçu" du
      * paneau servant à sélectionner la couleur.
      */
-    public void setBackground(final RenderedImage image)
-    {colorChooser.setBackground(image);}
+    public void setBackground(final RenderedImage image) {
+        colorChooser.setBackground(image);
+    }
 
     /**
      * Spécifie la forme géométrique à tracer. Cette forme devrait être centrée
@@ -169,43 +166,43 @@ public final class GridMarkControler extends JPanel
      * sera centrée dans la zone "aperçu" de la boîte de dialogue. Les dimensions
      * de cette forme détermineront les dimensions en pixels de la zone d'aperçu.
      */
-    public void setShape(final Shape shape)
-    {colorChooser.setShape(shape);}
+    public void setShape(final Shape shape) {
+        colorChooser.setShape(shape);
+    }
 
     /**
      * Retourne la couleur sélectionnée.
      */
-    public Color getColor()
-    {return colorChooser.getColor();}
+    public Color getColor() {
+        return colorChooser.getColor();
+    }
 
     /**
      * Spécifie la couleur sélectionnée.
      */
-    public void setColor(final Color color)
-    {colorChooser.setColor(color);}
+    public void setColor(final Color color) {
+        colorChooser.setColor(color);
+    }
 
     /**
      * Retourne la décimation sélectionnée par l'utilisateur, ou 0 si la décimation
      * doit être déterminée automatiquement. Si la décimation a été spécifiée par
      * l'utilisateur, elle sera obligatoirement supérieure à 0.
      */
-    public int getDecimation()
-    {return manual.isSelected() ? decimation.getValue() : 0;}
+    public int getDecimation() {
+        return manual.isSelected() ? decimation.getValue() : 0;
+    }
 
     /**
      * Spécifie la décimation sélectionnée. La valeur de 0 signifie
      * que la décimation devra être déterminée automatiquement.
      */
-    public void setDecimation(final int dc)
-    {
-        if (dc!=0)
-        {
+    public void setDecimation(final int dc) {
+        if (dc != 0) {
             manual.setSelected(true);
             decimation.setEnabled(true);
             decimation.setValue(dc);
-        }
-        else
-        {
+        } else {
             automatic.setSelected(true);
             decimation.setEnabled(false);
         }
@@ -217,18 +214,13 @@ public final class GridMarkControler extends JPanel
      * S'il a cliqué sur "Annuler", fermer la boîte de dialogue ou cliqué sur "Ok"
      * sans n'avoir rien changé, alors cette méthode retourne <code>false</code>.
      */
-    public boolean showDialog(final Component owner)
-    {
+    public boolean showDialog(final Component owner) {
         final Color color=getColor();
         final int dc=getDecimation();
         final int value=decimation.getValue();
-        if (SwingUtilities.showOptionDialog(owner, this, title))
-        {
-            return !color.equals(getColor()) ||
-                    dc!=getDecimation();
-        }
-        else
-        {
+        if (SwingUtilities.showOptionDialog(owner, this, title)) {
+            return !color.equals(getColor()) || dc!=getDecimation();
+        } else {
             setColor(color);
             setDecimation(dc);
             decimation.setValue(value);

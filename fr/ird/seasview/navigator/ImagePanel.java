@@ -59,14 +59,12 @@ import org.geotools.gui.swing.StatusBar;
 
 
 /**
- * Classe de base pour les classes qui afficheront des mosaïques
- * d'images.
+ * Classe de base pour les classes qui afficheront des mosaïques d'images.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class ImagePanel extends JSplitPane implements ComponentListener, ChangeListener, ClipboardOwner
-{
+abstract class ImagePanel extends JSplitPane implements ComponentListener, ChangeListener, ClipboardOwner {
     /**
      * Mosaïque affichant les images sélectionnées.
      */
@@ -84,7 +82,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * les événements {@link javax.swing.event.UndoableEditEvent} que produira la
      * table.
      */
-    protected final UndoManager undoManager=new UndoManager();
+    protected final UndoManager undoManager = new UndoManager();
 
     /**
      * Construit un panneau.
@@ -95,8 +93,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * @param layers    Couches que l'utilisateur pourra placer sur les images,
      *                  ou <code>null</code> pour n'afficher que les images.
      */
-    public ImagePanel(final StatusBar statusBar, final ThreadGroup readers, final LayerControl[] layers)
-    {
+    public ImagePanel(final StatusBar statusBar, final ThreadGroup readers, final LayerControl[] layers) {
         super(HORIZONTAL_SPLIT);
         this.layers = layers;
         this.mosaic = new MosaicCanvas(statusBar, readers);
@@ -119,13 +116,10 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
         undoManager.setLimit(20);
         addComponentListener(this);
 
-        if (layers!=null)
-        {
-            for (int i=0; i<layers.length; i++)
-            {
+        if (layers != null) {
+            for (int i=0; i<layers.length; i++) {
                 final LayerControl layer=layers[i];
-                synchronized (layer)
-                {
+                synchronized (layer) {
                     layer.addChangeListener      (this);
                     layer.addUndoableEditListener(undoManager);
                 }
@@ -136,8 +130,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
     /**
      * Reset divider locations.
      */
-    final void resetDividerLocation()
-    {
+    final void resetDividerLocation() {
         ((JSplitPane) getLeftComponent()).setDividerLocation(-1);
         setDividerLocation(-1);
     }
@@ -146,14 +139,15 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * Retourne les couches sélectionnées par l'utilisateur. Le tableau
      * retourné peut avoir une longueur de 0, mais ne sera jamais nul.
      */
-    public final LayerControl[] getSelectedLayers()
-    {
+    public final LayerControl[] getSelectedLayers() {
         final int length = (layers!=null) ? layers.length : 0;
         final LayerControl[] selected=new LayerControl[length];
         int count=0;
-        for (int i=0; i<length; i++)
-            if (layers[i].isSelected())
+        for (int i=0; i<length; i++) {
+            if (layers[i].isSelected()) {
                 selected[count++]=layers[i];
+            }
+        }
         return XArray.resize(selected, count);
     }
 
@@ -170,15 +164,14 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * dans le contenu de la table,  dans les images sélectionnées par
      * l'utilisateur ou dans la visibilité de la table par exemple.
      */
-    protected final void fireStateChanged()
-    {
+    protected final void fireStateChanged() {
         ChangeEvent event=null;
         final Object[] listeners=listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;)
-        {
-            if (listeners[i]==ChangeListener.class)
-            {
-                if (event==null) event=new ChangeEvent(this);
+        for (int i=listeners.length; (i-=2) >= 0;) {
+            if (listeners[i] == ChangeListener.class) {
+                if (event == null) {
+                    event = new ChangeEvent(this);
+                }
                 ((ChangeListener) listeners[i+1]).stateChanged(event);
             }
         }
@@ -189,16 +182,17 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * Cette modification n'affecte pas le fuseau horaire des éventuelles
      * bases de données accédées par cette fenêtre.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {}
+    protected void setTimeZone(final TimeZone timezone) {
+    }
 
     /**
      * Modifie la synchronisation des images. La valeur <code>true</code>
      * indique que tout zoom ou translation appliqué sur une image d'une
      * mosaïque doit être répliqué sur les autres.
      */
-    protected final void setImagesSynchronized(final boolean s)
-    {mosaic.setImagesSynchronized(s);}
+    protected final void setImagesSynchronized(final boolean s) {
+        mosaic.setImagesSynchronized(s);
+    }
 
     /**
      * Spécifie si les cartes doivent être redessinées
@@ -206,8 +200,7 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    protected final void setPaintingWhileAdjusting(final boolean s)
-    {
+    protected final void setPaintingWhileAdjusting(final boolean s) {
         mosaic.setPaintingWhileAdjusting(s);
         setContinuousLayout(s);
     }
@@ -220,12 +213,13 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * @throws SQLException si un accès à une base de
      *         données était nécessaire et a échoué.
      */
-    public final void dispose() throws SQLException
-    {
+    public final void dispose() throws SQLException {
         mosaic.dispose();
-        if (layers!=null)
-            for (int i=layers.length; --i>=0;)
+        if (layers != null) {
+            for (int i=layers.length; --i>=0;) {
                 layers[i].dispose();
+            }
+        }
     }
 
     /**
@@ -235,10 +229,8 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * menus. Par exemple le code {@link ResourceKeys#UNDO} désigne le menu
      * "annuler".
      */
-    protected boolean canProcess(final int clé)
-    {
-        switch (clé)
-        {
+    protected boolean canProcess(final int clé) {
+        switch (clé) {
             case ResourceKeys.UNDO:       return undoManager.canUndo();
             case ResourceKeys.REDO:       return undoManager.canRedo();
             case ResourceKeys.RESET_VIEW: return mosaic.getImageCount()!=0;
@@ -256,34 +248,33 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected boolean process(final int clé) throws SQLException
-    {
-        switch (clé)
-        {
+    protected boolean process(final int clé) throws SQLException {
+        switch (clé) {
             default: return false;
 
             //////////////////////////
             ///  Edition - Annuler ///
             //////////////////////////
-            case ResourceKeys.UNDO:
-            {
+            case ResourceKeys.UNDO: {
                 undoManager.undo();
                 return true;
             }
             //////////////////////////
             ///  Edition - Refaire ///
             //////////////////////////
-            case ResourceKeys.REDO:
-            {
+            case ResourceKeys.REDO: {
                 undoManager.redo();
                 return true;
             }
             //////////////////////////
             ///  Rétablir le zoom  ///
             //////////////////////////
-            case ResourceKeys.RESET_VIEW:
-            {
+            case ResourceKeys.RESET_VIEW: {
                 mosaic.reset();
+                return true;
+            }
+            case ResourceKeys.DEBUG: {
+                fr.ird.seasview.DataBase.out.println(mosaic);
                 return true;
             }
         }
@@ -299,35 +290,35 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
     /**
      * Invoked when the component's size changes.
      */
-    public void componentResized(final ComponentEvent event)
-    {}
+    public void componentResized(final ComponentEvent event) {
+    }
 
     /**
      * Invoked when the component's position changes.
      */
-    public void componentMoved(final ComponentEvent event)
-    {}
+    public void componentMoved(final ComponentEvent event) {
+    }
 
     /**
      * Méthode appelée automatiquement chaque fois
      * que l'onglet de ce panneau est sélectionné.
      */
-    public void componentShown(final ComponentEvent event)
-    {updateStatusBar();}
+    public void componentShown(final ComponentEvent event) {
+        updateStatusBar();
+    }
 
     /**
      * Invoked when the component has been made invisible.
      */
-    public void componentHidden(final ComponentEvent event)
-    {}
+    public void componentHidden(final ComponentEvent event) {
+    }
 
     /**
      * Méthode appelée automatiquement lorsque la configuration
      * d'au moins une couche a changée. Cette méthode recharge
      * les images afin de prendre en compte le changement.
      */
-    public final void stateChanged(final ChangeEvent event)
-    {
+    public final void stateChanged(final ChangeEvent event) {
         mosaic.reload((layers!=null) ? getSelectedLayers() : null);
         fireStateChanged();
     }
@@ -336,6 +327,6 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
      * Méthode appelée automatiquement lorsque ce panneau
      * ne possède plus le contenu du presse-papier.
      */
-    public void lostOwnership(final Clipboard clipboard, final Transferable contents)
-    {}
+    public void lostOwnership(final Clipboard clipboard, final Transferable contents) {
+    }
 }

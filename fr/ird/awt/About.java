@@ -51,7 +51,6 @@ import javax.swing.Box;
 import java.net.URL;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
@@ -72,7 +71,7 @@ import java.util.Map;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Iterator;
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
@@ -279,57 +278,59 @@ public class About extends JPanel {
          * IMAGE ENCODERS/DECODERS TAB
          */
         if (true) {
-            final JPanel pane = new JPanel(new GridLayout(1,2,3,3));
-            final Dimension size = new Dimension(200, 200);
-            pane.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+            final StringBuffer buffer = new StringBuffer();
+            final Map<String,DefaultMutableTreeNode> mimes = new TreeMap<String,DefaultMutableTreeNode>();
             boolean writer = false;
             do {
-                final String[] mimeTypes;
-                final int      titleKey;
-                final Class    category;
+                final int   titleKey;
+                final Class category;
                 if (writer) {
                     titleKey  = ResourceKeys.ENCODERS;
-                    mimeTypes = ImageIO.getWriterMIMETypes();
                     category  = ImageWriterSpi.class;
                 } else {
                     titleKey  = ResourceKeys.DECODERS;
-                    mimeTypes = ImageIO.getReaderMIMETypes();
                     category  = ImageReaderSpi.class;
                 }
-                Arrays.sort(mimeTypes);
-                final String title = resources.getString(titleKey);
-                final DefaultMutableTreeNode root = new DefaultMutableTreeNode(title);
-                final Map<String,DefaultMutableTreeNode> mimeMap = new HashMap<String,DefaultMutableTreeNode>();
-                for (int i=0; i<mimeTypes.length; i++) {
-                    patchMimes(mimeTypes);
-                    final DefaultMutableTreeNode child = new DefaultMutableTreeNode(mimeTypes[i]);
-                    root.add(child);
-                    mimeMap.put(mimeTypes[i], child);
-                }
+                String title = resources.getString(titleKey);
                 for (final Iterator it=IIORegistry.getDefaultInstance().getServiceProviders(category, true); it.hasNext();) {
                     final ImageReaderWriterSpi spi = (ImageReaderWriterSpi) it.next();
-                    final String name = spi.getDescription(locale);
-                    final String[] mimes = spi.getMIMETypes();
-                    patchMimes(mimes);
-                    for (int i=0; i<mimes.length; i++) {
-                        final DefaultMutableTreeNode child = mimeMap.get(mimes[i]);
-                        if (child != null) {
-                            child.add(new DefaultMutableTreeNode(name, false));
+                    final String  name = spi.getDescription(locale);
+                    final String[] mimeTypes = spi.getMIMETypes();
+                    patchMimes(mimeTypes);
+                    for (int i=0; i<mimeTypes.length; i++) {
+                        final String mimeType = mimeTypes[i];
+                        DefaultMutableTreeNode child = mimes.get(mimeType);
+                        if (child == null) {
+                            child = new DefaultMutableTreeNode(mimeType);
+                            mimes.put(mimeType, child);
                         }
+                        child.add(new DefaultMutableTreeNode(name, false));
+                    }
+                    if (title!=null && mimeTypes.length!=0) {
+                        if (buffer.length() != 0) {
+                            buffer.append(" / ");
+                        }
+                        buffer.append(title);
+                        title = null;
                     }
                 }
-                final JTree tree = new JTree(root);
-                tree.setRootVisible(false);
-                final JComponent scrollTree = new JScrollPane(tree);
-                scrollTree.setPreferredSize(size);
-                final Box c = Box.createVerticalBox();
-                c.add(Box.createVerticalStrut(3));
-                c.add(new JLabel(title, JLabel.CENTER));
-                c.add(Box.createVerticalStrut(3));
-                c.add(scrollTree);
-                pane.add(c);
             } while ((writer = !writer));
-            tabs.addTab(resources.getString(ResourceKeys.IMAGES), pane);
+            final String title = buffer.toString();
+            final DefaultMutableTreeNode root = new DefaultMutableTreeNode(title);
+            for (final Iterator<DefaultMutableTreeNode> it=mimes.values().iterator(); it.hasNext();) {
+                root.add(it.next());
+            }
+            final JTree tree = new JTree(root);
+            tree.setRootVisible(false);
+            final JComponent scrollTree = new JScrollPane(tree);
+            scrollTree.setPreferredSize(new Dimension(200, 200));
+            final Box c = Box.createVerticalBox();
+            c.add(Box.createVerticalStrut(3));
+            c.add(new JLabel(title, JLabel.CENTER));
+            c.add(Box.createVerticalStrut(3));
+            c.add(scrollTree);
+            c.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+            tabs.addTab(resources.getString(ResourceKeys.IMAGES), c);
         }
     }
 

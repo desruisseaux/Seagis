@@ -36,6 +36,7 @@ import org.geotools.renderer.geom.Isoline;
 import org.geotools.renderer.j2d.RenderedIsoline;
 import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.seasview.layer.IsolineFactory;
+import fr.ird.seasview.DataBase;
 
 // Graphical user interface
 import java.awt.Color;
@@ -65,12 +66,18 @@ public final class IsolineLayerControl extends LayerControl {
     static {
         try {
             FACTORIES = new IsolineFactory[] {
-                new IsolineFactory("Méditerranée")
+                new IsolineFactory(DataBase.MEDITERRANEAN_VERSION ? "Méditerranée"
+                                                                  : "Océan Indien")
             };
         } catch (FileNotFoundException exception) {
             throw new ExceptionInInitializerError(exception);
         }
     }
+
+    /**
+     * The default color for filling lands.
+     */
+    private static final Color FOREGROUND = new Color(59,107,92);
 
     /**
      * The default set of selected values.
@@ -125,12 +132,14 @@ public final class IsolineLayerControl extends LayerControl {
             }
         }
         IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
-
         final Isoline[]          isolines = factory.get(values);
         final RenderedIsoline[] isoLayers = new RenderedIsoline[isolines.length];
         for (int i=0; i<isoLayers.length; i++) {
-            isoLayers[i] = new RenderedIsoline(isolines[i]);
-            isoLayers[i].setContour(Color.white);  // TODO: Set colors
+            final RenderedIsoline isoLayer = new RenderedIsoline(isolines[i]);
+            isoLayer.setContour   (Color.white);  // TODO: Set colors
+            isoLayer.setBackground(Color.white);
+            isoLayer.setForeground(FOREGROUND);
+            isoLayers[i] = isoLayer;
         }
         return isoLayers;
     }

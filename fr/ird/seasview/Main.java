@@ -123,7 +123,7 @@ public final class Main {
          * liste des menus qui doivent être activés ou désactivés
          * en fonction de la fenêtre active.
          */
-        final List<Action> enableWhenFrameFocused=new ArrayList<Action>();
+        final List<Action> enableWhenFrameFocused = new ArrayList<Action>();
         frame.setJMenuBar(menuBar);
         /////////////////
         ///  Fichier  ///
@@ -163,7 +163,7 @@ public final class Main {
             /////////////////////////
             ///  Fichier - Ouvrir ///
             /////////////////////////
-            if (true) {
+            if (false) {
                 final Action action = new Action(desktop, ResourceKeys.OPEN, false);
                 action.setAccelerator(KeyEvent.VK_O, KeyEvent.CTRL_MASK);
                 action.setMnemonicKey(KeyEvent.VK_O);
@@ -174,7 +174,7 @@ public final class Main {
             //////////////////////////////
             ///  Fichier - Enregistrer ///
             //////////////////////////////
-            if (true) {
+            if (false) {
                 final Action action = new Action(desktop, ResourceKeys.SAVE, false);
                 action.setToolTipText(ResourceKeys.SAVE_DESKTOP);
                 action.setIcon("general/Save");
@@ -183,7 +183,7 @@ public final class Main {
             //////////////////////////////////////
             ///  Fichier - Enregistrer sous... ///
             //////////////////////////////////////
-            if (true) {
+            if (false) {
                 final Action action = new Action(desktop, ResourceKeys.SAVE_AS, true);
                 action.setAccelerator(KeyEvent.VK_S, KeyEvent.CTRL_MASK);
                 action.setMnemonicKey(KeyEvent.VK_S); // TODO: devrait être le **deuxième** S.
@@ -378,23 +378,33 @@ public final class Main {
             ///  Préférences - Images synchronisées ///
             ///////////////////////////////////////////
             if (true) {
-                final JMenuItem item=new JCheckBoxMenuItem(resources.getString(ResourceKeys.SYNCHRONIZED_IMAGES), true);
+                final JMenuItem item=new JCheckBoxMenuItem(resources.getString(ResourceKeys.SYNCHRONIZED_IMAGES));
+                item.setSelected(DataBase.preferences.getBoolean("images.synchronized", true));
                 item.addActionListener(new ActionListener() {
-                    public void actionPerformed(final ActionEvent event)
-                    {desktop.setImagesSynchronized(item.isSelected());}
+                    public void actionPerformed(final ActionEvent event) {
+                        final boolean selected = item.isSelected();
+                        desktop.setImagesSynchronized(selected);
+                        DataBase.preferences.putBoolean("images.synchronized", selected);
+                    }
                 });
                 menu.add(item);
+                desktop.setImagesSynchronized(item.isSelected());
             }
             /////////////////////////////////////////
             ///  Préférences - Défilement continu ///
             /////////////////////////////////////////
             if (true) {
                 final JMenuItem item=new JCheckBoxMenuItem(resources.getString(ResourceKeys.LIVE_SCROLLING));
+                item.setSelected(DataBase.preferences.getBoolean("scroll.continuous", false));
                 item.addActionListener(new ActionListener() {
-                    public void actionPerformed(final ActionEvent event)
-                    {desktop.setPaintingWhileAdjusting(item.isSelected());}
+                    public void actionPerformed(final ActionEvent event) {
+                        final boolean selected = item.isSelected();
+                        desktop.setPaintingWhileAdjusting(selected);
+                        DataBase.preferences.putBoolean("scroll.continuous", selected);
+                    }
                 });
                 menu.add(item);
+                desktop.setPaintingWhileAdjusting(item.isSelected());
             }
             menu.addSeparator();
             /////////////////////////////////////
@@ -514,11 +524,12 @@ public final class Main {
         }
         arguments.out.flush();
         /*
-         * Lance le programme. Tans que la création de {@link DataBase}
+         * Lance le programme. Tant que la création de {@link DataBase}
          * échoue à cause d'un problème de connection avec la base de
          * données, fait apparaître une boîte de dialogue et tente de
          * nouveau la connection.
          */
+        DataBase.out = arguments.out;
         ControlPanel control = null;
         do try {
             setup(new DataBase()).show();

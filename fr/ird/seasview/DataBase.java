@@ -39,8 +39,10 @@ import fr.ird.seasview.layer.control.CatchLayerControl;
 import fr.ird.seasview.layer.control.VectorLayerControl;
 import fr.ird.seasview.layer.control.IsolineLayerControl;
 
-// Logger
+// Logger and preferrences
+import java.io.PrintWriter;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 // Collections
 import java.util.List;
@@ -60,15 +62,32 @@ import fr.ird.resources.ResourceKeys;
  */
 public final class DataBase {
     /**
-     * The logger for the application.
+     * <code>true</code> pour compiler la version "Méditerranée" de l'application, or
+     * <code>false</code> pour compiler la version "Océan Indien". Ce drapeau n'est
+     * qu'un bricolage temporaire en attendant de trouver une solution plus générale.
      */
-    public static final Logger logger = Logger.getLogger("fr.ird");
+    public static final boolean MEDITERRANEAN_VERSION = true;
+
+    /**
+     * Flot de sortie standard.
+     */
+    public static PrintWriter out = new PrintWriter(System.out); // Will be modified by 'Main'
+
+    /**
+     * Le journal de l'application.
+     */
+    public static final Logger logger = Logger.getLogger("fr.ird.seasview");
+
+    /**
+     * Les préférences de l'utilisateur pour l'application.
+     */
+    public static final Preferences preferences = Preferences.userNodeForPackage(DataBase.class);
 
     /**
      * Nom de la table des données de SLA.
      */
-    private static final String SLA_TABLE = "SLA (Méditerranée - NRT)";
-//  private static final String SLA_TABLE = "SLA (Réunion)";
+    private static final String SLA_TABLE = MEDITERRANEAN_VERSION ? "SLA (Méditerranée - NRT)"
+                                                                  : "SLA (Réunion)";
 
     /**
      * Connexion vers la base de données d'images.
