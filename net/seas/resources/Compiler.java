@@ -511,29 +511,22 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
      */
     private static File toRelative(final File path)
     {
-        if (true)
+        String bestpath = null;
+        final String  absolutePath = path.getAbsolutePath();
+        final String fileSeparator = System.getProperty("file.separator", "/");
+        final String[]  classpaths = Pattern.compile(System.getProperty("path.separator", ":")).split(System.getProperty("java.class.path", "."));
+        for (int i=0; i<classpaths.length; i++)
         {
-            String bestpath = null;
-            final String  absolutePath = path.getAbsolutePath();
-            final String fileSeparator = System.getProperty("file.separator", "/");
-            final String[]  classpaths = Pattern.compile(System.getProperty("path.separator", ":")).split(System.getProperty("java.class.path", "."));
-            for (int i=0; i<classpaths.length; i++)
+            String classpath = new File(classpaths[i]).getAbsolutePath();
+            if (!classpath.endsWith(fileSeparator)) classpath+=fileSeparator;
+            if (absolutePath.startsWith(classpath))
             {
-                String classpath = new File(classpaths[i]).getAbsolutePath();
-                if (!classpath.endsWith(fileSeparator)) classpath+=fileSeparator;
-                if (absolutePath.startsWith(classpath))
-                {
-                    final String candidate = absolutePath.substring(classpath.length());
-                    if (bestpath==null || bestpath.length()>candidate.length())
-                        bestpath = candidate;
-                }
+                final String candidate = absolutePath.substring(classpath.length());
+                if (bestpath==null || bestpath.length()>candidate.length())
+                    bestpath = candidate;
             }
-            return (bestpath!=null) ? new File(bestpath) : path;
         }
-        else
-        {
-            return path; // Temporary patch for JDK 1.3
-        }
+        return (bestpath!=null) ? new File(bestpath) : path;
     }
 
     /**

@@ -262,7 +262,7 @@ public abstract class DatumType implements Serializable
      * @version 1.00
      * @author Martin Desruisseaux
      */
-    public final static class Horizontal extends DatumType
+    public static final class Horizontal extends DatumType
     {
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
@@ -303,7 +303,7 @@ public abstract class DatumType implements Serializable
      * @version 1.00
      * @author Martin Desruisseaux
      */
-    public final static class Vertical extends DatumType
+    public static final class Vertical extends DatumType
     {
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.
@@ -342,7 +342,7 @@ public abstract class DatumType implements Serializable
      * @version 1.00
      * @author Martin Desruisseaux
      */
-    public final static class Local extends DatumType
+    public static final class Local extends DatumType
     {
         /**
          * <code>serialVersionUID</code> for interoperability with previous versions.

@@ -38,6 +38,10 @@ import net.seas.resources.Resources;
  * mais les aires et les longueurs deviennent de plus en plus déformées à mesure que
  * l'on s'éloigne du centre. Cette projection est utilisée pour représenter des régions
  * polaires. Elle peut être appropriée pour d'autres régions ayant une forme circulaire.
+ * <br><br>
+ *
+ * Référence: John P. Snyder (Map Projections - A Working Manual,
+ *            U.S. Geological Survey Professional Paper 1395, 1987)
  *
  * @version 1.0
  * @author André Gosselin
@@ -45,46 +49,48 @@ import net.seas.resources.Resources;
  */
 final class StereographicProjection extends PlanarProjection
 {
-    /*
-     * Référence des formules: John P. Snyder (Map Projections - A Working Manual,
-     *                         U.S. Geological Survey Professional Paper 1395, 1987)
-     */
+    /*******************************************************
+     * Informations about a {@link StereographicProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     *******************************************************/
+    static final class Registration extends MathTransform.Registration
+    {
+        /** Default latitude: 90 for polar, 0 for oblique. */
+        private final double latitude;
 
-    /**
-     * Constante indiquant que cette projection
-     * sera appliquée au dessus du pôle nord.
-     * @see #SOUTH_POLE
-     * @see #EQUATORIAL
-     * @see #OBLIQUE
-     */
-    public static final int NORTH_POLE = +2;
+        /** Construct a default object. */
+        public Registration()
+        {
+            super("Stereographic", Clé.STEREOGRAPHIC);
+            this.latitude = 90;
+        }
 
-    /**
-     * Constante indiquant que cette projection
-     * sera appliquée au dessus du pôle sud.
-     * @see #NORTH_POLE
-     * @see #EQUATORIAL
-     * @see #OBLIQUE
-     */
-    public static final int SOUTH_POLE = -2;
+        /** Construct an object for polar or oblique stereographic. */
+        public Registration(final boolean polar)
+        {
+            super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
+            this.latitude = polar ? 90 : 0;
+        }
 
-    /**
-     * Constante indiquant que cette projection
-     * sera appliquée au dessus de l'équateur.
-     * @see #NORTH_POLE
-     * @see #SOUTH_POLE
-     * @see #OBLIQUE
-     */
-    public static final int EQUATORIAL =  0;
+        /** Create a new map projection. */
+        public MathTransform create(final Parameter[] parameters)
+        {return new StereographicProjection(parameters);}
 
-    /**
-     * Constante indiquant que cette projection
-     * sera appliquée avec un angle oblique.
-     * @see #NORTH_POLE
-     * @see #SOUTH_POLE
-     * @see #EQUATORIAL
-     */
-    public static final int OBLIQUE = 1;
+        /** Returns the default parameters. */
+        public Parameter[] getDefaultParameters()
+        {
+            return new Parameter[]
+            {
+                new Parameter("semi_major", 6378137.0),
+                new Parameter("semi_minor", 6356752.3142451794975639665996337),
+                new Parameter("latitude_of_origin",   0),
+                new Parameter("central_meridian",    latitude),
+                new Parameter("latitude_true_scale", latitude)
+            };
+        }
+    }
 
     /**
      * Nombre maximal d'itérations permises lors
@@ -92,116 +98,145 @@ final class StereographicProjection extends PlanarProjection
      */
     private static final int MAX_ITER=10;
 
-    /**
-     * Latitude des échelles vrais, en radians.
-     */
-    private final double lat_ts;
+    /** Projection mode for switch statement. */ private static final int   SPHERICAL_NORTH      = 0;
+    /** Projection mode for switch statement. */ private static final int   SPHERICAL_SOUTH      = 1;
+    /** Projection mode for switch statement. */ private static final int ELLIPSOIDAL_SOUTH      = 2;
+    /** Projection mode for switch statement. */ private static final int ELLIPSOIDAL_NORTH      = 3;
+    /** Projection mode for switch statement. */ private static final int   SPHERICAL_OBLIQUE    = 4;
+    /** Projection mode for switch statement. */ private static final int   SPHERICAL_EQUATORIAL = 5;
+    /** Projection mode for switch statement. */ private static final int ELLIPSOIDAL_EQUATORIAL = 6;
+    /** Projection mode for switch statement. */ private static final int ELLIPSOIDAL_OBLIQUE    = 7;
 
     /**
-     * Coéfficient multiplicatif pour les projections. Ce coéfficient
-     * aura été multiplié par {@link #a}, le rayon de la Terre.
-     */
-    private final double k0;
-
-    /**
-     * Variables internes calculées lors
-     * de l'initialisation de la projection.
-     */
-    private final double sinphi0, cosphi0, chi1, sinChi1, cosChi1;
-
-    /**
-     * Mode de cette projection. Ce sera une des constantes suivantes:
-     * {@link #NORTH_POLE},
-     * {@link #SOUTH_POLE}, 
-     * {@link #EQUATORIAL} ou
-     * {@link #OBLIQUE}.
+     * Projection mode. It must be one of the following constants:
+     * {@link #SPHERICAL_NORTH}, {@link #SPHERICAL_SOUTH},
+     * {@link #ELLIPSOIDAL_NORTH}, {@link #ELLIPSOIDAL_SOUTH}.
+     * {@link #SPHERICAL_OBLIQUE}, {@link #SPHERICAL_EQUATORIAL},
+     * {@link #ELLIPSOIDAL_OBLIQUE} or {@link #ELLIPSOIDAL_EQUATORIAL}.
      */
     private final int mode;
 
     /**
-     * Construit une projection cartographique
-     * qui utilisera l'ellipsoïde spécifié.
+     * Global scale factor. Value <code>ak0</code>
+     * is equals to <code>{@link #a a}*k0</code>.
      */
-    public StereographicProjection(final Ellipsoid ellipsoid, final Point2D centroid)
-    {this(ellipsoid, centroid, centroid.getY());}
+    private final double k0, ak0;
 
     /**
-     * Construit une projection cartographique
-     * qui utilisera l'ellipsoïde spécifié.
-     *
-     * @param ellipsoid Ellipsoïde à utiliser pour cette projection cartographique.
-     * @param centroid  Coordonnées géographique du centre de la projection.
-     * @param latitudeTrueScale Latitude où les échelles seront exactes.
+     * Facteurs utilisés lors des projections
+     * obliques et equatorialles.
      */
-    public StereographicProjection(final Ellipsoid ellipsoid, final Point2D centroid, final double latitudeTrueScale)
+    private final double sinphi0, cosphi0, chi1, sinChi1, cosChi1;
+
+    /**
+     * Construct a new map projection from the suplied parameters.
+     *
+     * @param  parameters The parameter values in standard units.
+     *         Parameters must contain "semi_major" and "semi_minor"
+     *         values in metres.
+     * @throws MissingParameterException if a mandatory parameter is missing.
+     */
+    protected StereographicProjection(final Parameter[] parameters) throws MissingParameterException
     {
-        super(ellipsoid, centroid);
-        latitudeToRadians(centroid.getY(), false); // Argument check.
-        lat_ts = Math.abs(latitudeToRadians(latitudeTrueScale, true));
+        //////////////////////////
+        //   Fetch parameters   //
+        //////////////////////////
+        super(parameters, longitudeToRadians(Parameter.getValue(parameters, "central_meridian",    0), true),
+                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 90), true));
+        final double latitudeTrueScale = Math.abs(
+                           latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale",
+                                             Parameter.getValue(parameters, "latitude_of_origin", 90)), true));
 
+        //////////////////////////
+        //  Compute constants   //
+        //////////////////////////
         if (Math.abs(Math.abs(centralLatitude) - (Math.PI/2)) < EPS)
-            mode = (centralLatitude<0) ? SOUTH_POLE : NORTH_POLE; // ±90°
+        {
+            if (centralLatitude<0) mode = (isSpherical) ? SPHERICAL_SOUTH : ELLIPSOIDAL_SOUTH;
+            else                   mode = (isSpherical) ? SPHERICAL_NORTH : ELLIPSOIDAL_NORTH;
+        }
+        else if (Math.abs(centralLatitude)<EPS)
+        {
+            mode = (isSpherical) ? SPHERICAL_EQUATORIAL : ELLIPSOIDAL_EQUATORIAL;
+        }
         else
-            mode = (Math.abs(centralLatitude)<EPS) ? EQUATORIAL : OBLIQUE;
-
-        cosphi0 = Math.cos(centralLatitude);
-        sinphi0 = Math.sin(centralLatitude);
-        double k0 = 2.0;
+        {
+            mode = (isSpherical) ? SPHERICAL_OBLIQUE : ELLIPSOIDAL_OBLIQUE;
+        }
         switch (mode)
         {
             default:
             {
-                throw new AssertionError(); // Should not happen
+                cosphi0 = Math.cos(centralLatitude);
+                sinphi0 = Math.sin(centralLatitude);
+                chi1    = 2.0 * Math.atan(ssfn(centralLatitude, sinphi0)) - (Math.PI/2);
+                cosChi1 = Math.cos(chi1);
+                sinChi1 = Math.sin(chi1);
+                break;
             }
-            /////////////////////////////////////////////////////
-            case NORTH_POLE: // Fall through
-            case SOUTH_POLE:
+            case SPHERICAL_EQUATORIAL:
+            case ELLIPSOIDAL_EQUATORIAL:
             {
-                if (!isSpherical)
-                {
-                    if (Math.abs(lat_ts-(Math.PI/2)) >= EPS)
-                    {
-                        final double t = Math.sin(lat_ts);
-                        k0 = (Math.cos(lat_ts) / (Math.sqrt(1-es * t*t))) / tsfn(lat_ts, t);
-                    }
-                    else
-                    {
-                        // True scale at pole
-                        k0 = 2.0 / Math.sqrt(Math.pow(1+e, 1+e)*Math.pow(1-e, 1-e));
-                    }
-                }
-                else
-                {
-                    if (Math.abs(lat_ts - (Math.PI/2)) >= EPS) 
-                        k0 = 1 + Math.sin(lat_ts);
-                }
-                // fall through. "chi1", "sinChi1" and "cosChi1"
-                // are not used for polar projection. We don't
-                // care about their value.
-            }
-            /////////////////////////////////////////////////////
-            case EQUATORIAL:
-            {
+                cosphi0 = 1.0;
+                sinphi0 = 0.0;
                 chi1    = 0.0;
                 cosChi1 = 1.0;
                 sinChi1 = 0.0;
                 break;
             }
-            /////////////////////////////////////////////////////
-            case OBLIQUE:
+        }
+
+        //////////////////////////
+        //  Compute k0 and ak0  //
+        //////////////////////////
+        switch (mode)
+        {
+            default:
             {
-                final double t = Math.sin(centralLatitude);
-                chi1    = 2.0 * Math.atan(ssfn(centralLatitude, t)) - (Math.PI/2);
-                cosChi1 = Math.cos(chi1);
-                sinChi1 = Math.sin(chi1);
-                if (!isSpherical)
+                throw new AssertionError(); // Should not happen.
+            }
+
+            case ELLIPSOIDAL_NORTH:
+            case ELLIPSOIDAL_SOUTH:
+            {
+                if (Math.abs(latitudeTrueScale-(Math.PI/2)) >= EPS)
                 {
-                    k0 = 2.0*Math.cos(centralLatitude)/Math.sqrt(1-es * t*t);
+                    final double t = Math.sin(latitudeTrueScale);
+                    k0 = (Math.cos(latitudeTrueScale) / (Math.sqrt(1-es * t*t))) / tsfn(latitudeTrueScale, t);
+                }
+                else
+                {
+                    // True scale at pole
+                    k0 = 2.0 / Math.sqrt(Math.pow(1+e, 1+e)*Math.pow(1-e, 1-e));
                 }
                 break;
             }
+
+            case SPHERICAL_NORTH:
+            case SPHERICAL_SOUTH:
+            {
+                if (Math.abs(latitudeTrueScale - (Math.PI/2)) >= EPS) 
+                    k0 = 1 + Math.sin(latitudeTrueScale);
+                else
+                    k0 = 2;
+                break;
+            }
+
+            case ELLIPSOIDAL_OBLIQUE:
+            case ELLIPSOIDAL_EQUATORIAL:
+            {
+                k0 = 2.0*Math.cos(centralLatitude)/Math.sqrt(1-es * sinphi0*sinphi0);
+                break;
+            }
+
+            case SPHERICAL_OBLIQUE:
+            case SPHERICAL_EQUATORIAL:
+            {
+                k0 = 2;
+                break;
+            }
         }
-        this.k0 = k0*a;
+        ak0 = a*k0;
     }
 
     /**
@@ -209,12 +244,6 @@ final class StereographicProjection extends PlanarProjection
      */
     public String getName(final Locale locale)
     {return Resources.getResources(locale).getString(Clé.STEREOGRAPHIC);}
-
-    /**
-     * Retourne la latitude à laquelle l'échelle est exacte.
-     */
-    public Latitude getLatitudeTrueScale()
-    {return new Latitude(Math.toDegrees(lat_ts));}
 
     /**
      * Transforms the specified <code>ptSrc</code>
@@ -236,107 +265,95 @@ final class StereographicProjection extends PlanarProjection
         final double sinlat = Math.sin(y);
         final double coslon = Math.cos(x);
         final double sinlon = Math.sin(x);
-        if (isSpherical)
+
+        switch (mode)
         {
-            //////////////////////////
-            // Spherical projection //
-            //////////////////////////
-            switch (mode)
+            default:
             {
-                case NORTH_POLE:
-                {
-                    if (!(Math.abs(1+sinlat) >= TOL))
-                    {
-                        throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
-                    }
-                    // (21-8)
-                    final double f= k0 * coslat / (1+sinlat);// == tan (pi/4 - phi/2)
-                    x =  f * sinlon; // (21-5)
-                    y = -f * coslon; // (21-6)
-                    break;
-                }
-                case SOUTH_POLE:
-                {
-                    if (!(Math.abs(1-sinlat) >= TOL))
-                    {
-                        throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
-                    }
-                    // (21-12)
-                    final double f= k0 * coslat / (1-sinlat);// == tan (pi/4 + phi/2)
-                    x = f * sinlon; // (21-9)
-                    y = f * coslon; // (21-10)
-                    break;
-                }
-                case EQUATORIAL:
-                {
-                    double f = 1 + coslat*coslon;
-                    if (!(f >= TOL))
-                    {
-                        throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
-                    }
-                    f = k0/f;
-                    x = f * coslat * sinlon;
-                    y = f * sinlat;
-                    break;
-                }
-                case OBLIQUE:
-                {
-                    double f = 1.0 + sinphi0*sinlat + cosphi0*coslat*coslon; // (21-4)
-                    if (!(f >= TOL))
-                    {
-                        throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
-                    }
-                    f = k0/f;
-                    x = f * coslat * sinlon;                               // (21-2)
-                    y = f * (cosphi0 * sinlat - sinphi0 * coslat * coslon);// (21-3)
-                    break;
-                }
-                default: throw new AssertionError(); // Should not happen
+                throw new AssertionError(); // Should not happen.
             }
-        }
-        else
-        {
-            ////////////////////////////
-            // Ellipsoidal projection //
-            ////////////////////////////
-            switch (mode)
+            case ELLIPSOIDAL_NORTH:
             {
-                case OBLIQUE:
+                final double rho = ak0 * tsfn(y, sinlat);
+                x =  rho * sinlon;
+                y = -rho * coslon;
+                break;
+            }
+            case ELLIPSOIDAL_SOUTH:
+            {
+                final double rho = ak0 * tsfn(-y, -sinlat);
+                x = rho * sinlon;
+                y = rho * coslon;
+                break;
+            }
+            case SPHERICAL_NORTH:
+            {
+                if (!(Math.abs(1+sinlat) >= TOL))
                 {
-                    final double chi = 2.0 * Math.atan(ssfn(y, sinlat)) - (Math.PI/2);
-                    final double sinChi = Math.sin(chi);
-                    final double cosChi = Math.cos(chi);
-                    final double cosChi_coslon = cosChi*coslon;
-                    final double A = k0 / cosChi1 / (1 + sinChi1*sinChi + cosChi1*cosChi_coslon);
-                    x = A * cosChi*sinlon;
-                    y = A * (cosChi1*sinChi - sinChi1*cosChi_coslon);
-                    break;
+                    throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
                 }
-                case EQUATORIAL:
+                // (21-8)
+                final double f= ak0 * coslat / (1+sinlat);// == tan (pi/4 - phi/2)
+                x =  f * sinlon; // (21-5)
+                y = -f * coslon; // (21-6)
+                break;
+            }
+            case SPHERICAL_SOUTH:
+            {
+                if (!(Math.abs(1-sinlat) >= TOL))
                 {
-                    final double chi = 2.0 * Math.atan(ssfn(y, sinlat)) - (Math.PI/2);
-                    final double sinChi = Math.sin(chi);
-                    final double cosChi = Math.cos(chi);
-                    final double A = k0 / (1.0 + cosChi*coslon);
-                    x = A * cosChi*sinlon;
-                    y = A * sinChi;
-                    break;
+                    throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
                 }
-                case SOUTH_POLE:
+                // (21-12)
+                final double f= ak0 * coslat / (1-sinlat);// == tan (pi/4 + phi/2)
+                x = f * sinlon; // (21-9)
+                y = f * coslon; // (21-10)
+                break;
+            }
+            case SPHERICAL_EQUATORIAL:
+            {
+                double f = 1.0 + coslat*coslon;
+                if (!(f >= TOL))
                 {
-                    final double rho = k0 * tsfn(-y, -sinlat);
-                    x = rho * sinlon;
-                    y = rho * coslon;
-                    break;
+                    throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
                 }
-                case NORTH_POLE:
+                f = ak0/f;
+                x = f * coslat * sinlon;
+                y = f * sinlat;
+                break;
+            }
+            case SPHERICAL_OBLIQUE:
+            {
+                double f = 1.0 + sinphi0*sinlat + cosphi0*coslat*coslon; // (21-4)
+                if (!(f >= TOL))
                 {
-                    final double rho = k0 * tsfn(y, sinlat);
-                    x = rho * sinlon;
-                    y = -rho * coslon;
-                    break;
+                    throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
                 }
-                default: throw new AssertionError(); // Should not happen
+                f = ak0/f;
+                x = f * coslat * sinlon;                               // (21-2)
+                y = f * (cosphi0 * sinlat - sinphi0 * coslat * coslon);// (21-3)
+                break;
+            }
+            case ELLIPSOIDAL_EQUATORIAL:
+            {
+                final double chi = 2.0 * Math.atan(ssfn(y, sinlat)) - (Math.PI/2);
+                final double sinChi = Math.sin(chi);
+                final double cosChi = Math.cos(chi);
+                final double A = ak0 / (1.0 + cosChi*coslon);
+                x = A * cosChi*sinlon;
+                y = A * sinChi;
+                break;
+            }
+            case ELLIPSOIDAL_OBLIQUE:
+            {
+                final double chi = 2.0 * Math.atan(ssfn(y, sinlat)) - (Math.PI/2);
+                final double sinChi = Math.sin(chi);
+                final double cosChi = Math.cos(chi);
+                final double cosChi_coslon = cosChi*coslon;
+                final double A = ak0 / cosChi1 / (1 + sinChi1*sinChi + cosChi1*cosChi_coslon);
+                x = A * cosChi*sinlon;
+                y = A * (cosChi1*sinChi - sinChi1*cosChi_coslon);
+                break;
             }
         }
 
@@ -363,134 +380,127 @@ final class StereographicProjection extends PlanarProjection
         //////////////////////////
         //   Transformation     //
         //////////////////////////
-        final double k0 = this.k0/a;
         final double rho = Math.sqrt(x*x + y*y);
-        if (isSpherical)
+choice: switch (mode)
         {
-            //////////////////////////
-            // Spherical projection //
-            //////////////////////////
-            final double c = 2.0 * Math.atan(rho/k0);
-            final double cosc = Math.cos(c);
-            final double sinc = Math.sin(c);
-            switch (mode)
+            default:
             {
-                case NORTH_POLE:
-                {
-                    y = -y;
-                    // fallthrough
-                }
-                case SOUTH_POLE:
-                {
-                    // (20-17) call atan2(x,y) to properly deal with y==0
-                    x = (Math.abs(x)<TOL && Math.abs(y)<TOL) ? centralLongitude : Math.atan2(x, y) + centralLongitude;
-                    if (Math.abs(rho)<TOL)
-                        y = centralLatitude;
-                    else
-                        y = (mode==NORTH_POLE) ? Math.asin(cosc) : Math.asin(-cosc); // (20-14) with phi1=90
-                    break;
-                }
-                case EQUATORIAL:
-                {
-                    if (Math.abs(rho)<TOL)
-                    {
-                        y = 0.0;
-                        x = centralLongitude;
-                    }
-                    else
-                    {
-                        y = Math.asin(y * sinc/rho); // (20-14)  with phi1=0
-                        final double t  = x*sinc;
-                        final double ct = rho*cosc;
-                        x = (Math.abs(t)<TOL && Math.abs(ct)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
-                    }
-                    break;
-                }
-                case OBLIQUE:
-                {
-                    if (Math.abs(rho) < TOL)
-                    {
-                        y = centralLatitude;
-                        x = centralLongitude;
-                    }
-                    else
-                    {
-                        final double ct = rho*cosphi0*cosc - y*sinphi0*sinc; // (20-15)
-                        final double t  = x*sinc;
-                        y = Math.asin(cosc*sinphi0 + y*sinc*cosphi0/rho);
-                        x = (Math.abs(ct)<TOL && Math.abs(t)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
-                    }
-                    break;
-                }
-                default: throw new AssertionError(); // Should not happen
+                throw new AssertionError(); // Should not happen.
             }
-        }
-        else
-        {
-            ////////////////////////////
-            // Ellipsoidal projection //
-            ////////////////////////////
-    choice: switch (mode)
+            case SPHERICAL_NORTH:
             {
-                case OBLIQUE:
+                y = -y;
+                // fallthrough
+            }
+            case SPHERICAL_SOUTH:
+            {
+                // (20-17) call atan2(x,y) to properly deal with y==0
+                x = (Math.abs(x)<TOL && Math.abs(y)<TOL) ? centralLongitude : Math.atan2(x, y) + centralLongitude;
+                if (Math.abs(rho)<TOL)
+                    y = centralLatitude;
+                else
                 {
-                    // fallthrough
+                    final double c = 2.0 * Math.atan(rho/k0);
+                    final double cosc = Math.cos(c);
+                    y = (mode==SPHERICAL_NORTH) ? Math.asin(cosc) : Math.asin(-cosc); // (20-14) with phi1=90
                 }
-                case EQUATORIAL:
+                break;
+            }
+            case SPHERICAL_EQUATORIAL:
+            {
+                if (Math.abs(rho)<TOL)
                 {
-                    final double ce = 2.0 * Math.atan2(rho*cosChi1, k0);
-                    final double cosce = Math.cos(ce);
-                    final double since = Math.sin(ce);
-                    final double chi = (Math.abs(rho)>=TOL) ? Math.asin(cosce*sinChi1 + (y*since*cosChi1 / rho)) : chi1;
-                    final double t = Math.tan(Math.PI/4.0 + chi/2.0);
-                    /*
-                     * Compute lat using iterative technique.
-                     */
-                    final double halfe = e/2.0;
-                    double phi0=chi;
-                    for (int i=MAX_ITER; --i>=0;)
+                    y = 0.0;
+                    x = centralLongitude;
+                }
+                else
+                {
+                    final double c = 2.0 * Math.atan(rho/k0);
+                    final double cosc = Math.cos(c);
+                    final double sinc = Math.sin(c);
+                    y = Math.asin(y * sinc/rho); // (20-14)  with phi1=0
+                    final double t  = x*sinc;
+                    final double ct = rho*cosc;
+                    x = (Math.abs(t)<TOL && Math.abs(ct)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
+                }
+                break;
+            }
+            case SPHERICAL_OBLIQUE:
+            {
+                if (Math.abs(rho) < TOL)
+                {
+                    y = centralLatitude;
+                    x = centralLongitude;
+                }
+                else
+                {
+                    final double c = 2.0 * Math.atan(rho/k0);
+                    final double cosc = Math.cos(c);
+                    final double sinc = Math.sin(c);
+                    final double ct = rho*cosphi0*cosc - y*sinphi0*sinc; // (20-15)
+                    final double t  = x*sinc;
+                    y = Math.asin(cosc*sinphi0 + y*sinc*cosphi0/rho);
+                    x = (Math.abs(ct)<TOL && Math.abs(t)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
+                }
+                break;
+            }
+            case ELLIPSOIDAL_SOUTH:
+            {
+                y = -y;
+                // fallthrough
+            }
+            case ELLIPSOIDAL_NORTH:
+            {
+                final double t = rho/k0;
+                /*
+                 * Compute lat using iterative technique.
+                 */
+                final double halfe = e / 2.0;
+                double phi0=0;
+                for (int i=MAX_ITER; --i>=0;)
+                {
+                    final double esinphi = e * Math.sin(phi0);
+                    final double phi = (Math.PI/2) - 2.0*Math.atan(t*Math.pow((1-esinphi)/(1+esinphi), halfe));
+                    if (Math.abs(phi-phi0) < TOL)
                     {
-                        final double esinphi = e*Math.sin(phi0);
-                        final double phi = 2.0 * Math.atan (t*Math.pow((1+esinphi)/(1-esinphi), halfe)) - (Math.PI/2);
-                        if (Math.abs(phi-phi0) < TOL)
-                        {
-                            x = (Math.abs(rho)<TOL) ? centralLongitude :
-                                 Math.atan2(x*since, rho*cosChi1*cosce - y*sinChi1*since) + centralLongitude;
-                            y = phi;
-                            break choice;
-                        }
-                        phi0=phi;
+                        x = (Math.abs(rho)<TOL) ? centralLongitude : Math.atan2(x, -y) + centralLongitude;
+                        y = (mode==ELLIPSOIDAL_NORTH) ? phi : -phi;
+                        break choice;
                     }
-                    throw new TransformException(Resources.format(Clé.NO_CONVERGENCE_FOR_LATITUDE¤1, new Latitude(ptSrc.getY())));
+                    phi0=phi;
                 }
-                case SOUTH_POLE:
+                throw new TransformException(Resources.format(Clé.NO_CONVERGENCE_FOR_LATITUDE¤1, new Latitude(ptSrc.getY())));
+            }
+            case ELLIPSOIDAL_OBLIQUE:
+            {
+                // fallthrough
+            }
+            case ELLIPSOIDAL_EQUATORIAL:
+            {
+                final double ce = 2.0 * Math.atan2(rho*cosChi1, k0);
+                final double cosce = Math.cos(ce);
+                final double since = Math.sin(ce);
+                final double chi = (Math.abs(rho)>=TOL) ? Math.asin(cosce*sinChi1 + (y*since*cosChi1 / rho)) : chi1;
+                final double t = Math.tan(Math.PI/4.0 + chi/2.0);
+                /*
+                 * Compute lat using iterative technique.
+                 */
+                final double halfe = e/2.0;
+                double phi0=chi;
+                for (int i=MAX_ITER; --i>=0;)
                 {
-                    y = -y;
-                    // fallthrough
-                }
-                case NORTH_POLE:
-                {
-                    final double t = rho/k0;
-                    /*
-                     * Compute lat using iterative technique.
-                     */
-                    final double halfe = e / 2.0;
-                    double phi0=0;
-                    for (int i=MAX_ITER; --i>=0;)
+                    final double esinphi = e*Math.sin(phi0);
+                    final double phi = 2.0 * Math.atan (t*Math.pow((1+esinphi)/(1-esinphi), halfe)) - (Math.PI/2);
+                    if (Math.abs(phi-phi0) < TOL)
                     {
-                        final double esinphi = e * Math.sin(phi0);
-                        final double phi = (Math.PI/2) - 2.0*Math.atan(t*Math.pow((1-esinphi)/(1+esinphi), halfe));
-                        if (Math.abs(phi-phi0) < TOL)
-                        {
-                            x = (Math.abs(rho)<TOL) ? centralLongitude : Math.atan2(x, -y) + centralLongitude;
-                            y = (mode==NORTH_POLE) ? phi : -phi;
-                            break choice;
-                        }
-                        phi0=phi;
+                        x = (Math.abs(rho)<TOL) ? centralLongitude :
+                             Math.atan2(x*since, rho*cosChi1*cosce - y*sinChi1*since) + centralLongitude;
+                        y = phi;
+                        break choice;
                     }
-                    throw new TransformException(Resources.format(Clé.NO_CONVERGENCE_FOR_LATITUDE¤1, new Latitude(ptSrc.getY())));
+                    phi0=phi;
                 }
-                default: throw new AssertionError(); // Should not happen
+                throw new TransformException(Resources.format(Clé.NO_CONVERGENCE_FOR_LATITUDE¤1, new Latitude(ptSrc.getY())));
             }
         }
 
@@ -526,7 +536,7 @@ final class StereographicProjection extends PlanarProjection
      */
     public int hashCode()
     {
-        final long code = Double.doubleToLongBits(lat_ts);
+        final long code = Double.doubleToLongBits(k0);
         return (int) code ^ (int) (code >>> 32) ^ super.hashCode();
     }
 
@@ -544,7 +554,13 @@ final class StereographicProjection extends PlanarProjection
     final boolean equals(final StereographicProjection that)
     {
         return super.equals(that) &&
-               Double.doubleToLongBits(this.lat_ts) == Double.doubleToLongBits(that.lat_ts);
+               Double.doubleToLongBits(this.     k0) == Double.doubleToLongBits(that.     k0) &&
+               Double.doubleToLongBits(this.    ak0) == Double.doubleToLongBits(that.    ak0) &&
+               Double.doubleToLongBits(this.sinphi0) == Double.doubleToLongBits(that.sinphi0) &&
+               Double.doubleToLongBits(this.cosphi0) == Double.doubleToLongBits(that.cosphi0) &&
+               Double.doubleToLongBits(this.   chi1) == Double.doubleToLongBits(that.   chi1) &&
+               Double.doubleToLongBits(this.sinChi1) == Double.doubleToLongBits(that.sinChi1) &&
+               Double.doubleToLongBits(this.cosChi1) == Double.doubleToLongBits(that.cosChi1);
     }
 
     /**
@@ -554,8 +570,8 @@ final class StereographicProjection extends PlanarProjection
     void toString(final StringBuffer buffer)
     {
         super.toString(buffer);
-        buffer.append(", Truescale=");
-        buffer.append(getLatitudeTrueScale());
+        buffer.append(", central latitude=");
+        buffer.append(new Latitude(Math.toDegrees(centralLatitude)));
         buffer.append(']');
     }
 }

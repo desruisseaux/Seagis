@@ -25,12 +25,8 @@
  */
 package net.seas.opengis.ct;
 
-// Coordinates
-import net.seas.opengis.cs.Ellipsoid;
-import java.awt.geom.Point2D;
 
-
-/** 
+/**
  * Classe de base des projections cartographiques cylindriques. Les projections
  * cylindriques consistent à projeter la surface de la Terre sur un cylindre tangeant ou sécant
  * à la Terre. Les parallèles et mes méridiens apparaissent habituellement comme des lignes droites.
@@ -48,9 +44,15 @@ import java.awt.geom.Point2D;
 abstract class CylindricalProjection extends MapProjection
 {
     /**
-     * Construit une projection cartographique
-     * qui utilisera l'ellipsoïde spécifié.
+     * Construct a new map projection from the suplied parameters.
+     *
+     * @param  parameters The parameter values in standard units.
+     *         Parameters must contain "semi_major" and "semi_minor"
+     *         values in metres.
+     * @param  centralLongitude Central longitude in <u>radians</u>.
+     * @param  centralLatitude  Central latitude in <u>radians</u>.
+     * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public CylindricalProjection(final Ellipsoid ellipsoid, final Point2D centroid)
-    {super(ellipsoid, centroid);}
+    protected CylindricalProjection(final Parameter[] parameters, final double centralLongitude, final double centralLatitude) throws MissingParameterException
+    {super(parameters, centralLongitude, centralLatitude);}
 }

@@ -49,14 +49,16 @@ public class ProjectionParameter implements Cloneable, Serializable
     private static final long serialVersionUID = -8277498873677222418L;
 
     /**
-     * The parameter name.
+     * The parameter name. This name
+     * is immutable and can't be null.
      */
-    private final String name;
+    public final String name;
 
     /**
-     * The parameter value.
+     * The parameter value. This value
+     * is mutable and can be updated.
      */
-    private double value;
+    public double value;
 
     /**
      * Construct a named parameter.
@@ -66,28 +68,10 @@ public class ProjectionParameter implements Cloneable, Serializable
      */
     public ProjectionParameter(final String name, final double value)
     {
-        this.name  = name;
-        this.value = value;
         Info.ensureNonNull("name", name);
+        this.name  = name.trim();
+        this.value = value;
     }
-
-    /**
-     * Returns the parameter name.
-     */
-    public String getName()
-    {return name;}
-
-    /**
-     * Returns the parameter value.
-     */
-    public double getValue()
-    {return value;}
-
-    /**
-     * Set the parameter value.
-     */
-    public void setValue(final double value)
-    {this.value = value;}
 
     /**
      * Returns a hash value for this parameter.

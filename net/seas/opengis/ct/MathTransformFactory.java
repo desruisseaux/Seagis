@@ -22,6 +22,14 @@
  */
 package net.seas.opengis.ct;
 
+// Miscellaneous
+import javax.units.Unit;
+import java.util.Locale;
+import java.awt.geom.Point2D;
+import net.seas.resources.Resources;
+import net.seas.opengis.cs.Ellipsoid;
+import java.util.NoSuchElementException;
+
 
 /**
  * Creates math transforms. <code>MathTransformFactory</code> is a low level
@@ -69,6 +77,18 @@ package net.seas.opengis.ct;
 public class MathTransformFactory
 {
     /**
+     * List of registered math transforms.
+     */
+    private final MathTransform.Registration[] REGISTERED = new MathTransform.Registration[]
+    {
+        new         MercatorProjection.Registration(),
+        new LambertConformalProjection.Registration(),
+        new    StereographicProjection.Registration(),
+        new    StereographicProjection.Registration(true),  // Polar
+        new    StereographicProjection.Registration(false)  // Oblique
+    };
+
+    /**
      * Creates a transform by concatenating two existing transforms.
      * A concatenated transform acts in the same way as applying two
      * transforms, one after the other. The dimension of the output
@@ -100,16 +120,98 @@ public class MathTransformFactory
     {return null;} // TODO
 
     /**
-     * Creates a transform from a classification name and parameters.
-     * The client must ensure that all the linear parameters are expressed in
-     * meters, and all the angular parameters are expressed in degrees.  Also,
-     * they must supply "semi_major" and "semi_minor" parameters for
-     * cartographic projection transforms. 
+     * Convenience method for creating a transform from a classification name and
+     * parameters.
      *
-     * @param  classification The classification name of the transform (e.g. "Transverse_Mercator").
+     * @param classification The classification name of the transform (e.g. "Transverse_Mercator").
+     * @param ellipsoid Ellipsoid parameter. "semi_major" and "semi_minor" parameters values will
+     *                  be determined from ellipsoid's axis length and unit.
+     * @param centroid  Centre de la projection. Souvent (mais <u>pas toujours</u>),
+     *                  les coordonnées du centre seront celles qui, lorsque projetées,
+     *                  donneraient les coordonnées (0,0). Notez que les coordonnées
+     *                  qui seront retenues comme le centre de la carte ne seront pas
+     *                  nécessairement identiques à celles qui auront été spécifiées.
+     *                  Par exemple les projections transverses de Mercator placent la
+     *                  longitude centrale au centre d'une de leurs "zones". D'autres
+     *                  projections placent toujours la latitude centrale sur l'équateur.
+     * @return The parameterized transform.
+     * @throws NoSuchElementException if there is no transform for the specified classification.
+     */
+    public MathTransform createParameterizedTransform(final String classification, final Ellipsoid ellipsoid, final Point2D centroid) throws NoSuchElementException
+    {
+        final Unit axisUnit = ellipsoid.getAxisUnit();
+        return createParameterizedTransform(classification, new Parameter[]
+        {
+            new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit)),
+            new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit))
+        });
+    }
+
+    /**
+     * Creates a transform from a classification name and parameters. The
+     * client must ensure that all the linear parameters are expressed in
+     * meters, and all the angular parameters are expressed in degrees.
+     * Also, they must supply "semi_major" and "semi_minor" parameters
+     * for cartographic projection transforms.
+     *
+     * @param  classification The classification name of the transform
+     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
+     *         are ignored, and comparaison is case-insensitive.
      * @param  parameters The parameter values in standard units.
      * @return The parameterized transform.
+     * @throws NoSuchElementException if there is no transform for the specified classification.
+     * @throws MissingParameterException if a parameter was required but not found.
      */
-    public MathTransform createParameterizedTransform(final String classification, final Parameter[] parameters)
-    {return null;} // TODO
+    public MathTransform createParameterizedTransform(final String classification, final Parameter[] parameters) throws NoSuchElementException, MissingParameterException
+    {return getRegistration(classification).create(parameters);}
+
+    /**
+     * Returns a human readable name localized for the specified locale.
+     * If no name is available for the specified locale, this method may
+     * returns a name in an arbitrary locale.
+     *
+     * @param  classification The classification name of the transform
+     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
+     *         are ignored, and comparaison is case-insensitive.
+     * @param  Locale The locale (e.g. {@link Locale#FRENCH}), or <code>null</code>
+     *         for the current default locale.
+     * @return Localized classification name (e.g. "<cite>Mercator transverse</cite>").
+     * @throws NoSuchElementException if there is no transform for the specified classification.
+     */
+    public String getName(final String classification, final Locale locale) throws NoSuchElementException
+    {return getRegistration(classification).getName(locale);}
+
+    /**
+     * Get the default parameters from a classification name. The
+     * client may change any of those parameters and submit them
+     * to {@link #createParameterizedTransform(String,Parameter[])}.
+     *
+     * @param  classification The classification name of the transform
+     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
+     *         are ignored, and comparaison is case-insensitive.
+     * @return Default parameters for a transform of the specified classification.
+     * @throws NoSuchElementException if there is no transform for the
+     *         specified classification.
+     */
+    public Parameter[] getDefaultParameters(final String classification) throws NoSuchElementException
+    {return getRegistration(classification).getDefaultParameters();}
+
+    /**
+     * Returns the registration for the specified classification.
+     *
+     * @param  classification The classification name of the transform
+     *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
+     *         are ignored, and comparaison is case-insensitive.
+     * @return The registration.
+     * @throws NoSuchElementException if there is no registration
+     *         for the specified classification.
+     */
+    private MathTransform.Registration getRegistration(String classification) throws NoSuchElementException
+    {
+        classification = classification.trim();
+        for (int i=0; i<REGISTERED.length; i++)
+            if (classification.equalsIgnoreCase(REGISTERED[i].classification))
+                return REGISTERED[i];
+        throw new NoSuchElementException(Resources.format(Clé.NO_TRANSFORM_FOR_CLASSIFICATION¤1, classification));
+    }
 }

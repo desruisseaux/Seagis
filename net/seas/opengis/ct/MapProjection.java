@@ -39,7 +39,6 @@ import net.seas.awt.geom.Geometry;
 
 // Miscellaneous
 import java.util.Locale;
-import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import net.seas.text.CoordinateFormat;
@@ -93,46 +92,46 @@ abstract class MapProjection extends MathTransform
      * indique que le modèle est sphérique, c'est-à-dire que les champs {@link #a}
      * et {@link #b} ont la même valeur.
      */
-    protected final boolean isSpherical;
+    final boolean isSpherical;
 
     /**
      * Excentricité de l'ellipse. L'excentricité est 0
      * si l'ellipsoïde est sphérique, c'est-à-dire si
      * {@link #isSpherical} est <code>true</code>.
      */
-    protected final double e;
+    final double e;
 
     /**
      * Carré de l'excentricité de l'ellipse: e² = (a²-b²)/a².
      */
-    protected final double es;
+    final double es;
 
     /**
      * Longueur de l'axe majeur de la terre, en mètres.
      * Sa valeur par défaut dépend de l'éllipsoïde par
      * défaut (par exemple "WGS 1984").
      */
-    protected final double a;
+    final double a;
 
     /**
      * Longueur de l'axe mineur de la terre, en mètres.
      * Sa valeur par défaut dépend de l'éllipsoïde par
      * défaut (par exemple "WGS 1984").
      */
-    protected final double b;
+    final double b;
 
     /**
      * Longitude centrale en <u>radians</u>.
      * La valeur par défaut est 0, le méridien
      * de Greenwich.
      */
-    protected final double centralLongitude;
+    final double centralLongitude;
 
     /**
      * Latitude centrale en <u>radians</u>.
      * La valeur par défaut est 0, l'équateur.
      */
-    protected final double centralLatitude;
+    final double centralLatitude;
 
     /**
      * The inverse of this map projection.
@@ -141,29 +140,24 @@ abstract class MapProjection extends MathTransform
     private transient MathTransform inverse;
 
     /**
-     * Construit une projection cartographique
-     * qui utilisera l'ellipsoïde spécifié.
+     * Construct a new map projection from the suplied parameters.
      *
-     * @param ellipsoid Ellipsoïde à utiliser pour cette projection cartographique.
-     * @param centroid  Centre de la projection. Souvent (mais <u>pas toujours</u>),
-     *                  les coordonnées du centre seront celles qui, lorsque projetées,
-     *                  donneraient les coordonnées (0,0). Notez que les coordonnées
-     *                  qui seront retenues comme le centre de la carte ne seront pas
-     *                  nécessairement identiques à celles qui auront été spécifiées.
-     *                  Par exemple les projections transverses de Mercator placent la
-     *                  longitude centrale au centre d'une de leurs "zones". D'autres
-     *                  projections placent toujours la latitude centrale sur l'équateur.
+     * @param  parameters The parameter values in standard units.
+     *         Parameters must contain "semi_major" and "semi_minor"
+     *         values in metres.
+     * @param  centralLongitude Central longitude in <u>radians</u>.
+     * @param  centralLatitude  Central latitude in <u>radians</u>.
+     * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public MapProjection(final Ellipsoid ellipsoid, final Point2D centroid)
+    protected MapProjection(final Parameter[] parameters, final double centralLongitude, final double centralLatitude) throws MissingParameterException
     {
-        final Unit ellipsoidUnit = ellipsoid.getAxisUnit();
-        a = Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), ellipsoidUnit);
-        b = Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), ellipsoidUnit);
-        centralLatitude  =  latitudeToRadians(centroid.getY(), true);
-        centralLongitude = longitudeToRadians(centroid.getX(), true);
-        isSpherical      = (a==b);
-        es = 1.0 - (b*b)/(a*a);
-        e  = Math.sqrt(es);
+        this.a = Parameter.getValue(parameters, "semi_major");
+        this.b = Parameter.getValue(parameters, "semi_minor");
+        this.centralLongitude = centralLongitude;
+        this.centralLatitude  = centralLatitude;
+        this.isSpherical      = (a==b);
+        this.es = 1.0 - (b*b)/(a*a);
+        this.e  = Math.sqrt(es);
     }
 
     /**
@@ -188,7 +182,7 @@ abstract class MapProjection extends MathTransform
      * @return Longitude en radians.
      * @throws IllegalArgumentException si la longitude est invalide.
      */
-    protected static double longitudeToRadians(final double x, boolean edge) throws IllegalArgumentException
+    static double longitudeToRadians(final double x, boolean edge) throws IllegalArgumentException
     {
         // On utilise pas {@link #XMIN} et {@link #XMAX} car c'est derniers peuvent être volontairement décalés de {@link #EPS}.
         if (edge ? (x>=Longitude.MIN_VALUE && x<=Longitude.MAX_VALUE) : (x>Longitude.MIN_VALUE && x<Longitude.MAX_VALUE)) return Math.toRadians(x);
@@ -205,7 +199,7 @@ abstract class MapProjection extends MathTransform
      * @return Latitude en radians.
      * @throws IllegalArgumentException si la latitude est invalide.
      */
-    protected static double latitudeToRadians(final double y, boolean edge) throws IllegalArgumentException
+    static double latitudeToRadians(final double y, boolean edge) throws IllegalArgumentException
     {
         // On utilise pas {@link #YMIN} et {@link #YMAX} car c'est derniers peuvent être volontairement décalés de {@link #EPS}.
         if (edge ? (y>=Latitude.MIN_VALUE && y<=Latitude.MAX_VALUE) : (y>Latitude.MIN_VALUE && y<Latitude.MAX_VALUE)) return Math.toRadians(y);

@@ -157,6 +157,12 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
+     * Returns the number of dimensions.
+     */
+    public int getDimension()
+    {return ord.length/2;}
+
+    /**
      * Returns the minimal ordinate along
      * the specified dimension.
      */

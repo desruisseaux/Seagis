@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.cs;
 
+// Miscellaneous
+import net.seas.opengis.ct.MissingParameterException;
+
 
 /**
  * A projection from geographic coordinates to projected coordinates.
@@ -35,6 +38,11 @@ package net.seas.opengis.cs;
 public abstract class Projection extends Info
 {
     /**
+     * Gets the projection classification name (e.g. "Transverse_Mercator").
+     */
+    public abstract String getClassName();
+
+    /**
      * Gets number of parameters of the projection.
      */
     public abstract int getNumParameters();
@@ -46,8 +54,61 @@ public abstract class Projection extends Info
      */
     public abstract ProjectionParameter getParameter(final int index);
 
+
     /**
-     * Gets the projection classification name (e.g. "Transverse_Mercator").
+     * Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and
+     * trailing blanks.
+     *
+     * @param  name Parameter to look for.
+     * @return The parameter value.
+     * @throws MissingParameterException if parameter <code>name</code> is not found.
      */
-    public abstract String getClassName();
+    public double getValue(final String name) throws MissingParameterException
+    {return getValue(name, Double.NaN, true);}
+
+    /**
+     * Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and
+     * trailing blanks.
+     *
+     * @param  name Parameter to look for.
+     * @param  defaultValue Default value to return if
+     *         parameter <code>name</code> is not found.
+     * @return The parameter value, or <code>defaultValue</code>
+     *         if the parameter <code>name</code> is not found.
+     */
+    public double getValue(final String name, final double defaultValue)
+    {return getValue(name, defaultValue, false);}
+
+    /**
+     * Convenience method for fetching a parameter value.
+     * Search is case-insensitive and ignore leading and
+     * trailing blanks.
+     *
+     * @param  name Parameter to look for.
+     * @param  defaultValue Default value to return if
+     *         parameter <code>name</code> is not found.
+     * @param  required <code>true</code> if the parameter is required (in which case
+     *         <code>defaultValue</code> is ignored), or <code>false</code> otherwise.
+     * @return The parameter value, or <code>defaultValue</code> if the parameter is
+     *         not found and <code>required</code> is <code>false</code>.
+     * @throws MissingParameterException if <code>required</code> is <code>true</code>
+     *         and parameter <code>name</code> is not found.
+     */
+    private double getValue(String name, final double defaultValue, final boolean required) throws MissingParameterException
+    {
+        name = name.trim();
+        final int count=getNumParameters();
+        for (int i=0; i<count; i++)
+        {
+            ProjectionParameter parameter = getParameter(i);
+            if (name.equalsIgnoreCase(parameter.name))
+            {
+                return parameter.value;
+            }
+        }
+        if (!required) return defaultValue;
+        throw new MissingParameterException(null, name);
+    }
 }

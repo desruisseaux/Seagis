@@ -34,14 +34,10 @@ import net.seas.resources.Resources;
 
 
 /**
- * Projection cylindrique de Mercator. Les parallèles et les méridients apparaissent
- * comme des lignes droites et se croisent à angles droits; cette projection produit
- * donc des cartes rectangulaires. L'échelle est vrai le long de l'équateur (par défaut)
- * ou le long de deux parallèles équidistants de l'équateur. Cette projection est utilisée
- * pour représenter des régions près de l'équateur. Elle est aussi souvent utilisée pour la
- * navigation maritime parce que toutes les lignes droites sur la carte sont des lignes
- * <em>loxodromiques</em>, c'est-à-dire qu'un navire suivant cette ligne garderait azimuth
- * constant sur son compas.
+ * Projection conique conforme de Lambert. Les aires et les formes sont déformées
+ * à mesure que l'on s'éloigne de parallèles standards. Les angles sont vrais dans
+ * une région limitée. Cette projection est utilisée pour les cartes de l'Amérique
+ * du Nord. Elle utilise par défaut une latitude centrale de 40°N.
  * <br><br>
  *
  * Référence: John P. Snyder (Map Projections - A Working Manual,
@@ -51,10 +47,10 @@ import net.seas.resources.Resources;
  * @author André Gosselin
  * @author Martin Desruisseaux
  */
-final class MercatorProjection extends CylindricalProjection
+final class LambertConformalProjection extends ConicProjection
 {
     /*******************************************************
-     * Informations about a {@link MercatorProjection}.
+     * Informations about a {@link LambertConformalProjection}.
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -62,11 +58,11 @@ final class MercatorProjection extends CylindricalProjection
     static final class Registration extends MathTransform.Registration
     {
         public Registration()
-        {super("Mercator_1SP", Clé.CYLINDRICAL_MERCATOR);}
+        {super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);}
 
         /** Create a new map projection. */
         public MathTransform create(final Parameter[] parameters)
-        {return new MercatorProjection(parameters);}
+        {return new LambertConformalProjection(parameters);}
 
         /** Returns the default parameters. */
         public Parameter[] getDefaultParameters()
@@ -77,16 +73,17 @@ final class MercatorProjection extends CylindricalProjection
                 new Parameter("semi_minor", 6356752.3142451794975639665996337),
                 new Parameter("latitude_of_origin",  0),
                 new Parameter("central_meridian",    0),
-                new Parameter("latitude_true_scale", 0)
+                new Parameter("standard_parallel1",  0),
+                new Parameter("standard_parallel2",  0)
             };
         }
     }
 
     /**
-     * Global scale factor. Value <code>ak0</code>
-     * is equals to <code>{@link #a a}*k0</code>.
+     * Variables internes
+     * pour les calculs.
      */
-    private final double ak0;
+    private final double n,F,rho0;
 
     /**
      * Construct a new map projection from the suplied parameters.
@@ -96,27 +93,60 @@ final class MercatorProjection extends CylindricalProjection
      *         values in metres.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    public MercatorProjection(final Parameter[] parameters) throws MissingParameterException
+    public LambertConformalProjection(final Parameter[] parameters) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
         super(parameters, longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true),
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), false));
-        final double latitudeTrueScale = Math.abs(
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale",
-                                             Parameter.getValue(parameters, "latitude_of_origin", 0)), false));
+                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true));
+        final double defaultLatitude =       Parameter.getValue(parameters, "latitude_of_origin", 0);
+        final double phi1= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel1", defaultLatitude), true);
+        final double phi2= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel2", defaultLatitude), true);
 
         //////////////////////////
         //  Compute constants   //
         //////////////////////////
+        if (Math.abs(phi1 + phi2) < EPS)
+            throw new IllegalArgumentException(Resources.format(Clé.ANTIPODE_LATITUDES¤2, new Latitude(Math.toDegrees(phi1)), new Latitude(Math.toDegrees(phi2))));
+
+        final double  cosphi = Math.cos(phi1);
+        final double  sinphi = Math.sin(phi1);
+        final boolean secant = Math.abs(phi1-phi2) > EPS;
         if (isSpherical)
         {
-            ak0 = a*Math.cos(latitudeTrueScale);
+            if (secant)
+            {
+                n = Math.log(cosphi / Math.cos(phi2)) /
+                    Math.log(Math.tan((Math.PI/4) + 0.5*phi2) /
+                    Math.tan((Math.PI/4) + 0.5 * phi1));
+            }
+            else n = sinphi;
+            F = cosphi * Math.pow(Math.tan((Math.PI/4) + 0.5*phi1), n) / n;
+            if (Math.abs(Math.abs(centralLatitude) - (Math.PI/2)) >= EPS)
+            {
+                rho0 = F * Math.pow(Math.tan((Math.PI/4) + 0.5*centralLatitude), -n);
+            }
+            else rho0 = 0.0;
         }
         else
         {
-            ak0 = a*msfn(Math.sin(latitudeTrueScale), Math.cos(latitudeTrueScale));
+            final double m1 = msfn(sinphi, cosphi);
+            final double t1 = tsfn(phi1, sinphi);
+            if (secant)
+            {
+                final double sinphi2 = Math.sin(phi2);
+                final double m2 = msfn(sinphi2, Math.cos(phi2));
+                final double t2 = tsfn(phi2, sinphi2);
+                n = Math.log(m1/m2) / Math.log(t1/t2);
+            }
+            else n = sinphi;
+            F = m1 * Math.pow (t1, -n) / n;
+            if (Math.abs(Math.abs(centralLatitude) - (Math.PI/2)) >= EPS)
+            {
+                rho0 = F * Math.pow(tsfn(centralLatitude, Math.sin(centralLatitude)), n);
+            }
+            else rho0 = 0.0;
         }
     }
 
@@ -124,7 +154,7 @@ final class MercatorProjection extends CylindricalProjection
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(Clé.CYLINDRICAL_MERCATOR);}
+    {return Resources.getResources(locale).getString(Clé.LAMBERT_CONFORMAL);}
 
     /**
      * Transforms the specified <code>ptSrc</code>
@@ -138,23 +168,27 @@ final class MercatorProjection extends CylindricalProjection
         double x=ptSrc.getX(); if (!(x>=XMIN && x<=XMAX)) throw badLongitudeException(x); x=Math.toRadians(x);
         double y=ptSrc.getY(); if (!(y>=YMIN && y<=YMAX)) throw badLatitudeException (y); y=Math.toRadians(y);
 
-        if (Math.abs(y) > (Math.PI/2 - EPS))
-        {
-            throw new TransformException(Resources.format(Clé.POLE_PROJECTION¤1, new Latitude(ptSrc.getY())));
-        }
-
         //////////////////////////
         //   Transformation     //
         //////////////////////////
-        x = (x-centralLongitude)*ak0;
-        if (isSpherical)
+        double rho;
+        if (Math.abs(Math.abs(y) - (Math.PI/2)) < EPS)
         {
-            y =  ak0*Math.log(Math.tan((Math.PI/4) + 0.5*y));
+            if (y*n <= 0)
+                throw new TransformException(Resources.format(Clé.POLE_PROJECTION¤1, new Latitude(y)));
+            else rho = 0;
         }
         else
         {
-            y = -ak0*Math.log(tsfn(y, Math.sin(y)));
+            if (isSpherical)
+                rho = Math.pow(Math.tan((Math.PI/4) + 0.5*y), -n);
+            else
+                rho = Math.pow(tsfn(y, Math.sin(y)), n);
+            rho *= F;
         }
+        x = n * (x-centralLongitude);
+        y = a * (rho0 - rho * Math.cos(x));
+        x = a * (rho * Math.sin(x));
 
         //////////////////////////
         //    Store result      //
@@ -167,27 +201,38 @@ final class MercatorProjection extends CylindricalProjection
         else return new Point2D.Double(x,y);
     }
 
+
     /**
      * Transforms the specified <code>ptSrc</code>
      * and stores the result in <code>ptDst</code>.
      */
     public Point2D inverseTransform(final Point2D ptSrc, final Point2D ptDst) throws TransformException
     {
-        double x = ptSrc.getX();
-        double y = ptSrc.getY();
+        double x   =        ptSrc.getX() / a;
+        double y   = rho0 - ptSrc.getY()/a;
+        double rho = Math.sqrt(x*x + y*y);
 
         //////////////////////////
         //   Transformation     //
         //////////////////////////
-        x = x/ak0 + centralLongitude;
-        y = Math.exp(-y/ak0);
-        if (isSpherical)
+        if (rho > EPS)
         {
-            y = (Math.PI/2) - 2.0*Math.atan(y);
+            if (n < 0)
+            {
+                rho = -rho;
+                x = -x;
+                y = -y;
+            }
+            x = centralLongitude + Math.atan2(x, y)/n;
+            if (isSpherical)
+                y = 2.0 * Math.atan(Math.pow(F/rho, 1.0/n)) - (Math.PI/2);
+            else
+                y = cphi2(Math.pow(rho/F, 1.0/n));
         }
         else
         {
-            y = cphi2(y);
+            x = centralLongitude;
+            y = n < 0 ? -(Math.PI/2) : (Math.PI/2);
         }
 
         //////////////////////////
@@ -212,7 +257,7 @@ final class MercatorProjection extends CylindricalProjection
      */
     public int hashCode()
     {
-        final long code = Double.doubleToLongBits(ak0);
+        final long code = Double.doubleToLongBits(F);
         return (int) code ^ (int) (code >>> 32) ^ super.hashCode();
     }
 
@@ -221,27 +266,17 @@ final class MercatorProjection extends CylindricalProjection
      * this map projection for equality.
      */
     public boolean equals(final Object object)
-    {return (object instanceof MercatorProjection) && equals((MercatorProjection) object);}
+    {return (object instanceof LambertConformalProjection) && equals((LambertConformalProjection) object);}
 
     /**
      * Compares the specified object with
      * this map projection for equality.
      */
-    final boolean equals(final MercatorProjection that)
+    final boolean equals(final LambertConformalProjection that)
     {
         return super.equals(that) &&
-               Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
-    }
-
-    /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
-     */
-    void toString(final StringBuffer buffer)
-    {
-        super.toString(buffer);
-        buffer.append(", central latitude=");
-        buffer.append(new Latitude(Math.toDegrees(centralLatitude)));
-        buffer.append(']');
+               Double.doubleToLongBits(this.n)    == Double.doubleToLongBits(that.n) &&
+               Double.doubleToLongBits(this.F)    == Double.doubleToLongBits(that.F) &&
+               Double.doubleToLongBits(this.rho0) == Double.doubleToLongBits(that.rho0);
     }
 }

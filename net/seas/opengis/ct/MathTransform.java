@@ -102,7 +102,7 @@ public abstract class MathTransform
     {throw new UnsupportedOperationException("Not implemented");}
 
     /**
-     * Transforms the specified {@link CoordinatePoint} and stores the result in <code>ptDst</code>.
+     * Transforms the specified <code>ptSrc</code> and stores the result in <code>ptDst</code>.
      * If <code>ptDst</code> is <code>null</code> or do not have the expected number of
      * dimensions, a new {@link CoordinatePoint} object is allocated and then the result
      * of the transformation is stored in this object. In either case, <code>ptDst</code>,
@@ -130,7 +130,7 @@ public abstract class MathTransform
     }
 
     /**
-     * Transforms the specified {@link Point2D} and stores the result in
+     * Transforms the specified <code>ptSrc</code> and stores the result in
      * <code>ptDst</code>. This is an convenience method for interoperability
      * with <a href="http://java.sun.com/products/java-media/2D">Java2D</a>.
      * This method will fail if this transform doesn't map two-dimensional spaces.
@@ -455,6 +455,9 @@ public abstract class MathTransform
         return buffer.toString();
     }
 
+
+
+
     /**
      * Base class for inverse {@link MathTransform}.
      *
@@ -519,5 +522,68 @@ public abstract class MathTransform
             }
             else return false;
         }
+    }
+
+
+
+
+    /**
+     * Base class for registration of {@link MathTransform} object. Instance of
+     * this class allow the creation of transform objects from a classification
+     * name.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static abstract class Registration
+    {
+        /**
+         * The classification name. This name do
+         * not contains leading or trailing blanks.
+         */
+        public final String classification;
+
+        /**
+         * Resources key for a human readable name. This
+         * is used for {@link #getName} implementation.
+         */
+        private final int nameKey;
+
+        /**
+         * Construct a new registration.
+         *
+         * @param classification The classification name.
+         * @param nameKey Resources key for a human readable name.
+         *        This is used for {@link #getName} implementation.
+         */
+        protected Registration(final String classification, final int nameKey)
+        {
+            this.classification = classification.trim();
+            this.nameKey        = nameKey;
+        }
+
+        /**
+         * Returns a human readable name localized for the specified locale.
+         * If no name is available for the specified locale, this method may
+         * returns a name in an arbitrary locale.
+         */
+        public final String getName(final Locale locale)
+        {return Resources.getResources(locale).getString(nameKey);}
+
+        /**
+         * Returns a set of default parameters. The returns array should contains
+         * one element for every parameter supported by the registered transform.
+         *
+         * @return A set of default parameters.
+         */
+        public abstract Parameter[] getDefaultParameters();
+
+        /**
+         * Returns an objet for the specified parameters.
+         *
+         * @param  parameters The parameter values in standard units.
+         * @return A {@link MathTransform} object of this classification.
+         */
+        public abstract MathTransform create(final Parameter[] parameters);
     }
 }
