@@ -54,7 +54,6 @@ import javax.swing.JScrollPane;
 import fr.ird.seasview.InternalFrame;
 import fr.ird.awt.ImageTableModel;
 import fr.ird.awt.ExportChooser;
-import fr.ird.awt.ColorRamp;
 
 // Models and events
 import javax.swing.table.TableCellRenderer;
@@ -88,6 +87,7 @@ import java.util.TimeZone;
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import org.geotools.gui.swing.ColorBar;
 import org.geotools.gui.swing.StatusBar;
 
 
@@ -99,8 +99,7 @@ import org.geotools.gui.swing.StatusBar;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ImageTablePanel extends ImagePanel
-{
+final class ImageTablePanel extends ImagePanel {
     /**
      * Nombre maximal d'images à afficher. En imposant un maximum,
      * on évite que l'utilisateur demande par mégarde l'affichage
@@ -132,7 +131,7 @@ final class ImageTablePanel extends ImagePanel
     /**
      * Echelle de couleurs.
      */
-    private final ColorRamp colorRamp=new ColorRamp();
+    private final ColorBar colorBar = new ColorBar();
 
     /**
      * Dernier répertoire à avoir été choisit
@@ -177,8 +176,8 @@ final class ImageTablePanel extends ImagePanel
         final JSplitPane         controler = (JSplitPane) getLeftComponent();
         final JPanel                images = new JPanel(new BorderLayout());
 
-        images.add(mosaic,    BorderLayout.CENTER);
-        images.add(colorRamp, BorderLayout.SOUTH );
+        images.add(mosaic,   BorderLayout.CENTER);
+        images.add(colorBar, BorderLayout.SOUTH );
 
         this       .setRightComponent(images);
         controler  .setTopComponent(tableScroll);
@@ -196,10 +195,12 @@ final class ImageTablePanel extends ImagePanel
     /**
      * Met à jour le texte de la barre d'état.
      */
-    protected final void updateStatusBar()
-    {
-        if (isShowing()) // Si c'est un autre panneau qui est visible,
-        {                // alors la barre d'état ne nous appartient pas.
+    protected final void updateStatusBar() {
+        /*
+         * Si c'est un autre panneau qui est visible,
+         * alors la barre d'état ne nous appartient pas.
+         */
+        if (isShowing()) {
             mosaic.statusBar.setText(Resources.format(ResourceKeys.IMAGES_COUNT_$2,
                                      new Integer(table.getRowCount()),
                                      new Integer(tableView.getSelectedRowCount())));
@@ -213,10 +214,8 @@ final class ImageTablePanel extends ImagePanel
      * utilisé pour la construction des menus. Par exemple le code {@link ResourceKeys#EXPORT}
      * désigne le menu "exporter".
      */
-    protected boolean canProcess(final int clé)
-    {
-        switch (clé)
-        {
+    protected boolean canProcess(final int clé) {
+        switch (clé) {
             case ResourceKeys.COPY:             // fall through
             case ResourceKeys.DELETE:           // fall through
             case ResourceKeys.INVERT_SELECTION: return tableView.getSelectedRowCount()!=0;
@@ -235,50 +234,46 @@ final class ImageTablePanel extends ImagePanel
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échouée.
      */
-    protected boolean process(final int clé) throws SQLException
-    {
-        switch (clé)
-        {
+    protected boolean process(final int clé) throws SQLException {
+        switch (clé) {
             default: return super.process(clé);
 
             ///////////////////////////
             ///  Fichier - Exporter ///
             ///////////////////////////
-            case ResourceKeys.EXPORT:
-            {
+            case ResourceKeys.EXPORT: {
                 final ExportChooser chooser=new ExportChooser(lastDirectory);
                 chooser.addEntries(table.getEntries());
                 chooser.showDialogAndStart(this, workers);
-                lastDirectory=chooser.getDestinationDirectory();
+                lastDirectory = chooser.getDestinationDirectory();
                 return true;
             }
             //////////////////////////
             ///  Edition - Annuler ///
             //////////////////////////
-            case ResourceKeys.UNDO:
-            {
+            case ResourceKeys.UNDO: {
                 final int[] IDs=table.getEntryIDs();
                 undoManager.undo(); // Change les index des images 'IDs'.
-                if (IDs.length!=0)
+                if (IDs.length != 0) {
                     inverseSelect(table.indexOf(IDs));
+                }
                 return true;
             }
             //////////////////////////
             ///  Edition - Refaire ///
             //////////////////////////
-            case ResourceKeys.REDO:
-            {
+            case ResourceKeys.REDO: {
                 final int[] IDs=table.getEntryIDs();
                 undoManager.redo(); // Change les index des images 'IDs'.
-                if (IDs.length!=0)
+                if (IDs.length != 0) {
                     inverseSelect(table.indexOf(IDs));
+                }
                 return true;
             }
             /////////////////////////
             ///  Edition - Copier ///
             /////////////////////////
-            case ResourceKeys.COPY:
-            {
+            case ResourceKeys.COPY: {
                 final Transferable content=table.copy(tableView.getSelectedRows());
                 getToolkit().getSystemClipboard().setContents(content, this);
                 return true;
@@ -286,8 +281,7 @@ final class ImageTablePanel extends ImagePanel
             ////////////////////////////
             ///  Edition - Supprimer ///
             ////////////////////////////
-            case ResourceKeys.DELETE:
-            {
+            case ResourceKeys.DELETE: {
                 table.remove(tableView.getSelectedRows());
                 selection=new ImageEntry[0];
                 mosaic.removeAllImages();
@@ -297,16 +291,14 @@ final class ImageTablePanel extends ImagePanel
             ////////////////////////////////////
             ///  Edition - Sélectionner tout ///
             ////////////////////////////////////
-            case ResourceKeys.SELECT_ALL:
-            {
+            case ResourceKeys.SELECT_ALL: {
                 tableView.selectAll();
                 return true;
             }
             ////////////////////////////////////////
             ///  Edition - Inverser la sélection ///
             ////////////////////////////////////////
-            case ResourceKeys.INVERT_SELECTION:
-            {
+            case ResourceKeys.INVERT_SELECTION: {
                 final int[] selected=tableView.getSelectedRows();
                 tableView.clearSelection();
                 inverseSelect(selected);
@@ -322,24 +314,23 @@ final class ImageTablePanel extends ImagePanel
      *
      * @param rows Numéro de lignes des images dont on ne veut pas changer la sélection.
      */
-    private void inverseSelect(final int[] rows)
-    {
+    private void inverseSelect(final int[] rows) {
         Arrays.sort(rows);
         final ListSelectionModel model = tableView.getSelectionModel();
         model.setValueIsAdjusting(true);
 
-        int lower=0;
-        for (int i=0; i<rows.length; i++)
-        {
+        int lower = 0;
+        for (int i=0; i<rows.length; i++) {
             final int upper = rows[i];
-            if (upper > lower)
+            if (upper > lower) {
                 model.addSelectionInterval(lower, upper-1);
+            }
             lower = upper+1;
         }
         final int upper = table.getRowCount();
-        if (upper > lower)
+        if (upper > lower) {
             model.addSelectionInterval(lower, upper-1);
-
+        }
         model.setValueIsAdjusting(false);
     }
 
@@ -351,10 +342,8 @@ final class ImageTablePanel extends ImagePanel
      *
      * @param selection Images sélectionnées.
      */
-    private void imageSelected(final ImageEntry[] selection)
-    {
-        synchronized (getTreeLock())
-        {
+    private void imageSelected(final ImageEntry[] selection) {
+        synchronized (getTreeLock()) {
             final LayerControl[] selectedLayers = (layers!=null) ? getSelectedLayers() : null;
             final ImageCanvas[] images=new ImageCanvas[selection.length];
             /*
@@ -364,12 +353,10 @@ final class ImageTablePanel extends ImagePanel
              */
             int i=this.selection.length;
             final Map<ImageEntry,ImageCanvas> old=new HashMap<ImageEntry,ImageCanvas>(Math.max(2*i, 11));
-            while (--i>=0)
-            {
+            while (--i >= 0) {
                 old.put(this.selection[i], mosaic.getImage(i));
             }
-            for (i=selection.length; --i>=0;)
-            {
+            for (i=selection.length; --i>=0;) {
                 images[i] = old.remove(selection[i]);
             }
             /*
@@ -379,23 +366,19 @@ final class ImageTablePanel extends ImagePanel
              */
             this.selection=selection;
             final Iterator<ImageCanvas> it=old.values().iterator();
-            for (i=0; i<selection.length; i++)
-            {
-                if (images[i]==null)
-                {
+            for (i=0; i<selection.length; i++) {
+                if (images[i] == null) {
                     final ImageEntry entry = selection[i];
                     final ImageCanvas panel;
-                    if (it.hasNext())
-                    {
+                    if (it.hasNext()) {
                         panel = it.next();
-                    }
-                    else
-                    {
+                    } else {
                         panel = new ImageCanvas();
                         panel.addImageChangeListener(listeners);
                     }
                     images[i]=panel;
-                    panel.setImage(entry, selectedLayers, mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
+                    panel.setImage(entry, selectedLayers,
+                                   mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
                 }
             }
             /*
@@ -404,8 +387,7 @@ final class ImageTablePanel extends ImagePanel
              * le zoom des fenêtres et la visibilité des barres de
              * défilements.
              */
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 final ImageCanvas panel = it.next();
                 panel.removeImageChangeListener(listeners);
                 panel.dispose();
@@ -423,16 +405,12 @@ final class ImageTablePanel extends ImagePanel
      *
      * @param images Liste des images présentement affichées.
      */
-    private void imageChanged(final GridCoverage[] images)
-    {
-        if (images.length!=0)
-        {
-            colorRamp.setColorRamp(images[0]);
-            for (int i=1; i<images.length; i++)
-            {
-                if (colorRamp.setColorRamp(images[i]))
-                {
-                    colorRamp.setColorRamp((GridCoverage) null);
+    private void imageChanged(final GridCoverage[] images) {
+        if (images.length != 0) {
+            colorBar.setColors(images[0]);
+            for (int i=1; i<images.length; i++) {
+                if (colorBar.setColors(images[i])) {
+                    colorBar.setColors((GridCoverage) null);
                     break;
                 }
             }
@@ -444,20 +422,21 @@ final class ImageTablePanel extends ImagePanel
      * Cette copie pourra être enregistrée en binaire
      * (<i>serialized</i>).
      */
-    public ImageTableModel getModel()
-    {return new ImageTableModel(table);}
+    public ImageTableModel getModel() {
+        return new ImageTableModel(table);
+    }
 
     /**
      * Retourne les entrés des images sélectionnées par l'utilisateur.
      * Le tableau retourné peut avoir une longueur de 0, mais ne sera
      * jamais <code>null</code>.
      */
-    public ImageEntry[] getSelectedEntries()
-    {
+    public ImageEntry[] getSelectedEntries() {
         final int[]             rows = tableView.getSelectedRows();
         final ImageEntry[] selection = new ImageEntry[rows.length];
-        for (int i=0; i<rows.length; i++)
+        for (int i=0; i<rows.length; i++) {
             selection[i]=table.getEntryAt(rows[i]);
+        }
         return selection;
     }
 
@@ -466,8 +445,9 @@ final class ImageTablePanel extends ImagePanel
      * spécifiée. Cette méthode peut être appelée de n'importe quel thread
      * (pas nécessairement celui de <i>Swing</i>).
      */
-    public void setEntries(final List<ImageEntry> entries)
-    {this.table.setEntries(entries);}
+    public void setEntries(final List<ImageEntry> entries) {
+        this.table.setEntries(entries);
+    }
 
     /**
      * Remplace tous les enregistrements courants par ceux de la table <code>table</code>.
@@ -478,24 +458,25 @@ final class ImageTablePanel extends ImagePanel
      * @param  table Table dans laquelle puiser la liste des images.
      * @throws SQLException si l'interrogation de la table a échouée.
      */
-    public void setEntries(final ImageTable table) throws SQLException
-    {this.table.setEntries(table);}
+    public void setEntries(final ImageTable table) throws SQLException {
+        this.table.setEntries(table);
+    }
 
     /**
      * Retourne la série d'images représentée par cette table. Si la série n'est
      * pas connue ou si cette table contient des images de plusieurs séries
      * différentes, alors cette méthode peut retourner <code>null</code>.
      */
-    public SeriesEntry getSeries()
-    {return table.getSeries();}
+    public SeriesEntry getSeries() {
+        return table.getSeries();
+    }
 
     /**
      * Modifie le fuseau horaire pour l'affichage et la saisie des dates.
      * Cette modification n'affecte pas le fuseau horaire des éventuelles
      * bases de données accédées par cette fenêtre.
      */
-    protected void setTimeZone(final TimeZone timezone)
-    {
+    protected void setTimeZone(final TimeZone timezone) {
         super.setTimeZone(timezone);
         table.setTimeZone(timezone);
     }
@@ -506,8 +487,9 @@ final class ImageTablePanel extends ImagePanel
      * changement du contenu de la table ou de la sélection de l'utilisateur,
      * apparation de la fenêtre alors qu'elle était auparavant invisible, etc.
      */
-    public void addChangeListener(final ChangeListener listener)
-    {listenerList.add(ChangeListener.class, listener);}
+    public void addChangeListener(final ChangeListener listener) {
+        listenerList.add(ChangeListener.class, listener);
+    }
 
     /**
      * Retire un objet de la liste des objets intéressés à être informés des
@@ -515,8 +497,9 @@ final class ImageTablePanel extends ImagePanel
      * changement du contenu de la table ou de la sélection de l'utilisateur,
      * apparation de la fenêtre alors qu'elle était auparavant invisible, etc.
      */
-    public void removeChangeListener(final ChangeListener listener)
-    {listenerList.remove(ChangeListener.class, listener);}
+    public void removeChangeListener(final ChangeListener listener) {
+        listenerList.remove(ChangeListener.class, listener);
+    }
 
     /**
      * Classe de l'objet qui écoutera les événements d'intéret pour ce panneau.
@@ -533,20 +516,20 @@ final class ImageTablePanel extends ImagePanel
          * Méthode appelée automatiquement chaque
          * fois que le contenu du tableau change.
          */
-        public void tableChanged(final TableModelEvent event)
-        {updateStatusBar();}
+        public void tableChanged(final TableModelEvent event) {
+            updateStatusBar();
+        }
 
         /**
          * Méthode appelée automatiquement chaque fois que change
          * la sélection de l'utilisateur dans le tableau.
          */
-        public void valueChanged(final ListSelectionEvent event)
-        {
-            if (!event.getValueIsAdjusting())
-            {
+        public void valueChanged(final ListSelectionEvent event) {
+            if (!event.getValueIsAdjusting()) {
                 ImageEntry[] entries=getSelectedEntries();
-                if (entries.length>MAX_IMAGES)
+                if (entries.length>MAX_IMAGES) {
                     entries = XArray.resize(entries, MAX_IMAGES);
+                }
                 imageSelected(entries);
             }
             updateStatusBar();
@@ -556,8 +539,7 @@ final class ImageTablePanel extends ImagePanel
          * Méthode appelée automatiquement chaque fois qu'une des images affichées a changée.
          * Cette méthode n'est appelée qu'après que le chargement ait été complétée.
          */
-        public void imageChanged(final ImageChangeEvent event)
-        {
+        public void imageChanged(final ImageChangeEvent event) {
             ImageTablePanel.this.imageChanged(mosaic.getGridCoverages());
         }
     }
