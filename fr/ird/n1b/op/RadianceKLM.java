@@ -42,12 +42,9 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 import fr.ird.io.text.ParseSatellite;
 import fr.ird.n1b.io.Satellite;
-
-// GEOTOOLS.
-import org.geotools.pt.CoordinatePoint;
 
 /**
  * Cette classe calcul la radiance. La radiance est obtenue depuis les 
@@ -88,7 +85,7 @@ final class RadianceKLM extends Radiance
     /**
      * Grille contenant les coefficients de calibration.
      */
-    private final ElementGrid grid;    
+    private final CoefficientGrid grid;    
     
     /** 
      * Construit une nouvelle instance de ImageRadianceKLM.
@@ -105,7 +102,7 @@ final class RadianceKLM extends Radiance
                        final Map configuration) 
     {
         super(raw, layout, configuration);        
-        grid = (ElementGrid)parameters.getObjectParameter(THERMAL_COEFFICIENT);
+        grid = (CoefficientGrid)parameters.getObjectParameter(THERMAL_COEFFICIENT);
     }    
         
     /**
@@ -140,15 +137,12 @@ final class RadianceKLM extends Radiance
             while (!iTarget.finishedLines())
             {
                 int col = (int)destRect.getX();
-                final CoordinatePoint coeff = grid.getRecord(row);                
-                final double a0 = coeff.getOrdinate(0),
-                             a1 = coeff.getOrdinate(1),
-                             a2 = coeff.getOrdinate(2);
+                final double[] coeff = grid.getRecord(row);                
                 iSource.startPixels();            
                 iTarget.startPixels();                
                 while (!iTarget.finishedPixels())
                 {
-                    final double radiance = Math.max(compute(iSource.getSampleDouble(), a0, a1, a2), 0);                    
+                    final double radiance = Math.max(compute(iSource.getSampleDouble(), coeff[0], coeff[1], coeff[2]), 0);                    
                     iTarget.setSample(radiance);
                     iSource.nextPixel();
                     iTarget.nextPixel();
@@ -185,7 +179,7 @@ final class RadianceKLM extends Radiance
     {        
         final String descriptor       = "RADIANCE";
         final String[] paramNames     = {THERMAL_COEFFICIENT};
-        final Class[]  paramClasses   = {ElementGrid.class};
+        final Class[]  paramClasses   = {CoefficientGrid.class};
         final Object[]  paramDefaults = {null};
         final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
                                                                                                paramNames,

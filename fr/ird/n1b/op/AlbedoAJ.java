@@ -42,11 +42,8 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 import fr.ird.io.text.ParseSatellite;
-
-// GEOTOOLS.
-import org.geotools.pt.CoordinatePoint;
 
 /**
  * Calcul le pourcentage d'albedo. L'albedo est obtenu depuis les valeurs brutes (rawData) 
@@ -82,7 +79,7 @@ final class AlbedoAJ extends Albedo
     /**
      * Grille contenant les coefficients de calibration utile lors de la conversion.
      */
-    private final ElementGrid grid;    
+    private final CoefficientGrid grid;    
         
     /** 
      * Construit une nouvelle instance de AlbedoAJ.
@@ -99,7 +96,7 @@ final class AlbedoAJ extends Albedo
                     final Map                   configuration) 
     {
         super(image, layout, configuration);  
-        grid = (ElementGrid)parameters.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT);
+        grid = (CoefficientGrid)parameters.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT);
     }    
         
     /**
@@ -126,17 +123,15 @@ final class AlbedoAJ extends Albedo
             iTarget.startLines();
             while (!iTarget.finishedLines())
             {
-                final CoordinatePoint coeff = grid.getRecord(row);                
-                final double a0 = coeff.getOrdinate(0),
-                             a1 = coeff.getOrdinate(1);
+                final double[] coeff = grid.getRecord(row);                
                 int col = (int)destRect.getX();
                 iSource.startPixels();            
                 iTarget.startPixels();                
                 while (!iTarget.finishedPixels())
                 {
                     final double albedo = Math.max(compute(iSource.getSampleDouble(), 
-                                                           a0, 
-                                                           a1), 0);
+                                                           coeff[0], 
+                                                           coeff[1]), 0);
                     iTarget.setSample(albedo);
                     iSource.nextPixel();
                     iTarget.nextPixel();
@@ -171,7 +166,7 @@ final class AlbedoAJ extends Albedo
     {        
         final String descriptor       = "ALBEDO";
         final String[] paramNames     = {SLOPE_INTERCEPT_COEFFICIENT};
-        final Class[]  paramClasses   = {ElementGrid.class};
+        final Class[]  paramClasses   = {CoefficientGrid.class};
         final Object[]  paramDefaults = {null};
         final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
                                                                                                paramNames,

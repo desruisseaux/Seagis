@@ -42,12 +42,9 @@ import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.WritableRectIter;
 
 // SEAGIS
-import fr.ird.util.ElementGrid;
+import fr.ird.util.CoefficientGrid;
 import fr.ird.io.text.ParseSatellite;
 import fr.ird.n1b.io.Satellite;
-
-// GEOTOOLS.
-import org.geotools.pt.CoordinatePoint;
 
 /**
  * Cette classe calcul la radiance. La radiance est obtenue depuis 
@@ -88,7 +85,7 @@ final class RadianceAJ extends Radiance
     /**
      * Grille contenant les coefficients de calibration.
      */
-    private final ElementGrid grid;    
+    private final CoefficientGrid grid;    
         
     /** 
      * Construit un GridCoverage contenant la radiance.
@@ -105,7 +102,7 @@ final class RadianceAJ extends Radiance
                       final Map                 configuration) 
     {
         super(raw, layout, configuration);  
-        grid = (ElementGrid)parameters.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT);
+        grid = (CoefficientGrid)parameters.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT);
     }    
         
     /**
@@ -139,14 +136,12 @@ final class RadianceAJ extends Radiance
             while (!iTarget.finishedLines())
             {
                 int col = (int)destRect.getX();
-                final CoordinatePoint coeff = grid.getRecord(row);                
-                final double a0 = coeff.getOrdinate(0),
-                             a1 = coeff.getOrdinate(1);
+                final double[] coeff = grid.getRecord(row);                
                 iSource.startPixels();            
                 iTarget.startPixels();                
                 while (!iTarget.finishedPixels())
                 {
-                    final double radiance = Math.max(compute(iSource.getSampleDouble(), a0, a1), 0);
+                    final double radiance = Math.max(compute(iSource.getSampleDouble(), coeff[0], coeff[1]), 0);
                     iTarget.setSample(radiance);
                     iSource.nextPixel();
                     iTarget.nextPixel();
@@ -181,7 +176,7 @@ final class RadianceAJ extends Radiance
     {        
         final String descriptor       = "RADIANCE";
         final String[] paramNames     = {SLOPE_INTERCEPT_COEFFICIENT};
-        final Class[]  paramClasses   = {ElementGrid.class};
+        final Class[]  paramClasses   = {CoefficientGrid.class};
         final Object[]  paramDefaults = {null};
         final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
                                                                                                paramNames,
