@@ -57,7 +57,7 @@ public class CoordinatePoint implements Dimensioned, Cloneable, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = 8733694401519122222L; // TODO
+    private static final long serialVersionUID = -6975990652038126533L;
 
     /**
      * The ordinates of the coordinate point.

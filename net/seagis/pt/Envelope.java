@@ -62,7 +62,7 @@ public class Envelope implements Dimensioned, Cloneable, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = -3698298355829867895L; // TODO
+    private static final long serialVersionUID = -3228667532994790309L;
 
     /**
      * Minimum and maximum ordinate values. The first half contains minimum
