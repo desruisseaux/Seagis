@@ -56,6 +56,21 @@ public final class OpenGIS
     {}
 
     /**
+     * Returns the dimension of the first axis of a particular type.
+     * For example, <code>getDimensionOf(cs,&nbsp;AxisInfo.TIME)</code>
+     * would returns the dimension number of time axis.
+     */
+    public static int getDimensionOf(final CoordinateSystem cs, final AxisInfo axis)
+    {
+        final int dimension = cs.getDimension();
+        final AxisOrientation orientation = axis.orientation.absolute();
+        for (int i=0; i<dimension; i++)
+            if (orientation.equals(cs.getAxis(i).orientation.absolute()))
+                return i;
+        return -1;
+    }
+
+    /**
      * Returns the first horizontal datum found in a coordinate system,
      * or <code>null</code> if there is none. Note: if a future version,
      * we may implement this method directly into {@link CoordinateSystem}
