@@ -33,6 +33,7 @@ package net.seagis.gp;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.gc.GridCoverage;
+import net.seagis.ct.CoordinateTransformationFactory;
 
 // Collections
 import java.util.Set;
@@ -100,7 +101,9 @@ public class GridCoverageProcessor
      * set of operations than the specified processor.
      */
     protected GridCoverageProcessor(final GridCoverageProcessor processor)
-    {operations.putAll(processor.operations);}
+    {
+        operations.putAll(processor.operations);
+    }
 
     /**
      * Returns the default grid coverage processor.
@@ -109,8 +112,10 @@ public class GridCoverageProcessor
     {
         if (DEFAULT==null)
         {
+            final CoordinateTransformationFactory factory = CoordinateTransformationFactory.getDefault();
             DEFAULT = new GridCoverageProcessor();
             DEFAULT.addOperation(new Interpolator.Operation());
+            DEFAULT.addOperation(new Resampler.Operation(factory));
             DEFAULT.addOperation(new OperationJAI("GradientMagnitude"));
             DEFAULT.addOperation(new OperationJAI("Rescale"));
         }

@@ -80,7 +80,7 @@ public class CoordinateTransformationFactory
     /**
      * The underlying math transform factory.
      */
-    protected final MathTransformFactory factory;
+    private final MathTransformFactory factory;
 
     /**
      * Construct a coordinate transformation factory.
@@ -101,6 +101,14 @@ public class CoordinateTransformationFactory
         }
         return DEFAULT;
     }
+
+    /**
+     * Returns the underlying math transform factory. This factory
+     * is used for constructing {@link MathTransform} objects for
+     * all {@link CoordinateTransformation}.
+     */
+    public MathTransformFactory getMathTransformFactory()
+    {return factory;}
 
     /**
      * Creates a transformation between two coordinate systems.
@@ -198,7 +206,7 @@ public class CoordinateTransformationFactory
         // TODO: Need to bring back the longitude in the [-180,180) range
         //       and the latitude to the [-90,90] range, with longitude==0
         //       if abs(latitude)==90.
-        final MathTransform transform = factory.createAffineTransform(matrix);
+        final MathTransform transform = getMathTransformFactory().createAffineTransform(matrix);
         return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
     }
 
@@ -230,7 +238,7 @@ public class CoordinateTransformationFactory
             // 'swapAndScaleAxis(...) takes care of axis orientation and units. Datum and projection
             // have just been checked above. Prime meridien is not checked (TODO: should we do???)
             final Matrix matrix = swapAndScaleAxis(sourceCS, targetCS);
-            final MathTransform transform = factory.createAffineTransform(matrix);
+            final MathTransform transform = getMathTransformFactory().createAffineTransform(matrix);
             return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
         }
         final CoordinateTransformation step1 = createTransformationStep(sourceCS,  sourceGeo);
@@ -259,7 +267,7 @@ public class CoordinateTransformationFactory
         assert projection.equals(targetCS.getProjection());
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
 
-        final MathTransform    mapProjection = factory.createParameterizedTransform(projection);
+        final MathTransform    mapProjection = getMathTransformFactory().createParameterizedTransform(projection);
         final CoordinateTransformation step1 = createTransformationStep(sourceCS, stepGeoCS);
         final CoordinateTransformation step2 = createFromMathTransform(stepGeoCS, stepProjCS, TransformType.CONVERSION, mapProjection);
         final CoordinateTransformation step3 = createTransformationStep(stepProjCS, targetCS);
@@ -308,12 +316,13 @@ public class CoordinateTransformationFactory
             // Current message is for debugging purpose only.
             throw new IllegalArgumentException(String.valueOf(step3));
         }
-        final MathTransform step  = factory.createConcatenatedTransform(step1.getMathTransform(),
-                                    factory.createConcatenatedTransform(step2.getMathTransform(),
-                                                                        step3.getMathTransform()));
-        final TransformType type  = step1.getTransformType().concatenate(
-                                    step2.getTransformType().concatenate(
-                                    step3.getTransformType()));
+        final MathTransformFactory factory = getMathTransformFactory();
+        final MathTransform step = factory.createConcatenatedTransform(step1.getMathTransform(),
+                                   factory.createConcatenatedTransform(step2.getMathTransform(),
+                                                                       step3.getMathTransform()));
+        final TransformType type = step1.getTransformType().concatenate(
+                                   step2.getTransformType().concatenate(
+                                   step3.getTransformType()));
         return createFromMathTransform(step1.getSourceCS(), step3.getTargetCS(), type, step);
     }
 

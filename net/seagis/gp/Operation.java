@@ -37,6 +37,7 @@ import net.seagis.gc.ParameterInfo;
 
 // Parameters
 import javax.media.jai.util.Range;
+import javax.media.jai.Interpolation;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
@@ -70,6 +71,30 @@ public abstract class Operation implements Serializable
      * Serial number for interoperability with different versions.
      */
     private static final long serialVersionUID = -1280778129220703728L;
+
+    /**
+     * List of valid names. Note: the "Optimal" type is not
+     * implemented because currently not provided by JAI.
+     */
+    private static final String[] INTERPOLATION_NAMES=
+    {
+        "NearestNeighbor",
+        "Bilinear",
+        "Bicubic",
+        "Bicubic2"
+    };
+
+    /**
+     * Interpolation types (provided by Java Advanced
+     * Imaging) for {@link #INTERPOLATION_NAMES}.
+     */
+    private static final int[] INTERPOLATION_TYPES=
+    {
+        Interpolation.INTERP_NEAREST,
+        Interpolation.INTERP_BILINEAR,
+        Interpolation.INTERP_BICUBIC,
+        Interpolation.INTERP_BICUBIC_2
+    };
 
     /**
      * The name of the processing operation.
@@ -154,6 +179,33 @@ public abstract class Operation implements Serializable
      */
     public ParameterList getParameterList()
     {return new ParameterListImpl(descriptor);}
+
+    /**
+     * Cast the specified object to an {@link Interpolation object}.
+     *
+     * @param  type The interpolation type as an {@link Interpolation} or a {@link CharSequence} object.
+     * @return The interpolation object for the specified type.
+     * @throws IllegalArgumentException if the specified interpolation type is not a know one.
+     */
+    static Interpolation toInterpolation(final Object type)
+    {
+        if (type instanceof Interpolation)
+        {
+            return (Interpolation) type;
+        }
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        else if (type instanceof CharSequence)
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        else if (type instanceof String)
+//----- END OF JDK 1.3 FALLBACK -------
+        {
+            final String name=type.toString();
+            for (int i=0; i<INTERPOLATION_NAMES.length; i++)
+                if (INTERPOLATION_NAMES[i].equalsIgnoreCase(name))
+                    return Interpolation.getInstance(INTERPOLATION_TYPES[i]);
+        }
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_UNKNOW_INTERPOLATION_$1, type));
+    }
 
     /**
      * Apply a process operation to a grid coverage. This method

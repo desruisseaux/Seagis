@@ -38,7 +38,12 @@ import java.awt.image.renderable.ParameterBlock;
 // Java Advanced Imaging
 import javax.media.jai.JAI;
 import javax.media.jai.Warp;
+import javax.media.jai.RenderedOp;
+import javax.media.jai.PlanarImage;
 import javax.media.jai.Interpolation;
+import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListDescriptor;
+import javax.media.jai.ParameterListDescriptorImpl;
 
 // OpenGIS (SEAGIS-GCS) dependencies
 import net.seagis.gc.GridCoverage;
@@ -47,18 +52,18 @@ import net.seagis.cv.CategoryList;
 import net.seagis.cv.SampleDimension;
 
 // OpenGIS (SEAGIS-CSS) dependencies
-import net.seagis.pt.Matrix;
 import net.seagis.pt.Envelope;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.ct.MathTransform;
 import net.seagis.ct.MathTransform2D;
 import net.seagis.ct.TransformException;
+import net.seagis.ct.MathTransformFactory;
 import net.seagis.ct.CoordinateTransformation;
 import net.seagis.ct.CoordinateTransformationFactory;
 
 // Resources
+import java.util.Locale;
 import net.seagis.resources.OpenGIS;
-import net.seagis.resources.Utilities;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
 
@@ -88,30 +93,85 @@ import net.seagis.resources.gcs.ResourceKeys;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-final class Resampler
+final class Resampler extends GridCoverage
 {
     /**
-     * The coordinate transform factory to use.
+     * Construct a new grid coverage performing
+     * the specified coordinate transformation.
+     *
+     * @param  sourceCoverage     The original grid coverage.
+     * @param  transformation     The transformation to apply. <code>sourceCS</code> <strong>must</strong>
+     *                            be equals to the source grid coverage coordinate system.
+     * @param  targetGridGeometry The target grid geometry, or <code>null</code> for default.
+     * @param  interpolation      The interpolation to use.
+     * @param  factory            The factory to use for constructing math transforms.
+     * @throws TransformException if a transformation failed.
      */
-    private final CoordinateTransformationFactory factory = CoordinateTransformationFactory.getDefault();
+    private Resampler(final GridCoverage             sourceCoverage,
+                      final CoordinateTransformation transformation,
+                      final GridGeometry         targetGridGeometry,
+                      final Interpolation             interpolation,
+                      final MathTransformFactory            factory) throws TransformException
+    {
+        super(sourceCoverage.getName(null),
+              JAI.create("Null", sourceCoverage.getRenderedImage(true)),
+              transformation.getTargetCS(),
+              OpenGIS.transform(transformation.getMathTransform(), sourceCoverage.getEnvelope()),
+              getCategories(sourceCoverage), true, new GridCoverage[] {sourceCoverage}, null);
 
-    /**
-     * The interpolation to use. Default to nearest neighbor.
-     */
-    private final Interpolation interpolation = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert sourceCoverage.getCoordinateSystem().equivalents(transformation.getSourceCS());
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+        if (targetGridGeometry!=null)
+        {
+            // TODO
+            throw new CannotReprojectException("'GridGeometry' parameter not yet implemented");
+        }
+
+        MathTransform transform = transformation.getMathTransform();
+        if (!(transform instanceof MathTransform2D))
+        {
+            // TODO: Generalize to cases where 'sourceToTarget'
+            // doesn't map two-dimensional coordinate systems.
+            throw new CannotReprojectException("Only 2D transforms are currently implemented");
+        }
+        final RenderedOp      operation = (RenderedOp) data;
+        final RenderedImage sourceImage = operation.getSourceImage(0);
+        final Warp                 warp = new WarpTransform(sourceCoverage.getGridGeometry(), (MathTransform2D) transform, gridGeometry, factory);
+        final ParameterBlock      param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
+        operation.setOperationName("Warp");
+        operation.setParameterBlock(param);
+        // We had to set the operation's parameters last  because the construction of
+        // 'WarpTransform' requires the geometry of this grid coverage. The trick was
+        // to initialize this 'Resampler' with a null operation, and change the
+        // operation here.
+
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert sourceImage == sourceCoverage.getRenderedImage(true);
+        assert data.getBounds().equals(PlanarImage.wrapRenderedImage(sourceImage).getBounds());
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+    }
 
     /**
      * Create a new coverage with a different coordinate reference system.
      *
      * @param  sourceCoverage The source grid coverage.
      * @param  targetCS Coordinate system of the new grid coverage.
-     * @return The new grid coverage.
+     * @param  targetGridGeometry The target grid geometry, or <code>null</code> for default.
+     * @param  interpolation The interpolation to use.
+     * @param  factory The transformation factory to use.
+     * @return The new grid coverage, or <code>sourceCoverage</code> if no resampling was needed.
      * @throws CannotReprojectException if the grid coverage can't be reprojected.
      */
-    private GridCoverage reproject(final GridCoverage sourceCoverage, final CoordinateSystem targetCS) throws CannotReprojectException
+    private static GridCoverage reproject(final GridCoverage             sourceCoverage,
+                                          final CoordinateSystem               targetCS,
+                                          final GridGeometry         targetGridGeometry,
+                                          final Interpolation             interpolation,
+                                          final CoordinateTransformationFactory factory) throws CannotReprojectException
     {
         final CoordinateSystem sourceCS = sourceCoverage.getCoordinateSystem();
-        if (sourceCS==targetCS) // May be both null.
+        if (sourceCS==targetCS && targetGridGeometry==null) // May be both null.
         {
             return sourceCoverage;
         }
@@ -119,44 +179,18 @@ final class Resampler
         {
             throw new CannotReprojectException(Resources.format(ResourceKeys.ERROR_UNSPECIFIED_COORDINATE_SYSTEM));
         }
-        if (sourceCS.equivalents(targetCS))
+        if (sourceCS.equivalents(targetCS) && targetGridGeometry==null)
         {
             return sourceCoverage;
         }
         try
         {
-            final Envelope      sourceEnvelope = sourceCoverage.getEnvelope();
-            final GridGeometry  sourceGeometry = sourceCoverage.getGridGeometry();
-            final MathTransform sourceToTarget = factory.createFromCoordinateSystems(sourceCS, targetCS).getMathTransform();
-            final Envelope      targetEnvelope = OpenGIS.transform(sourceToTarget, sourceEnvelope);
-            final GridGeometry  targetGeometry = new GridGeometry(sourceGeometry.getGridRange(), targetEnvelope, inverted(sourceGeometry));
-
-            final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
-            final CategoryList[]    categories = new CategoryList[samplesDim.length];
-            for (int i=0; i<categories.length; i++)
-                categories[i] = samplesDim[i].getCategoryList();
-
-            // TODO: Generalize to cases where 'sourceToTarget' doesn't map two-dimensional coordinate systems.
-            final Warp warp = new WarpTransform(sourceGeometry, (MathTransform2D) sourceToTarget, targetGeometry);
-
-            final RenderedImage sourceImage = sourceCoverage.getRenderedImage(true);
-            final ParameterBlock param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
-            final RenderedImage projectedImage = JAI.create("Warp", param);
-
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            assert projectedImage.getWidth()  == sourceImage.getWidth();
-            assert projectedImage.getHeight() == sourceImage.getHeight();
-            assert projectedImage.getMinX()   == sourceImage.getMinX();
-            assert projectedImage.getMinY()   == sourceImage.getMinY();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-
-            final String name = sourceCoverage.getName(null)+" reprojected"; // TODO: localize
-            return new GridCoverage(name, projectedImage, targetCS, targetEnvelope, categories, true,
-                                    new GridCoverage[] {sourceCoverage}, null);
+            final CoordinateTransformation transformation = factory.createFromCoordinateSystems(sourceCS, targetCS);
+            return new Resampler(sourceCoverage, transformation, targetGridGeometry, interpolation, factory.getMathTransformFactory());
         }
         catch (TransformException exception)
         {
-            CannotReprojectException e = new CannotReprojectException("Can't reproject"); // TODO: localize
+            CannotReprojectException e = new CannotReprojectException(Resources.format(ResourceKeys.ERROR_CANT_REPROJECT_$1, sourceCoverage.getName(null)));
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
@@ -165,52 +199,93 @@ final class Resampler
     }
 
     /**
-     * Try to guess which axis are inverted in the specified grid geometry.
-     * If this method can't make the guess, it returns <code>null</code>.
-     *
-     * TODO: Should we move this method into yet an other GridCoverage's constructor?
+     * Gets the source coverage category lists. The same
+     * categories will be used for the transformed image.
      */
-    private static boolean[] inverted(final GridGeometry geometry)
+    private static CategoryList[] getCategories(final GridCoverage sourceCoverage)
     {
-        final Matrix matrix;
-        try
+        final SampleDimension[] samplesDim = sourceCoverage.getSampleDimensions();
+        final CategoryList[]    categories = new CategoryList[samplesDim.length];
+        for (int i=0; i<categories.length; i++)
         {
-            // Try to get the affine transform, assuming it is
-            // insensitive to location (thus the 'null' argument).
-            matrix = geometry.getGridToCoordinateSystem().derivative(null);
+            categories[i] = samplesDim[i].getCategoryList();
         }
-        catch (NullPointerException exception)
+        return categories;
+    }
+
+    /**
+     * Returns the coverage name, localized for the supplied locale.
+     * Default implementation fallback to the first source coverage.
+     */
+    public String getName(final Locale locale)
+    {
+        final GridCoverage[] sources = getSources();
+        if (sources!=null && sources.length!=0)
+            return sources[0].getName(locale);
+        return super.getName(locale);
+    }
+
+
+
+
+    /**
+     * The "Resample" operation. See package description for more details.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Operation extends net.seagis.gp.Operation
+    {
+        /**
+         * The coordinate transform factory to use when
+         * coordinate transformation are required.
+         */
+        private final CoordinateTransformationFactory factory;
+
+        /**
+         * Construct a "Resample" operation.
+         */
+        public Operation(final CoordinateTransformationFactory factory)
         {
-            // The approximate affine transform is location-dependent.
-            // We can't guess axis orientation from this.
-            return null;
+            super("Resample", new ParameterListDescriptorImpl(
+                  null,         // the object to be reflected upon for enumerated values.
+                  new String[]  // the names of each parameter.
+                  {
+                      "Source",
+                      "InterpolationType",
+                      "CoordinateSystem",
+                      "GridGeometry"
+                  },
+                  new Class[]   // the class of each parameter.
+                  {
+                      GridCoverage.class,
+                      Object.class,
+                      CoordinateSystem.class,
+                      GridGeometry.class
+                  },
+                  new Object[] // The default values for each parameter.
+                  {
+                      ParameterListDescriptor.NO_PARAMETER_DEFAULT,
+                      "NearestNeighbor",
+                      null, // Same as source grid coverage
+                      null  // Automatic
+                  },
+                  null // Defines the valid values for each parameter.
+            ));
+            this.factory = factory;
         }
-        catch (Exception exception)
+
+        /**
+         * Resample a grid coverage. This method is invoked by
+         * {@link GridCoverageProcessor} for the "Resample" operation.
+         */
+        protected GridCoverage doOperation(final ParameterList parameters)
         {
-            // Some other error occured. We didn't expected it,
-            // but it will not prevent 'Resampler' to work.
-            Utilities.unexpectedException("net.seagis.gcs", "MathTransform", "derivative", exception);
-            return null;
+            final GridCoverage   source = (GridCoverage)     parameters.getObjectParameter("Source");
+            final Interpolation  interp = toInterpolation   (parameters.getObjectParameter("InterpolationType"));
+            final CoordinateSystem   cs = (CoordinateSystem) parameters.getObjectParameter("CoordinateSystem");
+            final GridGeometry gridGeom = (GridGeometry)     parameters.getObjectParameter("GridGeometry");
+            return reproject(source, (cs!=null) ? cs : source.getCoordinateSystem(), gridGeom, interp, factory);
         }
-        final int numCols = matrix.getNumColumns();
-        final boolean[] inverse = new boolean[matrix.getNumRows()];
-        for (int j=0; j<inverse.length; j++)
-        {
-            for (int i=0; i<numCols; i++)
-            {
-                final double value = matrix.get(j,i);
-                if (i==j)
-                {
-                    inverse[j] = (value < 0);
-                }
-                else if (value!=0)
-                {
-                    // Matrix is not diagonal.
-                    // Can't guess axis direction.
-                    return null;
-                }
-            }
-        }
-        return inverse;
     }
 }

@@ -101,6 +101,7 @@ import java.text.DateFormat;
 import java.text.FieldPosition;
 
 // Resources
+import net.seagis.resources.XArray;
 import net.seagis.resources.OpenGIS;
 import net.seagis.resources.WeakHashSet;
 import net.seagis.resources.gcs.Resources;
@@ -426,8 +427,32 @@ public class GridCoverage extends Coverage
         final GridGeometry gridGeometry;
         if (transform==null)
         {
-            final boolean[] inverse = new boolean[dimension];
-            inverse[1] = true; // Inverse 'y' axis only.
+            // Should we invert some axis? For example, the 'y' axis is often inversed
+            // (since image use a downward 'y' axis). If all source grid coverages use
+            // the same axis orientations, we will reuse those orientations. Otherwise,
+            // we will use default orientations where only the 'y' axis is inversed.
+            boolean[] inverse = null;
+            if (sources!=null)
+            {
+                for (int i=0; i<sources.length; i++)
+                {
+                    final boolean[] check = XArray.resize(sources[i].gridGeometry.areAxisInverted(), dimension);
+                    if (inverse!=null)
+                    {
+                        if (!Arrays.equals(check, inverse))
+                        {
+                            inverse = null;
+                            break;
+                        }
+                    }
+                    else inverse = check;
+                }
+            }
+            if (inverse==null)
+            {
+                inverse = new boolean[dimension];
+                inverse[1] = true; // Inverse 'y' axis only.
+            }
             gridGeometry = new GridGeometry(gridRange, envelope, inverse);
         }
         else gridGeometry = new GridGeometry(gridRange, transform);

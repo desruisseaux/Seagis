@@ -63,11 +63,12 @@ final class WarpTransform extends Warp
      * @param  source The source image's {@link GridGeometry}.
      * @param  transform The transformation to apply from source to target image.
      * @param  target The target image's {@link GridGeometry}.
+     * @param  factory The {@link MathTransformFactory} to use.
      * @throws NoninvertibleTransformException if a transform can't be inversed.
      */
-    public WarpTransform(final GridGeometry source, final MathTransform2D transform, final GridGeometry target) throws NoninvertibleTransformException
+    public WarpTransform(final GridGeometry source, final MathTransform2D transform, final GridGeometry target,
+                         final MathTransformFactory factory) throws NoninvertibleTransformException
     {
-        final MathTransformFactory factory = MathTransformFactory.getDefault();
         final MathTransform step1 = target.getGridToCoordinateSystem2D();
         final MathTransform step2 = transform.inverse();
         final MathTransform step3 = source.getGridToCoordinateSystem2D().inverse();

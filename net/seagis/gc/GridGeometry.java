@@ -373,6 +373,58 @@ public class GridGeometry implements Dimensioned, Serializable
     }
 
     /**
+     * Try to guess which axis are inverted in this grid geometry. If
+     * this method can't make the guess, it returns <code>null</code>.
+     *
+     * @return An array with length equals  to the number of dimensions in
+     *         the "real world" coordinate system, or <code>null</code> if
+     *         if this array can't be deduced.
+     */
+    final boolean[] areAxisInverted()
+    {
+        final Matrix matrix;
+        try
+        {
+            // Try to get the affine transform, assuming it is
+            // insensitive to location (thus the 'null' argument).
+            matrix = gridToCoordinateSystem.derivative(null);
+        }
+        catch (NullPointerException exception)
+        {
+            // The approximate affine transform is location-dependent.
+            // We can't guess axis orientation from this.
+            return null;
+        }
+        catch (Exception exception)
+        {
+            // Some other error occured. We didn't expected it,
+            // but it will not prevent 'GridCoverage' to work.
+            Utilities.unexpectedException("net.seagis.gcs", "MathTransform", "derivative", exception);
+            return null;
+        }
+        final int numCols = matrix.getNumColumns();
+        final boolean[] inverse = new boolean[matrix.getNumRows()];
+        for (int j=0; j<inverse.length; j++)
+        {
+            for (int i=0; i<numCols; i++)
+            {
+                final double value = matrix.get(j,i);
+                if (i==j)
+                {
+                    inverse[j] = (value < 0);
+                }
+                else if (value!=0)
+                {
+                    // Matrix is not diagonal.
+                    // Can't guess axis direction.
+                    return null;
+                }
+            }
+        }
+        return inverse;
+    }
+
+    /**
      * Returns a hash value for this grid geometry.
      * This value need not remain consistent between
      * different implementations of the same class.

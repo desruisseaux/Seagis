@@ -640,30 +640,6 @@ final class Interpolator extends GridCoverage
     static final class Operation extends net.seagis.gp.Operation
     {
         /**
-         * List of valid names. Note: the "Optimal" type is not
-         * implemented because currently not provided by JAI.
-         */
-        private static final String[] NAMES=
-        {
-            "NearestNeighbor",
-            "Bilinear",
-            "Bicubic",
-            "Bicubic2"
-        };
-
-        /**
-         * Interpolation types (provided by Java
-         * Advanced Imaging) for {@link #NAMES}.
-         */
-        private static final int[] TYPES=
-        {
-            Interpolation.INTERP_NEAREST,
-            Interpolation.INTERP_BILINEAR,
-            Interpolation.INTERP_BICUBIC,
-            Interpolation.INTERP_BICUBIC_2
-        };
-
-        /**
          * Construct an "Interpolate" operation.
          */
         public Operation()
@@ -683,37 +659,10 @@ final class Interpolator extends GridCoverage
                   new Object[] // The default values for each parameter.
                   {
                       ParameterListDescriptor.NO_PARAMETER_DEFAULT,
-                      NAMES[0] // "NearestNeighbor"
+                      "NearestNeighbor"
                   },
                   null // Defines the valid values for each parameter.
             ));
-        }
-
-        /**
-         * Cast the specified object to an {@link Interpolation object}.
-         *
-         * @param  type The interpolation type as an {@link Interpolation} or a {@link CharSequence} object.
-         * @return The interpolation object for the specified type.
-         * @throws IllegalArgumentException if the specified interpolation type is not a know one.
-         */
-        private static Interpolation cast(final Object type)
-        {
-            if (type instanceof Interpolation)
-            {
-                return (Interpolation) type;
-            }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            else if (type instanceof CharSequence)
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-            else if (type instanceof String)
-//----- END OF JDK 1.3 FALLBACK -------
-            {
-                final String name=type.toString();
-                for (int i=0; i<NAMES.length; i++)
-                    if (NAMES[i].equalsIgnoreCase(name))
-                        return Interpolation.getInstance(TYPES[i]);
-            }
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_UNKNOW_INTERPOLATION_$1, type));
         }
 
         /**
@@ -729,11 +678,14 @@ final class Interpolator extends GridCoverage
             {
                 interpolations = new Interpolation[Array.getLength(type)];
                 for (int i=0; i<interpolations.length; i++)
-                    interpolations[i] = cast(Array.get(type, i));
+                    interpolations[i] = toInterpolation(Array.get(type, i));
             }
             else
             {
-                interpolations = new Interpolation[] {cast(type)};
+                interpolations = new Interpolation[]
+                {
+                    toInterpolation(type)
+                };
             }
             return create(source, interpolations);
         }
