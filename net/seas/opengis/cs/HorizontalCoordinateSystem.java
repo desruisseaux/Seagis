@@ -27,6 +27,7 @@ import org.opengis.cs.CS_HorizontalDatum;
 import org.opengis.cs.CS_HorizontalCoordinateSystem;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -84,22 +85,20 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Wrap an OpenGIS coordinate system.
+     * Construct a coordinate system.
      *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param datum The horizontal datum.
+     * @param axis0 Details of 0th ordinates in created coordinate system.
+     * @param axis1 Details of 1st ordinates in created coordinate system.
      */
-    HorizontalCoordinateSystem(final CS_HorizontalCoordinateSystem cs) throws RemoteException
+    HorizontalCoordinateSystem(final Map<String,Object> properties, final HorizontalDatum datum, final AxisInfo axis0, final AxisInfo axis1)
     {
-        super(cs);
-        if (cs.getDimension()!=2)
-        {
-            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
-        }
-        datum = Adapters.wrap(cs.getHorizontalDatum());
-        axis0 = Adapters.wrap(cs.getAxis(0));
-        axis1 = Adapters.wrap(cs.getAxis(1));
-        // Accept null value.
+        super(properties);
+        this.datum = datum;
+        this.axis0 = axis0;
+        this.axis1 = axis1;
+        // Accept null values
     }
 
     /**
@@ -148,8 +147,11 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     /**
      * Returns an OpenGIS interface for this horizontal coordinate
      * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_HorizontalCoordinateSystem
+    Object toOpenGIS()
     {return new Export();}
 
 

@@ -28,6 +28,7 @@ import org.opengis.cs.CS_VerticalDatum;
 import org.opengis.cs.CS_VerticalCoordinateSystem;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -88,22 +89,20 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Wrap an OpenGIS coordinate system.
+     * Creates a vertical coordinate system from a datum and linear units.
      *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param datum Datum to use for new coordinate system.
+     * @param unit  Units to use for new coordinate system.
+     * @param axis  Axis to use for new coordinate system.
      */
-    VerticalCoordinateSystem(final CS_VerticalCoordinateSystem cs) throws RemoteException
+    VerticalCoordinateSystem(final Map<String,Object> properties, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
     {
-        super(cs);
-        if (cs.getDimension()!=1)
-        {
-            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
-        }
-        datum = Adapters.wrap(cs.getVerticalDatum());
-        unit  = Adapters.wrap(cs.getVerticalUnit());
-        axis  = Adapters.wrap(cs.getAxis(0));
-        // Accept null value.
+        super(properties);
+        this.datum = datum;
+        this.unit  = unit;
+        this.axis  = axis;
+        // Accept null values.
     }
 
     /**
@@ -175,8 +174,11 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     /**
      * Returns an OpenGIS interface for this vertical coordinate
      * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_VerticalCoordinateSystem toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

@@ -27,6 +27,7 @@ import org.opengis.cs.CS_Projection;
 import org.opengis.cs.CS_ProjectionParameter;
 
 // Miscellaneous
+import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
@@ -100,22 +101,18 @@ public class Projection extends Info
     }
 
     /**
-     * Wrap the specified OpenGIS projection.
+     * Creates a projection.
      *
-     * @param  projection The OpenGIS projection.
-     * @throws RemoteException if a remote call failed.
+     * @param properties     The set of properties.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    Projection(final CS_Projection projection) throws RemoteException
+    Projection(final Map<String,Object> properties, final String classification, final Parameter[] parameters)
     {
-        super(projection);
-        classification = projection.getClassName();
-        parameters = new Parameter[projection.getNumParameters()];
-        for (int i=0; i<parameters.length; i++)
-        {
-            final CS_ProjectionParameter param = projection.getParameter(i);
-            if (param!=null)
-                parameters[i] = new Parameter(param.name, param.value);
-        }
+        super(properties);
+        this.classification = classification;
+        this.parameters     = parameters;
+        // Accept null values.
     }
 
     /**
@@ -160,6 +157,17 @@ public class Projection extends Info
     {return parameters[index].clone();}
 
     /**
+     * Returns all parameters.
+     */
+    public Parameter[] getParameters()
+    {
+        final Parameter[] param = new Parameter[getNumParameters()];
+        for (int i=0; i<param.length; i++)
+            param[i] = getParameter(i);
+        return param;
+    }
+
+    /**
      * Convenience method for fetching a parameter value.
      * Search is case-insensitive and ignore leading and
      * trailing blanks.
@@ -192,7 +200,7 @@ public class Projection extends Info
     {
         int code = classification.hashCode();
         for (int i=0; i<parameters.length; i++)
-            code ^= parameters[i].hashCode();
+            code = code*37 + parameters[i].hashCode();
         return code;
     }
 
@@ -214,14 +222,17 @@ public class Projection extends Info
     /**
      * Returns a string representation of this projection.
      */
-    public String toString()
-    {return XClass.getShortClassName(this)+'['+getClassName()+']';}
+    String toString(final Object source)
+    {return XClass.getShortClassName(source)+'['+getClassName()+']';}
 
     /**
      * Returns an OpenGIS interface for this projection.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_Projection toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

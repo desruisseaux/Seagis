@@ -56,8 +56,15 @@ import org.opengis.cs.CS_AngularUnit;
 import net.seas.opengis.ct.Parameter;
 
 // Remote Method Invocation
-import javax.units.Unit;
 import java.rmi.RemoteException;
+
+// Collections
+import java.util.Map;
+import java.util.HashMap;
+
+// Miscellaneous
+import javax.units.Unit;
+import net.seas.resources.Resources;
 
 
 /**
@@ -81,7 +88,7 @@ public final class Adapters
      * Returns an OpenGIS interface for a coordinate system factory.
      */
     public static CS_CoordinateSystemFactory export(final CoordinateSystemFactory factory)
-    {return (factory!=null) ? factory.toOpenGIS() : null;}
+    {return (factory!=null) ? (CS_CoordinateSystemFactory)factory.toOpenGIS() : null;}
 
     /**
      * Returns an OpenGIS interface for an info. If the argument is an
@@ -244,8 +251,10 @@ public final class Adapters
         if (info instanceof CS_Datum)            return wrap((CS_Datum)           info);
         if (info instanceof CS_CoordinateSystem) return wrap((CS_CoordinateSystem)info);
         if (info instanceof Info.Export)
+        {
             return ((Info.Export)info).unwrap();
-        return new Info(info);
+        }
+        return new Info(map(info));
     }
 
     /**
@@ -260,7 +269,9 @@ public final class Adapters
         if (cs instanceof   CS_VerticalCoordinateSystem) return wrap(  (CS_VerticalCoordinateSystem)cs);
         if (cs instanceof CS_HorizontalCoordinateSystem) return wrap((CS_HorizontalCoordinateSystem)cs);
         if (cs instanceof CoordinateSystem.Export)
+        {
             return (CoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
+        }
         throw new UnsupportedOperationException("Not implemented"); // CoordinateSystem is abstract
     }
 
@@ -272,8 +283,10 @@ public final class Adapters
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
+        {
             return (CompoundCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
-        return new CompoundCoordinateSystem(cs);
+        }
+        return new CompoundCoordinateSystem(map(cs), wrap(cs.getHeadCS()), wrap(cs.getTailCS()));
     }
 
     /**
@@ -284,8 +297,19 @@ public final class Adapters
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
+        {
             return (LocalCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
-        return new LocalCoordinateSystem(cs);
+        }
+        final LocalDatum datum = wrap(cs.getLocalDatum());
+        final Unit[]      unit = new Unit[cs.getDimension()];
+        final AxisInfo[]  axes = new AxisInfo[unit.length];
+        for (int i=0; i<axes.length; i++)
+        {
+            unit[i] = wrap(cs.getUnits(i));
+            axes[i] = wrap(cs.getAxis (i));
+            // Accept null value.
+        }
+        return new LocalCoordinateSystem(map(cs), datum, unit, axes);
     }
 
     /**
@@ -296,8 +320,17 @@ public final class Adapters
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
+        {
             return (VerticalCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
-        return new VerticalCoordinateSystem(cs);
+        }
+        if (cs.getDimension()!=1)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
+        }
+        final VerticalDatum datum = wrap(cs.getVerticalDatum());
+        final Unit           unit = wrap(cs.getVerticalUnit());
+        final AxisInfo       axis = wrap(cs.getAxis(0));
+        return new VerticalCoordinateSystem(map(cs), datum, unit, axis);
     }
 
     /**
@@ -310,7 +343,9 @@ public final class Adapters
         if (cs instanceof CS_GeographicCoordinateSystem) return wrap((CS_GeographicCoordinateSystem)cs);
         if (cs instanceof  CS_ProjectedCoordinateSystem) return wrap( (CS_ProjectedCoordinateSystem)cs);
         if (cs instanceof HorizontalCoordinateSystem.Export)
+        {
             return (HorizontalCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
+        }
         throw new UnsupportedOperationException("Not implemented"); // HorizontalCoordinateSystem is abstract
     }
 
@@ -322,8 +357,19 @@ public final class Adapters
     {
         if (cs==null) return null;
         if (cs instanceof HorizontalCoordinateSystem.Export)
+        {
             return (GeographicCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
-        return new GeographicCoordinateSystem(cs);
+        }
+        if (cs.getDimension()!=2)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
+        }
+        final Unit              unit = wrap(cs.getAngularUnit());
+        final HorizontalDatum  datum = wrap(cs.getHorizontalDatum());
+        final PrimeMeridian meridian = wrap(cs.getPrimeMeridian());
+        final AxisInfo         axis0 = wrap(cs.getAxis(0));
+        final AxisInfo         axis1 = wrap(cs.getAxis(1));
+        return new GeographicCoordinateSystem(map(cs), unit, datum, meridian, axis0, axis1);
     }
 
     /**
@@ -334,8 +380,19 @@ public final class Adapters
     {
         if (cs==null) return null;
         if (cs instanceof HorizontalCoordinateSystem.Export)
+        {
             return (ProjectedCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
-        return new ProjectedCoordinateSystem(cs);
+        }
+        if (cs.getDimension()!=2)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_DIMENSION));
+        }
+        final GeographicCoordinateSystem gcs = wrap(cs.getGeographicCoordinateSystem());
+        final Projection          projection = wrap(cs.getProjection());
+        final Unit                      unit = wrap(cs.getLinearUnit());
+        final AxisInfo                 axis0 = wrap(cs.getAxis(0));
+        final AxisInfo                 axis1 = wrap(cs.getAxis(1));
+        return new ProjectedCoordinateSystem(map(cs), gcs, projection, unit, axis0, axis1);
     }
 
     /**
@@ -346,8 +403,17 @@ public final class Adapters
     {
         if (projection==null) return null;
         if (projection instanceof Info.Export)
+        {
             return (Projection) ((Info.Export)projection).unwrap();
-        return new Projection(projection);
+        }
+        final Parameter[] parameters = new Parameter[projection.getNumParameters()];
+        for (int i=0; i<parameters.length; i++)
+        {
+            final CS_ProjectionParameter param = projection.getParameter(i);
+            if (param!=null)
+                parameters[i] = new Parameter(param.name, param.value);
+        }
+        return new Projection(map(projection), projection.getClassName(), parameters);
     }
 
     /**
@@ -358,8 +424,10 @@ public final class Adapters
     {
         if (meridian==null) return null;
         if (meridian instanceof Info.Export)
+        {
             return (PrimeMeridian) ((Info.Export)meridian).unwrap();
-        return new PrimeMeridian(meridian);
+        }
+        return new PrimeMeridian(map(meridian), wrap(meridian.getAngularUnit()), meridian.getLongitude());
     }
 
     /**
@@ -370,8 +438,15 @@ public final class Adapters
     {
         if (ellipsoid==null) return null;
         if (ellipsoid instanceof Info.Export)
+        {
             return (Ellipsoid) ((Info.Export)ellipsoid).unwrap();
-        return new Ellipsoid(ellipsoid);
+        }
+        return new Ellipsoid(map(ellipsoid),
+                             ellipsoid.getSemiMajorAxis(),
+                             ellipsoid.getSemiMinorAxis(),
+                             ellipsoid.getInverseFlattening(),
+                             ellipsoid.isIvfDefinitive(),
+                             wrap(ellipsoid.getAxisUnit()));
     }
 
     /**
@@ -391,8 +466,10 @@ public final class Adapters
         if (datum instanceof   CS_VerticalDatum) return wrap(  (CS_VerticalDatum)datum);
         if (datum instanceof CS_HorizontalDatum) return wrap((CS_HorizontalDatum)datum);
         if (datum instanceof Datum.Export)
+        {
             return (Datum) ((Datum.Export)datum).unwrap();
-        return new Datum(datum);
+        }
+        return new Datum(map(datum), wrap(datum.getDatumType()));
     }
 
     /**
@@ -403,8 +480,10 @@ public final class Adapters
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
+        {
             return (LocalDatum) ((Datum.Export)datum).unwrap();
-        return new LocalDatum(datum);
+        }
+        return new LocalDatum(map(datum), wrap(datum.getDatumType()));
     }
 
     /**
@@ -415,8 +494,11 @@ public final class Adapters
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
+        {
             return (HorizontalDatum) ((Datum.Export)datum).unwrap();
-        return new HorizontalDatum(datum);
+        }
+        return new HorizontalDatum(map(datum), wrap(datum.getDatumType()),
+                                   wrap(datum.getEllipsoid()), wrap(datum.getWGS84Parameters()));
     }
 
     /**
@@ -427,8 +509,10 @@ public final class Adapters
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
+        {
             return (VerticalDatum) ((Datum.Export)datum).unwrap();
-        return new VerticalDatum(datum);
+        }
+        return new VerticalDatum(map(datum), wrap(datum.getDatumType()));
     }
 
     /**
@@ -509,5 +593,28 @@ public final class Adapters
             if (radiansPerUnit==Math.PI/180) return Unit.DEGREE; // TODO
         }
         throw new UnsupportedOperationException("Not implemented");
+    }
+
+    /**
+     * Returns a map for the specified OpenGIS structure.
+     * Note: current implementation search all info immediatly.
+     * Future implementation may differ fetching until needed.
+     *
+     * @param  info The OpenGIS structure.
+     * @throws RemoteException if a remote call failed.
+     */
+    private static Map<String,Object> map(final CS_Info info) throws RemoteException
+    {
+        final Map<String,Object> properties = new HashMap<String,Object>(16);
+        properties.put("name",           info.getName());
+        properties.put("authority",      info.getAuthority());
+        properties.put("authorityCode",  info.getAuthorityCode());
+        properties.put("alias",          info.getAlias());
+        properties.put("abbreviation",   info.getAbbreviation());
+        properties.put("remarks",        info.getRemarks());
+        properties.put("WKT",            info.getWKT());
+        properties.put("XML",            info.getXML());
+        properties.put("proxy",          info);
+        return properties;
     }
 }

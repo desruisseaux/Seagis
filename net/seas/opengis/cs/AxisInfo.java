@@ -86,9 +86,9 @@ public class AxisInfo implements Serializable
      */
     public int hashCode()
     {
-        int code=0;
-        if (orientation!=null) code ^= orientation.hashCode();
-        if (name       !=null) code ^= name.hashCode();
+        int code=36972167;
+        if (orientation!=null) code = code*37 + orientation.hashCode();
+        if (name       !=null) code = code*37 + name.hashCode();
         return code;
     }
 

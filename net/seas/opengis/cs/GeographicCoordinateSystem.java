@@ -36,6 +36,7 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -124,17 +125,22 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
-     * Wrap an OpenGIS coordinate system.
+     * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
+     * or <var>longitude</var>/<var>latitude</var>.
      *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param unit       Angular units for created coordinate system.
+     * @param datum      Horizontal datum for created coordinate system.
+     * @param meridian   Prime Meridian for created coordinate system.
+     * @param axis0      Details of 0th ordinates.
+     * @param axis1      Details of 1st ordinates.
      */
-    GeographicCoordinateSystem(final CS_GeographicCoordinateSystem cs) throws RemoteException
+    GeographicCoordinateSystem(final Map<String,Object> properties, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
     {
-        super(cs);
-        unit     = Adapters.wrap(cs.getAngularUnit());
-        meridian = Adapters.wrap(cs.getPrimeMeridian());
-        // Accept null value.
+        super(properties, datum, axis0, axis1);
+        this.unit     = unit;
+        this.meridian = meridian;
+        // Accept null values.
     }
 
     /**
@@ -238,8 +244,11 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     /**
      * Returns an OpenGIS interface for this geographic coordinate
      * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_GeographicCoordinateSystem toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 
@@ -283,10 +292,5 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          */
         public CS_WGS84ConversionInfo getWGS84ConversionInfo(final int index) throws RemoteException
         {return Adapters.export(GeographicCoordinateSystem.this.getWGS84ConversionInfo(index));}
-    }
-
-    public static void main(String[] args)
-    {
-        System.out.println(WGS84);
     }
 }

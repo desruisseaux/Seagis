@@ -27,6 +27,7 @@ import org.opengis.cs.CS_Datum;
 import org.opengis.cs.CS_DatumType;
 
 // Miscellaneous
+import java.util.Map;
 import net.seas.util.XClass;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -76,15 +77,16 @@ public class Datum extends Info
     }
 
     /**
-     * Wrap the specified OpenGIS datum.
+     * Construct a new datum with
+     * the specified properties.
      *
-     * @param  datum The OpenGIS datum.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param type The datum type.
      */
-    Datum(final CS_Datum datum) throws RemoteException
+    Datum(final Map<String,Object> properties, final DatumType type)
     {
-        super(datum);
-        type = Adapters.wrap(datum.getDatumType());
+        super(properties);
+        this.type = type;
         // Accept null value.
     }
 
@@ -99,9 +101,9 @@ public class Datum extends Info
      */
     public int hashCode()
     {
-        int code = super.hashCode();
-        final DatumType type = getDatumType();
-        if (type!=null) code ^= type.hashCode();
+        int code = 37*super.hashCode();
+        final DatumType type  = getDatumType();
+        if (type!=null) code += type.hashCode();
         return code;
     }
 
@@ -122,9 +124,9 @@ public class Datum extends Info
     /**
      * Returns a string representation of this datum.
      */
-    public String toString()
+    String toString(final Object source)
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(source));
         buffer.append('[');
         buffer.append(getName(null));
         final DatumType type = getDatumType();
@@ -140,8 +142,11 @@ public class Datum extends Info
     /**
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    org.opengis.cs.CS_Info toOpenGIS() // TODO: return type should be CS_Datum
+    Object toOpenGIS()
     {return new Export();}
 
 

@@ -32,6 +32,7 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 
 // Miscellaneous
+import java.util.Map;
 import java.util.Arrays;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -108,23 +109,20 @@ public class LocalCoordinateSystem extends CoordinateSystem
     }
 
     /**
-     * Wrap an OpenGIS coordinate system.
+     * Creates a local coordinate system.
      *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param datum Local datum to use in created coordinate system.
+     * @param unit  Units to use in created coordinate system.
+     * @param axes  Axes to use in created coordinate system.
      */
-    LocalCoordinateSystem(final CS_LocalCoordinateSystem cs) throws RemoteException
+    LocalCoordinateSystem(final Map<String,Object> properties, final LocalDatum datum, final Unit[] unit, final AxisInfo[] axes)
     {
-        super(cs);
-        datum = Adapters.wrap(cs.getLocalDatum());
-        axes  = new AxisInfo[cs.getDimension()];
-        unit  = new Unit[axes.length];
-        for (int i=0; i<axes.length; i++)
-        {
-            axes[i] = Adapters.wrap(cs.getAxis (i));
-            unit[i] = Adapters.wrap(cs.getUnits(i));
-            // Accept null value.
-        }
+        super(properties);
+        this.datum = datum;
+        this.unit  = unit;
+        this.axes  = axes;
+        // Accept null values.
     }
 
     /**
@@ -174,8 +172,11 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Returns an OpenGIS interface for this local coordinate
      * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_LocalCoordinateSystem toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

@@ -28,6 +28,9 @@ import org.opengis.cs.CS_LocalDatum;
 // Remote Method Invocation
 import java.rmi.RemoteException;
 
+// Miscellaneous
+import java.util.Map;
+
 
 /**
  * Local datum.
@@ -59,13 +62,13 @@ public class LocalDatum extends Datum
     {super(name, type);}
 
     /**
-     * Wrap the specified OpenGIS datum.
+     * Creates a local datum.
      *
-     * @param  datum The OpenGIS datum.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param localDatumType Type of local datum to create.
      */
-    LocalDatum(final CS_LocalDatum datum) throws RemoteException
-    {super(datum);}
+    LocalDatum(final Map<String,Object> properties, final DatumType type)
+    {super(properties, type);}
 
     /**
      * Gets the type of the datum as an enumerated code.
@@ -76,8 +79,11 @@ public class LocalDatum extends Datum
     /**
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_LocalDatum toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

@@ -28,6 +28,9 @@ import org.opengis.cs.CS_VerticalDatum;
 // Remote Method invocation
 import java.rmi.RemoteException;
 
+// Miscellaneous
+import java.util.Map;
+
 
 /**
  * Procedure used to measure vertical distances.
@@ -55,13 +58,13 @@ public class VerticalDatum extends Datum
     {super(name, type);}
 
     /**
-     * Wrap the specified OpenGIS datum.
+     * Creates a vertical datum.
      *
-     * @param  datum The OpenGIS datum.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param localDatumType Type of vertical datum to create.
      */
-    VerticalDatum(final CS_VerticalDatum datum) throws RemoteException
-    {super(datum);}
+    VerticalDatum(final Map<String,Object> properties, final DatumType type)
+    {super(properties, type);}
 
     /**
      * Gets the type of the datum as an enumerated code.
@@ -72,8 +75,11 @@ public class VerticalDatum extends Datum
     /**
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_VerticalDatum toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

@@ -28,6 +28,7 @@ import org.opengis.cs.CS_PrimeMeridian;
 import org.opengis.cs.CS_GeocentricCoordinateSystem;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -89,21 +90,6 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
         ensureNonNull("unit",     unit);
         ensureNonNull("datum",    datum);
         ensureNonNull("meridian", meridian);
-    }
-
-    /**
-     * Wrap an OpenGIS coordinate system.
-     *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
-     */
-    GeocentricCoordinateSystem(final CS_GeocentricCoordinateSystem cs) throws RemoteException
-    {
-        super(cs);
-        unit     = Adapters.wrap(cs.getLinearUnit());
-        datum    = Adapters.wrap(cs.getHorizontalDatum());
-        meridian = Adapters.wrap(cs.getPrimeMeridian());
-        // Accept null value.
     }
 
     /**

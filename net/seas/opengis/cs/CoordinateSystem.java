@@ -29,6 +29,7 @@ import org.opengis.pt.PT_Envelope;
 import org.opengis.cs.CS_CoordinateSystem;
 
 // Units and coordinates
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.ct.CoordinateTransformation;
@@ -79,13 +80,12 @@ public abstract class CoordinateSystem extends Info
     {super(name);}
 
     /**
-     * Wrap an OpenGIS coordinate system.
+     * Construct a coordinate system.
      *
-     * @param  cs The OpenGIS coordinate system.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
      */
-    CoordinateSystem(final CS_CoordinateSystem cs) throws RemoteException
-    {super(cs);}
+    CoordinateSystem(final Map<String,Object> properties)
+    {super(properties);}
 
     /**
      * Dimension of the coordinate system.
@@ -126,8 +126,11 @@ public abstract class CoordinateSystem extends Info
     /**
      * Returns an OpenGIS interface for this coordinate
      * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_CoordinateSystem.
+    Object toOpenGIS()
     {return new Export();}
 
 

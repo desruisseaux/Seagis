@@ -27,6 +27,7 @@ import org.opengis.cs.CS_AngularUnit;
 import org.opengis.cs.CS_PrimeMeridian;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import java.rmi.RemoteException;
@@ -80,16 +81,18 @@ public class PrimeMeridian extends Info
     }
 
     /**
-     * Wrap the specified OpenGIS prime meridian.
+     * Creates a prime meridian, relative to Greenwich.
      *
-     * @param  meridian The OpenGIS prime meridian.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param unit       Angular units of longitude.
+     * @param longitude  Longitude of prime meridian in supplied angular units East of Greenwich.
      */
-    PrimeMeridian(final CS_PrimeMeridian meridian) throws RemoteException
+    PrimeMeridian(final Map<String,Object> properties, final Unit unit, final double longitude)
     {
-        super(meridian);
-        this.unit      = Adapters.wrap(meridian.getAngularUnit());
-        this.longitude = meridian.getLongitude();
+        super(properties);
+        this.unit      = unit;
+        this.longitude = longitude;
+        // Accept null values.
     }
 
     /**
@@ -111,7 +114,7 @@ public class PrimeMeridian extends Info
     public int hashCode()
     {
         final long code = Double.doubleToLongBits(longitude);
-        return super.hashCode() ^ (int)(code >>> 32) ^ (int)code;
+        return super.hashCode()*37 + ((int)(code >>> 32) ^ (int)code);
     }
 
     /**
@@ -132,14 +135,17 @@ public class PrimeMeridian extends Info
     /**
      * Returns a string representation of this prime meridian.
      */
-    public String toString()
-    {return XClass.getShortClassName(this)+'['+getName(null)+'='+longitude+unit+']';}
+    String toString(final Object source)
+    {return XClass.getShortClassName(source)+'['+getName(null)+'='+longitude+unit+']';}
 
     /**
      * Returns an OpenGIS interface for this prime meridian.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_PrimeMeridian toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

@@ -93,7 +93,7 @@ public class Info implements Serializable
      * value of property <code>"authorityCode"</code>.   May be
      * null if there is no properties for this object.
      */
-    private final Map<String,String> properties;
+    private final Map<String,Object> properties;
 
     /**
      * OpenGIS object returned by {@link #cachedOpenGIS}.
@@ -108,31 +108,23 @@ public class Info implements Serializable
      */
     public Info(final String name)
     {
-        this.name=name;
-        this.properties=null;
+        this.name       = name;
+        this.properties = null;
         ensureNonNull("name", name);
     }
 
     /**
-     * Wrap the specified OpenGIS structure.
+     * Create an object with the specified properties.
      *
-     * @param  info The OpenGIS structure.
-     * @throws RemoteException if a remote call failed.
+     * @param properties The set of properties.
+     * @param name This object name.
      */
-    Info(final CS_Info info) throws RemoteException
+    Info(final Map<String,Object> properties)
     {
-        this.proxy = info;
-        // Note: current implementation search all info immediatly.
-        // Future implementation may differ fetching until needed.
-        properties = new HashMap<String,String>(16);
-        properties.put("name", this.name=info.getName());
-        properties.put("authority",      info.getAuthority());
-        properties.put("authorityCode",  info.getAuthorityCode());
-        properties.put("alias",          info.getAlias());
-        properties.put("abbreviation",   info.getAbbreviation());
-        properties.put("remarks",        info.getRemarks());
-        properties.put("WKT",            info.getWKT());
-        properties.put("XML",            info.getXML());
+        this.properties = properties;
+        this.name       = (String)properties.get("name");
+        this.proxy      = (Object)properties.get("proxy");
+        // Accept null values.
     }
 
     /**
@@ -154,7 +146,7 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */
     public String getAuthority(final Locale locale)
-    {return (properties!=null) ? properties.get("authority") : null;}
+    {return (properties!=null) ? (String)properties.get("authority") : null;}
 
     /**
      * Gets the authority-specific identification code, or <code>null</code> if unspecified.
@@ -167,7 +159,7 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */
     public String getAuthorityCode(final Locale locale)
-    {return (properties!=null) ? properties.get("authorityCode") : null;}
+    {return (properties!=null) ? (String)properties.get("authorityCode") : null;}
 
     /**
      * Gets the alias, or <code>null</code> if there is none.
@@ -175,7 +167,7 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */
     public String getAlias(final Locale locale)
-    {return (properties!=null) ? properties.get("alias") : null;}
+    {return (properties!=null) ? (String)properties.get("alias") : null;}
 
     /**
      * Gets the abbreviation, or <code>null</code> if there is none.
@@ -183,7 +175,7 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */
     public String getAbbreviation(final Locale locale)
-    {return (properties!=null) ? properties.get("abbreviation") : null;}
+    {return (properties!=null) ? (String)properties.get("abbreviation") : null;}
 
     /**
      * Gets the provider-supplied remarks, or <code>null</code> if there is none.
@@ -191,7 +183,7 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      */
     public String getRemarks(final Locale locale)
-    {return (properties!=null) ? properties.get("remarks") : null;}
+    {return (properties!=null) ? (String)properties.get("remarks") : null;}
 
     /**
      * Returns a hash value for this info.
@@ -199,7 +191,7 @@ public class Info implements Serializable
     public int hashCode()
     {
         final String name = getName(null);
-        return (name!=null) ? name.hashCode() : 0;
+        return (name!=null) ? name.hashCode() : 369781;
     }
 
     /**
@@ -221,13 +213,23 @@ public class Info implements Serializable
      * Returns a string representation of this info.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+getName(null)+']';}
+    {return toString(this);}
+
+    /**
+     * Returns a string representation of this info.
+     * @param the source (usually <code>this</code>).
+     */
+    String toString(final Object source)
+    {return XClass.getShortClassName(source)+'['+getName(null)+']';}
 
     /**
      * Returns an OpenGIS interface for this info.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    CS_Info toOpenGIS()
+    Object toOpenGIS()
     {return new Export();}
 
     /**
@@ -237,7 +239,7 @@ public class Info implements Serializable
      * method invokes {@link #toOpenGIS} and cache
      * the result.
      */
-    final synchronized CS_Info cachedOpenGIS()
+    final synchronized Object cachedOpenGIS()
     {
         if (proxy!=null)
         {
@@ -248,19 +250,20 @@ public class Info implements Serializable
             }
             else return (CS_Info) proxy;
         }
-        final CS_Info info = toOpenGIS();
+        final Object info = toOpenGIS();
         proxy = new WeakReference(info);
         return info;
     }
 
     /**
-     * Make sure an argument is non-null.
+     * Make sure an argument is non-null. This is a
+     * convenience method for subclasses constructors.
      *
      * @param  name   Argument name.
      * @param  object User argument.
      * @throws IllegalArgumentException if <code>object</code> is null.
      */
-    static void ensureNonNull(final String name, final Object object) throws IllegalArgumentException
+    protected static void ensureNonNull(final String name, final Object object) throws IllegalArgumentException
     {if (object==null) throw new IllegalArgumentException(Resources.format(Clé.NULL_ARGUMENT¤1, name));}
 
     /**
@@ -371,6 +374,12 @@ public class Info implements Serializable
          */
         public String getXML() throws RemoteException
         {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Returns a string representation of this info.
+         */
+        public String toString()
+        {return Info.this.toString(this);}
     }
 
     /**

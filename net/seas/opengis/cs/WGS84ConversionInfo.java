@@ -84,13 +84,14 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      */
     public int hashCode()
     {
-        final long code = (Double.doubleToLongBits(dx ) << 0) ^
-                          (Double.doubleToLongBits(dy ) << 1) ^
-                          (Double.doubleToLongBits(dz ) << 2) ^
-                          (Double.doubleToLongBits(ex ) << 3) ^
-                          (Double.doubleToLongBits(ey ) << 4) ^
-                          (Double.doubleToLongBits(ez ) << 5) ^
-                          (Double.doubleToLongBits(ppm) << 6);
+        long code = 14698129;
+        code = code*37 + Double.doubleToLongBits(dx );
+        code = code*37 + Double.doubleToLongBits(dy );
+        code = code*37 + Double.doubleToLongBits(dz );
+        code = code*37 + Double.doubleToLongBits(ex );
+        code = code*37 + Double.doubleToLongBits(ey );
+        code = code*37 + Double.doubleToLongBits(ez );
+        code = code*37 + Double.doubleToLongBits(ppm);
         return (int)(code >>> 32) ^ (int)code;
     }
 

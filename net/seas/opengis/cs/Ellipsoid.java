@@ -29,10 +29,12 @@ import org.opengis.cs.CS_LinearUnit;
 // Miscellaneous
 import java.util.Map;
 import javax.units.Unit;
+import java.awt.geom.Point2D;
+import java.rmi.RemoteException;
+
 import net.seas.util.XMath;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
-import java.rmi.RemoteException;
 
 
 /**
@@ -138,20 +140,24 @@ public class Ellipsoid extends Info
     }
 
     /**
-     * Wrap the specified OpenGIS ellipsoid.
+     * Construct a new ellipsoid using the specified axis length.
      *
-     * @param  info The OpenGIS ellipsoid.
-     * @throws RemoteException if a remote call failed.
+     * @param properties        The set of properties.
+     * @param semiMajorAxis     The equatorial radius.
+     * @param semiMinorAxis     The polar radius.
+     * @param inverseFlattening The inverse of the flattening value.
+     * @param ivfDefinitive     Is the Inverse Flattening definitive for this ellipsoid?
+     * @param unit              The units of the semi-major and semi-minor axis values.
      */
-    Ellipsoid(final CS_Ellipsoid ellipsoid) throws RemoteException
+    Ellipsoid(final Map<String,Object> properties, final double semiMajorAxis, final double semiMinorAxis, final double inverseFlattening, final boolean ivfDefinitive, final Unit unit)
     {
-        super(ellipsoid);
-        unit              = Adapters.wrap(ellipsoid.getAxisUnit());
-        semiMajorAxis     = ellipsoid.getSemiMajorAxis();
-        semiMinorAxis     = ellipsoid.getSemiMinorAxis();
-        inverseFlattening = ellipsoid.getInverseFlattening();
-        ivfDefinitive     = ellipsoid.isIvfDefinitive();
-        // Accept with no check.
+        super(properties);
+        this.unit = unit;
+        this.semiMajorAxis     = semiMajorAxis;
+        this.semiMinorAxis     = semiMinorAxis;
+        this.inverseFlattening = inverseFlattening;
+        this.ivfDefinitive     = ivfDefinitive;
+        // Accept null values.
     }
 
     /**
@@ -236,6 +242,20 @@ public class Ellipsoid extends Info
      * de distance parfois utilisée est la distance loxodromique, une distance plus longue mais selon
      * une trajectoire qui permet de garder un cap constant sur le compas.
      *
+     * @param  P1 Longitude et latitude du premier point (en degrés).
+     * @param  P2 Longitude et latitude du second point (en degrés).
+     * @return La distance orthodromique selon les unités de cet ellipsoïde.
+     */
+    public double orthodromicDistance(final Point2D P1, final Point2D P2)
+    {return orthodromicDistance(P1.getX(), P1.getY(), P2.getX(), P2.getY());}
+
+    /**
+     * Retourne une <em>estimation</em> de la distance orthodromique séparant les deux coordonnées
+     * spécifiées.  La distance orthodromique est la plus courte distance séparant deux points sur
+     * la surface d'une sphère. Elle correspond toujours à un arc de grand cercle. Une autre mesure
+     * de distance parfois utilisée est la distance loxodromique, une distance plus longue mais selon
+     * une trajectoire qui permet de garder un cap constant sur le compas.
+     *
      * @param  x1 Longitude du premier point (en degrés).
      * @param  y1 Latitude du premier point (en degrés).
      * @param  x2 Longitude du second point (en degrés).
@@ -293,7 +313,7 @@ public class Ellipsoid extends Info
     public int hashCode()
     {
         final long longCode=Double.doubleToLongBits(getSemiMajorAxis());
-        return ((int)(longCode >>> 32)) ^ (int)longCode ^ super.hashCode();
+        return (((int)(longCode >>> 32)) ^ (int)longCode) + 37*super.hashCode();
     }
 
     /**
@@ -303,9 +323,9 @@ public class Ellipsoid extends Info
      * Ellipsoid["WGS 1984", semiMajorAxis=6378137.0, inverseFlattening=298.257223563];
      * </pre>
      */
-    public String toString()
+    String toString(final Object source)
     {
-        final StringBuffer buffer = new StringBuffer("Ellipsoid[");
+        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(source));
         final String         name = getName(null);
         final Unit           unit = getAxisUnit();
         final String   unitSymbol = (unit!=null) ? unit.toString() : "";
@@ -345,8 +365,11 @@ public class Ellipsoid extends Info
     /**
      * Returns an OpenGIS interface for this ellipsoid.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CS_Ellipsoid toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 
