@@ -1,0 +1,25 @@
+#
+# Codes de couleurs RGB utilisées par l'Institut
+# de Recherche pour le Développement (IRD) dans
+# ses images de la température de surface.
+#
+# Cette palette est utilisée pour représenter
+# des températures de 15 à 31°C.
+#
+
+   130   035   130
+   100   035   210
+   125   102   180
+   055   140   255
+   000   252   252
+   150   180   245
+   000   144   000
+   080   185   040
+   120   255   160
+   190   215   090
+   255   255   000
+   235   190   060
+   255   140   130
+   255   060   060
+   192   000   194
+   160   080   092
