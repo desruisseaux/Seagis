@@ -29,8 +29,8 @@ import org.opengis.pt.PT_CoordinatePoint;
 
 /**
  * <FONT COLOR="#FF6633">Provide methods for interoperability
- * with <code>org.opengis.pt</code> package. All methods accept
- * null argument.</FONT>
+ * with <code>org.opengis.pt</code> package.</FONT>
+ * All methods accept null argument.
  *
  * @version 1.0
  * @author Martin Desruisseaux

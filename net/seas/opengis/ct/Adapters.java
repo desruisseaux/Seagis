@@ -43,8 +43,8 @@ import net.seas.util.XArray;
 
 /**
  * <FONT COLOR="#FF6633">Provide methods for interoperability with
- * <code>org.opengis.ct</code> package. All methods accept null
- * argument. All OpenGIS objects are suitable for RMI use.</FONT>
+ * <code>org.opengis.ct</code> package.</FONT>  All methods accept
+ * null argument. All OpenGIS objects are suitable for RMI use.
  *
  * @version 1.0
  * @author Martin Desruisseaux

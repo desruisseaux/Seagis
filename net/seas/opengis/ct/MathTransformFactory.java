@@ -173,8 +173,8 @@ public class MathTransformFactory
     {return createParameterizedTransform(projection.getClassName(), projection.getParameters());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the classification names of every available transforms.
-     * The returned array may have a zero length, but will never be null.</FONT>
+     * <FONT COLOR="#FF6633">Returns the classification names of every available transforms.</FONT>
+     * The returned array may have a zero length, but will never be null.
      */
     public String[] getAvailableTransforms()
     {
@@ -187,9 +187,9 @@ public class MathTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns a human readable name localized for the specified locale.
-     * If no name is available for the specified locale, this
-     * method may returns a name in an arbitrary locale.</FONT>
+     * <FONT COLOR="#FF6633">Returns a human readable name localized for the specified locale.</FONT>
+     * If no name is available for the specified locale, this method may returns a name in an
+     * arbitrary locale.
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces
@@ -203,9 +203,9 @@ public class MathTransformFactory
     {return getProvider(classification).getName(locale);}
 
     /**
-     * <FONT COLOR="#FF6633">Get the parameter list from a classification name.
+     * <FONT COLOR="#FF6633">Get the parameter list from a classification name.</FONT>
      * The client may change any of those parameters and submit them to
-     * {@link #createParameterizedTransform(String,ParameterList)}.</FONT>
+     * {@link #createParameterizedTransform(String,ParameterList)}.
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). Leading and trailing spaces

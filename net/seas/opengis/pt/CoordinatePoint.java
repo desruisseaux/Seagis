@@ -94,22 +94,22 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {this(point.getX(), point.getY());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the ordinate value along the specified dimension.
-     * This is equivalent to <code>{@link #ord}[dimension]</code>.</FONT>
+     * <FONT COLOR="#FF6633">Returns the ordinate value along the specified dimension.</FONT>
+     * This is equivalent to <code>{@link #ord}[dimension]</code>.
      */
     public final double getOrdinate(final int dimension)
     {return ord[dimension];}
 
     /**
-     * <FONT COLOR="#FF6633">The number of ordinates of a <code>CoordinatePoint</code>.
-     * This is equivalent to <code>{@link #ord}.length</code>.</FONT>
+     * <FONT COLOR="#FF6633">The number of ordinates of a <code>CoordinatePoint</code>.</FONT>
+     * This is equivalent to <code>{@link #ord}.length</code>.
      */
     public final int getDimension()
     {return ord.length;}
 
     /**
-     * <FONT COLOR="#FF6633">Convenience method for checking the point's dimension validity.
-     * This method is usually call for argument checking.</FONT>
+     * <FONT COLOR="#FF6633">Convenience method for checking the point's dimension validity.</FONT>
+     * This method is usually call for argument checking.
      *
      * @param  expectedDimension Expected dimension for this point.
      * @throws IllegalArgumentException if this point doesn't have the expected dimension.
@@ -126,8 +126,8 @@ public final class CoordinatePoint implements Cloneable, Serializable
 
     /**
      * <FONT COLOR="#FF6633">Returns a {@link Point2D} with the same coordinate
-     * as this <code>CoordinatePoint</code>. This is a convenience method for
-     * interoperability with Java2D.</FONT>
+     * as this <code>CoordinatePoint</code>.</FONT> This is a convenience method
+     * for interoperability with Java2D.
      *
      * @throws IllegalStateException if this coordinate point is not two-dimensional.
      */

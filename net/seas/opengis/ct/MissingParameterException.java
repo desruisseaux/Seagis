@@ -27,9 +27,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * <FONT COLOR="#FF6633">Thrown when a parameter was missing.
+ * <FONT COLOR="#FF6633">Thrown when a parameter was missing.</FONT>
  * For example, this exception may be thrown when a map projection
- * was requested but the "semi_major" parameter was not specified.</FONT>
+ * was requested but the "semi_major" parameter was not specified.
  *
  * @version 1.0
  * @author Martin Desruisseaux

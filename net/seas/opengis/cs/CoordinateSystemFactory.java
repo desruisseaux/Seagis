@@ -90,7 +90,7 @@ public class CoordinateSystemFactory
      * This set is used in order to return pre-existing object
      * instead of creating new one.
      */
-    private final WeakHashSet pool=new WeakHashSet();
+    private final WeakHashSet<Info> pool=new WeakHashSet<Info>();
 
     /**
      * Default constructor.
@@ -221,8 +221,8 @@ public class CoordinateSystemFactory
     {return (HorizontalDatum) pool.intern(new HorizontalDatum(name, type, ellipsoid, toWGS84));}
 
     /**
-     * <FONT COLOR="#FF6633">Creates horizontal datum from an ellipsoid.
-     * The datum type will be {@link DatumType.Horizontal#OTHER}.</FONT>
+     * <FONT COLOR="#FF6633">Creates horizontal datum from an ellipsoid.</FONT>
+     * The datum type will be {@link DatumType.Horizontal#OTHER}.
      *
      * @param name      Name to give new object.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.

@@ -22,66 +22,126 @@
  */
 package net.seas.util;
 
-// Collections
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.util.List;
-
-// Références
+// References
 import java.lang.ref.WeakReference;
 import java.lang.ref.ReferenceQueue;
 
-// Exceptions
-import java.util.NoSuchElementException;
-import java.util.ConcurrentModificationException;
+// Logging
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
+// Miscellaneous
+import net.seas.resources.Resources;
+import net.seas.awt.ExceptionMonitor;
 
 
 /**
- * Ensemble d'objets référencés par des liens faibles.  La méthode {@link #add} permet d'ajouter
- * un nouvel élément à cet ensemble, et la méthode {@link #remove} de l'en retirer. Toutefois,
- * chaque élément ajouté à cet ensemble pourra être automatiquement retiré (sans appel explicite
- * à {@link #remove}) si aucune référence forte vers cet élément n'est tenue ailleurs dans cette
- * machine virtuelle Java. Par exemple, supposons que l'on veut tenir une liste de tous les objets
- * {@link javax.units.Unit} créés et en cours d'utilisation. A chaque fois que l'on a besoin d'une
- * unité, on souhaite retourner un objet <code>Unit</code> précédemment créé plutôt que de gaspiller
- * de la mémoire avec des dizaines d'exemplaires identiques de la même chose. On pourrait alors
- * implémenter une méthode similaire à {@link java.lang.String#intern} de la façon suivante:
- *
- * <blockquote><pre>
- * &nbsp;private static final WeakHashSet<Unit> pool=new WeakHashSet<Unit>();
- * &nbsp;
- * &nbsp;final Unit intern()
- * &nbsp;{
- * &nbsp;    return pool.intern(this);
- * &nbsp;}
- * </pre></blockquote>
- *
- * Si nous avions utilisé la classe {@link java.util.HashSet} au lieu de <code>WeakHashSet</code>,
- * chaque élément ajoutés à l'ensemble <code>pool</code> y serait resté même s'il n'était finalement
- * plus utilisé. Mais avec la classe <code>WeakHashSet</code>, les éléments inutilisés disparaissent
- * d'eux-même. De plus, cette classe offre une méthode suplémentaire: {@link #get}. Un appel à
- * <code>get(object)</code> retournera l'élément de l'ensemble qui répond à la condition
- * <code>object_returned.equals(object)</code> (s'il y en a un), ce qui n'implique pas forcément que
- * <code>object_returned==object</code>.
- *
- * Notez qu'il est fortement conseillé que tout élément ajouté à cet ensemble soit immutable, afin
- * d'éviter qu'un élément précédemment ajouté ne deviennent irrécupérable si sa valeur retournée par
- * {@link java.lang.Object#hashCode} change.
+ * A set of object hold by weak references.
+ * This class is used to implements caches.
  * <br><br>
- * Les méthodes de cette classe sont synchronisées pour un environnement multi-threads.
+ * Note: depart from this name, this class do not implements
+ *       the {@link java.util.Set} interface. It may be done
+ *       if a future version if it seem worth.
  *
  * @version 1.0
  * @author Martin Desruisseaux
- *
- * @see java.util.HashSet
- * @see java.lang.ref.WeakReference
  */
-public final class WeakHashSet extends AbstractSet
+public class WeakHashSet<Element>
 {
+    /**
+     * A weak reference to an element.
+     * TODO: Should be an inner class, but the compiler don't likes it.
+     *       Make it inner and remove 'owner' when compiler's bugs will
+     *       be fixed.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private static final class WeakElement<Element> extends WeakReference
+    {
+        /**
+         * The outer class.
+         */
+        private final WeakHashSet<Element> owner;
+
+        /**
+         * The next entry, or <code>null</code> if there is none.
+         */
+        WeakElement<Element> next;
+
+        /**
+         * Index for this element in {@link #table}. This index
+         * must be updated at every {@link #rehash} call.
+         */
+        int index;
+
+        /**
+         * Construct a new weak reference.
+         */
+        WeakElement(final WeakHashSet<Element> owner, final Element obj, final WeakElement<Element> next, final int index)
+        {
+            super(obj, referenceQueue);
+            this.owner = owner;
+            this.next  = next;
+            this.index = index;
+        }
+
+        /**
+         * Returns the referenced object.
+         */
+        public Element get()
+        {return (Element) super.get();} // unchecked cast
+
+        /**
+         * Clear the reference.
+         */
+        public void clear()
+        {
+            super.clear();
+            owner.remove(this);
+            System.out.println(this);
+        }
+    }
+
+    /**
+     * Lance un thread en arrière-plan qui supprimera
+     * les références réclamées par le ramasse-miettes.
+     */
+    static
+    {
+        final Thread thread = new Thread("WeakHashSet")
+        {
+            public void run()
+            {
+                while (true) try
+                {
+                    referenceQueue.remove().clear();
+                }
+                catch (InterruptedException exception)
+                {
+                    // Somebody doesn't want to lets
+                    // us sleep... Go back to work.
+                }
+                catch (Exception exception)
+                {
+                    ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
+                }
+                catch (AssertionError exception)
+                {
+                    ExceptionMonitor.unexpectedException("net.seas.util", "WeakHashSet", "remove", exception);
+                }
+            }
+        };
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Liste des références qui viennent d'être détruites par le ramasse-miettes.
+     */
+    private static final ReferenceQueue referenceQueue=new ReferenceQueue();
+
     /**
      * Capacité minimale de la table {@link #table}.
      */
@@ -95,16 +155,10 @@ public final class WeakHashSet extends AbstractSet
     private static final float LOAD_FACTOR = 0.75f;
 
     /**
-     * Liste des références qui viennent d'être détruites par le ramasse-miettes.
-     * Ces informations seront utilisées par la méthode {@link #processQueue}.
-     */
-    private final ReferenceQueue referenceQueue=new ReferenceQueue();
-
-    /**
      * La liste des entrés de cette table. Cette
      * table sera agrandie selon les besoins.
      */
-    private WeakElement table[];
+    private WeakElement<Element> table[];
 
     /**
      * Une estimation du nombre d'éléments non-nul dans la
@@ -123,292 +177,94 @@ public final class WeakHashSet extends AbstractSet
     private int threshold;
 
     /**
-     * Nombre que cet ensemble a été modifiée. Notez que cet
-     * ensemble peut être modifiée même lors d'opérations
-     * qui ne sont pas sensées modifier l'ensemble, puisque
-     * des éléments ont pu être réclamés par le ramasse-miettes.
-     */
-    private int modCount;
-
-    /**
      * Construit un ensemble avec une
      * capacité initiale par défaut.
      */
     public WeakHashSet()
     {
-        table=new WeakElement[MIN_CAPACITY];
+        table=new WeakElement<Element>[MIN_CAPACITY];
         threshold=Math.round(table.length*LOAD_FACTOR);
-    }
-
-    /**
-     * Un élément de l'ensemble {@link WeakHashSet}. La valeur de chaque élément
-     * n'est retenue que par un lien faible, de sorte que le ramasse-miettes les
-     * détruira s'ils ne sont plus utilisés nul part ailleurs.
-     *
-     * @version 1.0
-     * @author Mark Reinhold
-     * @author Martin Desruisseaux
-     */
-    private static final class WeakElement extends WeakReference
-    {
-        /**
-         * L'entré suivante, ou <code>null</code>
-         * s'il n'y en a pas.
-         */
-        WeakElement next;
-
-        /**
-         * L'index dans le tableau {@link #table} ou se trouvait
-         * cette référence. Cet index sera utilisé pour retirer
-         * rapidement la référence dans la méthode {@link #processQueue}.
-         * Cet index devra être remis à jour à chaque appel de la méthode
-         * {@link #rehash}.
-         */
-        int index;
-
-        /**
-         * Construit une entré pour l'objet spécifié.
-         */
-        WeakElement(final Object obj, final WeakElement next, final ReferenceQueue referenceQueue, final int index)
-        {
-            super(obj, referenceQueue);
-            this.next=next;
-            this.index=index;
-        }
     }
 
     /**
      * Méthode à appeller lorsque l'on veut retirer de cet ensemble
      * les éléments qui ont été détruits par le ramasse-miettes.
      */
-    private void processQueue()
+    private synchronized void remove(final WeakElement<Element> toRemove)
     {
-        WeakElement toRemove;
-process:while ((toRemove = (WeakElement) referenceQueue.poll()) != null)
+        assert(count == count());
+        final int i=toRemove.index;
+        // L'index 'i' peut ne pas être valide si la référence
+        // 'toRemove' est un "cadavre" abandonné par 'rehash'.
+        if (i<table.length)
         {
-            final int i=toRemove.index;
-            // L'index 'i' peut ne pas être valide si la référence
-            // 'toRemove' est un "cadavre" abandonné par 'rehash'.
-            if (i<table.length)
+            WeakElement<Element> prev=null;
+            WeakElement<Element> e=table[i];
+            while (e!=null)
             {
-                WeakElement prev=null;
-                WeakElement e=table[i];
-                while (e!=null)
+                if (e==toRemove)
                 {
-                    if (e==toRemove)
-                    {
-                        count--;
-                        modCount++;
-                        if (prev!=null) prev.next=e.next;
-                        else table[i]=e.next;
-                        continue process;
-                        // Il ne faut pas continuer la boucle courante,
-                        // car la variable 'e' n'est plus valide.
-                    }
-                    prev=e;
-                    e=e.next;
+                    count--;
+                    if (prev!=null) prev.next=e.next;
+                    else table[i]=e.next;
+
+                    // Si le nombre d'éléments dans la table a diminué de
+                    // façon significative, on réduira la longueur de la table.
+                    if (count <= threshold/4) rehash(false);
+
+                    // Il ne faut pas continuer la boucle courante,
+                    // car la variable 'e' n'est plus valide.
+                    assert(count == count());
+                    return;
                 }
+                prev=e;
+                e=e.next;
             }
-            // Si on atteint ce point, c'est que la référence n'a pas été trouvée.
-            // Ca peut arriver si l'élément a déjà été supprimé par {@link #rehash}.
         }
-        /**
-         * Si le nombre d'éléments dans la table a diminué de
-         * façon significative, on réduira la longueur de la table.
-         */
-        if (count <= (threshold >> 1))
-        {
-            rehash();
-        }
+        // Si on atteint ce point, c'est que la référence n'a pas été trouvée.
+        // Ca peut arriver si l'élément a déjà été supprimé par {@link #rehash}.
     }
 
     /**
      * Redistribue les éléments de la table {@link #table}.
+     *
+     * @param augmentation <code>true</code> if this method is invoked
+     *        for augmenting {@link #table}, or <code>false</code> if
+     *        it is invoked for making the table smaller.
      */
-    private void rehash()
-    {rehash(Math.max(Math.round(count/(0.75f*LOAD_FACTOR)), count+MIN_CAPACITY));}
-
-    /**
-     * Redistribue les éléments de la table {@link #table}.
-     * @param capacity Nouvelle longueur du tableau.
-     */
-    private void rehash(final int capacity)
+    private void rehash(final boolean augmentation)
     {
-        modCount++;
-        final WeakElement[] oldTable = table;
-        table     = new WeakElement[capacity];
-        threshold = Math.min(Math.round(capacity*LOAD_FACTOR), capacity-7);
+        final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
         assert(capacity>=MIN_CAPACITY);
+        if (augmentation ? capacity<table.length : capacity>table.length)
+        {
+            return;
+        }
+        final WeakElement<Element>[] oldTable = table;
+        table     = new WeakElement<Element>[capacity];
+        threshold = Math.min(Math.round(capacity*LOAD_FACTOR), capacity-7);
         for (int i=0; i<oldTable.length; i++)
         {
-            for (WeakElement old=oldTable[i]; old!=null;)
+            for (WeakElement<Element> old=oldTable[i]; old!=null;)
             {
-                final WeakElement e=old;
+                final WeakElement<Element> e=old;
                 old=old.next; // On retient 'next' tout de suite car sa valeur va changer...
-                final Object obj_e = e.get();
+                final Element obj_e = e.get();
                 if (obj_e!=null)
                 {
-                    final int index=(obj_e.hashCode() & 0x7FFFFFFF) % table.length;
+                    final int index=(hashCode(obj_e) & 0x7FFFFFFF) % table.length;
                     e.index = index;
                     e.next  = table[index];
                     table[index]=e;
                 }
+                else count--;
             }
         }
-    }
-
-    /**
-     * Retourne le nombre d'éléments
-     * compris dans cet ensemble.
-     */
-    public synchronized int size()
-    {
-        processQueue();
-        return count;
-    }
-
-    /**
-     * Copie tous les éléments de
-     * cet ensemble dans une liste.
-     */
-    private Collection<Object> toArrayList()
-    {
-        processQueue();
-        final List<Object> list=new ArrayList<Object>(count);
-        for (int i=0; i<table.length; i++)
-        {
-            for (WeakElement e=table[i], prev=null; e!=null; prev=e, e=e.next)
-            {
-                final Object e_obj=e.get();
-                if (e_obj!=null) list.add(e_obj);
-            }
-        }
-        return list;
-    }
-
-    /**
-     * Retourne les éléments de cet ensemble
-     * à l'intérieur d'un tableau, sans ordre
-     * particulier.
-     */
-    public synchronized Object[] toArray()
-    {return toArrayList().toArray();}
-
-    /**
-     * Retourne les éléments de cet ensemble
-     * à l'intérieur du tableau spécifié,
-     * sans ordre particulier.
-     */
-    public synchronized Object[] toArray(final Object[] array)
-    {return toArrayList().toArray(array);}
-
-    /**
-     * Retourne un itérateur balayant
-     * tous les éléments de cet ensemble.
-     */
-    public synchronized Iterator iterator()
-    {
-        processQueue();
-        return new WeakIterator();
-    }
-
-    /**
-     * Retourne <code>true</code> si cet ensemble contient l'élément
-     * spécifié. Par défaut cette méthode est simplement implémentée
-     * par <code>return {@link #get get}(obj)!=null</code>.
-     *
-     * @param obj Elément (ne doit pas être nul).
-     * @return <code>true</code> si l'élément
-     *         est compris dans cet ensemble.
-     *
-     * @throws NullPointerException si <code>obj</code> est nul.
-     */
-    public boolean contains(final Object obj) throws NullPointerException
-    {return get(obj)!=null;}
-
-    /**
-     * Retourne l'élément de cet ensemble qui est égal à l'élément spécifié, ou <code>null</code>
-     * si cet élément n'y apparait pas. Soit <code>returnedElement</code> l'élément retourné par
-     * cette méthode. Si <code>returnedElement</code> est non-nul, alors cette méthode garantie
-     * que <code>returnedElement.{@link Object#equals equals}(obj)</code>, mais ne garantie pas
-     * que <code>returnedElement==obj</code>. Cette propriété permet de retrouver un unique
-     * exemplaire d'un objet à l'aide de cet ensemble plutôt que de conserver de multiples
-     * copies d'un même objet. Voyez la description de cette classe pour un exemple.
-     *
-     * @param obj L'élément recherché (ne doit pas être nul).
-     * @return L'élément compris dans cet ensemble qui est égal
-     *         à <code>obj</code>, ou <code>null</code> s'il n'y
-     *         en a pas.
-     *
-     * @throws NullPointerException si <code>obj</code> est nul.
-     */
-    public synchronized Object get(final Object obj) throws NullPointerException
-    {
-        processQueue();
-        final int index = (obj.hashCode() & 0x7FFFFFFF) % table.length;
-        for (WeakElement e=table[index], prev=null; e!=null; prev=e, e=e.next)
-        {
-            final Object e_obj = e.get();
-            if (e_obj==null)
-            {
-                count--;
-                modCount++;
-                if (prev!=null) prev.next=e.next;
-                else table[index]=e.next;
-            }
-            else if (obj.equals(e_obj))
-            {
-                return e_obj;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Ajoute l'élément <code>obj</code> à cet ensemble, s'il n'était pas
-     * déjà présent. Si l'élément <code>obj</code> était déjà présent, cette
-     * méthode retourne <code>false</code> sans rien faire.
-     *
-     * @param obj Élément à ajouter (ne doit pas être nul).
-     * @return <code>true</code> si cet ensemble ne contenait
-     *         pas déjà l'élément <code>obj</code>.
-     *
-     * @throws NullPointerException si <code>obj</code> est nul.
-     */
-    public synchronized boolean add(Object obj) throws NullPointerException
-    {
-        processQueue();
-        /*
-         * Vérifie si l'objet <code>obj</code> n'apparait pas déjà dans
-         * cet ensemble. Si oui, retourne <code>true</code> sans rien
-         * faire.
-         */
-        final int hash = obj.hashCode() & 0x7FFFFFFF;
-        int index = hash % table.length;
-        for (WeakElement e=table[index], prev=null; e!=null; prev=e, e=e.next)
-        {
-            final Object e_obj=e.get();
-            if (obj.equals(e_obj))
-                return false;
-        }
-        /*
-         * Vérifie si la table a besoin d'être agrandie. Si oui, on
-         * créera un nouveau tableau dans lequel on copiera les éléments
-         * de l'ancien tableau.
-         */
-        if (count>=threshold)
-        {
-            rehash();
-            index = hash % table.length;
-        }
-        /*
-         * Ajoute l'élément <code>obj</code>
-         * aux éléments de cet ensemble.
-         */
-        table[index]=new WeakElement(obj, table[index], referenceQueue, index);
-        count++;
-        modCount++;
-        return true;
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
+        record.setSourceClassName("WeakHashSet");
+        record.setSourceMethodName(augmentation ? "intern" : "remove");
+        Logger.getLogger("net.seas.util").log(record);
+        assert(count == count());
     }
 
     /**
@@ -426,74 +282,46 @@ process:while ((toRemove = (WeakElement) referenceQueue.poll()) != null)
      * &nbsp;  return object;
      * </pre></blockquote>
      */
-    private Object intern0(final Object obj)
+    private Element intern0(final Element obj)
     {
         if (obj!=null)
         {
-            final int hash = obj.hashCode() & 0x7FFFFFFF;
+            /*
+             * Vérifie si l'objet <code>obj</code> n'apparait pas déjà dans
+             * cet ensemble. Si oui, retourne l'objet sans rien faire.
+             */
+            final int hash = hashCode(obj) & 0x7FFFFFFF;
             int index = hash % table.length;
-            for (WeakElement e=table[index], prev=null; e!=null; prev=e, e=e.next)
+            for (WeakElement<Element> e=table[index], prev=null; e!=null; prev=e, e=e.next)
             {
-                final Object e_obj=e.get();
+                final Element e_obj=e.get();
                 if (e_obj==null)
                 {
                     count--;
-                    modCount++;
                     if (prev!=null) prev.next=e.next;
                     else table[index]=e.next;
                 }
-                else if (obj.equals(e_obj)) return e_obj;
+                else if (equals(obj, e_obj)) return e_obj;
             }
+            /*
+             * Vérifie si la table a besoin d'être agrandie. Si oui, on
+             * créera un nouveau tableau dans lequel on copiera les éléments
+             * de l'ancien tableau.
+             */
             if (count>=threshold)
             {
-                rehash();
+                rehash(true);
                 index = hash % table.length;
             }
-            table[index]=new WeakElement(obj, table[index], referenceQueue, index);
+            /*
+             * Ajoute l'élément <code>obj</code>
+             * aux éléments de cet ensemble.
+             */
+            table[index]=new WeakElement<Element>(this, obj, table[index], index);
             count++;
-            modCount++;
         }
+        assert(count == count());
         return obj;
-    }
-
-    /**
-     * Supprime de cet ensemble l'élément spécifié.
-     *
-     * @pâram obj Élément à supprimer (ne doit pas être nul).
-     * @return <code>true</code> si cet ensemble contenait
-     *         l'élément <code>obj</code>
-     *
-     * @throws NullPointerException si <code>obj</code> est nul.
-     */
-    public synchronized boolean remove(final Object obj) throws NullPointerException
-    {
-        processQueue();
-        final int index = (obj.hashCode() & 0x7FFFFFFF) % table.length;
-        for (WeakElement e=table[index], prev=null; e!=null; prev=e, e=e.next)
-        {
-            final Object e_obj=e.get();
-            if (obj.equals(e_obj))
-            {
-                e.clear();
-                count--;
-                modCount++;
-                if (prev!=null) prev.next=e.next;
-                else table[index]=e.next;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Retire tous les éléments
-     * de cet ensemble.
-     */
-    public synchronized void clear()
-    {
-        count=0;
-        modCount++;
-        Arrays.fill(table, null);
     }
 
     /**
@@ -512,11 +340,8 @@ process:while ((toRemove = (WeakElement) referenceQueue.poll()) != null)
      * &nbsp;  return object;
      * </pre></blockquote>
      */
-    public synchronized Object intern(final Object object)
-    {
-        processQueue();
-        return intern0(object);
-    }
+    public synchronized Element intern(final Element object)
+    {return intern0(object);}
 
     /**
      * Ajoute les objets spécifiés à l'ensemble <code>this</code> si des exemplaires identiques (au sens
@@ -529,141 +354,46 @@ process:while ((toRemove = (WeakElement) referenceQueue.poll()) != null)
      * &nbsp;      objects[i] = intern(objects[i]);
      * </pre></blockquote>
      */
-    public synchronized void intern(final Object[] objects)
+    public synchronized void intern(final Element[] objects)
     {
-        processQueue();
-        rehash(table.length+objects.length);
         for (int i=0; i<objects.length; i++)
             objects[i] = intern0(objects[i]);
     }
 
     /**
-     * Itérateur utilisé pour
-     * balayer les valeurs de cet ensemble.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
+     * Returns the count of element in this set.
      */
-    private final class WeakIterator implements Iterator
+    public synchronized int size()
     {
-        /**
-         * Index dans la table {@link #table}
-         * de l'entré {@link #entry}.
-         */
-        private int index = table.length;
-
-        /**
-         * Entré à retourner lors du prochain appel de la méthode {@link #next}.
-         * Si <code>null</code>, les méthodes {@link #next} et {@link #hasNext}
-         * chercheront la prochaine entré non-nul. Si <code>null</code> et que
-         * {@link #index} est en dehors des limites des index valides du tableau
-         * {@link #table}, alors il ne reste plus d'éléments à extraire de cet
-         * ensemble.
-         */
-        private WeakElement entry = null;
-
-        /**
-         * Entré retournée par le dernier appel de la méthode
-         * {@link #next}, ou <code>null</code> si {@link #next}
-         * n'a encore jamais été appellé ou que la méthode
-         * {@link #remove} a été appellée.
-         */
-        private WeakElement lastReturned = null;
-
-        /**
-         * Index dans le tableau {@link #table} du dernier
-         * élément retourné par {@link #next}.
-         */
-        private int lastReturnedIndex = index;
-
-        /**
-         * Un indicateur vérifiant si l'ensemble
-         * n'a pas été modifiée pendant son balayage.
-         */
-        private int expectedModCount = modCount;
-
-        /**
-         * Vérifie s'il reste au moins
-         * un autre élément à retourner.
-         */
-        public boolean hasNext()
-        {
-            synchronized (WeakHashSet.this)
-            {
-                if (modCount != expectedModCount)
-                    throw new ConcurrentModificationException();
-
-                while (entry==null)
-                {
-                    if (--index>=0)
-                        entry=table[index];
-                    else return false;
-                }
-                return true;
-            }
-        }
-
-        /**
-         * Retourne le prochain
-         * élément de l'ensemble.
-         */
-        public Object next()
-        {
-            synchronized (WeakHashSet.this)
-            {
-                while (modCount==expectedModCount)
-                {
-                    while (entry==null)
-                    {
-                        if (--index>=0)
-                            entry=table[index];
-                        else throw new NoSuchElementException();
-                    }
-                    final WeakElement returned=entry;
-                    final Object obj=returned.get();
-                    entry=entry.next;
-                    if (obj!=null)
-                    {
-                        lastReturnedIndex=index;
-                        lastReturned=returned;
-                        return obj;
-                    }
-                }
-                throw new ConcurrentModificationException();
-            }
-        }
-
-        /**
-         * Supprime le dernier
-         * élément de la liste.
-         */
-        public void remove()
-        {
-            synchronized (WeakHashSet.this)
-            {
-                if (modCount == expectedModCount)
-                {
-                    for (WeakElement e=table[lastReturnedIndex], prev=null; e!=null; prev=e, e=e.next)
-                    {
-                        if (lastReturned==null)
-                        {
-                            if (e == lastReturned)
-                            {
-                                count--;
-                                if (prev == null)
-                                    table[lastReturnedIndex] = e.next;
-                                else
-                                    prev.next = e.next;
-                                expectedModCount = ++modCount;
-                                lastReturned = null;
-                                return;
-                            }
-                        }
-                        else throw new IllegalStateException();
-                    }
-                }
-                throw new ConcurrentModificationException();
-            }
-        }
+        assert(count == count());
+        return count;
     }
+
+    /**
+     * Count the number of elements. This number
+     * should be equals to {@link #count}.
+     */
+    private int count()
+    {
+        int n=0;
+        for (int i=0; i<table.length; i++)
+            for (WeakElement<Element> e=table[i]; e!=null; e=e.next)
+                n++;
+        return n;
+    }
+
+    /**
+     * Returns a hash code value for the specified object.
+     * Default implementation returns {@link Object#hashCode}.
+     * Override to compute hash code in a different way.
+     */
+    protected int hashCode(final Element object)
+    {return (object!=null) ? object.hashCode() : 0;}
+
+    /**
+     * Check two objects for equality. This method should be overriden
+     * if {@link #hashCode(Object)} has been overriden.
+     */
+    protected boolean equals(final Element object1, final Element object2)
+    {return object1==object2 || (object1!=null && object1.equals(object2));}
 }

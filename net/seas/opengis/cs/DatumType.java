@@ -28,6 +28,7 @@ import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
 import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
+import net.seas.util.WeakHashSet;
 import net.seas.resources.Clé;
 
 
@@ -50,6 +51,12 @@ public abstract class DatumType extends EnumeratedParameter
      * <code>serialVersionUID</code> for interoperability with previous versions.
      */
     private static final long serialVersionUID = -3231606206426977300L;
+
+    /**
+     * The pool of local datum. This pool
+     * will be created only when needed.
+     */
+    private static WeakHashSet<DatumType> pool;
 
     /**
      * These datums, such as ED50, NAD27 and NAD83, have been designed
@@ -154,9 +161,7 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.
-     * Current version don't allow new enum definition (it will be
-     * fixed in a future version).</FONT>
+     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -166,7 +171,32 @@ public abstract class DatumType extends EnumeratedParameter
         for (int i=0; i<ENUMS.length; i++)
             if (ENUMS[i].getValue()==value)
                 return ENUMS[i];
-        throw new NoSuchElementException(String.valueOf(value));
+
+        final DatumType datum;
+        if (value>=Horizontal.MINIMUM && value<=Horizontal.MAXIMUM)
+        {
+            datum = new Horizontal("Custom", value, 0);
+        }
+        else if (value>=Vertical.MINIMUM && value<=Vertical.MAXIMUM)
+        {
+            datum = new Vertical("Custom", value, 0);
+        }
+        else if (value>=Local.MINIMUM && value<=Local.MAXIMUM)
+        {
+            datum = new Local("Custom", value, 0);
+        }
+        else
+        {
+            throw new IllegalArgumentException(String.valueOf(value));
+        }
+        synchronized (DatumType.class)
+        {
+            if (pool==null)
+            {
+                pool = new Pool();
+            }
+            return pool.intern(datum);
+        }
     }
 
     /**
@@ -185,22 +215,21 @@ public abstract class DatumType extends EnumeratedParameter
     abstract int getTypeKey();
 
     /**
-     * <FONT COLOR="#FF6633">Return the type name in the specified locale.
-     * Type may be "Horizontal", "Vertical" ou "Local".</FONT>
+     * <FONT COLOR="#FF6633">Return the type name in the specified locale.</FONT>
+     * Type may be "Horizontal", "Vertical" ou "Local".
      */
     public String getType(final Locale locale)
     {return Resources.getResources(locale).getString(getTypeKey());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.
-     * If no name is available for the specified locale, a default one will be
-     * used.</FONT>
+     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
+     * If no name is available for the specified locale, a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(clé);}
+    {return (clé!=0) ? Resources.getResources(locale).getString(clé) : getName();}
 
     /**
      * Use a single instance of {@link DatumType} after deserialization.
@@ -325,5 +354,26 @@ public abstract class DatumType extends EnumeratedParameter
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
         /** Return the type key.   */ final int getTypeKey() {return Clé.LOCAL;}
+    }
+
+    /**
+     * Pool of custom {@link DatumType}.
+     *
+     * @version 1.00
+     * @author Martin Desruisseaux
+     */
+    private static final class Pool extends WeakHashSet<DatumType>
+    {
+        /**
+         * Override in order to get hash code computed from the enum value.
+         */
+        protected int hashCode(final DatumType object)
+        {return object.getValue();}
+
+        /**
+         * Override in order to compare hash code values only (not the name).
+         */
+        protected boolean equals(final DatumType object1, final DatumType object2)
+        {return object1.getValue()==object2.getValue();}
     }
 }

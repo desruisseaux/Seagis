@@ -24,9 +24,8 @@ package net.seas.opengis.pt;
 
 
 /**
- * <FONT COLOR="#FF6633">A longitude angle. Positive longitudes are
- * East, while negative longitudes are West. This class has no direct
- * OpenGIS equivalent.</FONT>
+ * <FONT COLOR="#FF6633">A longitude angle.</FONT> Positive longitudes are East,
+ * while negative longitudes are West. This class has no direct OpenGIS equivalent.
  *
  * @version 1.0
  * @author Martin Desruisseaux

@@ -220,7 +220,7 @@ public class Ellipsoid extends Info
      * radius (<var>r<sub>e</sub></var> and <var>r<sub>p</sub></var> respectively)
      * by the formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>.
      * For perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
-     * (which is the correct value).</FONT>
+     * (which is the correct value).
      */
     public double getInverseFlattening()
     {return inverseFlattening;}

@@ -106,8 +106,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between two geographic coordinate systems.
-     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
+     * <FONT COLOR="#FF6633">Creates a transformation between two geographic coordinate systems.</FONT>
+     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.
      */
     protected CoordinateTransform create(final GeographicCoordinateSystem sourceCS, final GeographicCoordinateSystem targetCS)
     {
@@ -119,8 +119,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between two projected coordinate systems.
-     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
+     * <FONT COLOR="#FF6633">Creates a transformation between two projected coordinate systems.</FONT>
+     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.
      */
     protected CoordinateTransform create(final ProjectedCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS)
     {
@@ -132,8 +132,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between a geographic and a projected coordinate systems.
-     * This  method is automatically invoked by <code>createFromCoordinateSystems</code>.</FONT>
+     * <FONT COLOR="#FF6633">Creates a transformation between a geographic and a projected coordinate systems.</FONT>
+     * This  method is automatically invoked by <code>createFromCoordinateSystems</code>.
      */
     protected CoordinateTransform create(final GeographicCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS)
     {

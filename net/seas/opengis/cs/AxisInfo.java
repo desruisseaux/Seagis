@@ -73,8 +73,8 @@ public class AxisInfo implements Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the localized name of this axis.
-     * The default implementation returns {@link #name}.</FONT>
+     * <FONT COLOR="#FF6633">Returns the localized name of this axis.</FONT>
+     * The default implementation returns {@link #name}.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
      * @return The localized string.

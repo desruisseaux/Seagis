@@ -153,12 +153,12 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Adds a point to this envelope. The resulting envelope
+     * <FONT COLOR="#FF6633">Adds a point to this envelope.</FONT> The resulting envelope
      * is the smallest envelope that contains both the original envelope and the
      * specified point. After adding a point, a call to {@link #contains} with the
      * added point as an argument will return <code>true</code>, except if one of
      * the point's ordinates was {@link Double#NaN} (in which case the corresponding
-     * ordinate have been ignored).</FONT>
+     * ordinate have been ignored).
      *
      * @param  point The point to add.
      * @throws IllegalArgumentException if the point doesn't have the expected dimension.
@@ -204,8 +204,8 @@ public final class Envelope implements Cloneable, Serializable
     {return ord.length/2;}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the minimal ordinate along
-     * the specified dimension.</FONT>
+     * <FONT COLOR="#FF6633">Returns the minimal ordinate
+     * along the specified dimension.</FONT>
      */
     public double getMinimum(final int dimension)
     {
@@ -214,8 +214,8 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the maximal ordinate along
-     * the specified dimension.</FONT>
+     * <FONT COLOR="#FF6633">Returns the maximal ordinate
+     * along the specified dimension.</FONT>
      */
     public double getMaximum(final int dimension)
     {
@@ -224,8 +224,8 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the center ordinate along
-     * the specified dimension.</FONT>
+     * <FONT COLOR="#FF6633">Returns the center ordinate
+     * along the specified dimension.</FONT>
      */
     public double getCenter(final int dimension)
     {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}
