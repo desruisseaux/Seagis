@@ -46,7 +46,12 @@ final class OperationEntry implements fr.ird.database.sample.OperationEntry, Ser
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -7300910102715366367L;
+    private static final long serialVersionUID = -4700360283071351634L;
+
+    /**
+     * Un numéro unique identifiant cette entré.
+     */
+    private final int ID;
 
     /**
      * Le nom de colonne de l'opération. Cette colonne apparaît dans la table
@@ -78,12 +83,14 @@ final class OperationEntry implements fr.ird.database.sample.OperationEntry, Ser
     /**
      * Construit une entré.
      */
-    public OperationEntry(final String column,
+    public OperationEntry(final int    ID,
+                          final String column,
                           final String prefix,
                           final String operation,
                           final String name,
                           final String remarks)
     {
+        this.ID        = ID;
         this.column    = column;
         this.prefix    = prefix;
         this.operation = operation;
@@ -95,7 +102,7 @@ final class OperationEntry implements fr.ird.database.sample.OperationEntry, Ser
      * {@inheritDoc}
      */
     public int getID() {
-        return column.hashCode();
+        return ID;
     }
 
     /**

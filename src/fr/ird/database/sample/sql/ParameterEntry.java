@@ -155,4 +155,161 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
         }
         return false;
     }
+
+    /**
+     * Implémentation d'une des composantes d'un {@linkplain ParameterEntry paramètre}.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
+     */
+    final class Component implements fr.ird.database.sample.ParameterEntry.Component, Serializable {
+        /**
+         * Numéro de série pour compatibilité entre différentes versions.
+         */
+        private static final long serialVersionUID = 9013631151104037206L;
+
+        /**
+         * Le paramètre source.
+         */
+        private final fr.ird.database.sample.ParameterEntry source;
+
+        /**
+         * La position relative du paramètre source.
+         */
+        private final fr.ird.database.sample.RelativePositionEntry position;
+
+        /**
+         * L'opération à appliquer sur le paramètre source.
+         */
+        private final fr.ird.database.sample.OperationEntry operation;
+
+        /**
+         * Le poid à donner au paramètre source.
+         */
+        private final double weight;
+
+        /**
+         * Si différent de 0, le facteur par lequelle multiplier la valeur source
+         * avant de prendre son logarithme naturel. Si <code>logarithme</code> est
+         * 0, alors le logarithme ne sera pas pris.
+         */
+        private final double logarithm;
+
+        /**
+         * Construit une nouvelle composante.
+         */
+        public Component(final fr.ird.database.sample.ParameterEntry        source,
+                         final fr.ird.database.sample.RelativePositionEntry position,
+                         final fr.ird.database.sample.OperationEntry        operation,
+                         final double                weight,
+                         final double                logarithm)
+        {
+            this.source    = source;
+            this.position  = position;
+            this.operation = operation;
+            this.weight    = weight;
+            this.logarithm = logarithm;
+        }
+
+        /**
+         * Retourne un numéro unique identifiant cette composante. L'implémentation
+         * par défaut suppose que les numéro ID du paramètre cible, source, de la
+         * position relative et de l'opération sont tous sur 8 bits.
+         */
+        public int getID() {
+            return (ParameterEntry.this.getID() <<  0) ^
+                   (source             .getID() <<  8) ^
+                   (position           .getID() << 16) ^
+                   (operation          .getID() << 24);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getName() {
+            return ParameterEntry.this.getName();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getRemarks() {
+            return null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public fr.ird.database.sample.ParameterEntry getTarget() {
+            return ParameterEntry.this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public fr.ird.database.sample.ParameterEntry getSource() {
+            return source;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public fr.ird.database.sample.RelativePositionEntry getRelativePosition() {
+            return position;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public fr.ird.database.sample.OperationEntry getOperation() {
+            return operation;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double getWeight() {
+            return weight;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double transform(double value) {
+            if (logarithm != 0) {
+                value = Math.log(value * logarithm);
+            }
+            return value;
+        }
+
+        /**
+         * Retourne le nom de cette entrée.
+         */
+        public String toString() {
+            return getName();
+        }
+
+        /**
+         * Retourne un numéro à peu près unique identifiant cette entrée.
+         */
+        public int hashCode() {
+            return getID();
+        }
+
+        /**
+         * Compare cette entrée avec l'objet spécifié.
+         */
+        public boolean equals(final Object object) {
+            if (object instanceof Component) {
+                final Component that = (Component) object;
+                return Utilities.equals(ParameterEntry.this, that.getTarget()) &&
+                       Utilities.equals(this.source,         that.source)      &&
+                       Utilities.equals(this.position,       that.position)    &&
+                       Utilities.equals(this.operation,      that.operation)   &&
+                       Double.doubleToLongBits(weight)    == Double.doubleToLongBits(weight) &&
+                       Double.doubleToLongBits(logarithm) == Double.doubleToLongBits(logarithm);
+            }
+            return false;
+        }
+    }
 }

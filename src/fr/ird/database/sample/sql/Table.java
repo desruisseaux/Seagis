@@ -42,6 +42,7 @@ import fr.ird.database.sample.SampleDataBase;
  */
 abstract class Table implements fr.ird.database.Table {
     /** Nom de table. */ static final String ENVIRONMENTS = "Environnements";
+    /** Nom de table. */ static final String COMBINATIONS = "Combinaisons";
     /** Nom de table. */ static final String PARAMETERS   = "Paramètres";
     /** Nom de table. */ static final String OPERATIONS   = "Opérations";
     /** Nom de table. */ static final String POSITIONS    = "Positions";

@@ -38,6 +38,8 @@ import fr.ird.database.Entry;
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see SampleDataBase#getRelativePositions
  */
 public interface RelativePositionEntry extends Entry {
     /**

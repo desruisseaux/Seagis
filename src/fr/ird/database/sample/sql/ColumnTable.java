@@ -275,11 +275,21 @@ abstract class ColumnTable<T extends Entry> extends Table {
         final ResultSet results = statement.executeQuery();
         while (results.next()) {
             final T entry = getEntry(results);
-            pool.put(entry.getName(), entry);
-            set.add(entry);
+            if (accept(entry)) {
+                pool.put(entry.getName(), entry);
+                set.add(entry);
+            }
         }
         results.close();
         return set;
+    }
+
+    /**
+     * Indique si la méthode {@link #list} devrait accepter l'entré spécifiée.
+     * L'implémentation par défaut retourne toujours <code>true</code>.
+     */
+    protected boolean accept(final T entry) {
+        return true;
     }
 
     /**

@@ -42,13 +42,14 @@ final class OperationTable extends ColumnTable<fr.ird.database.sample.OperationE
      * Requête SQL pour obtenir le code d'une opération.
      */
     static final String SQL_SELECT =
-            "SELECT colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE colonne=? ORDER BY nom";
+            "SELECT ID, colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE colonne=? ORDER BY ID";
 
-    /** Numéro de colonne. */ private static final int COLUMN    = 1;
-    /** Numéro de colonne. */ private static final int PREFIX    = 2;
-    /** Numéro de colonne. */ private static final int OPERATION = 3;
-    /** Numéro de colonne. */ private static final int NAME      = 4;
-    /** Numéro de colonne. */ private static final int REMARKS   = 5;
+    /** Numéro de colonne. */ private static final int ID        = 1;
+    /** Numéro de colonne. */ private static final int COLUMN    = 2;
+    /** Numéro de colonne. */ private static final int PREFIX    = 3;
+    /** Numéro de colonne. */ private static final int OPERATION = 4;
+    /** Numéro de colonne. */ private static final int NAME      = 5;
+    /** Numéro de colonne. */ private static final int REMARKS   = 6;
 
     /**
      * Construit une table des opérations.
@@ -95,7 +96,8 @@ final class OperationTable extends ColumnTable<fr.ird.database.sample.OperationE
     protected fr.ird.database.sample.OperationEntry getEntry(final ResultSet results)
             throws SQLException
     {
-        return new OperationEntry(results.getString(COLUMN),
+        return new OperationEntry(results.getInt   (ID),
+                                  results.getString(COLUMN),
                                   results.getString(PREFIX),
                                   results.getString(OPERATION),
                                   results.getString(NAME),

@@ -95,10 +95,10 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         ResourceKeys.SQL_SERIES_BY_ID,
         ResourceKeys.SQL_SERIES,
         ResourceKeys.SQL_GRID_COVERAGES,
-        ResourceKeys.SQL_FORMAT,
+        ResourceKeys.SQL_FORMATS,
         ResourceKeys.SQL_SAMPLE_DIMENSIONS,
         ResourceKeys.SQL_CATEGORIES,
-        ResourceKeys.SQL_GRID_GEOMETRY
+        ResourceKeys.SQL_GRID_GEOMETRIES
     };
 
     /**

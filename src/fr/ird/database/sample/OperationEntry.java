@@ -42,6 +42,8 @@ import fr.ird.database.coverage.CoverageTable;
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see SampleDataBase#getOperations
  */
 public interface OperationEntry extends Entry {
     /**

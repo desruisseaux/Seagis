@@ -128,4 +128,16 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
                                   getSeries(results, SERIES2),
                                   results.getInt(    BAND));
     }
+
+    /**
+     * Indique si la méthode {@link #list} devrait accepter l'entré spécifiée.
+     * Cette méthode cache l'entré qui porte le numéro 0, c'est-à-dire l'entré
+     * désignant la série identitée.
+     */
+    protected boolean accept(final fr.ird.database.sample.ParameterEntry entry) {
+        if (entry.getID() == 0) {
+            return false;
+        }
+        return super.accept(entry);
+    }
 }

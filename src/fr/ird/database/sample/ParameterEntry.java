@@ -35,6 +35,8 @@ import fr.ird.database.coverage.SeriesEntry;
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see SampleDataBase#getParameters
  */
 public interface ParameterEntry extends Entry {
     /**
@@ -51,4 +53,51 @@ public interface ParameterEntry extends Entry {
      * Retourne le numéro de la bande à utiliser dans les images.
      */
     public abstract int getBand();
+
+    /**
+     * Une des composantes d'un {@linkplain ParameterEntry paramètre}.   Un tableau d'objets
+     * {@link Component} peut-être associé à un objet {@link ParameterEntry} si ce paramètre
+     * est le résultat d'une combinaison d'autres paramètres. Ces combinaisons de paramètres
+     * peuvent servir par exemple à créer une carte de potentiel.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
+     */
+    public static interface Component extends Entry {
+        /**
+         * Retourne le paramètre calculé.
+         */
+        public abstract ParameterEntry getTarget();
+
+        /**
+         * Retourne une des composante du {@linkplain #getTarget paramètre calculé}.
+         * Les valeurs de cette composantes seront {@link #transform transformée},
+         * puis pondérées par un {@linkplain #getWeight poids}.
+         */
+        public abstract ParameterEntry getSource();
+
+        /**
+         * Retourne la position relative à laquelle évaluer le {@linkplain #getSource paramètre
+         * source}.
+         */
+        public abstract RelativePositionEntry getRelativePosition();
+
+        /**
+         * Retourne l'opération à appliquer sur le {@linkplain #getSource paramètre source}.
+         */
+        public abstract OperationEntry getOperation();
+
+        /**
+         * Retourne le poids du {@linkplain #getSource paramètre source}.
+         */
+        public double getWeight();
+
+        /**
+         * Retourne la transformation à appliquer préalablement sur le {@linkplain #getSource
+         * paramètre source}. Lorsqu'elle n'est pas la transformation identitée, cette
+         * transformation consistera le plus souvent à prendre le logarithme de la valeur
+         * afin de donner à la distribution une apparence plus gaussienne.
+         */
+        public double transform(final double value);
+    }
 }
