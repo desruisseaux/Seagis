@@ -32,6 +32,8 @@ import net.seas.opengis.cv.Coverage;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
+ *
+ * @see org.opengis.gc.GC_GridCoverage
  */
 public abstract class GridCoverage extends Coverage
 {
@@ -53,4 +55,19 @@ public abstract class GridCoverage extends Coverage
      * includes the valid range of grid coordinates and the georeferencing.
      */
     public abstract GridGeometry getGridGeometry();
+
+    /**
+     * Return a sequence of strongly typed values for a block. A value for
+     * each sample dimension will be returned. The return value is an
+     * <CODE>N+1</CODE> dimensional array, with dimensions. For 2 dimensional
+     * grid coverages, this array will be accessed as (sample dimension, column,
+     * row). The index values will be based from 0. The indices in the returned
+     * <CODE>N</CODE> dimensional array will need to be offset by grid range
+     * minimum coordinates to get equivalent grid coordinates.
+     */
+//  public abstract DoubleMultiArray getDataBlockAsDouble(final GridRange range)
+//  {
+        // TODO: Waiting for multiarray package (JSR-083)!
+        //       Same for setDataBlock*
+//  }
 }

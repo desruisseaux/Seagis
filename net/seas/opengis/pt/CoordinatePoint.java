@@ -119,7 +119,7 @@ public final class CoordinatePoint implements Cloneable, Serializable
         final int dimension = getDimension();
         if (dimension != expectedDimension)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION¤2,
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2,
                                                new Integer(dimension), new Integer(expectedDimension)));
         }
     }
@@ -137,11 +137,11 @@ public final class CoordinatePoint implements Cloneable, Serializable
      */
     static int hashCode(final double[] ord)
     {
-        long code=0;
+        long code=78516481;
         if (ord!=null)
         {
             for (int i=ord.length; --i>=0;)
-                code = (code << 1) ^ Double.doubleToLongBits(ord[i]);
+                code = code*31 + Double.doubleToLongBits(ord[i]);
         }
         return (int)(code >>> 32) ^ (int)code;
     }

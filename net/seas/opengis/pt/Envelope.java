@@ -141,7 +141,7 @@ public final class Envelope implements Cloneable, Serializable
     {
         if (minCP.length != maxCP.length)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION¤2,
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2,
                                                new Integer(minCP.length), new Integer(maxCP.length)));
         }
         ord = new double[minCP.length + maxCP.length];
@@ -206,14 +206,20 @@ public final class Envelope implements Cloneable, Serializable
      * the specified dimension.
      */
     public double getMinimum(final int dimension)
-    {return ord[dimension];}
+    {
+        if (dimension<ord.length) return ord[dimension];
+        throw new ArrayIndexOutOfBoundsException(dimension);
+    }
 
     /**
      * Returns the maximal ordinate along
      * the specified dimension.
      */
     public double getMaximum(final int dimension)
-    {return ord[dimension+ord.length/2];}
+    {
+        if (dimension>=0) return ord[dimension+ord.length/2];
+        throw new ArrayIndexOutOfBoundsException(dimension);
+    }
 
     /**
      * Returns the center ordinate along

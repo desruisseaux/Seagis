@@ -5,7 +5,46 @@
     <TITLE>package net.seas.opengis.gp</TITLE>
   </HEAD>
   <BODY>
-    <P ALIGN="justify">Grid coverage processing implementation.</P>
+    <P ALIGN="justify">Grid coverage processing implementation. The following is
+    adapted from <A HREF="http://www.opengis.org/techno/specs/">OpenGIS® Grid
+    Coverages Implementation Specification</A>:</P>
+
+    <BLOCKQUOTE><FONT COLOR="#008060">
+    <P ALIGN="justify">This optional interface provides operations for different
+    ways of accessing the grid coverage values as well as image processing
+    functionality. The list of available processing operations is implementation
+    dependent. The interface has a discovery mechanism to determine the available
+    processing operations. These processing operations will transform values
+    within a single sample dimension, and leave the values in other sample
+    dimensions unaffected. The modified sample dimension may also change its
+    type (e.g. from <CODE>4BIT</CODE> to <CODE>1BIT</CODE>). The actual
+    underlying grid data remains unchanged. The interface has been designed to
+    allow the adaptations to be done in a "pipe-lined" manner. The interface
+    operates on {@link net.seas.opengis.gc.GridCoverage} to create a new 
+    {@link net.seas.opengis.gc.GridCoverage}. The interface does not need to
+    make a copy of the source grid data. Instead, it can return a grid coverage
+    object which applies the adaptations on the original grid coverage whenever
+    a block of data is requested. In this way, a pipeline of several grid
+    coverages can be constructed cheaply.</P>
+
+    <P ALIGN="justify">This interface can perform any of the following:</P>
+
+    <OL>
+      <LI>Change the number of bands being accessed.</LI>
+      <LI>Change the value sequencing in which the grid values are retrieved.</LI>
+      <LI>Allow re-sampling of the grid coverage for a different geometry.
+          Creating a new {@link net.seas.opengis.gc.GridCoverage} with different
+          grid geometry allows for reprojecting the grid coverage to another
+          projection and another georeferencing type, resampling to another cell
+          resolution and subsetting the grid coverage.</LI>
+      <LI>Modify the way the grid values are accessed (filtered, classified...).</LI>
+      <LI>Change the interpolation method used when evaluating points which fall
+          between grid cells.</LI>
+      <LI>Filtering</LI>
+      <LI>Image enhancements.</LI>
+      <LI>etc.</LI>
+    </OL>
+    </FONT></BLOCKQUOTE>
 
     <P ALIGN="justify">Note: the <CODE>GridAnalysis</CODE> class
     is intentionnaly omitted. <CODE>GridAnalysis</CODE> methods
