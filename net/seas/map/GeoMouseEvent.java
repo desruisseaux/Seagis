@@ -36,6 +36,7 @@ import java.awt.event.MouseListener;
 
 // Miscellaneous
 import java.awt.geom.Point2D;
+import net.seagis.resources.OpenGIS;
 
 
 /**
@@ -154,8 +155,9 @@ public final class GeoMouseEvent extends MouseEvent
      *         Si la coordonnée a pu être obtenue et que <code>dest</code> est non-nul, alors
      *         une nouveau point sera automatiquement créé et retourné.
      */
-    public Point2D getCoordinate(final CoordinateSystem system, Point2D dest)
+    public Point2D getCoordinate(CoordinateSystem system, Point2D dest)
     {
+        system = OpenGIS.getCoordinateSystem2D(system);
         try
         {
             if (inverseTransform==null)

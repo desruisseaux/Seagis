@@ -131,7 +131,7 @@ public class ControlPanel extends JPanel
         final String   sqlQueriesText = resources.getMenuLabel(ResourceKeys.SQL_QUERIES);
         final String       driverText = resources.getLabel(ResourceKeys.JDBC_DRIVER);
         final String       sourceText = resources.getLabel(ResourceKeys.DATABASE);
-        final String     timezoneText = resources.getLabel(ResourceKeys.TIME_ZONE);
+        final String     timezoneText = resources.getLabel(ResourceKeys.TIMEZONE);
         final String[]    timezoneIDs = TimeZone.getAvailableIDs();
         final JLabel   directoryLabel = new JLabel(resources.getLabel(ResourceKeys.ROOT_DIRECTORY));
         directory.setText(ImageDataBase.getDefaultDirectory().getPath());

@@ -85,7 +85,7 @@ public class LogarithmicCategory extends Category
      * le cas, la valeur retournée risque d'être une extrapolation qui
      * n'aura pas nécessairement de sens physique.
      */
-    protected double toValue(final int index)
+    public double toValue(final int index)
     {return XMath.pow10(offset + scale*index);}
 
     /**
@@ -95,7 +95,7 @@ public class LogarithmicCategory extends Category
      * cette méthode retourne {@link #lower}. Cette méthode ne retourne jamais un
      * nombre infini ou NaN.
      */
-    protected int toIndex(final double value)
+    public int toIndex(final double value)
     {
         final double index = Math.rint((XMath.log10(value)-offset)/scale);
         return (index>=lower) ? ((index<upper) ? (int)index : upper-1) : lower;

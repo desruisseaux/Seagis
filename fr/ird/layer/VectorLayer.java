@@ -27,6 +27,7 @@ package fr.ird.layer;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.gc.GridCoverage;
+import net.seagis.ct.MathTransform2D;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cv.SampleDimension;
 import net.seagis.cv.CategoryList;
@@ -189,7 +190,8 @@ public class VectorLayer extends GridMarkLayer
         this.bandU = bandU;
         this.bandV = bandV;
         final Dimension       size = new Dimension(data.getWidth(), data.getHeight());
-        final AffineTransform gref = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
+        final MathTransform2D  mtr = coverage.getGridGeometry().getGridToCoordinateSystem2D();
+        final AffineTransform gref = new AffineTransform((AffineTransform) mtr);
         gref.translate(-data.getMinX(), -data.getMinY());
         // La translation de -min(x,y) est pour faire commencer les indices à (0,0).
         setGrid(size, gref);
@@ -264,7 +266,7 @@ public class VectorLayer extends GridMarkLayer
      * la direction des <var>x</var> positifs (soit à un angle de 0 radians
      * arithmétiques).
      */
-    public Shape getShape(final int i)
+    public Shape getMarkShape(final int i)
     {return DEFAULT_SHAPE;}
 
     /**

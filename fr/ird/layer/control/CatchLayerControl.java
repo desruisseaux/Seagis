@@ -120,7 +120,7 @@ public final class CatchLayerControl extends LayerControl
      *         exemple parce qu'aucune espèce n'a été sélectionnée).
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized Layer configLayer(final Layer layer, final EventListenerList listeners) throws SQLException
+    public synchronized Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException
     {
         CatchLayer catchLayer = (CatchLayer) layer;
         if (catchLayer==null)

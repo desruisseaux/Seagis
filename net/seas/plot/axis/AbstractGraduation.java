@@ -74,12 +74,15 @@ public abstract class AbstractGraduation implements Graduation, Serializable
      * greater than or equals to the minimum.
      *
      * @param  value The new minimum in {@link #getUnit} units.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      * @throws IllegalArgumentException If <code>value</code> is NaN ou infinite.
      *
      * @see #getMinimum
      * @see #setMaximum(double)
      */
-    public abstract void setMinimum(final double value) throws IllegalArgumentException;
+    public abstract boolean setMinimum(final double value) throws IllegalArgumentException;
 
     /**
      * Set the maximum value for this graduation. If the new maximum is less
@@ -87,12 +90,15 @@ public abstract class AbstractGraduation implements Graduation, Serializable
      * less than or equals to the maximum.
      *
      * @param  value The new maximum in {@link #getUnit} units.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      * @throws IllegalArgumentException If <code>value</code> is NaN ou infinite.
      *
      * @see #getMaximum
      * @see #setMinimum(double)
      */
-    public abstract void setMaximum(final double value) throws IllegalArgumentException;
+    public abstract boolean setMaximum(final double value) throws IllegalArgumentException;
     
     /**
      * Returns the axis label. This label should not include units or

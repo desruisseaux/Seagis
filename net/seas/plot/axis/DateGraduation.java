@@ -26,7 +26,7 @@
  */
 package net.seas.plot.axis;
 
-// Temps et divers
+// Miscellaneous
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -36,6 +36,7 @@ import java.text.DateFormat;
 import java.text.Format;
 import javax.units.Unit;
 import java.awt.RenderingHints;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -74,10 +75,13 @@ public class DateGraduation extends AbstractGraduation
      *
      * @param value The new minimum in milliseconds ellapsed
      *              since January 1st, 1970 at 00:00 UTC.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      *
      * @see #setMaximum(long)
      */
-    public synchronized void setMinimum(final long value)
+    public synchronized boolean setMinimum(final long value)
     {
         long old=minimum;
         minimum = value;
@@ -87,7 +91,9 @@ public class DateGraduation extends AbstractGraduation
             old = maximum;
             maximum = value;
             firePropertyChange("maximum", old, value);
+            return true;
         }
+        return value != old;
     }
 
     /**
@@ -97,10 +103,13 @@ public class DateGraduation extends AbstractGraduation
      *
      * @param value The new maximum in milliseconds ellapsed
      *              since January 1st, 1970 at 00:00 UTC.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      *
      * @see #setMinimum(long)
      */
-    public synchronized void setMaximum(final long value)
+    public synchronized boolean setMaximum(final long value)
     {
         long old=maximum;
         maximum = value;
@@ -110,27 +119,29 @@ public class DateGraduation extends AbstractGraduation
             old = minimum;
             minimum = value;
             firePropertyChange("minimum", old, value);
+            return true;
         }
+        return value != old;
     }
 
     /**
      * Set the minimum value as a real number. This
      * method invokes {@link #setMinimum(long)}.
      */
-    public final void setMinimum(final double value)
+    public final boolean setMinimum(final double value)
     {
         ensureFinite("minimum", value);
-        setMinimum(Math.round(value));
+        return setMinimum(Math.round(value));
     }
 
     /**
      * Set the maximum value as a real number. This
      * method invokes {@link #setMaximum(long)}.
      */
-    public final void setMaximum(final double value)
+    public final boolean setMaximum(final double value)
     {
         ensureFinite("maximum", value);
-        setMaximum(Math.round(value));
+        return setMaximum(Math.round(value));
     }
 
     /**
@@ -246,5 +257,35 @@ public class DateGraduation extends AbstractGraduation
     {
         if (oldValue != newValue)
             firePropertyChange(propertyName, new Date(oldValue), new Date(newValue));
+    }
+
+    /**
+     * Compare this graduation with the
+     * specified object for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object!=null && object.getClass().equals(getClass()))
+        {
+            final DateGraduation that = (DateGraduation) object;
+            return this.minimum == that.minimum &&
+                   this.maximum == that.maximum &&
+                   Utilities.equals(this.timezone, that.timezone);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash value for this graduation.
+     */
+    public int hashCode()
+    {
+        final long lcode = minimum + 37*maximum;
+        int code = (int)lcode ^ (int)(lcode >>> 32);
+        if (timezone!=null)
+        {
+            code=37*code + timezone.hashCode();
+        }
+        return code;
     }
 }

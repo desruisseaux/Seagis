@@ -34,8 +34,10 @@ import fr.ird.sql.image.ImageEntry;
 import net.seas.map.Layer;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import javax.swing.Icon;
+import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -59,6 +61,10 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CannotRedoException;
+
+// Resources
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -149,7 +155,9 @@ public abstract class LayerControl
      */
     protected LayerControl(final boolean selected)
     {
-        selector = new JCheckBox(getName(), selected);
+        // Note: we can't call 'getName()' before
+        //       the construction is finished.
+        selector = new JCheckBox((String)null, selected);
         trigger  = new JButton();
     }
 
@@ -166,7 +174,7 @@ public abstract class LayerControl
      * @param  propertyText Texte  par défaut des boutons "propriétés".
      * @throws IllegalStateException si l'interface avait déjà été construite.
      */
-    final void buildUI(final Container owner, final GridBagConstraints c, final Dimension buttonSize, final Icon propertyIcon, final String propertyText)
+    private void buildUI(final Container owner, final GridBagConstraints c, final Dimension buttonSize, final Icon propertyIcon, final String propertyText)
     {
         final Listeners action = new Listeners();
         trigger .setIcon(propertyIcon);
@@ -175,8 +183,36 @@ public abstract class LayerControl
         trigger .setEnabled(selector.isSelected());
         trigger .addActionListener(action);
         selector.addActionListener(action);
+        selector.setText(getName());
         c.gridx=0; c.weightx=1; c.fill=c.HORIZONTAL; c.insets.left=9; c.insets.right=3; owner.add(selector, c);
         c.gridx=1; c.weightx=0; c.fill=c.NONE;       c.insets.left=0; c.insets.right=6; owner.add(trigger,  c);
+    }
+
+    /**
+     * Retourne un paneau qui contiendra tous les contrôles specifiés.
+     *
+     * @param layers Contrôles à placer dans le paneau.
+     * @param icon Icône à utiliser pour chaque contrôle.
+     */
+    public static JComponent getPanel(final LayerControl[] layers, final Icon icon)
+    {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        if (layers!=null)
+        {
+            final GridBagConstraints c = new GridBagConstraints();
+            final String  propertyText = Resources.format(ResourceKeys.PROPERTIES);
+            final Dimension buttonSize = new Dimension(24,24);
+            for (int i=0; i<layers.length; i++)
+            {
+                final LayerControl layer=layers[i];
+                synchronized (layer)
+                {
+                    c.gridy=i;
+                    layer.buildUI(panel, c, buttonSize, icon, propertyText);
+                }
+            }
+        }
+        return panel;
     }
 
     /**

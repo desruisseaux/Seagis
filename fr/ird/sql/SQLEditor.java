@@ -29,8 +29,7 @@ package fr.ird.sql;
 import java.util.prefs.Preferences;
 
 // Interface utilisateur
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Component;
 import java.awt.Font;
@@ -41,6 +40,7 @@ import javax.swing.JTextArea;
 import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.JScrollPane;
+import javax.swing.BorderFactory;
 import net.seas.util.SwingUtilities;
 
 // Modèles et événements
@@ -232,7 +232,7 @@ public class SQLEditor extends JPanel
      */
     public SQLEditor(final Preferences preferences, final String description, final Logger logger)
     {
-        super(new GridBagLayout());
+        super(new BorderLayout());
         this.logger=logger;
         this.preferences=preferences;
         if (preferences==null) throw new NullPointerException();
@@ -245,10 +245,10 @@ public class SQLEditor extends JPanel
         final JScrollPane scrollList  = new JScrollPane(sqlList);
         final JScrollPane scrollValue = new JScrollPane(valueArea);
         final JSplitPane  splitPane   = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollList, scrollValue);
-        final GridBagConstraints c    = new GridBagConstraints();
-        c.gridx=0; c.fill=c.BOTH;
-        c.gridy=0; c.weightx=1; add(SwingUtilities.getMultilineLabelFor(scrollList, description), c);
-        c.gridy=1; c.weighty=1; c.insets.top=18; add(splitPane, c);
+        final JComponent  comments    = SwingUtilities.getMultilineLabelFor(scrollList, description);
+        comments.setBorder(BorderFactory.createEmptyBorder(/*top*/0, /*left*/0, /*bottom*/18, /*right*/0));
+        add(comments,   BorderLayout.NORTH);
+        add(splitPane, BorderLayout.CENTER);
     }
 
     /**

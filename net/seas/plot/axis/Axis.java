@@ -420,7 +420,7 @@ public class Axis extends Line2D implements Cloneable, Serializable
 
     /**
      * Returns the axis's label. Default implementation returns a string build from
-     * "<code>{@link Graduation#getAxisLabel} label ({@link Graduation#getUnitLabel unit})"</code>.
+     * "<code>{@link Graduation#getAxisLabel label} ({@link Graduation#getUnitLabel unit})"</code>.
      */
     public synchronized String getLabel()
     {

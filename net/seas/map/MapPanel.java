@@ -474,9 +474,7 @@ public class MapPanel extends ZoomPane
             }
             if (layerCount >= layers.length)
             {
-                final Layer[] oldArrays = layers;
-                layers = new Layer[Math.max(layerCount,8) << 1];
-                System.arraycopy(oldArrays, 0, layers, 0, layerCount);
+                layers = XArray.resize(layers, Math.max(layerCount,8) << 1);
             }
             layers[layerCount++]=layer;
             layerSorted=false;
@@ -564,6 +562,7 @@ public class MapPanel extends ZoomPane
             }
             layers[layerCount]=null;
         }
+        layerCount         = 0;
         commonestTransform = null;
         stroke             = null;
         setArea(null);
@@ -792,7 +791,6 @@ public class MapPanel extends ZoomPane
     {
         for (int i=layerCount; --i>=0;)
             layers[i].clearCache();
-        System.gc();
     }
 
     /**

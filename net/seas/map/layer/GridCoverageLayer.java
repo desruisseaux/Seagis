@@ -42,7 +42,6 @@ import net.seagis.resources.XDimension2D;
 import net.seagis.resources.XAffineTransform;
 
 // Miscellaneous
-import java.util.List;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -196,14 +195,16 @@ public class GridCoverageLayer extends Layer
      */
     protected synchronized boolean getLabel(final GeoMouseEvent event, final StringBuffer toAppendTo)
     {
-        point  = event.getCoordinate(coverage.getCoordinateSystem(), point);
+        point  = event.getCoordinate(getCoordinateSystem(), point);
         values = coverage.evaluate(point, values);
         if (categories==null)
         {
             final SampleDimension[] dimensions = coverage.getSampleDimensions();
-            final CategoryList[] categories = new CategoryList[dimensions.length];
+            categories = new CategoryList[dimensions.length];
             for (int i=0; i<categories.length; i++)
+            {
                 categories[i] = dimensions[i].getCategoryList();
+            }
         }
         boolean modified = false;
         for (int i=0; i<values.length; i++)

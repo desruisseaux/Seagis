@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.awt.RenderingHints;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -72,12 +73,15 @@ public class NumberGraduation extends AbstractGraduation
      * greater than or equals to the minimum.
      *
      * @param  value The new minimum in {@link #getUnit} units.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      * @throws IllegalArgumentException Si <code>value</code> is NaN ou infinite.
      *
      * @see #getMinimum
      * @see #setMaximum(double)
      */
-    public synchronized void setMinimum(final double value) throws IllegalArgumentException
+    public synchronized boolean setMinimum(final double value) throws IllegalArgumentException
     {
         ensureFinite("minimum", value);
         double old = minimum;
@@ -88,7 +92,9 @@ public class NumberGraduation extends AbstractGraduation
             old = maximum;
             maximum = value;
             firePropertyChange("maximum", old, value);
+            return true;
         }
+        return Double.doubleToLongBits(value) != Double.doubleToLongBits(old);
     }
 
     /**
@@ -97,23 +103,28 @@ public class NumberGraduation extends AbstractGraduation
      * less than or equals to the maximum.
      *
      * @param  value The new maximum in {@link #getUnit} units.
+     * @return <code>true</code> if the state of this graduation changed
+     *         as a result of this call, or <code>false</code> if the new
+     *         value is identical to the previous one.
      * @throws IllegalArgumentException If <code>value</code> is NaN ou infinite.
      *
      * @see #getMaximum
      * @see #setMinimum(double)
      */
-    public synchronized void setMaximum(final double value) throws IllegalArgumentException
+    public synchronized boolean setMaximum(final double value) throws IllegalArgumentException
     {
         ensureFinite("maximum", value);
-        double old=maximum;
-        maximum = value;
+        double old = maximum;
+        maximum    = value;
         firePropertyChange("maximum", old, value);
         if (minimum>=value)
         {
             old = minimum;
             minimum = value;
             firePropertyChange("minimum", old, value);
+            return true;
         }
+        return Double.doubleToLongBits(value) != Double.doubleToLongBits(old);
     }
 
     /**
@@ -261,5 +272,36 @@ public class NumberGraduation extends AbstractGraduation
     {
         if (oldValue != newValue)
             firePropertyChange(propertyName, new Double(oldValue), new Double(newValue));
+    }
+
+    /**
+     * Compare this graduation with the
+     * specified object for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object!=null && object.getClass().equals(getClass()))
+        {
+            final NumberGraduation that = (NumberGraduation) object;
+            return Double.doubleToLongBits(this.minimum) == Double.doubleToLongBits(that.minimum) &&
+                   Double.doubleToLongBits(this.maximum) == Double.doubleToLongBits(that.maximum) &&
+                          Utilities.equals(this.unit, that.unit);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash value for this graduation.
+     */
+    public int hashCode()
+    {
+        final long lcode = Double.doubleToLongBits(minimum) +
+                        37*Double.doubleToLongBits(maximum);
+        int code = (int)lcode ^ (int)(lcode >>> 32);
+        if (unit!=null)
+        {
+            code=37*code + unit.hashCode();
+        }
+        return code;
     }
 }
