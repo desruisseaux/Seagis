@@ -34,6 +34,7 @@ import java.awt.image.RenderedImage;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.File;
+import java.util.logging.Logger;
 
 // Collection
 import java.util.Set;
@@ -46,11 +47,14 @@ import ncsa.hdf.hdflib.HDFException;
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
 import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.resources.MonolineFormatter;
 import org.geotools.resources.Arguments;
 
 // Miscellaneous
 import fr.ird.io.hdf4.Parser;
 import fr.ird.io.hdf4.DataSet;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import fr.ird.operator.image.AbstractImageFunction;
 
 
@@ -166,6 +170,8 @@ class WindImageFunction extends AbstractImageFunction {
             if (fileIndex >= files.length) {
                 return null;
             }
+            Logger.getLogger("fr.ird.image.pump").info(Resources.format(
+                    ResourceKeys.LOADING_$1, files[fileIndex].getName()));
             final QuikscatParser parser = new QuikscatParser(files[fileIndex]);
             try {
                 count = load(parser);
@@ -290,6 +296,7 @@ class WindImageFunction extends AbstractImageFunction {
      * more complete console application.
      */
     public static void main(String[] args) throws IOException {
+        MonolineFormatter.init("fr.ird");
         final Arguments arguments = new Arguments(args);
         if (args.length == 0) {
             arguments.out.println("Voir EkmanPumpingImageFunction pour la version complète.");

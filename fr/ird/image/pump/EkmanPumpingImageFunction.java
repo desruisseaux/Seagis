@@ -31,6 +31,7 @@ import java.awt.Dimension;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
+import javax.media.jai.PlanarImage;
 import javax.imageio.ImageIO;
 
 // Entrés/sorties
@@ -61,6 +62,7 @@ import java.util.logging.LogRecord;
 import org.geotools.gc.GridCoverage;
 import org.geotools.ct.TransformException;
 import org.geotools.resources.Arguments;
+import org.geotools.resources.MonolineFormatter;
 
 
 /**
@@ -240,6 +242,7 @@ final class EkmanPumpingImageFunction extends WindImageFunction {
      * </ul>
      */
     public static void main(String[] args) throws IOException {
+        MonolineFormatter.init("fr.ird.image.pump");
         /*
          * Initial image width and height. May be modified later
          * if the user supplied -width and/or -height arguments.
@@ -297,7 +300,17 @@ final class EkmanPumpingImageFunction extends WindImageFunction {
         }
         if (output != null) {
             image = function.getGridCoverage(title, width, height);
-            ImageIO.write(image.geophysics(false).getRenderedImage(), "png", new File(output));
+            final int extensionIndex = output.lastIndexOf('.');
+            final String type = (extensionIndex>=0) ? output.substring(extensionIndex+1) : "png";
+            RenderedImage outputImage;
+            if (type.equalsIgnoreCase("raw")) {
+                outputImage = image.geophysics(true).getRenderedImage();
+                outputImage = PlanarImage.wrapRenderedImage(outputImage).getAsBufferedImage();
+                // Convert to BufferedImage in order to make sure we have only one tile.
+            } else {
+                outputImage = image.geophysics(false).getRenderedImage();
+            }
+            ImageIO.write(outputImage, type, new File(output));
         } else {
             image = function.show(title, width, height);
         }
