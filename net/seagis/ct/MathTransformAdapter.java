@@ -137,6 +137,11 @@ class MathTransformAdapter extends AbstractMathTransform implements Serializable
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof TransformException)
+            {
+                throw (TransformException) cause;
+            }
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
@@ -161,6 +166,11 @@ class MathTransformAdapter extends AbstractMathTransform implements Serializable
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof TransformException)
+            {
+                throw (TransformException) cause;
+            }
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
@@ -187,6 +197,11 @@ class MathTransformAdapter extends AbstractMathTransform implements Serializable
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof TransformException)
+            {
+                throw (TransformException) cause;
+            }
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
@@ -206,6 +221,11 @@ class MathTransformAdapter extends AbstractMathTransform implements Serializable
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof NoninvertibleTransformException)
+            {
+                throw (NoninvertibleTransformException) cause;
+            }
             throw new NoninvertibleTransformException(exception.getLocalizedMessage(), exception);
         }
         return inverse;

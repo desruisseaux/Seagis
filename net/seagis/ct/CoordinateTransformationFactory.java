@@ -64,6 +64,7 @@ import net.seagis.resources.css.ResourceKeys;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.rmi.server.RemoteObject;
 
 // Miscellaneous
@@ -1108,7 +1109,7 @@ public class CoordinateTransformationFactory
             }
             catch (CannotCreateTransformException exception)
             {
-                throw new RemoteException(exception.getLocalizedMessage(), exception);
+                throw new ServerException(exception.getLocalizedMessage(), exception);
             }
         }
     }

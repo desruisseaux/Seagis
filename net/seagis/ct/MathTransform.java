@@ -45,6 +45,7 @@ import net.seagis.pt.MismatchedDimensionException;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.rmi.server.RemoteObject;
 
 // Resources
@@ -359,7 +360,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
         }
         catch (TransformException exception)
         {
-            throw new RemoteException(exception.getLocalizedMessage(), exception);
+            throw new ServerException(exception.getLocalizedMessage(), exception);
         }
     }
 
@@ -383,7 +384,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
         }
         catch (TransformException exception)
         {
-            throw new RemoteException(exception.getLocalizedMessage(), exception);
+            throw new ServerException(exception.getLocalizedMessage(), exception);
         }
     }
 
@@ -398,7 +399,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
         }
         catch (TransformException exception)
         {
-            throw new RemoteException(exception.getLocalizedMessage(), exception);
+            throw new ServerException(exception.getLocalizedMessage(), exception);
         }
     }
 
@@ -413,7 +414,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
         }
         catch (NoninvertibleTransformException exception)
         {
-            throw new RemoteException(exception.getLocalizedMessage(), exception);
+            throw new ServerException(exception.getLocalizedMessage(), exception);
         }
     }
 }

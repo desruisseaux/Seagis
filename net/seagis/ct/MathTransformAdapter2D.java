@@ -91,6 +91,11 @@ final class MathTransformAdapter2D extends MathTransformAdapter implements MathT
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof TransformException)
+            {
+                throw (TransformException) cause;
+            }
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
@@ -111,6 +116,11 @@ final class MathTransformAdapter2D extends MathTransformAdapter implements MathT
         }
         catch (RemoteException exception)
         {
+            final Throwable cause = exception.detail;
+            if (cause instanceof TransformException)
+            {
+                throw (TransformException) cause;
+            }
             throw new TransformException(exception.getLocalizedMessage(), exception);
         }
     }
