@@ -51,7 +51,13 @@ import net.seagis.resources.css.ResourceKeys;
 
 
 /**
- * A 2D cartographic coordinate system.
+ * A 2D cartographic coordinate system. Projected coordinates are the two-dimensional
+ * cartesian coordinates typically found on maps and computer displays. The cartesian
+ * axes are often called "paper coordinates" or "display coordinates." The conversions
+ * from a three-dimensional curvilinear coordinate system (whether ellipsoidal or spherical)
+ * to projected coordinates may be assumed to be well known. Examples of projected coordinate
+ * systems are: Lambert, Mercator, and transverse Mercator. Conversions to, and conversions
+ * between, projected spatial coordinate systems often do not preserve distances, areas and angles.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)

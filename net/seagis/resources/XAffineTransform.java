@@ -163,14 +163,14 @@ public final class XAffineTransform
      * Ce facteur est calculé par <IMG src="{@docRoot}/net/seas/map/layer/doc-files/equation1.gif">.
      */
     public static double getScaleX0(final AffineTransform zoom)
-    {return Utilities.hypot(zoom.getScaleX(), zoom.getShearX());}
+    {return XMath.hypot(zoom.getScaleX(), zoom.getShearX());}
 
     /**
      * Retourne le facteur d'échelle <var>y</var> en annulant l'effet d'une éventuelle rotation.
      * Ce facteur est calculé par <IMG src="{@docRoot}/net/seas/map/layer/doc-files/equation2.gif">.
      */
     public static double getScaleY0(final AffineTransform zoom)
-    {return Utilities.hypot(zoom.getScaleY(), zoom.getShearY());}
+    {return XMath.hypot(zoom.getScaleY(), zoom.getShearY());}
 
     /**
      * Retourne une transformation affine représentant un zoom fait autour d'un point

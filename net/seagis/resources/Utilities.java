@@ -48,12 +48,6 @@ import java.util.logging.LogRecord;
 public final class Utilities
 {
     /**
-     * Natural logarithm of 10.
-     * Approximatively equals to 2.302585.
-     */
-    public static final double LN10=2.3025850929940456840179914546844;
-
-    /**
      * An array of strings containing only white spaces. String length are equal
      * to their index + 1 in the <code>spacesFactory</code> array.  For example,
      * <code>spacesFactory[4]</code> contains a string of length 5.  Strings are
@@ -66,19 +60,6 @@ public final class Utilities
      */
     private Utilities()
     {}
-    
-    /**
-     * Compute the hypothenuse (<code>sqrt(x²+y²)</code>).
-     */
-    public static double hypot(double x, double y)
-    {return Math.sqrt(x*x + y*y);}
-
-    /**
-     * Compute the logarithm in base 10. See
-     * <a href="http://developer.java.sun.com/developer/bugParade/bugs/4074599.html">Implement log10 (base 10 logarithm)</a>.
-     */
-    public static double log10(double x)
-    {return Math.log(x)/LN10;}
 
     /**
      * Returns a string of the specified length filled with white spaces.

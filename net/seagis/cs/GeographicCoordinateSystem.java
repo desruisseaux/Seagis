@@ -36,8 +36,8 @@ import org.opengis.cs.CS_GeographicCoordinateSystem;
 
 // Coordinates
 import net.seagis.pt.Envelope;
-//import net.seagis.pt.Latitude;  // TODO
-//import net.seagis.pt.Longitude; // TODO
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
 import net.seagis.pt.CoordinatePoint;
 
 // Collections
@@ -186,17 +186,13 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
             final AxisOrientation orientation = getAxis(i).orientation;
             if (AxisOrientation.NORTH.equals(orientation.absolute()))
             {
-                min = -90; // TODO
-                max = +90; // TODO
-//              min = Latitude.MIN_VALUE;
-//              max = Latitude.MAX_VALUE;
+                min = Latitude.MIN_VALUE;
+                max = Latitude.MAX_VALUE;
             }
             else if (AxisOrientation.EAST.equals(orientation.absolute()))
             {
-                min = -180; // TODO
-                max = +180; // TODO
-//              min = Longitude.MIN_VALUE;
-//              max = Longitude.MAX_VALUE;
+                min = Longitude.MIN_VALUE;
+                max = Longitude.MAX_VALUE;
             }
             else
             {

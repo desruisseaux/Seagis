@@ -40,6 +40,7 @@ import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
 
 // Resources
+import net.seagis.resources.XMath;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
@@ -296,7 +297,7 @@ public class Ellipsoid extends Info
         final double y  = 0.5*(y1+y2);
         final double dx = Math.toRadians(Math.abs(x2-x1) % 360);
         return Math.acos(Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx))/
-               Utilities.hypot(Math.sin(y)/getSemiMajorAxis(), Math.cos(y)/getSemiMinorAxis());
+               XMath.hypot(Math.sin(y)/getSemiMajorAxis(), Math.cos(y)/getSemiMinorAxis());
                // 'hypot' calcule l'inverse du rayon **apparent** de la terre à la latitude 'y'.
     }
 
