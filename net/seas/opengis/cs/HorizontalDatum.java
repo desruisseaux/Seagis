@@ -22,8 +22,14 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Ellipsoid;
+import org.opengis.cs.CS_HorizontalDatum;
+import org.opengis.cs.CS_WGS84ConversionInfo;
+
 // Miscellaneous
 import net.seas.util.XClass;
+import java.rmi.RemoteException;
 
 
 /**
@@ -43,6 +49,11 @@ public class HorizontalDatum extends Datum
     private static final long serialVersionUID = 3506060221517273330L;
 
     /**
+     * The default WGS 1984 datum.
+     */
+    public static final HorizontalDatum WGS84 = new HorizontalDatum("WGS84", DatumType.GEOCENTRIC, Ellipsoid.WGS84, null);
+
+    /**
      * The ellipsoid for this datum.
      */
     private final Ellipsoid ellipsoid;
@@ -53,32 +64,31 @@ public class HorizontalDatum extends Datum
     private final WGS84ConversionInfo parameters;
 
     /**
-     * Construct a new datum with the
-     * specified name and datum type.
-     *
-     * @param name The datum name.
-     * @param type The datum type.
-     * @param ellipsoid Ellipsoid to use in horizontal datum.
-     * @param Suggested approximate conversion to WGS84, or
-     *        <code>null</code> if there is none.
-     */
-    protected HorizontalDatum(final String name, final DatumType.Horizontal type, final Ellipsoid ellipsoid,  final WGS84ConversionInfo parameters)
-    {
-        super(name, type);
-        this.ellipsoid  = ellipsoid;
-        this.parameters = (parameters!=null) ? parameters.clone() : null;
-        ensureNonNull("ellipsoid", ellipsoid);
-    }
-
-    /**
      * Creates horizontal datum from an ellipsoid. The datum
      * type will be {@link DatumType.Horizontal#OTHER}.
      *
      * @param name      Name to give new object.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.
      */
-    protected HorizontalDatum(final String name, final Ellipsoid ellipsoid)
+    public HorizontalDatum(final String name, final Ellipsoid ellipsoid)
     {this(name, DatumType.Horizontal.OTHER, ellipsoid, null);}
+
+    /**
+     * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
+     *
+     * @param name      Name to give new object.
+     * @param type      Type of horizontal datum to create.
+     * @param ellipsoid Ellipsoid to use in new horizontal datum.
+     * @param toWGS84   Suggested approximate conversion from new datum to WGS84,
+     *                  or <code>null</code> if there is none.
+     */
+    public HorizontalDatum(final String name, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo parameters)
+    {
+        super(name, type);
+        this.ellipsoid  = ellipsoid;
+        this.parameters = (parameters!=null) ? parameters.clone() : null;
+        ensureNonNull("ellipsoid", ellipsoid);
+    }
 
     /**
      * Gets the type of the datum as an enumerated code.
@@ -116,5 +126,46 @@ public class HorizontalDatum extends Datum
                    XClass.equals(this.parameters, that.parameters);
         }
         return false;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this datum.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_HorizontalDatum toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link HorizontalDatum} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends Datum.Export implements CS_HorizontalDatum
+    {
+        /**
+         * Returns the Ellipsoid.
+         */
+        public CS_Ellipsoid getEllipsoid() throws RemoteException
+        {return HorizontalDatum.this.getEllipsoid().toOpenGIS();}
+
+        /**
+         * Gets preferred parameters for a Bursa Wolf transformation into WGS84.
+         */
+        public CS_WGS84ConversionInfo getWGS84Parameters() throws RemoteException
+        {
+            final WGS84ConversionInfo info = HorizontalDatum.this.getWGS84Parameters();
+            return (info!=null) ? info.toOpenGIS() : null;
+        }
     }
 }

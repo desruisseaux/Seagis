@@ -22,6 +22,10 @@
  */
 package net.seas.opengis.pt;
 
+// OpenGIS dependencies
+import org.opengis.pt.PT_Envelope;
+import org.opengis.pt.PT_CoordinatePoint;
+
 // Miscellaneous
 import java.util.Arrays;
 import java.io.Serializable;
@@ -135,6 +139,27 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
+     * Construct a coordinate point from an OpenGIS's structure.
+     * This constructor is provided for compatibility with OpenGIS.
+     *
+     * @see #toOpenGIS
+     */
+    public Envelope(final PT_Envelope envelope)
+    {
+        final double[] minCP = envelope.minCP.ord;
+        final double[] maxCP = envelope.maxCP.ord;
+        if (minCP.length != maxCP.length)
+        {
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION¤2,
+                                               new Integer(maxCP.length), new Integer(minCP.length)));
+        }
+        ord = new double[minCP.length + maxCP.length];
+        System.arraycopy(minCP, 0, ord, 0,            minCP.length);
+        System.arraycopy(maxCP, 0, ord, minCP.length, maxCP.length);
+        checkCoherence();
+    }
+
+    /**
      * Adds a point to this envelope. The resulting envelope is the smallest
      * envelope that contains both the original envelope and the specified point.
      * After adding a point, a call to {@link #contains} with the added point as
@@ -241,4 +266,24 @@ public final class Envelope implements Cloneable, Serializable
      */
     public String toString()
     {return CoordinatePoint.toString(this, ord);}
+
+    /**
+     * Returns an OpenGIS structure for this envelope.
+     * This method is provided for compatibility with OpenGIS.
+     */
+    public PT_Envelope toOpenGIS()
+    {
+        final int dimension = getDimension();
+        final PT_Envelope envelope = new PT_Envelope();
+        envelope.minCP = new PT_CoordinatePoint();
+        envelope.maxCP = new PT_CoordinatePoint();
+        envelope.minCP.ord = new double[dimension];
+        envelope.maxCP.ord = new double[dimension];
+        for (int i=0; i<dimension; i++)
+        {
+            envelope.minCP.ord[i] = getMinimum(i);
+            envelope.maxCP.ord[i] = getMaximum(i);
+        }
+        return envelope;
+    }
 }

@@ -22,13 +22,28 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS dependencies
+import org.opengis.pt.PT_Matrix;
+import org.opengis.ct.CT_Parameter;
+import org.opengis.ct.CT_MathTransform;
+import org.opengis.ct.CT_MathTransformFactory;
+
+// OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Projection;
+
 // Miscellaneous
 import javax.units.Unit;
 import java.util.Locale;
 import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;
 import java.util.NoSuchElementException;
+import java.rmi.RemoteException;
 
+// Remote Method Invocation
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
+
+// Miscellaneous
 import net.seas.util.XArray;
 import net.seas.resources.Resources;
 import net.seas.opengis.cs.Ellipsoid;
@@ -80,9 +95,9 @@ import net.seas.opengis.cs.Ellipsoid;
 public class MathTransformFactory
 {
     /**
-     * List of registered math transforms.
+     * The default math transform factory.
      */
-    private final MathTransform.Provider[] REGISTERED = new MathTransform.Provider[]
+    public static final MathTransformFactory DEFAULT = new MathTransformFactory(new MathTransformProvider[]
     {
         new           MercatorProjection.Provider(),
         new   LambertConformalProjection.Provider(),
@@ -91,13 +106,24 @@ public class MathTransformFactory
         new      StereographicProjection.Provider(false), // Oblique
         new TransverseMercatorProjection.Provider(false), // Universal
         new TransverseMercatorProjection.Provider(true)   // Modified
-    };
+    });
+
+    /**
+     * List of registered math transforms.
+     */
+    private final MathTransformProvider[] providers;
 
     /**
      * Create a default factory.
      */
     public MathTransformFactory()
-    {}
+    {providers = new MathTransformProvider[0];}
+
+    /**
+     * Construct a factory using the specified providers.
+     */
+    private MathTransformFactory(final MathTransformProvider[] providers)
+    {this.providers = providers;}
 
     /**
      * Creates an affine transform from a matrix.
@@ -142,35 +168,19 @@ public class MathTransformFactory
     {return getProvider(classification).create(parameters);}
 
     /**
-     * Convenience method for creating a transform from a classification name,
-     * an ellipsoid and a central point.
+     * Convenience method for creating a transform from a projection.
      *
-     * @param classification The classification name of the transform (e.g. "Transverse_Mercator").
-     * @param ellipsoid Ellipsoid parameter. "semi_major" and "semi_minor" parameters values will
-     *                  be determined from ellipsoid's axis length and unit. If null, this argument
-     *                  default to WGS 1984.
-     * @param centre    Central meridian and latitude of origin, in degrees. If null, this argument
-     *                  usualy default to 0°,0° (but the exact default values are projection-dependent).
-     *
+     * @param  projection The projection.
      * @return The parameterized transform.
-     * @throws NoSuchElementException if there is no transform for the specified classification.
+     * @throws NoSuchElementException if there is no transform for the specified projection.
+     * @throws MissingParameterException if a parameter was required but not found.
      */
-    public MathTransform createParameterizedTransform(final String classification, final Ellipsoid ellipsoid, final Point2D centre) throws NoSuchElementException
+    public MathTransform createParameterizedTransform(final Projection projection) throws NoSuchElementException, MissingParameterException
     {
-        int n=0;
-        final Parameter[] param = new Parameter[4];
-        if (ellipsoid!=null)
-        {
-            final Unit axisUnit = ellipsoid.getAxisUnit();
-            param[n++] = new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
-            param[n++] = new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
-        }
-        if (centre!=null)
-        {
-            param[n++] = new Parameter("central_meridian",   centre.getX());
-            param[n++] = new Parameter("latitude_of_origin", centre.getY());
-        }
-        return createParameterizedTransform(classification, XArray.resize(param, n));
+        final Parameter[] parameters = new Parameter[projection.getNumParameters()];
+        for (int i=0; i<parameters.length; i++)
+            parameters[i] = projection.getParameter(i);
+        return createParameterizedTransform(projection.getClassName(), parameters);
     }
 
     /**
@@ -179,9 +189,9 @@ public class MathTransformFactory
      */
     public String[] getAvailableTransforms()
     {
-        final String[] names = new String[REGISTERED.length];
+        final String[] names = new String[providers.length];
         for (int i=0; i<names.length; i++)
-            names[i] = REGISTERED[i].classification;
+            names[i] = providers[i].classification;
         return names;
     }
 
@@ -226,12 +236,89 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no registration
      *         for the specified classification.
      */
-    private MathTransform.Provider getProvider(String classification) throws NoSuchElementException
+    private MathTransformProvider getProvider(String classification) throws NoSuchElementException
     {
         classification = classification.trim();
-        for (int i=0; i<REGISTERED.length; i++)
-            if (classification.equalsIgnoreCase(REGISTERED[i].classification))
-                return REGISTERED[i];
+        for (int i=0; i<providers.length; i++)
+            if (classification.equalsIgnoreCase(providers[i].classification))
+                return providers[i];
         throw new NoSuchElementException(Resources.format(Clé.NO_TRANSFORM_FOR_CLASSIFICATION¤1, classification));
+    }
+
+    /**
+     * Returns an OpenGIS interface for this transform factory.
+     * The returned object is suitable for RMI use.
+     *
+     * @see #wrapOpenGIS
+     */
+    public CT_MathTransformFactory toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link MathTransformFactory} for use with OpenGIS. This wrapper is a good
+     * place to check for non-implemented OpenGIS methods (just check for methods throwing
+     * {@link UnsupportedOperationException}). This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends RemoteObject implements CT_MathTransformFactory
+    {
+        /**
+         * Creates an affine transform from a matrix.
+         */
+        public CT_MathTransform createAffineTransform(PT_Matrix matrix) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Creates a transform by concatenating two existing transforms.
+         */
+        public CT_MathTransform createConcatenatedTransform(final CT_MathTransform transform1, final CT_MathTransform transform2) throws RemoteException
+        {return MathTransformFactory.this.createConcatenatedTransform(MathTransform.wrapOpenGIS(transform1), MathTransform.wrapOpenGIS(transform2)).toOpenGIS();}
+
+        /**
+         * Creates a transform which passes through a subset of ordinates to another transform.
+         */
+        public CT_MathTransform createPassThroughTransform(final int firstAffectedOrdinate, final CT_MathTransform subTransform) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Creates a transform from a classification name and parameters.
+         */
+        public CT_MathTransform createParameterizedTransform(final String classification, final CT_Parameter[] parameters) throws RemoteException
+        {return MathTransformFactory.this.createParameterizedTransform(classification, Parameter.wrapOpenGIS(parameters)).toOpenGIS();}
+
+        /**
+         * Creates a math transform from a Well-Known Text string.
+         */
+        public CT_MathTransform createFromWKT(final String wellKnownText) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Creates a math transform from XML.
+         */
+        public CT_MathTransform createFromXML(final String xml) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Tests whether parameter is angular.
+         */
+        public boolean isParameterAngular(final String parameterName) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Tests whether parameter is linear.
+         */
+        public boolean isParameterLinear(final String parameterName) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
     }
 }

@@ -22,14 +22,22 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Info;
+import org.opengis.cs.CS_Unit;
+import org.opengis.cs.CS_LinearUnit;
+import org.opengis.cs.CS_AngularUnit;
+
 // Miscellaneous
+import javax.units.Unit;
 import java.io.Serializable;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 
-// For JavaDOC only.
+// Remote Method Invocation
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 
 /**
@@ -59,7 +67,7 @@ import java.rmi.RemoteException;
  *
  * @see org.opengis.cs.CS_Info
  */
-public abstract class Info implements Serializable
+public class Info implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.
@@ -76,7 +84,7 @@ public abstract class Info implements Serializable
      *
      * @param name This object name.
      */
-    protected Info(final String name)
+    public Info(final String name)
     {
         this.name=name;
         ensureNonNull("name", name);
@@ -164,6 +172,32 @@ public abstract class Info implements Serializable
     {return XClass.getShortClassName(this)+'['+getName()+']';}
 
     /**
+     * Returns an OpenGIS interface for this info.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_Info toOpenGIS()
+    {return new Export();}
+
+    /**
+     * Transform a {@link Unit} object into a {@link CS_Unit}.
+     * This method is provided for interoperability with OpenGIS.
+     */
+    static CS_Unit toOpenGIS(final Unit unit)
+    {
+        if (unit.canConvert(Unit.METRE))
+        {
+            final double metersPerUnits = unit.convert(1, Unit.METRE);
+            // TODO: returns a LinearUnit
+        }
+        if (unit.canConvert(Unit.DEGREE))
+        {
+            final double degreesPerUnits = unit.convert(1, Unit.DEGREE);
+            // TODO: returns an AngularUnit
+        }
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    /**
      * Make sure an argument is non-null.
      *
      * @param  name   Argument name.
@@ -183,4 +217,97 @@ public abstract class Info implements Serializable
      */
     static void ensureNonNull(final String name, final Object[] array, final int index) throws IllegalArgumentException
     {if (array[index]==null) throw new IllegalArgumentException(Resources.format(Clé.NULL_ARGUMENT¤1, name+'['+index+']'));}
+
+    /**
+     * Make sure that the specified unit is a linear one.
+     *
+     * @param  unit Unit to check.
+     * @throws IllegalArgumentException if <code>unit</code> is not a linear unit.
+     */
+    static void ensureLinearUnit(final Unit unit) throws IllegalArgumentException
+    {
+        if (!Unit.METRE.canConvert(unit))
+            throw new IllegalArgumentException(Resources.format(Clé.NON_LINEAR_UNIT¤1, unit));
+    }
+
+    /**
+     * Make sure that the specified unit is an angular one.
+     *
+     * @param  unit Unit to check.
+     * @throws IllegalArgumentException if <code>unit</code> is not an angular unit.
+     */
+    static void ensureAngularUnit(final Unit unit) throws IllegalArgumentException
+    {
+        if (!Unit.DEGREE.canConvert(unit))
+            throw new IllegalArgumentException(Resources.format(Clé.NON_ANGULAR_UNIT¤1, unit));
+    }
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link Info} object for use with OpenGIS. This wrapper is a
+     * good place to check for non-implemented OpenGIS methods  (just check
+     * for methods throwing {@link UnsupportedOperationException}). This
+     * class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    class Export extends RemoteObject implements CS_Info
+    {
+        /**
+         * Gets the name.
+         */
+        public String getName() throws RemoteException
+        {return Info.this.getName();}
+
+        /**
+         * Gets the authority name.
+         */
+        public String getAuthority() throws RemoteException
+        {return Info.this.getAuthority();}
+
+        /**
+         * Gets the authority-specific identification code.
+         */
+        public String getAuthorityCode() throws RemoteException
+        {return Info.this.getAuthorityCode();}
+
+        /**
+         * Gets the alias.
+         */
+        public String getAlias() throws RemoteException
+        {return Info.this.getAlias();}
+
+        /**
+         * Gets the abbreviation.
+         */
+        public String getAbbreviation() throws RemoteException
+        {return Info.this.getAbbreviation();}
+
+        /**
+         * Gets the provider-supplied remarks.
+         */
+        public String getRemarks() throws RemoteException
+        {return Info.this.getRemarks();}
+
+        /**
+         * Gets a Well-Known text representation of this object.
+         */
+        public String getWKT() throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Gets an XML representation of this object.
+         */
+        public String getXML() throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+    }
 }

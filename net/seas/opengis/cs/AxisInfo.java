@@ -22,9 +22,15 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_AxisInfo;
+import org.opengis.cs.CS_AxisOrientationEnum;
+
 // Miscellaneous
+import java.util.Locale;
 import java.io.Serializable;
 import net.seas.util.XClass;
+import net.seas.resources.Resources;
 
 
 /**
@@ -37,7 +43,7 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cs.CS_AxisInfo
  */
-public class AxisInfo implements Cloneable, Serializable
+public class AxisInfo implements Serializable
 {
     /**
      * Serial number for interoperability with different versions.
@@ -49,17 +55,18 @@ public class AxisInfo implements Cloneable, Serializable
      * <code>X</code>, <code>Y</code>, <code>Long</code>,
      * <code>Lat</code> or any other short string.
      */
-    public String name;
+    public final String name;
 
     /**
      * Enumerated value for orientation.
      */
-    public AxisOrientation orientation;
+    public final AxisOrientation orientation;
 
     /**
      * Construct an AxisInfo.
      *
-     * @param name The axis name.
+     * @param name The axis name. Possible values are <code>X</code>, <code>Y</code>,
+     *             <code>Long</code>, <code>Lat</code> or any other short string.
      * @param orientation The axis orientation.
      */
     public AxisInfo(final String name, final AxisOrientation orientation)
@@ -67,6 +74,24 @@ public class AxisInfo implements Cloneable, Serializable
         this.name        = name;
         this.orientation = orientation;
     }
+
+    /**
+     * Returns the localized name of this axis. The
+     * default implementation returns {@link #name}.
+     *
+     * @param  locale The locale, or <code>null</code> for the default locale.
+     * @return The localized string.
+     */
+    public String getName(final Locale locale)
+    {return name;}
+
+    /**
+     * Construct an AxisInfo from an OpenGIS structure.
+     * This constructor is provided for interoperability
+     * with OpenGIS.
+     */
+    public AxisInfo(final CS_AxisInfo info)
+    {this(info.name, AxisOrientation.getEnum(info.orientation.value));}
 
     /**
      * Returns a hash value for this axis.
@@ -85,31 +110,13 @@ public class AxisInfo implements Cloneable, Serializable
      */
     public boolean equals(final Object object)
     {
-        if (object instanceof AxisInfo)
+        if (object!=null && object.getClass().equals(getClass()))
         {
             final AxisInfo that = (AxisInfo) object;
             return XClass.equals(this.orientation, that.orientation) &&
                    XClass.equals(this.name       , that.name);
         }
         else return false;
-    }
-
-    /**
-     * Returns a copy of this axis.
-     */
-    public AxisInfo clone()
-    {
-        try
-        {
-            return (AxisInfo) super.clone();
-        }
-        catch (CloneNotSupportedException exception)
-        {
-            // Should not happen, since we are cloneable.
-            final InternalError error = new InternalError(exception.getMessage());
-            error.initCause(exception);
-            throw error;
-        }
     }
 
     /**
@@ -127,5 +134,46 @@ public class AxisInfo implements Cloneable, Serializable
         }
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Returns an OpenGIS structure for this axis info.
+     * This method is provided for compatibility with OpenGIS.
+     */
+    public CS_AxisInfo toOpenGIS()
+    {return new CS_AxisInfo(name, new CS_AxisOrientationEnum(orientation.value));}
+
+    /**
+     * Localized {@link AxisInfo}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Localized extends AxisInfo
+    {
+        /**
+         * Serial number for interoperability with different versions.
+         */
+        //private static final long serialVersionUID = ?; // TODO
+
+        /**
+         * The key for localization.
+         */
+        private final int clé;
+
+        /**
+         * Construct a localized axis info.
+         */
+        public Localized(final String name, final int clé, final AxisOrientation orientation)
+        {
+            super(name, orientation);
+            this.clé = clé;
+        }
+
+        /**
+         * Returns a localized string.
+         */
+        public String getName(final Locale locale)
+        {return Resources.format(clé);}
     }
 }

@@ -22,6 +22,10 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_CoordinateSystem;
+import org.opengis.cs.CS_CompoundCoordinateSystem;
+
 // Units and coordinates
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
@@ -31,6 +35,7 @@ import net.seas.opengis.ct.CoordinateTransformation;
 // Miscellaneous
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import java.rmi.RemoteException;
 
 
 /**
@@ -63,13 +68,13 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     private final CoordinateSystem tail;
 
     /**
-     * Construct a compound coordinate system.
+     * Creates a compound coordinate system.
      *
-     * @param name The coordinate system name.
-     * @param head The first sub-coordinate system.
-     * @param tail The second sub-coordinate system.
+     * @param name Name to give new object.
+     * @param head Coordinate system to use for earlier ordinates.
+     * @param tail Coordinate system to use for later ordinates.
      */
-    protected CompoundCoordinateSystem(final String name, final CoordinateSystem head, final CoordinateSystem tail)
+    public CompoundCoordinateSystem(final String name, final CoordinateSystem head, final CoordinateSystem tail)
     {
         super(name);
         this.head = head;
@@ -177,5 +182,44 @@ public class CompoundCoordinateSystem extends CoordinateSystem
                    XClass.equals(this.tail, that.tail);
         }
         return false;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this compound coordinate
+     * system. The returned object is suitable for RMI use.
+     */
+    public CS_CompoundCoordinateSystem toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link CompoundCoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends CoordinateSystem.Export implements CS_CompoundCoordinateSystem
+    {
+        /**
+         * Gets first sub-coordinate system.
+         */
+        public CS_CoordinateSystem getHeadCS() throws RemoteException
+        {return (CS_CoordinateSystem)CompoundCoordinateSystem.this.getHeadCS().toOpenGIS();}
+
+        /**
+         * Gets second sub-coordinate system.
+         */
+        public CS_CoordinateSystem getTailCS() throws RemoteException
+        {return (CS_CoordinateSystem)CompoundCoordinateSystem.this.getTailCS().toOpenGIS();}
+        // TODO: remove cast when the returns type of "CoordinateSystem.toOpenGIS()" will have been fixed.
     }
 }

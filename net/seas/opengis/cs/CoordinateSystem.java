@@ -22,6 +22,12 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Unit;
+import org.opengis.cs.CS_AxisInfo;
+import org.opengis.pt.PT_Envelope;
+import org.opengis.cs.CS_CoordinateSystem;
+
 // Units and coordinates
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
@@ -29,6 +35,7 @@ import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import java.rmi.RemoteException;
 
 
 /**
@@ -68,7 +75,7 @@ public abstract class CoordinateSystem extends Info
      *
      * @param name The coordinate system name.
      */
-    protected CoordinateSystem(final String name)
+    public CoordinateSystem(final String name)
     {super(name);}
 
     /**
@@ -127,4 +134,54 @@ public abstract class CoordinateSystem extends Info
      */
     CoordinateTransformation transformTo(final ProjectedCoordinateSystem system)
     {throw new UnsupportedOperationException();}
+
+    /**
+     * Returns an OpenGIS interface for this coordinate
+     * system. The returned object is suitable for RMI use.
+     */
+    public org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_CoordinateSystem.
+    {return new Export();} // TODO: When return type changed, fix cast in CompoundCoordinateSystem.
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link CoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    class Export extends Info.Export implements CS_CoordinateSystem
+    {
+        /**
+         * Dimension of the coordinate system.
+         */
+        public int getDimension() throws RemoteException
+        {return CoordinateSystem.this.getDimension();}
+
+        /**
+         * Gets axis details for dimension within coordinate system.
+         */
+        public CS_AxisInfo getAxis(final int dimension) throws RemoteException
+        {return CoordinateSystem.this.getAxis(dimension).toOpenGIS();}
+
+        /**
+         * Gets units for dimension within coordinate system.
+         */
+        public CS_Unit getUnits(final int dimension) throws RemoteException
+        {return toOpenGIS(CoordinateSystem.this.getUnits(dimension));}
+
+        /**
+         * Gets default envelope of coordinate system.
+         */
+        public PT_Envelope getDefaultEnvelope() throws RemoteException
+        {return CoordinateSystem.this.getDefaultEnvelope().toOpenGIS();}
+    }
 }

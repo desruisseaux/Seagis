@@ -209,7 +209,7 @@ final class MercatorProjection extends CylindricalProjection
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransform.Provider
+    static final class Provider extends MathTransformProvider
     {
         /**
          * Construct a new registration.

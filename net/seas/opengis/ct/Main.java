@@ -58,7 +58,7 @@ final class Main extends Console
     public Main(final String[] args)
     {
         super(args);
-        this.factory = new MathTransformFactory();
+        this.factory = MathTransformFactory.DEFAULT;
     }
 
     /**

@@ -22,9 +22,19 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Projection;
+import org.opengis.cs.CS_ProjectionParameter;
+
 // Miscellaneous
 import java.util.Arrays;
+import java.awt.geom.Point2D;
+import java.rmi.RemoteException;
+import javax.units.Unit;
+
 import net.seas.util.XClass;
+import net.seas.util.XArray;
+import net.seas.opengis.ct.Parameter;
 import net.seas.opengis.ct.MissingParameterException;
 
 
@@ -52,27 +62,62 @@ public class Projection extends Info
     /**
      * Parameters to use for projection, in metres or degrees.
      */
-    private final ProjectionParameter[] parameters;
+    private final Parameter[] parameters;
 
     /**
-     * Construct a new projection.
+     * Creates a projection.
+     *
+     * @param name           Name to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param ellipsoid      Ellipsoid parameter. If non-null <code>"semi_major"</code> and
+     *                       <code>"semi_minor"</code> parameters will be set according.
+     * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
+     *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                       will be set according.
+     */
+    public Projection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
+    {this(name, classification, getParameters(ellipsoid, centre));}
+
+    /**
+     * Creates a projection.
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    protected Projection(final String name, final String classification, final ProjectionParameter[] parameters)
+    public Projection(final String name, final String classification, final Parameter[] parameters)
     {
         super(name);
         ensureNonNull("classification", classification);
         ensureNonNull("parameters",     parameters);
         this.classification = classification;
-        this.parameters     = (ProjectionParameter[]) parameters.clone();
+        this.parameters     = (Parameter[]) parameters.clone();
         for (int i=0; i<this.parameters.length; i++)
         {
             ensureNonNull("parameters", this.parameters, i);
             this.parameters[i] = this.parameters[i].clone();
         }
+    }
+
+    /**
+     * Transform an ellipsoid and point argument into a parameters array.
+     */
+    private static Parameter[] getParameters(final Ellipsoid ellipsoid, final Point2D centre)
+    {
+        int n=0;
+        final Parameter[] param = new Parameter[4];
+        if (ellipsoid!=null)
+        {
+            final Unit axisUnit = ellipsoid.getAxisUnit();
+            param[n++] = new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
+            param[n++] = new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
+        }
+        if (centre!=null)
+        {
+            param[n++] = new Parameter("central_meridian",   centre.getX());
+            param[n++] = new Parameter("latitude_of_origin", centre.getY());
+        }
+        return XArray.resize(param, n);
     }
 
     /**
@@ -92,7 +137,7 @@ public class Projection extends Info
      *
      * @param index Zero based index of parameter to fetch.
      */
-    public ProjectionParameter getParameter(final int index)
+    public Parameter getParameter(final int index)
     {return parameters[index].clone();}
 
     /**
@@ -105,7 +150,7 @@ public class Projection extends Info
      * @throws MissingParameterException if parameter <code>name</code> is not found.
      */
     public double getValue(final String name) throws MissingParameterException
-    {return getValue(name, Double.NaN, true);}
+    {return Parameter.getValue(parameters, name);}
 
     /**
      * Convenience method for fetching a parameter value.
@@ -119,37 +164,7 @@ public class Projection extends Info
      *         if the parameter <code>name</code> is not found.
      */
     public double getValue(final String name, final double defaultValue)
-    {return getValue(name, defaultValue, false);}
-
-    /**
-     * Convenience method for fetching a parameter value.
-     * Search is case-insensitive and ignore leading and
-     * trailing blanks.
-     *
-     * @param  name Parameter to look for.
-     * @param  defaultValue Default value to return if
-     *         parameter <code>name</code> is not found.
-     * @param  required <code>true</code> if the parameter is required (in which case
-     *         <code>defaultValue</code> is ignored), or <code>false</code> otherwise.
-     * @return The parameter value, or <code>defaultValue</code> if the parameter is
-     *         not found and <code>required</code> is <code>false</code>.
-     * @throws MissingParameterException if <code>required</code> is <code>true</code>
-     *         and parameter <code>name</code> is not found.
-     */
-    private double getValue(String name, final double defaultValue, final boolean required) throws MissingParameterException
-    {
-        name = name.trim();
-        for (int i=0; i<parameters.length; i++)
-        {
-            ProjectionParameter parameter = parameters[i];
-            if (name.equalsIgnoreCase(parameter.name))
-            {
-                return parameter.value;
-            }
-        }
-        if (!required) return defaultValue;
-        throw new MissingParameterException(null, name);
-    }
+    {return Parameter.getValue(parameters, name, defaultValue);}
 
     /**
      * Returns a hash value for this projection.
@@ -182,4 +197,51 @@ public class Projection extends Info
      */
     public String toString()
     {return XClass.getShortClassName(this)+'['+getClassName()+']';}
+
+    /**
+     * Returns an OpenGIS interface for this projection.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_Projection toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link Projection} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends Info.Export implements CS_Projection
+    {
+        /**
+         * Gets number of parameters of the projection.
+         */
+        public int getNumParameters() throws RemoteException
+        {return Projection.this.getNumParameters();}
+
+        /**
+         * Gets an indexed parameter of the projection.
+         */
+        public CS_ProjectionParameter getParameter(final int index) throws RemoteException
+        {
+            final Parameter param = Projection.this.getParameter(index);
+            return new CS_ProjectionParameter(param.name, param.value);
+        }
+
+        /**
+         * Gets the projection classification name (e.g. 'Transverse_Mercator').
+         */
+        public String getClassName() throws RemoteException
+        {return Projection.this.getClassName();}
+    }
 }

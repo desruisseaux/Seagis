@@ -22,9 +22,15 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_HorizontalDatum;
+import org.opengis.cs.CS_HorizontalCoordinateSystem;
+
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.XClass;
+import net.seas.resources.Resources;
+import java.rmi.RemoteException;
 
 
 /**
@@ -49,16 +55,32 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     private final HorizontalDatum datum;
 
     /**
+     * Details of 0th ordinates.
+     */
+    private final AxisInfo axis0;
+
+    /**
+     * Details of 1th ordinates.
+     */
+    private final AxisInfo axis1;
+
+    /**
      * Construct a coordinate system.
      *
      * @param name  The coordinate system name.
      * @param datum The horizontal datum.
+     * @param axis0 Details of 0th ordinates in created coordinate system.
+     * @param axis1 Details of 1st ordinates in created coordinate system.
      */
-    protected HorizontalCoordinateSystem(final String name, final HorizontalDatum datum)
+    protected HorizontalCoordinateSystem(final String name, final HorizontalDatum datum, final AxisInfo axis0, final AxisInfo axis1)
     {
         super(name);
         this.datum = datum;
+        this.axis0 = axis0;
+        this.axis1 = axis1;
         ensureNonNull("datum", datum);
+        ensureNonNull("axis0", axis0);
+        ensureNonNull("axis1", axis1);
     }
 
     /**
@@ -74,6 +96,21 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     {return datum;}
 
     /**
+     * Gets axis details for dimension within coordinate system.
+     *
+     * @param dimension Zero based index of axis.
+     */
+    public AxisInfo getAxis(final int dimension)
+    {
+        switch (dimension)
+        {
+            case 0:  return axis0;
+            case 1:  return axis1;
+            default: throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
+        }
+    }
+
+    /**
      * Compares the specified object with
      * this coordinate system for equality.
      */
@@ -82,8 +119,42 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
         if (super.equals(object))
         {
             final HorizontalCoordinateSystem that = (HorizontalCoordinateSystem) object;
-            return XClass.equals(this.datum, that.datum);
+            return XClass.equals(this.datum, that.datum) &&
+                   XClass.equals(this.axis0, that.axis0) &&
+                   XClass.equals(this.axis1, that.axis1);
         }
         return false;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this horizontal coordinate
+     * system. The returned object is suitable for RMI use.
+     */
+    public org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_HorizontalCoordinateSystem
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link HorizontalCoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    class Export extends CoordinateSystem.Export implements CS_HorizontalCoordinateSystem
+    {
+        /**
+         * Returns the HorizontalDatum.
+         */
+        public CS_HorizontalDatum getHorizontalDatum() throws RemoteException
+        {return HorizontalCoordinateSystem.this.getHorizontalDatum().toOpenGIS();}
     }
 }

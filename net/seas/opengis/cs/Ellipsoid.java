@@ -22,11 +22,16 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Ellipsoid;
+import org.opengis.cs.CS_LinearUnit;
+
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.XMath;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import java.rmi.RemoteException;
 
 
 /**
@@ -95,7 +100,7 @@ public class Ellipsoid extends Info
      * @param radius The equatorial and polar radius.
      * @param unit   The units of the semi-major and semi-minor axis values.
      */
-    protected Ellipsoid(final String name, final double radius, final Unit unit)
+    public Ellipsoid(final String name, final double radius, final Unit unit)
     {this(name, check("radius", radius), radius, Double.POSITIVE_INFINITY, false, unit);}
 
     /**
@@ -106,7 +111,7 @@ public class Ellipsoid extends Info
      * @param semiMinorAxis The polar radius.
      * @param unit          The units of the semi-major and semi-minor axis values.
      */
-    protected Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
+    public Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
     {this(name, semiMajorAxis, semiMinorAxis, semiMajorAxis/(semiMajorAxis-semiMinorAxis), false, unit);}
 
     /**
@@ -128,6 +133,7 @@ public class Ellipsoid extends Info
         this.inverseFlattening = check("inverseFlattening", inverseFlattening);
         this.ivfDefinitive     = ivfDefinitive;
         ensureNonNull ("unit", unit);
+        ensureLinearUnit(unit);
         if (!Unit.METRE.canConvert(unit))
         {
             throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤2, "unit", unit));
@@ -143,7 +149,7 @@ public class Ellipsoid extends Info
      * @param inverseFlattening The inverse flattening value.
      * @param unit              The units of the semi-major and semi-minor axis values.
      */
-    static Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
+    public static Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
     {return new Ellipsoid(name, semiMajorAxis, semiMajorAxis*(1-1/inverseFlattening), inverseFlattening, true, unit);}
 
     /**
@@ -324,5 +330,61 @@ public class Ellipsoid extends Info
         }
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Returns an OpenGIS interface for this ellipsoid.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_Ellipsoid toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link Ellipsoid} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends Info.Export implements CS_Ellipsoid
+    {
+        /**
+         * Gets the equatorial radius.
+         */
+        public double getSemiMajorAxis() throws RemoteException
+        {return Ellipsoid.this.getSemiMajorAxis();}
+
+        /**
+         * Gets the polar radius.
+         */
+        public double getSemiMinorAxis() throws RemoteException
+        {return Ellipsoid.this.getSemiMinorAxis();}
+
+        /**
+         * Returns the value of the inverse of the flattening constant.
+         */
+        public double getInverseFlattening() throws RemoteException
+        {return Ellipsoid.this.getInverseFlattening();}
+
+        /**
+         * Is the Inverse Flattening definitive for this ellipsoid?
+         */
+        public boolean isIvfDefinitive() throws RemoteException
+        {return Ellipsoid.this.isIvfDefinitive();}
+
+        /**
+         * Returns the LinearUnit.
+         */
+        public CS_LinearUnit getAxisUnit() throws RemoteException
+        {return (CS_LinearUnit) toOpenGIS(Ellipsoid.this.getAxisUnit());}
     }
 }

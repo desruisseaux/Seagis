@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_WGS84ConversionInfo;
+
 // Miscellaneous
 import java.io.Serializable;
 import net.seas.util.XClass;
@@ -71,11 +74,27 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
     public String areaOfUse;
 
     /**
-     * Construct an object with
-     * all parameters set to 0.
+     * Construct a conversion info
+     * with all parameters set to 0.
      */
     public WGS84ConversionInfo()
     {}
+
+    /**
+     * Construct a conversion info from an OpenGIS structure.
+     * This constructor is provided for interoperability with OpenGIS.
+     */
+    public WGS84ConversionInfo(final CS_WGS84ConversionInfo info)
+    {
+        dx = info.dx;
+        dy = info.dy;
+        dz = info.dz;
+        ex = info.ex;
+        ey = info.ey;
+        ez = info.ez;
+        ppm = info.ppm;
+        areaOfUse = info.areaOfUse;
+    }
 
     /**
      * Returns a hash value for this object.
@@ -153,5 +172,23 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
         buffer.append(ppm);
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Returns an OpenGIS structure for this conversion info.
+     * This method is provided for compatibility with OpenGIS.
+     */
+    public CS_WGS84ConversionInfo toOpenGIS()
+    {
+        final CS_WGS84ConversionInfo info = new CS_WGS84ConversionInfo();
+        info.dx = dx;
+        info.dy = dy;
+        info.dz = dz;
+        info.ex = ex;
+        info.ey = ey;
+        info.ez = ez;
+        info.ppm = ppm;
+        info.areaOfUse = areaOfUse;
+        return info;
     }
 }

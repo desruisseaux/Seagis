@@ -22,9 +22,14 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_AngularUnit;
+import org.opengis.cs.CS_PrimeMeridian;
+
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.XClass;
+import java.rmi.RemoteException;
 
 
 /**
@@ -44,6 +49,11 @@ public class PrimeMeridian extends Info
     private static final long serialVersionUID = -963498800353363758L;
 
     /**
+     * The Greenwich meridian, with angular measures in degrees.
+     */
+    public static final PrimeMeridian GREENWICH = new PrimeMeridian("Greenwich", Unit.DEGREE, 0);
+
+    /**
      * The angular units.
      */
     private final Unit unit;
@@ -54,13 +64,13 @@ public class PrimeMeridian extends Info
     private final double longitude;
 
     /**
-     * Construct a prime meridian.
+     * Creates a prime meridian, relative to Greenwich.
      *
-     * @param name The prime meridian name.
-     * @param unit The angular units. The longitude is expressed in this units.
-     * @param longitude The longitude value relative to the Greenwich Meridian.
+     * @param name      Name to give new object.
+     * @param unit      Angular units of longitude.
+     * @param longitude Longitude of prime meridian in supplied angular units East of Greenwich.
      */
-    protected PrimeMeridian(final String name, final Unit unit, final double longitude)
+    public PrimeMeridian(final String name, final Unit unit, final double longitude)
     {
         super(name);
         this.unit      = unit;
@@ -110,4 +120,44 @@ public class PrimeMeridian extends Info
      */
     public String toString()
     {return XClass.getShortClassName(this)+'['+getName()+'='+longitude+unit+']';}
+
+    /**
+     * Returns an OpenGIS interface for this prime meridian.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_PrimeMeridian toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link PrimeMeridian} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends Info.Export implements CS_PrimeMeridian
+    {
+        /**
+         * Returns the longitude value relative to the Greenwich Meridian.
+         */
+        public double getLongitude() throws RemoteException
+        {return PrimeMeridian.this.getLongitude();}
+
+        /**
+         * Returns the AngularUnits.
+         *
+         * @throws RemoteException if a remote method call failed.
+         */
+        public CS_AngularUnit getAngularUnit() throws RemoteException
+        {return (CS_AngularUnit) toOpenGIS(PrimeMeridian.this.getAngularUnit());}
+    }
 }

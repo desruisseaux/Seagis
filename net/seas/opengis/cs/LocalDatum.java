@@ -22,8 +22,8 @@
  */
 package net.seas.opengis.cs;
 
-// Miscellaneous
-import net.seas.util.XClass;
+// OpenGIS dependencies
+import org.opengis.cs.CS_LocalDatum;
 
 
 /**
@@ -47,13 +47,12 @@ public class LocalDatum extends Datum
     private static final long serialVersionUID = 5604979072241525415L;
 
     /**
-     * Construct a new datum with the
-     * specified name and datum type.
+     * Creates a local datum.
      *
-     * @param name The datum name.
-     * @param type The datum type.
+     * @param name Name to give new object.
+     * @param localDatumType Type of local datum to create.
      */
-    protected LocalDatum(final String name, final DatumType.Local type)
+    public LocalDatum(final String name, final DatumType.Local type)
     {super(name, type);}
 
     /**
@@ -61,4 +60,31 @@ public class LocalDatum extends Datum
      */
     public DatumType.Local getDatumType()
     {return (DatumType.Local) super.getDatumType();}
+
+    /**
+     * Returns an OpenGIS interface for this datum.
+     * The returned object is suitable for RMI use.
+     */
+    public CS_LocalDatum toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link LocalDatum} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends Datum.Export implements CS_LocalDatum
+    {
+    }
 }

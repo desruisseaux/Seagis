@@ -25,6 +25,7 @@ package net.seas.opengis.cs;
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.WeakHashSet;
+import net.seas.opengis.ct.Parameter;
 
 
 /**
@@ -170,7 +171,7 @@ public class CoordinateSystemFactory
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
      */
-    public Projection createProjection(final String name, final String classification, final ProjectionParameter[] parameters)
+    public Projection createProjection(final String name, final String classification, final Parameter[] parameters)
     {return (Projection) pool.intern(new Projection(name, classification, parameters));}
 
     /**
@@ -213,7 +214,6 @@ public class CoordinateSystemFactory
      *
      * @param name Name to give new object.
      * @param localDatumType Type of local datum to create.
-     * @throws RemoteException if a remote method call failed.
      */
     public LocalDatum createLocalDatum(final String name, final DatumType.Local type)
     {return (LocalDatum) pool.intern(new LocalDatum(name, type));}

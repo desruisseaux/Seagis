@@ -22,6 +22,12 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_AngularUnit;
+import org.opengis.cs.CS_PrimeMeridian;
+import org.opengis.cs.CS_WGS84ConversionInfo;
+import org.opengis.cs.CS_GeographicCoordinateSystem;
+
 // Coordinates
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.Latitude;
@@ -33,6 +39,7 @@ import net.seas.opengis.ct.CoordinateTransformation;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import java.rmi.RemoteException;
 
 
 /**
@@ -56,6 +63,24 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private static final long serialVersionUID = -80914667908100423L;
 
     /**
+     * Default axis info for longitude.
+     */
+    private static final AxisInfo EAST = new AxisInfo.Localized("Longitude", Clé.LONGITUDE, AxisOrientation.EAST);
+
+    /**
+     * Default axis info for latitude.
+     */
+    private static final AxisInfo NORTH = new AxisInfo.Localized("Latitude", Clé.LATITUDE, AxisOrientation.NORTH);
+
+    /**
+     * A geographic coordinate system using WGS84 datum. This coordinate system use
+     * <var>longitude</var>/<var>latitude</var> ordinates with longitude values
+     * increasing north and latitude values increasing east. Angular units are degrees
+     * and prime meridian is Greenwich.
+     */
+    public static final GeographicCoordinateSystem WGS84 = new GeographicCoordinateSystem("WGS84", HorizontalDatum.WGS84);
+
+    /**
      * The angular unit.
      */
     private final Unit unit;
@@ -66,17 +91,20 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private final PrimeMeridian meridian;
 
     /**
-     * Details of 0th ordinates.
+     * Creates a geographic coordinate system. This coordinate system will use
+     * <var>longitude</var>/<var>latitude</var> ordinates with longitude values
+     * increasing north and latitude values increasing east. Angular units are degrees
+     * and prime meridian is Greenwich.
+     *
+     * @param name      Name to give new object.
+     * @param datum     Horizontal datum for created coordinate system.
      */
-    private final AxisInfo axis0;
+    public GeographicCoordinateSystem(final String name, final HorizontalDatum datum)
+    {this(name, Unit.DEGREE, datum, PrimeMeridian.GREENWICH, EAST, NORTH);}
 
     /**
-     * Details of 1th ordinates.
-     */
-    private final AxisInfo axis1;
-
-    /**
-     * Construct a coordinate system.
+     * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
+     * or <var>longitude</var>/<var>latitude</var>.
      *
      * @param name      Name to give new object.
      * @param unit      Angular units for created coordinate system.
@@ -85,32 +113,14 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * @param axis0     Details of 0th ordinates.
      * @param axis1     Details of 1st ordinates.
      */
-    protected GeographicCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
+    public GeographicCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
     {
-        super(name, datum);
+        super(name, datum, axis0, axis1);
         ensureNonNull("unit",     unit);
         ensureNonNull("meridian", meridian);
-        ensureNonNull("axis0",    axis0);
-        ensureNonNull("axis1",    axis1);
+        ensureAngularUnit(unit);
         this.unit     = unit;
         this.meridian = meridian;
-        this.axis0    = axis0.clone();
-        this.axis1    = axis1.clone();
-    }
-
-    /**
-     * Gets axis details for dimension within coordinate system.
-     *
-     * @param dimension Zero based index of axis.
-     */
-    public AxisInfo getAxis(final int dimension)
-    {
-        switch (dimension)
-        {
-            case 0:  return axis0.clone();
-            case 1:  return axis1.clone();
-            default: throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
-        }
     }
 
     /**
@@ -184,7 +194,6 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * interest.
      *
      * @param index Zero based index of conversion to fetch.
-     * @throws RemoteException if a remote method call failed.
      */
     public WGS84ConversionInfo getWGS84ConversionInfo(final int index)
     {throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(index)));}
@@ -199,9 +208,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
         {
             final GeographicCoordinateSystem that = (GeographicCoordinateSystem) object;
             return XClass.equals(this.unit,     that.unit)     &&
-                   XClass.equals(this.meridian, that.meridian) &&
-                   XClass.equals(this.axis0,    that.axis0)    &&
-                   XClass.equals(this.axis1,    that.axis1);
+                   XClass.equals(this.meridian, that.meridian);
         }
         return false;
     }
@@ -212,4 +219,54 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      */
     CoordinateTransformation transformFrom(final CoordinateSystem system)
     {return transformTo(this);}
+
+    /**
+     * Returns an OpenGIS interface for this geographic coordinate
+     * system. The returned object is suitable for RMI use.
+     */
+    public CS_GeographicCoordinateSystem toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link GeographicCoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends HorizontalCoordinateSystem.Export implements CS_GeographicCoordinateSystem
+    {
+        /**
+         * Returns the AngularUnit.
+         */
+        public CS_AngularUnit getAngularUnit() throws RemoteException
+        {return (CS_AngularUnit) toOpenGIS(GeographicCoordinateSystem.this.getUnits(0));}
+
+        /**
+         * Returns the PrimeMeridian.
+         */
+        public CS_PrimeMeridian getPrimeMeridian() throws RemoteException
+        {return GeographicCoordinateSystem.this.getPrimeMeridian().toOpenGIS();}
+
+        /**
+         * Gets the number of available conversions to WGS84 coordinates.
+         */
+        public int getNumConversionToWGS84() throws RemoteException
+        {return GeographicCoordinateSystem.this.getNumConversionToWGS84();}
+
+        /**
+         * Gets details on a conversion to WGS84.
+         */
+        public CS_WGS84ConversionInfo getWGS84ConversionInfo(final int index) throws RemoteException
+        {return GeographicCoordinateSystem.this.getWGS84ConversionInfo(index).toOpenGIS();}
+    }
 }

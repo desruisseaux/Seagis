@@ -176,8 +176,8 @@ abstract class MapProjection extends MathTransform
      */
     protected MapProjection(final Parameter[] parameters) throws MissingParameterException
     {
-        this.a                =                    Parameter.getValue(parameters, "semi_major", SEMI_MAJOR);
-        this.b                =                    Parameter.getValue(parameters, "semi_minor", SEMI_MINOR);
+        this.a                =                    Parameter.getValue(parameters, "semi_major");
+        this.b                =                    Parameter.getValue(parameters, "semi_minor");
         this.centralLongitude = longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true);
         this.centralLatitude  =  latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true);
         this.isSpherical      = (a==b);

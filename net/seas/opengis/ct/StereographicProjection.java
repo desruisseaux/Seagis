@@ -538,7 +538,7 @@ choice: switch (mode)
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static final class Provider extends MathTransform.Provider
+    static final class Provider extends MathTransformProvider
     {
         /**
          * <code>true</code> for polar stereographic, or

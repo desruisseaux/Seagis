@@ -23,6 +23,12 @@
 package net.seas.opengis.ct;
 
 // OpenGIS dependencies
+import org.opengis.pt.PT_Matrix;
+import org.opengis.pt.PT_CoordinatePoint;
+import org.opengis.ct.CT_MathTransform;
+import org.opengis.ct.CT_DomainFlags;
+
+// OpenGIS (SEAS) dependencies
 import net.seas.opengis.pt.ConvexHull;
 import net.seas.opengis.pt.CoordinatePoint;
 
@@ -34,6 +40,10 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.IllegalPathStateException;
 import net.seas.awt.geom.Geometry;
+
+// Remote Method Invocation
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
 
 // Miscellaneous
 import java.util.Locale;
@@ -442,6 +452,19 @@ public abstract class MathTransform
     public abstract boolean isIdentity();
 
     /**
+     * Creates a transform by concatenating <code>this</code> with the specified
+     * transform. The default implementation construct a {@link ConcatenedTransform}
+     * instance. Subclasses can override this method if they know how to concatenate
+     * efficiently some special transforms.
+     */
+    MathTransform concatenate(final MathTransform that)
+    {
+        if (this.isIdentity()) return that;
+        if (that.isIdentity()) return this;
+        return new ConcatenedTransform(this, that);
+    }
+
+    /**
      * Returns a hash value for this transform.
      */
     public int hashCode()
@@ -469,17 +492,26 @@ public abstract class MathTransform
     }
 
     /**
-     * Creates a transform by concatenating <code>this</code> with the specified
-     * transform. The default implementation construct a {@link ConcatenedTransform}
-     * instance. Subclasses can override this method if they know how to concatenate
-     * efficiently some special transforms.
+     * Returns an OpenGIS interface for this math transform.
+     * The returned object is suitable for RMI use.
+     *
+     * @see #wrapOpenGIS
      */
-    MathTransform concatenate(final MathTransform that)
-    {
-        if (this.isIdentity()) return that;
-        if (that.isIdentity()) return this;
-        return new ConcatenedTransform(this, that);
-    }
+    public CT_MathTransform toOpenGIS()
+    {return new Export();}
+
+    /**
+     * Create a {@link MathTransform} object from a {@link CT_MathTransform}
+     * interface. This method is provided for interoperability with OpenGIS.
+     *
+     * @param  transform The OpenGIS interface to wrap.
+     * @return A {@link MathTransform} object wrapping the interface.
+     * @throws RemoteException if a remote call failed.
+     *
+     * @see #toOpenGIS
+     */
+    public static MathTransform wrapOpenGIS(final CT_MathTransform transform) throws RemoteException
+    {return (transform instanceof Export) ? ((Export)transform).unwrap() : new MathTransformAdapter(transform);}
 
 
 
@@ -553,62 +585,133 @@ public abstract class MathTransform
 
 
 
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
     /**
-     * Base class {@link MathTransform} providers. Instance of this class
-     * allow the creation of transform objects from a classification name.
+     * Wrap a {@link MathTransform} for use with OpenGIS. This wrapper is a
+     * good place to check for non-implemented OpenGIS methods  (just check
+     * for methods throwing {@link UnsupportedOperationException}). This
+     * class is suitable for RMI use.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    static abstract class Provider
+    private final class Export extends RemoteObject implements CT_MathTransform
     {
         /**
-         * The classification name. This name do
-         * not contains leading or trailing blanks.
+         * Returns the underlying math transform.
          */
-        public final String classification;
+        public final MathTransform unwrap()
+        {return MathTransform.this;}
 
         /**
-         * Resources key for a human readable name. This
-         * is used for {@link #getName} implementation.
+         * Gets flags classifying domain points within a convex hull.
          */
-        private final int nameKey;
+        public CT_DomainFlags getDomainFlags(final double[] ord) throws RemoteException
+        {return new CT_DomainFlags(MathTransform.this.getDomainFlags(new ConvexHull(ord)).value);}
 
         /**
-         * Construct a new registration.
-         *
-         * @param classification The classification name.
-         * @param nameKey Resources key for a human readable name.
-         *        This is used for {@link #getName} implementation.
+         * Gets transformed convex hull.
          */
-        protected Provider(final String classification, final int nameKey)
+        public double[] getCodomainConvexHull(final double[] ord) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Gets a Well-Known text representation of this object.
+         */
+        public String getWKT() throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Gets an XML representation of this object.
+         */
+        public String getXML() throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
+
+        /**
+         * Transforms a coordinate point.
+         */
+        public PT_CoordinatePoint transform(final PT_CoordinatePoint cp) throws RemoteException
         {
-            this.classification = classification.trim();
-            this.nameKey        = nameKey;
+            try
+            {
+                final PT_CoordinatePoint point=new PT_CoordinatePoint();
+                point.ord = new double[MathTransform.this.getDimTarget()];
+                MathTransform.this.transform(cp.ord, 0, point.ord, 0, 1);
+                return point;
+            }
+            catch (TransformException exception)
+            {
+                throw new RemoteException(exception.getLocalizedMessage(), exception);
+            }
         }
 
         /**
-         * Returns a human readable name localized for the specified locale.
-         * If no name is available for the specified locale, this method may
-         * returns a name in an arbitrary locale.
+         * Transforms a list of coordinate point ordinal values.
          */
-        public final String getName(final Locale locale)
-        {return Resources.getResources(locale).getString(nameKey);}
+        public double[] transformList(final double[] ord) throws RemoteException
+        {
+            final int dimSource = MathTransform.this.getDimSource();
+            final int dimTarget = MathTransform.this.getDimTarget();
+            if ((ord.length % dimSource)!=0)
+            {
+                throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARRAY_LENGTH_FOR_DIMENSION¤1, new Integer(dimSource)));
+            }
+            final int     count = ord.length/dimSource;
+            final double[] dest = (dimSource==dimTarget) ? ord : new double[count*dimTarget];
+            try
+            {
+                MathTransform.this.transform(ord, 0, dest, 0, count);
+                return dest;
+            }
+            catch (TransformException exception)
+            {
+                throw new RemoteException(exception.getLocalizedMessage(), exception);
+            }
+        }
 
         /**
-         * Returns a set of default parameters. The returns array should contains
-         * one element for every parameter supported by the registered transform.
-         *
-         * @return A set of default parameters.
+         * Gets the derivative of this transform at a point.
          */
-        public abstract Parameter[] getDefaultParameters();
+        public PT_Matrix derivative(PT_CoordinatePoint cp) throws RemoteException
+        {throw new UnsupportedOperationException("Not implemented");}
 
         /**
-         * Returns an objet for the specified parameters.
-         *
-         * @param  parameters The parameter values in standard units.
-         * @return A {@link MathTransform} object of this classification.
+         * Creates the inverse transform of this object.
          */
-        public abstract MathTransform create(final Parameter[] parameters);
+        public CT_MathTransform inverse() throws RemoteException
+        {
+            try
+            {
+                final MathTransform inverse = MathTransform.this.inverse();
+                return (inverse!=MathTransform.this) ? inverse.new Export() : this;
+            }
+            catch (NoninvertibleTransformException exception)
+            {
+                throw new RemoteException(exception.getLocalizedMessage(), exception);
+            }
+        }
+
+        /**
+         * Gets the dimension of input points.
+         */
+        public int getDimSource() throws RemoteException
+        {return MathTransform.this.getDimSource();}
+
+        /**
+         * Gets the dimension of output points.
+         */
+        public int getDimTarget() throws RemoteException
+        {return MathTransform.this.getDimTarget();}
+
+        /**
+         * Tests whether this transform does not move any points.
+         */
+        public boolean isIdentity() throws RemoteException
+        {return MathTransform.this.isIdentity();}
     }
 }

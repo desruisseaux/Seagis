@@ -22,6 +22,12 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_LinearUnit;
+import org.opengis.cs.CS_Projection;
+import org.opengis.cs.CS_ProjectedCoordinateSystem;
+import org.opengis.cs.CS_GeographicCoordinateSystem;
+
 // Coordinates
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.Latitude;
@@ -31,8 +37,10 @@ import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
 import javax.units.Unit;
+import java.awt.geom.Point2D;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import java.rmi.RemoteException;
 
 
 /**
@@ -52,6 +60,16 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     private static final long serialVersionUID = -4074962239062277502L;
 
     /**
+     * Default axis info for longitude.
+     */
+    private static final AxisInfo EAST = new AxisInfo("x", AxisOrientation.EAST);
+
+    /**
+     * Default axis info for latitude.
+     */
+    private static final AxisInfo NORTH = new AxisInfo("y", AxisOrientation.NORTH);
+
+    /**
      * The angular unit.
      */
     private final Unit unit;
@@ -67,14 +85,27 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     private final Projection projection;
 
     /**
-     * Details of 0th ordinates.
+     * Creates a projected coordinate system using WGS84 datum.
+     * Projected coordinates will be in meters, <var>x</var> values
+     * increasing east and <var>y</var> values increasing north.
+     *
+     * @param  name Name to give new object.
+     * @param  projection Projection from geographic to projected coordinate system.
      */
-    private final AxisInfo axis0;
+    public ProjectedCoordinateSystem(final String name, final Projection projection)
+    {this(name, GeographicCoordinateSystem.WGS84, projection);}
 
     /**
-     * Details of 1th ordinates.
+     * Creates a projected coordinate system using the specified geographic
+     * system. Projected coordinates will be in meters, <var>x</var> values
+     * increasing east and <var>y</var> values increasing north.
+     *
+     * @param  name Name to give new object.
+     * @param  gcs Geographic coordinate system to base projection on.
+     * @param  projection Projection from geographic to projected coordinate system.
      */
-    private final AxisInfo axis1;
+    public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection)
+    {this(name, gcs, projection, Unit.METRE, EAST, NORTH);}
 
     /**
      * Creates a projected coordinate system using a projection object.
@@ -82,23 +113,20 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * @param  name Name to give new object.
      * @param  gcs Geographic coordinate system to base projection on.
      * @param  projection Projection from geographic to projected coordinate system.
-     * @param  unit Linear units of returned PCS.
-     * @param  axis0 Details of 0th ordinates in returned PCS coordinates.
-     * @param  axis1 Details of 1st ordinates in returned PCS coordinates.
+     * @param  unit Linear units of created PCS.
+     * @param  axis0 Details of 0th ordinates in created PCS coordinates.
+     * @param  axis1 Details of 1st ordinates in created PCS coordinates.
      */
-    protected ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
+    public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
     {
-        super(name, gcs.getHorizontalDatum());
+        super(name, gcs.getHorizontalDatum(), axis0, axis1);
         ensureNonNull("gcs",        gcs);
         ensureNonNull("projection", projection);
         ensureNonNull("unit",       unit);
-        ensureNonNull("axis0",      axis0);
-        ensureNonNull("axis1",      axis1);
+        ensureLinearUnit(unit);
         this.gcs        = gcs;
         this.projection = projection;
         this.unit       = unit;
-        this.axis0      = axis0.clone();
-        this.axis1      = axis1.clone();
     }
 
     /**
@@ -112,21 +140,6 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      */
     public Projection getProjection()
     {return projection;}
-
-    /**
-     * Gets axis details for dimension within coordinate system.
-     *
-     * @param dimension Zero based index of axis.
-     */
-    public AxisInfo getAxis(final int dimension)
-    {
-        switch (dimension)
-        {
-            case 0:  return axis0.clone();
-            case 1:  return axis1.clone();
-            default: throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
-        }
-    }
 
     /**
      * Gets units for dimension within coordinate system.
@@ -151,9 +164,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
             final ProjectedCoordinateSystem that = (ProjectedCoordinateSystem) object;
             return XClass.equals(this.gcs,        that.gcs)        &&
                    XClass.equals(this.projection, that.projection) &&
-                   XClass.equals(this.unit,       that.unit)       &&
-                   XClass.equals(this.axis0,      that.axis0)      &&
-                   XClass.equals(this.axis1,      that.axis1);
+                   XClass.equals(this.unit,       that.unit);
         }
         return false;
     }
@@ -164,4 +175,55 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      */
     CoordinateTransformation transformFrom(final CoordinateSystem system)
     {return transformTo(this);}
+
+    /**
+     * Returns an OpenGIS interface for this projected coordinate
+     * system. The returned object is suitable for RMI use.
+     */
+    public CS_ProjectedCoordinateSystem toOpenGIS()
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link ProjectedCoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends HorizontalCoordinateSystem.Export implements CS_ProjectedCoordinateSystem
+    {
+        /**
+         * Returns the GeographicCoordinateSystem.
+         *
+         * @throws RemoteException if a remote method call failed.
+         */
+        public CS_GeographicCoordinateSystem getGeographicCoordinateSystem() throws RemoteException
+        {return ProjectedCoordinateSystem.this.getGeographicCoordinateSystem().toOpenGIS();}
+
+        /**
+         * Returns the LinearUnits.
+         * The linear unit must be the same as the {@link CS_CoordinateSystem} units.
+         *
+         * @throws RemoteException if a remote method call failed.
+         */
+        public CS_LinearUnit getLinearUnit() throws RemoteException
+        {return (CS_LinearUnit) toOpenGIS(ProjectedCoordinateSystem.this.getUnits(0));}
+
+        /**
+         * Gets the projection.
+         *
+         * @throws RemoteException if a remote method call failed.
+         */
+        public CS_Projection getProjection() throws RemoteException
+        {return ProjectedCoordinateSystem.this.getProjection().toOpenGIS();}
+    }
 }

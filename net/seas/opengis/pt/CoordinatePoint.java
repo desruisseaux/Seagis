@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.pt;
 
+// OpenGIS dependencies
+import org.opengis.pt.PT_CoordinatePoint;
+
 // Miscellaneous
 import java.util.Arrays;
 import java.io.Serializable;
@@ -92,6 +95,15 @@ public final class CoordinatePoint implements Cloneable, Serializable
      */
     public CoordinatePoint(final Point2D point)
     {this(point.getX(), point.getY());}
+
+    /**
+     * Construct a coordinate point from an OpenGIS's structure.
+     * This constructor is provided for compatibility with OpenGIS.
+     *
+     * @see #toOpenGIS
+     */
+    public CoordinatePoint(final PT_CoordinatePoint point)
+    {this(point.ord);}
 
     /**
      * Returns the ordinate value along the specified dimension.
@@ -190,5 +202,16 @@ public final class CoordinatePoint implements Cloneable, Serializable
         }
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Returns an OpenGIS structure for this coordinate point.
+     * This method is provided for compatibility with OpenGIS.
+     */
+    public PT_CoordinatePoint toOpenGIS()
+    {
+        final PT_CoordinatePoint pt = new PT_CoordinatePoint();
+        pt.ord = (double[]) ord.clone();
+        return pt;
     }
 }

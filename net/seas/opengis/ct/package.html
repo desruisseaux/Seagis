@@ -5,23 +5,62 @@
     <TITLE>package net.seas.opengis.ct</TITLE>
   </HEAD>
   <BODY>
-    <P ALIGN="justify">Coordinate Transformations implementation.</P>
+    <P ALIGN="justify">Coordinate Transformations implementation.
+    Transformations (for example map projections) are performed by
+    {@link MathTransform}. Instances of {@link MathTransform} are
+    created by {@link MathTransformFactory}. For example, a mercator
+    cylindrical projection can be created by the following code:</P>
 
+    <BLOCKQUOTE><PRE>
+{@link net.seas.opengis.ct.MathTransform} projection = {@link net.seas.opengis.ct.MathTransformFactory#DEFAULT}.createParameterizedTransform("Mercator_1SP", null, null);
+    </PRE></BLOCKQUOTE>
+
+    <P ALIGN="justify">The "Mercator_1SP" string is the classification name for
+    the mercator cylindrical projection. This package support the following
+    classification names:</P>
+
+    <TABLE ALIGN="center" BORDER='2'>
+      <TR BGCOLOR="#B9DCFF"><TD ALIGN="center">Classification</TD><TD ALIGN="center">EPSG code</TD></TR>
+      <TR><TD><CODE>Lambert_Conformal_Conic_2SP</CODE></TD>       <TD ALIGN="center">9802</TD></TR>
+      <TR><TD><CODE>Mercator_1SP</CODE></TD>                      <TD ALIGN="center">9804</TD></TR>
+      <TR><TD><CODE>Transverse_Mercator</CODE></TD>               <TD ALIGN="center">9807</TD></TR>
+      <TR><TD><CODE>Stereographic</CODE></TD>                     <TD ALIGN="center">&nbsp;</TD></TR>
+      <TR><TD><CODE>Oblique_Stereographic</CODE></TD>             <TD ALIGN="center">9809</TD></TR>
+      <TR><TD><CODE>Polar_Stereographic</CODE></TD>               <TD ALIGN="center">9810</TD></TR>
+      <TR><TD><CODE>Modified_Transverse_Mercator</CODE></TD>      <TD ALIGN="center">&nbsp;</TD></TR>
+    </TABLE>
+
+    <P>&nbsp;</P>
+    <P>&nbsp;</P>
+    <HR>
     <P>&nbsp;</P>
     <H2><A NAME="differences">Differences with the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
     <UL>
       <LI>Omitted the <CODE>CT_</CODE> prefix for all classes and interfaces.</LI>
+
       <LI>Made all enumeration classes immutable. Enumeration constants are instances
           of the actual enumeration class instead of integers. Names are uppercase,
           with no <CODE>CT_TT</CODE> or <CODE>CT_DF</CODE> prefix.</LI>
+
+      <LI>Classes <CODE>CoordinateTransformationFactory</CODE> and
+          <CODE>CoordinateTransformationAuthorityFactory</CODE> are
+          currently not implemented.</LI>
+
       <LI>The following methods are curently not implemented. They may be
           implemented in a future version:
           <UL>
-             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>derivative</STRONG>({@link net.seas.opengis.pt.CoordinatePoint})</CODE></LI>
-             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getCodomainConvexHull</STRONG>({@link net.seas.opengis.pt.ConvexHull})</CODE></LI>
-             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getWKT</STRONG>()</CODE></LI>
-             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getXML</STRONG>()</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>derivative</STRONG>(CoordinatePoint)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getDomainFlags</STRONG>(ConvexHull)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getCodomainConvexHull</STRONG>(ConvexHull)</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getWKT</STRONG>()</CODE></LI>
+             <LI><CODE>MathTransform.<STRONG>getXML</STRONG>()</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createAffineTransform</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createPassThroughTransform</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>createFromWKT</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>isParameterAngular</STRONG>(...)</CODE></LI>
+             <LI><CODE>MathTransformFactory.<STRONG>isParameterLinear</STRONG>(...)</CODE></LI>
           </UL></LI>
+
       <LI>Changed signature of various <CODE>transform(...)</CODE> methods in
           {@link net.seas.opengis.ct.MathTransform}. New signatures are similar
           to {@link java.awt.geom.AffineTransform}'s transform methods, which

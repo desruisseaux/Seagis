@@ -22,9 +22,14 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_Datum;
+import org.opengis.cs.CS_DatumType;
+
 // Miscellaneous
-import java.io.Serializable;
 import net.seas.util.XClass;
+import java.io.Serializable;
+import java.rmi.RemoteException;
 
 
 /**
@@ -63,7 +68,7 @@ public class Datum extends Info
      * @param name The datum name.
      * @param type The datum type.
      */
-    protected Datum(final String name, final DatumType type)
+    public Datum(final String name, final DatumType type)
     {
         super(name);
         this.type = type;
@@ -117,5 +122,37 @@ public class Datum extends Info
         }
         buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Returns an OpenGIS interface for this datum.
+     * The returned object is suitable for RMI use.
+     */
+    public org.opengis.cs.CS_Info toOpenGIS() // TODO: return type should be CS_Datum
+    {return new Export();}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link Datum} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    class Export extends Info.Export implements CS_Datum
+    {
+        /**
+         * Gets the type of the datum as an enumerated code.
+         */
+        public CS_DatumType getDatumType() throws RemoteException
+        {return new CS_DatumType(Datum.this.getDatumType().value);}
     }
 }
