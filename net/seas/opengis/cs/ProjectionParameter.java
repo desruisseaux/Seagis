@@ -89,17 +89,29 @@ public class ProjectionParameter implements Cloneable, Serializable
     {this.value = value;}
 
     /**
-     * Returns a string représentation of this parameter.
+     * Returns a hash value for this parameter.
      */
-    public String toString()
+    public int hashCode()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        buffer.append(name);
-        buffer.append('=');
-        buffer.append(value);
-        buffer.append(']');
-        return buffer.toString();
+        final long longCode = Double.doubleToLongBits(value);
+        int code = (int)(longCode >>> 32) ^ (int)longCode;
+        if (name!=null) code ^= name.hashCode();
+        return code;
+    }
+
+    /**
+     * Compares the specified object with
+     * this parameter for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object instanceof ProjectionParameter)
+        {
+            final ProjectionParameter that = (ProjectionParameter) object;
+            return Double.doubleToLongBits(this.value) == Double.doubleToLongBits(that.value) &&
+                   XClass.equals(this.name, that.name);
+        }
+        else return false;
     }
 
     /**
@@ -121,28 +133,16 @@ public class ProjectionParameter implements Cloneable, Serializable
     }
 
     /**
-     * Compares the specified object with
-     * this parameter for equality.
+     * Returns a string représentation of this parameter.
      */
-    public boolean equals(final Object object)
+    public String toString()
     {
-        if (object instanceof ProjectionParameter)
-        {
-            final ProjectionParameter that = (ProjectionParameter) object;
-            return Double.doubleToLongBits(this.value) == Double.doubleToLongBits(that.value) &&
-                   XClass.equals(this.name, that.name);
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a hash value for this parameter.
-     */
-    public int hashCode()
-    {
-        final long longCode = Double.doubleToLongBits(value);
-        int code = (int)(longCode >>> 32) ^ (int)longCode;
-        if (name!=null) code ^= name.hashCode();
-        return code;
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        buffer.append(name);
+        buffer.append('=');
+        buffer.append(value);
+        buffer.append(']');
+        return buffer.toString();
     }
 }

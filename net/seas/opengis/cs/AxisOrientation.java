@@ -49,12 +49,6 @@ public final class AxisOrientation implements Serializable
     private static final long serialVersionUID = 6962768641608234346L;
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.cs.CS_AxisOrientationEnum} only.
-     */
-    public final int value;
-
-    /**
      * Unknown or unspecified axis orientation.
      * This can be used for local or fitted coordinate systems. 
      */
@@ -108,6 +102,12 @@ public final class AxisOrientation implements Serializable
     private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN};
 
     /**
+     * The enum value. This field is public for compatibility
+     * with {@link org.opengis.cs.CS_AxisOrientationEnum}.
+     */
+    public final int value;
+
+    /**
      * Construct a new enum with the specified value.
      */
     private AxisOrientation(final int value)
@@ -115,7 +115,7 @@ public final class AxisOrientation implements Serializable
 
     /**
      * Return the enum for the specified value. This method is provided for
-     * compatibility with {@link org.opengis.cs.CS_AxisOrientationEnum} only.
+     * compatibility with {@link org.opengis.cs.CS_AxisOrientationEnum}.
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -125,6 +125,32 @@ public final class AxisOrientation implements Serializable
     {
         if (value>=0 && value<ENUMS.length) return ENUMS[value];
         throw new NoSuchElementException(String.valueOf(value));
+    }
+
+    /**
+     * Return this enum's name.
+     */
+    public String getName()
+    {return (value>=0 && value<NAMES.length) ? NAMES[value] : null;}
+
+    /**
+     * Returns a hash value for this enum.
+     */
+    public int hashCode()
+    {return value;}
+
+    /**
+     * Compares the specified object with
+     * this enum for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object instanceof AxisOrientation)
+        {
+            final AxisOrientation that = (AxisOrientation) object;
+            return this.value == that.value;
+        }
+        else return false;
     }
 
     /**
@@ -143,26 +169,6 @@ public final class AxisOrientation implements Serializable
     }
 
     /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof AxisOrientation)
-        {
-            final AxisOrientation that = (AxisOrientation) object;
-            return this.value == that.value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a hash value for this enum.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
      * Use a single instance of {@link AxisOrientation} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.
@@ -173,6 +179,6 @@ public final class AxisOrientation implements Serializable
     private Object readResolve() throws ObjectStreamException
     {
         if (value>=0 && value<ENUMS.length) return ENUMS[value]; // Canonicalize
-        else return this;
+        else return ENUMS[0]; // Collapse unknow value to a single canonical one
     }
 }
