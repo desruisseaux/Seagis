@@ -29,6 +29,8 @@ package fr.ird.n1b.image.sst;
 import java.awt.geom.Point2D;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.FieldPosition;
@@ -61,23 +63,22 @@ import org.geotools.ct.TransformException;
  * et par jour.<BR><BR>
  *
  * Lorsque un fichier est géoréferencé, la correction moyenne appliquée sur l'ensemble 
- * de l'image est loggées dans un fichier définie dans le fichier de configuration
- * "application-data/configurationSST.txt".<BR><BR>
+ * de l'image est loggées dans un fichier.<BR><BR>
  *
  * Lorsque qu'une erreur survient (fichier altéré, correction CLS moyenne anormale, ...), 
- * le fichier source est renommer avec l'extension ".err" pour indiquer qu'il n'a pas été 
- * traité. 
+ * le fichier source est renommer avec l'extension <i>.err</i> pour indiquer qu'il n'a pas 
+ * été traité ou qu'il contient des anomaliles. 
  *
  * @author Remi EVE
  * @version $Id$
  */
 public final class AutoGeoref 
 {        
-    /** Repertoire contenant les bulletin de correction CLS. */
+    /** Répertoire contenant les bulletin de correction CLS. */
     private final String CLS_PATH;   
 
     /** Fichier de log. */
-    private final String LOG_FILE;   
+    private final File LOG_FILE;   
 
     /** Correction maximale admise en degré. */
     private final double MAX_CORRECTION_ALLOWED;
@@ -90,32 +91,31 @@ public final class AutoGeoref
         // Extraction des parametres de configuration de la SST. 
         final ParameterList param = ParseSST.parse(ParseSST.getInputDefaultParameterList());        
         CLS_PATH    = (String)param.getObjectParameter(ParseSST.CLS_PATH);                
-        LOG_FILE    = (String)param.getObjectParameter(ParseSST.LOG_CLS_CORRECTION);                                        
+        LOG_FILE    = new File((String)param.getObjectParameter(ParseSST.LOG_CLS_CORRECTION));                                        
         MAX_CORRECTION_ALLOWED = param.getDoubleParameter(ParseSST.MAX_CORRECTION_ALLOWED);
     }
     
     /**
-     * Log dans un fichier les informations sur la correction du fichier en mode automatique.
+     * Log dans un fichier les informations sur la correction du fichier en mode 
+     * automatique.
      *
-     * @param name          Nom du fichier de log.
-     * @param file          Fichier géoréférencé.
+     * @param fileLog       Fichier de log.
+     * @param fileN1B       Fichier N1B.
      * @param satellite     Le satellite.
      * @param start         Date de début d'acauisition.
      * @param offset        Offset moyen en dégré appliqué. Si offset est <i>null</i>, le 
      *                      géoreferencement n'a pas fonctionné (bulletin non disponible, 
      *                      erreur dans le fichier, ...).
      */
-     private void log(final String      name,
+     private void log(final File        fileLog,
+                      final File        fileN1B,
                       final Satellite   satellite,
-                      final File        file,
-                      final Date        start,
                       final Point2D     offset)
      {
         RandomAccessFile out = null;
         try
         {
-            // Log des informations. 
-            out = new RandomAccessFile(name, "rw");        
+            out = new RandomAccessFile(fileLog, "rw");        
         }
         catch (IOException e)
         {
@@ -129,10 +129,11 @@ public final class AutoGeoref
             while(out.readLine()!=null);
 
             // Log la Date d'acquisition du fichier. 
+            final Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
             final DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.FRANCE);
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
             final StringBuffer buffer = new StringBuffer("");
-            format.format(start, buffer, new FieldPosition(0));
+            format.format(calendar.getTime(), buffer, new FieldPosition(0));
             out.writeBytes("\n" + buffer.toString() + " UTC\t\t");
 
             // Log le satellite. 
@@ -151,63 +152,60 @@ public final class AutoGeoref
             }
 
             // Log le nom du fichier créé.
-            out.writeBytes("FILE=\"" + file.getPath() + "\"");                
+            out.writeBytes("FILE=\"" + fileN1B.getPath() + "\"");                
             out.close();            
         }
         catch (IOException e)
         {
-            System.err.println("Erreur d'écriture dans le fichier \"" + name + "\"." );
+            System.err.println("Erreur d'écriture dans le fichier \"" + fileLog.getPath() + "\"." );
             return;            
         }        
      }
     
     /**
-     * Géoréférence en automatique un fichier N1B à partir des données fournies par les 
-     * bulletin CLS.
+     * Géoréférence en automatique un fichier N1B à partir des données fournies 
+     * par les bulletin CLS.
      *
      * @param source    Fichier source.
      * @param target    Fichier destination.
      */
-    public void compute(final File source, File target) throws IOException
+    public void compute(final File fileSrc, File fileTgt) throws IOException
     {
         // Controle des paramètres de la fonction.
-        if (source == null)
-            throw new IllegalArgumentException("File source is null");
-        if (!source.exists())
-            throw new IllegalArgumentException("Source doesn't exist : " + source.getPath());        
-        if (!source.isFile())
-            throw new IllegalArgumentException("Source is not a file : " + source.getPath());
-        if (!source.canRead())
-            throw new IllegalArgumentException("Source can't be read : " + source.getPath());
+        if (fileSrc == null)
+            throw new IllegalArgumentException("Source est null.");
+        if (!fileSrc.exists())
+            throw new IllegalArgumentException("Source est introuvable.");        
+        if (!fileSrc.isFile())
+            throw new IllegalArgumentException("Source n'est pas un fichier.");
+        if (!fileSrc.canRead())
+            throw new IllegalArgumentException("Source ne peut pas etre lu.");
                         
-        // Ouverture du fichier N1B.
-        ImageReaderN1B reader          = (ImageReaderN1B)ImageReaderN1B.get(new FileImageInputStream(source));                
+        // Informations relative au fichier N1B source.
+        ImageReaderN1B reader          = (ImageReaderN1B)ImageReaderN1B.get(new FileImageInputStream(fileSrc));                
         final LocalizationGridN1B grid = reader.getGridLocalization();
         final Metadata metadata        = (Metadata)reader.getImageMetadata(0);
         final Date start               = metadata.getStartTime();
         final Satellite satellite      = Satellite.get(metadata.getSpacecraft());                                            
-        final int width  = reader.getWidth(0),
-                  height = reader.getHeight(0);
                
-        // Correction CLS.
-        Point2D offset = null;
-        boolean hasError = false;
+        // Information sur la correction CLS.
+        Point2D offset   = null;    // Correction applique en °
+        boolean hasError = false;   // "true" si une erreur survient
         try 
         {
             final Bulletin bulletin = new Bulletin(satellite);        
             bulletin.load(new File(CLS_PATH), metadata.getStartTime());
             offset = grid.applyCorrection(bulletin);
             
-            // La limite acceptable de correction est dépassée, le fichier est 
-            // considéré comme défaillant. 
+            /* Vérification de la correction : si la limite acceptable de correction 
+               est dépassée, le fichier est considéré comme défaillant. */
             if (Math.abs(offset.getX())>MAX_CORRECTION_ALLOWED ||
                 Math.abs(offset.getY())>MAX_CORRECTION_ALLOWED)
-            {
                 hasError = true;
-            }
         }
         catch (FileNotFoundException e) 
         {
+            System.err.println("Aucun bulletin de correction disponible pour ce fichier.");
         }        
         catch (Exception e) 
         {
@@ -220,47 +218,62 @@ public final class AutoGeoref
         System.gc();
         System.runFinalization();                    
 
+        // Une erreur a été detectée.
         if (hasError)
         {
-            target = new File(source.getPath() + ".err");
-            source.renameTo(target);        
-            return;
+            final File fileErr = new File(fileSrc.getPath() + ".err");
+            if (fileErr.exists())
+            {
+                if (!fileErr.delete())
+                    System.err.println("Impossible de supprimer le fichier \"" + 
+                                       fileErr.getPath() + "\"");
+            }
+            if (!fileSrc.renameTo(fileErr))
+            {
+                System.err.println("Impossible de renomer le fichier \"" + 
+                                   fileSrc.getPath() + 
+                                   "\" en \" " + 
+                                   fileErr + "\"");            
+            }
+            System.exit(-1);
         }
         
-        // Enregistrement des modifications.
+        // Enregistrement des modifications dans le fichier de destination.
         File tmpFile              = null;
         FileImageOutputStream out = null;
         try 
         {
-            tmpFile = new File(target.getPath() + ".tmp");
+            tmpFile = new File(fileTgt.getPath() + ".tmp");
             out = new FileImageOutputStream(tmpFile);            
         }
         catch (IOException e) 
         {
-            System.err.println("Impossible de creer le fichier temporaire \"" + tmpFile.getName() + "\".");
-            return;
+            System.err.println("Impossible de creer le fichier temporaire \"" + 
+                               tmpFile.getName() + "\".");
+            System.exit(-1);
         }
 
-        // Creation du writeN1B. 
         FileImageInputStream in = null;
         ImageWriterN1B writer   = null;
         try
         {
-            in     = new FileImageInputStream(source);
+            in     = new FileImageInputStream(fileSrc);
             writer = ImageWriterN1B.get(in);                
         }
         catch (IOException e)
         {
-            System.err.println("Problème de lecture du fichier \"" + source.getName() + "\".");
-            return;            
+            System.err.println("Problème de lecture du fichier \"" + 
+                               fileSrc.getName() + "\".");
+            System.exit(-1);
         }
 
+        // Paramètre de l'enregistrement du .
         final ParameterListImpl parameters = ImageWriterN1B.getDefaultParameters();
         parameters.setParameter("GRID_LOCALIZATION", grid);
         parameters.setParameter("Y_MIN", (double)0.0);        
         parameters.setParameter("Y_MAX", (double)(grid.getSize().getHeight()-1));        
 
-        // Ecriture du fichier. 
+        // Copie du fichier. 
         try 
         {
             writer.write(out, parameters);
@@ -270,27 +283,26 @@ public final class AutoGeoref
         catch (IOException e)        
         {
             System.err.println("Erreur lors de l'ecriture du fichier.");
-            return;            
+            System.exit(-1);
         }
         
-        if (target.exists()) 
+        if (fileTgt.exists()) 
         {
-            // Sauvegarde du fichier sous le meme nom. 
-            if (!target.delete())
+            if (!fileTgt.delete())
             {
                 System.err.println("Impossible de supprimer le fichier \"" + 
-                                   target.getName() + "\".");
+                                   fileTgt.getName() + "\".");
                 System.exit(-1);
             }
         } 
-        if (!tmpFile.renameTo(target))
+        if (!tmpFile.renameTo(fileTgt))
         {
             System.err.println("Impossible de renomer le fichier \"" + 
                                tmpFile.getName() + "\" en \"" + 
-                               target.getName() + "\".");
+                               fileTgt.getName() + "\".");
             System.exit(-1);
         } 
-        log(LOG_FILE, satellite, source, start, offset);
+        log(LOG_FILE, fileSrc, satellite, offset);
     }
     
     /**
@@ -321,6 +333,7 @@ public final class AutoGeoref
         catch (IOException e)
         {
             System.err.println(e);
+            System.exit(-1);
         }
     }
 }
