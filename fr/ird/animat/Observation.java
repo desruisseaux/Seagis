@@ -43,18 +43,13 @@ import java.awt.geom.Point2D;
  */
 public interface Observation {
     /**
-     * Retourne le paramètre observé.
-     */
-    Parameter getParameter();
-
-    /**
      * Retourne la valeur de l'observation. Si aucune observation n'est disponible
      * (par exemple parce que l'animal se trouvait sous un nuage), alors cette méthode
      * retourne {@link Float#NaN NaN}.
      *
      * @return La valeur de l'observation, ou {@link Float#NaN NaN}.
      */
-    float getValue();
+    float value();
 
     /**
      * Retourne une position représentative de l'observation. Si une telle position
@@ -63,5 +58,5 @@ public interface Observation {
      * @return La position de l'observation en degrés de longitudes et de latitudes,
      *         ou <code>null</code>.
      */
-    Point2D getLocation();
+    Point2D location();
 }

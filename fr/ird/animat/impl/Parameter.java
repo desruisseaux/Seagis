@@ -82,7 +82,7 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne la {@link Observation#getValue valeur d'une observation}.
+     * Retourne la {@link Observation#value valeur d'une observation}.
      * L'implémentation par défaut retourne <code>data[0]</code>.
      *
      * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
@@ -95,7 +95,7 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne la {@linkplain Observation#getLocation position d'une observation}.
+     * Retourne la {@linkplain Observation#location position d'une observation}.
      * L'implémentation par défaut retourne (<code>data[1]</code>,<code>data[2]</code>)
      *
      * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à

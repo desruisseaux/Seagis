@@ -32,11 +32,8 @@ import java.rmi.Remote;
 
 
 /**
- * Définit un objet qui écoutera les changements survenant dans un environnement.
- * Un environnement peut changer suite à un changement de date, ainsi que suite à
- * l'ajout ou la supression de populations. Toutefois, cela n'inclu pas les ajouts,
- * suppressions ou déplacements d'animaux au sein d'une population; ces derniers
- * changements sont plutôt observés par {@link PopulationChangeListener}.
+ * Définit un objet qui écoutera les {@linkplain EnvironmentChangeEvent changements}
+ * survenant dans un {@linkplain fr.ird.animat.Environment environnement}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -45,7 +42,7 @@ public interface EnvironmentChangeListener extends EventListener, Remote {
     /**
      * Appelée quand un environnement a changé.
      *
-     * @param  event L'événement décrivant le changement d'environnement.
+     * @param  event L'événement décrivant le changement dans l'environnement.
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
      */

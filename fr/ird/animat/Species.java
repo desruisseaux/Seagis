@@ -26,6 +26,7 @@
 package fr.ird.animat;
 
 // J2SE standard
+import java.util.Set;
 import java.awt.Color;
 import java.util.Locale;
 
@@ -116,4 +117,17 @@ public interface Species {
          */
         void setColor(Color color);
     }
+
+    /**
+     * Retourne tous les {@linkplain Parameter paramètres} susceptibles d'intéresser les
+     * {@linkplain Animal animaux} de cette espèce. Cet ensemble de paramètres doit être
+     * immutable.  Les {@linkplain Animal#getObservations observations des animaux} à un
+     * pas de temps donné peuvent ne couvrir qu'un sous-ensemble de ces paramètres, mais
+     * ne devraient jamais contenir de paramètres extérieur à cet ensemble.
+     *
+     * @return L'ensemble des paramètres suceptibles d'intéresser les animaux de cette espèce
+     *         durant les pas de temps passés, pendant le pas de temps courant ou dans un pas
+     *         de temps futur.
+     */
+    //Set<Parameter> getParameters();
 }

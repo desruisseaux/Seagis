@@ -31,10 +31,16 @@ import fr.ird.animat.Environment;
 
 
 /**
- * Un événement signalant qu'un changement est survenu dans l'environnement.
+ * Un événement signalant que l'{@linkplain Environment environnement} a changé.
+ * Un environnement peut changer suite à un changement de date, ainsi que suite à
+ * l'ajout ou la supression de populations. Toutefois, cela n'inclu pas les ajouts
+ * ou suppressions d'animaux au sein d'une population; ces derniers changements étant
+ * plutôt signalés par {@link PopulationChangeEvent}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see EnvironmentChangeListener
  */
 public class EnvironmentChangeEvent extends EventObject {
     /**

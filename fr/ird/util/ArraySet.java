@@ -23,9 +23,16 @@
 package fr.ird.util;
 
 // Collection
+import java.util.Set;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.AbstractSet;
+import java.util.NoSuchElementException;
 import java.io.Serializable;
+
+// Geotools dependencies
+import org.geotools.resources.Utilities;
 
 
 /**
@@ -35,7 +42,7 @@ import java.io.Serializable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class ArraySet<Element> extends AbstractSet<Element> implements Serializable {
+public class ArraySet<Element> extends AbstractSet<Element> implements Serializable {
     /**
      * Serial number for compatibility between different versions.
      */
@@ -47,10 +54,22 @@ public final class ArraySet<Element> extends AbstractSet<Element> implements Ser
     private final Element[] elements;
 
     /**
-     * Construct a set initialized with the specified array.
+     * Construct a set initialized with the specified array. This array is not cloned.
+     * Consequently, it should not be modified externally after this object is constructed.
+     * Note that null elements in this array may be changed later if the method {@link #create}
+     * has been overrided.
      */
     public ArraySet(final Element[] elements) {
         this.elements = elements;
+        assert removeNull(new HashSet(Arrays.asList(elements))).size() == elements.length;
+    }
+
+    /**
+     * Used for assertion only.
+     */
+    private static Set removeNull(final Set set) {
+        set.remove(null);
+        return set;
     }
 
     /**
@@ -61,7 +80,8 @@ public final class ArraySet<Element> extends AbstractSet<Element> implements Ser
     }
 
     /**
-     * Returns an iterator over the elements in this collection.
+     * Returns an iterator over the elements in this collection. If the method {@link #create}
+     * has been overriden, then the element may be created on the fly during the iteration.
      */
     public Iterator<Element> iterator() {
         return new Iterator<Element>() {
@@ -72,6 +92,12 @@ public final class ArraySet<Element> extends AbstractSet<Element> implements Ser
             }
 
             public Element next() {
+                if (index >= elements.length) {
+                    throw new NoSuchElementException();
+                }
+                if (elements[index] == null) {
+                    elements[index] = create(index);
+                }
                 return elements[index++];
             }
 
@@ -83,19 +109,17 @@ public final class ArraySet<Element> extends AbstractSet<Element> implements Ser
 
     /**
      * Returns <code>true</code> if this collection contains the specified element.
+     *
+     * @task HACK: The argument type should be 'Element', but the compiler doesn't accept
+     *             it at this time.
      */
     public boolean contains(final Object e) {
-        if (e == null) {
-            for (int i=0; i<elements.length; i++) {
-                if (elements[i] == null) {
-                    return true;
-                }
+        for (int i=0; i<elements.length; i++) {
+            if (elements[i] == null) {
+                elements[i] = create(i);
             }
-        } else {
-            for (int i=0; i<elements.length; i++) {
-                if (e.equals(elements[i])) {
-                    return true;
-                }
+            if (Utilities.equals(e, elements[i])) {
+                return true;
             }
         }
         return false;
@@ -106,5 +130,15 @@ public final class ArraySet<Element> extends AbstractSet<Element> implements Ser
      */
     public Element[] toArray() {
         return (Element[]) elements.clone();
+    }
+
+    /**
+     * Invoked when the {@linkplain #iterator iterator} pass over a null element. If this method
+     * returns a non-null value, then this value will be stored in the array wrapped by this
+     * <code>ArraySet</code>. This method gives a chance to create element only when first needed.
+     * The default implementation returns always <code>null</code>.
+     */
+    protected Element create(final int index) {
+        return null;
     }
 }

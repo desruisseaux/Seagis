@@ -32,10 +32,13 @@ import fr.ird.animat.Animal;
 
 
 /**
- * Un événement signalant qu'une population a changé.
+ * Un événement signalant qu'une {@linkplain Population population} a changé.
+ * Ces changements inclus les animaux qui s'ajoutent ou qui meurent.
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see PopulationChangeListener
  */
 public class PopulationChangeEvent extends EventObject {
     /**

@@ -217,12 +217,13 @@ final class PopulationLayer extends RenderedMarks
                 graphics.setStroke(new BasicStroke(0));
                 graphics.setColor(Color.black);
                 for (int i=0; i<animals.length; i++) {
-                    final Set<Observation> observations = animals[i].getObservations(date);
+                    final Map<Parameter,Observation> observations = animals[i].getObservations(date);
                     if (observations != null) {
-                        for (final java.util.Iterator<Observation> it=observations.iterator(); it.hasNext();) {
-                            final Observation obs = it.next();
-                            final Parameter param = obs.getParameter();
-                            Point2D location = obs.getLocation();
+                        for (final java.util.Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
+                            final Map.Entry<Parameter,Observation> entry = it.next();
+                            final Parameter param = entry.getKey();
+                            final Observation obs = entry.getValue();
+                            Point2D location = obs.location();
                             if (location != null) {
                                 location = zoom.transform(location, location);
                                 final int x = (int) Math.round(location.getX());
@@ -305,7 +306,7 @@ final class PopulationLayer extends RenderedMarks
         /**
          * Observations de l'animal courant.
          */
-        private Set<Observation> observations;
+        private Map<Parameter,Observation> observations;
 
         /**
          * Position de l'animal courant, ou <code>null</code> si aucune.
@@ -361,13 +362,7 @@ final class PopulationLayer extends RenderedMarks
          */
         private void update() throws RemoteException {
             observations = animals[index].getObservations(date);
-            for (final java.util.Iterator<Observation> it=observations.iterator(); it.hasNext();) {
-                final Observation candidate = it.next();
-                if (fr.ird.animat.impl.Parameter.HEADING.equals(candidate)) {
-                    heading = candidate;
-                    break;
-                }
-            }
+            heading = observations.get(fr.ird.animat.impl.Parameter.HEADING);
         }
 
         /**
@@ -378,14 +373,14 @@ final class PopulationLayer extends RenderedMarks
          * @see #geographicArea
          */
         public Point2D position() {
-            return heading.getLocation();
+            return heading.location();
         }
 
         /**
          * Retourne la direction à la position d'un animal, en radians arithmétiques.
          */
         public double direction() {
-            double theta = heading.getValue();
+            double theta = heading.value();
             theta = Math.toRadians(90-theta);
             return Double.isNaN(theta) ? 0 : theta;
         }

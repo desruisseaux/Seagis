@@ -90,8 +90,8 @@ public interface Population extends Remote {
 
     /**
      * Déclare un objet à informer des changements survenant dans cette
-     * population. Ces changements inclus les espèces qui s'ajoutent ou
-     * qui meurent, ainsi que les changements de positions des animaux.
+     * population. Ces changements inclus les animaux qui s'ajoutent ou
+     * qui meurent.
      *
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.

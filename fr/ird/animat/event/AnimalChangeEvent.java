@@ -25,26 +25,41 @@
  */
 package fr.ird.animat.event;
 
-// J2SE dependencies
-import java.util.EventListener;
-import java.rmi.RemoteException;
-import java.rmi.Remote;
+// Dependencies
+import java.util.EventObject;
+import fr.ird.animat.Animal;
 
 
 /**
- * Définit un objet qui écoutera les {@linkplain PopulationChangeEvent changements}
- * survenant dans une {@link fr.ird.animat.Population population}.
+ * Un événement signalant que l'état d'un {@link Animal animal} a changé. La raison du changement
+ * peut être une migration vers une nouvelle population ou une métamorphose en une nouvelle
+ * espèce, mais n'inclus généralement pas les déplacements d'animaux étant donné que ces derniers
+ * surviennent typiquement à chaque pas de temps.
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see AnimalChangeListener
  */
-public interface PopulationChangeListener extends EventListener, Remote {
+public class AnimalChangeEvent extends EventObject {
     /**
-     * Appelée quand une population a changée.
-     *
-     * @param  event L'événement décrivant le changement dans une population.
-     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
-     *         et que cette exécution a échouée.
+     * Numéro de série pour compatibilité entre différentes versions.
      */
-    void populationChanged(PopulationChangeEvent event) throws RemoteException;
+//    private static final long serialVersionUID = 555996444421587694L;
+
+    /**
+     * Construit un nouvel événement.
+     *
+     * @param source La source.
+     */
+    public AnimalChangeEvent(final Animal source) {
+        super(source);
+    }
+
+    /**
+     * Retourne la source.
+     */
+    public Animal getSource() {
+        return (Animal) super.getSource();
+    }
 }

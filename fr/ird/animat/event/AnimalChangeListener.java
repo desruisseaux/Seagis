@@ -32,19 +32,19 @@ import java.rmi.Remote;
 
 
 /**
- * Définit un objet qui écoutera les {@linkplain PopulationChangeEvent changements}
- * survenant dans une {@link fr.ird.animat.Population population}.
+ * Définit un objet qui écoutera les {@linkplain AnimalChangeEvent changements}
+ * survenant dans l'état d'un {@link fr.ird.animat.Animal animal}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface PopulationChangeListener extends EventListener, Remote {
+public interface AnimalChangeListener extends EventListener, Remote {
     /**
-     * Appelée quand une population a changée.
+     * Appelée quand un animal a changé.
      *
-     * @param  event L'événement décrivant le changement dans une population.
+     * @param  event L'événement décrivant le changement dans l'état d'un animal.
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
      */
-    void populationChanged(PopulationChangeEvent event) throws RemoteException;
+    void animalChanged(AnimalChangeEvent event) throws RemoteException;
 }

@@ -27,55 +27,39 @@ package fr.ird.animat.impl;
 
 // J2SE
 import java.util.Set;
+import java.util.Map;
 import java.util.Date;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Collections;
 import java.io.Serializable;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.rmi.server.RemoteObject;
+import javax.swing.event.EventListenerList;
 
 // Geotools
 import org.geotools.cs.Ellipsoid;
 import org.geotools.cv.Coverage;
 
 // Seagis
-import fr.ird.animat.Species;
 import fr.ird.util.ArraySet;
+import fr.ird.animat.event.AnimalChangeEvent;
+import fr.ird.animat.event.AnimalChangeListener;
 
 
 /**
- * Implémentation par défaut d'un animal.
+ * Implémentation par défaut d'un animal. La {@linkplain Population population} et
+ * {@linkplain Species l'espèce} initiales d'un animal doivent être spécifiées dès sa naissance
+ * (c'est-à-dire dès la création d'un objet <code>Animal</code>) mais peuvent être changées par
+ * la suite, soit par la {@linkplain #migrate migration} vers une autre population, ou soit par
+ * la {@linkplain #metamorphose métamorphose} en une autre &quot;espèce&quot;.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public abstract class Animal extends RemoteObject implements fr.ird.animat.Animal {
-    /**
-     * Index (relatif au début d'un enregistrement) de la valeur d'une observation.
-     */
-    private static final int VALUE_OFFSET = 0;
-
-    /**
-     * Index (relatif au début d'un enregistrement) de la longitude d'une observation.
-     */
-    private static final int X_OFFSET = 1;
-
-    /**
-     * Index (relatif au début d'un enregistrement) de la latitude d'une observation.
-     */
-    private static final int Y_OFFSET = 2;
-
-    /**
-     * La longueur des enregistrements lorsqu'ils comprennent la position de l'observation.
-     */
-    private static final int LOCATED_LENGTH = 3;
-
-    /**
-     * La longueur des enregistrements lorsqu'ils ne comprennent que la valeur de l'observation.
-     */
-    private static final int SCALAR_LENGTH = 1;
-
     /**
      * La population à laquelle appartient cet animal, ou <code>null</code> si l'animal est mort.
      *
@@ -107,9 +91,17 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     protected final Path path;
 
     /**
-     * Les observations effectuées par cet animal depuis sa naissance.
+     * Les observations effectuées par cet animal depuis sa naissance. Cet objet doit
+     * être séparé de <code>path</code> afin de ne pas être transmis inutilement via
+     * le réseau lors de l'appel de {@link #getPath}.
      */
     private float[] observations;
+
+    /**
+     * Liste des objets intéressés à être informés des changements apportés à
+     * cet animal. Ne sera construit que la première fois où il sera nécessaire.
+     */
+    private EventListenerList listenerList;
 
     /**
      * Construit un animal à la position initiale spécifiée.
@@ -168,15 +160,6 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     }
 
     /**
-     * Retourne tous les paramètres susceptibles d'intéresser cet animal. Cet ensemble de
-     * paramètres doit être immutable et constant pendant toute la durée de vie de l'animal.
-     *
-     * @return L'ensemble des paramètres suceptibles d'intéresser l'animal durant les pas de
-     *         temps passés, pendant le pas de temps courant ou dans un pas de temps futur.
-     */
-    public abstract Set<fr.ird.animat.Parameter> getParameters();
-
-    /**
      * Retourne les observations de l'animal à la date spécifiée.
      *
      * @param  time Date pour laquelle on veut les observations, ou <code>null</code> pour les
@@ -185,23 +168,11 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      * @return Les observations de l'animal, ou <code>null</code> si la date spécifiée n'est pas
      *         pendant la durée de vie de cet animal.
      */
-    public Set<fr.ird.animat.Observation> getObservations(Date time) {
-        final Set<fr.ird.animat.Parameter> parameters = getParameters();
-        final Observation[] obs = new Observation[parameters.size()];
-        int i=0,offset=0;
-        for (final Iterator it=parameters.iterator(); it.hasNext();) {
-            final Parameter param = (Parameter) it.next();
-            obs[i] = new Observation(param, offset);
-            offset += param.isLocalized() ? LOCATED_LENGTH : SCALAR_LENGTH;
-            i++;
-        }
-        final float[] data = new float[offset];
-        offset *= clock.getStepSequenceNumber(time);
-        System.arraycopy(observations, offset, data, 0, data.length);
-        while (--i>=0) {
-            obs[i].observations = data;
-        }
-        return new ArraySet((fr.ird.animat.Observation[]) obs);
+    public Map<fr.ird.animat.Parameter,fr.ird.animat.Observation> getObservations(Date time) {
+        final int length = species.getRecordLength();
+        final float[] data = new float[length];
+        System.arraycopy(observations, clock.getStepSequenceNumber(time)*length, data, 0, length);
+        return new Observations(species.parameters, data);
     }
 
     /**
@@ -242,11 +213,10 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
                 throw new IllegalStateException("L'animal est mort.");
             }
             final Environment environment = population.getEnvironment();
-            float[] samples = environment.tmpSamples;
-            float[] buffer  = environment.tmpObservations;
-            final Set<fr.ird.animat.Parameter> parameters = getParameters();
-            for (final Iterator<fr.ird.animat.Parameter> it=parameters.iterator(); it.hasNext();) {
-                final Parameter parameter = (Parameter) it.next();
+            float[] samples = new float[3];
+            final Parameter[] parameters = species.parameters;
+            for (int i=0; i<parameters.length; i++) {
+                final Parameter parameter = parameters[i];
                 final Coverage coverage = environment.getCoverage(parameter);
                 samples = coverage.evaluate(null, samples); // TODO
             }
@@ -291,6 +261,9 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      */
     public void metamorphose(final Species species) {
         synchronized (getTreeLock()) {
+            if (!Arrays.equals(this.species.parameters, species.parameters)) {
+                throw new IllegalArgumentException("La nouvelle espèce doit observer les mêmes paramètres.");
+            }
             this.species = species;
         }
     }
@@ -310,91 +283,37 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     }
 
     /**
+     * Déclare un objet à informer des changements survenant dans l'état de cet animal.
+     */
+    public void addAnimalChangeListener(final AnimalChangeListener listener) {
+        synchronized (getTreeLock()) {
+            if (listenerList == null) {
+                listenerList = new EventListenerList();
+            }
+            listenerList.add(AnimalChangeListener.class, listener);
+        }
+    }
+
+    /**
+     * Retire un objet qui ne souhaite plus être informé des changements survenant
+     * dans l'état de cet animal.
+     */
+    public void removeAnimalChangeListener(final AnimalChangeListener listener) {
+        synchronized (getTreeLock()) {
+            if (listenerList != null) {
+                listenerList.remove(AnimalChangeListener.class, listener);
+                if (listenerList.getListenerCount() == 0) {
+                    listenerList = null;
+                }
+            }
+        }
+    }
+
+    /**
      * Retourne l'objet sur lequel se synchroniser lors des accès à cet animal.
      */
     protected final Object getTreeLock() {
         final Population population = this.population;
         return (population!=null) ? population.getTreeLock() : this;
-    }
-
-    /**
-     * Une observation de l'animal. Un ensemble de ces observations est retourné par la méthode
-     * {@link Animal#getObservations}.
-     *
-     * @version $Id$
-     * @author Martin Desruisseaux
-     */
-    private static final class Observation implements fr.ird.animat.Observation, Serializable {
-        /**
-         * Numéro de série pour compatibilité entre différentes versions.
-         */
-//        private static final long serialVersionUID = -1934991927931117874L;
-
-        /**
-         * Le paramètre observé.
-         */
-        private final Parameter parameter;
-
-        /**
-         * L'ensemble des observations de cet animal pour le pas de temps examiné.
-         * Ce tableau n'est qu'un extrait du tableau {@link Animal#observations},
-         * qui contient la totalité des observations de l'animal. Nous n'utilisons
-         * qu'un extrait afin d'accélérer les transfert via le réseau dans le cas
-         * d'une utilisation avec les RMI. Toutefois, tous les objets {@link Observation}
-         * d'un même pas de temps partageront une référence vers le même tableau
-         * <code>observations</code>, afin de diminuer la charge sur le ramasse-miette.
-         *
-         * Ce champ sera ajusté par {@link Animal#getObservations} après la
-         * construction de cet objet.
-         */
-        float[] observations;
-
-        /**
-         * Position de l'observation dans le tableau {@link #observations}.
-         */
-        private final int offset;
-
-        /**
-         * Construit une observation pour le paramètre spécifié.
-         *
-         * @param parameter    Le paramètre observé.
-         * @param offset       Index du premier élément à prendre en compte dans
-         *                     {@link #observation}.
-         */
-        public Observation(final Parameter parameter,
-                           final int offset)
-        {
-            this.parameter = parameter;
-            this.offset    = offset;
-        }
-
-        /**
-         * Retourne le paramètre observé.
-         */
-        public Parameter getParameter() {
-            return parameter;
-        }
-        
-        /**
-         * Retourne la valeur de l'observation, ou {@link Float#NaN} si elle n'est pas disponible.
-         */
-        public float getValue() {
-            return observations[offset + VALUE_OFFSET];
-        }
-        
-        /**
-         * Retourne une position représentative de l'observation, ou <code>null</code>
-         * si elle n'est pas disponible.
-         */
-        public Point2D getLocation() {
-            if (parameter.isLocalized()) {
-                final float x = observations[offset + X_OFFSET];
-                final float y = observations[offset + Y_OFFSET];
-                if (!Float.isNaN(x) || !Float.isNaN(y)) {
-                    return new Point2D.Float(x,y);
-                }
-            }
-            return null;
-        }
     }
 }

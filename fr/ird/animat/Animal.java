@@ -27,6 +27,7 @@ package fr.ird.animat;
 
 // J2SE standard
 import java.util.Set;
+import java.util.Map;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
@@ -37,17 +38,20 @@ import java.rmi.Remote;
 // Geotools (pour JavaDoc)
 import org.geotools.cs.Ellipsoid;
 
+// Animats
+import fr.ird.animat.event.AnimalChangeListener;
+
 
 /**
  * Représentation d'un animal. Chaque animal doit appartenir à une {@linkplain Species espèce}
- * ainsi qu'à une {@linkplain Population population}. Le terme "animal" est ici utilisé au sens
- * large. Un développeur pourrait très bien considérer la totalité d'un banc de poissons comme
- * une sorte de méga-animal.
+ * ainsi qu'à une {@linkplain Population population}. Le terme &quot;animal&quot; est ici utilisé
+ * au sens large. Un développeur pourrait très bien considérer la totalité d'un banc de poissons
+ * comme une sorte de méga-animal.
  * <br><br>
  * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes et de latitudes
  * selon l'ellipsoïde {@linkplain Ellipsoid#WGS84 WGS84}. Les déplacements sont exprimées en
  * milles nautiques, et les directions en degrés géographiques (c'est-à-dire par rapport au
- * nord "vrai"). Les intervalles de temps sont exprimées en nombre de jours.
+ * nord &quot;vrai&quot;). Les intervalles de temps sont exprimés en nombre de jours.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -78,7 +82,7 @@ public interface Animal extends Remote {
      * horloge sera toujours identique à celui de {@linkplain Environment#getClock l'horloge
      * de l'environnement} (puisque le temps s'écoule de la même façon pour tous les animaux),
      * mais {@link Clock#getAge l'âge} peut être différent. Cet âge dépend de l'instant du
-     * "pas de temps 0", qui correspond à la naissance de l'animal.
+     * &quot;pas de temps 0&quot;, qui correspond à la naissance de l'animal.
      */
     Clock getClock();
 
@@ -94,24 +98,14 @@ public interface Animal extends Remote {
     Shape getPath() throws RemoteException;
 
     /**
-     * Retourne tous les paramètres susceptibles d'intéresser cet animal. Cet ensemble de
-     * paramètres doit être immutable et constant pendant toute la durée de vie de l'animal.
-     *
-     * @return L'ensemble des paramètres suceptibles d'intéresser l'animal durant les pas de
-     *         temps passés, pendant le pas de temps courant ou dans un pas de temps futur.
-     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
-     *         et que cette exécution a échouée.
-     */
-    Set<Parameter> getParameters() throws RemoteException;
-
-    /**
-     * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@linkplain Parameter
-     * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
-     * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
-     * A l'inverse, un animal peut aussi faire quelques observations &quot;internes&quot; (par
-     * exemple la température de ses muscles) qui ne font pas partie des paramètres de son
-     * environnement externe. En général, {@linkplain fr.ird.animat.impl.Parameter#HEADING
-     * le cap et la position} de l'animal font partis des paramètres internes observés.
+     * Retourne les {@linkplain Observation observations} de l'animal à la date spécifiée. Le
+     * nombre de {@linkplain Parameter paramètres} observés n'est pas nécessairement égal au
+     * nombre de {@linkplain Environment#getParameters paramètres de l'environnement}, car un
+     * animal peut ignorer les paramètres qui ne l'intéresse pas. A l'inverse, un animal peut
+     * aussi faire quelques observations &quot;internes&quot; (par exemple la température de
+     * ses muscles) qui ne font pas partie des paramètres de son environnement externe. En
+     * général, {@linkplain fr.ird.animat.impl.Parameter#HEADING le cap et la position} de
+     * l'animal feront partis des paramètres &quot;internes&quot; observés.
      *
      * @param  time Date pour laquelle on veut les observations, ou <code>null</code> pour les
      *         dernières observations (c'est-à-dire celle qui ont été faites après le dernier
@@ -121,7 +115,7 @@ public interface Animal extends Remote {
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
      */
-    Set<Observation> getObservations(Date time) throws RemoteException;
+    Map<Parameter,Observation> getObservations(Date time) throws RemoteException;
 
     /**
      * Retourne la région jusqu'où s'étend la perception de cet animal. Il peut s'agir par
@@ -143,4 +137,21 @@ public interface Animal extends Remote {
      *         et que cette exécution a échouée.
      */
     void kill() throws RemoteException;
+
+    /**
+     * Déclare un objet à informer des changements survenant dans l'état de cet animal.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    void addAnimalChangeListener(AnimalChangeListener listener) throws RemoteException;
+
+    /**
+     * Retire un objet qui ne souhaite plus être informé des changements survenant
+     * dans l'état de cet animal.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    void removeAnimalChangeListener(AnimalChangeListener listener) throws RemoteException;
 }
