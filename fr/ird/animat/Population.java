@@ -27,6 +27,7 @@ package fr.ird.animat;
 
 // J2SE standard
 import java.util.Set;
+import java.awt.Shape;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -66,6 +67,17 @@ public interface Population extends Remote {
      *         et que cette exécution a échouée.
      */
     Set<Animal> getAnimals() throws RemoteException;
+
+    /**
+     * Retourne les limites de la région géographique dans laquelle on retrouve
+     * des animaux de cette population. Les coordonnées de la région retournée
+     * sont en degrés de longitudes et de latitudes.
+     *
+     * @return Les limites de la distribution geographique de cette population.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Shape getSpatialBounds() throws RemoteException;
 
     /**
      * Tue tout les animaux de cette population et fait disparaître

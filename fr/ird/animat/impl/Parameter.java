@@ -38,18 +38,18 @@ import java.awt.geom.Point2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Parameter implements Serializable {
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = -1934991927931117874L;
-
+public class Parameter implements fr.ird.animat.Parameter, Serializable {
     /**
      * Le cap des animaux, ainsi que leur position actuelle. Le cap peut être obtenu
      * par un appel à {@link #getValue}, alors que la position peut être obtenue par
      * un appel à {@link #getLocation}.
      */
     public static final Parameter HEADING = new Parameter("Heading");
+
+    /**
+     * Numéro de série pour compatibilité entre différentes versions.
+     */
+    private static final long serialVersionUID = -1934991927931117874L;
 
     /**
      * Le nom de ce paramètre.

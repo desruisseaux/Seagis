@@ -94,6 +94,19 @@ public interface Environment extends Remote {
     CV_Coverage getCoverage(Parameter parameter) throws NoSuchElementException, RemoteException;
 
     /**
+     * Retourne l'horloge de la simulation. Cet horloge tient à jour la date et heure (virtuelle)
+     * courante ainsi que l'âge de la simulation. Cette horloge contrôle le rythme de l'ensemble
+     * de la simulation. Bien que chaque animal peut avoir {@linkplain Animal#getClock sa propre
+     * horloge}, ces horloges individuelles sont toutes synchronisées sur celle de l'environnement
+     * et ne diffèrent que par l'âge de l'animal.
+     *
+     * @return L'horloge de la simulation.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    Clock getClock() throws RemoteException;
+
+    /**
      * Déclare un objet à informer des changements survenant dans cet environnement.
      * Ces changements surviennent à chaque fois que la simulation avance d'un pas de temps.
      *

@@ -46,24 +46,17 @@ import fr.ird.science.astro.SunRelativePosition;
 
 
 /**
- * Horloge de la simulation. Cette horloge représente un pas de temps dans l'exécution de la
- * simulation. Chaque pas de temps est exprimée par une date de début et une durée. Pendant
- * un pas de temps, tout les paramètres de {@link Environment} sont considérés constants.
- * L'horloge passe au pas de temps suivant à chaque appel de {@link #nextTimeStep}.
- * <br><br>
- * En plus des dates de début et de fin du pas de temps courant, l'horloge tient à jour un
- * numéro de pas de temps. Ce numéro commence à 0 et est incrémenté de 1 chaque fois que la
- * simulation passe au {@linkplain #nextTimeStep pas de temps suivant}. Le pas de temps 0
- * correspond au pas de temps au moment ou l'horloge a été créée, soit avec {@link #createClock}
- * ou soit avec {@link #getNewClock}. Il est possible que deux horloges soient synchronisées de
- * façon à avancer en même temps, tout un différent numéro de pas de temps. L'horloge ayant un
- * numéro de pas de temps plus petit correspondra à l'horloge d'un animal plus jeune, qui vit
- * à la même époque que les autres mais qui a "vécu" depuis un plus petit nombre de pas de temps.
+ * Implémentation par défaut de l'horloge de la simulation. En plus de la
+ * {@linkplain #getTime() date du pas de temps courant}, l'horloge tient à jour un
+ * {@linkplain #getStepSequenceNumber numéro séquentiel de pas de temps}. Ce numéro commence à 0
+ * et est incrémenté de 1 chaque fois que la simulation passe au {@linkplain #nextTimeStep pas de
+ * temps suivant}. Le pas de temps 0 correspond au pas de temps au moment ou l'horloge a été créée,
+ * soit avec {@link #createClock} ou soit avec {@link #getNewClock}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Clock implements Serializable {
+public abstract class Clock implements fr.ird.animat.Clock, Serializable {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
@@ -102,7 +95,7 @@ public abstract class Clock implements Serializable {
      * Ce numéro sera compris de 0 à {@link #getStepSequenceNumber()} inclusivement.
      *
      * @param  time Date pour laquelle on veut le pas de temps.
-     * @return Le numéro du pas de temps à la date spécifiée.
+     * @return Le numéro séquentiel du pas de temps à la date spécifiée.
      * @throws IllegalArgumentException si la date spécifiée est antérieure à la date initiale
      *         de l'horloge ou ultérieure à la date de fin du pas de temps courant.
      */
@@ -110,9 +103,19 @@ public abstract class Clock implements Serializable {
 
     /**
      * Retourne le numéro séquentiel du pas de temps courant. Ce numéro commence à 0 et est
-     * incrémenté de 1 à chaque fois que {@link #nextTimeStep} est appelée.
+     * incrémenté de 1 à chaque fois que l'horloge avance d'un pas de temps.
      */
     public abstract int getStepSequenceNumber();
+
+    /**
+     * Retourne le temps écoulé depuis la création de cette horloge.
+     * Il s'agira de l'âge de l'animal qui est soumis à cette horloge.
+     *
+     * @return L'âge en nombre de jours.
+     */
+    public final float getAge() {
+        return getStepSequenceNumber() * getStepDuration();
+    }
 
     /**
      * Retourne la date au milieu du pas de temps courant.
@@ -139,16 +142,6 @@ public abstract class Clock implements Serializable {
      * @return Angle d'élévation du soleil, en degrés par rapport à l'horizon.
      */
     public abstract float getSunElevation(final Point2D position);
-
-    /**
-     * Retourne le temps écoulé depuis la création de cette horloge.
-     * Il s'agira de l'âge de l'animal qui est soumis à cette horloge.
-     *
-     * @return L'âge en nombre de jours.
-     */
-    public final float getAge() {
-        return getStepSequenceNumber() * getStepDuration();
-    }
 
     /**
      * Retourne une nouvelle horloge avec le même pas de temps que <code>this</code>, mais dont le

@@ -46,6 +46,7 @@ import org.geotools.cs.Ellipsoid;
 import org.geotools.resources.XMath;
 import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
+import org.geotools.resources.XRectangle2D;
 
 
 /**
@@ -563,9 +564,7 @@ public final class Path extends Point2D implements Shape, Serializable {
         final double ymin = Math.toDegrees(this.ymin);
         final double xmax = Math.toDegrees(this.xmax);
         final double ymax = Math.toDegrees(this.ymax);
-        return new Rectangle2D.Float((float)xmin, (float)ymin,
-                                     (float)(xmax-xmin),
-                                     (float)(ymax-ymin));
+        return new XRectangle2D(xmin, ymin, xmax-xmin, ymax-ymin);
     }
 
     /**

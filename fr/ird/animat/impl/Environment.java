@@ -25,29 +25,34 @@
  */
 package fr.ird.animat.impl;
 
-// Divers
+// J2SE standard
 import java.util.Set;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
 import java.util.NoSuchElementException;
-
-// Evénements
 import javax.swing.event.EventListenerList;
+import java.rmi.server.RemoteServer;
+import java.rmi.RemoteException;
+
+// OpenGIS et Geotools
+import org.geotools.cv.Coverage;
+import org.geotools.gp.Adapters;
+import org.opengis.cv.CV_Coverage;
+import org.geotools.resources.Utilities;
+
+// Animats
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
 
-// Dépendences avec Geotools et resources
-import org.geotools.cv.Coverage;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
 
 /**
- * Représentation de l'environnement dans lequel évolueront les animaux. Cet environnement peut
- * contenir un nombre arbitraire de {@linkplain Population populations}, mais ne contient aucun
- * paramètre. Pour ajouter des paramètre à cet environnement, il est nécessaire de redéfinir les
- * méthodes suivantes:
+ * Implémentation par défaut de l'environnement dans lequel évolueront les animaux. Cet
+ * environnement peut contenir un nombre arbitraire de {@linkplain Population populations},
+ * mais ne contient aucun paramètre. Pour ajouter des paramètre à cet environnement, il est
+ * nécessaire de redéfinir les méthodes suivantes:
  * <ul>
  *   <li>{@link #getParameters}</li>
  *   <li>{@link #getCoverage}</li>
@@ -56,16 +61,16 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Environment {
+public class Environment extends RemoteServer implements fr.ird.animat.Environment {
     /**
      * Ensemble des populations comprises dans cet environnement.
      */
-    private final Set<Population> populations = new LinkedHashSet<Population>();
+    private final Set<fr.ird.animat.Population> populations = new LinkedHashSet<fr.ird.animat.Population>();
 
     /**
      * Version immutable de la population, retournée par {@link #getPopulation}.
      */
-    private final Set<Population> immutablePopulations = Collections.unmodifiableSet(populations);
+    private final Set<fr.ird.animat.Population> immutablePopulations = Collections.unmodifiableSet(populations);
 
     /**
      * Liste des objets intéressés à être informés
@@ -88,8 +93,10 @@ public class Environment {
             assert Thread.holdsLock(getTreeLock());
             final Object[] listeners = listenerList.getListenerList();
             for (int i=listeners.length; (i-=2)>=0;) {
-                if (listeners[i] == EnvironmentChangeListener.class) {
+                if (listeners[i] == EnvironmentChangeListener.class) try {
                     ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
+                } catch (RemoteException exception) {
+                    listenerException("Environment", "fireEnvironmentChanged", exception);
                 }
             }
         }
@@ -101,14 +108,16 @@ public class Environment {
     final EventQueue queue;
 
     /**
-     * Horloge de la simulation.
+     * Horloge de la simulation. Toute la simulation, ainsi que les événements mis en attente
+     * dans {@link #queue}, seront synchronisés sur cette horloge.
      */
     private final Clock clock;
 
     /**
      * Construit un environnement par défaut.
      *
-     * @param clock Horloge de la simulation.
+     * @param clock Horloge de la simulation. Toute la simulation
+     *              sera synchronisée sur cette horloge.
      */
     public Environment(final Clock clock) {
         if (clock == null) {
@@ -158,7 +167,7 @@ public class Environment {
     /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
      */
-    public Set<Population> getPopulations() {
+    public Set<fr.ird.animat.Population> getPopulations() {
         return immutablePopulations;
     }
 
@@ -168,20 +177,40 @@ public class Environment {
      *
      * @see Animal#getObservations
      */
-    public Set<Parameter> getParameters() {
+    public Set<fr.ird.animat.Parameter> getParameters() {
         return Collections.EMPTY_SET;
     }
 
     /**
-     * Retourne les données d'un paramètre sous forme d'un objet
-     * {@link Coverage}. L'implémentation par défaut lance toujours
-     * une exception de type {@link NoSuchElementException}.
+     * Retourne toute la {@linkplain CV_Coverage couverture spatiale des données} à la
+     * {@linkplain Clock#getTime date courante} pour un paramètre spécifié. L'implémentation
+     * par défaut appelle {@link #getCoverage(Parameter)}.
      *
      * @param  parameter Le paramètre désiré.
-     * @return L'objet {@link Coverage} contenant les données.
+     * @return La couverture spatiale des données pour le paramètre spécifié.
      *
-     * @throws NoSuchElementException si le paramètre spécifié n'existe pas
-     *         dans cet environnement.
+     * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
+     *
+     * @see Animal#getObservations
+     */
+    public CV_Coverage getCoverage(fr.ird.animat.Parameter parameter) throws NoSuchElementException {
+        if (parameter instanceof Parameter) {
+            return Adapters.getDefault().export(getCoverage((Parameter)parameter));
+        }
+        throw new NoSuchElementException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
+                                         "parameter", parameter));
+    }
+
+    /**
+     * Retourne toute la {@linkplain Coverage couverture spatiale des données} à la
+     * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
+     * L'implémentation par défaut lance toujours une exception de type
+     * {@link NoSuchElementException}.
+     *
+     * @param  parameter Le paramètre désiré.
+     * @return La couverture spatiale des données pour le paramètre spécifié.
+     *
+     * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
      *
      * @see Animal#getObservations
      */
@@ -191,8 +220,14 @@ public class Environment {
     }
 
     /**
-     * Retourne l'horloge de la simulation. Tous les paramètres de cet environnement
-     * sont considérés constants pendant toute la durée de chaque pas de temps.
+     * Retourne l'horloge de la simulation. Pendant chaque pas de temps de la simulation,
+     * les conditions suivantes sont remplies:
+     * <ul>
+     *   <li>Tous les paramètres de l'environnement sont considérés constants pendant toute
+     *       la durée du pas de temps.</li>
+     *   <li>L'ensemble de la simulation est synchronisée (au sens du mot-clé
+     *       <code>synchronized</code>) sur cette horloge.</li>
+     * </ul>
      */
     public Clock getClock() {
         return clock;
@@ -240,6 +275,15 @@ public class Environment {
      */
     protected void fireEnvironmentChanged() {
         queue.invokeLater(fireEnvironmentChanged);
+    }
+
+    /**
+     * Appelée lorsqu'une erreur est survenue sur une machine distance lors de la notification
+     * d'un changement. Cette erreur ne concerne généralement pas la simulation. On se contentera
+     * donc d'afficher un avertissement et de continuer.
+     */
+    static void listenerException(String classe, String method, RemoteException error) {
+        Utilities.unexpectedException("fr.ird.animat", classe, method, error);
     }
 
     /**

@@ -35,8 +35,13 @@ import java.awt.Rectangle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+import java.rmi.RemoteException;
+
+// OpenGIS dependencies
+import org.opengis.cv.CV_Coverage;
 
 // Geotools dependencies
+import org.geotools.gp.Adapters;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.ct.TransformException;
@@ -58,6 +63,11 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * @author Martin Desruisseaux
  */
 final class EnvironmentLayer extends RenderedGridCoverage implements EnvironmentChangeListener {
+    /**
+     * L'adapter à utiliser pour convertir les couches 
+     */
+    private final Adapters adapters = Adapters.getDefault();
+
     /**
      * Palette de couleurs à utiliser pour l'affichage de l'image.
      * On utilisera une palette en tons de gris plutôt que la palette
@@ -92,7 +102,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      * @param  environment Environnement à afficher.
      *         Il peut provenir d'une machine distante.
      */
-    public EnvironmentLayer(final Environment environment) {
+    public EnvironmentLayer(final Environment environment) throws RemoteException {
         super(null);
         final Set<Parameter> parameters = environment.getParameters();
         this.parameter = parameters.iterator().next();
@@ -101,10 +111,9 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     }
 
     /**
-     * Appelée quand un environnement a changé. Si l'image affichée
-     * a changée, elle sera retracée.
+     * Appelée quand un environnement a changé. Si l'image affichée a changée, elle sera retracée.
      */
-    public void environmentChanged(final EnvironmentChangeEvent event) {
+    public void environmentChanged(final EnvironmentChangeEvent event) throws RemoteException {
         final Environment environment = event.getSource();
         final Date oldDate = date;
         date = environment.getClock().getTime();
@@ -115,10 +124,11 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     /**
      * Définit la couverture à afficher.
      */
-    private void setCoverage(Coverage coverage) {
+    private void setCoverage(final CV_Coverage coverage) throws RemoteException {
+        final Coverage cv = adapters.wrap(coverage);
         final GridCoverage grid;
-        if (coverage instanceof GridCoverage) {
-            grid = (GridCoverage) coverage;
+        if (cv instanceof GridCoverage) {
+            grid = (GridCoverage) cv;
         } else {
             grid = null;
         }

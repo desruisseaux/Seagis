@@ -28,6 +28,7 @@ package fr.ird.animat.viewer;
 // J2SE dependencies
 import java.awt.Graphics2D;
 import javax.swing.JComponent;
+import java.rmi.RemoteException;
 
 // Geotools dependencies
 import org.geotools.gui.swing.MapPane;
@@ -69,8 +70,7 @@ public final class Viewer {
      *
      * @param population  La population à afficher.
      */
-    public Viewer(final Population population)
-    {
+    public Viewer(final Population population) throws RemoteException {
         this.environment = new EnvironmentLayer(population.getEnvironment());
         this.population  = new  PopulationLayer(population);
         this.environment.addPropertyChangeListener(this.population);

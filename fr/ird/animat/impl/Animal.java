@@ -26,33 +26,27 @@
 package fr.ird.animat.impl;
 
 // J2SE
-import java.util.Map;
+import java.util.Set;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.rmi.server.RemoteObject;
 
-// Geotools dependencies
+// Geotools
 import org.geotools.cs.Ellipsoid;
+
+// Animats
+import fr.ird.animat.Species;
 
 
 /**
- * Représentation d'un animal. Chaque animal doit appartenir à une espèce,
- * décrite par un objet {@link Species}, ainsi qu'à une population décrite
- * par un objet {@link Population}. Le terme "animal" est ici utilisé au
- * sens large. Un développeur pourrait très bien considérer la totalité
- * d'un banc de poissons comme une sorte de méga-animal.
- * <br><br>
- * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes
- * et de latitudes selon l'ellipsoïde {@link Ellipsoid#WGS84}.
- * Les déplacements sont exprimées en milles nautiques, et les directions
- * en degrés géographiques (c'est-à-dire par rapport au nord "vrai").
- * Les intervalles de temps sont exprimées en nombre de jours.
+ * Implémentation par défaut d'un animal.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Animal {
+public abstract class Animal extends RemoteObject implements fr.ird.animat.Animal {
     /**
      * La population à laquelle appartient cet animal.
      */
@@ -105,6 +99,13 @@ public abstract class Animal {
     }
 
     /**
+     * Retourne l'horloge de l'animal.
+     */
+    public Clock getClock() {
+        return clock;
+    }
+
+    /**
      * Retourne le chemin suivit par l'animal depuis le début
      * de la simulation jusqu'à maintenant. Les coordonnées
      * sont exprimées en degrés de longitudes et de latitudes.
@@ -114,27 +115,15 @@ public abstract class Animal {
     }
 
     /**
-     * Retourne les observations de l'animal à la date spécifiée. Le nombre de {@linkplain Parameter
-     * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
-     * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
-     * A l'inverse, un animal peut aussi faire quelques observations "internes" (par exemple la
-     * température de ses muscles) qui ne font pas partie des paramètres de son environnement
-     * externe. En général, {@linkplain Parameter#HEADING le cap et la position} de l'animal font
-     * partis des paramètres observés.
+     * Retourne les observations de l'animal à la date spécifiée.
      *
-     * @param  time Date pour laquelle on veut les observations,
-     *         ou <code>null</code> pour les dernières observations
-     *         (c'est-à-dire celle qui ont été faites après le dernier
+     * @param  time Date pour laquelle on veut les observations, ou <code>null</code> pour les
+     *         dernières observations (c'est-à-dire celle qui ont été faites après le dernier
      *         déplacement).
-     * @return Les observations de l'animal, ou <code>null</code> si la
-     *         date spécifiée n'est pas pendant la durée de vie de cet animal.
-     *         L'ensemble des clés ne comprend que les {@linkplain Parameter
-     *         paramètres} qui intéressent l'animal. Si un paramètre intéresse
-     *         l'animal mais qu'aucune donnée correspondante n'est disponible
-     *         dans son environnement, alors les observations correspondantes
-     *         seront <code>null</code>.
+     * @return Les observations de l'animal, ou <code>null</code> si la date spécifiée n'est pas
+     *         pendant la durée de vie de cet animal.
      */
-    public abstract Map<Parameter,float[]> getObservations(Date time);
+    public abstract Set<fr.ird.animat.Observation> getObservations(Date time);
 
     /**
      * Retourne la région jusqu'où s'étend la perception de cet

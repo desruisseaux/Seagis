@@ -74,6 +74,15 @@ public interface Animal extends Remote {
     Population getPopulation() throws RemoteException;
 
     /**
+     * Retourne l'horloge de l'animal. Le {@linkplain Clock#getTime moment présent} de cette
+     * horloge sera toujours identique à celui de {@linkplain Environment#getClock l'horloge
+     * de l'environnement} (puisque le temps s'écoule de la même façon pour tous les animaux),
+     * mais {@link Clock#getAge l'âge} peut être différent. Cet âge dépend de l'instant du
+     * "pas de temps 0", qui correspond à la naissance de l'animal.
+     */
+    Clock getClock();
+
+    /**
      * Retourne le chemin suivit par l'animal depuis le début
      * de la simulation jusqu'à maintenant. Les coordonnées
      * sont exprimées en degrés de longitudes et de latitudes.
@@ -90,8 +99,8 @@ public interface Animal extends Remote {
      * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
      * A l'inverse, un animal peut aussi faire quelques observations &quot;internes&quot; (par
      * exemple la température de ses muscles) qui ne font pas partie des paramètres de son
-     * environnement externe. En général, {@linkplain Parameter#HEADING le cap et la position}
-     * de l'animal font partis des paramètres internes observés.
+     * environnement externe. En général, {@linkplain fr.ird.animat.impl.Parameter#HEADING
+     * le cap et la position} de l'animal font partis des paramètres internes observés.
      *
      * @param  time Date pour laquelle on veut les observations, ou <code>null</code> pour les
      *         dernières observations (c'est-à-dire celle qui ont été faites après le dernier

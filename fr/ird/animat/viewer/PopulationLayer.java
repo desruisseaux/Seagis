@@ -40,9 +40,11 @@ import java.awt.image.RenderedImage;
 import java.awt.font.GlyphVector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.rmi.RemoteException;
 
 // Utilitaires
 import java.util.Date;
+import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
@@ -55,6 +57,7 @@ import java.util.logging.LogRecord;
 // Geotools dependencies
 import org.geotools.renderer.geom.Arrow2D;
 import org.geotools.ct.TransformException;
+import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.resources.XAffineTransform;
 import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
@@ -65,6 +68,7 @@ import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
 import fr.ird.animat.Parameter;
 import fr.ird.animat.Population;
+import fr.ird.animat.Observation;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
@@ -123,11 +127,10 @@ final class PopulationLayer extends RenderedMarks
     private Date date = new Date();
 
     /**
-     * Coordonnées géographiques de la région couverte
-     * par la population, ou <code>null</code> s'il n'y
-     * en a pas.
+     * Coordonnées géographiques de la région couverte par la population,
+     * ou <code>null</code> s'il n'y en a pas.
      */
-    private Rectangle2D bounds;
+    private Shape bounds;
 
     /**
      * Couleurs et symboles des espèces.
@@ -141,7 +144,7 @@ final class PopulationLayer extends RenderedMarks
      *         Elle peut provenir d'une machine distante.
      * @param  manager Objet à utiliser pour redessiner les cartes.
      */
-    public PopulationLayer(final Population population) {
+    public PopulationLayer(final Population population) throws RemoteException {
         refresh(population);
         population.addPopulationChangeListener(this);
     }
@@ -149,19 +152,10 @@ final class PopulationLayer extends RenderedMarks
     /**
      * Remet à jour cette composante pour la population spécifiée.
      */
-    private void refresh(final Population population) {
-        animals = (Animal[]) population.getAnimals().toArray();
-        bounds = null;
-        for (int i=0; i<animals.length; i++) {
-            final Rectangle2D animalBounds = animals[i].getPath().getBounds();
-            if (animalBounds != null) {
-                if (bounds == null) {
-                    bounds = animalBounds;
-                } else {
-                    bounds.add(animalBounds);
-                }
-            }
-        }
+    private void refresh(final Population population) throws RemoteException {
+        final Collection<Animal> col = population.getAnimals();
+        animals = col.toArray(new Animal[col.size()]);
+        bounds = population.getSpatialBounds();
     }
 
     /**
@@ -179,83 +173,91 @@ final class PopulationLayer extends RenderedMarks
         final Paint      oldPaint = graphics.getPaint();
         final Stroke    oldStroke = graphics.getStroke();
         final Rectangle      clip = graphics.getClipBounds();
-        Rectangle2D      llBounds = (bounds!=null) ? (Rectangle2D) bounds.clone() : null;
-        //////////////////////////////////////
-        ////    Dessine la trajectoire    ////
-        //////////////////////////////////////
-        if (pathColor != null) {
-            graphics.setColor(pathColor);
-            graphics.setStroke(PATH_STROKE);
-            for (int i=0; i<animals.length; i++) {
-                final Shape shape = animals[i].getPath();
-                if (clip==null || shape.intersects(clip)) {
-                    graphics.draw(shape);
-                }
-            }
-            graphics.setStroke(oldStroke);
-        }
-        ///////////////////////////////////////////////
-        ////    Dessine la région de perception    ////
-        ///////////////////////////////////////////////
-        if (perceptionColor != null) {
-            graphics.setColor(perceptionColor);
-            for (int i=0; i<animals.length; i++) {
-                final Shape shape = animals[i].getPerceptionArea(date);
-                if (clip==null || shape.intersects(clip)) {
-                    graphics.fill(shape);
-                }
-                final Rectangle2D perBounds = shape.getBounds2D();
-                if (perBounds != null) {
-                    if (llBounds==null) {
-                        llBounds = perBounds;
-                    } else {
-                        llBounds.add(perBounds);
+        Rectangle2D      llBounds = (bounds!=null) ? bounds.getBounds2D() : null;
+        try {
+            //////////////////////////////////////
+            ////    Dessine la trajectoire    ////
+            //////////////////////////////////////
+            if (pathColor != null) {
+                graphics.setColor(pathColor);
+                graphics.setStroke(PATH_STROKE);
+                for (int i=0; i<animals.length; i++) {
+                    final Shape shape = animals[i].getPath();
+                    if (clip==null || shape.intersects(clip)) {
+                        graphics.draw(shape);
                     }
                 }
+                graphics.setStroke(oldStroke);
             }
-        }
-        //////////////////////////////////////////////////////
-        ////    Dessine les positions des observations    ////
-        //////////////////////////////////////////////////////
-        final AffineTransform oldTr = graphics.getTransform();
-        final AffineTransform  zoom = context.getAffineTransform(context.mapCS, context.textCS);
-        if (true) {
-            graphics.setTransform(context.getAffineTransform(context.textCS, context.deviceCS));
-            graphics.setStroke(new BasicStroke(0));
-            graphics.setColor(Color.black);
-            for (int i=0; i<animals.length; i++) {
-                final Map<Parameter,float[]> observations = animals[i].getObservations(date);
-                if (observations != null) {
-                    for (final java.util.Iterator<Map.Entry<Parameter,float[]>> it=observations.entrySet().iterator(); it.hasNext();) {
-                        final Map.Entry<Parameter,float[]> obs = it.next();
-                        final Parameter param = obs.getKey();
-                        final float[]  values = obs.getValue();
-                        Point2D location = param.getLocation(values);
-                        if (location != null) {
-                            location = zoom.transform(location, location);
-                            final int x = (int) Math.round(location.getX());
-                            final int y = (int) Math.round(location.getY());
-                            graphics.drawLine(x-MARK_RADIUS, y, x+MARK_RADIUS, y);
-                            graphics.drawLine(x, y-MARK_RADIUS, x, y+MARK_RADIUS);
+            ///////////////////////////////////////////////
+            ////    Dessine la région de perception    ////
+            ///////////////////////////////////////////////
+            if (perceptionColor != null) {
+                graphics.setColor(perceptionColor);
+                for (int i=0; i<animals.length; i++) {
+                    final Shape shape = animals[i].getPerceptionArea(date);
+                    if (clip==null || shape.intersects(clip)) {
+                        graphics.fill(shape);
+                    }
+                    final Rectangle2D perBounds = shape.getBounds2D();
+                    if (perBounds != null) {
+                        if (llBounds==null) {
+                            llBounds = perBounds;
+                        } else {
+                            llBounds.add(perBounds);
                         }
                     }
                 }
             }
+            //////////////////////////////////////////////////////
+            ////    Dessine les positions des observations    ////
+            //////////////////////////////////////////////////////
+            final AffineTransform oldTr = graphics.getTransform();
+            final AffineTransform  zoom = context.getAffineTransform(context.mapCS, context.textCS);
+            if (true) {
+                graphics.setTransform(context.getAffineTransform(context.textCS, context.deviceCS));
+                graphics.setStroke(new BasicStroke(0));
+                graphics.setColor(Color.black);
+                for (int i=0; i<animals.length; i++) {
+                    final Set<Observation> observations = animals[i].getObservations(date);
+                    if (observations != null) {
+                        for (final java.util.Iterator<Observation> it=observations.iterator(); it.hasNext();) {
+                            final Observation obs = it.next();
+                            final Parameter param = obs.getParameter();
+                            Point2D location = obs.getLocation();
+                            if (location != null) {
+                                location = zoom.transform(location, location);
+                                final int x = (int) Math.round(location.getX());
+                                final int y = (int) Math.round(location.getY());
+                                graphics.drawLine(x-MARK_RADIUS, y, x+MARK_RADIUS, y);
+                                graphics.drawLine(x, y-MARK_RADIUS, x, y+MARK_RADIUS);
+                            }
+                        }
+                    }
+                }
+            }
+            graphics.setTransform(oldTr);
+            graphics.setStroke(oldStroke);
+            graphics.setPaint(oldPaint);
+            ///////////////////////////////////
+            ////    Dessine les animaux    ////
+            ///////////////////////////////////
+            super.paint(context);
+            final AffineTransform at = context.getAffineTransform(context.mapCS, context.textCS);
+            final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
+            pxBounds.x      -= ARROW_LENGTH;
+            pxBounds.y      -= ARROW_LENGTH;
+            pxBounds.width  += ARROW_LENGTH*2;
+            pxBounds.height += ARROW_LENGTH*2;
+            context.addPaintedArea(pxBounds, context.textCS);
+        } catch (RemoteException exception) {
+            graphics.setColor(Color.BLACK);
+            graphics.setStroke(new BasicStroke(0));
+            context.setCoordinateSystem(context.textCS);
+            ExceptionMonitor.paintStackTrace(graphics,
+                                context.getPaintingArea(context.textCS).getBounds(), exception);
+            context.setCoordinateSystem(context.mapCS);
         }
-        graphics.setTransform(oldTr);
-        graphics.setStroke(oldStroke);
-        graphics.setPaint(oldPaint);
-        ///////////////////////////////////
-        ////    Dessine les animaux    ////
-        ///////////////////////////////////
-        super.paint(context);
-        final AffineTransform at = context.getAffineTransform(context.mapCS, context.textCS);
-        final Rectangle pxBounds = (Rectangle) XAffineTransform.transform(at, llBounds, new Rectangle());
-        pxBounds.x      -= ARROW_LENGTH;
-        pxBounds.y      -= ARROW_LENGTH;
-        pxBounds.width  += ARROW_LENGTH*2;
-        pxBounds.height += ARROW_LENGTH*2;
-        context.addPaintedArea(pxBounds, context.textCS);
     }
 
     /**
@@ -264,7 +266,7 @@ final class PopulationLayer extends RenderedMarks
      * @throws RemoteException si une exécution sur une machine distante
      *         était nécessaire et a échoué.
      */
-    public void populationChanged(final PopulationChangeEvent event) {
+    public void populationChanged(final PopulationChangeEvent event) throws RemoteException {
         refresh(event.getSource());
         repaint();
     }
@@ -277,6 +279,12 @@ final class PopulationLayer extends RenderedMarks
             date = (Date) event.getNewValue();
             repaint();
         }
+    }
+
+    /**
+     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
+     */
+    private static void failed(final RemoteException exception) {
     }
 
     /**
@@ -294,12 +302,12 @@ final class PopulationLayer extends RenderedMarks
         /**
          * Observations de l'animal courant.
          */
-        private Map<Parameter,float[]> observations;
+        private Set<Observation> observations;
 
         /**
          * Position de l'animal courant, ou <code>null</code> si aucune.
          */
-        private float[] position;
+        private Observation heading;
 
         /**
          * Construit un itérateur par défaut.
@@ -319,28 +327,44 @@ final class PopulationLayer extends RenderedMarks
          */
         public void setIteratorPosition(final int index) {
             this.index = index;
-            update();
+            try {
+                update();
+            } catch (RemoteException exception) {
+                failed(exception);
+                observations = null;
+                heading = null;
+            }
         }
 
         /**
          * Avance l'itérateur à l'animal suivant.
          */
         public boolean next() {
-            if (++index >= animals.length) {
-                observations = null;
-                position = null;
-                return false;
+            while (++index >= animals.length) {
+                try {
+                    update();
+                    return true;
+                } catch (RemoteException exception) {
+                    failed(exception);
+                }
             }
-            update();
-            return true;
+            observations = null;
+            heading = null;
+            return false;
         }
 
         /**
          * Obtient des observations qui correspondent à l'animal courant.
          */
-        private void update() {
+        private void update() throws RemoteException {
             observations = animals[index].getObservations(date);
-            position = (observations!=null) ? observations.get(Parameter.HEADING) : null;
+            for (final java.util.Iterator<Observation> it=observations.iterator(); it.hasNext();) {
+                final Observation candidate = it.next();
+                if (fr.ird.animat.impl.Parameter.HEADING.equals(candidate)) {
+                    heading = candidate;
+                    break;
+                }
+            }
         }
 
         /**
@@ -351,14 +375,14 @@ final class PopulationLayer extends RenderedMarks
          * @see #geographicArea
          */
         public Point2D position() {
-            return Parameter.HEADING.getLocation(position);
+            return heading.getLocation();
         }
 
         /**
          * Retourne la direction à la position d'un animal, en radians arithmétiques.
          */
         public double direction() {
-            double theta = Parameter.HEADING.getValue(position);
+            double theta = heading.getValue();
             theta = Math.toRadians(90-theta);
             return Double.isNaN(theta) ? 0 : theta;
         }
@@ -384,8 +408,13 @@ final class PopulationLayer extends RenderedMarks
                              final GlyphVector     label,
                              final Point2D.Float   labelXY)
         {
-            Species species;
-            species = animals[index].getSpecies();
+            final Species species;
+            try {
+                species = animals[index].getSpecies();
+            } catch (RemoteException exception) {
+                failed(exception);
+                return;
+            }
             Species.Icon icon = icons.get(species);
             if (icon == null) {
                 icon = species.getIcon();

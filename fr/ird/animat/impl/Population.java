@@ -27,10 +27,15 @@ package fr.ird.animat.impl;
 
 // J2SE
 import java.util.Set;
+import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
+import java.awt.Shape;
+import java.awt.geom.Rectangle2D;
 import javax.swing.event.EventListenerList;
+import java.rmi.server.RemoteObject;
+import java.rmi.RemoteException;
 
 // Animats
 import fr.ird.animat.event.PopulationChangeEvent;
@@ -38,17 +43,14 @@ import fr.ird.animat.event.PopulationChangeListener;
 
 
 /**
- * Une population d'animaux. Chaque population appartient à un seul {@link Environment}.
- * Une population peut contenir plusieurs individus {@link Animal} de différentes espèces,
- * et peut aussi comprendre quelques règles qui gouvernent les déplacements de l'ensemble
- * de ces individus. Chaque population peut avoir sa dynamique propre, et chaque {@linkplain
- * Animal animal} dans une population peut avoir un comportement différent. Une population
- * évolue à chaque appel de {@link #evoluate}.
+ * Implémentation par défaut d'une population d'animaux. Chaque population peut avoir sa
+ * dynamique propre, et chaque {@linkplain Animal animal} dans une population peut avoir
+ * un comportement différent. Une population évolue à chaque appel de {@link #evoluate}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Population {
+public abstract class Population extends RemoteObject implements fr.ird.animat.Population {
     /**
      * L'environnement dans lequel évolue cette population. Peut être <code>null</code> si la
      * population est "morte". Ce champ est mis-à-jour par {@link Environment#addPopulation}.
@@ -58,12 +60,18 @@ public abstract class Population {
     /**
      * Ensemble des animaux de cette population.
      */
-    private final Set<Animal> animals = new LinkedHashSet<Animal>();
+    private final Set<fr.ird.animat.Animal> animals = new LinkedHashSet<fr.ird.animat.Animal>();
 
     /**
      * Liste immutable des animaux de cette population.
      */
-    private final Set<Animal> immutableAnimals = Collections.unmodifiableSet(animals);
+    private final Set<fr.ird.animat.Animal> immutableAnimals = Collections.unmodifiableSet(animals);
+
+    /**
+     * Les limites de la distribution geographique de cette population,
+     * ou <code>null</code> si elle n'a pas encore été calculée.
+     */
+    private transient Rectangle2D bounds;
 
     /**
      * Liste des objets intéressés à être informés
@@ -86,8 +94,10 @@ public abstract class Population {
             assert Thread.holdsLock(getTreeLock());
             final Object[] listeners = listenerList.getListenerList();
             for (int i=listeners.length; (i-=2)>=0;) {
-                if (listeners[i] == PopulationChangeListener.class) {
+                if (listeners[i] == PopulationChangeListener.class) try {
                     ((PopulationChangeListener)listeners[i+1]).populationChanged(event);
+                } catch (RemoteException exception) {
+                    Environment.listenerException("Population", "firePopulationChanged", exception);
                 }
             }
         }
@@ -95,8 +105,6 @@ public abstract class Population {
 
     /**
      * Construit une population initialement vide.
-     *
-     * @param  environment L'environnement dans lequel évoluera cette population.
      */
     public Population() {
     }
@@ -154,8 +162,32 @@ public abstract class Population {
     /**
      * Retourne l'ensemble des animaux que contient cette population.
      */
-    public Set<Animal> getAnimals() {
+    public Set<fr.ird.animat.Animal> getAnimals() {
         return immutableAnimals;
+    }
+    
+    /**
+     * Retourne les limites de la région géographique dans laquelle on retrouve
+     * des animaux de cette population. Les coordonnées de la région retournée
+     * sont en degrés de longitudes et de latitudes.
+     *
+     * @return Les limites de la distribution geographique de cette population.
+     */
+    public Shape getSpatialBounds() {
+        synchronized (getTreeLock()) {
+            if (bounds == null) {
+                for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                    final Animal animal = (Animal) it.next();
+                    final Rectangle2D b = animal.path.getBounds2D();
+                    if (bounds == null) {
+                        bounds = b;
+                    } else {
+                        bounds.add(b);
+                    }
+                }
+            }
+            return (Shape) bounds.clone();
+        }
     }
 
     /**

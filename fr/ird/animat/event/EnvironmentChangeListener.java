@@ -33,6 +33,10 @@ import java.rmi.Remote;
 
 /**
  * Définit un objet qui écoutera les changements survenant dans un environnement.
+ * Un environnement peut changer suite à un changement de date, ainsi que suite à
+ * l'ajout ou la supression de populations. Toutefois, cela n'inclu pas les ajouts,
+ * suppressions ou déplacements d'animaux au sein d'une population; ces derniers
+ * changements sont plutôt observés par {@link PopulationChangeListener}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
