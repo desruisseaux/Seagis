@@ -47,7 +47,7 @@ import java.awt.event.WindowAdapter;
 import java.util.NoSuchElementException;
 
 // Utilitaires
-import net.seas.util.Console;
+import fr.ird.util.Console;
 import org.geotools.resources.Utilities;
 
 

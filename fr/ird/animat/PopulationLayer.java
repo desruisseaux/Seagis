@@ -42,9 +42,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 // Composantes cartographiques
-import net.seas.awt.geom.Arrow2D;
-import net.seas.map.layer.MarkLayer;
-import net.seas.map.RenderingContext;
+import fr.ird.awt.geom.Arrow2D;
+import fr.ird.map.layer.MarkLayer;
+import fr.ird.map.RenderingContext;
 
 // Animats
 import fr.ird.operator.coverage.ParameterValue;

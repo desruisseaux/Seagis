@@ -29,8 +29,8 @@ package fr.ird.animat;
 import javax.swing.JComponent;
 
 // Cartes
-import net.seas.map.MapPanel;
-import net.seas.map.layer.GridCoverageLayer;
+import fr.ird.map.MapPanel;
+import fr.ird.map.layer.GridCoverageLayer;
 
 // Geotools dependencies
 import org.geotools.cs.GeographicCoordinateSystem;

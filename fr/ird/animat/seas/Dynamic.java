@@ -44,7 +44,7 @@ import fr.ird.sql.fishery.FisheryDataBase;
 import fr.ird.sql.image.ImageDataBase;
 
 // Divers
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 
 
 /**

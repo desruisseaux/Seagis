@@ -42,7 +42,7 @@ import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
 // Divers
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 import fr.ird.sql.fishery.CatchEntry;
 
 

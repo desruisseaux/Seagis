@@ -29,7 +29,7 @@ package fr.ird.animat;
 import java.awt.Color;
 
 // Cartes
-import net.seas.map.layer.GridCoverageLayer;
+import fr.ird.map.layer.GridCoverageLayer;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;

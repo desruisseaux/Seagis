@@ -38,7 +38,7 @@ import ncsa.hdf.hdflib.HDFNativeData;
 import java.lang.reflect.Array;
 
 // Divers
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 
 
 /**
