@@ -66,9 +66,14 @@ abstract class AbstractProperties extends PropertyParser
     private static final TemporalCoordinateSystem UTC = new TemporalCoordinateSystem("UTC", new Date(EPOCH));
 
     /**
-     * Date format to use for parsing date in filename.
+     * Date format to use for parsing date in input filename.
      */
-    private final DateFormat dateFormat = new SimpleDateFormat("yyMMdd", Locale.FRANCE);
+    private final DateFormat inputDateFormat = new SimpleDateFormat("yyMMdd", Locale.FRANCE);
+
+    /**
+     * Date format to use for formating date in output filename.
+     */
+    private final DateFormat outputDateFormat = new SimpleDateFormat("yyDDD", Locale.FRANCE);
 
     /**
      * The category lists to be returned by {@link #getCategoryList}.
@@ -84,7 +89,9 @@ abstract class AbstractProperties extends PropertyParser
     protected AbstractProperties(final CategoryList[] categories)
     {
         this.categories = categories;
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        final TimeZone UTC = TimeZone.getTimeZone("UTC");
+        inputDateFormat .setTimeZone(UTC);
+        outputDateFormat.setTimeZone(UTC);
     }
 
     /**
@@ -107,7 +114,7 @@ abstract class AbstractProperties extends PropertyParser
         final String text = filename.substring(lower, upper);
         try
         {
-            return dateFormat.parse(text);
+            return inputDateFormat.parse(text);
         }
         catch (ParseException exception)
         {
@@ -170,5 +177,5 @@ abstract class AbstractProperties extends PropertyParser
      * prefix.
      */
     protected String getOutputFilename()
-    {return dateFormat.format(getDate());}
+    {return outputDateFormat.format(getDate());}
 }

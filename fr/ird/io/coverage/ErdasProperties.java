@@ -155,5 +155,5 @@ final class ErdasProperties extends AbstractProperties
      * Gets the output filename <strong>without</strong> extension.
      */
     protected String getOutputFilename()
-    {return "MD"+super.getOutputFilename();}
+    {return "SST"+super.getOutputFilename();}
 }

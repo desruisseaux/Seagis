@@ -338,7 +338,10 @@ public class Processor extends Console
                     if (!process(sources[i])) break;
             }
             methodName="close";
-            tableFiller.close();
+            if (tableFiller!=null)
+            {
+                tableFiller.close();
+            }
             database.close();
         }
         catch (Exception exception)
