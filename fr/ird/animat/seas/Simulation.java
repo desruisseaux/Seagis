@@ -25,13 +25,11 @@
  */
 package fr.ird.animat.seas;
 
-// Entrés/sorties et divers
+// Entrés/sorties
 import java.net.URL;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import javax.media.jai.JAI;
-import javax.swing.JFrame;
 
 // Remote Method Invocation (RMI)
 import java.rmi.RemoteException;
@@ -42,6 +40,11 @@ import java.rmi.registry.LocateRegistry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+
+// Swing et JAI
+import javax.swing.JFrame;
+import javax.swing.UIManager;
+import javax.media.jai.JAI;
 
 // Geotools
 import org.geotools.resources.Arguments;
@@ -61,14 +64,9 @@ import fr.ird.sql.fishery.FisheryDataBase;
  */
 public class Simulation extends fr.ird.animat.impl.Simulation {
     /**
-     * La base de données des images.
-     */
-    private final ImageDataBase images;
-
-    /**
      * La base de données des pêches.
      */
-    private final FisheryDataBase fisheries;
+    private final FisheryDataBase fisheries = null; // TODO
 
     /**
      * Le processus qui aura la charge de fermer les connexion aux bases de données.
@@ -98,34 +96,18 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
     }
     
     /**
-     * Construit une simulation à partir de la configuration spécifiée.
-     * Ce constructeur devrait faire partie intégrante d'un constructeur précédent
-     * si Sun voulait bien donner suite au RFE #4093999
+     * Construit une simulation à partir de la configuration spécifiée. Ce constructeur devrait
+     * faire partie intégrante d'un constructeur précédent  si Sun voulait bien donner suite au
+     * RFE #4093999.
      */
     private Simulation(final String name, final Configuration configuration)
             throws SQLException, RemoteException
     {
-        this(name, new ImageDataBase(), new FisheryDataBase(), configuration);
-    }
-
-    /**
-     * Construit une nouvelle simulation. Ce constructeur devrait faire partie intégrante
-     * d'un constructeur précédent si Sun voulait bien donner suite au RFE #4093999
-     */
-    private Simulation(final String          name,
-                       final ImageDataBase   images,
-                       final FisheryDataBase fisheries,
-                       final Configuration   configuration)
-            throws SQLException, RemoteException
-    {
-        super(name, new Environment(images, fisheries, configuration));
-        this.images    = images;
-        this.fisheries = fisheries;
+        super(name, new Environment(configuration));
         this.delay     = (int)configuration.pause;
-        shutdown = new Thread() {
+        shutdown = new Thread(THREAD_GROUP, "Simulation shutdown") {
             public void run() {
-                try {
-                    images.close();
+                if (fisheries!=null) try {
                     fisheries.close();
                     Logger.getLogger("fr.ird.animat.seas").fine("Déconnexion des bases de données");
                 } catch (SQLException exception) {
@@ -150,8 +132,9 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
      */
     protected void finalize() throws Throwable {
         Runtime.getRuntime().removeShutdownHook(shutdown);
-        fisheries.close();
-        images.close();
+        if (fisheries != null) {
+            fisheries.close();
+        }
         super.finalize();
     }
 
@@ -178,12 +161,32 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
             MonolineFormatter.init("fr.ird");
             JAI.getDefaultInstance().getTileCache().setMemoryCapacity(128L * 1024 * 1024);
         }
+        if (true) try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception exception) {
+            Logger.getLogger("fr.ird.animat.seas").log(Level.INFO, "Utilise le L&F par défaut.", exception);
+        }
         final Arguments  arguments = new Arguments(args);
         final boolean       server = arguments.getFlag("-server");
         final String       connect = arguments.getOptionalString("-connect");
         final String configuration = arguments.getOptionalString("-config");
         args = arguments.getRemainingArguments(0);
         final fr.ird.animat.Simulation simulation;
+        /*
+         * Construit l'afficheur en premier. Ca nous permettra de commencer immédiatement
+         * à afficher les messages du journal. Un onglet pour la simulation sera ajouté
+         * plus tard.
+         */
+        Object view = null;
+        if (connect!=null || !server) {
+            final Viewer viewer = new Viewer();
+            final JFrame  frame = new JFrame("Animats");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.getContentPane().add(viewer);
+            frame.pack();
+            frame.show();
+            view=viewer;
+        }
         /*
          * Construit l'objet 'Simulation'. L'environnement sera construit à partir des informations
          * fournies dans le fichier "Configuration.txt",  ou tout autre fichier fournis en argument
@@ -219,16 +222,8 @@ public class Simulation extends fr.ird.animat.impl.Simulation {
             simulation = lookup(connect);
             arguments.out.println("Connecté au serveur.");
         }
-        /*
-         * Construit l'afficheur.
-         */
-        if (connect!=null || !server) {
-            final Viewer viewer = new Viewer(simulation);
-            final JFrame  frame = new JFrame(simulation.getName());
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setContentPane(viewer);
-            frame.pack();
-            frame.show();
+        if (view != null) {
+            ((Viewer) view).addSimulation(simulation);
         }
     }
 }

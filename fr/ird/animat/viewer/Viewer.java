@@ -25,152 +25,60 @@
  */
 package fr.ird.animat.viewer;
 
-// J2SE dependencies
-import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.awt.BorderLayout;
-import java.awt.Graphics2D;
-import javax.swing.JPanel;
-import javax.swing.JComponent;
+// J2SE standard
 import java.rmi.RemoteException;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.Handler;
 
-// Geotools dependencies
-import org.geotools.gui.swing.MapPane;
-import org.geotools.gui.swing.StatusBar;
-import org.geotools.renderer.j2d.Renderer;
-import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.renderer.j2d.RenderedMapScale;
-import org.geotools.renderer.j2d.RenderedGridCoverage;
+// AWT et Swing
+import java.awt.EventQueue;
+import javax.swing.JComponent;
+import javax.swing.JTabbedPane;
+
+// Geotools
+import org.geotools.gui.swing.LoggingPanel;
 
 // Animats
 import fr.ird.animat.Simulation;
-import fr.ird.animat.Population;
-import fr.ird.animat.Environment;
 
 
 /**
- * Composante affichant une carte représentant la position des
- * animaux dans leur environnement.
+ * Composante affichant une carte représentant la position des animaux dans leur environnement,
+ * ainsi que quelques contrôles.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Viewer extends JComponent {
+public final class Viewer extends JTabbedPane {
     /**
-     * La carte à afficher. Le système de coordonnées
-     * sera un système géographique selon l'ellipsoïde
-     * WGS84.
+     * Construit un afficheur par défaut. Cet afficheur ne contiendra initialement aucune
+     * simulation. Pour afficher une simulation, appelez {@link #addSimulation}.
      */
-    private final MapPane mapPane = new MapPane();
-
-    /**
-     * La barre d'état. Elle contiendra entre autres les coordonnées
-     * géographiques pointées par la souris.
-     */
-    private final StatusBar status = new StatusBar(mapPane);
-
-    /**
-     * La simulation en cours.
-     */
-    private final Simulation simulation;
-
-    /**
-     * La couche de l'environnement à afficher.
-     */
-    private final EnvironmentLayer environmentLayer;
-
-    /**
-     * Les couches représentant les populations.
-     */
-    private final Map<Population,PopulationLayer> populationLayers;
-
-    /**
-     * Objet ayant la charge d'écouter les changements survenant dans {@link EnvironmentLayer}.
-     */
-    private final Listener listener;
-
-    /**
-     * Construit un afficheur.
-     *
-     * @param simulation La simulation à afficher.
-     */
-    public Viewer(final Simulation simulation) throws RemoteException {
-        listener = new Listener();
-        this.simulation = simulation;
-        final Environment environment = simulation.getEnvironment();
-        /*
-         * Ajoute l'échelle de la carte et l'environnement.
-         */
-        mapPane.setPaintingWhileAdjusting(true);
-        environmentLayer = new EnvironmentLayer(environment);
-        environmentLayer.addPropertyChangeListener(listener);
-        final Renderer renderer = mapPane.getRenderer();
-        renderer.addLayer(new RenderedMapScale());
-        renderer.addLayer(environmentLayer);
-        /*
-         * Ajoute toutes les populations.
-         */
-        final Set<Population> populations = environment.getPopulations();
-        int size = populations.size();
-        size += size/2;
-        populationLayers = new HashMap<Population,PopulationLayer>(size);
-        for (final Iterator<Population> it=populations.iterator(); it.hasNext();) {
-            final Population population = it.next();
-            final PopulationLayer layer = new PopulationLayer(population);
-            environmentLayer.addPropertyChangeListener(layer);
-            populationLayers.put(population, layer);
-            renderer.addLayer(layer);
-        }
-        /*
-         * Construit l'interface.
-         */
-        setLayout(new BorderLayout());
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(mapPane.createScrollPane(),  BorderLayout.CENTER);
-        panel.add(environmentLayer.colors, BorderLayout.SOUTH );
-        add(panel, BorderLayout.CENTER);
-        add(status,  BorderLayout.SOUTH );
-        mapPane.reset();
+    public Viewer() {
+        super(BOTTOM);
+        final LoggingPanel logging = new LoggingPanel("fr.ird");
+        final Handler handler = logging.getHandler();
+        Logger.getLogger("org.geotools").addHandler(handler);
+        if (false) handler.setLevel(Level.FINE);
+        addTab("Journal", logging);
     }
 
     /**
-     * Classe ayant la charge d'écouter les changements survenant dans
-     * {@link EnvironmentLayer}.
+     * Ajoute un onglet affichant la simulation spécifiée. Cette méthode peut être appelée
+     * de n'importe quel thread (pas nécessairement celui de <cite>Swing</cite>).
+     *
+     * @param  simulation La simulation à afficher.
+     * @throws RemoteException si la construction de la simulation a échouée.
      */
-    private final class Listener implements PropertyChangeListener {
-        /**
-         * Appelée quand une propriété de {@link EnvironmentLayer} a changée.
-         */
-        public void propertyChange(final PropertyChangeEvent event) {
-            try {
-                final String property = event.getPropertyName();
-                if (property.equalsIgnoreCase("date")) {
-                    mapPane.repaint();
-                }
-                else if (property.equalsIgnoreCase("population")) {
-                    final Renderer renderer = mapPane.getRenderer();
-                    Population population = (Population) event.getOldValue();
-                    if (population != null) {
-                        final PopulationLayer layer = populationLayers.remove(population);
-                        renderer.removeLayer(layer);
-                        environmentLayer.removePropertyChangeListener(layer);
-                        layer.dispose();
-                    }
-                    population = (Population) event.getNewValue();
-                    if (population != null) {
-                        final PopulationLayer layer = new PopulationLayer(population);
-                        environmentLayer.addPropertyChangeListener(layer);
-                        populationLayers.put(population, layer);
-                        renderer.addLayer(layer);
-                    }
-                }
-            } catch (RemoteException exception) {
-                EnvironmentLayer.failed("Viewer", "propertyChange", exception);
+    public void addSimulation(final Simulation simulation) throws RemoteException {
+        final String     name = simulation.getName();
+        final JComponent pane = new SimulationPane(simulation);
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                addTab(name, pane);
+                setSelectedIndex(getTabCount()-1);
             }
-        }
+        });
     }
 }

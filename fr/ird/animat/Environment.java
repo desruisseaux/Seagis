@@ -93,7 +93,9 @@ public interface Environment extends Remote {
      * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié.
+     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
+     *         s'il y a des trous dans la couverture temporelle des données.
      *
      * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante

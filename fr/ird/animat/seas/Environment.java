@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.IdentityHashMap;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.rmi.RemoteException;
@@ -64,21 +65,42 @@ final class Environment extends fr.ird.animat.impl.Environment {
     /**
      * La configuration de la simulation.
      */
-    private final Configuration configuration;
+    final Configuration configuration;
 
     /**
-     * Couvertures à utiliser pour chaque paramètres. Les objets {@link Coverage3D} permettent
-     * d'obtenir une couverture à une date quelconque.  Les couvertures à une date spécifiques
-     * seront déclarées dans <code>coverage2D</code>  la première fois où elles sont demandées
-     * pour le pas de temps courant.
+     * Données à utiliser pour chaque paramètres.
      */
-    private final Map<Parameter,Coverage3D> coverage3D = new HashMap<Parameter,Coverage3D>();
+    private final Map<Parameter,Entry> coverages = new HashMap<Parameter,Entry>();
 
     /**
-     * Les couvertures pour le pas de temps courant. Les éléments de cet ensemble ne sont
-     * créés que lorsqu'ils sont demandés pour la première fois.
+     * Informations sur les données pour un paramètre. L'objet {@link Coverage3D} permet d'obtenir une
+     * couverture à une date quelconque. L'objet {@link GridCoverage} contient les données obtenues à
+     * une date précise et qui seront spécifiées à la méthode {@link Parameter#applyEvaluator}. L'objet
+     * {@link Coverage} est la sortie de <code>applyEvaluator(...)</code>, mémorisée afin d'éviter que
+     * cette dernière produit de nouveau calcul lorsque l'objet <code>GridCoverage</code> n'a pas changé
+     * entre deux pas de temps.
      */
-    private final Map<Parameter,Coverage> coverage2D = new HashMap<Parameter,Coverage>();
+    private static final class Entry {
+        /** La source de toutes les données pour ce paramètre. */
+        public final Coverage3D coverage3D;
+
+        /** L'objet {@link GridCoverage} donné par {@link #coverage3D} à la date courante. */
+        public GridCoverage gridCoverage;
+
+        /** L'objet {@link Coverage} donné par <code>applyEvaluator({@link #gridCoverage})</code>. */
+        public Coverage coverage;
+
+        /** <code>false</code> si la validité de {@link #coverage} a besoin d'être vérifiée. */
+        public boolean isValid;
+
+        /**
+         * Construit une nouvelle entrée pour les données spécifiées.
+         * @param La source de toute les données pour un paramètre.
+         */
+        public Entry(final Coverage3D coverage3D) {
+            this.coverage3D = coverage3D;
+        }
+    }
 
     /**
      * Les objets {@link Species} pour chaque espèce.
@@ -92,60 +114,82 @@ final class Environment extends fr.ird.animat.impl.Environment {
     private final Range timeRange;
 
     /**
-     * Table des captures. Cette table n'est pas utilisée par cette classe. Elle
-     * est plutôt accédée directement par le constructeur de {@link Population}.
-     */
-    final CatchTable catchs;
-
-    /**
-     * Construit un environnement qui utilisera la base de données d'images spécifiée.
+     * Construit un environnement qui utilisera la configuration spécifiée.
      *
-     * @param  database Base de données à utiliser.
-     * @param  catchs La table des captures. Cette table n'est pas utilisée par cette classe.
-     *         Elle est plutôt accédée directement par le constructeur de {@link Population}.
      * @param  config La configuration de la simulation.
      * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
      */
-    public Environment(final ImageDataBase database,
-                       final FisheryDataBase catchs,
-                       final Configuration   config)
-            throws SQLException
-    {
+    public Environment(final Configuration config) throws SQLException {
+        this(config, null);
+    }
+
+    /**
+     * Construit un environnement qui utilisera la configuration spécifiée.
+     *
+     * @param  config La configuration de la simulation.
+     * @param  database La base de données à utiliser, ou <code>null</code> pour utiliser
+     *         une base de données par défaut.
+     * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
+     */
+    protected Environment(final Configuration config, ImageDataBase database) throws SQLException {
         super(config.firstTimeStep);
         this.configuration = config;
-        this.catchs        = catchs.getCatchTable(config.species.toArray(new String[config.species.size()]));
         ImageTable  images = null;
         SeriesTable series = null;
         Range    timeRange = null;
+        boolean    closedb = false;
+        final Map<String,Coverage3D> coverageBySeries = new HashMap<String,Coverage3D>();
         for (final Iterator<fr.ird.animat.Parameter> it=config.parameters.iterator(); it.hasNext();) {
             final Parameter parameter = (Parameter) it.next();
-            if (images == null) {
-                Range range = config.firstTimeStep.getTimeRange();
-                range  = new Range(range.getElementClass(),
-                                   range.getMinValue(), range.isMinIncluded(), new Date(), true);
-                series = database.getSeriesTable();
-                images = database.getImageTable(series.getSeries(parameter.series));
-                images.setPreferredResolution(new XDimension2D.Double(config.resolution, config.resolution));
-                images.setTimeRange(range);
-            } else {
-                images.setSeries(series.getSeries(parameter.series));
+            Coverage3D coverage3D = coverageBySeries.get(parameter.series);
+            if (coverage3D == null) {
+                /*
+                 * Une nouvelle série a été demandée. Configure la table 'images' de façon
+                 * à ce qu'elle pointe vers la nouvelle séries à prendre en compte.
+                 */
+                if (images == null) {
+                    Range range = config.firstTimeStep.getTimeRange();
+                    range  = new Range(range.getElementClass(),
+                                       range.getMinValue(), range.isMinIncluded(), new Date(), true);
+                    if (database == null) {
+                        database = new ImageDataBase();
+                        closedb  = true;
+                    }
+                    series = database.getSeriesTable();
+                    images = database.getImageTable(series.getSeries(parameter.series));
+                    images.setPreferredResolution(new XDimension2D.Double(config.resolution,
+                                                                          config.resolution));
+                    images.setTimeRange(range);
+                } else {
+                    images.setSeries(series.getSeries(parameter.series));
+                }
+                /*
+                 * Construit la nouvelle couverture 3D pour la série spécifiée  et met à jour
+                 * la plage de temps de l'ensemble des données (pour détecter quand il faudra
+                 * arrêter la simulation).
+                 */
+                coverage3D = new Coverage3D(images);
+                if (coverageBySeries.put(parameter.series, coverage3D) != null) {
+                    throw new AssertionError();
+                }
+                final Range expand = coverage3D.getTimeRange();
+                if (timeRange == null) {
+                    timeRange = expand;
+                } else {
+                    timeRange = timeRange.union(expand);
+                }
             }
-            images.setOperation(parameter.operation);
-            final Coverage3D coverage = new Coverage3D(images);
-            if (coverage3D.put(parameter, coverage) != null) {
+            if (coverages.put(parameter, new Entry(coverage3D)) != null) {
                 // Should not happen since 'config.parameters' is a Set.
                 Logger.getLogger("fr.ird.animat.seas").warning("Un paramètre est répété plusieurs fois");
-            }
-            final Range expand = coverage.getTimeRange();
-            if (timeRange == null) {
-                timeRange = expand;
-            } else {
-                timeRange = timeRange.union(expand);
             }
         }
         if (images != null) {
             images.close();
             series.close();
+        }
+        if (closedb) {
+            database.close();
         }
         this.timeRange = timeRange;
     }
@@ -195,7 +239,9 @@ final class Environment extends fr.ird.animat.impl.Environment {
      * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié.
+     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
+     *         s'il y a des trous dans la couverture temporelle des données.
      *
      * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
      */
@@ -203,23 +249,34 @@ final class Environment extends fr.ird.animat.impl.Environment {
         synchronized (getTreeLock()) {
             if (parameter instanceof Parameter) {
                 final Parameter param = (Parameter) parameter;
-                Coverage coverage = coverage2D.get(param);
-                if (coverage != null) {
-                    return coverage;
-                }
-                final Coverage3D coverage3D = this.coverage3D.get(param);
-                if (coverage3D != null) {
-                    final Date time = getClock().getTime();
-                    coverage = param.applyEvaluator(coverage3D.getGridCoverage2D(time));
-                    if (coverage2D.put(param, coverage) != null) {
-                        throw new AssertionError();
+                final Entry entry = coverages.get(param);
+                if (entry != null) {
+                    /*
+                     * Vérifie si la couverture a déjà été calculée pour le paramètre spécifié.
+                     * Ca nous évite de faire une nouvelle lecture et de nouveaux calculs.
+                     */
+                    if (entry.isValid) {
+                        return entry.coverage;
                     }
-                    return coverage;
+                    /*
+                     * Procède à la lecture des données et vérifie si les calculs ont déjà été
+                     * effectuées sur les données obtenues.  Ca peut se produire si Coverage3D
+                     * retourne le même GridCoverage pour deux pas de temps différents.
+                     */
+                    final Date time = getClock().getTime();
+                    final GridCoverage gridCoverage = entry.coverage3D.getGridCoverage2D(time);
+                    if (gridCoverage != entry.gridCoverage) {
+                        entry.gridCoverage = gridCoverage;
+                        entry.coverage = param.applyEvaluator(gridCoverage);
+                    }
+                    entry.isValid = true;
+                    return entry.coverage;
                 }
             }
             return super.getCoverage(parameter);
         }
     }
+
     /**
      * Avance l'horloge d'un pas de temps.
      *
@@ -229,7 +286,9 @@ final class Environment extends fr.ird.animat.impl.Environment {
      */
     public boolean nextTimeStep() {
         synchronized (getTreeLock()) {
-            coverage2D.clear();
+            for (final Iterator<Entry> it=coverages.values().iterator(); it.hasNext();) {
+                it.next().isValid = false;
+            }
             final Comparable min = getClock().getTimeRange().getMinValue();
             final Comparable max = timeRange.getMaxValue();
             if (min.compareTo(max) >= 0) {
@@ -247,8 +306,7 @@ final class Environment extends fr.ird.animat.impl.Environment {
      */
     public void dispose() {
         synchronized (getTreeLock()) {
-            coverage2D.clear();
-            coverage3D.clear();
+            coverages.clear();
             super.dispose();
         }
     }

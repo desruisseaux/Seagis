@@ -70,6 +70,7 @@ import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
 import fr.ird.animat.Parameter;
 import fr.ird.animat.Population;
+import fr.ird.animat.Simulation;
 import fr.ird.animat.Observation;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
@@ -172,7 +173,8 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
         refresh(population);
         listener = new Listener();
         population.addPopulationChangeListener(listener);
-        Runtime.getRuntime().addShutdownHook(shutdownHook = new Thread(this));
+        shutdownHook = new Thread(Simulation.THREAD_GROUP, this, "PopulationLayer shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     /**

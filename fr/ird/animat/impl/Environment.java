@@ -152,7 +152,9 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * par défaut appelle {@link #getCoverage(Parameter)}.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié.
+     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
+     *         s'il y a des trous dans la couverture temporelle des données.
      *
      * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
      * @throws RemoteException si la couverture n'a pas pu être exportée.
@@ -176,7 +178,9 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * {@link NoSuchElementException}.
      *
      * @param  parameter Le paramètre désiré.
-     * @return La couverture spatiale des données pour le paramètre spécifié.
+     * @return La couverture spatiale des données pour le paramètre spécifié, or <code>null</code>
+     *         si aucune donnée n'est disponible à la date courante. Ce dernier cas peut se produire
+     *         s'il y a des trous dans la couverture temporelle des données.
      *
      * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
      *

@@ -39,6 +39,7 @@ import java.util.logging.LogRecord;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
+import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.resources.Utilities;
 
 // seagis dependencies
@@ -73,6 +74,11 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
     private static final RectangularShape AREA = new Ellipse2D.Double(-1, -1, 2, 2);
 
     /**
+     * L'objet à utiliser pour appliquer des opérations sur les images.
+     */
+    private static final GridCoverageProcessor PROCESSOR = GridCoverageProcessor.getDefault();
+
+    /**
      * Le poids à donner à ce paramètre.
      */
     public final float weight;
@@ -96,7 +102,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      *   <li>GradientMagnitude</li>
      * </ul>
      */
-    public final String operation;
+    private final String operation;
 
     /**
      * Nom de l'{@linkplain Evaluator évaluateur} à utiliser, or <code>null</code> si aucun.
@@ -108,7 +114,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      *   <li>Gradient:0.75</li>
      * </ul>
      */
-    public final String evaluator;
+    private final String evaluator;
 
     /**
      * Les arguments de l'évaluateur.
@@ -158,7 +164,10 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * @return La fonction basée sur l'image, ou <code>coverage</code>
      *         s'il n'y a pas d'évaluateur.
      */
-    protected Coverage applyEvaluator(final GridCoverage coverage) {
+    protected Coverage applyEvaluator(GridCoverage coverage) {
+        if (operation != null) {
+            coverage = PROCESSOR.doOperation(operation, coverage);
+        }
         if (evaluator != null) {
             if (evaluator.equalsIgnoreCase("Maximum")) {
                 return new MaximumEvaluator(coverage, AREA);

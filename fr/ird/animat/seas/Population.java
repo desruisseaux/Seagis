@@ -39,6 +39,7 @@ import fr.ird.animat.Species;
 import fr.ird.animat.impl.Animal;
 import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.CatchEntry;
+import fr.ird.sql.fishery.FisheryDataBase;
 
 
 /**
@@ -57,21 +58,35 @@ final class Population extends fr.ird.animat.impl.Population {
      */
     protected Population(final Environment environment) throws RemoteException {
         super(environment);
+        final Collection<CatchEntry> entries;
         try {
-            final CatchTable catchs = environment.catchs;
+            /*
+             * Note: S'il y avait beaucoup de populations à créer, il vaudrait mieux obtenir une
+             *       connexion vers CatchTable une fois pour toute  et la réutiliser pour toutes
+             *       les populations. Mais comme on va typiquement créer une seule (ou très peu)
+             *       population, on va plutôt libérer la connexion rapidement  afin de permettre
+             *       à d'autres machines de se connecter sur cette base de données (Access n'est
+             *       pas terrible  lorsqu'il y plusieurs utilisateurs qui se connectent  en même
+             *       temps).
+             */
+            final FisheryDataBase database = new FisheryDataBase();
+            final Collection<String> species = environment.configuration.species;
+            final CatchTable catchs = database.getCatchTable(species.toArray(new String[species.size()]));
             catchs.setTimeRange(environment.getClock().getTimeRange());
-            final Collection<CatchEntry> entries = catchs.getEntries();
-            for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();) {
-                final CatchEntry   entry   = it.next();
-                final Point2D      coord   = entry.getCoordinate();
-                final Set<Species> species = entry.getSpecies();
-                for (final Iterator<Species> its=species.iterator(); its.hasNext();) {
-                    newAnimal(its.next(), coord);
-                }
-            }
+            entries = catchs.getEntries();
+            catchs.close();
+            database.close();
         } catch (SQLException exception) {
             throw new ServerException("Échec lors de l'obtention "+
                                       "des positions initiales des animaux", exception);
+        }
+        for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();) {
+            final CatchEntry   entry   = it.next();
+            final Point2D      coord   = entry.getCoordinate();
+            final Set<Species> species = entry.getSpecies();
+            for (final Iterator<Species> its=species.iterator(); its.hasNext();) {
+                newAnimal(its.next(), coord);
+            }
         }
     }
 

@@ -140,7 +140,7 @@ public class Simulation extends RemoteServer implements fr.ird.animat.Simulation
         }
         stop = false;
         if (thread == null) {
-            thread = new Thread(this, name);
+            thread = new Thread(THREAD_GROUP, this, name);
             thread.setPriority(Thread.MIN_PRIORITY+1);
             thread.start();
         }

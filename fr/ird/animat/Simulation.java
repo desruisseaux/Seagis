@@ -39,6 +39,13 @@ import java.rmi.RemoteException;
  */
 public interface Simulation extends Remote {
     /**
+     * Groupe de threads utilisés pour la simulation. Les implémentations qui construisent
+     * de nouveau thread (par exemple lors de l'appel de la méthode {@link #start}) devraient
+     * placer leurs threads dans ce groupe.
+     */
+    ThreadGroup THREAD_GROUP = new ThreadGroup("Animat simulation");
+
+    /**
      * Retourne le nom de cette simulation.
      *
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante

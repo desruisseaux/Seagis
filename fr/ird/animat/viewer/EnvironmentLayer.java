@@ -60,6 +60,7 @@ import org.geotools.gui.swing.ColorBar;
 import fr.ird.animat.Parameter;
 import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
+import fr.ird.animat.Simulation;
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
 
@@ -146,7 +147,8 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
         }
         listener = new Listener();
         environment.addEnvironmentChangeListener(listener);
-        Runtime.getRuntime().addShutdownHook(shutdownHook = new Thread(this));
+        shutdownHook = new Thread(Simulation.THREAD_GROUP, this, "EnvironmentLayer shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     /**
