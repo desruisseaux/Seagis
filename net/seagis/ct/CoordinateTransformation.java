@@ -393,7 +393,7 @@ public class CoordinateTransformation extends Info
          * Human readable description of domain in source coordinate system.
          */
         public String getAreaOfUse() throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("Area of use not yet implemented");}
 
         /**
          * Semantic type of transform.

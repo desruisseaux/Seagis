@@ -488,24 +488,24 @@ public class MathTransformFactory
          * Creates a math transform from a Well-Known Text string.
          */
         public CT_MathTransform createFromWKT(final String wellKnownText) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("WKT parsing not yet implemented");}
 
         /**
          * Creates a math transform from XML.
          */
         public CT_MathTransform createFromXML(final String xml) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("XML parsing not yet implemented");}
 
         /**
          * Tests whether parameter is angular.
          */
         public boolean isParameterAngular(final String parameterName) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("Not yet implemented");}
 
         /**
          * Tests whether parameter is linear.
          */
         public boolean isParameterLinear(final String parameterName) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("Not yet implemented");}
     }
 }

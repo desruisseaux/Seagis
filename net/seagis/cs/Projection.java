@@ -89,9 +89,15 @@ public class Projection extends Info
      * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
      *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
      *                       will be set according.
+     * @param translation    False easting and northing, in metres. If non-null, then
+     *                       <code>"false_easting"</code> and <code>"false_northing"</code>
+     *                       will be set according.
      */
-    public Projection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
-    {this(name, classification, getParameterList(ellipsoid, centre));}
+    public Projection(final String name, final String classification,
+                      final Ellipsoid ellipsoid, final Point2D centre, final Point2D translation)
+    {
+        this(name, classification, getParameterList(ellipsoid, centre, translation));
+    }
 
     /**
      * Creates a projection. The set of parameters (<code>parameters</code>) may be
@@ -128,15 +134,18 @@ public class Projection extends Info
     }
 
     /**
-     * Construct a list of parameter from the specified ellipsoid and point.
+     * Construct a list of parameter from the specified ellipsoid and points.
      *
-     * @param ellipsoid Ellipsoid parameter. If non-null <code>"semi_major"</code> and
-     *                  <code>"semi_minor"</code> parameters will be set according.
-     * @param centre    Central meridian and latitude of origin, in degrees. If non-null,
-     *                  <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
-     *                  will be set according.
+     * @param ellipsoid   Ellipsoid parameter. If non-null <code>"semi_major"</code> and
+     *                    <code>"semi_minor"</code> parameters will be set according.
+     * @param centre      Central meridian and latitude of origin, in degrees. If non-null,
+     *                    <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
+     *                    will be set according.
+     * @param translation False easting and northing, in metres. If non-null, then
+     *                    <code>"false_easting"</code> and <code>"false_northing"</code>
+     *                    will be set according.
      */
-    static ParameterList getParameterList(final Ellipsoid ellipsoid, final Point2D centre)
+    static ParameterList getParameterList(final Ellipsoid ellipsoid, final Point2D centre, final Point2D translation)
     {
         final ParameterList parameters = new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
         if (ellipsoid!=null)
@@ -149,6 +158,11 @@ public class Projection extends Info
         {
             parameters.setParameter("central_meridian",   centre.getX());
             parameters.setParameter("latitude_of_origin", centre.getY());
+        }
+        if (translation!=null)
+        {
+            parameters.setParameter("false_easting",  translation.getX());
+            parameters.setParameter("false_northing", translation.getY());
         }
         return parameters;
     }

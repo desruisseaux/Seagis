@@ -309,7 +309,7 @@ public class Adapters
         {
             return new Info(unit.toString()).new AngularUnit(this, Math.toRadians(unit.convert(1, Unit.DEGREE)));
         }
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Only linear and angular units are currently implemented");
     }
 
     /**
@@ -361,7 +361,7 @@ public class Adapters
         {
             return (CoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
         }
-        throw new UnsupportedOperationException("Not implemented"); // CoordinateSystem is abstract
+        throw new UnsupportedOperationException("Unknow CS not yet implemented"); // CoordinateSystem is abstract
     }
 
     /**
@@ -456,7 +456,7 @@ public class Adapters
         {
             return (HorizontalCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
         }
-        throw new UnsupportedOperationException("Not implemented"); // HorizontalCoordinateSystem is abstract
+        throw new UnsupportedOperationException("Unknow CS not yet implemented"); // HorizontalCoordinateSystem is abstract
     }
 
     /**
@@ -706,7 +706,7 @@ public class Adapters
             final double radiansPerUnit = ((CS_AngularUnit)unit).getRadiansPerUnit();
             if (radiansPerUnit==Math.PI/180) return Unit.DEGREE; // TODO
         }
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Only meters and degrees are currently implemented");
     }
 
     /**

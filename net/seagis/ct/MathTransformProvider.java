@@ -94,15 +94,23 @@ public abstract class MathTransformProvider
     private static final int RECORD_LENGTH = 4;
 
     /**
-     * A default parameter list descriptor for map projections. This descriptor declare
-     * "semi_major", "semi_minor", "central_meridian" and "latitude_of_origin" parameters.
+     * A default parameter list descriptor for
+     * map projections. This descriptor declare
+     * <code>"semi_major"</code>,
+     * <code>"semi_minor"</code>,
+     * <code>"central_meridian"</code>,
+     * <code>"latitude_of_origin"</code>,
+     * <code>"false_easting"</code> and
+     * <code>"false_northing"</code> parameters.
      */
     public static final ParameterListDescriptor DEFAULT_PROJECTION_DESCRIPTOR = getDescriptor(new Object[]
     {
         "semi_major",          Double.class, ParameterListDescriptor.NO_PARAMETER_DEFAULT, POSITIVE_RANGE,
         "semi_minor",          Double.class, ParameterListDescriptor.NO_PARAMETER_DEFAULT, POSITIVE_RANGE,
         "central_meridian",    Double.class, ZERO,                                         LONGITUDE_RANGE,
-        "latitude_of_origin",  Double.class, ZERO,                                         LATITUDE_RANGE
+        "latitude_of_origin",  Double.class, ZERO,                                         LATITUDE_RANGE,
+        "false_easting",       Double.class, ZERO,                                         null,
+        "false_northing",      Double.class, ZERO,                                         null
     });
 
     /**

@@ -394,25 +394,25 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
      */
     public CT_DomainFlags getDomainFlags(final double[] ord) throws RemoteException
 //  {return adapters.export(MathTransform.this.getDomainFlags(new ConvexHull(ord)));}
-    {throw new UnsupportedOperationException("Not implemented");}
+    {throw new UnsupportedOperationException("Convex hull not yet implemented");}
 
     /**
      * Gets transformed convex hull.
      */
     public double[] getCodomainConvexHull(final double[] ord) throws RemoteException
-    {throw new UnsupportedOperationException("Not implemented");}
+    {throw new UnsupportedOperationException("Convex hull not yet implemented");}
 
     /**
      * Gets a Well-Known text representation of this object.
      */
     public String getWKT() throws RemoteException
-    {throw new UnsupportedOperationException("Not implemented");}
+    {throw new UnsupportedOperationException("WKT parsing not yet implemented");}
 
     /**
      * Gets an XML representation of this object.
      */
     public String getXML() throws RemoteException
-    {throw new UnsupportedOperationException("Not implemented");}
+    {throw new UnsupportedOperationException("XML parsing not yet implemented");}
 
     /**
      * Gets the dimension of input points.
@@ -478,7 +478,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
      * Gets the derivative of this transform at a point.
      */
     public PT_Matrix derivative(PT_CoordinatePoint cp) throws RemoteException
-    {throw new UnsupportedOperationException("Not implemented");}
+    {throw new UnsupportedOperationException("Matrix derivative not yet implemented");}
 
     /**
      * Creates the inverse transform of this object.

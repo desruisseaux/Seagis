@@ -505,7 +505,7 @@ public class Info implements Serializable
          * Gets an XML representation of this object.
          */
         public String getXML() throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("XML parsing not yet implemented");}
 
         /**
          * Returns a string representation of this info.

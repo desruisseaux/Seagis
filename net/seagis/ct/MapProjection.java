@@ -160,6 +160,13 @@ abstract class MapProjection extends MathTransform2D.Abstract
         this.isSpherical      = (a==b);
         this.es = 1.0 - (b*b)/(a*a);
         this.e  = Math.sqrt(es);
+
+        final double dx = parameters.getValue("false_easting");
+        final double dy = parameters.getValue("false_northing");
+        if (!(dx==0 && dy==0))
+        {
+            throw new UnsupportedOperationException("False easting/northing not yet implemented");
+        }
     }
 
     /**

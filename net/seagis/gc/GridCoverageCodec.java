@@ -39,10 +39,17 @@ import net.seagis.cs.Projection;
 import net.seagis.cs.HorizontalDatum;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cs.CoordinateSystemFactory;
+import net.seagis.cs.ProjectedCoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
+import net.seagis.ct.CoordinateTransformationFactory;
+import net.seagis.ct.TransformException;
+import net.seagis.pt.AngleFormat;
+import net.seagis.pt.Longitude;
+import net.seagis.pt.Latitude;
 
 // Images
-import javax.imageio.IIOException;
+import java.awt.image.RenderedImage;
+import java.awt.image.RasterFormatException;
 
 // Input/output
 import java.net.URL;
@@ -61,20 +68,27 @@ import net.seagis.io.TableWriter;
 // Collections
 import java.util.Set;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.LinkedHashMap;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+import java.util.NoSuchElementException;
 import javax.media.jai.util.CaselessStringKey;
 
 // Miscellaneous
 import javax.units.Unit;
 import java.awt.geom.Point2D;
+import net.seagis.resources.OpenGIS;
 import net.seagis.resources.Utilities;
 
 
 /**
  * Base class for encoding and decoding of Grid Coverage objects.
+ * This class is only a first drafy; it may change in incompatible
+ * way in any future version.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -94,6 +108,13 @@ abstract class GridCoverageCodec
      * separated text file.
      */
     private Map properties;
+
+    /**
+     * The coordinate system, or <code>null</code> if it has not been constructed yet.
+     * Coordinate system may be expensive to construct and requested many time; this
+     * is way it should be cached the first time {@link #getCoordinateSystem} is invoked.
+     */
+    private transient CoordinateSystem coordinateSystem;
 
     /**
      * The coordinate system factory.
@@ -140,8 +161,7 @@ abstract class GridCoverageCodec
      * Read all properties from a header file. Default implementation
      * invokes {@link #parseHeaderLine} for each line found in the stream.
      *
-     * @param in The stream to read until EOF.
-     *           The stream will not be closed.
+     * @param in The stream to read until EOF. The stream will not be closed.
      * @throws IOException if an error occurs during loading.
      */
     private void loadProperties(final BufferedReader in) throws IOException
@@ -184,10 +204,10 @@ abstract class GridCoverageCodec
      *
      * @param  line The line to parse.
      * @return <code>true</code> if the line has been succefuly parsed.
-     * @throws IIOException if the line is badly formatted, or if the
-     *         line contains a property already stored.
+     * @throws RasterFormatException if the line is badly formatted,
+     *         or if the line contains a property already stored.
      */
-    protected boolean parseHeaderLine(final String line) throws IIOException
+    protected boolean parseHeaderLine(final String line) throws RasterFormatException
     {
         final int index = line.indexOf('=');
         if (index>=0)
@@ -200,13 +220,16 @@ abstract class GridCoverageCodec
 
     /**
      * Add a property for the specified key. Keys are case-insensitive.
+     * Calling this method with an illegal key-value pair thrown an
+     * {@link RasterFormatException} since properties are used for
+     * holding raster informations.
      *
      * @param  key   The key for the property to add.
      * @param  value The value for the property to add.
-     * @throws IIOException if a different value already
-     *         exists for the specified key.
+     * @throws RasterFormatException if a different value
+     *         already exists for the specified key.
      */
-    public void addProperty(String key, String value) throws IIOException
+    public void addProperty(String key, String value) throws RasterFormatException
     {
         key = key.trim();
         value = value.trim();
@@ -226,7 +249,7 @@ abstract class GridCoverageCodec
         final String oldValue = (String) properties.get(caselessKey);
         if (oldValue != null && !oldValue.equals(value))
         {
-            throw new IIOException("Duplicated property"); // TODO
+            throw new RasterFormatException("Duplicated property \""+key+'"'); // TODO
         }
         properties.put(caselessKey, value);
     }
@@ -237,34 +260,19 @@ abstract class GridCoverageCodec
      *
      * @param  key The key of the desired property.
      * @return Value for the specified key (never <code>null</code>).
-     * @throws IIOException if no value exists for the specified key.
+     * @throws NoSuchElementException if no value exists for the specified key.
      */
-    public String getProperty(final String key) throws IIOException
+    public String getProperty(final String key) throws NoSuchElementException
     {
         if (properties!=null)
         {
-            final String value = (String) properties.get(new CaselessStringKey(key.trim()));
+            final Object value = (String) properties.get(new CaselessStringKey(key.trim()));
             if (value!=null)
             {
-                return value;
+                return value.toString();
             }
         }
-        throw new IIOException("Property not defined"); // TODO
-    }
-
-    /**
-     * Returns the first word of the property for
-     * the specified key. Keys are case-insensitive.
-     *
-     * @param  key The key of the desired property.
-     * @return Value for the specified key (never <code>null</code>).
-     * @throws IIOException if no value exists for the specified key.
-     */
-    private String getPropertyWord(final String key) throws IIOException
-    {
-        final String value = getProperty(key);
-        final int index = value.indexOf(' ');
-        return (index>=0) ? value.substring(0, index) : value;
+        throw new NoSuchElementException("Property \""+key+"\" not defined"); // TODO
     }
 
     /**
@@ -281,161 +289,185 @@ abstract class GridCoverageCodec
     }
 
     /**
-     * Returns the units. This method fetchs the property value for the key
-     * <code>key</code> and convert the resulting string into an {@link Unit}
-     * object. If <code>key</code> is null, then some implementation-dependent
-     * default key is used.
+     * Returns the units.  Default implementation fetchs the property
+     * value for key <code>"Units"</code> and transform the resulting
+     * string into an {@link Unit} object.
      */
-    public Unit getUnits(String key) throws IIOException
+    public Unit getUnits() throws NoSuchElementException
     {
-        if (key==null) key="Units";
-        final String value = getProperty(key);
-        if (contains(value, new String[]{"meter","meters","metre","metres","m"}))
+        final String text = getProperty("Units");
+        if (contains(text, new String[]{"meter","meters","metre","metres","m"}))
         {
             return Unit.METRE;
         }
-        else if (contains(value, new String[]{"degree","degrees","deg","°"}))
+        else if (contains(text, new String[]{"degree","degrees","deg","°"}))
         {
             return Unit.DEGREE;
         }
         else
         {
-            throw new IIOException("Unknow unit: "+value); // TODO
+            throw new NoSuchElementException("Unknow unit: "+text); // TODO
         }
     }
 
     /**
-     * Returns the datum. This method fetchs the property value for the key
-     * <code>key</code> and convert the resulting string into a {@link Datum}
-     * object. If <code>key</code> is null, then some implementation-dependent
-     * default key is used.
+     * Returns the datum.  Default implementation fetchs the property
+     * value for key <code>"Datum"</code> and transform the resulting
+     * string into a {@link HorizontalDatum} object.
      */
-    public HorizontalDatum getDatum(String key) throws IIOException
+    public HorizontalDatum getDatum() throws NoSuchElementException
     {
-        if (key==null) key="Datum";
-        final String value = getProperty(key);
+        final String text = getProperty("Datum");
         /*
-         * TODO: parse 'value' when CoordinateSystemAuthorityFactory
+         * TODO: parse 'text' when CoordinateSystemAuthorityFactory
          *       will be implemented.
          */
         return HorizontalDatum.WGS84;
     }
-    
 
     /**
-     * Returns the ellipsoid. This method fetchs the property value for the key
-     * <code>key</code> and convert the resulting string into an {@link Ellipsoid}
-     * object. If <code>key</code> is null, then some implementation-dependent
-     * default key is used.
+     * Returns the ellipsoid.  Default implementation fetchs the property
+     * value for key <code>"Ellipsoid"</code> and transform the resulting
+     * string into an {@link Ellipsoid} object.
      */
-    public Ellipsoid getEllipsoid(String key) throws IIOException
+    public Ellipsoid getEllipsoid() throws NoSuchElementException
     {
-        if (key==null) key="Ellipsoid";
-        final String value = getProperty(key);
+        final String text = getProperty("Ellipsoid");
         /*
-         * TODO: parse 'value' when CoordinateSystemAuthorityFactory
+         * TODO: parse 'text' when CoordinateSystemAuthorityFactory
          *       will be implemented.
          */
         return Ellipsoid.WGS84;
     }
 
     /**
-     * Returns the central longitude and latitude. This method fetchs the property
-     * values for the keys (<code>xKey</code>,<code>yKey</code>) and convert the
-     * resulting string into a {@link Point2D} object. If some keys are null, then
-     * some implementation-dependent default keys are used.
+     * Returns the central longitude and latitude.  Default implementation fetchs the property
+     * values for keys <code>"Longitude center"</code> and <code>"Latitude center"</code>, and
+     * transform the resulting strings into an {@link Point2D} object.
      */
-    public Point2D getCenter(String xKey, String yKey) throws IIOException
+    public Point2D getCenter() throws NoSuchElementException
     {
-        if (xKey==null) xKey="Lon center";
-        if (yKey==null) yKey="Lat center";
-        final double x = Double.parseDouble(getProperty(xKey));
-        final double y = Double.parseDouble(getProperty(yKey));
+        final double x = Double.parseDouble(getProperty("Longitude center"));
+        final double y = Double.parseDouble(getProperty("Latitude center"));
         return new Point2D.Double(x,y);
     }
 
     /**
-     * Returns the projection. This method fetchs the property value for the key
-     * <code>key</code> and convert the resulting string into a {@link Projection}
-     * object. If <code>key</code> is null, then some implementation-dependent
-     * default key is used.
+     * Returns the translation. Default implementation fetchs the property values
+     * for keys <code>"False easting"</code> and <code>"False northing"</code>,
+     * and transform the resulting strings into an {@link Point2D} object.
      */
-    public Projection getProjection(String key) throws IIOException
+    public Point2D getTranslation() throws NoSuchElementException
     {
-        if (key==null) key="Projection Name";
-        final String value = getProperty(key);
-        String classname = value;
-        if (classname.equalsIgnoreCase("Mercator"))
-        {
-            classname = "Mercator_1SP";
-        }
-        /*
-         * TODO: take "False easting" and "False northing" in acount.
-         *       Assuming 0 for now.
-         */
-        return factory.createProjection(value, classname, getEllipsoid(null), getCenter(null,null));
+        final double x = Double.parseDouble(getProperty("False easting"));
+        final double y = Double.parseDouble(getProperty("False northing"));
+        return new Point2D.Double(x,y);
+    }
+
+    /**
+     * Returns the projection.  Default implementation fetchs the property
+     * value for key <code>"Projection"</code> and transform the resulting
+     * string into a {@link Projection} object.
+     */
+    public Projection getProjection() throws NoSuchElementException
+    {
+        final String text = getProperty("Projection");
+        return factory.createProjection(text, text, getEllipsoid(), getCenter(), getTranslation());
     }
 
     /**
      * Returns the coordinate system.
      */
-    public CoordinateSystem getCoordinateSystem() throws IIOException
+    public CoordinateSystem getCoordinateSystem() throws NoSuchElementException
     {
-        final Unit            units = getUnits(null);
-        final HorizontalDatum datum = getDatum(null);
-        final Projection projection = getProjection(null);
-        final GeographicCoordinateSystem gcs = factory.createGeographicCoordinateSystem("Geographic CS", datum);
-        return factory.createProjectedCoordinateSystem("Projected CS", gcs, projection, units, AxisInfo.X, AxisInfo.Y);
-    }
-
-    /**
-     * Returns the grid range. This method fetchs the property values for the keys
-     * (<code>xKey</code>,<code>yKey</code>) and convert the resulting string into
-     * a {@link GridRange} object. If some keys are null, then some
-     * implementation-dependent default keys are used.
-     */
-    public GridRange getGridRange(String xKey, String yKey) throws IIOException
-    {
-        if (xKey==null) xKey="x_size";
-        if (yKey==null) yKey="y_size";
-        final int x = Integer.parseInt(getProperty(xKey));
-        final int y = Integer.parseInt(getProperty(yKey));
-        return new GridRange(new int[2], new int[] {x,y});
-    }
-
-    /**
-     * Returns the envelope. This method fetchs the property values for the keys
-     * (<code>xKey</code>,<code>yKey</code>) and convert the resulting string into
-     * a {@link Envelope} object. If some keys are null, then some
-     * implementation-dependent default keys are used.
-     */
-    public Envelope getEnvelope(String xKey, String yKey, String xRes, String yRes) throws IIOException
-    {
-        if (xKey==null) xKey="ULX";
-        if (yKey==null) yKey="ULY";
-        if (xRes==null) xRes="Resolution";
-        if (yRes==null) yRes="Resolution";
-        final double  x = Double.parseDouble(getPropertyWord(xKey));
-        final double  y = Double.parseDouble(getPropertyWord(yKey));
-        final double rx = Double.parseDouble(getPropertyWord(xRes));
-        final double ry = Double.parseDouble(getPropertyWord(yRes));
-        final GridRange range = getGridRange(null,null);
-        return new Envelope(new double[]{x,y}, new double[]
+        if (coordinateSystem==null)
         {
-            x + rx*range.getLength(0),
-            y + ry*range.getLength(1)
-        });
+            final Unit            units = getUnits();
+            final HorizontalDatum datum = getDatum();
+            final Projection projection = getProjection();
+            final GeographicCoordinateSystem gcs = factory.createGeographicCoordinateSystem("Geographic CS", datum);
+            coordinateSystem = factory.createProjectedCoordinateSystem("Projected CS", gcs, projection, units, AxisInfo.X, AxisInfo.Y);
+        }
+        return coordinateSystem;
     }
 
     /**
-     * Returns the grid geometry.
+     * Convenience method returning the envelope
+     * in geographic coordinate system using WGS
+     * 1984 datum.
+     *
+     * @throws NoSuchElementException if the operation failed.
      */
-    public GridGeometry getGridGeometry() throws IIOException
+    public Envelope getGeographicEnvelope() throws NoSuchElementException
     {
-        final GridRange   range = getGridRange(null,null);
-        final boolean[] inverse = new boolean[range.getDimension()];
-        inverse[1] = true; // Inverse Y axis.
-        return new GridGeometry(range, getEnvelope(null,null,null,null), inverse);
+        final Envelope         envelope = getEnvelope();
+        final CoordinateSystem sourceCS = getCoordinateSystem();
+        final CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
+        try
+        {
+            final CoordinateTransformationFactory factory = CoordinateTransformationFactory.getDefault();
+            return OpenGIS.transform(factory.createFromCoordinateSystems(sourceCS, targetCS).getMathTransform(), envelope);
+        }
+        catch (TransformException exception)
+        {
+            NoSuchElementException e = new NoSuchElementException("Can't transform envelope"); // TODO
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
+    }
+
+    /**
+     * Returns the envelope. Default implementation fetchs the property values
+     * for keys <code>"ULX"</code>, <code>"ULY"</code> and <code>"Resolution"</code>
+     * and transform the resulting strings into an {@link Envelope} object.
+     */
+    public Envelope getEnvelope() throws NoSuchElementException
+    {
+        final double x = Double.parseDouble(getProperty("ULX"));
+        final double y = Double.parseDouble(getProperty("ULY"));
+        final double r = Double.parseDouble(getProperty("Resolution"));
+        final GridRange range = getGridRange();
+        final int   dimension = range.getDimension();
+        final double[]    min = new double[dimension];
+        final double[]    max = new double[dimension];
+        min[0] = x; min[1] = y - r*range.getLength(1);
+        max[1] = y; max[0] = x + r*range.getLength(0);
+        /*
+         * TODO: What should we do with other dimensions?
+         *       Open question...
+         */
+        return new Envelope(min, max);
+    }
+
+    /**
+     * Returns the grid range. Default implementation fetchs the property values
+     * for keys <code>"x_size"</code> and <code>"y_size"</code>,
+     * and transform the resulting strings into a {@link GridRange} object.
+     */
+    public GridRange getGridRange() throws NoSuchElementException
+    {
+        final int dimension = getCoordinateSystem().getDimension();
+        final int[]   lower = new int[dimension];
+        final int[]   upper = new int[dimension];
+        Arrays.fill(upper, 1);
+        upper[0] = Integer.parseInt(getProperty("x_size"));
+        upper[1] = Integer.parseInt(getProperty("y_size"));
+        return new GridRange(lower, upper);
+    }
+
+    /**
+     * Returns the grid coverage.
+     */
+    public GridCoverage getGridCoverage(final RenderedImage image)
+    {
+        final GridRange range = getGridRange();
+        if (range.getLength(0)!=image.getWidth() || range.getLength(1)!=image.getHeight())
+        {
+            throw new IllegalArgumentException("Unexpected image size"); // TODO
+        }
+        return new GridCoverage("Image", image, getCoordinateSystem(), getEnvelope());
     }
 
     /**
@@ -491,6 +523,19 @@ abstract class GridCoverageCodec
         buffer.write(source);
         buffer.write("\"]");
         buffer.write(lineSeparator);
+        try
+        {
+            final Envelope  envelope = getGeographicEnvelope();
+            final AngleFormat format = new AngleFormat("DD°MM'SS\"");
+            buffer.write(format.format(new  Latitude(envelope.getMaximum(1)))); buffer.write(", ");
+            buffer.write(format.format(new Longitude(envelope.getMinimum(0)))); buffer.write(" - ");
+            buffer.write(format.format(new  Latitude(envelope.getMinimum(1)))); buffer.write(", ");
+            buffer.write(format.format(new Longitude(envelope.getMaximum(0)))); buffer.write(lineSeparator);
+        }
+        catch (RuntimeException exception)
+        {
+            // Ignore.
+        }
         buffer.write('{');
         buffer.write(lineSeparator);
         try

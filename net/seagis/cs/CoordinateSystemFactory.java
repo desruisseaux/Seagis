@@ -289,9 +289,13 @@ public class CoordinateSystemFactory
      * @param centre         Central meridian and latitude of origin, in degrees. If non-null,
      *                       <code>"central_meridian"</code> and <code>"latitude_of_origin"</code>
      *                       will be set according.
+     * @param translation    False easting and northing, in metres. If non-null, then
+     *                       <code>"false_easting"</code> and <code>"false_northing"</code>
+     *                       will be set according.
      */
-    public Projection createProjection(final String name, final String classification, final Ellipsoid ellipsoid, final Point2D centre)
-    {return createProjection(name, classification, Projection.getParameterList(ellipsoid, centre));}
+    public Projection createProjection(final String name, final String classification, final Ellipsoid ellipsoid,
+                                       final Point2D centre, final Point2D translation)
+    {return createProjection(name, classification, Projection.getParameterList(ellipsoid, centre, translation));}
 
     /**
      * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
@@ -394,13 +398,13 @@ public class CoordinateSystemFactory
          * Creates a coordinate system object from an XML string.
          */
         public CS_CoordinateSystem createFromXML(final String xml) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("XML parsing not yet implemented");}
 
         /**
          * Creates a coordinate system object from a Well-Known Text string.
          */
         public CS_CoordinateSystem createFromWKT(String wellKnownText) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("WKT parsing not yet implemented");}
 
         /**
          * Creates a compound coordinate system.
@@ -412,7 +416,7 @@ public class CoordinateSystemFactory
          * Creates a fitted coordinate system.
          */
         public CS_FittedCoordinateSystem createFittedCoordinateSystem(final String name, final CS_CoordinateSystem base, final String toBaseWKT, final CS_AxisInfo[] arAxes) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {throw new UnsupportedOperationException("Fitted CS not yet implemented");}
 
         /**
          * Creates a local coordinate system.

@@ -718,7 +718,7 @@ public class GridCoverage extends Coverage
         final MathTransform2D mathTransform = gridGeometry.getGridToCoordinateSystem2D();
         if (!(mathTransform instanceof AffineTransform))
         {
-            throw new UnsupportedOperationException(); // TODO
+            throw new UnsupportedOperationException("Non-affine transformations not yet implemented"); // TODO
         }
         final AffineTransform gridToCoordinate = (AffineTransform) mathTransform;
         if (images==null)
