@@ -472,17 +472,19 @@ public final class Main {
     public static void main(final String[] args) {
         org.geotools.resources.Geotools.init();
         org.geotools.resources.MonolineFormatter.init("fr.ird");
+        final Arguments arguments = new Arguments(args);
         if (false) {
             LookAndFeelMenu.initLookAndFeel();
         } else {
             // Effectue le changement de L&F ici pour éviter de charger Swing trop tôt.
-            final String PREF = LookAndFeelMenu.PREF;
-            final Preferences preferences = Preferences.userNodeForPackage(Main.class);
-            final String classname = preferences.get(PREF, null);
+            String classname = arguments.getOptionalString("-plaf");
+            if (classname == null) {
+                final Preferences preferences = Preferences.userNodeForPackage(Main.class);
+                classname = preferences.get(LookAndFeelMenu.PREF, null);
+            }
             if (classname != null) try {
                 UIManager.setLookAndFeel(classname);
             } catch (Exception exception) {
-                preferences.remove(PREF);
                 Utilities.unexpectedException("fr.ird.seasview", "Main", "main", exception);
             }
         }
@@ -491,7 +493,6 @@ public final class Main {
          * Les arguments non-valides provoqueront un message
          * d'erreur et l'arrêt du programme.
          */
-        final Arguments arguments = new Arguments(args);
         final String    tilecache = arguments.getOptionalString("-tilecache");
         DataBase.MEDITERRANEAN_VERSION = arguments.getFlag("-Méditerranée");
         arguments.getRemainingArguments(0);

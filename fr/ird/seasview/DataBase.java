@@ -86,10 +86,12 @@ public final class DataBase {
     public static final Preferences preferences = Preferences.userNodeForPackage(DataBase.class);
 
     /**
-     * Nom de la table des données de SLA.
+     * Nom de la table des données de courants géostrophiques.
      */
-    private static final String SLA_TABLE = MEDITERRANEAN_VERSION ? "SLA (Méditerranée - NRT)"
-                                                                  : "SLA (Réunion)";
+    private static String getGeostrophicCurrentTable() {
+        return MEDITERRANEAN_VERSION ? "SLA (Méditerranée - NRT)"
+                                     : "SLA (Réunion)";
+    }
 
     /**
      * Connexion vers la base de données d'images.
@@ -224,7 +226,7 @@ public final class DataBase {
     public synchronized LayerControl[] getLayerControls() throws SQLException {
         final ImageDataBase      images = getImageDataBase();
         final List<LayerControl> layers = new ArrayList<LayerControl>(3);
-        final ImageTable       currents = images.getImageTable(SLA_TABLE);
+        final ImageTable       currents = images.getImageTable(getGeostrophicCurrentTable());
         layers.add(new ImageLayerControl());
         if (currents != null) {
             layers.add(new VectorLayerControl(currents, 1, 2));

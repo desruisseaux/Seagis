@@ -42,7 +42,7 @@ import org.geotools.resources.Utilities;
 // seagis dependencies
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import fr.ird.science.astro.SunRelativePosition;
+import org.geotools.science.astro.SunRelativePosition;
 
 
 /**
