@@ -78,6 +78,11 @@ public final class Path extends Point2D implements Shape, Serializable {
     private static final double EARTH_RADIUS = Ellipsoid.WGS84.getSemiMajorAxis()/1852;
 
     /**
+     * The length of a (x,y) record.
+     */
+    static final int RECORD_LENGTH = 2;
+
+    /**
      * Longueur valide du tableau {@link #points}. Le nombre
      * de points sera la moitié de cette longueur.
      */
@@ -168,7 +173,7 @@ public final class Path extends Point2D implements Shape, Serializable {
      */
     public double getX() {
         ensureNonEmpty();
-        return Math.toDegrees(points[validLength-2]);
+        return Math.toDegrees(points[validLength-RECORD_LENGTH+0]);
     }
 
     /**
@@ -176,7 +181,7 @@ public final class Path extends Point2D implements Shape, Serializable {
      */
     public double getY() {
         ensureNonEmpty();
-        return Math.toDegrees(points[validLength-1]);
+        return Math.toDegrees(points[validLength-RECORD_LENGTH+1]);
     }
 
     /**
@@ -191,7 +196,7 @@ public final class Path extends Point2D implements Shape, Serializable {
      * Retourne le nombre de points mémorisé jusqu'à maintenant.
      */
     public int getPointCount() {
-        return validLength/2;
+        return validLength/RECORD_LENGTH;
     }
 
     /**
@@ -205,9 +210,9 @@ public final class Path extends Point2D implements Shape, Serializable {
      * @throws IndexOutOfBoundsException si <code>index</code> est en dehors des limites permises.
      */
     public Point2D getLocation(int index) throws IndexOutOfBoundsException {
-        index *= 2;
+        index *= RECORD_LENGTH;
         if (index<0 || index>=validLength) {
-            throw new IndexOutOfBoundsException(String.valueOf(index/2));
+            throw new IndexOutOfBoundsException(String.valueOf(index/RECORD_LENGTH));
         }
         return new Point2D.Double(Math.toDegrees(points[index+0]),
                                   Math.toDegrees(points[index+1]));
@@ -225,9 +230,9 @@ public final class Path extends Point2D implements Shape, Serializable {
     final void getLocation(int index, final float[] buffer, final int offset)
             throws IndexOutOfBoundsException
     {
-        index *= 2;
+        index *= RECORD_LENGTH;
         if (index<0 || index>=validLength) {
-            throw new IndexOutOfBoundsException(String.valueOf(index/2));
+            throw new IndexOutOfBoundsException(String.valueOf(index/RECORD_LENGTH));
         }
         buffer[offset+0] = (float) Math.toDegrees(points[index+0]);
         buffer[offset+1] = (float) Math.toDegrees(points[index+1]);
@@ -253,8 +258,8 @@ public final class Path extends Point2D implements Shape, Serializable {
      */
     public void moveForward(final double distance) {
         ensureNonEmpty();
-        double x = points[validLength-2];
-        double y = points[validLength-1];
+        double x = points[validLength-RECORD_LENGTH+0];
+        double y = points[validLength-RECORD_LENGTH+1];
 
         // Compute parameters for a Mercator projection
         // centred on the current location (x,y).
@@ -289,8 +294,8 @@ public final class Path extends Point2D implements Shape, Serializable {
      */
     public boolean moveToward(final Point2D point, final double distance) {
         ensureNonEmpty();
-        double x = points[validLength-2];
-        double y = points[validLength-1];
+        double x = points[validLength-RECORD_LENGTH+0];
+        double y = points[validLength-RECORD_LENGTH+1];
 
         // Compute parameters for a Mercator projection
         // centred on the current location (x,y).
@@ -339,8 +344,8 @@ public final class Path extends Point2D implements Shape, Serializable {
      */
     public void relativeToGeographic(final RectangularShape shape) {
         ensureNonEmpty();
-        relativeToGeographic(shape, points[validLength-2],
-                                    points[validLength-1]);
+        relativeToGeographic(shape, points[validLength-RECORD_LENGTH+0],
+                                    points[validLength-RECORD_LENGTH+1]);
     }
 
     /**
@@ -360,9 +365,9 @@ public final class Path extends Point2D implements Shape, Serializable {
     public void relativeToGeographic(final RectangularShape shape, int index)
             throws IndexOutOfBoundsException
     {
-        index *= 2;
+        index *= RECORD_LENGTH;
         if (index<0 || index>=validLength) {
-            throw new IndexOutOfBoundsException(String.valueOf(index/2));
+            throw new IndexOutOfBoundsException(String.valueOf(index/RECORD_LENGTH));
         }
         relativeToGeographic(shape, points[index], points[index+1]);
     }
@@ -421,7 +426,7 @@ public final class Path extends Point2D implements Shape, Serializable {
     public String toString() {
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
-        buffer.append(validLength/2);
+        buffer.append(validLength/RECORD_LENGTH);
         buffer.append(" points");
         if (validLength != 0) {
             buffer.append("; last=");
@@ -684,7 +689,7 @@ public final class Path extends Point2D implements Shape, Serializable {
          * more points in that direction.
          */
         public void next() {
-            pos += 2;
+            pos += RECORD_LENGTH;
         }
     }
 }

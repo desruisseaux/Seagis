@@ -171,18 +171,66 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *         pendant la durée de vie de cet animal.
      */
     public Map<fr.ird.animat.Parameter,fr.ird.animat.Observation> getObservations(Date time) {
-        final int step = clock.computeStepSequenceNumber(time);
-        if (step < 0) {
+        /*
+         * Pas de synchronisation!  On va plutôt copier la référence vers 'observations' afin de
+         * se protéger de tout changement fait dans un autre thread. On copie aussi la référence
+         * vers 'species', mais ce cas n'est pas critique. Même si un changement survenait entre
+         * la copie des deux références, ça n'aura pas d'impact parce que les propriétés de Species
+         * que nous allons interroger ne peuvent pas avoir changées. Le seul cas problématique
+         * serait lorsque la date demandée correspond au pas de temps en cours...
+         */
+        final Species      species = this.species;
+        final float[] observations = this.observations;
+        if (observations == null) {
             return null;
         }
-        int offset = 0;
+        final int step, currentStep;
+        if (time != null) {
+            step = clock.computeStepSequenceNumber(time);
+            if (step < 0) {
+                return null;
+            }
+            currentStep = clock.getStepSequenceNumber();
+        } else {
+            step = currentStep = clock.getStepSequenceNumber();
+        }
+        /*
+         * Vérifie si une synchronisation est nécessaire. Par prudence, on ne fera une
+         * synchronisation que si l'utilisateur a demandé les observations pour le pas
+         * de temps courant.  Ces observations peuvent être en cours de lecture,  d'où
+         * la nécessité de se synchroniser.
+         */
+        if (step == currentStep) {
+            final Object lock = getTreeLock();
+            if (!Thread.holdsLock(lock)) {
+                synchronized (lock) {
+                    return getObservations(time);
+                }
+            }
+        }
+        /*
+         * Copie les données demandées vers un tableau temporaire, qui sera lui-même enveloppé
+         * dans un objet Map. Un traitement spécial est nécessaire pour les observations du
+         * paramètre HEADING, étant donné que la position est mémorisée séparément du reste
+         * (dans l'objet 'path').
+         */
+        int srcOffset;
+        int dstOffset = 0;
         int length = species.getRecordLength();
         final float[] data = new float[length];
-//        if (species.containsHeading) {
-//            path.getLocation(step, data);
-//            length -= (offset=2);
-//        }
-        System.arraycopy(observations, step*length, data, offset, length);
+        if (species.headingIndex >= 0) {
+            length   -= Path.RECORD_LENGTH;
+            srcOffset = step*length;
+            dstOffset = species.offsets[species.headingIndex] + Observations.SCALAR_LENGTH;
+            System.arraycopy(observations, srcOffset, data, 0, dstOffset);
+            path.getLocation(step, data, dstOffset);
+            srcOffset += dstOffset;
+            dstOffset  = species.offsets[species.headingIndex+1];
+        } else {
+            srcOffset = step*length;
+        }
+        assert srcOffset + (data.length-dstOffset) == (step+1)*length : step;
+        System.arraycopy(observations, srcOffset, data, dstOffset, data.length-dstOffset);
         return new Observations(species.parameters, data);
     }
 
@@ -217,11 +265,17 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *
      * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
      *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
+     *
+     * @see #observe
      */
     protected abstract void move(float duration);
 
     /**
-     * Mémorise des observations sur l'environnement actuel de l'animal.
+     * Mémorise des observations sur l'environnement actuel de l'animal. Cette méthode doit
+     * être appelée après chaque {@linkplain #move mouvement} de l'animal. L'implémentation
+     * par défaut puisera les données dans les {@linkplain Environment#getCoverage(Parameter)
+     * couvertures} de chaque {@linkplain Species#getObservedParameters paramètre intéressant
+     * cette espèce}.
      *
      * @throws IllegalStateException si cet animal est mort.
      */

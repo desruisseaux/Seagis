@@ -276,6 +276,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * <code>float[]</code> qui contiendra les données d'observations.
      */
     final int getRecordLength() {
+        assert offsets.length == parameters.length+1;
         return offsets[parameters.length];
     }
 
@@ -339,6 +340,8 @@ public class Species implements fr.ird.animat.Species, Serializable {
      */
     public Set<fr.ird.animat.Parameter> getObservedParameters() {
         if (parameterSet == null) {
+            // Pas besoin de synchroniser. Ce n'est pas très
+            // grave si deux instances de cet objet existent.
             parameterSet = new ArraySet<fr.ird.animat.Parameter>(parameters);
         }
         return parameterSet;
@@ -455,9 +458,10 @@ public class Species implements fr.ird.animat.Species, Serializable {
         }
         if (object!=null && object.getClass().equals(getClass())) {
             final Species that = (Species) object;
-            return Arrays.equals(this.locales, that.locales) &&
-                   Arrays.equals(this.names,   that.names)   &&
-                Utilities.equals(this.color,   that.color);
+            return Arrays.equals(this.locales,    that.locales) &&
+                   Arrays.equals(this.names,      that.names)   &&
+                Utilities.equals(this.color,      that.color)   &&
+                   Arrays.equals(this.parameters, that.parameters);
         }
         return false;
     }

@@ -41,6 +41,9 @@ import fr.ird.animat.Observation;
 import fr.ird.animat.Parameter;
 import fr.ird.util.ArraySet;
 
+// Geotools
+import org.geotools.resources.Utilities;
+
 
 /**
  * Un ensemble d'observations à un pas de temps donné. Cet ensemble est construit chaque fois que
@@ -278,6 +281,14 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
         public Observation setValue(final Observation value) {
             throw new UnsupportedOperationException();
         }
+
+        /**
+         * Retoune sous forme de bits la valeur à l'index spécifiée. Cette méthode est utilisée
+         * pour l'implémentation des méthodes {@link #equals} et {@link #hashCode} seulement.
+         */
+        private int value(final int index) {
+            return Float.floatToIntBits(observations[index+offset]);
+        }
         
         /**
          * Retourne la valeur de l'observation, ou {@link Float#NaN} si elle n'est pas disponible.
@@ -300,5 +311,80 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
             }
             return null;
         }
+
+        /**
+         * Vérifie si cette observation est identique à l'objet spécifié.
+         */
+        public boolean equals(final Object object) {
+            if (object instanceof Entry) {
+                final Entry that = (Entry) object;
+                if (this.offset==that.offset && Utilities.equals(this.parameter, that.parameter)) {
+                    for (int i=parameter.getRecordLength(); --i>=0;) {
+                        if (this.value(i) != that.value(i)) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Retourne un code pour cette observation.
+         */
+        public int hashCode() {
+            int code = offset;
+            for (int i=parameter.getRecordLength(); --i>=0;) {
+                code = 37*code + value(i);
+            }
+            return code;
+        }
+
+        /**
+         * Retourne une représentation de cet observation sous forme de chaîne de caractères.
+         */
+        public String toString() {
+            final StringBuffer buffer = new StringBuffer("Observation[");
+            final int stop = parameter.getRecordLength();
+            for (int i=0; i<stop; i++) {
+                if (i!=0) {
+                    buffer.append(", ");
+                }
+                buffer.append(observations[i+offset]);
+            }
+            buffer.append(']');
+            return buffer.toString();
+        }
+    }
+
+    /**
+     * Retourne une représentation de cet ensemble sous forme de chaîne de caractères.
+     */
+    public String toString() {
+        final String lineSeparator = System.getProperty("line.separator", "\n");
+        final StringBuffer buffer = new StringBuffer("Observations:");
+        final String[] names = new String[parameters.length];
+        int maxLength = 0;
+        for (int i=0; i<parameters.length; i++) {
+            final int length = (names[i] = parameters[i].getName()).length();
+            if (length > maxLength) {
+                maxLength = length;
+            }
+        }
+        buffer.append(lineSeparator);
+        for (int i=0; i<names.length; i++) {
+            buffer.append("  Parameter[");
+            buffer.append(names[i]);
+            buffer.append(']');
+            buffer.append(Utilities.spaces(maxLength - names[i].length()));
+            buffer.append(" = ");
+            if (entries[i] == null) {
+                entries[i] = new Entry(i);
+            }
+            buffer.append(entries[i]);
+            buffer.append(lineSeparator);
+        }
+        return buffer.toString();
     }
 }
