@@ -40,10 +40,12 @@ import java.sql.SQLException;
 // JAI
 import javax.media.jai.util.Range;
 
-// Geotools
+// OpenGIS et Geotools
+import org.opengis.cv.CV_Coverage;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.XDimension2D;
+import fr.ird.util.XArray;
 
 // Base de données
 import fr.ird.sql.image.Coverage3D;
@@ -149,8 +151,9 @@ final class Environment extends fr.ird.animat.impl.Environment {
                  */
                 if (images == null) {
                     Range range = config.firstTimeStep.getTimeRange();
-                    range  = new Range(range.getElementClass(),
-                                       range.getMinValue(), range.isMinIncluded(), new Date(), true);
+                    Date startTime = (Date) range.getMinValue();
+                    startTime = new Date(startTime.getTime() + configuration.getTimeLag());
+                    range = new Range(Date.class, startTime, range.isMinIncluded(), new Date(), true);
                     if (database == null) {
                         database = new ImageDataBase();
                         closedb  = true;
@@ -196,8 +199,12 @@ final class Environment extends fr.ird.animat.impl.Environment {
 
     /**
      * Retourne un objet {@link Species} pour l'espèce spécifiée.
+     *
+     * @param  parent L'espèce dont on veut copier les propriétés (noms, couleur).
+     * @throws RemoteException si des méthodes devaient être appelée sur une machine distance
+     *         et que ces appels ont échoués.
      */
-    final Species wrap(final fr.ird.animat.Species sp) {
+    final Species wrap(final fr.ird.animat.Species sp) throws RemoteException {
         assert Thread.holdsLock(getTreeLock());
         Species candidate = species.get(sp);
         if (candidate == null) {
@@ -264,6 +271,7 @@ final class Environment extends fr.ird.animat.impl.Environment {
                      * retourne le même GridCoverage pour deux pas de temps différents.
                      */
                     final Date time = getClock().getTime();
+                    time.setTime(time.getTime() + param.timelag);
                     final GridCoverage gridCoverage = entry.coverage3D.getGridCoverage2D(time);
                     if (gridCoverage != entry.gridCoverage) {
                         entry.gridCoverage = gridCoverage;
@@ -274,6 +282,26 @@ final class Environment extends fr.ird.animat.impl.Environment {
                 }
             }
             return super.getCoverage(parameter);
+        }
+    }
+
+    /**
+     * Retourne les noms de toutes les {@linkplain CV_Coverage couvertures spatiales des données}
+     * qui ont été utilisées pour le pas de temps de la {@linkplain Clock#getTime date courante}.
+     *
+     * @return Les noms couvertures spatiales utilisées pour le pas de temps courant.
+     */
+    public String[] getCoverageNames() {
+        synchronized (getTreeLock()) {
+            int count = 0;
+            final String[] names = new String[coverages.size()];
+            for (final Iterator<Entry> it=coverages.values().iterator(); it.hasNext();) {
+                final Entry entry = it.next();
+                if (entry.isValid) {
+                    names[count++] = entry.coverage.getName(null);
+                }
+            }
+            return XArray.resize(names, count);
         }
     }
 

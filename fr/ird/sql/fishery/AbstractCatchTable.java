@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.rmi.RemoteException;
 
 // Miscellaneous
 import fr.ird.sql.DataBase;
@@ -178,15 +179,22 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     }
 
     /**
-     * Complète la requète SQL en ajouter les noms de colonnes des espèces
+     * Complète la requète SQL en ajoutant les noms de colonnes des espèces
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
      * Une condition basée sur les captures est aussi ajoutée.
      */
-    private static String completeQuery(String query, final Set<Species> species) {
+    private static String completeQuery(String query, final Set<Species> species)
+            throws SQLException
+    {
         final String[] columns = new String[species.size()];
         int index=0;
         for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
-            columns[index++] = it.next().getName(Species.FAO);
+            try {
+                columns[index++] = it.next().getName(Species.FAO);
+            } catch (RemoteException exception) {
+                throw new fr.ird.sql.RemoteException(
+                            "L'obtention du code de la FAO a échouée.", exception);
+            }
         }
         assert index == columns.length;
         query = completeSelect(query, columns);

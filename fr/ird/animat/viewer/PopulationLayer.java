@@ -486,7 +486,12 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
             }
             Species.Icon icon = icons.get(species);
             if (icon == null) {
-                icon = species.getIcon();
+                try {
+                    icon = species.getIcon();
+                } catch (RemoteException exception) {
+                    EnvironmentLayer.failed("PopulationLayer", "paint", exception);
+                    return;
+                }
                 icon.setColor(Color.red);
                 icons.put(species, icon);
             }

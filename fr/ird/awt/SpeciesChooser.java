@@ -71,10 +71,12 @@ import javax.swing.event.ChangeListener;
 import java.awt.geom.Ellipse2D;
 
 // Collections
+import java.util.Map;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 // Geotools dependencies
 import org.geotools.resources.Utilities;
@@ -83,6 +85,7 @@ import org.geotools.resources.SwingUtilities;
 // Divers
 import java.util.Locale;
 import java.util.TimeZone;
+import java.rmi.RemoteException;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -140,11 +143,16 @@ public final class SpeciesChooser extends JPanel {
     private final MutableComboBoxModel speciesIcons = new DefaultComboBoxModel();
 
     /**
-     * Composante affichant la liste des espèces.
-     * Cette liste ne devra comprendre que des
-     * objets {@link Species.Icon}.
+     * Composante affichant la liste des espèces. Cette liste ne devra comprendre
+     * que des objets {@link Species.Icon}.
      */
-    private final JList list = new JList(speciesIcons);
+    private final JList speciesList = new JList(speciesIcons);
+
+    /**
+     * Nom des espèces à afficher dans la liste. Le contenu de ce dictionnaire dépend de la
+     * langue sélectionnée. Il sera effacé et reconstruit lorsque la langue d'affichange change.
+     */
+    private final Map<Species,String> speciesNames = new HashMap<Species,String>();
 
     /**
      * Boîte de dialogue à utiliser pour permettre à l'utilisateur
@@ -195,7 +203,7 @@ public final class SpeciesChooser extends JPanel {
         ////////////////////
         if (true) {
             final JComboBox   localeBox = new JComboBox(locales);
-            final JComponent scrollList = new JScrollPane(list); scrollList.setPreferredSize(new Dimension(80,80));
+            final JComponent scrollList = new JScrollPane(speciesList); scrollList.setPreferredSize(new Dimension(80,80));
             final ButtonGroup     group = new ButtonGroup();
             final JPanel          panel = new JPanel(new GridBagLayout());
             final GridBagConstraints  c = new GridBagConstraints();
@@ -221,9 +229,9 @@ public final class SpeciesChooser extends JPanel {
             showPositionOnly.addActionListener(listener);
             showCatchAmount .addActionListener(listener);
             localeBox.addItemListener(renderer);
-            list.setCellRenderer  (renderer);
-            list.addMouseListener (listener);
-            list.setEnabled       (false);
+            speciesList.setCellRenderer  (renderer);
+            speciesList.addMouseListener (listener);
+            speciesList.setEnabled       (false);
             tabs.addTab(resources.getString(ResourceKeys.SPECIES), panel);
         }
         /////////////////////
@@ -233,7 +241,7 @@ public final class SpeciesChooser extends JPanel {
             colorChooser.setShape(new Ellipse2D.Float(-24f, -24f, 48f, 48f));
             final JPanel panel=new JPanel(new GridBagLayout());
             final GridBagConstraints c=new GridBagConstraints();
-            final JComboBox list=new JComboBox(speciesIcons);
+            final JComboBox list = new JComboBox(speciesIcons);
             c.gridx=0; c.fill=c.HORIZONTAL;
             c.gridy=0; c.weightx=1;                panel.add(list,         c);
             c.gridy=1; c.weighty=1; c.fill=c.BOTH; panel.add(colorChooser, c);
@@ -246,16 +254,18 @@ public final class SpeciesChooser extends JPanel {
     }
 
     /**
-     * Construit une boîte de dialogue avec les
-     * espèces de la base de données spécifiée.
+     * Construit une boîte de dialogue avec les espèces de la base de données spécifiée.
      */
     public SpeciesChooser(final FisheryDataBase database) throws SQLException {
         this();
-        if (database != null) {
+        if (database != null) try {
             final Collection<Species> sp = database.getSpecies();
             for (final Iterator<Species> it=sp.iterator(); it.hasNext();) {
                 add(it.next().getIcon());
             }
+        } catch (RemoteException exception) {
+            throw new fr.ird.sql.RemoteException(
+                        "L'obtention de l'icône d'une espèce a échouée.", exception);
         }
         final Locale locale   = Locale.getDefault();
         final String language = locale.getLanguage();
@@ -264,15 +274,14 @@ public final class SpeciesChooser extends JPanel {
             final LocaleEntry entry = (LocaleEntry) locales.getElementAt(i);
             if (entry.locale!=null && language.equals(entry.locale.getLanguage())) {
                 locales.setSelectedItem(entry);
-                this.locale=locale;
+                this.locale = locale;
                 break;
             }
         }
     }
 
     /**
-     * Fait apparaître un paneau proposant de
-     * choisir une couleur pour l'entrée spécifiée.
+     * Fait apparaître un paneau proposant de choisir une couleur pour l'entrée spécifiée.
      */
     private void showControler(final Species.Icon entry) {
         speciesIcons.setSelectedItem(entry);
@@ -287,7 +296,13 @@ public final class SpeciesChooser extends JPanel {
      * langue sera ajoutée dans la boîte déroulante "Langue".
      */
     public void add(final Species.Icon icon) {
-        final Locale[] loc = icon.getSpecies().getLocales();
+        Locale[] loc;
+        try {
+            loc = icon.getSpecies().getLocales();
+        } catch (RemoteException exception) {
+            Utilities.unexpectedException("fr.ird.awt", "SpeciesChooser", "add", exception);
+            loc = new Locale[0];
+        }
         StringBuffer buffer = null;
  check: for (int i=0; i<loc.length; i++) {
             final Locale locale = loc[i];
@@ -360,7 +375,7 @@ public final class SpeciesChooser extends JPanel {
      * Returns all icons currently selected in this <code>SpeciesChooser</code>.
      */
     public Species.Icon[] getSelectedIcons() {
-        final int[]                  indices = list.getSelectedIndices();
+        final int[]                  indices = speciesList.getSelectedIndices();
         final Species.Icon[] selectedSpecies = new Species.Icon[indices.length];
         for (int i=0; i<selectedSpecies.length; i++) {
             selectedSpecies[i] = (Species.Icon) speciesIcons.getElementAt(indices[i]);
@@ -394,7 +409,7 @@ public final class SpeciesChooser extends JPanel {
 
         if (showCatch) showCatchAmount.setSelected(true);
         else          showPositionOnly.setSelected(true);
-        list.setEnabled(showCatch);
+        speciesList.setEnabled(showCatch);
 
         for (int i=colors.length; --i>=0;) {
             ((Species.Icon) speciesIcons.getElementAt(i)).setColor(colors[i]);
@@ -428,8 +443,8 @@ public final class SpeciesChooser extends JPanel {
          * palette de couleur pour l'espèce double-cliqué.
          */
         public void mouseClicked(final MouseEvent event) {
-            if (event.getClickCount()==2 && list.isEnabled()) {
-                final int index = list.locationToIndex(event.getPoint());
+            if (event.getClickCount()==2 && speciesList.isEnabled()) {
+                final int index = speciesList.locationToIndex(event.getPoint());
                 if (index >= 0) {
                     showControler((Species.Icon) speciesIcons.getElementAt(index));
                 }
@@ -462,7 +477,7 @@ public final class SpeciesChooser extends JPanel {
          * "Afficher les positions seulement" / "Afficher les quantités pêchées".
          */
         public void actionPerformed(final ActionEvent event) {
-            list.setEnabled(showCatchAmount.isSelected());
+            speciesList.setEnabled(showCatchAmount.isSelected());
         }
     }
 
@@ -470,12 +485,16 @@ public final class SpeciesChooser extends JPanel {
      * Classe de l'objet chargé de dessiner les étiquettes des items.
      */
     private final class Renderer extends DefaultListCellRenderer implements ItemListener {
+        /**
+         * Retourne l'objet à utiliser pour dessiner un nom d'espèce.
+         */
         public Component getListCellRendererComponent(final JList list, final Object value, final int index,
                                                       final boolean isSelected, final boolean cellHasFocus)
         {
             final Species.Icon icon = (Species.Icon) value;
-            final Component c=super.getListCellRendererComponent(list, format(icon.getSpecies(), list==SpeciesChooser.this.list),
-                                                                 index, isSelected, cellHasFocus);
+            final Component c = super.getListCellRendererComponent(
+                                list, format(icon.getSpecies(), list==speciesList),
+                                index, isSelected, cellHasFocus);
             setIcon(icon);
             return c;
         }
@@ -490,7 +509,8 @@ public final class SpeciesChooser extends JPanel {
                 if (selected != null) {
                     locale = selected.locale;
                 }
-                list.repaint();
+                speciesNames.clear();
+                speciesList.repaint();
             }
         }
     }
@@ -499,24 +519,31 @@ public final class SpeciesChooser extends JPanel {
      * Retourne la chaîne de caractères à afficher pour représenter
      * une espèce. Cette chaîne dépendra de la langue sélectionnée
      * par l'utilisateur.
+     *
+     * @task TODO: cache the name in {@link #speciesName}.
      */
     private String format(final Species species, final boolean isSpeciesList) {
-        if (isSpeciesList || locale==Species.LATIN) {
-            final String name = species.getName(locale);
-            return (name!=null) ? name : species.getName(null);
-        }
-        final StringBuffer buffer=new StringBuffer("<HTML>");
-        String name = species.getName(locale);
-        if (name == null) {
-            name = species.getName(null);
-        }
-        buffer.append(name);
-        name = species.getName(Species.LATIN);
-        if (name!=null && name.length()>=2) { // Evite "?"
-            buffer.append("&nbsp;&nbsp; (<i>");
+        try {
+            if (isSpeciesList || locale==Species.LATIN) {
+                final String name = species.getName(locale);
+                return (name!=null) ? name : species.getName(null);
+            }
+            final StringBuffer buffer=new StringBuffer("<HTML>");
+            String name = species.getName(locale);
+            if (name == null) {
+                name = species.getName(null);
+            }
             buffer.append(name);
-            buffer.append("</i>)");
+            name = species.getName(Species.LATIN);
+            if (name!=null && name.length()>=2) { // Evite "?"
+                buffer.append("&nbsp;&nbsp; (<i>");
+                buffer.append(name);
+                buffer.append("</i>)");
+            }
+            buffer.append("</HTML>");
+            return buffer.toString();
+        } catch (RemoteException exception) {
+            return "<HTML><strong>Erreur:</strong> "+exception.getLocalizedMessage()+"</HTML>";
         }
-        return buffer.toString();
     }
 }

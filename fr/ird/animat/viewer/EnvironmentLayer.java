@@ -30,12 +30,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Date;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Collections;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.EventQueue;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.EventListenerList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
@@ -66,14 +71,15 @@ import fr.ird.animat.event.EnvironmentChangeListener;
 
 
 /**
- * Couche représentant une image sur une carte.
+ * Couche représentant une image sur une carte. Cet objet implémente aussi une liste des
+ * noms des couvertures utilisées lors du dernier pas de temps.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
+final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, Runnable {
     /**
-     * L'adapter à utiliser pour convertir les couches 
+     * L'adapteur à utiliser pour convertir les couches 
      */
     private final Adapters adapters = Adapters.getDefault();
 
@@ -114,6 +120,16 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
      * L'environnement dessiné par cette couche.
      */
     private final Environment environment;
+
+    /**
+     * Les noms des couvertures du pas de temps courant.
+     */
+    private String[] coverageNames;
+
+    /**
+     * Objet intéressé à être informé des changements apportés à cet objet.
+     */
+    private final EventListenerList listenerList = new EventListenerList();
 
     /**
      * Les instructions à exécuter si jamais la machine virtuelle était interrompue
@@ -217,7 +233,55 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
         record.setThrown(exception);
         Logger.getLogger("fr.ird.animat.viewer").log(record);
     }
+    
+    /**
+     * Returns the length of the list.
+     */
+    public int getSize() {
+        return (coverageNames!=null) ? coverageNames.length : 0;
+    }
+    
+    /**
+     * Returns the value at the specified index.
+     */
+    public String getElementAt(final int index) {
+        return coverageNames[index];
+    }
 
+    /**
+     * Adds a listener to the list that's notified each time a change to the data model occurs.
+     * @param listener the <code>ListDataListener</code> to be added
+     */
+    public void addListDataListener(final ListDataListener listener) {
+        listenerList.add(ListDataListener.class, listener);
+    }
+    
+    /**
+     * Removes a listener from the list that's notified each time a change to the data model occurs.
+     * @param l the <code>ListDataListener</code> to be removed
+     */
+    public void removeListDataListener(final ListDataListener listener) {
+        listenerList.remove(ListDataListener.class, listener);
+    }
+
+    /**
+     * Remet à jour la liste des noms des couvertures.
+     */
+    private void refreshCoverageNames() throws RemoteException {
+        final String[] check = environment.getCoverageNames();
+        if (!Arrays.equals(coverageNames, check)) {
+            coverageNames = check;
+            final ListDataEvent event = new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED,
+                                                          0, coverageNames.length);
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length-2; i>=0; i-=2) {
+                if (listeners[i] == ListDataListener.class) {
+                    ((ListDataListener)listeners[i+1]).contentsChanged(event);
+                }
+            }
+        }
+    }
+    
     /**
      * Objet ayant la charge de réagir aux changements survenant dans l'environnement.
      * Ces changements peuvent se produire sur une machine distante.
@@ -257,6 +321,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
             if (parameter != null) {
                 if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
                     coverage = adapters.wrap(event.getSource().getCoverage(parameter));
+                    refreshCoverageNames();
                 }
             }
             EventQueue.invokeLater(this);

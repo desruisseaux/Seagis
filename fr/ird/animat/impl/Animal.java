@@ -540,6 +540,7 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      */
     final void export(final int port) throws RemoteException {
         UnicastRemoteObject.exportObject(this, port);
+        getSpecies().export(port);
     }
 
     /**
@@ -549,6 +550,7 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      */
     final void unexport() {
         unexport("Animal", this);
+        getSpecies().unexport();
     }
 
     /**

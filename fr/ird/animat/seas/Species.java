@@ -26,6 +26,7 @@
 package fr.ird.animat.seas;
 
 // J2SE
+import java.rmi.RemoteException;
 import java.awt.geom.RectangularShape;
 
 // Seagis
@@ -39,11 +40,6 @@ import fr.ird.util.XEllipse2D;
  * @author Martin Desruisseaux
  */
 final class Species extends fr.ird.animat.impl.Species {
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = -7347862222695899211L;
-
     /**
      * Valeur par défaut du rayon de perception de l'animal, en miles nautiques.
      *
@@ -60,10 +56,15 @@ final class Species extends fr.ird.animat.impl.Species {
      * Construit une espèce avec le même nom que l'espèce spécifiée mais qui s'intéressera
      * à des paramètres différents.
      *
-     * @param parent L'espèce dont on veut copier les propriétés (noms, couleur).
-     * @param La configuration de la simulation.
+     * @param  parent L'espèce dont on veut copier les propriétés (noms, couleur).
+     * @param  La configuration de la simulation.
+     * @throws RemoteException si des méthodes devaient être appelée sur une machine distance
+     *         et que ces appels ont échoués.
      */
-    protected Species(final fr.ird.animat.Species parent, final Configuration configuration) {
+    protected Species(final fr.ird.animat.Species parent,
+                      final Configuration configuration)
+            throws RemoteException
+    {
         super(wrap(parent), configuration.parameterArray);
         perceptionRadius = configuration.perceptionRadius;
         dailyDistance    = configuration.dailyDistance;
@@ -86,11 +87,14 @@ final class Species extends fr.ird.animat.impl.Species {
      * Vérifie si cette espèce est égale à l'objet spécifié.
      */
     public boolean equals(final Object object) {
-        if (super.equals(object)) {
-            final Species that = (Species) object;
-            return Double.doubleToLongBits(this.perceptionRadius) ==
-                   Double.doubleToLongBits(that.perceptionRadius);
+        if (object instanceof Species) {
+            if (super.equals(object)) {
+                final Species that = (Species) object;
+                return Double.doubleToLongBits(this.perceptionRadius) ==
+                       Double.doubleToLongBits(that.perceptionRadius);
+            }
+            return false;
         }
-        return false;
+        return super.equals(object); // Compare RMI stubs
     }
 }

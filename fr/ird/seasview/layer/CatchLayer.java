@@ -62,10 +62,12 @@ import java.awt.image.RenderedImage;
 import java.awt.font.GlyphVector;
 
 // Miscellaneous
-import org.geotools.units.Unit;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
+import java.rmi.RemoteException;
 import javax.media.jai.util.Range;
+import org.geotools.units.Unit;
+import org.geotools.resources.Utilities;
 
 
 /**
@@ -253,7 +255,12 @@ public class CatchLayer extends RenderedMarks {
         markType         = CATCH_AMOUNTS; // Needed for "amplitude" calculations.
         typicalAmplitude = super.getTypicalAmplitude();
         markType         = POSITIONS_ONLY;
-        validate();
+        try {
+            validate();
+        } catch (RemoteException exception) {
+            throw new fr.ird.sql.RemoteException(
+                        "L'obtention de l'icône d'une espèce a échouée.", exception);
+        }
     }
 
     /**
@@ -281,14 +288,19 @@ public class CatchLayer extends RenderedMarks {
             catchTable.setTimeRange(startTime, endTime);
             catchs = catchTable.getEntries();
         }
-        validate();
+        try {
+            validate();
+        } catch (RemoteException exception) {
+            throw new fr.ird.sql.RemoteException(
+                        "L'obtention de l'icône d'une espèce a échouée.", exception);
+        }
         repaint();
     }
 
     /**
      * Validate {@link #colors} after new catch entries have been read.
      */
-    private void validate() {
+    private void validate() throws RemoteException {
         hasShape = false;
         colors   = new Color[catchs.size()];
         useFill  = new boolean[colors.length];
@@ -335,7 +347,7 @@ public class CatchLayer extends RenderedMarks {
      * of created icon, in such a way that change to the icon's color are
      * saved.
      */
-    private Species.Icon getIcon(final Species species) {
+    private Species.Icon getIcon(final Species species) throws RemoteException {
         synchronized (icons) {
             Species.Icon icon = icons.get(species);
             if (icon == null) {
@@ -392,7 +404,18 @@ public class CatchLayer extends RenderedMarks {
         if (type>=POSITIONS_ONLY && type<=CATCH_AMOUNTS) {
             if (markType != type) {
                 this.markType = type;
-                validate();
+                try {
+                    validate();
+                } catch (RemoteException exception) {
+                    /*
+                     * TODO: Envelopper cette exception dans une autre non-vérifiée n'est pas une
+                     *       pratique acceptable.   Pour l'instant, on ne s'en formalise pas trop
+                     *       étant donné qu'on ne vas pas utiliser cette  classe dans un contexte
+                     *       de RMI. Mais dans une version future, il faudra sans doute corriger.
+                     */
+                    throw new RuntimeException(
+                                "L'obtention de l'icône d'une espèce a échouée.", exception);
+                }
                 repaint();
                 listeners.firePropertyChange("markType", new Integer(markType), new Integer(type));
             }
@@ -596,7 +619,13 @@ public class CatchLayer extends RenderedMarks {
                     } else {
                         final ShapeBroker broker = new ShapeBroker(markShape);
                         for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
-                            graphics.setColor(getIcon(it.next()).getColor());
+                            try {
+                                graphics.setColor(getIcon(it.next()).getColor());
+                            } catch (RemoteException exception) {
+                                // TODO: On garde la même couleur que la dernière fois. Est-ce correct?
+                                Utilities.unexpectedException("fr.ird.seasview", "CatchLayer",
+                                                              "paint", exception);
+                            }
                             graphics.fill(broker);
                             if (broker.finished()) {
                                 break;

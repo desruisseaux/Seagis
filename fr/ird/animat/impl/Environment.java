@@ -192,6 +192,17 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     }
 
     /**
+     * Retourne les noms de toutes les {@linkplain CV_Coverage couvertures spatiales des données}
+     * qui ont été utilisées pour le pas de temps de la {@linkplain Clock#getTime date courante}.
+     * L'implémentation par défaut retourne toujours un ensemble vide.
+     *
+     * @return Les noms des couvertures spatiales utilisées pour le pas de temps courant.
+     */
+    public String[] getCoverageNames() {
+        return new String[0];
+    }
+
+    /**
      * Retourne l'horloge de la simulation. Pendant chaque pas de temps de la simulation,
      * les conditions suivantes sont remplies:
      * <ul>

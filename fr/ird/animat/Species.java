@@ -29,6 +29,8 @@ package fr.ird.animat;
 import java.util.Set;
 import java.awt.Color;
 import java.util.Locale;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 
 /**
@@ -43,7 +45,7 @@ import java.util.Locale;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Species {
+public interface Species extends Remote {
     /**
      * Constante désignant la langue "Latin".
      * Souvent utilisée pour nommer les espèces.
@@ -62,10 +64,12 @@ public interface Species {
     Locale FAO = new Locale("fao", "");
 
     /**
-     * Retourne les langues dans lesquelles peuvent
-     * être exprimées le nom de cette espèce.
+     * Retourne les langues dans lesquelles peuvent être exprimées le nom de cette espèce.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    Locale[] getLocales();
+    Locale[] getLocales() throws RemoteException;
 
     /**
      * Retourne le nom de cette espèce dans la langue spécifiée. Cette langue peut être typiquement
@@ -85,13 +89,18 @@ public interface Species {
      *         un nom dans une langue par défaut.
      * @return Le nom de l'espèce dans la langue spécifiée, ou <code>null</code> si
      *         aucun nom n'est disponible dans la langue spécifiée.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    String getName(Locale locale);
+    String getName(Locale locale) throws RemoteException;
 
     /**
      * Construit un nouvel icone représentant cette espèce.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    Icon getIcon();
+    Icon getIcon() throws RemoteException;
 
     /**
      * Icône représentant une espèce. Un icône peut servir à positionner
@@ -128,6 +137,8 @@ public interface Species {
      * @return L'ensemble des paramètres suceptibles d'intéresser les animaux de cette espèce
      *         durant les pas de temps passés, pendant le pas de temps courant ou dans un pas
      *         de temps futur.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    Set<Parameter> getObservedParameters();
+    Set<Parameter> getObservedParameters() throws RemoteException;
 }

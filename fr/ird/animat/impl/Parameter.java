@@ -28,7 +28,9 @@ package fr.ird.animat.impl;
 // J2SE dependencies
 import java.awt.Shape;
 import java.awt.geom.Point2D;
-import java.io.Serializable;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 
 // Geotools dependencies
 import org.geotools.cv.Coverage;
@@ -46,12 +48,7 @@ import fr.ird.animat.Observation;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Parameter implements fr.ird.animat.Parameter, Serializable {
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = -1934991927931117874L;
-
+public class Parameter extends RemoteObject implements fr.ird.animat.Parameter {
     /**
      * Le cap des animaux, ainsi que leur position actuelle. Le cap peut être obtenu
      * par un appel à {@link #getValue}, alors que la position peut être obtenue par
@@ -63,6 +60,11 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
      * Le nom de ce paramètre.
      */
     private final String name;
+
+    /**
+     * Nombre de fois que cet objet a été exporté.
+     */
+    private transient int exportCount;
 
     /**
      * Construit un nouveau paramètre.
@@ -130,19 +132,30 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne une valeur de hachage pour cet objet.
+     * Exporte ce paramètre de façon à ce qu'il puisse accepter les appels de machines distantes.
+     * Etant donné qu'un même objet <code>Parameter</code> peut être partagé par plusieurs expèces,
+     * cette méthode tient un compte des appels de <code>export</code> et <code>unexport</code>.
+     *
+     * @param  port Numéro de port, ou 0 pour choisir un port anonyme.
+     * @throws RemoteException si ce paramètre n'a pas pu être exporté.
      */
-    public int hashCode() {
-        return name.hashCode();
+    final void export(final int port) throws RemoteException {
+        if (exportCount++ == 0) {
+            UnicastRemoteObject.exportObject(this, port);
+        }
     }
 
     /**
-     * Compare ce paramètre avec l'objet spécifié.
+     * Annule l'exportation de ce paramètre. Si le paramètre était déjà en train d'exécuter une
+     * méthode, alors <code>unexport(...)</code> attendra un maximum d'une seconde avant de forcer
+     * l'arrêt de l'exécution.
+     *
+     * Etant donné qu'un même objet <code>Parameter</code> peut être partagé par plusieurs expèces,
+     * cette méthode tient un compte des appels de <code>export</code> et <code>unexport</code>.
      */
-    public boolean equals(final Object object) {
-        if (object!=null && object.getClass().equals(getClass())) {
-            return name.equals(((Parameter) object).name);
+    final void unexport() {
+        if (--exportCount == 0) {
+            Animal.unexport("Parameter", this);
         }
-        return false;
     }
 }

@@ -27,6 +27,8 @@ package fr.ird.animat;
 
 // J2SE dependencies
 import java.awt.geom.Point2D;
+import java.rmi.RemoteException;
+import java.rmi.Remote;
 
 // OpenGIS dependencies
 import org.opengis.cv.CV_Coverage;
@@ -49,12 +51,15 @@ import org.opengis.cv.CV_Coverage;
  * @see Environment#getParameters
  * @see Environment#getCoverage
  */
-public interface Parameter {
+public interface Parameter extends Remote {
     /**
      * Retourne le nom de ce paramètre. En général, la méthode {@link #toString}
      * retournera aussi ce même nom afin de faciliter l'insertion des paramètres
      * dans une interface graphique <cite>Swing</cite> (par exemple une liste
      * déroulante).
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    String getName();
+    String getName() throws RemoteException;
 }

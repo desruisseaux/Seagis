@@ -36,8 +36,11 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.HashSet;
-import java.io.Serializable;
+import java.util.Iterator;
 import javax.swing.ImageIcon;
+import java.rmi.RemoteException;
+import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 import javax.vecmath.MismatchedSizeException;
 
 // Divers
@@ -57,12 +60,7 @@ import fr.ird.util.ArraySet;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Species implements fr.ird.animat.Species, Serializable {
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = 1428323484284560694L;
-
+public class Species extends RemoteObject implements fr.ird.animat.Species {
     /**
      * Valeur par défaut du rayon de perception de l'animal, en miles nautiques.
      *
@@ -143,6 +141,11 @@ public class Species implements fr.ird.animat.Species, Serializable {
     final int headingIndex;
 
     /**
+     * Nombre de fois que cet objet a été exporté.
+     */
+    private transient int exportCount;
+
+    /**
      * Construit une espèce avec un nom dans la {@link Locale#getDefault langue par défaut}
      * du système.
      *
@@ -202,7 +205,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
                    final String[]    names,
                    final Color       color,
                    final Parameter[] parameters)
-            throws MismatchedSizeException, IllegalArgumentException
+        throws MismatchedSizeException, IllegalArgumentException
     {
         this(locales, names, color, parameters, getOffsets(parameters));
     }
@@ -287,8 +290,13 @@ public class Species implements fr.ird.animat.Species, Serializable {
     /**
      * Retourne un objet {@link fr.ird.animat.Species} arbitraire
      * sous forme d'un objet {@link Species} de cette classe.
+     *
+     * @param  species L'espèce à envelopper.
+     * @return L'expèce sous forme d'objet <code>Species</code> de cette classe.
+     * @throws RemoteException Si certaines méthode devaient être exécutées sur une machine
+     *         distante et que leur exécution a échouée.
      */
-    protected static Species wrap(final fr.ird.animat.Species species) {
+    protected static Species wrap(final fr.ird.animat.Species species) throws RemoteException {
         if (species instanceof Species) {
             return (Species) species;
         }
@@ -522,7 +530,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
                 Utilities.equals(this.color,      that.color)   &&
                    Arrays.equals(this.parameters, that.parameters);
         }
-        return false;
+        return super.equals(object); // Compare RMI stubs.
     }
 
     /**
@@ -534,5 +542,39 @@ public class Species implements fr.ird.animat.Species, Serializable {
             code = code*37 + names[i].hashCode();
         }
         return code;
+    }
+
+    /**
+     * Exporte cette espèce de façon à ce qu'elle puisse accepter les appels de machines distantes.
+     * Etant donné qu'un même objet <code>Species</code> peut être partagé par plusieurs animaux,
+     * cette méthode tient un compte des appels de <code>export</code> et <code>unexport</code>.
+     *
+     * @param  port Numéro de port, ou 0 pour choisir un port anonyme.
+     * @throws RemoteException si cet animal n'a pas pu être exporté.
+     */
+    final void export(final int port) throws RemoteException {
+        if (exportCount++ == 0) {
+            UnicastRemoteObject.exportObject(this, port);
+            for (final Iterator<fr.ird.animat.Parameter> it=getObservedParameters().iterator(); it.hasNext();) {
+                ((Parameter) it.next()).export(port);
+            }
+        }
+    }
+
+    /**
+     * Annule l'exportation de cette espèce. Si l'espèce était déjà en train d'exécuter une méthode,
+     * alors <code>unexport(...)</code> attendra un maximum d'une seconde avant de forcer l'arrêt
+     * de l'exécution.
+     *
+     * Etant donné qu'un même objet <code>Species</code> peut être partagé par plusieurs animaux,
+     * cette méthode tient un compte des appels de <code>export</code> et <code>unexport</code>.
+     */
+    final void unexport() {
+        if (--exportCount == 0) {
+            Animal.unexport("Species", this);
+            for (final Iterator<fr.ird.animat.Parameter> it=getObservedParameters().iterator(); it.hasNext();) {
+                ((Parameter) it.next()).unexport();
+            }
+        }
     }
 }

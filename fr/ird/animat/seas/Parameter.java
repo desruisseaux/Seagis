@@ -47,6 +47,7 @@ import fr.ird.animat.Observation;
 import fr.ird.animat.impl.Animal;
 
 import fr.ird.operator.coverage.Evaluator;
+import fr.ird.operator.coverage.MinimumEvaluator;
 import fr.ird.operator.coverage.MaximumEvaluator;
 import fr.ird.operator.coverage.AverageEvaluator;
 import fr.ird.operator.coverage.GradientEvaluator;
@@ -59,11 +60,6 @@ import fr.ird.operator.coverage.GradientEvaluator;
  * @author Martin Desruisseaux
  */
 final class Parameter extends fr.ird.animat.impl.Parameter {
-    /**
-     * Numéro de série pour compatibilité entre différentes versions.
-     */
-    private static final long serialVersionUID = 6728135550533618356L;
-
     /**
      * La région à prospecter par défaut autour de l'animal.   Cette région est un argument
      * obligatoire pour le constructeur de {@link Evaluator}, mais ne sera généralement pas
@@ -81,7 +77,14 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
     /**
      * Le poids à donner à ce paramètre.
      */
-    public final float weight;
+    final float weight;
+
+    /**
+     * Décalage (en millisecondes) entre l'instant présent de la simulation et le paramètre
+     * observé par l'animal. Une valeur négative signifiera que l'animal observera par exemple
+     * la température qu'il faisait 5 jours auparavent.
+     */
+    final long timelag;
 
     /**
      * Nom de la série d'images.
@@ -93,7 +96,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      *   <li>Chlorophylle-a (Réunion)</li>
      * </ul>
      */
-    public final String series;
+    final String series;
 
     /**
      * Nom de l'opération à appliquer, ou <code>null</code> si aucune.
@@ -108,6 +111,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * Nom de l'{@linkplain Evaluator évaluateur} à utiliser, or <code>null</code> si aucun.
      * Exemples:
      * <ul>
+     *   <li>Minimum</li>
      *   <li>Maximum</li>
      *   <li>Average</li>
      *   <li>Gradient</li>
@@ -127,6 +131,11 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
     private transient boolean evaluatorWarning;
 
     /**
+     * Le nombre de bandes dans les images de ce paramètre.
+     */
+    private final byte numSampleDimensions;
+
+    /**
      * Construit un paramètre.
      *
      * @param series    Nom de la série d'images.
@@ -138,8 +147,30 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      */
     Parameter(String series, String operation, String evaluator, float weight) {
         super(toString(series=series.trim(), operation, evaluator));
+        double timelag = 0;
+        if (true) {
+            /*
+             * Prend en compte le décalage temporel
+             * (par exemple le nombre "-5" dans "SST (synthèse) à -5j").
+             */
+            int length = series.length();
+            int split = series.lastIndexOf('à');
+            if (split>0 && split<length-1 && Character.isSpaceChar(series.charAt(split-1))
+                                          && Character.isSpaceChar(series.charAt(split+1)))
+            {
+                if (Character.toLowerCase(series.charAt(length-1)) == 'j') {
+                    length--;
+                }
+                try {
+                    timelag = Double.parseDouble(series.substring(split+1, length));
+                    series = series.substring(0, split-1).trim();
+                } catch (NumberFormatException exception) {
+                }
+            }
+        }
         this.weight    = weight;
         this.series    = series;
+        this.timelag   = Math.round(timelag * 24L*60*60*1000);
         this.operation = operation; // May be null.
         if (evaluator != null) {
             final StringTokenizer tokens = new StringTokenizer(evaluator, ":");
@@ -153,6 +184,23 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
             this.evaluator     = null;
             this.evaluatorArgs = null;
         }
+        numSampleDimensions = getNumSampleDimensions(evaluator);
+    }
+
+    /**
+     * Retourne le nombre d'éléments valides dans le tableau retourné par la méthode
+     * {@link #evaluate evaluate(...)}. Ce nombre sera généralement de 1 ou 3.
+     */
+    private static byte getNumSampleDimensions(final String evaluator) {
+        if (evaluator != null) {
+            if (evaluator.equalsIgnoreCase("Minimum")) {
+                return 3;
+            }
+            if (evaluator.equalsIgnoreCase("Maximum")) {
+                return 3;
+            }
+        }
+        return 1;
     }
 
     /**
@@ -164,11 +212,14 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * @return La fonction basée sur l'image, ou <code>coverage</code>
      *         s'il n'y a pas d'évaluateur.
      */
-    protected Coverage applyEvaluator(GridCoverage coverage) {
+    final Coverage applyEvaluator(GridCoverage coverage) {
         if (operation != null) {
             coverage = PROCESSOR.doOperation(operation, coverage);
         }
         if (evaluator != null) {
+            if (evaluator.equalsIgnoreCase("Minimum")) {
+                return new MinimumEvaluator(coverage, AREA);
+            }
             if (evaluator.equalsIgnoreCase("Maximum")) {
                 return new MaximumEvaluator(coverage, AREA);
             }
@@ -225,12 +276,7 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
      * {@link #evaluate evaluate(...)}. Ce nombre sera généralement de 1 ou 3.
      */
     protected int getNumSampleDimensions() {
-        if (evaluator != null) {
-            if (evaluator.equalsIgnoreCase("Maximum")) {
-                return 3;
-            }
-        }
-        return 1;
+        return numSampleDimensions;
     }
 
     /**
@@ -255,21 +301,5 @@ final class Parameter extends fr.ird.animat.impl.Parameter {
             buffer.append('"');
         }
         return buffer.toString();
-    }
-
-    /**
-     * Compare ce paramètre avec l'objet spécifié.
-     */
-    public boolean equals(final Object object) {
-        if (object == this) {
-            return true;
-        }
-        if (super.equals(object)) {
-            final Parameter that = (Parameter) object;
-            return Utilities.equals(this.series,    that.series   ) &&
-                   Utilities.equals(this.operation, that.operation) &&
-                   Utilities.equals(this.evaluator, that.evaluator);
-        }
-        return false;
     }
 }

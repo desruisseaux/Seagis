@@ -106,6 +106,16 @@ public interface Environment extends Remote {
     CV_Coverage getCoverage(Parameter parameter) throws NoSuchElementException, RemoteException;
 
     /**
+     * Retourne les noms de toutes les {@linkplain CV_Coverage couvertures spatiales des données}
+     * qui ont été utilisées pour le pas de temps de la {@linkplain Clock#getTime date courante}.
+     *
+     * @return Les noms des couvertures spatiales utilisées pour le pas de temps courant.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    String[] getCoverageNames() throws RemoteException;
+
+    /**
      * Retourne l'horloge de la simulation. Cet horloge tient à jour la date et heure (virtuelle)
      * courante ainsi que l'âge de la simulation. Cette horloge contrôle le rythme de l'ensemble
      * de la simulation. Bien que chaque animal peut avoir {@linkplain Animal#getClock sa propre

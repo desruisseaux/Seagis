@@ -253,6 +253,9 @@ final class Configuration {
             if ((line=line.trim()).length() == 0) {
                 continue;
             }
+            if (line.startsWith("#")) {
+                continue;
+            }
             final StringTokenizer tokens = new StringTokenizer(line, ";");
             Arrays.fill(args, null);
             for (int i=0; i<args.length; i++) {
@@ -274,6 +277,21 @@ final class Configuration {
             }
         }
         return Collections.unmodifiableSet(parameters);
+    }
+
+    /**
+     * Retourne l'écart de temps entre la date des paramètres à utiliser et la date
+     * de la simulation.
+     */
+    final long getTimeLag() {
+        long timelag = Long.MAX_VALUE;
+        for (final Iterator<Parameter> it=parameters.iterator(); it.hasNext();) {
+            final long dt = ((fr.ird.animat.seas.Parameter) it.next()).timelag;
+            if (dt < timelag) {
+                timelag = dt;
+            }
+        }
+        return timelag!=Long.MAX_VALUE ? timelag : 0;
     }
 
     /**
