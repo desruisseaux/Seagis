@@ -60,20 +60,21 @@ final class LinearSampleTable extends SampleTable {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes [@link #DATE}, [@link #START_LONGITUDE} et compagnie.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ "ID, "         +
-                                /*[02] DATE            */ "date, "       +
-                                /*[03] START_LONGITUDE */ "x1, "         +
-                                /*[04] START_LATITUDE  */ "y1, "         +
-                                /*[05] END_LONGITUDE   */ "x2, "         +
-                                /*[06] END_LATITUDE    */ "y2, "         +
-                                /*[07] EFFORT_UNIT     */ "nb_hameçons " +
-
-                    "FROM "+SAMPLES+"\n"+
-                    "WHERE valid=TRUE "+
-                      "AND (date>=? AND date<=?) "+
-                      "AND (total>=?) "+
-                    "ORDER BY date";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_LINEAR_SAMPLE);
+    // static final String SQL_SELECT=
+    //                 "SELECT "+  /*[01] ID              */ "ID, "         +
+    //                             /*[02] DATE            */ "date, "       +
+    //                             /*[03] START_LONGITUDE */ "x1, "         +
+    //                             /*[04] START_LATITUDE  */ "y1, "         +
+    //                             /*[05] END_LONGITUDE   */ "x2, "         +
+    //                             /*[06] END_LATITUDE    */ "y2, "         +
+    //                             /*[07] EFFORT_UNIT     */ "nb_hameçons " +
+    // 
+    //                 "FROM "+SAMPLES+"\n"+
+    //                 "WHERE valid=TRUE "+
+    //                   "AND (date>=? AND date<=?) "+
+    //                   "AND (total>=?) "+
+    //                 "ORDER BY date";
 
     // IMPORTANT: Les données DOIVENT être classées en ordre croissant de date
     //            du début de la pêche (StartTime), pour le bon fonctionnement
@@ -107,7 +108,7 @@ final class LinearSampleTable extends SampleTable {
                                 final Set<Species> species)
             throws SQLException
     {
-        super(connection, preferences.get("Linear."+SAMPLES, SQL_SELECT), timezone, species);
+        super(connection, SQL_SELECT, timezone, species);
     }
 
     /**

@@ -86,16 +86,18 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
      * Instruction SQL pour mettre à jour une donnée environnementale.
      * Note: La valeur est le premier paramètre, et tous les autres sont décalés de 1.
      */
-    static final String SQL_UPDATE=
-                    "UPDATE "+ENVIRONMENTS+" SET [?]=? "+
-                    "WHERE capture=? AND position=? AND paramètre=?";
+    static final String SQL_UPDATE = Table.configuration.get(Configuration.KEY_ENVIRONMENTS_UPDATE);
+    // static final String SQL_UPDATE=
+    //                 "UPDATE "+ENVIRONMENTS+" SET [?]=? "+
+    //                 "WHERE capture=? AND position=? AND paramètre=?";
 
     /**
      * Instruction SQL pour ajouter une donnée environnementale.
      */
-    static final String SQL_INSERT=
-                    "INSERT INTO "+ENVIRONMENTS+" (capture,position,paramètre,[?]) "+
-                    "VALUES(?,?,?,?)";
+    static final String SQL_INSERT = Table.configuration.get(Configuration.KEY_ENVIRONMENTS_INSERT);
+    // static final String SQL_INSERT=
+    //                "INSERT INTO "+ENVIRONMENTS+" (capture,position,paramètre,[?]) "+
+    //                "VALUES(?,?,?,?)";
 
     /** Numéro d'argument. */ private static final int ARG_SAMPLE    = 1;
     /** Numéro d'argument. */ private static final int ARG_POSITION  = 2;
@@ -610,8 +612,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
                     update = null;
                 }
                 if (update == null) {
-                    update = descriptors.getConnection().prepareStatement(replaceQuestionMark(
-                             preferences.get(ENVIRONMENTS+":UPDATE", SQL_UPDATE), column));
+                    update = descriptors.getConnection().prepareStatement(replaceQuestionMark(SQL_UPDATE, column));
                     columnUpdate = column;
                 }
                 update.setInt   (1+ARG_SAMPLE,    sample.getID());
@@ -630,8 +631,7 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
                         insert = null;
                     }
                     if (insert == null) {
-                        insert = descriptors.getConnection().prepareStatement(replaceQuestionMark(
-                                 preferences.get(ENVIRONMENTS+":INSERT", SQL_INSERT), column));
+                        insert = descriptors.getConnection().prepareStatement(replaceQuestionMark(SQL_INSERT, column));
                         columnInsert = column;
                     }
                     insert.setInt   (ARG_SAMPLE,    sample.getID());

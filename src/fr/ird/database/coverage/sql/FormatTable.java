@@ -50,14 +50,15 @@ final class FormatTable extends Table {
      * Requête SQL utilisée pour obtenir le type MIME du format
      * (par exemple "image/png") dans la table des formats.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID         */ "ID, "         +
-                                /*[02] NAME       */ "name, "       +
-                                /*[03] MIME       */ "mime, "       +
-                                /*[04] EXTENSION  */ "extension, "  +
-                                /*[05] GEOPHYSICS */ "geophysics\n" +
-    
-                    "FROM "+FORMATS+" WHERE ID=?";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_FORMATS);
+    // static final String SQL_SELECT=
+    //                 "SELECT "+  /*[01] ID         */ "ID, "         +
+    //                             /*[02] NAME       */ "name, "       +
+    //                             /*[03] MIME       */ "mime, "       +
+    //                             /*[04] EXTENSION  */ "extension, "  +
+    //                             /*[05] GEOPHYSICS */ "geophysics\n" +
+    // 
+    //                 "FROM "+FORMATS+" WHERE ID=?";
 
     /** Numéro de colonne. */ private static final int ID         = 1;
     /** Numéro de colonne. */ private static final int NAME       = 2;
@@ -84,7 +85,7 @@ final class FormatTable extends Table {
      * @throws SQLException si <code>FormatTable</code> n'a pas pu construire sa requête SQL.
      */
     protected FormatTable(final Connection connection) throws SQLException {
-        statement = connection.prepareStatement(PREFERENCES.get(FORMATS, SQL_SELECT));
+        statement = connection.prepareStatement(SQL_SELECT);
     }
 
     /**

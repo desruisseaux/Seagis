@@ -61,7 +61,7 @@ import fr.ird.database.coverage.sql.CoverageDataBase;
 import fr.ird.database.sample.sql.SampleDataBase;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.resources.seagis.Resources;
-
+import fr.ird.database.Configuration;
 
 /**
  * Panneau de configuration des bases de données. Ce panneau permettra par
@@ -80,7 +80,7 @@ public class ControlPanel extends JPanel {
      */
     private final SQLEditor[] editors = {
         CoverageDataBase.getSQLEditor(),
-          SampleDataBase.getSQLEditor()
+        SampleDataBase.getSQLEditor()
     };
 
     /**
@@ -173,9 +173,17 @@ public class ControlPanel extends JPanel {
             // Initialize fields according preferences
             // ---------------------------------------
             final SQLEditor editor = editors[i];
-            drivers  [i].setText        (editor.getProperty(DataBase.DRIVER  ));
-            sources  [i].setText        (editor.getProperty(DataBase.SOURCE  ));
-            timezones[i].setSelectedItem(editor.getProperty(DataBase.TIMEZONE));
+            final Configuration configuration = editor.configuration;
+            /*drivers  [i].setText        (configuration.get(Configuration.KEY_DRIVER));
+            sources  [i].setText        (configuration.get(Configuration.KEY_SOURCE));
+            timezones[i].setSelectedItem(configuration.get(Configuration.KEY_TIME_ZONE));*/
+            //drivers  [i].setText        (configuration.get(DataBase.getKey(DataBase.DRIVER  )));
+            //sources  [i].setText        (editor.getProperty(DataBase.SOURCE  ));
+            //timezones[i].setSelectedItem(editor.getProperty(DataBase.TIMEZONE));
+            drivers  [i].setText        (configuration.get(editor.getProperty(DataBase.DRIVER)));
+            sources  [i].setText        (configuration.get(editor.getProperty(DataBase.SOURCE)));
+            timezones[i].setSelectedItem(configuration.get(editor.getProperty(DataBase.TIMEZONE)));
+            
             // -------------
             // Add listeners
             // -------------
@@ -215,10 +223,11 @@ public class ControlPanel extends JPanel {
             final File directory = new File(this.directory.getText());
             CoverageDataBase.setDefaultDirectory(directory);
             for (int i=0; i<editors.length; i++) {
-                final Preferences preferences = editors[i].preferences;
-                preferences.put(DataBase.DRIVER,   drivers[i].getText());
-                preferences.put(DataBase.SOURCE,   sources[i].getText());
-                preferences.put(DataBase.TIMEZONE, TimeZone.getTimeZone(timezones[i].getSelectedItem().toString()).getID());
+                final SQLEditor editor = editors[i];
+                final Configuration configuration = editor.configuration;
+                editor.configuration.set(editor.getProperty(DataBase.DRIVER),   drivers[i].getText());
+                editor.configuration.set(editor.getProperty(DataBase.SOURCE),   sources[i].getText());
+                editor.configuration.set(editor.getProperty(DataBase.TIMEZONE), TimeZone.getTimeZone(timezones[i].getSelectedItem().toString()).getID());
             }
             return true;
         }

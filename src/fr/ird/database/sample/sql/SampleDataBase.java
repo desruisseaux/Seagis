@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.TimeZone;
 import java.io.IOException;
+import java.io.File;
 
 // Geotools
 import org.geotools.resources.Arguments;
@@ -70,7 +71,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
      * pas défini de préférence pour un paramètre.
      */
-    private static String getPreference(final String name) {
+    /*private static String getPreference(final String name) {
         String def=null;
         if (name != null)
         {
@@ -79,7 +80,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
             else if (name.equalsIgnoreCase(TIMEZONE)) def = "Indian/Reunion";
         }
         return Table.preferences.get(name, def);
-    }
+    }*/
 
     /**
      * Liste des propriétées par défaut. Les valeurs aux index pairs sont les index
@@ -92,7 +93,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * correspondantes pour détecter le type de la table des échantillons. Le numéro
      * (à partir de 1) de la première requête à réussir sera retourné.
      */
-    private static final String[] DEFAULT_PROPERTIES = {
+    /*private static final String[] DEFAULT_PROPERTIES = {
         Table.SPECIES,                SpeciesTable         .SQL_SELECT,
         "Punctual."+Table.SAMPLES,    PunctualSampleTable  .SQL_SELECT, // SampleTableType #1
         "Linear."+Table.SAMPLES,      LinearSampleTable    .SQL_SELECT, // SampleTableType #2
@@ -105,7 +106,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         Table.PARAMETERS,             ParameterTable       .SQL_SELECT,
         Table.OPERATIONS,             OperationTable       .SQL_SELECT,
         Table.POSITIONS,              RelativePositionTable.SQL_SELECT
-    };
+    };*/
 
     /**
      * Liste des noms descriptifs à donner aux propriétés.
@@ -113,7 +114,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * Ces clés doivent apparaîtrent dans le même ordre que
      * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
      */
-    private static final int[] PROPERTY_NAMES = {
+    /*private static final int[] PROPERTY_NAMES = {
         ResourceKeys.SQL_SPECIES,
         ResourceKeys.SQL_SAMPLES_POINT,
         ResourceKeys.SQL_SAMPLES_LINE,
@@ -126,15 +127,15 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         ResourceKeys.SQL_PARAMETERS,
         ResourceKeys.SQL_OPERATIONS,
         ResourceKeys.SQL_POSITIONS
-    };
+    };*/
 
     /**
      * Retourne l'URL par défaut de la base de données des échantillons.
      * Cet URL sera puisé dans les préférences de l'utilisateur autant que possible.
      */
     private static String getDefaultURL() {
-        LOGGER.log(loadDriver(getPreference(DRIVER)));
-        return getPreference(SOURCE);
+        LOGGER.log(loadDriver(Table.configuration.get(Configuration.KEY_DRIVER)));
+        return Table.configuration.get(Configuration.KEY_SOURCE);
     }
 
     /**
@@ -151,7 +152,10 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
     public SampleDataBase() throws SQLException {
-        this(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));
+        // this(getDefaultURL(), TimeZone.getTimeZone(getPreference(TIMEZONE)));
+        super(getDefaultURL(), 
+              TimeZone.getTimeZone(Configuration.getInstance().get(Configuration.KEY_TIME_ZONE)),
+              Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));        
     }
 
     /**
@@ -164,7 +168,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
     public SampleDataBase(final String name, final TimeZone timezone) throws SQLException {
-        super(name, timezone);
+        super(name, timezone, Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
 
     /**
@@ -215,7 +219,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
     private synchronized int getSampleTableType() throws SQLException {
-        if (sampleTableType == 0) {
+        /*if (sampleTableType == 0) {
             int type = sampleTableType;
             final Statement statement = connection.createStatement();
             for (int i=0; i<DEFAULT_PROPERTIES.length; i+=2) {
@@ -235,14 +239,15 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
             }
             statement.close();
         }
-        return sampleTableType;
+        return sampleTableType;*/
+        return 0;
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<Species> getSpecies() throws SQLException {
-        final String key, def;
+        /*final String key, def;
         switch (getSampleTableType()) {
             case  1: key="Punctual."+Table.SAMPLES; def= PunctualSampleTable.SQL_SELECT; break;
             case  2: key=  "Linear."+Table.SAMPLES; def= LinearSampleTable.SQL_SELECT;   break;
@@ -256,7 +261,8 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
         result   .close();
         statement.close();
         spTable  .close();
-        return species;
+        return species;*/
+        return null;
     }
 
     /**
@@ -355,19 +361,60 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * interroger les tables de la base de données de échantillons.
      */
     public static SQLEditor getSQLEditor() {
-        assert 2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length;
+        // assert 2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length;
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor = new SQLEditor(Table.preferences,
+        final SQLEditor editor = new SQLEditor(Configuration.getInstance(),
             resources.getString(ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(1)), LOGGER)
         {
-            public String getProperty(final String name) {
-                return getPreference(name);
+            public Configuration.Key getProperty(final String name) {
+                final Configuration.Key[] keys = {Table.configuration.KEY_DESCRIPTORS,
+                                                  Table.configuration.KEY_PARAMETERS,
+                                                  Table.configuration.KEY_LINEAR_MODELS,
+                                                  Table.configuration.KEY_ENVIRONMENTS_UPDATE,
+                                                  Table.configuration.KEY_ENVIRONMENTS_INSERT,
+                                                  Table.configuration.KEY_OPERATIONS,
+                                                  Table.configuration.KEY_LINEAR_SAMPLE,
+                                                  Table.configuration.KEY_ENVIRONMENTS,
+                                                  Table.configuration.KEY_POSITIONS,
+                                                  Table.configuration.KEY_SAMPLES_UPDATE,
+                                                  Table.configuration.KEY_SPECIES,
+                                                  Table.configuration.KEY_PUNCTUAL_SAMPLE,
+                                                  Table.configuration.KEY_DRIVER,
+                                                  Table.configuration.KEY_TIME_ZONE,
+                                                  Table.configuration.KEY_SOURCE};                
+                for (int i=0 ; i<keys.length ; i++) 
+                {
+                    final Configuration.Key key = keys[i];
+                    if (key.name.equals(name)) 
+                    {
+                        return key;
+                    }
+                }
+                throw new IllegalArgumentException("Impossible de trouver la propriété '" + name + "'.");
             }
         };
-        for (int i=0; i<PROPERTY_NAMES.length; i++) {
-            editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
-                    DEFAULT_PROPERTIES[(i<<1)+1], DEFAULT_PROPERTIES[i<<1]);
-        }
+        // for (int i=0; i<PROPERTY_NAMES.length; i++) {
+        //    editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
+        //            DEFAULT_PROPERTIES[(i<<1)+1], DEFAULT_PROPERTIES[i<<1]);
+        //}
+        
+        final Configuration.Key[] keyArray = {Table.configuration.KEY_DESCRIPTORS,
+                                              Table.configuration.KEY_PARAMETERS,
+                                              Table.configuration.KEY_LINEAR_MODELS,
+                                              Table.configuration.KEY_ENVIRONMENTS_UPDATE,
+                                              Table.configuration.KEY_ENVIRONMENTS_INSERT,
+                                              Table.configuration.KEY_OPERATIONS,
+                                              Table.configuration.KEY_LINEAR_SAMPLE,
+                                              Table.configuration.KEY_ENVIRONMENTS,
+                                              Table.configuration.KEY_POSITIONS,
+                                              Table.configuration.KEY_SAMPLES_UPDATE,
+                                              Table.configuration.KEY_SPECIES,
+                                              Table.configuration.KEY_PUNCTUAL_SAMPLE};
+                                              
+        for (int i=0; i<keyArray.length; i++) {
+            editor.addSQL(keyArray[i]);
+        }        
+        
         return editor;
     }
 
@@ -476,4 +523,28 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
             }
         }
     }
+    
+    /**
+     * Retourne le fichier de configuration permettant de se connecter et d'interroger 
+     * la base.
+     *
+     */
+    public static File getDefaultFileOfConfiguration() {
+        final String name = Table.preferences.get(Table.DATABASE, "");
+        if (name.trim().length() == 0 || (!new File(name).exists())) {
+            return new File(Configuration.class.getClassLoader().
+                getResource("fr/ird/database/sample/sql/resources/resources.properties").getPath());
+        }
+        return new File(name);
+    }    
+
+    /**
+     * Définit le fichier de configuration à utiliser pour se connecter interroger 
+     * la base.
+     *
+     * @param file  Le fichier de configuration.
+     */
+    public static void setDefaultFileOfConfiguration(final File file) {
+        Table.preferences.put(Table.DATABASE, file.toString());
+    }    
 }

@@ -73,7 +73,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * la propriété "GridCoverages" donne l'instruction SQL à utiliser pour interroger
      * la table d'images.
      */
-    private static final String[] DEFAULT_PROPERTIES = {
+    /*private static final String[] DEFAULT_PROPERTIES = {
         Table.SERIES+":TREE",             SeriesTable.SQL_TREE,
         Table.SERIES+":ID",               SeriesTable.SQL_SELECT_BY_ID,
         Table.SERIES,                     SeriesTable.SQL_SELECT,
@@ -82,7 +82,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         Table.SAMPLE_DIMENSIONS, SampleDimensionTable.SQL_SELECT,
         Table.CATEGORIES,               CategoryTable.SQL_SELECT,
         Table.GRID_GEOMETRIES,      GridGeometryTable.SQL_SELECT
-    };
+    };*/
 
     /**
      * Liste des noms descriptifs à donner aux propriétés.
@@ -90,7 +90,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * Ces clés doivent apparaîtrent dans le même ordre que
      * les éléments du tableau {@link #DEFAULT_PROPERTIES}.
      */
-    private static final int[] PROPERTY_NAMES = {
+    /*private static final int[] PROPERTY_NAMES = {
         ResourceKeys.SQL_SERIES_TREE,
         ResourceKeys.SQL_SERIES_BY_ID,
         ResourceKeys.SQL_SERIES,
@@ -99,7 +99,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         ResourceKeys.SQL_SAMPLE_DIMENSIONS,
         ResourceKeys.SQL_CATEGORIES,
         ResourceKeys.SQL_GRID_GEOMETRIES
-    };
+    };*/
 
     /**
      * La géométrie de l'ensemble des images de la base de données,
@@ -119,8 +119,9 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * autant que possible.
      */
     private static String getDefaultURL() {
-        LOGGER.log(loadDriver(Table.getPreference(DRIVER)));
-        return Table.getPreference(SOURCE);
+        final String driver = Table.configuration.get(Configuration.KEY_DRIVER);
+        LOGGER.log(loadDriver(driver));
+        return Table.configuration.get(Configuration.KEY_SOURCE);
     }
 
     /**
@@ -132,7 +133,8 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      *         à la base de données.
      */
     public CoverageDataBase() throws SQLException {
-        super(getDefaultURL(), TimeZone.getTimeZone(Table.getPreference(TIMEZONE)));
+        super(getDefaultURL(), TimeZone.getTimeZone(Table.configuration.get(Configuration.KEY_TIME_ZONE)),
+             Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
 
     /**
@@ -146,7 +148,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      *         à la base de données.
      */
     public CoverageDataBase(final String url, final TimeZone timezone) throws SQLException {
-        super(url, timezone);
+        super(url, timezone, Table.configuration.get(Configuration.KEY_LOGIN), Table.configuration.get(Configuration.KEY_PASSWORD));
     }
 
     /**
@@ -335,7 +337,8 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * @return Répertoire racine des images.
      */
     public static File getDefaultDirectory() {
-        return (Table.directory!=null) ? Table.directory : new File(".");
+        // return (Table.directory!=null) ? Table.directory : new File(".");
+        return new File(Table.configuration.get(Configuration.KEY_DIRECTORY)!=null ? Table.configuration.get(Configuration.KEY_DIRECTORY) : ".");
     }
 
     /**
@@ -348,11 +351,36 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      */
     public static void setDefaultDirectory(final File directory) {
         Table.directory=directory;
-        if (directory!=null) {
-            Table.PREFERENCES.put(Table.DIRECTORY, directory.getPath());
-        } else {
-            Table.PREFERENCES.remove(Table.DIRECTORY);
+        // if (directory!=null) {
+            // Table.PREFERENCES.put(Table.DIRECTORY, directory.getPath());
+        // } else {
+            // Table.PREFERENCES.remove(Table.DIRECTORY);
+            // Configuration.get(Configuration.KEY_DIRECTORY_ROOT);
+        // }
+        Table.configuration.set(Table.configuration.KEY_DIRECTORY, directory.toString());
+    }
+
+    /**
+     * Retourne le fichier de configuration permettant de se connecter et d'interroger 
+     * la base.
+     */
+    public static File getDefaultFileOfConfiguration() {
+        final String name = Table.preferences.get(Table.DATABASE, "");
+        if (name.trim().length() == 0 || !(new File(name).exists())) {
+            return new File(Configuration.class.getClassLoader().
+                getResource("fr/ird/database/coverage/sql/resources/resources.properties").getPath());
         }
+        return new File(name);
+    }
+    
+    /**
+     * Définit le fichier de configuration à utiliser pour se connecter interroger 
+     * la base.
+     *
+     * @param file  Le fichier de configuration.
+     */
+    public static void setDefaultFileOfConfiguration(final File file) {
+        Table.preferences.put(Table.DATABASE, file.toString());
     }
 
     /**
@@ -409,18 +437,73 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * base de données d'images.
      */
     public static SQLEditor getSQLEditor() {
-        assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
+        //assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
         final Resources resources = Resources.getResources(null);
-        final SQLEditor editor = new SQLEditor(Table.PREFERENCES,
+        final SQLEditor editor = new SQLEditor(Table.configuration,
             resources.getString(ResourceKeys.EDIT_SQL_COVERAGES_OR_SAMPLES_$1, new Integer(0)), LOGGER)
         {
-            public String getProperty(final String name) {
-                return Table.getPreference(name);
-            }
+            public Configuration.Key getProperty(final String name) {
+                final Configuration.Key[] keys = {Configuration.KEY_SERIES_TREE,
+                                                  Configuration.KEY_SERIES_ID,
+                                                  Configuration.KEY_SERIES_SUBSERIES,
+                                                  Configuration.KEY_SERIES_NAME,
+                                                  Configuration.KEY_GRID_COVERAGES_ID_INSERT,
+                                                  Configuration.KEY_GRID_COVERAGES_INSERT,
+                                                  Configuration.KEY_GRID_GEOMETRIES_ID_INSERT,
+                                                  Configuration.KEY_GRID_GEOMETRIES_INSERT,
+                                                  Configuration.KEY_GRID_COVERAGES,
+                                                  Configuration.KEY_GRID_COVERAGES3,
+                                                  Configuration.KEY_GRID_COVERAGES1,
+                                                  Configuration.KEY_GRID_COVERAGES2,
+                                                  Configuration.KEY_FORMATS,
+                                                  Configuration.KEY_SAMPLE_DIMENSIONS,
+                                                  Configuration.KEY_CATEGORIES,
+                                                  Configuration.KEY_GRID_GEOMETRIES,
+                                                  Configuration.KEY_GEOMETRY,
+                                                  Configuration.KEY_DRIVER,
+                                                  Configuration.KEY_SOURCE,
+                                                  Configuration.KEY_TIME_ZONE,
+                                                  Configuration.KEY_DIRECTORY,
+                                                  Configuration.KEY_LOGIN,
+                                                  Configuration.KEY_PASSWORD};
+
+                for (int i=0 ; i<keys.length ; i++) 
+                {
+                    final Configuration.Key key = keys[i];
+                    if (key.name.equals(name)) 
+                    {
+                        return key;
+                    }
+                }
+                throw new IllegalArgumentException("Impossible de trouver la propriété '" + name + "'.");            
+             }
         };
-        for (int i=0; i<PROPERTY_NAMES.length; i++) {
-            editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
-                          DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
+        
+        // for (int i=0; i<PROPERTY_NAMES.length; i++) {
+        //     editor.addSQL(resources.getString(PROPERTY_NAMES[i]),
+        //                   DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
+        // }
+                
+        final Configuration.Key[] keys = {Configuration.KEY_SERIES_TREE,
+                                          Configuration.KEY_SERIES_ID,
+                                          Configuration.KEY_SERIES_SUBSERIES,
+                                          Configuration.KEY_SERIES_NAME,
+                                          Configuration.KEY_GRID_COVERAGES_ID_INSERT,
+                                          Configuration.KEY_GRID_COVERAGES_INSERT,
+                                          Configuration.KEY_GRID_GEOMETRIES_ID_INSERT,
+                                          Configuration.KEY_GRID_GEOMETRIES_INSERT,
+                                          Configuration.KEY_GRID_COVERAGES,
+                                          Configuration.KEY_GRID_COVERAGES3,
+                                          Configuration.KEY_GRID_COVERAGES1,
+                                          Configuration.KEY_GRID_COVERAGES2,
+                                          Configuration.KEY_FORMATS,
+                                          Configuration.KEY_SAMPLE_DIMENSIONS,
+                                          Configuration.KEY_CATEGORIES,
+                                          Configuration.KEY_GRID_GEOMETRIES,
+                                          Configuration.KEY_GEOMETRY};
+                                          
+        for (int i=0; i<keys.length; i++) {
+            editor.addSQL(keys[i]);
         }
         return editor;
     }

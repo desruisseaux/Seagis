@@ -75,12 +75,27 @@ public interface DataBase {
     public static final String TIMEZONE = "TimeZone";
 
     /**
+     * Clé de la propriétée représentant le fuseau horaire de
+     * la base de données. Cette clé peut être utilisée avec
+     * {@link #getProperty}.
+     */
+    //protected static final String DATABASE = "FileOfConfiguration";
+
+    /**
      * Retourne une des propriétée de la base de données. La clé <code>name</code>
      * est habituellement une des constantes {@link #DRIVER}, {@link #SOURCE} ou
      * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
      * demandée n'est pas définie.
      */
     public abstract String getProperty(final String name);
+
+    /**
+     * Retourne une des propriétée de la base de données. La clé <code>name</code>
+     * est habituellement une des constantes {@link #DRIVER}, {@link #SOURCE} ou
+     * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
+     * demandée n'est pas définie.
+     */
+    /*public abstract Configuration.Key getKey(final String name);*/
 
     /**
      * Retourne le fuseau horaire des dates exprimées dans cette base de données.

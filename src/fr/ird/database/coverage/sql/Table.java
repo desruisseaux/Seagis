@@ -62,13 +62,25 @@ abstract class Table implements fr.ird.database.Table {
      * pas défini de préférence pour un paramètre.
      */
     static String getPreference(final String name) {
-        String def=null;
+        /*String def=null;
         if (name != null) {
                  if (name.equalsIgnoreCase(CoverageDataBase.DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
             else if (name.equalsIgnoreCase(CoverageDataBase.SOURCE))   def = "jdbc:odbc:SEAS-Images";
             else if (name.equalsIgnoreCase(CoverageDataBase.TIMEZONE)) def = "UTC";
-        }
-        return PREFERENCES.get(name, def);
+        }*/
+        if (name.equals(Configuration.KEY_DRIVER.name)) 
+        {
+            return configuration.get(Configuration.KEY_DRIVER);
+        } 
+        else if (name.equals(Configuration.KEY_SOURCE.name)) 
+        {
+            return configuration.get(Configuration.KEY_SOURCE);        
+        } 
+        else if (name.equals(Configuration.KEY_TIME_ZONE)) 
+        {
+            return configuration.get(Configuration.KEY_TIME_ZONE);        
+        }                          
+        throw new IllegalArgumentException("Impossible de trouver la clé '" + name + "'.");
     }
 
     /* Nom de table dans les instructions SQL. */ static final String OPERATIONS        = "Operations";
@@ -87,6 +99,12 @@ abstract class Table implements fr.ird.database.Table {
     static final String DIRECTORY = "Directory";
 
     /**
+     * Clé à utiliser pour mémoriser le fichier de configuration permettant de se connecter 
+     * et d'interroger la base.
+     */
+    static final String DATABASE = "Database";
+    
+    /**
      * Ensemble d'objets qui ont déjà été créés et qui n'ont pas encore été réclamés par
      * le ramasse-miettes. Cet ensemble sera utilisé avec des objets {@link GridCoverageEntry},
      * {@link FormatEntry}, {@link CategoryList}, etc. pour tenter autant que possible
@@ -100,8 +118,9 @@ abstract class Table implements fr.ird.database.Table {
      * notamment les instructions SQL à utiliser pour interroger la base
      * de données d'images.
      */
-    static final Preferences PREFERENCES = Preferences.systemNodeForPackage(CoverageDataBase.class);
-
+    static final Preferences preferences = Preferences.systemNodeForPackage(CoverageDataBase.class);
+    static final Configuration configuration = Configuration.getInstance();
+        
     /**
      * Répertoire racine à partir d'où rechercher les
      * images, ou <code>null</code> pour utiliser le
@@ -109,7 +128,7 @@ abstract class Table implements fr.ird.database.Table {
      */
     static File directory;
     static {
-        final String dir = PREFERENCES.get(DIRECTORY, null);
+        final String dir = configuration.get(Configuration.KEY_DIRECTORY);
         if (dir != null) {
             directory = new File(dir);
         }
@@ -166,5 +185,5 @@ abstract class Table implements fr.ird.database.Table {
         calendar.set(Calendar.SECOND,      localCalendar.get(Calendar.SECOND     ));
         calendar.set(Calendar.MILLISECOND, localCalendar.get(Calendar.MILLISECOND));
         return calendar.getTime();
-    }
+    }   
 }

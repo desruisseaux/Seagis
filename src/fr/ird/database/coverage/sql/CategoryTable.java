@@ -74,16 +74,17 @@ final class CategoryTable extends Table {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par les
      * constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] NAME    */ "name, "    +
-                                /*[02] LOWER   */ "lower, "   +
-                                /*[03] UPPER   */ "upper, "   +
-                                /*[04] C0      */ "c0, "      +
-                                /*[05] C1      */ "c1, "      +
-                                /*[06] LOG     */ "log, "     +
-                                /*[07] COLORS  */ "colors\n"  +
-        
-                    "FROM "+CATEGORIES+" WHERE [band]=? ORDER BY lower";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_CATEGORIES);
+    // static final String SQL_SELECT=
+    //                 "SELECT "+  /*[01] NAME    */ "name, "    +
+    //                             /*[02] LOWER   */ "lower, "   +
+    //                             /*[03] UPPER   */ "upper, "   +
+    //                             /*[04] C0      */ "c0, "      +
+    //                             /*[05] C1      */ "c1, "      +
+    //                             /*[06] LOG     */ "log, "     +
+    //                             /*[07] COLORS  */ "colors\n"  +
+    //     
+    //                 "FROM "+CATEGORIES+" WHERE [band]=? ORDER BY lower";
                     // "Note: "band" semble être un opérateur pour Access.
 
     /** Numéro de colonne. */ private static final int NAME    =  1;
@@ -113,7 +114,7 @@ final class CategoryTable extends Table {
      * @throws SQLException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
      */
     protected CategoryTable(final Connection connection) throws SQLException {
-        statement = connection.prepareStatement(PREFERENCES.get(CATEGORIES, SQL_SELECT));
+        statement = connection.prepareStatement(SQL_SELECT);
     }
 
     /**

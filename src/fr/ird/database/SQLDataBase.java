@@ -101,7 +101,11 @@ public abstract class SQLDataBase implements DataBase {
                           final String user, final String   password)
             throws SQLException
     {
-        this.connection = DriverManager.getConnection(url, user, password);
+        if (user.trim().length() != 0 && password.trim().length() != 0) {
+            this.connection = DriverManager.getConnection(url, user, password);
+        } else {
+            this.connection = DriverManager.getConnection(url);
+        }
         this.timezone   = timezone;
         this.source     = url;
     }

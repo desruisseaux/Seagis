@@ -64,8 +64,9 @@ final class ParameterTable
     /**
      * Requête SQL pour obtenir un paramètre environnemental.
      */
-    static final String SQL_SELECT =
-            "SELECT ID, nom, séries0, séries1, bande FROM "+PARAMETERS+" WHERE ID=? ORDER BY nom";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_PARAMETERS);
+    // static final String SQL_SELECT =
+    //         "SELECT ID, nom, séries0, séries1, bande FROM "+PARAMETERS+" WHERE ID=? ORDER BY nom";
 
     /** Numéro de colonne. */ private static final int ID      = 1;
     /** Numéro de colonne. */ private static final int NAME    = 2;
@@ -130,7 +131,7 @@ final class ParameterTable
      * Retourne l'instruction SQL à utiliser pour obtenir les paramètres.
      */
     protected String getQuery() {
-        return preferences.get(PARAMETERS, SQL_SELECT);
+        return SQL_SELECT;
     }
 
     /**

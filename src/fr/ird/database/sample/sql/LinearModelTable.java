@@ -44,8 +44,9 @@ final class LinearModelTable extends Table {
     /**
      * La requête SQL servant à interroger la table.
      */
-    static final String SQL_SELECT = "SELECT source1, source2, coefficient " +
-                                     "FROM [" + LINEAR_MODELS + "] WHERE cible=?";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_LINEAR_MODELS);
+    // static final String SQL_SELECT = "SELECT source1, source2, coefficient " +
+    //                                  "FROM [" + LINEAR_MODELS + "] WHERE cible=?";
 
     /** Numéro de colonne. */ private static final int SOURCE1     = 1;
     /** Numéro de colonne. */ private static final int SOURCE2     = 2;
@@ -64,7 +65,7 @@ final class LinearModelTable extends Table {
      * @throws SQLException si la construction de cette table a échouée.
      */
     protected LinearModelTable(final DescriptorTable descriptors) throws SQLException {
-        super(descriptors.getConnection().prepareStatement(preferences.get(LINEAR_MODELS, SQL_SELECT)));
+        super(descriptors.getConnection().prepareStatement(SQL_SELECT));
         this.descriptors = descriptors;
     }
 

@@ -58,13 +58,14 @@ final class SampleDimensionTable extends Table {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID      */ "ID, "      +
-                                /*[02] BAND    */ "[band], "  +
-                                /*[04] UNITS   */ "units\n"   +
-
-                    "FROM "+SAMPLE_DIMENSIONS+" WHERE format=? ORDER BY [band]";
-                    // "Note: "band" semble être un opérateur pour Access.
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_SAMPLE_DIMENSIONS);
+    // static final String SQL_SELECT=
+    //                 "SELECT "+  /*[01] ID      */ "ID, "      +
+    //                             /*[02] BAND    */ "[band], "  +
+    //                             /*[04] UNITS   */ "units\n"   +
+    // 
+    //                 "FROM "+SAMPLE_DIMENSIONS+" WHERE format=? ORDER BY [band]";
+    //                 // "Note: "band" semble être un opérateur pour Access.
 
     /** Numéro de colonne. */ private static final int ID      =  1;
     /** Numéro de colonne. */ private static final int BAND    =  2;
@@ -90,7 +91,7 @@ final class SampleDimensionTable extends Table {
      * @throws SQLException si <code>SampleDimensionTable</code> n'a pas pu construire sa requête SQL.
      */
     protected SampleDimensionTable(final Connection connection) throws SQLException {
-        statement = connection.prepareStatement(PREFERENCES.get(SAMPLE_DIMENSIONS, SQL_SELECT));
+        statement = connection.prepareStatement(SQL_SELECT);
     }
 
     /**

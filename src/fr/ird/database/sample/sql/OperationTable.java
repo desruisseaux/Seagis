@@ -43,8 +43,9 @@ final class OperationTable
     /**
      * Requête SQL pour obtenir le code d'une opération.
      */
-    static final String SQL_SELECT =
-            "SELECT ID, colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE ID=? ORDER BY ID";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_OPERATIONS);
+    // static final String SQL_SELECT =
+    //         "SELECT ID, colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE ID=? ORDER BY ID";
 
     /** Numéro de colonne. */ private static final int ID        = 1;
     /** Numéro de colonne. */ private static final int COLUMN    = 2;
@@ -76,7 +77,7 @@ final class OperationTable
      * Retourne l'instruction SQL à utiliser pour obtenir les opérations.
      */
     protected String getQuery() {
-        return preferences.get(OPERATIONS, SQL_SELECT);
+        return SQL_SELECT;
     }
 
     /**

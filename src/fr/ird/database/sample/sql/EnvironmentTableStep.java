@@ -63,8 +63,9 @@ final class EnvironmentTableStep extends Table {
      * Requête SQL pour obtenir la table des données environnementales.
      * Cette requête <strong>doit</strong> être classé par numéro ID des échantillons.
      */
-    static final String SQL_SELECT=
-           "SELECT capture FROM "+ENVIRONMENTS+" WHERE position=? AND paramètre=? ORDER BY capture";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_ENVIRONMENTS);
+    // static final String SQL_SELECT=
+    //       "SELECT capture FROM "+ENVIRONMENTS+" WHERE position=? AND paramètre=? ORDER BY capture";
 
     /** Numéro d'argument. */ private static final int ARG_POSITION  = 1;
     /** Numéro d'argument. */ private static final int ARG_PARAMETER = 2;
@@ -217,7 +218,7 @@ final class EnvironmentTableStep extends Table {
             // colonnes ainsi que les clauses "IS NOT NULL".
             //
             final String[] columns = getColumns(false);
-            String query = completeSelect(preferences.get(ENVIRONMENTS, SQL_SELECT), columns);
+            String query = completeSelect(configuration.get(Configuration.KEY_ENVIRONMENTS), columns);
             if (!nullIncluded) {
                 int index = indexOfWord(query, "ORDER");
                 if (index >= 0) {

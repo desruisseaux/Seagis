@@ -51,17 +51,18 @@ final class GridGeometryTable extends Table {
      * Requête SQL utilisée pour obtenir les coordonnées
      * et la plage de temps couverte par les images.
      */
-    static final String SQL_SELECT =
-            "SELECT Min("+GRID_COVERAGES +".start_time) AS start_time, "+
-                   "Max("+GRID_COVERAGES +".end_time) AS end_time, "+
-                   "Min("+GRID_GEOMETRIES+".xmin) AS xmin, "+
-                   "Min("+GRID_GEOMETRIES+".ymin) AS ymin, "+
-                   "Max("+GRID_GEOMETRIES+".xmax) AS xmax, "+
-                   "Max("+GRID_GEOMETRIES+".ymax) AS ymax\n"+
-            "FROM ("+GRID_COVERAGES+' '+
-            "INNER JOIN "+SUBSERIES      +" ON "+GRID_COVERAGES+".subseries="+SUBSERIES     +".ID) "+
-            "INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID\n"+
-            "WHERE (visible=TRUE)";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_GRID_GEOMETRIES);
+    // static final String SQL_SELECT =
+    //         "SELECT Min("+GRID_COVERAGES +".start_time) AS start_time, "+
+    //                "Max("+GRID_COVERAGES +".end_time) AS end_time, "+
+    //                "Min("+GRID_GEOMETRIES+".xmin) AS xmin, "+
+    //                "Min("+GRID_GEOMETRIES+".ymin) AS ymin, "+
+    //                "Max("+GRID_GEOMETRIES+".xmax) AS xmax, "+
+    //                "Max("+GRID_GEOMETRIES+".ymax) AS ymax\n"+
+    //         "FROM ("+GRID_COVERAGES+' '+
+    //         "INNER JOIN "+SUBSERIES      +" ON "+GRID_COVERAGES+".subseries="+SUBSERIES     +".ID) "+
+    //         "INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID\n"+
+    //         "WHERE (visible=TRUE)";
 
     /** Date de début des images de la base de données.      */ private long  startTime;
     /** Date de fin des images de la base de données.        */ private long  endTime;
@@ -80,7 +81,7 @@ final class GridGeometryTable extends Table {
      */
     public GridGeometryTable(final Connection connection, final TimeZone timezone) throws SQLException {
         final Statement statement = connection.createStatement();
-        final ResultSet result = statement.executeQuery(PREFERENCES.get(GRID_GEOMETRIES, SQL_SELECT));
+        final ResultSet result = statement.executeQuery(configuration.get(Configuration.KEY_GRID_GEOMETRIES));
         if (result.next()) {
             boolean wasNull=false;
             final Calendar      calendar = new GregorianCalendar(timezone);

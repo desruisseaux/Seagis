@@ -81,7 +81,8 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
     /**
      * Requête utilisé pour mettre à jour un enregistrement.
      */
-    static final String SQL_UPDATE = "UPDATE "+SAMPLES+" SET [?]=? WHERE ID=?";
+    static final String SQL_UPDATE = Table.configuration.get(Configuration.KEY_SAMPLES_UPDATE);
+    // static final String SQL_UPDATE = "UPDATE "+SAMPLES+" SET [?]=? WHERE ID=?";
 
     /** Numéro d'argument. */ private static final int ARG_VALUE = 1;
     /** Numéro d'argument. */ private static final int ARG_ID    = 2;
@@ -440,7 +441,7 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
                 update = null;
                 lastColumnUpdated = null;
             }
-            String query = replaceQuestionMark(preferences.get(SAMPLES+":UPDATE", SQL_UPDATE), columnName);
+            String query = replaceQuestionMark(SQL_UPDATE, columnName);
             update = statement.getConnection().prepareStatement(query);
             lastColumnUpdated = columnName;
         }

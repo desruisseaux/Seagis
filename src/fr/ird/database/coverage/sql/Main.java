@@ -126,14 +126,10 @@ final class Main extends Arguments {
         String driver = getOptionalString("-driver");
         String source = getOptionalString("-source");
         if (driver == null) {
-            driver = Table.getPreference(CoverageDataBase.DRIVER);
-        } else {
-            Table.PREFERENCES.put(CoverageDataBase.DRIVER, driver);
+            Table.configuration.get(Configuration.KEY_DRIVER);
         }
         if (source == null) {
-            source = Table.getPreference(CoverageDataBase.SOURCE);
-        } else {
-            Table.PREFERENCES.put(CoverageDataBase.SOURCE, source);
+            Table.configuration.get(Configuration.KEY_SOURCE);
         }
         this.driver = driver;
         this.source = source;

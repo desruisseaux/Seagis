@@ -98,37 +98,57 @@ import fr.ird.database.coverage.CoverageDataBase;
  * @author Martin Desruisseaux
  */
 class GridCoverageTable extends Table implements CoverageTable {
+        
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des images.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes {@link #SERIES}, {@link #FILENAME} et compagnie.
      */
-    static final String SQL_SELECT =
-                    "SELECT "+  /*[01] ID         */ GRID_COVERAGES+".ID, "          +
-                                /*[02] SERIES     */                 "series, "      +
-                                /*[03] PATHNAME   */                 "pathname, "    +
-                                /*[04] FILENAME   */                 "filename, "    +
-                                /*[05] START_TIME */                 "start_time, "  +
-                                /*[06] END_TIME   */                 "end_time, "    +
-                                /*[07] XMIN       */                 "xmin, "        +
-                                /*[08] XMAX       */                 "xmax, "        +
-                                /*[09] YMIN       */                 "ymin, "        +
-                                /*[10] YMAX       */                 "ymax, "        +
-                                /*[11] WIDTH      */                 "width, "       +
-                                /*[12] HEIGHT     */                 "height, "      +
-                                /*[13] CS         */                 "coordinate_system, " +
-                                /*[14] FORMAT     */                 "format\n"      +
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_GRID_COVERAGES);
+    // static final String SQL_SELECT =
+    //                 "SELECT "+  /*[01] ID         */ GRID_COVERAGES+".ID, "          +
+    //                             /*[02] SERIES     */                 "series, "      +
+    //                             /*[03] PATHNAME   */                 "pathname, "    +
+    //                             /*[04] FILENAME   */                 "filename, "    +
+    //                             /*[05] START_TIME */                 "start_time, "  +
+    //                             /*[06] END_TIME   */                 "end_time, "    +
+    //                             /*[07] XMIN       */                 "xmin, "        +
+    //                             /*[08] XMAX       */                 "xmax, "        +
+    //                             /*[09] YMIN       */                 "ymin, "        +
+    //                             /*[10] YMAX       */                 "ymax, "        +
+    //                             /*[11] WIDTH      */                 "width, "       +
+    //                             /*[12] HEIGHT     */                 "height, "      +
+    //                             /*[13] CS         */                 "coordinate_system, " +
+    //                             /*[14] FORMAT     */                 "format\n"      +
+    // 
+    //                 "FROM ("+GRID_COVERAGES+
+    //                 " INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID)" +
+    //                 " INNER JOIN "+SUBSERIES+      " ON "+GRID_COVERAGES+".subseries="     +SUBSERIES+".ID\n"+
+    // 
+    //                 "WHERE (xmax>? AND xmin<? AND ymax>? AND ymin<?) "+
+    //                   "AND (((end_time Is Null) OR end_time>=?) AND ((start_time Is Null) OR start_time<=?)) "+
+    //                   "AND series=?\n"+
+    //                   "ORDER BY end_time, subseries"; // DOIT être en ordre chronologique.
+    //                                                   // Voir {@link GridCoverageEntry#compare}.
 
-                    "FROM ("+GRID_COVERAGES+
-                    " INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID)" +
-                    " INNER JOIN "+SUBSERIES+      " ON "+GRID_COVERAGES+".subseries="     +SUBSERIES+".ID\n"+
-
-                    "WHERE (xmax>? AND xmin<? AND ymax>? AND ymin<?) "+
-                      "AND (((end_time Is Null) OR end_time>=?) AND ((start_time Is Null) OR start_time<=?)) "+
-                      "AND series=?\n"+
-                      "ORDER BY end_time, subseries"; // DOIT être en ordre chronologique.
-                                                      // Voir {@link GridCoverageEntry#compare}.
-
+    /**
+     * Requête SQL utilisée par cette classe pour obtenir une image.
+     * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
+     * les constantes {@link #SERIES}, {@link #FILENAME} et compagnie.
+     */
+    static final String SQL_SELECT_ID1 = configuration.get(Configuration.KEY_GRID_COVERAGES1);
+    // static final String SQL_SELECT_ID1 = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+    //                                      " WHERE "+GRID_COVERAGES+".ID=?";
+    
+    /**
+     * Requête SQL utilisée par cette classe pour obtenir la table des images.
+     * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
+     * les constantes {@link #SERIES}, {@link #FILENAME} et compagnie.
+     */
+    static final String SQL_SELECT_ID2 = configuration.get(Configuration.KEY_GRID_COVERAGES2);
+    // static final String SQL_SELECT_ID2 = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+    //                                     " WHERE (visible=TRUE) AND (series=?) AND (filename LIKE ?)";    
+    
     /** Numéro de colonne. */ static final int ID                =  1;
     /** Numéro de colonne. */ static final int SERIES            =  2;
     /** Numéro de colonne. */ static final int PATHNAME          =  3;
@@ -283,7 +303,7 @@ class GridCoverageTable extends Table implements CoverageTable {
      * @throws SQLException si <code>GridCoverageTable</code> n'a pas pu construire sa requête SQL.
      */
     GridCoverageTable(final Connection connection, final TimeZone timezone) throws SQLException {
-        statement = connection.prepareStatement(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT));
+        statement = connection.prepareStatement(SQL_SELECT);
         this.timezone   = timezone;
         this.calendar   = new GregorianCalendar(timezone);
         this.dateFormat = DateFormat.getDateInstance(DateFormat.LONG);
@@ -524,9 +544,9 @@ class GridCoverageTable extends Table implements CoverageTable {
      */
     public final synchronized CoverageEntry getEntry(final int ID) throws SQLException {
         if (imageByID == null) {
-            final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
-                                        " WHERE "+GRID_COVERAGES+".ID=?";
-            imageByID = statement.getConnection().prepareStatement(query);
+            // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+            //                             " WHERE "+GRID_COVERAGES+".ID=?";
+            imageByID = statement.getConnection().prepareStatement(SQL_SELECT_ID1);
         }
         imageByID.setInt(1, ID);
         return getEntry(imageByID);
@@ -539,9 +559,9 @@ class GridCoverageTable extends Table implements CoverageTable {
      */
     public final synchronized CoverageEntry getEntry(final String name) throws SQLException {
         if (imageByName == null) {
-            final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
-                                " WHERE (visible=TRUE) AND (series=?) AND (filename LIKE ?)";
-            imageByName = statement.getConnection().prepareStatement(query);
+            // final String query = select(PREFERENCES.get(GRID_COVERAGES, SQL_SELECT)) +
+            //                      " WHERE (visible=TRUE) AND (series=?) AND (filename LIKE ?)";
+            imageByName = statement.getConnection().prepareStatement(SQL_SELECT_ID2);
         }
         imageByName.setInt(1, series.getID());
         imageByName.setString(2, name);

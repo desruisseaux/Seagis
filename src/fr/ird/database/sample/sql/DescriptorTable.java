@@ -63,11 +63,12 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
     /**
      * Requête SQL pour obtenir un descripteur du paysage océanique.
      */
-    static final String SQL_SELECT =
-            "SELECT nom, position, paramètre, opération, distribution, scale, offset, log " +
-            "FROM "+DESCRIPTORS+" INNER JOIN "    +DISTRIBUTIONS +
-             " ON "+DESCRIPTORS+".distribution = "+DISTRIBUTIONS+".ID " +
-            "WHERE nom LIKE ?";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_DESCRIPTORS);
+    // static final String SQL_SELECT =
+    //         "SELECT nom, position, paramètre, opération, distribution, scale, offset, log " +
+    //         "FROM "+DESCRIPTORS+" INNER JOIN "    +DISTRIBUTIONS +
+    //          " ON "+DESCRIPTORS+".distribution = "+DISTRIBUTIONS+".ID " +
+    //         "WHERE nom LIKE ?";
 
     /** Numéro de colonne. */ private static final int NAME         = 1;
     /** Numéro de colonne. */ private static final int POSITION     = 2;
@@ -112,7 +113,7 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * @throws SQLException si la construction de cette table a échouée.
      */
     protected DescriptorTable(final Connection connection) throws SQLException {
-        super(connection.prepareStatement(preferences.get(DESCRIPTORS, SQL_SELECT)));
+        super(connection.prepareStatement(SQL_SELECT));
     }
 
     /**
@@ -155,7 +156,7 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * Retourne la requête SQL à utiliser pour obtenir un descripteur.
      */
     protected String getQuery() {
-        return preferences.get(DESCRIPTORS, SQL_SELECT);
+        return SQL_SELECT;
     }
 
     /**

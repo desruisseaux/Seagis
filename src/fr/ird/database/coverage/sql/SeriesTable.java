@@ -71,50 +71,54 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      *
      * @task TODO: Pourrait être dérivée de la requête suivante (SQL_SELECT_BY_ID).
      */
-    static final String SQL_SELECT =
-        "SELECT ID, name, description, period FROM "+SERIES+" WHERE name LIKE ?";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_SERIES_NAME);
+    // static final String SQL_SELECT =
+    //    "SELECT ID, name, description, period FROM "+SERIES+" WHERE name LIKE ?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir une série à partir de son numéro ID.
      */
-    static final String SQL_SELECT_BY_ID =
-        "SELECT ID, name, description, period FROM "+SERIES+" WHERE ID=?";
+    static final String SQL_SELECT_BY_ID = configuration.get(Configuration.KEY_SERIES_ID);    
+    //static final String SQL_SELECT_BY_ID =
+    //    "SELECT ID, name, description, period FROM "+SERIES+" WHERE ID=?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir les sous-séries d'une série.
      */
-    private static final String SQL_SELECT_SUBSERIES =
-        "SELECT ID, name, description, format FROM "+SUBSERIES+" WHERE series=?";
+    static final String SQL_SELECT_SUBSERIES = configuration.get(Configuration.KEY_SERIES_SUBSERIES);
+    //static final String SQL_SELECT_SUBSERIES =
+    //    "SELECT ID, name, description, format FROM "+SUBSERIES+" WHERE series=?";
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des séries.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes {@link #SERIES_ID}, {@link #SERIES_NAME} et compagnie.
      */
-    static final String SQL_TREE =
-           "SELECT "+  /*[01] SUBSERIES_ID      */  SUBSERIES+".ID, "          +
-                       /*[02] SUBSERIES_NAME    */  SUBSERIES+".name, "        +
-                       /*[03] SUBSERIES_REMARKS */  SUBSERIES+".description, " +
-                       /*[04] SERIES_ID         */     SERIES+".ID, "          +
-                       /*[05] SERIES_NAME       */     SERIES+".name, "        +
-                       /*[06] SERIES_REMARKS    */     SERIES+".description, " +
-                       /*[07] OPERATION_ID      */ OPERATIONS+".ID, "          +
-                       /*[08] OPERATION_NAME    */ OPERATIONS+".name, "        +
-                       /*[09] OPERATION_REMARKS */ OPERATIONS+".description, " +
-                       /*[10] PARAMETER_ID      */ PARAMETERS+".ID, "          +
-                       /*[11] PARAMETER_NAME    */ PARAMETERS+".name, "        +
-                       /*[12] PARAMETER_REMARKS */ PARAMETERS+".description, " +
-                       /*[13] FORMAT            */  SUBSERIES+".format,"       +
-                       /*[14] PERIOD            */     SERIES+".period\n"      +
-           "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
-                       OPERATIONS + ", " +
-                       SERIES     + ", " +
-                       SUBSERIES  + "\n" +
-           "WHERE "  + PARAMETERS + ".ID=parameter AND " +
-                       OPERATIONS + ".ID=operation AND " +
-                       SERIES     + ".ID=series    AND " +
-                                        "visible=TRUE\n" +
-           "ORDER BY "+PARAMETERS+".name, "+OPERATIONS+".name, "+SERIES+".name";
+    static final String SQL_TREE = configuration.get(Configuration.KEY_SERIES_TREE);
+    // static final String SQL_TREE =
+    //        "SELECT "+  /*[01] SUBSERIES_ID      */  SUBSERIES+".ID, "          +
+    //                    /*[02] SUBSERIES_NAME    */  SUBSERIES+".name, "        +
+    //                    /*[03] SUBSERIES_REMARKS */  SUBSERIES+".description, " +
+    //                    /*[04] SERIES_ID         */     SERIES+".ID, "          +
+    //                    /*[05] SERIES_NAME       */     SERIES+".name, "        +
+    //                    /*[06] SERIES_REMARKS    */     SERIES+".description, " +
+    //                    /*[07] OPERATION_ID      */ OPERATIONS+".ID, "          +
+    //                    /*[08] OPERATION_NAME    */ OPERATIONS+".name, "        +
+    //                    /*[09] OPERATION_REMARKS */ OPERATIONS+".description, " +
+    //                    /*[10] PARAMETER_ID      */ PARAMETERS+".ID, "          +
+    //                    /*[11] PARAMETER_NAME    */ PARAMETERS+".name, "        +
+    //                    /*[12] PARAMETER_REMARKS */ PARAMETERS+".description, " +
+    //                    /*[13] FORMAT            */  SUBSERIES+".format,"       +
+    //                    /*[14] PERIOD            */     SERIES+".period\n"      +
+    //        "FROM ["  + PARAMETERS +"], " + // Note: les [  ] sont nécessaires pour Access.
+    //                    OPERATIONS + ", " +
+    //                    SERIES     + ", " +
+    //                    SUBSERIES  + "\n" +
+    //        "WHERE "  + PARAMETERS + ".ID=parameter AND " +
+    //                    OPERATIONS + ".ID=operation AND " +
+    //                    SERIES     + ".ID=series    AND " +
+    //                                     "visible=TRUE\n" +
+    //        "ORDER BY "+PARAMETERS+".name, "+OPERATIONS+".name, "+SERIES+".name";
 
 
     /** Numéro de colonne. */ private static final int SUBSERIES_ID      =  1;
@@ -212,7 +216,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      */
     public synchronized SeriesEntry getEntry(final int ID) throws SQLException {
         if (selectByID == null) {
-            selectByID = connection.prepareStatement(PREFERENCES.get(SERIES+":ID", SQL_SELECT_BY_ID));
+            selectByID = connection.prepareStatement(SQL_SELECT_BY_ID);
         }
         selectByID.setInt(ARG_ID, ID);
         return getEntry(selectByID);
@@ -223,7 +227,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      */
     public synchronized SeriesEntry getEntry(final String name) throws SQLException {
         if (selectByName == null) {
-            selectByName = connection.prepareStatement(PREFERENCES.get(SERIES, SQL_SELECT));
+            selectByName = connection.prepareStatement(SQL_SELECT);
         }
         selectByName.setString(ARG_NAME, name);
         return getEntry(selectByName);
@@ -250,6 +254,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
                  * alors la méthode peut être statique).
                  */
                 if (selectSubSeries == null) {
+                    System.out.println(SQL_SELECT_SUBSERIES);
                     selectSubSeries = connection.prepareStatement(SQL_SELECT_SUBSERIES);
                 }
                 selectSubSeries.setInt(1, ID);
@@ -280,7 +285,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      */
     public synchronized Set<fr.ird.database.coverage.SeriesEntry> getEntries() throws SQLException {
         final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(PREFERENCES.get(SERIES+":TREE", SQL_TREE));
+        final ResultSet resultSet = statement.executeQuery(SQL_TREE);
         final Set<fr.ird.database.coverage.SeriesEntry> set;
         set = new LinkedHashSet<fr.ird.database.coverage.SeriesEntry>();
         while (resultSet.next()) {
@@ -302,7 +307,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
     public synchronized TreeModel getTree(final int leafType) throws SQLException {
         final Locale       locale = null;
         final Statement statement = connection.createStatement();
-        final ResultSet resultSet = statement.executeQuery(PREFERENCES.get(SERIES+":TREE", SQL_TREE));
+        final ResultSet resultSet = statement.executeQuery(SQL_TREE);
         final int     branchCount = Math.min(TREE_STRUCTURE.length, leafType);
         final int[]           ids = new int   [branchCount];
         final String[]      names = new String[branchCount];

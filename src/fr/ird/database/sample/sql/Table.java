@@ -52,11 +52,18 @@ abstract class Table implements fr.ird.database.Table {
     /** Nom de table. */ static final String SPECIES       = "Espèces";
 
     /**
+     * Clé à utiliser pour mémoriser le fichier de configuration permettant de se connecter 
+     * et d'interroger la base.
+     */
+    static final String DATABASE = "Database";
+    
+    /**
      * Propriétés de la base de données. Ces propriétés peuvent contenir
      * notamment les instructions SQL à utiliser pour interroger la base
      * de données d'images.
      */
-    static final Preferences preferences = Preferences.systemNodeForPackage(SampleDataBase.class);
+    public static final Preferences preferences = Preferences.systemNodeForPackage(SampleDataBase.class);
+    public static final Configuration configuration = Configuration.getInstance();
 
     /**
      * Requète SQL à utiliser pour obtenir les données.

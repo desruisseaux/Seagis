@@ -43,8 +43,9 @@ final class RelativePositionTable
     /**
      * La requête SQL à utiliser pour obtnir une position relative.
      */
-    static final String SQL_SELECT =
-            "SELECT ID, nom, temps, défaut FROM "+POSITIONS+" WHERE ID=? ORDER BY temps DESC";
+    static final String SQL_SELECT = configuration.get(Configuration.KEY_POSITIONS);
+    // static final String SQL_SELECT =
+    //         "SELECT ID, nom, temps, défaut FROM "+POSITIONS+" WHERE ID=? ORDER BY temps DESC";
 
     /** Numéro de colonne. */ private static final int ID        = 1;
     /** Numéro de colonne. */ private static final int NAME      = 2;
@@ -79,7 +80,7 @@ final class RelativePositionTable
      * Retourne l'instruction SQL à utiliser pour obtenir les positions relatives.
      */
     protected String getQuery() {
-        return preferences.get(POSITIONS, SQL_SELECT);
+        return SQL_SELECT;
     }
 
     /**

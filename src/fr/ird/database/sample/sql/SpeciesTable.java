@@ -55,13 +55,14 @@ final class SpeciesTable extends Table {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes [@link #FRENCH}, [@link #LATIN} et compagnie.
      */
-    static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ "ID, "        +
-                                /*[02] DATE            */ "anglais, "   +
-                                /*[03] START_LONGITUDE */ "français, "  +
-                                /*[04] START_LATITUDE  */ "latin\n"     +
-
-                    "FROM "+SPECIES+" WHERE ID=?";
+    static final String SQL_SELECT = Table.configuration.get(Configuration.KEY_SPECIES);
+    // static final String SQL_SELECT=
+    //                 "SELECT "+  /*[01] ID              */ "ID, "        +
+    //                             /*[02] DATE            */ "anglais, "   +
+    //                             /*[03] START_LONGITUDE */ "français, "  +
+    //                             /*[04] START_LATITUDE  */ "latin\n"     +
+    //
+    //                 "FROM "+SPECIES+" WHERE ID=?";
 
     /** Numéro d'argument. */ private static final int ID_ARG =  1;
 
@@ -100,7 +101,7 @@ final class SpeciesTable extends Table {
      * @throws SQLException si l'accès à la base de données a échouée.
      */
     protected SpeciesTable(final Connection connection) throws SQLException {
-        super(connection.prepareStatement(preferences.get(SPECIES, SQL_SELECT)));
+        super(connection.prepareStatement(SQL_SELECT));
     }
 
     /**
