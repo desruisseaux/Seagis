@@ -393,8 +393,10 @@ public abstract class AbstractMathTransform implements MathTransform
     {return getDimSource() + 37*getDimTarget();}
 
     /**
-     * Compares the specified object with
-     * this math transform for equality.
+     * Compares the specified object with this math transform for equality.
+     * The default implementation checks if <code>object</code> is an instance
+     * of the same class than <code>this</code>. Subclasses should override
+     * this method in order to compare internal fields.
      */
     public boolean equals(final Object object)
     {
@@ -456,4 +458,106 @@ public abstract class AbstractMathTransform implements MathTransform
      */
     Object toOpenGIS(final Object adapters)
     {return new MathTransformExport(adapters, this);}
+
+    /**
+     * Default implementation for inverse math transform.
+     * This inner class is the inverse of the enclosing
+     * math transform.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    protected abstract class Inverse extends AbstractMathTransform
+    {
+        /**
+         * Construct an inverse math transform.
+         */
+        public Inverse()
+        {}
+
+        /**
+         * Gets the dimension of input points. The default
+         * implementation returns the dimension of output
+         * points of the enclosing math transform.
+         */
+        public int getDimSource()
+        {return AbstractMathTransform.this.getDimTarget();}
+
+        /**
+         * Gets the dimension of output points. The default
+         * implementation returns the dimension of input
+         * points of the enclosing math transform.
+         */
+        public int getDimTarget()
+        {return AbstractMathTransform.this.getDimSource();}
+
+        /**
+         * Gets the derivative of this transform at a point. The default
+         * implementation compute the inverse of the matrix returned by
+         * the enclosing math transform.
+         */
+        public Matrix derivative(final Point2D point) throws TransformException
+        {
+            // TODO: implement Matrix.inverse();
+            throw new UnsupportedOperationException("Matrix inversion not yet implemented");
+        }
+
+        /**
+         * Gets the derivative of this transform at a point. The default
+         * implementation compute the inverse of the matrix returned by
+         * the enclosing math transform.
+         */
+        public Matrix derivative(final CoordinatePoint point) throws TransformException
+        {
+            // TODO: implement Matrix.inverse();
+            throw new UnsupportedOperationException("Matrix inversion not yet implemented");
+        }
+
+        /**
+         * Returns the inverse of this math transform, which is the enclosing math transform.
+         * This method is declared final because some implementation assume that the inverse
+         * of <code>this</code> is always <code>AbstractMathTransform.this</code>.
+         */
+        public final MathTransform inverse()
+        {return AbstractMathTransform.this;}
+
+        /**
+         * Tests whether this transform does not move any points.
+         * The default implementation delegate this tests to the
+         * enclosing math transform.
+         */
+        public boolean isIdentity()
+        {return AbstractMathTransform.this.isIdentity();}
+
+        /**
+         * Returns a hash code value for this math transform.
+         */
+        public int hashCode()
+        {return ~AbstractMathTransform.this.hashCode();}
+
+        /**
+         * Compares the specified object with this inverse math
+         * transform for equality. The default implementation tests
+         * if <code>object</code> in an instance of the same class
+         * than <code>this</code>, and then test their enclosing
+         * math transforms.
+         */
+        public boolean equals(final Object object)
+        {
+            if (object==this) return true; // Slight optimization
+            if (object instanceof Inverse)
+            {
+                final Inverse that = (Inverse) object;
+                return Utilities.equals(this.inverse(), that.inverse());
+            }
+            else return false;
+        }
+
+        /**
+         * Returns the Well Know Text (WKT)
+         * for this inverse math transform.
+         */
+        public String toString()
+        {return "INVERSE_MT["+AbstractMathTransform.this+']';}
+    }
 }
