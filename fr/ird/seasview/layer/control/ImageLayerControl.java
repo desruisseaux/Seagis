@@ -58,8 +58,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class ImageLayerControl extends LayerControl
-{
+public final class ImageLayerControl extends LayerControl {
     /**
      * Objet à utiliser pour configurer l'affichage des images.
      */
@@ -68,14 +67,16 @@ public final class ImageLayerControl extends LayerControl
     /**
      * Construit une couche des images.
      */
-    public ImageLayerControl()
-    {super(true);}
+    public ImageLayerControl() {
+        super(true);
+    }
 
     /**
      * Retourne le nom de cette couche.
      */
-    public String getName()
-    {return Resources.format(ResourceKeys.IMAGES);}
+    public String getName() {
+        return Resources.format(ResourceKeys.IMAGES);
+    }
 
     /**
      * Retourne une couche appropriée pour l'image spécifiée. Cette méthode peut être
@@ -92,20 +93,21 @@ public final class ImageLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public RenderedLayer[] configLayers(final RenderedLayer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
+                                        final ImageEntry        entry,
+                                        final EventListenerList listeners)
+        throws SQLException, IOException
     {
         GridCoverage coverage = entry.getGridCoverage(listeners);
-        if (coverage==null)
-        {
+        if (coverage == null) {
             return null;
         }
-        synchronized(this)
-        {
-            if (controler!=null)
-            {
-                final Operation operation=controler.getSelectedOperation();
-                if (operation!=null)
+        synchronized(this) {
+            if (controler != null) {
+                final Operation operation = controler.getSelectedOperation();
+                if (operation != null) {
                     coverage = operation.filter(coverage);
+                }
             }
         }
         final RenderedGridCoverage layer = new RenderedGridCoverage(coverage);
@@ -118,29 +120,25 @@ public final class ImageLayerControl extends LayerControl
      * méthode est responsable d'appeler {@link #fireStateChanged} si l'état
      * de cette couche a changé suite aux interventions de l'utilisateur.
      */
-    protected void showControler(final JComponent owner)
-    {
+    protected void showControler(final JComponent owner) {
         final Operation oldOperation;
         final Operation newOperation;
-        synchronized(this)
-        {
-            if (controler==null)
-            {
+        synchronized (this) {
+            if (controler == null) {
                 controler = new ImageControlPanel();
                 controler.addDefaultOperations();
             }
             oldOperation = controler.getSelectedOperation();
         }
-        if (controler.showDialog(owner)) synchronized(this)
-        {
-            newOperation = controler.getSelectedOperation();
-            fireStateChanged(new Edit()
-            {
-                protected void edit(final boolean redo)
-                {
-                    controler.setSelectedOperation(redo ? newOperation : oldOperation);
-                }
-            });
+        if (controler.showDialog(owner)) {
+            synchronized(this) {
+                newOperation = controler.getSelectedOperation();
+                fireStateChanged(new Edit() {
+                    protected void edit(final boolean redo) {
+                        controler.setSelectedOperation(redo ? newOperation : oldOperation);
+                    }
+                });
+            }
         }
     }
 }

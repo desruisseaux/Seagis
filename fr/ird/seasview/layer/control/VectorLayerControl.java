@@ -49,6 +49,7 @@ import fr.ird.seasview.layer.VectorLayer;
 // Divers
 import java.util.Date;
 import java.util.List;
+import org.geotools.ct.TransformException;
 import org.geotools.renderer.geom.Arrow2D;
 
 
@@ -113,11 +114,12 @@ public final class VectorLayerControl extends LayerControl {
      *         se traduirait à toute fin pratique par la disparition de la couche.
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
+     * @throws TransformException si une transformation était nécessaire et a échouée.
      */
     public RenderedLayer[] configLayers(final RenderedLayer[]   layers,
                                               ImageEntry        entry,
                                         final EventListenerList listeners)
-        throws SQLException, IOException
+        throws SQLException, IOException, TransformException
     {
         if (!table.getSeries().equals(entry.getSeries())) {
             table.setTimeRange(entry.getTimeRange());
@@ -130,7 +132,8 @@ public final class VectorLayerControl extends LayerControl {
         final VectorLayer layer;
         if (layers!=null && layers.length==1 && layers[0] instanceof VectorLayer) {
             layer = (VectorLayer) layers[0];
-            layer.setData(coverage, bandU, bandV);
+            layer.setGridCoverage(coverage);
+            layer.setBands(new int[]{bandU, bandV});
         } else {
             layer = new VectorLayer(coverage, bandU, bandV);
         }

@@ -74,8 +74,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class LayerControl
-{
+public abstract class LayerControl {
     /**
      * Case à cocher pour sélectionner cette couche.
      */
@@ -102,24 +101,19 @@ public abstract class LayerControl
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Listeners implements ActionListener
-    {
-        public final void actionPerformed(final ActionEvent event)
-        {
-            final Object source=event.getSource();
+    private final class Listeners implements ActionListener {
+        public final void actionPerformed(final ActionEvent event) {
+            final Object source = event.getSource();
             /*
              * Si l'utilisateur a sélectionné ou déselectionné
              * cette couche, fait apparaître ou disparaître la
              * couche correspondante. Cette action sera annulable.
              */
-            if (source==selector)
-            {
+            if (source == selector) {
                 final boolean selected = selector.isSelected();
                 trigger.setEnabled(selected);
-                fireStateChanged(new Edit()
-                {
-                    protected void edit(final boolean redo)
-                    {
+                fireStateChanged(new Edit() {
+                    protected void edit(final boolean redo) {
                         final boolean s = redo ? selected : !selected;
                         selector.setSelected(s);
                         trigger .setEnabled (s);
@@ -130,16 +124,12 @@ public abstract class LayerControl
              * Si l'utilisateur a demandé à configurer cette
              * couche, fait apparaître le paneau de contrôle.
              */
-            if (source==trigger)
-            {
+            if (source == trigger) {
                 selector.setEnabled(false); // Must be first
                 trigger .setEnabled(false);
-                try
-                {
+                try {
                     showControler((JComponent) source);
-                }
-                finally
-                {
+                } finally {
                     trigger .setEnabled(selector.isSelected());
                     selector.setEnabled(true); // Must be last
                 }
@@ -153,8 +143,7 @@ public abstract class LayerControl
      * @param selected <code>true</code> si cette couche
      *        doit être initialement sélectionnée.
      */
-    protected LayerControl(final boolean selected)
-    {
+    protected LayerControl(final boolean selected) {
         // Note: we can't call 'getName()' before
         //       the construction is finished.
         selector = new JCheckBox((String)null, selected);
@@ -174,7 +163,9 @@ public abstract class LayerControl
      * @param  propertyText Texte  par défaut des boutons "propriétés".
      * @throws IllegalStateException si l'interface avait déjà été construite.
      */
-    private void buildUI(final Container owner, final GridBagConstraints c, final Dimension buttonSize, final Icon propertyIcon, final String propertyText)
+    private void buildUI(final Container owner,      final GridBagConstraints c,
+                         final Dimension buttonSize, final Icon propertyIcon,
+                         final String    propertyText)
     {
         final Listeners action = new Listeners();
         trigger .setIcon(propertyIcon);
@@ -194,20 +185,16 @@ public abstract class LayerControl
      * @param layers Contrôles à placer dans le paneau.
      * @param icon Icône à utiliser pour chaque contrôle.
      */
-    public static JComponent getPanel(final LayerControl[] layers, final Icon icon)
-    {
+    public static JComponent getPanel(final LayerControl[] layers, final Icon icon) {
         final JPanel panel = new JPanel(new GridBagLayout());
-        if (layers!=null)
-        {
+        if (layers != null) {
             final GridBagConstraints c = new GridBagConstraints();
             final String  propertyText = Resources.format(ResourceKeys.PROPERTIES);
             final Dimension buttonSize = new Dimension(24,24);
-            for (int i=0; i<layers.length; i++)
-            {
-                final LayerControl layer=layers[i];
-                synchronized (layer)
-                {
-                    c.gridy=i;
+            for (int i=0; i<layers.length; i++) {
+                final LayerControl layer = layers[i];
+                synchronized (layer) {
+                    c.gridy = i;
                     layer.buildUI(panel, c, buttonSize, icon, propertyText);
                 }
             }
@@ -224,8 +211,9 @@ public abstract class LayerControl
      * Indique si cette couche est sélectionnée.
      * Cette méthode n'a pas à être synchronisée.
      */
-    public final boolean isSelected()
-    {return selector.isSelected();}
+    public final boolean isSelected() {
+        return selector.isSelected();
+    }
 
     /**
      * Configure des couches en fonction de cet objet <code>LayerControl</code>.
@@ -241,10 +229,12 @@ public abstract class LayerControl
      * @param  listeners Objets à informer des progrès d'une éventuelle lecture.
      * @return Des couches proprement configurées, ou <code>null</code> si la configuration
      *         se traduirait à toute fin pratique par la disparition de la couche.
-     * @throws SQLException si les accès à la base de données ont échoués.
-     * @throws IOException si une erreur d'entré/sortie est survenue.
+     * @throws Exception si l'opération a échouée.
      */
-    public abstract RenderedLayer[] configLayers(final RenderedLayer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
+    public abstract RenderedLayer[] configLayers(final RenderedLayer[]   layers,
+                                                 final ImageEntry        entry,
+                                                 final EventListenerList listeners)
+        throws Exception;
 
     /**
      * Fait apparaître un paneau de configuration pour les couches. Cette méthode est
@@ -258,29 +248,33 @@ public abstract class LayerControl
      * Ajoute un objet à la liste des objets intéressés à
      * être informés des changements apportées à cette couche.
      */
-    public final void addChangeListener(final ChangeListener listener)
-    {listenerList.add(ChangeListener.class, listener);}
+    public final void addChangeListener(final ChangeListener listener) {
+        listenerList.add(ChangeListener.class, listener);
+    }
 
     /**
      * Retire un objet de la liste des objets intéressés à
      * être informés des changements apportées à cette couche.
      */
-    public final void removeChangeListener(final ChangeListener listener)
-    {listenerList.remove(ChangeListener.class, listener);}
+    public final void removeChangeListener(final ChangeListener listener) {
+        listenerList.remove(ChangeListener.class, listener);
+    }
 
     /**
      * Ajoute un objet à la liste des objets intéressés à être
      * informés chaque fois qu'une édition anulable a été faite.
      */
-    public void addUndoableEditListener(final UndoableEditListener listener)
-    {listenerList.add(UndoableEditListener.class, listener);}
+    public void addUndoableEditListener(final UndoableEditListener listener) {
+        listenerList.add(UndoableEditListener.class, listener);
+    }
 
     /**
      * Retire un objet de la liste des objets intéressés à être
      * informés chaque fois qu'une édition anulable a été faite.
      */
-    public void removeUndoableEditListener(final UndoableEditListener listener)
-    {listenerList.remove(UndoableEditListener.class, listener);}
+    public void removeUndoableEditListener(final UndoableEditListener listener) {
+        listenerList.remove(UndoableEditListener.class, listener);
+    }
 
     /**
      * Préviens tous les objets intéressés
@@ -289,23 +283,22 @@ public abstract class LayerControl
      * @param edit Objet capable d'annuler le changement, ou
      *        <code>null</code> si le changement n'est pas annulable.
      */
-    protected final void fireStateChanged(final UndoableEdit edit)
-    {
+    protected final void fireStateChanged(final UndoableEdit edit) {
         ChangeEvent changeEvent=null;
         UndoableEditEvent editEvent=null;
         final Object[] listeners=listenerList.getListenerList();
-        for (int i=listeners.length; (i-=2)>=0;)
-        {
-            if (listeners[i]==ChangeListener.class)
-            {
-                if (changeEvent==null) changeEvent=new ChangeEvent(this);
+        for (int i=listeners.length; (i-=2)>=0;) {
+            if (listeners[i]==ChangeListener.class) {
+                if (changeEvent == null) {
+                    changeEvent = new ChangeEvent(this);
+                }
                 ((ChangeListener) listeners[i+1]).stateChanged(changeEvent);
             }
-            if (listeners[i]==UndoableEditListener.class)
-            {
-                if (edit!=null)
-                {
-                    if (editEvent==null) editEvent=new UndoableEditEvent(this, edit);
+            if (listeners[i] == UndoableEditListener.class) {
+                if (edit != null) {
+                    if (editEvent == null) {
+                        editEvent=new UndoableEditEvent(this, edit);
+                    }
                     ((UndoableEditListener) listeners[i+1]).undoableEditHappened(editEvent);
                 }
             }
@@ -317,8 +310,8 @@ public abstract class LayerControl
      *
      * @throws SQLException si un accès à la base de données était nécessaire et a échoué.
      */
-    public void dispose() throws SQLException
-    {}
+    public void dispose() throws SQLException {
+    }
 
     /**
      * Classe de base des éditions qui peuvent être annulées.
@@ -327,24 +320,21 @@ public abstract class LayerControl
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    protected abstract class Edit extends AbstractUndoableEdit
-    {
+    protected abstract class Edit extends AbstractUndoableEdit {
         /**
          * Constructeur par défaut.
          */
-        protected Edit()
-        {}
+        protected Edit() {
+        }
 
         /**
          * Annule cette édition.  L'implémentation par défaut appelle
          * <code>{@link #edit edit}(false)</code> après avoir vérifié
          * que l'opération peut être annulée.
          */
-        public void undo() throws CannotUndoException
-        {
+        public void undo() throws CannotUndoException {
             super.undo();
-            synchronized(LayerControl.this)
-            {
+            synchronized(LayerControl.this) {
                 edit(false);
             }
             fireStateChanged(null);
@@ -355,11 +345,9 @@ public abstract class LayerControl
          * <code>{@link #edit edit}(true)</code> après avoir vérifié
          * que l'opération peut être annulée.
          */
-        public void redo() throws CannotRedoException
-        {
+        public void redo() throws CannotRedoException {
             super.redo();
-            synchronized(LayerControl.this)
-            {
+            synchronized(LayerControl.this) {
                 edit(true);
             }
             fireStateChanged(null);
