@@ -32,6 +32,8 @@ package net.seagis.resources;
 import net.seagis.cs.*;
 import net.seagis.ct.*;
 import net.seagis.pt.*;
+import net.seagis.resources.css.Resources;
+import net.seagis.resources.css.ResourceKeys;
 
 // Miscellaneous
 import javax.units.Unit;
@@ -70,6 +72,34 @@ public final class OpenGIS
             if (orientation.equals(cs.getAxis(i).orientation.absolute()))
                 return i;
         return -1;
+    }
+
+    /**
+     * Returns a two-dimensional coordinate system representing the two first dimensions
+     * of the specified coordinate system. If <code>cs</code> is already a two-dimensional
+     * coordinate system, then it is returned unchanged. Otherwise, if it is a
+     * {@link CompoundCoordinateSystem}, then the head coordinate system is examined.
+     *
+     * @param  cs The coordinate system.
+     * @return A two-dimensional coordinate system that represents the two first
+     *         dimensions of <code>cs</code>.
+     * @throws IllegalArgumentException if <code>cs</code> can't be reduced to
+     *         a two-coordinate system.
+     */
+    public static CoordinateSystem getCoordinateSystem2D(CoordinateSystem cs) throws IllegalArgumentException
+    {
+        if (cs!=null)
+        {
+            while (cs.getDimension()!=2)
+            {
+                if (!(cs instanceof CompoundCoordinateSystem))
+                {
+                    throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_CANT_REDUCE_TO_TWO_DIMENSIONS_$1, cs.getName(null)));
+                }
+                cs = ((CompoundCoordinateSystem) cs).getHeadCS();
+            }
+        }
+        return cs;
     }
 
     /**
