@@ -69,6 +69,13 @@ public final class ConvexHull implements Serializable
     {throw new UnsupportedOperationException("Not implemented");}
 
     /**
+     * Construct a convex hull from an array of ordinates.
+     * This method is provided for compatibility with OpenGIS.
+     */
+    public ConvexHull(final double[] ord)
+    {throw new UnsupportedOperationException("Not implemented");}
+
+    /**
      * Returns a hash value for this convex hull.
      * This value need not remain consistent between
      * different implementations of the same class.
