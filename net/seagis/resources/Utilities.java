@@ -31,6 +31,13 @@ package net.seagis.resources;
 // Miscellaneous
 import java.util.Arrays;
 
+/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+// Logging
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+
 
 /**
  * A set of miscellaneous methods.
@@ -41,10 +48,10 @@ import java.util.Arrays;
 public final class Utilities
 {
     /**
-     * Forbive object creation.
+     * Natural logarithm of 10.
+     * Approximatively equals to 2.302585.
      */
-    private Utilities()
-    {}
+    public static final double LN10=2.3025850929940456840179914546844;
 
     /**
      * An array of strings containing only white spaces. String length are equal
@@ -53,6 +60,25 @@ public final class Utilities
      * constructed only when first needed.
      */
     private static final String[] spacesFactory = new String[20];
+
+    /**
+     * Forbive object creation.
+     */
+    private Utilities()
+    {}
+    
+    /**
+     * Compute the hypothenuse (<code>sqrt(x²+y²)</code>).
+     */
+    public static double hypot(double x, double y)
+    {return Math.sqrt(x*x + y*y);}
+
+    /**
+     * Compute the logarithm in base 10. See
+     * <a href="http://developer.java.sun.com/developer/bugParade/bugs/4074599.html">Implement log10 (base 10 logarithm)</a>.
+     */
+    public static double log10(double x)
+    {return Math.log(x)/LN10;}
 
     /**
      * Returns a string of the specified length filled with white spaces.
@@ -113,5 +139,36 @@ public final class Utilities
         int   lower = name.lastIndexOf('.');
         int   upper = name.length();
         return name.substring(lower+1, upper).replace('$','.');
+    }
+
+    /**
+     * Invoked when an unexpected error occured. The action taken by this method is
+     * implementation depedent. On JRE 1.4, it may record the error in the logging.
+     * On JRE 1.3, it may just dump the stack trace on the error stream.
+     *
+     * @param paquet  The package where the error occured. This information may be used
+     *                to fetch an appropriate {@link Logger} for logging the error.
+     * @param classe  The class name where the error occured.
+     * @param method  The method name where the error occured.
+     * @param error   The error.
+     */
+    public static void unexpectedException(final String paquet, final String classe, final String method, final Throwable error)
+    {
+/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+        final StringBuffer buffer = new StringBuffer(getShortClassName(error));
+        final String message = error.getLocalizedMessage();
+        if (message!=null)
+        {
+            buffer.append(": ");
+            buffer.append(message);
+        }
+        final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
+        record.setSourceClassName (classe);
+        record.setSourceMethodName(method);
+        record.setThrown          (error);
+        Logger.getLogger(paquet).log(record);
+   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+        error.printStackTrace();
+// ---- END OF JDK 1.3 FALLBACK ----
     }
 }

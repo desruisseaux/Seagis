@@ -48,12 +48,10 @@ import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 
 /* ---- BEGIN JDK 1.4 DEPENDENCIES ----
-
 // Logging
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-
    ---- END OF JDK 1.4 DEPENDENCIES ---- */
 
 
