@@ -37,7 +37,6 @@ import java.util.IdentityHashMap;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.rmi.RemoteException;
-import java.sql.SQLException;
 
 // JAI
 import javax.media.jai.util.Range;
@@ -148,10 +147,10 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
      * Construit un environnement qui utilisera la configuration spécifiée.
      *
      * @param  config La configuration de la simulation.
-     * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'accès à la base de données.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échouée.
      */
-    public Environment(final Configuration config) throws SQLException, TransformException {
+    public Environment(final Configuration config) throws RemoteException, TransformException {
         this(config, null, null);
     }
 
@@ -163,13 +162,13 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
      *         ou <code>null</code> pour utiliser une base de données par défaut.
      * @param  samplesDB La base de données de pêches à utiliser,
      *         ou <code>null</code> pour utiliser une base de données par défaut.
-     * @throws SQLException si une erreur est survenue lors de l'accès à la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'accès à la base de données.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échouée.
      */
     protected Environment(final Configuration config,
                           CoverageDataBase coverageDB,
                           SampleDataBase   samplesDB)
-        throws SQLException, TransformException
+        throws RemoteException, TransformException
     {
         super(config.firstTimeStep);
         this.configuration = config;
@@ -380,9 +379,9 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
      * Retourne toutes les espèces se trouvant dans la table.
      *
      * @return Les espèces se trouvant dans la table.
-     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'interrogation de la base de données.
      */
-    public Set<fr.ird.animat.Species> getSpecies() throws SQLException {
+    public Set<fr.ird.animat.Species> getSpecies() throws RemoteException {
         return samples.getSpecies();
     }
 
@@ -390,9 +389,9 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
      * Retourne l'ensemble des échantillons pour le pas de temps courant.
      *
      * @return Les échantillons pour le pas de temps courant.
-     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'interrogation de la base de données.
      */
-    public Collection<SampleEntry> getSamples() throws SQLException {
+    public Collection<SampleEntry> getSamples() throws RemoteException {
         Range timeRange = getClock().getTimeRange();
         Date  startTime = (Date) timeRange.getMinValue();
         Date    endTime = (Date) timeRange.getMaxValue();
@@ -442,7 +441,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
                 for (int i=toClose.length; --i>=0;) {
                     toClose[i].close();
                 }
-            } catch (SQLException exception) {
+            } catch (RemoteException exception) {
                 Utilities.unexpectedException("fr.ird.animat.server", "Environment", "dispose", exception);
             }
             super.dispose();

@@ -35,6 +35,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // JAI dependencies
 import javax.media.jai.util.Range;
@@ -45,7 +46,7 @@ import junit.framework.*;
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Arguments;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 
 // Seagis dependencies
 import fr.ird.database.coverage.*;
@@ -84,7 +85,7 @@ public class SeriesCoverageTest extends TestCase {
     /**
      * Etablit la connexion avec la base de données.
      */
-    protected void setUp() throws SQLException {
+    protected void setUp() throws RemoteException {
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         database = new fr.ird.database.coverage.sql.CoverageDataBase();
@@ -93,7 +94,7 @@ public class SeriesCoverageTest extends TestCase {
     /**
      * Ferme la connexion avec la base de données.
      */
-    protected void tearDown() throws SQLException {
+    protected void tearDown() throws RemoteException {
         database.close();
     }
 

@@ -29,7 +29,7 @@ package fr.ird.animat.server.tuna;
 import java.net.URL;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 
 // Remote Method Invocation (RMI)
 import java.rmi.RemoteException;
@@ -51,7 +51,7 @@ import org.opengis.referencing.operation.TransformException;
 
 // Geotools
 import org.geotools.resources.Arguments;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 
 // Seagis
 import fr.ird.animat.gui.swing.Viewer;
@@ -74,10 +74,10 @@ public class Simulation extends fr.ird.animat.server.Simulation {
      *
      * @param  url L'adresse URL du fichier de configuration.
      * @throws IOException si le fichier de configuration n'a pas pu être lu.
-     * @throws SQLException si la connexion à une base de données a échouée.
+     * @throws RemoteException si la connexion à une base de données a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échouée.
      */
-    public Simulation(final URL url) throws IOException, SQLException, TransformException {
+    public Simulation(final URL url) throws IOException, RemoteException, TransformException {
         this(url.getPath(), new Configuration(url));
     }
     
@@ -86,10 +86,10 @@ public class Simulation extends fr.ird.animat.server.Simulation {
      *
      * @param  file Le fichier de configuration.
      * @throws IOException si le fichier de configuration n'a pas pu être lu.
-     * @throws SQLException si la connexion à une base de données a échouée.
+     * @throws RemoteException si la connexion à une base de données a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échouée.
      */
-    public Simulation(final File file) throws IOException, SQLException, TransformException {
+    public Simulation(final File file) throws IOException, RemoteException, TransformException {
         this(file.getPath(), new Configuration(file));
     }
     
@@ -99,7 +99,7 @@ public class Simulation extends fr.ird.animat.server.Simulation {
      * RFE #4093999.
      */
     private Simulation(final String name, final Configuration configuration)
-            throws SQLException, RemoteException, TransformException
+            throws RemoteException, TransformException
     {
         super(name, new Environment(configuration));
         this.delay = (int)configuration.pause;
@@ -138,10 +138,10 @@ public class Simulation extends fr.ird.animat.server.Simulation {
      * @throws IOException si le fichier de configuration n'a pas pu être lu.
      * @throws RemoteException Si une méthode devait être exécutée sur
      *         une machine distante et que cette exécution a échouée.
-     * @throws SQLException si la connexion à une base de données a échouée.
+     * @throws RemoteException si la connexion à une base de données a échouée.
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échouée.
      */
-    public static void main(String[] args) throws IOException, SQLException, TransformException {
+    public static void main(String[] args) throws IOException, RemoteException, TransformException {
         if (true) {
             MonolineFormatter.init("org.geotools");
             MonolineFormatter.init("fr.ird");

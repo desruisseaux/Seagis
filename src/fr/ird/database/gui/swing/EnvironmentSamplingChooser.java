@@ -47,7 +47,7 @@ import javax.media.jai.util.CaselessStringKey;
 // geotools
 import org.geotools.resources.XArray;
 import org.geotools.resources.SwingUtilities;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.gui.swing.CoordinateChooser;
 import org.geotools.gui.swing.GradientKernelEditor;

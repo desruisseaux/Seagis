@@ -28,7 +28,7 @@ package fr.ird.animat.server;
 // Dépendences
 import java.util.Set;
 import java.util.Collection;
-import java.sql.SQLException;
+import java.rmi.RemoteException;
 import fr.ird.animat.Species;
 import fr.ird.animat.Environment;
 import fr.ird.database.sample.SampleEntry;
@@ -47,15 +47,15 @@ public interface SampleSource {
      * Retourne toutes les espèces se trouvant dans la table.
      *
      * @return Les espèces se trouvant dans la table.
-     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'interrogation de la base de données.
      */
-    public Set<Species> getSpecies() throws SQLException;
+    public Set<Species> getSpecies() throws RemoteException;
 
     /**
      * Retourne l'ensemble des captures pour le pas de temps courant.
      *
      * @return Les captures pour le pas de temps courant.
-     * @throws SQLException si une erreur est survenue lors de l'interrogation de la base de données.
+     * @throws RemoteException si une erreur est survenue lors de l'interrogation de la base de données.
      */
-    public Collection<SampleEntry> getSamples() throws SQLException;
+    public Collection<SampleEntry> getSamples() throws RemoteException;
 }

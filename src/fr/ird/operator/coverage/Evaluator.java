@@ -37,6 +37,9 @@ import java.util.Locale;
 import java.util.Arrays;
 import javax.vecmath.MismatchedSizeException;
 
+// GeoAPI
+import org.opengis.coverage.CannotEvaluateException;
+
 // Geotools dependencies
 import org.geotools.units.Unit;
 import org.geotools.pt.Envelope;
@@ -47,7 +50,6 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.ct.MathTransform1D;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.cv.CannotEvaluateException;
 import org.geotools.resources.geometry.XAffineTransform;
 import org.geotools.resources.Utilities;
 import org.geotools.util.NumberRange;

@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.Collection;
 import java.awt.Color;
 import java.awt.EventQueue;
-import java.sql.SQLException;
 import java.rmi.RemoteException;
 
 // Geotools & Seagis dependencies
@@ -80,15 +79,10 @@ final class SampleLayer extends fr.ird.database.gui.map.SampleLayer {
      */
     public SampleLayer(final SampleSource samples) throws RemoteException {
         this.samples = samples;
-        try {
-            for (final Species sp : samples.getSpecies()) {
-                setColor(sp, COLOR);
-            }
-            setColor(null, COLOR);
-        } catch (SQLException exception) {
-            // Ne peut pas changer la couleur. Tant pis, ça n'empêchera pas le reste de fonctionner.
-            Utilities.unexpectedException("fr.ird.animat.gui", "SampleLayer", "<init>", exception);
+        for (final Species sp : samples.getSpecies()) {
+            setColor(sp, COLOR);
         }
+        setColor(null, COLOR);
     }
 
     /**
@@ -153,7 +147,7 @@ final class SampleLayer extends fr.ird.database.gui.map.SampleLayer {
                     });
                     wait();
                 }
-            } catch (SQLException exception) {
+            } catch (RemoteException exception) {
                 Utilities.unexpectedException("fr.ird.animat.viewer", "SampleLayer", "refresh", exception);
             } catch (InterruptedException exception) {
                 // Quelqu'un ne veut pas nous laisser dormir.

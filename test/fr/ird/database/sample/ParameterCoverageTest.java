@@ -39,6 +39,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
+import java.rmi.RemoteException;
 
 // JAI dependencies
 import javax.media.jai.JAI;
@@ -51,7 +52,7 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.util.NumberRange;
 import org.geotools.gui.swing.FrameFactory;
 import org.geotools.resources.Arguments;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 
 // Seagis dependencies
 import fr.ird.database.coverage.*;
@@ -90,7 +91,7 @@ public class ParameterCoverageTest extends TestCase {
     /**
      * Etablit la connexion avec la base de données.
      */
-    protected void setUp() throws SQLException {
+    protected void setUp() throws RemoteException {
         JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
         coverage   = new ParameterCoverage3D();
@@ -110,7 +111,7 @@ public class ParameterCoverageTest extends TestCase {
      * ce test correspond à des positions de captures pour lesquels on a un maximum de
      * paramètres environnementaux.
      */
-    public void testValues() throws SQLException, ParseException {
+    public void testValues() throws RemoteException, ParseException {
         setParameter(null);
         assertTrue(Float.isNaN(evaluate(39.80,  -17.90,  "18/08/1999")));
         assertTrue(Float.isNaN(evaluate(38.05,  -19.23,  "18/08/1999")));
@@ -166,7 +167,7 @@ public class ParameterCoverageTest extends TestCase {
     /**
      * Test la création d'une image.
      */
-    public void testImages() throws SQLException, ParseException {
+    public void testImages() throws RemoteException, ParseException {
         if (false) {
             setParameter("PP1");
             coverage.setOutputRange(new NumberRange(-2.0, 2.0));
@@ -179,7 +180,7 @@ public class ParameterCoverageTest extends TestCase {
     /**
      * Définit le paramètre à utiliser.
      */
-    private void setParameter(final String parameter) throws SQLException {
+    private void setParameter(final String parameter) throws RemoteException {
         ParameterEntry entry = null;
         if (parameter != null) {
             for (final ParameterEntry param : parameters) {

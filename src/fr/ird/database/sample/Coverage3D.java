@@ -30,9 +30,11 @@ import java.awt.geom.Point2D;
 // JAI
 import javax.media.jai.PropertySource;
 
+// GeoAPI
+import org.opengis.coverage.CannotEvaluateException;
+
 // Geotools
 import org.geotools.pt.CoordinatePoint;
-import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 
 

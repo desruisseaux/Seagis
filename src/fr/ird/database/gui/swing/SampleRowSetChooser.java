@@ -53,7 +53,7 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 
 // Geotools dependencies
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ProgressWindow;
 import org.geotools.gui.swing.ExceptionMonitor;

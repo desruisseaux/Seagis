@@ -52,11 +52,13 @@ import java.text.ParseException;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 
+// OpenGIS dependencies
+import org.opengis.referencing.FactoryException;
+
 // Geotools
 import org.geotools.cv.Category;
 import org.geotools.ct.MathTransform1D;
 import org.geotools.ct.MathTransformFactory;
-import org.geotools.cs.FactoryException;
 import org.geotools.util.NumberRange;
 
 // Seagis

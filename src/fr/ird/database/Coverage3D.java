@@ -39,11 +39,12 @@ import javax.media.jai.util.Range;
 
 // OpenGIS
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.spatialschema.geometry.MismatchedDimensionException;
+import org.opengis.coverage.CannotEvaluateException;
 
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
-import org.geotools.pt.MismatchedDimensionException;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
@@ -57,7 +58,6 @@ import org.geotools.resources.CTSUtilities;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.SampleDimension;
-import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 
 // Geotools (resources)
@@ -316,7 +316,8 @@ public abstract class Coverage3D extends Coverage {
      */
     private final Point2D checkDimension(final CoordinatePoint coord) throws MismatchedDimensionException {
         if (coord.getDimension() != coordinateSystem.getDimension()) {
-            throw new MismatchedDimensionException(coord, coordinateSystem);
+            // TODO: provides a message.
+            throw new MismatchedDimensionException(/*coord, coordinateSystem*/);
         }
         return new Point2D.Double(coord.ord[temporalDimension!=0 ? 0 : 1],
                                   coord.ord[temporalDimension>=2 ? 1 : 2]);

@@ -58,12 +58,13 @@ import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 
 // OpenGIS
+import org.opengis.coverage.CannotEvaluateException;
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.spatialschema.geometry.MismatchedDimensionException;
 
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
-import org.geotools.pt.MismatchedDimensionException;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform;
@@ -78,7 +79,6 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.cv.Coverage;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.ColorInterpretation;
-import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.Operation;
@@ -490,7 +490,8 @@ public class SeriesCoverage3D extends Coverage3D {
             coordinate = transform.transform(coordinate, coordinate);
             point.setLocation(coordinate.ord[0], coordinate.ord[1]);
         } catch (TransformException exception) {
-            throw new CannotEvaluateException(point, exception);
+            // TODO: provides a message
+            throw new CannotEvaluateException(/*point, exception*/);
         }
     }
 

@@ -298,7 +298,7 @@ final class Main extends Arguments {
      * de données ainsi que le bon fonctionnement de cette classe.
      */
     public static void main(final String[] args) throws RemoteException {
-        org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.util.MonolineFormatter.init("fr.ird");
         new Main(args).run();
     }
 }

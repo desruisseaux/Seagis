@@ -446,7 +446,7 @@ public final class CoverageExportChooser extends JPanel {
                                                         sourceCS, targetDim, sourceDim);
                         if (tailCS != null) {
                             targetCS = new CompoundCoordinateSystem(
-                                           targetCS.getName(null), targetCS, tailCS);
+                                           targetCS.getName().getCode(), targetCS, tailCS);
                         }
                     }
                     image = processor.doOperation("Resample", image, "CoordinateSystem", targetCS);

@@ -36,7 +36,7 @@ import junit.framework.*;
 
 // Geotools dependencies
 import org.geotools.resources.Arguments;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 
 
 /**

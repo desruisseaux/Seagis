@@ -240,7 +240,7 @@ public class ControlPanel extends JPanel {
      * système.
      */
     public static void main(final String[] args) {
-        org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.util.MonolineFormatter.init("fr.ird");
         new ControlPanel().showDialog(null);
         System.exit(0);
     }

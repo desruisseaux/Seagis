@@ -80,8 +80,8 @@ public class DatabaseConfiguration extends JPanel {
         size.height=80;
         setPreferredSize(size);
         
-        textFields[BD_IMG].setText(CoverageDataBase.getDefaultFileOfConfiguration().toString());
-        textFields[BD_OBS].setText(SampleDataBase.getDefaultFileOfConfiguration().toString());                    
+        textFields[BD_IMG].setText(CoverageDataBase.getDefaultConfigurationFile().toString());
+        textFields[BD_OBS].setText(SampleDataBase.getDefaultConfigurationFile().toString());                    
     }
     
     /**

@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
-import java.sql.SQLException;
 import javax.media.jai.util.Range;
 
 // Animats
@@ -58,12 +57,7 @@ final class Population extends fr.ird.animat.server.Population {
     protected Population(final Environment environment) throws RemoteException {
         super(environment);
         final Collection<SampleEntry> entries;
-        try {
-            entries = environment.getSamples();
-        } catch (SQLException exception) {
-            throw new ServerException("Échec lors de l'obtention "+
-                                      "des positions initiales des animaux", exception);
-        }
+        entries = environment.getSamples();
         for (final SampleEntry entry : entries) {
             final Point2D      coord   = entry.getCoordinate();
             final Set<Species> species = entry.getSpecies();

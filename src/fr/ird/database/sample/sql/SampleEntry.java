@@ -34,9 +34,9 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 // Formatting (Geotools)
-import org.geotools.pt.Latitude;
-import org.geotools.pt.Longitude;
-import org.geotools.pt.AngleFormat;
+import org.geotools.measure.Latitude;
+import org.geotools.measure.Longitude;
+import org.geotools.measure.AngleFormat;
 
 // Miscellaneous
 import fr.ird.animat.Species;

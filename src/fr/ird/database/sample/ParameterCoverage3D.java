@@ -48,6 +48,7 @@ import javax.media.jai.ParameterList;
 
 // OpenGIS
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.coverage.CannotEvaluateException;
 
 // Geotools
 import org.geotools.pt.Envelope;
@@ -55,13 +56,12 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.Coverage; // Pour Javadoc
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
-import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.gp.CannotReprojectException;
 import org.geotools.gui.swing.FrameFactory;
-import org.geotools.resources.MonolineFormatter;
+import org.geotools.util.MonolineFormatter;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.Arguments;
 import org.geotools.util.NumberRange;

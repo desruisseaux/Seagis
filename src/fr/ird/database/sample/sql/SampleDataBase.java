@@ -506,7 +506,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
     public static void main(final String[] args) throws RemoteException {
-        org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.util.MonolineFormatter.init("fr.ird");
         final Arguments  console = new Arguments(args);
         final boolean     config = console.getFlag("-config");
         final Integer maxRecords = console.getOptionalInteger("-count");
@@ -572,9 +572,8 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     /**
      * Retourne le fichier de configuration permettant de se connecter et d'interroger 
      * la base.
-     *
      */
-    public static File getDefaultFileOfConfiguration() {
+    public static File getDefaultConfigurationFile() {
         final String name = Table.preferences.get(Table.DATABASE, "");
         if (name.trim().length() == 0 || (!new File(name).exists())) {
             return new File(Configuration.class.getClassLoader().

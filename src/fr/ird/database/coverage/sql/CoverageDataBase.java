@@ -376,7 +376,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * Retourne le fichier de configuration permettant de se connecter et d'interroger 
      * la base.
      */
-    public static File getDefaultFileOfConfiguration() {
+    public static File getDefaultConfigurationFile() {
         final String name = Table.preferences.get(Table.DATABASE, "");
         if (name.trim().length() == 0 || !(new File(name).exists())) {
             return new File(Configuration.class.getClassLoader().
@@ -569,7 +569,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * @throws RemoteException si l'interrogation du catalogue a échoué.
      */
     public static void main(final String[] args) throws RemoteException {
-        org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.util.MonolineFormatter.init("fr.ird");
         final Main console = new Main(args);
         if (console.config) {
             getSQLEditor().showDialog(null);
