@@ -72,14 +72,14 @@ public final class CoordinatePoint implements Cloneable, Serializable
 
     /**
      * Construct a 2D coordinate from
-     * the specified ordinate.
+     * the specified ordinates.
      */
     public CoordinatePoint(final double x, final double y)
     {ord = new double[] {x,y};}
 
     /**
      * Construct a 3D coordinate from
-     * the specified ordinate.
+     * the specified ordinates.
      */
     public CoordinatePoint(final double x, final double y, final double z)
     {ord = new double[] {x,y,z};}
@@ -92,29 +92,20 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {this(point.getX(), point.getY());}
 
     /**
-     * Returns a string representation of this coordinate.
+     * Returns a hash value for this coordinate.
+     * This value need not remain consistent between
+     * different implementations of the same class.
      */
-    public String toString()
+    public int hashCode()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
+        long code=0;
         if (ord!=null)
         {
-            for (int i=0; i<ord.length; i++)
-            {
-                if (i!=0) buffer.append(", ");
-                buffer.append(ord[i]);
-            }
+            for (int i=ord.length; --i>=0;)
+                code = (code << 1) ^ Double.doubleToLongBits(ord[i]);
         }
-        buffer.append(']');
-        return buffer.toString();
+        return (int)(code >>> 32) ^ (int)code;
     }
-
-    /**
-     * Returns a deep copy of this coordinate.
-     */
-    public CoordinatePoint clone()
-    {return new CoordinatePoint((double[]) ord.clone());}
 
     /**
      * Compares the specified object with
@@ -131,16 +122,29 @@ public final class CoordinatePoint implements Cloneable, Serializable
     }
 
     /**
-     * Returns a hash value for this coordinate.
+     * Returns a deep copy of this coordinate.
      */
-    public int hashCode()
+    public CoordinatePoint clone()
+    {return new CoordinatePoint((double[]) ord.clone());}
+
+    /**
+     * Returns a string representation of this coordinate.
+     * The returned string is implementation dependent.
+     * It is usually provided for debugging purposes.
+     */
+    public String toString()
     {
-        long code=0;
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
         if (ord!=null)
         {
             for (int i=0; i<ord.length; i++)
-                code = (code << 1) ^ Double.doubleToLongBits(ord[i]);
+            {
+                if (i!=0) buffer.append(", ");
+                buffer.append(ord[i]);
+            }
         }
-        return (int)(code >>> 32) ^ (int)code;
+        buffer.append(']');
+        return buffer.toString();
     }
 }

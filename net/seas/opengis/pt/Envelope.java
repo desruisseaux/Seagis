@@ -197,24 +197,17 @@ public final class Envelope implements Cloneable, Serializable
     {return 0.5*(minCP.ord[dimension] + maxCP.ord[dimension]);}
 
     /**
-     * Returns a string representation of this envelope.
+     * Returns a hash value for this envelope.
+     * This value need not remain consistent between
+     * different implementations of the same class.
      */
-    public String toString()
+    public int hashCode()
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        buffer.append(minCP);
-        buffer.append(", ");
-        buffer.append(maxCP);
-        buffer.append(']');
-        return buffer.toString();
+        int code = 0;
+        if (minCP!=null) code ^= minCP.hashCode();
+        if (maxCP!=null) code ^= maxCP.hashCode();
+        return code;
     }
-
-    /**
-     * Returns a deep copy of this envelope.
-     */
-    public Envelope clone()
-    {return new Envelope(minCP, maxCP);}
 
     /**
      * Compares the specified object with
@@ -232,13 +225,24 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
-     * Returns a hash value for this envelope.
+     * Returns a deep copy of this envelope.
      */
-    public int hashCode()
+    public Envelope clone()
+    {return new Envelope(minCP, maxCP);}
+
+    /**
+     * Returns a string representation of this envelope.
+     * The returned string is implementation dependent.
+     * It is usually provided for debugging purposes.
+     */
+    public String toString()
     {
-        int code = 0;
-        if (minCP!=null) code ^= minCP.hashCode();
-        if (maxCP!=null) code ^= maxCP.hashCode();
-        return code;
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        buffer.append(minCP);
+        buffer.append(", ");
+        buffer.append(maxCP);
+        buffer.append(']');
+        return buffer.toString();
     }
 }
