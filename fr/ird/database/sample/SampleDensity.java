@@ -71,6 +71,8 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.renderer.j2d.RenderingContext;
 import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.cv.SampleDimension;
+import org.geotools.cv.Category;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gc.GridGeometry;
 import org.geotools.pt.Envelope;
@@ -140,22 +142,32 @@ public class SampleDensity extends RenderedLayer {
     /**
      * Retourne une couverture contenant la densité d'échantillonage.
      *
-     * @param bounds Coordonnées géographiques.
-     * @param month  Le mois pour lequel on veut les données (de 1 à 12),
-     *               ou 0 pour prendre tous les mois.
+     * @param bounds   Coordonnées géographiques.
+     * @param presence Colonne indiquant la présence d'une espèce, ou <code>null</code> pour une
+     *                 carte de la distribution d'échantillonage sans le taux de présence.
+     * @param month    Le mois pour lequel on veut les données (de 1 à 12),
+     *                 ou 0 pour prendre tous les mois.
      */
-    private static GridCoverage getDensityCoverage(final Rectangle2D bounds, final int month)
+    private static GridCoverage getDensityCoverage(final Rectangle2D bounds,
+                                                   final String    presence,
+                                                   final int          month)
             throws IOException, SQLException
     {
-        final StringBuffer query = new StringBuffer("SELECT x, y FROM [Présences par catégories] WHERE visite<>0");
+        final StringBuffer query = new StringBuffer("SELECT x, y");
+        if (presence != null) {
+            query.append(", ");
+            query.append(presence);
+        }
+        query.append(" FROM [Présences par catégories] WHERE visite<>0");
         if (month != 0) {
             query.append(" AND MONTH(date)=");
             query.append(month);
         }
+        final String colors = (presence!=null) ? "rainbow" : "white-cyan-red";
         final BufferedImage image = new BufferedImage((int)Math.round(bounds.getWidth())  *2,
                                                       (int)Math.round(bounds.getHeight()) *2,
                                                       BufferedImage.TYPE_BYTE_INDEXED,
-                                                      Utilities.getPaletteFactory().getIndexColorModel("white-cyan-red"));
+                                                      Utilities.getPaletteFactory().getIndexColorModel(colors));
         final int    width   = image.getWidth();
         final int    height  = image.getHeight();
         final int    xmin    = image.getMinX();
@@ -167,6 +179,7 @@ public class SampleDensity extends RenderedLayer {
         final double xoffset = bounds.getMinX() + xmin/scaleX;
         final double yoffset = bounds.getMinY() + ymin/scaleY;
         final int[]  count   = new int[width*height];
+        final int[]  present = (presence!=null) ? new int[count.length] : null;
         int max = 0;
         final Connection connection = DriverManager.getConnection("jdbc:odbc:SEAS-Sennes");
         try {
@@ -176,9 +189,15 @@ public class SampleDensity extends RenderedLayer {
                 final int x = (int)Math.floor((results.getDouble(1)-xoffset) * scaleX);
                 final int y = (int)Math.floor((results.getDouble(2)-yoffset) * scaleY);
                 if (x>=xmin && x<xmax && y>=ymin && y<ymax) {
-                    final int c = ++count[x + width*y];
+                    final int offset = x + width*y;
+                    final int c = ++count[offset];
                     if (c > max) {
                         max = c;
+                    }
+                    if (present != null) {
+                        if (results.getBoolean(3)) {
+                            ++present[offset];
+                        }
                     }
                 }
             }
@@ -190,12 +209,27 @@ public class SampleDensity extends RenderedLayer {
         out.print("Densité maximale: "); out.println(max);
         final WritableRaster raster = image.getRaster();
         int index = 0;
-        final int scale = 1;
         for (int y=ymax; --y>=ymin;) {
             for (int x=xmin; x<xmax; x++) {
+                int value = count[index];
+                if (present != null) {
+                    if (value != 0) {
+                        value = (int)Math.round(((double)present[index]/value)*254 + 1);
+                    }
+                } else {
+                    // Apply a scale here, if needed.
+                }
                 // Copie les valeurs en arrondissant vers le haut.
-                raster.setSample(x, y, 0, Math.min((count[index++]+(scale-1))/scale, 255));
+                raster.setSample(x, y, 0, Math.min(Math.max(value, 0), 255));
+                index++;
             }
+        }
+        if (present != null) {
+            SampleDimension band = new SampleDimension(new Category[] {
+                    new Category("Taux de présence", null, 1, 255, 1./254, -1./254)}, null);
+            return new GridCoverage("Densité d'échantillonage", image,
+                                    GeographicCoordinateSystem.WGS84, new Envelope(bounds),
+                                    new SampleDimension[] {band}, null, null);
         }
         return new GridCoverage("Densité d'échantillonage", image,
                                 GeographicCoordinateSystem.WGS84, new Envelope(bounds));
@@ -205,10 +239,12 @@ public class SampleDensity extends RenderedLayer {
      * Affiche la carte de distribution des données.
      * Les arguments sur la ligne de commandes peuvent être:
      *
-     * -mois=[1-12]   (optionel) Le mois des données à utiliser.
+     * -presences=[C1|C3} (optionel) Nom de la colonne à utiliser pour les présences ou absences.
+     * -mois=[1-12]       (optionel) Le mois des données à utiliser.
      */
     public static void main(final String[] args) throws Exception {
         final Arguments arguments = new Arguments(args);
+        final String     presence = arguments.getOptionalString("-presence");
         final Integer    monthObj = arguments.getOptionalInteger("-mois");
         final int           month = monthObj!=null ? monthObj.intValue() : 0;
         arguments.getRemainingArguments(0);
@@ -217,7 +253,7 @@ public class SampleDensity extends RenderedLayer {
         final Driver driver = (Driver)Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
         final MapPane           mapPane = new MapPane(GeographicCoordinateSystem.WGS84);
         final GeometryCollection  coast = new GEBCOFactory("Océan_Indien").get(0);
-        final GridCoverage gridCoverage = getDensityCoverage(coast.getBounds(), month);
+        final GridCoverage gridCoverage = getDensityCoverage(coast.getBounds(), presence, month);
         // Note: on veut réellement getBounds() plutôt que getBounds2D() sur la ligne précédente,
         //       afin d'arrondir les coordonnées au degré près.
         final Renderer renderer = mapPane.getRenderer();
