@@ -85,8 +85,17 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Coverage3D extends Coverage
-{
+public class Coverage3D extends Coverage {
+    /**
+     * <code>true</code> pour exécuter {@link System#gc} avant tout chargement d'images. Il
+     * s'agit d'une tentative de réduction des erreurs de type {@link OutOfMemoryError}.  A
+     * l'heure actuelle, il est pratiquement impossible d'utiliser cette classe sans se casser
+     * la gueule sur un {@link OutOfMemoryError}, même avec une quantité monstrueuse de mémoire
+     * donnée à la machine virtuelle avec l'option -Xmx. Le problème est peut-être lié au
+     * bug #4640743 (SoftReferences are not being released in time and cause OutOfMemoryError).
+     */
+    private static final boolean RUN_GC = true;
+
     /**
      * Liste des images à prendre en compte.
      */
@@ -378,6 +387,10 @@ public class Coverage3D extends Coverage
      * @throws IOException if an error occured while loading image.
      */
     private void load(final int index) throws IOException {
+        if (RUN_GC) {
+            System.gc();
+            System.runFinalization();
+        }
         final ImageEntry entry = entries[index];
         log(ResourceKeys.LOADING_IMAGE_$1, new Object[]{entry});
         lower = upper = load(entry);
@@ -390,6 +403,10 @@ public class Coverage3D extends Coverage
      * @throws IOException if an error occured while loading images.
      */
     private void load(final ImageEntry entryLower, final ImageEntry entryUpper) throws IOException {
+        if (RUN_GC) {
+            System.gc();
+            System.runFinalization();
+        }
         final long timeLower = getTime(entryLower);
         final long timeUpper = getTime(entryUpper);
         log(ResourceKeys.LOADING_IMAGES_$2, new Object[]{entryLower, entryUpper});

@@ -27,6 +27,7 @@ public interface ResourceKeys
     public static final int ADJUST_MOSAIC_$3                    =     2;
     public static final int ADJUST_WITH_ZOOM                    =     3;
     public static final int ALTITUDE                            =     4;
+    public static final int ANALYSES                            =   183;
     public static final int APPLICATION_TITLE                   =     5;
     public static final int BATHYMETRY                          =     6;
     public static final int BLANK                               =     7;
@@ -72,6 +73,7 @@ public interface ResourceKeys
     public static final int FILE                                =    47;
     public static final int FILE_ALREADY_EXIST_$1               =    48;
     public static final int FISHERIES                           =    49;
+    public static final int FISHERIES_ENVIRONMENT               =   184;
     public static final int FORMATS                             =    50;
     public static final int FOUND_IMAGES_$1                     =    51;
     public static final int GRADIENT_SOBEL                      =    52;

@@ -28,6 +28,8 @@ package fr.ird.seasview;
 // Base de données
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
+import fr.ird.sql.coupling.EnvironmentTableFiller;
+import fr.ird.sql.coupling.EnvironmentControlPanel;
 import java.sql.SQLException;
 
 // Interface utilisateur
@@ -97,8 +99,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Desktop extends JDesktopPane implements PropertyChangeListener
-{
+final class Desktop extends JDesktopPane implements PropertyChangeListener {
     /**
      * Extension des fichiers binaires
      * enregistrés par cette application.
@@ -153,13 +154,14 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * Objet ayant la charge de réagir aux
      * changements de fenêtre actives.
      */
-    private final InternalFrameListener listener=new InternalFrameAdapter()
-    {
-        public void internalFrameActivated(final InternalFrameEvent e)
-        {stateChanged();}
+    private final InternalFrameListener listener = new InternalFrameAdapter() {
+        public void internalFrameActivated(final InternalFrameEvent e) {
+            stateChanged();
+        }
 
-        public void internalFrameDeactivated(final InternalFrameEvent e)
-        {stateChanged();}
+        public void internalFrameDeactivated(final InternalFrameEvent e) {
+            stateChanged();
+        }
     };
 
     /**
@@ -167,8 +169,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * @param database Connection avec l'ensemble des
      *              bases de données du projet PELOPS.
      */
-    public Desktop(final DataBase database)
-    {
+    public Desktop(final DataBase database) {
         this.database = database;
         this.timezone = TimeZone.getTimeZone("UTC");
         setDragMode(OUTLINE_DRAG_MODE);
@@ -178,8 +179,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * Spécifie la liste des actions dont
      * l'état dépendra de la fenêtre active.
      */
-    final void setActions(final Collection<Action> actions)
-    {
+    final void setActions(final Collection<Action> actions) {
         this.actions = actions.toArray(new Action[actions.size()]);
         stateChanged();
     }
@@ -189,16 +189,13 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * et une hauteur par défaut.  Cette méthode peut être appelée à partir de
      * n'importe quel thread (pas nécessairement celui de <i>Swing</i>).
      */
-    protected final void addFrame(final InternalFrame frame)
-    {
-        if (frame!=null)
-        {
-            if (!EventQueue.isDispatchThread())
-            {
-                EventQueue.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {addFrame(frame);}
+    protected final void addFrame(final InternalFrame frame) {
+        if (frame != null) {
+            if (!EventQueue.isDispatchThread()) {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                        addFrame(frame);
+                    }
                 });
                 return;
             }
@@ -206,8 +203,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             frame.setPaintingWhileAdjusting(getDragMode()==LIVE_DRAG_MODE);
             final int  width = Math.max(100, Math.min(620, (getWidth ()/50)*50));
             final int height = Math.max(100, Math.min(540, (getHeight()/50)*50));
-            if (nextFramePosition+width>=getWidth() || nextFramePosition+height>=getHeight())
-            {
+            if (nextFramePosition+width>=getWidth() || nextFramePosition+height>=getHeight()) {
                 nextFramePosition = CASCADE_STEP/2;
             }
             add(frame);
@@ -230,30 +226,27 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      *                    {@link JOptionPane.WARNING_MESSAGE} ou {@link JOptionPane.ERROR_MESSAGE}).
      * @return <code>true</code> si l'utilisateur a cliqué sur "Oui".
      */
-    private final boolean showConfirmDialog(final String message, final String title, final int messageType, final boolean yesNoOptions)
+    private final boolean showConfirmDialog(final String message,  final String title,
+                                            final int messageType, final boolean yesNoOptions)
     {
-        if (!EventQueue.isDispatchThread())
-        {
+        if (!EventQueue.isDispatchThread()) {
             final boolean[] result=new boolean[1];
-            Task.invokeAndWait(new Runnable()
-            {
-                public void run()
-                {result[0]=showConfirmDialog(message, title, messageType, yesNoOptions);}
+            Task.invokeAndWait(new Runnable() {
+                public void run() {
+                    result[0]=showConfirmDialog(message, title, messageType, yesNoOptions);
+                }
             });
             return result[0];
         }
         final int WIDTH=80;
         final int length=message.length();
         Object messageObject=message;
-        if (length>WIDTH)
-        {
+        if (length > WIDTH) {
             final List<String> list=new ArrayList<String>();
             int lower=0;
             int upper=0;
-            while ((upper=message.indexOf(' ', upper+1))>=0)
-            {
-                if (upper-lower>WIDTH)
-                {
+            while ((upper=message.indexOf(' ', upper+1))>=0) {
+                if (upper-lower > WIDTH) {
                     list.add(message.substring(lower, upper));
                     while (upper<length && Character.isSpaceChar(message.charAt(upper))) upper++;
                     lower=upper;
@@ -262,12 +255,10 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             list.add(message.substring(lower));
             messageObject=list.toArray();
         }
-        if (yesNoOptions)
-        {
-            return JOptionPane.showInternalConfirmDialog(this, messageObject, title, JOptionPane.YES_NO_OPTION, messageType)==JOptionPane.YES_OPTION;
-        }
-        else
-        {
+        if (yesNoOptions) {
+            return JOptionPane.showInternalConfirmDialog(this, messageObject, title,
+                   JOptionPane.YES_NO_OPTION, messageType)==JOptionPane.YES_OPTION;
+        } else {
             JOptionPane.showInternalMessageDialog(this, messageObject, title, messageType);
             return true;
         }
@@ -277,10 +268,10 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * Vérifie que le nom de fichier spécifié est valide. S'il n'a pas
      * d'extension, cette méthode lui rajoutera {@link #EXTENSION}.
      */
-    private static File valid(File file)
-    {
-        if (file.getName().indexOf('.')<0)
-            file=new File(file.getPath()+'.'+EXTENSION);
+    private static File valid(File file) {
+        if (file.getName().indexOf('.') < 0) {
+            file = new File(file.getPath()+'.'+EXTENSION);
+        }
         return file;
     }
 
@@ -288,46 +279,46 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * Retourne une tache capable de lire ou d'enregistrer le fichier spécifié.
      * La tache pourra être effectué en arrière plan.
      */
-    private Task getSerializable(final File file, final boolean save)
-    {
+    private Task getSerializable(final File file, final boolean save) {
         final Resources resources = Resources.getResources(getLocale());
-        lastSavedFile=file;
-        if (save)
-        {
+        lastSavedFile = file;
+        if (save) {
             final JInternalFrame[] frames=getAllFrames();
             final Task[] serial=new Task[frames.length];
-            for (int i=0; i<frames.length; i++)
-                if (frames[i] instanceof InternalFrame)
-                    serial[i]=((InternalFrame) frames[i]).getSerializable();
-            return new Task(resources.getString(ResourceKeys.SAVE))
-            {
-                protected void run() throws IOException
-                {
+            for (int i=0; i<frames.length; i++) {
+                if (frames[i] instanceof InternalFrame) {
+                    serial[i]=((InternalFrame) frames[i]).getSerializable(); {
+                    }
+                }
+            }
+            return new Task(resources.getString(ResourceKeys.SAVE)) {
+                protected void run() throws IOException {
                     final ObjectOutputStream out=new ObjectOutputStream(
                                                  new DeflaterOutputStream(
-                                                 new FileOutputStream(file), new Deflater(Deflater.BEST_COMPRESSION)));
-                    for (int i=0; i<serial.length; i++)
+                                                 new FileOutputStream(file),
+                                                 new Deflater(Deflater.BEST_COMPRESSION)));
+                    for (int i=0; i<serial.length; i++) {
                         if (serial[i]!=null) out.writeObject(serial[i]);
+                    }
                     out.writeObject(null); // Valeur sentinelle
                     out.close();
                 }
             };
-        }
-        else return new Task(resources.getString(ResourceKeys.OPEN))
-        {
-            protected void run() throws Exception
-            {
+        } else return new Task(resources.getString(ResourceKeys.OPEN)) {
+            protected void run() throws Exception {
                 Object serial;
-                final ObjectInputStream in=new ObjectInputStream(new InflaterInputStream(new FileInputStream(file)));
-                while ((serial=in.readObject()) != null)
-                {
+                final ObjectInputStream in = new ObjectInputStream(
+                                             new InflaterInputStream(
+                                             new FileInputStream(file)));
+                while ((serial=in.readObject()) != null) {
                     ((Task) serial).run(this);
                 }
                 in.close();
             }
 
-            protected String getTitle(final Throwable exception)
-            {return resources.getString(ResourceKeys.ERROR_BAD_FILE_$1, file.getName());}
+            protected String getTitle(final Throwable exception) {
+                return resources.getString(ResourceKeys.ERROR_BAD_FILE_$1, file.getName());
+            }
         };
     }
 
@@ -337,23 +328,26 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * @param name The thread name.
      * @param runnable The task to run.
      */
-    public final Thread createThread(final String name, final Runnable runnable)
-    {return new Thread(database.builder, runnable, name);}
+    public final Thread createThread(final String name, final Runnable runnable) {
+        return new Thread(database.builder, runnable, name);
+    }
 
     /**
      * Retourne la connection avec l'ensemble des bases de
      * données du projet PELOPS.
      */
-    public final DataBase getDataBase()
-    {return database;}
+    public final DataBase getDataBase() {
+        return database;
+    }
 
     /**
      * Retourne le fuseau horaire pour l'affichage et la saisie des dates dans l'application.
      * L'utilisateur pourra changer ce fuseau horaire sans que cela n'affecte celui de la base
      * de données.
      */
-    public final TimeZone getTimeZone()
-    {return timezone;}
+    public final TimeZone getTimeZone() {
+        return timezone;
+    }
 
     /**
      * Modifie le fuseau horaire pour l'affichage et la saisie des dates.
@@ -362,13 +356,14 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * défaut appelle les méthodes {@link InternalFrame#setTimeZone} de
      * toutes les fenêtres internes.
      */
-    public final void setTimeZone(final TimeZone timezone)
-    {
+    public final void setTimeZone(final TimeZone timezone) {
         this.timezone=timezone;
         final JInternalFrame[] frames=getAllFrames();
-        for (int i=0; i<frames.length; i++)
-            if (frames[i] instanceof InternalFrame)
+        for (int i=0; i<frames.length; i++) {
+            if (frames[i] instanceof InternalFrame) {
                 ((InternalFrame) frames[i]).setTimeZone(timezone);
+            }
+        }
     }
 
     /**
@@ -377,13 +372,14 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * <code>true</code> demandera plus de puissance de
      * la part de l'ordinateur.
      */
-    public final void setPaintingWhileAdjusting(final boolean s)
-    {
+    public final void setPaintingWhileAdjusting(final boolean s) {
         setDragMode(s ? LIVE_DRAG_MODE : OUTLINE_DRAG_MODE);
         final JInternalFrame[] frames=getAllFrames();
-        for (int i=0; i<frames.length; i++)
-            if (frames[i] instanceof InternalFrame)
+        for (int i=0; i<frames.length; i++) {
+            if (frames[i] instanceof InternalFrame) {
                 ((InternalFrame) frames[i]).setPaintingWhileAdjusting(s);
+            }
+        }
     }
 
     /**
@@ -391,12 +387,13 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * indique que tout zoom ou translation appliqué sur une image d'une
      * mosaïque doit être répliqué sur les autres.
      */
-    public final void setImagesSynchronized(final boolean s)
-    {
+    public final void setImagesSynchronized(final boolean s) {
         final JInternalFrame[] frames=getAllFrames();
-        for (int i=0; i<frames.length; i++)
-            if (frames[i] instanceof InternalFrame)
+        for (int i=0; i<frames.length; i++) {
+            if (frames[i] instanceof InternalFrame) {
                 ((InternalFrame) frames[i]).setImagesSynchronized(s);
+            }
+        }
     }
 
     /**
@@ -405,26 +402,22 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * de la fenêtre qui a le focus. Les actions en cours d'exécution seront
      * laissées inchangées.
      */
-    protected final void stateChanged()
-    {
-        if (actions!=null)
-        {
+    protected final void stateChanged() {
+        if (actions != null)  {
             final JInternalFrame window=getSelectedFrame();
-            if (window instanceof InternalFrame)
-            {
+            if (window instanceof InternalFrame) {
                 final InternalFrame frame=(InternalFrame) window;
-                for (int i=0; i<actions.length; i++)
-                {
+                for (int i=0; i<actions.length; i++) {
                     final Action action=actions[i];
-                    if (!action.isBusy())
+                    if (!action.isBusy()) {
                         action.setEnabled(frame.canProcess(action.getCommandKey()));
+                    }
                 }
-            }
-            else for (int i=0; i<actions.length; i++)
-            {
+            } else for (int i=0; i<actions.length; i++) {
                 final Action action=actions[i];
-                if (!action.isBusy())
+                if (!action.isBusy()) {
                     action.setEnabled(false);
+                }
             }
         }
     }
@@ -432,14 +425,11 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
     /**
      * Listen for property changes in other components.
      */
-    public void propertyChange(final PropertyChangeEvent event)
-    {
+    public void propertyChange(final PropertyChangeEvent event) {
         final String property = event.getPropertyName();
         final Object newValue = event.getNewValue();
-        if (property!=null)
-        {
-            if (property.equalsIgnoreCase("TimeZone"))
-            {
+        if (property != null) {
+            if (property.equalsIgnoreCase("TimeZone")) {
                 setTimeZone((TimeZone) newValue);
                 return;
             }
@@ -455,8 +445,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      *                par exemple du nom du fichier d'une image.
      * @param message Message à afficher.
      */
-    protected final void warning(final String source, final String message)
-    {
+    protected final void warning(final String source, final String message) {
         // TODO: We should handle that in a better way.
         final LogRecord record = new LogRecord(Level.WARNING, message);
         DataBase.logger.log(record);
@@ -468,24 +457,22 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * ferme les connections avec les bases de données, puis
      * termine le programme par un appel à {@link System#exit}.
      */
-    protected void exit()
-    {
-        try
-        {
+    protected void exit() {
+        try {
             // TODO: VERIFIER SI ON EST AUTORISE A FERMER L'APPLICATION!!!!
             //       Il faudrait en particulier vérifier s'il n'y a pas un
             //       thread en cours d'exécution en arrière-plan.
             database.close();
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             ExceptionMonitor.show(this, exception);
             // Continue to close the application.
         }
         Container parent=this;
-        while ((parent=parent.getParent())!=null)
-            if (parent instanceof Window)
+        while ((parent=parent.getParent()) != null) {
+            if (parent instanceof Window) {
                 ((Window) parent).dispose();
+            }
+        }
         DataBase.logger.log(Resources.getResources(getLocale()).getLogRecord(Level.FINE, ResourceKeys.END_APPLICATION));
         System.exit(0);
     }
@@ -513,36 +500,30 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
      * @throws SQLException si une interrogation de la base
      *         de données était nécessaire et a échouée.
      */
-    protected Task process(final int clé) throws SQLException
-    {
+    protected Task process(final int clé) throws SQLException {
         final Resources resources = Resources.getResources(getLocale());
         Task task=null;
-        switch (clé)
-        {
-            default:
-            {
+        switch (clé) {
+            default: {
                 final JInternalFrame frame=getSelectedFrame();
-                if (frame instanceof InternalFrame)
+                if (frame instanceof InternalFrame) {
                     task = ((InternalFrame) frame).process(clé);
+                }
                 break;
             }
 
             ////////////////////////////////////////////
             ///  Fichier - Nouveau - Séries d'images ///
             ////////////////////////////////////////////
-            case ResourceKeys.IMAGES_SERIES:
-            {
-                task=new Task(resources.getString(ResourceKeys.NEW_IMAGES_SERIES))
-                {
-                    protected void run() throws SQLException
-                    {
+            case ResourceKeys.IMAGES_SERIES: {
+                task=new Task(resources.getString(ResourceKeys.NEW_IMAGES_SERIES)) {
+                    protected void run() throws SQLException {
                         final DataBase database = getDataBase();
-                        final CoordinateChooserDB chooser=new CoordinateChooserDB(database.getImageDataBase());
+                        final CoordinateChooserDB chooser = new CoordinateChooserDB(database.getImageDataBase());
                         chooser.setMultiSeriesAllowed(true);
                         chooser.setTimeZone(getTimeZone());
                         setWaitCursor(false);
-                        if (chooser.showDialog(Desktop.this, resources.format(ResourceKeys.NEW_IMAGES_SERIES)))
-                        {
+                        if (chooser.showDialog(Desktop.this, resources.format(ResourceKeys.NEW_IMAGES_SERIES))) {
                             setWaitCursor(true);
                             final NavigatorFrame frame = new NavigatorFrame(database, chooser, Desktop.this);
                             addFrame(frame);
@@ -556,14 +537,12 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             //////////////////////////
             ///  Fichier - Ouvrir  ///
             //////////////////////////
-            case ResourceKeys.OPEN:
-            {
+            case ResourceKeys.OPEN: {
                 final JFileChooser chooser=new JFileChooser(lastDirectory);
                 chooser.setFileFilter  (new DefaultFileFilter("*."+EXTENSION, resources.getString(ResourceKeys.DESKTOP_FILES_TYPE_$1, EXTENSION)));
                 chooser.setDialogTitle (resources.getString(ResourceKeys.OPEN_DESKTOP));
                 chooser.setSelectedFile(lastSavedFile);
-                if (chooser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION)
-                {
+                if (chooser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION) {
                     final File file = valid(chooser.getSelectedFile());
                     task = getSerializable(file, false);
                     lastDirectory = file.getParent();
@@ -574,10 +553,8 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             ///////////////////////////////
             ///  Fichier - Enregistrer  ///
             ///////////////////////////////
-            case ResourceKeys.SAVE:
-            {
-                if (lastSavedFile!=null)
-                {
+            case ResourceKeys.SAVE: {
+                if (lastSavedFile != null) {
                     task = getSerializable(lastSavedFile, true);
                     break;
                 }
@@ -587,16 +564,16 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             ///////////////////////////////////////
             ///  Fichier - Enregistrer sous...  ///
             ///////////////////////////////////////
-            case ResourceKeys.SAVE_AS:
-            {
-                if (showConfirmDialog(resources.getString(ResourceKeys.WARNING_SERIALIZATION), resources.getString(ResourceKeys.WARNING), JOptionPane.WARNING_MESSAGE, false))
+            case ResourceKeys.SAVE_AS: {
+                if (showConfirmDialog(resources.getString(ResourceKeys.WARNING_SERIALIZATION),
+                                      resources.getString(ResourceKeys.WARNING),
+                                      JOptionPane.WARNING_MESSAGE, false))
                 {
                     final JFileChooser chooser=new JFileChooser(lastDirectory);
-                    chooser.setFileFilter  (new DefaultFileFilter("*."+EXTENSION, resources.getString(ResourceKeys.DESKTOP_FILES_TYPE_$1, EXTENSION)));
-                    chooser.setDialogTitle (resources.getString(ResourceKeys.SAVE_DESKTOP));
+                    chooser.setFileFilter(new DefaultFileFilter("*."+EXTENSION, resources.getString(ResourceKeys.DESKTOP_FILES_TYPE_$1, EXTENSION)));
+                    chooser.setDialogTitle(resources.getString(ResourceKeys.SAVE_DESKTOP));
                     chooser.setSelectedFile(lastSavedFile);
-                    while (chooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION)
-                    {
+                    while (chooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION) {
                         final File file=valid(chooser.getSelectedFile());
                         if (!file.exists() || showConfirmDialog(resources.getString(ResourceKeys.FILE_ALREADY_EXIST_$1, file.getName()),
                                               resources.getString(ResourceKeys.CONFIRM_OVERWRITE), JOptionPane.QUESTION_MESSAGE, true))
@@ -613,21 +590,33 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             //////////////////////////
             ///  Fichier - Quitter ///
             //////////////////////////
-            case ResourceKeys.EXIT:
-            {
+            case ResourceKeys.EXIT: {
                 exit();
             }
 
             //////////////////////////////////////////////
             ///  Séries - Sommaire des plages de temps ///
             //////////////////////////////////////////////
-            case ResourceKeys.IMAGES_CATALOG:
-            {
-                task=new Task(resources.getString(ResourceKeys.IMAGES_CATALOG))
-                {
-                    protected void run() throws SQLException
-                    {
+            case ResourceKeys.IMAGES_CATALOG: {
+                task = new Task(resources.getString(ResourceKeys.IMAGES_CATALOG)) {
+                    protected void run() throws SQLException {
                         addFrame(new CatalogFrame(getDataBase(), Desktop.this));
+                    }
+                };
+                break;
+            }
+
+            /////////////////////////////////////////////
+            ///  Analyses - Environnements des pêches ///
+            /////////////////////////////////////////////
+            case ResourceKeys.FISHERIES_ENVIRONMENT: {
+                task = new Task(resources.getString(ResourceKeys.IMAGES_CATALOG)) {
+                    protected void run() throws SQLException {
+                        final DataBase database = getDataBase();
+                        final EnvironmentControlPanel panel = new EnvironmentControlPanel(
+                              new EnvironmentTableFiller(database.getImageDataBase(),
+                                                         database.getFisheryDataBase()));
+                        panel.showDialog(Desktop.this);
                     }
                 };
                 break;
@@ -636,20 +625,16 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             //////////////////////////////////////
             ///  Préférences - Fuseau horaire  ///
             //////////////////////////////////////
-            case ResourceKeys.TIMEZONE:
-            {
-                TimeZone selectedTimezone=this.timezone;
-                final TimeZoneChooser chooser=new TimeZoneChooser(resources.getString(ResourceKeys.TIMEZONE_SELECTION_MESSAGE));
+            case ResourceKeys.TIMEZONE: {
+                TimeZone selectedTimezone = this.timezone;
+                final TimeZoneChooser chooser = new TimeZoneChooser(resources.getString(ResourceKeys.TIMEZONE_SELECTION_MESSAGE));
                 chooser.setTimeZone(selectedTimezone);
                 chooser.setPreferredSize(new Dimension(320,250));
                 final TimeZone newtz;
-                try
-                {
+                try {
                     chooser.addPropertyChangeListener(this);
                     newtz = chooser.showDialog(this);
-                }
-                finally
-                {
+                } finally {
                     chooser.removePropertyChangeListener(this);
                 }
                 if (newtz!=null) selectedTimezone=newtz;
@@ -660,9 +645,10 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             ///////////////////////////////////////
             ///  Préférences - Base de données  ///
             ///////////////////////////////////////
-            case ResourceKeys.DATABASES:
-            {
-                if (showConfirmDialog(resources.getString(ResourceKeys.WARNING_ADVANCED_USER), resources.getString(ResourceKeys.WARNING), JOptionPane.WARNING_MESSAGE, true))
+            case ResourceKeys.DATABASES: {
+                if (showConfirmDialog(resources.getString(ResourceKeys.WARNING_ADVANCED_USER),
+                                      resources.getString(ResourceKeys.WARNING),
+                                      JOptionPane.WARNING_MESSAGE, true))
                 {
                     new fr.ird.sql.ControlPanel().showDialog(this);
                 }
@@ -672,12 +658,9 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
             ////////////////////////////
             ///  ? - A propos de...  ///
             ////////////////////////////
-            case ResourceKeys.ABOUT:
-            {
-                task=new Task(resources.getString(ResourceKeys.ABOUT))
-                {
-                    protected void run()
-                    {
+            case ResourceKeys.ABOUT: {
+                task = new Task(resources.getString(ResourceKeys.ABOUT)) {
+                    protected void run() {
                         final About about=new About("application-data/images/About.png",
                                                     Desktop.class, getDataBase().threads);
                         setWaitCursor(false);

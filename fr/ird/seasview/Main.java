@@ -91,29 +91,26 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Main
-{
+public final class Main {
     /**
      * Do not allows instantiation of this class.
      */
-    private Main()
-    {}
+    private Main() {
+    }
 
     /**
      * Construit une fenêtre de l'application SEAS.
      *
      * @param database Connection avec les bases de données.
      */
-    public static JFrame setup(final DataBase database)
-    {
+    public static JFrame setup(final DataBase database) {
         final Resources   resources = Resources.getResources(null);
         final JFrame          frame = new JFrame(resources.getString(ResourceKeys.APPLICATION_TITLE));
         final Desktop       desktop = new Desktop(database);
         final JToolBar      toolBar = new JToolBar("SEAS");
         final JMenuBar      menuBar = new JMenuBar();
         final Container contentPane = frame.getContentPane();
-        frame.addWindowListener(new WindowAdapter()
-        {
+        frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(final WindowEvent event)
             {desktop.exit();}
         });
@@ -131,24 +128,21 @@ public final class Main
         /////////////////
         ///  Fichier  ///
         /////////////////
-        if (true)
-        {
+        if (true) {
             final JMenu menu=new JMenu(resources.getString(ResourceKeys.FILE));
             menu.setMnemonic(KeyEvent.VK_F);
             menuBar.add(menu);
             //////////////////////////
             ///  Fichier - Nouveau ///
             //////////////////////////
-            if (true)
-            {
+            if (true) {
                 final JMenu submenu = new JMenu(resources.getString(ResourceKeys.NEW));
                 submenu.setMnemonic(KeyEvent.VK_N);
                 menu.add(submenu);
                 ////////////////////////////////////////////
                 ///  Fichier - Nouveau - Séries d'images ///
                 ////////////////////////////////////////////
-                if (true)
-                {
+                if (true) {
                     final Action action = new Action(desktop, ResourceKeys.IMAGES_SERIES, true);
                     action.setAccelerator(KeyEvent.VK_N, KeyEvent.CTRL_MASK);
                     action.setToolTipText(ResourceKeys.NEW_IMAGES_SERIES);
@@ -159,8 +153,7 @@ public final class Main
                 //////////////////////////////////////////////////////////
                 ///  Fichier - Nouveau - Couplage pêche/environnement  ///
                 //////////////////////////////////////////////////////////
-                if (false)
-                {
+                if (false) {
                     final Action action = new Action(desktop, ResourceKeys.COUPLING, true);
                     action.setMnemonicKey(KeyEvent.VK_C);
                     action.addTo(submenu);
@@ -170,8 +163,7 @@ public final class Main
             /////////////////////////
             ///  Fichier - Ouvrir ///
             /////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.OPEN, false);
                 action.setAccelerator(KeyEvent.VK_O, KeyEvent.CTRL_MASK);
                 action.setMnemonicKey(KeyEvent.VK_O);
@@ -182,8 +174,7 @@ public final class Main
             //////////////////////////////
             ///  Fichier - Enregistrer ///
             //////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.SAVE, false);
                 action.setToolTipText(ResourceKeys.SAVE_DESKTOP);
                 action.setIcon("general/Save");
@@ -192,8 +183,7 @@ public final class Main
             //////////////////////////////////////
             ///  Fichier - Enregistrer sous... ///
             //////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.SAVE_AS, true);
                 action.setAccelerator(KeyEvent.VK_S, KeyEvent.CTRL_MASK);
                 action.setMnemonicKey(KeyEvent.VK_S); // TODO: devrait être le **deuxième** S.
@@ -204,8 +194,7 @@ public final class Main
             ///////////////////////////
             ///  Fichier - Exporter ///
             ///////////////////////////
-            if (false)
-            {
+            if (false) {
                 final Action action = new Action(desktop, ResourceKeys.EXPORT, true);
                 action.setMnemonicKey(KeyEvent.VK_E);
                 action.setToolTipText(ResourceKeys.EXPORT);
@@ -216,8 +205,7 @@ public final class Main
             //////////////////////////
             ///  Fichier - Quitter ///
             //////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.EXIT, false);
                 action.addTo(menu);
             }
@@ -225,8 +213,7 @@ public final class Main
         /////////////////
         ///  Edition  ///
         /////////////////
-        if (true)
-        {
+        if (true) {
             final JMenu menu=new JMenu(resources.getString(ResourceKeys.EDIT));
             menu.setMnemonic(KeyEvent.VK_E);
             menuBar.add(menu);
@@ -234,8 +221,7 @@ public final class Main
             //////////////////////////
             ///  Edition - Annuler ///
             //////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.UNDO, false);
                 action.setAccelerator(KeyEvent.VK_Z, KeyEvent.CTRL_MASK);
                 action.setToolTipText(ResourceKeys.UNDO);
@@ -246,8 +232,7 @@ public final class Main
             //////////////////////////
             ///  Edition - Refaire ///
             //////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.REDO, false);
                 action.setAccelerator(KeyEvent.VK_Y, KeyEvent.CTRL_MASK);
                 action.setToolTipText(ResourceKeys.REDO);
@@ -260,8 +245,7 @@ public final class Main
             /////////////////////////
             ///  Edition - Copier ///
             /////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.COPY, false);
                 action.setAccelerator(KeyEvent.VK_C, KeyEvent.CTRL_MASK);
                 action.setMnemonicKey(KeyEvent.VK_C);
@@ -273,8 +257,7 @@ public final class Main
             ////////////////////////////
             ///  Edition - Supprimer ///
             ////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.DELETE, false);
                 action.setAccelerator(KeyEvent.VK_DELETE, 0);
                 action.setToolTipText(ResourceKeys.DELETE);
@@ -286,8 +269,7 @@ public final class Main
             ////////////////////////////////////
             ///  Edition - Sélectionner tout ///
             ////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.SELECT_ALL, false);
                 action.setAccelerator(KeyEvent.VK_A, KeyEvent.CTRL_MASK);
                 action.setToolTipText(ResourceKeys.SELECT_ALL);
@@ -297,8 +279,7 @@ public final class Main
             ////////////////////////////////////////
             ///  Edition - Inverser la sélection ///
             ////////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.INVERT_SELECTION, false);
                 action.setToolTipText(ResourceKeys.INVERT_SELECTION);
                 action.addTo(menu);
@@ -308,13 +289,11 @@ public final class Main
         ///////////////////
         ///  Affichage  ///
         ///////////////////
-        if (true)
-        {
+        if (true) {
             //////////////////////////////////////
             ///  Affichage - Rétablir le zoom  ///
             //////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 toolBar.addSeparator();
                 final Action action=new Action(desktop, ResourceKeys.RESET_VIEW, false);
                 action.setToolTipText(ResourceKeys.RESET_VIEW);
@@ -326,16 +305,14 @@ public final class Main
         ////////////////
         ///  Séries  ///
         ////////////////
-        if (true)
-        {
+        if (true) {
             final JMenu menu=new JMenu(resources.getString(ResourceKeys.SERIES));
             menu.setMnemonic(KeyEvent.VK_S);
             menuBar.add(menu);
             ///////////////////////////////////
             ///  Séries - Ajouter une série ///
             ///////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action=new Action(desktop, ResourceKeys.ADD_SERIES, true);
                 action.setMnemonicKey(KeyEvent.VK_A);
                 action.setIcon("general/Add");
@@ -345,8 +322,7 @@ public final class Main
             /////////////////////////////////
             ///  Séries - Fermer la série ///
             /////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action=new Action(desktop, ResourceKeys.CLOSE_SERIES, true);
                 action.setMnemonicKey(KeyEvent.VK_F);
                 action.setIcon("general/Remove");
@@ -356,8 +332,7 @@ public final class Main
             /////////////////////////////////////////
             ///  Séries - Changer les coordonnées ///
             /////////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 menu.addSeparator();
                 final Action action=new Action(desktop, ResourceKeys.CHANGE_COORDINATES, true);
                 action.setMnemonicKey(KeyEvent.VK_C);
@@ -368,8 +343,7 @@ public final class Main
             //////////////////////////////////////////////
             ///  Séries - Sommaire des plages de temps ///
             //////////////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 menu.addSeparator();
                 final Action action=new Action(desktop, ResourceKeys.IMAGES_CATALOG, true);
                 action.setMnemonicKey(KeyEvent.VK_S);
@@ -377,22 +351,35 @@ public final class Main
                 action.addTo(menu);
             }
         }
+        /////////////////
+        ///  Analyse  ///
+        /////////////////
+        if (true) {
+            final JMenu menu=new JMenu(resources.getString(ResourceKeys.ANALYSES));
+            menu.setMnemonic(KeyEvent.VK_A);
+            menuBar.add(menu);
+            /////////////////////////////////////////////
+            ///  Analyses - Environnements des pêches ///
+            /////////////////////////////////////////////
+            if (true) {
+                final Action action = new Action(desktop, ResourceKeys.FISHERIES_ENVIRONMENT, true);
+                action.setMnemonicKey(KeyEvent.VK_E);
+                action.addTo(menu);
+            }
+        }
         /////////////////////
         ///  Préférences  ///
         /////////////////////
-        if (true)
-        {
+        if (true) {
             final JMenu menu=new JMenu(resources.getString(ResourceKeys.PREFERENCES));
             menu.setMnemonic(KeyEvent.VK_P);
             menuBar.add(menu);
             ///////////////////////////////////////////
             ///  Préférences - Images synchronisées ///
             ///////////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final JMenuItem item=new JCheckBoxMenuItem(resources.getString(ResourceKeys.SYNCHRONIZED_IMAGES), true);
-                item.addActionListener(new ActionListener()
-                {
+                item.addActionListener(new ActionListener() {
                     public void actionPerformed(final ActionEvent event)
                     {desktop.setImagesSynchronized(item.isSelected());}
                 });
@@ -401,11 +388,9 @@ public final class Main
             /////////////////////////////////////////
             ///  Préférences - Défilement continu ///
             /////////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final JMenuItem item=new JCheckBoxMenuItem(resources.getString(ResourceKeys.LIVE_SCROLLING));
-                item.addActionListener(new ActionListener()
-                {
+                item.addActionListener(new ActionListener() {
                     public void actionPerformed(final ActionEvent event)
                     {desktop.setPaintingWhileAdjusting(item.isSelected());}
                 });
@@ -415,8 +400,7 @@ public final class Main
             /////////////////////////////////////
             ///  Préférences - Fuseau horaire ///
             /////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.TIMEZONE, true);
                 action.setMnemonicKey(KeyEvent.VK_H);
                 action.addTo(menu);
@@ -424,8 +408,7 @@ public final class Main
             ///////////////////////////////////////
             ///  Préférences - Bases de données ///
             ///////////////////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.DATABASES, true);
                 action.setMnemonicKey(KeyEvent.VK_D);
                 action.addTo(menu);
@@ -434,15 +417,13 @@ public final class Main
         ///////////
         ///  ?  ///
         ///////////
-        if (true)
-        {
+        if (true) {
             final JMenu menu=new JMenu("?");
             menuBar.add(menu);
             ///////////////////////////
             ///  ? - A propos de... ///
             ///////////////////////////
-            if (true)
-            {
+            if (true) {
                 final Action action = new Action(desktop, ResourceKeys.ABOUT, true);
                 action.setMnemonicKey(KeyEvent.VK_A);
                 action.setIcon("general/About");
@@ -452,8 +433,7 @@ public final class Main
         ///////////////
         ///  Debug  ///
         ///////////////
-        if (true)
-        {
+        if (true) {
             final String DEBUG="Debug";
             final Action action=new Action(desktop, ResourceKeys.DEBUG, DEBUG);
             desktop.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.ALT_MASK), DEBUG);
@@ -488,8 +468,7 @@ public final class Main
      *       utilisant le "Look and Feel" par défaut de <i>Swing</i>.</li>
      * </ul>
      */
-    public static void main(final String[] args)
-    {
+    public static void main(final String[] args) {
         fr.ird.util.InterlineFormatter.init(Logger.getLogger("fr.ird"));
         /*
          * Interprète les arguments de la ligne de commange.
@@ -500,20 +479,15 @@ public final class Main
         final String    tilecache = arguments.getOptionalString("-tilecache");
         final boolean    nativeLF = arguments.getFlag("-native");
         arguments.getRemainingArguments(0);
-        if (tilecache!=null)
-        {
+        if (tilecache != null) {
             final long value = Long.parseLong(tilecache)*(1024*1024);
             JAI.getDefaultInstance().getTileCache().setMemoryCapacity(value);
             // La capacité par défaut était de 64 Megs.
         }
-        if (nativeLF)
-        {
-            try
-            {
+        if (nativeLF) {
+            try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }
-            catch (Exception exception)
-            {
+            } catch (Exception exception) {
                 Utilities.unexpectedException("fr.ird", "Main", "main", exception);
             }
         }
@@ -525,19 +499,13 @@ public final class Main
          * Il existe aussi avec le JDK 1.2, mais ce dernier n'est pas
          * compatible avec le JDBC 2.0.
          */
-        if (false) try
-        {
+        if (false) try {
             Class.forName("org.gjt.mm.mysql.Driver");
             arguments.out.println("Utilise le pilote MySQL");
-        }
-        catch (ClassNotFoundException exception1)
-        {
-            try
-            {
+        } catch (ClassNotFoundException exception1) {
+            try {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-            }
-            catch (ClassNotFoundException exception2)
-            {
+            } catch (ClassNotFoundException exception2) {
                 // Ignore. On espère que l'utilisateur spécifiera
                 // un nom de base de données avec un pilote existant.
                 arguments.out.println("Pilote JDBC-ODBC introuvable");
@@ -551,16 +519,14 @@ public final class Main
          * nouveau la connection.
          */
         ControlPanel control = null;
-        do try
-        {
+        do try {
             setup(new DataBase()).show();
             return;
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             ExceptionMonitor.show(null, exception);
-            if (control==null)
+            if (control==null) {
                 control = new ControlPanel();
+            }
         }
         while (control.showDialog(null));
         System.exit(0);

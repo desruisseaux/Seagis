@@ -245,6 +245,7 @@ final class CouplingResultSet implements ResultSet {
         return last.getBigDecimal(columnIndex);
     }
 
+    /** @deprecated Use {@link #getBigDecimal(int)} instead. */
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
         columnIndex = toResultSet(columnIndex);
         if (columnIndex == 0) {
@@ -317,6 +318,7 @@ final class CouplingResultSet implements ResultSet {
         return last.getAsciiStream(columnIndex);
     }
 
+    /** @deprecated use {@link #getCharacterStream(int)} instead. */
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
         columnIndex = toResultSet(columnIndex);
         if (columnIndex == 0) {
@@ -438,6 +440,7 @@ final class CouplingResultSet implements ResultSet {
         return getBigDecimal(findColumn(columnName));
     }
 
+    /** @deprecated Use {@link #getBigDecimal(String)} instead. */
     public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
         return getBigDecimal(findColumn(columnName), scale);
     }
@@ -474,6 +477,7 @@ final class CouplingResultSet implements ResultSet {
         return getAsciiStream(findColumn(columnName));
     }
 
+    /** @deprecated use {@link #getCharacterStream(String)} instead. */
     public InputStream getUnicodeStream(String columnName) throws SQLException {
         return getUnicodeStream(findColumn(columnName));
     }

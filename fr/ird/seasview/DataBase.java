@@ -58,8 +58,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class DataBase
-{
+public final class DataBase {
     /**
      * The logger for the application.
      */
@@ -114,8 +113,7 @@ public final class DataBase
      * Construit une nouvelle source de données avec des
      * connections vers les bases de données spécifiées.
      */
-    private DataBase(final ImageDataBase images, final FisheryDataBase fisheries)
-    {
+    private DataBase(final ImageDataBase images, final FisheryDataBase fisheries) {
         this.images    = images;
         this.fisheries = fisheries;
         threads.setMaxPriority(Thread.NORM_PRIORITY-3);
@@ -132,8 +130,9 @@ public final class DataBase
      *
      * @throws SQLException si les connections avec les bases de données ont échouées.
      */
-    public DataBase() throws SQLException
-    {this(null, null);}
+    public DataBase() throws SQLException {
+        this(null, null);
+    }
 
     /**
      * Construit une nouvelle source de données
@@ -146,25 +145,27 @@ public final class DataBase
      * @param fisheriesTZ Fuseau horaire par défaut des dates dans les bases de données de pêches.
      * @throws SQLException si les connections avec les bases de données ont échouées.
      */
-    public DataBase(final String images, final TimeZone imagesTZ, final String fisheries, final TimeZone fisheriesTZ) throws SQLException
-    {this(new ImageDataBase(images, imagesTZ), new FisheryDataBase(fisheries, fisheriesTZ));}
+    public DataBase(final String images,    final TimeZone imagesTZ,
+                    final String fisheries, final TimeZone fisheriesTZ) throws SQLException
+    {
+        this(new ImageDataBase(images, imagesTZ), new FisheryDataBase(fisheries, fisheriesTZ));
+    }
 
     /**
      * Returns a thread group that may be used
      * for reading images as a background process.
      */
-    public ThreadGroup getThreadGroup()
-    {return readers;}
+    public ThreadGroup getThreadGroup() {
+        return readers;
+    }
 
     /**
      * Retourne la base de données d'images.
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized ImageDataBase getImageDataBase() throws SQLException
-    {
-        if (images==null)
-        {
+    public synchronized ImageDataBase getImageDataBase() throws SQLException {
+        if (images == null) {
             images = new ImageDataBase();
         }
         return images;
@@ -175,10 +176,8 @@ public final class DataBase
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    private synchronized FisheryDataBase getFisheryDataBase() throws SQLException
-    {
-        if (fisheries==null)
-        {
+    protected synchronized FisheryDataBase getFisheryDataBase() throws SQLException {
+        if (fisheries == null) {
             fisheries = new FisheryDataBase();
         }
         return fisheries;
@@ -190,8 +189,7 @@ public final class DataBase
      * @param  series La série voulue, ou <code>null</code> pour une série par défaut.
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public ImageTable getImageTable(final SeriesEntry series) throws SQLException
-    {
+    public ImageTable getImageTable(final SeriesEntry series) throws SQLException {
         final ImageDataBase images = getImageDataBase();
         return (series!=null) ? images.getImageTable(series) : images.getImageTable();
     }
@@ -202,14 +200,12 @@ public final class DataBase
      *
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized LayerControl[] getLayerControls() throws SQLException
-    {
+    public synchronized LayerControl[] getLayerControls() throws SQLException {
         final ImageDataBase      images = getImageDataBase();
         final List<LayerControl> layers = new ArrayList<LayerControl>(3);
         final ImageTable       currents = images.getImageTable(SLA_TABLE);
         layers.add(new ImageLayerControl());
-        if (currents!=null)
-        {
+        if (currents != null) {
             layers.add(new VectorLayerControl(currents, 1, 2));
         }
         final FisheryDataBase fisheries = getFisheryDataBase();
@@ -223,15 +219,12 @@ public final class DataBase
      * @throws SQLException si un problème est survenu
      *         lors de la fermeture d'une connection.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (images!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (images != null) {
             images.close();
             images = null;
         }
-        if (fisheries!=null)
-        {
+        if (fisheries != null) {
             fisheries.close();
             fisheries = null;
         }

@@ -171,6 +171,7 @@ public class EnvironmentControlPanel extends JPanel {
         ////////    Onglet Coordonnées spatio-temporelles    ////////
         /////////////////////////////////////////////////////////////
         if (true) {
+            final JPanel panel = new JPanel(new BorderLayout());
             if (true) {
                 // Configure la liste des décalages de temps.
                 int selectedCount=0;
@@ -186,13 +187,16 @@ public class EnvironmentControlPanel extends JPanel {
                 selectedIndices = XArray.resize(selectedIndices, selectedCount);
                 timeLags.setListData(lags.toArray());
                 timeLags.setSelectedIndices(selectedIndices);
-                final JPanel panel = new JPanel(new BorderLayout());
-                panel.add(new JLabel("Décalages en jours"), BorderLayout.NORTH);
-                panel.add(new JScrollPane(timeLags),        BorderLayout.CENTER);
-                coordinates.setAccessory(panel);
+                final JPanel timePanel = new JPanel(new BorderLayout());
+                timePanel.add(new JLabel("Décalages en jours"), BorderLayout.NORTH);
+                timePanel.add(new JScrollPane(timeLags),        BorderLayout.CENTER);
+                timePanel.setBorder(BorderFactory.createEmptyBorder(6,18,6,6));
+                panel.add(timePanel, BorderLayout.CENTER);
             }
             coordinates.setSelectorVisible(CoordinateChooser.RESOLUTION, false);
-            tabs.addTab("Coordonnées", coordinates);
+            panel.setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
+            panel.add(coordinates, BorderLayout.WEST);
+            tabs.addTab("Coordonnées", panel);
         }
         //////////////////////////////////////////////////
         ////////    Onglet Operateurs de Sobel    ////////
@@ -309,6 +313,10 @@ public class EnvironmentControlPanel extends JPanel {
      */
     public void showDialog(final Component owner) {
         if (SwingUtilities.showOptionDialog(owner, this, "Environnement aux positions de pêches")) {
+            final LoggingPanel logging = new LoggingPanel("");
+            logging.getHandler().setLevel(Level.FINE);
+            logging.show(owner);
+
             final Map<String,Object> arguments = new HashMap<String,Object>();
             arguments.put("mask1", kernelH.getKernel());
             arguments.put("mask2", kernelV.getKernel());
@@ -350,12 +358,8 @@ public class EnvironmentControlPanel extends JPanel {
      * @throws SQLException si un problème est survenu lors d'un accès à une base de données.
      */
     public static void main(final String[] args) throws SQLException {
-        final LoggingPanel logging = new LoggingPanel("");
-        logging.getHandler().setLevel(Level.FINE);
-        final Component owner = logging.show(null);
-
         final EnvironmentControlPanel panel = new EnvironmentControlPanel();
-        panel.showDialog(owner);
+        panel.showDialog(null);
         panel.dispose();
         System.exit(0);
     }

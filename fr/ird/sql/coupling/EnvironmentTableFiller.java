@@ -185,15 +185,35 @@ public final class EnvironmentTableFiller {
     final FisheryDataBase pêches;
 
     /**
-     * Construit une connexion par défaut.  Cette connexion utilisera des
-     * paramètres par défaut qui peuvent être préalablement configurés en
-     * exécutant {@link SQLControler} à partir de la ligne de commande.
+     * <code>true</code> si cet objet possède les connexion vers les bases
+     * de données d'images et de pêches. Dans ce cas, {@link #close} fermera
+     * ces connexion.
+     */
+    private boolean canClose;
+
+    /**
+     * Construit un objet utlisant une connexion par défaut.  Cette connexion utilisera
+     * des paramètres par défaut qui peuvent être préalablement configurés en exécutant
+     * {@link SQLControler} à partir de la ligne de commande.
      *
      * @throws SQLException si la connexion a échouée.
      */
     public EnvironmentTableFiller() throws SQLException {
-        images = new ImageDataBase();
-        pêches = new FisheryDataBase();
+        this(new ImageDataBase(), new FisheryDataBase());
+        canClose = true;
+    }
+
+    /**
+     * Construit un objet utilisant les connexions specifiées.
+     *
+     * @param  images Connexion vers la base de données d'images.
+     * @param  pêches Connexion vers la base de données des pêches.
+     * @throws SQLException si la connexion a échouée.
+     */
+    public EnvironmentTableFiller(final ImageDataBase   images,
+                                  final FisheryDataBase pêches) throws SQLException {
+        this.images = images;
+        this.pêches = pêches;
         final SeriesTable series = images.getSeriesTable();
         for (int i=0; i<DEFAULT_SERIES.length; i++) {
             final String[] param = DEFAULT_SERIES[i];
@@ -313,7 +333,7 @@ public final class EnvironmentTableFiller {
         final CatchEntry[]   catchs = getCatchs();
         final ImageTable imageTable = images.getImageTable();
         final ParameterList  params = imageTable.setOperation(operation.name);
-        if (true) {
+        if (params != null) {
             final String[] names = params.getParameterListDescriptor().getParamNames();
             for (int i=0; i<names.length; i++) {
                 final Object value = arguments.get(names[i]);
@@ -350,8 +370,11 @@ public final class EnvironmentTableFiller {
      *         lors de la fermeture des connections.
      */
     public void close() throws SQLException {
-        pêches.close();
-        images.close();
+        if (canClose) {
+            pêches.close();
+            images.close();
+            canClose=false;
+        }
     }
 
     /**
