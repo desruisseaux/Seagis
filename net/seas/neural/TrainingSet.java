@@ -80,4 +80,11 @@ public interface TrainingSet
      * Move the cursor before the first training instance.
      */
     public abstract void rewind();
+
+    /**
+     * Randomly permute instances in this training set.
+     * This is an optional operation (some backing store
+     * may be difficult to permute).
+     */
+    public abstract void shuffle();
 }
