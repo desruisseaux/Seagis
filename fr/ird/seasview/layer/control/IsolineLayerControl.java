@@ -76,9 +76,11 @@ public final class IsolineLayerControl extends LayerControl {
     }
 
     /**
-     * The default color for filling lands.
+     * Couleur par défaut pour le remplissage des terres. La couleur RFB des images SST
+     * est (210,200,160). Pour le remplissage, nous prennons une couleur légèrement plus
+     * foncée.
      */
-    private static final Color FOREGROUND = new Color(59,107,92);
+    private static final Color FOREGROUND = new Color(168,160,128);
 
     /**
      * The default set of selected values.

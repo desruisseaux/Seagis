@@ -51,10 +51,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 // Other J2SE dependencies
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.logging.LogRecord;
+import java.util.logging.Level;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 
@@ -94,11 +99,18 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      * pour une description plus détaillée. Cette liste est utilisée par {@link #getLock}
      * pour obtenir l'objet sur lequel se synchroniser lors des lectures d'images.
      */
-    static File[] synchronizedDirectories=File.listRoots();
+    static File[] synchronizedDirectories = File.listRoots();
 
     /**
-     * Numéro unique identifiant ce format
-     * dans la base de données.
+     * Images en cours de lecture. Les clés sont les objets {@link ImageEntry} en attente
+     * d'être lus, tandis que les valeurs sont {@link Boolean#TRUE} si la lecture est en
+     * cours, ou {@link Boolean#FALSE} si elle est en attente.
+     */
+    private final Map<ImageEntry,Boolean> enqueued =
+            Collections.synchronizedMap(new IdentityHashMap<ImageEntry,Boolean>());
+
+    /**
+     * Numéro unique identifiant ce format dans la base de données.
      */
     private final int ID;
 
@@ -136,19 +148,6 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      * tous les appels subséquents.
      */
     private transient ImageReader reader;
-
-    /**
-     * Objet {@link ImageEntry} qui est en train d'utiliser ce format pour lire une image.
-     * Cette information est utilisée pour vérifier si un objet  {@link ImageEntry}  a le
-     * droit d'annuler une lecture avec {@link #abort}.
-     */
-    private transient ImageEntry owner;
-
-    /**
-     * Drapeau mis à <code>true</code> si une lecture
-     * de l'image était en cours et a été annulée.
-     */
-    private transient boolean aborted;
 
     /**
      * Construit une entrée représentant un format.
@@ -272,13 +271,17 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
 
     /**
      * Retourne un bloc de paramètres par défaut pour le format courant.
+     * Cette méthode n'est appelée que par {@link ImageEntryImpl#getGridCoverage}.
+     * Note: cette méthode <strong>doit</strong> être appelée à partir d'un bloc
+     * synchronisé sur <code>this</code>.
      *
      * @return Un bloc de paramètres par défaut.
      *         Cette méthode ne retourne jamais <code>null</code>.
      * @throws IIOException s'il n'y a pas d'objet {@link ImageReader}
      *         pour ce format.
      */
-    final synchronized ImageReadParam getDefaultReadParam() throws IIOException {
+    final ImageReadParam getDefaultReadParam() throws IIOException {
+        assert Thread.holdsLock(this);
         return getImageReader().getDefaultReadParam();
     }
 
@@ -291,7 +294,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      * @return Objet sur lequel se synchroniser.
      */
     private static Object getLock(File file, final Object def) throws IOException {
-        final File[] sync=synchronizedDirectories;
+        final File[] sync = synchronizedDirectories;
         file = file.getCanonicalFile();
         while (file != null) {
             for (int i=0; i<sync.length; i++) {
@@ -308,6 +311,14 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
     /**
      * Procède à la lecture d'une image. Il est possible que l'image
      * soit lue non pas localement, mais plutôt à travers un réseau.
+     * Cette méthode n'est appelée que par {@link ImageEntryImpl#getGridCoverage}.
+     * <br><br>
+     * Note 1: cette méthode <strong>doit</strong> être appelée à partir d'un bloc
+     * synchronisé sur <code>this</code>.
+     * <br><br>
+     * Note 2: La méthode {@link #setReading} <strong>doit</strong> être appelée
+     *         avant et après cette méthode dans un bloc <code>try...finally</code>.
+     *
      *
      * @param  file Nom du fichier à lire. Ce nom peut désigner un
      *         fichier sur un serveur distant. Le nom du serveur
@@ -328,19 +339,26 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      * @return Image lue, ou <code>null</code> si la lecture de l'image a été annulée.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    synchronized RenderedImage read(final File              file,
-                                    final int               imageIndex,
-                                    final ImageReadParam    param,
-                                    final EventListenerList listeners,
-                                    final Dimension         expected,
-                                    final ImageEntry        source) throws IOException
+    final RenderedImage read(final File              file,
+                             final int               imageIndex,
+                             final ImageReadParam    param,
+                             final EventListenerList listeners,
+                             final Dimension         expected,
+                             final ImageEntry        source) throws IOException
     {
+        assert Thread.holdsLock(this);
+        RenderedImage image = null;
         /*
          * Procède à la lecture de l'image.  Plusieurs lectures peuvent être démarrées
          * en parallèle par différents objets 'FormatEntryImpl', mais la méthode 'getLock'
          * peut imposer des restrictions sur les accès en parallèle au même lecteur.
          */
         synchronized (getLock(file, this)) {
+            if (!enqueued.containsKey(source)) {
+                // Obtenir le 'lock' peut prendre du temps si d'autres lectures sont
+                // en cours. L'utilisateur peut avoir annulé l'opération entre-temps.
+                return null;
+            }
             Object           inputObject = null;
             ImageInputStream inputStream = null;
             /*
@@ -366,17 +384,13 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
                 inputObject = inputStream = ImageIO.createImageInputStream(file);
             }
             if (inputObject == null) {
-                throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
+                throw new FileNotFoundException(Resources.format(
+                        ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
             }
             /*
-             * Configure maintenant le décodeur
-             * et lance la lecture de l'image.
+             * Configure maintenant le décodeur et lance la lecture de l'image.
              */
             try {
-                synchronized (getAbortLock()) {
-                    owner = source;
-                    aborted = false;
-                }
                 if (listeners != null) {
                     final Object[] list = listeners.getListenerList();
                     for (int i=0; i<list.length; i+=2) {
@@ -406,23 +420,55 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
                 } else {
                     // Don't perform this check if we are reading a RAW image,
                     // since the RAW image doesn't know its size by itself.
-                    checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex), expected, file);
+                    checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex),
+                              expected, file);
                 }
                 /*
-                 * Read the file, close it in the
-                 * "finally" block and returns.
+                 * Read the file, close it in the "finally" block and returns the image.
+                 * The reading will not be performed if the user aborted it before we reach
+                 * this point.
                  */
-                final RenderedImage image = reader.readAsRenderedImage(imageIndex, param);
-                return !aborted ? image : null;
+                if (enqueued.put(source, Boolean.TRUE) != null) {
+                    image = reader.readAsRenderedImage(imageIndex, param);
+                }
             } finally {
-                synchronized (getAbortLock()) {
-                    owner = null;
+                if (enqueued.remove(source) == null) {
+                    // User aborted the reading while it was in process.
+                    image = null;
                 }
                 reader.reset(); // Comprend "removeIIOReadProgressListener" et "setInput(null)".
                 if (inputStream != null) {
                     inputStream.close();
                 }
             }
+        }
+        return image;
+    }
+
+    /**
+     * <strong>Most</strong> be invoked before and after {@link #read}. The thread must
+     * <strong>not</strong> hold the lock on <code>this</code>. This method should be
+     * invoked in a <code>try...finally</code> clause as below:
+     *
+     * <blockquote><pre>
+     * try {
+     *     format.setReading(source, true);
+     *     synchronized (format) {
+     *         format.read(...);
+     *     }
+     * } finally {
+     *     format.setReading(source, false);
+     * }
+     * </pre></blockquote>
+     */
+    final void setReading(final ImageEntry source, final boolean starting) {
+        assert !Thread.holdsLock(this); // The thread must *not* hold the lock.
+        if (starting) {
+            if (enqueued.put(source, Boolean.FALSE) != null) {
+                throw new AssertionError();
+            }
+        } else {
+            enqueued.remove(source);
         }
     }
 
@@ -436,26 +482,24 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      *        cette méthode <code>abort</code> ne fera rien.
      */
     final void abort(final ImageEntry source) {
-        synchronized (getAbortLock()) {
-            if (owner == source) {
-                aborted = true;
-                final ImageReader reader=this.reader;
+        assert !Thread.holdsLock(this); // The thread must *not* hold the lock.
+        final Boolean active;
+        synchronized (enqueued) {
+            active = enqueued.remove(source);
+            if (Boolean.TRUE.equals(active)) {
                 if (reader != null) {
                     reader.abort();
                 }
             }
         }
-    }
-
-    /**
-     * Retourne un objet sur lequel se synchroniser pour les demandes d'annulation de
-     * la lecture. On ne pourra pas se synchroniser sur <code>this</code>  puisque la
-     * méthode <code>read(...)</code> est synchronisée sur <code>this</code>  pendant
-     * toute la durée de la lecture de l'image. N'importe quel autre objet déclaré
-     * <code>final</code> fait l'affaire.
-     */
-    private Object getAbortLock() {
-        return mimeType;
+        if (active != null) {
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
+                        ResourceKeys.ABORT_IMAGE_READING_$2, source.getName(),
+                        new Integer(active.booleanValue() ? 1 : 0));
+            record.setSourceClassName("ImageEntry");
+            record.setSourceMethodName("abort");
+            Table.logger.log(record);
+        }
     }
 
     /**

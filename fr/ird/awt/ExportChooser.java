@@ -37,6 +37,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
+import javax.swing.event.EventListenerList;
 
 // Entrés/sorties
 import java.io.File;
@@ -51,12 +52,6 @@ import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.event.IIOReadWarningListener;
 
-// Images et progrès
-import fr.ird.sql.image.ImageEntry;
-import org.geotools.gc.GridCoverage;
-import org.geotools.util.ProgressListener;
-import org.geotools.gui.swing.ProgressWindow;
-
 // Collections
 import java.util.Set;
 import java.util.HashSet;
@@ -64,15 +59,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-// Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-import javax.swing.event.EventListenerList;
-
 // Geotools dependencies
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.gc.GridCoverage;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gui.swing.ProgressWindow;
+import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.util.ProgressListener;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.SwingUtilities;
-import org.geotools.gui.swing.ExceptionMonitor;
+
+// Divers
+import fr.ird.sql.image.ImageEntry;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -88,8 +89,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  */
 public final class ExportChooser extends JPanel {
     /**
-     * Objet à utiliser pour sélectionner
-     * un répertoire de destination.
+     * Objet à utiliser pour sélectionner un répertoire de destination.
      */
     private final JFileChooser chooser;
 
@@ -121,8 +121,7 @@ public final class ExportChooser extends JPanel {
         count.setForeground(Color.yellow);
         count.setHorizontalAlignment(SwingConstants.CENTER);
         ///
-        /// Configure le paneau servant
-        /// à choisir un répertoire.
+        /// Configure le paneau servant à choisir un répertoire.
         ///
         chooser=new JFileChooser(directory);
         chooser.setDialogType(JFileChooser.SAVE_DIALOG);
@@ -158,8 +157,7 @@ public final class ExportChooser extends JPanel {
     }
 
     /**
-     * Met à jour l'étiquette qui indique
-     * le nombre d'images à exporter.
+     * Met à jour l'étiquette qui indique le nombre d'images à exporter.
      */
     private void updateCount() {
         count.setText(resources.getString(ResourceKeys.IMAGES_TO_EXPORT_COUNT_$1,
@@ -300,7 +298,7 @@ public final class ExportChooser extends JPanel {
          * Buffer temporaire. Ce buffer est utilisé pour construire
          * chacun des noms de fichier de destination des images.
          */
-        private final StringBuffer buffer=new StringBuffer();
+        private final StringBuffer buffer = new StringBuffer();
 
         /**
          * Construit un objet qui procèdera aux écritures des images en arrière plan.
@@ -404,12 +402,15 @@ public final class ExportChooser extends JPanel {
             listeners.add(IIOReadWarningListener.class, this);
 
             progress.started();
+            final CoordinateSystem cs = GeographicCoordinateSystem.WGS84;
+            final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
             for (int i=0; i<entries.length; i++) {
-                final ImageEntry entry=entries[i];
+                final ImageEntry entry = entries[i];
                 progress.setDescription(Resources.format(ResourceKeys.EXPORTING_$1, entry.getName()));
                 progress.progress(((float)(i*100))/entries.length);
                 try {
-                    final GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
+                    GridCoverage image = entry.getGridCoverage(listeners).geophysics(false);
+                    image = processor.doOperation("Resample", image, "CoordinateSystem", cs);
                     final ImageOutputStream output=ImageIO.createImageOutputStream(getDestinationFile(i));
                     writer.setOutput(output);
                     writer.write(image.getRenderedImage());

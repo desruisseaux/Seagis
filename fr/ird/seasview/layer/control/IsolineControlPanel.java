@@ -50,8 +50,7 @@ import org.geotools.resources.SwingUtilities;
  * @author Martin Desruisseaux
  * @version $Id$
  */
-final class IsolineControlPanel extends JPanel
-{
+final class IsolineControlPanel extends JPanel {
     /**
      * The table model for available depths.
      */
@@ -62,8 +61,7 @@ final class IsolineControlPanel extends JPanel
      * Isolines can with the {@link #addIsoline}
      * method.
      */
-    public IsolineControlPanel()
-    {
+    public IsolineControlPanel() {
         super(new BorderLayout());
         final JTable       tableView = new JTable(table);
         final JScrollPane scrollPane = new JScrollPane(tableView);
@@ -78,28 +76,32 @@ final class IsolineControlPanel extends JPanel
      * Add an array of values to the table.
      * Values already present will be ignored.
      */
-    public void addValues(final float[] values)
-    {table.add(values);}
+    public void addValues(final float[] values) {
+        table.add(values);
+    }
 
     /**
      * Remove an array of values from the table.
      */
-    public void removeValues(final float[] values)
-    {table.remove(values);}
+    public void removeValues(final float[] values) {
+        table.remove(values);
+    }
 
     /**
      * Returns an array of values with the
      * visible state set to <code>true</code>.
      */
-    public float[] getSelectedValues()
-    {return table.getSelectedValues();}
+    public float[] getSelectedValues() {
+        return table.getSelectedValues();
+    }
 
     /**
      * Define the set of selected values. All
      * other values will be left unselected.
      */
-    public void setSelectedValues(final float[] values)
-    {table.setSelectedValues(values);}
+    public void setSelectedValues(final float[] values) {
+        table.setSelectedValues(values);
+    }
 
     /**
      * Returns the current table content as an opaque object.
@@ -108,8 +110,9 @@ final class IsolineControlPanel extends JPanel
      * <code>mark()</code> was invoked. This method is used
      * for undoing or redoing action.
      */
-    final Object mark()
-    {return table.mark();}
+    final Object mark() {
+        return table.mark();
+    }
 
     /**
      * Restore the table content to the state at the time
@@ -118,18 +121,17 @@ final class IsolineControlPanel extends JPanel
      *
      * @param mark The opaque object returned by {@link #mark}.
      */
-    final void reset(final Object mark)
-    {table.reset(mark);}
+    final void reset(final Object mark) {
+        table.reset(mark);
+    }
 
     /**
      * Show the dialog box. If the user clicked on "Ok"
      * then this method returns <code>true</code>.
      */
-    public boolean showDialog(final Component owner)
-    {
+    public boolean showDialog(final Component owner) {
         final Object mark = mark();
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.BATHYMETRY)))
-        {
+        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(ResourceKeys.BATHYMETRY))) {
             return true;
         }
         reset(mark);

@@ -101,7 +101,7 @@ abstract class EkmanPumpingCalculator {
      *
      * @return Ekman pumping (in m/s), or {@link Double#NaN} if the
      *         pumping can not be computed with the given arguments.
-     * @throws MapProjectionException if a map projection failed.
+     * @throws TransformException if a map projection failed.
      */
     public final double pumping(double x1, double y1, final double u1, final double v1,
                                 double x2, double y2, final double u2, final double v2,
@@ -209,6 +209,30 @@ abstract class EkmanPumpingCalculator {
                                           positions[2], positions[3], velocityComponents[2], velocityComponents[3],
                                           positions[4], positions[5], velocityComponents[4], velocityComponents[5],
                                           positions[6], positions[7], velocityComponents[6], velocityComponents[7]);
+    }
+
+    /**
+     * Convenience method computing Ekman pumping from arrays.
+     *
+     * @param positions An array of length 8 containing the
+     *        <code>(x1,y1),(x2,y2),(x3,y3),(x4,y4)</code> coordinates.
+     * @param velocityComponents An array of length 8 containing the
+     *        <code>(u1,v1),(u2,v2),(u3,v3),(u4,v4)</code> components.
+     * @param  xo Longitude (in degrees) where to compute Ekman pumping.
+     * @param  yo Latitude  (in degrees) where to compute Ekman pumping.
+     *
+     * @return Ekman pumping (in m/s), or {@link Double#NaN} if the
+     *         pumping can not be computed with the given arguments.
+     * @throws TransformException if a map projection failed.
+     */
+    final double pumping(final double[] positions, final double[] velocityComponents,
+                         final double xo, final double yo) throws TransformException
+    {
+        return pumping(positions[0], positions[1], velocityComponents[0], velocityComponents[1],
+                       positions[2], positions[3], velocityComponents[2], velocityComponents[3],
+                       positions[4], positions[5], velocityComponents[4], velocityComponents[5],
+                       positions[6], positions[7], velocityComponents[6], velocityComponents[7],
+                       xo, yo);
     }
 
     /**

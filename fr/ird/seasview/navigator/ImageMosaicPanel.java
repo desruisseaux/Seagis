@@ -32,12 +32,6 @@ import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.image.SeriesEntry;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-
-// Map components
-import fr.ird.seasview.layer.control.LayerControl;
-
 // User interface
 import java.awt.Component;
 import java.awt.Dimension;
@@ -48,6 +42,7 @@ import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
 import fr.ird.awt.RangeSet;
 import fr.ird.awt.RangeBars;
+import fr.ird.seasview.layer.control.LayerControl;
 
 // Events and models
 import javax.swing.BoundedRangeModel;
@@ -64,11 +59,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Formats
+// Formats and miscellaneous
 import java.text.DateFormat;
 import java.text.ParseException;
+import javax.media.jai.util.Range;
 
 // Geotools dependencies
+import org.geotools.gc.GridCoverage;
 import org.geotools.gui.swing.StatusBar;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.ExceptionMonitor;
@@ -299,26 +296,31 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
             final Date   endTime=new Date(Math.round(rangeBars.getMaxSelectedValue()));
             synchronized (table) {
                 try {
-                    table.setTimeRange(startTime, endTime);
-                    /*
-                     * Pour chaque série, obtient une image qui
-                     * intercepte la plage de dates spécifiées.
-                     */
-                    final int length = series.size();
-                    final int check;
-                    assert length == (check=mosaic.getImageCount()) :  "series="+length+" images="+check;
-                    for (int i=0; i<length; i++) {
-                        table.setSeries(series.get(i));
-                        final ImageEntry   entry = table.getEntry();
-                        final ImageCanvas canvas = mosaic.getImage(i);
-                        if (canvas != null) {
-                            if (entry != null) {
-                                canvas.setImage(entry, getSelectedLayers(),
-                                        mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
-                            } else {
-                                canvas.setImage((GridCoverage)null);
+                    final Range oldRange = table.getTimeRange();
+                    try {
+                        table.setTimeRange(startTime, endTime);
+                        /*
+                         * Pour chaque série, obtient une image qui
+                         * intercepte la plage de dates spécifiées.
+                         */
+                        final int length = series.size();
+                        final int check;
+                        assert length == (check=mosaic.getImageCount()) : "series="+length+" images="+check;
+                        for (int i=0; i<length; i++) {
+                            table.setSeries(series.get(i));
+                            final ImageEntry   entry = table.getEntry();
+                            final ImageCanvas canvas = mosaic.getImage(i);
+                            if (canvas != null) {
+                                if (entry != null) {
+                                    canvas.setImage(entry, getSelectedLayers(),
+                                      mosaic.statusBar.getIIOReadProgressListener(entry.getName()));
+                                } else {
+                                    canvas.setImage((GridCoverage)null);
+                                }
                             }
                         }
+                    } finally {
+                        table.setTimeRange(oldRange);
                     }
                 } catch (SQLException exception) {
                     ExceptionMonitor.show(this, exception);

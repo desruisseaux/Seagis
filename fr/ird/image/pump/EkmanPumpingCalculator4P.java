@@ -28,6 +28,7 @@ package fr.ird.image.pump;
 
 // Miscellaneous
 import java.awt.geom.AffineTransform;
+import org.geotools.ct.TransformException;
 
 
 /**
@@ -132,16 +133,18 @@ final class EkmanPumpingCalculator4P extends EkmanPumpingCalculator {
     }
 
     /**
-     * Test this class.
+     * Test this class with a counter-clockwise wind stress.
+     * Result should be positive in the north hemisphere and
+     * negative in south hemisphere.
      */
-    public static void main(final String[] args) {
-        final double[] positions=new double[]
-        {2,2, 6,2, 2,6, 6,6};
-        
-        final double[] velocityComponents=new double[]
-        {20,-12, -5,14, 2,-10, 7,-2};
-
-        EkmanPumpingCalculator4P calculator=new EkmanPumpingCalculator4P();
+    public static void main(final String[] args) throws TransformException {
+        final double[] positions = new double[] {
+            -2,-2, 6,-2, -2,6, 6,6
+        };
+        final double[] velocityComponents = new double[] {
+            20,-12, -5,14, 2,-10, -7,-2
+        };
+        EkmanPumpingCalculator4P calculator = new EkmanPumpingCalculator4P();
         System.out.print("Reference : ");
         System.out.println(calculator.pumpingUsingCartesianCoord(positions, velocityComponents));
 
@@ -149,18 +152,31 @@ final class EkmanPumpingCalculator4P extends EkmanPumpingCalculator {
         tr.transform     (positions,          0, positions,          0, positions.length         /2);
         tr.deltaTransform(velocityComponents, 0, velocityComponents, 0, velocityComponents.length/2);
         System.out.print("Rotated   : ");
-        System.out.println(calculator.pumpingUsingCartesianCoord(positions ,velocityComponents));
+        System.out.println(calculator.pumpingUsingCartesianCoord(positions, velocityComponents));
 
         tr.setToScale(2, 2);
         tr.transform     (positions,          0, positions,          0, positions.length         /2);
         tr.deltaTransform(velocityComponents, 0, velocityComponents, 0, velocityComponents.length/2);
         System.out.print("Scaled    : ");
-        System.out.println(calculator.pumpingUsingCartesianCoord(positions ,velocityComponents));
+        System.out.println(calculator.pumpingUsingCartesianCoord(positions, velocityComponents));
 
         tr.setToTranslation(457, -562);
         tr.transform     (positions,          0, positions,          0, positions.length         /2);
         tr.deltaTransform(velocityComponents, 0, velocityComponents, 0, velocityComponents.length/2);
         System.out.print("Translated: ");
-        System.out.println(calculator.pumpingUsingCartesianCoord(positions ,velocityComponents));
+        System.out.println(calculator.pumpingUsingCartesianCoord(positions, velocityComponents));
+
+        // Test using cartesian coordinates around 40°N
+        final double origin = 40;
+        for (int i=0; i<positions.length; i++) {
+            positions[i] += origin;
+        }
+        System.out.print("Geo. North: ");
+        System.out.println(calculator.pumping(positions, velocityComponents, origin, origin));
+        for (int i=1; i<positions.length; i+=2) {
+            positions[i] -= 2*origin;
+        }
+        System.out.print("Geo. South: ");
+        System.out.println(calculator.pumping(positions, velocityComponents, origin, -origin));
     }
 }

@@ -107,7 +107,7 @@ final class ImageCanvas extends JPanel {
      * d'une image. On attend ce laps de temps au cas où l'utilisateur
      * changerait d'idée.
      */
-    private static final int TIMELAG = 500; // 1/2 de seconde
+    private static final int TIMELAG = 300;
 
     /**
      * The date format to use for formatting date in image's title.
@@ -660,9 +660,7 @@ final class ImageCanvas extends JPanel {
                                     for (int j=0; j<newLayers.length; j++) {
                                         final RenderedLayer layer = newLayers[j];
                                         if (layer instanceof RenderedGridCoverage) {
-                                            final RenderedGridCoverage imageLayer = (RenderedGridCoverage) layer;
-                                            image = imageLayer.getGridCoverage();
-// TODO                                     imageLayer.prefetch(mapPanel);
+                                            image = ((RenderedGridCoverage)layer).getGridCoverage();
                                         }
                                         visualLayers.add(layer);
                                     }

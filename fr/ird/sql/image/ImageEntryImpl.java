@@ -402,7 +402,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          *     utiliserait le même format.
          *
          *  3) Les demandes d'annulation de lecture ({@link #abort}) sur
-         *     <code>FormatEntryImpl.getAbortLock()</code>, afine de pouvoir
+         *     <code>FormatEntryImpl.enqueued</code>, afin de pouvoir
          *     être faite pendant qu'une lecture est en cours. Cette
          *     synchronisation est gérée en interne par <code>FormatEntryImpl</code>.
          */
@@ -533,17 +533,26 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
          */
         final FormatEntryImpl format = parameters.format;
         final SampleDimension[] bands;
-        synchronized (format) {
-            final ImageReadParam param = format.getDefaultReadParam();
-            if (clipPixel!=null) param.setSourceRegion(clipPixel);
-            param.setSourceSubsampling(xSubsampling, ySubsampling, xSubsampling>>1, ySubsampling>>1);
-            if (image == null) {
-                image=format.read(getFile(), imageIndex, param, listenerList, new Dimension(width, height), this);
-                if (image==null) {
-                    return null;
+        try {
+            format.setReading(this, true);
+            synchronized (format) {
+                final ImageReadParam param = format.getDefaultReadParam();
+                if (clipPixel != null) {
+                    param.setSourceRegion(clipPixel);
                 }
+                param.setSourceSubsampling(xSubsampling,   ySubsampling,
+                                           xSubsampling/2, ySubsampling/2);
+                if (image == null) {
+                    image = format.read(getFile(), imageIndex, param, listenerList,
+                                        new Dimension(width, height), this);
+                    if (image == null) {
+                        return null;
+                    }
+                }
+                bands = format.getSampleDimensions(param);
             }
-            bands = format.getSampleDimensions(param);
+        } finally {
+            format.setReading(this, false);
         }
         /*
          * La lecture est maintenant terminée et n'a pas été annulée.
