@@ -248,12 +248,7 @@ public class GridCoverageLayer extends Layer
         values = coverage.evaluate(point, values);
         if (categories==null)
         {
-            final SampleDimension[] dimensions = coverage.getSampleDimensions();
-            categories = new CategoryList[dimensions.length];
-            for (int i=0; i<categories.length; i++)
-            {
-                categories[i] = dimensions[i].getCategoryList();
-            }
+            categories = coverage.getCategoryLists();
         }
         boolean modified = false;
         for (int i=0; i<values.length; i++)

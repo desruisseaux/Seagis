@@ -198,7 +198,7 @@ public class FisheryDataBase extends DataBase
         final SpeciesTable spSQL = new SpeciesTable(connection);
         for (int i=0; i<species.length; i++)
         {
-            final Species sp = spSQL.getSpecies(species[i]);
+            final Species sp = spSQL.getSpecies(species[i], i);
             if (sp!=null) list.add(sp);
         }
         spSQL.close();

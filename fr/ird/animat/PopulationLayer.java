@@ -55,7 +55,7 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     /**
      * Forme géométrique représentant les animaux.
      */
-    private static final Shape DEFAULT_SHAPE = new Arrow2D(0, -4, 10, 8);
+    private static final Shape DEFAULT_SHAPE = new Arrow2D(0, -6, 15, 12);
 
     /**
      * Liste des animaux formant cette population.

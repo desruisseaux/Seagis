@@ -72,6 +72,7 @@ public final class Viewer
     {
         this.environment = new EnvironmentLayer(environment);
         this.population  = new  PopulationLayer(population );
+        map.setPaintingWhileAdjusting(true);
         map.addLayer(this.environment);
         map.addLayer(this.population );
     }
@@ -82,6 +83,6 @@ public final class Viewer
      */
     public JComponent getView()
     {
-        return map;
+        return map.createScrollPane();
     }
 }

@@ -31,6 +31,7 @@ import net.seagis.ct.MathTransform2D;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cv.SampleDimension;
 import net.seagis.cv.CategoryList;
+import net.seagis.pt.AngleFormat;
 import net.seagis.resources.OpenGIS;
 
 // Map components
@@ -116,6 +117,16 @@ public class VectorLayer extends GridMarkLayer
      * point <code>({@link #lastI}, {@link #lastJ})</code>.
      */
     private transient double lastU, lastV;
+
+    /**
+     * Buffer temporaire pour l'écriture des "tooltip".
+     */
+    private transient StringBuffer buffer;
+
+    /**
+     * Objet à utiliser pour l'écriture des angles.
+     */
+    private transient AngleFormat angleFormat;
 
     /**
      * Procède à la lecture binaire de cet objet,
@@ -287,5 +298,20 @@ public class VectorLayer extends GridMarkLayer
      * Retourne l'amplitude de la flèche.
      */
     protected synchronized String getToolTipText(final int index)
-    {return theme.format(getAmplitude(index), null);}
+    {
+        if (angleFormat==null)
+        {
+            buffer = new StringBuffer();
+            angleFormat = new AngleFormat("D.dd°");
+        }
+        double amplitude = getAmplitude(index);
+        double angle     = getDirection(index);
+        angle = 90-Math.toDegrees(angle);
+        angle -= 360*Math.floor(angle/360);
+
+        buffer.setLength(0);
+        buffer.append(theme.format(amplitude, null));
+        buffer.append("  ");
+        return angleFormat.format(angle, buffer, null).toString();
+    }
 }

@@ -46,6 +46,8 @@ import net.seas.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.operator.coverage.Operation;
+import fr.ird.operator.coverage.ProcessorOperation;
+import net.seagis.gp.GridCoverageProcessor;
 
 
 /**
@@ -77,22 +79,10 @@ final class ImageControlPanel extends JPanel
         super(new GridBagLayout());
         final Resources resources = Resources.getResources(null);
         NO_OPERATION = resources.getString(ResourceKeys.NO_OPERATION);
-        operations = new JList(new Object[]
-        {
-            NO_OPERATION
-        });
+        final DefaultListModel model = new DefaultListModel();
+        model.addElement(NO_OPERATION);
+        operations = new JList(model);
         operations.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        /*
-         * Ajoute quelques opérateurs par défaut.
-         * NOTE: plusieurs de ces opérateurs ne
-         *       sont que temporaires!   Ils me
-         *       servent à faire un contrôle de
-         *       qualité des images.
-         */
-//      if (true ) addImageOperation(new ColorRamp(new Color(16,16,16), new Color(240,240,240)));
-//      if (true ) for (int i=0; i<=10; i++) addImageOperation(new Convolution(i)); // TODO (JUST A TRY)
-//      if (false) addImageOperation(new ColorSmoother(ColorSmoother.KEEP_UPPER_COLOR));
-//      if (false) addImageOperation(new ThemeEraser("Quadrillage", 1));
         /*
          * Construit l'interface utilisateur.
          */
@@ -100,6 +90,21 @@ final class ImageControlPanel extends JPanel
         c.fill=c.BOTH; c.weightx=1; c.weighty=1;
         c.gridx=0; c.gridy=0; add(new JScrollPane(operations), c);
         setSelectedOperation(null);
+    }
+
+    /**
+     * Ajoute une série d'opérations par défaut.
+     *
+     * @param processor Processeur à utiliser pour ajouter des opérations.
+     */
+    protected void addDefaultOperations()
+    {
+        final Resources             resources = Resources.getResources(null);
+        final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
+        if (true) addOperation(new ProcessorOperation(processor, "Colormap", resources.getString(ResourceKeys.GRAY_SCALE)));
+//      if (true ) for (int i=0; i<=10; i++) addImageOperation(new Convolution(i)); // TODO (JUST A TRY)
+//      if (false) addImageOperation(new ColorSmoother(ColorSmoother.KEEP_UPPER_COLOR));
+//      if (false) addImageOperation(new ThemeEraser("Quadrillage", 1));
     }
 
     /**

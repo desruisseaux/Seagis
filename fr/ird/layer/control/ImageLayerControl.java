@@ -127,6 +127,7 @@ public final class ImageLayerControl extends LayerControl
             if (controler==null)
             {
                 controler = new ImageControlPanel();
+                controler.addDefaultOperations();
             }
             oldOperation = controler.getSelectedOperation();
         }

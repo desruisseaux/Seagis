@@ -30,6 +30,7 @@ import net.seas.map.layer.GridCoverageLayer;
 
 // Implémentation OpenGIS
 import net.seagis.gc.GridCoverage;
+import net.seagis.gp.GridCoverageProcessor;
 import net.seagis.cs.GeographicCoordinateSystem;
 
 // Animats
@@ -45,6 +46,11 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  */
 final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentChangeListener
 {
+    /**
+     * L'objet à utiliser pour traiter les images.
+     */
+    private final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
+
     /**
      * L'index du paramètre à afficher.
      */
@@ -67,5 +73,15 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     {
         final Environment environment = event.getSource();
         setCoverage(environment.getGridCoverage(parameter));
+    }
+
+    /**
+     * Set the grid coverage. A <code>null</code> value
+     * will remove the current grid coverage.
+     */
+    public void setCoverage(GridCoverage coverage)
+    {
+        coverage = processor.doOperation("Colormap", coverage);
+        super.setCoverage(coverage);
     }
 }

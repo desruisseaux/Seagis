@@ -113,7 +113,7 @@ final class SpeciesTable extends Table
      * @return L'espèce demandée.
      * @throws SQLException si l'accès à la base de données a échouée.
      */
-    public synchronized Species getSpecies(final String code) throws SQLException
+    final synchronized Species getSpecies(final String code, int index) throws SQLException
     {
         Species species=null;
         statement.setString(ID_ARG, code);
@@ -126,7 +126,8 @@ final class SpeciesTable extends Table
             {
                 names[i] = result.getString(i+1);
             }
-            species = new FishSpecies(locales, names, Color.black);
+            index %= COLORS.length;
+            species = new FishSpecies(locales, names, COLORS[index]);
             if (lastSpecies!=null && !lastSpecies.equals(species))
             {
                 throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, species.getName()));
