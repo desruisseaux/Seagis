@@ -50,8 +50,7 @@ import javax.imageio.event.IIOWriteProgressListener;
  * @author Remi Eve
  * @version $Id$
  */
-final class JProgress extends JDialog implements IIOReadProgressListener,
-                                                 IIOWriteProgressListener
+final class ImageProgress extends JDialog implements IIOReadProgressListener, IIOWriteProgressListener
 {   
     /**
      * Barre de progression.
@@ -61,7 +60,7 @@ final class JProgress extends JDialog implements IIOReadProgressListener,
     /**
      * Construit la boîte de dialogue.
      */
-    public JProgress(final Frame parent, final boolean modal) {
+    public ImageProgress(final Frame parent, final boolean modal) {
         super (parent, modal);
         final JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
