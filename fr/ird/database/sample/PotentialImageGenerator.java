@@ -50,6 +50,7 @@ import org.geotools.resources.Arguments;
 import org.geotools.resources.XDimension2D;
 import org.geotools.resources.ImageUtilities;
 import org.geotools.resources.MonolineFormatter;
+import org.geotools.cv.PointOutsideCoverageException;
 
 // SEAGIS dependencies
 import fr.ird.database.sample.*;
@@ -82,6 +83,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
      * Région geographique d'intérêt. Par défaut de 30°E à 90°E et 30°S à 30°N.
      */
     private static final Rectangle2D GEOGRAPHIC_AREA = new Rectangle(30, -30, 60, 60);
+//    private static final Rectangle2D GEOGRAPHIC_AREA = new Rectangle(35, -30, 35, 35);
 
     /**
      * Arrondie un nombre vers le haut.
@@ -206,10 +208,21 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
             while (!time.after(endTime)) {
                 final String filename = df.format(time);
                 final File filepath = new File(path, filename);
-                arguments.out.print("Création de ");
-                arguments.out.println(filename);
-                final GridCoverage coverage = coverage3D.getGridCoverage2D(time);
-                Utilities.save(coverage.geophysics(false).getRenderedImage(), filepath.getPath());
+                if (!filepath.createNewFile()) {
+                    arguments.out.print(filename);
+                    arguments.out.println(" existe déjà.");
+                } else {
+                    arguments.out.print("Création de ");
+                    arguments.out.println(filename);
+                    try {
+                        final GridCoverage coverage = coverage3D.getGridCoverage2D(time);
+                        Utilities.save(coverage.geophysics(false).getRenderedImage(), filepath.getPath());
+                    } catch (PointOutsideCoverageException exception) {
+                        org.geotools.resources.Utilities.unexpectedException("fr.ird.database.sample",
+                                                        "PotentialImageGenerator", "main", exception);
+                        filepath.delete();
+                    }
+                }
                 time.setTime(time.getTime() + TIME_STEP);
             }
         } finally {
