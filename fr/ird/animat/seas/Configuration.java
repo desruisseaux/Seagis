@@ -40,6 +40,7 @@ import java.net.URL;
 // Collections
 import java.util.Set;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -53,7 +54,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 // Animats
-import fr.ird.animat.TimeStep;
+import fr.ird.animat.impl.Clock;
 import fr.ird.animat.Parameter;
 
 
@@ -67,7 +68,23 @@ final class Configuration {
     /**
      * Le premier pas de temps de la simulation.
      */
-    public final TimeStep firstTimeStep;
+    public final Clock firstTimeStep;
+
+    /**
+     * Pause à prendre entre deux pas de la simulation, en nombre de millisecondes.
+     */
+    public final long pause;
+
+    /**
+     * Distance maximale (en miles nautiques) que peut parcourir un thon en une journée.
+     */
+    public final double dailyDistance;
+
+    /**
+     * Rayon de perception des thons, en miles nautiques. Les thons ne "sentiront" pas les
+     * paramètres en dehors de ce rayon.
+     */
+    public final double perceptionRadius;
 
     /**
      * Résolution désirée des images en degrés d'angle de longitude et de latitude.
@@ -78,6 +95,19 @@ final class Configuration {
      * Liste des séries, opérations et évaluateurs à utiliser.
      */
     public final Set<Parameter> parameters;
+
+    /**
+     * Espèces désignées par leurs codes de la FAO.
+     */
+    public final Set<String> species;
+
+    /**
+     * Les paramètres {@link #parameters} sous forme de tableau.  Ce tableau peut contenir un
+     * élément suplémentaire pour {@link fr.ird.animat.impl.Parameter#HEADING}. Ce tableau est
+     * utilisé pour construire les objets  {@link Species}  en partageant le même tableau pour
+     * chaque espèce.
+     */
+    final fr.ird.animat.impl.Parameter[] parameterArray;
 
     /**
      * Construit une configuration à partir du fichier spécifié.
@@ -103,24 +133,65 @@ final class Configuration {
         parameters = loadParameters(reader);
         reader.close();
         try {
+            ////
+            ////    PAS DE TEMPS
+            ////
             final long timeStep = Math.round((24.0*60*60*1000)*
                     Double.parseDouble(getProperty(properties, "TIME_STEP")));
-
+            ////
+            ////    DATE DE DEPART
+            ////
             final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.FRANCE);
             final Date startTime = dateFormat.parse(getProperty(properties, "START_TIME"));
-            firstTimeStep = new TimeStep(startTime, new Date(startTime.getTime() + timeStep));
-
-            final long pause = Math.round(1000*
-                    Double.parseDouble(getProperty(properties, "PAUSE")));
-
+            firstTimeStep = Clock.createClock(startTime, new Date(startTime.getTime() + timeStep));
+            ////
+            ////    PAUSE ENTRE CHAQUE PAS DE TEMPS
+            ////
+            pause = Math.round(1000*Double.parseDouble(getProperty(properties, "PAUSE")));
+            ////
+            ////    RESOLUTION SPATIALE DES PIXELS
+            ////
             resolution = Double.parseDouble(getProperty(properties, "RESOLUTION"))/60;
-
-            final double moveDistance = (timeStep!=0 ? timeStep*1852 : 1852)*
+            ////
+            ////    DISTANCE MAXIMALE PARCOURUE PAR JOUR
+            ////
+            dailyDistance = (timeStep!=0 ? timeStep*1852 : 1852)*
                     Double.parseDouble(getProperty(properties, "DAILY_DISTANCE"));
+            ////
+            ////    RAYON DE PERCEPTION DES THONS
+            ////
+            perceptionRadius = (timeStep!=0 ? timeStep*1852 : 1852)*
+                    Double.parseDouble(getProperty(properties, "PERCEPTION_RADIUS"));
+            ////
+            ////    ESPECES (CODES DE LA FAO)
+            ////
+            final Set<String> species = new HashSet<String>();
+            if (true) {
+                final StringTokenizer tk = new StringTokenizer(getProperty(properties, "SPECIES"), ",");
+                while (tk.hasMoreTokens()) {
+                    species.add(tk.nextToken().trim());
+                }
+            }
+            this.species = Collections.unmodifiableSet(species);
+            //
+            //      (fin)
+            //
         } catch (ParseException exception) {
             final IOException e = new IOException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
+        } catch (NumberFormatException exception) {
+            final IOException e = new IOException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
+        final int paramCount = parameters.size();
+        if (false) {
+            // Inclus HEADING
+            parameterArray = parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount+1]);
+            parameterArray[paramCount] = fr.ird.animat.impl.Parameter.HEADING;
+        } else {
+            parameterArray = parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount]);
         }
     }
 
@@ -179,7 +250,7 @@ final class Configuration {
      */
     private static Set<Parameter> loadParameters(final BufferedReader reader) throws IOException {
         final Set<Parameter> parameters = new LinkedHashSet<Parameter>();
-        final String[] args = new String[3];
+        final String[] args = new String[4];
         String line; while ((line=reader.readLine()) != null) {
             if ((line=line.trim()).length() == 0) {
                 continue;
@@ -195,7 +266,14 @@ final class Configuration {
                     args[i] = token;
                 }
             }
-            parameters.add(new fr.ird.animat.seas.Parameter(args[0], args[1], args[2]));
+            try {
+                parameters.add(new fr.ird.animat.seas.Parameter(args[0], args[1], args[2],
+                                                                Float.parseFloat(args[3])));
+            } catch (NumberFormatException exception) {
+                final IOException e = new IOException(exception.getLocalizedMessage());
+                e.initCause(exception);
+                throw e;
+            }
         }
         return Collections.unmodifiableSet(parameters);
     }

@@ -47,6 +47,7 @@ import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.Set;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Collection;
 
@@ -116,6 +117,12 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * Liste des animaux formant cette population.
      */
     private Animal[] animals;
+
+    /**
+     * Les observations pour chaque animal. Ces observations seront obtenues avec
+     * {@link Animal#getObservations} la première fois où elles seront demandées.
+     */
+    private transient Map<Parameter,Observation>[] observations;
 
     /**
      * La date des données à afficher. Cette date sera constamment
@@ -199,9 +206,22 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
             assert population.equals(this.population) : population;
             final Collection<Animal> col = population.getAnimals();
             animals = col.toArray(new Animal[col.size()]);
+            observations = new Map<Parameter,Observation>[animals.length];
             bounds = population.getSpatialBounds();
             setPreferredArea((bounds!=null) ? bounds.getBounds2D() : null);
         }
+    }
+
+    /**
+     * Retourne les observations pour l'animal à l'index spécifié.
+     */
+    private Map<Parameter,Observation> getObservations(final int index) throws RemoteException {
+        Map<Parameter,Observation> obs = observations[index];
+        if (obs == null) {
+            obs = animals[index].getObservations(date);
+            observations[index] = obs;
+        }
+        return obs;
     }
 
     /**
@@ -265,7 +285,11 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
                 graphics.setStroke(new BasicStroke(0));
                 graphics.setColor(Color.black);
                 for (int i=0; i<animals.length; i++) {
-                    final Map<Parameter,Observation> observations = animals[i].getObservations(date);
+                    // TODO: il sera peut-être plus efficace d'ajouter une méthode dans 'Population'
+                    //       qui retourne la totalité des animaux avec leurs observations.
+                    //       Ça éviterait d'envoyer plusieurs copies des mêmes paramètres
+                    //       à travers le réseau chaque fois que 'getObservations' est appelée.
+                    final Map<Parameter,Observation> observations = getObservations(i);
                     if (observations != null) {
                         for (final java.util.Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
                             final Map.Entry<Parameter,Observation> entry = it.next();
@@ -314,6 +338,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
         final String property = event.getPropertyName();
         if (property.equalsIgnoreCase("date")) {
             date = (Date) event.getNewValue();
+            Arrays.fill(observations, null);
             repaint();
         }
     }
@@ -395,7 +420,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
          * Obtient des observations qui correspondent à l'animal courant.
          */
         private void update() throws RemoteException {
-            observations = animals[index].getObservations(date);
+            observations = getObservations(index);
             heading = observations.get(fr.ird.animat.impl.Parameter.HEADING);
         }
 

@@ -217,6 +217,17 @@ public class Species implements fr.ird.animat.Species, Serializable {
     }
 
     /**
+     * Construit une espèce avec le même nom que l'espèce spécifiée mais qui s'intéressera
+     * à des paramètres différents.
+     *
+     * @param parent L'espèce dont on veut copier les propriétés (noms, couleur).
+     * @param parameters Paramètres susceptibles d'intéresser les animaux de cette espèce.
+     */
+    protected Species(final Species parent, final Parameter[] parameters) {
+        this(parent.locales, parent.names, parent.color, parameters, getOffsets(parameters));
+    }
+
+    /**
      * Procède à la construction d'une espèce.
      * <strong>Note: aucun tableau n'est cloné</strong>, afin de faciliter la réutilisation
      * de tableaux déjà existants. Evitez donc de modifier un tableau après la construction
@@ -277,7 +288,7 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * Retourne un objet {@link fr.ird.animat.Species} arbitraire
      * sous forme d'un objet {@link Species} de cette classe.
      */
-    static Species wrap(final fr.ird.animat.Species species) {
+    protected static Species wrap(final fr.ird.animat.Species species) {
         if (species instanceof Species) {
             return (Species) species;
         }

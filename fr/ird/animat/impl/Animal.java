@@ -83,9 +83,11 @@ import fr.ird.animat.event.AnimalChangeListener;
  */
 public class Animal extends RemoteObject implements fr.ird.animat.Animal {
     /**
-     * Générateur de nombre aléatoire utilisé pour l'implémentation par défaut de {@link #move}.
+     * Générateur de nombres aléatoires. Ces nombres peuvent être utilisés par exemple lorsque
+     * aucune donnée n'est disponible mais qu'on ne veut pas laisser l'animal immobile.
+     * L'implémentation par défaut de {@link #move} utilise ces nombres aléatoires.
      */
-    private static final Random random = new Random();
+    protected static final Random random = new Random();
 
     /**
      * La population à laquelle appartient cet animal, ou <code>null</code> si l'animal est mort.

@@ -266,6 +266,27 @@ public abstract class Evaluator extends Coverage {
     public abstract double[] evaluate(final Shape area, double[] dest) throws CannotEvaluateException;
 
     /**
+     * Calcule la valeur de cette fonction dans la région géographique spécifiée.
+     *
+     * @param  area  Région géographique autour de laquelle évaluer la fonction.
+     * @param  dest  Tableau dans lequel mémoriser le résultat, ou <code>null</code>.
+     * @return Les résultats par bandes.
+     * @throws CannotEvaluateException si la fonction ne peut pas être évaluée, par exemple parce
+     *         que la coordonnée est en dehors de la couverture de l'image {@link #coverage}.
+     */
+    public final float[] evaluate(final Shape area, float[] dest) throws CannotEvaluateException {
+        double[] buffer = null;
+        buffer = evaluate(area, buffer);
+        if (dest == null) {
+            dest = new float[buffer.length];
+        }
+        for (int i=0; i<buffer.length; i++) {
+            dest[i] = (float)buffer[i];
+        }
+        return dest;
+    }
+
+    /**
      * Transform a geographic bounding box into a grid bounding box.
      * The resulting bounding box will be clipped to image's bounding
      * box.

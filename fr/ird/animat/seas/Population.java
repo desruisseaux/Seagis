@@ -30,70 +30,69 @@ import java.util.Set;
 import java.util.Iterator;
 import java.util.Collection;
 import java.awt.geom.Point2D;
+import java.rmi.RemoteException;
+import java.rmi.ServerException;
+import java.sql.SQLException;
 
 // Animats
-import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
-import fr.ird.animat.Environment;
+import fr.ird.animat.impl.Animal;
+import fr.ird.sql.fishery.CatchTable;
 import fr.ird.sql.fishery.CatchEntry;
 
 
 /**
- * Une population de thon. Il peut y avoir des thons de plusieurs espèces.
+ * Une population de thons. Il peut y avoir des thons de plusieurs espèces.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Population extends fr.ird.animat.Population {
+final class Population extends fr.ird.animat.impl.Population {
     /**
-     * Distance maximale que peuvent parcourir les animaux de
-     * cette population à chaque instruction {@link #move}.
-     */
-    private final double maximumDistance;
-
-    /**
-     * Construit une population.
+     * Construit une population qui contiendra initialement les thons aux positions
+     * de pêches du pas de temps courant.
      *
-     * @param maximumDistance Distance maximale que peuvent parcourir les
-     *        animaux de cette population à chaque instruction {@link #move}.
+     * @param environment Environnement Environnement de la population.
+     * @throws RemoteException si la construction de la population a échouée.
      */
-    public Population(final double maximumDistance) {
-        this.maximumDistance = maximumDistance;
-    }
-
-    /**
-     * Ajoute un animal pour chaque espèce à chacune des positions de pêche spécifiées.
-     */
-    public void addAnimals(final Collection<CatchEntry> entries) {
-        final int oldSize = getAnimals().size();
-        for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();) {
-            final CatchEntry   entry   = it.next();
-            final Point2D      coord   = entry.getCoordinate();
-            final Set<Species> species = entry.getSpecies();
-            for (final Iterator<Species> its=species.iterator(); its.hasNext();) {
-                final Tuna tuna = new Tuna(its.next());
-                tuna.setLocation(coord);
-                addAnimal(tuna);
+    protected Population(final Environment environment) throws RemoteException {
+        super(environment);
+        try {
+            final CatchTable catchs = environment.catchs;
+            catchs.setTimeRange(environment.getClock().getTimeRange());
+            final Collection<CatchEntry> entries = catchs.getEntries();
+            for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();) {
+                final CatchEntry   entry   = it.next();
+                final Point2D      coord   = entry.getCoordinate();
+                final Set<Species> species = entry.getSpecies();
+                for (final Iterator<Species> its=species.iterator(); its.hasNext();) {
+                    newAnimal(its.next(), coord);
+                }
             }
-        }
-        if (oldSize != getAnimals().size()) {
-            firePopulationChanged();
+        } catch (SQLException exception) {
+            throw new ServerException("Échec lors de l'obtention "+
+                                      "des positions initiales des animaux", exception);
         }
     }
 
     /**
-     * Fait évoluer une population en fonction de son environnement.
-     * Cette méthode va typiquement déplacer les {@linkplain Animal animaux}
-     * en appellant des méthodes telles que {@link Animal#moveToward}. Des
-     * individus peuvent aussi naître ou mourrir.
+     * Ajoute un nouvel animal dans cette population.
      *
-     * @param  duration Durée de l'évolution, en nombre de jours.
-     *         Cette durée est habituellement égale à
-     *         <code>{@link #getEnvironment()}.{@link Environment#getStepSequenceNumber()
-     *         getStepSequenceNumber()}.{@link TimeStep#getStepDuration getStepDuration()}</code>.
+     * @param  species L'espèce de cet animal.
+     * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
+     * @return L'animal créé.
+     * @throws IllegalStateException si cette population est morte.
+     * @throws RemoteException si l'exportation du nouvel animal a échoué.
      */
-    public void evoluate(final float duration) {
-        // TODO
-        firePopulationChanged();
+    public Animal newAnimal(fr.ird.animat.Species species, final Point2D position)
+            throws IllegalStateException, RemoteException
+    {
+        synchronized (getTreeLock()) {
+            final Environment environment = (Environment) getEnvironment();
+            if (environment == null) {
+                throw new IllegalStateException("Cette population est morte.");
+            }
+            return new Tuna(environment.wrap(species), this, position);
+        }
     }
 }

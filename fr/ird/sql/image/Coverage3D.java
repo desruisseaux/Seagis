@@ -108,9 +108,20 @@ public class Coverage3D extends Coverage {
     private final SampleDimension[] bands;
 
     /**
-     * Enveloppe des données englobées par cet objet.
+     * La plage de temps englobant toutes les images trouvées dans {@link #entries}.
+     * Ne sera calculée que la première fois où cette information sera demandée.
+     *
+     * @see #getTimeRange
      */
-    private final Envelope envelope;
+    private transient Range timeRange;
+
+    /**
+     * Les coordonnées géographiques englobant toutes les images trouvées dans {@link #entries}.
+     * Ne sera calculée que la première fois où cette information sera demandée.
+     *
+     * @see #getGeographicArea
+     */
+    private transient Rectangle2D geographicArea;
 
     /**
      * Indique si les interpolations sont permises.
@@ -188,7 +199,6 @@ public class Coverage3D extends Coverage {
         super(table.getSeries().getName(), table.getCoordinateSystem(), null, null);
         final List<ImageEntry> entryList = table.getEntries();
         this.entries  = entryList.toArray(new ImageEntry[entryList.size()]);
-        this.envelope = table.getEnvelope();
         this.bands    = (entries.length!=0) ? entries[0].getSampleDimensions() : new SampleDimension[0];
         for (int i=1; i<entries.length; i++) {
             if (!Arrays.equals(bands, entries[i].getSampleDimensions())) {
@@ -252,11 +262,59 @@ public class Coverage3D extends Coverage {
     }
 
     /**
+     * Retourne le plus petit rectangle englobant les coordonnées géographiques
+     * de toutes les données disponibles.
+     */
+    public synchronized Rectangle2D getGeographicArea() {
+        if (geographicArea == null) {
+            for (int i=0; i<entries.length; i++) {
+                final Rectangle2D area = entries[i].getGeographicArea();
+                if (geographicArea == null) {
+                    geographicArea = area;
+                } else {
+                    geographicArea = geographicArea.createUnion(area);
+                }
+            }
+        }
+        return geographicArea;
+    }
+
+    /**
+     * Retourne la plus petite plage de temps englobant toutes les données disponibles.
+     */
+    public synchronized Range getTimeRange() {
+        if (timeRange == null) {
+            for (int i=0; i<entries.length; i++) {
+                final Range range = entries[i].getTimeRange();
+                if (timeRange == null) {
+                    timeRange = range;
+                } else {
+                    timeRange = timeRange.union(range);
+                }
+            }
+        }
+        return timeRange;
+    }
+
+    /**
      * Returns The bounding box for the coverage
      * domain in coordinate system coordinates.
      */
     public Envelope getEnvelope() {
-        return (Envelope) envelope.clone();
+        Rectangle2D geographicArea = this.geographicArea;
+        if (geographicArea == null) {
+            geographicArea = getGeographicArea();
+        }
+        Range timeRange = this.timeRange;
+        if (timeRange == null) {
+            timeRange = getTimeRange();
+        }
+        final Envelope envelope = new Envelope(3);
+        envelope.setRange(0, geographicArea.getMinX(), geographicArea.getMaxX());
+        envelope.setRange(1, geographicArea.getMinY(), geographicArea.getMaxY());
+        envelope.setRange(2, CoordinateSystemTable.toJulian(((Date)timeRange.getMinValue()).getTime()),
+                             CoordinateSystemTable.toJulian(((Date)timeRange.getMaxValue()).getTime()));
+        return envelope;
     }
 
     /**

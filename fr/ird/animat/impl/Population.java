@@ -122,7 +122,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
      * @return L'animal créé.
      * @throws IllegalStateException si cette population est morte.
-     * @throws RemoteException si l'exportation di nouvel animal a échoué.
+     * @throws RemoteException si l'exportation du nouvel animal a échoué.
      */
     public Animal newAnimal(fr.ird.animat.Species species, final Point2D position)
             throws IllegalStateException, RemoteException
