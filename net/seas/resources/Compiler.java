@@ -158,7 +158,6 @@ final class Compiler implements FileFilter, Comparator<String>
                 warning(file, key, "Valeur invalide: "+exception.getLocalizedMessage());
                 continue;
             }
-            entry.setValue(message.toPattern());
             /*
              * Vérifie le respect de la convention. Le nom-respect entraînera
              * l'affichage d'un avertissement, mais sans plus.
@@ -167,6 +166,7 @@ final class Compiler implements FileFilter, Comparator<String>
             int index=key.lastIndexOf('¤');
             if (index>=0) try
             {
+                entry.setValue(message.toPattern());
                 argumentCount = Integer.parseInt(key.substring(index+1));
             }
             catch (NumberFormatException exception)

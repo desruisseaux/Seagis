@@ -34,7 +34,7 @@ public class CannotReprojectException extends RuntimeException
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -6013914554116219033L;
 
     /**
      * Creates new <code>CannotReprojectException</code> without detail message.

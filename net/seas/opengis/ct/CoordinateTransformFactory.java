@@ -217,15 +217,15 @@ public class CoordinateTransformFactory
         for (int i=targetCS.getDimension(); --i>=0;)
         {
             // Find longitude ordinate, and apply a rotation if prime meridian are different.
-            if (AxisOrientation.EAST.equals(targetCS.getAxis(i).orientation.absolute()))
+            final AxisOrientation orientation = targetCS.getAxis(i).orientation;
+            if (AxisOrientation.EAST.equals(orientation.absolute()))
             {
-                final Unit                    unit = targetCS.getUnits(i);
-                final PrimeMeridian sourceMeridian = sourceCS.getPrimeMeridian();
-                final PrimeMeridian targetMeridian = targetCS.getPrimeMeridian();
-                final double       sourceLongitude = unit.convert(sourceMeridian.getLongitude(), sourceMeridian.getAngularUnit());
-                final double       targetLongitude = unit.convert(targetMeridian.getLongitude(), targetMeridian.getAngularUnit());
-                final double                rotate = targetLongitude - sourceLongitude;
-                final int         lastMatrixColumn = matrix.getSize()-1;
+                final Unit              unit = targetCS.getUnits(i);
+                final double sourceLongitude = sourceCS.getPrimeMeridian().getLongitude(unit);
+                final double targetLongitude = targetCS.getPrimeMeridian().getLongitude(unit);
+                final int   lastMatrixColumn = matrix.getSize()-1;
+                double rotate = targetLongitude - sourceLongitude;
+                if (AxisOrientation.WEST.equals(orientation)) rotate = -rotate;
                 matrix.set(i, lastMatrixColumn, matrix.get(i, lastMatrixColumn)-rotate);
             }
         }
@@ -282,13 +282,15 @@ public class CoordinateTransformFactory
         final Projection      projection = targetCS.getProjection();
         GeographicCoordinateSystem geoCS = targetCS.getGeographicCoordinateSystem();
         ProjectedCoordinateSystem  prjCS = targetCS;
-        if (!isStandard(geoCS, Unit.DEGREE))
+        if (!isStandard(geoCS, Unit.DEGREE) || geoCS.getPrimeMeridian().getLongitude(Unit.DEGREE)!=0)
         {
             geoCS = new GeographicCoordinateSystem(geoCS.getName(null), geoCS.getHorizontalDatum());
+            assert(isStandard(geoCS, Unit.DEGREE));
         }
         if (!isStandard(prjCS, Unit.METRE))
         {
             prjCS = new ProjectedCoordinateSystem(prjCS.getName(null), geoCS, projection);
+            assert(isStandard(prjCS, Unit.METRE));
         }
         final CoordinateTransform step1 = createFromCoordinateSystems(sourceCS, geoCS);
         final MathTransform       step2 = factory.createParameterizedTransform(projection.getClassName(), projection.getParameters());

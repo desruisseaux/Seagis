@@ -37,7 +37,7 @@ public class TemporalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+     private static final long serialVersionUID = -3132187036753923869L;
 
     /**
      * Creates a temporal datum from an enumerated type value.

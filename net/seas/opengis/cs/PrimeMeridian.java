@@ -103,6 +103,17 @@ public class PrimeMeridian extends Info
     {return longitude;}
 
     /**
+     * Returns the longitude value relative to the Greenwich Meridian,
+     * expressed in the specified units. This convenience method make
+     * easier to obtains longitude in degrees (<code>getLongitude(Unit.DEGREE)</code>),
+     * no matter the underlying angular units of this prime meridian.
+     *
+     * @param targetUnit The unit in which to express longitude.
+     */
+    public double getLongitude(final Unit targetUnit)
+    {return targetUnit.convert(getLongitude(), getAngularUnit());}
+
+    /**
      * Returns the angular units.
      */
     public Unit getAngularUnit()

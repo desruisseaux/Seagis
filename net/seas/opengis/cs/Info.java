@@ -83,7 +83,7 @@ public class Info implements Serializable
     private static final long serialVersionUID = 6074780819696693524L;
 
     /**
-     * This object name.
+     * The non-localized object name.
      */
     private final String name;
 
@@ -128,9 +128,12 @@ public class Info implements Serializable
     }
 
     /**
-     * Gets the name of this object.
+     * Gets the name of this object. The default implementation
+     * returns the non-localized name given at construction time.
      *
-     * @param locale The desired locale, or <code>null</code> for the default locale.
+     * @param locale The desired locale, or <code>null</code> for a default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getName(final Locale locale)
     {return name;}
@@ -144,6 +147,8 @@ public class Info implements Serializable
      * WGS84 Lat/Lon coordinate system is '4326'.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getAuthority(final Locale locale)
     {return (properties!=null) ? (String)properties.get("authority") : null;}
@@ -157,6 +162,8 @@ public class Info implements Serializable
      * WGS84 Lat/Lon is '4326'.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getAuthorityCode(final Locale locale)
     {return (properties!=null) ? (String)properties.get("authorityCode") : null;}
@@ -165,6 +172,8 @@ public class Info implements Serializable
      * Gets the alias, or <code>null</code> if there is none.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getAlias(final Locale locale)
     {return (properties!=null) ? (String)properties.get("alias") : null;}
@@ -173,6 +182,8 @@ public class Info implements Serializable
      * Gets the abbreviation, or <code>null</code> if there is none.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getAbbreviation(final Locale locale)
     {return (properties!=null) ? (String)properties.get("abbreviation") : null;}
@@ -182,6 +193,8 @@ public class Info implements Serializable
      * or <code>null</code> if there is none.
      *
      * @param locale The desired locale, or <code>null</code> for the default locale.
+     *        If no string is available for the specified locale, an arbitrary locale
+     *        is used.
      */
     public String getRemarks(final Locale locale)
     {return (properties!=null) ? (String)properties.get("remarks") : null;}

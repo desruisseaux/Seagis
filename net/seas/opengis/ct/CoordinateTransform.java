@@ -128,18 +128,18 @@ public abstract class CoordinateTransform extends MathTransform
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    abstract class Inverse extends CoordinateTransform implements Serializable
+    abstract class AbstractInverse extends CoordinateTransform implements Serializable
     {
         /**
          * Serial number for interoperability with different versions.
          */
-    //  private static final long serialVersionUID = 2370521414804482480L; // TODO
+        private static final long serialVersionUID = 200439639948274894L;
 
         /**
          * Default constructor.
          */
-        protected Inverse()
-        {super(Resources.format(Clé.INVERSE_OF¤1, CoordinateTransform.super.getName(null)));}
+        public AbstractInverse()
+        {super(Resources.format(Clé.INVERSE_OF¤1, CoordinateTransform.this.getName(null)));}
 
         /**
          * Returns a human readable name localized for the specified locale.
@@ -190,9 +190,9 @@ public abstract class CoordinateTransform extends MathTransform
         public final boolean equals(final Object object)
         {
             if (object==this) return true;
-            if (object instanceof Inverse)
+            if (object instanceof AbstractInverse)
             {
-                final Inverse that = (Inverse) object;
+                final AbstractInverse that = (AbstractInverse) object;
                 return this.inverse().equals(that.inverse());
             }
             else return false;

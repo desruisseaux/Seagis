@@ -196,7 +196,7 @@ abstract class MapProjection extends CoordinateTransform
      */
     protected MapProjection(final Projection parameters) throws MissingParameterException
     {
-        super(parameters.getClassName());
+        super(parameters.getName(null));
         this.a                =                    parameters.getValue("semi_major");
         this.b                =                    parameters.getValue("semi_minor");
         this.centralLongitude = longitudeToRadians(parameters.getValue("central_meridian",   0), true);
@@ -783,12 +783,14 @@ abstract class MapProjection extends CoordinateTransform
     }
 
     /**
-     * Inverse of a map projection.
+     * Inverse of a map projection. Note: Do not use the same name than
+     * CoordinateTransform's inner class. It throw a VerifyError at run
+     * time.
      *
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Inverse extends CoordinateTransform.Inverse
+    private final class Inverse extends AbstractInverse
     {
         public Point2D transform(final Point2D source, final Point2D dest) throws TransformException
         {return MapProjection.this.inverseTransform(source, dest);}

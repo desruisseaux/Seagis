@@ -43,17 +43,21 @@ import java.awt.image.Raster;
 // Geometry
 import java.awt.Shape;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import net.seas.util.XAffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 
 // Collections
 import java.util.List;
 import java.util.Vector;
+import java.util.Comparator;
 import javax.media.jai.PropertySource;
 import javax.media.jai.PropertySourceImpl;
 
 // Miscellaneous
+import java.util.Arrays;
 import java.util.Locale;
 import net.seas.resources.Resources;
 import net.seas.util.XArray;
@@ -260,15 +264,15 @@ public abstract class Coverage implements Dimensioned, PropertySource
     public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
 
     /**
-     * <FONT COLOR="#FF6633">Returns this grid coverage as a renderable image.</FONT>
-     * This method allows interoperability with Java2D, but will work only for
-     * two-dimensional coverages.
+     * <FONT COLOR="#FF6633">Returns 2D view of this grid coverage as a renderable image.</FONT>
+     * This method allows interoperability with Java2D.
      *
-     * @return This grid coverage as a renderable image.
-     * @throws IllegalStateException if this coverage is not two-dimensional.
+     * @param  xAxis Dimension to use for <var>x</var> axis.
+     * @param  yAxis Dimension to use for <var>y</var> axis.
+     * @return A 2D view of this grid coverage as a renderable image.
      */
-    public RenderableImage getRenderableImage() throws IllegalStateException
-    {return new Renderable();}
+    public RenderableImage getRenderableImage(final int xAxis, final int yAxis)
+    {return new Renderable(xAxis, yAxis);}
 
     /**
      * Returns an array of metadata keywords for this coverage.
@@ -321,9 +325,9 @@ public abstract class Coverage implements Dimensioned, PropertySource
     {return Image.UndefinedProperty;}
 
     /**
-     * <FONT COLOR="#FF6633">Base class for a renderable view of grid coverage.</FONT>
-     * Renderable images allow interoperability with Java2D for two-dimensional coverage
-     * (which may or may not be a grid coverage).
+     * <FONT COLOR="#FF6633">Base class for renderable image of a grid coverage.</FONT>
+     * Renderable images allow interoperability with Java2D for a two-dimensional view
+     * of a coverage (which may or may not be a grid coverage).
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -331,19 +335,36 @@ public abstract class Coverage implements Dimensioned, PropertySource
     protected class Renderable extends PropertySourceImpl implements RenderableImage
     {
         /**
-         * The envelope as a {@link Rectangle2D}.
+         * The two dimensional view of the coverage's envelope.
          */
-        private final Rectangle2D envelope;
+        private final Rectangle2D bounds;
+
+        /**
+         * Dimension to use for <var>x</var> axis.
+         */
+        private final int xAxis;
+
+        /**
+         * Dimension to use for <var>y</var> axis.
+         */
+        private final int yAxis;
 
         /**
          * Construct a renderable image.
          *
-         * @throws IllegalStateException if the underlying coverage is not two-dimensional.
+         * @param  xAxis Dimension to use for <var>x</var> axis.
+         * @param  yAxis Dimension to use for <var>y</var> axis.
          */
-        public Renderable() throws IllegalStateException
+        public Renderable(final int xAxis, final int yAxis)
         {
             super(null, Coverage.this);
-            envelope = getEnvelope().toRectangle2D();
+            this.xAxis = xAxis;
+            this.yAxis = yAxis;
+            final Envelope envelope = getEnvelope();
+            bounds = new Rectangle2D.Double(envelope.getMinimum(xAxis),
+                                            envelope.getMinimum(yAxis),
+                                            envelope.getLength (xAxis),
+                                            envelope.getLength (yAxis));
         }
 
         /**
@@ -370,7 +391,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
          * @see Coverage#getCoordinateSystem
          */
         public float getWidth()
-        {return (float)envelope.getWidth();}
+        {return (float)bounds.getWidth();}
 
         /**
          * Gets the height in coverage coordinate space.
@@ -379,7 +400,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
          * @see Coverage#getCoordinateSystem
          */
         public float getHeight()
-        {return (float)envelope.getHeight();}
+        {return (float)bounds.getHeight();}
 
         /**
          * Gets the minimum X coordinate of the rendering-independent image data.
@@ -388,7 +409,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
          * @see Coverage#getCoordinateSystem
          */
         public float getMinX()
-        {return (float)envelope.getX();}
+        {return (float)bounds.getX();}
 
         /**
          * Gets the minimum Y coordinate of the rendering-independent image data.
@@ -397,7 +418,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
          * @see Coverage#getCoordinateSystem
          */
         public float getMinY()
-        {return (float)envelope.getY();}
+        {return (float)bounds.getY();}
 
         /**
          * Returnd a rendered image with a default width and height in pixels.
@@ -422,19 +443,19 @@ public abstract class Coverage implements Dimensioned, PropertySource
          */
         public RenderedImage createScaledRendering(int width, int height, final RenderingHints hints)
         {
-            final double coverageWidth  = envelope.getWidth();
-            final double coverageHeight = envelope.getHeight();
+            final double boundsWidth  = bounds.getWidth();
+            final double boundsHeight = bounds.getHeight();
             if (!(width>0)) // Use '!' in order to catch NaN
             {
                 if (!(height>0))
                 {
                     throw new IllegalArgumentException(Resources.format(Clé.UNSPECIFIED_IMAGE_SIZE));
                 }
-                width = (int)Math.round(height * (coverageWidth/coverageHeight));
+                width = (int)Math.round(height * (boundsWidth/boundsHeight));
             }
             else if (!(height>0))
             {
-                height = (int)Math.round(width * (coverageHeight/coverageWidth));
+                height = (int)Math.round(width * (boundsHeight/boundsWidth));
             }
             return createRendering(new RenderContext(getTransform(new Rectangle(0,0,width,height)), hints));
         }
@@ -448,34 +469,72 @@ public abstract class Coverage implements Dimensioned, PropertySource
         public RenderedImage createRendering(final RenderContext context)
         {
             final List<SampleDimension> catg = getSampleDimensions();
-            final AffineTransform         tr = context.getTransform();
+            final AffineTransform  transform = context.getTransform();
             final Shape                 area = context.getAreaOfInterest();
-            final Rectangle2D        srcRect = (area!=null) ? area.getBounds2D() : envelope;
-            final Rectangle          dstRect = (Rectangle) XAffineTransform.transform(tr, srcRect, new Rectangle());
+            final Rectangle2D        srcRect = (area!=null) ? area.getBounds2D() : bounds;
+            final Rectangle          dstRect = (Rectangle) XAffineTransform.transform(transform, srcRect, new Rectangle());
             final WritableRaster      raster = Raster.createBandedRaster(DataBuffer.TYPE_FLOAT, dstRect.width, dstRect.height, catg.size(), dstRect.getLocation());
-            return null;
+            final CoordinatePoint coordinate = new CoordinatePoint(getDimension());
+            final Point2D.Double     point2D = new Point2D.Double();
+
+            final int xmin = dstRect.x;
+            final int ymin = dstRect.y;
+            final int xmax = dstRect.x + dstRect.width;
+            final int ymax = dstRect.y + dstRect.height;
+            final int numBands = raster.getNumBands();
+            final double[] samples=new double[numBands];
+            try
+            {
+                for (int y=ymin; y<ymax; y++)
+                {
+                    for (int x=xmin; x<xmax; x++)
+                    {
+                        point2D.x = x;
+                        point2D.y = y;
+                        transform.inverseTransform(point2D, point2D);
+                        coordinate.ord[xAxis] = point2D.x;
+                        coordinate.ord[yAxis] = point2D.y;
+                        raster.setPixel(x, y, evaluate(coordinate, samples));
+                    }
+                }
+            }
+            catch (NoninvertibleTransformException exception)
+            {
+                final IllegalArgumentException e = new IllegalArgumentException("RenderContext");
+                e.initCause(exception);
+                throw e;
+            }
+
+            // TODO: create RenderedImage from the Raster
+            throw new UnsupportedOperationException("Not implemented");
         }
 
         /**
          * Returns an affine transform that maps the coverage envelope
-         * to the specified destination rectangle.
+         * to the specified destination rectangle.  This transform may
+         * swap axis in order to normalize them (i.e. make them appear
+         * in the (x,y) order).
+         *
+         * @param destination The two-dimensional destination rectangle.
          */
-        protected AffineTransform getTransform(final Rectangle2D destination)
+        private AffineTransform getTransform(final Rectangle2D destination)
         {
             final Matrix matrix;
-            final Envelope srcEnvelope = getEnvelope();
+            final Envelope srcEnvelope = new Envelope(bounds);
             final Envelope dstEnvelope = new Envelope(destination);
             final CoordinateSystem  cs = getCoordinateSystem();
             if (cs!=null)
             {
-                final AxisOrientation[] axis = new AxisOrientation[]
+                final AxisOrientation[] axis = new AxisOrientation[cs.getDimension()];
+                final AxisOrientation[] normalized = new AxisOrientation[axis.length];
+                for (int i=0; i<axis.length; i++)
                 {
-                    cs.getAxis(0).orientation,
-                    cs.getAxis(1).orientation
-                };
-                final AxisOrientation[] normalizedAxis = axis;
-                // TODO: sort normalizedAxis. Don't forget to inverse the second dimension (usually Y).
-                matrix = Matrix.createAffineTransform(srcEnvelope, axis, dstEnvelope, normalizedAxis);
+                    axis[i] = cs.getAxis(i).orientation;
+                    normalized[i] = axis[i].absolute();
+                }
+                Arrays.sort(normalized);
+                normalized[1] = normalized[1].inverse(); // Image's Y axis is downward.
+                matrix = Matrix.createAffineTransform(srcEnvelope, axis, dstEnvelope, normalized);
             }
             else
             {

@@ -101,7 +101,7 @@ public abstract class MathTransform extends Info
     /**
      * Construct a math transform with the specified name.
      *
-     * @param name A default name for this math transform.
+     * @param name The math transform name.
      */
     public MathTransform(final String name)
     {super(name);}

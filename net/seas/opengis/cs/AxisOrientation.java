@@ -36,6 +36,18 @@ import net.seas.resources.Clé;
  * For example, the first axis in South African grids usually points West,
  * instead of East. This information is obviously relevant for algorithms
  * converting South African grid coordinates into Lat/Long.
+ * <br><br>
+ * <FONT COLOR="#FF6633">The <em>natural ordering</em> for axis orientations is defined
+ * as (EAST-WEST), (NORTH-SOUTH), (UP-DOWN), (FUTURE-PAST) and OTHER,</FONT> which is
+ * the ordering for a (<var>x</var>,<var>y</var>,<var>z</var>,<var>t</var>) coordinate
+ * system. This means that when an array of <code>AxisOrientation</code>s is sorted using
+ * {@link java.util.Arrays#sort(Object[])}, EAST and WEST orientations will
+ * appears first. NORTH and SOUTH will be next, followed by UP and DOWN, etc.
+ *
+ * Care should be exercised if <code>AxisOrientation</code>s are to be used as keys in
+ * a sorted map or elements in a sorted set, as <code>AxisOrientation</code>'s natural
+ * ordering is inconsistent with equals. See {@link java.lang.Comparable},
+ * {@link java.util.SortedMap} or {@link java.util.SortedSet} for more information.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -43,7 +55,7 @@ import net.seas.resources.Clé;
  *
  * @see org.opengis.cs.CS_AxisOrientationEnum
  */
-public final class AxisOrientation extends EnumeratedParameter
+public final class AxisOrientation extends EnumeratedParameter implements Comparable<AxisOrientation>
 {
     /**
      * Serial number for interoperability with different versions.
@@ -117,6 +129,11 @@ public final class AxisOrientation extends EnumeratedParameter
      * canonicalize after deserialization.
      */
     private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN,FUTURE,PAST};
+
+    /**
+     * The axis order. Used for {@link #compareTo} implementation.
+     */
+    private static final AxisOrientation[] ORDER = {EAST, NORTH, UP, FUTURE};
 
     /**
      * Resource key, used for building localized name. This key doesn't need to
@@ -208,6 +225,35 @@ public final class AxisOrientation extends EnumeratedParameter
             return ENUMS[(value & ~1)+1];
         }
         else return this;
+    }
+
+    /**
+     * Compares this <code>AxisOrientation</code> with the specified orientation.
+     * The <em>natural ordering</em> is defined as (EAST-WEST), (NORTH-SOUTH),
+     * (UP-DOWN), (FUTURE-PAST) and OTHER, which is the ordering for a
+     * (<var>x</var>,<var>y</var>,<var>z</var>,<var>t</var>) coordinate system.
+     * Two <code>AxisOrientation</code> that are among the same axis but with an
+     * opposite direction (like EAST and WEST) are considered equal by this method.
+     */
+    public int compareTo(final AxisOrientation that)
+    {
+        final int thisOrder = this.absolute().getOrder();
+        final int thatOrder = that.absolute().getOrder();
+        if (thisOrder > thatOrder) return +1;
+        if (thisOrder < thatOrder) return -1;
+        return 0;
+    }
+
+    /**
+     * Returns the order for this axis orientation
+     * (i.e. the index in the {@link #ORDER} table).
+     */
+    private int getOrder()
+    {
+        int i;
+        for (i=0; i<ORDER.length; i++)
+            if (equals(ORDER[i])) break;
+        return i;
     }
 
     /**
