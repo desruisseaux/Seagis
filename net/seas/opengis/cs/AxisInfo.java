@@ -40,10 +40,9 @@ import net.seas.util.XClass;
 public class AxisInfo implements Cloneable, Serializable
 {
     /**
-     * Serial number for compatibility with previous versions.
-     * TODO: compure serialver
+     * Serial number for interoperability with different versions.
      */
-    //private static final long serialVersionUID = ?;
+    private static final long serialVersionUID = 2949229234384551980L;
 
     /**
      * Human readable name for axis. Possible values are
@@ -124,7 +123,7 @@ public class AxisInfo implements Cloneable, Serializable
         if (orientation!=null)
         {
             buffer.append(',');
-            buffer.append(orientation.getName());
+            buffer.append(orientation.getName(null));
         }
         buffer.append(']');
         return buffer.toString();

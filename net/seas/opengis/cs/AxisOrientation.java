@@ -23,10 +23,13 @@
 package net.seas.opengis.cs;
 
 // Miscellaneous
-import net.seas.util.XClass;
+import java.util.Locale;
 import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import net.seas.resources.Resources;
+import net.seas.resources.Clé;
+import net.seas.util.XClass;
 
 
 /**
@@ -44,7 +47,7 @@ import java.util.NoSuchElementException;
 public final class AxisOrientation implements Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
     private static final long serialVersionUID = 6962768641608234346L;
 
@@ -52,54 +55,57 @@ public final class AxisOrientation implements Serializable
      * Unknown or unspecified axis orientation.
      * This can be used for local or fitted coordinate systems. 
      */
-    public static final AxisOrientation OTHER = new AxisOrientation(0);
+    public static final AxisOrientation OTHER = new AxisOrientation(0, Clé.OTHER);
 
     /**
      * Increasing ordinates values go North. This is usually
      * used for Grid Y coordinates and Latitude.
      */
-    public static final AxisOrientation NORTH = new AxisOrientation(1);
+    public static final AxisOrientation NORTH = new AxisOrientation(1, Clé.NORTH);
 
     /**
      * Increasing ordinates values go South.
      * This is rarely used.
      */
-    public static final AxisOrientation SOUTH = new AxisOrientation(2);
+    public static final AxisOrientation SOUTH = new AxisOrientation(2, Clé.SOUTH);
 
     /**
      * Increasing ordinates values go East.
      * This is rarely used.
      */
-    public static final AxisOrientation EAST = new AxisOrientation(3);
+    public static final AxisOrientation EAST = new AxisOrientation(3, Clé.EAST);
 
     /**
      * Increasing ordinates values go West.
      * This is usually used for Grid X coordinates and Longitude.
      */
-    public static final AxisOrientation WEST = new AxisOrientation(4);
+    public static final AxisOrientation WEST = new AxisOrientation(4, Clé.WEST);
 
     /**
      * Increasing ordinates values go up.
      * This is used for vertical coordinate systems.
      */
-    public static final AxisOrientation UP = new AxisOrientation(5);
+    public static final AxisOrientation UP = new AxisOrientation(5, Clé.UP);
 
     /**
      * Increasing ordinates values go down.
      * This is used for vertical coordinate systems.
      */
-    public static final AxisOrientation DOWN = new AxisOrientation(6);
-
-    /**
-     * Enum names. TODO: localize!
-     */
-    private static final String[] NAMES = {"Other","North","South","East","West","Up","Down"};
+    public static final AxisOrientation DOWN = new AxisOrientation(6, Clé.DOWN);
 
     /**
      * Axis orientations by value. Used to
      * canonicalize after deserialization.
      */
     private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN};
+
+    /**
+     * Resource key, used for building localized name. This key doesn't need to
+     * be serialized, since {@link #readResolve} canonicalize enums according their
+     * {@link #value}. Furthermore, its value is implementation-dependent (which is
+     * an other raison why it should not be serialized).
+     */
+    private transient final int clé;
 
     /**
      * The enum value. This field is public for compatibility
@@ -110,8 +116,11 @@ public final class AxisOrientation implements Serializable
     /**
      * Construct a new enum with the specified value.
      */
-    private AxisOrientation(final int value)
-    {this.value = value;}
+    private AxisOrientation(final int value, final int clé)
+    {
+        this.value = value;
+        this.clé   = clé;
+    }
 
     /**
      * Return the enum for the specified value. This method is provided for
@@ -128,10 +137,15 @@ public final class AxisOrientation implements Serializable
     }
 
     /**
-     * Return this enum's name.
+     * Returns this enum's name in the specified locale. If no name
+     * is available for the specified locale, a default one will be
+     * used.
+     *
+     * @param  locale The locale, or <code>null</code> for the current default locale.
+     * @return Enum's name in the specified locale.
      */
-    public String getName()
-    {return (value>=0 && value<NAMES.length) ? NAMES[value] : null;}
+    public String getName(final Locale locale)
+    {return Resources.getResources(locale).getString(clé);}
 
     /**
      * Returns a hash value for this enum.
@@ -160,8 +174,9 @@ public final class AxisOrientation implements Serializable
     {
         final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
-        if (value>=0 && value<NAMES.length)
-            buffer.append(NAMES[value]);
+        final String name = getName(null);
+        if (name!=null)
+            buffer.append(name);
         else
             buffer.append(value);
         buffer.append(']');
