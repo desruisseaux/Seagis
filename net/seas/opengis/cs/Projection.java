@@ -27,6 +27,7 @@ import org.opengis.cs.CS_Projection;
 import org.opengis.cs.CS_ProjectionParameter;
 
 // Miscellaneous
+import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
@@ -91,12 +92,37 @@ public class Projection extends Info
         ensureNonNull("classification", classification);
         ensureNonNull("parameters",     parameters);
         this.classification = classification;
-        this.parameters     = (Parameter[]) parameters.clone();
-        for (int i=0; i<this.parameters.length; i++)
+        this.parameters     = clone(parameters);
+    }
+
+    /**
+     * Creates a projection.
+     *
+     * @param properties     Properties to give new object.
+     * @param classification Classification string for projection (e.g. "Transverse_Mercator").
+     * @param parameters     Parameters to use for projection, in metres or degrees.
+     */
+    Projection(final Map<String,String> properties, final String classification, final Parameter[] parameters)
+    {
+        super(properties);
+        ensureNonNull("classification", classification);
+        ensureNonNull("parameters",     parameters);
+        this.classification = classification;
+        this.parameters     = clone(parameters);
+    }
+
+    /**
+     * Returns a deep clone of the specified parameters array.
+     */
+    private static Parameter[] clone(Parameter[] parameters)
+    {
+        parameters = (Parameter[]) parameters.clone();
+        for (int i=0; i<parameters.length; i++)
         {
-            ensureNonNull("parameters", this.parameters, i);
-            this.parameters[i] = this.parameters[i].clone();
+            ensureNonNull("parameters", parameters, i);
+            parameters[i] = parameters[i].clone();
         }
+        return parameters;
     }
 
     /**
@@ -202,7 +228,7 @@ public class Projection extends Info
      * Returns an OpenGIS interface for this projection.
      * The returned object is suitable for RMI use.
      */
-    public CS_Projection toOpenGIS()
+    final CS_Projection toOpenGIS()
     {return new Export();}
 
 

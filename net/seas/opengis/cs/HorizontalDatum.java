@@ -28,6 +28,7 @@ import org.opengis.cs.CS_HorizontalDatum;
 import org.opengis.cs.CS_WGS84ConversionInfo;
 
 // Miscellaneous
+import java.util.Map;
 import net.seas.util.XClass;
 import java.rmi.RemoteException;
 
@@ -91,6 +92,23 @@ public class HorizontalDatum extends Datum
     }
 
     /**
+     * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
+     *
+     * @param properties Properties to give new object.
+     * @param type       Type of horizontal datum to create.
+     * @param ellipsoid  Ellipsoid to use in new horizontal datum.
+     * @param toWGS84    Suggested approximate conversion from new datum to WGS84,
+     *                   or <code>null</code> if there is none.
+     */
+    HorizontalDatum(final Map<String,String> properties, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo parameters)
+    {
+        super(properties, type);
+        this.ellipsoid  = ellipsoid;
+        this.parameters = (parameters!=null) ? parameters.clone() : null;
+        ensureNonNull("ellipsoid", ellipsoid);
+    }
+
+    /**
      * Gets the type of the datum as an enumerated code.
      */
     public DatumType.Horizontal getDatumType()
@@ -132,7 +150,7 @@ public class HorizontalDatum extends Datum
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
      */
-    public CS_HorizontalDatum toOpenGIS()
+    final CS_HorizontalDatum toOpenGIS()
     {return new Export();}
 
 
@@ -157,15 +175,12 @@ public class HorizontalDatum extends Datum
          * Returns the Ellipsoid.
          */
         public CS_Ellipsoid getEllipsoid() throws RemoteException
-        {return HorizontalDatum.this.getEllipsoid().toOpenGIS();}
+        {return Adapters.export(HorizontalDatum.this.getEllipsoid());}
 
         /**
          * Gets preferred parameters for a Bursa Wolf transformation into WGS84.
          */
         public CS_WGS84ConversionInfo getWGS84Parameters() throws RemoteException
-        {
-            final WGS84ConversionInfo info = HorizontalDatum.this.getWGS84Parameters();
-            return (info!=null) ? info.toOpenGIS() : null;
-        }
+        {return Adapters.export(HorizontalDatum.this.getWGS84Parameters());}
     }
 }

@@ -24,15 +24,18 @@ package net.seas.opengis.cs;
 
 // OpenGIS dependencies
 import org.opengis.cs.CS_Info;
-import org.opengis.cs.CS_Unit;
 import org.opengis.cs.CS_LinearUnit;
 import org.opengis.cs.CS_AngularUnit;
 
 // Miscellaneous
 import javax.units.Unit;
+import java.util.Locale;
 import java.io.Serializable;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+
+// Collections
+import java.util.Map;
 
 // Remote Method Invocation
 import java.rmi.Remote;
@@ -72,7 +75,7 @@ public class Info implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 2470505154745218555L;
+    //private static final long serialVersionUID = ?; // TODO
 
     /**
      * This object name.
@@ -80,20 +83,51 @@ public class Info implements Serializable
     private final String name;
 
     /**
+     * Properties for all methods except {@link #getName}.  For
+     * example the method {@link #getAuthorityCode} returns the
+     * value of property <code>"authorityCode"</code>.   May be
+     * null if there is no properties for this object.
+     */
+    private final Map<String,String> properties;
+
+    /**
      * Create an object with the specified name.
      *
      * @param name This object name.
      */
     public Info(final String name)
+    {this(name, null);}
+
+    /**
+     * Create an object with the specified properties.
+     *
+     * @param name This object name.
+     */
+    Info(final Map<String,String> properties)
+    {this(properties.get("name"), properties);}
+
+    /**
+     * Create an object with the specified name.
+     *
+     * @param name This object name.
+     * @param Properties for all methods except {@link #getName}.  For
+     *        example the method {@link #getAuthorityCode} returns the
+     *        value of property <code>"authorityCode"</code>.   May be
+     *        null if there is no properties for this object.
+     */
+    private Info(final String name, final Map<String,String> properties)
     {
         this.name=name;
+        this.properties=properties;
         ensureNonNull("name", name);
     }
 
     /**
      * Gets the name of this object.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getName()
+    public String getName(final Locale locale)
     {return name;}
 
     /**
@@ -103,9 +137,11 @@ public class Info implements Serializable
      * a database of coordinate systems, and other spatial referencing objects,
      * where each object has a code number ID.  For example, the EPSG code for a
      * WGS84 Lat/Lon coordinate system is '4326'.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getAuthority()
-    {return null;}
+    public String getAuthority(final Locale locale)
+    {return (properties!=null) ? properties.get("authority") : null;}
 
     /**
      * Gets the authority-specific identification code, or <code>null</code> if unspecified.
@@ -114,35 +150,42 @@ public class Info implements Serializable
      * Group (EPSG) authority uses 32 bit integers to reference coordinate systems,
      * so all their code strings will consist of a few digits.  The EPSG code for
      * WGS84 Lat/Lon is '4326'.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getAuthorityCode()
-    {return null;}
+    public String getAuthorityCode(final Locale locale)
+    {return (properties!=null) ? properties.get("authorityCode") : null;}
 
     /**
      * Gets the alias, or <code>null</code> if there is none.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getAlias()
-    {return null;}
+    public String getAlias(final Locale locale)
+    {return (properties!=null) ? properties.get("alias") : null;}
 
     /**
      * Gets the abbreviation, or <code>null</code> if there is none.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getAbbreviation()
-    {return null;}
+    public String getAbbreviation(final Locale locale)
+    {return (properties!=null) ? properties.get("abbreviation") : null;}
 
     /**
-     * Gets the provider-supplied remarks, or
-     * <code>null</code> if there is none.
+     * Gets the provider-supplied remarks, or <code>null</code> if there is none.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
      */
-    public String getRemarks()
-    {return null;}
+    public String getRemarks(final Locale locale)
+    {return (properties!=null) ? properties.get("remarks") : null;}
 
     /**
      * Returns a hash value for this info.
      */
     public int hashCode()
     {
-        final String name = getName();
+        final String name = getName(null);
         return (name!=null) ? name.hashCode() : 0;
     }
 
@@ -155,12 +198,8 @@ public class Info implements Serializable
         if (object!=null && getClass().equals(object.getClass()))
         {
             final Info that = (Info) object;
-            return XClass.equals(this.getName(),          that.getName()         ) &&
-                   XClass.equals(this.getAuthority(),     that.getAuthority()    ) &&
-                   XClass.equals(this.getAuthorityCode(), that.getAuthorityCode()) &&
-                   XClass.equals(this.getAlias(),         that.getAlias()        ) &&
-                   XClass.equals(this.getAbbreviation(),  that.getAbbreviation() ) &&
-                   XClass.equals(this.getRemarks(),       that.getRemarks()      );
+            return XClass.equals(this.name,       that.name) &&
+                   XClass.equals(this.properties, that.properties);
         }
         return false;
     }
@@ -169,33 +208,14 @@ public class Info implements Serializable
      * Returns a string representation of this info.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+getName()+']';}
+    {return XClass.getShortClassName(this)+'['+getName(null)+']';}
 
     /**
      * Returns an OpenGIS interface for this info.
      * The returned object is suitable for RMI use.
      */
-    public CS_Info toOpenGIS()
+    CS_Info toOpenGIS()
     {return new Export();}
-
-    /**
-     * Transform a {@link Unit} object into a {@link CS_Unit}.
-     * This method is provided for interoperability with OpenGIS.
-     */
-    static CS_Unit toOpenGIS(final Unit unit)
-    {
-        if (unit.canConvert(Unit.METRE))
-        {
-            final double metersPerUnits = unit.convert(1, Unit.METRE);
-            // TODO: returns a LinearUnit
-        }
-        if (unit.canConvert(Unit.DEGREE))
-        {
-            final double degreesPerUnits = unit.convert(1, Unit.DEGREE);
-            // TODO: returns an AngularUnit
-        }
-        throw new UnsupportedOperationException("Not implemented");
-    }
 
     /**
      * Make sure an argument is non-null.
@@ -263,40 +283,46 @@ public class Info implements Serializable
     class Export extends RemoteObject implements CS_Info
     {
         /**
+         * Returns the underlying implementation.
+         */
+        public final Info unwrap()
+        {return Info.this;}
+
+        /**
          * Gets the name.
          */
         public String getName() throws RemoteException
-        {return Info.this.getName();}
+        {return Info.this.getName(null);}
 
         /**
          * Gets the authority name.
          */
         public String getAuthority() throws RemoteException
-        {return Info.this.getAuthority();}
+        {return Info.this.getAuthority(null);}
 
         /**
          * Gets the authority-specific identification code.
          */
         public String getAuthorityCode() throws RemoteException
-        {return Info.this.getAuthorityCode();}
+        {return Info.this.getAuthorityCode(null);}
 
         /**
          * Gets the alias.
          */
         public String getAlias() throws RemoteException
-        {return Info.this.getAlias();}
+        {return Info.this.getAlias(null);}
 
         /**
          * Gets the abbreviation.
          */
         public String getAbbreviation() throws RemoteException
-        {return Info.this.getAbbreviation();}
+        {return Info.this.getAbbreviation(null);}
 
         /**
          * Gets the provider-supplied remarks.
          */
         public String getRemarks() throws RemoteException
-        {return Info.this.getRemarks();}
+        {return Info.this.getRemarks(null);}
 
         /**
          * Gets a Well-Known text representation of this object.
@@ -309,5 +335,39 @@ public class Info implements Serializable
          */
         public String getXML() throws RemoteException
         {throw new UnsupportedOperationException("Not implemented");}
+    }
+
+    /**
+     * OpenGIS linear unit.
+     */
+    final class LinearUnit extends Export implements CS_LinearUnit
+    {
+        /** Number of meters per linear unit. */
+        private final double scale;
+
+        /** Construct a linear unit. */
+        public LinearUnit(final double metersPerUnit)
+        {scale = metersPerUnit;}
+
+        /** Returns the number of meters per linear unit. */
+        public double getMetersPerUnit() throws RemoteException
+        {return scale;}
+    }
+
+    /**
+     * OpenGIS angular unit.
+     */
+    final class AngularUnit extends Export implements CS_AngularUnit
+    {
+        /** Number of radians per linear unit. */
+        private final double scale;
+
+        /** Construct an angular unit. */
+        public AngularUnit(final double radiansPerUnit)
+        {scale = radiansPerUnit;}
+        
+        /** Returns the number of radians per angular unit. */
+        public double getRadiansPerUnit() throws RemoteException
+        {return scale;}
     }
 }

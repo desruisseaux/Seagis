@@ -22,10 +22,6 @@
  */
 package net.seas.opengis.cs;
 
-// OpenGIS dependencies
-import org.opengis.cs.CS_AxisInfo;
-import org.opengis.cs.CS_AxisOrientationEnum;
-
 // Miscellaneous
 import java.util.Locale;
 import java.io.Serializable;
@@ -86,14 +82,6 @@ public class AxisInfo implements Serializable
     {return name;}
 
     /**
-     * Construct an AxisInfo from an OpenGIS structure.
-     * This constructor is provided for interoperability
-     * with OpenGIS.
-     */
-    public AxisInfo(final CS_AxisInfo info)
-    {this(info.name, AxisOrientation.getEnum(info.orientation.value));}
-
-    /**
      * Returns a hash value for this axis.
      */
     public int hashCode()
@@ -135,13 +123,6 @@ public class AxisInfo implements Serializable
         buffer.append(']');
         return buffer.toString();
     }
-
-    /**
-     * Returns an OpenGIS structure for this axis info.
-     * This method is provided for compatibility with OpenGIS.
-     */
-    public CS_AxisInfo toOpenGIS()
-    {return new CS_AxisInfo(name, new CS_AxisOrientationEnum(orientation.value));}
 
     /**
      * Localized {@link AxisInfo}.

@@ -27,6 +27,7 @@ import org.opengis.cs.CS_AngularUnit;
 import org.opengis.cs.CS_PrimeMeridian;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import java.rmi.RemoteException;
@@ -79,6 +80,21 @@ public class PrimeMeridian extends Info
     }
 
     /**
+     * Creates a prime meridian, relative to Greenwich.
+     *
+     * @param properties Set of properties.
+     * @param unit       Angular units of longitude.
+     * @param longitude  Longitude of prime meridian in supplied angular units East of Greenwich.
+     */
+    PrimeMeridian(final Map<String,String> properties, final Unit unit, final double longitude)
+    {
+        super(properties);
+        this.unit      = unit;
+        this.longitude = longitude;
+        ensureNonNull("unit", unit);
+    }
+
+    /**
      * Returns the longitude value relative to the Greenwich Meridian.
      * The longitude is expressed in this objects angular units.
      */
@@ -119,13 +135,13 @@ public class PrimeMeridian extends Info
      * Returns a string representation of this prime meridian.
      */
     public String toString()
-    {return XClass.getShortClassName(this)+'['+getName()+'='+longitude+unit+']';}
+    {return XClass.getShortClassName(this)+'['+getName(null)+'='+longitude+unit+']';}
 
     /**
      * Returns an OpenGIS interface for this prime meridian.
      * The returned object is suitable for RMI use.
      */
-    public CS_PrimeMeridian toOpenGIS()
+    final CS_PrimeMeridian toOpenGIS()
     {return new Export();}
 
 
@@ -158,6 +174,6 @@ public class PrimeMeridian extends Info
          * @throws RemoteException if a remote method call failed.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
-        {return (CS_AngularUnit) toOpenGIS(PrimeMeridian.this.getAngularUnit());}
+        {return (CS_AngularUnit) Adapters.export(PrimeMeridian.this.getAngularUnit());}
     }
 }

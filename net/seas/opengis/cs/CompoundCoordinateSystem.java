@@ -33,6 +33,7 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
+import java.util.Map;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
 import java.rmi.RemoteException;
@@ -77,6 +78,22 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     public CompoundCoordinateSystem(final String name, final CoordinateSystem head, final CoordinateSystem tail)
     {
         super(name);
+        this.head = head;
+        this.tail = tail;
+        ensureNonNull("head", head);
+        ensureNonNull("tail", tail);
+    }
+
+    /**
+     * Creates a compound coordinate system.
+     *
+     * @param properties Properties to give new object.
+     * @param head Coordinate system to use for earlier ordinates.
+     * @param tail Coordinate system to use for later ordinates.
+     */
+    CompoundCoordinateSystem(final Map<String,String> properties, final CoordinateSystem head, final CoordinateSystem tail)
+    {
+        super(properties);
         this.head = head;
         this.tail = tail;
         ensureNonNull("head", head);
@@ -188,7 +205,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      * Returns an OpenGIS interface for this compound coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public CS_CompoundCoordinateSystem toOpenGIS()
+    final CS_CompoundCoordinateSystem toOpenGIS()
     {return new Export();}
 
 
@@ -213,13 +230,12 @@ public class CompoundCoordinateSystem extends CoordinateSystem
          * Gets first sub-coordinate system.
          */
         public CS_CoordinateSystem getHeadCS() throws RemoteException
-        {return (CS_CoordinateSystem)CompoundCoordinateSystem.this.getHeadCS().toOpenGIS();}
+        {return Adapters.export(CompoundCoordinateSystem.this.getHeadCS());}
 
         /**
          * Gets second sub-coordinate system.
          */
         public CS_CoordinateSystem getTailCS() throws RemoteException
-        {return (CS_CoordinateSystem)CompoundCoordinateSystem.this.getTailCS().toOpenGIS();}
-        // TODO: remove cast when the returns type of "CoordinateSystem.toOpenGIS()" will have been fixed.
+        {return Adapters.export(CompoundCoordinateSystem.this.getTailCS());}
     }
 }

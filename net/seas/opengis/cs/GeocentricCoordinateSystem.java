@@ -23,6 +23,7 @@
 package net.seas.opengis.cs;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -74,9 +75,28 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
      * @param datum    The horizontal datum.
      * @param meridian The prime meridian.
      */
-    protected GeocentricCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
+    public GeocentricCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
     {
         super(name);
+        this.unit     = unit;
+        this.datum    = datum;
+        this.meridian = meridian;
+        ensureNonNull("unit",     unit);
+        ensureNonNull("datum",    datum);
+        ensureNonNull("meridian", meridian);
+    }
+
+    /**
+     * Construct a coordinate system.
+     *
+     * @param properties The coordinate system properties.
+     * @param unit       The linear unit.
+     * @param datum      The horizontal datum.
+     * @param meridian   The prime meridian.
+     */
+    GeocentricCoordinateSystem(final Map<String,String> properties, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian)
+    {
+        super(properties);
         this.unit     = unit;
         this.datum    = datum;
         this.meridian = meridian;

@@ -117,6 +117,6 @@ public final class ConvexHull implements Serializable
      *
      * @deprecated This method is not implemented.
      */
-    public double[] toOpenGIS()
+    private double[] toArray()
     {throw new UnsupportedOperationException("Not implemented");}
 }

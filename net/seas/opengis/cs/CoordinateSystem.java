@@ -34,6 +34,7 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
+import java.util.Map;
 import net.seas.util.XClass;
 import java.rmi.RemoteException;
 
@@ -77,6 +78,14 @@ public abstract class CoordinateSystem extends Info
      */
     public CoordinateSystem(final String name)
     {super(name);}
+
+    /**
+     * Construct a coordinate system.
+     *
+     * @param properties The coordinate system properties.
+     */
+    CoordinateSystem(final Map<String,String> properties)
+    {super(properties);}
 
     /**
      * Dimension of the coordinate system.
@@ -139,8 +148,8 @@ public abstract class CoordinateSystem extends Info
      * Returns an OpenGIS interface for this coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_CoordinateSystem.
-    {return new Export();} // TODO: When return type changed, fix cast in CompoundCoordinateSystem.
+    org.opengis.cs.CS_Info toOpenGIS() // TODO: should be CS_CoordinateSystem.
+    {return new Export();}
 
 
 
@@ -170,18 +179,18 @@ public abstract class CoordinateSystem extends Info
          * Gets axis details for dimension within coordinate system.
          */
         public CS_AxisInfo getAxis(final int dimension) throws RemoteException
-        {return CoordinateSystem.this.getAxis(dimension).toOpenGIS();}
+        {return Adapters.export(CoordinateSystem.this.getAxis(dimension));}
 
         /**
          * Gets units for dimension within coordinate system.
          */
         public CS_Unit getUnits(final int dimension) throws RemoteException
-        {return toOpenGIS(CoordinateSystem.this.getUnits(dimension));}
+        {return Adapters.export(CoordinateSystem.this.getUnits(dimension));}
 
         /**
          * Gets default envelope of coordinate system.
          */
         public PT_Envelope getDefaultEnvelope() throws RemoteException
-        {return CoordinateSystem.this.getDefaultEnvelope().toOpenGIS();}
+        {return net.seas.opengis.pt.Adapters.export(CoordinateSystem.this.getDefaultEnvelope());}
     }
 }

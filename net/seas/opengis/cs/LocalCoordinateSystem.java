@@ -32,6 +32,7 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 
 // Miscellaneous
+import java.util.Map;
 import java.util.Arrays;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -96,14 +97,43 @@ public class LocalCoordinateSystem extends CoordinateSystem
         super(name);
         ensureNonNull("datum", datum);
         ensureNonNull("unit",  unit );
-        ensureNonNull("axes",  axes );
         this.datum = datum;
         this.unit  = unit;
-        this.axes  = (AxisInfo[])axes.clone();
-        for (int i=0; i<this.axes.length; i++)
-        {
-            ensureNonNull("axes", this.axes, i);
-        }
+        this.axes  = clone(axes);
+    }
+
+    /**
+     * Creates a local coordinate system. The dimension of the local coordinate
+     * system is determined by the size of the axis array.  All the axes will
+     * have the same units.  If you want to make a coordinate system with mixed
+     * units, then you can make a compound coordinate system from different local
+     * coordinate systems.
+     *
+     * @param properties Properties to give new object.
+     * @param datum      Local datum to use in created coordinate system.
+     * @param unit       Units to use for all axes in created coordinate system.
+     * @param axes       Axes to use in created coordinate system.
+     */
+    LocalCoordinateSystem(final Map<String,String> properties, final LocalDatum datum, final Unit unit, final AxisInfo[] axes)
+    {
+        super(properties);
+        ensureNonNull("datum", datum);
+        ensureNonNull("unit",  unit );
+        this.datum = datum;
+        this.unit  = unit;
+        this.axes  = clone(axes);
+    }
+
+    /**
+     * Returns a clone of the axis array.
+     */
+    private static AxisInfo[] clone(AxisInfo[] axes)
+    {
+        ensureNonNull("axes",  axes );
+        axes = (AxisInfo[])axes.clone();
+        for (int i=0; i<axes.length; i++)
+            ensureNonNull("axes", axes, i);
+        return axes;
     }
 
     /**
@@ -170,7 +200,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * Returns an OpenGIS interface for this local coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public CS_LocalCoordinateSystem toOpenGIS()
+    final CS_LocalCoordinateSystem toOpenGIS()
     {return new Export();}
 
 
@@ -195,6 +225,6 @@ public class LocalCoordinateSystem extends CoordinateSystem
          * Gets the local datum.
          */
         public CS_LocalDatum getLocalDatum() throws RemoteException
-        {return LocalCoordinateSystem.this.getLocalDatum().toOpenGIS();}
+        {return Adapters.export(LocalCoordinateSystem.this.getLocalDatum());}
     }
 }

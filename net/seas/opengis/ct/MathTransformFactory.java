@@ -248,10 +248,8 @@ public class MathTransformFactory
     /**
      * Returns an OpenGIS interface for this transform factory.
      * The returned object is suitable for RMI use.
-     *
-     * @see #wrapOpenGIS
      */
-    public CT_MathTransformFactory toOpenGIS()
+    final CT_MathTransformFactory toOpenGIS()
     {return new Export();}
 
 
@@ -283,7 +281,7 @@ public class MathTransformFactory
          * Creates a transform by concatenating two existing transforms.
          */
         public CT_MathTransform createConcatenatedTransform(final CT_MathTransform transform1, final CT_MathTransform transform2) throws RemoteException
-        {return MathTransformFactory.this.createConcatenatedTransform(MathTransform.wrapOpenGIS(transform1), MathTransform.wrapOpenGIS(transform2)).toOpenGIS();}
+        {return Adapters.export(MathTransformFactory.this.createConcatenatedTransform(Adapters.wrap(transform1), Adapters.wrap(transform2)));}
 
         /**
          * Creates a transform which passes through a subset of ordinates to another transform.
@@ -295,7 +293,16 @@ public class MathTransformFactory
          * Creates a transform from a classification name and parameters.
          */
         public CT_MathTransform createParameterizedTransform(final String classification, final CT_Parameter[] parameters) throws RemoteException
-        {return MathTransformFactory.this.createParameterizedTransform(classification, Parameter.wrapOpenGIS(parameters)).toOpenGIS();}
+        {
+            final Parameter[] param = new Parameter[parameters.length];
+            for (int i=0; i<param.length; i++)
+            {
+                final CT_Parameter p = parameters[i];
+                if (p!=null)
+                    param[i] = new Parameter(p.name, p.value);
+            }
+            return Adapters.export(MathTransformFactory.this.createParameterizedTransform(classification, param));
+        }
 
         /**
          * Creates a math transform from a Well-Known Text string.

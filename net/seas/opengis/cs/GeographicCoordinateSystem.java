@@ -36,6 +36,7 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -124,6 +125,27 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
+     * Creates a geographic coordinate system, which could be <var>latitude</var>/<var>longiude</var>
+     * or <var>longitude</var>/<var>latitude</var>.
+     *
+     * @param properties Properties to give new object.
+     * @param unit       Angular units for created coordinate system.
+     * @param datum      Horizontal datum for created coordinate system.
+     * @param meridian   Prime Meridian for created coordinate system.
+     * @param axis0      Details of 0th ordinates.
+     * @param axis1      Details of 1st ordinates.
+     */
+    GeographicCoordinateSystem(final Map<String,String> properties, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
+    {
+        super(properties, datum, axis0, axis1);
+        ensureNonNull("unit",     unit);
+        ensureNonNull("meridian", meridian);
+        ensureAngularUnit(unit);
+        this.unit     = unit;
+        this.meridian = meridian;
+    }
+
+    /**
      * Gets units for dimension within coordinate system.
      * This angular unit is the same for all axis.
      *
@@ -131,9 +153,17 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      */
     public Unit getUnits(final int dimension)
     {
-        if (dimension>=0 && dimension<getDimension()) return unit;
+        if (dimension>=0 && dimension<getDimension()) return getAngularUnit();
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
+
+    /**
+     * Gets angular unit. This convenience is equivalent to
+     * <code>{@link #getUnits getUnits}(0)</code> or
+     * <code>{@link #getUnits getUnits}(1)</code>.
+     */
+    public Unit getAngularUnit()
+    {return unit;}
 
     /**
      * Returns the prime meridian.
@@ -224,7 +254,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * Returns an OpenGIS interface for this geographic coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public CS_GeographicCoordinateSystem toOpenGIS()
+    final CS_GeographicCoordinateSystem toOpenGIS()
     {return new Export();}
 
 
@@ -249,13 +279,13 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          * Returns the AngularUnit.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
-        {return (CS_AngularUnit) toOpenGIS(GeographicCoordinateSystem.this.getUnits(0));}
+        {return (CS_AngularUnit) Adapters.export(GeographicCoordinateSystem.this.getAngularUnit());}
 
         /**
          * Returns the PrimeMeridian.
          */
         public CS_PrimeMeridian getPrimeMeridian() throws RemoteException
-        {return GeographicCoordinateSystem.this.getPrimeMeridian().toOpenGIS();}
+        {return Adapters.export(GeographicCoordinateSystem.this.getPrimeMeridian());}
 
         /**
          * Gets the number of available conversions to WGS84 coordinates.
@@ -267,6 +297,6 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          * Gets details on a conversion to WGS84.
          */
         public CS_WGS84ConversionInfo getWGS84ConversionInfo(final int index) throws RemoteException
-        {return GeographicCoordinateSystem.this.getWGS84ConversionInfo(index).toOpenGIS();}
+        {return Adapters.export(GeographicCoordinateSystem.this.getWGS84ConversionInfo(index));}
     }
 }

@@ -6,38 +6,5 @@
   </HEAD>
   <BODY>
     <P ALIGN="justify">Coordinate Systems implementation.</P>
-
-
-    <P>&nbsp;</P>
-    <P>&nbsp;</P>
-    <HR>
-    <P>&nbsp;</P>
-    <H2><A NAME="differences">Differences with the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
-    <UL>
-      <LI>Omitted the <CODE>CS_</CODE> prefix for all classes and interfaces.</LI>
-
-      <LI>Omitted {@link org.opengis.cs.CS_Unit} class and subclasses
-          in order to avoid duplication with standard Java classes.
-          Use {@link javax.units.Unit} instead.</LI>
-
-      <LI>Omitted {@link org.opengis.cs.CS_ProjectionParameter} in order to
-          avoid duplication with {@link org.opengis.ct.CT_Parameter}. Use
-          {@link net.seas.opengis.ct.Parameter} instead.</LI>
-
-      <LI>Made all enumeration classes immutable. Enumeration constants are instances
-          of the actual enumeration class instead of integers. Names are uppercase,
-          with no <CODE>CS_AO</CODE> prefix.</LI>
-
-      <LI>{@link net.seas.opengis.cs.Ellipsoid#getInverseFlattening} returns
-          {@link java.lang.Double#POSITIVE_INFINITY} instead of 0 for
-          perfect spheres. Infinity is the mathematically correct value.</LI>
-
-      <LI>Added methods:
-          <UL>
-            <LI>{@link net.seas.opengis.cs.Ellipsoid#getEccentricity}</LI>
-            <LI>{@link net.seas.opengis.cs.Ellipsoid#orthodromicDistance}</LI>
-          </UL>
-          </LI>
-    </UL>
   </BODY>
 </HTML>

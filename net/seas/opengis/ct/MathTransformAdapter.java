@@ -164,7 +164,7 @@ final class MathTransformAdapter extends MathTransform
     /**
      * Returns the underlying OpenGIS interface.
      */
-    public CT_MathTransform toOpenGIS()
+    final CT_MathTransform toOpenGIS()
     {return transform;}
 
     /**

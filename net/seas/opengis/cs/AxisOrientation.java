@@ -141,7 +141,7 @@ public final class AxisOrientation implements Serializable
      * is available for the specified locale, a default one will be
      * used.
      *
-     * @param  locale The locale, or <code>null</code> for the current default locale.
+     * @param  locale The locale, or <code>null</code> for the default locale.
      * @return Enum's name in the specified locale.
      */
     public String getName(final Locale locale)

@@ -28,6 +28,7 @@ import org.opengis.cs.CS_VerticalDatum;
 import org.opengis.cs.CS_VerticalCoordinateSystem;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
@@ -88,6 +89,26 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     }
 
     /**
+     * Creates a vertical coordinate system from a datum and linear units.
+     *
+     * @param properties Properties to give new object.
+     * @param datum      Datum to use for new coordinate system.
+     * @param unit       Units to use for new coordinate system.
+     * @param axis       Axis to use for new coordinate system.
+     */
+    VerticalCoordinateSystem(final Map<String,String> properties, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
+    {
+        super(properties);
+        ensureNonNull("datum", datum);
+        ensureNonNull("unit",  unit );
+        ensureNonNull("axis",  axis );
+        ensureLinearUnit(unit);
+        this.datum = datum;
+        this.unit  = unit;
+        this.axis  = axis;
+    }
+
+    /**
      * Returns the dimension of this coordinate system, which is 1.
      */
     public int getDimension()
@@ -120,9 +141,16 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     public Unit getUnits(final int dimension)
     {
         final int maxDim = getDimension();
-        if (dimension>=0 && dimension<maxDim) return unit;
+        if (dimension>=0 && dimension<maxDim) return getVerticalUnit();
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
+
+    /**
+     * Gets the units used along the vertical axis. This convenience
+     * is equivalent to <code>{@link #getUnits getUnits}(0)</code>.
+     */
+    public Unit getVerticalUnit()
+    {return unit;}
 
     /**
      * Gets default envelope for this coordinate system.
@@ -150,7 +178,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * Returns an OpenGIS interface for this vertical coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public CS_VerticalCoordinateSystem toOpenGIS()
+    final CS_VerticalCoordinateSystem toOpenGIS()
     {return new Export();}
 
 
@@ -175,12 +203,12 @@ public class VerticalCoordinateSystem extends CoordinateSystem
          * Gets the vertical datum, which indicates the measurement method.
          */
         public CS_VerticalDatum getVerticalDatum() throws RemoteException
-        {return VerticalCoordinateSystem.this.getVerticalDatum().toOpenGIS();}
+        {return Adapters.export(VerticalCoordinateSystem.this.getVerticalDatum());}
 
         /**
          * Gets the units used along the vertical axis.
          */
         public CS_LinearUnit getVerticalUnit() throws RemoteException
-        {return (CS_LinearUnit) toOpenGIS(VerticalCoordinateSystem.this.getUnits(0));}
+        {return (CS_LinearUnit) Adapters.export(VerticalCoordinateSystem.this.getVerticalUnit());}
     }
 }

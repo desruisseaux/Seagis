@@ -22,9 +22,6 @@
  */
 package net.seas.opengis.ct;
 
-// OpenGIS dependencies
-import org.opengis.ct.CT_Parameter;
-
 // Miscellaneous
 import java.io.Serializable;
 import net.seas.util.XClass;
@@ -70,13 +67,6 @@ public final class Parameter implements Cloneable, Serializable
         this.name  = name.trim();
         this.value = value;
     }
-
-    /**
-     * Construct a named parameter from an OpenGIS structure.
-     * This constructor is provided for interoperability with OpenGIS.
-     */
-    private Parameter(final CT_Parameter parameter)
-    {this(parameter.name, parameter.value);}
 
     /**
      * Convenience method for fetching a parameter value.
@@ -204,17 +194,5 @@ public final class Parameter implements Cloneable, Serializable
         buffer.append(value);
         buffer.append(']');
         return buffer.toString();
-    }
-
-    /**
-     * Wrap an array of parameters.
-     */
-    static Parameter[] wrapOpenGIS(final CT_Parameter[] parameters)
-    {
-        final Parameter[] param = new Parameter[parameters.length];
-        for (int i=0; i<param.length; i++)
-            if (parameters[i]!=null)
-                param[i] = new Parameter(parameters[i]);
-        return param;
     }
 }

@@ -22,10 +22,6 @@
  */
 package net.seas.opengis.pt;
 
-// OpenGIS dependencies
-import org.opengis.pt.PT_Envelope;
-import org.opengis.pt.PT_CoordinatePoint;
-
 // Miscellaneous
 import java.util.Arrays;
 import java.io.Serializable;
@@ -130,28 +126,23 @@ public final class Envelope implements Cloneable, Serializable
      *         less than or equal to the corresponding ordinate value in the maximum point.
      */
     public Envelope(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws IllegalArgumentException
-    {
-        maxCP.ensureDimensionMatch(minCP.ord.length);
-        ord = new double[minCP.ord.length + maxCP.ord.length];
-        System.arraycopy(minCP.ord, 0, ord, 0,                minCP.ord.length);
-        System.arraycopy(maxCP.ord, 0, ord, minCP.ord.length, maxCP.ord.length);
-        checkCoherence();
-    }
+    {this(minCP.ord, maxCP.ord);}
 
     /**
-     * Construct a coordinate point from an OpenGIS's structure.
-     * This constructor is provided for compatibility with OpenGIS.
+     * Construct a envelope defined by two positions.
      *
-     * @see #toOpenGIS
+     * @param  minCP Minimum ordinate values.
+     * @param  maxCP Maximum ordinate values.
+     * @throws IllegalArgumentException if the two positions don't have the same dimension.
+     * @throws IllegalArgumentException if an ordinate value in the minimum point is not
+     *         less than or equal to the corresponding ordinate value in the maximum point.
      */
-    public Envelope(final PT_Envelope envelope)
+    Envelope(final double[] minCP, final double[] maxCP) throws IllegalArgumentException
     {
-        final double[] minCP = envelope.minCP.ord;
-        final double[] maxCP = envelope.maxCP.ord;
         if (minCP.length != maxCP.length)
         {
             throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION¤2,
-                                               new Integer(maxCP.length), new Integer(minCP.length)));
+                                               new Integer(minCP.length), new Integer(maxCP.length)));
         }
         ord = new double[minCP.length + maxCP.length];
         System.arraycopy(minCP, 0, ord, 0,            minCP.length);
@@ -266,24 +257,4 @@ public final class Envelope implements Cloneable, Serializable
      */
     public String toString()
     {return CoordinatePoint.toString(this, ord);}
-
-    /**
-     * Returns an OpenGIS structure for this envelope.
-     * This method is provided for compatibility with OpenGIS.
-     */
-    public PT_Envelope toOpenGIS()
-    {
-        final int dimension = getDimension();
-        final PT_Envelope envelope = new PT_Envelope();
-        envelope.minCP = new PT_CoordinatePoint();
-        envelope.maxCP = new PT_CoordinatePoint();
-        envelope.minCP.ord = new double[dimension];
-        envelope.maxCP.ord = new double[dimension];
-        for (int i=0; i<dimension; i++)
-        {
-            envelope.minCP.ord[i] = getMinimum(i);
-            envelope.maxCP.ord[i] = getMaximum(i);
-        }
-        return envelope;
-    }
 }

@@ -494,24 +494,9 @@ public abstract class MathTransform
     /**
      * Returns an OpenGIS interface for this math transform.
      * The returned object is suitable for RMI use.
-     *
-     * @see #wrapOpenGIS
      */
-    public CT_MathTransform toOpenGIS()
+    CT_MathTransform toOpenGIS()
     {return new Export();}
-
-    /**
-     * Create a {@link MathTransform} object from a {@link CT_MathTransform}
-     * interface. This method is provided for interoperability with OpenGIS.
-     *
-     * @param  transform The OpenGIS interface to wrap.
-     * @return A {@link MathTransform} object wrapping the interface.
-     * @throws RemoteException if a remote call failed.
-     *
-     * @see #toOpenGIS
-     */
-    public static MathTransform wrapOpenGIS(final CT_MathTransform transform) throws RemoteException
-    {return (transform instanceof Export) ? ((Export)transform).unwrap() : new MathTransformAdapter(transform);}
 
 
 
@@ -600,7 +585,7 @@ public abstract class MathTransform
      * @version 1.0
      * @author Martin Desruisseaux
      */
-    private final class Export extends RemoteObject implements CT_MathTransform
+    final class Export extends RemoteObject implements CT_MathTransform
     {
         /**
          * Returns the underlying math transform.
@@ -612,7 +597,7 @@ public abstract class MathTransform
          * Gets flags classifying domain points within a convex hull.
          */
         public CT_DomainFlags getDomainFlags(final double[] ord) throws RemoteException
-        {return new CT_DomainFlags(MathTransform.this.getDomainFlags(new ConvexHull(ord)).value);}
+        {return Adapters.export(MathTransform.this.getDomainFlags(new ConvexHull(ord)));}
 
         /**
          * Gets transformed convex hull.

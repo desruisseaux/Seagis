@@ -27,6 +27,7 @@ import org.opengis.cs.CS_Datum;
 import org.opengis.cs.CS_DatumType;
 
 // Miscellaneous
+import java.util.Map;
 import net.seas.util.XClass;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -76,6 +77,20 @@ public class Datum extends Info
     }
 
     /**
+     * Construct a new datum with the
+     * specified properties and datum type.
+     *
+     * @param properties The datum properties.
+     * @param type       The datum type.
+     */
+    Datum(final Map<String,String> properties, final DatumType type)
+    {
+        super(properties);
+        this.type = type;
+        ensureNonNull("type", type);
+    }
+
+    /**
      * Gets the type of the datum as an enumerated code.
      */
     public DatumType getDatumType()
@@ -113,7 +128,7 @@ public class Datum extends Info
     {
         final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
         buffer.append('[');
-        buffer.append(getName());
+        buffer.append(getName(null));
         final DatumType type = getDatumType();
         if (type!=null)
         {
@@ -128,7 +143,7 @@ public class Datum extends Info
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
      */
-    public org.opengis.cs.CS_Info toOpenGIS() // TODO: return type should be CS_Datum
+    org.opengis.cs.CS_Info toOpenGIS() // TODO: return type should be CS_Datum
     {return new Export();}
 
 
@@ -153,6 +168,6 @@ public class Datum extends Info
          * Gets the type of the datum as an enumerated code.
          */
         public CS_DatumType getDatumType() throws RemoteException
-        {return new CS_DatumType(Datum.this.getDatumType().value);}
+        {return Adapters.export(Datum.this.getDatumType());}
     }
 }

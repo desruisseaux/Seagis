@@ -36,6 +36,7 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.ct.CoordinateTransformation;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import java.awt.geom.Point2D;
 import net.seas.util.XClass;
@@ -130,6 +131,28 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     }
 
     /**
+     * Creates a projected coordinate system using a projection object.
+     *
+     * @param  properties Properties to give new object.
+     * @param  gcs Geographic coordinate system to base projection on.
+     * @param  projection Projection from geographic to projected coordinate system.
+     * @param  unit Linear units of created PCS.
+     * @param  axis0 Details of 0th ordinates in created PCS coordinates.
+     * @param  axis1 Details of 1st ordinates in created PCS coordinates.
+     */
+    ProjectedCoordinateSystem(final Map<String,String> properties, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
+    {
+        super(properties, gcs.getHorizontalDatum(), axis0, axis1);
+        ensureNonNull("gcs",        gcs);
+        ensureNonNull("projection", projection);
+        ensureNonNull("unit",       unit);
+        ensureLinearUnit(unit);
+        this.gcs        = gcs;
+        this.projection = projection;
+        this.unit       = unit;
+    }
+
+    /**
      * Returns the geographic coordinate system.
      */
     public GeographicCoordinateSystem getGeographicCoordinateSystem()
@@ -142,6 +165,14 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     {return projection;}
 
     /**
+     * Gets linear unit. This convenience is equivalent to
+     * <code>{@link #getUnits getUnits}(0)</code> or
+     * <code>{@link #getUnits getUnits}(1)</code>.
+     */
+    public Unit getLinearUnit()
+    {return unit;}
+
+    /**
      * Gets units for dimension within coordinate system.
      * This angular unit is the same for all axis.
      *
@@ -149,7 +180,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      */
     public Unit getUnits(final int dimension)
     {
-        if (dimension>=0 && dimension<getDimension()) return unit;
+        if (dimension>=0 && dimension<getDimension()) return getLinearUnit();
         throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
     }
 
@@ -180,7 +211,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * Returns an OpenGIS interface for this projected coordinate
      * system. The returned object is suitable for RMI use.
      */
-    public CS_ProjectedCoordinateSystem toOpenGIS()
+    final CS_ProjectedCoordinateSystem toOpenGIS()
     {return new Export();}
 
 
@@ -203,27 +234,20 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     {
         /**
          * Returns the GeographicCoordinateSystem.
-         *
-         * @throws RemoteException if a remote method call failed.
          */
         public CS_GeographicCoordinateSystem getGeographicCoordinateSystem() throws RemoteException
-        {return ProjectedCoordinateSystem.this.getGeographicCoordinateSystem().toOpenGIS();}
+        {return Adapters.export(ProjectedCoordinateSystem.this.getGeographicCoordinateSystem());}
 
         /**
          * Returns the LinearUnits.
-         * The linear unit must be the same as the {@link CS_CoordinateSystem} units.
-         *
-         * @throws RemoteException if a remote method call failed.
          */
         public CS_LinearUnit getLinearUnit() throws RemoteException
-        {return (CS_LinearUnit) toOpenGIS(ProjectedCoordinateSystem.this.getUnits(0));}
+        {return (CS_LinearUnit) Adapters.export(ProjectedCoordinateSystem.this.getLinearUnit());}
 
         /**
          * Gets the projection.
-         *
-         * @throws RemoteException if a remote method call failed.
          */
         public CS_Projection getProjection() throws RemoteException
-        {return ProjectedCoordinateSystem.this.getProjection().toOpenGIS();}
+        {return Adapters.export(ProjectedCoordinateSystem.this.getProjection());}
     }
 }

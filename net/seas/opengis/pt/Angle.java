@@ -36,8 +36,9 @@ import net.seas.resources.Resources;
 
 
 /**
- * The amount of rotation needed to bring one line or plane into coincidence
- * with another, generally measured in degrees, sexagesimal degrees or grads.
+ * An angle in degrees. An angle is the amount of rotation needed to bring one line
+ * or plane into coincidence with another, generally measured in degrees, sexagesimal
+ * degrees or grads.
  *
  * @version 1.0
  * @author Martin Desruisseaux

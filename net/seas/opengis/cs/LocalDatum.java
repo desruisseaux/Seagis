@@ -25,6 +25,9 @@ package net.seas.opengis.cs;
 // OpenGIS dependencies
 import org.opengis.cs.CS_LocalDatum;
 
+// Miscellaneous
+import java.util.Map;
+
 
 /**
  * Local datum.
@@ -56,6 +59,15 @@ public class LocalDatum extends Datum
     {super(name, type);}
 
     /**
+     * Creates a local datum.
+     *
+     * @param properties Properties to give new object.
+     * @param localDatumType Type of local datum to create.
+     */
+    LocalDatum(final Map<String,String> properties, final DatumType.Local type)
+    {super(properties, type);}
+
+    /**
      * Gets the type of the datum as an enumerated code.
      */
     public DatumType.Local getDatumType()
@@ -65,7 +77,7 @@ public class LocalDatum extends Datum
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
      */
-    public CS_LocalDatum toOpenGIS()
+    final CS_LocalDatum toOpenGIS()
     {return new Export();}
 
 

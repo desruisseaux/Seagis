@@ -27,6 +27,7 @@ import org.opengis.cs.CS_Ellipsoid;
 import org.opengis.cs.CS_LinearUnit;
 
 // Miscellaneous
+import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XMath;
 import net.seas.util.XClass;
@@ -134,10 +135,28 @@ public class Ellipsoid extends Info
         this.ivfDefinitive     = ivfDefinitive;
         ensureNonNull ("unit", unit);
         ensureLinearUnit(unit);
-        if (!Unit.METRE.canConvert(unit))
-        {
-            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤2, "unit", unit));
-        }
+    }
+
+    /**
+     * Construct a new ellipsoid using the specified axis length.
+     *
+     * @param properties        Properties of this ellipsoid.
+     * @param semiMajorAxis     The equatorial radius.
+     * @param semiMinorAxis     The polar radius.
+     * @param inverseFlattening The inverse of the flattening value.
+     * @param ivfDefinitive     Is the Inverse Flattening definitive for this ellipsoid?
+     * @param unit              The units of the semi-major and semi-minor axis values.
+     */
+    Ellipsoid(final Map<String,String> properties, final double semiMajorAxis, final double semiMinorAxis, final double inverseFlattening, final boolean ivfDefinitive, final Unit unit)
+    {
+        super(properties);
+        this.unit = unit;
+        this.semiMajorAxis     = check("semiMajorAxis",     semiMajorAxis);
+        this.semiMinorAxis     = check("semiMinorAxis",     semiMinorAxis);
+        this.inverseFlattening = check("inverseFlattening", inverseFlattening);
+        this.ivfDefinitive     = ivfDefinitive;
+        ensureNonNull ("unit", unit);
+        ensureLinearUnit(unit);
     }
 
     /**
@@ -279,11 +298,7 @@ public class Ellipsoid extends Info
     public int hashCode()
     {
         final long longCode=Double.doubleToLongBits(getSemiMajorAxis());
-        int code = ((int)(longCode >>> 32)) ^ (int)longCode;
-        final String name=getName();
-        if (name!=null)
-            code ^= name.hashCode();
-        return code;
+        return ((int)(longCode >>> 32)) ^ (int)longCode ^ super.hashCode();
     }
 
     /**
@@ -296,7 +311,7 @@ public class Ellipsoid extends Info
     public String toString()
     {
         final StringBuffer buffer = new StringBuffer("Ellipsoid[");
-        final String         name = getName();
+        final String         name = getName(null);
         final Unit           unit = getAxisUnit();
         final String   unitSymbol = (unit!=null) ? unit.toString() : "";
         if (name!=null)
@@ -336,7 +351,7 @@ public class Ellipsoid extends Info
      * Returns an OpenGIS interface for this ellipsoid.
      * The returned object is suitable for RMI use.
      */
-    public CS_Ellipsoid toOpenGIS()
+    final CS_Ellipsoid toOpenGIS()
     {return new Export();}
 
 
@@ -373,7 +388,10 @@ public class Ellipsoid extends Info
          * Returns the value of the inverse of the flattening constant.
          */
         public double getInverseFlattening() throws RemoteException
-        {return Ellipsoid.this.getInverseFlattening();}
+        {
+            final double ivf=Ellipsoid.this.getInverseFlattening();
+            return Double.isInfinite(ivf) ? 0 : ivf;
+        }
 
         /**
          * Is the Inverse Flattening definitive for this ellipsoid?
@@ -385,6 +403,6 @@ public class Ellipsoid extends Info
          * Returns the LinearUnit.
          */
         public CS_LinearUnit getAxisUnit() throws RemoteException
-        {return (CS_LinearUnit) toOpenGIS(Ellipsoid.this.getAxisUnit());}
+        {return (CS_LinearUnit) Adapters.export(Ellipsoid.this.getAxisUnit());}
     }
 }

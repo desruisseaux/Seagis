@@ -28,7 +28,6 @@ import net.seas.opengis.cs.Ellipsoid;
 // Miscellaneous
 import java.io.IOException;
 import java.awt.geom.Point2D;
-
 import net.seas.util.XClass;
 import net.seas.util.Console;
 import net.seas.io.TableWriter;
@@ -59,6 +58,35 @@ final class Main extends Console
     {
         super(args);
         this.factory = MathTransformFactory.DEFAULT;
+    }
+
+    /**
+     * Parse command line and run the application.
+     * Command-line arguments may be:
+     *
+     * <blockquote><pre>
+     *  <b>-list</b> <i></i>           List available transforms
+     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
+     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+     * </pre></blockquote>
+     */
+    public static void main(final String[] args)
+    {
+        if (args.length==0)
+        {
+            System.out.println("Options:\n"+
+                               "-list                 List available transforms\n"+
+                               "-locale <name>        Locale to be used    (example: \"fr_CA\")\n"+
+                               "-encoding <name>      Output encoding name (example: \"cp850\")");
+        }
+        else try
+        {
+            new Main(args).run();
+        }
+        catch (IllegalArgumentException exception)
+        {
+            System.err.println(exception.getLocalizedMessage());
+        }
     }
 
     /**
@@ -121,35 +149,6 @@ final class Main extends Console
             final AssertionError error = new AssertionError(exception.getLocalizedMessage());
             error.initCause(exception);
             throw error;
-        }
-    }
-
-    /**
-     * Parse command line and run the application.
-     * Command-line arguments may be:
-     *
-     * <blockquote><pre>
-     *  <b>-list</b> <i></i>           List available transforms
-     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
-     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
-     * </pre></blockquote>
-     */
-    public static void main(final String[] args)
-    {
-        if (args.length==0)
-        {
-            System.out.println("Options:\n"+
-                               "-list                 List available transforms\n"+
-                               "-locale <name>        Locale to be used    (example: \"fr_CA\")\n"+
-                               "-encoding <name>      Output encoding name (example: \"cp850\")");
-        }
-        else try
-        {
-            new Main(args).run();
-        }
-        catch (IllegalArgumentException exception)
-        {
-            System.err.println(exception.getLocalizedMessage());
         }
     }
 }

@@ -25,6 +25,9 @@ package net.seas.opengis.cs;
 // OpenGIS dependencies
 import org.opengis.cs.CS_VerticalDatum;
 
+// Miscellaneous
+import java.util.Map;
+
 
 /**
  * Procedure used to measure vertical distances.
@@ -52,6 +55,15 @@ public class VerticalDatum extends Datum
     {super(name, type);}
 
     /**
+     * Creates a vertical datum from an enumerated type value.
+     *
+     * @param properties Properties to give new object.
+     * @param type Type of vertical datum to create.
+     */
+    VerticalDatum(final Map<String,String> properties, final DatumType.Vertical type)
+    {super(properties, type);}
+
+    /**
      * Gets the type of the datum as an enumerated code.
      */
     public DatumType.Vertical getDatumType()
@@ -61,7 +73,7 @@ public class VerticalDatum extends Datum
      * Returns an OpenGIS interface for this datum.
      * The returned object is suitable for RMI use.
      */
-    public CS_VerticalDatum toOpenGIS()
+    final CS_VerticalDatum toOpenGIS()
     {return new Export();}
 
 
