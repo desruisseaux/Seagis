@@ -57,6 +57,7 @@ import java.util.logging.LogRecord;
 import java.util.Locale;
 import java.io.Serializable;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -179,7 +180,7 @@ public abstract class Layer implements Serializable
         {
             return getCoordinateSystem2D(((CompoundCoordinateSystem) cs).getHeadCS());
         }
-        throw new IllegalArgumentException(Resources.format(Clé.CANT_REDUCE_TO_TWO_DIMENSIONS¤1, cs.getName(null)));
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_CANT_REDUCE_TO_TWO_DIMENSIONS_$1, cs.getName(null)));
     }
 
     /**
@@ -624,7 +625,7 @@ public abstract class Layer implements Serializable
                 if (time > 200)
                 {
                     final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINEST,
-                                             Clé.PAINTING¤2, getName(), new Double(time/1000.0));
+                                             ResourceKeys.PAINTING_$2, getName(), new Double(time/1000.0));
                     record.setSourceClassName(Utilities.getShortClassName(this));
                     record.setSourceMethodName("paint");
                     Contour.LOGGER.log(record);

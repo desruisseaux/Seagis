@@ -77,6 +77,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
 import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -334,7 +335,7 @@ public final class ExceptionMonitor
              * de {@link JDialog}. La trace de l'exception ne sera pas écrite
              * tout de suite.
              */
-            final String title=resources.getString(Clé.ERROR¤1, Utilities.getShortClassName(exception));
+            final String title=resources.getString(ResourceKeys.ERROR_$1, Utilities.getShortClassName(exception));
             final JDesktopPane desktop=getDesktopPaneForComponent(owner);
             if (desktop!=null)
             {
@@ -368,7 +369,7 @@ public final class ExceptionMonitor
             {
                 message=exception.getLocalizedMessage();
                 if (message==null)
-                    message=resources.getString(Clé.NO_DETAILS¤1, Utilities.getShortClassName(exception));
+                    message=resources.getString(ResourceKeys.NO_DETAILS_$1, Utilities.getShortClassName(exception));
             }
             final JTextArea textArea=new JTextArea(message, 1, WIDTH);
             textArea.setEditable(false);
@@ -384,8 +385,8 @@ public final class ExceptionMonitor
             messageBox.add(textArea, BorderLayout.NORTH);
             final Pane pane=new Pane(owner, exception, messageBox, new AbstractButton[]
             {
-                new JButton(resources.getString(Clé.DEBUG)),
-                new JButton(resources.getString(Clé.CLOSE))
+                new JButton(resources.getString(ResourceKeys.DEBUG)),
+                new JButton(resources.getString(ResourceKeys.CLOSE))
             }, resources);
             pane.dialog.setVisible(true);
         }
@@ -437,7 +438,7 @@ public final class ExceptionMonitor
              * Insère ou cache la trace de l'exception. Même si on cache la trace, on
              * ne la détruira pas au cas où l'utilisateur voudrait encore la réafficher.
              */
-            traceButton.setText(Resources.format(traceVisible ? Clé.DEBUG : Clé.HIDE));
+            traceButton.setText(Resources.format(traceVisible ? ResourceKeys.DEBUG : ResourceKeys.HIDE));
             traceVisible = !traceVisible;
             if (dialog instanceof Dialog)
             {

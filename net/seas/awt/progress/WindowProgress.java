@@ -49,6 +49,7 @@ import javax.swing.BoundedRangeModel;
 import java.lang.reflect.InvocationTargetException;
 
 // Divers
+import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
@@ -166,7 +167,8 @@ public class WindowProgress extends Progress
          * les composantes affichant le progrès.
          */
         Dimension       parentSize;
-        final String         title = Resources.format(Clé.PROGRESSION);
+        final Resources  resources = Resources.getResources(parent!=null ? parent.getLocale() : null);
+        final String         title = resources.getString(ResourceKeys.PROGRESSION);
         final JDesktopPane desktop = JOptionPane.getDesktopPaneForComponent(parent);
         if (desktop!=null)
         {
@@ -221,6 +223,12 @@ public class WindowProgress extends Progress
     }
 
     /**
+     * Returns a localized string for the specified key.
+     */
+    private String getString(final int key)
+    {return Resources.getResources(window.getLocale()).getString(key);}
+
+    /**
      * Retourne le titre de la fenêtre. Il s'agira en général
      * du titre de la boîte de dialogue. Par défaut, ce titre
      * sera "Progression" dans la langue de l'utilisateur.
@@ -233,7 +241,7 @@ public class WindowProgress extends Progress
      * nul rétablira le titre par défaut de la fenêtre.
      */
     public void setTitle(final String name)
-    {set(Caller.TITLE, (name!=null) ? name : Resources.format(Clé.PROGRESSION));}
+    {set(Caller.TITLE, (name!=null) ? name : getString(ResourceKeys.PROGRESSION));}
 
     /**
      * Retourne le message d'écrivant l'opération
@@ -305,7 +313,7 @@ public class WindowProgress extends Progress
         {
             lastSource=source;
             if (warningArea!=null) buffer.append('\n');
-            buffer.append(source!=null ? source : Resources.format(Clé.UNTITLED));
+            buffer.append(source!=null ? source : getString(ResourceKeys.UNTITLED));
             buffer.append('\n');
         }
         int wm=WARNING_MARGIN;
@@ -560,10 +568,10 @@ public class WindowProgress extends Progress
                     warningArea.setFont(Font.getFont("Monospaced"));
                     warningArea.setEditable(false);
                     title.setBorder(BorderFactory.createEmptyBorder(0,HMARGIN,VMARGIN,HMARGIN));
-                    panel.add(content,                                   BorderLayout.NORTH);
-                    title.add(new JLabel(Resources.format(Clé.WARNING)), BorderLayout.NORTH );
-                    title.add(scroll,                                    BorderLayout.CENTER);
-                    panel.add(title,                                     BorderLayout.CENTER);
+                    panel.add(content,                                     BorderLayout.NORTH);
+                    title.add(new JLabel(getString(ResourceKeys.WARNING)), BorderLayout.NORTH );
+                    title.add(scroll,                                      BorderLayout.CENTER);
+                    panel.add(title,                                       BorderLayout.CENTER);
                     if (window instanceof JDialog)
                     {
                         final JDialog window = (JDialog) WindowProgress.this.window;

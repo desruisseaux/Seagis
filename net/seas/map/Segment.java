@@ -56,6 +56,7 @@ import java.io.Serializable;
 import net.seas.util.XArray;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.Geometry;
 
@@ -801,7 +802,7 @@ final class Segment implements Serializable
             final CoordinateSystem targetCS = transformation.getTargetCS();
             if (!Utilities.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
             {
-                throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_CARTESIAN_COORDINATE_SYSTEM_$1, targetCS.getName(null)));
             }
             ellipsoid = getEllipsoid(targetCS);
         }
@@ -873,7 +874,7 @@ final class Segment implements Serializable
             final CoordinateSystem targetCS = transformation.getTargetCS();
             if (getEllipsoid(targetCS)!=null || !Utilities.equals(targetCS.getUnits(0), targetCS.getUnits(1)))
             {
-                throw new IllegalArgumentException(Resources.format(Clé.NON_CARTESIAN_COORDINATE_SYSTEM¤1, targetCS.getName(null)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_CARTESIAN_COORDINATE_SYSTEM_$1, targetCS.getName(null)));
             }
             final MathTransform tr = transformation.getMathTransform();
             if (!tr.isIdentity())

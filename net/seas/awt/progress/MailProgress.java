@@ -49,6 +49,7 @@ import java.text.FieldPosition;
 // Divers
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -180,8 +181,8 @@ public class MailProgress extends Progress
      * @param method Nom de la méthode qui appelle celle-ci.
      *        Cette information est utilisée pour produire
      *        un message d'erreur en cas d'échec.
-     * @param subjectKey Clé du sujet: {@link Clé#PROGRESS},
-     *        {@link Clé#WARNING} ou {@link Clé#EXCEPTION}.
+     * @param subjectKey Clé du sujet: {@link ResourceKeys#PROGRESS},
+     *        {@link ResourceKeys#WARNING} ou {@link ResourceKeys#EXCEPTION}.
      * @param messageText Message à envoyer par courriel.
      */
     private void send(final String method, final int subjectKey, final String messageText)
@@ -220,12 +221,13 @@ public class MailProgress extends Progress
         final float   MEMORY_UNIT = (1024f*1024f);
         final float    freeMemory = system.freeMemory()  / MEMORY_UNIT;
         final float   totalMemory = system.totalMemory() / MEMORY_UNIT;
-        final StringBuffer buffer = new StringBuffer(description!=null ? description : Resources.format(Clé.PROGRESSION));
+        final Resources resources = Resources.getResources(null);
+        final StringBuffer buffer = new StringBuffer(description!=null ? description : resources.getString(ResourceKeys.PROGRESSION));
         final NumberFormat format = NumberFormat.getPercentInstance(locale);
         buffer.append(": "); format.format(percent/100, buffer, new FieldPosition(0));            buffer.append('\n');
-        buffer.append(Resources.format(Clé.TOTAL_MEMORY¤1, new Float(totalMemory)));              buffer.append('\n');
-        buffer.append(Resources.format(Clé.MEMORY_USE¤1,   new Float(1-freeMemory/totalMemory))); buffer.append('\n');
-        send(method, Clé.PROGRESSION, buffer.toString());
+        buffer.append(resources.getString(ResourceKeys.TOTAL_MEMORY_$1, new Float(totalMemory)));              buffer.append('\n');
+        buffer.append(resources.getString(ResourceKeys.MEMORY_USE_$1,   new Float(1-freeMemory/totalMemory))); buffer.append('\n');
+        send(method, ResourceKeys.PROGRESSION, buffer.toString());
     }
 
     /**
@@ -292,7 +294,7 @@ public class MailProgress extends Progress
             buffer.append(": ");
         }
         buffer.append(warning);
-        send("warningOccurred", Clé.WARNING, buffer.toString());
+        send("warningOccurred", ResourceKeys.WARNING, buffer.toString());
     }
 
     /**
@@ -304,6 +306,6 @@ public class MailProgress extends Progress
     {
         final CharArrayWriter buffer=new CharArrayWriter();
         exception.printStackTrace(new PrintWriter(buffer));
-        send("exceptionOccurred", Clé.EXCEPTION, buffer.toString());
+        send("exceptionOccurred", ResourceKeys.EXCEPTION, buffer.toString());
     }
 }

@@ -41,6 +41,7 @@ import java.io.Serializable;
 // Miscellaneous
 import java.text.ParseException;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -208,7 +209,7 @@ public class AngleSpinnerModel extends AbstractSpinnerModel implements Serializa
     {
         if (!(value instanceof Angle))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤1, value));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$1, value));
         }
         if (!Utilities.equals(value, this.value))
         {

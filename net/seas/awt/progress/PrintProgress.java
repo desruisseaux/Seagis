@@ -38,6 +38,7 @@ import java.text.BreakIterator;
 // Divers
 import net.seas.util.Console;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -337,13 +338,13 @@ public class PrintProgress extends Progress
         carriageReturn(0);
         if (!hasPrintedWarning)
         {
-            printInBox(Resources.format(Clé.WARNING));
+            printInBox(Resources.format(ResourceKeys.WARNING));
             hasPrintedWarning=true;
         }
         if (!equals(source, lastSource))
         {
             out.println();
-            out.println(source!=null ? source : Resources.format(Clé.UNTITLED));
+            out.println(source!=null ? source : Resources.format(ResourceKeys.UNTITLED));
             lastSource=source;
         }
         /*
@@ -409,7 +410,7 @@ public class PrintProgress extends Progress
     public synchronized void exceptionOccurred(final Throwable exception)
     {
         carriageReturn(0);
-        printInBox(Resources.format(Clé.EXCEPTION));
+        printInBox(Resources.format(ResourceKeys.EXCEPTION));
         exception.printStackTrace(out);
         hasPrintedWarning=false;
         out.flush();

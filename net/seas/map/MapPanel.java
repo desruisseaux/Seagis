@@ -76,6 +76,7 @@ import java.util.Comparator;
 
 // Miscellaneous
 import net.seas.util.XArray;
+import net.seas.resources.ResourceKeys;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
@@ -460,7 +461,7 @@ public class MapPanel extends ZoomPane
             }
             if (layer.mapPanel != null)
             {
-                throw new IllegalArgumentException(Resources.format(Clé.MAPPANEL_NOT_OWNER));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MAPPANEL_NOT_OWNER));
             }
             layer.mapPanel = this;
             /*
@@ -516,7 +517,7 @@ public class MapPanel extends ZoomPane
             }
             if (layer.mapPanel != this)
             {
-                throw new IllegalArgumentException(Resources.format(Clé.MAPPANEL_NOT_OWNER));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MAPPANEL_NOT_OWNER));
             }
             repaint(); // Must be invoked first
             layer.removePropertyChangeListener(listeners);

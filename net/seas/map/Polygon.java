@@ -79,8 +79,9 @@ import net.seas.util.XArray;
 import net.seas.util.Console;
 import net.seas.util.Statistics;
 import net.seagis.resources.XMath;
-import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
+import net.seas.resources.ResourceKeys;
+import net.seas.resources.Resources;
 
 
 /**
@@ -1164,7 +1165,7 @@ public class Polygon extends Contour
                 else
                 {
                     // Should be uncommon. Doesn't hurt, but may be a memory issue for big polyline.
-                    LOGGER.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
+                    LOGGER.info(Resources.format(ResourceKeys.WARNING_EXCESSIVE_MEMORY_USAGE));
                     array=null; // {@link #toArray} will allocate a new array.
                 }
             }
@@ -1408,7 +1409,7 @@ public class Polygon extends Contour
             cache      = null;
             // No change to resolution, since its doesn't take border in account.
         }
-        else throw new IllegalStateException(Resources.format(Clé.POLYGON_CLOSED));
+        else throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_POLYGON_CLOSED));
     }
 
     /**
@@ -1429,8 +1430,10 @@ public class Polygon extends Contour
         {
             throw new UnsupportedOperationException(); // TODO.
         }
-        if (         interiorSign != UNKNOW) throw new IllegalStateException   (Resources.format(Clé.POLYGON_CLOSED));
-        if (toAppend.interiorSign != UNKNOW) throw new IllegalArgumentException(Resources.format(Clé.POLYGON_CLOSED));
+        if (interiorSign != UNKNOW || toAppend.interiorSign != UNKNOW)
+        {
+            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_POLYGON_CLOSED));
+        }
         data = Segment.append(data, Segment.clone(toAppend.data));
         if (dataBounds!=null)
         {

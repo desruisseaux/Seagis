@@ -42,6 +42,7 @@ import java.awt.geom.NoninvertibleTransformException;
 // Miscellaneous
 import java.util.List;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -272,7 +273,7 @@ public final class RenderingContext
     {
         if (contours.isEmpty())
         {
-            throw new IllegalArgumentException(Resources.format(Clé.EMPTY_LIST));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_EMPTY_LIST));
         }
         if (isPrinting)
         {

@@ -47,6 +47,7 @@ import javax.swing.event.ListSelectionListener;
 // Divers
 import net.seas.util.SwingUtilities;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -178,7 +179,8 @@ public class TimeZoneChooser extends JPanel
      */
     public TimeZone showDialog(final Component owner)
     {
-        if (SwingUtilities.showOptionDialog(owner, this, Resources.format(Clé.TIME_ZONE)))
+        final Resources resources = Resources.getResources((owner!=null) ? owner.getLocale() : null);
+        if (SwingUtilities.showOptionDialog(owner, this, resources.getString(ResourceKeys.TIME_ZONE)))
         {
             return getTimeZone();
         }

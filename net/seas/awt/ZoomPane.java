@@ -74,8 +74,12 @@ import java.awt.Graphics2D;
 import java.awt.BasicStroke;
 
 // User interface
+import java.awt.Toolkit;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JMenu;
@@ -86,22 +90,22 @@ import javax.swing.JViewport;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.AbstractButton;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.BoundedRangeModel;
 import javax.swing.plaf.ComponentUI;
 
-// Miscellaneous
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+// Logging
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
+// Miscellaneous
+import java.util.Arrays;
 import java.io.Serializable;
-import java.awt.Toolkit;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -313,16 +317,16 @@ public abstract class ZoomPane extends JComponent
      */
     private static final int[] RESOURCE_ID=
     {
-        /*[0] Left        */ Clé.LEFT,
-        /*[1] Right       */ Clé.RIGHT,
-        /*[2] Up          */ Clé.UP,
-        /*[3] Down        */ Clé.DOWN,
-        /*[4] ZoomIn      */ Clé.ZOOM_IN,
-        /*[5] ZoomOut     */ Clé.ZOOM_OUT,
-        /*[6] ZoomMax     */ Clé.ZOOM_MAX,
-        /*[7] Reset       */ Clé.RESET,
-        /*[8] RotateLeft  */ Clé.ROTATE_LEFT,
-        /*[9] RotateRight */ Clé.ROTATE_RIGHT
+        /*[0] Left        */ ResourceKeys.LEFT,
+        /*[1] Right       */ ResourceKeys.RIGHT,
+        /*[2] Up          */ ResourceKeys.UP,
+        /*[3] Down        */ ResourceKeys.DOWN,
+        /*[4] ZoomIn      */ ResourceKeys.ZOOM_IN,
+        /*[5] ZoomOut     */ ResourceKeys.ZOOM_OUT,
+        /*[6] ZoomMax     */ ResourceKeys.ZOOM_MAX,
+        /*[7] Reset       */ ResourceKeys.RESET,
+        /*[8] RotateLeft  */ ResourceKeys.ROTATE_LEFT,
+        /*[9] RotateRight */ ResourceKeys.ROTATE_RIGHT
     };
 
     /**
@@ -623,6 +627,7 @@ public abstract class ZoomPane extends JComponent
             throw new IllegalArgumentException();
         }
         this.type=type;
+        final Resources resources = Resources.getResources(null);
         final InputMap   inputMap = getInputMap();
         final ActionMap actionMap = getActionMap();
         for (int i=0; i<ACTION_ID.length; i++)
@@ -660,7 +665,7 @@ public abstract class ZoomPane extends JComponent
                         transform(actionType & type, m, point);
                     }
                 };
-                action.putValue(Action.NAME,               Resources.format(RESOURCE_ID[i]));
+                action.putValue(Action.NAME,               resources.getString(RESOURCE_ID[i]));
                 action.putValue(Action.ACTION_COMMAND_KEY, actionID);
                 action.putValue(Action.ACCELERATOR_KEY,    stroke);
                 actionMap.put(actionID, action);
@@ -819,7 +824,10 @@ public abstract class ZoomPane extends JComponent
                 firePropertyChange("preferredArea", oldArea, area);
                 log("setPreferredArea", area);
             }
-            else throw new IllegalArgumentException(Resources.format(Clé.BAD_RECTANGLE¤1, area));
+            else
+            {
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RECTANGLE_$1, area));
+            }
         }
         else preferredArea=null;
     }
@@ -891,7 +899,7 @@ public abstract class ZoomPane extends JComponent
          */
         if (!isValid(source))
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_RECTANGLE¤1, source));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_RECTANGLE_$1, source));
         }
         if (!isValid(dest))
         {
@@ -1527,7 +1535,8 @@ public abstract class ZoomPane extends JComponent
                 navigationPopupMenu=new PointPopupMenu(event.getPoint());
                 if (magnifierEnabled)
                 {
-                    final JMenuItem item=new JMenuItem(Resources.format(Clé.SHOW_MAGNIFIER));
+                    final Resources resources = Resources.getResources(getLocale());
+                    final JMenuItem item=new JMenuItem(resources.getString(ResourceKeys.SHOW_MAGNIFIER));
                     item.addActionListener(new ActionListener()
                     {
                         public void actionPerformed(final ActionEvent event)
@@ -1559,10 +1568,11 @@ public abstract class ZoomPane extends JComponent
      */
     protected JPopupMenu getMagnifierMenu(final MouseEvent event)
     {
-        final JPopupMenu menu = new JPopupMenu(Resources.format(Clé.MAGNIFIER));
+        final Resources resources = Resources.getResources(getLocale());
+        final JPopupMenu menu = new JPopupMenu(resources.getString(ResourceKeys.MAGNIFIER));
         if (true)
         {
-            final JMenuItem item=new JMenuItem(Resources.format(Clé.HIDE));
+            final JMenuItem item=new JMenuItem(resources.getString(ResourceKeys.HIDE));
             item.addActionListener(new ActionListener()
             {
                 public void actionPerformed(final ActionEvent event)
@@ -2182,13 +2192,22 @@ public abstract class ZoomPane extends JComponent
      * @param packageName The caller's package (e.g. <code>"net.seas.awt"</code>).
      * @param   className The caller's short class name (e.g. <code>"ZoomPane"</code>).
      * @param  methodName The caller's short class name (e.g. <code>"setArea"</code>).
-     * @param        area The coordinates to log.
+     * @param        area The coordinates to log (may be <code>null</code>).
      */
     protected static void log(final String packageName, final String className, final String methodName, final Rectangle2D area)
     {
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
-                                     new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
-                                                   new Double(area.getMinY()), new Double(area.getMaxY())});
+        final Double[] areaBounds;
+        if (area!=null)
+        {
+            areaBounds = new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
+                                       new Double(area.getMinY()), new Double(area.getMaxY())};
+        }
+        else
+        {
+            areaBounds = new Double[4];
+            Arrays.fill(areaBounds, new Double(Double.NaN));
+        }
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, ResourceKeys.RECTANGLE_$4, areaBounds);
         record.setSourceClassName ( className);
         record.setSourceMethodName(methodName);
         Logger.getLogger(packageName).log(record);

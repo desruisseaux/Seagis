@@ -55,6 +55,7 @@ import java.util.logging.LogRecord;
 import java.util.Locale;
 import java.io.Serializable;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -398,7 +399,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
                                                                 final String sourceMethodName) throws CannotCreateTransformException
     {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
-                                 Clé.INITIALIZING_TRANSFORMATION¤2, toString(sourceCS), toString(targetCS));
+                                 ResourceKeys.INITIALIZING_TRANSFORMATION_$2, toString(sourceCS), toString(targetCS));
         record.setSourceClassName (sourceClassName);
         record.setSourceMethodName(sourceMethodName);
         LOGGER.log(record);

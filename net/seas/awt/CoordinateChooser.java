@@ -81,6 +81,7 @@ import net.seagis.pt.AngleFormat;
 import java.util.Arrays;
 import java.util.Locale;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -199,8 +200,8 @@ public class CoordinateChooser extends JPanel
         final int timeField = Calendar.DAY_OF_YEAR;
         final Resources resources = Resources.getResources(locale);
 
-        radioBestRes=new JRadioButton(resources.getString(Clé.USE_BEST_RESOLUTION), true);
-        radioPrefRes=new JRadioButton(resources.getString(Clé.SET_PREFERRED_RESOLUTION));
+        radioBestRes=new JRadioButton(resources.getString(ResourceKeys.USE_BEST_RESOLUTION), true);
+        radioPrefRes=new JRadioButton(resources.getString(ResourceKeys.SET_PREFERRED_RESOLUTION));
 
         tmin = new JSpinner(new SpinnerDateModel(minTime, minTime, maxTime, timeField));
         tmax = new JSpinner(new SpinnerDateModel(maxTime, minTime, maxTime, timeField));
@@ -233,7 +234,7 @@ public class CoordinateChooser extends JPanel
         timezone=new JComboBox(timezones);
         timezone.setSelectedItem(dateFormat.getTimeZone().getID());
 
-        final JLabel labelSize1=new JLabel(resources.getLabel(Clé.SIZE_IN_MINUTES));
+        final JLabel labelSize1=new JLabel(resources.getLabel(ResourceKeys.SIZE_IN_MINUTES));
         final JLabel labelSize2=new JLabel("\u00D7"  /*Symbole multiplication*/);
         final ButtonGroup group=new ButtonGroup();
         group.add(radioBestRes);
@@ -244,9 +245,9 @@ public class CoordinateChooser extends JPanel
         timezone    .addActionListener(listeners);
         radioPrefRes.addChangeListener(listeners);
 
-        final JPanel p1=getPanel(resources.getString(Clé.GEOGRAPHIC_COORDINATES));
-        final JPanel p2=getPanel(resources.getString(Clé.TIME_RANGE            ));
-        final JPanel p3=getPanel(resources.getString(Clé.PREFERRED_RESOLUTION  ));
+        final JPanel p1=getPanel(resources.getString(ResourceKeys.GEOGRAPHIC_COORDINATES));
+        final JPanel p2=getPanel(resources.getString(ResourceKeys.TIME_RANGE            ));
+        final JPanel p3=getPanel(resources.getString(ResourceKeys.PREFERRED_RESOLUTION  ));
         final GridBagConstraints c=new GridBagConstraints();
 
         c.weightx=1;
@@ -257,9 +258,9 @@ public class CoordinateChooser extends JPanel
 
         JLabel label;
         c.gridx=0; c.anchor=c.WEST; c.insets.right=3; c.weightx=0;
-        c.gridy=0; p2.add(label=new JLabel(resources.getLabel(Clé.START_TIME)), c); label.setLabelFor(tmin);
-        c.gridy=1; p2.add(label=new JLabel(resources.getLabel(Clé.END_TIME  )), c); label.setLabelFor(tmax);
-        c.gridy=2; p2.add(label=new JLabel(resources.getLabel(Clé.TIME_ZONE )), c); label.setLabelFor(timezone); c.gridwidth=4;
+        c.gridy=0; p2.add(label=new JLabel(resources.getLabel(ResourceKeys.START_TIME)), c); label.setLabelFor(tmin);
+        c.gridy=1; p2.add(label=new JLabel(resources.getLabel(ResourceKeys.END_TIME  )), c); label.setLabelFor(tmax);
+        c.gridy=2; p2.add(label=new JLabel(resources.getLabel(ResourceKeys.TIME_ZONE )), c); label.setLabelFor(timezone); c.gridwidth=4;
         c.gridy=0; p3.add(radioBestRes,  c);
         c.gridy=1; p3.add(radioPrefRes,  c);
         c.gridy=2; c.gridwidth=1; c.anchor=c.EAST; c.insets.right=c.insets.left=1; c.weightx=1;
@@ -527,7 +528,7 @@ public class CoordinateChooser extends JPanel
         final Object angle=field.getValue();
         if (expectLatitude ? (angle instanceof Longitude) : (angle instanceof Latitude))
         {
-            throw new ParseException(getResources().getString(Clé.BAD_COORDINATE¤1, angle), 0);
+            throw new ParseException(getResources().getString(ResourceKeys.ERROR_BAD_COORDINATE_$1, angle), 0);
         }
     }
 
@@ -580,7 +581,7 @@ public class CoordinateChooser extends JPanel
         }
         catch (ParseException exception)
         {
-            SwingUtilities.showMessageDialog(owner, exception.getLocalizedMessage(), getResources().getString(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
+            SwingUtilities.showMessageDialog(owner, exception.getLocalizedMessage(), getResources().getString(ResourceKeys.ERROR_BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -600,7 +601,7 @@ public class CoordinateChooser extends JPanel
      *         or closing the dialog box from the title bar).
      */
     public boolean showDialog(final Component owner)
-    {return showDialog(owner, getResources().format(Clé.COORDINATES_SELECTION));}
+    {return showDialog(owner, getResources().format(ResourceKeys.COORDINATES_SELECTION));}
 
     /**
      * Shows a dialog box requesting input from the user. The dialog box will be

@@ -57,6 +57,7 @@ import net.seas.util.XArray;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 
 
 /**
@@ -484,9 +485,9 @@ public class Isoline extends Contour
             {
                 // FINER is the default level for entering, returning, or throwing an exception.
                 final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER,
-                                         Clé.REBUILD_CACHE_ARRAY¤3,
+                                         ResourceKeys.REBUILD_CACHE_ARRAY_$3,
                                          new Float(value),
-                                         new Integer(numDecimated),
+                                         new Integer(numPoints),
                                          new Double((double)numDecimated / (double)numPoints));
                 record.setSourceClassName ("Isoline");
                 record.setSourceMethodName("paint");

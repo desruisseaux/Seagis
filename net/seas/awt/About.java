@@ -67,6 +67,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import net.seas.util.XArray;
 import net.seas.resources.Resources;
+import net.seas.resources.ResourceKeys;
 import net.seagis.resources.Utilities;
 
 
@@ -104,6 +105,11 @@ public class About extends JPanel
      * Ce champ sera <code>null</code> s'il n'y en a pas.
      */
     private final ThreadList updater;
+
+    /**
+     * The localized resources to use.
+     */
+    private final Resources resources = Resources.getResources(null);
 
     /**
      * Construct a new dialog box for the specified application class.  This constructor
@@ -220,8 +226,8 @@ public class About extends JPanel
             add(title, BorderLayout.NORTH);
         }
         final JTabbedPane        tabs = new JTabbedPane();
-        final JLabel totalMemoryLabel = new JLabel(Resources.format(Clé.TOTAL_MEMORY¤1, new Float(totalMemory)));
-        final JLabel percentUsedLabel = new JLabel(Resources.format(Clé.MEMORY_USE¤1,   new Float(1-freeMemory/totalMemory)));
+        final JLabel totalMemoryLabel = new JLabel(resources.getString(ResourceKeys.TOTAL_MEMORY_$1, new Float(totalMemory)));
+        final JLabel percentUsedLabel = new JLabel(resources.getString(ResourceKeys.MEMORY_USE_$1,   new Float(1-freeMemory/totalMemory)));
         add(tabs, BorderLayout.CENTER);
         /*
          * MAIN TAB (Application name and version informations)
@@ -231,17 +237,17 @@ public class About extends JPanel
             final JPanel pane = new JPanel(new GridBagLayout());
             final GridBagConstraints c=new GridBagConstraints();
             c.gridx=0; c.weightx=1;
-            c.gridy=0;                  pane.add(new JLabel(                                     application), c);
-            c.gridy++;                  pane.add(new JLabel(Resources.format(Clé.VERSION¤1,      version)   ), c);
-            c.gridy++;                  pane.add(new JLabel(                                     vendor     ), c);
-            c.gridy++; c.insets.top= 6; pane.add(new JLabel(Resources.format(Clé.JAVA_VERSION¤1, System.getProperty("java.version"))), c);
-            c.gridy++; c.insets.top= 0; pane.add(new JLabel(Resources.format(Clé.JAVA_VENDOR¤1,  System.getProperty("java.vendor" ))), c);
-            c.gridy++; c.insets.top= 6; pane.add(new JLabel(Resources.format(Clé.OS_NAME¤1,      System.getProperty("os.name"     ))), c);
-            c.gridy++; c.insets.top= 0; pane.add(new JLabel(Resources.format(Clé.OS_VERSION¤2,   System.getProperty("os.version"),
-                                                                                                 System.getProperty("os.arch"     ))), c);
+            c.gridy=0;                  pane.add(new JLabel(                                                  application), c);
+            c.gridy++;                  pane.add(new JLabel(resources.getString(ResourceKeys.VERSION_$1,      version)   ), c);
+            c.gridy++;                  pane.add(new JLabel(                                                  vendor     ), c);
+            c.gridy++; c.insets.top= 6; pane.add(new JLabel(resources.getString(ResourceKeys.JAVA_VERSION_$1, System.getProperty("java.version"))), c);
+            c.gridy++; c.insets.top= 0; pane.add(new JLabel(resources.getString(ResourceKeys.JAVA_VENDOR_$1,  System.getProperty("java.vendor" ))), c);
+            c.gridy++; c.insets.top= 6; pane.add(new JLabel(resources.getString(ResourceKeys.OS_NAME_$1,      System.getProperty("os.name"     ))), c);
+            c.gridy++; c.insets.top= 0; pane.add(new JLabel(resources.getString(ResourceKeys.OS_VERSION_$2,   System.getProperty("os.version"),
+                                                                                                              System.getProperty("os.arch"     ))), c);
             c.gridy++; c.insets.top=12; pane.add(totalMemoryLabel, c);
             c.gridy++; c.insets.top= 0; pane.add(percentUsedLabel, c);
-            tabs.addTab(Resources.format(Clé.SYSTEM), pane);
+            tabs.addTab(resources.getString(ResourceKeys.SYSTEM), pane);
         }
         /*
          * RUNNING TASKS TAB
@@ -249,10 +255,10 @@ public class About extends JPanel
         if (tasks!=null)
         {
             final JPanel pane = new JPanel(new BorderLayout());
-            final JList  list = new JList(updater=new ThreadList(tasks, totalMemoryLabel, percentUsedLabel));
-            pane.add(new JLabel(Resources.format(Clé.RUNNING_TASKS)), BorderLayout.NORTH);
+            final JList  list = new JList(updater=new ThreadList(tasks, totalMemoryLabel, percentUsedLabel, resources));
+            pane.add(new JLabel(resources.getString(ResourceKeys.RUNNING_TASKS)), BorderLayout.NORTH);
             pane.add(new JScrollPane(list), BorderLayout.CENTER);
-            tabs.addTab(Resources.format(Clé.TASKS), pane);
+            tabs.addTab(resources.getString(ResourceKeys.TASKS), pane);
         }
         else updater=null;
         /*
@@ -264,9 +270,9 @@ public class About extends JPanel
         Arrays.sort(readers);
         Arrays.sort(writers);
         Box c;
-        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.DECODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(readers))); pane.add(c);
-        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.ENCODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(writers))); pane.add(c);
-        tabs.addTab(Resources.format(Clé.IMAGES), pane);
+        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(resources.getString(ResourceKeys.DECODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(readers))); pane.add(c);
+        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(resources.getString(ResourceKeys.ENCODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(writers))); pane.add(c);
+        tabs.addTab(resources.getString(ResourceKeys.IMAGES), pane);
     }
 
     /**
@@ -341,14 +347,20 @@ public class About extends JPanel
         private final JLabel percentUsed;
 
         /**
+         * The localized resources to use.
+         */
+        private final Resources resources;
+
+        /**
          * Construit une liste des processus actifs
          * dans le groupe <code>tasks</code> spécifié.
          */
-        public ThreadList(final ThreadGroup tasks, final JLabel totalMemory, final JLabel percentUsed)
+        public ThreadList(final ThreadGroup tasks, final JLabel totalMemory, final JLabel percentUsed, final Resources resources)
         {
             this.tasks       = tasks;
             this.totalMemory = totalMemory;
             this.percentUsed = percentUsed;
+            this.resources   = resources;
         }
 
         /**
@@ -377,7 +389,7 @@ public class About extends JPanel
         {
             if (worker==null)
             {
-                worker=new Thread(this, Resources.format(Clé.ABOUT));
+                worker=new Thread(this, Resources.format(ResourceKeys.ABOUT));
                 worker.setPriority(Thread.MIN_PRIORITY);
                 worker.setDaemon(true);
                 worker.start();
@@ -399,8 +411,8 @@ public class About extends JPanel
                 final Runtime     system = Runtime.getRuntime();
                 final float  freeMemoryN = system.freeMemory()  / MEMORY_UNIT;
                 final float totalMemoryN = system.totalMemory() / MEMORY_UNIT;
-                String   totalMemoryText = Resources.format(Clé.TOTAL_MEMORY¤1, new Float(totalMemoryN));
-                String   percentUsedText = Resources.format(Clé.MEMORY_USE¤1,   new Float(1-freeMemoryN/totalMemoryN));
+                String   totalMemoryText = resources.getString(ResourceKeys.TOTAL_MEMORY_$1, new Float(totalMemoryN));
+                String   percentUsedText = resources.getString(ResourceKeys.MEMORY_USE_$1,   new Float(1-freeMemoryN/totalMemoryN));
 
                 Thread[] threadArray = new Thread[tasks.activeCount()];
                 String[] threadNames = new String[tasks.enumerate(threadArray)];
@@ -463,7 +475,7 @@ public class About extends JPanel
         try
         {
             start();
-            SwingUtilities.showMessageDialog(owner, this, Resources.trailing(Clé.ABOUT), JOptionPane.PLAIN_MESSAGE);
+            SwingUtilities.showMessageDialog(owner, this, resources.getMenuLabel(ResourceKeys.ABOUT), JOptionPane.PLAIN_MESSAGE);
         }
         finally
         {
