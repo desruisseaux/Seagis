@@ -412,8 +412,27 @@ final class ImageTableImpl extends Table implements ImageTable
      * Cette méthode ne change que la partie temporelle de l'enveloppe recherchée
      * (voir {@link #getEnvelope}).
      *
-     * @param  startTime Date du début de la plage de temps.
-     * @param  endTime   Date de la fin de la plage de temps.
+     * @param  range Période d'intérêt dans laquelle rechercher des images.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public void setTimeRange(final Range range) throws SQLException
+    {
+        Date startTime = (Date) range.getMinValue();
+        Date   endTime = (Date) range.getMaxValue();
+        if (!range.isMinIncluded())
+            startTime = new Date(startTime.getTime()+1);
+        if (!range.isMaxIncluded())
+            endTime = new Date(endTime.getTime()-1);
+        setTimeRange(startTime, endTime);
+    }
+
+    /**
+     * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
+     * Cette méthode ne change que la partie temporelle de l'enveloppe recherchée
+     * (voir {@link #getEnvelope}).
+     *
+     * @param  startTime Date du  début de la plage de temps, inclusive.
+     * @param  endTime   Date de la fin de la plage de temps, inclusive.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
     public synchronized void setTimeRange(final Date startTime, final Date endTime) throws SQLException

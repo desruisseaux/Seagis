@@ -58,6 +58,21 @@ import javax.swing.event.EventListenerList;
 public interface ImageEntry extends Entry
 {
     /**
+     * Clé sous laquelle mémoriser l'objet <code>ImageEntry</code> source
+     * dans les propriétés de {@link GridCoverage}. Cette propriétés permet
+     * de retrouver l'objet <code>ImageEntry</code> source par exemple dans
+     * le code suivant:
+     *
+     * <blockquote><pre>
+     * ImageEntry   entry    = ...
+     * GridCoverage coverage = entry.getGridCoverage(null);
+     * Object       source   = coverage.getProperty(ImageEntry.SOURCE_KEY);
+     * assert source == entry;
+     * </pre></blockquote>
+     */
+    public static final String SOURCE_KEY = "fr.ird.sql.image.ImageEntry";
+
+    /**
      * Retourne la série à laquelle
      * appartient cette image.
      */

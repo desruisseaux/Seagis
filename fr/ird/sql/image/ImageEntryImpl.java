@@ -98,6 +98,12 @@ import javax.media.jai.util.CaselessStringKey;
 final class ImageEntryImpl implements ImageEntry, Serializable
 {
     /**
+     * Clé sous laquelle mémoriser l'objet {@link ImageEntry}
+     * source dans les propriétés de {@link GridCoverage}.
+     */
+    private static final CaselessStringKey SOURCE_KEY = new CaselessStringKey(ImageEntry.SOURCE_KEY);
+
+    /**
      * Compare deux entrées selon le même critère que celui qui a apparait dans
      * l'instruction "ORDER BY" dans la réquête SQL de {@link ImageTableImpl}).
      */
@@ -120,12 +126,6 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         "Bilinear",
         "NearestNeighbor"
     };
-
-    /**
-     * Clé à utiliser pour mémoriser cette entrée dans les
-     * propriétés de l'objet {@link GridCoverage} retourné.
-     */
-    private static final CaselessStringKey ENTRY_KEY = new CaselessStringKey("Entry");
 
     /**
      * Ensemble des entrés qui ont déjà été retournées par {@link #intern()}
@@ -539,27 +539,29 @@ final class ImageEntryImpl implements ImageEntry, Serializable
         final double[] max = new double[] {clipLogical.getMaxX(), clipLogical.getMaxY(), ImageTableImpl.toJulian(  endTime)};
         GridCoverage coverage = new GridCoverage(filename, image, parameters.coordinateSystem,
                                 new Envelope(min, max), categoryLists, format.geophysics, null,
-                                Collections.singletonMap(ENTRY_KEY, this));
+                                Collections.singletonMap(SOURCE_KEY, this));
         /*
          * Si l'utilisateur a spécifié une operation à appliquer
          * sur les images, applique cette opération maintenant.
          */
         GridCoverageProcessor processor = parameters.PROCESSOR;
         Operation             operation = parameters.operation;
-        if (operation!=null) try
+        if (operation!=null) synchronized (operation)
         {
-            coverage = processor.doOperation(operation, parameters.parameters.setParameter("Source", coverage));
-        }
-        finally
-        {
-            parameters.parameters.setParameter("Source", null);
+            try
+            {
+                coverage = processor.doOperation(operation, parameters.parameters.setParameter("Source", coverage));
+            }
+            finally
+            {
+                parameters.parameters.setParameter("Source", null);
+            }
         }
         /*
          * Applique l'interpolation bicubique, conserve le
          * résultat dans une cache et retourne le résultat.
          */
-        operation = processor.getOperation("Interpolate");
-        coverage  = processor.doOperation(operation, operation.getParameterList().setParameter("Source", coverage).setParameter("Type", INTERPOLATIONS));
+        coverage  = processor.doOperation("Interpolate", coverage, "Type", INTERPOLATIONS);
         renderedImage = new WeakReference(image);
         gridCoverage  = new SoftReference(coverage);
         return coverage;

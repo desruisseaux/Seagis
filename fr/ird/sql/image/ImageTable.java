@@ -117,10 +117,20 @@ public interface ImageTable extends Table
     /**
      * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
      * Cette méthode ne change que la partie temporelle de l'enveloppe recherchée
+     * (voir {@link #getEnvelope}).
+     *
+     * @param  range Période d'intérêt dans laquelle rechercher des images.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public abstract void setTimeRange(final Range range) throws SQLException;
+
+    /**
+     * Définit la période de temps d'intérêt (dans laquelle rechercher des images).
+     * Cette méthode ne change que la partie temporelle de l'enveloppe recherchée
      * (voir {@link #setEnvelope}).
      *
-     * @param  startTime Date du début de la plage de temps.
-     * @param  endTime   Date de la fin de la plage de temps.
+     * @param  startTime Date du  début de la plage de temps, inclusive.
+     * @param  endTime   Date de la fin de la plage de temps, inclusive.
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
     public abstract void setTimeRange(final Date startTime, final Date endTime) throws SQLException;
