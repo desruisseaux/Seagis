@@ -1,0 +1,262 @@
+/*
+ * Geotools - OpenSource mapping toolkit
+ * (C) 2003, Geotools Project Managment Committee (PMC)
+ *
+ *     THIS IS AN AUTOMATICALLY GENERATED FILE. DO NOT EDIT!
+ *     Generated with: org.geotools.resources.ResourceCompiler
+ */
+package fr.ird.resources.seagis;
+
+
+/**
+ * Resource keys. This interface is used when compiling sources, but
+ * no dependencies to <code>ResourceKeys</code> should appear in any
+ * resulting class files.  Since Java compiler inlines final integer
+ * values, using long identifiers will not bloat constant pools of
+ * classes compiled against the interface, provided that no class
+ * implements this interface.
+ *
+ * @see org.geotools.resources.ResourceBundle
+ * @see org.geotools.resources.ResourceCompiler
+ */
+public interface ResourceKeys
+{
+    public static final int ABORT_IMAGE_READING_$2                   =     0;
+    public static final int ABOUT                                    =     1;
+    public static final int ADD_SERIES                               =     2;
+    public static final int ADJUST_MOSAIC_$3                         =     3;
+    public static final int ADJUST_WITH_ZOOM                         =     4;
+    public static final int ALTITUDE                                 =     5;
+    public static final int ANALYSES                                 =     6;
+    public static final int APPLICATION_TITLE                        =     7;
+    public static final int BATHYMETRY                               =     8;
+    public static final int BLANK                                    =     9;
+    public static final int BUILD_INDEX_$1                           =    10;
+    public static final int CATCHS                                   =    11;
+    public static final int CHANGE_COORDINATES                       =    12;
+    public static final int CLOSE                                    =    13;
+    public static final int CLOSE_$1                                 =    14;
+    public static final int CLOSE_FORMAT_TABLE                       =    15;
+    public static final int CLOSE_SERIES                             =    16;
+    public static final int COLOR                                    =    17;
+    public static final int COMPUTATION_DONE_$2                      =    18;
+    public static final int COMPUTING_STATISTICS                     =    19;
+    public static final int CONFIRM_OVERWRITE                        =    20;
+    public static final int CONFIRM_OVERWRITE_ALL_$2                 =    21;
+    public static final int CONSTANT_DECIMATION                      =    22;
+    public static final int CONSTRUCT_DECODER_$1                     =    23;
+    public static final int COPY                                     =    24;
+    public static final int COUPLING                                 =    25;
+    public static final int DATABASE                                 =    26;
+    public static final int DATABASES                                =    27;
+    public static final int DAY                                      =    28;
+    public static final int DAYS                                     =    29;
+    public static final int DEBUG                                    =    30;
+    public static final int DECIMATION                               =    31;
+    public static final int DECODERS                                 =    32;
+    public static final int DEFINE                                   =    33;
+    public static final int DEFINE_QUERY_$1                          =    34;
+    public static final int DELETE                                   =    35;
+    public static final int DEPTH                                    =    36;
+    public static final int DESKTOP_FILES_TYPE_$1                    =    37;
+    public static final int DURATION                                 =    38;
+    public static final int EDIT                                     =    39;
+    public static final int EDIT_DATABASES_CONFIGURATION             =    40;
+    public static final int EDIT_SQL_IMAGES_OR_FISHERIES_$1          =    41;
+    public static final int ENCODERS                                 =    42;
+    public static final int END_APPLICATION                          =    43;
+    public static final int END_TIME                                 =    44;
+    public static final int EXCEPTION                                =    45;
+    public static final int EXIT                                     =    46;
+    public static final int EXPORT                                   =    47;
+    public static final int EXPORTING_$1                             =    48;
+    public static final int EXTRACT_ENVIRONMENT                      =    49;
+    public static final int FAO_CODE                                 =    50;
+    public static final int FILE                                     =    51;
+    public static final int FILE_ALREADY_EXIST_$1                    =    52;
+    public static final int FISHERIES                                =    53;
+    public static final int FISHERIES_ENVIRONMENT                    =    54;
+    public static final int FORMATS                                  =    55;
+    public static final int FOUND_IMAGES_$1                          =    56;
+    public static final int GRADIENT_SOBEL                           =    57;
+    public static final int GRAY_SCALE                               =    58;
+    public static final int HIDE                                     =    59;
+    public static final int IMAGES                                   =    60;
+    public static final int IMAGES_CATALOG                           =    61;
+    public static final int IMAGES_COUNT_$2                          =    62;
+    public static final int IMAGES_DATE                              =    63;
+    public static final int IMAGES_LIST                              =    64;
+    public static final int IMAGES_SERIES                            =    65;
+    public static final int IMAGES_TABLE_INSTRUCTIONS                =    66;
+    public static final int IMAGES_TO_EXPORT_COUNT_$1                =    67;
+    public static final int INITIALIZING_TRANSFORMATION_$2           =    68;
+    public static final int INVERT_SELECTION                         =    69;
+    public static final int ISOLINE_COMPRESSED_$2                    =    70;
+    public static final int JAVA_VENDOR_$1                           =    71;
+    public static final int JAVA_VERSION_$1                          =    72;
+    public static final int JDBC_DRIVER                              =    73;
+    public static final int JOIN_TABLE_$1                            =    74;
+    public static final int KEEP_DATA_$3                             =    75;
+    public static final int LANGUAGE                                 =    76;
+    public static final int LEFT                                     =    77;
+    public static final int LIVE_SCROLLING                           =    78;
+    public static final int LOADED_JDBC_DRIVER_$3                    =    79;
+    public static final int LOADING_$1                               =    80;
+    public static final int LOADING_$2                               =    81;
+    public static final int LOADING_IMAGES_$2                        =    82;
+    public static final int LOADING_IMAGE_$1                         =    83;
+    public static final int LOADING_ISOLINE_$1                       =    84;
+    public static final int LOOKING_INTO_DATABASE                    =    85;
+    public static final int LOOK_AND_FEEL                            =    86;
+    public static final int MAGNIFIER                                =    87;
+    public static final int MEMORY_USE_$1                            =    88;
+    public static final int MOSAIC                                   =    89;
+    public static final int NAME                                     =    90;
+    public static final int NEURAL_NETWORK_SUMMARY_$5                =    91;
+    public static final int NEW                                      =    92;
+    public static final int NEW_IMAGES_SERIES                        =    93;
+    public static final int NOT_AVAILABLE                            =    94;
+    public static final int NO_DATA_TO_DISPLAY                       =    95;
+    public static final int NO_DETAILS_$1                            =    96;
+    public static final int NO_OPERATION                             =    97;
+    public static final int OK                                       =    98;
+    public static final int OPEN                                     =    99;
+    public static final int OPEN_$1                                  =   100;
+    public static final int OPEN_DESKTOP                             =   101;
+    public static final int OPTIONS                                  =   102;
+    public static final int OS_NAME_$1                               =   103;
+    public static final int OS_VERSION_$2                            =   104;
+    public static final int OUT_DIRECTORY                            =   105;
+    public static final int POSITIONS_TO_EVALUATE_$1                 =   106;
+    public static final int PREFERENCES                              =   107;
+    public static final int PROGRESSION                              =   108;
+    public static final int PROPERTIES                               =   109;
+    public static final int REDO                                     =   110;
+    public static final int REMOVE_QUERY_$1                          =   111;
+    public static final int RESET                                    =   112;
+    public static final int RESET_VIEW                               =   113;
+    public static final int RESIZE_$2                                =   114;
+    public static final int RIGHT                                    =   115;
+    public static final int ROOT_DIRECTORY                           =   116;
+    public static final int RUNNING_TASKS                            =   117;
+    public static final int SAVE                                     =   118;
+    public static final int SAVE_AS                                  =   119;
+    public static final int SAVE_DESKTOP                             =   120;
+    public static final int SEEK_TO_DATE_$2                          =   121;
+    public static final int SELECT_ALL                               =   122;
+    public static final int SERIES                                   =   123;
+    public static final int SET_GEOGRAPHIC_AREA_$2                   =   124;
+    public static final int SET_OPERATION_$2                         =   125;
+    public static final int SET_RESOLUTION_$3                        =   126;
+    public static final int SET_SERIES_$1                            =   127;
+    public static final int SET_TIME_RANGE_$3                        =   128;
+    public static final int SHOW_CATCH_AMOUNT                        =   129;
+    public static final int SHOW_MAGNIFIER                           =   130;
+    public static final int SHOW_POSITION_ONLY                       =   131;
+    public static final int SPECIES                                  =   132;
+    public static final int SPECIES_SELECTION                        =   133;
+    public static final int SQL_AREA                                 =   134;
+    public static final int SQL_BANDS                                =   135;
+    public static final int SQL_CATCHS_UPDATE                        =   136;
+    public static final int SQL_CATEGORIES                           =   137;
+    public static final int SQL_ENVIRONMENTS                         =   138;
+    public static final int SQL_ENVIRONMENTS_INSERT                  =   139;
+    public static final int SQL_ENVIRONMENTS_UPDATE                  =   140;
+    public static final int SQL_FORMAT                               =   141;
+    public static final int SQL_FORMAT_FOR_GROUP_ID                  =   142;
+    public static final int SQL_IMAGES                               =   143;
+    public static final int SQL_IMAGE_COUNT                          =   144;
+    public static final int SQL_LONGLINES                            =   145;
+    public static final int SQL_OPERATION                            =   146;
+    public static final int SQL_PARAMETER                            =   147;
+    public static final int SQL_PARAMETER_LIST                       =   148;
+    public static final int SQL_POSITIONS                            =   149;
+    public static final int SQL_QUERIES                              =   150;
+    public static final int SQL_SEINES                               =   151;
+    public static final int SQL_SERIES                               =   152;
+    public static final int SQL_SERIES_BY_ID                         =   153;
+    public static final int SQL_SERIES_TREE                          =   154;
+    public static final int SQL_SPECIES                              =   155;
+    public static final int START_TIME                               =   156;
+    public static final int SYNCHRONIZED_IMAGES                      =   157;
+    public static final int SYSTEM                                   =   158;
+    public static final int TABLE_ERROR_$2                           =   159;
+    public static final int TASKS                                    =   160;
+    public static final int THEME_ERASER_$1                          =   161;
+    public static final int TIMEZONE                                 =   162;
+    public static final int TIMEZONE_SELECTION_MESSAGE               =   163;
+    public static final int TIME_RANGE                               =   164;
+    public static final int TIME_ZONE                                =   165;
+    public static final int TOTAL_MEMORY_$1                          =   166;
+    public static final int UNDO                                     =   167;
+    public static final int UNNAMED                                  =   168;
+    public static final int UNSET_OPERATION_$1                       =   169;
+    public static final int UNSET_RESOLUTION_$1                      =   170;
+    public static final int UNTITLED                                 =   171;
+    public static final int VERSION_$1                               =   172;
+    public static final int VISIBLE                                  =   173;
+    public static final int WARNING                                  =   174;
+
+    public static final int WARNING_ADVANCED_USER                    =   175;
+    public static final int WARNING_SERIALIZATION                    =   176;
+
+    public static final int ERROR_BAD_ARGUMENT_$2                    =   177;
+    public static final int ERROR_BAD_COORDINATE_SYSTEM              =   178;
+    public static final int ERROR_BAD_DIRECTORY                      =   179;
+    public static final int ERROR_BAD_ENTRY                          =   180;
+    public static final int ERROR_BAD_FILE_$1                        =   181;
+    public static final int ERROR_BAD_FILE_FORMAT_$1                 =   182;
+    public static final int ERROR_BAD_IMAGE_RESOLUTION_$4            =   183;
+    public static final int ERROR_BAD_RANGE_$2                       =   184;
+    public static final int ERROR_BAD_RECORD_COUNT_$1                =   185;
+    public static final int ERROR_CATCH_NOT_FOUND_$1                 =   186;
+    public static final int ERROR_CATEGORIES_MITMATCH                =   187;
+    public static final int ERROR_DATES_NOT_INCREASING               =   188;
+    public static final int ERROR_DATES_OVERLAP_$3                   =   189;
+    public static final int ERROR_DATE_OUTSIDE_COVERAGE_$1           =   190;
+    public static final int ERROR_DATE_TOO_LATE_$3                   =   191;
+    public static final int ERROR_DIRECTORY_NOT_FOUND_$1             =   192;
+    public static final int ERROR_DUPLICATED_AREA_$1                 =   193;
+    public static final int ERROR_DUPLICATED_IMAGE_$1                =   194;
+    public static final int ERROR_DUPLICATED_IMAGE_$2                =   195;
+    public static final int ERROR_DUPLICATED_ISOLINE_$1              =   196;
+    public static final int ERROR_DUPLICATED_RECORD_$1               =   197;
+    public static final int ERROR_DUPLICATED_SERIES_$1               =   198;
+    public static final int ERROR_FILE_NOT_FOUND_$1                  =   199;
+    public static final int ERROR_IMAGE_ALREADY_EXIST_$1             =   200;
+    public static final int ERROR_IMAGE_SIZE_MISMATCH_$5             =   201;
+    public static final int ERROR_IMAGE_UNDERWAY                     =   202;
+    public static final int ERROR_INDEX_OUT_OF_BOUNDS_$1             =   203;
+    public static final int ERROR_INPUT_LENGTH_MISMATCH              =   204;
+    public static final int ERROR_LATITUDE_OUT_OF_RANGE_$1           =   205;
+    public static final int ERROR_LONGITUDE_OUT_OF_RANGE_360_$1      =   206;
+    public static final int ERROR_MISSING_FIELDS_$1                  =   207;
+    public static final int ERROR_MISSING_ISOLINE_$1                 =   208;
+    public static final int ERROR_MISSING_LINES_$1                   =   209;
+    public static final int ERROR_MISSING_RECORDS_$1                 =   210;
+    public static final int ERROR_NON_CARTESIAN_COORDINATE_SYSTEM_$1 =   211;
+    public static final int ERROR_NON_CONSECUTIVE_BANDS_$2           =   212;
+    public static final int ERROR_NOT_AN_INTEGER_$1                  =   213;
+    public static final int ERROR_NOT_COMPARABLE_CLASS_$1            =   214;
+    public static final int ERROR_NOT_GREATER_THAN_ZERO_$1           =   215;
+    public static final int ERROR_NO_DATA_AFTER_DATE_$1              =   216;
+    public static final int ERROR_NO_DATA_BETWEEN_$2                 =   217;
+    public static final int ERROR_NO_IMAGE_DECODER_$1                =   218;
+    public static final int ERROR_NO_IMAGE_FORMAT_$1                 =   219;
+    public static final int ERROR_NO_IMAGE_FOR_SELECTION             =   220;
+    public static final int ERROR_NO_IMAGE_RECORD_$2                 =   221;
+    public static final int ERROR_NO_INPUT_SET                       =   222;
+    public static final int ERROR_NO_MAIN_THEME                      =   223;
+    public static final int ERROR_NO_PARAMETER_$1                    =   224;
+    public static final int ERROR_NO_SERIES                          =   225;
+    public static final int ERROR_NO_SERIES_SELECTION                =   226;
+    public static final int ERROR_ODD_ARRAY_LENGTH_$1                =   227;
+    public static final int ERROR_OUTPUT_LENGTH_MISMATCH             =   228;
+    public static final int ERROR_OVERFLOW                           =   229;
+    public static final int ERROR_SERIES_NOT_FOUND_$1                =   230;
+    public static final int ERROR_TOO_MANY_IMAGE_FORMATS_$1          =   231;
+    public static final int ERROR_UNEXPECTED_UPDATE_$1               =   232;
+    public static final int ERROR_UNKNOW_DATATYPE                    =   233;
+    public static final int ERROR_UNSUPPORTED_DATATYPE_$1            =   234;
+    public static final int ERROR_WRONG_SERIES_$1                    =   235;
+}
