@@ -64,6 +64,7 @@ import javax.media.jai.PropertySourceImpl;
 import java.util.Arrays;
 import java.util.Locale;
 import net.seas.resources.Resources;
+import net.seas.util.Version;
 import net.seas.util.XArray;
 
 
@@ -160,7 +161,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
      * Returns the coordinate system. This specifies the coordinate system used when
      * accessing a coverage or grid coverage with the “evaluate” methods. It is also
      * the coordinate system of the coordinates used with the math transform  {@link
-     * net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem}. This coordinate
+     * net.seas.opengis.gc.GridGeometry#getGridToCoordinateSystem}. This coordinate
      * system is usually different than the grid coordinate system of the grid. A grid
      * coverage can be accessed (re-projected) with new coordinate system with the
      * {@link net.seas.opengis.gp.GridCoverageProcessor} component.
@@ -169,7 +170,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
      * @return The coordinate system, or <code>null</code> if this coverage
      *         does not have an associated coordinate system.
      *
-     * @see net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
+     * @see net.seas.opengis.gc.GridGeometry#getGridToCoordinateSystem
      */
     public CoordinateSystem getCoordinateSystem()
     {return coordinateSystem;}
@@ -543,7 +544,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
             catch (NoninvertibleTransformException exception)
             {
                 final IllegalArgumentException e = new IllegalArgumentException("RenderContext");
-                e.initCause(exception);
+                if (Version.MINOR>=4) e.initCause(exception);
                 throw e;
             }
             return image;

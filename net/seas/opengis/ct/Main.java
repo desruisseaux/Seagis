@@ -50,6 +50,7 @@ import java.awt.geom.Point2D;
 import net.seas.util.XClass;
 import net.seas.util.XString;
 import net.seas.util.Console;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 
 
@@ -154,9 +155,14 @@ final class Main extends Console
         catch (IOException exception)
         {
             // Should not happen.
-            final AssertionError error = new AssertionError(exception.getLocalizedMessage());
-            error.initCause(exception);
-            throw error;
+            if (Version.MINOR>=4)
+            {
+                final AssertionError error = new AssertionError(exception.getLocalizedMessage());
+                error.initCause(exception);
+                throw error;
+            }
+            else throw new Error(exception.getLocalizedMessage());
+            // Error is the first parent class of AssertionError
         }
     }
 

@@ -189,7 +189,15 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
      * @see org.opengis.cs.CS_CoordinateSystem#getDefaultEnvelope()
      */
     public Envelope getDefaultEnvelope()
-    {return new Envelope(getDimension());}
+    {
+        final int     dimension = getDimension();
+        final Envelope envelope = new Envelope(dimension);
+        for (int i=dimension; --i>=0;)
+        {
+            envelope.setRange(dimension, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+        return envelope;
+    }
 
     /**
      * Returns  <code>true</code> if this coordinate system is equivalents to

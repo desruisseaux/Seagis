@@ -83,15 +83,11 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     {ord = (double[]) envelope.ord.clone();}
 
     /**
-     * Construct an envelope of the specified
-     * dimension with infinite bounds.
+     * Construct an empty envelope of the specified dimension.
+     * All ordinates are initialized to 0.
      */
     public Envelope(final int dimension)
-    {
-        ord = new double[dimension*2];
-        Arrays.fill(ord, 0, dimension,          Double.NEGATIVE_INFINITY);
-        Arrays.fill(ord, dimension, ord.length, Double.POSITIVE_INFINITY);
-    }
+    {ord = new double[dimension*2];}
 
     /**
      * Construct one-dimensional envelope defined by a range of values.
@@ -152,89 +148,6 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * Determines whether or not this envelope is empty.
-     * An envelope is non-empty only if it has a length
-     * greater that 0 along all dimensions.
-     */
-    public boolean isEmpty()
-    {
-        final int dimension = ord.length/2;
-        for (int i=0; i<dimension; i++)
-            if (!(ord[i] < ord[i+dimension])) // Use '!' in order to catch NaN
-                return true;
-        return false;
-    }
-
-    /**
-     * Adds a point to this envelope. The resulting envelope
-     * is the smallest envelope that contains both the original envelope and the
-     * specified point. After adding a point, a call to {@link #contains} with the
-     * added point as an argument will return <code>true</code>, except if one of
-     * the point's ordinates was {@link Double#NaN} (in which case the corresponding
-     * ordinate have been ignored).
-     *
-     * @param  point The point to add.
-     * @throws MismatchedDimensionException if the specified point doesn't have
-     *         the expected dimension.
-     */
-    public void add(final CoordinatePoint point) throws MismatchedDimensionException
-    {
-        final int dimension = ord.length/2;
-        point.ensureDimensionMatch(dimension);
-        for (int i=0; i<dimension; i++)
-        {
-            final double value = point.ord[i];
-            if (value < ord[i          ]) ord[i          ]=value;
-            if (value > ord[i+dimension]) ord[i+dimension]=value;
-        }
-    }
-
-    /**
-     * Adds an envelope object to this envelope.
-     * The resulting envelope is the union of the
-     * two <code>Envelope</code> objects.
-     *
-     * @param  envelope the <code>Envelope</code> to add to this envelope.
-     * @throws MismatchedDimensionException if the specified envelope doesn't
-     *         have the expected dimension.
-     */
-    public void add(final Envelope envelope) throws MismatchedDimensionException
-    {
-        final int dimension = ord.length/2;
-        envelope.ensureDimensionMatch(dimension);
-        for (int i=0; i<dimension; i++)
-        {
-            final double min = envelope.ord[i          ];
-            final double max = envelope.ord[i+dimension];
-            if (min < ord[i          ]) ord[i          ]=min;
-            if (max > ord[i+dimension]) ord[i+dimension]=max;
-        }
-    }
-
-    /**
-     * Tests if a specified coordinate is inside the boundary of this envelope.
-     *
-     * @param  point The point to text.
-     * @return <code>true</code> if the specified coordinates are inside the boundary
-     *         of this envelope; <code>false</code> otherwise.
-     * @throws MismatchedDimensionException if the specified point doesn't have
-     *         the expected dimension.
-     */
-    public boolean contains(final CoordinatePoint point) throws MismatchedDimensionException
-    {
-        final int dimension = ord.length/2;
-        point.ensureDimensionMatch(dimension);
-        for (int i=0; i<dimension; i++)
-        {
-            final double value = point.ord[i];
-            if (!(value >= ord[i          ])) return false;
-            if (!(value <= ord[i+dimension])) return false;
-            // Use '!' in order to take 'NaN' in account.
-        }
-        return true;
-    }
-
-    /**
      * Convenience method for checking the envelope's dimension validity.
      * This method is usually call for argument checking.
      *
@@ -248,6 +161,20 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
         {
             throw new MismatchedDimensionException(dimension, expectedDimension);
         }
+    }
+
+    /**
+     * Determines whether or not this envelope is empty.
+     * An envelope is non-empty only if it has a length
+     * greater that 0 along all dimensions.
+     */
+    public boolean isEmpty()
+    {
+        final int dimension = ord.length/2;
+        for (int i=0; i<dimension; i++)
+            if (!(ord[i] < ord[i+dimension])) // Use '!' in order to catch NaN
+                return true;
+        return false;
     }
 
     /**
@@ -290,6 +217,130 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
      */
     public double getLength(final int dimension)
     {return ord[dimension+ord.length/2] - ord[dimension];}
+
+    /**
+     * Set the envelope's range along the specified dimension.
+     *
+     * @param dimension The dimension to set.
+     * @param minimum   The minimum value along the specified dimension.
+     * @param maximum   The maximum value along the specified dimension.
+     */
+    public void setRange(final int dimension, double minimum, double maximum)
+    {
+        if (minimum > maximum)
+        {
+            // Make an empty envelope (min==max)
+            // while keeping it legal (min<=max).
+            minimum = maximum = 0.5*(minimum+maximum);
+        }
+        if (dimension>=0)
+        {
+            // Do not make any change if 'dimension' is out of range.
+            ord[dimension+ord.length/2] = maximum;
+            ord[dimension             ] = minimum;
+        }
+        else throw new ArrayIndexOutOfBoundsException(dimension);
+    }
+
+    /**
+     * Adds a point to this envelope. The resulting envelope
+     * is the smallest envelope that contains both the original envelope and the
+     * specified point. After adding a point, a call to {@link #contains} with the
+     * added point as an argument will return <code>true</code>, except if one of
+     * the point's ordinates was {@link Double#NaN} (in which case the corresponding
+     * ordinate have been ignored).
+     *
+     * @param  point The point to add.
+     * @throws MismatchedDimensionException if the specified point doesn't have
+     *         the expected dimension.
+     */
+    public void add(final CoordinatePoint point) throws MismatchedDimensionException
+    {
+        final int dim = ord.length/2;
+        point.ensureDimensionMatch(dim);
+        for (int i=0; i<dim; i++)
+        {
+            final double value = point.ord[i];
+            if (value < ord[i    ]) ord[i    ]=value;
+            if (value > ord[i+dim]) ord[i+dim]=value;
+        }
+    }
+
+    /**
+     * Adds an envelope object to this envelope.
+     * The resulting envelope is the union of the
+     * two <code>Envelope</code> objects.
+     *
+     * @param  envelope the <code>Envelope</code> to add to this envelope.
+     * @throws MismatchedDimensionException if the specified envelope doesn't
+     *         have the expected dimension.
+     */
+    public void add(final Envelope envelope) throws MismatchedDimensionException
+    {
+        final int dim = ord.length/2;
+        envelope.ensureDimensionMatch(dim);
+        for (int i=0; i<dim; i++)
+        {
+            final double min = envelope.ord[i    ];
+            final double max = envelope.ord[i+dim];
+            if (min < ord[i    ]) ord[i    ]=min;
+            if (max > ord[i+dim]) ord[i+dim]=max;
+        }
+    }
+
+    /**
+     * Tests if a specified coordinate is inside the boundary of this envelope.
+     *
+     * @param  point The point to text.
+     * @return <code>true</code> if the specified coordinates are inside the boundary
+     *         of this envelope; <code>false</code> otherwise.
+     * @throws MismatchedDimensionException if the specified point doesn't have
+     *         the expected dimension.
+     */
+    public boolean contains(final CoordinatePoint point) throws MismatchedDimensionException
+    {
+        final int dimension = ord.length/2;
+        point.ensureDimensionMatch(dimension);
+        for (int i=0; i<dimension; i++)
+        {
+            final double value = point.ord[i];
+            if (!(value >= ord[i          ])) return false;
+            if (!(value <= ord[i+dimension])) return false;
+            // Use '!' in order to take 'NaN' in account.
+        }
+        return true;
+    }
+
+    /**
+     * Returns a new envelope representing the intersection of this
+     * <code>Envelope</code> with the specified <code>Envelope</code>.
+     *
+     * @param  envelope The <code>Envelope</code> to intersect with this envelope.
+     * @return The largest envelope contained in both the specified <code>Envelope</code>
+     *         and in this <code>Envelope</code>.
+     * @throws MismatchedDimensionException if the specified envelope doesn't
+     *         have the expected dimension.
+     */
+    public Envelope createIntersection(final Envelope envelope) throws MismatchedDimensionException
+    {
+        final int dim = ord.length/2;
+        envelope.ensureDimensionMatch(dim);
+        final Envelope dest = new Envelope(dim);
+        for (int i=0; i<dim; i++)
+        {
+            double min = Math.max(ord[i    ], envelope.ord[i    ]);
+            double max = Math.min(ord[i+dim], envelope.ord[i+dim]);
+            if (min > max)
+            {
+                // Make an empty envelope (min==max)
+                // while keeping it legal (min<=max).
+                min = max = 0.5*(min+max);
+            }
+            dest.ord[i    ]=min;
+            dest.ord[i+dim]=max;
+        }
+        return dest;
+    }
 
     /**
      * Returns a {@link Rectangle2D} with the same bounds as this <code>Envelope</code>.

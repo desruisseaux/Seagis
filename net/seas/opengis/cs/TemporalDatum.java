@@ -49,13 +49,6 @@ public class TemporalDatum extends Datum
     public static final TemporalDatum UTC = new TemporalDatum("UTC", DatumType.UTC);
 
     /**
-     * Default datum for Greenwich Mean Time (GMT).
-     * GMT is based on astronomical observations,
-     * while UTC is based on an atomic clock.
-     */
-    public static final TemporalDatum GMT = new TemporalDatum("GMT", DatumType.GMT);
-
-    /**
      * Creates a temporal datum from an enumerated type value.
      *
      * @param name Name to give new object.

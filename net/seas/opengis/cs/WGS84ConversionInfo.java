@@ -25,6 +25,7 @@ package net.seas.opengis.cs;
 // Miscellaneous
 import java.io.Serializable;
 import net.seas.util.XClass;
+import net.seas.util.Version;
 
 // Collections
 import java.util.Set;
@@ -119,7 +120,7 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
         {
             // Should not happen, since we are cloneable.
             final InternalError error = new InternalError(exception.getMessage());
-            error.initCause(exception);
+            if (Version.MINOR>=4) error.initCause(exception);
             throw error;
         }
     }

@@ -36,6 +36,7 @@ import net.seas.opengis.cs.HorizontalCoordinateSystem;
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.XClass;
+import net.seas.util.Version;
 
 
 /**
@@ -151,7 +152,7 @@ public class CoordinateTransformFactory
             catch (NoninvertibleTransformException exception)
             {
                 final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-                e.initCause(exception);
+                if (Version.MINOR>=4) e.initCause(exception);
                 throw e;
             }
         }
@@ -179,7 +180,7 @@ public class CoordinateTransformFactory
         catch (RuntimeException exception)
         {
             final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-            e.initCause(exception);
+            if (Version.MINOR>=4) e.initCause(exception);
             throw e;
         }
 

@@ -48,6 +48,7 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.ArrayList;
 import net.seas.util.XArray;
+import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 
@@ -226,9 +227,14 @@ public class PaletteFactory
         }
         catch (ParseException exception)
         {
-            final IIOException error = new IIOException(exception.getLocalizedMessage());
-            error.initCause(exception);
-            throw error;
+            if (Version.MINOR>=4)
+            {
+                final IIOException error = new IIOException(exception.getLocalizedMessage());
+                error.initCause(exception);
+                throw error;
+            }
+            else throw new IOException(exception.getLocalizedMessage());
+            // IOException is the first 1.2 parent of IIOException.
         }
         return colors.toArray(new Color[colors.size()]);
     }

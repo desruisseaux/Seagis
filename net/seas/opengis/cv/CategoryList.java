@@ -79,7 +79,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     /**
      * Liste des catégories constituant cet objet <code>CategoryList</code>.
      * Cette liste doit être en ordre croissant de {@link Category#lower},
-     * c'est-à-dire classée selon le comparateur {@link CategoryComparator#BY_INDEX}.
+     * c'est-à-dire classée selon le comparateur <code>CategoryComparator.BY_INDEX</code>.
      */
     private final Category[] byIndex;
 

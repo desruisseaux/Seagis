@@ -38,8 +38,6 @@ import java.awt.image.Raster;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
- *
- * @see org.opengis.gc.GC_GridRange
  */
 public final class GridRange implements Serializable
 {

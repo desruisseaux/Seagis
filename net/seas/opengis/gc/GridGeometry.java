@@ -45,8 +45,6 @@ import java.io.Serializable;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
- *
- * @see org.opengis.gc.GC_GridGeometry
  */
 public class GridGeometry implements Serializable
 {
@@ -154,26 +152,18 @@ public class GridGeometry implements Serializable
      * affine transformation. The coordinate system of the real world coordinates
      * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
      * math transform is available, this method returns <code>null</code>.
-     * <br><br>
-     * The default implementation compute the math
-     * transform from {@link #gridToCoordinateJAI}.
      */
     public synchronized MathTransform getGridToCoordinateSystem()
     {
         if (gridToCoordinateSystem==null)
         {
-            if (gridRange.getDimension()!=2)
-            {
-                // TODO
-                throw new UnsupportedOperationException("Not implemented");
-            }
-            final AffineTransform tr = getGridToCoordinateJAI();
-            if (tr!=null)
+            if (gridToCoordinateJAI!=null)
             {
                 // AffineTransform's operations are applied in reverse order.
                 // We translate the grid coordinate by (0.5,0.5) first (which
                 // set the position in the pixel center),  and then apply the
                 // transformation specified by gridToCoordinateJAI().
+                final AffineTransform tr = new AffineTransform(gridToCoordinateJAI);
                 tr.translate(0.5, 0.5);
                 gridToCoordinateSystem = MathTransformFactory.DEFAULT.createAffineTransform(tr);
             }
@@ -192,24 +182,4 @@ public class GridGeometry implements Serializable
      */
     final AffineTransform getGridToCoordinateJAI()
     {return gridToCoordinateJAI;} // No clone for performance raisons.
-
-    /**
-     * Returns an estimation of cell size, in user coordinates.
-     * Note: the returned dimension is an <em>estimation only</em>,
-     *       and may be improved in future version.
-     */
-    public Dimension2D getCellSize2D()
-    {
-        if (gridToCoordinateJAI!=null)
-        {
-            final double scaleX0 = XAffineTransform.getScaleX0(gridToCoordinateJAI);
-            final double scaleY0 = XAffineTransform.getScaleY0(gridToCoordinateJAI);
-            return new XDimension2D.Double(scaleX0, scaleY0);
-        }
-        else
-        {
-            // TODO
-            throw new UnsupportedOperationException("Not implemented");
-        }
-    }
 }

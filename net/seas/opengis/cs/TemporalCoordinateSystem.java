@@ -68,16 +68,14 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     private final long epoch;
 
     /**
-     * Creates a temporal coordinate system from a datum.
-     * Units are seconds and values are increasing toward
-     * future.
+     * Creates a temporal coordinate system. Datum is UTC,
+     * units are days and values are increasing toward future.
      *
      * @param name  Name  to give new object.
-     * @param datum Datum to use for new coordinate system.
      * @param epoch The epoch (i.e. date of origin).
      */
-    public TemporalCoordinateSystem(final String name, final TemporalDatum datum, final Date epoch)
-    {this(name, datum, Unit.SECOND, epoch, AxisInfo.TIME);}
+    public TemporalCoordinateSystem(final String name, final Date epoch)
+    {this(name, TemporalDatum.UTC, Unit.DAY, epoch, AxisInfo.TIME);}
 
     /**
      * Creates a temporal coordinate system from a datum and time units.

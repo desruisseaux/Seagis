@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Arrays;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
+import net.seas.util.Version;
 import net.seas.util.XClass;
 import net.seas.util.XArray;
 import javax.units.Unit;
@@ -242,7 +243,7 @@ public class Projection extends Info
         }
         if (!required) return defaultValue;
         final MissingParameterException exception = new MissingParameterException(null, name);
-        if (cause!=null) exception.initCause(cause);
+        if (Version.MINOR>=4 && cause!=null) exception.initCause(cause);
         throw exception;
     }
 

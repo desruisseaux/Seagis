@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
+import net.seas.util.Version;
 import net.seas.text.AngleFormat;
 import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
@@ -111,7 +112,7 @@ public class Angle implements Comparable<Angle>, Serializable
         catch (ParseException exception)
         {
             NumberFormatException e=new NumberFormatException(exception.getLocalizedMessage());
-            e.initCause(exception);
+            if (Version.MINOR>=4) e.initCause(exception);
             throw e;
         }
     }
