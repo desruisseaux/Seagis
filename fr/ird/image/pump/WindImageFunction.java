@@ -32,7 +32,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import javax.imageio.ImageIO;
-import fr.ird.image.AbstractImageFunction;
+import fr.ird.operator.image.AbstractImageFunction;
 
 // Lecture de fichiers HDF
 import java.io.File;
