@@ -11,205 +11,239 @@
  */
 package org.opengis.cv;
 
-import org.opengis.cs.CS_CoordinateSystem;
+// CSS dependencies
 import org.opengis.pt.PT_Envelope;
 import org.opengis.pt.PT_CoordinatePoint;
+import org.opengis.cs.CS_CoordinateSystem;
+
+// Forward GCS dependencies
 import org.opengis.gc.GC_GridCoverage;
 
-/** Provides access to an OpenGIS coverage.<br>
- *  The essential property of coverage is to be able to generate a value for any point
- *  within its domain. How coverage is represented internally is not a concern.<br><br>
- *
- *  For example consider the following different internal representations of coverage :<br>
- *  <OL>  <li>A coverage may be represented by a set of polygons which exhaustively
- *            tile a plane (that is each point on the plane falls in precisely one polygon).
- *            The value returned by the coverage for a point is the value of an attribute of
- *            the polygon that contains the point.<br>
- *        <li>A coverage may be represented by a grid of values.
- *            The value returned by the coverage for a point is that of the grid value
- *            whose location is nearest the point.<br>
- *        <li>Coverage may be represented by a mathematical function.
- *            The value returned by the coverage for a point is just the return value
- *            of the function when supplied the coordinates of the point as arguments.<br>
- *        <li>Coverage may be represented by combination of these.
- *            For example, coverage may be represented by a combination of mathematical
- *            functions valid over a set of polynomials.</OL><br>
- *
- *  A coverage has a corresponding {@link CV_SampleDimension} for each sample dimension in the coverage.
- */
-public interface CV_Coverage extends java.rmi.Remote {
-    
-    /** The number of sample dimensions in the coverage.<br>
-     *  For grid coverages, a sample dimension is a band.<br>
-     *
-     *  @return the number of sample dimensions in the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    int getNumSampleDimensions() throws java.rmi.RemoteException;
-    
-    /** The names of each dimension in the coverage.<br>
-     *  Typically these names are  x ,  y ,  z  and  t .<br>
-     *  The number of items in the sequence is the number of dimensions in the coverage.<br>
-     *  Grid coverages are typically 2D (x, y) while other coverages may be 3D (x, y, z)
-     *  or 4D (x, y, z, t).<br>
-     *  The number of dimensions of the coverage is the number of entries in the
-     *  list of dimension names.<br>
-     *
-     *  @return the names of each dimension in the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    String [] getdimensionNames() throws java.rmi.RemoteException;
-    
-    /** Number of grid coverages which the grid coverage was derived from.<br>
-     *  This implementation specification does not include interfaces for creating
-     *  collections of coverages therefore this value will usually be one indicating
-     *  an adapted grid coverage, or zero indicating a raw grid coverage.
-     *
-     *  @return the number of grid coverages which the grid coverage was derived from.
-     *  @throws java.rmi.RemoteException
-     */
-    int getNumSources() throws java.rmi.RemoteException;
-    
-    /** List of metadata keywords for a coverage.<br>
-     *  If no metadata is available, the sequence will be empty.
-     *
-     *  @return the list of metadata keywords for a coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    String [] getMetadataNames() throws java.rmi.RemoteException;
-    
-    /** This specifies the coordinate system used when accessing a coverage or grid
-     *  coverage with the  evaluate  methods.<br>
-     *  It is also the coordinate system of the coordinates used with the math transform
-     *  (see {@link org.opengis.gc.GC_GridGeometry} attribute - gridToCoordinateSystem: {@link org.opengis.ct.CT_MathTransform}).<br>
-     *  This coordinate system is usually different than the grid coordinate system of the grid.<br>
-     *  grid coverage can be accessed (re-projected) with new coordinate system with the
-     *  {@link org.opengis.gp.GP_GridCoverageProcessor} component.<br>
-     *  In this case, a new instance of a grid coverage is created.<br><br>
-     *
-     *  Note: If a coverage does not have an associated coordinate system,
-     *  coordinateSystem will be <code>null</code>.<br>
-     *  The gridToCoordinateSystem attribute for GC_GridGeometry should also be <code>null</code>
-     *  if coordinateSystem is <code>null</code>.<br>
-     *
-     *  @return the coordinate system used when accessing a coverage or grid
-     *          coverage with the  evaluate  methods.
-     *  @throws java.rmi.RemoteException
-     */
-    CS_CoordinateSystem getCoordinateSystem() throws java.rmi.RemoteException;
-    
-    /** The bounding box for the coverage domain in coordinate system coordinates.<br>
-     *  For grid coverages, the grid cells are centered on each grid coordinate.<br>
-     *  The envelope for a 2-D grid coverage includes the following corner positions.<br><br>
-     *
-     *          (Minimum row - 0.5, Minimum column - 0.5) for the minimum coordinates<br>
-     *          (Maximum row - 0.5, Maximum column - 0.5) for the maximum coordinates<br><br>
-     * 
-     *  Note: If a grid coverage does not have any associated coordinate system,
-     *  the minimum and maximum coordinate points for the envelope will be empty sequences.
-     *
-     *  @return the bounding box for the coverage domain in coordinate system coordinates.
-     *  @throws java.rmi.RemoteException
-     */
-    PT_Envelope getEnvelope() throws java.rmi.RemoteException;
-    
-    /** Retrieve Sample dimension information for the coverage.<br>
-     *  For a grid coverage a sample dimension is a band. The sample dimension information
-     *  include such things as description, data type of the value (bit, byte, integer...),
-     *  the no data values, minimum and maximum values and a color table if one is
-     *  associated with the dimension.<br>
-     *  A coverage must have at least one sample dimension.
-     *
-     *  @param index Index for sample dimension to retrieve. Indices are numbered 0 to (n-1).
-     *  @return Sample dimension information for the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    CV_SampleDimension getSampleDimension(int index) throws java.rmi.RemoteException;
+// Remote Method Invocation
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
-    /** Returns the source data for a grid coverage.<br>
-     *  If the GC_GridCoverage was produced from an underlying dataset
-     *  (by createFromName() or createFromSubName for instance) the NumSource
-     *  property should be zero, and this method should not be called.<br>
-     *  If the GC_GridCoverage was produced using GP_GridCoverageProcessor
-     *  then it should return the source grid coverage of the one used as input
-     *  to GP_GridCoverageProcessor. In general the source() method is intended
-     *  to return the original GC_GridCoverage on which it depends.<br>
-     *  This is intended to allow applications to establish what GC_GridCoverages
-     *  will be affected when others are updated, as well as to trace back to the "raw data".
-     *
-     *  @param sourceDataIndex Source grid coverage index. Indexes start at 0.
-     *  @return the source data for a grid coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    GC_GridCoverage getSource(int sourceDataIndex) throws java.rmi.RemoteException;
-    
-    /** Retrieve the metadata value for a given metadata name.
-     *
-     *  @param name Metadata keyword for which to retrieve data.
-     *  @return the metadata value for a given metadata name.
-     *  @throws java.rmi.RemoteException
-     */
-    String getMetadataValue(String name) throws java.rmi.RemoteException;
-    
-    /** Return the value vector for a given point in the coverage.<br>
-     *  A value for each sample dimension is included in the vector.<br>
-     *  The default interpolation type used when accessing grid values for points
-     *  which fall between grid cells is nearest neighbor.<br>
-     *  The coordinate system of the point is the same as the grid coverage coordinate
-     *  system (specified by the coordinateSystem attribute).
-     *
-     *  @param point Point at which to find the grid values.
-     *  @return the value vector for a given point in the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    Object evaluate(PT_CoordinatePoint point) throws java.rmi.RemoteException;
-    
-    /** Return a sequence of Boolean values for a given point in the coverage.<br>
-     *  A value for each sample dimension is included in the sequence.<br>
-     *  The default interpolation type used when accessing grid values for points which
-     *  fall between grid cells is nearest neighbor.<br>
-     *  The coordinate system of the point is the same as the grid coverage coordinate system.
-     *
-     *  @param point Point at which to find the coverage values.
-     *  @return a sequence of Boolean values for a given point in the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    boolean [] evaluateAsBoolean(PT_CoordinatePoint point) throws java.rmi.RemoteException;
-    
-    /** Return a sequence of unsigned byte values for a given point in the coverage.<br>
-     *  A value for each sample dimension is included in the sequence.<br>
-     *  The default interpolation type used when accessing grid values for points which
-     *  fall between grid cells is nearest neighbor.<br>
-     *  The coordinate system of the point is the same as the grid coverage coordinate system.
-     *
-     *  @param point Point at which to find the coverage values.
-     *  @return a sequence of unsigned byte values for a given point in the coverage.
-     *  @throws java.rmi.RemoteException
-     */
-    byte [] evaluateAsByte(PT_CoordinatePoint point) throws java.rmi.RemoteException;
-    
+
+/**
+ * Provides access to an OpenGIS coverage.
+ * The essential property of coverage is to be able to generate a value for any point
+ * within its domain. How coverage is represented internally is not a concern.
+ *
+ * For example consider the following different internal representations of coverage:<br>
+ *  <OL>
+ *    <li>A coverage may be represented by a set of polygons which exhaustively
+ *        tile a plane (that is each point on the plane falls in precisely one polygon).
+ *        The value returned by the coverage for a point is the value of an attribute of
+ *        the polygon that contains the point.</li>
+ *    <li>A coverage may be represented by a grid of values.
+ *        The value returned by the coverage for a point is that of the grid value
+ *        whose location is nearest the point.</li>
+ *    <li>Coverage may be represented by a mathematical function.
+ *        The value returned by the coverage for a point is just the return value
+ *        of the function when supplied the coordinates of the point as arguments.</li>
+ *    <li>Coverage may be represented by combination of these.
+ *        For example, coverage may be represented by a combination of mathematical
+ *        functions valid over a set of polynomials.</LI>
+ * </OL>
+ *
+ * A coverage has a corresponding {@link CV_SampleDimension} for each sample
+ * dimension in the coverage.
+ *
+ * @version 1.00
+ * @since   1.00
+ */
+public interface CV_Coverage extends Remote
+{
     /**
-     *  Return a sequence of integer values for a given point in the coverage.<br>
-     *  A value for each sample dimension is included in the sequence.<br>
+     * The number of sample dimensions in the coverage.
+     * For grid coverages, a sample dimension is a band.
+     *
+     * @return the number of sample dimensions in the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    int getNumSampleDimensions() throws RemoteException;
+
+    /**
+     * The names of each dimension in the coverage.
+     * Typically these names are <var>x</var>, <var>y</var>, <var>z</var> and <var>t</var>.
+     * The number of items in the sequence is the number of dimensions in the coverage.
+     * Grid coverages are typically 2D (<var>x</var>, <var>y</var>) while other coverages
+     * may be 3D (<var>x</var>, <var>y</var>, <var>z</var>) or
+     * 4D (<var>x</var>, <var>y</var>, <var>z</var>, <var>t</var>).
+     * The number of dimensions of the coverage is the number of entries in the
+     * list of dimension names.
+     *
+     * @return the names of each dimension in the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    String[] getdimensionNames() throws RemoteException;
+
+    /**
+     * Number of grid coverages which the grid coverage was derived from.
+     * This implementation specification does not include interfaces for creating
+     * collections of coverages therefore this value will usually be one indicating
+     * an adapted grid coverage, or zero indicating a raw grid coverage.
+     *
+     * @return the number of grid coverages which the grid coverage was derived from.
+     * @throws RemoteException if a remote method call failed.
+     */
+    int getNumSources() throws RemoteException;
+
+    /**
+     * List of metadata keywords for a coverage.
+     * If no metadata is available, the sequence will be empty.
+     *
+     * @return the list of metadata keywords for a coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    String[] getMetadataNames() throws RemoteException;
+
+    /**
+     * This specifies the coordinate system used when accessing a coverage or grid
+     * coverage with the <code>evaluate</code> methods. It is also the coordinate
+     * system of the coordinates used with the math transform (see
+     * {@link org.opengis.gc.GC_GridGeometry#gridToCoordinateSystem}).
+     * This coordinate system is usually different than the grid coordinate system
+     * of the grid. grid coverage can be accessed (re-projected) with new coordinate
+     * system with the {@link org.opengis.gp.GP_GridCoverageProcessor} component.
+     * In this case, a new instance of a grid coverage is created.
+     * <br><br>
+     * Note: If a coverage does not have an associated coordinate system,
+     * the returned value will be <code>null</code>.
+     * The {@link org.opengis.gc.GC_GridGeometry#gridToCoordinateSystem}) attribute
+     * should also be <code>null</code> if the coordinate system is <code>null</code>.
+     *
+     * @return the coordinate system used when accessing a coverage or grid
+     *         coverage with the <code>evaluate</code>  methods.
+     * @throws RemoteException if a remote method call failed.
+     */
+    CS_CoordinateSystem getCoordinateSystem() throws RemoteException;
+
+    /**
+     * The bounding box for the coverage domain in coordinate system coordinates.
+     * For grid coverages, the grid cells are centered on each grid coordinate.
+     * The envelope for a 2-D grid coverage includes the following corner positions.
+     *
+     * <blockquote><pre>
+     * (Minimum row - 0.5, Minimum column - 0.5) for the minimum coordinates
+     * (Maximum row - 0.5, Maximum column - 0.5) for the maximum coordinates
+     * </pre></blockquote>
+     *
+     * If a grid coverage does not have any associated coordinate system,
+     * the minimum and maximum coordinate points for the envelope will be empty sequences.
+     *
+     * @return the bounding box for the coverage domain in coordinate system coordinates.
+     * @throws RemoteException if a remote method call failed.
+     */
+    PT_Envelope getEnvelope() throws RemoteException;
+
+    /**
+     * Retrieve sample dimension information for the coverage.
+     * For a grid coverage a sample dimension is a band. The sample dimension information
+     * include such things as description, data type of the value (bit, byte, integer...),
+     * the no data values, minimum and maximum values and a color table if one is
+     * associated with the dimension. A coverage must have at least one sample dimension.
+     *
+     * @param  index Index for sample dimension to retrieve. Indices are numbered 0 to (n-1).
+     * @return Sample dimension information for the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    CV_SampleDimension getSampleDimension(int index) throws RemoteException;
+
+    /**
+     * Returns the source data for a grid coverage.
+     * If the {@link GC_GridCoverage} was produced from an underlying dataset
+     * (by <code>createFromName</code> or <code>createFromSubName</code> for
+     * instance) the {@link #getNumSources} method should returns zero, and this
+     * method should not be called.
+     *
+     * If the <code>GC_GridCoverage}</code> was produced using
+     * {link org.opengis.gp.GP_GridCoverageProcessor} then it should return the source
+     * grid coverage of the one used as input to <code>GP_GridCoverageProcessor</code>.
+     * In general the source() method is intended to return the original
+     * <code>GC_GridCoverage</code> on which it depends.
+     *
+     * This is intended to allow applications to establish what <code>GC_GridCoverage</code>s
+     * will be affected when others are updated, as well as to trace back to the "raw data".
+     *
+     * @param sourceDataIndex Source grid coverage index. Indexes start at 0.
+     * @return the source data for a grid coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    GC_GridCoverage getSource(int sourceDataIndex) throws RemoteException;
+
+    /**
+     * Retrieve the metadata value for a given metadata name.
+     *
+     * @param name Metadata keyword for which to retrieve data.
+     * @return the metadata value for a given metadata name.
+     * @throws RemoteException if a remote method call failed.
+     */
+    String getMetadataValue(String name) throws RemoteException;
+
+    /**
+     * Return the value vector for a given point in the coverage.
+     * A value for each sample dimension is included in the vector.
+     * The default interpolation type used when accessing grid values for points
+     * which fall between grid cells is nearest neighbor.
+     * The coordinate system of the point is the same as the grid coverage coordinate
+     * system (specified by the {@link #getCoordinateSystem}).
+     *
+     * @param point Point at which to find the grid values.
+     * @return the value vector for a given point in the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    Object evaluate(PT_CoordinatePoint point) throws RemoteException;
+
+    /**
+     * Return a sequence of Boolean values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence.
+     * The default interpolation type used when accessing grid values for points which
+     * fall between grid cells is nearest neighbor.
+     * The coordinate system of the point is the same as the grid coverage coordinate system.
+     *
+     * @param point Point at which to find the coverage values.
+     * @return a sequence of Boolean values for a given point in the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    boolean[] evaluateAsBoolean(PT_CoordinatePoint point) throws RemoteException;
+
+    /**
+     * Return a sequence of unsigned byte values for a given point in the coverage.
+     * A value for each sample dimension is included in the sequence.
+     * The default interpolation type used when accessing grid values for points which
+     * fall between grid cells is nearest neighbor.
+     * The coordinate system of the point is the same as the grid coverage coordinate system.
+     *
+     * @param point Point at which to find the coverage values.
+     * @return a sequence of unsigned byte values for a given point in the coverage.
+     * @throws RemoteException if a remote method call failed.
+     */
+    byte[] evaluateAsByte(PT_CoordinatePoint point) throws RemoteException;
+
+    /**
+     *  Return a sequence of integer values for a given point in the coverage.
+     *  A value for each sample dimension is included in the sequence.
      *  The default interpolation type used when accessing grid values for points which
-     *  fall between grid cells is nearest neighbor.<br>
+     *  fall between grid cells is nearest neighbor.
      *  The coordinate system of the point is the same as the grid coverage coordinate system.
      *
-     *  @param point Point at which to find the grid values.
-     *  @return a sequence of integer values for a given point in the coverage.
-     *  @throws java.rmi.RemoteException
+     * @param point Point at which to find the grid values.
+     * @return a sequence of integer values for a given point in the coverage.
+     * @throws RemoteException if a remote method call failed.
      */
-    int [] evaluateAsInteger(PT_CoordinatePoint point) throws java.rmi.RemoteException;
-    
-    /** Return a sequence of double values for a given point in the coverage.<br>
-     *  A value for each sample dimension is included in the sequence.<br>
+    int[] evaluateAsInteger(PT_CoordinatePoint point) throws RemoteException;
+
+    /**
+     * Return a sequence of double values for a given point in the coverage.
+     *  A value for each sample dimension is included in the sequence.
      *  The default interpolation type used when accessing grid values for points which
-     *  fall between grid cells is nearest neighbor.<br>
+     *  fall between grid cells is nearest neighbor.
      *  The coordinate system of the point is the same as the grid coverage coordinate system.
      *
-     *  @param point Point at which to find the grid values.
-     *  @return a sequence of double values for a given point in the coverage.
-     *  @throws java.rmi.RemoteException
+     * @param point Point at which to find the grid values.
+     * @return a sequence of double values for a given point in the coverage.
+     * @throws RemoteException if a remote method call failed.
      */
-    double [] evaluateAsDouble(PT_CoordinatePoint point) throws java.rmi.RemoteException;
+    double[] evaluateAsDouble(PT_CoordinatePoint point) throws RemoteException;
 }
