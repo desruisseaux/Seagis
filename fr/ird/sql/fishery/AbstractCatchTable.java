@@ -76,16 +76,13 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     private transient Calendar localCalendar;
 
     /**
-     * Liste des espèces demandées. Cette liste sera accédée directement par
-     * les classes dérivées de {@link Catch} (comme {@link LongLineCatch})
-     * afin d'éviter la copie que fait {@link #getSpecies}.
+     * Ensemble immutable des espèces. Le contenu d'un objet {@link SpeciesSet} ne doit
+     * pas changer. Toutefois, <code>species</code> pourra se référer à d'autres objets
+     * {@link SpeciesSet}. Les objets {@link SpeciesSet} enveloppe la liste des espèces
+     * dans un tableau ({@link SpeciesSet#species}) qui sera accédé directement par les
+     * classes {@link AbstractCatchEntry} et dérivées.
      */
-    protected final Species[] species;
-
-    /**
-     * Liste immutables des espèces.
-     */
-    private final SpeciesSet speciesSet;
+    protected SpeciesSet species;
 
     /**
      * Construit une objet qui interrogera la
@@ -102,9 +99,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     protected AbstractCatchTable(final PreparedStatement statement, final TimeZone timezone, final Set<Species> species) throws SQLException
     {
         super(statement);
-        this.speciesSet = new SpeciesSet(species);
-        this.species    = speciesSet.species;
-        this.calendar   = new GregorianCalendar(timezone);
+        this.species  = new SpeciesSet(species);
+        this.calendar = new GregorianCalendar(timezone);
     }
 
     /**
@@ -180,9 +176,10 @@ abstract class AbstractCatchTable extends Table implements CatchTable
 
     /**
      * Retourne l'ensemble des espèces comprises dans la requête de cette table.
+     * L'ensemble retourné est immutable.
      */
     public final Set<Species> getSpecies()
-    {return speciesSet;}
+    {return species;}
 
     /**
      * Retourne le système de coordonnées utilisées

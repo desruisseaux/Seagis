@@ -61,6 +61,18 @@ public interface CatchTable extends Table
     public abstract Set<Species> getSpecies() throws SQLException;
 
     /**
+     * Spécifie l'ensemble des espèces à prendre en compte lors des interrogations de
+     * la base de données. Les objets {@link CatchEntry} retournés par cette table ne
+     * contiendront des informations que sur ces espèces, et la méthode {@link CatchEntry#getCatch()}
+     * (qui retourne la quantité totale de poisson capturé) ignorera toute espèce qui
+     * n'apparait pas dans l'ensemble <code>species</code>.
+     *
+     * @param species Ensemble des espèces à prendre en compte.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public void setSpecies(final Set<Species> species) throws SQLException;
+
+    /**
      * Retourne le système de coordonnées utilisées
      * pour les positions de pêches dans cette table.
      *

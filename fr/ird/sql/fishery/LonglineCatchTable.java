@@ -129,6 +129,12 @@ final class LonglineCatchTable extends AbstractCatchTable
     private transient Statement update;
 
     /**
+     * Retourne la requête SQL à utiliser pour un ensemble d'espèce spécifié.
+     */
+    private static String getQuery(final Set<Species> species)
+    {return completeQuery(preferences.get(CATCHS, SQL_SELECT), CATCHS, species);}
+
+    /**
      * Construit un objet en utilisant la connection spécifiée.
      *
      * @param  connection Connection vers une base de données de pêches.
@@ -140,9 +146,31 @@ final class LonglineCatchTable extends AbstractCatchTable
      */
     protected LonglineCatchTable(final Connection connection, final TimeZone timezone, final Set<Species> species) throws SQLException
     {
-        super(connection.prepareStatement(completeQuery(preferences.get(CATCHS, SQL_SELECT), CATCHS, species)), timezone, species);
+        super(connection.prepareStatement(getQuery(species)), timezone, species);
         setTimeRange(new Date(0), new Date());
         setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
+    }
+
+    /**
+     * Spécifie l'ensemble des espèces à prendre en compte lors des interrogations de
+     * la base de données. Les objets {@link CatchEntry} retournés par cette table ne
+     * contiendront des informations que sur ces espèces, et la méthode {@link CatchEntry#getCatch()}
+     * (qui retourne la quantité totale de poisson capturé) ignorera toute espèce qui
+     * n'apparait pas dans l'ensemble <code>species</code>.
+     *
+     * @param species Ensemble des espèces à prendre en compte.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException
+    {
+        if (!species.equals(newSpecies))
+        {
+            final Connection connection = statement.getConnection();
+            statement.close();
+            statement = null; // Au cas où l'instruction suivante échourait.
+            statement = connection.prepareStatement(getQuery(newSpecies));
+            this.species = new SpeciesSet(newSpecies);
+        }
     }
 
     /**

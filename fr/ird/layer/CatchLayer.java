@@ -554,11 +554,11 @@ public class CatchLayer extends MarkLayer implements ImageAdjustable
      *
      * @param icons A set of icons to use for species.
      */
-    public synchronized void addIcons(final Collection<Species.Icon> icons)
+    public synchronized void defineIcons(final Species.Icon[] icons)
     {
-        for (final Iterator<Species.Icon> it=icons.iterator(); it.hasNext();)
+        for (int i=0; i<icons.length; i++)
         {
-            final Species.Icon icon = it.next();
+            final Species.Icon icon = icons[i];
             this.icons.put(icon.getSpecies(), icon);
         }
     }

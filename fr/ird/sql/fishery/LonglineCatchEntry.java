@@ -101,7 +101,7 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      */
     public LonglineCatchEntry(final LonglineCatchTable table, final ResultSet result) throws SQLException
     {
-        super(result.getInt(LonglineCatchTable.ID), table.species);
+        super(result.getInt(LonglineCatchTable.ID), table.species.species);
         final float efu;
 
         date = table.getTimestamp(LonglineCatchTable.DATE, result).getTime();

@@ -62,7 +62,7 @@ abstract class Table implements fr.ird.sql.Table
      * Requète SQL faisant le lien
      * avec la base de données.
      */
-    protected final PreparedStatement statement;
+    protected PreparedStatement statement;
 
     /**
      * Construit une objet qui interrogera la
@@ -83,5 +83,11 @@ abstract class Table implements fr.ird.sql.Table
      *         lors de la disposition des ressources.
      */
     public synchronized void close() throws SQLException
-    {statement.close();}
+    {
+        if (statement!=null)
+        {
+            statement.close();
+            statement = null;
+        }
+    }
 }
