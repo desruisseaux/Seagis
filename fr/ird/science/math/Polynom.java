@@ -19,6 +19,9 @@
  *     CANADA: Observatoire du Saint-Laurent
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
+ *
+ *       This class contains formulas from Ken Turkiwski's Open Source Repository
+ *       (http://www.worldserver.com/turk/opensource). Ken's work is fully aknowledge here.
  */
 package fr.ird.science.math;
 
@@ -27,9 +30,10 @@ import org.geotools.resources.XMath;
 
 
 /**
- * Compute the root of a polynom.
+ * Compute the root of a polynomial equation.
  *
  * @version $Id$
+ * @author Ken Turkiwski
  * @author Martin Desruisseaux
  */
 public class Polynom {
