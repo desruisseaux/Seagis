@@ -8,9 +8,10 @@
     <P ALIGN="justify">Provides implementation for general positioning, coordinate
     systems, and coordinate transformations. SEAGIS is an open source implementation
     of a subset of <A HREF="http://www.opengis.org/techno/specs/">OpenGIS® Coordinate
-    Transformation Services Specification</A>. Being OpenGIS-compliant should allow
-    developers to switch between this free implementation and any commercial implementation
-    with no code change (providing that commercial implementations are OpenGIS compliant).</P>
+    Transformation Services Specification</A> and <A HREF="http://www.opengis.org/techno/specs/">OpenGIS®
+    Grid Coverages Specification</A>. Being OpenGIS-compliant should allow developers
+    to switch between this free implementation and any commercial implementation with
+    no code change (providing that commercial implementations are OpenGIS compliant).</P>
 
     <P>&nbsp;</P>
     <H2><A NAME="packages_organization">Packages organization</A></H2>
@@ -41,10 +42,20 @@
     <P ALIGN="justify">Factory classes allow the creation of OpenGIS objects (RMI enabled)
     backed by SEAGIS classes. Internally, interoperability between OpenGIS interfaces and
     SEAGIS classes is assured through a set of RMI-aware adapters. Classes not related to
-    any OpenGIS API appear in separated packages (e.g. <CODE>net.seas.image.io</CODE>).</P>
+    any OpenGIS API appear in separated packages (e.g. <CODE>net.seas.map</CODE>) and
+    sub-packages.</P>
 
     <P>&nbsp;</P>
     <P ALIGN="center">Additional reading: <A HREF="doc-files/differences.html">A
     list of differences between SEAGIS's API and OpenGIS specification</A>.</P>
+
+    <P>&nbsp;</P>
+    <H3>Note about <CODE>fr.ird</CODE> packages</H3>
+    <P ALIGN="justify">The <CODE>fr.ird</CODE> branch contains experimental classes
+    needed for some work at IRD (Institut de Recherche pour le Développement, France).
+    It can be seen as an example of use of <CODE>net.seas</CODE> packages. Note that
+    <STRONG>the <CODE>net.seas</CODE> branch has no dependencies to <CODE>fr.ird</CODE></STRONG>.
+    Consequently, the whole <CODE>fr</CODE> directory and sub-directories can be deleted
+    (if you want) without any impact on the OpenGIS implementation in <CODE>net.seas</CODE>.</P>
   </BODY>
 </HTML>

@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+  <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <TITLE>SEAGIS home page</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+
+<TABLE cellpadding="12"><TR><TD nowrap valign="top" bgcolor="#FEF7DE">
+
+<P>&nbsp;</P>
+<P><FONT FACE="Arial Narrow"><B>
+&nbsp;<A HREF="javadoc/overview-summary.html">Browse&nbsp;the&nbsp;JavaDoc</A><BR>
+&nbsp;<A HREF="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/seagis/seas/">Browse&nbsp;the&nbsp;CVS&nbsp;repository</A><BR>
+&nbsp;<A HREF="http://sourceforge.net/project/showfiles.php?group_id=31798&release_id=60108">Download&nbsp;sources&nbsp;and&nbsp;binaries</A><BR>
+&nbsp;<A HREF="demo/index.html">Demos&nbsp;for&nbsp;developers</A><BR>
+&nbsp;<A HREF="http://sourceforge.net/projects/seagis">SourceForge&nbsp;project&nbsp;page</A><BR>
+&nbsp;<A HREF="http://lists.sourceforge.net/lists/listinfo/seagis-discuss">Discussion&nbsp;list</A><BR>
+&nbsp;<A HREF="http://sourceforge.net/sendmessage.php?touser=194261">Contact&nbsp;us</A></B></FONT></P>
+<P>&nbsp;</P>
+<P ALIGN="center"><A HREF="http://sourceforge.net"><IMG SRC="http://sourceforge.net/sflogo.php?group_id=31798&type=1" ALT="SourceForge"></A></P>
+
+</TD><TD>
+
+
+<H1>Summary</H1>
+<P ALIGN="justify"><FONT FACE="Verdana">SEAGIS is an open source project implementing a subset
+of <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Coordinate Transformation Services
+Specification</A> and <A HREF="http://www.opengis.org/techno/specs.htm">OpenGIS® Grid Coverages
+Implementation Specification</A>. OpenGIS is a consortium of organizations developing public
+specifications through structured committee programs. Products and services that conform to those
+open interface specifications enable users to freely exchange and apply spatial information,
+applications and services across networks, different platforms and products.</P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">The current SEAGIS library supports Cylindrical Mercator,
+Transverse Mercator, Lambert Conformal Conical and Stereographic projections. Because the API
+closely matches OpenGIS specifications, developers can switch between this free implementation
+and any commercial implementation with no code change (providing that commercial implementations
+are OpenGIS compliant). The learning barrier is also lowered because the API matches a standard
+one.</FONT></P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">A second SEAGIS's goal is to ensure interoperability with
+standard Java packages like <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A> and
+<A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>. SEAGIS extends
+existing Java classes like <A HREF="http://java.sun.com/j2se/1.4/docs/api/java/text/Format.html"><CODE>Format</CODE></A>
+for parsing and formatting angles, and <A HREF="http://java.sun.com/j2se/1.4/docs/api/javax/imageio/ImageReader.html"><CODE>ImageReader</CODE></A>
+for reading ASCII and binary files.</FONT></P>
+
+<P ALIGN="justify"><FONT FACE="Verdana">Full source code is freely available under LGPL license,
+which allow linking against many open source and commercial projects.</FONT></P>
+
+
+<P>&nbsp;</P>
+<H2>Why yet an other geographic package?</H2>
+<P ALIGN="justify"><FONT FACE="Verdana"><A HREF="http://www.openmap.org/">OpenMap</A> and
+<A HREF="http://geotools.sourceforge.net/docs.php">GeoTools</A> are two others valuable packages
+which may worth your consideration. However, SEAGIS is different in three aspects:</P>
+
+<UL>
+    <LI>We try to conform to the <A HREF="http://www.opengis.org">OpenGIS</A> specification. Non-OpenGIS APIs appear in clearly
+        separated packages (see <A HREF="javadoc/overview-summary.html#packages_organization">Packages organization</A>).</LI>
+    <LI>We try to make best use of latest Java packages, especially <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>
+        (For example, the Sun's <A HREF="http://java.sun.com/j2se/1.4/docs/api/java/awt/geom/AffineTransform.html">AffineTransform</A>
+        class is highly optimized and should be more extensively used).
+        We try to remove API that duplicates standard classes. Our package does not carry around legacy code from JDK 1.1 days.</LI>
+    <LI>SEAGIS is under LGPL license, which is similar but somewhat less restrictive than GPL
+        (see <A HREF="http://www.mozilla.org/MPL/FAQ.html#7">What is the LGPL?</A>,
+        <A HREF="http://www.mozilla.org/MPL/FAQ.html#18">How can GPL code be incorporated into the Communicator code base?</A>).</LI>
+</UL>
+
+
+<P>&nbsp;</P>
+<H2>Requirements</H2>
+<UL>
+    <LI><A HREF="http://java.sun.com/j2se/">J2SE 1.4.0-beta3</A> (mandatory)</LI>
+    <LI><A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A> (mandatory)</LI>
+    <LI><A HREF="http://developer.java.sun.com/developer/earlyAccess/adding_generics/">Prototype compiler for JSR014:
+        Adding Generics to the Java Programming Language</A> (optional)</LI>
+</UL>
+
+<P>&nbsp;</P>
+<H2>References</H2>
+<UL>
+    <LI><A HREF="http://www.opengis.org/public/abstract/99-102r1.pdf">Topic
+        2 - Spatial Reference Systems</A> give a general overview.</LI>
+    <LI><A HREF="http://www.opengis.org/techno/specs/01-009.pdf">OpenGIS®
+        Coordinate Transformation Services Implementation
+        Specification</A> is our primary working material
+        for CS, CT and PT packages.</LI>
+    <LI><A HREF="http://www.opengis.org/techno/specs/01-004.pdf">OpenGIS®
+        Grid Coverages Implementation Specification</A> is our primary
+        working material for CV, GC and GP packages.</LI>
+</UL>
+
+</TD></TR></TABLE>
+
+
+</BODY>
+</HTML>
