@@ -29,7 +29,7 @@ package fr.ird.sql.image;
 import fr.ird.sql.Table;
 import java.sql.SQLException;
 import javax.swing.tree.TreeModel;
-import fr.ird.awt.tree.TreeNode;
+import org.geotools.gui.swing.tree.TreeNode;
 import java.util.List;
 
 

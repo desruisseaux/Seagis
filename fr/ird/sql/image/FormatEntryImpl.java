@@ -71,11 +71,11 @@ import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
 import org.geotools.io.image.RawBinaryImageReadParam;
+import org.geotools.gui.swing.tree.MutableTreeNode;
+import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
 
 // Seagis dependencies
 import fr.ird.util.XArray;
-import fr.ird.awt.tree.MutableTreeNode;
-import fr.ird.awt.tree.DefaultMutableTreeNode;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 

@@ -82,11 +82,11 @@ import java.util.StringTokenizer;
 
 // Map display
 import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.gui.swing.MapPane;
 import fr.ird.io.map.GEBCOReader;
 import fr.ird.io.map.IsolineReader;
-import org.geotools.renderer.j2d.RenderedIsoline;
+import org.geotools.renderer.j2d.RenderedGeometries;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Swing components
@@ -467,10 +467,10 @@ public class Processor extends Arguments
         {
             for (int i=0; i<isolines.length; i++)
             {
-                final Isoline isoline = isolineFactory.get(isolines[i]);
+                final GeometryCollection isoline = isolineFactory.get(isolines[i]);
                 if (isoline!=null)
                 {
-                    final RenderedIsoline layer = new RenderedIsoline(isoline);
+                    final RenderedGeometries layer = new RenderedGeometries(isoline);
                     layer.setContour(Color.white);
                     map.getRenderer().addLayer(layer);
                 }
@@ -535,7 +535,7 @@ public class Processor extends Arguments
             gr.setColor(Color.white);
             for (int i=0; i<isolines.length; i++)
             {
-                final Isoline isoline = isolineFactory.get(isolines[i]);
+                final GeometryCollection isoline = isolineFactory.get(isolines[i]);
                 if (isoline!=null) try
                 {
                     isoline.setCoordinateSystem(coverage.getCoordinateSystem());

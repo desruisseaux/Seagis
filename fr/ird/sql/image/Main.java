@@ -34,11 +34,11 @@ import java.sql.DriverManager;
 import fr.ird.sql.DataBase;
 
 // Modèles (table et arborescence)
-import fr.ird.awt.tree.Trees;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.table.TableCellRenderer;
-import fr.ird.awt.tree.DefaultMutableTreeNode;
+import org.geotools.gui.swing.tree.Trees;
+import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
 import fr.ird.awt.ImageTableModel;
 
 // Interface utilisateur

@@ -32,8 +32,8 @@ import fr.ird.sql.image.ImageEntry;
 import java.io.FileNotFoundException;
 
 // Map components
-import org.geotools.renderer.geom.Isoline;
-import org.geotools.renderer.j2d.RenderedIsoline;
+import org.geotools.renderer.geom.GeometryCollection;
+import org.geotools.renderer.j2d.RenderedGeometries;
 import org.geotools.renderer.j2d.RenderedLayer;
 import fr.ird.seasview.layer.IsolineFactory;
 import fr.ird.seasview.DataBase;
@@ -136,7 +136,7 @@ public final class IsolineLayerControl extends LayerControl {
         }
         IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
         final ProgressWindow progress = new ProgressWindow(null);
-        final Isoline[] isolines;
+        final GeometryCollection[] isolines;
         try {
             factory.setProgressListener(progress);
             isolines = factory.get(values);
@@ -144,11 +144,10 @@ public final class IsolineLayerControl extends LayerControl {
             factory.setProgressListener(null);
             progress.dispose();
         }
-        final RenderedIsoline[] isoLayers = new RenderedIsoline[isolines.length];
+        final RenderedGeometries[] isoLayers = new RenderedGeometries[isolines.length];
         for (int i=0; i<isoLayers.length; i++) {
-            final RenderedIsoline isoLayer = new RenderedIsoline(isolines[i]);
+            final RenderedGeometries isoLayer = new RenderedGeometries(isolines[i]);
             isoLayer.setContour   (Color.white);  // TODO: Set colors
-            isoLayer.setBackground(Color.white);
             isoLayer.setForeground(FOREGROUND);
             isoLayers[i] = isoLayer;
         }

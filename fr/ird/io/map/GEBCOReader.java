@@ -27,7 +27,7 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Maps
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.GeometryCollection;
 
 // Input/output
 import java.io.File;
@@ -121,13 +121,13 @@ public class GEBCOReader extends IsolineReader {
      *         is no isoline for the specified altitude.
      * @throws IOException if an error occured during reading.
      */
-    public Isoline read(final double altitude) throws IOException {
+    public GeometryCollection read(final double altitude) throws IOException {
         if (Double.isNaN(altitude)) {
             return null;
         }
         final BufferedReader reader = getBufferedReader();
         try {
-            final Isoline[] isolines = read(reader, altitude);
+            final GeometryCollection[] isolines = read(reader, altitude);
             switch (isolines.length) {
                 case 0:  return null;
                 case 1:  return isolines[0];
@@ -149,7 +149,7 @@ public class GEBCOReader extends IsolineReader {
      * @return Isolines An array of all isoline founds.
      * @throws IOException if an error occured during reading.
      */
-    public Isoline[] read() throws IOException {
+    public GeometryCollection[] read() throws IOException {
         final BufferedReader reader = getBufferedReader();
         try {
             return read(reader, Double.NaN);
@@ -176,10 +176,10 @@ public class GEBCOReader extends IsolineReader {
      * @throws IOException if an error occured during reading.
      * @throws ParseException if an error occured during parsing.
      */
-    private Isoline[] read(final BufferedReader reader, final double desiredZ)
+    private GeometryCollection[] read(final BufferedReader reader, final double desiredZ)
             throws IOException, ParseException
     {
-        final Map<Float,Isoline> isolines = new TreeMap<Float,Isoline>();
+        final Map<Float,GeometryCollection> isolines = new TreeMap<Float,GeometryCollection>();
         final double[] record = new double[2];
         String line; while ((line=reader.readLine()) != null) {
             if ((line=line.trim()).length() == 0) {
@@ -201,12 +201,13 @@ public class GEBCOReader extends IsolineReader {
              * If the next segment is to be stored in memory,
              * construct a new isoline or get an existing one.
              */
-            Isoline isoline = null;
+            GeometryCollection isoline = null;
             if (Double.isNaN(desiredZ) || record[0]==desiredZ) {
                 final Float altitude = new Float(-record[0]);
                 isoline = isolines.get(altitude);
                 if (isoline == null) {
-                    isoline = new Isoline(altitude.floatValue(), coordinateSystem);
+                    isoline = new GeometryCollection(coordinateSystem);
+                    isoline.setValue(altitude.floatValue());
                     isolines.put(altitude, isoline);
                 }
             }
@@ -235,9 +236,9 @@ public class GEBCOReader extends IsolineReader {
                                     ResourceKeys.ERROR_MISSING_LINES_$1, new Integer(count-j/2)));
             }
             if (isoline != null) {
-                isoline.add(points);
+                isoline.add(points, 0, points.length);
             }
         }
-        return isolines.values().toArray(new Isoline[isolines.size()]);
+        return isolines.values().toArray(new GeometryCollection[isolines.size()]);
     }
 }

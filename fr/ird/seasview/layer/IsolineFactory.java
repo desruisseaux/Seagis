@@ -33,7 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 // Map components
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.ct.TransformException;
 import fr.ird.io.map.GEBCOReader;
 
@@ -147,7 +147,7 @@ public final class IsolineFactory extends fr.ird.io.map.IsolineFactory {
      * @return All isolines parsed.
      * @throws IOException if the reader can't be created.
      */
-    protected Isoline[] readAll() throws IOException {
+    protected GeometryCollection[] readAll() throws IOException {
         final GEBCOReader reader = new GEBCOReader();
         reader.setInput(toSourceURL(name));
         return reader.read();

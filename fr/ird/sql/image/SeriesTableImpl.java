@@ -34,9 +34,9 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // Arborescence
-import fr.ird.awt.tree.TreeNode;
-import fr.ird.awt.tree.MutableTreeNode;
-import fr.ird.awt.tree.DefaultMutableTreeNode;
+import org.geotools.gui.swing.tree.TreeNode;
+import org.geotools.gui.swing.tree.MutableTreeNode;
+import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 
@@ -451,9 +451,11 @@ final class SeriesTableImpl extends Table implements SeriesTable {
      * SELECT * FROM Series WHERE Series.ID=5
      * </pre></blockquote>
      *
-     * Des objets <code>ImageSeries.Reference</code> sont contenus dans l'arborescence construite par
-     * {@link SeriesTable#getTree} et peuvent être obtenus par des appels à {@link fr.ird.awt.tree.TreeNode#getUserObject}.
-     * La façon préférée d'obtenir des objets de cette classe est par la méthode {@link ImageDataBase#getReference(int)}.
+     * Des objets <code>ImageSeries.Reference</code> sont contenus dans l'arborescence
+     * construite par {@link SeriesTable#getTree} et peuvent être obtenus par des appels
+     * à {@link org.geotools.gui.swing.tree.TreeNode#getUserObject}.
+     * La façon préférée d'obtenir des objets de cette classe est par la méthode
+     * {@link ImageDataBase#getReference(int)}.
      *
      * @version $Id$
      * @author Martin Desruisseaux

@@ -49,8 +49,8 @@ import javax.swing.BorderFactory;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import fr.ird.awt.tree.TreeNode;
-import fr.ird.awt.tree.Trees;
+import org.geotools.gui.swing.tree.TreeNode;
+import org.geotools.gui.swing.tree.Trees;
 
 // Divers
 import java.util.Date;

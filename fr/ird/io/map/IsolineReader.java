@@ -23,7 +23,7 @@
 package fr.ird.io.map;
 
 // Maps
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.GeometryCollection;
 
 // Input/output
 import java.net.URL;
@@ -127,7 +127,7 @@ public abstract class IsolineReader {
      *         is no isoline for the specified altitude.
      * @throws IOException if an error occured during reading.
      */
-    public abstract Isoline read(final double altitude) throws IOException;
+    public abstract GeometryCollection read(final double altitude) throws IOException;
 
     /**
      * Read all isolines.
@@ -135,5 +135,5 @@ public abstract class IsolineReader {
      * @return Isolines An array of all isoline founds.
      * @throws IOException if an error occured during reading.
      */
-    public abstract Isoline[] read() throws IOException;
+    public abstract GeometryCollection[] read() throws IOException;
 }

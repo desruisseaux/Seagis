@@ -49,7 +49,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
 import org.geotools.resources.Geometry;
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.GeometryCollection;
 
 
 /**
@@ -255,8 +255,8 @@ public final class CatchTableFiller {
     public static void main(final String[] args) throws SQLException, IOException {
         final GEBCOReader reader = new GEBCOReader();
         reader.setInput(new File("compilerData/Océan Indien.asc"));
-        final Isoline           coast = reader.read(0);
-        final CatchTableFiller worker = new CatchTableFiller();
+        final GeometryCollection coast = reader.read(0);
+        final CatchTableFiller  worker = new CatchTableFiller();
         worker.computeAnchorDistances             ("distance");
         worker.computeInterCatchDistances(0, "distance_pêche");
         worker.computeCoastDistances (coast, "distance_côte" );

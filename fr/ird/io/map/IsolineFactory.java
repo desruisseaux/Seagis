@@ -73,12 +73,13 @@ import fr.ird.resources.ResourceKeys;
 import org.geotools.math.Statistics;
 import org.geotools.resources.Utilities;
 import org.geotools.util.ProgressListener;
-import org.geotools.renderer.geom.Isoline;
+import org.geotools.renderer.geom.CompressionLevel;
+import org.geotools.renderer.geom.GeometryCollection;
 import org.geotools.ct.TransformException;
 
 
 /**
- * A factory class for {@link Isoline} objects. Isolines are loaded
+ * A factory class for {@link GeometryCollection} objects. Isolines are loaded
  * using the specified  {@link IsolineReader}  and cached in memory
  * using soft references. <code>IsolineFactory</code> make sure that
  * an isoline readed twice will not result in two copies of the same
@@ -100,7 +101,7 @@ public abstract class IsolineFactory {
     protected transient ProgressListener progress;
 
     /**
-     * Path to serialized {@link Isoline}s as a file. The first time an
+     * Path to serialized {@link GeometryCollection}s as a file. The first time an
      * isoline is requested,  all isolines will be read and serizalized
      * to this cache file. Subsequent calls will fetch isolines from this
      * file. This field may be <code>null</code> if the cache is not
@@ -109,24 +110,24 @@ public abstract class IsolineFactory {
     private final File cacheFile;
 
     /**
-     * Path to serialized {@link Isoline}s as an URL. This field may
+     * Path to serialized {@link GeometryCollection}s as an URL. This field may
      * be <code>null</code> if the cache is accessible as a file,
      * which is more efficient than an URL.
      */
     private final URL cacheURL;
 
     /**
-     * The set of previously loaded {@link Isolines},  or <code>null</code> if no
+     * The set of previously loaded {@link GeometryCollections},  or <code>null</code> if no
      * isolines has been loaded yet. When this map is first constructed, keys are
      * set to all isolone values available but values may still <code>null</code>
      * as long as the isoline has not been really loaded.
      */
-    private Map<Float,Reference<Isoline>> isolines;
+    private Map<Float,Reference<GeometryCollection>> isolines;
 
     /**
      * Construct an <code>IsolineFactory</code>.
      *
-     * @param cache Path to serialized {@link Isoline}s as a file. The first time an
+     * @param cache Path to serialized {@link GeometryCollection}s as a file. The first time an
      *              isoline is requested,  all isolines will be read and serizalized
      *              to this cache file. Subsequent calls will fetch isolines from this
      *              file.
@@ -141,7 +142,7 @@ public abstract class IsolineFactory {
      * can be read as a file, then this constructor is equivalents to
      * the <code>IsolineFactory(File)</code> constructor.
      *
-     * @param cache Path to serialized {@link Isoline}s as an URL.
+     * @param cache Path to serialized {@link GeometryCollection}s as an URL.
      */
     public IsolineFactory(URL cache) {
         File file = null;
@@ -179,7 +180,7 @@ public abstract class IsolineFactory {
      * @return All parsed isolines.
      * @throws IOException if the reader can't be created.
      */
-    protected abstract Isoline[] readAll() throws IOException;
+    protected abstract GeometryCollection[] readAll() throws IOException;
 
     /**
      * Returns an entry name for the specified value.
@@ -229,7 +230,7 @@ public abstract class IsolineFactory {
      *         if there is no isoline for the specified value.
      * @throws IOException if an I/O operation failed.
      */
-    public Isoline get(final float value) throws IOException {
+    public GeometryCollection get(final float value) throws IOException {
         return get(new float[]{value})[0];
     }
 
@@ -248,7 +249,7 @@ public abstract class IsolineFactory {
      * </ul>
      *
      * If an isoline has been found, then this method returns a clone of this
-     * isoline. Note that cloning {@link Isoline} means that only meta-data
+     * isoline. Note that cloning {@link GeometryCollection} means that only meta-data
      * info (like {@link org.geotools.cs.CoordinateSystem}) are really cloned.
      * Most voluminous data (like the array of points defining ploygons) are
      * shared among all clones.
@@ -260,9 +261,9 @@ public abstract class IsolineFactory {
      *         value.
      * @throws IOException if an I/O operation failed.
      */
-    public synchronized Isoline[] get(final float[] values) throws IOException {
+    public synchronized GeometryCollection[] get(final float[] values) throws IOException {
         final float[]   sortedValues = (float[]) values.clone();
-        final Isoline[] sortedResult = new Isoline[values.length];
+        final GeometryCollection[] sortedResult = new GeometryCollection[values.length];
         Arrays.sort(sortedValues);
         Object input = null;
         if (isolines == null) {
@@ -294,7 +295,7 @@ public abstract class IsolineFactory {
             }
             final Reference reference = isolines.get(key);
             if (reference != null) {
-                final Isoline iso = (Isoline) reference.get();
+                final GeometryCollection iso = (GeometryCollection) reference.get();
                 if (iso != null) {
                     // An isoline has been found in the cache. Put
                     // it in they array (we will clone it later).
@@ -356,7 +357,7 @@ public abstract class IsolineFactory {
          * garbage collection (which would defect the purpose
          * of this cache).
          */
-        final Isoline[] result = new Isoline[sortedResult.length];
+        final GeometryCollection[] result = new GeometryCollection[sortedResult.length];
         for (int i=0; i<values.length; i++) {
             final int index = Arrays.binarySearch(sortedValues, values[i]);
             if (index < 0) {
@@ -364,7 +365,7 @@ public abstract class IsolineFactory {
                 warning("get", ResourceKeys.ERROR_MISSING_ISOLINE_$1, new Float(values[i]));
                 continue;
             }
-            final Isoline iso = sortedResult[index];
+            final GeometryCollection iso = sortedResult[index];
             if (iso != null) {
                 result[i] = new Cloned(iso);
             }
@@ -377,7 +378,7 @@ public abstract class IsolineFactory {
      *
      * @param  input The stream to close, usually a {@link ZipFile}
      *         or a {@link InputStream} object. Other object type
-     *         (likes <code>Isoline[]</code> or <code>null</code>)
+     *         (likes <code>GeometryCollection[]</code> or <code>null</code>)
      *         will be ignored.
      * @throws IOException if an error occured while closing the stream.
      */
@@ -398,7 +399,7 @@ public abstract class IsolineFactory {
      * object, or a {@link ZipInputStream} if the cache can be accessed
      * through an {@link URL}. If the cache can't be found, then this method
      * read all isolines from the source (with {@link #readAll}) and returns
-     * an <code>Isoline[]</code> array. In any case, if the memory cache
+     * an <code>GeometryCollection[]</code> array. In any case, if the memory cache
      * {@link #isolines} hasn't be constructed yet, then this method initialize
      * the memory cache now.
      */
@@ -444,8 +445,8 @@ public abstract class IsolineFactory {
          * used, but prevent the garbage collector to collect
          * the isolines too early.
          */
-        Isoline[] all = readAll();
-        isolines = new HashMap<Float,Reference<Isoline>>(all.length + all.length/2);
+        GeometryCollection[] all = readAll();
+        isolines = new HashMap<Float,Reference<GeometryCollection>>(all.length + all.length/2);
         try {
             process(all, sourceMethodName);
         } catch (TransformException exception) {
@@ -458,7 +459,7 @@ public abstract class IsolineFactory {
          * Save isolines in the memory cache and on disk.
          */
         for (int i=0; i<all.length; i++) {
-            final Isoline isoline = all[i];
+            final GeometryCollection isoline = all[i];
             if (isoline != null) {
                 add(isoline);
             }
@@ -470,17 +471,22 @@ public abstract class IsolineFactory {
     /**
      * Post processing after reading isolines. Assemble them and compress.
      */
-    private void process(final Isoline[] all, final String sourceMethodName)
+    private void process(GeometryCollection[] all, final String sourceMethodName)
             throws TransformException
     {
-        Isoline.assemble(all, progress);
+        final GeometryCollection allGeo = new GeometryCollection();
+        for (int i=0; i<all.length; i++) {
+            allGeo.add(all[i]);
+        }
+        allGeo.assemble(progress);
+        all = (GeometryCollection[]) allGeo.getGeometries().toArray(all);
 
         final Resources resources = Resources.getResources(null);
         int        pointCount = 0;
         double    compression = 0;
         Statistics resolution = null;
         for (int i=0; i<all.length; i++) {
-            final Isoline isoline = all[i];
+            final GeometryCollection isoline = all[i];
             final Statistics res = isoline.getResolution();
             if (resolution == null) {
                 resolution = res;
@@ -489,7 +495,7 @@ public abstract class IsolineFactory {
             }
             final int count = isoline.getPointCount();
             // TODO: provides some API for controling compression.
-            compression += count * isoline.compress(0.75f);
+            compression += count * isoline.compress(CompressionLevel.RELATIVE_AS_BYTES);
             pointCount  += count;
         }
         compression /= pointCount;
@@ -514,7 +520,7 @@ public abstract class IsolineFactory {
     private void loadIndex(final InputStream input, final boolean canClose) throws IOException {
         final DataInputStream in = new DataInputStream(input);
         int count = in.readInt();
-        isolines = new HashMap<Float,Reference<Isoline>>(count + count/2);
+        isolines = new HashMap<Float,Reference<GeometryCollection>>(count + count/2);
         while (--count >= 0) {
             isolines.put(new Float(in.readFloat()), null);
         }
@@ -534,14 +540,14 @@ public abstract class IsolineFactory {
      * @return The isoline.
      * @throws IOException if an error occured while decoding the isoline.
      */
-    private Isoline load(final InputStream input, final boolean canClose) throws IOException {
-        Isoline isoline = null;
+    private GeometryCollection load(final InputStream input, final boolean canClose) throws IOException {
+        GeometryCollection isoline = null;
         final ObjectInputStream in = new ObjectInputStream(input);
         try {
-            isoline = (Isoline) in.readObject();
+            isoline = (GeometryCollection) in.readObject();
             add(isoline);
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
-                                     ResourceKeys.LOADING_ISOLINE_$1, new Float(isoline.value));
+                                     ResourceKeys.LOADING_ISOLINE_$1, new Float(isoline.getValue()));
             record.setSourceClassName("IsolineFactory");
             record.setSourceMethodName("get");
             logger.log(record);
@@ -563,9 +569,9 @@ public abstract class IsolineFactory {
      * Add an isoline to the cache. If an other isoline was already in
      * the cache for the same value, a warning message will be logged.
      */
-    private void add(final Isoline isoline) {
-        final Float key = new Float(isoline.value);
-        final Reference oldRef = isolines.put(key, new SoftReference<Isoline>(isoline));
+    private void add(final GeometryCollection isoline) {
+        final Float key = new Float(isoline.getValue());
+        final Reference oldRef = isolines.put(key, new SoftReference<GeometryCollection>(isoline));
         if (oldRef!=null && oldRef.get()!=null) {
             // Should not occurs.
             warning("get", ResourceKeys.ERROR_DUPLICATED_ISOLINE_$1, key);
@@ -579,11 +585,11 @@ public abstract class IsolineFactory {
      * @param  isolines The set of isolines to save in the cache.
      * @throws IOException if an error occurs during serialization.
      */
-    private void save(final Isoline[] isolines) throws IOException {
+    private void save(final GeometryCollection[] isolines) throws IOException {
         final ZipOutputStream out = new ZipOutputStream(
                 (cacheFile!=null) ? new FileOutputStream(cacheFile) :
                                     cacheURL.openConnection().getOutputStream());
-        out.setComment("Serialized Java objects: org.geotools.renderer.geom.Isoline");
+        out.setComment("Serialized Java objects: org.geotools.renderer.geom.GeometryCollection");
         out.setLevel(Deflater.BEST_COMPRESSION);
         /*
          * Fist write an index of all available isolines, in increasing
@@ -599,7 +605,7 @@ public abstract class IsolineFactory {
             final DataOutputStream dataStream = new DataOutputStream(checked);
             dataStream.writeInt(isolines.length);
             for (int i=0; i<isolines.length; i++) {
-                dataStream.writeFloat(isolines[i].value);
+                dataStream.writeFloat(isolines[i].getValue());
             }
             dataStream.close();
             final int size = buffer.size();
@@ -617,11 +623,11 @@ public abstract class IsolineFactory {
          */
         for (int i=0; i<isolines.length; i++) {
             buffer.reset();
-            final Isoline isoline = isolines[i];
+            final GeometryCollection isoline = isolines[i];
             final ObjectOutputStream dataStream = new ObjectOutputStream(buffer);
             dataStream.writeObject(isoline);
             dataStream.close();
-            final ZipEntry entry = new ZipEntry(getName(isoline.value));
+            final ZipEntry entry = new ZipEntry(getName(isoline.getValue()));
             out.putNextEntry(entry);
             buffer.writeTo(out);
             out.closeEntry();
@@ -650,16 +656,16 @@ public abstract class IsolineFactory {
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static class Cloned extends Isoline {
+    private static class Cloned extends GeometryCollection {
         /**
          * The originating provider.
          */
-        private final Isoline parent;
+        private final GeometryCollection parent;
 
         /**
          * Construct a cloned isoline.
          */
-        public Cloned(final Isoline isoline) {
+        public Cloned(final GeometryCollection isoline) {
             super(isoline);
             parent = isoline;
         }
