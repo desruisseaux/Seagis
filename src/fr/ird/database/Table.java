@@ -30,6 +30,13 @@ import java.rmi.RemoteException;
  */
 public interface Table extends Remote {
     /**
+     * Returns the database object where this table come from.
+     *
+     * @throws RemoteException if a problem occured while fetching this information.
+     */
+    public abstract DataBase getDataBase() throws RemoteException;
+
+    /**
      * Release any resources used by this table.
      *
      * @throws RemoteException if a problem occured while releasing the resources.

@@ -10,15 +10,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
- *
- * Contacts:
- *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
- *             Institut de Recherche pour le Développement
- *             mailto:seasnet@teledetection.fr
- *
- *     CANADA: Observatoire du Saint-Laurent
- *             Institut Maurice-Lamontagne
- *             mailto:osl@osl.gc.ca
  */
 package fr.ird.resources.seagis;
 
@@ -26,6 +17,8 @@ package fr.ird.resources.seagis;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import org.geotools.resources.ResourceBundle;
+import org.geotools.util.InternationalString;
+import org.geotools.util.ResourceInternationalString;
 
 
 /**
@@ -81,6 +74,18 @@ public class Resources extends ResourceBundle {
         /*
          * We rely on cache capability of {@link java.util.ResourceBundle}.
          */
+    }
+
+    /**
+     * Gets an international string for the given key. This method do not check for the key
+     * validity. If the key is invalid, then a {@link MissingResourceException} may be thrown
+     * when a {@link InternationalString#toString} method is invoked.
+     *
+     * @param  key The key for the desired string.
+     * @return An international string for the given key.
+     */
+    public static InternationalString formatInternational(final int key) {
+        return new ResourceInternationalString(Resources.class.getName(), String.valueOf(key));
     }
 
     /**

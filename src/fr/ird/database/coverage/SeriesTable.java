@@ -58,6 +58,11 @@ public interface SeriesTable extends Table {
     public static final int CATEGORY_LEAF = 7;
 
     /**
+     * {@inheritDoc}
+     */
+    public abstract CoverageDataBase getDataBase() throws RemoteException;
+
+    /**
      * Retourne une référence vers un enregistrement de la table des séries.
      *
      * @param  name Nom de la série recherchée.

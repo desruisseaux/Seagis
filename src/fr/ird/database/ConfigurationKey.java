@@ -80,7 +80,8 @@ public final class ConfigurationKey implements Serializable {
         this.defaultValue = defaultValue;
         this.description  = description;
         synchronized (POOL) {
-            if (!equals(POOL.put(name, this))) {
+            final ConfigurationKey previous = POOL.put(name, this);
+            if (previous!=null && !equals(previous)) {
                 throw new IllegalStateException("Doublon dans les noms de clés.");
             }
         }

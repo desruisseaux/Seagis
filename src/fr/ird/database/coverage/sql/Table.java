@@ -26,6 +26,11 @@ import java.rmi.server.UnicastRemoteObject;
 // Geotools dependencies
 import org.geotools.util.WeakHashSet;
 
+// Seagis dependencies
+import fr.ird.database.ConfigurationKey;
+import fr.ird.resources.seagis.Resources;
+import fr.ird.database.coverage.CoverageDataBase;
+
 
 /**
  * Base class for all implementations provided in the
@@ -35,12 +40,6 @@ import org.geotools.util.WeakHashSet;
  * @author Martin Desruisseaux
  */
 abstract class Table extends UnicastRemoteObject implements fr.ird.database.Table {
-    /**
-     * Construct a new table.
-     */
-    protected Table() throws RemoteException {
-    }
-
     /* Default schema name for SQL instructions. */ static final String SCHEMA            = "images";
     /* Default table  name for SQL instructions. */ static final String PHENOMENONS       = "Parameters";
     /* Default table  name for SQL instructions. */ static final String PROCEDURES        = "Operations";
@@ -62,6 +61,20 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
     static final WeakHashSet POOL = new WeakHashSet();
 
     /**
+     * The database where this table come from.
+     */
+    protected final CoverageDataBase database;
+
+    /**
+     * Construct a new table.
+     *
+     * @param database The database where this table come from.
+     */
+    protected Table(final CoverageDataBase database) throws RemoteException {
+        this.database = database;
+    }
+
+    /**
      * Extrait la partie "SELECT ... FROM ..." de la requête spécifiée. Cette méthode
      * retourne la chaîne <code>query</code> à partir du début jusqu'au dernier caractère
      * précédant la première clause "WHERE". La clause "WHERE" et tout ce qui suit ne sera
@@ -80,6 +93,13 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
             }
         }
         return query;
+    }
+
+    /**
+     * Create a configuration key for the specified attributes.
+     */
+    static ConfigurationKey createKey(final String name, final int text, final String SQL) {
+        return new ConfigurationKey(name, Resources.formatInternational(text), SQL);
     }
 
     /**
@@ -114,5 +134,20 @@ abstract class Table extends UnicastRemoteObject implements fr.ird.database.Tabl
         calendar.set(Calendar.SECOND,      localCalendar.get(Calendar.SECOND     ));
         calendar.set(Calendar.MILLISECOND, localCalendar.get(Calendar.MILLISECOND));
         return calendar.getTime();
-    }   
+    }
+
+    /**
+     * Returns a property value for the specified key. This method work for a null database,
+     * which is convenient for testing purpose.
+     */
+    protected String getProperty(final ConfigurationKey key) throws RemoteException {
+        return (database!=null) ? database.getProperty(key) : key.defaultValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public final CoverageDataBase getDataBase() throws RemoteException {
+        return database;
+    }
 }

@@ -12,59 +12,40 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
-// Base de données
+// J2SE dependencies
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
-import java.rmi.RemoteException;
-import java.rmi.server.RemoteObject;
-
-// Entrés/sorties
 import java.net.URL;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileNotFoundException;
-
-// Divers
+import java.rmi.RemoteException;
 import java.awt.Color;
-import java.util.Locale;
 import java.util.List;
 import java.util.ArrayList;
-import java.nio.charset.Charset;
 import java.text.ParseException;
-import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 
 // OpenGIS dependencies
 import org.opengis.referencing.FactoryException;
 
-// Geotools
+// Geotools dependencies
 import org.geotools.cv.Category;
 import org.geotools.ct.MathTransform1D;
 import org.geotools.ct.MathTransformFactory;
 import org.geotools.util.NumberRange;
 
-// Seagis
-import fr.ird.resources.Utilities;
+// Seagis dependencies
+import fr.ird.database.DataBase;
+import fr.ird.database.ConfigurationKey;
 import fr.ird.database.CatalogException;
 import fr.ird.database.IllegalRecordException;
+import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.resources.seagis.ResourceKeys;
+import fr.ird.resources.Utilities;
 
 
 /**
@@ -79,27 +60,25 @@ final class CategoryTable extends Table {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par les
      * constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
-    static final String SQL_SELECT = configuration.get(Configuration.KEY_CATEGORIES);
-    // static final String SQL_SELECT=
-    //                 "SELECT "+  /*[01] NAME    */ "name, "    +
-    //                             /*[02] LOWER   */ "lower, "   +
-    //                             /*[03] UPPER   */ "upper, "   +
-    //                             /*[04] C0      */ "c0, "      +
-    //                             /*[05] C1      */ "c1, "      +
-    //                             /*[06] LOG     */ "log, "     +
-    //                             /*[07] COLORS  */ "colors\n"  +
-    //     
-    //                 "FROM "+CATEGORIES+" WHERE [band]=? ORDER BY lower";
-                    // "Note: "band" semble être un opérateur pour Access.
+    static final ConfigurationKey SELECT = createKey(CATEGORIES, ResourceKeys.SQL_CATEGORIES,
+            "SELECT name, "    +   // [01] NAME
+                   "lower, "   +   // [02] LOWER
+                   "upper, "   +   // [03] UPPER
+                   "c0, "      +   // [04] C0
+                   "c1, "      +   // [05] C1
+                   "log, "     +   // [06] LOG
+                   "colors\n"  +   // [07] COLORS
 
-    /** Numéro de colonne. */ private static final int NAME    =  1;
-    /** Numéro de colonne. */ private static final int LOWER   =  2;
-    /** Numéro de colonne. */ private static final int UPPER   =  3;
-    /** Numéro de colonne. */ private static final int C0      =  4;
-    /** Numéro de colonne. */ private static final int C1      =  5;
-    /** Numéro de colonne. */ private static final int LOG     =  6;
-    /** Numéro de colonne. */ private static final int COLORS  =  7;
-    /** Numéro d'argument. */ private static final int ARG_ID  =  1;
+            "FROM "+SCHEMA+".\""+CATEGORIES+"\" WHERE band=? ORDER BY lower");
+
+    /** Numéro de colonne. */ private static final int NAME     =  1;
+    /** Numéro de colonne. */ private static final int LOWER    =  2;
+    /** Numéro de colonne. */ private static final int UPPER    =  3;
+    /** Numéro de colonne. */ private static final int C0       =  4;
+    /** Numéro de colonne. */ private static final int C1       =  5;
+    /** Numéro de colonne. */ private static final int LOG      =  6;
+    /** Numéro de colonne. */ private static final int COLORS   =  7;
+    /** Numéro d'argument. */ private static final int ARG_BAND =  1;
 
     /**
      * Requète SQL pour interroger la base de données.
@@ -115,85 +94,87 @@ final class CategoryTable extends Table {
     /**
      * Construit une table en utilisant la connection spécifiée.
      *
+     * @param database The database where this table come from.
      * @param connection Connection vers une base de données d'images.
-     * @throws CatalogException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
+     * @throws RemoteException si <code>ThemeTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected CategoryTable(final Connection connection) throws RemoteException {
+    protected CategoryTable(final CoverageDataBase database,
+                            final Connection     connection)
+            throws RemoteException
+    {
+        super(database);
         try {
-            statement = connection.prepareStatement(SQL_SELECT);
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            statement = connection.prepareStatement(getProperty(SELECT));
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
         }
     }
 
     /**
      * Retourne la liste des catégories qui appartiennent à la bande spécifiée.
      *
-     * @param  bandID Identificateur de la bande pour lequel on veut les catégories.
+     * @param  band Identificateur de la bande pour lequel on veut les catégories.
      * @return Les catégories de la bande demandée.
-     * @throws CatalogException si l'interrogation de la table "Categories" a échoué.
+     * @throws SQLException si l'interrogation de la table "Categories" a échoué.
+     * @throws IllegalRecordException si une incohérence a été trouvée dans les enregistrements.
      */
-    public synchronized Category[] getCategories(final int bandID) throws RemoteException {
-        try {
-            statement.setInt(ARG_ID, bandID);
-            final List<Category> categories = new ArrayList<Category>();
-            final ResultSet result = statement.executeQuery();
-            while (result.next()) {
-                boolean isQuantifiable = true;
-                final String    name = result.getString (NAME).intern();
-                final int      lower = result.getInt    (LOWER);
-                final int      upper = result.getInt    (UPPER);
-                final double      c0 = result.getDouble (C0); isQuantifiable &= !result.wasNull();
-                final double      c1 = result.getDouble (C1); isQuantifiable &= !result.wasNull();
-                final boolean    log = result.getBoolean(LOG);
-                final String colorID = result.getString (COLORS);
-                /*
-                 * Procède maintenant au décodage du champ "colors". Ce champ contient
-                 * une chaîne de caractère qui indique soit le code RGB d'une couleur
-                 * uniforme, ou soit l'adresse URL d'une palette de couleurs.
-                 */
-                Color[] colors = null;
-                if (colorID != null) try {
-                    colors = decode(colorID);
-                } catch (IOException exception) {
-                    throw new IllegalRecordException(CATEGORIES, exception);
-                } catch (ParseException exception) {
-                    throw new IllegalRecordException(CATEGORIES, exception);
-                }
-                /*
-                 * Construit une catégorie correspondant à
-                 * l'enregistrement qui vient d'être lu.
-                 */
-                Category category;
-                final NumberRange range = new NumberRange(lower, upper);
-                if (!isQuantifiable) {
-                    category = new Category(name, colors, range, (MathTransform1D)null);
-                } else {
-                    category = new Category(name, colors, range, c1, c0);
-                    if (log) {
-                        final MathTransformFactory factory = MathTransformFactory.getDefault();
-                        if (exponential == null) try {
-                            final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
-                            param.setParameter("Dimension", 1);
-                            param.setParameter("Base", 10.0); // Must be a 'double'
-                            exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
-                        } catch (FactoryException exception) {
-                            final CatalogException e = new CatalogException(exception.getLocalizedMessage());
-                            e.initCause(exception);
-                            throw e;
-                        }
-                        MathTransform1D tr = category.getSampleToGeophysics();
-                        tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);
-                        category = new Category(name, colors, range, tr);
-                    }
-                }
-                categories.add(category);
+    public synchronized Category[] getCategories(final int band)
+            throws SQLException, CatalogException
+    {
+        statement.setInt(ARG_BAND, band);
+        final List<Category> categories = new ArrayList<Category>();
+        final ResultSet result = statement.executeQuery();
+        while (result.next()) {
+            boolean isQuantifiable = true;
+            final String    name = result.getString (NAME);
+            final int      lower = result.getInt    (LOWER);
+            final int      upper = result.getInt    (UPPER);
+            final double      c0 = result.getDouble (C0); isQuantifiable &= !result.wasNull();
+            final double      c1 = result.getDouble (C1); isQuantifiable &= !result.wasNull();
+            final boolean    log = result.getBoolean(LOG);
+            final String colorID = result.getString (COLORS);
+            /*
+             * Procède maintenant au décodage du champ "colors". Ce champ contient
+             * une chaîne de caractère qui indique soit le code RGB d'une couleur
+             * uniforme, ou soit l'adresse URL d'une palette de couleurs.
+             */
+            Color[] colors = null;
+            if (colorID != null) try {
+                colors = decode(colorID);
+            } catch (IOException exception) {
+                throw new IllegalRecordException(CATEGORIES, exception);
+            } catch (ParseException exception) {
+                throw new IllegalRecordException(CATEGORIES, exception);
             }
-            result.close();
-            return categories.toArray(new Category[categories.size()]);
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            /*
+             * Construit une catégorie correspondant à
+             * l'enregistrement qui vient d'être lu.
+             */
+            Category category;
+            final NumberRange range = new NumberRange(lower, upper);
+            if (!isQuantifiable) {
+                category = new Category(name, colors, range, (MathTransform1D)null);
+            } else {
+                category = new Category(name, colors, range, c1, c0);
+                if (log) {
+                    final MathTransformFactory factory = MathTransformFactory.getDefault();
+                    if (exponential == null) try {
+                        final ParameterList param = factory.getMathTransformProvider("Exponential").getParameterList();
+                        param.setParameter("Dimension", 1);
+                        param.setParameter("Base", 10.0); // Must be a 'double'
+                        exponential = (MathTransform1D) factory.createParameterizedTransform("Exponential", param);
+                    } catch (FactoryException exception) {
+                        throw new CatalogException(exception);
+                    }
+                    MathTransform1D tr = category.getSampleToGeophysics();
+                    tr = (MathTransform1D) factory.createConcatenatedTransform(tr, exponential);
+                    category = new Category(name, colors, range, tr);
+                }
+            }
+            categories.add(category);
         }
+        result.close();
+        return categories.toArray(new Category[categories.size()]);
     }
 
     /**
@@ -213,12 +194,12 @@ final class CategoryTable extends Table {
          * Retire les guillements au début et à la fin de la chaîne, s'il y en a.
          * Cette opération vise à éviter des problèmes de compatibilités lorsque
          * l'importation des thèmes dans la base des données s'est senti obligée
-         * de placer des guillemets partout (cas de MySQL sous Linux par exemple).
+         * de placer des guillemets partout.
          */
         if (true) {
             colors = colors.trim();
             final int length = colors.length();
-            if (length>=2 && colors.charAt(0)=='\"' && colors.charAt(length-1)=='\"') {
+            if (length>=2 && colors.charAt(0)=='"' && colors.charAt(length-1)=='"') {
                 colors = colors.substring(1, length-1);
             }
         }

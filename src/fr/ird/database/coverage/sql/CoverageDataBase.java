@@ -386,53 +386,6 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
     }
 
     /**
-     * Retourne la liste des répertoires synchronisées. Voyez
-     * {@link #setSynchronizedDirectories} pour une description
-     * plus détaillée.
-     */
-    public static File[] getSynchronizedDirectories() {
-        return (File[]) FormatEntry.synchronizedDirectories.clone();
-    }
-
-    /**
-     * Spécifie les répertoires dans lesquels il faudra synchroniser les lectures d'images. Cette liste
-     * sert à éviter qu'on ne lise en même temps deux images qui se trouve sur le même disque, afin de
-     * réduire les déplacements requis de la tête du lecteur. Cette liste s'interprète comme suit:
-     *
-     * soit deux images qui ont les chemins complets
-     *
-     * "<code>/common/directory1/filename1</code>" et "<code>/common/directory2/filename2</code>".
-     *
-     * Ces deux images ont un répertoire parent commun: "<code>common</code>". Si ce répertoire
-     * commun apparaît dans la liste, ou s'il est un sous-répertoire d'un répertoire apparaissant
-     * dans la liste, alors les lectures de ces images seront synchronisées de façon à éviter qu'elles
-     * ne soient faites en même temps.
-     *
-     * <p>Sous Windows, cette liste contient par défaut les lettres des lecteurs ("A:", "C:", "D:",
-     * etc.). Ca signifie que deux images peuvent être lues en même temps si l'une est lue sur le
-     * lecteur "C:" et l'autre sur le lecteur "D:", mais pas si elles sont toutes deux lues sur le
-     * lecteur "C:". Sous Unix, cette liste contient par défaut "/", ce qui signifie qu'aucune
-     * image ne peut être lue en même temps. Spécifier une liste de répertoires plus précise peut
-     * donc améliorer les performances, surtout sur Unix.</p>
-     *
-     * <p>La liste spécifiée dépend typiquement de la configuration matérielle de système, telle que
-     * la présence physique de disques durs ou de lecteur de bandes. Cette configuration est la même
-     * pour toute les base de données sur une machine, mais peut varier d'une machine à l'autre.
-     * C'est pourquoi cette liste est statique (s'applique à toute les bases de données de la
-     * machine virtuelle courante) plutôt que liée à une base de données particulière.</p>
-     *
-     * <p>Notez enfin que cette liste n'a d'impact que sur la performance. Que la liste soit
-     * précise ou pas ne devrait pas affecter les résultats obtenus.</p>
-     */
-    public static void setSynchronizedDirectories(final File[] directories) throws IOException {
-        final File[] dir = new File[directories.length];
-        for (int i=0; i<dir.length; i++) {
-            dir[i]=directories[i].getCanonicalFile();
-        }
-        FormatEntry.synchronizedDirectories = dir;
-    }
-
-    /**
      * Construit et retourne un panneau qui permet à l'utilisateur de modifier
      * les instructions SQL. Les instructions modifiées seront conservées dans
      * les préférences systèmes et utilisées pour interroger les tables de la

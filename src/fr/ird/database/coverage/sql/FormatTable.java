@@ -12,22 +12,11 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
 // Base de données
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
@@ -35,6 +24,7 @@ import java.rmi.RemoteException;
 
 // Seagis
 import fr.ird.database.CatalogException;
+import fr.ird.database.ConfigurationKey;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.database.IllegalRecordException;
@@ -52,22 +42,19 @@ final class FormatTable extends Table {
      * Requête SQL utilisée pour obtenir le type MIME du format
      * (par exemple "image/png") dans la table des formats.
      */
-    static final String SQL_SELECT = configuration.get(Configuration.KEY_FORMATS);
-    // static final String SQL_SELECT=
-    //                 "SELECT "+  /*[01] ID         */ "ID, "         +
-    //                             /*[02] NAME       */ "name, "       +
-    //                             /*[03] MIME       */ "mime, "       +
-    //                             /*[04] EXTENSION  */ "extension, "  +
-    //                             /*[05] GEOPHYSICS */ "geophysics\n" +
-    // 
-    //                 "FROM "+FORMATS+" WHERE ID=?";
+    static final ConfigurationKey SELECT = createKey(FORMATS, ResourceKeys.SQL_FORMATS, 
+            "SELECT name, "       +   // [01] NAME
+                   "mime, "       +   // [02] MIME
+                   "extension, "  +   // [03] EXTENSION
+                   "geophysics\n" +   // [04] GEOPHYSICS
+            "FROM "+SCHEMA+".\""+FORMATS+"\" WHERE name=?");
 
-    /** Numéro de colonne. */ private static final int ID         = 1;
-    /** Numéro de colonne. */ private static final int NAME       = 2;
-    /** Numéro de colonne. */ private static final int MIME       = 3;
-    /** Numéro de colonne. */ private static final int EXTENSION  = 4;
-    /** Numéro de colonne. */ private static final int GEOPHYSICS = 5;
-    /** Numéro d'argument. */ private static final int ARG_ID     = 1;
+
+    /** Numéro de colonne. */ private static final int NAME       = 1;
+    /** Numéro de colonne. */ private static final int MIME       = 2;
+    /** Numéro de colonne. */ private static final int EXTENSION  = 3;
+    /** Numéro de colonne. */ private static final int GEOPHYSICS = 4;
+    /** Numéro d'argument. */ private static final int ARG_NAME   = 1;
 
     /**
      * Requète SQL pour interroger la base de données.
@@ -83,75 +70,62 @@ final class FormatTable extends Table {
     /**
      * Construit un objet en utilisant la connection spécifiée.
      *
+     * @param database The database where this table come from.
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>FormatTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected FormatTable(final Connection connection) throws RemoteException {
+    protected FormatTable(final CoverageDataBase database,
+                          final Connection     connection)
+            throws RemoteException
+    {
+        super(database);
         try {
-            statement = connection.prepareStatement(SQL_SELECT);
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            statement = connection.prepareStatement(getProperty(SELECT));
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
         }
     }
 
     /**
-     * Retourne l'entré correspondant au format identifié par le numéro <code>ID</code> spécifié.
-     *
-     * @param  ID Numéro ID du format.
-     * @return L'entré correspondant au format spécifié.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue, 
-     *                                      ou si le format spécifié n'a pas été trouvé.
-     */
-    public FormatEntry getEntry(final int ID) throws RemoteException {
-        return getEntry(new Integer(ID));
-    }
-
-    /**
-     * Retourne l'entré correspondant au format identifié par le numéro <code>key</code> spécifié.
+     * Retourne l'entré correspondant au format identifié par le nom spécifié.
      *
      * @param  key Numéro ID du format.
      * @return L'entré correspondant au format spécifié.
-     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue, 
-     *                                      ou si le format spécifié n'a pas été trouvé.
+     * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */
-    final synchronized FormatEntry getEntry(final Integer key) throws RemoteException 
+    public synchronized FormatEntry getEntry(final String key)
+            throws SQLException, RemoteException
     {
-        try {
-            statement.setInt(ARG_ID, key.intValue());
-            ResultSet result = statement.executeQuery();
-            if (!result.next()) {
+        statement.setString(ARG_NAME, key);
+        ResultSet result = statement.executeQuery();
+        if (!result.next()) {
+            result.close();
+            throw new IllegalRecordException(FORMATS,
+                    Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
+        }
+        final String       name  = result.getString (NAME);
+        final String   mimeType  = result.getString (MIME);
+        final String   extension = result.getString (EXTENSION);
+        final boolean geophysics = result.getBoolean(GEOPHYSICS);
+        while (result.next()) {
+            if (!      name.equals(result.getString (NAME))      ||
+                !  mimeType.equals(result.getString (MIME))      ||
+                ! extension.equals(result.getString (EXTENSION)) ||
+                 geophysics !=     result.getBoolean(GEOPHYSICS))
+            {
                 result.close();
                 throw new IllegalRecordException(FORMATS,
-                        Resources.format(ResourceKeys.ERROR_NO_IMAGE_FORMAT_$1, key));
+                        Resources.format(ResourceKeys.ERROR_TOO_MANY_IMAGE_FORMATS_$1, key));
             }
-            final int      formatID  = result.getInt    (ID);
-            final String       name  = result.getString (NAME);
-            final String   mimeType  = result.getString (MIME);
-            final String   extension = result.getString (EXTENSION);
-            final boolean geophysics = result.getBoolean(GEOPHYSICS);
-            while (result.next()) {
-                if (formatID  !=     result.getInt    (ID)         ||
-                  !      name.equals(result.getString (NAME))      ||
-                  !  mimeType.equals(result.getString (MIME))      ||
-                  ! extension.equals(result.getString (EXTENSION)) ||
-                   geophysics !=     result.getBoolean(GEOPHYSICS))
-                {
-                    result.close();
-                    throw new IllegalRecordException(FORMATS,
-                            Resources.format(ResourceKeys.ERROR_TOO_MANY_IMAGE_FORMATS_$1, key));
-                }
-            }
-            result.close();
-            if (bands == null) {
-                bands = new SampleDimensionTable(statement.getConnection());
-            }
-            final FormatEntry entry = new FormatEntry(formatID, name, mimeType, extension,
-                                                  geophysics, bands.getSampleDimensions(formatID));
-            CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
-            return entry;
-        } catch (SQLException e) {
-            throw new CatalogException(e);
         }
+        result.close();
+        if (bands == null) {
+            bands = new SampleDimensionTable(database, statement.getConnection());
+        }
+        final FormatEntry entry = new FormatEntry(name, mimeType, extension,
+                                      geophysics, bands.getSampleDimensions(name));
+        CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CONSTRUCT_DECODER_$1, name));
+        return entry;
     }
 
     /**
@@ -163,15 +137,15 @@ final class FormatTable extends Table {
      *         lors de la disposition des ressources.
      */
     public synchronized void close() throws RemoteException {
+        if (bands != null) {
+            bands.close();
+            bands = null;
+        }
         try {
-            if (bands != null) {
-                bands.close();
-                bands = null;
-            }
             statement.close();
-            CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CLOSE_FORMAT_TABLE));
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+        } catch (SQLException cause) {
+            throw new CatalogException(cause);
         }            
+        CoverageDataBase.LOGGER.fine(Resources.format(ResourceKeys.CLOSE_FORMAT_TABLE));
     }
 }

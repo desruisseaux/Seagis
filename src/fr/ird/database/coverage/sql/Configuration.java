@@ -37,26 +37,6 @@ final class Configuration extends fr.ird.database.Configuration {
      * Définition des clés accessibles.
      */
     public static final Key
-        KEY_SERIES_TREE = Key.get(Table.SERIES+":TREE", ResourceKeys.SQL_SERIES_TREE,
-            "SELECT subseries.id, subseries.name, subseries.description, series.id, series.name, "+
-            "series.description, operations.id, operations.name, operations.description, parameters.ID, "+
-            "parameters.name, parameters.description, subseries.format, series.period FROM \"" +
-            Table.PARAMETERS + "\" parameters, \"" + Table.OPERATIONS + "\" operations, \"" +
-            Table.SERIES+ "\" series, \"" + Table.SUBSERIES + "\" subseries WHERE "+
-            "parameters.id=parameter AND operations.id=operation AND series.id=series "+
-            "AND visible=TRUE ORDER BY parameters.name, operations.name, series.name"),
-
-        KEY_SERIES_ID = Key.get(Table.SERIES+":ID", ResourceKeys.SQL_SERIES_BY_ID,
-            "SELECT id, name, description, period FROM \"" + Table.SERIES + "\" WHERE ID=?"),
-
-        KEY_SERIES_SUBSERIES   = Key.get(Table.SERIES+":SubSeries",
-                                         ResourceKeys.SQL_SERIES_BY_SUBSERIES,
-                                         "SELECT id, name, description, format FROM \"" + Table.SUBSERIES + "\" WHERE series=?"),
-
-        KEY_SERIES_NAME        = Key.get(Table.SERIES,
-                                 ResourceKeys.SQL_SERIES_BY_NAME,
-                                 "SELECT id, name, description, period FROM \"" + Table.SERIES    + "\" WHERE name LIKE ?"),
-
         KEY_GRID_COVERAGES_ID_INSERT = Key.get(Table.GRID_COVERAGES+"_ID:INSERT",
                                                ResourceKeys.SQL_GRID_COVERAGES_ID_INSERT,
                                                "INSERT INTO \"" + Table.GRID_COVERAGES + "\" (ID, subseries, filename, start_time, end_time, geometry) VALUES (?, ?, ?, ?, ?, ?)"),
@@ -88,18 +68,6 @@ final class Configuration extends fr.ird.database.Configuration {
         KEY_GRID_COVERAGES2 = Key.get(Table.GRID_COVERAGES+":filename", 
                                       ResourceKeys.SQL_GRID_COVERAGES_BY_FILENAME, 
                                       "SELECT gridcoverages.id, series, pathname, filename, start_time, end_time, x_min AS xmin, x_max as xmax, y_min as ymin, y_max as ymax, width, height, coordinate_system, format FROM \"" + Table.GRID_GEOMETRIES + "\" gridgeometries, + \"" + Table.GRID_COVERAGES + "\" gridcoverages, \"" + Table.SUBSERIES + "\" subseries WHERE gridcoverages.subseries = subseries.id AND gridgeometries.id = gridcoverages.geometry and (visible=TRUE) AND (series=?) AND (filename LIKE ?)"),                            
-
-        KEY_FORMATS            = Key.get(Table.FORMATS, 
-                                         ResourceKeys.SQL_FORMATS, 
-                                         "SELECT id, name, mime, extension, geophysics FROM \"" + Table.FORMATS + "\" WHERE ID=?"),
-
-        KEY_SAMPLE_DIMENSIONS  = Key.get(Table.SAMPLE_DIMENSIONS, 
-                                         ResourceKeys.SQL_SAMPLE_DIMENSIONS, 
-                                         "SELECT id, band, units FROM \"" + Table.SAMPLE_DIMENSIONS + "\" WHERE format=? ORDER BY band"),
-
-        KEY_CATEGORIES         = Key.get(Table.CATEGORIES, 
-                                         ResourceKeys.SQL_CATEGORIES, 
-                                         "SELECT name, lower, upper, c0, c1, log, colors FROM \"" + Table.CATEGORIES + "\" WHERE band=? ORDER BY lower"),
 
         KEY_GRID_GEOMETRIES    = Key.get(Table.GRID_GEOMETRIES, 
                                          ResourceKeys.SQL_GRID_GEOMETRIES, 

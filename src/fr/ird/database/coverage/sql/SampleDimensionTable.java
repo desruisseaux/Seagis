@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
@@ -42,10 +32,12 @@ import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 
 // Seagis
+import fr.ird.database.ConfigurationKey;
 import fr.ird.database.CatalogException;
+import fr.ird.database.IllegalRecordException;
+import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.resources.seagis.Resources;
 import fr.ird.resources.seagis.ResourceKeys;
-import fr.ird.database.IllegalRecordException;
 
 
 /**
@@ -60,23 +52,19 @@ final class SampleDimensionTable extends Table {
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
      * les constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
-    static final String SQL_SELECT = configuration.get(Configuration.KEY_SAMPLE_DIMENSIONS);
-    // static final String SQL_SELECT=
-    //                 "SELECT "+  /*[01] ID      */ "ID, "      +
-    //                             /*[02] BAND    */ "[band], "  +
-    //                             /*[04] UNITS   */ "units\n"   +
-    // 
-    //                 "FROM "+SAMPLE_DIMENSIONS+" WHERE format=? ORDER BY [band]";
-    //                 // "Note: "band" semble être un opérateur pour Access.
+    static final ConfigurationKey SELECT = createKey(SAMPLE_DIMENSIONS, ResourceKeys.SQL_SAMPLE_DIMENSIONS,
+            "SELECT oid, "     +   // [01] ID
+                   "band, "    +   // [02] BAND
+                   "units\n"   +   // [04] UNITS
+            "FROM "+SCHEMA+".\""+SAMPLE_DIMENSIONS+"\" WHERE format=? ORDER BY band");
 
-    /** Numéro de colonne. */ private static final int ID      =  1;
-    /** Numéro de colonne. */ private static final int BAND    =  2;
-    /** Numéro de colonne. */ private static final int UNITS   =  3;
-    /** Numéro d'argument. */ private static final int ARG_ID  =  1;
+    /** Numéro de colonne. */ private static final int ID         =  1;
+    /** Numéro de colonne. */ private static final int BAND       =  2;
+    /** Numéro de colonne. */ private static final int UNITS      =  3;
+    /** Numéro d'argument. */ private static final int ARG_FORMAT =  1;
 
     /**
-     * Requète SQL faisant le lien
-     * avec la base de données.
+     * Requète SQL faisant le lien avec la base de données.
      */
     private final PreparedStatement statement;
 
@@ -89,12 +77,18 @@ final class SampleDimensionTable extends Table {
 
     /**
      * Construit un objet en utilisant la connection spécifiée.
+     *
+     * @param database The database where this table come from.
      * @param connection Connection vers une base de données d'images.
      * @throws SQLException si <code>SampleDimensionTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected SampleDimensionTable(final Connection connection) throws RemoteException {
+    protected SampleDimensionTable(final CoverageDataBase database, 
+                                   final Connection     connection)
+            throws RemoteException
+    {
+        super(database);
         try {
-            statement = connection.prepareStatement(SQL_SELECT);
+            statement = connection.prepareStatement(getProperty(SELECT));
         } catch (SQLException e) {   
             throw new CatalogException(e);
         }
@@ -103,63 +97,60 @@ final class SampleDimensionTable extends Table {
     /**
      * Retourne les bandes qui se rapportent au format spécifié.
      *
-     * @param  formatID Identificateur du format pour lequel on veut les bandes.
+     * @param  format Nom du format pour lequel on veut les bandes.
      * @return Les listes des bandes du format demandé.
-     * @throws RemoteException si l'interrogation de la table "Bands" a échoué.
+     * @throws RemoteException si l'interrogation de la table "SampleDimensions" a échoué.
      */
-    public synchronized SampleDimension[] getSampleDimensions(final int formatID) throws RemoteException {
-        try {
-            statement.setInt(ARG_ID, formatID);
-
-            int                        lastBand = 0;
-            final List<SampleDimension> mappers = new ArrayList<SampleDimension>();
-            final ResultSet              result = statement.executeQuery();
-            while (result.next()) {
-                final int   bandID = result.getInt   (ID);
-                final int     band = result.getInt   (BAND); // Comptées à partir de 1.
-                final String units = result.getString(UNITS);
-                /*
-                 * Obtient les unités de cette bande.
-                 */
-                Unit unit = null;
-                if (units != null) {
-                    unit = Unit.get(units);
-                    if (unit != null) {
-                        unit = unit.rename(units, null);
-                    }
+    public synchronized SampleDimension[] getSampleDimensions(final String format)
+            throws SQLException, RemoteException
+    {
+        statement.setString(ARG_FORMAT, format);
+        int                        lastBand = 0;
+        final List<SampleDimension> mappers = new ArrayList<SampleDimension>();
+        final ResultSet              result = statement.executeQuery();
+        while (result.next()) {
+            final int   bandID = result.getInt   (ID);
+            final int     band = result.getInt   (BAND); // Comptées à partir de 1.
+            final String units = result.getString(UNITS);
+            /*
+             * Obtient les unités de cette bande.
+             */
+            Unit unit = null;
+            if (units != null) {
+                unit = Unit.get(units);
+                if (unit != null) {
+                    unit = unit.rename(units, null);
                 }
-                /*
-                 * Obtient les thèmes de cette bande.
-                 */
-                if (categories==null) {
-                    categories = new CategoryTable(statement.getConnection());
-                }
-                final Category[] categoryArray = categories.getCategories(bandID);
-                final SampleDimension mapper;
-                try {
-                    mapper = new SampleDimension(categoryArray, unit);
-                } catch (IllegalArgumentException exception) {
-                    throw new IllegalRecordException(CATEGORIES, exception);
-                    // L'erreur se trouve bien dans la table CATEGORIES, et non SAMPLE_DIMENSIONS.
-                }
-                /*
-                 * Vérifie que la bande n'avait pas déjà
-                 * été définie, et ajoute cette bande à
-                 * la liste des bandes.
-                 */
-                if (band-1 != lastBand) {
-                    throw new IllegalRecordException(SAMPLE_DIMENSIONS,
-                                    Resources.format(ResourceKeys.ERROR_NON_CONSECUTIVE_BANDS_$2,
-                                                     new Integer(lastBand), new Integer(band)));
-                }
-                lastBand = band;
-                mappers.add((SampleDimension)POOL.canonicalize(mapper));
             }
-            result.close();
-            return mappers.toArray(new SampleDimension[mappers.size()]);
-        } catch (SQLException e) {
-            throw new CatalogException(e);
+            /*
+             * Obtient les thèmes de cette bande.
+             */
+            if (categories == null) {
+                categories = new CategoryTable(database, statement.getConnection());
+            }
+            final Category[] categoryArray = categories.getCategories(bandID);
+            final SampleDimension mapper;
+            try {
+                mapper = new SampleDimension(categoryArray, unit);
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalRecordException(CATEGORIES, exception);
+                // L'erreur se trouve bien dans la table CATEGORIES, et non SAMPLE_DIMENSIONS.
+            }
+            /*
+             * Vérifie que la bande n'avait pas déjà
+             * été définie, et ajoute cette bande à
+             * la liste des bandes.
+             */
+            if (band-1 != lastBand) {
+                throw new IllegalRecordException(SAMPLE_DIMENSIONS,
+                                Resources.format(ResourceKeys.ERROR_NON_CONSECUTIVE_BANDS_$2,
+                                                 new Integer(lastBand), new Integer(band)));
+            }
+            lastBand = band;
+            mappers.add((SampleDimension)POOL.canonicalize(mapper));
         }
+        result.close();
+        return mappers.toArray(new SampleDimension[mappers.size()]);
     }
 
     /**
@@ -171,11 +162,11 @@ final class SampleDimensionTable extends Table {
      *         lors de la disposition des ressources.
      */
     public synchronized void close() throws RemoteException {
+        if (categories != null) {
+            categories.close();
+            categories = null;
+        }
         try {
-            if (categories != null) {
-                categories.close();
-                categories=null;
-            }
             statement.close();
         } catch (SQLException e) {
             throw new CatalogException(e);

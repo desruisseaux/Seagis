@@ -50,6 +50,11 @@ import fr.ird.database.Table;
  */
 public interface CoverageTable extends Table {
     /**
+     * {@inheritDoc}
+     */
+    public abstract CoverageDataBase getDataBase() throws RemoteException;
+
+    /**
      * Retourne la référence vers la séries d'images.
      *
      * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.

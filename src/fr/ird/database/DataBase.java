@@ -37,44 +37,7 @@ import java.rmi.Remote;
  */
 public interface DataBase extends Remote {
     /**
-     * Key for fetching the JDBC driver for a connection to a SQL database.
-     *
-     * @see #getProperty
-     */
-    public static final ConfigurationKey DRIVER = new ConfigurationKey("Driver", null, "sun.jdbc.odbc.JdbcOdbcDriver");
-
-    /**
-     * Key for fetching the URL of a SQL database.
-     *
-     * @see #getProperty
-     */
-    public static final ConfigurationKey SOURCE = new ConfigurationKey("Sources", null, "jdbc:odbc:SEAGIS");
-
-    /**
-     * Key for fetching the user name during a connection to a database.
-     *
-     * @see #getProperty
-     */
-    public static final ConfigurationKey USER = new ConfigurationKey("User", null, null);
-
-    /**
-     * Key for fetching the user name during a connection to a database.
-     * <strong>WARNING:</strong> This information is not encrypted.
-     *
-     * @see #getProperty
-     */
-    public static final ConfigurationKey PASSWORD = new ConfigurationKey("Password", null, null);
-
-    /**
-     * Key for fetching the default timezone for dates in the database.
-     *
-     * @see #getProperty
-     */
-    public static final ConfigurationKey TIMEZONE = new ConfigurationKey("TimeZone", null, "UTC");
-
-    /**
-     * Returns a property from the database. The <code>key</code> argument is a key like
-     * {@link #DRIVER}, {@link #SOURCE} or {@link #TIMEZONE}. This method returns
+     * Returns a property from the database. This method returns
      * <code>null</code> if the property is undefined and has no default value.
      *
      * @throws RemoteException if a problem occured while querying the backing store.

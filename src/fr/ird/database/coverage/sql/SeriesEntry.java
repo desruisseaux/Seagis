@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
@@ -56,13 +46,12 @@ final class SeriesEntry extends Entry implements fr.ird.database.coverage.Series
     /**
      * Construit une nouvelle référence.
      */
-    protected SeriesEntry(final String table,
-                          final String name,
-                          final int    ID,
-                          final String remarks,
-                          final double period) throws RemoteException 
+    protected SeriesEntry(final String     table,
+                          final Comparable identifier,
+                          final String     remarks,
+                          final double     period) throws RemoteException
     {
-        super(table, name, ID, remarks);
+        super(table, identifier, remarks);
         this.period = period;
     }
 

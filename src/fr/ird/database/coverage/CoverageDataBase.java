@@ -42,7 +42,7 @@ public interface CoverageDataBase extends DataBase {
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey DIRECTORY = new ConfigurationKey("Directory", null, "/home/data/");
+    public static final ConfigurationKey ROOT_DIRECTORY = new ConfigurationKey("RootDirectory", null, "/home/data/");
 
     /**
      * The logger for events relative to this object.

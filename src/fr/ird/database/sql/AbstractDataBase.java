@@ -52,6 +52,42 @@ import fr.ird.resources.seagis.ResourceKeys;
  */
 public abstract class AbstractDataBase extends UnicastRemoteObject implements DataBase {
     /**
+     * Key for fetching the JDBC driver for a connection to a SQL database.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey DRIVER = new ConfigurationKey("Driver", null, "sun.jdbc.odbc.JdbcOdbcDriver");
+
+    /**
+     * Key for fetching the URL of a SQL database.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey SOURCE = new ConfigurationKey("Sources", null, "jdbc:odbc:SEAGIS");
+
+    /**
+     * Key for fetching the user name during a connection to a database.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey USER = new ConfigurationKey("User", null, null);
+
+    /**
+     * Key for fetching the user name during a connection to a database.
+     * <strong>WARNING:</strong> This information is not encrypted.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey PASSWORD = new ConfigurationKey("Password", null, null);
+
+    /**
+     * Key for fetching the default timezone for dates in the database.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey TIMEZONE = new ConfigurationKey("TimeZone", null, "UTC");
+
+    /**
      * Le nom de la classe du dernier pilote chargé.
      * En général, une application ne chargera qu'un seul pilote.
      */
@@ -105,7 +141,12 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
      * @throws IOException si le fichier de configuration existe mais n'a pas pu être ouvert.
      * @throws SQLException Si on n'a pas pu se connecter à la base de données.
      */
-    protected AbstractDataBase(File propertyFile, TimeZone timezone, String source, String user, String password) throws IOException, SQLException
+    protected AbstractDataBase(File propertyFile,
+                               TimeZone timezone,
+                               String     source,
+                               String       user,
+                               String   password)
+            throws IOException, SQLException
     {
         /*
          * Procède d'abord à la lecture du fichier de configuration,  afin de permettre
