@@ -266,7 +266,7 @@ public class WeakHashSet<Element>
         }
         if (Version.MINOR>=4)
         {
-            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.CAPACITY_CHANGE¤2, new Integer(oldTable.length), new Integer(table.length));
             record.setSourceClassName("WeakHashSet");
             record.setSourceMethodName(augmentation ? "intern" : "remove");
             Logger.getLogger("net.seas.util").log(record);

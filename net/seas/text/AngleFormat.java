@@ -802,7 +802,10 @@ public class AngleFormat extends Format
      * @return       L'angle lu.
      */
     public Angle parse(final String source, final ParsePosition pos)
-    {return parse(source, pos, false);}
+    {
+        final Angle ang=parse(source, pos, false);
+        return ang;
+    }
 
     /**
      * Interprète une chaîne de caractères représentant un angle. Les règles d'interprétation de
@@ -1347,31 +1350,40 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
         /**
          * The step size.
          */
-        private double stepSize;
+        private double stepSize = 1;
 
         /**
-         * Constructs a <code>SpinnerModel</code> that represents
-         * a closed sequence of angles  from <code>minimum</code>
-         * to <code>maximum</code>. The <code>nextValue</code> and
-         * <code>previousValue</code> methods compute elements of
-         * the sequence by adding or subtracting <code>stepSize</code>
-         * respectively.
+         * Constructs a <code>SpinnerModel</code> that represents a closed sequence
+         * of angles. Initial minimum and maximum values are choosen according the
+         * <code>value</code> type:
+         *
+         * <table>
+         *   <tr><td>{@link Longitude}&nbsp;</td> <td>-180° to 180°</td></tr>
+         *   <tr><td>{@link Latitude}&nbsp;</td>  <td>-90° to 90°</td>  </tr>
+         *   <tr><td>{@link Angle}&nbsp;</td>     <td>0° to 360°</td>   </tr>
+         * </table>
          *
          * @param value the current (non <code>null</code>) value of the model
-         * @param minimum the first angle in the sequence.
-         * @param maximum the last angle in the sequence.
-         * @param stepSize the difference between elements of the sequence
          */
-        public SpinnerModel(final Angle value, final double minimum, final double maximum, final double stepSize)
+        public SpinnerModel(final Angle value)
         {
-            if (!(minimum <= maximum))
+            this.value = value;
+            if (value instanceof Longitude)
             {
-                throw new IllegalArgumentException(Resources.format(Clé.ILLEGAL_ARGUMENT¤1, "["+new Angle(minimum)+".."+new Angle(maximum)+']'));
+                minimum  = Longitude.MIN_VALUE;
+                maximum  = Longitude.MAX_VALUE;
             }
-            this.value    = value;
-            this.minimum  = minimum;
-            this.maximum  = maximum;
-            this.stepSize = stepSize;
+            else if (value instanceof Latitude)
+            {
+                minimum  = Latitude.MIN_VALUE;
+                maximum  = Latitude.MAX_VALUE;
+            }
+            else if (value!=null)
+            {
+                minimum = 0;
+                maximum = 360;
+            }
+            else throw new IllegalArgumentException();
         }
 
         /**
@@ -1511,7 +1523,33 @@ BigBoss:    switch (skipSuffix(source, pos, 0)) // 0==DEGRÉS
             setAllowsInvalid(true);
             setCommitsOnValidEdit(false);
             setOverwriteMode(false);
-            setValueClass(Angle.class);
+
+            final Class classe;
+            final Object value=model.getValue();
+            if      (value instanceof Longitude) classe=Longitude.class;
+            else if (value instanceof  Latitude) classe=Latitude.class;
+            else                                 classe=Angle.class;
+            setValueClass(classe);
+        }
+
+        /**
+         * Returns the {@link Object} representation
+         * of the {@link String} <code>text</code>.
+         */
+        public Object stringToValue(final String text) throws ParseException
+        {
+            final Object value = super.stringToValue(text);
+            if (value instanceof Longitude) return value;
+            if (value instanceof  Latitude) return value;
+            if (value instanceof     Angle)
+            {
+                final Class valueClass = getValueClass();
+                if (Longitude.class.isAssignableFrom(valueClass))
+                    return new Longitude(((Angle)value).degrees());
+                if (Latitude.class.isAssignableFrom(valueClass))
+                    return new Latitude(((Angle)value).degrees());
+            }
+            return value;
         }
 
         /**

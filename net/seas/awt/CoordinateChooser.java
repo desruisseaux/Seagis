@@ -29,7 +29,6 @@ import java.util.Calendar;
 
 // Geometry and coordinates
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import net.seas.opengis.pt.Angle;
@@ -60,9 +59,11 @@ import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.AbstractSpinnerModel;
 import javax.swing.JFormattedTextField;
+import javax.swing.text.InternationalFormatter;
 import net.seas.util.SwingUtilities;
 
 // Events
+import java.awt.EventQueue;
 import java.util.EventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -97,12 +98,6 @@ import net.seas.resources.Resources;
  */
 public class CoordinateChooser extends JPanel
 {
-    /**
-     * Résolution par défaut proposée à l'utilisateur,
-     * en degrés de longitude et de latitude.
-     */
-    private static final double DEFAULT_RESOLUTION = 6;
-
     /**
      * Liste de choix dans laquelle l'utilisateur
      * choisira le fuseau horaire de ses dates.
@@ -210,32 +205,34 @@ public class CoordinateChooser extends JPanel
 
         tmin = new JSpinner(new SpinnerDateModel(minTime, minTime, maxTime, timeField));
         tmax = new JSpinner(new SpinnerDateModel(maxTime, minTime, maxTime, timeField));
-        xmin = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(-180.0), -180, +180, 1));
-        xmax = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(+180.0), -180, +180, 1));
-        ymin = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude(- 90.0), - 90, + 90, 1));
-        ymax = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude(+ 90.0), - 90, + 90, 1));
-        xres = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 360*60, 1));
-        yres = new JSpinner(new SpinnerNumberModel(DEFAULT_RESOLUTION, 0, 180*60, 1));
+        xmin = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(Longitude.MIN_VALUE)));
+        xmax = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(Longitude.MAX_VALUE)));
+        ymin = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude( Latitude.MIN_VALUE)));
+        ymax = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude( Latitude.MAX_VALUE)));
+        xres = new JSpinner(new SpinnerNumberModel(1, 0, 360*60, 1));
+        yres = new JSpinner(new SpinnerNumberModel(1, 0, 180*60, 1));
 
-        final AngleFormat angleFormat=new AngleFormat();
+        final AngleFormat   angleFormat = new AngleFormat("D°MM.m'", locale);
+        final DateFormat     dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
+        final NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
         xmin.setEditor(new AngleFormat.SpinnerEditor(xmin, angleFormat));
         xmax.setEditor(new AngleFormat.SpinnerEditor(xmax, angleFormat));
         ymin.setEditor(new AngleFormat.SpinnerEditor(ymin, angleFormat));
         ymax.setEditor(new AngleFormat.SpinnerEditor(ymax, angleFormat));
 
-        setColumns(tmin, 10);
-        setColumns(tmax, 10);
-        setColumns(xmin,  8);
-        setColumns(xmax,  8);
-        setColumns(ymin,  8);
-        setColumns(ymax,  8);
-        setColumns(xres,  3);
-        setColumns(yres,  3);
+        setup(tmin, 10,   dateFormat);
+        setup(tmax, 10,   dateFormat);
+        setup(xmin,  8,         null);
+        setup(xmax,  8,         null);
+        setup(ymin,  8,         null);
+        setup(ymax,  8,         null);
+        setup(xres,  3, numberFormat);
+        setup(yres,  3, numberFormat);
 
         final String[] timezones=TimeZone.getAvailableIDs();
         Arrays.sort(timezones);
         timezone=new JComboBox(timezones);
-        timezone.setSelectedItem(((JSpinner.DateEditor)tmin.getEditor()).getFormat().getTimeZone().getID());
+        timezone.setSelectedItem(dateFormat.getTimeZone().getID());
 
         final JLabel labelSize1=new JLabel(resources.getLabel(Clé.SIZE_IN_MINUTES));
         final JLabel labelSize2=new JLabel("\u00D7"  /*Symbole multiplication*/);
@@ -282,8 +279,6 @@ public class CoordinateChooser extends JPanel
         c.gridy=0; add(p1, c);
         c.gridy=1; add(p2, c);
         c.gridy=2; add(p3, c);
-
-//      setGeographicArea(new Rectangle2D.Float(-180, -90, 360, 180));
     }
 
     /**
@@ -300,12 +295,18 @@ public class CoordinateChooser extends JPanel
 
     /**
      * Définit la largeur (en nombre de colonnes) d'un champ.
+     * Eventuellement, cette méthode peut aussi redéfinir le
+     * format.
      */
-    private static void setColumns(final JSpinner spinner, final int width)
+    private static void setup(final JSpinner spinner, final int width, final Format format)
     {
         final JFormattedTextField field=((JSpinner.DefaultEditor)spinner.getEditor()).getTextField();
         field.setMargin(new Insets(/*top*/0, /*left*/6, /*bottom*/0, /*right*/3));
         field.setColumns(width);
+        if (format!=null)
+        {
+            ((InternationalFormatter)field.getFormatter()).setFormat(format);
+        }
     }
 
     /**
@@ -580,36 +581,41 @@ public class CoordinateChooser extends JPanel
         }
         catch (ParseException exception)
         {
-            JOptionPane.showInternalMessageDialog(owner, exception.getLocalizedMessage(), getResources().getString(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
+            SwingUtilities.showMessageDialog(owner, exception.getLocalizedMessage(), getResources().getString(Clé.BAD_ENTRY), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
     }
 
     /**
-     * Fait apparaître ce panneau dans une boîte de dialogue avec
-     * les boutons "ok" et "annuler". Retourne <code>true</code>
-     * si l'utilisateur a appuyé sur "ok", et <code>false</code>
-     * sinon. Cette méthode peut être appelée de n'importe quel
-     * thread (pas nécessairement celui de <i>Swing</i>).
+     * Shows a dialog box requesting input from the user. The dialog box will be
+     * parented to <code>owner</code>. If <code>owner</code> is contained into a
+     * {@link javax.swing.JDesktopPane}, the dialog box will appears as an internal
+     * frame. This method can be invoked from any thread (may or may not be the
+     * <i>Swing</i> thread).
      *
-     * @param  owner Fenêtre dans laquelle faire apparaître la boîte de dialogue.
-     * @return <code>true</code> si l'utilisateur a cliqué sur "Ok".
+     * @param  owner The parent component for the dialog box,
+     *         or <code>null</code> if there is no parent.
+     * @return <code>true</code> if user pressed the "Ok" button, or
+     *         <code>false</code> otherwise (e.g. pressing "Cancel"
+     *         or closing the dialog box from the title bar).
      */
     public boolean showDialog(final Component owner)
     {return showDialog(owner, getResources().format(Clé.COORDINATES_SELECTION));}
 
     /**
-     * Fait apparaître ce panneau dans une boîte de dialogue avec
-     * les boutons "ok" et "annuler" ainsi que le titre spécifié.
-     * Retourne <code>true</code> si l'utilisateur a appuyé sur
-     * "ok", et <code>false</code> sinon. Cette méthode peut être
-     * appelée de n'importe quel thread (pas nécessairement celui
-     * de <i>Swing</i>).
+     * Shows a dialog box requesting input from the user. The dialog box will be
+     * parented to <code>owner</code>. If <code>owner</code> is contained into a
+     * {@link javax.swing.JDesktopPane}, the dialog box will appears as an internal
+     * frame. This method can be invoked from any thread (may or may not be the
+     * <i>Swing</i> thread).
      *
-     * @param  owner Fenêtre dans laquelle faire apparaître la boîte de dialogue.
-     * @param  title Titre de la boîte de dialogue.
-     * @return <code>true</code> si l'utilisateur a cliqué sur "Ok".
+     * @param  owner The parent component for the dialog box,
+     *         or <code>null</code> if there is no parent.
+     * @param  title The dialog box title.
+     * @return <code>true</code> if user pressed the "Ok" button, or
+     *         <code>false</code> otherwise (e.g. pressing "Cancel"
+     *         or closing the dialog box from the title bar).
      */
     public boolean showDialog(final Component owner, final String title)
     {
@@ -617,22 +623,5 @@ public class CoordinateChooser extends JPanel
             if (commitEdit(owner))
                 return true;
         return false;
-    }
-
-    /**
-     * Fait apparaître la boîte de dialogue et termine le programme.
-     * Cette méthode ne sert qu'à tester l'apparence de la boîte.
-     */
-    public static void main(final String[] args)
-    {
-        final CoordinateChooser chooser = new CoordinateChooser();
-        if (chooser.showDialog(null))
-        {
-            System.out.println(chooser.getStartTime());
-            System.out.println(chooser.getEndTime());
-            System.out.println(chooser.getGeographicArea());
-            System.out.println(chooser.getPreferredResolution());
-        }
-        System.exit(0);
     }
 }
