@@ -28,6 +28,8 @@ package fr.ird.database;
 // Géométrie et image
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
 
 // Divers
@@ -43,12 +45,15 @@ import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform2D;
 import org.geotools.ct.TransformException;
+import org.geotools.ct.MathTransformFactory;
 import org.geotools.ct.CoordinateTransformation;
 import org.geotools.ct.CoordinateTransformationFactory;
 import org.geotools.resources.CTSUtilities;
 
 // Geotools (GCS)
 import org.geotools.cv.Coverage;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
 import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 
@@ -98,6 +103,15 @@ public abstract class Coverage3D extends Coverage {
         }
         temporalDimension = CTSUtilities.getDimensionOf(cs, temporalCS.getClass());
         assert temporalDimension >= 0 : temporalDimension;
+    }
+
+    /**
+     * Construit une couverture utilisant les même paramètres que la couverture spécifiée.
+     */
+    protected Coverage3D(final Coverage3D source) {
+        super(source);
+        temporalCS = source.temporalCS;
+        temporalDimension = source.temporalDimension;
     }
 
     /**
@@ -304,7 +318,26 @@ public abstract class Coverage3D extends Coverage {
         return new Point2D.Double(coord.ord[temporalDimension!=0 ? 0 : 1],
                                   coord.ord[temporalDimension>=2 ? 1 : 2]);
     }
-    
+
+    /**
+     * Returns a 2 dimensional grid coverage for the given date.
+     *
+     * @param  time The date where to evaluate.
+     * @return The grid coverage at the specified time, or <code>null</code>
+     *         if the requested date fall in a hole in the data.
+     * @throws PointOutsideCoverageException if <code>time</code> is outside coverage.
+     * @throws CannotEvaluateException if the computation failed for some other reason.
+     */
+    public GridCoverage getGridCoverage2D(final Date time) throws CannotEvaluateException {
+        final String              name = getName(null);
+        final SampleDimension[]  bands = getSampleDimensions();
+        final CoordinateSystem      cs = CTSUtilities.getSubCoordinateSystem(coordinateSystem, 0,2);
+        final RenderedImage      image = getRenderableImage(time).createDefaultRendering();
+        final MathTransform2D gridToCS = MathTransformFactory.getDefault().createAffineTransform(
+                                   (AffineTransform) image.getProperty("gridToCoordinateSystem"));
+        return new GridCoverage(name, image, cs, gridToCS, bands, null, null);
+    }
+
     /**
      * Returns 2D view of this grid coverage as the given date.
      * This method allows interoperability with Java2D.

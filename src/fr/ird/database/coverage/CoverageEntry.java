@@ -144,7 +144,12 @@ public interface CoverageEntry extends Entry {
      * comment interpréter les valeurs des pixels. Par exemple, ils peuvent indiquer
      * que la valeur 9 désigne des nuages.
      *
-     * @return La liste des catégories pour chaque bande de l'image.
+     * Contrairement à {@link FormatEntry#getSampleDimensions FormatEntry}, cette méthode retourne
+     * toujours la version des <code>SampleDimensions</code> correspondant aux valeurs réelles
+     * (<code>{@link SampleDimension#geophysics geophysics}(false)</code>), ceci afin d'être
+     * cohérent avec la méthode {@link #getGridCoverage getGridCoverage(...)}.
+     *
+     * @return La liste des catégories géophysiques pour chaque bande de l'image.
      *         La longueur de ce tableau sera égale au nombre de bandes.
      */
     public abstract SampleDimension[] getSampleDimensions();
@@ -181,7 +186,8 @@ public interface CoverageEntry extends Entry {
      *
      * @return Image lue, ou <code>null</code> si l'image n'intercepte pas la région géographique
      *         ou la plage de temps qui avaient été spécifiées à {@link CoverageTable}, ou si
-     *         l'utilisateur a interrompu la lecture.
+     *         l'utilisateur a interrompu la lecture. Cette méthode retourne toujours la version
+     *         geophysiques de l'image (<code>{@link GridCoverage#geophysics geophysics}(true)</code>).
      * @throws IOException si le fichier n'a pas été trouvé ou si une autre erreur d'entrés/sorties
      *         est survenue.
      * @throws IIOException s'il n'y a pas de décodeur approprié pour l'image, ou si l'image n'est

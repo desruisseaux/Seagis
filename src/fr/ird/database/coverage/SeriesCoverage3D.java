@@ -288,6 +288,18 @@ public class SeriesCoverage3D extends Coverage3D {
     }
 
     /**
+     * Construit une couverture utilisant les mêmes paramètres que la couverture spécifiée.
+     */
+    protected SeriesCoverage3D(final SeriesCoverage3D source) {
+        super(source);
+        entries              = source.entries;
+        bands                = source.bands;
+        envelope             = source.envelope;
+        geographicArea       = source.geographicArea;
+        interpolationAllowed = source.interpolationAllowed;
+    }
+
+    /**
      * Comparateur à utiliser pour classer les images et effectuer des recherches rapides.
      * Ce comparateur utilise la date du milieu comme critère. Il doit accepter aussi bien
      * des objets {@link Date} que {@link CoverageEntry} étant donné que les recherches

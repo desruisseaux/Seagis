@@ -115,18 +115,36 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     private static final class SeriesKey {
         /** La série. */                public SeriesEntry    series;
         /** L'opération à appliquer. */ public OperationEntry operation;
+        /** Décalage temporel.       */ public float          timeOffset;
 
-        /** Construit une nouvelle clé. */
+        /**
+         * Construit une nouvelle clé initialisée avec tous les champs à <code>null</code> ou 0.
+         * Il est de la responsabilité de l'appellant d'affecter une valeur non-nulle au moins
+         * au champ {@link #series}. Les autres peuvent rester nuls.
+         */
         public SeriesKey() {
         }
 
-        /** Construit une nouvelle clé pour la série et l'opération spécifiée. */
-        public SeriesKey(final SeriesEntry series, final OperationEntry operation) {
+        /**
+         * Construit une nouvelle clé pour la série et l'opération spécifiée. L'argument
+         * <code>series</code> ne devrait pas être nul; les autres peuvent l'être.
+         */
+        public SeriesKey(final SeriesEntry           series,
+                         final OperationEntry        operation,
+                         final RelativePositionEntry position)
+        {
             this.series    = series;
             this.operation = operation;
+            if (position != null) {
+                timeOffset = position.getTypicalTimeOffset();
+            }
         }
 
-        /** Retourne un code à peu près unique pour cette clé. */
+        /**
+         * Retourne un code à peu près unique pour cette clé. L'écart de temps {@link #timeOffset}
+         * n'est pas pris en compte, ce qui permettre d'utiliser la valeur {@link Float#NaN} comme
+         * un joker.
+         */
         public int hashCode() {
             int code = series.hashCode();
             if (operation != null) {
@@ -135,22 +153,51 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             return code;
         }
 
-        /** Compare cette clé avec l'objet spécifié. */
+        /**
+         * Compare cette clé avec l'objet spécifié. Si la valeur {@link #timeOffset} est
+         * {@link Float#NaN} pour au moins une des deux clés, cet écart de temps ne sera
+         * pas pris en compte dans la comparaison. Autrement dit, NaN nous sert de joker.
+         */
         public boolean equals(final Object object) {
             if (object instanceof SeriesKey) {
                 final SeriesKey that = (SeriesKey) object;
+                if (this.timeOffset != that.timeOffset) {
+                    if (!Float.isNaN(timeOffset) && !Float.isNaN(that.timeOffset)) {
+                        return false;
+                    }
+                    // Si une des deux valeurs est NaN, ne la prend pas en compte
+                    // dans la comparaison. Autrement dit, NaN nous sert de joker.
+                }
                 return Utilities.equals(this.series,    that.series) &&
                        Utilities.equals(this.operation, that.operation);
             }
             return false;
         }
 
-        /** Retourne le nom de la série et son opération. */
+        /**
+         * Retourne le nom de la série et son opération, ainsi que l'écart de temps en jours.
+         */
         public String toString() {
-            if (operation == null) {
-                return series.getName();
+            final StringBuffer buffer = new StringBuffer();
+            if (operation != null) {
+                buffer.append(operation.getName());
+                buffer.append('[');
             }
-            return operation.getName() + '[' + series.getName() + ']';
+            buffer.append(series.getName());
+            if (timeOffset != 0) {
+                buffer.append(' ');
+                if (timeOffset >= 0) {
+                    buffer.append('+');
+                } else if (Float.isNaN(timeOffset)) {
+                    buffer.append("-?");
+                }
+                buffer.append(timeOffset);
+                buffer.append(" jours");
+            }
+            if (operation != null) {
+                buffer.append(']');
+            }
+            return buffer.toString();
         }
     }
 
@@ -299,6 +346,19 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     }
 
     /**
+     * Retourne une clone de la couverture spécifiée, si possible. L'utilisation de clones
+     * pour la même série d'images à des positions relatives différentes permet d'éviter que
+     * la même image soit rechargée plusieurs fois, puisque chaque {@link SeriesCoverage3D}
+     * gardera une référence forte vers la dernière image lue.
+     */
+    private static Coverage3D clone(Coverage3D coverage) {
+        if (coverage instanceof fr.ird.database.coverage.SeriesCoverage3D) {
+            coverage = new SeriesCoverage3D((fr.ird.database.coverage.SeriesCoverage3D) coverage);
+        }
+        return coverage;
+    }
+
+    /**
      * Retourne le nom de l'opération à utiliser. L'appel de cette méthode équivaut à l'appel
      * de {@link OperationEntry#getProcessorOperation}, mais peut ajouter en plus l'opération
      * "NodataFilter".
@@ -348,19 +408,15 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         coverages = new HashMap<SeriesKey,Coverage3D>();
         final Collection<+ParameterEntry.Component> list = parameter.getComponents();
         final ParameterEntry[] sources;
-        final OperationEntry[] operations;
         if (list == null) {
-            sources    = new ParameterEntry[] {target};
-            operations = new OperationEntry[] {null};
+            sources = new ParameterEntry[] {target};
         } else {
             int i=0;
             components = new ParameterEntry.Component[list.size()];
             sources    = new ParameterEntry[components.length];
-            operations = new OperationEntry[components.length];
             for (final ParameterEntry.Component component : list) {
                 components[i] = component;
                 sources   [i] = component.getSource();
-                operations[i] = component.getOperation();
                 i++;
             }
             assert i == sources.length;
@@ -374,8 +430,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
          * d'utilisation par 'evaluate' dans un autre thread.
          */
         for (int i=0; i<sources.length; i++) {
-            final ParameterEntry source    = sources   [i];
-            final OperationEntry operation = operations[i];
+            final ParameterEntry source = sources[i];
             final int band = source.getBand(); // Les numéros commencent à 1.
             if (band > maxNumBands) {
                 maxNumBands = band;
@@ -383,48 +438,80 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             if (source.isIdentity()) {
                 continue;
             }
+            final OperationEntry       operation;
+            final RelativePositionEntry position;
+            if (components != null) {
+                final ParameterEntry.Component component;
+                component = components[i];
+                operation = component.getOperation();
+                position  = component.getRelativePosition();
+            } else {
+                operation = null;
+                position  = null;
+            }
             SeriesEntry series;
             for (int seriesIndex=0; (series=source.getSeries(seriesIndex))!=null; seriesIndex++) {
-                final SeriesKey key = new SeriesKey(series, operation);
+                final SeriesKey key = new SeriesKey(series, operation, position);
                 Coverage3D coverage = coverages.get(key);
+                if (coverage != null) {
+                    // Continue sans mémoriser le Coverage3D dans le dictonnaire 'coverages',
+                    // puisqu'il y est déjà.  C'est la seule exception;  tous les autres cas
+                    // ci-dessous placeront leurs résultats dans 'coverages'.
+                    continue;
+                }
+                coverage = oldCoverages.get(key);
                 if (coverage == null) {
-                    coverage = oldCoverages.get(key);
-                    if (coverage == null) {
-                        synchronized (coverageTable) {
-                            final ParameterList param;
-                            coverageTable.setSeries(series);
-                            param = coverageTable.setOperation(getProcessorOperation(operation));
-                            if (operation != null) {
-                                final String[] names;
-                                names = param.getParameterListDescriptor().getParamNames();
-                                for (int j=0; j<names.length; j++) {
-                                    final String name  = names[j];
-                                    final Object value = operation.getParameter(name);
-                                    if (value != null) {
-                                        param.setParameter(name, value);
+                    /*
+                     * La série demandée n'existe pas déjà pour le décalage temporel spécifié.
+                     * Vérifie si elle existerait pour n'importe quel autre décalage temporel.
+                     * Cloner une série existante est beaucoup plus rapide que d'en construire
+                     * une identique à partir de la base de données.
+                     */
+                    final SeriesKey joker = new SeriesKey(series, operation, null);
+                    joker.timeOffset = Float.NaN;
+                    coverage = coverages.get(joker);
+                    if (coverage != null) {
+                        coverage = clone(coverage);
+                    } else {
+                        coverage = oldCoverages.get(joker);
+                        if (coverage != null) {
+                            coverage = clone(coverage);
+                        } else {
+                            /*
+                             * La série n'existait pas déjà, quel que soit le décalage temporel.
+                             * Procède maintenant à la construction d'un nouvel objet Coverage3D
+                             * pour cette série.
+                             */
+                            synchronized (coverageTable) {
+                                final ParameterList param;
+                                coverageTable.setSeries(series);
+                                param = coverageTable.setOperation(getProcessorOperation(operation));
+                                if (operation != null) {
+                                    final String[] names;
+                                    names = param.getParameterListDescriptor().getParamNames();
+                                    for (int j=0; j<names.length; j++) {
+                                        final String name  = names[j];
+                                        final Object value = operation.getParameter(name);
+                                        if (value != null) {
+                                            param.setParameter(name, value);
+                                        }
                                     }
                                 }
+                                coverage = createCoverage3D(source, coverageTable);
                             }
-                            coverage = createCoverage3D(source, coverageTable);
                         }
                     }
-                    coverages.put(key, coverage);
                 }
+                coverages.put(key, coverage);
             }
         }
         /*
-         * Libère les ressources des 'Coverage3D' qui ne sont plus utilisés. Ce bloc est pour
-         * l'instant désactivé car ces 'Coverage3D' peuvent être encore utilisés par la méthode
+         * Note: on aurait pu libèrer les ressources des 'Coverage3D' qui ne sont plus utilisés
+         * (c'est-à-dire ceux qui sont encore dans 'oldCoverages' mais plus dans 'coverages').
+         * Mais on ne le fait pas car ces 'Coverage3D' peuvent être encore utilisés par la méthode
          * 'evaluate', qui n'est que partiellement synchronisée sur 'this' afin de permettre des
-         * accès simultanés aux données.
+         * accès multi-thread aux données.
          */
-        if (false) {
-            for (final Map.Entry<SeriesKey,Coverage3D> entry : oldCoverages.entrySet()) {
-                if (!coverages.containsKey(entry.getKey())) {
-                    entry.getValue().dispose();
-                }
-            }
-        }
     }
 
     /**
@@ -457,6 +544,25 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
     }
 
     /**
+     * Définit la plage des valeurs qui seront produit en sortie. Cette plage de valeur
+     * sera donnée à l'objet {@link Category} qui représentera le résultat du calcul.
+     * Par défaut, cette plage est calculée automatiquement.
+     *
+     * @param range La plage de valeur de la sortie, ou <code>null</code> pour la calculer
+     *              automatiquement.
+     */
+    public synchronized void setOutputRange(final NumberRange range) {
+        if (range == null) {
+            sampleDimension = null;
+        } else {
+            sampleDimension = new SampleDimension(new Category[] {
+                Category.NODATA,
+                new Category(Resources.format(ResourceKeys.POTENTIAL),
+                             COLOR_PALETTE, INDEX_RANGE, range)}, null).geophysics(true);
+        }
+    }
+
+    /**
      * Retourne une description de l'unique bande produite en sortie par cet objet.
      * L'implémentation par défaut recherche les valeurs minimales et maximales que
      * peuvent produire les composantes du paramètre, et calcule la combinaison de
@@ -481,8 +587,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                         continue;
                     }
                     final SampleDimension sd;
-                    key.series = source.getSeries(0);
-                    key.operation = component.getOperation();
+                    key.series     = source.getSeries(0);
+                    key.operation  = component.getOperation();
+                    key.timeOffset = component.getRelativePosition().getTypicalTimeOffset();
                     sd = coverages.get(key).getSampleDimensions()[source.getBand()-1];
                     double min = weight * component.transform(sd.getMinimumValue());
                     double max = weight * component.transform(sd.getMaximumValue());
@@ -495,15 +602,10 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                     maximum += max;
                 }
                 if (minimum < maximum) {
-                    sampleDimension = new SampleDimension(new Category[] {
-                        new Category(Resources.format(ResourceKeys.POTENTIAL),
-                                     COLOR_PALETTE, INDEX_RANGE, new NumberRange(minimum, maximum)),
-                        Category.NODATA
-                    }, null);
+                    setOutputRange(new NumberRange(minimum, maximum));
                 } else {
                     sampleDimension = new SampleDimension();
                 }
-                sampleDimension = sampleDimension.geophysics(true);
             }
         }
         return new SampleDimension[] {sampleDimension};
@@ -585,6 +687,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             final RelativePositionEntry relativePosition;
             relativePosition = component.getRelativePosition();
             key.operation    = component.getOperation();
+            key.timeOffset   = relativePosition.getTypicalTimeOffset();
             coord1.setLocation(coordinate);
             time1.setTime(time.getTime());
             relativePosition.applyOffset(coord1, time1);

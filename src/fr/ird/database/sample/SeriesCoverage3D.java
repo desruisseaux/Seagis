@@ -127,6 +127,14 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
     }
 
     /**
+     * Construit une couverture utilisant les mêmes paramètres que la couverture spécifiée.
+     */
+    protected SeriesCoverage3D(final fr.ird.database.coverage.SeriesCoverage3D source) {
+        super(source);
+        isDefaultImplementation = SeriesCoverage3D.class.equals(getClass());
+    }
+
+    /**
      * Évalue les valeurs du paramètre géophysique pour un échantillon. La région géographique
      * ainsi que la date des données environnementales à utiliser sont déterminées à partir de
      * <code>position.{@link RelativePositionEntry#getCoordinate getCoordinate}(sample)</code> et

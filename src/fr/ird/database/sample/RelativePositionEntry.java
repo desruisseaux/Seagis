@@ -65,7 +65,7 @@ public interface RelativePositionEntry extends Entry {
      * peuvent faire un travail plus élaboré en fonction de la classe de l'échantillon.
      *
      * @param coordinate La position spatiale de l'échantillon, ou <code>null</code>.
-     *                   La nouvelle position écrasera la date courante dans cet objet.
+     *                   La nouvelle position écrasera la position courante dans cet objet.
      * @param time       La date de l'échantillon, ou <code>null</code>.
      *                   La nouvelle date écrasera la date courante dans cet objet.
      *
@@ -73,6 +73,18 @@ public interface RelativePositionEntry extends Entry {
      * @see #getTime
      */
     public abstract void applyOffset(final Point2D coordinate, final Date time);
+
+    /**
+     * Retourne l'écart de temps typique entre les échantillons et la date à laquelle évaluer le
+     * paramètre environnemental. Cet écart de temps n'est qu'à titre indicatif et n'a pas à être
+     * précis; la manière la plus précise d'obtenir la date pour un échantillon reste la méthode
+     * {@link #getTime}. La méthode <code>getTypicalTimeOffset()</code> ne sert qu'à réduire les
+     * temps de calculs en planifiant d'une manière plus optimale l'ordre et la fréquence dans
+     * lesquelles les images seront lues.
+     *
+     * @return Un décalage de temps typique, en nombre de jours.
+     */
+    public abstract float getTypicalTimeOffset();
 
     /**
      * Indique si cette position relative devrait être sélectionnée par défaut.

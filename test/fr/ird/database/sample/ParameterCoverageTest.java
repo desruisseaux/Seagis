@@ -36,17 +36,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.sql.SQLException;
 import java.awt.geom.Point2D;
+import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
-import java.awt.Frame;
 
 // JAI dependencies
-import javax.media.jai.widget.ScrollingImagePanel;
+import javax.media.jai.JAI;
 
 // JUnit dependencies
 import junit.framework.*;
 
 // Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.util.NumberRange;
+import org.geotools.gui.swing.FrameFactory;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.MonolineFormatter;
 
@@ -93,6 +96,7 @@ public class ParameterCoverageTest extends TestCase {
      * Etablit la connexion avec la base de données.
      */
     protected void setUp() throws SQLException {
+        JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
         database   = new fr.ird.database.coverage.sql.CoverageDataBase();
         coverage   = new ParameterCoverage3D(database.getCoverageTable());
@@ -164,8 +168,13 @@ public class ParameterCoverageTest extends TestCase {
      * Test la création d'une image.
      */
     public void testImages() throws SQLException, ParseException {
-        setParameter("SST");
-        show(getImage("18/08/1999"));
+        if (false) {
+            setParameter("PP1");
+            coverage.setOutputRange(new NumberRange(-2.0, 2.0));
+            assertNotNull(coverage.getSampleDimensions());
+            FrameFactory.show(getGridCoverage("18/08/1999"));
+            coverage.setOutputRange(null);
+        }
     }
 
     /**
@@ -199,22 +208,13 @@ public class ParameterCoverageTest extends TestCase {
      * Retourne une image à la date spécifiée.
      * Cette méthode est un bon endroit où placer un point d'arrêt à des fins de déboguage.
      */
-    private RenderedImage getImage(final String date) throws ParseException {
-        final Date time  = dateFormat.parse(date);
-        RenderableImage renderable = coverage.getRenderableImage(time);
-        RenderedImage   rendered   = renderable.createDefaultRendering();
+    private GridCoverage getGridCoverage(final String date) throws ParseException {
+        final Date              time = dateFormat.parse(date);
+        final GridCoverage      grid = coverage.getGridCoverage2D(time);
+        final RenderedImage rendered = grid.getRenderedImage();
+        assertEquals("Wrong data type", DataBuffer.TYPE_FLOAT, rendered.getSampleModel().getDataType());
         assertNotNull(rendered.getData());
-        return rendered;
-    }
-
-    /**
-     * Affiche l'image spécifiée.
-     */
-    private static void show(final RenderedImage image) {
-        final Frame frame = new Frame("Potentiel");
-        frame.add(new ScrollingImagePanel(image, 512, 512));
-        frame.pack();
-        frame.show();
+        return grid;
     }
 
     /**

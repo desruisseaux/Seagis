@@ -50,7 +50,7 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -606226607519367847L;
+    private static final long serialVersionUID = -5711725430224190689L;
 
     /**
      * Une entrée à utiliser à la place de <code>null</code> dans {@link EnvironmentTable}.
@@ -71,7 +71,7 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
      * Ecart de temps (en nombre de millisecondes) entre la date de l'échantillon
      * et la date à prendre en compte dans les paramètres environnementaux.
      */
-    private final long timeLag;
+    private final long timeOffset;
 
     /**
      * Indique si cette position relative devrait être sélectionnée par défaut.
@@ -83,21 +83,21 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
     /**
      * Construit une nouvelle entré.
      *
-     * @param ID        Un numéro unique identifiant cette entrée.
-     * @param name      Le nom de cette entrée.
-     * @param timeLag   Ecart de temps (en nombre de millisecondes) entre la date de l'échantillon
-     *                  et la date à prendre en compte dans les paramètres environnementaux.
+     * @param ID         Un numéro unique identifiant cette entrée.
+     * @param name       Le nom de cette entrée.
+     * @param timeOffset Ecart de temps (en nombre de millisecondes) entre la date de l'échantillon
+     *                   et la date à prendre en compte dans les paramètres environnementaux.
      * @param isDefault Indique si cette position relative devrait être sélectionnée par défaut.
      */
     public RelativePositionEntry(final int     ID,
                                  final String  name,
-                                 final long    timeLag,
+                                 final long    timeOffset,
                                  final boolean isDefault)
     {
-        this.ID        = ID;
-        this.name      = name;
-        this.timeLag   = timeLag;
-        this.isDefault = isDefault;
+        this.ID         = ID;
+        this.name       = name;
+        this.timeOffset = timeOffset;
+        this.isDefault  = isDefault;
     }
 
     /**
@@ -119,7 +119,7 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
      */
     public Date getTime(final SampleEntry sample) {
         final Date time = sample.getTime();
-        time.setTime(time.getTime() + timeLag);
+        time.setTime(time.getTime() + timeOffset);
         return time;
     }
 
@@ -135,8 +135,15 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
      */
     public void applyOffset(final Point2D coordinate, final Date time) {
         if (time != null) {
-            time.setTime(time.getTime() + timeLag);
+            time.setTime(time.getTime() + timeOffset);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public float getTypicalTimeOffset() {
+        return timeOffset / (float)(24*60*60*1000);
     }
 
     /**
@@ -174,9 +181,9 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
     public boolean equals(final Object object) {
         if (object instanceof RelativePositionEntry) {
             final RelativePositionEntry that = (RelativePositionEntry) object;
-            return this.ID        == that.ID        &&
-                   this.isDefault == that.isDefault &&
-                   this.timeLag   == that.timeLag   &&
+            return this.ID         == that.ID         &&
+                   this.isDefault  == that.isDefault  &&
+                   this.timeOffset == that.timeOffset &&
                    Utilities.equals(this.name, that.name);
         }
         return false;
@@ -186,8 +193,8 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
      * Compare l'objet spécifié avec cette entré.
      */
     public int compareTo(final RelativePositionEntry that) {
-        if (this.timeLag < that.timeLag) return -1;
-        if (this.timeLag > that.timeLag) return +1;
+        if (this.timeOffset < that.timeOffset) return -1;
+        if (this.timeOffset > that.timeOffset) return +1;
         return 0;
     }
 }

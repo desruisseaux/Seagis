@@ -388,10 +388,39 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
     }
 
     /**
+     * Palette de couleurs pour le bricolage temporaire dans {@link #getSampleDimensions}.
+     * A supprimer si on trouve une meilleur solution.
+     */
+    private static final SampleDimension SAMPLE_DIMENSION_HACK = new SampleDimension(
+            new org.geotools.cv.Category[] {org.geotools.cv.Category.NODATA,
+                new org.geotools.cv.Category("Gradient", new java.awt.Color[] {
+                                                             java.awt.Color.DARK_GRAY,
+                                                             java.awt.Color.LIGHT_GRAY},
+                                                             1, 256, 0.5, -0.5)}, null);
+
+    /**
      * {@inheritDoc}
+     *
+     * @task TODO: If faudrait trouver un moyen de déterminer la plage de valeurs lorsqu'une
+     *             opération est appliquée. Peut-être avec OperationJAI.deriveSampleDimensions?
      */
     public SampleDimension[] getSampleDimensions() {
-        return parameters.format.getSampleDimensions();
+        final SampleDimension[] bands = parameters.format.getSampleDimensions();
+
+        // HACK BEGIN
+        final Operation operation = parameters.operation;
+        if (operation != null) {
+            // Note: le nom peut apparaître n'importe où (ex: "NodataFilter;GradientMagnitude").
+            if (operation.getName().indexOf("GradientMagnitude") >= 0) {
+                java.util.Arrays.fill(bands, SAMPLE_DIMENSION_HACK);
+            }
+        }
+        // HACK END
+
+        for (int i=0; i<bands.length; i++) {
+            bands[i] = bands[i].geophysics(true);
+        }
+        return bands;
     }
 
     /**

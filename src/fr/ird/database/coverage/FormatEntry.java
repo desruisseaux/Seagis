@@ -43,7 +43,14 @@ public interface FormatEntry extends Entry {
     /**
      * Retourne les listes des bandes {@link SampleDimension} qui permettent
      * de décoder les valeurs des paramètres géophysiques. Cette méthode peut
-     * retourner plusieurs objets {@link SampleDimension}, un par bande.
+     * retourner plusieurs objets {@link SampleDimension}, un par bande. Leur
+     * type (géophysique ou non) correspond au type des images dans leur format
+     * natif. Par exemple les valeurs des pixels seront des entiers
+     * (<code>{@link SampleDimension#geophysics geophysics}(false)</code>)
+     * si l'image est enregistrée au format PNG, tandis que les plages de valeurs
+     * peuvent être des nombres réels
+     * (<code>{@link SampleDimension#geophysics geophysics}(true)</code>)
+     * si l'image est enregistrée dans un format brut ou ASCII.
      */
     public abstract SampleDimension[] getSampleDimensions();
 }
