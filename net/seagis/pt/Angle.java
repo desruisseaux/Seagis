@@ -38,6 +38,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
 // Resources
+import net.seagis.resources.ClassChanger;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
@@ -67,20 +68,20 @@ public class Angle implements Comparable, Serializable
     private static Reference format;
 
     /**
-     * Définit de quelle façon les angles
-     * peuvent être convertis en nombres.
+     * Define how angle can be converted
+     * to {@link Number} objects.
      */
-//  static
-//  {
-//      ClassChanger.register(new ClassChanger(Angle.class, Double.class)
-//      {
-//          protected Number convert(final Comparable o)
-//          {return new Double(((Angle) o).theta);}
-//
-//          protected Comparable inverseConvert(final Number value)
-//          {return new Angle(value.doubleValue());}
-//      });
-//  }
+    static
+    {
+        ClassChanger.register(new ClassChanger(Angle.class, Double.class)
+        {
+            protected Number convert(final Comparable o)
+            {return new Double(((Angle) o).theta);}
+
+            protected Comparable inverseConvert(final Number value)
+            {return new Angle(value.doubleValue());}
+        });
+    }
 
     /**
      * Angle value in degres.
