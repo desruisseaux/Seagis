@@ -126,6 +126,9 @@ public final class SSTSup
 {
     /** Boolean : true pour corriger les pixels acquis de jour lorsque cela est possible. */
     private final boolean DAY_CORRECTION_TEMPERATURE;
+
+    /** Taille de la fenetre de calcul du delta en nombre de ligne. */
+    private final int SIZE_WINDOW_DELTA;
     
     /** Système de coordonnée des images S.S.T.. */  
     private final CoordinateSystem WGS84 = Utilities.WGS84;
@@ -154,8 +157,19 @@ public final class SSTSup
     /** Heure de début du jour J. Le Sup sera réalisé sur des fichiers appartenant au jour J. */
     private final long START_TIME_SST_DAY;   
 
-    /* Zone de couverture de l'image générée. */
+    /** Zone de couverture de l'image générée. */
     private final Rectangle2D SST_ONE_DAY_AREA;
+
+    /** Nombre minimum de pixel jour et nuit necessaire au calcul du delta. */
+    private final int MIN_PIXEL_FOR_PROCESSING_DELTA; 
+    
+    /** si "true", autorise les deltas (temperature nuit - temperature jour<0). Sinon, 
+        lorsque le delta est positif il est mis à 0. */
+    private final boolean ALLOWED_POSITIF_DELTA;
+    
+    /** Valeur maximale de delta acceptée. Si cette valeur est atteinte, le delta n'est 
+        pas pris en compte. */
+    private final double MAX_ALLOWED_DELTA; 
     
     /** 
      * Indique si la zone definie ci-dessus doit etre la taille de la zone de sortie 
@@ -254,6 +268,10 @@ public final class SSTSup
         SST_ONE_DAY_AREA         = (Rectangle2D)param.getObjectParameter(ParseSST.SST_ONE_DAY_AREA);
         ISOLINE_PATH       = (String)param.getObjectParameter(ParseSST.ISOLINE_PATH);                
         DAY_CORRECTION_TEMPERATURE = param.getBooleanParameter(ParseSST.DAY_CORRECTION_TEMPERATURE);
+        SIZE_WINDOW_DELTA   = param.getIntParameter(ParseSST.SIZE_WINDOW_DELTA);
+        MIN_PIXEL_FOR_PROCESSING_DELTA = param.getIntParameter(ParseSST.MIN_PIXEL_FOR_PROCESSING_DELTA); 
+        ALLOWED_POSITIF_DELTA          = param.getBooleanParameter(ParseSST.ALLOWED_POSITIF_DELTA);
+        MAX_ALLOWED_DELTA              = param.getDoubleParameter(ParseSST.MAX_ALLOWED_DELTA); 
         
         // Configuration de JAI.
         final JAI jai = JAI.getDefaultInstance();
@@ -334,12 +352,18 @@ public final class SSTSup
                 stat = stat_;
             else
                 stat = stat.union(stat_);            
-            isFirstStat = false;
+            isFirstStat = false;            
         }
         
         // Ecriture du fichier de statistique.
         if (stat != null)
+        {
             Utilities.writeStat(stat, fileStatTgt);        
+            stat.computeDelta(SIZE_WINDOW_DELTA, 
+                              MIN_PIXEL_FOR_PROCESSING_DELTA,
+                              MAX_ALLOWED_DELTA,
+                              ALLOWED_POSITIF_DELTA);            
+        }
         
         /* Traitement de l'ensemble des images SST. Les images sont traitées deux par 
            deux pour économiser de la mémoire. */
@@ -394,7 +418,7 @@ public final class SSTSup
             // SUP des GridCoverages. 
             GridCoverage sstSUP = fr.ird.n1b.op.SSTSup.get(arrayCoverage, bound, configuration);       
             
-            if (i == 0)
+            if (i == (length-1))
             {
                 // On projète le fond de carte sur la première image trouvée.
                 final Category catSSTLandBg      = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
@@ -455,7 +479,7 @@ public final class SSTSup
                                           -1*image.getMinY()*RESOLUTION + "\n");
             info.write("RESOLUTION     \t" + RESOLUTION + "\t" + RESOLUTION + "\n\n\n\n");
             info.write("# RESUME DU TRAITEMENT SST DAY\n");            
-            for (int j=0 ; j<length; j++)
+            for (int j=0 ; j<=i; j++)
                 info.write("PROCESSING FILE \t" + "\"" + src[j].getPath() + "\"\n");                        
             info.write("PROCESSING     \t" + ((System.currentTimeMillis() 
                                             - START_COMPUTATION)/1000.0) + " secondes.\n\n");                        

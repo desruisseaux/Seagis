@@ -321,6 +321,32 @@ public final class Utilities
     /**
      * Genere une image du gridCoverage au format floating raw.
      *
+     * @param image       L'image à afficher.
+     * @apram filename    Filename du fichier de sortie.
+     */
+    public static final void writeFloatingImageRaw(final RenderedImage image, 
+                                                    final String filename) throws IOException
+    {
+        final Raster raster = image.getData();
+        final int width  = raster.getWidth(),
+                  height = raster.getHeight();
+        final int minX = image.getMinX(),
+                  minY = image.getMinY();
+        
+        final FileImageOutputStream out = new FileImageOutputStream(new File(filename));
+        final float[] array = new float[width];
+        for (int h=0 ; h<height ; h++)
+        {
+            for (int w=0 ; w<width ; w++)
+                array[w] = (float)raster.getSampleFloat(w + minX, h + minY, 0);            
+            out.writeFloats(array, 0, array.length);                
+        }    
+        out.close();
+    }
+
+    /**
+     * Genere une image du gridCoverage au format floating raw.
+     *
      * @param coverage    Le gridCoverage source.
      * @apram filename    Filename du fichier de sortie.
      */
@@ -517,13 +543,13 @@ public final class Utilities
         for (int i=0 ; i<grid.getHeight() ; i++)
         {
             final double latitude = grid.getLatitude(i);
-            fStatTxt.write((double)((Math.round(latitude*100.0))/100.0)                 + "\t\t");
-            fStatTxt.write((double)((int)(grid.getAvgTempOfDay(i)*100.0))/100.0         + "\t\t");
-            fStatTxt.write((double)((int)(grid.getEcartTypeTempOfDay(i)*100.0))/100.0   + "\t\t"); 
-            fStatTxt.write(grid.getCountDay(i)                                          + "\t\t"); 
-            fStatTxt.write((double)((int)(grid.getAvgTempOfNight(i)*100.0))/100.0       + "\t\t"); 
-            fStatTxt.write((double)((int)(grid.getEcartTypeTempOfNight(i)*100.0))/100.0 + "\t\t"); 
-            fStatTxt.write(grid.getCountNight(i)                                        + "\n");
+            fStatTxt.write((double)((Math.round(latitude*100.0))/100.0) + "\t\t");
+            fStatTxt.write(grid.getAvgTempOfDay(i)                      + "\t\t");
+            fStatTxt.write(grid.getEcartTypeTempOfDay(i)                + "\t\t"); 
+            fStatTxt.write(grid.getCountDay(i)                          + "\t\t"); 
+            fStatTxt.write(grid.getAvgTempOfNight(i)                    + "\t\t"); 
+            fStatTxt.write(grid.getEcartTypeTempOfNight(i)              + "\t\t"); 
+            fStatTxt.write(grid.getCountNight(i)                        + "\n");
         }   
         fStatTxt.close();        
     }

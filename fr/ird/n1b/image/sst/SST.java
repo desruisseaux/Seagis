@@ -37,6 +37,7 @@ import fr.ird.io.text.ParseSatellite;
 import fr.ird.n1b.io.ImageReaderN1B;
 import fr.ird.n1b.image.sst.Utilities;
 import fr.ird.n1b.io.LocalizationGridN1B;
+import fr.ird.n1b.io.Calibrate;
 import fr.ird.science.astro.SatelliteRelativeAngle;
 import fr.ird.io.text.Parse;
 import fr.ird.io.text.ParseSST;
@@ -200,6 +201,9 @@ public final class SST
     /** Fichier contenant le masque terre (ce fichier est un <CODE>Isoline</CODE> sérialisé). */
     private final String ISOLINE_PATH;   
 
+    /** Chemin dans lequel trouver les fichiers .cal permettant de calibrer les canaux. */
+    private final String CALIBRATION_PATH;   
+
     /** 
      * Angle d'exclusion des pixels en degré. Les pixels acquis par le capteur avec un angle 
      * supérieur à "SENSOR_ANGLE_EXCLUSION" seront considérés comme des données abscentes.
@@ -246,6 +250,7 @@ public final class SST
         TILE_H      = param.getIntParameter(ParseSST.JAI_TILE_HEIGHT);                
         FILTER_SST_SLOPE_INTERCEPT = (AffineTransform[])param.getObjectParameter(ParseSST.FILTER_SST_SLOPE_INTERCEPT);                
         ISOLINE_PATH = (String)param.getObjectParameter(ParseSST.ISOLINE_PATH);                
+        CALIBRATION_PATH = (String)param.getObjectParameter(ParseSST.CALIBRATION_PATH);                
         LATITUDINAL  = (ThresoldRange[])param.getObjectParameter(ParseSST.FILTER_LATITUDINAL);
 
         // Configuration de JAI 
@@ -681,71 +686,7 @@ public final class SST
         block = block.addSource(maskLat);
         return JAI.create("Or", block).createInstance();                
     }
-    
-    /**
-     * Retourne une image contenant la température de brillance correspondant à la bande 
-     * <CODE>channel</CODE>.
-     *
-     * @param reader         Lecteur de fichier N1B.
-     * @param bande          Numéro de la bande sur laquelle calculer la température de 
-     *                       brillance.
-     * @param channel        Canal correspondant à la bande.
-     * @param configuration  Configuration du JAI pour la gestion des tuiles lors du calcul.
-     * @return une image contenant la température de brillance correspondant à la bande 
-     *         <CODE>channel</CODE>.
-     */
-    private RenderedImage computeTemperature(final ImageReaderN1B  reader,
-                                             final Channel         channel,
-                                             final int             band,
-                                             final Map             configuration) 
-                                             throws IOException
-    {
-        final ImageReadParam paramReader = new ImageReadParam();                
-        final int[] bandeSrc = {band};
-
-        // Extraction du satellite. 
-        final Metadata metadata   = (Metadata)reader.getImageMetadata(0);
-        final Satellite satellite = Satellite.get(metadata.getSpacecraft());                                                    
         
-        // Paramètre de la calibration du fichier N1B. 
-        final ParameterList  paramCalibN1B  = reader.getCalibrationParameter(channel);        
-                    
-        // Paramètres de calibration du fichier de configuration. 
-        final ParameterList parameterInConf = ParseSatellite.getInputDefaultParameterList();
-        parameterInConf.setParameter(ParseSatellite.SATELLITE, satellite);
-        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(band));
-        final ParameterList parameterOutConf = ParseSatellite.parse(parameterInConf);                     
-        
-        // Paramètres de configuration de la radiance. 
-        final ParameterList parameterInRadiance = Radiance.getInputParameterList(satellite);        
-        if (!satellite.isKLM())
-            parameterInRadiance.setParameter(SLOPE_INTERCEPT_COEFFICIENT, paramCalibN1B.getObjectParameter(SLOPE_INTERCEPT_COEFFICIENT));
-        else
-            parameterInRadiance.setParameter(THERMAL_COEFFICIENT, paramCalibN1B.getObjectParameter(THERMAL_COEFFICIENT));
-        
-        // Extraction de l'image count. 
-        paramReader.setSourceBands(bandeSrc);              
-        final RenderedImage count = reader.read(0, paramReader);
-        
-        // Calcul de la radiance.
-        final RenderedImage radiance = Radiance.get(satellite, count, parameterInRadiance, configuration);                            
-        
-        // Paramètres de configuration de la radiance. 
-        final ParameterList parameterInTemperature = Temperature.getInputParameterList(satellite);                
-        if (!satellite.isKLM())
-            parameterInTemperature.setParameter(WAVE_LENGTH, parameterOutConf.getObjectParameter(WAVE_LENGTH));
-        else
-            parameterInTemperature.setParameter(TEMPERATURE_CONSTANT, parameterOutConf.getObjectParameter(TEMPERATURE_CONSTANT));
-
-        // JAI.
-        final TileCache tileCache = JAI.getDefaultInstance().getTileCache();
-        tileCache.removeTiles(count);
-        tileCache.removeTiles(radiance);
-        
-        // Calcul de la température. 
-        return Temperature.get(satellite, radiance, parameterInTemperature, configuration); 
-    }
-    
     /**
      * Calcul l'image SST à partir d'un fichier N1B.
      *
@@ -847,11 +788,13 @@ public final class SST
                     geoSSTLandContour = catSSTLandContour.getColors()[0],
                     geoMatrixLand     = catMatrixLand.getColors()[0];
                         
+        final Calibrate calibrate = new Calibrate(reader, CALIBRATION_PATH);
+        
         // Calcul de la Température de brillance du canal 4.
-        final RenderedImage t4 = computeTemperature(reader, Channel.CHANNEL_4, CHANNEL_4, configuration);
+        final RenderedImage t4 = calibrate.compute(Channel.CHANNEL_4, false, configuration);        
         
         // Calcul de la Température de brillance du canal 5.
-        final RenderedImage t5 = computeTemperature(reader, Channel.CHANNEL_5, CHANNEL_5, configuration);
+        final RenderedImage t5 = calibrate.compute(Channel.CHANNEL_5, false, configuration);        
         
         // Calcul de la matrice jour / nuit. 
         final RenderedImage elevation = SolarElevation.get(grid, imToGeo, bound, configuration);                
@@ -863,10 +806,9 @@ public final class SST
         final RenderedImage zenithAngle = SatelliteZenithAngle.get(grid, imToGeo, bound, configuration);
         
         // Calcul de la S.S.T. 
-        ParameterList paramProcess = reader.getCalibrationParameter(Channel.CHANNEL_5);        
         final ParameterList parameterInConf = ParseSatellite.getInputDefaultParameterList();
         parameterInConf.setParameter(ParseSatellite.SATELLITE, satellite);
-        parameterInConf.setParameter(ParseSatellite.CHANNEL, new Integer(CHANNEL_5));
+        parameterInConf.setParameter(ParseSatellite.CHANNEL, Channel.CHANNEL_5);
         final ParameterList parameterOutConf = ParseSatellite.parse(parameterInConf);                             
         double[] coeffDay   = (double[])parameterOutConf.getObjectParameter(ParseSatellite.LINEAR_SPLIT_WINDOW_DAY),
                  coeffNight = (double[])parameterOutConf.getObjectParameter(ParseSatellite.LINEAR_SPLIT_WINDOW_NIGHT);
@@ -901,7 +843,7 @@ public final class SST
         if (isoline != null)
         {
             gridSST = Utilities.addLayer(gridSST, isoline, geoSSTLandBg, geoSSTLandContour);                    
-            gridMatrix = Utilities.addLayer(gridMatrix, isoline, geoMatrixLand, geoMatrixLand);        
+            if (true) gridMatrix = Utilities.addLayer(gridMatrix, isoline, geoMatrixLand, geoMatrixLand);        
         }
         sst    = gridSST.geophysics(false).getRenderedImage();        
         matrix = gridMatrix.geophysics(false).getRenderedImage();        
@@ -911,20 +853,37 @@ public final class SST
                                                    (double)((int)(sst.getMinY()*RESOLUTION*100.0*-1))/100.0);                 
        
         // Ecriture de l'image S.S.T.
-        Utilities.writeImage(sst, fileSST, fileTmp);
-        
+        Utilities.writeImage(sst, fileSST, fileTmp);        
+
+        if (true){
         // Ecriture de la matrice. 
         Utilities.writeImage(matrix, fileMask, fileTmp);
 
         // Création du fichier de statistiques. 
         generateStatisticMatrix(gridSST.geophysics(true), gridMatrix.geophysics(true),
                                 origine, fileStat);
-       
+        }
+        
         // Création du fichier Header.
         final double time = ((System.currentTimeMillis() - START_COMPUTATION)/1000.0);        
         createHeader(fileHeader, source, width, height, start, end, origine, time);
     }
-     
+
+    /**
+     * 
+     */
+    public static void printFile(File root)
+    {
+        if (root.isDirectory())
+        {
+            final File[] file = root.listFiles();
+            for (int i=0 ; i<file.length ; i++)
+                printFile(file[i]);
+        }
+        else
+            System.out.println(root.getPath());
+    }
+    
     /**
      * Lancement du traitement. Ce programme calcul une image SST projetée dans le système 
      * géographique de l'image N1B avec une résolution de 1/100°. L'image SST est
@@ -939,6 +898,8 @@ public final class SST
      */
     public static void main(String[] args)
     {        
+        //printFile(new File("C:/Compte_Remi/data/Images N1B/Reunion"));
+        
         final int count = args.length;
         if (count < 3) 
         {

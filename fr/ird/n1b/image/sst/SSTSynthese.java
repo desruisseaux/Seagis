@@ -127,6 +127,9 @@ public final class SSTSynthese {
     /** Taille en hauteur d'une tuile de l'image. */
     private final int TILE_H;
     
+    /** Fichier contenant le masque terre (ce fichier est un <CODE>Isoline</CODE> sérialisé). */
+    private final String ISOLINE_PATH;   
+
     /** Zone de couverture de l'image générée. */
     private final Rectangle2D SST_N_DAY_AREA;
     
@@ -147,8 +150,9 @@ public final class SSTSynthese {
         TILE_W             = param.getIntParameter(ParseSST.JAI_TILE_WIDTH);
         TILE_H             = param.getIntParameter(ParseSST.JAI_TILE_HEIGHT);
         SST_N_DAY_LIMITED_AREA = param.getBooleanParameter(ParseSST.SST_N_DAY_LIMITED_AREA);
-        SST_N_DAY_AREA         = (Rectangle2D)param.getObjectParameter(ParseSST.SST_N_DAY_AREA);
-        
+        SST_N_DAY_AREA     = (Rectangle2D)param.getObjectParameter(ParseSST.SST_N_DAY_AREA);
+        ISOLINE_PATH       = (String)param.getObjectParameter(ParseSST.ISOLINE_PATH);                
+
         // Configuration de JAI.
         final JAI jai = JAI.getDefaultInstance();
         final TileCache tileCache = jai.getTileCache();
@@ -222,10 +226,33 @@ public final class SSTSynthese {
         }
         
         // Synthèse des GridCoverages.
-        final GridCoverage sstSynthese = fr.ird.n1b.op.SSTWeightedAverage.get(array,
-        coefficients,
-        bound,
-        configuration);
+        GridCoverage sstSynthese = fr.ird.n1b.op.SSTWeightedAverage.get(array,
+                                                                        coefficients,
+                                                                        bound,
+                                                                        configuration);
+        
+        // On projète le fond de carte sur la première image trouvée.
+        final Category catSSTLandBg      = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                 Utilities.LAND_BACKGROUND),
+                       catSSTLandContour = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                 Utilities.LAND_CONTOUR);                
+        if (catSSTLandBg == null)
+            throw new IllegalArgumentException("Category \"" + 
+                                               Utilities.LAND_BACKGROUND + 
+                                               "\" is not define.");
+        if (catSSTLandContour == null)
+            throw new IllegalArgumentException("Category \"" + 
+                                               Utilities.LAND_CONTOUR + 
+                                               "\" is not define.");
+        final Color geoSSTLandBg      = catSSTLandBg.getColors()[0],
+                    geoSSTLandContour = catSSTLandContour.getColors()[0];
+
+        final Isoline isoline = Utilities.loadSerializedIsoline(ISOLINE_PATH);
+        if (isoline != null)
+            sstSynthese = Utilities.addLayer(sstSynthese, 
+                                             isoline, 
+                                             geoSSTLandBg, 
+                                             geoSSTLandContour);             
         
         // Ecriture dans un fichier temporaire de la synthèse.
         final RenderedImage image = sstSynthese.geophysics(false).getRenderedImage();
@@ -301,32 +328,58 @@ public final class SSTSynthese {
         for (int i=0 ; i<sources.length ; i++) {
             final File fileHeader = new File(sources[i].getPath().substring(0, sources[i].getPath().length()-3).toString() + "hdr");
             final GridCoverage currentGridCoverage = Utilities.getGridCoverage(sources[i],
-            fileHeader,
-            "SST passage " + i,
-            WGS84,
-            SAMPLE_SST_INDEXED,
-            configuration);
+                                                                               fileHeader,
+                                                                               "SST passage " + i,
+                                                                               WGS84,
+                                                                               SAMPLE_SST_INDEXED,
+                                                                               configuration);
             GridCoverage[] arrayCoverage;
             if (isFirstImage == true) {
                 arrayCoverage    = new GridCoverage[1];
                 arrayCoverage[0] = currentGridCoverage;
             }
             else {
-                arrayCoverage    = new GridCoverage[2];
+                arrayCoverage    = new GridCoverage[2];                
                 final File fileHeaderInter = new File(fImageInter.getPath().substring(0, fImageInter.getPath().length()-3).toString() + "hdr");
                 arrayCoverage[0] = Utilities.getGridCoverage(fImageInter,
-                fileHeaderInter,
-                "SST passage " + i,
-                WGS84,
-                SAMPLE_SST_INDEXED,
-                configuration);
+                                                             fileHeaderInter,
+                                                             "SST passage " + i,
+                                                             WGS84,
+                                                             SAMPLE_SST_INDEXED,
+                                                             configuration);
                 arrayCoverage[1] = currentGridCoverage;
             }
             
             // Synthèse des GridCoverages.
             GridCoverage sstSynthese = fr.ird.n1b.op.SSTSynthese.get(arrayCoverage,
-            bound,
-            configuration);
+                                                                     bound,
+                                                                     configuration);
+            
+            if (i == (sources.length-1))
+            {
+                // On projète le fond de carte sur la première image trouvée.
+                final Category catSSTLandBg      = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                         Utilities.LAND_BACKGROUND),
+                               catSSTLandContour = Utilities.getCategory(SAMPLE_SST_GEOPHYSIC, 
+                                                                         Utilities.LAND_CONTOUR);                
+                if (catSSTLandBg == null)
+                    throw new IllegalArgumentException("Category \"" + 
+                                                       Utilities.LAND_BACKGROUND + 
+                                                       "\" is not define.");
+                if (catSSTLandContour == null)
+                    throw new IllegalArgumentException("Category \"" + 
+                                                       Utilities.LAND_CONTOUR + 
+                                                       "\" is not define.");
+                final Color geoSSTLandBg      = catSSTLandBg.getColors()[0],
+                            geoSSTLandContour = catSSTLandContour.getColors()[0];
+
+                final Isoline isoline = Utilities.loadSerializedIsoline(ISOLINE_PATH);
+                if (isoline != null)
+                    sstSynthese = Utilities.addLayer(sstSynthese, 
+                                                     isoline, 
+                                                     geoSSTLandBg, 
+                                                     geoSSTLandContour);     
+            }            
             
             // Ecriture dans un fichier temporaire de la synthèse.
             final RenderedImage image = sstSynthese.geophysics(false).getRenderedImage();
@@ -362,7 +415,7 @@ public final class SSTSynthese {
             RESOLUTION + "\n\n\n\n");
             
             info.write("# RESUME DU TRAITEMENT SST DAY\n");
-            for (int j=0 ; j<sources.length ; j++)
+            for (int j=0 ; j<=i; j++)
                 info.write("PROCESSING FILE \t" + "\"" + sources[j].getPath() + "\"\n");
             info.write("PROCESSING     \t" + ((System.currentTimeMillis()
             - START_COMPUTATION)/1000.0) + " secondes.\n\n");
