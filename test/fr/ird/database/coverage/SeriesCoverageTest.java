@@ -29,6 +29,7 @@ package fr.ird.database.coverage;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -81,6 +82,7 @@ public class SeriesCoverageTest extends TestCase {
      */
     protected void setUp() throws SQLException {
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         database = new fr.ird.database.coverage.sql.CoverageDataBase();
     }
 
@@ -98,8 +100,8 @@ public class SeriesCoverageTest extends TestCase {
         final CoverageTable table = database.getCoverageTable("Chlorophylle-a (Monde)");
         coverage = new SeriesCoverage3D(table);
         coverage.setInterpolationAllowed(false);
-        assertEquals(0.0851138f, evaluate(66.6100,  -3.2100, "24/12/1997"), 0.0001f);
-        assertEquals(0.0851138f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
+        assertEquals(0.0851138f, evaluate(66.6100,  -3.2100, "24/12/1997"), 0.00001f);
+        assertEquals(0.0851138f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.00001f);
         assertTrue  (Float.isNaN(evaluate(52.6300,  +3.6600, "15/06/1999")));
         table.close();
     }

@@ -280,6 +280,9 @@ public class SeriesCoverage3D extends Coverage3D {
                 envelope.add(candidate);
             }
         }
+        if (envelope == null) {
+            envelope = coordinateSystem.getDefaultEnvelope();
+        }
         this.envelope = envelope;
         this.geographicArea = getGeographicArea(envelope);
     }

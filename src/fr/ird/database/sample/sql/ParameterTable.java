@@ -112,7 +112,7 @@ final class ParameterTable extends ColumnTable<ParameterEntry> {
             return null;
         }
         if (seriesTable != null) {
-            return seriesTable.getEntry(column);
+            return seriesTable.getEntry(id);
         }
         return new SeriesEntry() {
             public int    getID()      {return id;}

@@ -25,9 +25,10 @@
  */
 package fr.ird.database;
 
-// Géométrie
+// Géométrie et image
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.renderable.RenderableImage;
 
 // Divers
 import java.util.Date;
@@ -302,5 +303,30 @@ public abstract class Coverage3D extends Coverage {
         }
         return new Point2D.Double(coord.ord[temporalDimension!=0 ? 0 : 1],
                                   coord.ord[temporalDimension>=2 ? 1 : 2]);
+    }
+    
+    /**
+     * Returns 2D view of this grid coverage as the given date.
+     * This method allows interoperability with Java2D.
+     */
+    public RenderableImage getRenderableImage(final Date date) {
+        return new Renderable(date);
+    }
+
+    /**
+     * Produit des images sur demande.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
+     */
+    private final class Renderable extends Coverage.Renderable {
+        /**
+         * Construit un objet <code>Renderable</code> pour la date spécifiée.
+         */
+        public Renderable(final Date date) {
+            super(temporalDimension!=0 ? 0 : 1,
+                  temporalDimension>=2 ? 1 : 2);
+            coordinate.ord[temporalDimension] = temporalCS.toValue(date);
+        }
     }
 }

@@ -37,6 +37,7 @@ import java.util.Date;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
+import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
 
 // Base de données environnementales et de pêches
@@ -106,7 +107,22 @@ public class SeriesCoverage3D extends fr.ird.database.coverage.SeriesCoverage3D 
      * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
      */
     public SeriesCoverage3D(final CoverageTable table) throws SQLException, TransformException {
-        super(table);
+        this(table, table.getCoordinateSystem());
+    }
+
+    /**
+     * Construit une couverture à partir des données de la table spécifiée.
+     *
+     * @param  table Table d'où proviennent les données.
+     * @param  cs Le système de coordonnées à utiliser pour cet obet {@link Coverage}.
+     *         Ce système de coordonnées doit obligatoirement comprendre un axe temporel.
+     * @throws SQLException si l'interrogation de la base de données a échouée.
+     * @throws TransformException si une transformation de coordonnées était nécessaire et a échoué.
+     */
+    public SeriesCoverage3D(final CoverageTable table, final CoordinateSystem cs)
+            throws SQLException, TransformException
+    {
+        super(table, cs);
         isDefaultImplementation = SeriesCoverage3D.class.equals(getClass());
     }
 

@@ -29,12 +29,19 @@ package fr.ird.database.sample;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.Collection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.awt.geom.Point2D;
 import java.sql.SQLException;
+import java.awt.geom.Point2D;
+import java.awt.image.RenderedImage;
+import java.awt.image.renderable.RenderableImage;
+import java.awt.Frame;
+
+// JAI dependencies
+import javax.media.jai.widget.ScrollingImagePanel;
 
 // JUnit dependencies
 import junit.framework.*;
@@ -88,10 +95,11 @@ public class ParameterCoverageTest extends TestCase {
     protected void setUp() throws SQLException {
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
         database   = new fr.ird.database.coverage.sql.CoverageDataBase();
-        coverage   = new ParameterCoverage3D(database.getCoverageTable(), null);
+        coverage   = new ParameterCoverage3D(database.getCoverageTable());
         SampleDataBase samples = new fr.ird.database.sample.sql.SampleDataBase();
         parameters = samples.getParameters(database.getSeriesTable());
         samples.close();
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     /**
@@ -103,16 +111,61 @@ public class ParameterCoverageTest extends TestCase {
     }
 
     /**
-     * Test des valeurs individuelles.
+     * Test des valeurs individuelles. Les coordonnées spatio-temporelles utilisées dans
+     * ce test correspond à des positions de captures pour lesquels on a un maximum de
+     * paramètres environnementaux.
      */
     public void testValues() throws SQLException, ParseException {
-        setParameter("PP1");
-        evaluate(40.10,  -18.33,  "19/08/1999");
-        evaluate(53.36,    3.65,  "14/11/1999");
-        evaluate(56.95,   -3.53,  "25/11/1999");
-        evaluate(38.05,  -19.23,  "18/08/1999");
-        evaluate(39.80,  -17.90,  "18/08/1999");
-        evaluate(47.53,  -11.95,  "21/08/1999");
+        setParameter(null);
+        assertTrue(Float.isNaN(evaluate(39.80,  -17.90,  "18/08/1999")));
+        assertTrue(Float.isNaN(evaluate(38.05,  -19.23,  "18/08/1999")));
+        assertTrue(Float.isNaN(evaluate(40.10,  -18.33,  "19/08/1999")));
+        assertTrue(Float.isNaN(evaluate(47.53,  -11.95,  "21/08/1999")));
+        assertTrue(Float.isNaN(evaluate(53.36,    3.65,  "14/11/1999")));
+        assertTrue(Float.isNaN(evaluate(56.95,   -3.53,  "25/11/1999")));
+
+        setParameter("SST"); // SST le jour même
+        assertEquals(26.21554f,  evaluate(39.80,  -17.90,  "18/08/1999"), 0.09f); // 26.296907
+        assertEquals(25.67984f,  evaluate(38.05,  -19.23,  "18/08/1999"), 0.05f); // 25.701126
+        assertEquals(25.86468f,  evaluate(40.10,  -18.33,  "19/08/1999"), 0.02f); // 25.876064
+        assertEquals(26.79711f,  evaluate(47.53,  -11.95,  "21/08/1999"), 0.02f); // 26.803180
+        assertEquals(29.60495f,  evaluate(53.36,    3.65,  "14/11/1999"), 0.01f); // 29.602047
+        assertEquals(28.23608f,  evaluate(56.95,   -3.53,  "25/11/1999"), 0.01f); // 28.235308
+
+        // SST 5 jours avant
+        assertEquals(28.90020f,  evaluate(39.80,  -17.90,  "13/08/1999"), 0.09f);
+        assertEquals(26.49956f,  evaluate(38.05,  -19.23,  "13/08/1999"), 0.05f);
+        assertEquals(28.69938f,  evaluate(40.10,  -18.33,  "14/08/1999"), 0.02f);
+        assertEquals(27.14296f,  evaluate(47.53,  -11.95,  "16/08/1999"), 0.02f);
+        assertEquals(29.55049f,  evaluate(53.36,    3.65,  "10/11/1999"), 0.05f);
+        assertEquals(28.09617f,  evaluate(56.95,   -3.53,  "21/11/1999"), 0.01f);
+
+        setParameter("SLA"); // SLA le jour même
+        assertEquals( 3.084735f, evaluate(39.80,  -17.90,  "18/08/1999"), 1.0f);
+        assertEquals( 22.43602f, evaluate(38.05,  -19.23,  "18/08/1999"), 3.1f);
+        assertEquals( 3.027869f, evaluate(40.10,  -18.33,  "19/08/1999"), 1.5f);
+        assertEquals(-2.475523f, evaluate(47.53,  -11.95,  "21/08/1999"), 1.0f);
+        assertEquals(-13.31123f, evaluate(53.36,    3.65,  "14/11/1999"), 1.0f);
+        assertEquals(-10.75712f, evaluate(56.95,   -3.53,  "25/11/1999"), 1.0f);
+
+        final float SST = 10.0f; // Doit correspondre au coefficient dans la base de données.
+        final float SLA =  0.1f; // Doit correspondre au coefficient dans la base de données.
+        final float C   = -500f; // Doit correspondre au coefficient dans la base de données.
+        setParameter("PP-Test");
+        assertEquals(C+SST*(26.21554f+28.90020f)+SLA* 3.084735f, evaluate(39.80,  -17.90,  "18/08/1999"), 1.0f);
+        assertEquals(C+SST*(25.67984f+26.49956f)+SLA* 22.43602f, evaluate(38.05,  -19.23,  "18/08/1999"), 0.5f);
+        assertEquals(C+SST*(25.86468f+28.69938f)+SLA* 3.027869f, evaluate(40.10,  -18.33,  "19/08/1999"), 0.5f);
+        assertEquals(C+SST*(26.79711f+27.14296f)+SLA*-2.475523f, evaluate(47.53,  -11.95,  "21/08/1999"), 0.5f);
+        assertEquals(C+SST*(29.60495f+29.55049f)+SLA*-13.31123f, evaluate(53.36,    3.65,  "14/11/1999"), 5.0f);
+        assertEquals(C+SST*(28.23608f+28.09617f)+SLA*-10.75712f, evaluate(56.95,   -3.53,  "25/11/1999"), 0.5f);
+    }
+
+    /**
+     * Test la création d'une image.
+     */
+    public void testImages() throws SQLException, ParseException {
+        setParameter("SST");
+        show(getImage("18/08/1999"));
     }
 
     /**
@@ -120,10 +173,12 @@ public class ParameterCoverageTest extends TestCase {
      */
     private void setParameter(final String parameter) throws SQLException {
         ParameterEntry entry = null;
-        for (final ParameterEntry param : parameters) {
-            if (parameter.equalsIgnoreCase(param.getName())) {
-                entry = param;
-                break;
+        if (parameter != null) {
+            for (final ParameterEntry param : parameters) {
+                if (parameter.equalsIgnoreCase(param.getName())) {
+                    entry = param;
+                    break;
+                }
             }
         }
         coverage.setParameter(entry);
@@ -138,6 +193,28 @@ public class ParameterCoverageTest extends TestCase {
         final Point2D coord = new Point2D.Double(x,y);
         final Date    time  = dateFormat.parse(date);
         return (float)coverage.evaluate(coord, time); //       <--- Break point ici
+    }
+
+    /**
+     * Retourne une image à la date spécifiée.
+     * Cette méthode est un bon endroit où placer un point d'arrêt à des fins de déboguage.
+     */
+    private RenderedImage getImage(final String date) throws ParseException {
+        final Date time  = dateFormat.parse(date);
+        RenderableImage renderable = coverage.getRenderableImage(time);
+        RenderedImage   rendered   = renderable.createDefaultRendering();
+        assertNotNull(rendered.getData());
+        return rendered;
+    }
+
+    /**
+     * Affiche l'image spécifiée.
+     */
+    private static void show(final RenderedImage image) {
+        final Frame frame = new Frame("Potentiel");
+        frame.add(new ScrollingImagePanel(image, 512, 512));
+        frame.pack();
+        frame.show();
     }
 
     /**

@@ -26,8 +26,9 @@
 package fr.ird.database.sample;
 
 // J2SE
-import java.util.Date;
 import java.util.Map;
+import java.util.Date;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import org.geotools.cv.Coverage; // Pour Javadoc
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cv.CannotEvaluateException;
+import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.gp.CannotReprojectException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.resources.Utilities;
@@ -57,7 +59,6 @@ import fr.ird.database.Coverage3D;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
-import fr.ird.database.coverage.SeriesCoverage3D;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.resources.seagis.Resources;
 
@@ -236,6 +237,19 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
 
     /**
      * Construit un objet <code>ParameterCoverage3D</code> qui utilisera la table d'image
+     * spécifiée et son système de coordonnées. Ce constructeur délègue le travail à celui
+     * qui prend en argument un système de coordonnées.
+     *
+     * @param  coverages La table des images à utiliser. Il sera de la responsabilité de
+     *         l'utilisateur de fermer cette table lorsque cet objet ne sera plus utilisé.
+     * @throws SQLException si la connexion à la base de données a échouée.
+     */
+    public ParameterCoverage3D(final CoverageTable coverages)throws SQLException {
+        this(coverages, coverages.getCoordinateSystem());
+    }
+
+    /**
+     * Construit un objet <code>ParameterCoverage3D</code> qui utilisera la table d'image
      * spécifiée. La {@linkplain CoverageTable#setGeographicArea zone géographique} et la
      * {@linkplain CoverageTable#setTimeRange plage de temps} définies sur cette table
      * affecteront toutes les images qui seront lus par cet objet <code>ParameterCoverage3D</code>.
@@ -247,15 +261,15 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *         l'utilisateur de fermer cette table lorsque cet objet ne sera plus utilisé
      *         (ça ne sera pas fait automatiquement par {@link #dispose}, puisque la table
      *         spécifiée n'appartient pas à cet objet <code>ParameterCoverage3D</code>).
-     * @param  cs Le système de coordonnées pour cet objet {@link Coverage}, or <code>null</code>
-     *         pour utiliser celui de la table <code>coverages</code>.
+     * @param  cs Le système de coordonnées à utiliser pour cet obet {@link Coverage}.
+     *         Ce système de coordonnées doit obligatoirement comprendre un axe temporel.
      * @throws SQLException si la connexion à la base de données a échouée.
      */
     public ParameterCoverage3D(final CoverageTable coverages,
                                final CoordinateSystem cs)
             throws SQLException
     {
-        super("ParameterCoverage3D", cs!=null ? cs : coverages.getCoordinateSystem());
+        super("ParameterCoverage3D", cs);
         coverageTable = coverages;
     }
 
@@ -290,6 +304,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      * "NodataFilter".
      */
     private static String getProcessorOperation(final OperationEntry operation) {
+        if (operation == null) {
+            return NODATA_FILTER;
+        }
         String name = operation.getProcessorOperation();
         if (name == null) {
             return NODATA_FILTER;
@@ -359,9 +376,12 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
         for (int i=0; i<sources.length; i++) {
             final ParameterEntry source    = sources   [i];
             final OperationEntry operation = operations[i];
-            final int band = source.getBand();
-            if (band >= maxNumBands) {
-                maxNumBands = band+1;
+            final int band = source.getBand(); // Les numéros commencent à 1.
+            if (band > maxNumBands) {
+                maxNumBands = band;
+            }
+            if (source.isIdentity()) {
+                continue;
             }
             SeriesEntry series;
             for (int seriesIndex=0; (series=source.getSeries(seriesIndex))!=null; seriesIndex++) {
@@ -371,16 +391,18 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                     coverage = oldCoverages.get(key);
                     if (coverage == null) {
                         synchronized (coverageTable) {
-                            final String[]      names;
                             final ParameterList param;
                             coverageTable.setSeries(series);
                             param = coverageTable.setOperation(getProcessorOperation(operation));
-                            names = param.getParameterListDescriptor().getParamNames();
-                            for (int j=0; j<names.length; j++) {
-                                final String name  = names[j];
-                                final Object value = operation.getParameter(name);
-                                if (value != null) {
-                                    param.setParameter(name, value);
+                            if (operation != null) {
+                                final String[] names;
+                                names = param.getParameterListDescriptor().getParamNames();
+                                for (int j=0; j<names.length; j++) {
+                                    final String name  = names[j];
+                                    final Object value = operation.getParameter(name);
+                                    if (value != null) {
+                                        param.setParameter(name, value);
+                                    }
                                 }
                             }
                             coverage = createCoverage3D(source, coverageTable);
@@ -445,7 +467,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
             final SeriesKey key = new SeriesKey();
             if (components == null) {
                 key.series = target.getSeries(0);
-                sampleDimension = coverages.get(key).getSampleDimensions()[target.getBand()];
+                sampleDimension = coverages.get(key).getSampleDimensions()[target.getBand()-1];
             } else {
                 double minimum = 0;
                 double maximum = 0;
@@ -461,7 +483,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                     final SampleDimension sd;
                     key.series = source.getSeries(0);
                     key.operation = component.getOperation();
-                    sd = coverages.get(key).getSampleDimensions()[source.getBand()];
+                    sd = coverages.get(key).getSampleDimensions()[source.getBand()-1];
                     double min = weight * component.transform(sd.getMinimumValue());
                     double max = weight * component.transform(sd.getMaximumValue());
                     if (min > max) {
@@ -481,6 +503,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                 } else {
                     sampleDimension = new SampleDimension();
                 }
+                sampleDimension = sampleDimension.geophysics(true);
             }
         }
         return new SampleDimension[] {sampleDimension};
@@ -523,7 +546,7 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                 if (target == null) {
                     return Double.NaN;
                 }
-                final int band = target.getBand();
+                final int band = target.getBand()-1;
                 int seriesIndex = 0;
                 do {
                     key.series = target.getSeries(seriesIndex++);
@@ -547,9 +570,11 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
          * et 'maxNumBands') ont été copiées dans le bloc synchronisé précédent. Par design,
          * les instances référés ne sont jamais modifiés après leur création par 'setParameters'.
          */
-        double value = 0;
-        final Point2D coord1 = new Point2D.Double();
-        final Date     time1 = new Date(0);
+        double  value  = 0;                          // La valeur à retourner.
+        boolean inside = false;                      // Vrai si au moins un paramètre a une valeur.
+        PointOutsideCoverageException outside=null;  // La première exception obtenue.
+        final Point2D coord1 = new Point2D.Double(); // La coordonnée spatiale décalée.
+        final Date     time1 = new Date(0);          // La coordonnée temporelle décalée.
         for (int i=0; i<components.length; i++) {
             final ParameterEntry.Component component = components[i];
             final ParameterEntry source = component.getSource();
@@ -557,27 +582,49 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                 value += component.getWeight();
                 continue;
             }
+            final RelativePositionEntry relativePosition;
+            relativePosition = component.getRelativePosition();
+            key.operation    = component.getOperation();
             coord1.setLocation(coordinate);
             time1.setTime(time.getTime());
-            final RelativePositionEntry relativePosition = component.getRelativePosition();
             relativePosition.applyOffset(coord1, time1);
-            key.operation = component.getOperation();
-            final int band = source.getBand();
+            final int band = source.getBand()-1;
             int seriesIndex = 0;
             do {
+                /*
+                 * Obtient la couverture spatio-temporelle SeriesCoverage3D correspondant à la
+                 * série principale de la composante courante.  Si aucune valeur n'est trouvée
+                 * pour cette série, alors seulement on examinera les séries "de secours".
+                 */
                 key.series = source.getSeries(seriesIndex++);
                 if (key.series == null) {
                     break;
                 }
                 final Coverage3D coverage = coverages.get(key);
-                if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
-                    buffer = ((fr.ird.database.sample.Coverage3D)coverage)
-                             .evaluate(sample, relativePosition, buffer);
-                } else {
-                    buffer = coverage.evaluate(coord1, time1, buffer);
+                try {
+                    if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
+                        buffer = ((fr.ird.database.sample.Coverage3D)coverage)
+                                 .evaluate(sample, relativePosition, buffer);
+                    } else {
+                        buffer = coverage.evaluate(coord1, time1, buffer);
+                    }
+                    inside = true;
+                } catch (PointOutsideCoverageException exception) {
+                    if (outside == null) {
+                        outside = exception;
+                    }
+                    Arrays.fill(buffer, Double.NaN);
                 }
             } while (Double.isNaN(buffer[band]));
             value += component.getWeight() * component.transform(buffer[band]);
+        }
+        /*
+         * Calcul terminer. Lance une exception si la coordonnée spécifiée tombait en dehours
+         * de la couverture de *toutes* les séries. Autrement, les séries pour lesquelles le
+         * point tombait en dehors auront simplement été considérés comme des données manquantes.
+         */
+        if (!inside && outside!=null) {
+            throw outside;
         }
         return value;
     }
@@ -626,6 +673,36 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      */
     public double evaluate(final Point2D coord, final Date time) throws CannotEvaluateException {
         return evaluate(null, coord, time);
+    }
+
+    /**
+     * Retourne la valeur à la coordonnée spatio-temporelle spécifiée.
+     * L'implémentation par défaut délègue le travail à
+     * <code>{@link #evaluate(Point2D,Date) evaluate}(coord, time)</code>.
+     */
+    public int[] evaluate(final Point2D coord, final Date time, int[] dest)
+            throws CannotEvaluateException
+    {
+        if (dest == null) {
+            dest = new int[1];
+        }
+        dest[0] = (int)Math.round(evaluate(coord, time));
+        return dest;
+    }
+
+    /**
+     * Retourne la valeur à la coordonnée spatio-temporelle spécifiée.
+     * L'implémentation par défaut délègue le travail à
+     * <code>{@link #evaluate(Point2D,Date) evaluate}(coord, time)</code>.
+     */
+    public float[] evaluate(final Point2D coord, final Date time, float[] dest)
+            throws CannotEvaluateException
+    {
+        if (dest == null) {
+            dest = new float[1];
+        }
+        dest[0] = (float)evaluate(coord, time);
+        return dest;
     }
 
     /**

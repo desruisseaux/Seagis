@@ -305,6 +305,7 @@ class GridCoverageTable extends Table implements CoverageTable {
             throws SQLException
     {
         if (!series.equals(this.series)) {
+            final boolean toLog = (this.series!=null);
             parameters = null;
             int ID = series.getID();
             statement.setInt(ARG_SERIES, ID);
@@ -313,7 +314,10 @@ class GridCoverageTable extends Table implements CoverageTable {
             }
             statement.setInt(ARG_QUICKLOOK, ID);
             this.series = series;
-            log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
+            if (toLog) {
+                // Don't log if this object is configured by CoverageDataBase.
+                log("setSeries", Level.CONFIG, ResourceKeys.SET_SERIES_$1, series.getName());
+            }
         }
     }
 

@@ -48,6 +48,12 @@ import fr.ird.resources.seagis.ResourceKeys;
  */
 public abstract class SQLDataBase implements DataBase {
     /**
+     * Le nom de la classe du dernier pilote chargé.
+     * En général, une application ne chargera qu'un seul pilote.
+     */
+    private static String loadedDriver;
+
+    /**
      * Source de la base de données.
      */
     private final String source;
@@ -146,15 +152,17 @@ public abstract class SQLDataBase implements DataBase {
      *         de version du pilote), ou que son chargement a échoué.
      */
     protected static LogRecord loadDriver(final String driverClassName) {
+        final Level level = driverClassName.equals(loadedDriver) ? Level.FINEST : Level.CONFIG;
         LogRecord record;
         try {
             final Driver driver = (Driver)Class.forName(driverClassName).newInstance();
-            record = Resources.getResources(null).getLogRecord(Level.CONFIG, ResourceKeys.LOADED_JDBC_DRIVER_$3);
+            record = Resources.getResources(null).getLogRecord(level, ResourceKeys.LOADED_JDBC_DRIVER_$3);
             record.setParameters(new Object[] {
                 driver.getClass().getName(),
                 new Integer(driver.getMajorVersion()),
                 new Integer(driver.getMinorVersion())
             });
+            loadedDriver = driverClassName;
         } catch (Exception exception) {
             record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
             record.setThrown(exception);
