@@ -50,7 +50,6 @@ import org.opengis.cs.CS_WGS84ConversionInfo;
 // Miscellaneous
 import javax.units.Unit;
 import net.seas.util.WeakHashSet;
-import net.seas.opengis.ct.Parameter;
 
 // Remote Method Invocation
 import java.rmi.RemoteException;
@@ -254,8 +253,8 @@ public class CoordinateSystemFactory
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -278,6 +277,17 @@ public class CoordinateSystemFactory
     private final class Export extends RemoteObject implements CS_CoordinateSystemFactory
     {
         /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
+        /**
          * Returns the underlying implementation.
          */
         public CoordinateSystemFactory unwrap()
@@ -299,7 +309,7 @@ public class CoordinateSystemFactory
          * Creates a compound coordinate system.
          */
         public CS_CompoundCoordinateSystem createCompoundCoordinateSystem(final String name, final CS_CoordinateSystem head, final CS_CoordinateSystem tail) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createCompoundCoordinateSystem(name, Adapters.wrap(head), Adapters.wrap(tail)));}
+        {return adapters.export(CoordinateSystemFactory.this.createCompoundCoordinateSystem(name, adapters.wrap(head), adapters.wrap(tail)));}
 
         /**
          * Creates a fitted coordinate system.
@@ -311,66 +321,66 @@ public class CoordinateSystemFactory
          * Creates a local coordinate system.
          */
         public CS_LocalCoordinateSystem createLocalCoordinateSystem(final String name, final CS_LocalDatum datum, final CS_Unit unit, final CS_AxisInfo[] arAxes) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createLocalCoordinateSystem(name, Adapters.wrap(datum), Adapters.wrap(unit), Adapters.wrap(arAxes)));}
+        {return adapters.export(CoordinateSystemFactory.this.createLocalCoordinateSystem(name, adapters.wrap(datum), adapters.wrap(unit), adapters.wrap(arAxes)));}
 
         /**
          * Creates an ellipsoid from radius values.
          */
         public CS_Ellipsoid createEllipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final CS_LinearUnit linearUnit) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createEllipsoid(name, semiMajorAxis, semiMinorAxis, Adapters.wrap(linearUnit)));}
+        {return adapters.export(CoordinateSystemFactory.this.createEllipsoid(name, semiMajorAxis, semiMinorAxis, adapters.wrap(linearUnit)));}
 
         /**
          * Creates an ellipsoid from an major radius, and inverse flattening.
          */
         public CS_Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final CS_LinearUnit linearUnit) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, Adapters.wrap(linearUnit)));}
+        {return adapters.export(CoordinateSystemFactory.this.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, adapters.wrap(linearUnit)));}
 
         /**
          * Creates a projected coordinate system using a projection object.
          */
         public CS_ProjectedCoordinateSystem createProjectedCoordinateSystem(final String name, final CS_GeographicCoordinateSystem gcs, final CS_Projection projection, final CS_LinearUnit linearUnit, final CS_AxisInfo axis0, final CS_AxisInfo axis1) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createProjectedCoordinateSystem(name, Adapters.wrap(gcs), Adapters.wrap(projection), Adapters.wrap(linearUnit), Adapters.wrap(axis0), Adapters.wrap(axis1)));}
+        {return adapters.export(CoordinateSystemFactory.this.createProjectedCoordinateSystem(name, adapters.wrap(gcs), adapters.wrap(projection), adapters.wrap(linearUnit), adapters.wrap(axis0), adapters.wrap(axis1)));}
 
         /**
          * Creates a projection.
          */
         public CS_Projection createProjection(final String name, final String wktProjectionClass, final CS_ProjectionParameter[] parameters) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createProjection(name, wktProjectionClass, Adapters.wrap(parameters)));}
+        {return adapters.export(CoordinateSystemFactory.this.createProjection(name, wktProjectionClass, adapters.wrap(parameters)));}
 
         /**
          * Creates horizontal datum from ellipsoid and Bursa-Wolf parameters.
          */
         public CS_HorizontalDatum createHorizontalDatum(final String name, final CS_DatumType horizontalDatumType, final CS_Ellipsoid ellipsoid, final CS_WGS84ConversionInfo toWGS84) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createHorizontalDatum(name, (DatumType.Horizontal)Adapters.wrap(horizontalDatumType), Adapters.wrap(ellipsoid), Adapters.wrap(toWGS84)));}
+        {return adapters.export(CoordinateSystemFactory.this.createHorizontalDatum(name, (DatumType.Horizontal)adapters.wrap(horizontalDatumType), adapters.wrap(ellipsoid), adapters.wrap(toWGS84)));}
 
         /**
          * Creates a prime meridian, relative to Greenwich.
          */
         public CS_PrimeMeridian createPrimeMeridian(final String name, final CS_AngularUnit angularUnit, final double longitude) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createPrimeMeridian(name, Adapters.wrap(angularUnit), longitude));}
+        {return adapters.export(CoordinateSystemFactory.this.createPrimeMeridian(name, adapters.wrap(angularUnit), longitude));}
 
         /**
          * Creates a GCS, which could be Lat/Lon or Lon/Lat.
          */
         public CS_GeographicCoordinateSystem createGeographicCoordinateSystem(final String name, final CS_AngularUnit angularUnit, final CS_HorizontalDatum horizontalDatum, final CS_PrimeMeridian primeMeridian, final CS_AxisInfo axis0, final CS_AxisInfo axis1) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createGeographicCoordinateSystem(name, Adapters.wrap(angularUnit), Adapters.wrap(horizontalDatum), Adapters.wrap(primeMeridian), Adapters.wrap(axis0), Adapters.wrap(axis1)));}
+        {return adapters.export(CoordinateSystemFactory.this.createGeographicCoordinateSystem(name, adapters.wrap(angularUnit), adapters.wrap(horizontalDatum), adapters.wrap(primeMeridian), adapters.wrap(axis0), adapters.wrap(axis1)));}
 
         /**
          * Creates a local datum.
          */
         public CS_LocalDatum createLocalDatum(final String name, final CS_DatumType localDatumType) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createLocalDatum(name, (DatumType.Local)Adapters.wrap(localDatumType)));}
+        {return adapters.export(CoordinateSystemFactory.this.createLocalDatum(name, (DatumType.Local)adapters.wrap(localDatumType)));}
 
         /**
          * Creates a vertical datum from an enumerated type value.
          */
         public CS_VerticalDatum createVerticalDatum(final String name, final CS_DatumType verticalDatumType) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createVerticalDatum(name, (DatumType.Vertical)Adapters.wrap(verticalDatumType)));}
+        {return adapters.export(CoordinateSystemFactory.this.createVerticalDatum(name, (DatumType.Vertical)adapters.wrap(verticalDatumType)));}
 
         /**
          * Creates a vertical coordinate system from a datum and linear units.
          */
         public CS_VerticalCoordinateSystem createVerticalCoordinateSystem(final String name, final CS_VerticalDatum verticalDatum, final CS_LinearUnit verticalUnit, final CS_AxisInfo axis) throws RemoteException
-        {return Adapters.export(CoordinateSystemFactory.this.createVerticalCoordinateSystem(name, Adapters.wrap(verticalDatum), Adapters.wrap(verticalUnit), Adapters.wrap(axis)));}
+        {return adapters.export(CoordinateSystemFactory.this.createVerticalCoordinateSystem(name, adapters.wrap(verticalDatum), adapters.wrap(verticalUnit), adapters.wrap(axis)));}
     }
 }

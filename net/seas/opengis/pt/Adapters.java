@@ -28,27 +28,31 @@ import org.opengis.pt.PT_CoordinatePoint;
 
 
 /**
- * Provide static methods for interoperability with
- * <code>org.opengis.pt</code> package. All static
+ * Provide methods for interoperability with
+ * <code>org.opengis.pt</code> package. All
  * methods accept null argument.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class Adapters
+public class Adapters
 {
     /**
-     * Do not allow creation of
-     * instance of this class.
+     * Default adapters.
      */
-    private Adapters()
+    public static final Adapters DEFAULT = new Adapters();
+
+    /**
+     * Default constructor.
+     */
+    protected Adapters()
     {}
 
     /**
      * Returns an OpenGIS structure for a coordinate point.
      * Changes to the returned structure will not affect the original point.
      */
-    public static PT_CoordinatePoint export(final CoordinatePoint point)
+    public PT_CoordinatePoint export(final CoordinatePoint point)
     {
         if (point==null) return null;
         final PT_CoordinatePoint pt = new PT_CoordinatePoint();
@@ -60,7 +64,7 @@ public final class Adapters
      * Returns an OpenGIS structure for an envelope.
      * Changes to the returned structure will not affect the original envelope.
      */
-    public static PT_Envelope export(final Envelope envelope)
+    public PT_Envelope export(final Envelope envelope)
     {
         if (envelope==null) return null;
         final int  dimension = envelope.getDimension();
@@ -81,13 +85,13 @@ public final class Adapters
      * Returns a coordinate point from an OpenGIS's structure.
      * Changes to the returned point will not affect the original structure.
      */
-    public static CoordinatePoint wrap(final PT_CoordinatePoint point)
+    public CoordinatePoint wrap(final PT_CoordinatePoint point)
     {return (point!=null) ? new CoordinatePoint(point.ord) : null;}
 
     /**
      * Returns an envelope from an OpenGIS's structure.
      * Changes to the returned envelope will not affect the original structure.
      */
-    public static Envelope wrap(final PT_Envelope envelope)
+    public Envelope wrap(final PT_Envelope envelope)
     {return (envelope!=null) ? new Envelope(envelope.minCP.ord, envelope.maxCP.ord) : null;}
 }

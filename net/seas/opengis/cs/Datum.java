@@ -146,8 +146,8 @@ public class Datum extends Info
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -168,9 +168,15 @@ public class Datum extends Info
     class Export extends Info.Export implements CS_Datum
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Gets the type of the datum as an enumerated code.
          */
         public CS_DatumType getDatumType() throws RemoteException
-        {return Adapters.export(Datum.this.getDatumType());}
+        {return adapters.export(Datum.this.getDatumType());}
     }
 }

@@ -24,13 +24,12 @@ package net.seas.opengis.ct;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
 import net.seas.resources.Clé;
 import net.seas.util.XArray;
-import net.seas.util.XClass;
 
 
 /**
@@ -46,12 +45,12 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.ct.CT_DomainFlags
  */
-public final class DomainFlags implements Serializable
+public final class DomainFlags extends EnumeratedParameter
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 5585150830410796130L;
+    //private static final long serialVersionUID = 5585150830410796130L; // TODO
 
     /**
      * Domain flags by value. Used to
@@ -66,7 +65,17 @@ public final class DomainFlags implements Serializable
     static
     {
         for (int i=ENUMS.length; --i>=0;)
-            ENUMS[i] = new DomainFlags(i);
+        {
+            String name=null;
+            switch (i)
+            {
+                case 0: name="UNKNOW";        break;
+                case 1: name="INSIDE";        break;
+                case 2: name="OUTSIDE";       break;
+                case 4: name="DISCONTINUOUS"; break;
+            }
+            ENUMS[i] = new DomainFlags(name, i);
+        }
     };
 
     /**
@@ -90,16 +99,10 @@ public final class DomainFlags implements Serializable
     public static final DomainFlags DISCONTINUOUS = ENUMS[4];
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.ct.CT_DomainFlags}.
-     */
-    public final int value;
-
-    /**
      * Construct a new enum value.
      */
-    private DomainFlags(final int value)
-    {this.value = value;}
+    private DomainFlags(final String name, final int value)
+    {super(name, value);}
 
     /**
      * Return the enum for the specified value. This method is provided
@@ -126,7 +129,7 @@ public final class DomainFlags implements Serializable
     public String[] getNames(final Locale locale)
     {
         int            count = 0;
-        int             bits = value;
+        int             bits = getValue();
         Resources  resources = null;
         final int[]     clés = {Clé.INSIDE, Clé.OUTSIDE, Clé.DISCONTINUOUS};
         final String[] names = new String[clés.length];
@@ -148,43 +151,7 @@ public final class DomainFlags implements Serializable
      * to <code>getEnum(this.{@link #value} | flags.value)</code>.
      */
     public DomainFlags or(final DomainFlags flags)
-    {return getEnum(value | flags.value);}
-
-    /**
-     * Returns the enum value.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof DomainFlags)
-        {
-            return ((DomainFlags) object).value == value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a string représentation of this enum.
-     */
-    public String toString()
-    {
-        final String[]      names = getNames(null);
-        final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        for (int i=0; i<names.length; i++)
-        {
-            if (i!=0) buffer.append('|');
-            buffer.append(names[i]);
-        }
-        buffer.append(']');
-        return buffer.toString();
-    }
+    {return getEnum(getValue() | flags.getValue());}
 
     /**
      * Use a single instance of {@link DomainFlags} after deserialization.
@@ -196,6 +163,7 @@ public final class DomainFlags implements Serializable
      */
     private Object readResolve() throws ObjectStreamException
     {
+        final int value=getValue();
         if (value>=0 && value<ENUMS.length) return ENUMS[value]; // Canonicalize
         else return ENUMS[0]; // Collapse unknow value to a single canonical one
     }

@@ -151,8 +151,8 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -173,9 +173,15 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     class Export extends CoordinateSystem.Export implements CS_HorizontalCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Returns the HorizontalDatum.
          */
         public CS_HorizontalDatum getHorizontalDatum() throws RemoteException
-        {return Adapters.export(HorizontalCoordinateSystem.this.getHorizontalDatum());}
+        {return adapters.export(HorizontalCoordinateSystem.this.getHorizontalDatum());}
     }
 }

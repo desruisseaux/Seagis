@@ -176,8 +176,8 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -198,9 +198,15 @@ public class LocalCoordinateSystem extends CoordinateSystem
     private final class Export extends CoordinateSystem.Export implements CS_LocalCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Gets the local datum.
          */
         public CS_LocalDatum getLocalDatum() throws RemoteException
-        {return Adapters.export(LocalCoordinateSystem.this.getLocalDatum());}
+        {return adapters.export(LocalCoordinateSystem.this.getLocalDatum());}
     }
 }

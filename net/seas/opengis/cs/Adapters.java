@@ -52,9 +52,6 @@ import org.opengis.cs.CS_Unit;
 import org.opengis.cs.CS_LinearUnit;
 import org.opengis.cs.CS_AngularUnit;
 
-// OpenGIS dependencies (SEAS)
-import net.seas.opengis.ct.Parameter;
-
 // Remote Method Invocation
 import java.rmi.RemoteException;
 
@@ -68,27 +65,39 @@ import net.seas.resources.Resources;
 
 
 /**
- * Provide static methods for interoperability with
- * <code>org.opengis.cs</code> package. All static
- * methods accept null argument.
+ * Provide methods for interoperability with
+ * <code>org.opengis.cs</code> package.  All
+ * methods accept null argument. All OpenGIS
+ * objects are suitable for RMI use.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class Adapters
+public class Adapters
 {
     /**
-     * Do not allow creation of
-     * instance of this class.
+     * Default adapters.
      */
-    private Adapters()
-    {}
+    public static final Adapters DEFAULT = new Adapters(net.seas.opengis.pt.Adapters.DEFAULT);
+
+    /**
+     * The underlying adapters for the <code>net.seas.opengis.pt</code> package.
+     */
+    public final net.seas.opengis.pt.Adapters PT;
+
+    /**
+     * Default constructor.
+     *
+     * @param PT The underlying adapters for <code>net.seas.opengis.pt</code> package.
+     */
+    protected Adapters(final net.seas.opengis.pt.Adapters PT)
+    {this.PT = PT;}
 
     /**
      * Returns an OpenGIS interface for a coordinate system factory.
      */
-    public static CS_CoordinateSystemFactory export(final CoordinateSystemFactory factory)
-    {return (factory!=null) ? (CS_CoordinateSystemFactory)factory.toOpenGIS() : null;}
+    public CS_CoordinateSystemFactory export(final CoordinateSystemFactory factory)
+    {return (factory!=null) ? (CS_CoordinateSystemFactory)factory.toOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for an info. If the argument is an
@@ -97,117 +106,124 @@ public final class Adapters
      * of type {@link GeographicCoordinateSystem} will returns an object
      * implementing the {@link CS_GeographicCoordinateSystem} interface.
      */
-    public static CS_Info export(final Info info)
-    {return (info!=null) ? (CS_Info)info.cachedOpenGIS() : null;}
+    public CS_Info export(final Info info)
+    {return (info!=null) ? (CS_Info)info.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a coordinate system. If the argument
      * is a <code>CoordinateSystem</code> subclass, the returned object will
      * implements the corresponding interface.
      */
-    public static CS_CoordinateSystem export(final CoordinateSystem cs)
-    {return (cs!=null) ? (CS_CoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_CoordinateSystem export(final CoordinateSystem cs)
+    {return (cs!=null) ? (CS_CoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a compound coordinate system.
      */
-    public static CS_CompoundCoordinateSystem export(final CompoundCoordinateSystem cs)
-    {return (cs!=null) ? (CS_CompoundCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_CompoundCoordinateSystem export(final CompoundCoordinateSystem cs)
+    {return (cs!=null) ? (CS_CompoundCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a local coordinate system.
      */
-    public static CS_LocalCoordinateSystem export(final LocalCoordinateSystem cs)
-    {return (cs!=null) ? (CS_LocalCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_LocalCoordinateSystem export(final LocalCoordinateSystem cs)
+    {return (cs!=null) ? (CS_LocalCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a vertical coordinate system.
      */
-    public static CS_VerticalCoordinateSystem export(final VerticalCoordinateSystem cs)
-    {return (cs!=null) ? (CS_VerticalCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_VerticalCoordinateSystem export(final VerticalCoordinateSystem cs)
+    {return (cs!=null) ? (CS_VerticalCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a horizontal coordinate system.
      */
-    public static CS_HorizontalCoordinateSystem export(final HorizontalCoordinateSystem cs)
-    {return (cs!=null) ? (CS_HorizontalCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_HorizontalCoordinateSystem export(final HorizontalCoordinateSystem cs)
+    {return (cs!=null) ? (CS_HorizontalCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a geographic coordinate system.
      */
-    public static CS_GeographicCoordinateSystem export(final GeographicCoordinateSystem cs)
-    {return (cs!=null) ? (CS_GeographicCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_GeographicCoordinateSystem export(final GeographicCoordinateSystem cs)
+    {return (cs!=null) ? (CS_GeographicCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a projected coordinate system.
      */
-    public static CS_ProjectedCoordinateSystem export(final ProjectedCoordinateSystem cs)
-    {return (cs!=null) ? (CS_ProjectedCoordinateSystem)cs.cachedOpenGIS() : null;}
+    public CS_ProjectedCoordinateSystem export(final ProjectedCoordinateSystem cs)
+    {return (cs!=null) ? (CS_ProjectedCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a projection.
      */
-    public static CS_Projection export(final Projection projection)
-    {return (projection!=null) ? (CS_Projection)projection.cachedOpenGIS() : null;}
+    public CS_Projection export(final Projection projection)
+    {return (projection!=null) ? (CS_Projection)projection.cachedOpenGIS(this) : null;}
+
+    /**
+     * Construct an OpenGIS structure from a named parameter.
+     * Changes to the returned structure will not affect the original parameter.
+     */
+    public CS_ProjectionParameter export(final Parameter parameter)
+    {return (parameter!=null) ? new CS_ProjectionParameter(parameter.name, parameter.value) : null;}
 
     /**
      * Returns an OpenGIS interface for a prime meridien.
      */
-    public static CS_PrimeMeridian export(final PrimeMeridian meridian)
-    {return (meridian!=null) ? (CS_PrimeMeridian)meridian.cachedOpenGIS() : null;}
+    public CS_PrimeMeridian export(final PrimeMeridian meridian)
+    {return (meridian!=null) ? (CS_PrimeMeridian)meridian.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for an ellipsoid.
      */
-    public static CS_Ellipsoid export(final Ellipsoid ellipsoid)
-    {return (ellipsoid!=null) ? (CS_Ellipsoid)ellipsoid.cachedOpenGIS() : null;}
+    public CS_Ellipsoid export(final Ellipsoid ellipsoid)
+    {return (ellipsoid!=null) ? (CS_Ellipsoid)ellipsoid.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS enumeration for a datum type.
      */
-    public static CS_DatumType export(final DatumType type)
-    {return (type!=null) ? new CS_DatumType(type.value) : null;}
+    public CS_DatumType export(final DatumType type)
+    {return (type!=null) ? new CS_DatumType(type.getValue()) : null;}
 
     /**
      * Returns an OpenGIS interface for a datum.
      */
-    public static CS_Datum export(final Datum datum)
-    {return (datum!=null) ? (CS_Datum)datum.cachedOpenGIS() : null;}
+    public CS_Datum export(final Datum datum)
+    {return (datum!=null) ? (CS_Datum)datum.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a datum.
      */
-    public static CS_LocalDatum export(final LocalDatum datum)
-    {return (datum!=null) ? (CS_LocalDatum)datum.cachedOpenGIS() : null;}
+    public CS_LocalDatum export(final LocalDatum datum)
+    {return (datum!=null) ? (CS_LocalDatum)datum.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a datum.
      */
-    public static CS_HorizontalDatum export(final HorizontalDatum datum)
-    {return (datum!=null) ? (CS_HorizontalDatum)datum.cachedOpenGIS() : null;}
+    public CS_HorizontalDatum export(final HorizontalDatum datum)
+    {return (datum!=null) ? (CS_HorizontalDatum)datum.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS interface for a datum.
      */
-    public static CS_VerticalDatum export(final VerticalDatum datum)
-    {return (datum!=null) ? (CS_VerticalDatum)datum.cachedOpenGIS() : null;}
+    public CS_VerticalDatum export(final VerticalDatum datum)
+    {return (datum!=null) ? (CS_VerticalDatum)datum.cachedOpenGIS(this) : null;}
 
     /**
      * Returns an OpenGIS enumeration for an axis orientation.
      */
-    public static CS_AxisOrientationEnum export(final AxisOrientation orientation)
-    {return (orientation!=null) ? new CS_AxisOrientationEnum(orientation.value) : null;}
+    public CS_AxisOrientationEnum export(final AxisOrientation orientation)
+    {return (orientation!=null) ? new CS_AxisOrientationEnum(orientation.getValue()) : null;}
 
     /**
      * Returns an OpenGIS structure for an axis info.
      */
-    public static CS_AxisInfo export(final AxisInfo axis)
+    public CS_AxisInfo export(final AxisInfo axis)
     {return (axis!=null) ? new CS_AxisInfo(axis.name, export(axis.orientation)) : null;}
 
     /**
      * Returns an OpenGIS structure for conversion info.
      */
-    public static CS_WGS84ConversionInfo export(final WGS84ConversionInfo info)
+    public CS_WGS84ConversionInfo export(final WGS84ConversionInfo info)
     {
         if (info==null) return null;
         final CS_WGS84ConversionInfo nf = new CS_WGS84ConversionInfo();
@@ -227,16 +243,16 @@ public final class Adapters
      * extends {@link CS_LinearUnit} or {@link CS_AngularUnit} according
      * the specified unit.
      */
-    public static CS_Unit export(final Unit unit)
+    public CS_Unit export(final Unit unit)
     {
         if (unit==null) return null;
         if (unit.canConvert(Unit.METRE))
         {
-            return new Info(unit.toString()).new LinearUnit(unit.convert(1, Unit.METRE));
+            return new Info(unit.toString()).new LinearUnit(this, unit.convert(1, Unit.METRE));
         }
         if (unit.canConvert(Unit.DEGREE))
         {
-            return new Info(unit.toString()).new AngularUnit(unit.convert(Math.PI/180, Unit.DEGREE));
+            return new Info(unit.toString()).new AngularUnit(this, unit.convert(Math.PI/180, Unit.DEGREE));
         }
         throw new UnsupportedOperationException("Not implemented");
     }
@@ -245,7 +261,7 @@ public final class Adapters
      * Returns info for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static Info wrap(final CS_Info info) throws RemoteException
+    public Info wrap(final CS_Info info) throws RemoteException
     {
         if (info==null) return null;
         if (info instanceof CS_Datum)            return wrap((CS_Datum)           info);
@@ -261,7 +277,7 @@ public final class Adapters
      * Returns a coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static CoordinateSystem wrap(final CS_CoordinateSystem cs) throws RemoteException
+    public CoordinateSystem wrap(final CS_CoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof   CS_CompoundCoordinateSystem) return wrap(  (CS_CompoundCoordinateSystem)cs);
@@ -279,7 +295,7 @@ public final class Adapters
      * Returns a compound coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static CompoundCoordinateSystem wrap(final CS_CompoundCoordinateSystem cs) throws RemoteException
+    public CompoundCoordinateSystem wrap(final CS_CompoundCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
@@ -293,7 +309,7 @@ public final class Adapters
      * Returns a local coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static LocalCoordinateSystem wrap(final CS_LocalCoordinateSystem cs) throws RemoteException
+    public LocalCoordinateSystem wrap(final CS_LocalCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
@@ -316,7 +332,7 @@ public final class Adapters
      * Returns a vertical coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static VerticalCoordinateSystem wrap(final CS_VerticalCoordinateSystem cs) throws RemoteException
+    public VerticalCoordinateSystem wrap(final CS_VerticalCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof CoordinateSystem.Export)
@@ -337,7 +353,7 @@ public final class Adapters
      * Returns a horizontal coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static HorizontalCoordinateSystem wrap(final CS_HorizontalCoordinateSystem cs) throws RemoteException
+    public HorizontalCoordinateSystem wrap(final CS_HorizontalCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof CS_GeographicCoordinateSystem) return wrap((CS_GeographicCoordinateSystem)cs);
@@ -353,7 +369,7 @@ public final class Adapters
      * Returns a geographic coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static GeographicCoordinateSystem wrap(final CS_GeographicCoordinateSystem cs) throws RemoteException
+    public GeographicCoordinateSystem wrap(final CS_GeographicCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof HorizontalCoordinateSystem.Export)
@@ -376,7 +392,7 @@ public final class Adapters
      * Returns a projected coordinate system for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static ProjectedCoordinateSystem wrap(final CS_ProjectedCoordinateSystem cs) throws RemoteException
+    public ProjectedCoordinateSystem wrap(final CS_ProjectedCoordinateSystem cs) throws RemoteException
     {
         if (cs==null) return null;
         if (cs instanceof HorizontalCoordinateSystem.Export)
@@ -399,7 +415,7 @@ public final class Adapters
      * Returns a projection for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static Projection wrap(final CS_Projection projection) throws RemoteException
+    public Projection wrap(final CS_Projection projection) throws RemoteException
     {
         if (projection==null) return null;
         if (projection instanceof Info.Export)
@@ -409,9 +425,7 @@ public final class Adapters
         final Parameter[] parameters = new Parameter[projection.getNumParameters()];
         for (int i=0; i<parameters.length; i++)
         {
-            final CS_ProjectionParameter param = projection.getParameter(i);
-            if (param!=null)
-                parameters[i] = new Parameter(param.name, param.value);
+            parameters[i] = wrap(projection.getParameter(i));
         }
         return new Projection(map(projection), projection.getClassName(), parameters);
     }
@@ -420,7 +434,7 @@ public final class Adapters
      * Returns a prime meridian for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static PrimeMeridian wrap(final CS_PrimeMeridian meridian) throws RemoteException
+    public PrimeMeridian wrap(final CS_PrimeMeridian meridian) throws RemoteException
     {
         if (meridian==null) return null;
         if (meridian instanceof Info.Export)
@@ -434,17 +448,18 @@ public final class Adapters
      * Returns an ellipsoid for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static Ellipsoid wrap(final CS_Ellipsoid ellipsoid) throws RemoteException
+    public Ellipsoid wrap(final CS_Ellipsoid ellipsoid) throws RemoteException
     {
         if (ellipsoid==null) return null;
         if (ellipsoid instanceof Info.Export)
         {
             return (Ellipsoid) ((Info.Export)ellipsoid).unwrap();
         }
+        final double ivf = ellipsoid.getInverseFlattening();
         return new Ellipsoid(map(ellipsoid),
                              ellipsoid.getSemiMajorAxis(),
                              ellipsoid.getSemiMinorAxis(),
-                             ellipsoid.getInverseFlattening(),
+                             ivf!=0 ? ivf : Double.POSITIVE_INFINITY,
                              ellipsoid.isIvfDefinitive(),
                              wrap(ellipsoid.getAxisUnit()));
     }
@@ -452,14 +467,14 @@ public final class Adapters
     /**
      * Returns a datum type for an OpenGIS enumeration.
      */
-    public static DatumType wrap(final CS_DatumType type)
+    public DatumType wrap(final CS_DatumType type)
     {return (type!=null) ? DatumType.getEnum(type.value) : null;}
 
     /**
      * Returns a datum for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static Datum wrap(final CS_Datum datum) throws RemoteException
+    public Datum wrap(final CS_Datum datum) throws RemoteException
     {
         if (datum==null) return null;
         if (datum instanceof      CS_LocalDatum) return wrap(     (CS_LocalDatum)datum);
@@ -476,7 +491,7 @@ public final class Adapters
      * Returns a local datum for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static LocalDatum wrap(final CS_LocalDatum datum) throws RemoteException
+    public LocalDatum wrap(final CS_LocalDatum datum) throws RemoteException
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
@@ -490,7 +505,7 @@ public final class Adapters
      * Returns a horizontal datum for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static HorizontalDatum wrap(final CS_HorizontalDatum datum) throws RemoteException
+    public HorizontalDatum wrap(final CS_HorizontalDatum datum) throws RemoteException
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
@@ -505,7 +520,7 @@ public final class Adapters
      * Returns a vertical datum for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
-    public static VerticalDatum wrap(final CS_VerticalDatum datum) throws RemoteException
+    public VerticalDatum wrap(final CS_VerticalDatum datum) throws RemoteException
     {
         if (datum==null) return null;
         if (datum instanceof Datum.Export)
@@ -518,19 +533,19 @@ public final class Adapters
     /**
      * Returns an axis orientation for an OpenGIS enumeration.
      */
-    public static AxisOrientation wrap(final CS_AxisOrientationEnum orientation)
+    public AxisOrientation wrap(final CS_AxisOrientationEnum orientation)
     {return (orientation!=null) ? AxisOrientation.getEnum(orientation.value) : null;}
 
     /**
      * Returns an axis info for an OpenGIS structure.
      */
-    public static AxisInfo wrap(final CS_AxisInfo axis)
+    public AxisInfo wrap(final CS_AxisInfo axis)
     {return (axis!=null) ? new AxisInfo(axis.name, wrap(axis.orientation)) : null;}
 
     /**
      * Returns an axis array for an OpenGIS structure array.
      */
-    static AxisInfo[] wrap(final CS_AxisInfo[] axis)
+    final AxisInfo[] wrap(final CS_AxisInfo[] axis)
     {
         if (axis==null) return null;
         final AxisInfo[] a=new AxisInfo[axis.length];
@@ -542,13 +557,13 @@ public final class Adapters
     /**
      * Returns a parameter for an OpenGIS structure.
      */
-    public static Parameter wrap(final CS_ProjectionParameter parameter)
+    public Parameter wrap(final CS_ProjectionParameter parameter)
     {return (parameter!=null) ? new Parameter(parameter.name, parameter.value) : null;}
 
     /**
      * Returns a parameter array for an OpenGIS structure array.
      */
-    static Parameter[] wrap(final CS_ProjectionParameter[] parameters)
+    final Parameter[] wrap(final CS_ProjectionParameter[] parameters)
     {
         if (parameters==null) return null;
         final Parameter[] p=new Parameter[parameters.length];
@@ -560,7 +575,7 @@ public final class Adapters
     /**
      * Returns conversion info for an OpenGIS structure.
      */
-    public static WGS84ConversionInfo wrap(final CS_WGS84ConversionInfo info)
+    public WGS84ConversionInfo wrap(final CS_WGS84ConversionInfo info)
     {
         if (info==null) return null;
         final WGS84ConversionInfo nf = new WGS84ConversionInfo();
@@ -579,7 +594,7 @@ public final class Adapters
      * Returns an unit for an OpenGIS structure.
      * @throws RemoteException if a remote call failed.
      */
-    public static Unit wrap(final CS_Unit unit) throws RemoteException
+    public Unit wrap(final CS_Unit unit) throws RemoteException
     {
         if (unit==null) return null;
         if (unit instanceof CS_LinearUnit)

@@ -153,8 +153,8 @@ public class HorizontalDatum extends Datum
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -175,15 +175,21 @@ public class HorizontalDatum extends Datum
     private final class Export extends Datum.Export implements CS_HorizontalDatum
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Returns the Ellipsoid.
          */
         public CS_Ellipsoid getEllipsoid() throws RemoteException
-        {return Adapters.export(HorizontalDatum.this.getEllipsoid());}
+        {return adapters.export(HorizontalDatum.this.getEllipsoid());}
 
         /**
          * Gets preferred parameters for a Bursa Wolf transformation into WGS84.
          */
         public CS_WGS84ConversionInfo getWGS84Parameters() throws RemoteException
-        {return Adapters.export(HorizontalDatum.this.getWGS84Parameters());}
+        {return adapters.export(HorizontalDatum.this.getWGS84Parameters());}
     }
 }

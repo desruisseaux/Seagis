@@ -22,6 +22,10 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Projection;
+import net.seas.opengis.cs.Parameter;
+
 // Miscellaneous
 import java.util.Locale;
 import net.seas.util.XClass;

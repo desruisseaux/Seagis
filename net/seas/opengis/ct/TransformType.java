@@ -24,12 +24,11 @@ package net.seas.opengis.ct;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
 import net.seas.resources.Clé;
-import net.seas.util.XClass;
 
 
 /**
@@ -41,34 +40,34 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.ct.CT_TransformType
  */
-public final class TransformType implements Serializable
+public final class TransformType extends EnumeratedParameter
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -1187157188547650512L;
+    // private static final long serialVersionUID = -1187157188547650512L; // TODO
 
     /**
      * Unknown or unspecified type of transform.
      */
-    public static final TransformType OTHER = new TransformType(0, Clé.OTHER);
+    public static final TransformType OTHER = new TransformType("OTHER", 0, Clé.OTHER);
 
     /**
      * Transform depends only on defined parameters.
      * For example, a cartographic projection.
      */
-    public static final TransformType CONVERSION = new TransformType(1, Clé.CONVERSION);
+    public static final TransformType CONVERSION = new TransformType("CONVERSION", 1, Clé.CONVERSION);
 
     /**
      * Transform depends only on empirically derived parameters.
      * For example a datum transformation.
      */
-    public static final TransformType TRANSFORMATION = new TransformType(2, Clé.TRANSFORMATION);
+    public static final TransformType TRANSFORMATION = new TransformType("TRANSFORMATION", 2, Clé.TRANSFORMATION);
 
     /**
      * Transform depends on both defined and empirical parameters.
      */
-    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType(3, Clé.CONVERSION_AND_TRANSFORMATION);
+    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType("CONVERSION_AND_TRANSFORMATION", 3, Clé.CONVERSION_AND_TRANSFORMATION);
 
     /**
      * Transform types by value. Used to
@@ -91,18 +90,12 @@ public final class TransformType implements Serializable
     private transient final int clé;
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.ct.CT_TransformType}.
-     */
-    public final int value;
-
-    /**
      * Construct a new enum value.
      */
-    private TransformType(final int value, final int clé)
+    private TransformType(final String name, final int value, final int clé)
     {
-        this.value = value;
-        this.clé   = clé;
+        super(name, value);
+        this.clé = clé;
     }
 
     /**
@@ -131,41 +124,6 @@ public final class TransformType implements Serializable
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * Returns the enum value.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof TransformType)
-        {
-            return ((TransformType) object).value == value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a string représentation of this enum.
-     */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        final String name = getName(null);
-        if (name!=null)
-            buffer.append(name);
-        else
-            buffer.append(value);
-        buffer.append(']');
-        return buffer.toString();
-    }
-
-    /**
      * Use a single instance of {@link TransformType} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.
@@ -175,6 +133,7 @@ public final class TransformType implements Serializable
      */
     private Object readResolve() throws ObjectStreamException
     {
+        final int value = getValue();
         if (value>=0 && value<ENUMS.length) return ENUMS[value]; // Canonicalize
         else return ENUMS[0]; // Collapse unknow value to a single canonical one
     }

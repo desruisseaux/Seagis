@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Parameter;
+
 // Miscellaneous
 import net.seas.resources.Resources;
 

@@ -206,8 +206,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -228,15 +228,21 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     private final class Export extends CoordinateSystem.Export implements CS_CompoundCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Gets first sub-coordinate system.
          */
         public CS_CoordinateSystem getHeadCS() throws RemoteException
-        {return Adapters.export(CompoundCoordinateSystem.this.getHeadCS());}
+        {return adapters.export(CompoundCoordinateSystem.this.getHeadCS());}
 
         /**
          * Gets second sub-coordinate system.
          */
         public CS_CoordinateSystem getTailCS() throws RemoteException
-        {return Adapters.export(CompoundCoordinateSystem.this.getTailCS());}
+        {return adapters.export(CompoundCoordinateSystem.this.getTailCS());}
     }
 }

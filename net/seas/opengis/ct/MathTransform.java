@@ -47,6 +47,10 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
+// References
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+
 // Miscellaneous
 import java.util.Locale;
 import net.seas.util.XClass;
@@ -78,6 +82,18 @@ public abstract class MathTransform extends Info
      * Serial number for interoperability with different versions.
      */
     //private static final long serialVersionUID = ?; // TODO
+
+    /**
+     * OpenGIS object returned by {@link #cachedOpenGIS}.
+     * It may be a hard or a weak reference.
+     */
+    private transient Object proxy;
+
+    /**
+     * OpenGIS object returned by {@link #cachedMath}.
+     * It may be a hard or a weak reference.
+     */
+    private transient Object proxyMT;
 
     /**
      * Construct a math transform with the specified name.
@@ -503,24 +519,57 @@ public abstract class MathTransform extends Info
      *         since the returned object do not implements CS_Info. The
      *         package-private access do the trick.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
     /**
-     * Returns an OpenGIS interface for this transform.
+     * Returns an OpenGIS interface for this info.
      * This method first look in the cache. If no
      * interface was previously cached, then this
-     * method invokes {@link #toOpenGIS} and cache
-     * the result.
+     * method create a new adapter  and cache the
+     * result.
+     *
+     * @param adapters The originating {@link Adapters}.
      */
-    final synchronized Object cachedOpenGIS(final boolean allowSubclass)
+    final synchronized Object cachedOpenGIS(final Object adapters)
     {
-        Object info = cachedOpenGIS(null);
-        if (info==null)
+        if (proxy!=null)
         {
-            info = cachedOpenGIS(allowSubclass ? toOpenGIS() : new Export());
+            if (proxy instanceof Reference)
+            {
+                final Object ref = ((Reference) proxy).get();
+                if (ref!=null) return ref;
+            }
+            else return proxy;
         }
-        return info;
+        final Object opengis = toOpenGIS(adapters);
+        proxy = new WeakReference(opengis);
+        return opengis;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this math.
+     * This method first look in the cache. If no
+     * interface was previously cached, then this
+     * method create a new adapter  and cache the
+     * result.
+     *
+     * @param adapters The originating {@link Adapters}.
+     */
+    final synchronized Object cachedMath(final Object adapters)
+    {
+        if (proxyMT!=null)
+        {
+            if (proxyMT instanceof Reference)
+            {
+                final Object ref = ((Reference) proxyMT).get();
+                if (ref!=null) return ref;
+            }
+            else return proxyMT;
+        }
+        final Object opengis = new Export(adapters);
+        proxy = new WeakReference(opengis);
+        return opengis;
     }
 
 
@@ -619,6 +668,17 @@ public abstract class MathTransform extends Info
     final class Export extends RemoteObject implements CT_MathTransform
     {
         /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
+        /**
          * Returns the underlying math transform.
          */
         public final MathTransform unwrap()
@@ -628,7 +688,7 @@ public abstract class MathTransform extends Info
          * Gets flags classifying domain points within a convex hull.
          */
         public CT_DomainFlags getDomainFlags(final double[] ord) throws RemoteException
-        {return Adapters.export(MathTransform.this.getDomainFlags(new ConvexHull(ord)));}
+        {return adapters.export(MathTransform.this.getDomainFlags(new ConvexHull(ord)));}
 
         /**
          * Gets transformed convex hull.
@@ -703,8 +763,7 @@ public abstract class MathTransform extends Info
         {
             try
             {
-                final MathTransform inverse = MathTransform.this.inverse();
-                return (inverse!=MathTransform.this) ? inverse.new Export() : this;
+                return adapters.export(MathTransform.this.inverse());
             }
             catch (NoninvertibleTransformException exception)
             {

@@ -97,7 +97,7 @@ public class Info implements Serializable
 
     /**
      * OpenGIS object returned by {@link #cachedOpenGIS}.
-     * It may be a hard or a strong reference.
+     * It may be a hard or a weak reference.
      */
     private transient Object proxy;
 
@@ -229,34 +229,19 @@ public class Info implements Serializable
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
     /**
      * Returns an OpenGIS interface for this info.
      * This method first look in the cache. If no
      * interface was previously cached, then this
-     * method invokes {@link #toOpenGIS} and cache
-     * the result.
+     * method create a new adapter  and cache the
+     * result.
+     *
+     * @param adapters The originating {@link Adapters}.
      */
-    final synchronized Object cachedOpenGIS()
-    {
-        Object info = cachedOpenGIS(null);
-        if (info==null)
-        {
-            info = cachedOpenGIS(toOpenGIS());
-        }
-        return info;
-    }
-
-    /**
-     * Returns an OpenGIS interface for this info. This method first look
-     * in an internal cache. If no interface was previously cached and
-     * <code>newInstance</code> is non-null, then this method cache
-     * <code>newInstance</code> and returns it. <strong>This method
-     * is for internal use only. DO NOT USE.</strong>
-     */
-    protected final Object cachedOpenGIS(final Object newInstance)
+    final synchronized Object cachedOpenGIS(final Object adapters)
     {
         if (proxy!=null)
         {
@@ -267,8 +252,9 @@ public class Info implements Serializable
             }
             else return proxy;
         }
-        proxy = (newInstance!=null) ? new WeakReference(newInstance) : null;
-        return newInstance;
+        final Object opengis = toOpenGIS(adapters);
+        proxy = new WeakReference(opengis);
+        return opengis;
     }
 
     /**
@@ -337,6 +323,17 @@ public class Info implements Serializable
      */
     class Export extends RemoteObject implements CS_Info
     {
+        /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
         /**
          * Returns the underlying implementation.
          */
@@ -407,8 +404,11 @@ public class Info implements Serializable
         private final double scale;
 
         /** Construct a linear unit. */
-        public LinearUnit(final double metersPerUnit)
-        {scale = metersPerUnit;}
+        public LinearUnit(final Adapters adapters, final double metersPerUnit)
+        {
+            super(adapters);
+            scale = metersPerUnit;
+        }
 
         /** Returns the number of meters per linear unit. */
         public double getMetersPerUnit() throws RemoteException
@@ -424,8 +424,11 @@ public class Info implements Serializable
         private final double scale;
 
         /** Construct an angular unit. */
-        public AngularUnit(final double radiansPerUnit)
-        {scale = radiansPerUnit;}
+        public AngularUnit(final Adapters adapters, final double radiansPerUnit)
+        {
+            super(adapters);
+            scale = radiansPerUnit;
+        }
         
         /** Returns the number of radians per angular unit. */
         public double getRadiansPerUnit() throws RemoteException

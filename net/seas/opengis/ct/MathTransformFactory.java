@@ -30,6 +30,7 @@ import org.opengis.ct.CT_MathTransformFactory;
 
 // OpenGIS (SEAS) dependencies
 import net.seas.opengis.cs.Projection;
+import net.seas.opengis.cs.Parameter;
 
 // Miscellaneous
 import javax.units.Unit;
@@ -252,8 +253,8 @@ public class MathTransformFactory
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -274,6 +275,17 @@ public class MathTransformFactory
      */
     private final class Export extends RemoteObject implements CT_MathTransformFactory
     {
+        /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
         /**
          * Creates an affine transform from a matrix.
          */
@@ -301,7 +313,7 @@ public class MathTransformFactory
                 {
                     final double[] row0 = rows[0];
                     final double[] row1 = rows[1];
-                    return Adapters.export(MathTransformFactory.this.createAffineTransform(new AffineTransform(row0[0], row1[0], row0[1], row1[1], row0[2], row1[2])));
+                    return adapters.export(MathTransformFactory.this.createAffineTransform(new AffineTransform(row0[0], row1[0], row0[1], row1[1], row0[2], row1[2])));
                 }
             }
             /*
@@ -314,7 +326,7 @@ public class MathTransformFactory
          * Creates a transform by concatenating two existing transforms.
          */
         public CT_MathTransform createConcatenatedTransform(final CT_MathTransform transform1, final CT_MathTransform transform2) throws RemoteException
-        {return Adapters.export(MathTransformFactory.this.createConcatenatedTransform(Adapters.wrap(transform1), Adapters.wrap(transform2)));}
+        {return adapters.export(MathTransformFactory.this.createConcatenatedTransform(adapters.wrap(transform1), adapters.wrap(transform2)));}
 
         /**
          * Creates a transform which passes through a subset of ordinates to another transform.
@@ -326,16 +338,7 @@ public class MathTransformFactory
          * Creates a transform from a classification name and parameters.
          */
         public CT_MathTransform createParameterizedTransform(final String classification, final CT_Parameter[] parameters) throws RemoteException
-        {
-            final Parameter[] param = new Parameter[parameters.length];
-            for (int i=0; i<param.length; i++)
-            {
-                final CT_Parameter p = parameters[i];
-                if (p!=null)
-                    param[i] = new Parameter(p.name, p.value);
-            }
-            return Adapters.export(MathTransformFactory.this.createParameterizedTransform(classification, param));
-        }
+        {return adapters.export(MathTransformFactory.this.createParameterizedTransform(classification, adapters.wrap(parameters)));}
 
         /**
          * Creates a math transform from a Well-Known Text string.

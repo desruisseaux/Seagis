@@ -24,12 +24,11 @@ package net.seas.opengis.cs;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
 import net.seas.resources.Clé;
-import net.seas.util.XClass;
 
 
 /**
@@ -45,12 +44,12 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cs.CS_DatumType
  */
-public abstract class DatumType implements Serializable
+public abstract class DatumType extends EnumeratedParameter
 {
     /**
      * <code>serialVersionUID</code> for interoperability with previous versions.
      */
-    private static final long serialVersionUID = 2123402922368772495L;
+    //private static final long serialVersionUID = 2123402922368772495L; // TODO
 
     /**
      * These datums, such as ED50, NAD27 and NAD83, have been designed to
@@ -59,7 +58,7 @@ public abstract class DatumType implements Serializable
      * component of a position in a domain of limited extent, such as a country,
      * a region or a continent.
      */
-    public static final Horizontal CLASSIC = new Horizontal(1001, Clé.CLASSIC);
+    public static final Horizontal CLASSIC = new Horizontal("CLASSIC", 1001, Clé.CLASSIC);
 
     /**
      * A geocentric datum is a "satellite age" modern geodetic datum mainly of
@@ -69,19 +68,19 @@ public abstract class DatumType implements Serializable
      * ellipsoidal heights).  The regional realizations of ITRF, such as
      * ETRF, are also included in this category.
      */
-    public static final Horizontal GEOCENTRIC = new Horizontal(1002, Clé.GEOCENTRIC);
+    public static final Horizontal GEOCENTRIC = new Horizontal("GEOCENTRIC", 1002, Clé.GEOCENTRIC);
 
     /**
      * A vertical datum for orthometric heights that are measured along the
      * plumb line.
      */
-    public static final Vertical ORTHOMETRIC = new Vertical(2001, Clé.ORTHOMETRIC);
+    public static final Vertical ORTHOMETRIC = new Vertical("ORTHOMETRIC", 2001, Clé.ORTHOMETRIC);
 
     /**
      * A vertical datum for ellipsoidal heights that are measured along the
      * normal to the ellipsoid used in the definition of horizontal datum.
      */
-    public static final Vertical ELLIPSOIDAL = new Vertical(2002, Clé.ELLIPSOIDAL);
+    public static final Vertical ELLIPSOIDAL = new Vertical("ELLIPSOIDAL", 2002, Clé.ELLIPSOIDAL);
 
     /**
      * The vertical datum of altitudes or heights in the atmosphere. These
@@ -91,12 +90,12 @@ public abstract class DatumType implements Serializable
      * (used to measure pressure levels),  or theta value (units used to
      * measure geopotential height).
      */
-    public static final Vertical ALTITUDE_BAROMETRIC = new Vertical(2003, Clé.BAROMETRIC_ALTITUDE);
+    public static final Vertical ALTITUDE_BAROMETRIC = new Vertical("ALTITUDE_BAROMETRIC", 2003, Clé.BAROMETRIC_ALTITUDE);
 
     /**
      * A normal height system.
      */
-    public static final Vertical NORMAL = new Vertical(2004, Clé.NORMAL);
+    public static final Vertical NORMAL = new Vertical("NORMAL", 2004, Clé.NORMAL);
 
     /**
      * A vertical datum of geoid model derived heights, also called
@@ -106,7 +105,7 @@ public abstract class DatumType implements Serializable
      * geoid undulation model (<var>N</var>) through the equation:
      * <var>H</var>=<var>h</var>-<var>N</var>.
      */
-    public static final Vertical GEOID_MODEL_DERIVED = new Vertical(2005, Clé.GEOID_MODEL_DERIVED);
+    public static final Vertical GEOID_MODEL_DERIVED = new Vertical("GEOID_MODEL_DERIVED", 2005, Clé.GEOID_MODEL_DERIVED);
 
     /**
      * This attribute is used to support the set of datums generated
@@ -116,7 +115,7 @@ public abstract class DatumType implements Serializable
      * (approximately) to the actual equipotential surfaces of the earth's
      * gravity field, using such procedures as echo-sounding.
      */
-    public static final Vertical DEPTH = new Vertical(2006, Clé.DEPTH);
+    public static final Vertical DEPTH = new Vertical("DEPTH", 2006, Clé.DEPTH);
 
     /**
      * List of predefined enum types.
@@ -144,18 +143,12 @@ public abstract class DatumType implements Serializable
     private transient final int clé;
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.cs.CS_DatumType}.
-     */
-    public final int value;
-
-    /**
      * Construct a new enum with the specified value.
      */
-    private DatumType(final int value, final int clé)
+    private DatumType(final String name, final int value, final int clé)
     {
-        this.value = value;
-        this.clé   = clé;
+        super(name, value);
+        this.clé = clé;
         if (!(value>=getMinimum() && value<=getMaximum()))
             throw new IllegalArgumentException(String.valueOf(value));
     }
@@ -170,7 +163,7 @@ public abstract class DatumType implements Serializable
     public static DatumType getEnum(final int value)
     {
         for (int i=0; i<ENUMS.length; i++)
-            if (ENUMS[i].value==value)
+            if (ENUMS[i].getValue()==value)
                 return ENUMS[i];
         throw new NoSuchElementException(String.valueOf(value));
     }
@@ -209,43 +202,6 @@ public abstract class DatumType implements Serializable
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * Returns the enum value.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof DatumType)
-        {
-            return ((DatumType) object).value == value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a string représentation of this enum.
-     * The returned string is implementation dependent.
-     * It is usually provided for debugging purposes only.
-     */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        final String name = getName(null);
-        if (name!=null)
-            buffer.append(name);
-        else
-            buffer.append(value);
-        buffer.append(']');
-        return buffer.toString();
-    }
-
-    /**
      * Use a single instance of {@link DatumType} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.
@@ -254,7 +210,7 @@ public abstract class DatumType implements Serializable
      * @throws ObjectStreamException is deserialization failed.
      */
     private Object readResolve() throws ObjectStreamException
-    {return getEnum(value);}
+    {return getEnum(getValue());}
 
     /**
      * Horizontal datum type.
@@ -284,13 +240,13 @@ public abstract class DatumType implements Serializable
          * Horizontal datums with this type should never supply
          * a conversion to WGS84 using Bursa Wolf parameters.
          */
-        public static final Horizontal OTHER = new Horizontal(1000, Clé.OTHER);
+        public static final Horizontal OTHER = new Horizontal("OTHER", 1000, Clé.OTHER);
 
         /**
          * Construct a new enum with the specified value.
          */
-        private Horizontal(final int value, final int clé)
-        {super(value, clé);}
+        private Horizontal(final String name, final int value, final int clé)
+        {super(name, value, clé);}
 
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
@@ -323,13 +279,13 @@ public abstract class DatumType implements Serializable
         /**
          * Unspecified vertical datum type.
          */
-        public static final Vertical OTHER = new Vertical(2000, Clé.OTHER);
+        public static final Vertical OTHER = new Vertical("OTHER", 2000, Clé.OTHER);
 
         /**
          * Construct a new enum with the specified value.
          */
-        private Vertical(final int value, final int clé)
-        {super(value, clé);}
+        private Vertical(final String name, final int value, final int clé)
+        {super(name, value, clé);}
 
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}
@@ -362,8 +318,8 @@ public abstract class DatumType implements Serializable
         /**
          * Construct a new enum with the specified value.
          */
-        private Local(final int value, final int clé)
-        {super(value, clé);}
+        private Local(final String name, final int value, final int clé)
+        {super(name, value, clé);}
 
         /** Get the minimum value. */ final int getMinimum() {return MINIMUM;}
         /** Get the maximum value. */ final int getMaximum() {return MAXIMUM;}

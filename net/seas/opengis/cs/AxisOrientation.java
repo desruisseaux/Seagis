@@ -24,12 +24,11 @@ package net.seas.opengis.cs;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
 import net.seas.resources.Clé;
-import net.seas.util.XClass;
 
 
 /**
@@ -44,54 +43,54 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cs.CS_AxisOrientationEnum
  */
-public final class AxisOrientation implements Serializable
+public final class AxisOrientation extends EnumeratedParameter
 {
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 6962768641608234346L;
+    // private static final long serialVersionUID = 6962768641608234346L; // TODO
 
     /**
      * Unknown or unspecified axis orientation.
      * This can be used for local or fitted coordinate systems.
      */
-    public static final AxisOrientation OTHER = new AxisOrientation(0, Clé.OTHER);
+    public static final AxisOrientation OTHER = new AxisOrientation("OTHER", 0, Clé.OTHER);
 
     /**
      * Increasing ordinates values go North. This is usually
      * used for Grid Y coordinates and Latitude.
      */
-    public static final AxisOrientation NORTH = new AxisOrientation(1, Clé.NORTH);
+    public static final AxisOrientation NORTH = new AxisOrientation("NORTH", 1, Clé.NORTH);
 
     /**
      * Increasing ordinates values go South.
      * This is rarely used.
      */
-    public static final AxisOrientation SOUTH = new AxisOrientation(2, Clé.SOUTH);
+    public static final AxisOrientation SOUTH = new AxisOrientation("SOUTH", 2, Clé.SOUTH);
 
     /**
      * Increasing ordinates values go East.
      * This is rarely used.
      */
-    public static final AxisOrientation EAST = new AxisOrientation(3, Clé.EAST);
+    public static final AxisOrientation EAST = new AxisOrientation("EAST", 3, Clé.EAST);
 
     /**
      * Increasing ordinates values go West.
      * This is usually used for Grid X coordinates and Longitude.
      */
-    public static final AxisOrientation WEST = new AxisOrientation(4, Clé.WEST);
+    public static final AxisOrientation WEST = new AxisOrientation("WEST", 4, Clé.WEST);
 
     /**
      * Increasing ordinates values go up.
      * This is used for vertical coordinate systems.
      */
-    public static final AxisOrientation UP = new AxisOrientation(5, Clé.UP);
+    public static final AxisOrientation UP = new AxisOrientation("UP", 5, Clé.UP);
 
     /**
      * Increasing ordinates values go down.
      * This is used for vertical coordinate systems.
      */
-    public static final AxisOrientation DOWN = new AxisOrientation(6, Clé.DOWN);
+    public static final AxisOrientation DOWN = new AxisOrientation("DOWN", 6, Clé.DOWN);
 
     /**
      * Axis orientations by value. Used to
@@ -108,18 +107,12 @@ public final class AxisOrientation implements Serializable
     private transient final int clé;
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.cs.CS_AxisOrientationEnum}.
-     */
-    public final int value;
-
-    /**
      * Construct a new enum with the specified value.
      */
-    private AxisOrientation(final int value, final int clé)
+    private AxisOrientation(final String name, final int value, final int clé)
     {
-        this.value = value;
-        this.clé   = clé;
+        super(name, value);
+        this.clé = clé;
     }
 
     /**
@@ -148,42 +141,6 @@ public final class AxisOrientation implements Serializable
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * Returns a hash value for this enum.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof AxisOrientation)
-        {
-            final AxisOrientation that = (AxisOrientation) object;
-            return this.value == that.value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a string représentation of this enum.
-     */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        final String name = getName(null);
-        if (name!=null)
-            buffer.append(name);
-        else
-            buffer.append(value);
-        buffer.append(']');
-        return buffer.toString();
-    }
-
-    /**
      * Use a single instance of {@link AxisOrientation} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.
@@ -193,6 +150,7 @@ public final class AxisOrientation implements Serializable
      */
     private Object readResolve() throws ObjectStreamException
     {
+        final int value = getValue();
         if (value>=0 && value<ENUMS.length) return ENUMS[value]; // Canonicalize
         else return ENUMS[0]; // Collapse unknow value to a single canonical one
     }

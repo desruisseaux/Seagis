@@ -25,11 +25,15 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Projection;
+import net.seas.opengis.cs.Ellipsoid;
+import net.seas.opengis.cs.Parameter;
+import net.seas.opengis.pt.Latitude;
+
 // Miscellaneous
 import java.util.Locale;
 import java.awt.geom.Point2D;
-import net.seas.opengis.pt.Latitude;
-import net.seas.opengis.cs.Ellipsoid;
 import net.seas.resources.Resources;
 
 

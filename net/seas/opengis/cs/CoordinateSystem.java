@@ -129,8 +129,8 @@ public abstract class CoordinateSystem extends Info
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -151,6 +151,12 @@ public abstract class CoordinateSystem extends Info
     class Export extends Info.Export implements CS_CoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Dimension of the coordinate system.
          */
         public int getDimension() throws RemoteException
@@ -160,18 +166,18 @@ public abstract class CoordinateSystem extends Info
          * Gets axis details for dimension within coordinate system.
          */
         public CS_AxisInfo getAxis(final int dimension) throws RemoteException
-        {return Adapters.export(CoordinateSystem.this.getAxis(dimension));}
+        {return adapters.export(CoordinateSystem.this.getAxis(dimension));}
 
         /**
          * Gets units for dimension within coordinate system.
          */
         public CS_Unit getUnits(final int dimension) throws RemoteException
-        {return Adapters.export(CoordinateSystem.this.getUnits(dimension));}
+        {return adapters.export(CoordinateSystem.this.getUnits(dimension));}
 
         /**
          * Gets default envelope of coordinate system.
          */
         public PT_Envelope getDefaultEnvelope() throws RemoteException
-        {return net.seas.opengis.pt.Adapters.export(CoordinateSystem.this.getDefaultEnvelope());}
+        {return adapters.PT.export(CoordinateSystem.this.getDefaultEnvelope());}
     }
 }

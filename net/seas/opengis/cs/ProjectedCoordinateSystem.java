@@ -203,8 +203,8 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -225,21 +225,27 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     private final class Export extends HorizontalCoordinateSystem.Export implements CS_ProjectedCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Returns the GeographicCoordinateSystem.
          */
         public CS_GeographicCoordinateSystem getGeographicCoordinateSystem() throws RemoteException
-        {return Adapters.export(ProjectedCoordinateSystem.this.getGeographicCoordinateSystem());}
+        {return adapters.export(ProjectedCoordinateSystem.this.getGeographicCoordinateSystem());}
 
         /**
          * Returns the LinearUnits.
          */
         public CS_LinearUnit getLinearUnit() throws RemoteException
-        {return (CS_LinearUnit) Adapters.export(ProjectedCoordinateSystem.this.getLinearUnit());}
+        {return (CS_LinearUnit) adapters.export(ProjectedCoordinateSystem.this.getLinearUnit());}
 
         /**
          * Gets the projection.
          */
         public CS_Projection getProjection() throws RemoteException
-        {return Adapters.export(ProjectedCoordinateSystem.this.getProjection());}
+        {return adapters.export(ProjectedCoordinateSystem.this.getProjection());}
     }
 }

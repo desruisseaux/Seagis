@@ -177,8 +177,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -199,15 +199,21 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     private final class Export extends CoordinateSystem.Export implements CS_VerticalCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Gets the vertical datum, which indicates the measurement method.
          */
         public CS_VerticalDatum getVerticalDatum() throws RemoteException
-        {return Adapters.export(VerticalCoordinateSystem.this.getVerticalDatum());}
+        {return adapters.export(VerticalCoordinateSystem.this.getVerticalDatum());}
 
         /**
          * Gets the units used along the vertical axis.
          */
         public CS_LinearUnit getVerticalUnit() throws RemoteException
-        {return (CS_LinearUnit) Adapters.export(VerticalCoordinateSystem.this.getVerticalUnit());}
+        {return (CS_LinearUnit) adapters.export(VerticalCoordinateSystem.this.getVerticalUnit());}
     }
 }

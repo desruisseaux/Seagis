@@ -247,8 +247,8 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -269,16 +269,22 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private final class Export extends HorizontalCoordinateSystem.Export implements CS_GeographicCoordinateSystem
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Returns the AngularUnit.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
-        {return (CS_AngularUnit) Adapters.export(GeographicCoordinateSystem.this.getAngularUnit());}
+        {return (CS_AngularUnit) adapters.export(GeographicCoordinateSystem.this.getAngularUnit());}
 
         /**
          * Returns the PrimeMeridian.
          */
         public CS_PrimeMeridian getPrimeMeridian() throws RemoteException
-        {return Adapters.export(GeographicCoordinateSystem.this.getPrimeMeridian());}
+        {return adapters.export(GeographicCoordinateSystem.this.getPrimeMeridian());}
 
         /**
          * Gets the number of available conversions to WGS84 coordinates.
@@ -290,6 +296,6 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
          * Gets details on a conversion to WGS84.
          */
         public CS_WGS84ConversionInfo getWGS84ConversionInfo(final int index) throws RemoteException
-        {return Adapters.export(GeographicCoordinateSystem.this.getWGS84ConversionInfo(index));}
+        {return adapters.export(GeographicCoordinateSystem.this.getWGS84ConversionInfo(index));}
     }
 }

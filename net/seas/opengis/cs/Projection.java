@@ -35,7 +35,6 @@ import javax.units.Unit;
 
 import net.seas.util.XClass;
 import net.seas.util.XArray;
-import net.seas.opengis.ct.Parameter;
 import net.seas.opengis.ct.MissingParameterException;
 
 
@@ -53,7 +52,7 @@ public class Projection extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = -7116072094430367096L;
+    //private static final long serialVersionUID = -7116072094430367096L; // TODO
 
     /**
      * Classification string for projection (e.g. "Transverse_Mercator").
@@ -232,8 +231,8 @@ public class Projection extends Info
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -254,6 +253,12 @@ public class Projection extends Info
     private final class Export extends Info.Export implements CS_Projection
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Gets number of parameters of the projection.
          */
         public int getNumParameters() throws RemoteException
@@ -263,10 +268,7 @@ public class Projection extends Info
          * Gets an indexed parameter of the projection.
          */
         public CS_ProjectionParameter getParameter(final int index) throws RemoteException
-        {
-            final Parameter param = Projection.this.getParameter(index);
-            return new CS_ProjectionParameter(param.name, param.value);
-        }
+        {return adapters.export(Projection.this.getParameter(index));}
 
         /**
          * Gets the projection classification name (e.g. 'Transverse_Mercator').

@@ -145,8 +145,8 @@ public class PrimeMeridian extends Info
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -167,6 +167,12 @@ public class PrimeMeridian extends Info
     private final class Export extends Info.Export implements CS_PrimeMeridian
     {
         /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
          * Returns the longitude value relative to the Greenwich Meridian.
          */
         public double getLongitude() throws RemoteException
@@ -178,6 +184,6 @@ public class PrimeMeridian extends Info
          * @throws RemoteException if a remote method call failed.
          */
         public CS_AngularUnit getAngularUnit() throws RemoteException
-        {return (CS_AngularUnit) Adapters.export(PrimeMeridian.this.getAngularUnit());}
+        {return (CS_AngularUnit) adapters.export(PrimeMeridian.this.getAngularUnit());}
     }
 }

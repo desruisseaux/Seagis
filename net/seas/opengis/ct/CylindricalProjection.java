@@ -25,6 +25,10 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS (SEAS) dependencies
+import net.seas.opengis.cs.Projection;
+import net.seas.opengis.cs.Parameter;
+
 
 /**
  * Classe de base des projections cartographiques cylindriques. Les projections

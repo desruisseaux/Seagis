@@ -329,6 +329,7 @@ public class Ellipsoid extends Info
         final String         name = getName(null);
         final Unit           unit = getAxisUnit();
         final String   unitSymbol = (unit!=null) ? unit.toString() : "";
+        buffer.append('[');
         if (name!=null)
         {
             buffer.append('"');
@@ -369,8 +370,8 @@ public class Ellipsoid extends Info
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    final Object toOpenGIS()
-    {return new Export();}
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -390,6 +391,12 @@ public class Ellipsoid extends Info
      */
     private final class Export extends Info.Export implements CS_Ellipsoid
     {
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
         /**
          * Gets the equatorial radius.
          */
@@ -421,6 +428,6 @@ public class Ellipsoid extends Info
          * Returns the LinearUnit.
          */
         public CS_LinearUnit getAxisUnit() throws RemoteException
-        {return (CS_LinearUnit) Adapters.export(Ellipsoid.this.getAxisUnit());}
+        {return (CS_LinearUnit) adapters.export(Ellipsoid.this.getAxisUnit());}
     }
 }

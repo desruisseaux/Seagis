@@ -32,7 +32,9 @@ import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
 import net.seas.opengis.cs.ProjectedCoordinateSystem;
 import net.seas.opengis.cs.GeographicCoordinateSystem;
+import net.seas.opengis.cs.Projection;
 import net.seas.opengis.cs.Ellipsoid;
+import net.seas.opengis.cs.Parameter;
 
 // Geometry
 import java.awt.Shape;

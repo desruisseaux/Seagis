@@ -141,8 +141,8 @@ public abstract class CoordinateTransform extends MathTransform
      * Note: The returned type is a generic {@link Object} in order
      *       to avoid too early class loading of OpenGIS interface.
      */
-    Object toOpenGIS()
-    {return new Export();}
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
 
 
 
@@ -165,6 +165,17 @@ public abstract class CoordinateTransform extends MathTransform
      */
     final class Export extends RemoteObject implements CT_CoordinateTransformation
     {
+        /**
+         * The originating adapter.
+         */
+        protected final Adapters adapters;
+
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {this.adapters = (Adapters)adapters;}
+
         /**
          * Returns the underlying math transform.
          */
@@ -205,24 +216,24 @@ public abstract class CoordinateTransform extends MathTransform
          * Semantic type of transform.
          */
         public CT_TransformType getTransformType() throws RemoteException
-        {return new CT_TransformType(CoordinateTransform.this.getTransformType().value);}
+        {return adapters.export(CoordinateTransform.this.getTransformType());}
 
         /**
          * Source coordinate system.
          */
         public CS_CoordinateSystem getSourceCS() throws RemoteException
-        {return net.seas.opengis.cs.Adapters.export(CoordinateTransform.this.getSourceCS());}
+        {return adapters.CS.export(CoordinateTransform.this.getSourceCS());}
 
         /**
          * Target coordinate system.
          */
         public CS_CoordinateSystem getTargetCS() throws RemoteException
-        {return net.seas.opengis.cs.Adapters.export(CoordinateTransform.this.getTargetCS());}
+        {return adapters.CS.export(CoordinateTransform.this.getTargetCS());}
 
         /**
          * Gets math transform.
          */
         public CT_MathTransform getMathTransform() throws RemoteException
-        {return Adapters.export(CoordinateTransform.this.getMathTransform());}
+        {return adapters.export(CoordinateTransform.this.getMathTransform());}
     }
 }
