@@ -49,9 +49,10 @@ import fr.ird.database.coverage.*;
 /**
  * Teste le fonctionnement de {@link SeriesCoverage3D}.
  *
+ * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Coverage3DTest extends TestCase {
+public class SeriesCoverageTest extends TestCase {
     /**
      * Connexion vers la base de données.
      */
@@ -71,7 +72,7 @@ public class Coverage3DTest extends TestCase {
     /**
      * Construit la suite de tests.
      */
-    public Coverage3DTest(final String name) {
+    public SeriesCoverageTest(final String name) {
         super(name);
     }
 
@@ -171,7 +172,7 @@ public class Coverage3DTest extends TestCase {
      * Retourne la suite de tests.
      */
     public static Test suite() {
-        TestSuite suite = new TestSuite(Coverage3DTest.class);
+        TestSuite suite = new TestSuite(SeriesCoverageTest.class);
         return suite;
     }
 

@@ -71,12 +71,13 @@ import fr.ird.resources.seagis.Resources;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ParameterCoverage3D extends Coverage3D {
+public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.sample.Coverage3D {
     /**
      * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
      * &quot;NodataFilter&quot;.
      *
      * @see fr.ird.database.coverage.sql.GridCoverageProcessor#NODATA_FILTER
+     * @see #getProcessorOperation
      */
     private static final String NODATA_FILTER = "NodataFilter";
 
@@ -84,6 +85,7 @@ public class ParameterCoverage3D extends Coverage3D {
      * Le séparateur à utiliser entre les noms d'opérations.
      *
      * @see fr.ird.database.coverage.sql.GridCoverageProcessor#SEPARATOR
+     * @see #getProcessorOperation
      */
     private static final char SEPARATOR = ';';
 
@@ -283,6 +285,23 @@ public class ParameterCoverage3D extends Coverage3D {
     }
 
     /**
+     * Retourne le nom de l'opération à utiliser. L'appel de cette méthode équivaut à l'appel
+     * de {@link OperationEntry#getProcessorOperation}, mais peut ajouter en plus l'opération
+     * "NodataFilter".
+     */
+    private static String getProcessorOperation(final OperationEntry operation) {
+        String name = operation.getProcessorOperation();
+        if (name == null) {
+            return NODATA_FILTER;
+        }
+        name = name.trim();
+        if (!name.equalsIgnoreCase(NODATA_FILTER)) {
+            name = NODATA_FILTER + SEPARATOR + name;
+        }
+        return name;
+    }
+
+    /**
      * Spécifie le paramètre à produire. Des couvertures spatiales seront produites à partir
      * des {@linplain ParameterEntry#getComponents composantes} de ce paramètre, s'il y en a.
      *
@@ -355,7 +374,7 @@ public class ParameterCoverage3D extends Coverage3D {
                             final String[]      names;
                             final ParameterList param;
                             coverageTable.setSeries(series);
-                            param = coverageTable.setOperation(operation.getProcessorOperation());
+                            param = coverageTable.setOperation(getProcessorOperation(operation));
                             names = param.getParameterListDescriptor().getParamNames();
                             for (int j=0; j<names.length; j++) {
                                 final String name  = names[j];
@@ -468,19 +487,30 @@ public class ParameterCoverage3D extends Coverage3D {
     }
 
     /**
-     * Retourne la valeur à la coordonnée spatio-temporelle spécifiée. Cette valeur sera calculée
+     * Retourne la valeur d'un échantillon ou d'un point arbitraire. Cette valeur sera calculée
      * en combinant toutes les {@linkplain ParameterEntry#getComponents composantes} du paramètre
      * spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a été spécifié,
      * alors cette méthode retourne {@link Double#NaN}.
      *
      * Cette méthode peut être appelée simultanément par plusieurs threads.
      *
-     * @param  coord La coordonnée spatiale du point à évaluer.
-     * @param  time  La date du point à évaluer.
+     * @param  sample L'échantillon dont on veut la valeur du paramètre environnemental,
+     *         ou <code>null</code>. Si non-null, alors les arguments <code>coordinate</code>
+     *         et <code>time</code> <strong>doivent</strong> correspondre à la position de
+     *         l'échantillon (ça ne sera pas vérifié, sauf si les assertions sont activées).
+     * @param  coordinate La coordonnée spatiale du point à évaluer.
+     * @param  time La date du point à évaluer.
      * @return La valeur du point aux coordonnées spatio-temporelles spécifiées.
      * @throws CannotEvaluateException si l'évaluation a échouée.
      */
-    public double evaluate(final Point2D coord, final Date time) throws CannotEvaluateException {
+    protected double evaluate(final SampleEntry sample,
+                              final Point2D     coordinate,
+                              final Date        time) throws CannotEvaluateException
+    {
+        if (sample != null) {
+            assert sample.getCoordinate().equals(coordinate) : coordinate;
+            assert sample.getTime()      .equals(time)       : time;
+        }
         final SeriesKey key = new SeriesKey();
         final ParameterEntry.Component[] components;
         final Map<SeriesKey,Coverage3D>  coverages;
@@ -500,7 +530,13 @@ public class ParameterCoverage3D extends Coverage3D {
                     if (key.series == null) {
                         break;
                     }
-                    buffer = coverages.get(key).evaluate(coord, time, buffer);
+                    final Coverage3D coverage = coverages.get(key);
+                    if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
+                        buffer = ((fr.ird.database.sample.Coverage3D)coverage)
+                                 .evaluate(sample, null, buffer);
+                    } else {
+                        buffer = coverage.evaluate(coordinate, time, buffer);
+                    }
                 } while (Double.isNaN(buffer[band]));
                 return buffer[band];
             }
@@ -521,9 +557,10 @@ public class ParameterCoverage3D extends Coverage3D {
                 value += component.getWeight();
                 continue;
             }
-            coord1.setLocation(coord);
+            coord1.setLocation(coordinate);
             time1.setTime(time.getTime());
-            component.getRelativePosition().applyOffset(coord1, time1);
+            final RelativePositionEntry relativePosition = component.getRelativePosition();
+            relativePosition.applyOffset(coord1, time1);
             key.operation = component.getOperation();
             final int band = source.getBand();
             int seriesIndex = 0;
@@ -532,11 +569,63 @@ public class ParameterCoverage3D extends Coverage3D {
                 if (key.series == null) {
                     break;
                 }
-                buffer = coverages.get(key).evaluate(coord1, time1, buffer);
+                final Coverage3D coverage = coverages.get(key);
+                if (sample!=null && coverage instanceof fr.ird.database.sample.Coverage3D) {
+                    buffer = ((fr.ird.database.sample.Coverage3D)coverage)
+                             .evaluate(sample, relativePosition, buffer);
+                } else {
+                    buffer = coverage.evaluate(coord1, time1, buffer);
+                }
             } while (Double.isNaN(buffer[band]));
             value += component.getWeight() * component.transform(buffer[band]);
         }
         return value;
+    }
+
+    /**
+     * Évalue les valeurs de la couverture pour un échantillon.
+     *
+     * L'implémentation par défaut délègue le travail à
+     * <code>{@link #evaluate(SampleEntry,Point2D,Date) evaluate}(sample, ...)</code>.
+     * Cette méthode peut être appelée simultanément par plusieurs threads.
+     *
+     * @param  sample Échantillon pour lequel on veut les paramètres environnementaux.
+     * @param  position Doit être <code>null</code> pour l'implémentation actuelle.
+     * @param  dest Tableau de destination, ou <code>null</code>.
+     * @return Les paramètres environnementaux pour l'échantillon spécifié.
+     * @throws CannotEvaluateException si l'évaluation a échouée.
+     */
+    public double[] evaluate(final SampleEntry sample, final RelativePositionEntry position, double[] dest)
+            throws CannotEvaluateException
+    {
+        if (position != null) {
+            throw new UnsupportedOperationException("Not yet implemented");
+        }
+        if (dest == null) {
+            dest = new double[1];
+        }
+        dest[0] = evaluate(sample, sample.getCoordinate(), sample.getTime());
+        return dest;
+    }
+
+
+    /**
+     * Retourne la valeur à la coordonnée spatio-temporelle spécifiée. Cette valeur sera calculée
+     * en combinant toutes les {@linkplain ParameterEntry#getComponents composantes} du paramètre
+     * spécifié lors du dernier appel à {@link #setParameter}. Si aucun paramètre n'a été spécifié,
+     * alors cette méthode retourne {@link Double#NaN}.
+     *
+     * L'implémentation par défaut délègue le travail à
+     * <code>{@link #evaluate(SampleEntry,Point2D,Date) evaluate}(null, coord, time)</code>.
+     * Cette méthode peut être appelée simultanément par plusieurs threads.
+     *
+     * @param  coord La coordonnée spatiale du point à évaluer.
+     * @param  time  La date du point à évaluer.
+     * @return La valeur du point aux coordonnées spatio-temporelles spécifiées.
+     * @throws CannotEvaluateException si l'évaluation a échouée.
+     */
+    public double evaluate(final Point2D coord, final Date time) throws CannotEvaluateException {
+        return evaluate(null, coord, time);
     }
 
     /**

@@ -59,8 +59,10 @@ public interface Coverage3D extends PropertySource {
      *                  <code>null</code> pour les évaluer à la position exacte de l'échantillon.
      * @param  dest Tableau de destination, ou <code>null</code>.
      * @return Les paramètres environnementaux pour l'échantillon spécifié.
+     * @throws CannotEvaluateException Si la valeur ne peut pas être évaluée.
      */
-    double[] evaluate(SampleEntry sample, RelativePositionEntry position, double[] dest);
+    double[] evaluate(SampleEntry sample, RelativePositionEntry position, double[] dest)
+             throws CannotEvaluateException;
 
     /**
      * Returns a sequence of double values for a given point in the coverage.
