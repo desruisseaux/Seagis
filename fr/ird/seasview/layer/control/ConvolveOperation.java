@@ -34,26 +34,25 @@ import javax.media.jai.KernelJAI;
 // Geotools dependencies
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gp.GridCoverageProcessor;
-import org.geotools.gui.swing.GradientKernelEditor;
+import org.geotools.gui.swing.KernelEditor;
 
 
 /**
- * Opération "GradientMagnitude".
+ * Opération "Convolve".
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class GradientMagnitudeOperation extends ProcessorOperation implements Configurable {
+final class ConvolveOperation extends ProcessorOperation implements Configurable {
     /**
      * L'éditeur.
      */
-    private transient GradientKernelEditor editor;
+    private transient KernelEditor editor;
 
     /**
-     * The horizontal and vertical kernels.
+     * The kernel.
      */
-    private KernelJAI mask1 = KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL,
-                      mask2 = KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL;
+    private KernelJAI kernel = KernelJAI.ERROR_FILTER_STUCKI;
 
     /**
      * Construit une opération sans paramètres.
@@ -62,11 +61,10 @@ final class GradientMagnitudeOperation extends ProcessorOperation implements Con
      * @param operation   Le nom de l'opération.
      * @param description Une description à faire apparaître dans le menu.
      */
-    public GradientMagnitudeOperation(final GridCoverageProcessor processor,
-                                      final String                operation,
-                                      final String              description)
+    public ConvolveOperation(final GridCoverageProcessor processor, final String operation, final String description)
     {
         super(processor, operation, description);
+        parameters.setParameter("kernel", kernel);
     }
 
     /**
@@ -74,20 +72,18 @@ final class GradientMagnitudeOperation extends ProcessorOperation implements Con
      */
     public void showControler(final Component owner) {
         if (editor == null) {
-            editor = new GradientKernelEditor();
+            editor = new KernelEditor();
             editor.addDefaultKernels();
+            editor.setKernel(kernel);
         }
         if (SwingUtilities.showOptionDialog(owner, editor, "Magnitude du gradient")) {
-            final KernelJAI m1 = editor.getHorizontalEditor().getKernel();
-            final KernelJAI m2 = editor.getVerticalEditor()  .getKernel();
-            if (!m1.equals(mask1) || !m2.equals(mask2)) {
-                parameters.setParameter("mask1", mask1=m1);
-                parameters.setParameter("mask2", mask2=m2);
+            final KernelJAI k = editor.getKernel();
+            if (!kernel.equals(k)) {
+                parameters.setParameter("kernel", kernel=k);
                 clearCache();
             }
         } else {
-            editor.getHorizontalEditor().setKernel(mask1);
-            editor.getVerticalEditor()  .setKernel(mask2);
+            editor.setKernel(kernel);
         }
     }
 }

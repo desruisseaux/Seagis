@@ -123,8 +123,17 @@ final class ImageControlPanel extends JPanel implements ListSelectionListener, A
     protected void addDefaultOperations() {
         final Resources             resources = Resources.getResources(null);
         final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
-        if (true) addOperation(new ProcessorOperation        (processor, "Recolor",           resources.getString(ResourceKeys.GRAY_SCALE    )));
-        if (true) addOperation(new GradientMagnitudeOperation(processor, "GradientMagnitude", resources.getString(ResourceKeys.GRADIENT_SOBEL)));
+        addOperation(new ProcessorOperation        (processor, "Recolor",           resources.getString(ResourceKeys.GRAY_SCALE)));
+        addOperation(new ProcessorOperation        (processor, "MinFilter",         "Filtre par valeur minimale"));
+        addOperation(new ProcessorOperation        (processor, "MaxFilter",         "Filtre par valeur maximale"));
+        addOperation(new ProcessorOperation        (processor, "MedianFilter",      "Filtre par valeur médiane" ));
+        if (false) {
+            // Redondant avec l'opération "Convolve".
+            addOperation(new ProcessorOperation(processor, "LaplaceType1Filter", "Filtre Laplace type 1"));
+            addOperation(new ProcessorOperation(processor, "LaplaceType2Filter", "Filtre Laplace type 2"));
+        }
+        addOperation(new ConvolveOperation(processor, "Convolve", "Convolution"));
+        addOperation(new GradientMagnitudeOperation(processor, "GradientMagnitude", resources.getString(ResourceKeys.GRADIENT_SOBEL)));
 //      if (true ) for (int i=0; i<=10; i++) addImageOperation(new Convolution(i)); // TODO (JUST A TRY)
 //      if (false) addImageOperation(new ColorSmoother(ColorSmoother.KEEP_UPPER_COLOR));
 //      if (false) addImageOperation(new ThemeEraser("Quadrillage", 1));
