@@ -58,7 +58,7 @@ public interface EnvironmentTable extends Table {
      * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
      * être spécifié en argument à la méthode {@link #setParameter}.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public String[] getAvailableParameters() throws SQLException;
 
@@ -68,7 +68,7 @@ public interface EnvironmentTable extends Table {
      * "U", "V" et "EKP".
      *
      * @param parameter Le paramètre à définir (exemple: "SST").
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public abstract void setParameter(final String parameter) throws SQLException;
 
@@ -77,14 +77,14 @@ public interface EnvironmentTable extends Table {
      * Les principales valeurs permises sont {@link #START_POINT}, {@link #CENTER}
      * et {@link #END_POINT}.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public abstract void setPosition(final int position) throws SQLException;
 
     /**
      * Définit le décalage de temps (en jours). La valeur par défaut est 0.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public abstract void setTimeLag(final int timeLag) throws SQLException;
 

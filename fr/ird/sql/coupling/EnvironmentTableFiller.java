@@ -227,7 +227,7 @@ public final class EnvironmentTableFiller {
         if (geographicArea != null) {
             table.setGeographicArea(geographicArea);
         }
-        if (true) {
+        if (false) {
             table.setCatchRange(250, Double.POSITIVE_INFINITY);
         }
         final List<CatchEntry> list = table.getEntries();

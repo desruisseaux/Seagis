@@ -251,7 +251,7 @@ public class FisheryDataBase extends DataBase
      * @throws SQLException si l'accès à la base de données a échouée.
      */
     public String[] getAvailableParameters() throws SQLException {
-        return EnvironmentTableImpl.getAvailableParameters(connection);
+        return ParameterTable.getAvailableParameters(connection);
     }
 
     /**

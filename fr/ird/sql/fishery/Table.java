@@ -40,8 +40,7 @@ import java.util.prefs.Preferences;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class Table implements fr.ird.sql.Table
-{
+abstract class Table implements fr.ird.sql.Table {
     /* Nom de table. */ static final String ENVIRONMENTS = "Environnements";
     /* Nom de table. */ static final String PARAMETERS   = "Paramètres";
     /* Nom de table. */ static final String LONGLINES    = "Captures";
@@ -52,8 +51,7 @@ abstract class Table implements fr.ird.sql.Table
      * Journal des évènements.
      */
     static final Logger logger = Logger.getLogger("fr.ird.sql");
-    static
-    {
+    static {
         fr.ird.util.InterlineFormatter.init(logger);
     }
 
@@ -77,8 +75,52 @@ abstract class Table implements fr.ird.sql.Table
      *
      * @param statement Interrogation à soumettre à la base de données.
      */
-    protected Table(final PreparedStatement statement)
-    {this.statement=statement;}
+    protected Table(final PreparedStatement statement) {
+        this.statement=statement;
+    }
+
+    /**
+     * Complète la requète SQL en ajouter des noms de colonnes à celles qui existe déjà.
+     * Les noms seront ajoutées juste avant la première clause "FROM" dans la requête SQL.
+     *
+     * @param  query Requête à modifier.
+     * @param  colunms Noms de colonnes à ajouter.
+     * @return La requête modifiée.
+     */
+    static String completeSelect(String query, final String[] columns) {
+        int index = indexOf(query, "FROM");
+        if (index >= 0) {
+            while (index>=1 && Character.isWhitespace(query.charAt(index-1))) index--;
+            final StringBuffer buffer = new StringBuffer(query.substring(0, index));
+            for (int i=0; i<columns.length; i++) {
+                final String name = columns[i];
+                if (name != null) {
+                    buffer.append(", ");
+                    buffer.append(name);
+                }
+            }
+            buffer.append(query.substring(index));
+            query = buffer.toString();
+        }
+        return query;
+    }
+
+    /**
+     * Recherche une sous-chaîne dans une chaîne en ignorant les différences entre majuscules et
+     * minuscules. Les racourcis du genre <code>text.toUpperCase().indexOf("SEARCH FOR")</code>
+     * ne fonctionne pas car <code>toUpperCase()</code> et <code>toLowerCase()</code> peuvent
+     * changer le nombre de caractères de la chaîne.
+     */
+    static int indexOf(final String text, final String searchFor) {
+        final int searchLength = searchFor.length();
+        final int length = text.length();
+        for (int i=0; i<length; i++) {
+            if (text.regionMatches(true, 0, searchFor, 0, searchLength)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     /**
      * Libère les ressources utilisées par cet objet.
@@ -88,10 +130,8 @@ abstract class Table implements fr.ird.sql.Table
      * @throws SQLException si un problème est survenu
      *         lors de la disposition des ressources.
      */
-    public synchronized void close() throws SQLException
-    {
-        if (statement!=null)
-        {
+    public synchronized void close() throws SQLException {
+        if (statement != null) {
             statement.close();
             statement = null;
         }

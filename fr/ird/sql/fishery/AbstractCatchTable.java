@@ -160,7 +160,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
                                  final TimeZone     timezone,
                                  final Set<Species> species) throws SQLException
     {
-        super(connection.prepareStatement(completeQuery(statement, table, species)));
+        super(connection.prepareStatement(completeQuery(statement, species)));
         this.table     = table;
         this.sqlSelect = statement;
         this.species   = new SpeciesSet(species);
@@ -174,28 +174,22 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     /**
      * Complète la requète SQL en ajouter les noms de colonnes des espèces
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
-     * Une colonne "total" est aussi ajoutée.
+     * Une condition basée sur les captures est aussi ajoutée.
      */
-    private static String completeQuery(String query, final String table, final Set<Species> species)
+    private static String completeQuery(String query, final Set<Species> species)
     {
-        int index = query.toUpperCase().indexOf("FROM");
-        if (index >= 0) {
-            while (index>=1 && Character.isWhitespace(query.charAt(index-1))) index--;
-            final StringBuffer buffer = new StringBuffer(query.substring(0, index));
-            for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
-                final String name = it.next().getName(null);
-                if (name != null) {
-                    buffer.append(", ");
-                    buffer.append(table);
-                    buffer.append('.');
-                    buffer.append(name);
-                }
-            }
-            buffer.append(query.substring(index));
-            query = buffer.toString();
+        final String[] columns = new String[species.size()];
+        int index=0;
+        for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
+            columns[index++] = it.next().getName(null);
         }
+        assert index == columns.length;
+        query = completeSelect(query, columns);
+        /*
+         * Ajoute une condition "total".
+         */
         final String total = "total";
-        index = query.toLowerCase().indexOf(total);
+        index = indexOf(query, total);
         if (index>0 && index+1<query.length() &&
             !Character.isUnicodeIdentifierPart(query.charAt(index-1)) &&
             !Character.isUnicodeIdentifierPart(query.charAt(index+total.length())))
@@ -203,8 +197,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
             final StringBuffer buffer = new StringBuffer(query.substring(0, index));
             boolean additional = false;
             buffer.append('(');
-            for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
-                final String name = it.next().getName(null);
+            for (int i=0; i<columns.length; i++) {
+                final String name = columns[i];
                 if (name != null) {
                     if (additional) {
                         buffer.append('+');
@@ -239,7 +233,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
             final Connection connection = statement.getConnection();
             statement.close();
             statement = null; // Au cas où l'instruction suivante échourait.
-            statement = connection.prepareStatement(completeQuery(sqlSelect, table, newSpecies));
+            statement = connection.prepareStatement(completeQuery(sqlSelect, newSpecies));
             this.species = new SpeciesSet(newSpecies);
             setTimeRange(timeRange);
             setGeographicArea(area);

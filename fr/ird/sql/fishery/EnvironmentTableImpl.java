@@ -34,10 +34,8 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // Divers
-import java.util.Set;
 import java.util.Date;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import javax.media.jai.util.Range;
 
 // Resources
@@ -53,18 +51,6 @@ import fr.ird.resources.gui.ResourceKeys;
  * @author Martin Desruisseaux
  */
 final class EnvironmentTableImpl extends Table implements EnvironmentTable {
-    /**
-     * Requête SQL pour obtenir le code d'un paramètre environnemental.
-     */
-    private static final String SQL_LIST_PARAMETERS=
-                    "SELECT name FROM "+PARAMETERS+" SORTED BY name";
-
-    /**
-     * Requête SQL pour obtenir le code d'un paramètre environnemental.
-     */
-    private static final String SQL_MAP_PARAMETER=
-                    "SELECT ID FROM "+PARAMETERS+" WHERE name LIKE ?";
-
     /**
      * Requête SQL pour obtenir la table des données environnementales.
      */
@@ -159,34 +145,13 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     }
 
     /**
-     * Retourne la liste des paramètres disponibles.
-     *
-     * @param connection La connection à utiliser.
-     * @throws SQLException si l'accès à la base de données a échouée.
-     */
-    static String[] getAvailableParameters(final Connection connection) throws SQLException {
-        final Statement      stm = connection.createStatement();
-        final ResultSet   result = stm.executeQuery(SQL_LIST_PARAMETERS);
-        final Set<String>  param = new LinkedHashSet<String>();
-        while (result.next()) {
-            final String item = result.getString(0);
-            if (item != null) {
-                param.add(item);
-            }
-        }
-        result.close();
-        stm.close();
-        return param.toArray(new String[param.size()]);
-    }
-
-    /**
      * Retourne la liste des paramètres disponibles. Ces paramètres peuvent
      * être spécifié en argument à la méthode {@link #setParameter}.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public String[] getAvailableParameters() throws SQLException {
-        return getAvailableParameters(statement.getConnection());
+        return ParameterTable.getAvailableParameters(statement.getConnection());
     }
 
     /**
@@ -195,34 +160,20 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * "U", "V" et "EKP".
      *
      * @param parameter Le paramètre à définir (exemple: "SST").
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized void setParameter(final String parameter) throws SQLException {
-        final PreparedStatement stm = statement.getConnection().prepareStatement(SQL_MAP_PARAMETER);
-        stm.setString(1, parameter);
-        final ResultSet result = stm.executeQuery();
-        int lastParameter=0, count=0;
-        while (result.next()) {
-            final int code = result.getInt(1);
-            if (count==0 || code!=lastParameter) {
-                lastParameter = code;
-                if (++count >= 2) break;
-            }
-        }
-        result.close();
-        stm.close();
-        if (count != 1) {
-            throw new SQLException(Resources.format(count==0 ?
-                            ResourceKeys.ERROR_NO_PARAMETER_$1 : 
-                            ResourceKeys.ERROR_DUPLICATED_RECORD_$1, parameter));
-        }
-        statement.setInt(ARG_PARAMETER, lastParameter);
-        this.parameter = lastParameter;
+        final ParameterTable table = new ParameterTable(statement.getConnection(), true);
+        final int code = table.getParameterID(parameter);
+        table.close();
+
+        statement.setInt(ARG_PARAMETER, code);
+        this.parameter = code;
         if (update != null) {
-            update.setInt(ARG_PARAMETER+1, lastParameter);
+            update.setInt(ARG_PARAMETER+1, code);
         }
         if (insert != null) {
-            insert.setInt(ARG_PARAMETER, lastParameter);
+            insert.setInt(ARG_PARAMETER, code);
         }
     }
 
@@ -231,7 +182,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * Les principales valeurs permises sont {@link #START_POINT}, {@link #CENTER}
      * et {@link #END_POINT}.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized void setPosition(final int position) throws SQLException {
         if (position>=START_POINT && position<=END_POINT) {
@@ -250,7 +201,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     /**
      * Définit le décalage de temps (en jours). La valeur par défaut est 0.
      *
-     * @throws SQLException si l'accès à la base de données a échouée.
+     * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized void setTimeLag(final int timeLag) throws SQLException {
         statement.setInt(ARG_TIMELAG, timeLag);
