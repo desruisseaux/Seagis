@@ -175,9 +175,9 @@ public final class SSTSynthese
             throw new IllegalArgumentException("Sources est null.");
         for (int i=0 ; i<sources.length ; i++)
             if (sources[i] == null)
-                throw new IllegalArgumentException("La source à l'index " + i + "est null.");
+                throw new IllegalArgumentException("La source à l'index " + i + " est null.");
             else if (!sources[i].exists())
-                throw new IllegalArgumentException("Le source à l'index " + i + "est introuvable.");                
+                throw new IllegalArgumentException("Le source à l'index " + i + " est introuvable.");                
         if (coefficients == null)
             throw new IllegalArgumentException("Coefficients est null.");
         
@@ -269,9 +269,9 @@ public final class SSTSynthese
             throw new IllegalArgumentException("Source est null.");
         for (int i=0 ; i<sources.length ; i++)
             if (sources[i] == null)
-                throw new IllegalArgumentException("La source à l'index " + i + "est null.");
+                throw new IllegalArgumentException("La source à l'index " + i + " est null.");
             else if (!sources[i].exists())
-                throw new IllegalArgumentException("La source à l'index " + i + "est introuvable.");                
+                throw new IllegalArgumentException("La source à l'index " + i + " est introuvable.");                
         if (target == null)
             throw new IllegalArgumentException("Le répertoire cible est null.");
                 
