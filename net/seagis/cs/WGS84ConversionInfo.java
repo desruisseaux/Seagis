@@ -33,7 +33,9 @@ package net.seagis.cs;
 
 // Miscellaneous
 import java.io.Serializable;
+import net.seagis.pt.Matrix;
 import net.seagis.resources.Utilities;
+import java.awt.geom.AffineTransform;
 
 
 /**
@@ -85,6 +87,44 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      */
     public WGS84ConversionInfo()
     {}
+
+    /**
+     * Returns an affine maps that can be used to define this
+     * Bursa Wolf transformation. The formula is as follows:
+     *
+     * <blockquote><pre>
+     * S = 1 + {@link #ppm}*1000000
+     *
+     * [ X’ ]    [     S   -{@link #ez}*S   +{@link #ey}*S   {@link #dx} ]  [ X ]
+     * [ Y’ ]  = [ +{@link #ez}*S       S   -{@link #ex}*S   {@link #dy} ]  [ Y }
+     * [ Z’ ]    [ -{@link #ey}*S   +{@link #ex}*S       S   {@link #dz} ]  [ Z ]
+     * [ 1  ]    [     0       0       0    1 ]  [ 1 ]
+     * </pre></blockquote>
+     */
+    public Matrix getAffineTransform()
+    {
+        final double    S = 1 + ppm*1000000;
+        final double[] R3 = new double[4]; R3[3]=1;
+        return new Matrix(new double[][]
+        {
+            {     S,  -ez*S,  +ey*S,  dx },
+            { +ez*S,      S,  -ex*S,  dy },
+            { -ey*S,  +ex*S,      S,  dz },
+            R3
+        });
+    }
+
+    /**
+     * Returns the horizontal part of an affine maps than can
+     * be used to define this Bursa Wolf transformation. The
+     * returned affine transform assume that all input elevation
+     * are equal to 0.
+     */
+    public AffineTransform getAffineTransform2D()
+    {
+        final double S = 1 + ppm*1000000;
+        return new AffineTransform(S, ez*S, -ez*S, S, dx, dy);
+    }
 
     /**
      * Returns a hash value for this object.
