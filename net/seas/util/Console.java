@@ -39,7 +39,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.prefs.Preferences;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -108,7 +108,7 @@ public class Console
              * If output to screen, fetch the encoding from user's preferences.
              */
             boolean prefEnc = false;
-            if (Version.MINOR>=4 && encoding==null)
+            if (encoding==null)
             {
                 encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
                 prefEnc  = true;
@@ -116,7 +116,7 @@ public class Console
             if (encoding!=null)
             {
                 out = new PrintWriter(new OutputStreamWriter(System.out, encoding), true);
-                if (Version.MINOR>=4 && !prefEnc)
+                if (!prefEnc)
                 {
                     Preferences.userNodeForPackage(Console.class).put(ENCODING, encoding);
                 }
@@ -128,19 +128,14 @@ public class Console
         }
         catch (UnsupportedEncodingException exception)
         {
-            if (Version.MINOR>=4)
-            {
-                UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
-                e.initCause(exception);
-                throw e;
-            }
-            else throw new IllegalArgumentException(exception.getLocalizedMessage());
-            // IllegalArgumentException is the first 1.2 parent of UnsupportedCharsetException
+            UnsupportedCharsetException e=new UnsupportedCharsetException(encoding);
+            e.initCause(exception);
+            throw e;
         }
         catch (IOException exception)
         {
             IllegalArgumentException e=new IllegalArgumentException(destination);
-            if (Version.MINOR>=4) e.initCause(exception);
+            e.initCause(exception);
             throw e;
         }
     }
@@ -275,14 +270,14 @@ public class Console
      */
     public static Writer getWriter(final OutputStream out)
     {
-        if (Version.MINOR>=4) try
+        try
         {
             final String encoding = Preferences.userNodeForPackage(Console.class).get(ENCODING, null);
             if (encoding!=null) return new OutputStreamWriter(out, encoding);
         }
         catch (UnsupportedEncodingException exception)
         {
-            ExceptionMonitor.unexpectedException("net.seas.util", "Console", "getWriter", exception);
+            Utilities.unexpectedException("net.seas.util", "Console", "getWriter", exception);
         }
         return new OutputStreamWriter(out);
     }

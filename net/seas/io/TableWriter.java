@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 import net.seas.util.XArray;
-import net.seas.util.XString;
-import net.seas.util.Version;
+import net.seas.util.XCharacter;
+import net.seagis.resources.Utilities;
 import javax.swing.text.StyleConstants;
 
 
@@ -240,7 +240,7 @@ public class TableWriter extends FilterWriter
      * @param spaces Amount of white spaces to use as column separator.
      */
     public TableWriter(final Writer out, final int spaces)
-    {this(out, XString.spaces(spaces));}
+    {this(out, Utilities.spaces(spaces));}
 
     /**
      * Create a new table writer with the specified column separator.
@@ -656,7 +656,7 @@ public class TableWriter extends FilterWriter
             {
                 width = XArray.resize(width, column+1);
             }
-            final int length = XString.getSize(cellText).width;
+            final int length = XCharacter.getSize(cellText).width;
             if (length>width[column])
             {
                 width[column]=length;
@@ -692,7 +692,7 @@ public class TableWriter extends FilterWriter
             {
                 nextColumn(fill);
             }
-            if (Version.MINOR>=4) assert(buffer.length()==0);
+            assert buffer.length()==0;
             cells.add(!Character.isSpaceChar(fill) ? new Cell(null, alignment, fill) : null);
             column=0;
             row++;
@@ -714,8 +714,7 @@ public class TableWriter extends FilterWriter
             if (buffer.length()!=0)
             {
                 nextLine();
-                if (Version.MINOR>=4)
-                    assert(buffer.length()==0);
+                assert buffer.length()==0;
             }
             flushTo(out);
             row=column=0;
@@ -829,7 +828,7 @@ public class TableWriter extends FilterWriter
                      */
                     if (currentCount==0)
                     {
-                        if (Version.MINOR>=4) assert(textLength==0);
+                        assert textLength==0;
                         final int verticalBorder;
                         if      (cellIndex==0)           verticalBorder = -1;
                         else if (cellIndex>=cellCount-1) verticalBorder = +1;
@@ -939,14 +938,9 @@ public class TableWriter extends FilterWriter
             catch (IOException exception)
             {
                 // Should not happen
-                if (Version.MINOR>=4)
-                {
-                    final AssertionError error = new AssertionError(exception.getLocalizedMessage());
-                    error.initCause(exception);
-                    throw error;
-                }
-                else throw new Error(exception.getLocalizedMessage());
-                // Error is the first 1.2 parent of AssertionError.
+                final AssertionError error = new AssertionError(exception.getLocalizedMessage());
+                error.initCause(exception);
+                throw error;
             }
             return writer.toString();
         }

@@ -34,10 +34,10 @@ import java.text.DecimalFormatSymbols;
 import net.seagis.pt.Angle;
 import net.seagis.pt.Latitude;
 import net.seagis.pt.Longitude;
+import net.seas.text.AngleFormat;
 import net.seagis.pt.CoordinatePoint;
 
 // Miscellaneous
-import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
 
@@ -495,7 +495,7 @@ public class CoordinateFormat extends Format
                 pos.setIndex(px);
                 pos.setErrorIndex(px);
                 ParseException e=new ParseException(exception.getLocalizedMessage(), px);
-                if (Version.MINOR>=4) e.initCause(exception);
+                e.initCause(exception);
                 throw e;
             }
         }

@@ -66,8 +66,8 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
 import net.seas.util.XArray;
-import net.seas.util.Version;
 import net.seas.resources.Resources;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -183,7 +183,7 @@ public class About extends JPanel
         }
         catch (ParseException exception)
         {
-            ExceptionMonitor.unexpectedException("net.seas.awt", "About", "<init>", exception);
+            Utilities.unexpectedException("net.seas.awt", "About", "<init>", exception);
         }
         /*
          * If the user supplied a logo, load it and display it in the dialog's upper part (NORTH).
@@ -258,18 +258,15 @@ public class About extends JPanel
         /*
          * IMAGE ENCODERS/DECODERS TAB
          */
-        if (Version.MINOR>=4)
-        {
-            final JPanel   pane = new JPanel(new GridLayout(1,2,3,3));
-            final String[] readers = ImageIO.getReaderMIMETypes();
-            final String[] writers = ImageIO.getWriterMIMETypes();
-            Arrays.sort(readers);
-            Arrays.sort(writers);
-            Box c;
-            c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.DECODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(readers))); pane.add(c);
-            c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.ENCODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(writers))); pane.add(c);
-            tabs.addTab(Resources.format(Clé.IMAGES), pane);
-        }
+        final JPanel   pane = new JPanel(new GridLayout(1,2,3,3));
+        final String[] readers = ImageIO.getReaderMIMETypes();
+        final String[] writers = ImageIO.getWriterMIMETypes();
+        Arrays.sort(readers);
+        Arrays.sort(writers);
+        Box c;
+        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.DECODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(readers))); pane.add(c);
+        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(Resources.format(Clé.ENCODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(writers))); pane.add(c);
+        tabs.addTab(Resources.format(Clé.IMAGES), pane);
     }
 
     /**
@@ -293,7 +290,7 @@ public class About extends JPanel
         }
         catch (IOException exception)
         {
-            ExceptionMonitor.unexpectedException("net.seas.awt", "About", "getAttributes", exception);
+            Utilities.unexpectedException("net.seas.awt", "About", "getAttributes", exception);
         }
         // Use empty manifest attributes.
         return new Attributes();

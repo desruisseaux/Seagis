@@ -28,6 +28,7 @@ import net.seagis.ct.MathTransform2D;
 import net.seagis.ct.TransformException;
 import net.seagis.ct.CoordinateTransformation;
 import net.seagis.ct.CannotCreateTransformException;
+import net.seagis.resources.Utilities;
 import net.seagis.resources.OpenGIS;
 
 // Geometry
@@ -41,7 +42,6 @@ import java.awt.geom.NoninvertibleTransformException;
 // Miscellaneous
 import java.util.List;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -289,7 +289,7 @@ public final class RenderingContext
         catch (NoninvertibleTransformException exception)
         {
             // (should not happen) Clip failed: conservatively returns the whole contour.
-            ExceptionMonitor.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
+            Utilities.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
             return contours.get(0);
         }
         final CoordinateSystem targetCS = getViewCoordinateSystem();
@@ -330,7 +330,7 @@ public final class RenderingContext
             }
             catch (TransformException exception)
             {
-                ExceptionMonitor.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
+                Utilities.unexpectedException("net.seas.map", "RenderingContext", "clip", exception);
                 continue; // A contour seems invalid. It will be ignored (and probably garbage collected soon).
             }
             /*

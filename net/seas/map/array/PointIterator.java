@@ -25,7 +25,6 @@ package net.seas.map.array;
 // Divers
 import java.util.Iterator;
 import java.awt.geom.Point2D;
-import net.seas.util.Version;
 
 
 /**
@@ -96,7 +95,7 @@ public abstract class PointIterator implements Iterator<Point2D>, Cloneable
         catch (CloneNotSupportedException exception)
         {
             InternalError e=new InternalError(exception.getLocalizedMessage());
-            if (Version.MINOR>=4) e.initCause(exception);
+            e.initCause(exception);
             throw e;
         }
     }

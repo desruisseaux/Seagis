@@ -33,7 +33,6 @@ import net.seagis.ct.CannotCreateTransformException;
 // Miscellaneous
 import java.awt.geom.Point2D;
 import java.awt.event.MouseEvent;
-import net.seas.awt.ExceptionMonitor;
 import net.seas.text.CoordinateFormat;
 
 

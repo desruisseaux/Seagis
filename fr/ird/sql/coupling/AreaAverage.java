@@ -23,9 +23,11 @@
  */
 package fr.ird.sql.coupling;
 
-// OpenGIS dependencies
+// SEAGIS dependencies
 import net.seagis.gc.GridCoverage;
 import net.seagis.cv.PointOutsideCoverageException;
+import net.seagis.resources.XAffineTransform;
+import net.seagis.resources.Utilities;
 
 // Géométrie
 import java.awt.Shape;
@@ -33,12 +35,10 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import net.seagis.resources.XAffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 
 // Java Advanced Imaging et divers
 import java.awt.image.RenderedImage;
-import net.seas.awt.ExceptionMonitor;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
@@ -91,7 +91,7 @@ class AreaAverage implements AreaEvaluator
         }
         catch (NoninvertibleTransformException exception)
         {
-            ExceptionMonitor.unexpectedException("fr.ird.sql", "AreaEvaluator", "evaluate", exception);
+            Utilities.unexpectedException("fr.ird.sql", "AreaEvaluator", "evaluate", exception);
             // Returns an empty bounds.
         }
         return bounds;

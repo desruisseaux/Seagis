@@ -22,6 +22,9 @@
  */
 package net.seas.util;
 
+// Miscellaneous
+import java.awt.Dimension;
+
 
 /**
  * Simple operations on characters.
@@ -147,5 +150,39 @@ public class XCharacter
         if (c>='\u2070' && c<='\u2079') return (char) (c-('\u2070'-'0'));
         if (c>='\u2080' && c<='\u2089') return (char) (c-('\u2080'-'0'));
         return c;
+    }
+
+    /**
+     * Retourne le nombre de ligne et de colonnes du texte spécifié. Les caractères
+     * <code>'\r'</code>, <code>'\n'</code> or <code>"\r\n"</code> sont acceptés comme
+     * séparateur de ligne. La largeur retournée sera la longueur de la ligne la plus
+     * longue.
+     */
+    public static Dimension getSize(final CharSequence text)
+    {
+        final int length = text.length();
+        int height = 0;
+        int width  = 0;
+        int lower  = 0;
+        int upper  = 0;
+        while (upper < length)
+        {
+            final char c=text.charAt(upper++);
+            if (c=='\r' || c=='\n')
+            {
+                final int lineWidth = upper-lower;
+                if (lineWidth>width) width=lineWidth;
+                if (c=='\r' && upper<length && text.charAt(upper)=='\n')
+                {
+                    upper++;
+                }
+                lower = upper;
+                height++;
+            }
+        }
+        final int lineWidth = upper-lower;
+        if (lineWidth>width) width=lineWidth;
+        if (lineWidth>0) height++;
+        return new Dimension(width, height);
     }
 }

@@ -44,7 +44,7 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import net.seagis.pt.Latitude;
 import net.seagis.pt.Longitude;
-import net.seas.text.AngleFormat;
+import net.seagis.pt.AngleFormat;
 
 // Logging
 import java.util.logging.Level;
@@ -54,9 +54,7 @@ import java.util.logging.LogRecord;
 // Miscellaneous
 import java.util.Locale;
 import java.io.Serializable;
-import net.seas.util.Version;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -368,7 +366,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
         {
             // Should never happen, since we are cloneable.
             InternalError e=new InternalError(exception.getLocalizedMessage());
-            if (Version.MINOR>=4) e.initCause(exception);
+            e.initCause(exception);
             throw e;
         }
     }
@@ -386,7 +384,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
         catch (CannotCreateTransformException exception)
         {
             // Should not happen; we are just asking for an identity transform!
-            ExceptionMonitor.unexpectedException("net.seas.map", "Contour", "getIdentityTransform", exception);
+            Utilities.unexpectedException("net.seas.map", "Contour", "getIdentityTransform", exception);
         }
         return null;
     }
@@ -399,14 +397,11 @@ public abstract class Contour implements Shape, Cloneable, Serializable
                                                                 final String sourceClassName,
                                                                 final String sourceMethodName) throws CannotCreateTransformException
     {
-        if (Version.MINOR >= 4)
-        {
-            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
-                                     Clé.INITIALIZING_TRANSFORMATION¤2, sourceCS, targetCS);
-            record.setSourceClassName (sourceClassName);
-            record.setSourceMethodName(sourceMethodName);
-            LOGGER.log(record);
-        }
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
+                                 Clé.INITIALIZING_TRANSFORMATION¤2, sourceCS, targetCS);
+        record.setSourceClassName (sourceClassName);
+        record.setSourceMethodName(sourceMethodName);
+        LOGGER.log(record);
         return TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
     }
 }

@@ -57,7 +57,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 
 // Divers
-import net.seas.util.WeakHashSet;
 import net.seas.resources.Resources;
 import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;

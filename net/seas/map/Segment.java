@@ -56,7 +56,6 @@ import java.io.Serializable;
 import net.seas.util.XArray;
 import net.seas.util.Statistics;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.Geometry;
 
@@ -1537,5 +1536,5 @@ final class Segment implements Serializable
      * @param exception L'exception survenue.
      */
     static void unexpectedException(final String classe, final String method, final TransformException exception)
-    {ExceptionMonitor.unexpectedException("net.seas.map", classe, method, exception);}
+    {Utilities.unexpectedException("net.seas.map", classe, method, exception);}
 }

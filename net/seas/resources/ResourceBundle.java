@@ -47,7 +47,6 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Divers
-import net.seas.util.Version;
 import net.seagis.resources.Utilities;
 
 
@@ -163,13 +162,10 @@ public class ResourceBundle extends java.util.ResourceBundle
          */
         final Logger    logger;
         final LogRecord record;
-        if (Version.MINOR>=4)
-        {
-            logger = Logger.getLogger("net.seas");
-            record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
-            record.setSourceClassName (getClass().getName());
-            record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");
-        }
+        logger = Logger.getLogger("net.seas");
+        record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
+        record.setSourceClassName (getClass().getName());
+        record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");
         try
         {
             final InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
@@ -185,23 +181,18 @@ public class ResourceBundle extends java.util.ResourceBundle
             input.close();
             String language = getLocale().getDisplayName(Locale.UK);
             if (language==null || language.length()==0) language="<default>";
-            if (Version.MINOR>=4)
-            {
-                record.setParameters(new String[]{language});
-                logger.log(record);
-            }
+            record.setParameters(new String[]{language});
+            logger.log(record);
         }
         catch (IOException exception)
         {
-            if (Version.MINOR>=4)
-            {
-                record.setLevel  (Level.WARNING);
-                record.setMessage(exception.getLocalizedMessage());
-                record.setThrown (exception);
-                logger.log(record);
-            }
+            record.setLevel  (Level.WARNING);
+            record.setMessage(exception.getLocalizedMessage());
+            record.setThrown (exception);
+            logger.log(record);
+
             final MissingResourceException error = new MissingResourceException(exception.getLocalizedMessage(), getClass().getName(), key);
-            if (Version.MINOR>=4) error.initCause(exception);
+            error.initCause(exception);
             throw error;
         }
     }

@@ -79,11 +79,9 @@ import java.util.logging.LogRecord;
 // Miscellaneous
 import net.seas.util.XArray;
 import net.seas.util.Console;
-import net.seas.util.Version;
 import net.seas.util.Statistics;
 import net.seagis.resources.XMath;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
 
 
@@ -1158,16 +1156,13 @@ public class Polygon extends Contour
                 }
                 catch (NoninvertibleTransformException exception)
                 {
-                    ExceptionMonitor.unexpectedException("net.seas.map", "Polygon", "getDrawingArray", exception);
+                    Utilities.unexpectedException("net.seas.map", "Polygon", "getDrawingArray", exception);
                     // Continue... On va simplement reconstruire le tableau à partir de la base.
                 }
                 else
                 {
                     // Should be uncommon. Doesn't hurt, but may be a memory issue for big polyline.
-                    if (Version.MINOR>=4)
-                    {
-                        LOGGER.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
-                    }
+                    LOGGER.info(Resources.format(Clé.EXCESSIVE_MEMORY_USAGE));
                     array=null; // {@link #toArray} will allocate a new array.
                 }
             }
@@ -1180,7 +1175,7 @@ public class Polygon extends Contour
         assert((array.length & 1) == 0);
         final int pointCount = array.length/2;
         transform.transform(array, 0, array, 0, pointCount);
-        if (Version.MINOR>=4 && pointCount*drawingDecimation>=500) // Log only big arrays
+        if (pointCount*drawingDecimation>=500) // Log only big arrays
         {
             // FINER is the default level for entering, returning, or throwing an exception.
             final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, Clé.REBUILD_CACHE_ARRAY¤3,
@@ -1764,7 +1759,7 @@ public class Polygon extends Contour
     {
         Segment.unexpectedException("Polygon", method, exception);
         final IllegalPathStateException e=new IllegalPathStateException(exception.getLocalizedMessage());
-        if (Version.MINOR>=4) e.initCause(exception);
+        e.initCause(exception);
         throw e;
     }
 

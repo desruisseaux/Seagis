@@ -77,7 +77,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
 import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
-import net.seas.util.Version;
 
 
 /**
@@ -156,43 +155,9 @@ public final class ExceptionMonitor
             final Throwable e = error.getTargetException();
             if (e instanceof RuntimeException) throw (RuntimeException)     e;
             if (e instanceof Error)            throw (Error)                e;
-            unexpectedException("net.seas.awt", "ExceptionMonitor", "show", e);
+            Utilities.unexpectedException("net.seas.awt", "ExceptionMonitor", "show", e);
         }
         else monitor.run();
-    }
-
-    /**
-     * Indique qu'une erreur inatendue vient de survenir. L'action entreprise dépend de l'implémentation.
-     * Cette méthode peut par exemple afficher le message d'erreur dans une fenêtre, ou l'imprimer sur le
-     * périphérique de sortie standard.
-     *
-     * @param paquet  Paquet dans lequel est survenu l'exception. Cette information peut servir
-     *                à obtenir l'objet {@link Logger} approprié pour informer de l'erreur.
-     * @param classe  Nom de la classe dans laquelle est survenue l'exception.
-     * @param méthode Nom de la méthode dans laquelle est survenue l'exception.
-     * @param error   L'exception qui est survenue.
-     */
-    public static void unexpectedException(final String paquet, final String classe, final String méthode, final Throwable error)
-    {
-        if (Version.MINOR>=4)
-        {
-            final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(error));
-            final String message = error.getLocalizedMessage();
-            if (message!=null)
-            {
-                buffer.append(": ");
-                buffer.append(message);
-            }
-            final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
-            record.setSourceClassName (classe );
-            record.setSourceMethodName(méthode);
-            record.setThrown          (error);
-            Logger.getLogger(paquet).log(record);
-        }
-        else
-        {
-            error.printStackTrace();
-        }
     }
 
     /**

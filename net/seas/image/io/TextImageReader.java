@@ -45,7 +45,7 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.awt.image.DataBuffer;
 import javax.imageio.spi.ImageReaderSpi;
-import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
 
 
@@ -246,7 +246,7 @@ public abstract class TextImageReader extends SimpleImageReader
             }
             catch (IOException exception)
             {
-                ExceptionMonitor.unexpectedException("net.seas.image.io", "TextImageReader", "close", exception);
+                Utilities.unexpectedException("net.seas.image.io", "TextImageReader", "close", exception);
             }
         }
         reader = null;

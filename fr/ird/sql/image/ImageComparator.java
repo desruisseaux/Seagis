@@ -39,12 +39,12 @@ import net.seagis.ct.CoordinateTransformation;
 import net.seagis.ct.CannotCreateTransformException;
 import net.seagis.ct.CoordinateTransformationFactory;
 
+import net.seagis.resources.OpenGIS;
+import net.seagis.resources.Utilities;
+
 // Divers
 import javax.units.Unit;
 import java.util.Comparator;
-
-import net.seagis.resources.OpenGIS;
-import net.seas.awt.ExceptionMonitor;
 
 
 /**
@@ -246,7 +246,7 @@ public class ImageComparator implements Comparator<ImageEntry>
         }
         catch (TransformException exception)
         {
-            ExceptionMonitor.unexpectedException("net.seas.image.sql", "ImageComparator", "evaluator", exception);
+            Utilities.unexpectedException("net.seas.image.sql", "ImageComparator", "evaluator", exception);
             return null;
         }
     }

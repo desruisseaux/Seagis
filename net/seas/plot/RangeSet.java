@@ -35,7 +35,6 @@ import java.lang.reflect.Array;
 import javax.media.jai.util.Range;
 import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
 
 
@@ -241,7 +240,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
         catch (ClassNotFoundException exception)
         {
             // Should not happen, since this operation is legal according the constructor.
-            ExceptionMonitor.unexpectedException("net.seas.plot", "RangeSet", "add", exception);
+            Utilities.unexpectedException("net.seas.plot", "RangeSet", "add", exception);
         }
         if (array==null)
         {
@@ -527,7 +526,7 @@ public class RangeSet extends AbstractSet<Range> implements Serializable// TODO:
                 catch (ClassNotFoundException exception)
                 {
                     // Should not happen, since class type should have been checked by addRange(...)
-                    ExceptionMonitor.unexpectedException("net.seas.plot", "RangeSet.Iterator", "next", exception);
+                    Utilities.unexpectedException("net.seas.plot", "RangeSet.Iterator", "next", exception);
                 }
                 if (RangeSet.this.modCount != modCount)
                 {

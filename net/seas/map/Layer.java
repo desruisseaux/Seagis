@@ -53,7 +53,6 @@ import javax.swing.JPopupMenu;
 import java.util.Locale;
 import java.io.Serializable;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
 
 
@@ -559,7 +558,7 @@ public abstract class Layer implements Serializable
                     }
                     catch (RuntimeException exception)
                     {
-                        ExceptionMonitor.unexpectedException("fr.ird.map", "Layer", "firePropertyChange", exception);
+                        Utilities.unexpectedException("fr.ird.map", "Layer", "firePropertyChange", exception);
                     }
                 }
             }

@@ -377,7 +377,7 @@ public class WindowProgress extends Progress
      * Signale qu'une erreur inatendue est survenue.
      */
     private static void unexpectedException(final String method, final Exception exception)
-    {ExceptionMonitor.unexpectedException("net.seas.awt", "WindowProgress", method, exception);}
+    {Utilities.unexpectedException("net.seas.awt", "WindowProgress", method, exception);}
 
     /**
      * Modifie l'état d'une des composantes de la boîte des progrès.

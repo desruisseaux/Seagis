@@ -62,6 +62,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import net.seagis.resources.XAffineTransform;
 import net.seagis.resources.XDimension2D;
+import net.seagis.resources.Utilities;
 
 // Graphics
 import java.awt.Paint;
@@ -89,7 +90,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.BoundedRangeModel;
 import javax.swing.plaf.ComponentUI;
-import net.seas.awt.ExceptionMonitor;
 
 // Miscellaneous
 import java.util.logging.LogRecord;
@@ -102,7 +102,6 @@ import java.awt.GridBagConstraints;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import net.seas.resources.Resources;
-import net.seas.util.Version;
 
 
 /**
@@ -2147,7 +2146,7 @@ public abstract class ZoomPane extends JComponent
     private void unexpectedException(final String method, final NoninvertibleTransformException exception)
     {
         zoom.setToIdentity();
-        ExceptionMonitor.unexpectedException("net.seas.awt", "ZoomPane", method, exception);
+        Utilities.unexpectedException("net.seas.awt", "ZoomPane", method, exception);
     }
 
     /**
@@ -2155,7 +2154,7 @@ public abstract class ZoomPane extends JComponent
      * par défaut enregistre la trace de l'exception dans le journal.
      */
     private static void unexpectedException(final String method, final RuntimeException exception)
-    {ExceptionMonitor.unexpectedException("net.seas.awt", "ZoomPane", method, exception);}
+    {Utilities.unexpectedException("net.seas.awt", "ZoomPane", method, exception);}
 
     /**
      * Ecrit dans le journal les coordonnées d'un rectangle spécifié.
@@ -2178,15 +2177,12 @@ public abstract class ZoomPane extends JComponent
      */
     protected static void log(final String packageName, final String className, final String methodName, final Rectangle2D area)
     {
-        if (Version.MINOR>=4)
-        {
-            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
-                                         new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
-                                                       new Double(area.getMinY()), new Double(area.getMaxY())});
-            record.setSourceClassName ( className);
-            record.setSourceMethodName(methodName);
-            Logger.getLogger(packageName).log(record);
-        }
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, Clé.RECTANGLE¤4,
+                                     new Double[] {new Double(area.getMinX()), new Double(area.getMaxX()),
+                                                   new Double(area.getMinY()), new Double(area.getMaxY())});
+        record.setSourceClassName ( className);
+        record.setSourceMethodName(methodName);
+        Logger.getLogger(packageName).log(record);
     }
 
     /**

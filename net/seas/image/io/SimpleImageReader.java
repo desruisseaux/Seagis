@@ -55,7 +55,7 @@ import java.util.Collections;
 // Miscellaneous
 import javax.media.jai.util.Range;
 import net.seas.resources.Resources;
-import net.seas.awt.ExceptionMonitor;
+import net.seagis.resources.Utilities;
 
 
 /**
@@ -115,7 +115,7 @@ public abstract class SimpleImageReader extends ImageReader
         catch (IOException exception)
         {
             streamOrigin = 0;
-            ExceptionMonitor.unexpectedException("net.seas.image.io", "SimpleImageReader", "setInput", exception);
+            Utilities.unexpectedException("net.seas.image.io", "SimpleImageReader", "setInput", exception);
         }
     }
 

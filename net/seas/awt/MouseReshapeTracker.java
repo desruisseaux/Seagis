@@ -69,10 +69,10 @@ import java.text.ParseException;
 // Entrés/sorties et divers
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import net.seagis.resources.XMath;
 import net.seagis.resources.Utilities;
 import net.seas.resources.Resources;
 import net.seas.util.XArray;
-import net.seas.util.XMath;
 import java.lang.Double;
 
 

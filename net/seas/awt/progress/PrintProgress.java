@@ -37,7 +37,6 @@ import java.text.BreakIterator;
 
 // Divers
 import net.seas.util.Console;
-import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
 

@@ -76,7 +76,6 @@ import java.util.Comparator;
 
 // Miscellaneous
 import net.seas.util.XArray;
-import net.seas.util.Version;
 import net.seas.resources.Resources;
 import net.seas.awt.ExceptionMonitor;
 import net.seagis.resources.Utilities;
@@ -894,7 +893,7 @@ public class MapPanel extends ZoomPane
             }
             catch (RuntimeException exception)
             {
-                ExceptionMonitor.unexpectedException("net.seas.map", "MapPanel", "paintComponent", exception);
+                Utilities.unexpectedException("net.seas.map", "MapPanel", "paintComponent", exception);
             }
         }
     }
@@ -974,7 +973,7 @@ public class MapPanel extends ZoomPane
         catch (NoninvertibleTransformException exception)
         {
             // This method is actually invoked by GeoMouseEvent only.
-            ExceptionMonitor.unexpectedException("net.seas.map", "GeoMouseEvent", "getVisualCoordinate", exception);
+            Utilities.unexpectedException("net.seas.map", "GeoMouseEvent", "getVisualCoordinate", exception);
             return null;
         }
     }
@@ -987,7 +986,7 @@ public class MapPanel extends ZoomPane
      * la queue des événements de <i>Swing</i>.
      */
     protected void handleException(final String className, final String methodName, final TransformException exception)
-    {ExceptionMonitor.unexpectedException("net.seas.map", className, methodName, exception);}
+    {Utilities.unexpectedException("net.seas.map", className, methodName, exception);}
 
     /**
      * Préviens que ce paneau sera bientôt détruit. Cette méthode peut être appelée lorsque cet
