@@ -54,9 +54,16 @@ import net.seas.resources.Resources;
 
 
 /**
- * Main class for Coordinate Transform package. This class is not part of OpenGIS specification,
- * so it is not public. It is provided as a convenient way to query Coordinate Transform services
- * from the command line.
+ * Provides some coordinates services from the command line.
+ * This class may be run from the command line. It accept
+ * the following options:
+ *
+ * <blockquote><pre>
+ *  <b>-help</b> <i></i>           Display command line options
+ *  <b>-list</b> <i></i>           List available transforms
+ *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
+ *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
+ * </pre></blockquote>
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -80,7 +87,7 @@ final class Main extends Console
      *
      * @param args Command line arguments.
      */
-    public Main(final String[] args)
+    private Main(final String[] args)
     {
         super(args);
         this.factory = MathTransformFactory.DEFAULT;
@@ -88,62 +95,16 @@ final class Main extends Console
     }
 
     /**
-     * Parse command line and run the application.
-     * Command-line arguments may be:
-     *
-     * <blockquote><pre>
-     *  <b>-list</b> <i></i>           List available transforms
-     *  <b>-locale</b> <i>name</i>     Locale to be used    (example: "fr_CA")
-     *  <b>-encoding</b> <i>name</i>   Output encoding name (example: "cp850")
-     * </pre></blockquote>
+     * Print help instructions.
      */
-    public static void main(final String[] args)
+    public void help()
     {
-        if (args.length==0)
-        {
-            System.out.println("Options:\n"+
-                               "  -list              List available transforms\n"+
-                               "  -locale <name>     Locale to be used    (example: \"fr_CA\")\n"+
-                               "  -encoding <name>   Output encoding name (example: \"cp850\")");
-        }
-        else new Main(args).run();
-    }
-
-    /**
-     * Run the commands.
-     */
-    protected void run()
-    {
-        try
-        {
-            final boolean list = getFlag("-list");
-            final String[] toProject = checkRemainingArguments(1);
-            if (list)
-            {
-                availableTransforms();
-            }
-            for (int i=0; i<toProject.length; i++)
-            {
-                project(new File(toProject[i]));
-            }
-        }
-        catch (IllegalArgumentException exception)
-        {
-            out.println(exception.getLocalizedMessage());
-        }
-        catch (IOException exception)
-        {
-            out.println(exception.getLocalizedMessage());
-        }
-        catch (ParseException exception)
-        {
-            out.println(exception.getLocalizedMessage());
-        }
-        catch (TransformException exception)
-        {
-            out.println(exception.getLocalizedMessage());
-        }
-        out.flush();
+        out.println("Command line tool for Coordinate Transformation Services\n"+
+                    "Options:\n"+
+                    "  -help              Display command line options\n"+
+                    "  -list              List available transforms\n"+
+                    "  -locale <name>     Locale to be used    (example: \"fr_CA\")\n"+
+                    "  -encoding <name>   Output encoding name (example: \"cp850\")");
     }
 
     /**
@@ -304,5 +265,43 @@ final class Main extends Console
         }
         table.writeHorizontalSeparator();
         table.flush();
+    }
+
+    /**
+     * Run the command-line tool.
+     */
+    public static void main(final String[] args)
+    {
+        final Main console = new Main(args);
+        try
+        {
+            final boolean       list = console.hasFlag("-list");
+            final boolean       help = console.hasFlag("-help");
+            final String[] toProject = console.checkRemainingArguments(1);
+            final boolean   noOption = !list && toProject.length==0;
+            if (list) console.availableTransforms();
+            if (help || noOption) console.help();
+            for (int i=0; i<toProject.length; i++)
+            {
+                console.project(new File(toProject[i]));
+            }
+        }
+        catch (IllegalArgumentException exception)
+        {
+            console.out.println(exception.getLocalizedMessage());
+        }
+        catch (IOException exception)
+        {
+            console.out.println(exception.getLocalizedMessage());
+        }
+        catch (ParseException exception)
+        {
+            console.out.println(exception.getLocalizedMessage());
+        }
+        catch (TransformException exception)
+        {
+            console.out.println(exception.getLocalizedMessage());
+        }
+        console.out.flush();
     }
 }

@@ -427,18 +427,20 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * Lowest possible value for temporal datum types.
          * <br><br>
-         * <strong>Note: Temporal enums are not part of OpenGIS specification. The
-         *               <code>MINIMUM</code> "constant" may change in the future
-         *               if OpenGIS defines an equivalent datum type.</strong>
+         * <strong>Note: Temporal enums are not part of OpenGIS specification.  The
+         *               <code>MINIMUM</code>  "constant"  may change in the future
+         *               if OpenGIS defines an equivalent datum type. If this value
+         *               change, developpers will have to recompile their code.</strong>
          */
         public static final int MINIMUM = 3000;
 
         /**
          * Highest possible value for temporal datum types.
          * <br><br>
-         * <strong>Note: Temporal enums are not part of OpenGIS specification. The
-         *               <code>MAXIMUM</code> "constant" may change in the future
-         *               if OpenGIS defines an equivalent datum type.</strong>
+         * <strong>Note: Temporal enums are not part of OpenGIS specification.  The
+         *               <code>MAXIMUM</code>  "constant"  may change in the future
+         *               if OpenGIS defines an equivalent datum type. If this value
+         *               change, developpers will have to recompile their code.</strong>
          */
         public static final int MAXIMUM = 3999;
 

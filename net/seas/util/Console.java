@@ -179,7 +179,7 @@ public class Console
      * for the same flag will returns <code>false</code> (unless the same flag
      * appears many times on the command line).
      */
-    public final boolean getFlag(final String flag)
+    public final boolean hasFlag(final String flag)
     {
         for (int i=0; i<arguments.length; i++)
         {

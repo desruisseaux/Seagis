@@ -28,6 +28,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 
 // Input/output
+import java.net.URL;
 import java.io.File;
 import java.io.Reader;
 import java.io.IOException;
@@ -165,9 +166,10 @@ public class PaletteFactory
      * @return A buffered reader to read <code>name</code>.
      * @throws IOException if an I/O error occured.
      */
-    private BufferedReader getReader(final String name) throws IOException
+    private BufferedReader getReader(String name) throws IOException
     {
-        final File file = new File(directory, name+extension);
+        if (extension!=null) name += extension;
+        final File file = new File(directory, name);
         final InputStream stream;
         if (loader!=null)
         {
@@ -181,6 +183,18 @@ public class PaletteFactory
         {
             return null;
         }
+        return getReader(stream);
+    }
+
+    /**
+     * Returns a buffered reader for the specified stream.
+     *
+     * @param  The input stream.
+     * @return A buffered reader to read the input stream.
+     * @throws IOException if an I/O error occured.
+     */
+    private BufferedReader getReader(final InputStream stream) throws IOException
+    {
         final Reader reader = (charset!=null) ? new InputStreamReader(stream, charset) : new InputStreamReader(stream);
         return new BufferedReader(reader);
     }
@@ -236,6 +250,22 @@ public class PaletteFactory
         {
             return (parent!=null) ? parent.getColors(name) : null;
         }
+        final Color[] colors = getColors(reader);
+        reader.close();
+        return colors;
+    }
+
+    /**
+     * Load colors from an URL.
+     *
+     * @param  The palette's URL.
+     * @return The set of colors, or <code>null</code> if the set was not found.
+     * @throws IOException if an error occurs during reading.
+     * @throws IIOException if an error occurs during parsing.
+     */
+    public Color[] getColors(final URL url) throws IOException
+    {
+        final BufferedReader reader = getReader(url.openStream());
         final Color[] colors = getColors(reader);
         reader.close();
         return colors;
