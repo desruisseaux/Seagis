@@ -88,8 +88,11 @@ final class LambertConformalProjection extends ConicProjection
         //  Compute constants   //
         //////////////////////////
         if (Math.abs(phi1 + phi2) < EPS)
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ANTIPODE_LATITUDES_$2, new Latitude(Math.toDegrees(phi1)), new Latitude(Math.toDegrees(phi2))));
-
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ANTIPODE_LATITUDES_$2,
+                                                                new Latitude(Math.toDegrees(phi1)),
+                                                                new Latitude(Math.toDegrees(phi2))));
+        }
         final double  cosphi = Math.cos(phi1);
         final double  sinphi = Math.sin(phi1);
         final boolean secant = Math.abs(phi1-phi2) > EPS;
@@ -134,7 +137,7 @@ final class LambertConformalProjection extends ConicProjection
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(ResourceKeys.LAMBERT_CONFORMAL);}
+    {return Resources.getResources(locale).getString(ResourceKeys.LAMBERT_CONFORMAL_PROJECTION);}
 
     /**
      * Transforms the specified (<var>x</var>,<var>y</var>) coordinate
@@ -147,7 +150,7 @@ final class LambertConformalProjection extends ConicProjection
         {
             if (y*n <= 0)
             {
-                throw new TransformException(Resources.format(ResourceKeys.POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
+                throw new TransformException(Resources.format(ResourceKeys.ERROR_POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
             }
             else rho = 0;
         }
@@ -250,7 +253,7 @@ final class LambertConformalProjection extends ConicProjection
          */
         public Provider()
         {
-            super("Lambert_Conformal_Conic_2SP", ResourceKeys.LAMBERT_CONFORMAL);
+            super("Lambert_Conformal_Conic_2SP", ResourceKeys.LAMBERT_CONFORMAL_PROJECTION);
             put("standard_parallel1",  0, LATITUDE_RANGE);
             put("standard_parallel2",  0, LATITUDE_RANGE);
         }

@@ -63,9 +63,10 @@ final class MathTransformAdapter2D extends MathTransformAdapter implements MathT
     public MathTransformAdapter2D(final CT_MathTransform transform) throws RemoteException
     {
         super(transform);
-/* ---- BEGIN JDK 1.4 DEPENDENCIES -----
-        assert getDimSource()==2 && getDimTarget()==2;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+        if (getDimSource()!=2 || getDimTarget()!=2)
+        {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -73,9 +74,9 @@ final class MathTransformAdapter2D extends MathTransformAdapter implements MathT
      */
     public Point2D transform(final Point2D ptSrc, final Point2D ptDst) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES -----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert getDimSource()==2 && getDimTarget()==2;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         try
         {
             double[] array = transform.transformList(new double[] {ptSrc.getX(), ptSrc.getY()});

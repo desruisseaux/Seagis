@@ -105,8 +105,16 @@ public final class TransformType extends EnumeratedParameter
     static
     {
         for (int i=0; i<ENUMS.length; i++)
+        {
             if (ENUMS[i].getValue()!=i)
-                throw new /*Assertion*/Error(String.valueOf(ENUMS[i])); // Possible use of JDK1.4 assertion here
+            {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+                throw new AssertionError(ENUMS[i]);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+                throw new Error(String.valueOf(ENUMS[i]));
+//----- END OF JDK 1.3 FALLBACK -------
+            }
+        }
     }
 
     /**

@@ -75,7 +75,7 @@ final class AffineTransform2D extends XAffineTransform implements MathTransform2
      * is invoked, since <code>AffineTransform2D</code> must be immutable.
      */
     protected void checkPermission()
-    {throw new UnsupportedOperationException(Resources.format(ResourceKeys.UNMODIFIABLE_AFFINE_TRANSFORM));}
+    {throw new UnsupportedOperationException(Resources.format(ResourceKeys.ERROR_UNMODIFIABLE_AFFINE_TRANSFORM));}
 
     /**
      * Gets the dimension of input points.

@@ -417,7 +417,7 @@ public class MathTransformFactory
         for (int i=0; i<providers.length; i++)
             if (classification.equalsIgnoreCase(providers[i].getClassName().trim()))
                 return providers[i];
-        throw new NoSuchElementException(Resources.format(ResourceKeys.NO_TRANSFORM_FOR_CLASSIFICATION_$1, classification));
+        throw new NoSuchElementException(Resources.format(ResourceKeys.ERROR_NO_TRANSFORM_FOR_CLASSIFICATION_$1, classification));
     }
 
     /**

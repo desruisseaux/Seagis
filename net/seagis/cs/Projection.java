@@ -252,9 +252,12 @@ public class Projection extends Info
         }
         if (!required) return defaultValue;
         final MissingParameterException exception = new MissingParameterException(null, name);
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
-        if (cause!=null) exception.initCause(cause);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        if (cause!=null)
+        {
+            exception.initCause(cause);
+        }
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         throw exception;
     }
 

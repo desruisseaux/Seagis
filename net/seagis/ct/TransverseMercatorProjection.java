@@ -149,7 +149,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
     /**
      * Resource key for localized name.
      */
-    private final int clé;
+    private final int key;
 
     /**
      * Construct a new map projection from the suplied parameters.
@@ -197,7 +197,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         //////////////////////////
         if (modified)
         {
-            clé                   = ResourceKeys.MTM;
+            key                   = ResourceKeys.MTM_PROJECTION;
             name                  = "MTM";
             centralLongitudeZone1 = -52.5; // 52°30'W
             zoneWidth             = -3;    // 3° from East to West
@@ -207,7 +207,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         }
         else
         {
-            clé                   = ResourceKeys.UTM;
+            key                   = ResourceKeys.UTM_PROJECTION;
             name                  = "UTM";
             centralLongitudeZone1 = -177;  // 177°W
             zoneWidth             = +6;    // 6° from West to East
@@ -247,7 +247,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(clé);}
+    {return Resources.getResources(locale).getString(key);}
 
     /**
      * Calcule la distance méridionale sur un
@@ -272,7 +272,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
     {
         if (Math.abs(y) > (Math.PI/2 - EPS))
         {
-            throw new TransformException(Resources.format(ResourceKeys.POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
         }
         x -= centralLongitude;
         double sinphi = Math.sin(y);
@@ -283,7 +283,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             double b = cosphi * Math.sin(x);
             if (Math.abs(Math.abs(b) - 1.0) <= EPS10)
             {
-                throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
             }
             double yy = cosphi * Math.cos(x) / Math.sqrt(1.0-b*b);
             x = 0.5*ak0 * Math.log((1.0+b)/(1.0-b)) + x0; /* 8-1 */
@@ -291,7 +291,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             {
                 if ((b-1.0) > EPS10)
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 else
                     yy = 0.0;
@@ -357,7 +357,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             {
                 if (--i < 0)
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.NO_CONVERGENCE));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_CONVERGENCE));
                 }
                 final double s = Math.sin(phi);
                 double t = 1.0 - es * (s*s);
@@ -461,7 +461,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         public Provider(final boolean modified)
         {
             super(modified ? "Modified_Transverse_Mercator" : "Transverse_Mercator",
-                  modified ? ResourceKeys.MTM               : ResourceKeys.UTM);
+                  modified ? ResourceKeys.MTM_PROJECTION    : ResourceKeys.UTM_PROJECTION);
             this.modified = modified;
         }
 

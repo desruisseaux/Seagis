@@ -37,12 +37,12 @@ import java.util.ArrayList;
 import java.lang.ref.WeakReference;
 import java.lang.ref.ReferenceQueue;
 
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
 // Logging
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
 
 /**
@@ -133,16 +133,16 @@ public class WeakHashSet
             }
             catch (Exception exception)
             {
-                Utilities.unexpectedException("net.seagis.resources", "WeakHashSet", "remove", exception);
+                Utilities.unexpectedException("net.seagis", "WeakHashSet", "remove", exception);
             }
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             catch (AssertionError exception)
             {
-                Utilities.unexpectedException("net.seagis.resources", "WeakHashSet", "remove", exception);
+                Utilities.unexpectedException("net.seagis", "WeakHashSet", "remove", exception);
                 // Do not kill the thread on assertion failure, in order to
                 // keep the same behaviour as if assertions were turned off.
             }
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         }
     };
     static
@@ -199,9 +199,9 @@ public class WeakHashSet
      */
     private synchronized void remove(final WeakElement toRemove)
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert valid() : count;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         final int i=toRemove.index;
         // Index 'i' may not be valid if the reference 'toRemove'
         // has been already removed in a previous rehash.
@@ -216,9 +216,9 @@ public class WeakHashSet
                     if (prev!=null) prev.next=e.next;
                     else table[i]=e.next;
                     count--;
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
                     assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
                     // If the number of elements has dimunished
                     // significatively, rehash the table.
@@ -231,9 +231,9 @@ public class WeakHashSet
                 e=e.next;
             }
         }
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         /*
          * If we reach this point, its mean that reference 'toRemove' has not
          * been found. This situation may occurs if 'toRemove' has already been
@@ -250,10 +250,10 @@ public class WeakHashSet
      */
     private void rehash(final boolean augmentation)
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert Thread.holdsLock(this);
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         final long currentTime = System.currentTimeMillis();
         final int capacity = Math.max(Math.round(count/(LOAD_FACTOR/2)), count+MIN_CAPACITY);
         if (augmentation ? (capacity<=table.length) :
@@ -282,14 +282,18 @@ public class WeakHashSet
                 else count--;
             }
         }
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINER, ResourceKeys.CAPACITY_CHANGE_$2,
-                                                              new Integer(oldTable.length), new Integer(table.length));
-        record.setSourceClassName("WeakHashSet");
-        record.setSourceMethodName(augmentation ? "intern" : "remove");
-        Logger.getLogger("net.seagis.resources").log(record);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        final Logger logger = Logger.getLogger("net.seagis");
+        final Level   level = Level.FINEST;
+        if (logger.isLoggable(level))
+        {
+            final LogRecord record = new LogRecord(level, "Rehash from "+oldTable.length+" to "+table.length);
+            record.setSourceMethodName(augmentation ? "intern" : "remove");
+            record.setSourceClassName("WeakHashSet");
+            logger.log(record);
+        }
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
     /**
@@ -299,10 +303,10 @@ public class WeakHashSet
      */
     public synchronized final Object get(final Object obj)
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert thread.isAlive() : thread;
         assert valid() : count;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         if (obj!=null)
         {
             final int hash = hashCode(obj) & 0x7FFFFFFF;
@@ -338,11 +342,11 @@ public class WeakHashSet
      */
     private Object intern0(final Object obj)
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert Thread.holdsLock(this);
         assert thread.isAlive() : thread;
         assert valid() : count;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         if (obj!=null)
         {
             /*
@@ -374,9 +378,9 @@ public class WeakHashSet
             table[index]=new WeakElement(obj, table[index], index);
             count++;
         }
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return obj;
     }
 
@@ -419,9 +423,9 @@ public class WeakHashSet
      */
     public synchronized final int size()
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return count;
     }
 
@@ -463,9 +467,9 @@ public class WeakHashSet
      */
     public synchronized final Object[] toArray()
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert valid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         final Object[] elements = new Object[count];
         int index = 0;
         for (int i=0; i<table.length; i++)

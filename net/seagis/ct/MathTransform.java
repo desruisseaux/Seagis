@@ -243,7 +243,7 @@ public interface MathTransform
          * @return The transform name localized in the specified locale if possible, or
          *         <code>null</code> if no name is available in any locale.
          */
-        public String getName(final Locale locale)
+        protected String getName(final Locale locale)
         {return null;}
 
         /**
@@ -298,7 +298,7 @@ public interface MathTransform
         public MathTransform inverse() throws NoninvertibleTransformException
         {
             if (isIdentity()) return this;
-            throw new NoninvertibleTransformException(Resources.format(ResourceKeys.NONINVERTIBLE_TRANSFORM));
+            throw new NoninvertibleTransformException(Resources.format(ResourceKeys.ERROR_NONINVERTIBLE_TRANSFORM));
         }
 
         /**
@@ -459,7 +459,7 @@ final class MathTransformExport extends RemoteObject implements CT_MathTransform
         final int dimTarget = transform.getDimTarget();
         if ((ord.length % dimSource)!=0)
         {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_ARRAY_LENGTH_FOR_DIMENSION_$1, new Integer(dimSource)));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARRAY_LENGTH_FOR_DIMENSION_$1, new Integer(dimSource)));
         }
         final int     count = ord.length/dimSource;
         final double[] dest = (dimSource==dimTarget) ? ord : new double[count*dimTarget];

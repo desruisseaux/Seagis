@@ -63,10 +63,10 @@ public class TransformException extends Exception
      */
     public TransformException(final String message, final Throwable cause)
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES -----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         super(message, cause);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         super(message);
-// ---- END OF JDK 1.3 FALLBACK --------
+//----- END OF JDK 1.3 FALLBACK -------
     }
 }

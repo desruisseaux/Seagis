@@ -201,7 +201,7 @@ public class Ellipsoid extends Info
     private static double check(final String name, final double value) throws IllegalArgumentException
     {
         if (value>0) return value;
-        throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_ARGUMENT_$2, name, new Double(value)));
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2, name, new Double(value)));
     }
 
     /**

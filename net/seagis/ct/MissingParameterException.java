@@ -62,7 +62,7 @@ public class MissingParameterException extends RuntimeException
      */
     public MissingParameterException(final String msg, final String parameter)
     {
-        super((msg!=null || parameter==null) ? msg : Resources.format(ResourceKeys.MISSING_PARAMETER_$1, parameter));
+        super((msg!=null || parameter==null) ? msg : Resources.format(ResourceKeys.ERROR_MISSING_PARAMETER_$1, parameter));
         this.parameter = parameter;
     }
 

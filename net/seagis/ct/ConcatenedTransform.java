@@ -89,10 +89,22 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
         this.transform2 = transform2;
         if (!isValid())
         {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.COORDINATE_SYSTEM_DIMENSION_MISMATCH_$2,
-                                               Utilities.getShortClassName(transform1),
-                                               Utilities.getShortClassName(transform2)));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_CANT_CONCATENATE_CS_$2,
+                                               getName(transform1), getName(transform2)));
         }
+    }
+
+    /**
+     * Returns a name for the specified coordinate system.
+     */
+    private static final String getName(final MathTransform transform)
+    {
+        if (transform instanceof MathTransform.Abstract)
+        {
+            String name = ((MathTransform.Abstract) transform).getName(null);
+            if (name!=null && (name=name.trim()).length()!=0) return name;
+        }
+        return Utilities.getShortClassName(transform);
     }
 
     /**
@@ -119,9 +131,9 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        point. This optimization is done in ConcatenedTransformDirect.
@@ -133,9 +145,9 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
      */
     public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        buffer. This optimization is done in ConcatenedTransformDirect.
@@ -149,9 +161,9 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
      */
     public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        buffer. This optimization is done in ConcatenedTransformDirect.
@@ -165,9 +177,9 @@ class ConcatenedTransform extends MathTransform.Abstract implements Serializable
      */
     public synchronized final MathTransform inverse() throws NoninvertibleTransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         if (inverse==null)
         {
             inverse = provider.createConcatenatedTransform(transform2.inverse(), transform1.inverse());

@@ -332,7 +332,10 @@ public class Info implements Serializable
      * @throws IllegalArgumentException if <code>object</code> is null.
      */
     protected static void ensureNonNull(final String name, final Object object) throws IllegalArgumentException
-    {if (object==null) throw new IllegalArgumentException(Resources.format(ResourceKeys.NULL_ARGUMENT_$1, name));}
+    {
+        if (object==null)
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NULL_ARGUMENT_$1, name));
+    }
 
     /**
      * Make sure an array element is non-null.
@@ -343,7 +346,10 @@ public class Info implements Serializable
      * @throws IllegalArgumentException if <code>array[i]</code> is null.
      */
     static void ensureNonNull(final String name, final Object[] array, final int index) throws IllegalArgumentException
-    {if (array[index]==null) throw new IllegalArgumentException(Resources.format(ResourceKeys.NULL_ARGUMENT_$1, name+'['+index+']'));}
+    {
+        if (array[index]==null)
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NULL_ARGUMENT_$1, name+'['+index+']'));
+    }
 
     /**
      * Make sure that the specified unit is a temporal one.
@@ -354,7 +360,7 @@ public class Info implements Serializable
     static void ensureTimeUnit(final Unit unit) throws IllegalArgumentException
     {
         if (!Unit.SECOND.canConvert(unit))
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.NON_TEMPORAL_UNIT_$1, unit));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_TEMPORAL_UNIT_$1, unit));
     }
 
     /**
@@ -366,7 +372,7 @@ public class Info implements Serializable
     static void ensureLinearUnit(final Unit unit) throws IllegalArgumentException
     {
         if (!Unit.METRE.canConvert(unit))
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.NON_LINEAR_UNIT_$1, unit));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_LINEAR_UNIT_$1, unit));
     }
 
     /**
@@ -378,7 +384,7 @@ public class Info implements Serializable
     static void ensureAngularUnit(final Unit unit) throws IllegalArgumentException
     {
         if (!Unit.DEGREE.canConvert(unit))
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.NON_ANGULAR_UNIT_$1, unit));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_ANGULAR_UNIT_$1, unit));
     }
 
 

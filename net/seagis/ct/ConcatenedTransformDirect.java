@@ -74,9 +74,9 @@ class ConcatenedTransformDirect extends ConcatenedTransform
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         ptDst = transform1.transform(ptSrc, ptDst);
         return  transform2.transform(ptDst, ptDst);
     }
@@ -86,9 +86,9 @@ class ConcatenedTransformDirect extends ConcatenedTransform
      */
     public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         transform1.transform(srcPts, srcOff, dstPts, dstOff, numPts);
         transform2.transform(dstPts, dstOff, dstPts, dstOff, numPts);
     }
@@ -98,9 +98,9 @@ class ConcatenedTransformDirect extends ConcatenedTransform
      */
     public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         transform1.transform(srcPts, srcOff, dstPts, dstOff, numPts);
         transform2.transform(dstPts, dstOff, dstPts, dstOff, numPts);
     }

@@ -85,7 +85,7 @@ public class Envelope implements Dimensioned, Cloneable, Serializable
         final int dimension = ord.length/2;
         for (int i=0; i<dimension; i++)
             if (!(ord[i] <= ord[dimension+i])) // Use '!' in order to catch 'NaN'.
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.BAD_ORDINATE_$1, new Integer(i)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ENVELOPE_ORDINATE_$1, new Integer(i)));
     }
 
     /**
@@ -366,7 +366,7 @@ public class Envelope implements Dimensioned, Cloneable, Serializable
         {
             return new Rectangle2D.Double(ord[0], ord[1], ord[2]-ord[0], ord[3]-ord[1]);
         }
-        throw new IllegalStateException(Resources.format(ResourceKeys.NOT_TWO_DIMENSIONAL_$1, new Integer(getDimension())));
+        throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(getDimension())));
     }
 
     /**

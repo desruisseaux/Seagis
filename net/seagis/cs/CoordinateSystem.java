@@ -118,7 +118,8 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
             AxisOrientation check = getAxis(i).orientation;
             if (type!=null && !type.isCompatibleOrientation(check))
             {
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_AXIS_ORIENTATION_$1, check.getName(null)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_AXIS_ORIENTATION_$2,
+                                                          check.getName(null), Utilities.getShortClassName(this)));
             }
             check = check.absolute();
             if (!check.equals(AxisOrientation.OTHER))
@@ -129,7 +130,7 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
                     {
                         final String nameI = getAxis(i).orientation.getName(null);
                         final String nameJ = getAxis(j).orientation.getName(null);
-                        throw new IllegalArgumentException(Resources.format(ResourceKeys.NON_ORTHOGONAL_AXIS_$2, nameI, nameJ));
+                        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_COLINEAR_AXIS_$2, nameI, nameJ));
                     }
                 }
             }

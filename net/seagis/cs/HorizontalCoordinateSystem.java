@@ -149,7 +149,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
         {
             case 0:  return axis0;
             case 1:  return axis1;
-            default: throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+            default: throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
         }
     }
 

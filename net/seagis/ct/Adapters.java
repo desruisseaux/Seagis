@@ -210,10 +210,11 @@ public class Adapters
         {
             return (CoordinateTransformation) ((CoordinateTransformation.Export)transform).unwrap();
         }
-        return new CoordinateTransformation(CS.wrap(transform.getSourceCS()),
-                                            CS.wrap(transform.getTargetCS()),
-                                               wrap(transform.getTransformType()),
-                                               wrap(transform.getMathTransform()));
+        return new CoordinateTransformation(null,
+                                         CS.wrap(transform.getSourceCS()),
+                                         CS.wrap(transform.getTargetCS()),
+                                            wrap(transform.getTransformType()),
+                                            wrap(transform.getMathTransform()));
     }
 
     /**

@@ -74,8 +74,17 @@ import java.lang.reflect.Field;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-final class ResourceCompiler
+final class ResourceCompiler implements Comparator
 {
+    /**
+     * Special order for resource keys starting
+     * with the specified prefix.
+     */
+    private static final String[] ORDER=
+    {
+        "ERROR_"
+    };
+
     /**
      * The class name for the interfaces to be generated.
      */
@@ -314,7 +323,7 @@ final class ResourceCompiler
          * Allocate an ID for each new keys.
          */
         final String[] keys = (String[]) resources.keySet().toArray(new String[resources.size()]);
-        Arrays.sort(keys);
+        Arrays.sort(keys, this);
         int freeID = 0;
         for (int i=0; i<keys.length; i++)
         {
@@ -579,15 +588,7 @@ search: for (int i=0; i<buffer.length(); i++) // Length of 'buffer' will vary.
         out.write('{');
         out.newLine();
         final Map.Entry[] entries = (Map.Entry[]) allocatedIDs.entrySet().toArray(new Map.Entry[allocatedIDs.size()]);
-        Arrays.sort(entries, new Comparator()
-        {
-            public int compare(final Object o1, final Object o2)
-            {
-                final String key1 = (String) ((Map.Entry) o1).getValue();
-                final String key2 = (String) ((Map.Entry) o2).getValue();
-                return key1.compareTo(key2);
-            }
-        });
+        Arrays.sort(entries, this);
         int maxLength=0;
         for (int i=entries.length; --i>=0;)
         {
@@ -598,6 +599,10 @@ search: for (int i=0; i<buffer.length(); i++) // Length of 'buffer' will vary.
         {
             final String key = (String) entries[i].getValue();
             final String ID  = entries[i].getKey().toString();
+            if (i!=0 && compare(entries[i-1], key)<-1)
+            {
+                out.newLine();
+            }
             writeWhiteSpaces(out, 4);
             out.write("public static final int ");
             out.write(key);
@@ -611,6 +616,27 @@ search: for (int i=0; i<buffer.length(); i++) // Length of 'buffer' will vary.
         out.write('}');
         out.newLine();
         out.close();
+    }
+
+    /**
+     * Compare two resource keys. Object <code>o1</code> and <code>o2</code>
+     * are usually  {@link String}  objects representing resource keys  (for
+     * example "<code>MISMATCHED_DIMENSION</code>").    This method compares
+     * strings as of  {@link String#compareTo},  except that string starting
+     * with one of the prefix enumetated in {@link #ORDER}  will appear last
+     * in the sorted array.
+     */
+    public int compare(Object o1, Object o2)
+    {
+        if (o1 instanceof Map.Entry) o1 = ((Map.Entry) o1).getValue();
+        if (o2 instanceof Map.Entry) o2 = ((Map.Entry) o2).getValue();
+        final String key1 = (String) o1;
+        final String key2 = (String) o2;
+        int i1=ORDER.length; while (--i1>=0) if (key1.startsWith(ORDER[i1])) break;
+        int i2=ORDER.length; while (--i2>=0) if (key2.startsWith(ORDER[i2])) break;
+        if (i1 < i2) return -2;
+        if (i1 > i2) return +2;
+        return XMath.sgn(key1.compareTo(key2));
     }
 
     /**

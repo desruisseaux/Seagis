@@ -47,12 +47,12 @@ import java.io.DataInputStream;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
 // Logging
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
 
 /**
@@ -180,17 +180,14 @@ public class ResourceBundle extends java.util.ResourceBundle
          * Prepare a log record. We will wait for succesfull loading before to post this
          * record. If loading fail, the record will be changed into an error record.
          */
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
-
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         final Logger    logger;
         final LogRecord record;
         logger = Logger.getLogger("net.seagis");
         record = new LogRecord(Level.CONFIG, "Loaded resources for {0}.");
         record.setSourceClassName (getClass().getName());
         record.setSourceMethodName((key!=null) ? "getObject" : "getKeys");
-
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
-
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         try
         {
             final InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
@@ -207,7 +204,8 @@ public class ResourceBundle extends java.util.ResourceBundle
                     values[i]=null;
             }
             input.close();
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             String language = getLocale().getDisplayName(Locale.UK);
             if (language==null || language.length()==0)
             {
@@ -215,23 +213,21 @@ public class ResourceBundle extends java.util.ResourceBundle
             }
             record.setParameters(new String[]{language});
             logger.log(record);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         }
         catch (IOException exception)
         {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             record.setLevel  (Level.WARNING);
             record.setMessage(exception.getLocalizedMessage());
             record.setThrown (exception);
             logger.log(record);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
             final MissingResourceException error = new MissingResourceException(exception.getLocalizedMessage(), getClass().getName(), key);
-
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             error.initCause(exception);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
-
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             throw error;
         }
     }
@@ -455,12 +451,12 @@ public class ResourceBundle extends java.util.ResourceBundle
             {
                 locale = resourceLocale;
             }
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             format = new MessageFormat(object.toString(), locale);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             format = new MessageFormat(object.toString());
             format.setLocale(locale);
-// ---- END OF JDK 1.3 FALLBACK ----
+//----- END OF JDK 1.3 FALLBACK -------
         }
         else if (keyID != lastKey)
         {

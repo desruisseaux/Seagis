@@ -313,6 +313,23 @@ public class Adapters
     }
 
     /**
+     * Check if the specified coordinate system has the expected number of dimensions.
+     *
+     * @param  cs The coordinate system to check.
+     * @param  expected The expected number of dimensions.
+     * @throws IllegalArgumentException if the coordinate system
+     *         doesn't have the expected number of dimensions.
+     */
+    private static void checkDimension(final CS_CoordinateSystem cs, final int expected) throws RemoteException, IllegalArgumentException
+    {
+        final int dimension = cs.getDimension();
+        if (dimension != expected)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_CS_DIMENSION_$1, new Integer(dimension)));
+        }
+    }
+
+    /**
      * Returns info for an OpenGIS interface.
      * @throws RemoteException if a remote call failed.
      */
@@ -395,10 +412,7 @@ public class Adapters
         {
             return (GeocentricCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
         }
-        if (cs.getDimension()!=3)
-        {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_DIMENSION));
-        }
+        checkDimension(cs, 3);
         final Unit              unit = wrap(cs.getLinearUnit());
         final HorizontalDatum  datum = wrap(cs.getHorizontalDatum());
         final PrimeMeridian meridian = wrap(cs.getPrimeMeridian());
@@ -422,10 +436,7 @@ public class Adapters
         {
             return (VerticalCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
         }
-        if (cs.getDimension()!=1)
-        {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_DIMENSION));
-        }
+        checkDimension(cs, 1);
         final VerticalDatum datum = wrap(cs.getVerticalDatum());
         final Unit           unit = wrap(cs.getVerticalUnit());
         final AxisInfo       axis = wrap(cs.getAxis(0));
@@ -459,10 +470,7 @@ public class Adapters
         {
             return (GeographicCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
         }
-        if (cs.getDimension()!=2)
-        {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_DIMENSION));
-        }
+        checkDimension(cs, 2);
         final Unit              unit = wrap(cs.getAngularUnit());
         final HorizontalDatum  datum = wrap(cs.getHorizontalDatum());
         final PrimeMeridian meridian = wrap(cs.getPrimeMeridian());
@@ -482,10 +490,7 @@ public class Adapters
         {
             return (ProjectedCoordinateSystem) ((HorizontalCoordinateSystem.Export)cs).unwrap();
         }
-        if (cs.getDimension()!=2)
-        {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_DIMENSION));
-        }
+        checkDimension(cs, 2);
         final GeographicCoordinateSystem gcs = wrap(cs.getGeographicCoordinateSystem());
         final Projection          projection = wrap(cs.getProjection());
         final Unit                      unit = wrap(cs.getLinearUnit());

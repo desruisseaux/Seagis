@@ -165,9 +165,9 @@ public interface MathTransform2D extends MathTransform
          */
         static Shape createTransformedShape(final Shape shape, final AffineTransform preTr, final MathTransform2D tr, final AffineTransform postTr, final int quadDir) throws TransformException
         {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES -----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert tr.getDimSource()==2 && tr.getDimTarget()==2 : tr;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
             final PathIterator    it = shape.getPathIterator(preTr);
             final GeneralPath   path = new GeneralPath(it.getWindingRule());
             final Point2D.Float ctrl = new Point2D.Float();

@@ -69,5 +69,5 @@ public class CannotCreateTransformException extends TransformException
      * path has been found between the specified coordinate system.
      */
     public CannotCreateTransformException(final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
-    {this(Resources.format(ResourceKeys.NO_TRANSFORMATION_PATH_$2, sourceCS.getName(null), targetCS.getName(null)));}
+    {this(Resources.format(ResourceKeys.ERROR_NO_TRANSFORMATION_PATH_$2, sourceCS.getName(null), targetCS.getName(null)));}
 }

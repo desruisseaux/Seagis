@@ -86,9 +86,9 @@ final class ConcatenedTransformDirect2D extends ConcatenedTransformDirect implem
      */
     public Point2D transform(final Point2D ptSrc, Point2D ptDst) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         ptDst = transform1.transform(ptSrc, ptDst);
         return  transform2.transform(ptDst, ptDst);
     }
@@ -98,9 +98,9 @@ final class ConcatenedTransformDirect2D extends ConcatenedTransformDirect implem
      */
     public Shape createTransformedShape(final Shape shape) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return transform2.createTransformedShape(transform1.createTransformedShape(shape));
     }
 }

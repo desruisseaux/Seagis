@@ -161,7 +161,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     public Unit getUnits(final int dimension)
     {
         if (dimension>=0 && dimension<getDimension()) return unit;
-        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
     }
 
     /**

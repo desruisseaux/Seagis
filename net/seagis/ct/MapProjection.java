@@ -183,7 +183,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
         {
             return Math.toRadians(x);
         }
-        throw new IllegalArgumentException(Resources.format(ResourceKeys.LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
     }
 
     /**
@@ -202,7 +202,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
         {
             return Math.toRadians(y);
         }
-        throw new IllegalArgumentException(Resources.format(ResourceKeys.LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
     }
 
     /**
@@ -228,6 +228,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
      * @return <code>true</code> if the two points are close enough.
      * @throws TransformException if a transformation failed.
      */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
     private boolean checkTransform(Point2D point, final Point2D target, final boolean inverse)
     {
         if (!(point instanceof CheckPoint)) try
@@ -250,21 +251,18 @@ abstract class MapProjection extends MathTransform2D.Abstract
             }
             if (!(distance <= MAX_ERROR)) // Do not accept NaN as valid value.
             {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
                 throw new AssertionError(distance);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
             }
         }
         catch (TransformException exception)
         {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
             final AssertionError error = new AssertionError(exception.getLocalizedMessage());
             error.initCause(exception);
             throw error;
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
         }
         return true;
     }
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
 
 
@@ -310,16 +308,16 @@ abstract class MapProjection extends MathTransform2D.Abstract
         final double y=ptSrc.getY();
         if (!(x>=Longitude.MIN_VALUE && x<=Longitude.MAX_VALUE))
         {
-            throw new TransformException(Resources.format(ResourceKeys.LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
         }
         if (!(y>=Latitude.MIN_VALUE && y<=Latitude.MAX_VALUE))
         {
-            throw new TransformException(Resources.format(ResourceKeys.LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
         }
         ptDst = transform(Math.toRadians(x), Math.toRadians(y), ptDst);
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert checkTransform(ptDst, ptSrc, true);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return ptDst;
     }
 
@@ -488,18 +486,18 @@ abstract class MapProjection extends MathTransform2D.Abstract
         ptDst = inverseTransform(ptSrc.getX(), ptDst.getX(), ptDst);
         final double x = Math.toDegrees(ptDst.getX());
         final double y = Math.toDegrees(ptDst.getY());
+        ptDst.setLocation(x,y);
         if (!(x>=Longitude.MIN_VALUE && x<=Longitude.MAX_VALUE))
         {
-            throw new TransformException(Resources.format(ResourceKeys.LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
         }
         if (!(y>=Latitude.MIN_VALUE && y<=Latitude.MAX_VALUE))
         {
-            throw new TransformException(Resources.format(ResourceKeys.LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
         }
-        ptDst.setLocation(x,y);
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert checkTransform(ptDst, ptSrc, false);
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return ptDst;
     }
 
@@ -626,7 +624,7 @@ abstract class MapProjection extends MathTransform2D.Abstract
             phi += dphi;
             if (Math.abs(dphi) <= TOL) return phi;
         }
-        throw new TransformException(Resources.format(ResourceKeys.NO_CONVERGENCE));
+        throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_CONVERGENCE));
     }
 
     /**
@@ -813,10 +811,10 @@ abstract class MapProjection extends MathTransform2D.Abstract
 
         /**
          * Create a new map projection.  NOTE: The returns type should
-         * be {@link MathTransform}, but as of JDK 1.4-beta2, it force
+         * be {@link MathTransform}, but as of JDK 1.4-beta3, it force
          * class loading for all projection classes (MercatorProjection,
          * etc.) before than necessary. Changing the returns type to
-         * Object is a trick to avoir too early class loading...
+         * Object is a trick to avoid too early class loading...
          */
         protected abstract Object create(final Projection parameters);
     }

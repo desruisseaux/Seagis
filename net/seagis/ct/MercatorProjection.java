@@ -104,7 +104,7 @@ final class MercatorProjection extends CylindricalProjection
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(ResourceKeys.CYLINDRICAL_MERCATOR);}
+    {return Resources.getResources(locale).getString(ResourceKeys.CYLINDRICAL_MERCATOR_PROJECTION);}
 
     /**
      * Transforms the specified (<var>x</var>,<var>y</var>) coordinate
@@ -114,7 +114,7 @@ final class MercatorProjection extends CylindricalProjection
     {
         if (Math.abs(y) > (Math.PI/2 - EPS))
         {
-            throw new TransformException(Resources.format(ResourceKeys.POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
+            throw new TransformException(Resources.format(ResourceKeys.ERROR_POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
         }
         x = (x-centralLongitude)*ak0;
         if (isSpherical)
@@ -193,7 +193,7 @@ final class MercatorProjection extends CylindricalProjection
          * Construct a new provider.
          */
         public Provider()
-        {super("Mercator_1SP", ResourceKeys.CYLINDRICAL_MERCATOR);}
+        {super("Mercator_1SP", ResourceKeys.CYLINDRICAL_MERCATOR_PROJECTION);}
 
         /**
          * Create a new map projection.

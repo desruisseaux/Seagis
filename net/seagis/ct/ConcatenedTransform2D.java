@@ -71,9 +71,9 @@ final class ConcatenedTransform2D extends ConcatenedTransform implements MathTra
      */
     public Point2D transform(final Point2D ptSrc, final Point2D ptDst) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         // Basically a copy of MathTransform2D.Abstract implementation
         final double[] ord = new double[] {ptSrc.getX(), ptSrc.getY()};
         this.transform(ord, 0, ord, 0, 1);
@@ -90,9 +90,9 @@ final class ConcatenedTransform2D extends ConcatenedTransform implements MathTra
      */
     public Shape createTransformedShape(final Shape shape) throws TransformException
     {
-/* ---- BEGIN JDK 1.4 DEPENDENCIES ----
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-   ---- END OF JDK 1.4 DEPENDENCIES ---- */
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         // Basically a copy of MathTransform2D.Abstract implementation
         return MathTransform2D.Abstract.createTransformedShape(shape, null, this, null, Geometry.PARALLEL);
     }

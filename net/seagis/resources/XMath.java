@@ -127,4 +127,82 @@ public final class XMath
             return StrictMath.pow(10, x);
         }
     }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null or <code>NaN</code> and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static int sgn(double x)
+    {
+        if (x>0) return +1;
+        if (x<0) return -1;
+        else     return  0;
+    }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null or <code>NaN</code> and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static int sgn(float x)
+    {
+        if (x>0) return +1;
+        if (x<0) return -1;
+        else     return  0;
+    }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static int sgn(long x)
+    {
+        if (x>0) return +1;
+        if (x<0) return -1;
+        else     return  0;
+    }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static int sgn(int x)
+    {
+        if (x>0) return +1;
+        if (x<0) return -1;
+        else     return  0;
+    }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static short sgn(short x)
+    {
+        if (x>0) return (short) +1;
+        if (x<0) return (short) -1;
+        else     return (short)  0;
+    }
+
+    /**
+     * Returns the sign of <var>x</var>. This method returns
+     *    -1 if <var>x</var> is negative,
+     *     0 if <var>x</var> is null and
+     *    +1 if <var>x</var> is positive.
+     */
+    public static byte sgn(byte x)
+    {
+        if (x>0) return (byte) +1;
+        if (x<0) return (byte) -1;
+        else     return (byte)  0;
+    }
 }

@@ -173,7 +173,11 @@ final class StereographicProjection extends PlanarProjection
             default:
             {
                  // Should not happen.
-                throw new /*Assertion*/Error(String.valueOf(mode)); // Possible use of JDK1.4 assertion here.
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+                throw new AssertionError(mode);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+                throw new Error(String.valueOf(mode));
+//----- END OF JDK 1.3 FALLBACK -------
             }
 
             case ELLIPSOIDAL_NORTH:
@@ -223,7 +227,7 @@ final class StereographicProjection extends PlanarProjection
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(ResourceKeys.STEREOGRAPHIC);}
+    {return Resources.getResources(locale).getString(ResourceKeys.STEREOGRAPHIC_PROJECTION);}
 
     /**
      * Transforms the specified (<var>x</var>,<var>y</var>) coordinate
@@ -242,7 +246,11 @@ final class StereographicProjection extends PlanarProjection
             default:
             {
                 // Should not happen.
-                throw new /*Assertion*/Error(String.valueOf(mode)); // Possible use of JDK1.4 assertion here.
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+                throw new AssertionError(mode);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+                throw new Error(String.valueOf(mode));
+//----- END OF JDK 1.3 FALLBACK -------
             }
             case ELLIPSOIDAL_NORTH:
             {
@@ -262,7 +270,7 @@ final class StereographicProjection extends PlanarProjection
             {
                 if (!(Math.abs(1+sinlat) >= TOL))
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 // (21-8)
                 final double f= ak0 * coslat / (1+sinlat);// == tan (pi/4 - phi/2)
@@ -274,7 +282,7 @@ final class StereographicProjection extends PlanarProjection
             {
                 if (!(Math.abs(1-sinlat) >= TOL))
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 // (21-12)
                 final double f= ak0 * coslat / (1-sinlat);// == tan (pi/4 + phi/2)
@@ -287,7 +295,7 @@ final class StereographicProjection extends PlanarProjection
                 double f = 1.0 + coslat*coslon;
                 if (!(f >= TOL))
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 f = ak0/f;
                 x = f * coslat * sinlon;
@@ -299,7 +307,7 @@ final class StereographicProjection extends PlanarProjection
                 double f = 1.0 + sinphi0*sinlat + cosphi0*coslat*coslon; // (21-4)
                 if (!(f >= TOL))
                 {
-                    throw new TransformException(Resources.format(ResourceKeys.INFINITY_IN_PROJECTION));
+                    throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 f = ak0/f;
                 x = f * coslat * sinlon;                               // (21-2)
@@ -350,7 +358,11 @@ choice: switch (mode)
             default:
             {
                 // Should not happen.
-                throw new /*Assertion*/Error(String.valueOf(mode)); // Possible use of JDK1.4 assertion here.
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+                throw new AssertionError(mode);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+                throw new Error(String.valueOf(mode));
+//----- END OF JDK 1.3 FALLBACK -------
             }
             case SPHERICAL_NORTH:
             {
@@ -434,7 +446,7 @@ choice: switch (mode)
                     }
                     phi0=phi;
                 }
-                throw new TransformException(Resources.format(ResourceKeys.NO_CONVERGENCE));
+                throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_CONVERGENCE));
             }
             case ELLIPSOIDAL_OBLIQUE:
             {
@@ -465,7 +477,7 @@ choice: switch (mode)
                     }
                     phi0=phi;
                 }
-                throw new TransformException(Resources.format(ResourceKeys.NO_CONVERGENCE));
+                throw new TransformException(Resources.format(ResourceKeys.ERROR_NO_CONVERGENCE));
             }
         }
         if (ptDst!=null)
@@ -544,7 +556,7 @@ choice: switch (mode)
          */
         public Provider()
         {
-            super("Stereographic", ResourceKeys.STEREOGRAPHIC);
+            super("Stereographic", ResourceKeys.STEREOGRAPHIC_PROJECTION);
             put("latitude_true_scale", 90, LATITUDE_RANGE);
             polar = true;
             auto  = true;
@@ -559,7 +571,7 @@ choice: switch (mode)
          */
         public Provider(final boolean polar)
         {
-            super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", ResourceKeys.STEREOGRAPHIC);
+            super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", ResourceKeys.STEREOGRAPHIC_PROJECTION);
             put("latitude_true_scale", polar ? 90 : 0, LATITUDE_RANGE);
             this.polar = polar;
             this.auto  = false;

@@ -150,7 +150,7 @@ public class CoordinatePoint implements Dimensioned, Cloneable, Serializable
         {
             return new Point2D.Double(ord[0], ord[1]);
         }
-        throw new IllegalStateException(Resources.format(ResourceKeys.NOT_TWO_DIMENSIONAL_$1, new Integer(ord.length)));
+        throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(ord.length)));
     }
 
     /**

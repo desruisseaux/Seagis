@@ -385,7 +385,7 @@ public class AngleFormat extends Format
                         setSuffix(PREFIX_FIELD, null);
                         widthDecimal=0;
                         decimalSeparator=true;
-                        throw new IllegalArgumentException(Resources.format(ResourceKeys.BAD_ANGLE_PATTERN_$1, pattern));
+                        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ANGLE_PATTERN_$1, pattern));
                     }
                     if (c==upperCaseC)
                     {
@@ -414,7 +414,7 @@ public class AngleFormat extends Format
                                             decimalSeparator=true;
                                             break;
                                         }
-                                default: throw new IllegalArgumentException(Resources.format(ResourceKeys.BAD_ANGLE_PATTERN_$1, pattern));
+                                default: throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ANGLE_PATTERN_$1, pattern));
                         }
                         int w=1; while (++i<length && pattern.charAt(i)==c) w++;
                         widthDecimal=w;
@@ -528,7 +528,7 @@ public class AngleFormat extends Format
             if (minutes<0 || minutes>60)
             {
                 // Erreur d'arrondissement (parce que l'angle est trop élevé)
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.ANGLE_OVERFLOW_$1, new Double(angle)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ANGLE_OVERFLOW_$1, new Double(angle)));
             }
             if (width2!=0)
             {
@@ -538,7 +538,7 @@ public class AngleFormat extends Format
                 if (secondes<0 || secondes>60)
                 {
                     // Erreur d'arrondissement (parce que l'angle est trop élevé)
-                    throw new IllegalArgumentException(Resources.format(ResourceKeys.ANGLE_OVERFLOW_$1, new Double(angle)));
+                    throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ANGLE_OVERFLOW_$1, new Double(angle)));
                 }
                 /*
                  * On applique maintenant une correction qui tiendra
@@ -665,7 +665,7 @@ public class AngleFormat extends Format
             numberFormat.setMaximumFractionDigits(2);
             return numberFormat.format(obj, toAppendTo, (pos!=null) ? pos : dummy);
         }
-        throw new IllegalArgumentException(Resources.format(ResourceKeys.NOT_AN_ANGLE_OBJECT_$1, Utilities.getShortClassName(obj)));
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NOT_AN_ANGLE_OBJECT_$1, Utilities.getShortClassName(obj)));
     }
 
     /**
@@ -1265,7 +1265,8 @@ BigBoss:    switch (skipSuffix(source, pos, DEGREES_FIELD))
                 index=pos.getErrorIndex(); if (index<0) index=origin;
                 int lower=index; while (lower<length &&  Character.isWhitespace(source.charAt(lower))) lower++;
                 int upper=lower; while (upper<length && !Character.isWhitespace(source.charAt(upper))) upper++;
-                throw new ParseException(Resources.format(ResourceKeys.PARSE_ANGLE_EXCEPTION_$2, source, source.substring(lower, Math.min(lower+10, upper))), index);
+                throw new ParseException(Resources.format(ResourceKeys.ERROR_PARSE_ANGLE_EXCEPTION_$2, source,
+                                                          source.substring(lower, Math.min(lower+10, upper))), index);
             }
         }
     }

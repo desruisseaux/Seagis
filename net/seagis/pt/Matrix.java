@@ -134,7 +134,7 @@ public final class Matrix implements Cloneable, Serializable
         {
             if (matrix[j].length!=size)
             {
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.MATRIX_NOT_SQUARE));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MATRIX_NOT_SQUARE));
             }
             System.arraycopy(matrix[j], 0, elt, j*size, size);
         }
@@ -193,7 +193,7 @@ public final class Matrix implements Cloneable, Serializable
                 {
                     if (hasFound)
                     {
-                        throw new IllegalArgumentException(Resources.format(ResourceKeys.NON_ORTHOGONAL_AXIS_$2,
+                        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_COLINEAR_AXIS_$2,
                                                            srcAxe.getName(null), dstAxe.getName(null)));
                     }
                     hasFound = true;
@@ -217,7 +217,7 @@ public final class Matrix implements Cloneable, Serializable
             }
             if (!hasFound)
             {
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.NO_DESTINATION_FOR_AXIS_$1, srcAxis[srcIndex].getName(null)));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NO_DESTINATION_AXIS_$1, srcAxis[srcIndex].getName(null)));
             }
         }
         set(dimension, dimension, 1);
@@ -487,9 +487,9 @@ public final class Matrix implements Cloneable, Serializable
             {
                 return new AffineTransform(elt[0], elt[3], elt[1], elt[4], elt[2], elt[5]);
             }
-            throw new IllegalStateException(Resources.format(ResourceKeys.NOT_AN_AFFINE_TRANSFORM));
+            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_AN_AFFINE_TRANSFORM));
         }
-        throw new IllegalStateException(Resources.format(ResourceKeys.NOT_TWO_DIMENSIONAL_$1, new Integer(size-1)));
+        throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(size-1)));
     }
 
     /**

@@ -115,15 +115,25 @@ public class CoordinateTransformation extends Info
     protected MathTransform transform;
 
     /**
+     * The inverse transform. This field
+     * will be computed only when needed.
+     */
+    transient CoordinateTransformation inverse;
+
+    /**
      * Construct a coordinate transformation.
      *
-     * @param name      The coordinate transformation name.
+     * @param name      The coordinate transformation name, or <code>null</code>
+     *                  for an automatically generated name.
      * @param sourceCS  The source coordinate system.
      * @param targetCS  The destination coordinate system.
      * @param type      The transform type.
      * @param transform The math transform.  This argument is allowed to
      *                  be <code>null</code> only if this constructor is
-     *                  invoked from within a subclass constructor.
+     *                  invoked from within a subclass constructor. In
+     *                  this case, the subclass <strong>must</strong>
+     *                  construct a math transform no later than the first
+     *                  time {@link #getMathTransform} is invoked.
      */
     public CoordinateTransformation(final String           name,
                                     final CoordinateSystem sourceCS,
@@ -131,7 +141,7 @@ public class CoordinateTransformation extends Info
                                     final TransformType    type,
                                     final MathTransform    transform)
     {
-        super(name);
+        super((name!=null) ? name : "");
         this.sourceCS  = sourceCS;
         this.targetCS  = targetCS;
         this.type      = type;
@@ -151,24 +161,6 @@ public class CoordinateTransformation extends Info
         {
             throw new IllegalArgumentException("targetCS");
         }
-    }
-
-    /**
-     * Construct a coordinate transformation with a default name.
-     *
-     * @param sourceCS  The source coordinate system.
-     * @param targetCS  The destination coordinate system.
-     * @param type      The transform type.
-     * @param transform The math transform.  This argument is allowed to
-     *                  be <code>null</code> only if this constructor is
-     *                  invoked from within a subclass constructor.
-     */
-    public CoordinateTransformation(final CoordinateSystem sourceCS,
-                                    final CoordinateSystem targetCS,
-                                    final TransformType    type,
-                                    final MathTransform    transform)
-    {
-        this("", sourceCS, targetCS, type, transform);
     }
 
     /**
@@ -225,6 +217,44 @@ public class CoordinateTransformation extends Info
     }
 
     /**
+     * Returns the inverse transform of this object.
+     */
+    public synchronized CoordinateTransformation inverse() throws NoninvertibleTransformException
+    {
+        if (inverse==null)
+        {
+            inverse = new Inverse(this);
+        }
+        return inverse;
+    }
+
+    /**
+     * The inverse coordinate transformation. This class override
+     * {@link #getName} in order to delegate part of the call to
+     * the underlying direct transformation.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private static final class Inverse extends CoordinateTransformation
+    {
+        /**
+         * Construct a coordinate transformation.
+         */
+        public Inverse(final CoordinateTransformation transform) throws NoninvertibleTransformException
+        {
+            super(null, transform.getTargetCS(), transform.getSourceCS(), transform.getTransformType(), transform.getMathTransform().inverse());
+            this.inverse = transform;
+        }
+
+        /**
+         * Gets the name of this coordinate transformation.
+         */
+        public String getName(final Locale locale)
+        {return Resources.getResources(locale).getString(ResourceKeys.INVERSE_$1, this.inverse.getName(locale));}
+    }
+
+    /**
      * Returns a hash value for this
      * coordinate transformation.
      */
@@ -238,8 +268,11 @@ public class CoordinateTransformation extends Info
     }
 
     /**
-     * Compares the specified object with this
-     * coordinate transformation for equality.
+     * Compares the specified object with this coordinate transformation
+     * for equality.  The default implementation compare name, transform
+     * type, source and target coordinate systems. It doesn't compare the
+     * math transform, since it should be equivalents if the above mentionned
+     * parameters are equal.
      */
     public boolean equals(final Object object)
     {

@@ -158,7 +158,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
                 return tail.getAxis(dim);
             }
         }
-        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
     }
 
     /**
@@ -182,7 +182,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
                 return head.getUnits(dim);
             }
         }
-        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
     }
 
     /**

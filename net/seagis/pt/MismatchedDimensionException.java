@@ -79,5 +79,5 @@ public class MismatchedDimensionException extends RuntimeException
      *        otherwise there is no dimension mismatch!
      */
     public MismatchedDimensionException(final int dim1, final int dim2)
-    {this(Resources.format(ResourceKeys.MISMATCHED_OBJECT_DIMENSION_$2, new Integer(dim1), new Integer(dim2)));}
+    {this(Resources.format(ResourceKeys.ERROR_MISMATCHED_DIMENSION_$2, new Integer(dim1), new Integer(dim2)));}
 }

@@ -163,7 +163,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     {
         final int maxDim = getDimension();
         if (dimension>=0 && dimension<maxDim) return axis;
-        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
     }
 
     /**
@@ -180,7 +180,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     {
         final int maxDim = getDimension();
         if (dimension>=0 && dimension<maxDim) return unit;
-        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
+        throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_INDEX_OUT_OF_BOUNDS_$1, new Integer(dimension)));
     }
 
     /**
