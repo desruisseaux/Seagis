@@ -137,16 +137,21 @@ public class PaletteFactory
      *                  If <code>null</code>, loading will occurs from the system current
      *                  working directory.
      * @param directory The base directory from which to search for palette definition files.
-     *                  If <code>null</code>, then the working directory (".") is assumed.
-     * @param extension File name extension. This extension will be automatically
-     *                  appended to filename. It should contains the separator '.'.
+     *                  If <code>null</code>, then <code>"."</code> is assumed.
+     * @param extension File name extension, or <code>null</code> if there is no extension
+     *                  to add to filename. If non-null, this extension will be automatically
+     *                  appended to filename. It should starts with the character <code>'.'</code>.
      * @param charset   The charset to use for parsing files, or
      *                  <code>null</code> for the current default.
      * @param locale    The locale to use for parsing files. or
      *                  <code>null</code> for the current default.
      */
-    public PaletteFactory(final PaletteFactory parent, final ClassLoader loader, final File directory, final String extension, final Charset charset, final Locale locale)
+    public PaletteFactory(final PaletteFactory parent, final ClassLoader loader, final File directory, String extension, final Charset charset, final Locale locale)
     {
+        if (extension!=null && !extension.startsWith("."))
+        {
+            extension = "." + extension;
+        }
         this.parent    = parent;
         this.loader    = loader;
         this.directory = directory;
@@ -166,7 +171,10 @@ public class PaletteFactory
      */
     private BufferedReader getReader(String name) throws IOException
     {
-        if (extension!=null) name += extension;
+        if (extension!=null && !name.endsWith(extension))
+        {
+            name += extension;
+        }
         final File file = new File(directory, name);
         final InputStream stream;
         if (loader!=null)

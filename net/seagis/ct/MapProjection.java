@@ -225,9 +225,9 @@ abstract class MapProjection extends MathTransform2D.Abstract
     }
 
     /**
-     * Check if the transform of <code>point</code> is close enough of <code>target</code>.
+     * Check if the transform of <code>point</code> is close enough to <code>target</code>.
      * "Close enough" means that the two points are separated by a distance shorter than
-     * {@link #MAX_ERROR}. This method is used during assertions with JDK 1.4.
+     * {@link #MAX_ERROR}. This method is used for assertions with JDK 1.4.
      *
      * @param  point  Point to transform, in degrees if <code>inverse</code> is false.
      * @param  target Point to compare to, in metres if <code>inverse</code> is false.
@@ -248,7 +248,10 @@ abstract class MapProjection extends MathTransform2D.Abstract
                 final double y1 = Math.toRadians(point .getY());
                 final double y2 = Math.toRadians(target.getY());
                 final double dx = Math.toRadians(Math.abs(target.getX()-point.getX()) % 360);
-                distance = Math.acos(Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx))*a;
+                double rho = Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx);
+                if (rho>+1) {assert rho<=+(1+EPS) : rho; rho=+1;}
+                if (rho<-1) {assert rho>=-(1+EPS) : rho; rho=-1;}
+                distance = Math.acos(rho)*a;
                 // Computed orthodromic distance (spherical model) in metres.
             }
             else

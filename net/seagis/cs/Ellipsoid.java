@@ -299,8 +299,12 @@ public class Ellipsoid extends Info
         y2 = Math.toRadians(y2);
         final double y  = 0.5*(y1+y2);
         final double dx = Math.toRadians(Math.abs(x2-x1) % 360);
-        return Math.acos(Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx))/
-               XMath.hypot(Math.sin(y)/getSemiMajorAxis(), Math.cos(y)/getSemiMinorAxis());
+        double rho = Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        if (rho>+1) {assert rho<=+(1+1E-6) : rho; rho=+1;} // Catch rounding error.
+        if (rho<-1) {assert rho>=-(1+1E-6) : rho; rho=-1;} // Catch rounging error.
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        return Math.acos(rho)/XMath.hypot(Math.sin(y)/getSemiMajorAxis(), Math.cos(y)/getSemiMinorAxis());
                // 'hypot' calcule l'inverse du rayon **apparent** de la terre à la latitude 'y'.
     }
 
