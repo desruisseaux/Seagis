@@ -458,47 +458,59 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     final Category getEncoder(final double value, Category category)
     {
         if (category==null ||
-            (!(value>=category.minimum && value<category.maximum)) && // Le '!' est important à cause des NaN
-             Double.doubleToRawLongBits(value)!=Double.doubleToRawLongBits(category.minimum))
+            (!(value>=category.minimum && value<category.maximum) && // Le '!' est important à cause des NaN
+             Double.doubleToRawLongBits(value)!=Double.doubleToRawLongBits(category.minimum)))
         {
             /*
              * Si la catégorie n'est pas la même que la dernière fois,
              * recherche à quelle catégorie pourrait appartenir la valeur.
              * Note: Les valeurs 'NaN' sont à la fin du tableau 'values'. Donc:
              *
-             * 1) Si 'value' est réel, alors 'i' pointera forcément sur une catégorie de valeurs réelles.
-             * 2) Si 'value' est NaN,  alors 'i' peut pointer sur une des catégories NaN ou sur la dernière
-             *    catégorie de nombres réels.
+             * 1) Si 'value' est NaN,  alors 'i' pointera forcément sur une catégorie NaN.
+             * 2) Si 'value' est réel, alors 'i' peut pointer sur une des catégories de
+             *    valeurs réels ou sur la première catégorie de NaN.
              */
             int i=binarySearch(values, value); // Special 'binarySearch' for NaN values.
             if (i>=0)
             {
+                // The value is exactly equals to one of Category.minimum,
+                // or is one of NaN values. There is nothing else to do.
                 category = byValues[i];
             }
             else
             {
                 if (Double.isNaN(value))
                 {
-                    return null; // 'value' est un NaN inconnu.
+                    // The value is NaN, but not one of the registered ones.
+                    // Consequently, we can't map a category to this value.
+                    return null;
                 }
+                // 'binarySearch' found the index of "insertion point" (~i). This means that
+                // 'value' is lower than 'Category.minimum' at this index.  Consequently, if
+                // this value fits in a category's range, it fits in the previous category (~i-1).
                 i = ~i-1;
                 if (i<0)
                 {
+                    // If the value is smaller than the smallest Category.minimum, returns
+                    // the first category (except if there is only NaN categories).
                     if (byValues.length==0) return null;
                     category = byValues[0];
                     if (Double.isNaN(category.minimum)) return null;
-                    // 'value' est inférieure à la plus petite valeur représentable.
                 }
                 else
                 {
                     category = byValues[i];
+                    assert(value >= category.minimum);
+                    // We found the probable category.  If value is outside
+                    // any category's range (including this one), it may be
+                    // closer to the next category than the current one...
                     if (value >= category.maximum  &&  i+1 < byValues.length)
                     {
-                        // Vérifie si la valeur ne serait pas plus proche du prochain thème.
                         final Category upper = byValues[i+1];
                         // assert: if 'upper.minimum' was smaller than 'value',
                         //         it should has been found by 'binarySearch'.
-                        assert(upper.minimum > value);
+                        //         We use '!' in order to accept NaN values.
+                        assert(!(upper.minimum <= value));
                         if (upper.minimum-value <= value-category.maximum)
                         {
                             category = upper;
@@ -509,7 +521,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         }
         // assert: after converting geophysics value to sample
         //         value, it should stay in the same category.
-        assert(category==null || category==getDecoder(category.toIndex(value), category));
+        assert(category==null || category==getDecoder(category.toIndex(value), category)) : category;
         return category;
     }
 
@@ -680,7 +692,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {
         final int cacheIndex = (numBands*2) + (geophysicsValue ? 0 : 1);
         // Look in the cache for an existing color model.
-        if (colors!=null && colors.length>cacheIndex)
+        if (colors!=null && cacheIndex<colors.length)
         {
             return colors[cacheIndex];
         }
@@ -694,7 +706,12 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         {
             if (numBands!=1)
             {
-                // TODO: support 2, 3, 4... bands
+                // It would be possible to support 2, 3, 4... bands. But is it
+                // really a good idea? This method is used by GridCoverage for
+                // creating a displayable image from a geophysics one.  We may
+                // ignore extra bands (by subclassing IndexColorModel), but it
+                // would involve useless computation every time the "thematic"
+                // image is computed since extra-bands are ignored...
                 throw new UnsupportedOperationException(String.valueOf(numBands));
             }
             if (byIndex.length==0)

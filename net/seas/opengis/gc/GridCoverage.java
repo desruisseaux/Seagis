@@ -42,6 +42,7 @@ import net.seas.opengis.ct.TransformException;
 import net.seas.opengis.ct.CoordinateTransform;
 
 // Images
+import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -380,8 +381,15 @@ public class GridCoverage extends Coverage
         }
         else if (isGeophysics)
         {
+            final int   band  = 0; // TODO: make available as a parameter.
+            final int[] bands = new int[]{band};
+
+            final RenderedImage reducedImage = JAI.create("BandSelect", new ParameterBlock().addSource(image).add(bands));
+            final CategoryList[]  reducedCat = new CategoryList[bands.length];
+            for (int i=0; i<bands.length; i++) reducedCat[i]=categories[bands[i]];
+    
             this.numeric = image;
-            this.image   = PlanarImage.wrapRenderedImage(toThematic(this.numeric, categories));
+            this.image   = PlanarImage.wrapRenderedImage(toThematic(reducedImage, reducedCat));
         }
         else
         {
@@ -495,31 +503,51 @@ public class GridCoverage extends Coverage
         return numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getPixel(x, y, dest);
     }
 
-    /*
-     * Retourne une chaîne de caractère décrivant un pixel. Si le pixel aux coordonnées
-     * spécifiées contient une valeur numérique, cette valeur sera retournée sous forme
-     * de chaîne de caractères suivit du symbole des unités. Si au contraire le pixel
-     * représente une valeur <code>NaN</code>, alors cette méthode retourne le nom du
-     * thème du pixel (par exemple "Nuage").
+    /**
+     * Returns a debug string for the specified coordinate.   This method produces a
+     * string with pixel coordinates and pixel values for all bands (with geophysics
+     * values or category name in parenthesis). Example for a 1-banded image:
      *
-     * @param point Coordonnées logiques du pixel dont on veut la description. Ces
-     *              coordonnées doivent être en mètres ou en degrés de longitude et
-     *              de latitude dépendament du système de coordonnées de l'image.
+     * <blockquote><pre>(1171,1566)=[196 (29.6 °C)]</pre></blockquote>
      *
-     * @return Description du pixel, ou <code>null</code> si le pixel demandé est en
-     *         dehors des limites de l'image ou ne correspond pas à un thème connu.
+     * @param  coord The coordinate point where to evaluate.
+     * @return A string with pixel coordinates and pixel values at the specified location.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-//  public synchronized String getLabel(final CoordinatePoint coord)
-//  {
-//      if (setPoint(coord))
-//      {
-//          final int x = pixel.x;
-//          final int y = pixel.y;
-//          final double value = numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y)).getSampleDouble(x, y, 0);
-//          return sampleDimensions.get(0).getCategoryList().format(value, null);
-//      }
-//      else throw new PointOutsideCoverageException(coord);
-//  }
+    public synchronized String getDebugString(final CoordinatePoint coord) throws PointOutsideCoverageException
+    {
+        setPoint(coord);
+        final int                x = pixel.x;
+        final int                y = pixel.y;
+        final int    numImageBands = image.getNumBands();
+        final int  numNumericBands = numeric.getNumBands();
+        final int         numBands = Math.max(numImageBands, numNumericBands);
+        final Raster   imageRaster = image  .getTile(image  .XToTileX(x), image  .YToTileY(y));
+        final Raster numericRaster = numeric.getTile(numeric.XToTileX(x), numeric.YToTileY(y));
+        final StringBuffer  buffer = new StringBuffer();
+        buffer.append('(');
+        buffer.append(x);
+        buffer.append(',');
+        buffer.append(y);
+        buffer.append(")=[");
+
+        for (int band=0; band<numBands; band++)
+        {
+            if (band!=0) buffer.append(";\u00A0");
+            if (band<numImageBands)
+            {
+                buffer.append(imageRaster.getSample(x, y, band));
+            }
+            if (band<numNumericBands)
+            {
+                buffer.append("\u00A0(");
+                buffer.append(sampleDimensions.get(band).getCategoryList().format(numericRaster.getSampleDouble(x, y, band), null));
+                buffer.append(')');
+            }
+        }
+        buffer.append(']');
+        return buffer.toString();
+    }
 
     /**
      * Convertit les coordonnées logiques <code>point</code> en coordonnées pixel.
