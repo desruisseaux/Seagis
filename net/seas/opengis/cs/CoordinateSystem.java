@@ -126,6 +126,8 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
 
     /**
      * Returns the dimension of the coordinate system.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystem#getDimension()
      */
     public abstract int getDimension();
 
@@ -134,6 +136,8 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
      * Each dimension in the coordinate system has a corresponding axis.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystem#getAxis(int)
      */
     public abstract AxisInfo getAxis(int dimension);
 
@@ -142,6 +146,8 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
      * Each dimension in the coordinate system has corresponding units.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystem#getUnits(int)
      */
     public abstract Unit getUnits(int dimension);
 
@@ -179,9 +185,32 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
      * of the Earth.
      * <br><br>
      * The default implementation returns an envelope with infinite bounds.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystem#getDefaultEnvelope()
      */
     public Envelope getDefaultEnvelope()
     {return new Envelope(getDimension());}
+
+    /**
+     * Returns a string representation of this info.
+     * @param the source (usually <code>this</code>).
+     */
+    final String toString(final Object source)
+    {
+        final StringBuffer  buffer = new StringBuffer(super.toString(source));
+        final String lineSeparator = System.getProperty("line.separator", "\r");
+        final int        dimension = getDimension();
+        for (int i=0; i<dimension; i++)
+        {
+            buffer.append(lineSeparator);
+            buffer.append("    [");
+            buffer.append(i);
+            buffer.append("]:");
+            buffer.append(getAxis(i));
+        }
+        buffer.append(lineSeparator);
+        return buffer.toString();
+    }
 
     /**
      * Add more information inside the "[...]" part of {@link #toString}.

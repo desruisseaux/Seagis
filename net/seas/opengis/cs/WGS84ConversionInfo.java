@@ -53,7 +53,7 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
     private static final long serialVersionUID = -7104458538855128443L;
 
     /**
-     * <FONT COLOR="#FF6633">An empty, immutable, set of <code>WGS84ConversionInfo</code>.</FONT>
+     * An empty, immutable, set of <code>WGS84ConversionInfo</code>.
      */
     public static final Set<WGS84ConversionInfo> EMPTY_SET = new EmptySet();
 

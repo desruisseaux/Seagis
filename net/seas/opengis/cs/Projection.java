@@ -118,6 +118,8 @@ public class Projection extends Info
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjection
      */
     public Projection(final String name, final String classification, final ParameterList parameters)
     {
@@ -162,18 +164,23 @@ public class Projection extends Info
 
     /**
      * Gets the projection classification name (e.g. "Transverse_Mercator").
+     *
+     * @see org.opengis.cs.CS_Projection#getClassName()
      */
     public String getClassName()
     {return classification;}
 
     /**
      * Returns all parameters.
+     *
+     * @see org.opengis.cs.CS_Projection#getNumParameters()
+     * @see org.opengis.cs.CS_Projection#getParameter(int)
      */
     public ParameterList getParameters()
     {return clone(parameters);}
 
     /**
-     * <FONT COLOR="#FF6633">Convenience method for fetching a parameter value.</FONT>
+     * Convenience method for fetching a parameter value.
      * Search is case-insensitive and ignore leading and trailing blanks.
      *
      * @param  name Parameter to look for.
@@ -184,7 +191,7 @@ public class Projection extends Info
     {return getValue(parameters, name, Double.NaN, true);}
 
     /**
-     * <FONT COLOR="#FF6633">Convenience method for fetching a parameter value.</FONT>
+     * Convenience method for fetching a parameter value.
      * Search is case-insensitive and ignore leading and trailing blanks.
      *
      * @param  name Parameter to look for.

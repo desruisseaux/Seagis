@@ -31,7 +31,7 @@ import net.seas.resources.Resources;
 
 
 /**
- * <FONT COLOR="#FF6633">Thrown when a coordinate transformation can't be created.</FONT>
+ * Thrown when a coordinate transformation can't be created.
  * It may be because there is no known path between source and coordinate systems,
  * or because the requested transformation is not available in the environment.
  *

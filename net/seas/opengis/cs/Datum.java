@@ -92,6 +92,8 @@ public class Datum extends Info
 
     /**
      * Gets the type of the datum as an enumerated code.
+     *
+     * @see org.opengis.cs.CS_Datum#getDatumType()
      */
     public DatumType getDatumType()
     {return type;}

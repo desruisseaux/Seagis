@@ -74,6 +74,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
      * @param axis  Axis to use for new coordinate system.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createVerticalCoordinateSystem
      */
     public VerticalCoordinateSystem(final String name, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
     {
@@ -107,6 +109,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the dimension of this coordinate system, which is 1.
+     *
+     * @see org.opengis.cs.CS_VerticalCoordinateSystem#getDimension()
      */
     public final int getDimension()
     {return 1;}
@@ -119,6 +123,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
 
     /**
      * Gets the vertical datum, which indicates the measurement method.
+     *
+     * @see org.opengis.cs.CS_VerticalCoordinateSystem#getVerticalDatum()
      */
     public VerticalDatum getVerticalDatum()
     {return datum;}
@@ -128,6 +134,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * A vertical coordinate system have only one axis, always at index 0.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_VerticalCoordinateSystem#getAxis(int)
      */
     public AxisInfo getAxis(final int dimension)
     {
@@ -142,6 +150,9 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * always at index 0.
      *
      * @param dimension Must be 0.
+     *
+     * @see org.opengis.cs.CS_VerticalCoordinateSystem#getUnits(int)
+     * @see org.opengis.cs.CS_VerticalCoordinateSystem#getVerticalUnit()
      */
     public Unit getUnits(final int dimension)
     {

@@ -24,7 +24,7 @@ package net.seas.opengis.pt;
 
 
 /**
- * <FONT COLOR="#FF6633">Interface for dimensioned object.</FONT>
+ * Interface for dimensioned object.
  * Objects implementing this interface may have an arbitrary number of dimensions.
  * It is generally not possible to determine their dimension only by their type.
  * For example a {@link CoordinatePoint} may very well be one-dimensional (e.g.

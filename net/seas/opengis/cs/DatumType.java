@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_DatumType;
+
 // Miscellaneous
 import java.util.Locale;
 import java.io.ObjectStreamException;
@@ -64,8 +67,10 @@ public abstract class DatumType extends EnumeratedParameter
      * in 3-D space.  These datums were designed mainly to support a horizontal
      * component of a position in a domain of limited extent, such as a country,
      * a region or a continent.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_HD_Classic
      */
-    public static final Horizontal CLASSIC = new Horizontal("CLASSIC", 1001, Clé.CLASSIC);
+    public static final Horizontal CLASSIC = new Horizontal("CLASSIC", CS_DatumType.CS_HD_Classic, Clé.CLASSIC);
 
     /**
      * A geocentric datum is a "satellite age" modern geodetic datum
@@ -74,20 +79,26 @@ public abstract class DatumType extends EnumeratedParameter
      * component of position and a vertical component of position (through
      * ellipsoidal heights).  The regional realizations of ITRF, such as
      * ETRF, are also included in this category.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_HD_Geocentric
      */
-    public static final Horizontal GEOCENTRIC = new Horizontal("GEOCENTRIC", 1002, Clé.GEOCENTRIC);
+    public static final Horizontal GEOCENTRIC = new Horizontal("GEOCENTRIC", CS_DatumType.CS_HD_Geocentric, Clé.GEOCENTRIC);
 
     /**
      * A vertical datum for orthometric heights
      * that are measured along the plumb line.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_Orthometric
      */
-    public static final Vertical ORTHOMETRIC = new Vertical("ORTHOMETRIC", 2001, Clé.ORTHOMETRIC);
+    public static final Vertical ORTHOMETRIC = new Vertical("ORTHOMETRIC", CS_DatumType.CS_VD_Orthometric, Clé.ORTHOMETRIC);
 
     /**
      * A vertical datum for ellipsoidal heights that are measured along the
      * normal to the ellipsoid used in the definition of horizontal datum.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_Ellipsoidal
      */
-    public static final Vertical ELLIPSOIDAL = new Vertical("ELLIPSOIDAL", 2002, Clé.ELLIPSOIDAL);
+    public static final Vertical ELLIPSOIDAL = new Vertical("ELLIPSOIDAL", CS_DatumType.CS_VD_Ellipsoidal, Clé.ELLIPSOIDAL);
 
     /**
      * The vertical datum of altitudes or heights in the atmosphere.
@@ -96,13 +107,17 @@ public abstract class DatumType extends EnumeratedParameter
      * are usually expressed in one of the following units: meters, feet,
      * millibars (used to measure pressure levels), or theta value (units
      * used to measure geopotential height).
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_AltitudeBarometric
      */
-    public static final Vertical ALTITUDE_BAROMETRIC = new Vertical("ALTITUDE_BAROMETRIC", 2003, Clé.BAROMETRIC_ALTITUDE);
+    public static final Vertical ALTITUDE_BAROMETRIC = new Vertical("ALTITUDE_BAROMETRIC", CS_DatumType.CS_VD_AltitudeBarometric, Clé.BAROMETRIC_ALTITUDE);
 
     /**
      * A normal height system.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_Normal
      */
-    public static final Vertical NORMAL = new Vertical("NORMAL", 2004, Clé.NORMAL);
+    public static final Vertical NORMAL = new Vertical("NORMAL", CS_DatumType.CS_VD_Normal, Clé.NORMAL);
 
     /**
      * A vertical datum of geoid model derived heights,
@@ -111,8 +126,10 @@ public abstract class DatumType extends EnumeratedParameter
      * ellipsoidal heights (<var>h</var>) by the use of the given
      * geoid undulation model (<var>N</var>) through the equation:
      * <var>H</var>=<var>h</var>-<var>N</var>.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_GeoidModelDerived
      */
-    public static final Vertical GEOID_MODEL_DERIVED = new Vertical("GEOID_MODEL_DERIVED", 2005, Clé.GEOID_MODEL_DERIVED);
+    public static final Vertical GEOID_MODEL_DERIVED = new Vertical("GEOID_MODEL_DERIVED", CS_DatumType.CS_VD_GeoidModelDerived, Clé.GEOID_MODEL_DERIVED);
 
     /**
      * This attribute is used to support the set of datums generated
@@ -121,11 +138,13 @@ public abstract class DatumType extends EnumeratedParameter
      * datum. Depths are measured in the direction perpendicular
      * (approximately) to the actual equipotential surfaces of the earth's
      * gravity field, using such procedures as echo-sounding.
+     *
+     * @see org.opengis.cs.CS_DatumType#CS_VD_Depth
      */
-    public static final Vertical DEPTH = new Vertical("DEPTH", 2006, Clé.DEPTH);
+    public static final Vertical DEPTH = new Vertical("DEPTH", CS_DatumType.CS_VD_Depth, Clé.DEPTH);
 
     /**
-     * <FONT COLOR="#FF6633">A temporal datum for Universal Time (UTC).</FONT>
+     * A temporal datum for Universal Time (UTC).
      * UTC is based on an atomic clock, while GMT is based on astronomical observations.
      * <br><br>
      * <strong>Note: This enum is not part of OpenGIS specification. It may change
@@ -134,7 +153,7 @@ public abstract class DatumType extends EnumeratedParameter
     public static final Temporal UTC = new Temporal("UTC", 3001, Clé.UTC);
 
     /**
-     * <FONT COLOR="#FF6633">A temporal datum for Greenwich Mean Time (GMT).</FONT>
+     * A temporal datum for Greenwich Mean Time (GMT).
      * GMT is based on astronomical observations, while UTC is based on an atomic clock.
      * <br><br>
      * <strong>Note: This enum is not part of OpenGIS specification. It may change
@@ -181,7 +200,7 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
+     * Return the enum for the specified value.
      *
      * @param  value The enum value.
      * @return The enum for the specified value.
@@ -246,14 +265,14 @@ public abstract class DatumType extends EnumeratedParameter
     abstract int getTypeKey();
 
     /**
-     * <FONT COLOR="#FF6633">Return the type name in the specified locale.</FONT>
+     * Return the type name in the specified locale.
      * Type may be "Horizontal", "Vertical", "Temporal" or "Local".
      */
     public String getType(final Locale locale)
     {return Resources.getResources(locale).getString(getTypeKey());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
+     * Returns this enum's name in the specified locale.
      * If no name is available for the specified locale, a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
@@ -274,10 +293,12 @@ public abstract class DatumType extends EnumeratedParameter
     {return getEnum(getValue());}
 
     /**
-     * <FONT COLOR="#FF6633">Horizontal datum type.</FONT>
+     * Horizontal datum type.
      *
      * @version 1.00
      * @author Martin Desruisseaux
+     *
+     * @see org.opengis.cs.CS_DatumType
      */
     public static final class Horizontal extends DatumType
     {
@@ -288,20 +309,26 @@ public abstract class DatumType extends EnumeratedParameter
 
         /**
          * Lowest possible value for horizontal datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_HD_Min
          */
-        public static final int MINIMUM = 1000;
+        public static final int MINIMUM = CS_DatumType.CS_HD_Min;
 
         /**
          * Highest possible value for horizontal datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_HD_Max
          */
-        public static final int MAXIMUM = 1999;
+        public static final int MAXIMUM = CS_DatumType.CS_HD_Max;
 
         /**
          * Unspecified horizontal datum type.
          * Horizontal datums with this type should never supply
          * a conversion to WGS84 using Bursa Wolf parameters.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_HD_Other
          */
-        public static final Horizontal OTHER = new Horizontal("OTHER", 1000, Clé.OTHER);
+        public static final Horizontal OTHER = new Horizontal("OTHER", CS_DatumType.CS_HD_Other, Clé.OTHER);
 
         /**
          * Construct a new enum with the specified value.
@@ -328,10 +355,12 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Vertical datum type.</FONT>
+     * Vertical datum type.
      *
      * @version 1.00
      * @author Martin Desruisseaux
+     *
+     * @see org.opengis.cs.CS_DatumType
      */
     public static final class Vertical extends DatumType
     {
@@ -342,18 +371,24 @@ public abstract class DatumType extends EnumeratedParameter
 
         /**
          * Lowest possible value for vertical datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_VD_Min
          */
-        public static final int MINIMUM = 2000;
+        public static final int MINIMUM = CS_DatumType.CS_VD_Min;
 
         /**
          * Highest possible value for vertical datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_VD_Max
          */
-        public static final int MAXIMUM = 2999;
+        public static final int MAXIMUM = CS_DatumType.CS_VD_Max;
 
         /**
          * Unspecified vertical datum type.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_VD_Other
          */
-        public static final Vertical OTHER = new Vertical("OTHER", 2000, Clé.OTHER);
+        public static final Vertical OTHER = new Vertical("OTHER", CS_DatumType.CS_VD_Other, Clé.OTHER);
 
         /**
          * Construct a new enum with the specified value.
@@ -377,7 +412,7 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Temporal datum type.</FONT>
+     * Temporal datum type.
      *
      * @version 1.00
      * @author Martin Desruisseaux
@@ -429,10 +464,12 @@ public abstract class DatumType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Local datum type.</FONT>
+     * Local datum type.
      *
      * @version 1.00
      * @author Martin Desruisseaux
+     *
+     * @see org.opengis.cs.CS_DatumType
      */
     public static final class Local extends DatumType
     {
@@ -443,13 +480,17 @@ public abstract class DatumType extends EnumeratedParameter
 
         /**
          * Lowest possible value for local datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_LD_Min
          */
-        public static final int MINIMUM = 10000;
+        public static final int MINIMUM = CS_DatumType.CS_LD_Min;
 
         /**
          * Highest possible value for local datum types.
+         *
+         * @see org.opengis.cs.CS_DatumType#CS_LD_Max
          */
-        public static final int MAXIMUM = 32767;
+        public static final int MAXIMUM = CS_DatumType.CS_LD_Max;
 
         /**
          * Construct a new enum with the specified value.

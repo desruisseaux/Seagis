@@ -59,6 +59,7 @@ import net.seas.resources.Resources;
 
 // For JavaDoc only
 import javax.media.jai.PerspectiveTransform;
+import javax.media.j3d.Transform3D;
 
 
 /**
@@ -78,6 +79,7 @@ import javax.media.jai.PerspectiveTransform;
  * @see org.opengis.ct.CT_MathTransform
  * @see AffineTransform
  * @see PerspectiveTransform
+ * @see Transform3D
  */
 public abstract class MathTransform extends Info
 {
@@ -119,6 +121,8 @@ public abstract class MathTransform extends Info
      *
      * @param  hull The convex hull.
      * @return flags classifying domain points within the convex hull.
+     *
+     * @see org.opengis.ct.CT_MathTransform#getDomainFlags
      */
     public DomainFlags getDomainFlags(final ConvexHull hull)
     {throw new UnsupportedOperationException("Not implemented");}
@@ -143,6 +147,8 @@ public abstract class MathTransform extends Info
      * @throws MismatchedDimensionException if <code>ptSrc</code>
      *         doesn't have the expected dimension.
      * @throws TransformException if the point can't be transformed.
+     *
+     * @see org.opengis.ct.CT_MathTransform#transform
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
     {
@@ -216,6 +222,8 @@ public abstract class MathTransform extends Info
      *               destination array.
      * @param numPts the number of point objects to be transformed.
      * @throws TransformException if a point can't be transformed.
+     *
+     * @see org.opengis.ct.CT_MathTransform#transformList
      */
     public abstract void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException;
 
@@ -448,6 +456,8 @@ public abstract class MathTransform extends Info
      *
      * @return The inverse transform.
      * @throws NoninvertibleTransformException if the transform can't be inversed.
+     *
+     * @see org.opengis.ct.CT_MathTransform#inverse
      */
     public MathTransform inverse() throws NoninvertibleTransformException
     {
@@ -457,11 +467,15 @@ public abstract class MathTransform extends Info
 
     /**
      * Gets the dimension of input points.
+     *
+     * @see org.opengis.ct.CT_MathTransform#getDimSource
      */
     public abstract int getDimSource();
 
     /**
      * Gets the dimension of output points.
+     *
+     * @see org.opengis.ct.CT_MathTransform#getDimTarget
      */
     public abstract int getDimTarget();
 
@@ -470,6 +484,8 @@ public abstract class MathTransform extends Info
      *
      * @return <code>true</code> if this <code>MathTransform</code> is
      *         an identity transform; <code>false</code> otherwise.
+     *
+     * @see org.opengis.ct.CT_MathTransform#isIdentity
      */
     public abstract boolean isIdentity();
 

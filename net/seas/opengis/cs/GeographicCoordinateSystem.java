@@ -77,7 +77,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     private static final AxisInfo NORTH = new AxisInfo.Localized("Latitude", Clé.LATITUDE, AxisOrientation.NORTH);
 
     /**
-     * <FONT COLOR="#FF6633">A geographic coordinate system using WGS84 datum.</FONT>
+     * A geographic coordinate system using WGS84 datum.
      * This coordinate system use <var>longitude</var>/<var>latitude</var> ordinates
      * with longitude values increasing north and latitude values increasing east.
      * Angular units are degrees and prime meridian is Greenwich.
@@ -116,6 +116,8 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * @param meridian  Prime Meridian for created coordinate system.
      * @param axis0     Details of 0th ordinates.
      * @param axis1     Details of 1st ordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createGeographicCoordinateSystem
      */
     public GeographicCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
     {
@@ -151,6 +153,8 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * This angular unit is the same for all axis.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_GeographicCoordinateSystem#getUnits(int)
      */
     public Unit getUnits(final int dimension)
     {
@@ -160,12 +164,16 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
 
     /**
      * Returns the prime meridian.
+     *
+     * @see org.opengis.cs.CS_GeographicCoordinateSystem#getPrimeMeridian()
      */
     public PrimeMeridian getPrimeMeridian()
     {return meridian;}
 
     /**
      * Gets default envelope of coordinate system.
+     *
+     * @see org.opengis.cs.CS_GeographicCoordinateSystem#getDefaultEnvelope()
      */
     public Envelope getDefaultEnvelope()
     {
@@ -210,6 +218,9 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      *
      * @return A set of conversions info to WGS84. The default
      *         implementation returns an empty set.
+     *
+     * @see org.opengis.cs.CS_GeographicCoordinateSystem#getNumConversionToWGS84()
+     * @see org.opengis.cs.CS_GeographicCoordinateSystem#getWGS84ConversionInfo(int)
      */
     public Set<WGS84ConversionInfo> getWGS84ConversionInfos()
     {return WGS84ConversionInfo.EMPTY_SET;}

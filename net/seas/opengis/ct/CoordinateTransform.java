@@ -81,27 +81,37 @@ public abstract class CoordinateTransform extends MathTransform
     /**
      * Gets the semantic type of transform.
      * For example, a datum transformation or a coordinate conversion.
+     *
+     * @see org.opengis.ct.CT_CoordinateTransformation#getTransformType()
      */
     public abstract TransformType getTransformType();
 
     /**
      * Gets the source coordinate system.
+     *
+     * @see org.opengis.ct.CT_CoordinateTransformation#getSourceCS()
      */
     public abstract CoordinateSystem getSourceCS();
 
     /**
      * Gets the target coordinate system.
+     *
+     * @see org.opengis.ct.CT_CoordinateTransformation#getTargetCS()
      */
     public abstract CoordinateSystem getTargetCS();
     
     /**
      * Gets the dimension of input points.
+     *
+     * @see org.opengis.ct.CT_MathTransformation#getDimSource()
      */
     public int getDimSource()
     {return getSourceCS().getDimension();}
     
     /**
      * Gets the dimension of output points.
+     *
+     * @see org.opengis.ct.CT_MathTransformation#getDimTarget()
      */
     public int getDimTarget()
     {return getTargetCS().getDimension();}
@@ -116,6 +126,8 @@ public abstract class CoordinateTransform extends MathTransform
      *
      * @return The inverse transform.
      * @throws NoninvertibleTransformException if the transform can't be inversed.
+     *
+     * @see org.opengis.ct.CT_MathTransformation#inverse()
      */
 //  public CoordinateTransform inverse() throws NoninvertibleTransformException
 //  {return (CoordinateTransform) super.inverse();}

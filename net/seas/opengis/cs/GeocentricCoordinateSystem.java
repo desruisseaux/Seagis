@@ -93,6 +93,8 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the dimension of this coordinate system, which is 3.
+     *
+     * @see org.opengis.cs.CS_GeocentricCoordinateSystem#getDimension()
      */
     public int getDimension()
     {return 3;}
@@ -108,6 +110,8 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
      * The horizontal datum is used to determine where the center of the Earth
      * is considered to be. All coordinate points will be measured from the
      * center of the Earth, and not the surface.
+     *
+     * @see org.opengis.cs.CS_GeocentricCoordinateSystem#getHorizontalDatum()
      */
     public HorizontalDatum getHorizontalDatum()
     {return datum;}
@@ -118,6 +122,8 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
      * units is the same for all axis.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_GeocentricCoordinateSystem#getUnits(int)
      */
     public Unit getUnits(final int dimension)
     {
@@ -127,6 +133,8 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the prime meridian.
+     *
+     * @see org.opengis.cs.CS_GeocentricCoordinateSystem#getPrimeMeridian()
      */
     public PrimeMeridian getPrimeMeridian()
     {return meridian;}

@@ -109,6 +109,8 @@ public class CoordinateSystemFactory
      * @param meridian  Prime Meridian for created coordinate system.
      * @param axis0     Details of 0th ordinates.
      * @param axis1     Details of 1st ordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createGeographicCoordinateSystem
      */
     public GeographicCoordinateSystem createGeographicCoordinateSystem(final String name, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo axis0, final AxisInfo axis1)
     {return (GeographicCoordinateSystem) pool.intern(new GeographicCoordinateSystem(name, unit, datum, meridian, axis0, axis1));}
@@ -122,6 +124,8 @@ public class CoordinateSystemFactory
      * @param  unit Linear units of returned PCS.
      * @param  axis0 Details of 0th ordinates in returned PCS coordinates.
      * @param  axis1 Details of 1st ordinates in returned PCS coordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjectedCoordinateSystem
      */
     public ProjectedCoordinateSystem createProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
     {return (ProjectedCoordinateSystem) pool.intern(new ProjectedCoordinateSystem(name, gcs, projection, unit, axis0, axis1));}
@@ -133,6 +137,8 @@ public class CoordinateSystemFactory
      * @param datum Datum to use for new coordinate system.
      * @param unit  Units to use for new coordinate system.
      * @param axis  Axis to use for new coordinate system.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createVerticalCoordinateSystem
      */
     public VerticalCoordinateSystem createVerticalCoordinateSystem(final String name, final VerticalDatum datum, final Unit unit, final AxisInfo axis)
     {return (VerticalCoordinateSystem) pool.intern(new VerticalCoordinateSystem(name, datum, unit, axis));}
@@ -143,6 +149,8 @@ public class CoordinateSystemFactory
      * @param name Name to give new object.
      * @param head Coordinate system to use for earlier ordinates.
      * @param tail Coordinate system to use for later ordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createCompoundCoordinateSystem
      */
     public CompoundCoordinateSystem createCompoundCoordinateSystem(final String name, final CoordinateSystem head, final CoordinateSystem tail)
     {return (CompoundCoordinateSystem) pool.intern(new CompoundCoordinateSystem(name, head, tail));}
@@ -158,6 +166,8 @@ public class CoordinateSystemFactory
      * @param datum Local datum to use in created CS.
      * @param unit  Units to use for all axes in created CS.
      * @param axes  Axes to use in created CS.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createLocalCoordinateSystem
      */
     public LocalCoordinateSystem createLocalCoordinateSystem(final String name, final LocalDatum datum, final Unit unit, final AxisInfo[] axes)
     {return (LocalCoordinateSystem) pool.intern(new LocalCoordinateSystem(name, datum, unit, axes));}
@@ -169,6 +179,8 @@ public class CoordinateSystemFactory
      * @param semiMajorAxis Equatorial radius in supplied linear units.
      * @param semiMinorAxis Polar radius in supplied linear units.
      * @param unit          Linear units of ellipsoid axes.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createEllipsoid
      */
     public Ellipsoid createEllipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
     {return (Ellipsoid) pool.intern(new Ellipsoid(name, semiMajorAxis, semiMinorAxis, unit));}
@@ -180,6 +192,8 @@ public class CoordinateSystemFactory
      * @param semiMajorAxis     Equatorial radius in supplied linear units.
      * @param inverseFlattening Eccentricity of ellipsoid.
      * @param unit              Linear units of major axis.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createFlattenedSphere
      */
     public Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
     {return (Ellipsoid) pool.intern(Ellipsoid.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, unit));}
@@ -190,6 +204,8 @@ public class CoordinateSystemFactory
      * @param name      Name to give new object.
      * @param unit      Angular units of longitude.
      * @param longitude Longitude of prime meridian in supplied angular units East of Greenwich.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createPrimeMeridian
      */
     public PrimeMeridian createPrimeMeridian(final String name, final Unit unit, final double longitude)
     {return (PrimeMeridian) pool.intern(new PrimeMeridian(name, unit, longitude));}
@@ -200,6 +216,8 @@ public class CoordinateSystemFactory
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
      * @param parameters     Parameters to use for projection, in metres or degrees.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjection
      */
     public Projection createProjection(final String name, final String classification, final ParameterList parameters)
     {return (Projection) pool.intern(new Projection(name, classification, parameters));}
@@ -216,12 +234,14 @@ public class CoordinateSystemFactory
      * @param type      Type of horizontal datum to create.
      * @param ellipsoid Ellipsoid to use in new horizontal datum.
      * @param toWGS84   Suggested approximate conversion from new datum to WGS84.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createHorizontalDatum
      */
     public HorizontalDatum createHorizontalDatum(final String name, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo toWGS84)
     {return (HorizontalDatum) pool.intern(new HorizontalDatum(name, type, ellipsoid, toWGS84));}
 
     /**
-     * <FONT COLOR="#FF6633">Creates horizontal datum from an ellipsoid.</FONT>
+     * Creates horizontal datum from an ellipsoid.
      * The datum type will be {@link DatumType.Horizontal#OTHER}.
      *
      * @param name      Name to give new object.
@@ -235,6 +255,8 @@ public class CoordinateSystemFactory
      *
      * @param name Name to give new object.
      * @param type Type of vertical datum to create.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createVerticalDatum
      */
     public VerticalDatum createVerticalDatum(final String name, final DatumType.Vertical type)
     {return (VerticalDatum) pool.intern(new VerticalDatum(name, type));}
@@ -244,6 +266,8 @@ public class CoordinateSystemFactory
      *
      * @param name Name to give new object.
      * @param localDatumType Type of local datum to create.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createLocalDatum
      */
     public LocalDatum createLocalDatum(final String name, final DatumType.Local type)
     {return (LocalDatum) pool.intern(new LocalDatum(name, type));}

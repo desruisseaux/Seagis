@@ -73,6 +73,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      * @param name Name to give new object.
      * @param head Coordinate system to use for earlier ordinates.
      * @param tail Coordinate system to use for later ordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createCompoundCoordinateSystem
      */
     public CompoundCoordinateSystem(final String name, final CoordinateSystem head, final CoordinateSystem tail)
     {
@@ -101,18 +103,24 @@ public class CompoundCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the first sub-coordinate system.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getHeadCS()
      */
     public CoordinateSystem getHeadCS()
     {return head;}
 
     /**
      * Returns the second sub-coordinate system.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getTailCS()
      */
     public CoordinateSystem getTailCS()
     {return tail;}
 
     /**
      * Returns the dimension of the coordinate system.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getDimension()
      */
     public int getDimension()
     {return head.getDimension()+tail.getDimension();}
@@ -120,6 +128,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     /**
      * Gets axis details for dimension within coordinate system.
      * Each dimension in the coordinate system has a corresponding axis.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getAxis(int)
      */
     public AxisInfo getAxis(final int dimension)
     {
@@ -142,6 +152,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     /**
      * Gets units for dimension within coordinate system.
      * Each dimension in the coordinate system has corresponding units.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getUnits(int)
      */
     public Unit getUnits(final int dimension)
     {
@@ -163,6 +175,8 @@ public class CompoundCoordinateSystem extends CoordinateSystem
 
     /**
      * Gets default envelope of coordinate system.
+     *
+     * @see org.opengis.cs.CS_CompoundCoordinateSystem#getDefaultEnvelope()
      */
     public Envelope getDefaultEnvelope()
     {

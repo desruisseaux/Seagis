@@ -116,6 +116,8 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * @param  unit Linear units of created PCS.
      * @param  axis0 Details of 0th ordinates in created PCS coordinates.
      * @param  axis1 Details of 1st ordinates in created PCS coordinates.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createProjectedCoordinateSystem
      */
     public ProjectedCoordinateSystem(final String name, final GeographicCoordinateSystem gcs, final Projection projection, final Unit unit, final AxisInfo axis0, final AxisInfo axis1)
     {
@@ -150,12 +152,16 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
 
     /**
      * Returns the geographic coordinate system.
+     *
+     * @see org.opengis.cs.CS_ProjectedCoordinateSystem#getGeographicCoordinateSystem()
      */
     public GeographicCoordinateSystem getGeographicCoordinateSystem()
     {return gcs;}
 
     /**
      * Gets the projection.
+     *
+     * @see org.opengis.cs.CS_ProjectedCoordinateSystem#getProjection()
      */
     public Projection getProjection()
     {return projection;}
@@ -165,6 +171,9 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      * This linear unit is the same for all axis.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_ProjectedCoordinateSystem#getUnits(int)
+     * @see org.opengis.cs.CS_ProjectedCoordinateSystem#getLinearUnit()
      */
     public Unit getUnits(final int dimension)
     {

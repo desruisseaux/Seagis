@@ -40,8 +40,8 @@ import net.seas.resources.Resources;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
- * @see Point2D
  * @see org.opengis.pt.PT_CoordinatePoint
+ * @see java.awt.geom.Point2D
  */
 public final class CoordinatePoint implements Dimensioned, Cloneable, Serializable
 {
@@ -52,6 +52,8 @@ public final class CoordinatePoint implements Dimensioned, Cloneable, Serializab
 
     /**
      * The ordinates of the coordinate point.
+     *
+     * @see org.opengis.pt.PT_CoordinatePoint#ord
      */
     public final double[] ord;
 
@@ -94,14 +96,14 @@ public final class CoordinatePoint implements Dimensioned, Cloneable, Serializab
     {this(point.getX(), point.getY());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the ordinate value along the specified dimension.</FONT>
+     * Returns the ordinate value along the specified dimension.
      * This is equivalent to <code>{@link #ord}[dimension]</code>.
      */
     public final double getOrdinate(final int dimension)
     {return ord[dimension];}
 
     /**
-     * <FONT COLOR="#FF6633">The number of ordinates of a <code>CoordinatePoint</code>.</FONT>
+     * The number of ordinates of a <code>CoordinatePoint</code>.
      * This is equivalent to <code>{@link #ord}.length</code>.
      */
     public final int getDimension()
@@ -124,9 +126,9 @@ public final class CoordinatePoint implements Dimensioned, Cloneable, Serializab
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns a {@link Point2D} with the same coordinate
-     * as this <code>CoordinatePoint</code>.</FONT> This is a convenience method
-     * for interoperability with Java2D.
+     * Returns a {@link Point2D} with the same coordinate
+     * as this <code>CoordinatePoint</code>. This is a
+     * convenience method for interoperability with Java2D.
      *
      * @throws IllegalStateException if this coordinate point is not two-dimensional.
      */

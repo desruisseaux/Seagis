@@ -134,6 +134,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for a default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getName()
      */
     public String getName(final Locale locale)
     {return name;}
@@ -149,6 +151,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getAuthority()
      */
     public String getAuthority(final Locale locale)
     {return (properties!=null) ? (String)properties.get("authority") : null;}
@@ -164,6 +168,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getAuthorityCode()
      */
     public String getAuthorityCode(final Locale locale)
     {return (properties!=null) ? (String)properties.get("authorityCode") : null;}
@@ -174,6 +180,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getAlias()
      */
     public String getAlias(final Locale locale)
     {return (properties!=null) ? (String)properties.get("alias") : null;}
@@ -184,6 +192,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getAbreviation()
      */
     public String getAbbreviation(final Locale locale)
     {return (properties!=null) ? (String)properties.get("abbreviation") : null;}
@@ -195,6 +205,8 @@ public class Info implements Serializable
      * @param locale The desired locale, or <code>null</code> for the default locale.
      *        If no string is available for the specified locale, an arbitrary locale
      *        is used.
+     *
+     * @see org.opengis.cs.CS_Info#getRemarks()
      */
     public String getRemarks(final Locale locale)
     {return (properties!=null) ? (String)properties.get("remarks") : null;}
@@ -233,7 +245,7 @@ public class Info implements Serializable
      * Returns a string representation of this info.
      * @param the source (usually <code>this</code>).
      */
-    final String toString(final Object source)
+    String toString(final Object source)
     {
         final StringBuffer buffer = new StringBuffer(XClass.getShortClassName(source));
         buffer.append("[\"");

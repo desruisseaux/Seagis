@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS dependencies
+import org.opengis.ct.CT_DomainFlags;
+
 // Miscellaneous
 import java.util.Locale;
 import java.io.ObjectStreamException;
@@ -69,10 +72,10 @@ public final class DomainFlags extends EnumeratedParameter
             String name=null;
             switch (i)
             {
-                case 0: name="UNKNOW";        break;
-                case 1: name="INSIDE";        break;
-                case 2: name="OUTSIDE";       break;
-                case 4: name="DISCONTINUOUS"; break;
+                case 0:                                  name="UNKNOW";        break;
+                case CT_DomainFlags.CT_DF_Inside:        name="INSIDE";        break;
+                case CT_DomainFlags.CT_DF_Outside:       name="OUTSIDE";       break;
+                case CT_DomainFlags.CT_DF_Discontinuous: name="DISCONTINUOUS"; break;
             }
             ENUMS[i] = new DomainFlags(name, i);
         }
@@ -80,13 +83,17 @@ public final class DomainFlags extends EnumeratedParameter
 
     /**
      * At least one point in a convex hull is inside the transform's domain.
+     *
+     * @see org.opengis.ct.CT_DomainFlags#CT_DF_Inside
      */
-    public static final DomainFlags INSIDE = ENUMS[1];
+    public static final DomainFlags INSIDE = ENUMS[CT_DomainFlags.CT_DF_Inside];
 
     /**
      * At least one point in a convex hull is outside the transform's domain.
+     *
+     * @see org.opengis.ct.CT_DomainFlags#CT_DF_Outside
      */
-    public static final DomainFlags OUTSIDE = ENUMS[2];
+    public static final DomainFlags OUTSIDE = ENUMS[CT_DomainFlags.CT_DF_Outside];
 
     /**
      * At least one point in a convex hull is not transformed continuously.
@@ -95,8 +102,10 @@ public final class DomainFlags extends EnumeratedParameter
      * If the rotation is 5 degrees east, then the point (Lat=0,Lon=175)
      * is not transformed continuously, since it is on the meridian line
      * which will be split at +180/-180 degrees.
+     *
+     * @see org.opengis.ct.CT_DomainFlags#CT_DF_Discontinuous
      */
-    public static final DomainFlags DISCONTINUOUS = ENUMS[4];
+    public static final DomainFlags DISCONTINUOUS = ENUMS[CT_DomainFlags.CT_DF_Discontinuous];
 
     /**
      * Construct a new enum value.
@@ -105,7 +114,7 @@ public final class DomainFlags extends EnumeratedParameter
     {super(name, value);}
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
+     * Return the enum for the specified value.
      * This method is provided for compatibility with
      * {@link org.opengis.ct.CT_DomainFlags}.
      *
@@ -120,7 +129,7 @@ public final class DomainFlags extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns enum's names in the specified locale.</FONT>
+     * Returns enum's names in the specified locale.
      * For example if this enum has value "3", then <code>getNames</code>
      * returns an array of two elements: "Inside" and "Outside".
      *
@@ -148,7 +157,7 @@ public final class DomainFlags extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns a combination of two domain flags.</FONT>
+     * Returns a combination of two domain flags.
      * This is equivalent to <code>getEnum(this.getValue()&nbsp;|&nbsp;flags.getValue())</code>.
      */
     public DomainFlags or(final DomainFlags flags)

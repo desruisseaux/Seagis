@@ -89,7 +89,7 @@ public class Adapters
     public PT_Matrix export(final Matrix matrix)
     {
         final PT_Matrix m = new PT_Matrix();
-        m.elt = matrix.getMatrix();
+        m.elt = matrix.getElements();
         return m;
     }
 

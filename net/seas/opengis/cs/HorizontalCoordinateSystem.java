@@ -104,6 +104,8 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the dimension of this coordinate system, which is 2.
+     *
+     * @see org.opengis.cs.CS_HorizontalCoordinateSystem#getDimension()
      */
     public final int getDimension()
     {return 2;}
@@ -116,6 +118,8 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
 
     /**
      * Returns the horizontal datum.
+     *
+     * @see org.opengis.cs.CS_HorizontalCoordinateSystem#getHorizontalDatum()
      */
     public HorizontalDatum getHorizontalDatum()
     {return datum;}
@@ -124,6 +128,8 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
      * Gets axis details for dimension within coordinate system.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_HorizontalCoordinateSystem#getAxis(int)
      */
     public AxisInfo getAxis(final int dimension)
     {

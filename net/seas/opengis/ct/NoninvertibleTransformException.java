@@ -24,8 +24,8 @@ package net.seas.opengis.ct;
 
 
 /**
- * <FONT COLOR="#FF6633">Thrown when {@link MathTransform#inverse}
- * is invoked but the transform can't be inverted.</FONT>
+ * Thrown when {@link MathTransform#inverse}
+ * is invoked but the transform can't be inverted.
  *
  * @version 1.0
  * @author Martin Desruisseaux

@@ -91,6 +91,8 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * @param datum Local datum to use in created coordinate system.
      * @param unit  Units to use for all axes in created coordinate system.
      * @param axes  Axes to use in created coordinate system.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createLocalCoordinateSystem
      */
     public LocalCoordinateSystem(final String name, final LocalDatum datum, final Unit unit, final AxisInfo[] axes)
     {
@@ -134,12 +136,16 @@ public class LocalCoordinateSystem extends CoordinateSystem
 
     /**
      * Gets the local datum.
+     *
+     * @see org.opengis.cs.CS_LocalCoordinateSystem#getLocalDatum()
      */
     public LocalDatum getLocalDatum()
     {return datum;}
 
     /**
      * Dimension of the coordinate system.
+     *
+     * @see org.opengis.cs.CS_LocalCoordinateSystem#getDimension()
      */
     public int getDimension()
     {return axes.length;}
@@ -148,6 +154,8 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * Gets axis details for dimension within coordinate system.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_LocalCoordinateSystem#getAxis(int)
      */
     public AxisInfo getAxis(final int dimension)
     {return axes[dimension];}
@@ -156,6 +164,8 @@ public class LocalCoordinateSystem extends CoordinateSystem
      * Gets units for dimension within coordinate system.
      *
      * @param dimension Zero based index of axis.
+     *
+     * @see org.opengis.cs.CS_LocalCoordinateSystem#getUnits(int)
      */
     public Unit getUnits(final int dimension)
     {return unit[dimension];}

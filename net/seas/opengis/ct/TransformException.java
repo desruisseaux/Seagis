@@ -24,9 +24,9 @@ package net.seas.opengis.ct;
 
 
 /**
- * <FONT COLOR="#FF6633">Common superclass for a number of transformation-related
- * exceptions.</FONT> It may be thrown by {@link MathTransform} when a coordinate
- * can't be transformed. It may also be thrown when a coordinate transformation
+ * Common superclass for a number of transformation-related exceptions.
+ * It may be thrown by {@link MathTransform} when a coordinate can't be
+ * transformed. It may also be thrown when a coordinate transformation
  * can't be created or inverted.
  *
  * @version 1.0

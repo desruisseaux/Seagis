@@ -27,7 +27,7 @@ import java.util.Map;
 
 
 /**
- * <FONT COLOR="#FF6633">Procedure used to measure time.</FONT>
+ * Procedure used to measure time.
  *
  * @version 1.0
  * @author Martin Desruisseaux

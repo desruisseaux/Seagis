@@ -53,6 +53,8 @@ public class VerticalDatum extends Datum
      *
      * @param name Name to give new object.
      * @param type Type of vertical datum to create.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createVerticalDatum
      */
     public VerticalDatum(final String name, final DatumType.Vertical type)
     {super(name, type);}
@@ -68,6 +70,8 @@ public class VerticalDatum extends Datum
 
     /**
      * Gets the type of the datum as an enumerated code.
+     *
+     * @see org.opengis.cs.CS_VerticalDatum#getDatumType()
      */
     public DatumType.Vertical getDatumType()
     {return (DatumType.Vertical) super.getDatumType();}

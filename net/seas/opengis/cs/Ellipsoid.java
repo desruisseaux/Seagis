@@ -114,6 +114,8 @@ public class Ellipsoid extends Info
      * @param semiMajorAxis The equatorial radius.
      * @param semiMinorAxis The polar radius.
      * @param unit          The units of the semi-major and semi-minor axis values.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createEllipsoid
      */
     public Ellipsoid(final String name, final double semiMajorAxis, final double semiMinorAxis, final Unit unit)
     {this(name, semiMajorAxis, semiMinorAxis, semiMajorAxis/(semiMajorAxis-semiMinorAxis), false, unit);}
@@ -169,6 +171,8 @@ public class Ellipsoid extends Info
      * @param semiMajorAxis     The equatorial radius.
      * @param inverseFlattening The inverse flattening value.
      * @param unit              The units of the semi-major and semi-minor axis values.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createFlattenedSphere
      */
     public static Ellipsoid createFlattenedSphere(final String name, final double semiMajorAxis, final double inverseFlattening, final Unit unit)
     {return new Ellipsoid(name, semiMajorAxis, semiMajorAxis*(1-1/inverseFlattening), inverseFlattening, true, unit);}
@@ -192,6 +196,8 @@ public class Ellipsoid extends Info
     /**
      * Gets the equatorial radius.
      * The returned length is expressed in this object's axis units.
+     *
+     * @see org.opengis.cs.CS_Ellipsoid#getSemiMajorAxis()
      */
     public double getSemiMajorAxis()
     {return semiMajorAxis;}
@@ -199,6 +205,8 @@ public class Ellipsoid extends Info
     /**
      * Gets the polar radius.
      * The returned length is expressed in this object's axis units.
+     *
+     * @see org.opengis.cs.CS_Ellipsoid#getSemiMinorAxis()
      */
     public double getSemiMinorAxis()
     {return semiMinorAxis;}
@@ -222,6 +230,8 @@ public class Ellipsoid extends Info
      * by the formula <code>ivf=r<sub>e</sub>/(r<sub>e</sub>-r<sub>p</sub>)</code>.
      * For perfect spheres, this method returns {@link Double#POSITIVE_INFINITY}
      * (which is the correct value).
+     *
+     * @see org.opengis.cs.CS_Ellipsoid#getInverseFlattening()
      */
     public double getInverseFlattening()
     {return inverseFlattening;}
@@ -286,6 +296,8 @@ public class Ellipsoid extends Info
     /**
      * Returns the units of the semi-major
      * and semi-minor axis values.
+     *
+     * @see org.opengis.cs.CS_Ellipsoid#getAxisUnit()
      */
     public Unit getAxisUnit()
     {return unit;}

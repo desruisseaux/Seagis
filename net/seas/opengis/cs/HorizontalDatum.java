@@ -50,7 +50,7 @@ public class HorizontalDatum extends Datum
     private static final long serialVersionUID = 3506060221517273330L;
 
     /**
-     * <FONT COLOR="#FF6633">The default WGS 1984 datum.</FONT>
+     * The default WGS 1984 datum.
      */
     public static final HorizontalDatum WGS84 = new HorizontalDatum("WGS84", DatumType.GEOCENTRIC, Ellipsoid.WGS84, null);
 
@@ -82,6 +82,8 @@ public class HorizontalDatum extends Datum
      * @param ellipsoid Ellipsoid to use in new horizontal datum.
      * @param toWGS84   Suggested approximate conversion from new datum to WGS84,
      *                  or <code>null</code> if there is none.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createHorizontalDatum
      */
     public HorizontalDatum(final String name, final DatumType.Horizontal type, final Ellipsoid ellipsoid, final WGS84ConversionInfo parameters)
     {
@@ -110,12 +112,16 @@ public class HorizontalDatum extends Datum
 
     /**
      * Gets the type of the datum as an enumerated code.
+     *
+     * @see org.opengis.cs.CS_HorizontalDatum#getDatumType()
      */
     public DatumType.Horizontal getDatumType()
     {return (DatumType.Horizontal) super.getDatumType();}
 
     /**
      * Returns the ellipsoid.
+     *
+     * @see org.opengis.cs.CS_HorizontalDatum#getEllipsoid()
      */
     public Ellipsoid getEllipsoid()
     {return ellipsoid;}
@@ -127,6 +133,8 @@ public class HorizontalDatum extends Datum
      * always returns <code>null</code> for horizontal datums with type
      * {@link DatumType.Horizontal#OTHER}. This method may also returns
      * <code>null</code> if no suitable transformation is available.
+     *
+     * @see org.opengis.cs.CS_HorizontalDatum#getWGS84Parameters()
      */
     public WGS84ConversionInfo getWGS84Parameters()
     {return (parameters!=null) ? parameters.clone() : null;}

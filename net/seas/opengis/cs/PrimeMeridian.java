@@ -50,7 +50,7 @@ public class PrimeMeridian extends Info
     private static final long serialVersionUID = -963498800353363758L;
 
     /**
-     * <FONT COLOR="#FF6633">The Greenwich meridian, with angular measures in degrees.</FONT>
+     * The Greenwich meridian, with angular measures in degrees.
      */
     public static final PrimeMeridian GREENWICH = new PrimeMeridian("Greenwich", Unit.DEGREE, 0);
 
@@ -70,6 +70,8 @@ public class PrimeMeridian extends Info
      * @param name      Name to give new object.
      * @param unit      Angular units of longitude.
      * @param longitude Longitude of prime meridian in supplied angular units East of Greenwich.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemFactory#createPrimeMeridian
      */
     public PrimeMeridian(final String name, final Unit unit, final double longitude)
     {
@@ -98,6 +100,8 @@ public class PrimeMeridian extends Info
     /**
      * Returns the longitude value relative to the Greenwich Meridian.
      * The longitude is expressed in this objects angular units.
+     *
+     * @see org.opengis.cs.CS_PrimeMeridian#getLongitude()
      */
     public double getLongitude()
     {return longitude;}
@@ -115,6 +119,8 @@ public class PrimeMeridian extends Info
 
     /**
      * Returns the angular units.
+     *
+     * @see org.opengis.cs.CS_PrimeMeridian#getAngularUnit()
      */
     public Unit getAngularUnit()
     {return unit;}

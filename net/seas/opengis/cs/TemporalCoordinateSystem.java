@@ -31,7 +31,7 @@ import net.seas.opengis.pt.Envelope;
 
 
 /**
- * <FONT COLOR="#FF6633">A one-dimensional coordinate system suitable for time measurements.</FONT>
+ * A one-dimensional coordinate system suitable for time measurements.
  *
  * @version 1.0
  * @author Martin Desruisseaux

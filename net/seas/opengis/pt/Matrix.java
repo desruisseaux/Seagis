@@ -211,7 +211,7 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Construct an affine transform changing axis order and/or orientation.</FONT>
+     * Construct an affine transform changing axis order and/or orientation.
      * For example, the affine transform may convert (NORTH,WEST) coordinates
      * into (EAST,NORTH). Axis orientation can be inversed only. For example,
      * it is illegal to transform (NORTH,WEST) coordinates into (NORTH,DOWN).
@@ -225,9 +225,9 @@ public final class Matrix implements Cloneable, Serializable
     {return new Matrix(null, srcAxis, null, dstAxis, false);}
 
     /**
-     * <FONT COLOR="#FF6633">Construct an affine transform that maps
-     * a source region to a destination region.</FONT> Axis order and
-     * orientation are left unchanged.
+     * Construct an affine transform that maps
+     * a source region to a destination region.
+     * Axis order and orientation are left unchanged.
      *
      * @param  srcRegion The source region.
      * @param  dstRegion The destination region.
@@ -250,8 +250,8 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Construct an affine transform mapping a source region to a destination
-     * region.</FONT> Axis order and/or orientation can be changed during the process.
+     * Construct an affine transform mapping a source region to a destination
+     * region. Axis order and/or orientation can be changed during the process.
      * For example, the affine transform may convert (NORTH,WEST) coordinates
      * into (EAST,NORTH). Axis orientation can be inversed only. For example,
      * it is illegal to transform (NORTH,WEST) coordinates into (NORTH,DOWN).
@@ -307,9 +307,12 @@ public final class Matrix implements Cloneable, Serializable
      * Retrieves the specifiable values in the transformation matrix into a
      * 2-dimensional array of double precision values. The values are stored
      * into the 2-dimensional array using the row index as the first subscript
-     * and the column index as the second.
+     * and the column index as the second. Values are copied; changes to the
+     * returned array will not change this matrix.
+     *
+     * @see org.opengis.pt.PT_Matrix#elt
      */
-    public double[][] getMatrix()
+    public double[][] getElements()
     {
         final double[][] matrix = new double[size][];
         for (int j=0; j<size; j++)
@@ -321,7 +324,7 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns an affine transform for this matrix.</FONT>
+     * Returns an affine transform for this matrix.
      * This is a convenience method for interoperability with Java2D.
      *
      * @throws IllegalStateException if this matrix is not 3x3,

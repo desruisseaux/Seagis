@@ -44,6 +44,8 @@ import net.seas.util.XClass;
  * @version 1.0
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
+ *
+ * @see org.opengis.ct.CT_CoordinateTransformationFactory
  */
 public class CoordinateTransformFactory
 {
@@ -66,13 +68,13 @@ public class CoordinateTransformFactory
     {this.factory = factory;}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the underlying math transform factory.</FONT>
+     * Returns the underlying math transform factory.
      */
     public MathTransformFactory getMathTransformFactory()
     {return factory;}
 
     /**
-     * <FONT COLOR="#FF6633">Create a coordinate transform from a math transform.</FONT>
+     * Create a coordinate transform from a math transform.
      * If the specified math transform is already a coordinate transform,  and if source
      * and target coordinate systems match, then <code>transform</code> is returned with
      * no change. Otherwise, a new coordinate transform is created.
@@ -107,6 +109,8 @@ public class CoordinateTransformFactory
      * @param  targetCS Output coordinate system.
      * @return A coordinate transformation from <code>sourceCS</code> to <code>targetCS</code>.
      * @throws CannotCreateTransformException if no transformation path has been found.
+     *
+     * @see org.opengis.ct.CT_CoordinateTransformationFactory#createFromCoordinateSystems
      */
     public CoordinateTransform createFromCoordinateSystems(final CoordinateSystem sourceCS, final CoordinateSystem targetCS) throws CannotCreateTransformException
     {
@@ -196,7 +200,7 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between two geographic coordinate systems.</FONT>
+     * Creates a transformation between two geographic coordinate systems.
      * This method is automatically invoked by <code>createFromCoordinateSystems</code>. The default
      * implementation can adjust axis order and orientation (e.g. transforming from (NORTH,WEST) to
      * (EAST,NORTH)), adjust for prime meridian and perform units conversion.
@@ -233,7 +237,7 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between two projected coordinate systems.</FONT>
+     * Creates a transformation between two projected coordinate systems.
      * This method is automatically invoked by <code>createFromCoordinateSystems</code>. The default
      * implementation can adjust axis order and orientation and performs units conversion if this is
      * the only change needed. Otherwise, it performs three steps:
@@ -268,9 +272,8 @@ public class CoordinateTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Creates a transformation between a geographic and a
-     * projected coordinate systems.</FONT> This method is automatically invoked
-     * by <code>createFromCoordinateSystems</code>.
+     * Creates a transformation between a geographic and a projected coordinate systems.
+     * This method is automatically invoked by <code>createFromCoordinateSystems</code>.
      *
      * @param  sourceCS Input coordinate system.
      * @param  targetCS Output coordinate system.

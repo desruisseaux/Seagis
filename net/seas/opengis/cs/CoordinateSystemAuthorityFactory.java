@@ -58,6 +58,8 @@ public abstract class CoordinateSystemAuthorityFactory
      * @param  code Value allocated by authority.
      * @return The ellipsoid object.
      * @throws NoSuchElementException if <code>code</code> is not a known code.
+     *
+     * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createEllipsoid
      */
     public Ellipsoid createEllipsoid(final String code) throws NoSuchElementException
     {throw new NoSuchElementException(code);}

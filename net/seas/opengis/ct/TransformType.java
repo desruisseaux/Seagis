@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.ct;
 
+// OpenGIS dependencies
+import org.opengis.ct.CT_TransformType;
+
 // Miscellaneous
 import java.util.Locale;
 import java.io.ObjectStreamException;
@@ -49,25 +52,33 @@ public final class TransformType extends EnumeratedParameter
 
     /**
      * Unknown or unspecified type of transform.
+     *
+     * @see org.opengis.ct.CT_TransformType#CT_TT_Other
      */
-    public static final TransformType OTHER = new TransformType("OTHER", 0, Clé.OTHER);
+    public static final TransformType OTHER = new TransformType("OTHER", CT_TransformType.CT_TT_Other, Clé.OTHER);
 
     /**
      * Transform depends only on defined parameters.
      * For example, a cartographic projection.
+     *
+     * @see org.opengis.ct.CT_TransformType#CT_TT_Conversion
      */
-    public static final TransformType CONVERSION = new TransformType("CONVERSION", 1, Clé.CONVERSION);
+    public static final TransformType CONVERSION = new TransformType("CONVERSION", CT_TransformType.CT_TT_Conversion, Clé.CONVERSION);
 
     /**
      * Transform depends only on empirically derived parameters.
      * For example a datum transformation.
+     *
+     * @see org.opengis.ct.CT_TransformType#CT_TT_Transformation
      */
-    public static final TransformType TRANSFORMATION = new TransformType("TRANSFORMATION", 2, Clé.TRANSFORMATION);
+    public static final TransformType TRANSFORMATION = new TransformType("TRANSFORMATION", CT_TransformType.CT_TT_Transformation, Clé.TRANSFORMATION);
 
     /**
      * Transform depends on both defined and empirical parameters.
+     *
+     * @see org.opengis.ct.CT_TransformType#CT_TT_ConversionAndTransformation
      */
-    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType("CONVERSION_AND_TRANSFORMATION", 3, Clé.CONVERSION_AND_TRANSFORMATION);
+    public static final TransformType CONVERSION_AND_TRANSFORMATION = new TransformType("CONVERSION_AND_TRANSFORMATION", CT_TransformType.CT_TT_ConversionAndTransformation, Clé.CONVERSION_AND_TRANSFORMATION);
 
     /**
      * Transform types by value. Used to
@@ -80,6 +91,12 @@ public final class TransformType extends EnumeratedParameter
         TRANSFORMATION,
         CONVERSION_AND_TRANSFORMATION
     };
+    static
+    {
+        for (int i=0; i<ENUMS.length; i++)
+            if (ENUMS[i].getValue()!=i)
+                throw new ExceptionInInitializerError(String.valueOf(ENUMS[i]));
+    }
 
     /**
      * Resource key, used for building localized name. This key doesn't need to
@@ -99,7 +116,7 @@ public final class TransformType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
+     * Return the enum for the specified value.
      * This method is provided for compatibility with
      * {@link org.opengis.ct.CT_TransformType}.
      *
@@ -114,7 +131,7 @@ public final class TransformType extends EnumeratedParameter
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
+     * Returns this enum's name in the specified locale.
      * If no name is available for the specified locale, a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the current default locale.
@@ -124,8 +141,8 @@ public final class TransformType extends EnumeratedParameter
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * <FONT COLOR="#FF6633">Concatenate this transform type with the specified transform
-     * type.</FONT> If at least one transform type is {@link #OTHER}, then {@link #OTHER}
+     * Concatenate this transform type with the specified transform type.
+     * If at least one transform type is {@link #OTHER}, then {@link #OTHER}
      * is returned. Otherwise, transform type values are combined as with the logical "OR"
      * operand.
      */

@@ -51,11 +51,15 @@ public class AxisInfo implements Serializable
      * Possible values are <code>X</code>, <code>Y</code>,
      * <code>Long</code>, <code>Lat</code> or any other
      * short string.
+     *
+     * @see org.opengis.cs.CS_AxisInfo#name
      */
     public final String name;
 
     /**
      * Enumerated value for orientation.
+     *
+     * @see org.opengis.cs.CS_AxisInfo#orientation
      */
     public final AxisOrientation orientation;
 
@@ -75,7 +79,7 @@ public class AxisInfo implements Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the localized name of this axis.</FONT>
+     * Returns the localized name of this axis.
      * The default implementation returns {@link #name}.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.

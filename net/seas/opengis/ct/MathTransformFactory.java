@@ -134,6 +134,8 @@ public class MathTransformFactory
      *
      * @param matrix The matrix used to define the affine transform.
      * @return The affine transform.
+     *
+     * @see org.opengis.ct.CT_MathTransformFactory#createAffineTransform
      */
     final MathTransform createAffineTransform(final Matrix matrix)
     {
@@ -162,6 +164,8 @@ public class MathTransformFactory
      * @param  transform1 The first transform to apply to points.
      * @param  transform2 The second transform to apply to points.
      * @return The concatenated transform.
+     *
+     * @see org.opengis.ct.CT_MathTransformFactory#createConcatenatedTransform
      */
     public MathTransform createConcatenatedTransform(final MathTransform transform1, final MathTransform transform2)
     {return transform1.concatenate(transform2);}
@@ -180,12 +184,14 @@ public class MathTransformFactory
      * @return The parameterized transform.
      * @throws NoSuchElementException if there is no transform for the specified classification.
      * @throws MissingParameterException if a parameter was required but not found.
+     *
+     * @see org.opengis.ct.CT_MathTransformFactory#createParameterizedTransform
      */
     public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
     {return getProvider(classification).create(parameters);}
 
     /**
-     * <FONT COLOR="#FF6633">Convenience method for creating a transform from a projection.</FONT>
+     * Convenience method for creating a transform from a projection.
      *
      * @param  projection The projection.
      * @return The parameterized transform.
@@ -196,7 +202,7 @@ public class MathTransformFactory
     {return createParameterizedTransform(projection.getClassName(), projection.getParameters());}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the classification names of every available transforms.</FONT>
+     * Returns the classification names of every available transforms.
      * The returned array may have a zero length, but will never be null.
      */
     public String[] getAvailableTransforms()
@@ -210,7 +216,7 @@ public class MathTransformFactory
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns a human readable name localized for the specified locale.</FONT>
+     * Returns a human readable name localized for the specified locale.
      * If no name is available for the specified locale, this method may returns a name in an
      * arbitrary locale.
      *
@@ -226,7 +232,7 @@ public class MathTransformFactory
     {return getProvider(classification).getName(locale);}
 
     /**
-     * <FONT COLOR="#FF6633">Get the parameter list from a classification name.</FONT>
+     * Get the parameter list from a classification name.
      * The client may change any of those parameters and submit them to
      * {@link #createParameterizedTransform(String,ParameterList)}.
      *

@@ -54,6 +54,18 @@ public class MismatchedDimensionException extends RuntimeException
      * Construct an exception with a detail message stating that
      * two objects don't have the same number of dimensions.
      *
+     * @param object1 The first dimensioned object.
+     * @param object2 The second dimensioned object. Its dimension
+     *        should be different than <code>object1</code>'s dimension,
+     *        otherwise there is no dimension mismatch!
+     */
+    public MismatchedDimensionException(final Dimensioned object1, final Dimensioned object2)
+    {this(object1.getDimension(), object2.getDimension());}
+
+    /**
+     * Construct an exception with a detail message stating that
+     * two objects don't have the same number of dimensions.
+     *
      * @param dim1 Number of dimensions for the first object.
      * @param dim2 Number of dimensions for the second object.
      *        It shoud be different than <code>dim1</code>,

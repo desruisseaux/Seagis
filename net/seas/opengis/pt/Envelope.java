@@ -45,8 +45,8 @@ import net.seas.resources.Resources;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  *
- * @see Rectangle2D
  * @see org.opengis.pt.PT_Envelope
+ * @see java.awt.geom.Rectangle2D
  */
 public final class Envelope implements Dimensioned, Cloneable, Serializable
 {
@@ -152,9 +152,9 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Determines whether or not this envelope
-     * is empty.</FONT> An envelope is non-empty only if it has a
-     * length greater that 0 along all dimensions.
+     * Determines whether or not this envelope is empty.
+     * An envelope is non-empty only if it has a length
+     * greater that 0 along all dimensions.
      */
     public boolean isEmpty()
     {
@@ -166,7 +166,7 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Adds a point to this envelope.</FONT> The resulting envelope
+     * Adds a point to this envelope. The resulting envelope
      * is the smallest envelope that contains both the original envelope and the
      * specified point. After adding a point, a call to {@link #contains} with the
      * added point as an argument will return <code>true</code>, except if one of
@@ -190,9 +190,9 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Adds an envelope object to this envelope.</FONT>
-     * The resulting envelope is the union of the two <code>Envelope</code>
-     * objects.
+     * Adds an envelope object to this envelope.
+     * The resulting envelope is the union of the
+     * two <code>Envelope</code> objects.
      *
      * @param  envelope the <code>Envelope</code> to add to this envelope.
      * @throws MismatchedDimensionException if the specified envelope doesn't
@@ -212,7 +212,7 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Tests if a specified coordinate is inside the boundary of this envelope.</FONT>
+     * Tests if a specified coordinate is inside the boundary of this envelope.
      *
      * @param  point The point to text.
      * @return <code>true</code> if the specified coordinates are inside the boundary
@@ -251,14 +251,14 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the number of dimensions.</FONT>
+     * Returns the number of dimensions.
      */
     public int getDimension()
     {return ord.length/2;}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the minimal ordinate
-     * along the specified dimension.</FONT>
+     * Returns the minimal ordinate
+     * along the specified dimension.
      */
     public double getMinimum(final int dimension)
     {
@@ -267,8 +267,8 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the maximal ordinate
-     * along the specified dimension.</FONT>
+     * Returns the maximal ordinate
+     * along the specified dimension.
      */
     public double getMaximum(final int dimension)
     {
@@ -277,25 +277,23 @@ public final class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the center ordinate
-     * along the specified dimension.</FONT>
+     * Returns the center ordinate
+     * along the specified dimension.
      */
     public double getCenter(final int dimension)
     {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the envelope length
-     * along the specified dimension.</FONT> This length
-     * is equals to the maximum ordinate minus the minimal
-     * ordinate.
+     * Returns the envelope length along the specified dimension.
+     * This length is equals to the maximum ordinate minus the
+     * minimal ordinate.
      */
     public double getLength(final int dimension)
     {return ord[dimension+ord.length/2] - ord[dimension];}
 
     /**
-     * <FONT COLOR="#FF6633">Returns a {@link Rectangle2D} with the same bounds
-     * as this <code>Envelope</code>.</FONT> This is a convenience method for
-     * interoperability with Java2D.
+     * Returns a {@link Rectangle2D} with the same bounds as this <code>Envelope</code>.
+     * This is a convenience method for interoperability with Java2D.
      *
      * @throws IllegalStateException if this envelope is not two-dimensional.
      */

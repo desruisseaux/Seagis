@@ -22,6 +22,9 @@
  */
 package net.seas.opengis.cs;
 
+// OpenGIS dependencies
+import org.opengis.cs.CS_AxisOrientationEnum;
+
 // Miscellaneous
 import java.util.Locale;
 import java.io.ObjectStreamException;
@@ -37,8 +40,8 @@ import net.seas.resources.Clé;
  * instead of East. This information is obviously relevant for algorithms
  * converting South African grid coordinates into Lat/Long.
  * <br><br>
- * <FONT COLOR="#FF6633">The <em>natural ordering</em> for axis orientations is defined
- * as (EAST-WEST), (NORTH-SOUTH), (UP-DOWN), (FUTURE-PAST) and OTHER,</FONT> which is
+ * The <em>natural ordering</em> for axis orientations is defined
+ * as (EAST-WEST), (NORTH-SOUTH), (UP-DOWN), (FUTURE-PAST) and OTHER, which is
  * the ordering for a (<var>x</var>,<var>y</var>,<var>z</var>,<var>t</var>) coordinate
  * system. This means that when an array of <code>AxisOrientation</code>s is sorted using
  * {@link java.util.Arrays#sort(Object[])}, EAST and WEST orientations will
@@ -69,51 +72,65 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     /**
      * Unknown or unspecified axis orientation.
      * This can be used for local or fitted coordinate systems.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_Other
      */
-    public static final AxisOrientation OTHER = new AxisOrientation("OTHER", 0, Clé.OTHER);
+    public static final AxisOrientation OTHER = new AxisOrientation("OTHER", CS_AxisOrientationEnum.CS_AO_Other, Clé.OTHER);
 
     /**
      * Increasing ordinates values go North.
      * This is usually used for Grid Y coordinates and Latitude.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_North
      */
-    public static final AxisOrientation NORTH = new AxisOrientation("NORTH", 1, Clé.NORTH);
+    public static final AxisOrientation NORTH = new AxisOrientation("NORTH", CS_AxisOrientationEnum.CS_AO_North, Clé.NORTH);
 
     /**
      * Increasing ordinates values go South.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_South
      */
-    public static final AxisOrientation SOUTH = new AxisOrientation("SOUTH", 2, Clé.SOUTH);
+    public static final AxisOrientation SOUTH = new AxisOrientation("SOUTH", CS_AxisOrientationEnum.CS_AO_South, Clé.SOUTH);
 
     /**
      * Increasing ordinates values go East.
      * This is usually used for Grid X coordinates and Longitude.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_East
      */
-    public static final AxisOrientation EAST = new AxisOrientation("EAST", 3, Clé.EAST);
+    public static final AxisOrientation EAST = new AxisOrientation("EAST", CS_AxisOrientationEnum.CS_AO_East, Clé.EAST);
 
     /**
      * Increasing ordinates values go West.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_West
      */
-    public static final AxisOrientation WEST = new AxisOrientation("WEST", 4, Clé.WEST);
+    public static final AxisOrientation WEST = new AxisOrientation("WEST", CS_AxisOrientationEnum.CS_AO_West, Clé.WEST);
 
     /**
      * Increasing ordinates values go up.
      * This is used for vertical coordinate systems.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_Up
      */
-    public static final AxisOrientation UP = new AxisOrientation("UP", 5, Clé.UP);
+    public static final AxisOrientation UP = new AxisOrientation("UP", CS_AxisOrientationEnum.CS_AO_Up, Clé.UP);
 
     /**
      * Increasing ordinates values go down.
      * This is used for vertical coordinate systems.
+     *
+     * @see org.opengis.cs.CS_AxisOrientationEnum#CS_AO_Down
      */
-    public static final AxisOrientation DOWN = new AxisOrientation("DOWN", 6, Clé.DOWN);
+    public static final AxisOrientation DOWN = new AxisOrientation("DOWN", CS_AxisOrientationEnum.CS_AO_Down, Clé.DOWN);
 
     /**
-     * <FONT COLOR="#FF6633">Increasing time go toward future.</FONT>
+     * Increasing time go toward future.
      * This is used for temporal axis.
      */
     public static final AxisOrientation FUTURE = new AxisOrientation("FUTURE", 7, Clé.FUTURE);
 
     /**
-     * <FONT COLOR="#FF6633">Increasing time go toward past.</FONT>
+     * Increasing time go toward past.
      * This is used for temporal axis.
      */
     public static final AxisOrientation PAST = new AxisOrientation("PAST", 8, Clé.PAST);
@@ -129,6 +146,12 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
      * canonicalize after deserialization.
      */
     private static final AxisOrientation[] ENUMS = {OTHER,NORTH,SOUTH,EAST,WEST,UP,DOWN,FUTURE,PAST};
+    static
+    {
+        for (int i=0; i<ENUMS.length; i++)
+            if (ENUMS[i].getValue()!=i)
+                throw new ExceptionInInitializerError(String.valueOf(ENUMS[i]));
+    }
 
     /**
      * The axis order. Used for {@link #compareTo} implementation.
@@ -153,7 +176,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     }
 
     /**
-     * <FONT COLOR="#FF6633">Return the enum for the specified value.</FONT>
+     * Return the enum for the specified value.
      * This method is provided for compatibility with
      * {@link org.opengis.cs.CS_AxisOrientationEnum}.
      *
@@ -168,7 +191,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns this enum's name in the specified locale.</FONT>
+     * Returns this enum's name in the specified locale.
      * If no name is available for the specified locale, a default one will be used.
      *
      * @param  locale The locale, or <code>null</code> for the default locale.
@@ -178,7 +201,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * <FONT COLOR="#FF6633">Returns the opposite orientation of this axis.</FONT>
+     * Returns the opposite orientation of this axis.
      * The opposite of North is South, and the opposite of South is North.
      * The same apply to East-West, Up-Down and Future-Past.
      * Other axis orientation are returned inchanged.
@@ -194,7 +217,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     }
 
     /**
-     * <FONT COLOR="#FF6633">Returns the "absolute" orientation of this axis.</FONT>
+     * Returns the "absolute" orientation of this axis.
      * This "absolute" operation is similar to the <code>Math.abs(int)</code> method
      * in that "negative" orientation (<code>SOUTH</code>, <code>WEST</code>, <code>DOWN</code>,
      * <code>PAST</code>) are changed for their positive counterpart (<code>NORTH</code>,
