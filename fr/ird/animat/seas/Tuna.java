@@ -122,50 +122,31 @@ final class Tuna extends MobileObject implements Animal
     }
 
     /**
-     * Déplace l'animal en fonction de son environnement.
+     * Retourne la région jusqu'où s'étend la perception de cette
+     * animal. Il peut s'agir par exemple d'un cercle centré sur
+     * la position de l'animal.
+     *
+     * @param condition 1 si les conditions environnementales sont optimales
+     *        (eaux des plus transparentes), ou 0 si les conditions sont des
+     *        plus mauvaises (eaux complètement brouillées).
      */
-    public void move(final Environment environment)
+    public Shape getPerceptionArea(final double condition)
     {
-        observe(environment);
-        final ParameterValue param = getObservation(0);
-        if (param!=null)
-        {
-            final Point2D location = param.getLocation();
-            if (location != null)
-            {
-                moveToward(5*1852, location);
-            }
-        }
+        final double radius = condition*PERCEPTION_RADIUS;
+        return relativeToGeographic(new Ellipse2D.Double(-radius, -radius, 2*radius, 2*radius));
     }
 
     /**
-     * Prend note des paramètres environnementaux autour de cet animal.
-     *
-     * @param environment L'environnement de l'animal.
+     * Retourne le nombre d'observations. Ce nombre devrait être égal au nombre
+     * de points, sauf si l'utilisateur fait déplacer l'animal sans appeller la
+     * méthode {@link #observe}.
      */
-    public void observe(final Environment environment)
+    private int getObservationCount()
     {
-        final ParameterValue[] perceptions = environment.getParameters(this);
-        final int requiredLength = getPointCount()*(paramCount*RECORD_LENGTH);
-        if (requiredLength > parameters.length)
-        {
-            parameters = XArray.resize(parameters, requiredLength + Math.min(requiredLength, 4096));
-            Arrays.fill(parameters, validLength, parameters.length, Float.NaN);
-        }
-        if (requiredLength != 0) // 'false' if initial position is not set.
-        {
-            validLength = requiredLength - (paramCount*RECORD_LENGTH);
-            for (int i=0; i<paramCount; i++)
-            {
-                Point2D pos = getLocation();
-                final ParameterValue value = perceptions[i];
-                parameters[validLength + LONGITUDE] = (float) (pos.getX()-0.2*(0.5+Math.random()));
-                parameters[validLength +  LATITUDE] = (float) (pos.getY()-0.2*(0.5+Math.random()));
-                parameters[validLength +     VALUE] = (float) value.getValue();
-                validLength += RECORD_LENGTH;
-            }
-        }
-        assert validLength == requiredLength;
+        assert (validLength % (paramCount*RECORD_LENGTH)) == 0;
+        final int count = validLength / (paramCount*RECORD_LENGTH);
+        assert count <= getPointCount() : count;
+        return count;
     }
 
     /**
@@ -199,30 +180,57 @@ final class Tuna extends MobileObject implements Animal
     }
 
     /**
-     * Retourne le nombre d'observations. Ce nombre devrait être égal au nombre
-     * de points, sauf si l'utilisateur fait déplacer l'animal sans appeller la
-     * méthode {@link #observe}.
+     * Observe l'environnement de l'animal. Cette méthode doit être appelée
+     * avant {@link #move}, sans quoi l'animal ne sera pas comment se déplacer.
+     *
+     * @param environment L'environment à observer.
      */
-    private int getObservationCount()
+    public void observe(final Environment environment)
     {
-        assert (validLength % (paramCount*RECORD_LENGTH)) == 0;
-        final int count = validLength / (paramCount*RECORD_LENGTH);
-        assert count <= getPointCount() : count;
-        return count;
+        final ParameterValue[] perceptions = environment.getParameters(this);
+        final int requiredLength = getPointCount()*(paramCount*RECORD_LENGTH);
+        if (requiredLength > parameters.length)
+        {
+            parameters = XArray.resize(parameters, requiredLength + Math.min(requiredLength, 4096));
+            Arrays.fill(parameters, validLength, parameters.length, Float.NaN);
+        }
+        if (requiredLength != 0) // 'false' if initial position is not set.
+        {
+            validLength = requiredLength - (paramCount*RECORD_LENGTH);
+            for (int i=0; i<paramCount; i++)
+            {
+                final ParameterValue value = perceptions[i];
+                if (value != null)
+                {
+                    Point2D pos = value.getLocation();
+                    if (pos!=null)
+                    {
+                        parameters[validLength + LONGITUDE] = (float) pos.getX();
+                        parameters[validLength +  LATITUDE] = (float) pos.getY();
+                    }
+                    parameters[validLength + VALUE] = (float) value.getValue();
+                }
+                validLength += RECORD_LENGTH;
+            }
+        }
+        assert validLength == requiredLength;
     }
 
     /**
-     * Retourne la région jusqu'où s'étend la perception de cette
-     * animal. Il peut s'agir par exemple d'un cercle centré sur
-     * la position de l'animal.
-     *
-     * @param condition 1 si les conditions environnementales sont optimales
-     *        (eaux des plus transparentes), ou 0 si les conditions sont des
-     *        plus mauvaises (eaux complètement brouillées).
+     * Déplace l'animal en fonction de son environnement. La méthode
+     * {@link #observe} doit avoir d'abord été appelée, sans quoi
+     * aucun déplacement ne sera fait (l'animal ne sachant pas où aller).
      */
-    public Shape getPerceptionArea(final double condition)
+    public void move()
     {
-        final double radius = condition*PERCEPTION_RADIUS;
-        return relativeToGeographic(new Ellipse2D.Double(-radius, -radius, 2*radius, 2*radius));
+        final ParameterValue param = getObservation(0);
+        if (param!=null)
+        {
+            final Point2D location = param.getLocation();
+            if (location != null)
+            {
+                moveToward(5*1852, location);
+            }
+        }
     }
 }

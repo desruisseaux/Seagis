@@ -33,6 +33,7 @@ import java.sql.SQLException;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
+import org.geotools.resources.XDimension2D;
 
 // Base de données
 import fr.ird.sql.image.Coverage3D;
@@ -101,12 +102,15 @@ final class Environment implements fr.ird.animat.Environment
      * Construit un environnement qui utilisera
      * la base de données d'images spécifiée.
      *
+     * @param  database Base de données à utiliser.
+     * @param  resolution Résolution en degrés d'angles.
      * @throws SQLException si une erreur est survenue
      *         lors de l'accès à la base de données.
      */
-    public Environment(final ImageDataBase database) throws SQLException
+    public Environment(final ImageDataBase database, final double resolution) throws SQLException
     {
         final ImageTable table = database.getImageTable();
+        table.setPreferredResolution(new XDimension2D.Double(resolution, resolution));
         coverage = new Coverage3D(table);
         table.close();
     }

@@ -113,24 +113,14 @@ final class Dynamic implements Runnable
     /**
      * Construit une dynamique avec les bases de données par defaut.
      *
+     * @param  resolution Résolution préférée des images à charger,
+     *         en degrés d'angles.
      * @throws SQLException si une connexion avec une des base de données
      *         a échouée.
      */
-    public Dynamic() throws SQLException
+    public Dynamic(final double resolution) throws SQLException
     {
-        this(new ImageDataBase(), new FisheryDataBase(), true);
-    }
-
-    /**
-     * Construit une dynamique avec les bases de données spécifiées.
-     *
-     * @throws SQLException si une connexion avec une des base de données
-     *         a échouée.
-     */
-    public Dynamic(final ImageDataBase   images,
-                   final FisheryDataBase fisheries) throws SQLException
-    {
-        this(images, fisheries, false);
+        this(new ImageDataBase(), new FisheryDataBase(), resolution, true);
     }
 
     /**
@@ -141,10 +131,11 @@ final class Dynamic implements Runnable
      */
     private Dynamic(final ImageDataBase   images,
                     final FisheryDataBase fisheries,
+                    final double          resolution,
                     final boolean         close) throws SQLException
     {
         this.catchs      = fisheries.getCatchTable(SPECIES);
-        this.environment = new Environment(images);
+        this.environment = new Environment(images, resolution);
         toClose = close ? new DataBase[] {images, fisheries} : null;
     }
 
@@ -170,14 +161,24 @@ final class Dynamic implements Runnable
     public void run()
     {
         running=true;
-        moveAnimals();
         do
         {
             try
             {
-                nextTimeStep();
-                moveAnimals();
+                synchronized (this)
+                {
+                    population.move();
+                    nextTimeStep();
+                    population.observe(environment);
+                }
                 Thread.currentThread().sleep(pause);
+                /*
+                 * On a appellé 'nextTimeStep' après avoir déplacé les animaux de
+                 * façon à ce que l'image courante de l'afficheur  soit celle qui
+                 * influencera le prochain déplacement. C'est nécessaire pour que
+                 * l'affichage du "cercle de perception" des animaux  corresponde
+                 * bien aux données qu'ils prendront en compte.
+                 */
             }
             catch (SQLException exception)
             {
@@ -204,14 +205,6 @@ final class Dynamic implements Runnable
     }
 
     /**
-     * Déplace les animaux en fonction de leur environnements.
-     */
-    private void moveAnimals()
-    {
-        population.moveAnimals(environment);
-    }
-
-    /**
      * Retourne l'afficheur
      * pour cette dynamique.
      */
@@ -219,7 +212,7 @@ final class Dynamic implements Runnable
     {
         if (viewer == null)
         {
-            viewer = new Viewer(environment, population);
+            viewer = new Viewer(environment, population, this);
         }
         return viewer;
     }

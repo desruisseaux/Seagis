@@ -69,17 +69,6 @@ public interface Animal
     public abstract double getDirection();
 
     /**
-     * Retourne une observation de l'animal.
-     *
-     * @param  index L'index du paramètre, de 0 jusqu'à
-     *         <code>{@link #getNumParameters()}-1</code>.
-     * @return L'observation de l'animal, ou <code>null</code>
-     *         si aucune observation n'a encore été faite à la
-     *         position actuelle de l'animal.
-     */
-    public ParameterValue getObservation(final int index);
-
-    /**
      * Retourne la région jusqu'où s'étend la perception de cette
      * animal. Il peut s'agir par exemple d'un cercle centré sur
      * la position de l'animal.
@@ -91,9 +80,30 @@ public interface Animal
     public Shape getPerceptionArea(final double condition);
 
     /**
-     * Déplace l'animal en fonction de son environnement.
+     * Retourne une observation de l'animal.
+     *
+     * @param  index L'index du paramètre, de 0 jusqu'à
+     *         <code>{@link #getNumParameters()}-1</code>.
+     * @return L'observation de l'animal, ou <code>null</code>
+     *         si aucune observation n'a encore été faite à la
+     *         position actuelle de l'animal.
      */
-    public void move(final Environment environment);
+    public ParameterValue getObservation(final int index);
+
+    /**
+     * Observe l'environnement de l'animal. Cette méthode doit être appelée
+     * avant {@link #move}, sans quoi l'animal ne sera pas comment se déplacer.
+     *
+     * @param environment L'environment à observer.
+     */
+    public void observe(final Environment environment);
+
+    /**
+     * Déplace l'animal en fonction de son environnement. La méthode
+     * {@link #observe} doit avoir d'abord été appelée, sans quoi
+     * aucun déplacement ne sera fait (l'animal ne sachant pas où aller).
+     */
+    public void move();
 
     /**
      * Retourne le chemin suivit par l'animal jusqu'ici.

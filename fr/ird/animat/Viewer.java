@@ -25,15 +25,17 @@
  */
 package fr.ird.animat;
 
-// Interface utilisateur
+// J2SE dependencies
 import javax.swing.JComponent;
+import java.awt.Graphics2D;
+import java.awt.EventQueue;
+import java.util.TimerTask;
+import java.util.Timer;
 
-// Cartes
+// Other dependencies
+import fr.ird.map.Layer;
 import fr.ird.map.MapPanel;
 import fr.ird.map.layer.GridCoverageLayer;
-
-// Geotools dependencies
-import org.geotools.cs.GeographicCoordinateSystem;
 
 
 /**
@@ -45,6 +47,16 @@ import org.geotools.cs.GeographicCoordinateSystem;
  */
 public final class Viewer
 {
+    /**
+     * Objet à utiliser pour envoyer les commandes <code>repaint</code>.
+     */
+    private static final Timer timer = new Timer(true);
+
+    /**
+     * Objet sur lequel synchronizer les traçages.
+     */
+    private final Object lock;
+
     /**
      * La carte à afficher. Le système de coordonnées
      * sera un système géographique selon l'ellipsoïde
@@ -67,11 +79,15 @@ public final class Viewer
      *
      * @param environment L'environemment à afficher.
      * @param population  La population à afficher.
+     * @param lock        Objet sur lequel synchronizer les traçages. La méthode
+     *                    {@link MapPanel#paintComponent(Graphics2D)} sera appelée
+     *                    à l'intérieur d'un block <code>synchronized(lock)</code>.
      */
-    public Viewer(final Environment environment, final Population population)
+    public Viewer(final Environment environment, final Population population, final Object lock)
     {
-        this.environment = new EnvironmentLayer(environment);
-        this.population  = new  PopulationLayer(population );
+        this.lock = (lock!=null) ? (Object)lock : (Object)this;
+        this.environment = new EnvironmentLayer(environment, this);
+        this.population  = new  PopulationLayer(population,  this);
         map.setPaintingWhileAdjusting(true);
         map.addLayer(this.environment);
         map.addLayer(this.population );
@@ -84,5 +100,25 @@ public final class Viewer
     public JComponent getView()
     {
         return map.createScrollPane();
+    }
+
+    /**
+     * Redessine la couche spécifiée. Cette implémentation n'appelle {@link Layer#repaint}
+     * qu'après s'être snychronizée sur {@link #lock}, ce qui permet d'éviter que le
+     * traçage ne soit déclanché avant que {@link fr.ird.animat.seas.Dynamic} n'ai
+     * terminé son travail.
+     */
+    final void repaint(final Layer layer)
+    {
+        timer.schedule(new TimerTask()
+        {
+            public void run()
+            {
+                synchronized (lock)
+                {
+                    layer.repaint();
+                }
+            }
+        }, 0);
     }
 }

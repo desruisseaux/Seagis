@@ -80,6 +80,12 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     private static final Shape DEFAULT_SHAPE = new Arrow2D(0, -8, ARROW_LENGTH, 16);
 
     /**
+     * Type de ligne pour les trajectoire. Par défaut, on utilise
+     * une ligne d'une épaisseur de 1 mile nautique.
+     */
+    private static final Stroke PATH_STROKE = new BasicStroke(1/60f);
+
+    /**
      * Couleur des trajectoires, ou <code>null</code>
      * pour ne pas les dessiner.
      */
@@ -109,10 +115,16 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     private final Map<Species,Species.Icon> icons = new HashMap<Species,Species.Icon>();
 
     /**
+     * L'afficheur parent.
+     */
+    private final Viewer viewer;
+
+    /**
      * Construit une couche pour la population spécifiée.
      */
-    public PopulationLayer(final Population population)
+    public PopulationLayer(final Population population, final Viewer viewer)
     {
+        this.viewer = viewer;
         refresh(population);
         population.addPopulationChangeListener(this);
     }
@@ -206,15 +218,17 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
      */
     protected synchronized Shape paint(final GraphicsJAI graphics, final RenderingContext context) throws TransformException
     {
-        final Paint oldPaint = graphics.getPaint();
-        final Rectangle clip = graphics.getClipBounds();
-        Rectangle2D llBounds = (bounds!=null) ? (Rectangle2D) bounds.clone() : null;
+        final Paint   oldPaint = graphics.getPaint();
+        final Stroke oldStroke = graphics.getStroke();
+        final Rectangle   clip = graphics.getClipBounds();
+        Rectangle2D   llBounds = (bounds!=null) ? (Rectangle2D) bounds.clone() : null;
         //////////////////////////////////////
         ////    Dessine la trajectoire    ////
         //////////////////////////////////////
         if (pathColor != null)
         {
             graphics.setColor(pathColor);
+            graphics.setStroke(PATH_STROKE);
             for (int i=0; i<animals.length; i++)
             {
                 final Shape shape = animals[i].getPath();
@@ -223,6 +237,7 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
                     graphics.draw(shape);
                 }
             }
+            graphics.setStroke(oldStroke);
         }
         ///////////////////////////////////////////////
         ////    Dessine la région de perception    ////
@@ -256,7 +271,6 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
         //////////////////////////////////////////////////////
         if (true)
         {
-            final Stroke      oldStroke = graphics.getStroke();
             final AffineTransform oldTr = graphics.getTransform();
             final AffineTransform  zoom = context.getAffineTransform(RenderingContext.WORLD_TO_POINT);
             graphics.setTransform(context.getAffineTransform(RenderingContext.POINT_TO_PIXEL));
@@ -306,6 +320,6 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     public void populationChanged(final PopulationChangeEvent event)
     {
         refresh(event.getSource());
-        repaint();
+        viewer.repaint(this);
     }
 }

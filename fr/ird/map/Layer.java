@@ -333,7 +333,7 @@ public abstract class Layer implements Serializable
      *
      * @param bounds Coordonnées (en points) de la partie à redessiner.
      */
-    protected final void repaint(final Rectangle bounds)
+    protected void repaint(final Rectangle bounds)
     {
         final JComponent mapPanel=this.mapPanel;
         if (mapPanel!=null)

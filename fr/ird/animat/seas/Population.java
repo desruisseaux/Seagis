@@ -38,6 +38,7 @@ import javax.swing.event.EventListenerList;
 // Animats
 import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
+import fr.ird.animat.Environment;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
@@ -100,15 +101,27 @@ final class Population extends AbstractSet<Animal> implements fr.ird.animat.Popu
     }
 
     /**
+     * Observe l'environnement de tous les animaux de cette population.
+     * Cette méthode doit être appelée avant {@link #move}.
+     */
+    public synchronized void observe(final Environment environment)
+    {
+        for (int i=0; i<count; i++)
+        {
+            animals[i].observe(environment);
+        }
+    }
+
+    /**
      * Déplace tous les animaux de cette population en fonction de leur
      * environnement. Cette méthode appelle {@link Animal#move(Environment)}
      * pour chaque animal de cette population.
      */
-    public synchronized void moveAnimals(final fr.ird.animat.Environment environment)
+    public synchronized void move()
     {
         for (int i=0; i<count; i++)
         {
-            animals[i].move(environment);
+            animals[i].move();
         }
         firePopulationChanged(PopulationChangeEvent.ANIMAL_MOVED);
     }

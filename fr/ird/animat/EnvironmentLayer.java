@@ -27,6 +27,7 @@ package fr.ird.animat;
 
 // Graphisme
 import java.awt.Color;
+import java.awt.Rectangle;
 
 // Cartes
 import fr.ird.map.layer.GridCoverageLayer;
@@ -58,7 +59,7 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
      * Couleur des valeurs les plus élevées.
      */
     private static final Color UPPER_COLOR = new Color(224,240,255);
-
+    
     /**
      * L'objet à utiliser pour traiter les images.
      */
@@ -70,11 +71,22 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     private int parameter = 0;
 
     /**
+     * L'afficheur parent.
+     */
+    private final Viewer viewer;
+
+    /**
+     * <code>true</code> si on se trouve à l'intérieur de la méthode {@link #environmentChanged}.
+     */
+    private boolean processingEvent;
+
+    /**
      * Construit une couche pour l'environnement spécifié.
      */
-    public EnvironmentLayer(final Environment environment)
+    public EnvironmentLayer(final Environment environment, final Viewer viewer)
     {
         super(GeographicCoordinateSystem.WGS84);
+        this.viewer = viewer;
         environment.addEnvironmentChangeListener(this);
         setCoverage(environment.getGridCoverage(parameter));
     }
@@ -85,7 +97,16 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     public void environmentChanged(final EnvironmentChangeEvent event)
     {
         final Environment environment = event.getSource();
-        setCoverage(environment.getGridCoverage(parameter));
+        try
+        {
+            processingEvent = true;
+            setCoverage(environment.getGridCoverage(parameter));
+        }
+        finally
+        {
+            processingEvent = false;
+        }
+        viewer.repaint(this);
     }
 
     /**
@@ -98,5 +119,23 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
                                          "lowerColor", LOWER_COLOR,
                                          "upperColor", UPPER_COLOR);
         super.setCoverage(coverage);
+    }
+
+    /**
+     * Redessine sette composante.
+     */
+    public void repaint()
+    {
+        if (!processingEvent)
+            super.repaint();
+    }
+
+    /**
+     * Redessine sette composante.
+     */
+    protected void repaint(final Rectangle bounds)
+    {
+        if (!processingEvent)
+            super.repaint(bounds);
     }
 }

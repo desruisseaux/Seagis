@@ -103,9 +103,14 @@ public final class Main extends Console
             final long pause = Math.round(1000*
                     Double.parseDouble(getProperty(properties, "PAUSE")));
             /////////////////////////////////////////////////
+            ////    Extrait la propriété "RESOLUTION"    ////
+            /////////////////////////////////////////////////
+            final double resolution =
+                    Double.parseDouble(getProperty(properties, "RESOLUTION"))/60;
+            /////////////////////////////////////////////////
             ////    Construit la dynamique du modèle     ////
             /////////////////////////////////////////////////
-            dynamic = new Dynamic();
+            dynamic = new Dynamic(resolution);
             dynamic.init(startTime, timeStep, pause);
         }
         catch (Exception exception)
