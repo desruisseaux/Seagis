@@ -223,7 +223,7 @@ final class MercatorProjection extends CylindricalProjection
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Projection parameters)
+        protected Object create(final Projection parameters)
         {return new MercatorProjection(parameters);}
     }
 }

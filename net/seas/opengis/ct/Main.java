@@ -24,13 +24,31 @@ package net.seas.opengis.ct;
 
 // Coordinate systems
 import net.seas.opengis.cs.Ellipsoid;
+import net.seas.opengis.cs.Projection;
+import net.seas.opengis.pt.CoordinatePoint;
+
+// Input/output
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.BufferedReader;
+import net.seas.io.TableWriter;
+
+// Parsing/formatting
+import java.text.NumberFormat;
+import java.text.ParseException;
+import net.seas.text.CoordinateFormat;
+
+// Collections
+import java.util.List;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 // Miscellaneous
-import java.io.IOException;
 import java.awt.geom.Point2D;
 import net.seas.util.XClass;
+import net.seas.util.XString;
 import net.seas.util.Console;
-import net.seas.io.TableWriter;
 import net.seas.resources.Resources;
 
 
@@ -75,18 +93,11 @@ final class Main extends Console
         if (args.length==0)
         {
             System.out.println("Options:\n"+
-                               "-list                 List available transforms\n"+
-                               "-locale <name>        Locale to be used    (example: \"fr_CA\")\n"+
-                               "-encoding <name>      Output encoding name (example: \"cp850\")");
+                               "  -list              List available transforms\n"+
+                               "  -locale <name>     Locale to be used    (example: \"fr_CA\")\n"+
+                               "  -encoding <name>   Output encoding name (example: \"cp850\")");
         }
-        else try
-        {
-            new Main(args).run();
-        }
-        catch (IllegalArgumentException exception)
-        {
-            System.err.println(exception.getLocalizedMessage());
-        }
+        else new Main(args).run();
     }
 
     /**
@@ -94,9 +105,36 @@ final class Main extends Console
      */
     protected void run()
     {
-        final boolean list = getFlag("-list");
-        checkRemainingArguments();
-        if (list) availableTransforms();
+        try
+        {
+            final boolean list = getFlag("-list");
+            final String[] toProject = checkRemainingArguments(1);
+            if (list)
+            {
+                availableTransforms();
+            }
+            for (int i=0; i<toProject.length; i++)
+            {
+                project(new File(toProject[i]));
+            }
+        }
+        catch (IllegalArgumentException exception)
+        {
+            out.println(exception.getLocalizedMessage());
+        }
+        catch (IOException exception)
+        {
+            out.println(exception.getLocalizedMessage());
+        }
+        catch (ParseException exception)
+        {
+            out.println(exception.getLocalizedMessage());
+        }
+        catch (TransformException exception)
+        {
+            out.println(exception.getLocalizedMessage());
+        }
+        out.flush();
     }
 
     /**
@@ -150,5 +188,82 @@ final class Main extends Console
             error.initCause(exception);
             throw error;
         }
+    }
+
+    /**
+     * Project a list of points from a file.
+     *
+     * @throws IOException if an error occurs during file access.
+     * @throws ParseException if an error occurs during parsing.
+     * @throws TransformException if an error occurs during map projection.
+     */
+    public void project(final File file) throws IOException, ParseException, TransformException
+    {
+        ///////////////////////////
+        ///   Read all points   ///
+        ///////////////////////////
+        final List<Point2D>      points = new ArrayList<Point2D>();
+        final BufferedReader      input = new BufferedReader(new FileReader(file));
+        final CoordinateFormat inFormat = new CoordinateFormat();
+        final Point2D.Double     center = new Point2D.Double();
+        String line; while ((line=input.readLine())!=null)
+        {
+            if ((line=line.trim()).length()!=0 && line.charAt(0)!='#')
+            {
+                line=line.replace('\t', ' ');
+                final CoordinatePoint coord = inFormat.parse(line);
+                center.x += coord.getOrdinate(0);
+                center.y += coord.getOrdinate(1);
+                points.add(coord.toPoint2D());
+            }
+        }
+        input.close();
+        center.x /= points.size();
+        center.y /= points.size();
+
+        ////////////////////////////
+        ///   Setup projection   ///
+        ////////////////////////////
+        final Projection   projection = new Projection("Main", "Mercator_1SP", center);
+        final MathTransform transform = factory.createParameterizedTransform(projection);
+        final NumberFormat  outFormat = NumberFormat.getNumberInstance(locale);
+        final CoordinateFormat format = new CoordinateFormat("D°MM.m'", locale);
+        final TableWriter       table = new TableWriter(out, "  \u2502  ");
+        final Resources     resources = Resources.getResources(null);
+        outFormat.setMinimumFractionDigits(3);
+        outFormat.setMaximumFractionDigits(3);
+        out.println();
+        out.print(' ');
+        out.println(resources.format(Clé.PROJECTION¤1, transform.getName(null)));
+
+        //////////////////////////////
+        ///   Write column titles  ///
+        //////////////////////////////
+        table.setMultiLinesCells(true);
+        table.writeHorizontalSeparator();
+        table.setAlignment(TableWriter.ALIGN_CENTER);
+        table.write(resources.getString(Clé.GEOGRAPHIC_COORDINATE));
+        table.nextColumn();
+        table.write(resources.getString(Clé.PROJECTED_COORDINATE));
+        table.writeHorizontalSeparator();
+        table.setAlignment(TableWriter.ALIGN_LEFT);
+
+        //////////////////////////////
+        ///   Project all points   ///
+        //////////////////////////////
+        for (final Iterator<Point2D> it=points.iterator(); it.hasNext();)
+        {
+            final Point2D geographic = it.next();
+            final Point2D projected  = transform.transform(geographic, null);
+            table.write(format.format(new CoordinatePoint(geographic)));
+            table.nextColumn();
+            final String xLength = outFormat.format(projected.getX()/1000); // Convert m --> km
+            final String yLength = outFormat.format(projected.getY()/1000); // Convert m --> km
+            table.write(XString.spaces(10-xLength.length())); table.write(xLength);
+            table.write(XString.spaces(12-yLength.length())); table.write(yLength);
+            table.nextLine();
+        }
+        table.writeHorizontalSeparator();
+        table.flush();
     }
 }

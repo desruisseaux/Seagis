@@ -162,7 +162,7 @@ public abstract class MathTransformProvider
                 properties[j+0] = names   [i];
                 properties[j+1] = classes [i];
                 properties[j+2] = defaults[i];
-                properties[j+3] = descriptor.getParamValueRange(names[i]);
+                properties[j+3] = inherit.getParamValueRange(names[i]);
             }
         }
         else properties = new Object[0];

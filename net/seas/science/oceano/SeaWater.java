@@ -286,9 +286,7 @@ public final class SeaWater
      * Volumic anomaly is defined as the sea water sample's volume minus a standard
      * sample's volume, where the standard sample is a sample of salinity 35, temperature
      * 0°C and the same pressure. In pseudo-code, <code>volumeAnomaly</code> is equivalent
-     * to:
-     *
-     * <center><code>{@link #volume volume}(S,T,P)-{@link #volume volume}(35,0,P)</code></center>.
+     * to <code>{@link #volume volume}(S,T,P)-{@link #volume volume}(35,0,P)</code>.
      *
      * @param S Salinity PSS-78 (0 to 42)
      * @param T Temperature ITS-68 (-2 to 40°C)

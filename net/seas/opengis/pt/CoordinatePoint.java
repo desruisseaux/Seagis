@@ -125,6 +125,22 @@ public final class CoordinatePoint implements Cloneable, Serializable
     }
 
     /**
+     * Returns a {@link Point2D} with the same coordinate as this
+     * <code>CoordinatePoint</code>. This is a convenience method
+     * for interoperability with Java2D.
+     *
+     * @throws IllegalStateException if this coordinate point is not two-dimensional.
+     */
+    public Point2D toPoint2D() throws IllegalStateException
+    {
+        if (ord.length == 2)
+        {
+            return new Point2D.Double(ord[0], ord[1]);
+        }
+        throw new IllegalStateException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2, new Integer(ord.length), new Integer(2)));
+    }
+
+    /**
      * Returns a hash value for this coordinate.
      * This value need not remain consistent between
      * different implementations of the same class.

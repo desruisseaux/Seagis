@@ -816,17 +816,21 @@ abstract class MapProjection extends CoordinateTransform
          *        This is used for {@link #getName} implementation.
          */
         protected Provider(final String classname, final int nameKey)
-        {super("Mercator_1SP", nameKey, DEFAULT_PROJECTION_DESCRIPTOR);}
+        {super(classname, nameKey, DEFAULT_PROJECTION_DESCRIPTOR);}
 
         /**
          * Create a new map projection for a parameter list.
          */
         public final MathTransform create(final ParameterList parameters)
-        {return create(new Projection("Generated", getClassName(), parameters));}
+        {return (MathTransform)create(new Projection("Generated", getClassName(), parameters));}
 
         /**
-         * Create a new map projection.
+         * Create a new map projection.  NOTE: The returns type should
+         * be {@link MathTransform}, but as of JDK 1.4-beta2, it force
+         * class loading for all projection classes (MercatorProjection,
+         * etc.) before than necessary. Changing the returns type to
+         * Object is a trick to avoir too early class loading...
          */
-        public abstract MathTransform create(final Projection parameters);
+        protected abstract Object create(final Projection parameters);
     }
 }

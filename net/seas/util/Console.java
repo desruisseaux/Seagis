@@ -199,11 +199,27 @@ public class Console
 
     /**
      * Check if there is some unprocessed command.
+     *
+     * @param  max Maximum remaining arguments autorized.
+     * @return An array of remaining arguments. Will never be longer than <code>max</code>.
+     * @throws IllegalArgumentException if there is more argument left than <code>max</code>.
      */
-    public void checkRemainingArguments()
+    public String[] checkRemainingArguments(final int max) throws IllegalArgumentException
     {
+        int count=0;
+        final String[] left = new String[max];
         for (int i=0; i<arguments.length; i++)
-            if (arguments[i] != null)
-                throw new IllegalArgumentException(Resources.format(Clé.UNKNOW_OPTION¤1, arguments[i]));
+        {
+            final String arg = arguments[i];
+            if (arg != null)
+            {
+                if (count>=max)
+                {
+                    throw new IllegalArgumentException(Resources.format(Clé.UNKNOW_OPTION¤1, arguments[i]));
+                }
+                left[count++] = arg;
+            }
+        }
+        return XArray.resize(left, count);
     }
 }

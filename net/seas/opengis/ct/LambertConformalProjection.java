@@ -274,7 +274,7 @@ final class LambertConformalProjection extends ConicProjection
         /**
          * Create a new map projection.
          */
-        public MathTransform create(final Projection parameters)
+        protected Object create(final Projection parameters)
         {return new LambertConformalProjection(parameters);}
     }
 }

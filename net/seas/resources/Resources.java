@@ -192,7 +192,7 @@ public class Resources extends ResourceBundle
         try
         {
             final Console console = new Console(args);
-            console.checkRemainingArguments();
+            console.checkRemainingArguments(0);
             getResources(console.locale).list(console.out);
             console.out.flush();
         }

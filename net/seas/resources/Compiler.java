@@ -124,7 +124,7 @@ final class Compiler implements FileFilter, Comparator<String>
     /**
      * Procède au chargement d'un fichier de propriétées, puis convertit les valeurs
      * en patron compréhensibles par {@link MessageFormat}. La conversion consistera
-     * principalement à doubler les appostrophes. Cette méthode vérifiera au passage
+     * principalement à doubler les apostrophes.  Cette méthode vérifiera au passage
      * si on respecte la convention voulant que les noms des étiquettes se terminent
      * par le nombre d'arguments.
      *
@@ -186,7 +186,7 @@ final class Compiler implements FileFilter, Comparator<String>
 
     /**
      * Transforme une chaîne de caractères "normal" en patron compatible avec {@link MessageFormat}.
-     * Cette transformation consiste notamment à doubler les appostrophes, sauf ceux qui se trouvent
+     * Cette transformation consiste notamment à doubler les apostrophes, sauf ceux qui se trouvent
      * de part et d'autre d'une accolade.
      */
     private static String toMessageFormatString(final String text)
@@ -326,8 +326,9 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
          */
         for (int i=0; i<others.length; i++)
         {
-            if (others[i]==this) continue;
-            for (final Iterator<Map.Entry<String,Set<String>>> it=others[i].keysByPackage.entrySet().iterator(); it.hasNext();)
+            final Compiler that=others[i];
+            if (that==this) continue;
+            for (final Iterator<Map.Entry<String,Set<String>>> it=that.keysByPackage.entrySet().iterator(); it.hasNext();)
             {
                 final Map.Entry<String,Set<String>> entry = it.next();
                 final String    classname = entry.getKey();
@@ -338,10 +339,19 @@ search: for (int level=0,last=-1,i=0; i<buffer.length(); i++) // La longueur du 
                 for (final Iterator<String> itk=thatSet.iterator(); itk.hasNext();)
                 {
                     final String key = itk.next();
-                    if (!allProperties.containsKey(key))
+                    if (!this.allProperties.containsKey(key))
                     {
-                        warning(null, key, "Clé définit en "+others[i].suffix+" mais pas en "+suffix);
-                        allProperties.put(key, null);
+                        warning(null, key, "Clé définit en "+that.suffix+" mais pas en "+this.suffix);
+                        this.allProperties.put(key, that.allProperties.get(key));
+                    }
+                }
+                for (final Iterator<String> itk=thisSet.iterator(); itk.hasNext();)
+                {
+                    final String key = itk.next();
+                    if (!that.allProperties.containsKey(key))
+                    {
+                        warning(null, key, "Clé définit en "+this.suffix+" mais pas en "+that.suffix);
+                        that.allProperties.put(key, this.allProperties.get(key));
                     }
                 }
             }
