@@ -29,6 +29,7 @@ package fr.ird.sql.image;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import fr.ird.sql.DataBase;
 
 // Journal
 import java.util.logging.Logger;
@@ -53,6 +54,23 @@ import net.seas.util.XClass;
  */
 abstract class Table implements fr.ird.sql.Table
 {
+    /**
+     * Retourne une des préférences du système.  Cette méthode définit les
+     * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
+     * pas défini de préférence pour un paramètre.
+     */
+    static String getPreference(final String name)
+    {
+        String def=null;
+        if (name!=null)
+        {
+                 if (name.equalsIgnoreCase(DataBase.DRIVER))   def = "sun.jdbc.odbc.JdbcOdbcDriver";
+            else if (name.equalsIgnoreCase(DataBase.SOURCE))   def = "jdbc:odbc:SEAS-Images";
+            else if (name.equalsIgnoreCase(DataBase.TIMEZONE)) def = "UTC";
+        }
+        return Table.preferences.get(name, def);
+    }
+
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String AREAS       = "Areas";
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String IMAGES      = "Images_new"; // TODO
     /* Nom de table <strong>par défaut</strong> dans les instructions SQL. */ static final String FORMATS     = "Formats";
@@ -69,6 +87,12 @@ abstract class Table implements fr.ird.sql.Table
      * Pour MySQL, c'est 'Y' (entre appostrophes). Vive les standards qui n'en sont pas!
      */
     static final String TRUE = "True";
+
+    /**
+     * Clé à utiliser pour mémoriser dans les préférences
+     * le répertoire racine des images.
+     */
+    static final String DIRECTORY = "Directory";
 
     /**
      * Ensemble d'objets qui ont déjà été créés et qui n'ont pas encore été réclamés par
@@ -99,7 +123,7 @@ abstract class Table implements fr.ird.sql.Table
     static File directory;
     static
     {
-        final String dir = preferences.get("directory", null);
+        final String dir = preferences.get(DIRECTORY, null);
         if (dir!=null) directory = new File(dir);
     }
 

@@ -29,7 +29,7 @@ package fr.ird.sql.image;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
-import fr.ird.awt.SQLEditor;
+import fr.ird.sql.SQLEditor;
 import fr.ird.sql.DataBase;
 
 // Entrés/sorties
@@ -179,19 +179,20 @@ public class ImageDataBase extends DataBase
      */
     private static String getDefaultURL()
     {
-        Table.logger.log(loadDriver(Table.preferences.get("Driver", Main.DRIVER)));
-        return Table.preferences.get("Source", Main.SOURCE);
+        Table.logger.log(loadDriver(Table.getPreference(DRIVER)));
+        return Table.getPreference(SOURCE);
     }
 
     /**
-     * Ouvre une connection avec une base de données par défaut.
-     * Ce constructeur est surtout utilisé à des fins de test.
+     * Ouvre une connection avec une base de données par défaut. Le nom de la base de
+     * données ainsi que le pilote à utiliser   seront puisés dans les préférences du
+     * système.
      *
      * @throws SQLException Si on n'a pas pu se connecter
      *         à la base de données.
      */
     public ImageDataBase() throws SQLException
-    {super(getDefaultURL(), TimeZone.getTimeZone("UTC"));}
+    {super(getDefaultURL(), TimeZone.getTimeZone(Table.getPreference(TIMEZONE)));}
 
     /**
      * Ouvre une connection avec la base de données des images.
@@ -398,48 +399,32 @@ public class ImageDataBase extends DataBase
     }
 
     /**
-     * Construit et retourne un panneau qui permet à l'utilisateur de modifier
-     * les instructions SQL. Les instructions modifiées seront utilisées pour
-     * interroger les tables de la base de données d'images.
-     */
-    public SQLEditor getSQLEditor()
-    {return getSQLEditor(Table.preferences);}
-
-    /**
-     * Construit et retourne un panneau qui permet à l'utilisateur de modifier
-     * les instructions SQL. Les instructions modifiées seront utilisées pour
-     * interroger les tables de la base de données d'images.
-     */
-    private static SQLEditor getSQLEditor(final Preferences preferences)
-    {
-        assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
-        final Resources resources = Resources.getResources(null);
-        final SQLEditor editor=new SQLEditor(preferences, resources.getString(Clé.EDIT_SQL_IMAGES_OR_FISHERIES¤1, new Integer(0)), Table.logger);
-        for (int i=0; i<PROPERTY_NAMES.length; i++)
-        {
-            editor.addSQL(resources.getString(PROPERTY_NAMES[i]), DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
-        }
-        return editor;
-    }
-
-    /**
-     * Retourne le répertoire racine à partir
-     * duquel seront puisées les images.
+     * Retourne le répertoire racine à partir d'où construire le
+     * chemin des images. Les chemins relatifs spécifiés dans la
+     * base de données seront ajoutés à ce répertoire racine.
      *
      * @return Répertoire racine des images.
      */
-    public static File getDirectory()
-    {return Table.directory;}
+    public static File getDefaultDirectory()
+    {return (Table.directory!=null) ? Table.directory : new File(".");}
 
     /**
-     * Définit le répertoire racine à
-     * partir duquel puiser les images.
+     * Définit le répertoire racine à partir duquel puiser les images.
+     * L'appel de cette méthode affecte toutes les {@link ImageTable}
+     * qui utilisent le répertoire racine par défaut, pour la session
+     * de travail courante ainsi que pour toutes les prochaines sessions
+     * (le répertoire sera sauvegardé dans les préférences systèmes).
      *
      * @param directory Répertoire racine des images.
-     * @see #getDirectory
      */
-    public static void setDirectory(final File directory)
-    {Table.directory=directory;}
+    public static void setDefaultDirectory(final File directory)
+    {
+        Table.directory=directory;
+        if (directory!=null)
+            Table.preferences.put(Table.DIRECTORY, directory.getPath());
+        else
+            Table.preferences.remove(Table.DIRECTORY);
+    }
 
     /**
      * Retourne la liste des répertoires synchronisées. Voyez
@@ -492,6 +477,28 @@ public class ImageDataBase extends DataBase
     }
 
     /**
+     * Construit et retourne un panneau qui permet à l'utilisateur de modifier
+     * les instructions SQL. Les instructions modifiées seront conservées dans
+     * les préférences systèmes et utilisées pour interroger les tables de la
+     * base de données d'images.
+     */
+    public static SQLEditor getSQLEditor()
+    {
+        assert(2*PROPERTY_NAMES.length == DEFAULT_PROPERTIES.length);
+        final Resources resources = Resources.getResources(null);
+        final SQLEditor editor=new SQLEditor(Table.preferences, resources.getString(Clé.EDIT_SQL_IMAGES_OR_FISHERIES¤1, new Integer(0)), Table.logger)
+        {
+            public String getProperty(final String name)
+            {return Table.getPreference(name);}
+        };
+        for (int i=0; i<PROPERTY_NAMES.length; i++)
+        {
+            editor.addSQL(resources.getString(PROPERTY_NAMES[i]), DEFAULT_PROPERTIES[i*2+1], DEFAULT_PROPERTIES[i*2]);
+        }
+        return editor;
+    }
+
+    /**
      * Affiche des enregistrements de la base de données ou configure les requêtes SQL.
      * Cette méthode peut être exécutée à partir de la ligne de commande:
      *
@@ -533,7 +540,7 @@ public class ImageDataBase extends DataBase
         final Main console = new Main(args);
         if (console.config)
         {
-            getSQLEditor(Table.preferences).showDialog(null);
+            getSQLEditor().showDialog(null);
         }
         console.run();
         System.exit(0);

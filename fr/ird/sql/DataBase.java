@@ -47,6 +47,31 @@ import fr.ird.resources.Resources;
 public abstract class DataBase
 {
     /**
+     * Clé de la propriétée représentant le pilote JDBC
+     * à utiliser pour se connecter à la base de données.
+     * Cette clé peut être utilisée avec {@link #getProperty}.
+     */
+    public static final String DRIVER = "Driver";
+
+    /**
+     * Clé de la propriétée représentant la source des données.
+     * Cette clé peut être utilisée avec {@link #getProperty}.
+     */
+    public static final String SOURCE = "Sources";
+
+    /**
+     * Clé de la propriétée représentant le fuseau horaire de
+     * la base de données. Cette clé peut être utilisée avec
+     * {@link #getProperty}.
+     */
+    public static final String TIMEZONE = "TimeZone";
+
+    /**
+     * Source de la base de données.
+     */
+    private final String source;
+
+    /**
      * Connection vers la base de données. Cette connection
      * est établie au moment de la construction de cet objet.
      */
@@ -72,6 +97,7 @@ public abstract class DataBase
     {
         this.connection = DriverManager.getConnection(url);
         this.timezone   = timezone;
+        this.source     = url;
     }
 
     /**
@@ -89,6 +115,23 @@ public abstract class DataBase
     {
         this.connection = DriverManager.getConnection(url, user, password);
         this.timezone   = timezone;
+        this.source     = url;
+    }
+
+    /**
+     * Retourne une des propriétée de la base de données. La clé <code>name</code>
+     * est habituellement une des constantes {@link #DRIVER}, {@link #SOURCE} ou
+     * {@link #TIMEZONE}. Cette méthode retourne <code>null</code> si la propriété
+     * demandée n'est pas définie.
+     */
+    public String getProperty(final String name)
+    {
+        if (name!=null)
+        {
+            if (name.equalsIgnoreCase(SOURCE))   return source;
+            if (name.equalsIgnoreCase(TIMEZONE)) return timezone.getID();
+        }
+        return null;
     }
 
     /**

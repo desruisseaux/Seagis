@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import fr.ird.sql.DataBase;
 
 // Modèles (table et arborescence)
 import net.seas.awt.tree.Trees;
@@ -89,16 +90,6 @@ import fr.ird.resources.Resources;
 final class Main extends Console
 {
     /**
-     * Pilote par défaut.
-     */
-    static final String DRIVER = "sun.jdbc.odbc.JdbcOdbcDriver";
-
-    /**
-     * Source de données par défaut.
-     */
-    static final String SOURCE = "jdbc:odbc:SEAS-Images";
-
-    /**
      * Pilote utilisée.
      */
     private final String driver;
@@ -132,8 +123,8 @@ final class Main extends Console
         this.config   = hasFlag     ("-config");
         String driver = getParameter("-driver");
         String source = getParameter("-source");
-        if (driver==null) driver=Table.preferences.get("Driver", DRIVER); else Table.preferences.put("Driver", driver);
-        if (source==null) source=Table.preferences.get("Source", SOURCE); else Table.preferences.put("Source", source);
+        if (driver==null) driver=Table.getPreference(DataBase.DRIVER); else Table.preferences.put(DataBase.DRIVER, driver);
+        if (source==null) source=Table.getPreference(DataBase.SOURCE); else Table.preferences.put(DataBase.SOURCE, source);
         this.driver = driver;
         this.source = source;
     }
@@ -239,7 +230,7 @@ final class Main extends Console
         final JSplitPane   splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, treePane, tabbedPane);
 
         final TableCellRenderer renderer = new ImageTableModel.CellRenderer();
-        final ImageTable      imageTable = new ImageTableImpl(connection, TimeZone.getTimeZone("UTC"));
+        final ImageTable      imageTable = new ImageTableImpl(connection, TimeZone.getTimeZone(Table.getPreference(DataBase.TIMEZONE)));
         imageTable.setGeographicArea(new Rectangle(-180, -90, 360, 180));
         imageTable.setTimeRange(new Date(0), new Date());
         for (final Iterator<SeriesEntry> it=seriesTable.getSeries().iterator(); it.hasNext();)
