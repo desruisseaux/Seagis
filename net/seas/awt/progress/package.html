@@ -5,21 +5,16 @@
     <TITLE>package net.seas.awt.progress</TITLE>
   </HEAD>
   <BODY>
-    <P ALIGN="justify">Suivi des progrès d'une longue opération. La classe
-    {@link net.seas.awt.progress.Progress} sert de base à toutes les classes
-    de ce paquet qui informeront l'utilisateur des progrès d'une longue opération.
-    Cette information peut apparaître par exemple comme un pourcentage écrit sur
-    l'écran d'un terminal ({@link net.seas.awt.progress.PrintProgress}) ou sous
-    forme d'une barre des progrès dans une boîte de dialogue
-    ({@link net.seas.awt.progress.WindowProgress}).</P>
+    <P ALIGN="justify">A set of classes to monitor the progress of some operation.
+    Progress may be monitored through the classical progress bar in a window
+    ({@link net.seas.awt.progress.WindowProgress}), through percents written on the
+    standard output device ({@link net.seas.awt.progress.PrintProgress}), or as mail
+    reports send at fixed interval ({@link net.seas.awt.progress.MailProgress}).</P>
 
-    <P ALIGN="justify">Le JDK 1.2 offrait déjà une classe pour l'affichage des
-    progrès d'une longue opération: {@link javax.swing.ProgressMonitor}. Cette
-    classe standard n'est pas utilisée ici car elle n'offrait pas exactement
-    les fonctionnalités désirées. Une des fonctionnalités les plus importantes
-    de {@link net.seas.awt.progress.Progress} est la possibilité d'afficher des
-    messages d'avertissements. Cette possibilité est utilisée par exemple lorsque
-    l'on rencontre des erreurs durant le long processus, mais qui ne sont pas
-    assez graves pour l'interrompre.</P>
+    <P ALIGN="justify">A standard Java class already provides progress monitoring:
+    {@link javax.swing.ProgressMonitor}. However, this package provides some
+    supplemental facilities. 1) Progresses don't have to be monitored in a window
+    and 2) this package support displaying warnings (with line source line number)
+    or exception stack traces.</P>
   </BODY>
 </HTML>

@@ -5,6 +5,7 @@ package javax.units;
 
 // Miscellaneous
 import java.io.Serializable;
+import net.seas.util.WeakHashSet;
 
 
 /**
@@ -16,24 +17,35 @@ import java.io.Serializable;
 public final class Unit implements Serializable
 {
     /**
+     * Pool of units.
+     */
+    private static final WeakHashSet<Unit> pool=new WeakHashSet<Unit>();
+
+    /**
      * Base unit of time.
      */
-    public static final Unit SECOND = new Unit("s");
+    public static final Unit SECOND = pool.intern(new Unit("s"));
 
     /**
      * Base unit of length.
      */
-    public static final Unit METRE = new Unit("m");
+    public static final Unit METRE = pool.intern(new Unit("m"));
 
     /**
      * Unit of angle.
      */
-    public static final Unit DEGREE = new Unit("°");
+    public static final Unit DEGREE = pool.intern(new Unit("°"));
 
     /**
      * The unit's symbol.
      */
     private final String symbol;
+
+    /**
+     * Returns an unit instance.
+     */
+    public static Unit get(final String symbol)
+    {return pool.intern(new Unit(symbol));}
 
     /**
      * Don't allow instance creation, since

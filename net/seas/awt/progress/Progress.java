@@ -24,7 +24,6 @@ package net.seas.awt.progress;
 
 // Divers
 import net.seas.util.XClass;
-import java.util.EventListener;
 import javax.swing.ProgressMonitor; // Pour JavaDoc
 
 
@@ -65,7 +64,7 @@ import javax.swing.ProgressMonitor; // Pour JavaDoc
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public abstract class Progress implements EventListener
+public abstract class Progress
 {
     /**
      * Construit un objet qui représentera

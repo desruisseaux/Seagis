@@ -236,12 +236,12 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             for (int i=j+1; i<byIndex.length; i++)
             {
                 final Category check = byIndex[i];
-                if (!(categ.lower>=check.upper || categ.upper<check.lower)) // Do not accept NaN
+                if (!(categ.lower>=check.upper || categ.upper<=check.lower)) // Do not accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
                                                        new Integer(categ.lower), new Integer(categ.upper),
                                                        new Integer(check.lower), new Integer(check.upper)));
 
-                if (categ.minimum<check.maximum && categ.maximum>=check.minimum) // Accept NaN
+                if (categ.minimum<check.maximum && categ.maximum>check.minimum) // Accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
                                                        new Double(categ.minimum), new Double(categ.maximum),
                                                        new Double(check.minimum), new Double(check.maximum)));
