@@ -22,6 +22,10 @@
  */
 package net.seas.util;
 
+// Collections
+import java.util.List;
+import java.util.ArrayList;
+
 // References
 import java.lang.ref.WeakReference;
 import java.lang.ref.ReferenceQueue;
@@ -145,7 +149,7 @@ public class WeakHashSet<Element>
     /**
      * Capacité minimale de la table {@link #table}.
      */
-    private static final int MIN_CAPACITY = 17;
+    private static final int MIN_CAPACITY = 7;
 
     /**
      * Facteur servant à déterminer à
@@ -380,6 +384,27 @@ public class WeakHashSet<Element>
             for (WeakElement<Element> e=table[i]; e!=null; e=e.next)
                 n++;
         return n;
+    }
+
+    /**
+     * Returns a view of this set as an array. Elements will be in an arbitrary
+     * order. Note that this array contains strong reference.  Consequently, no
+     * object reclamation will occurs as long as a reference to this array is hold.
+     */
+    public synchronized Element[] toArray()
+    {
+        assert(count==count());
+        final Element[] elements = new Element[count];
+        int index = 0;
+        for (int i=0; i<table.length; i++)
+        {
+            for (WeakElement<Element> el=table[i]; el!=null; el=el.next)
+            {
+                if ((elements[index]=el.get()) != null)
+                    index++;
+            }
+        }
+        return XArray.resize(elements, index);
     }
 
     /**

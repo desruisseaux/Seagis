@@ -64,6 +64,7 @@ Longitude Latitude Altitude
 import {@link javax.media.jai.JAI javax.media.jai.JAI};
 import {@link javax.media.jai.ImageLayout javax.media.jai.ImageLayout};
 import {@link java.awt.RenderingHints java.awt.RenderingHints};
+import {@link java.awt.image.DataBuffer java.awt.image.DataBuffer};
 import {@link java.awt.image.IndexColorModel java.awt.image.IndexColorModel};
 import {@link java.awt.image.renderable.ParameterBlock java.awt.image.renderable.ParameterBlock};
 
@@ -90,7 +91,7 @@ final RenderingHints   hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
 final double C0 = ...
 final double C1 = ...
 image = JAI.create("Rescale", new ParameterBlock().addSource(image).add(new double[]{C1}).add(new double[]{C0}));
-image = JAI.create("Format",  new ParameterBlock().addSource(image), hints);
+image = JAI.create("Format",  new ParameterBlock().addSource(image).add(DataBuffer.TYPE_BYTE), hints);
 </FONT></PRE></TD></TR></TABLE>
 
   </BODY>

@@ -34,11 +34,15 @@ import net.seas.opengis.cs.AxisOrientation;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.DataBuffer;
+import java.awt.image.ColorModel;
+import java.awt.image.SampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
-import java.awt.image.WritableRaster;
-import java.awt.image.Raster;
+import javax.media.jai.TiledImage;
+import javax.media.jai.RasterFactory;
+import javax.media.jai.iterator.RectIterFactory;
+import javax.media.jai.iterator.WritableRectIter;
 
 // Geometry
 import java.awt.Shape;
@@ -59,7 +63,6 @@ import javax.media.jai.PropertySourceImpl;
 // Miscellaneous
 import java.util.Arrays;
 import java.util.Locale;
-import javax.media.jai.Histogram;
 import net.seas.resources.Resources;
 import net.seas.util.XArray;
 
@@ -287,41 +290,6 @@ public abstract class Coverage implements Dimensioned, PropertySource
     public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
 
     /**
-     * Determine the histogram of grid values for this coverage.
-     */
-    public Histogram getHistogram()
-    {
-        final List<SampleDimension> samples = getSampleDimensions();
-        final int dimension = samples.size();
-        final double[] minimum=new double[dimension];
-        final double[] maximum=new double[dimension];
-        Arrays.fill(minimum, Double.POSITIVE_INFINITY);
-        Arrays.fill(maximum, Double.NEGATIVE_INFINITY);
-        for (int i=0; i<dimension; i++)
-        {
-            final CategoryList categories = samples.get(i).getCategoryList();
-            if (categories!=null)
-            {
-                minimum[i] = categories.getMinimumValue();
-                maximum[i] = categories.getMaximumValue();
-            }
-        }
-        // TODO
-        return null;
-    }
-
-    /**
-     * Determine the histogram of grid values for this coverage.
-     *
-     * @param  miniumEntryValue Minimum value stored in the first histogram entry.
-     * @param  maximumEntryValue Maximum value stored in the last histogram entry.
-     * @param  numberEntries Number of entries in the histogram.
-     * @return The histogram.
-     */
-    public Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries)
-    {return null;}
-
-    /**
      * Returns 2D view of this grid coverage as a renderable image.
      * This method allows interoperability with Java2D.
      *
@@ -384,8 +352,9 @@ public abstract class Coverage implements Dimensioned, PropertySource
 
     /**
      * Base class for renderable image of a grid coverage.
-     * Renderable images allow interoperability with Java2D for a two-dimensional view
-     * of a coverage (which may or may not be a grid coverage).
+     * Renderable images allow interoperability with Java2D
+     * for a two-dimensional view of a coverage (which may
+     * or may not be a grid coverage).
      *
      * @version 1.0
      * @author Martin Desruisseaux
@@ -400,12 +369,12 @@ public abstract class Coverage implements Dimensioned, PropertySource
         /**
          * Dimension to use for <var>x</var> axis.
          */
-        private final int xAxis;
+        protected final int xAxis;
 
         /**
          * Dimension to use for <var>y</var> axis.
          */
-        private final int yAxis;
+        protected final int yAxis;
 
         /**
          * Construct a renderable image.
@@ -531,7 +500,9 @@ public abstract class Coverage implements Dimensioned, PropertySource
             final Shape                 area = context.getAreaOfInterest();
             final Rectangle2D        srcRect = (area!=null) ? area.getBounds2D() : bounds;
             final Rectangle          dstRect = (Rectangle) XAffineTransform.transform(transform, srcRect, new Rectangle());
-            final WritableRaster      raster = Raster.createBandedRaster(DataBuffer.TYPE_FLOAT, dstRect.width, dstRect.height, catg.size(), dstRect.getLocation());
+            final ColorModel      colorModel = catg.get(0).getCategoryList().getColorModel(true, catg.size());
+            final SampleModel    sampleModel = colorModel.createCompatibleSampleModel(512, 512);
+            final TiledImage           image = new TiledImage(dstRect.x, dstRect.y, dstRect.width, dstRect.height, 0, 0, sampleModel, colorModel);
             final CoordinatePoint coordinate = new CoordinatePoint(getDimension());
             final Point2D.Double     point2D = new Point2D.Double();
 
@@ -539,10 +510,12 @@ public abstract class Coverage implements Dimensioned, PropertySource
             final int ymin = dstRect.y;
             final int xmax = dstRect.x + dstRect.width;
             final int ymax = dstRect.y + dstRect.height;
-            final int numBands = raster.getNumBands();
+            final int numBands = image.getNumBands();
             final double[] samples=new double[numBands];
             final double[] padNaNs=new double[numBands];
             Arrays.fill(padNaNs, Double.NaN);
+
+            final WritableRectIter iterator = RectIterFactory.createWritable(image, dstRect);
             try
             {
                 for (int y=ymin; y<ymax; y++)
@@ -556,11 +529,16 @@ public abstract class Coverage implements Dimensioned, PropertySource
                         {
                             coordinate.ord[xAxis] = point2D.x;
                             coordinate.ord[yAxis] = point2D.y;
-                            raster.setPixel(x, y, evaluate(coordinate, samples));
+                            iterator.setPixel(evaluate(coordinate, samples));
                         }
-                        else raster.setPixel(x, y, padNaNs);
+                        else iterator.setPixel(padNaNs);
+                        iterator.nextPixel();
                     }
+                    assert(iterator.finishedPixels());
+                    iterator.startPixels();
+                    iterator.nextLine();
                 }
+                assert(iterator.finishedLines());
             }
             catch (NoninvertibleTransformException exception)
             {
@@ -568,9 +546,7 @@ public abstract class Coverage implements Dimensioned, PropertySource
                 e.initCause(exception);
                 throw e;
             }
-
-            // TODO: create RenderedImage from the Raster
-            throw new UnsupportedOperationException("Not implemented");
+            return image;
         }
 
         /**

@@ -24,7 +24,13 @@ package net.seas.opengis.cv;
 
 // Images
 import java.awt.Color;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
+import java.awt.image.ComponentColorModel;
+import javax.media.jai.RasterFactory;
 
 // Miscellaneous
 import javax.units.Unit;
@@ -34,8 +40,12 @@ import java.io.Serializable;
 import java.util.AbstractList;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
+import javax.media.jai.util.Range;
+
+// Miscellaneous
 import net.seas.util.XClass;
 import net.seas.util.XMath;
+import net.seas.util.WeakHashSet;
 import net.seas.resources.Resources;
 
 
@@ -123,11 +133,11 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     private transient FieldPosition dummy;
 
     /**
-     * Modèle de couleurs suggéré pour l'affichage des catégories. Ce modèle de couleurs
-     * sera construit à partir des couleurs qui ont été définies dans les différentes
+     * Modèles de couleurs suggérés pour l'affichage des catégories. Ces modèles de couleurs
+     * peuvent être construits à partir des couleurs qui ont été définies dans les différentes
      * catégories du tableau {@link #byIndex}.
      */
-    private transient IndexColorModel colors;
+    private transient WeakHashSet<ColorModel> colors;
 
     /**
      * Catégorie utilisée lors du dernier encodage ou décodage d'un pixel.  Avant de rechercher
@@ -308,47 +318,46 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {return unit;}
 
     /**
-     * Returns the minimal geophysics value (inclusive) allowed for this
-     * category list. This value is expressed in {@link #getUnits} units.
+     * Returns the range of values for this category list. The range is bounded by a
+     * lower (or minimal) inclusive value and an upper (or maximal) exclusive value.
+     * If <code>geophysicsValues</code> is <code>true</code>, then the returned range
+     * is expressed in {@link #getUnits} units. Otherwise, it is expressed as sample
+     * index.
+     *
+     * @param  geophysicsValues <code>true</code> for the range of geophysics values
+     *         <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         or <code>false</code> for the range of sample index
+     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     * @return The range of values, or <code>null</code> if this category list
+     *         has no category.
      */
-    final double getMinimumValue()
+    public Range getRange(final boolean geophysicsValues)
     {
-        assert(CategoryComparator.BY_VALUES.isSorted(byValues));
-        return (byValues.length!=0) ? byValues[0].minimum : Double.NaN;
-    }
-
-    /**
-     * Returns the maximal geophysics value (exclusive) allowed for this
-     * category list. This value is expressed in {@link #getUnits} units.
-     */
-    final double getMaximumValue()
-    {
-        assert(CategoryComparator.BY_VALUES.isSorted(byValues));
-        int max = byValues.length;
-        if (max!=0)
+        if (geophysicsValues)
         {
-            while (--max!=0 && Double.isNaN(byValues[max].maximum));
-            return byValues[max].maximum;
+            assert(CategoryComparator.BY_VALUES.isSorted(byValues));
+            int max = byValues.length;
+            if (max!=0)
+            {
+                while (--max!=0 && Double.isNaN(byValues[max].maximum));
+                final double minimum = byValues[0  ].minimum;
+                final double maximum = byValues[max].maximum;
+                assert(minimum <= maximum);
+                return new Range(Double.class, new Double(minimum), true, new Double(maximum), false);
+            }
         }
-        return Double.NaN;
-    }
-
-    /**
-     * Returns the minimal index value (inclusive) allowed for this category list.
-     */
-    final int getMinimumSample()
-    {
-        assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-        return (byIndex.length!=0) ? byIndex[0].lower : 0;
-    }
-
-    /**
-     * Returns the maximal sample value (exclusive) allowed for this category list.
-     */
-    final int getMaximumSample()
-    {
-        assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-        return (byIndex.length!=0) ? byIndex[byIndex.length-1].upper : 0;
+        else
+        {
+            assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
+            if (byIndex.length!=0)
+            {
+                final int lower = byIndex[0].lower;
+                final int upper = byIndex[byIndex.length-1].upper;
+                assert(lower < upper);
+                return new Range(Integer.class, new Integer(lower), true, new Integer(upper), false);
+            }
+        }
+        return null;
     }
 
     /**
@@ -596,19 +605,72 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Returns a color model for this category list. The default implementation
-     * build up the color model from each category's colors (as returned by
-     * {@link Category#getColors}).
+     * may build up the color model from each category's colors (as returned by
+     * {@link Category#getColors}). The returned color model will use data type
+     * {@link DataBuffer#TYPE_FLOAT} for geophysical values, or an integer data
+     * type for sample index.
+     *
+     * @param  geophysicsValues <code>true</code> to request a color model applicable to geophysics
+     *         values <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         or <code>false</code> to request a color model applicable to sample index
+     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     * @return The requested color model.
      */
-    final synchronized IndexColorModel getIndexColorModel()
+    public ColorModel getColorModel(final boolean geophysicsValue)
+    {return getColorModel(geophysicsValue, 1);}
+
+    /**
+     * Returns a color model for this category list. The default implementation
+     * may build up the color model from each category's colors (as returned by
+     * {@link Category#getColors}). The returned color model will use data type
+     * {@link DataBuffer#TYPE_FLOAT} for geophysical values, or an integer data
+     * type for sample index.
+     *
+     * @param  geophysicsValues <code>true</code> to request a color model applicable to geophysics
+     *         values <code>[{@link Cateogory#minimum}..{@link Cateogory#maximum}]</code>,
+     *         or <code>false</code> to request a color model applicable to sample index
+     *         <code>[{@link Cateogory#lower}..{@link Cateogory#upper}]</code>.
+     * @param  numBands The number of bands for the color model.  The returned color model may
+     *         take in account only the first band and ignore the others, but the existence of
+     *         all <code>numBands</code> will be at least tolerated.  Supplemental bands, even
+     *         invisible, are useful for processing with Java Advanced Imaging.
+     * @return The requested color model.
+     */
+    final synchronized ColorModel getColorModel(final boolean geophysicsValue, final int numBands)
     {
-        if (colors==null)
+        // Look in the cache for an existing color model. Note: this implementation
+        // is not efficient! However, we should have very few color models (usually
+        // no more than 2), so this implementation still acceptable.
+        if (colors!=null)
         {
+            final ColorModel[] models = colors.toArray();
+            for (int i=0; i<models.length; i++)
+            {
+                final ColorModel model = models[i];
+                if (model.getNumComponents()==numBands)
+                    if ((model.getTransferType()==DataBuffer.TYPE_FLOAT) == geophysicsValue)
+                        return model;
+            }
+        }
+        final ColorModel model;
+        if (geophysicsValue)
+        {
+            final ColorSpace colors = new ScaledColorSpace(numBands, getRange(true));
+            model = RasterFactory.createComponentColorModel(DataBuffer.TYPE_FLOAT, colors, false, false, Transparency.OPAQUE);
+        }
+        else
+        {
+            if (numBands!=1)
+            {
+                // TODO: support 2, 3, 4... bands
+                throw new UnsupportedOperationException(String.valueOf(numBands));
+            }
             if (byIndex.length==0)
             {
                 // Construct a gray scale palette.
                 final byte[] RGB = new byte[256];
                 for (int i=0; i<RGB.length; i++) RGB[i] = (byte)i;
-                colors = new IndexColorModel(8, RGB.length, RGB, RGB, RGB);
+                model = new IndexColorModel(8, RGB.length, RGB, RGB, RGB);
             }
             else
             {
@@ -628,10 +690,15 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                     final Category category = byIndex[i];
                     PaletteFactory.expand(category.getColors(), ARGB, Math.round(category.lower), Math.round(category.upper));
                 }
-                colors = PaletteFactory.getIndexColorModel(ARGB);
+                model = PaletteFactory.getIndexColorModel(ARGB);
             }
         }
-        return colors;
+        // Cache and returns the color model
+        if (colors==null)
+        {
+            colors = new WeakHashSet<ColorModel>();
+        }
+        return colors.intern(model);
     }
 
     /**
@@ -679,15 +746,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     public String toString()
     {
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        StringBuffer buffer = new StringBuffer(XClass.getShortClassName(this));
+        final Range   range = getRange(true);
         buffer.append('[');
-        final double minimum = getMinimumValue();
-        final double maximum = getMaximumValue();
-        if (minimum < maximum)
+        if (range!=null)
         {
-            buffer=format(minimum, false, null, buffer);
+            buffer=format(((Number)range.getMinValue()).doubleValue(), false, null, buffer);
             buffer.append("..");
-            buffer=format(maximum, true,  null, buffer);
+            buffer=format(((Number)range.getMaxValue()).doubleValue(), true,  null, buffer);
         }
         else if (unit!=null)
         {

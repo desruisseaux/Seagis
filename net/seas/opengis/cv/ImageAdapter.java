@@ -29,8 +29,10 @@ import javax.media.jai.TileCache;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.PointOpImage;
-import java.awt.image.RenderedImage;
+import javax.media.jai.RasterFactory;
 import java.awt.image.WritableRaster;
+import java.awt.image.RenderedImage;
+import java.awt.image.ColorModel;
 
 
 /**
@@ -67,6 +69,25 @@ abstract class ImageAdapter extends PointOpImage
             throw new IllegalArgumentException(String.valueOf(categories.length)+"!="+numBands);
         }
         permitInPlaceOperation();
+    }
+
+    /**
+     * Returns the destination image layout.
+     *
+     * @param  image The source image.
+     * @param  categories Category list.
+     * @param  geophysicsValue <code>true</code> if destination will contains geophysics values.
+     * @return Layout for the destination image.
+     */
+    protected static ImageLayout getLayout(final RenderedImage image, final CategoryList categories, final boolean geophysicsValue)
+    {
+        ImageLayout layout = new ImageLayout(image);
+        if (image.getNumXTiles()==1 && image.getNumYTiles()==1)
+        {
+            layout = layout.unsetTileLayout(); // Lets JAI choose a default tile size.
+        }
+        final ColorModel colors = categories.getColorModel(geophysicsValue, image.getSampleModel().getNumBands());
+        return layout.setSampleModel(colors.createCompatibleSampleModel(image.getWidth(), image.getHeight())).setColorModel(colors);
     }
 
     /**

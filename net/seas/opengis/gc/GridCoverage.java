@@ -40,6 +40,7 @@ import java.awt.image.renderable.ParameterBlock;
 // Java Advanced Imaging
 import javax.media.jai.JAI;
 import javax.media.jai.Warp;
+import javax.media.jai.Histogram;
 import javax.media.jai.ImageMIPMap;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.GraphicsJAI;
@@ -47,6 +48,7 @@ import javax.media.jai.Interpolation;
 import javax.media.jai.InterpolationNearest;
 import javax.media.jai.iterator.RectIterFactory;
 import javax.media.jai.iterator.RectIter;
+import javax.media.jai.util.Range;
 
 // Geometry
 import java.awt.Point;
@@ -75,9 +77,9 @@ import java.awt.event.WindowAdapter;
 
 // Miscellaneous
 import java.util.Date;
+import java.util.Arrays;
 import java.text.DateFormat;
 import java.text.FieldPosition;
-import javax.media.jai.Histogram;
 import net.seas.awt.ExceptionMonitor;
 import net.seas.util.XClass;
 
@@ -401,12 +403,41 @@ public abstract class GridCoverage extends Coverage
 //  }
 
     /**
-     * Determine the histogram of the grid values for this coverage.
+     * Determine the histogram of grid values for this coverage.
+     */
+    public Histogram getHistogram()
+    {
+        final List<SampleDimension> samples = getSampleDimensions();
+        final int    dimension = samples.size();
+        final double[] minimum = new double[dimension];
+        final double[] maximum = new double[dimension];
+        Arrays.fill(minimum, Double.POSITIVE_INFINITY);
+        Arrays.fill(maximum, Double.NEGATIVE_INFINITY);
+        for (int i=0; i<dimension; i++)
+        {
+            final CategoryList categories = samples.get(i).getCategoryList();
+            if (categories!=null)
+            {
+                final Range range = categories.getRange(true);
+                if (range!=null)
+                {
+                    minimum[i] = ((Number)range.getMinValue()).doubleValue();
+                    maximum[i] = ((Number)range.getMaxValue()).doubleValue();
+                }
+            }
+        }
+        // TODO
+        return null;
+    }
+
+    /**
+     * Determine the histogram of grid values for this coverage.
      *
      * @param  miniumEntryValue Minimum value stored in the first histogram entry.
      * @param  maximumEntryValue Maximum value stored in the last histogram entry.
      * @param  numberEntries Number of entries in the histogram.
      * @return The histogram.
      */
-    public abstract Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries);
+    public Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries)
+    {return null;}
 }

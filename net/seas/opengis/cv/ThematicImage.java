@@ -27,7 +27,7 @@ import javax.media.jai.ImageLayout;
 import javax.media.jai.PlanarImage;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
-import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
 
 // Divers
 import java.util.Arrays;
@@ -79,31 +79,7 @@ final class ThematicImage extends ImageAdapter
      * @param categories Ensemble des catégories qui donnent une signification aux pixels de l'image.
      */
     private ThematicImage(final RenderedImage image, final CategoryList[] categories)
-    {super(image, getLayout(image, categories), categories);}
-
-    /**
-     * Returns the destination image layout.
-     *
-     * @param  image The source image.
-     * @param  categories Category lists.
-     * @return Layout for the destination image.
-     */
-    private static ImageLayout getLayout(final RenderedImage image, final CategoryList[] categories)
-    {
-        final IndexColorModel colors;
-        switch (categories.length)
-        {
-            default: throw new UnsupportedOperationException(String.valueOf(categories.length));
-            case 1:  colors = categories[0].getIndexColorModel(); break;
-            // TODO: support 2, 3, 4... bands
-        }
-        ImageLayout layout = new ImageLayout(image);
-        if (image.getNumXTiles()==1 && image.getNumYTiles()==1)
-        {
-            layout = layout.unsetTileLayout(); // Lets JAI choose a default tile size.
-        }
-        return layout.setSampleModel(colors.createCompatibleSampleModel(image.getWidth(), image.getHeight())).setColorModel(colors);
-    }
+    {super(image, getLayout(image, categories[0], false), categories);}
 
     /**
      * Retourne l'image qui contient les données sous forme de nombres réels.

@@ -184,11 +184,10 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne les méta-données associées à une image en particulier. Etant donné
-     * que les fichiers de données brutes ne contiennent généralement pas de
-     * méta-données, l'implémentation par défaut retourne toujours <code>null</code>.
+     * Returns metadata associated with the given image. Since many raw images
+     * can't store metadata, the default implementation returns <code>null</code>.
      *
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     * @throws IOException if an error occurs during reading.
      */
     public IIOMetadata getImageMetadata(int imageIndex) throws IOException
     {
@@ -197,11 +196,10 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne les méta-données associées à l'ensemble du fichier. Etant donné
-     * que les fichiers de données brutes ne contiennent généralement pas de
-     * méta-données, l'implémentation par défaut retourne toujours <code>null</code>.
+     * Returns metadata associated with the input source as a whole. Since many raw images
+     * can't store metadata, the default implementation returns <code>null</code>.
      *
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     * @throws IOException if an error occurs during reading.
      */
     public IIOMetadata getStreamMetadata() throws IOException
     {return null;}

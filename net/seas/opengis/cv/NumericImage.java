@@ -25,12 +25,13 @@ package net.seas.opengis.cv;
 // Image
 import javax.media.jai.ImageLayout;
 import javax.media.jai.PlanarImage;
-import javax.media.jai.ComponentSampleModelJAI;
+import javax.media.jai.RasterFactory;
 
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.SampleModel;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 
 // Divers
@@ -80,43 +81,7 @@ final class NumericImage extends ImageAdapter
      * @param categories Ensemble des catégories qui donnent une signification aux pixels de l'image.
      */
     private NumericImage(final RenderedImage image, final CategoryList[] categories)
-    {super(image, getLayout(image), categories);}
-
-    /**
-     * Returns the destination image layout.
-     *
-     * @param  image The source image.
-     * @return Layout for the destination image.
-     */
-    private static ImageLayout getLayout(final RenderedImage image)
-    {
-        final int width    = image.getWidth();
-        final int height   = image.getHeight();
-        final int numBands = image.getSampleModel().getNumBands();
-        // Construit un modèle {@link SampleModel}
-        // capable de mémoriser des nombres réels.
-        final SampleModel sampleModel;
-        if (false)
-        {
-            sampleModel = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, numBands);
-        }
-        else
-        {
-            final int[] bankIndices = new int[numBands];
-            final int[] bandOffsets = new int[numBands];
-            for (int i=0; i<bankIndices.length; i++) bankIndices[i]=i;
-            sampleModel = new ComponentSampleModelJAI(DataBuffer.TYPE_FLOAT, width, height, 1, width, bankIndices, bandOffsets);
-            // Java Advanced Imaging ne connait pas les nouveaux DataBufferFloat du JDK 1.4.
-            // On est obligé d'utiliser la classe adaptée de JAI.
-        }
-        ImageLayout layout = new ImageLayout(image);
-        if (image.getNumXTiles()==1 && image.getNumYTiles()==1)
-        {
-            layout = layout.unsetTileLayout(); // Lets JAI choose a default tile size.
-        }
-        return layout.setSampleModel(sampleModel).setColorModel(createColorModel(sampleModel));
-        // TODO: we should choose a better color model than PlanarImage.createColorModel(...).
-    }
+    {super(image, getLayout(image, categories[0], true), categories);}
 
     /**
      * Retourne l'image qui contient les données sous forme de nombres réels.
