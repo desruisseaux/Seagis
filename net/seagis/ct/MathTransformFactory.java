@@ -193,7 +193,7 @@ public class MathTransformFactory
          * If the user is requesting a 2D transform, delegate to the
          * highly optimized java.awt.geom.AffineTransform class.
          */
-        if (matrix.getSize()==3 && matrix.isAffine())
+        if (matrix.getNumRows()==3 && matrix.isAffine()) // Affine transform are square.
         {
             return createAffineTransform(matrix.toAffineTransform2D());
         }

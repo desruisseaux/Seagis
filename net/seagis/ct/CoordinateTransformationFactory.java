@@ -184,7 +184,10 @@ public class CoordinateTransformationFactory
 
         // Convert units (Optimized case where the conversion
         // can be applied right into the AffineTransform).
-        final int dimension = matrix.getSize()-1;
+        final int dimension = matrix.getNumRows()-1;
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert dimension == matrix.getNumColumns()-1;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         for (int i=0; i<dimension; i++)
         {
             // TODO: check if units conversion is really linear.
@@ -226,7 +229,7 @@ public class CoordinateTransformationFactory
                 final Unit              unit = targetCS.getUnits(i);
                 final double sourceLongitude = sourceCS.getPrimeMeridian().getLongitude(unit);
                 final double targetLongitude = targetCS.getPrimeMeridian().getLongitude(unit);
-                final int   lastMatrixColumn = matrix.getSize()-1;
+                final int   lastMatrixColumn = matrix.getNumColumns()-1;
                 double rotate = targetLongitude - sourceLongitude;
                 if (AxisOrientation.WEST.equals(orientation)) rotate = -rotate;
                 matrix.set(i, lastMatrixColumn, matrix.get(i, lastMatrixColumn)-rotate);

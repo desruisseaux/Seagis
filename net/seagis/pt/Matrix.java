@@ -61,7 +61,7 @@ import net.seagis.resources.css.ResourceKeys;
  * class, the <A HREF="http://math.nist.gov/javanumerics/jama/">Jama matrix</A>,
  * <A HREF="http://jcp.org/jsr/detail/83.jsp">JSR-83 Multiarray package</A>, etc.).
  * It is not clear at this time how this <code>Matrix</code> class
- * will interoperate with those other matrix types.
+ * will leverage their work or interoperate with those other matrix types.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -78,7 +78,7 @@ public final class Matrix implements Cloneable, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 1738552446018677791L;
+    private static final long serialVersionUID = -5179250712400337217L;
 
     /**
      * Elements of the matrix. Column indice vary fastest.
@@ -86,24 +86,39 @@ public final class Matrix implements Cloneable, Serializable
     private final double[] elt;
 
     /**
-     * The matrix size. Since the matrix is square,
-     * the number of rows and the number of columns
-     * are both equals to <code>size</code>.
+     * the number of rows.
      */
-    private final int size;
+    private final int rows;
+
+    /**
+     * the number of columns.
+     */
+    private final int columns;
 
     /**
      * Construct a square matrix of size
-     * <code>size</code>&nbsp;x&nbsp;<code>size</code>.
+     * <code>size</code>&nbsp;&times;&nbsp;<code>size</code>.
      */
     public Matrix(final int size)
+    {this(size,size);}
+
+    /**
+     * Construct a matrix of size
+     * <code>rows</code>&nbsp;&times;&nbsp;<code>columns</code>.
+     */
+    public Matrix(final int rows, final int columns)
     {
-        if (size>=0)
+        if (rows < 0)
         {
-            this.size = size;
-            this.elt  = new double[size*size];
+            throw new NegativeArraySizeException(String.valueOf(rows));
         }
-        else throw new NegativeArraySizeException(String.valueOf(size));
+        if (columns < 0)
+        {
+            throw new NegativeArraySizeException(String.valueOf(columns));
+        }
+        this.rows    = rows;
+        this.columns = columns;
+        this.elt     = new double[rows*columns];
     }
 
     /**
@@ -112,31 +127,36 @@ public final class Matrix implements Cloneable, Serializable
      */
     public Matrix(final AffineTransform transform)
     {
-        size = 3;
+        rows = columns = 3;
         elt  = new double[]
         {
             transform.getScaleX(), transform.getShearX(), transform.getTranslateX(),
             transform.getShearY(), transform.getScaleY(), transform.getTranslateY(),
                                 0,                     0,                         1
         };
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert isAffine();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
     /**
      * Constructs a new matrix from a two-dimensional array of doubles.
      *
-     * @throws IllegalArgumentException if the specified matrix is not square.
+     * @throws IllegalArgumentException if the specified matrix is not regular
+     *         (i.e. if all rows doesn't have the same length).
      */
     public Matrix(final double[][] matrix) throws IllegalArgumentException
     {
-        size = matrix.length;
-        elt  = new double[size*size];
-        for (int j=0; j<size; j++)
+        rows    = matrix.length;
+        columns = (rows!=0) ? matrix[0].length : 0;
+        elt     = new double[rows*columns];
+        for (int j=0; j<rows; j++)
         {
-            if (matrix[j].length!=size)
+            if (matrix[j].length!=columns)
             {
-                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MATRIX_NOT_SQUARE));
+                throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_MATRIX_NOT_REGULAR));
             }
-            System.arraycopy(matrix[j], 0, elt, j*size, size);
+            System.arraycopy(matrix[j], 0, elt, j*columns, columns);
         }
     }
 
@@ -172,8 +192,8 @@ public final class Matrix implements Cloneable, Serializable
             srcRegion.ensureDimensionMatch(dimension);
             dstRegion.ensureDimensionMatch(dimension);
         }
-        this.size = dimension+1;
-        this.elt  = new double[size*size];
+        rows = columns = dimension+1;
+        elt  = new double[rows*columns];
         /*
          * Map source axis to destination axis.  If no axis is moved (for example if the user
          * want to transform (NORTH,EAST) to (SOUTH,EAST)), then source and destination index
@@ -221,6 +241,9 @@ public final class Matrix implements Cloneable, Serializable
             }
         }
         set(dimension, dimension, 1);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert isAffine();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
     /**
@@ -259,6 +282,9 @@ public final class Matrix implements Cloneable, Serializable
             matrix.set(i, dimension, translate);
         }
         matrix.set(dimension, dimension, 1);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert matrix.isAffine();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return matrix;
     }
 
@@ -281,12 +307,16 @@ public final class Matrix implements Cloneable, Serializable
     {return new Matrix(srcRegion, srcAxis, dstRegion, dstAxis, true);}
 
     /**
-     * Returns the size of this matrix. Since the matrix is square,
-     * the number of rows and the number of columns are both equals
-     * to <code>size</code>.
+     * Returns the number of rows in this matrix.
      */
-    public int getSize()
-    {return size;}
+    public int getNumRows()
+    {return rows;}
+
+    /**
+     * Returns the number of columns in this matrix.
+     */
+    public int getNumColumns()
+    {return columns;}
 
     /**
      * Returns a matrix element.
@@ -297,9 +327,9 @@ public final class Matrix implements Cloneable, Serializable
      */
     public double get(final int j, final int i)
     {
-        if (j<0 || j>=size) throw new IndexOutOfBoundsException(String.valueOf(j));
-        if (i<0 || i>=size) throw new IndexOutOfBoundsException(String.valueOf(i));
-        return elt[j*size+i];
+        if (j<0 || j>=rows)    throw new IndexOutOfBoundsException(String.valueOf(j));
+        if (i<0 || i>=columns) throw new IndexOutOfBoundsException(String.valueOf(i));
+        return elt[j*columns+i];
     }
 
     /**
@@ -311,9 +341,42 @@ public final class Matrix implements Cloneable, Serializable
      */
     public void set(final int j, final int i, final double value)
     {
-        if (j<0 || j>=size) throw new IndexOutOfBoundsException(String.valueOf(j));
-        if (i<0 || i>=size) throw new IndexOutOfBoundsException(String.valueOf(i));
-        elt[j*size+i] = value;
+        if (j<0 || j>=rows)    throw new IndexOutOfBoundsException(String.valueOf(j));
+        if (i<0 || i>=columns) throw new IndexOutOfBoundsException(String.valueOf(i));
+        elt[j*columns+i] = value;
+    }
+
+    /**
+     * Copies a sub-matrix derived from this matrix into the target matrix.
+     * The upper left of the sub-matrix is located at (<code>rowSource</code>, <code>colSource</code>);
+     * The sub-matrix is copied into the the target matrix starting at (<code>rowDest</code>, <code>colDest</code>).
+     *
+     * @param rowSource The top-most row of the sub-matrix
+     * @param colSource The left-most column of the sub-matrix
+     * @param numRow    The number of rows in the sub-matrix
+     * @param numCol    The number of columns in the sub-matrix
+     * @param rowDest   The top-most row of the position of the copied sub-matrix within the target matrix
+     * @param colDest   The left-most column of the position of the copied sub-matrix within the target matrix
+     * @param target    The matrix into which the sub-matrix will be copied
+     */
+    public void copySubMatrix(int rowSource, final int colSource,
+                              int numRow,    final int numCol,
+                              int rowDest,   final int colDest, final Matrix target)
+    {
+        if (numRow<0 || numCol<0 || rowSource<0 || colSource<0 || rowDest<0 || colDest<0 ||
+            rowSource + numRow >   this.rows || colSource + numCol >   this.columns ||
+            rowDest   + numRow > target.rows || colDest   + numCol > target.columns)
+        {
+            throw new IllegalArgumentException();
+        }
+        rowSource = rowSource * this.columns + colSource;
+        rowDest   = rowDest * target.columns + colDest;
+        while (--numRow >= 0)
+        {
+            System.arraycopy(elt, rowSource, target.elt, rowDest, numCol);
+            rowSource += this.columns;
+            rowDest += target.columns;
+        }
     }
 
     /**
@@ -327,24 +390,27 @@ public final class Matrix implements Cloneable, Serializable
      */
     public double[][] getElements()
     {
-        final double[][] matrix = new double[size][];
-        for (int j=0; j<size; j++)
+        final double[][] matrix = new double[rows][];
+        for (int j=0; j<rows; j++)
         {
-            matrix[j] = new double[size];
-            System.arraycopy(elt, j*size, matrix[j], 0, size);
+            matrix[j] = new double[columns];
+            System.arraycopy(elt, j*columns, matrix[j], 0, columns);
         }
         return matrix;
     }
 
     /**
      * Returns <code>true</code> if this matrix is an affine transform.
-     * A transform is affine if the last row contains only zeros, except
-     * in the last column which contains 1.
+     * A transform is affine if the matrix is square and last row contains
+     * only zeros, except in the last column which contains 1.
      */
     public boolean isAffine()
     {
-        final int dimension=size-1;
-        int index = dimension*size;
+        if (rows != columns)
+            return false;
+
+        final int dimension=rows-1;
+        int index = dimension*rows;
         for (int i=0; i<=dimension; i++)
             if (elt[index++] != (i==dimension ? 1 : 0))
                 return false;
@@ -356,11 +422,17 @@ public final class Matrix implements Cloneable, Serializable
      */
     public boolean isIdentity()
     {
+        if (rows != columns)
+            return false;
+
         int index=0;
-        for (int j=0; j<size; j++)
-            for (int i=0; i<size; i++)
+        for (int j=0; j<rows; j++)
+            for (int i=0; i<columns; i++)
                 if (elt[index++] != (i==j ? 1 : 0))
                     return false;
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert isAffine();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
         return true;
     }
 
@@ -370,23 +442,23 @@ public final class Matrix implements Cloneable, Serializable
      */
     public Matrix multiply(final Matrix matrix)
     {
-        if (size!=matrix.size)
+        if (columns != matrix.rows)
         {
             throw new IllegalArgumentException();
         }
         int index0 = 0;
-        final Matrix dest = new Matrix(size);
-        for (int j=0; j<size; j++)
+        final Matrix dest = new Matrix(rows, matrix.columns);
+        for (int j=0; j<rows; j++)
         {
-            for (int i=0; i<size; i++)
+            for (int i=0; i<matrix.columns; i++)
             {
-                int index1 = j*size;
+                int index1 = j*columns;
                 int index2 = i;
                 double sum = 0;
-                for (int k=0; k<size; k++)
+                for (int k=0; k<columns; k++)
                 {
                     sum    += elt[index1++] * matrix.elt[index2];
-                    index2 += size;
+                    index2 += matrix.columns;
                 }
                 dest.elt[index0++] = sum;
             }
@@ -395,84 +467,156 @@ public final class Matrix implements Cloneable, Serializable
     }
 
     /**
-     * Transforms an array of floating point coordinates by this matrix.
-     * The two coordinate array sections can be exactly the same or can
-     * be overlapping sections of the same array without affecting the
-     * validity of the results.
+     * Transforms an array of floating point coordinates by this matrix. Point coordinates
+     * must have a dimension equals to <code>{@link #getNumColumns}-1</code>. For example,
+     * for square matrix of size 4&times;4, coordinate points are three-dimensional and
+     * stored in the arrays starting at the specified offset (<code>srcOff</code>) in the order
+     * <code>[x<sub>0</sub>, y<sub>0</sub>, z<sub>0</sub>,
+     *        x<sub>1</sub>, y<sub>1</sub>, z<sub>1</sub>...,
+     *        x<sub>n</sub>, y<sub>n</sub>, z<sub>n</sub>]</code>.
+     *
+     * The transformed points <code>(x',y',z')</code> are computed as below
+     * (note that this computation is similar to {@link PerspectiveTransform}):
+     *
+     * <blockquote><pre>
+     * [ u ]     [ m<sub>00</sub>  m<sub>01</sub>  m<sub>02</sub>  m<sub>03</sub> ] [ x ]
+     * [ v ]  =  [ m<sub>10</sub>  m<sub>11</sub>  m<sub>12</sub>  m<sub>13</sub> ] [ y ]
+     * [ w ]     [ m<sub>20</sub>  m<sub>21</sub>  m<sub>22</sub>  m<sub>23</sub> ] [ z ]
+     * [ t ]     [ m<sub>30</sub>  m<sub>31</sub>  m<sub>32</sub>  m<sub>33</sub> ] [ 1 ]
+     *
+     *   x' = u/t
+     *   y' = v/t
+     *   y' = w/t
+     * </pre></blockquote>
      *
      * @param srcPts The array containing the source point coordinates.
      * @param srcOff The offset to the first point to be transformed in the source array.
      * @param dstPts The array into which the transformed point coordinates are returned.
-     * @param dstOff The offset to the location of the first transformed point that is stored in the destination array.
+     * @param dstOff The offset to the location of the first transformed point that is stored
+     *               in the destination array. The source and destination array sections can
+     *               be overlaps.
      * @param numPts The number of points to be transformed
      */
     public void transform(float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
     {
-        final int size = this.size-1; // The last ordinate will be assumed 1.
-        if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
+        final int  inputDimension = columns-1; // The last ordinate will be assumed equals to 1.
+        final int outputDimension = rows-1;
+        final double[]     buffer = new double[rows];
+        if (srcPts==dstPts)
         {
-            // If source overlaps destination  (taking in account the 'size' elements of
-            // 'srcPts' that need to be read many times), then the easiest workaround is
-            // to copy source data. This is not the most efficient however...
-            srcPts = new float[numPts*size];
-            System.arraycopy(dstPts, srcOff, srcPts, 0, numPts*size);
-            srcOff = 0;
+            // We are going to write in the source array. Checks if
+            // source and destination sections are going to clash.
+            final int upperSrc = srcOff + numPts*inputDimension;
+            if (upperSrc > dstOff)
+            {
+                if (inputDimension >= outputDimension ? dstOff > srcOff :
+                              dstOff + numPts*outputDimension > upperSrc)
+                {
+                    // If source overlaps destination, then the easiest workaround is
+                    // to copy source data. This is not the most efficient however...
+                    srcPts = new float[numPts*inputDimension];
+                    System.arraycopy(dstPts, srcOff, srcPts, 0, srcPts.length);
+                    srcOff = 0;
+                }
+            }
         }
         while (--numPts>=0)
         {
             int mix=0;
-            for (int j=0; j<size; j++)
+            for (int j=0; j<rows; j++)
             {
-                double sum=elt[mix+size];
-                for (int i=0; i<size; i++)
+                double sum=elt[mix + inputDimension];
+                for (int i=0; i<inputDimension; i++)
                 {
                     sum += srcPts[srcOff+i]*elt[mix++];
                 }
-                dstPts[dstOff++] = (float) sum;
+                buffer[j] = sum;
                 mix++;
             }
-            srcOff += size;
+            final double w = buffer[outputDimension];
+            for (int j=0; j<outputDimension; j++)
+            {
+                // 'w' is equals to 1 if the transform is affine.
+                dstPts[dstOff++] = (float) (buffer[j]/w);
+            }
+            srcOff += inputDimension;
         }
     }
 
     /**
-     * Transforms an array of floating point coordinates by this matrix.
-     * The two coordinate array sections can be exactly the same or can
-     * be overlapping sections of the same array without affecting the
-     * validity of the results.
+     * Transforms an array of floating point coordinates by this matrix. Point coordinates
+     * must have a dimension equals to <code>{@link #getNumColumns}-1</code>. For example,
+     * for square matrix of size 4&times;4, coordinate points are three-dimensional and
+     * stored in the arrays starting at the specified offset (<code>srcOff</code>) in the order
+     * <code>[x<sub>0</sub>, y<sub>0</sub>, z<sub>0</sub>,
+     *        x<sub>1</sub>, y<sub>1</sub>, z<sub>1</sub>...,
+     *        x<sub>n</sub>, y<sub>n</sub>, z<sub>n</sub>]</code>.
+     *
+     * The transformed points <code>(x',y',z')</code> are computed as below
+     * (note that this computation is similar to {@link PerspectiveTransform}):
+     *
+     * <blockquote><pre>
+     * [ u ]     [ m<sub>00</sub>  m<sub>01</sub>  m<sub>02</sub>  m<sub>03</sub> ] [ x ]
+     * [ v ]  =  [ m<sub>10</sub>  m<sub>11</sub>  m<sub>12</sub>  m<sub>13</sub> ] [ y ]
+     * [ w ]     [ m<sub>20</sub>  m<sub>21</sub>  m<sub>22</sub>  m<sub>23</sub> ] [ z ]
+     * [ t ]     [ m<sub>30</sub>  m<sub>31</sub>  m<sub>32</sub>  m<sub>33</sub> ] [ 1 ]
+     *
+     *   x' = u/t
+     *   y' = v/t
+     *   y' = w/t
+     * </pre></blockquote>
      *
      * @param srcPts The array containing the source point coordinates.
      * @param srcOff The offset to the first point to be transformed in the source array.
      * @param dstPts The array into which the transformed point coordinates are returned.
-     * @param dstOff The offset to the location of the first transformed point that is stored in the destination array.
+     * @param dstOff The offset to the location of the first transformed point that is stored
+     *               in the destination array. The source and destination array sections can
+     *               be overlaps.
      * @param numPts The number of points to be transformed
      */
     public void transform(double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
     {
-        final int size = this.size-1; // The last ordinate will be assumed 1.
-        if (srcPts==dstPts && srcOff-size<dstOff && (srcOff+numPts*size)>dstOff)
+        final int  inputDimension = columns-1; // The last ordinate will be assumed equals to 1.
+        final int outputDimension = rows-1;
+        final double[]     buffer = new double[rows];
+        if (srcPts==dstPts)
         {
-            // If source overlaps destination  (taking in account the 'size' elements of
-            // 'srcPts' that need to be read many times), then the easiest workaround is
-            // to copy source data. This is not the most efficient however...
-            srcPts = new double[numPts*size];
-            System.arraycopy(dstPts, srcOff, srcPts, 0, numPts*size);
-            srcOff = 0;
+            // We are going to write in the source array. Checks if
+            // source and destination sections are going to clash.
+            final int upperSrc = srcOff + numPts*inputDimension;
+            if (upperSrc > dstOff)
+            {
+                if (inputDimension >= outputDimension ? dstOff > srcOff :
+                              dstOff + numPts*outputDimension > upperSrc)
+                {
+                    // If source overlaps destination, then the easiest workaround is
+                    // to copy source data. This is not the most efficient however...
+                    srcPts = new double[numPts*inputDimension];
+                    System.arraycopy(dstPts, srcOff, srcPts, 0, srcPts.length);
+                    srcOff = 0;
+                }
+            }
         }
         while (--numPts>=0)
         {
             int mix=0;
-            for (int j=0; j<size; j++)
+            for (int j=0; j<rows; j++)
             {
-                double sum=elt[mix+size];
-                for (int i=0; i<size; i++)
+                double sum=elt[mix + inputDimension];
+                for (int i=0; i<inputDimension; i++)
                 {
                     sum += srcPts[srcOff+i]*elt[mix++];
                 }
-                dstPts[dstOff++] = sum;
+                buffer[j] = sum;
                 mix++;
             }
-            srcOff += size;
+            final double w = buffer[outputDimension];
+            for (int j=0; j<outputDimension; j++)
+            {
+                // 'w' is equals to 1 if the transform is affine.
+                dstPts[dstOff++] = buffer[j]/w;
+            }
+            srcOff += inputDimension;
         }
     }
 
@@ -485,15 +629,22 @@ public final class Matrix implements Cloneable, Serializable
      */
     public AffineTransform toAffineTransform2D() throws IllegalStateException
     {
-        if (elt.length == 9)
+        int check;
+        if ((check=rows)!=3 || (check=columns)!=3)
         {
-            if (elt[6]==0 && elt[7]==0 && elt[8]==1)
-            {
-                return new AffineTransform(elt[0], elt[3], elt[1], elt[4], elt[2], elt[5]);
-            }
-            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_AN_AFFINE_TRANSFORM));
+            throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(check-1)));
         }
-        throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_TWO_DIMENSIONAL_$1, new Integer(size-1)));
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert elt.length==9;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        if (elt[6]==0 && elt[7]==0 && elt[8]==1)
+        {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            assert isAffine();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            return new AffineTransform(elt[0], elt[3], elt[1], elt[4], elt[2], elt[5]);
+        }
+        throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NOT_AN_AFFINE_TRANSFORM));
     }
 
     /**
@@ -530,7 +681,7 @@ public final class Matrix implements Cloneable, Serializable
      */
     public Object clone()
     {
-        final Matrix copy = new Matrix(size);
+        final Matrix copy = new Matrix(rows, columns);
         System.arraycopy(elt, 0, copy.elt, 0, elt.length);
         return copy;
     }
@@ -549,9 +700,9 @@ public final class Matrix implements Cloneable, Serializable
         final NumberFormat  format = NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(6);
         format.setMaximumFractionDigits(6);
-        for (int j=0; j<size; j++)
+        for (int j=0; j<rows; j++)
         {
-            for (int i=0; i<size; i++)
+            for (int i=0; i<columns; i++)
             {
                 final int position = buffer.length();
                 buffer = format.format(get(j,i), buffer, dummy);
