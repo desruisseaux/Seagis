@@ -27,14 +27,16 @@ package fr.ird.animat.seas;
 
 // J2SE standard
 import java.util.Arrays;
+import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 
-// Geotools dependencies
+// Geotools
 import org.geotools.resources.XArray;
 
-// Interfaces
+// Implémentation de base
+import fr.ird.animat.Clock;
 import fr.ird.animat.Animal;
 import fr.ird.animat.Species;
 import fr.ird.animat.Environment;
@@ -47,37 +49,19 @@ import fr.ird.animat.Environment;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Tuna extends MobileObject implements Animal {
+final class Tuna extends Animal {
     /**
      * Rayon de perception de l'animal en mètres.
+     *
+     * @see #getPerceptionArea
      */
     private static final double PERCEPTION_RADIUS = 20000;
 
     /**
-     * Index relatif de la coordonnées <var>x</var> dans le tableau {@link #parameters}.
-     */
-    private static final int LONGITUDE = 0;
-
-    /**
-     * Index relatif de la coordonnées <var>y</var> dans le tableau {@link #parameters}.
-     */
-    private static final int LATITUDE = 1;
-
-    /**
-     * Index relatif de la valeur <var>value</var> dans le tableau {@link #parameters}.
-     */
-    private static final int VALUE = 2;
-
-    /**
-     * Nombre d'éléments dans chaque enregistrement <code>parameters</code>.
-     */
-    private static final int RECORD_LENGTH = 3;
-
-    /**
-     * Les valeurs des paramètres mesurés. Chaque pas de temps peut mesurer
-     * plusieurs paramètres, et chaque paramètre contient trois éléments:
-     * la position (<var>x</var>,<var>y</var>) en coordonnées géographiques
-     * ainsi que la valeur <var>value</var> du paramètre.
+     * Les valeurs des paramètres mesurés. Chaque pas de temps peut mesurer plusieurs
+     * paramètres, et chaque paramètre contient plusieurs éléments tels que la position
+     * (<var>x</var>,<var>y</var>) en coordonnées géographiques ainsi que la valeur
+     * <var>value</var> du paramètre.
      */
     private float[] parameters = new float[8];
 
@@ -100,14 +84,13 @@ final class Tuna extends MobileObject implements Animal {
     private final Species species;
 
     /**
-     * Construit un animal appartenant à l'espèce spécifié. L'animal n'a pas de
-     * position initiale. Appellez {@link #setLocation} après la construction de
-     * cet animal pour lui affecter une position.
+     * Construit un animal appartenant à l'espèce spécifié. L'animal sera
+     * initiallement positionné à la position spécifiée.
      *
      * @param species Espèce de l'animal.
      */
-    public Tuna(final Species species)
-    {
+    public Tuna(final Species species, final Point2D position) {
+        super(position);
         this.species = species;
     }
 
@@ -116,8 +99,7 @@ final class Tuna extends MobileObject implements Animal {
      *
      * @return L'espèce à laquelle appartient cet animal.
      */
-    public Species getSpecies()
-    {
+    public Species getSpecies() {
         return species;
     }
 
@@ -126,27 +108,16 @@ final class Tuna extends MobileObject implements Animal {
      * animal. Il peut s'agir par exemple d'un cercle centré sur
      * la position de l'animal.
      *
-     * @param condition 1 si les conditions environnementales sont optimales
-     *        (eaux des plus transparentes), ou 0 si les conditions sont des
-     *        plus mauvaises (eaux complètement brouillées).
+     * @param  time La date pour laquelle on veut la région perçue,
+     *         ou <code>null</code> pour la région actuelle.
+     * @param  La région perçue, ou <code>null</code> si la date
+     *         spécifiée n'est pas pendant la durée de vie de cet animal.
      */
-    public Shape getPerceptionArea(final double condition)
-    {
-        final double radius = condition*PERCEPTION_RADIUS;
-        return relativeToGeographic(new Ellipse2D.Double(-radius, -radius, 2*radius, 2*radius));
-    }
-
-    /**
-     * Retourne le nombre d'observations. Ce nombre devrait être égal au nombre
-     * de points, sauf si l'utilisateur fait déplacer l'animal sans appeller la
-     * méthode {@link #observe}.
-     */
-    private int getObservationCount()
-    {
-        assert (validLength % (paramCount*RECORD_LENGTH)) == 0;
-        final int count = validLength / (paramCount*RECORD_LENGTH);
-        assert count <= getPointCount() : count;
-        return count;
+    public Shape getPerceptionArea(final Date time) {
+        final double radius = PERCEPTION_RADIUS;
+        final Ellipse2D area = new Ellipse2D.Double(-radius, -radius, 2*radius, 2*radius);
+        path.relativeToGeographic(area);
+        return area;
     }
 
     /**
@@ -279,5 +250,44 @@ final class Tuna extends MobileObject implements Animal {
         }
         assert index == values.length;
         return values;
+    }
+    
+    /** Retourne les observations de l'animal à la date spécifiée. Le nombre de {@linkplain Parameter
+     * paramètres} observés n'est pas nécessairement égal au nombre de paramètres de l'{@linkplain
+     * Environment environnement}, car un animal peut ignorer les paramètres qui ne l'intéresse pas.
+     * A l'inverse, un animal peut aussi faire quelques observations "internes" (par exemple la
+     * température de ses muscles) qui ne font pas partie des paramètres de son environnement
+     * externe. En général, {@linkplain Parameter#HEADING le cap et la position} de l'animal font
+     * partis des paramètres observés.
+     *
+     * @param  time Date pour laquelle on veut les observations,
+     *         ou <code>null</code> pour les dernières observations
+     *         (c'est-à-dire celle qui ont été faites après le dernier
+     *         déplacement).
+     * @return Les observations de l'animal, ou <code>null</code> si la
+     *         date spécifiée n'est pas pendant la durée de vie de cet animal.
+     *         L'ensemble des clés ne comprend que les {@linkplain Parameter
+     *         paramètres} qui intéressent l'animal. Si un paramètre intéresse
+     *         l'animal mais qu'aucune donnée correspondante n'est disponible
+     *         dans son environnement, alors les observations correspondantes
+     *         seront <code>null</code>.
+     *
+     */
+    public Map getObservations(Date time) {
+    }
+    
+    /** Fait avancer l'animal pendant le laps de temps spécifié. La vitesse à laquelle se
+     * déplacera l'animal (et donc la distance qu'il parcourera) peuvent dépendre de son
+     * état ou des conditions environnementales. Le comportement de l'animal dépendra de
+     * l'implémentation. Il peut par exemple {@linkplain Path#rotate changer de cap}  et
+     * {@linkplain Path#moveForward se déplacer vers ce cap}.  Il peut aussi {@linkplain
+     * Path#moveToward se déplacer vers un certain point}, qu'il peut ne pas atteindre si
+     * le laps de temps n'est pas suffisant.
+     *
+     * @param duration Durée du déplacement, en nombre de jours. Cette valeur est généralement
+     *        la même que celle qui a été spécifiée à {@link Population#evoluate}.
+     *
+     */
+    public void move(float duration) {
     }
 }

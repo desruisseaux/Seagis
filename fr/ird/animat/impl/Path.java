@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat;
+package fr.ird.animat.impl;
 
 // Géométrie
 import java.awt.Shape;
@@ -65,7 +65,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Path extends Point2D implements Shape, Serializable {
+public final class Path extends Point2D implements Shape, Serializable {
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
@@ -105,19 +105,11 @@ public class Path extends Point2D implements Shape, Serializable {
                   ymax = java.lang.Float.NEGATIVE_INFINITY;
 
     /**
-     * Construit une nouvelle trajectoire qui n'a pas de position
-     * initiale. Appellez {@link #setLocation} après la construction
-     * de cet objet pour lui affecter une position.
-     */
-    public Path() {
-    }
-
-    /**
      * Construit une trajectoire qui commencera à la position spécifiée.
      *
      * @param position Position initiale de la trajectoire.
      */
-    public Path(final Point2D position) {
+    protected Path(final Point2D position) {
         setLocation(position);
     }
 
@@ -317,24 +309,62 @@ public class Path extends Point2D implements Shape, Serializable {
     }
 
     /**
-     * Transforme les coordonnées de la forme spécifiée des milles nautiques
-     * vers des coordonnées géographiques. En entrée, les coordonnées
-     * de <code>shape</code> sont des milles nautiques relatifs à la position
-     * actuelle (c'est-à-dire que la position actuelle est définie
-     * comme étant l'origine (0,0) du système de coordonnées).
-     * En sortie, les coordonnées de <code>shape</code> sont des degrés
-     * de longitudes et de latitudes.
+     * Transforme les coordonnées de la forme spécifiée des milles nautiques vers des coordonnées
+     * géographiques. En entrée, les coordonnées de <code>shape</code> sont des milles nautiques
+     * relatifs à la position actuelle (c'est-à-dire que la position actuelle est définie comme
+     * étant l'origine (0,0) du système de coordonnées de <code>shape</code>). En sortie, les
+     * coordonnées de <code>shape</code> sont des degrés de longitudes et de latitudes.
      *
      * @param  shape Forme géométrique à transformer.
      */
     public void relativeToGeographic(final RectangularShape shape) {
         ensureNonEmpty();
+        relativeToGeographic(shape, points[validLength-2],
+                                    points[validLength-1]);
+    }
+
+    /**
+     * Transforme les coordonnées de la forme spécifiée des milles nautiques vers des coordonnées
+     * géographiques. En entrée, les coordonnées de <code>shape</code> sont des milles nautiques
+     * relatifs à une position précédement visitée (c'est-à-dire que la position visitée est
+     * définie comme étant l'origine (0,0) du système de coordonnées de <code>shape</code>).
+     * En sortie, les coordonnées de <code>shape</code> sont des degrés de longitudes et de
+     * latitudes.
+     *
+     * @param  shape Forme géométrique à transformer.
+     * @param  index Indice de la position désirée, de 0 inclusivement
+     *         jusqu'à {@link #getPointCount} exclusivement.
+     * @throws IndexOutOfBoundsException si <code>index</code> est en
+     *         dehors des limites permises.
+     */
+    public void relativeToGeographic(final RectangularShape shape, int index)
+            throws IndexOutOfBoundsException
+    {
+        index *= 2;
+        if (index<0 || index>=validLength) {
+            throw new IndexOutOfBoundsException(String.valueOf(index/2));
+        }
+        relativeToGeographic(shape, points[index], points[index+1]);
+    }
+
+    /**
+     * Transforme les coordonnées de la forme spécifiée des milles nautiques vers des coordonnées
+     * géographiques. En entrée, les coordonnées de <code>shape</code> sont des milles nautiques
+     * relatifs à la position spécifiée (c'est-à-dire que la position spécifiée est définie comme
+     * étant l'origine (0,0) du système de coordonnées de <code>shape</code>). En sortie, les
+     * coordonnées de <code>shape</code> sont des degrés de longitudes et de latitudes.
+     *
+     * @param  shape Forme géométrique à transformer.
+     * @param  x Longitude de l'origine de la forme, en <strong>radians</strong>.
+     * @param  y Latitude de l'origine de la forme, en <strong>radians</strong>.
+     */
+    private static void relativeToGeographic(final RectangularShape shape,
+                                             final double x, final double y)
+    {
         double xmin = shape.getMinX();
         double xmax = shape.getMaxX();
         double ymin = shape.getMinY();
         double ymax = shape.getMaxY();
-        final double x = points[validLength-2];
-        final double y = points[validLength-1];
         final double[] corners = new double[] {
             xmin, ymin,
             xmax, ymin,

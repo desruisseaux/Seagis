@@ -25,31 +25,26 @@
  */
 package fr.ird.animat;
 
-// Divers
+// J2SE standard
 import java.awt.Color;
 import java.util.Locale;
 
 
 /**
- * Représentation d'une espèce animale. Chaque individu {@link Animal} devra
- * obligatoirement appartenir à une et une seule espèce. Le terme "espèce"
- * est ici utilisé au sens large: bien que le nom <code>Species</code>
- * suggère qu'il se réfère à la classification des espèces, ce n'est pas
- * obligatoirement le cas. Le programmeur est libre d'utiliser plusieurs
- * objets <code>Species</code> pour représenter par exemple des groupes
- * d'individus qui appartiennent à la même espèce animale, mais qui sont
- * de tailles différentes (par exemple les juvéniles versus les adultes).
- * <br><br>
- * Les objets <code>Species</code> sont immutables. En général, il
- * n'existera qu'une courte liste d'espèces qui seront partagées par
- * tous les individus {@link Animal}.
+ * Représentation d'une espèce animale. Chaque {@linkplain Animal animal} devra obligatoirement
+ * appartenir à une et une seule espèce. Le terme "espèce" est ici utilisé au sens large: bien
+ * que le nom <code>Species</code> suggère qu'il se réfère à la classification des espèces, ce
+ * n'est pas obligatoirement le cas. Le programmeur est libre d'utiliser plusieurs objets
+ * <code>Species</code> pour représenter par exemple des groupes d'individus qui appartiennent
+ * à la même espèce animale, mais qui sont de tailles différentes (par exemple les juvéniles
+ * versus les adultes).
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public interface Species {
     /**
-     * Constante pour la langue latine.
+     * Constante désignant la langue "Latin".
      * Souvent utilisée pour nommer les espèces.
      *
      * @see Locale#ENGLISH
@@ -59,32 +54,38 @@ public interface Species {
     Locale LATIN = new Locale("la", "");
 
     /**
+     * Constante désignant les codes de la FAO. Il ne s'agit pas d'une langue à proprement
+     * parler. Toutefois, cette constante est utile pour désignant la façon de représenter
+     * le {@linkplain #getName nom d'une espèce}.
+     */
+    Locale FAO = new Locale("fao", "");
+
+    /**
      * Retourne les langues dans lesquelles peuvent
      * être exprimées le nom de cette espèce.
      */
     Locale[] getLocales();
 
     /**
-     * Retourne le nom de cette espèce dans la langue spécifiée. Si aucun
-     * nom n'est disponible dans cette langue, retourne <code>null</code>.
+     * Retourne le nom de cette espèce dans la langue spécifiée. Cette langue peut être typiquement
+     * {@linkplain Locale#ENGLISH l'anglais}, {@linkplain Locale#FRENCH le français} ou {@linkplain
+     * Locale#SPANISH l'espagnol}. La "langue" {@link #FAO} fait partie des valeurs légales. Elle
+     * signifie que la chaîne désirée est un code représentant l'espèce. Par exemple, le code de
+     * la FAO pour l'albacore (<cite>Thunnus albacares</cite>, ou <cite>Yellowfin tuna</cite> en
+     * anglais) est "YFT".
+     * <br><br>
+     * Si la langue spécifiée est <code>null</code>, alors cette méthode tentera de retourner
+     * un nom dans la {@linkplain Locale#getDefault() langue par défaut du système}. Si
+     * aucun nom n'est disponible dans la langue du système, alors cette méthode tentera
+     * de retourner un nom dans une autre langue. Le code de l'espèce (tel que retourné
+     * par <code>getName(FAO)</code>) ne sera retourné qu'en dernier recours.
      *
-     * @param  locale Langue désirée pour le nom de l'espèce. La valeur <code>null</code>
-     *         est légale. Elle signifie que la chaîne désirée est un code représentant
-     *         l'espèce. Par exemple, le code de la FAO pour l'albacore (<cite>Thunnus
-     *         albacares</cite>, ou <cite>Yellowfin tuna</cite> en anglais) est "YFT".
-     * @return Le nom de l'espèce dans la langue spécifiée, ou <code>null</code> s'il
-     *         n'y en a pas.
+     * @param  locale Langue désirée pour le nom de l'espèce, or <code>null</code> pour
+     *         un nom dans une langue par défaut.
+     * @return Le nom de l'espèce dans la langue spécifiée, ou <code>null</code> si
+     *         aucun nom n'est disponible dans la langue spécifiée.
      */
-    String getName(final Locale locale);
-
-    /**
-     * Retourne le nom de cette espèce. Le nom sera retourné de préférence dans la langue
-     * par défaut du système. Si aucun nom n'est définie dans la langue par défaut, alors
-     * cette méthode tentera de retourner un nom dans une autre langue. Le code de l'espèce
-     * (tel que retourné par <code>getName(null)</code>) ne sera retourné qu'en dernier
-     * recours.
-     */
-    String getName();
+    String getName(Locale locale);
 
     /**
      * Construit un nouvel icone représentant cette espèce.
@@ -99,7 +100,7 @@ public interface Species {
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    public static interface Icon extends javax.swing.Icon {
+    public interface Icon extends javax.swing.Icon {
         /**
          * Retourne l'espèce associée à cet icône.
          */

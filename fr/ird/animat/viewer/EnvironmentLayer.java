@@ -23,10 +23,11 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat;
+package fr.ird.animat.viewer;
 
-// J2SE
+// J2SE dependencies
 import java.util.Map;
+import java.util.Set;
 import java.util.Date;
 import java.util.Collections;
 import java.awt.Color;
@@ -44,6 +45,8 @@ import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 
 // Animats
+import fr.ird.animat.Parameter;
+import fr.ird.animat.Environment;
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
 
@@ -91,6 +94,8 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      */
     public EnvironmentLayer(final Environment environment) {
         super(null);
+        final Set<Parameter> parameters = environment.getParameters();
+        this.parameter = parameters.iterator().next();
         environment.addEnvironmentChangeListener(this);
         setCoverage(environment.getCoverage(parameter));
     }
@@ -102,7 +107,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
     public void environmentChanged(final EnvironmentChangeEvent event) {
         final Environment environment = event.getSource();
         final Date oldDate = date;
-        date = environment.getTimeStep().getStartTime();
+        date = environment.getClock().getTime();
         setCoverage(environment.getCoverage(parameter));
         listeners.firePropertyChange("date", oldDate, date);
     }

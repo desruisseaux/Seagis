@@ -112,6 +112,7 @@ public interface ResourceKeys
     public static final int LOADING_IMAGE_$1                         =   134;
     public static final int LOADING_ISOLINE_$1                       =    20;
     public static final int LOOKING_INTO_DATABASE                    =   135;
+    public static final int LOOK_AND_FEEL                            =   245;
     public static final int MAGNIFIER                                =    21;
     public static final int MEMORY_USE_$1                            =    22;
     public static final int MOSAIC                                   =   136;

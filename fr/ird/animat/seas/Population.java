@@ -89,8 +89,8 @@ final class Population extends fr.ird.animat.Population {
      *
      * @param  duration Durée de l'évolution, en nombre de jours.
      *         Cette durée est habituellement égale à
-     *         <code>{@link #getEnvironment()}.{@link Environment#getTimeStep()
-     *         getTimeStep()}.{@link TimeStep#getDuration getDuration()}</code>.
+     *         <code>{@link #getEnvironment()}.{@link Environment#getStepSequenceNumber()
+     *         getStepSequenceNumber()}.{@link TimeStep#getStepDuration getStepDuration()}</code>.
      */
     public void evoluate(final float duration) {
         // TODO

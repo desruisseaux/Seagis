@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.sql.SQLException;
 
-// OpenGIS
+// Geotools
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.XDimension2D;
@@ -108,15 +108,14 @@ final class Environment extends fr.ird.animat.Environment {
     }
 
     /**
-     * Retourne les données d'un paramètre sous forme d'un objet
-     * {@link Coverage}.
+     * Retourne les données d'un paramètre sous forme d'un objet {@link Coverage}.
      */
     public Coverage getCoverage(final fr.ird.animat.Parameter parameter) throws NoSuchElementException {
         if (parameter instanceof Parameter) {
             final Parameter param = (Parameter) parameter;
             final Coverage3D coverage = coverages.get(param);
             if (coverage != null) {
-                final Date time = getTimeStep().getStartTime();
+                final Date time = getClock().getTime();
                 return param.applyEvaluator(coverage.getGridCoverage2D(time));
             }
         }

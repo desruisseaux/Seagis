@@ -27,6 +27,8 @@ package fr.ird.animat.event;
 
 // J2SE dependencies
 import java.util.EventListener;
+import java.rmi.RemoteException;
+import java.rmi.Remote;
 
 
 /**
@@ -37,11 +39,13 @@ import java.util.EventListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface PopulationChangeListener extends EventListener {
+public interface PopulationChangeListener extends EventListener, Remote {
     /**
      * Appelée quand une population a changée.
      *
      * @param  event L'événement décrivant le changement de population.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    void populationChanged(final PopulationChangeEvent event);
+    void populationChanged(PopulationChangeEvent event) throws RemoteException;
 }

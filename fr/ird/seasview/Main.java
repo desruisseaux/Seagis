@@ -25,31 +25,18 @@
  */
 package fr.ird.seasview;
 
-// Bases de données
+// Bases de données et images
 import java.sql.SQLException;
-
-// Images
 import javax.media.jai.JAI;
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 
 // Interface utilisateur
-import java.awt.BorderLayout;
+import javax.swing.*;
 import java.awt.Dimension;
 import java.awt.Component;
 import java.awt.Container;
-import javax.swing.JMenu;
-import javax.swing.JFrame;
-import javax.swing.JButton;
-import javax.swing.JMenuBar;
-import javax.swing.JToolBar;
-import javax.swing.JMenuItem;
-import javax.swing.KeyStroke;
-import javax.swing.UIManager;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JInternalFrame;
-import javax.swing.JCheckBoxMenuItem;
+import java.awt.BorderLayout;
 import fr.ird.sql.ControlPanel;
 
 // Evénements
@@ -61,17 +48,14 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 
-// Temps
-import java.util.TimeZone;
-
-// Collections
+// Divers
 import java.util.List;
 import java.util.ArrayList;
-
-// Journal
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+import java.util.prefs.Preferences;
 
 // Divers
 import fr.ird.resources.Resources;
@@ -99,11 +83,11 @@ public final class Main {
     }
 
     /**
-     * Construit une fenêtre de l'application SEAS.
+     * Construit et affiche une fenêtre de l'application SEAS.
      *
      * @param database Connection avec les bases de données.
      */
-    public static JFrame setup(final DataBase database) {
+    public static void setup(final DataBase database) {
         final Resources   resources = Resources.getResources(null);
         final JFrame          frame = new JFrame(resources.getString(ResourceKeys.APPLICATION_TITLE));
         final Desktop       desktop = new Desktop(database);
@@ -423,6 +407,13 @@ public final class Main {
                 action.setMnemonicKey(KeyEvent.VK_D);
                 action.addTo(menu);
             }
+            ////////////////////////////////
+            ///  Préférences - Apparence ///
+            ////////////////////////////////
+            if (true) {
+                menu.addSeparator();
+                menu.add(new LookAndFeelMenu(desktop, resources));
+            }
         }
         ///////////
         ///  ?  ///
@@ -451,7 +442,7 @@ public final class Main {
             enableWhenFrameFocused.add(action);
         }
         desktop.setActions(enableWhenFrameFocused);
-        return frame;
+        frame.show();
     }
 
 
@@ -481,6 +472,20 @@ public final class Main {
     public static void main(final String[] args) {
         org.geotools.resources.Geotools.init();
         org.geotools.resources.MonolineFormatter.init("fr.ird");
+        if (false) {
+            LookAndFeelMenu.initLookAndFeel();
+        } else {
+            // Effectue le changement de L&F ici pour éviter de charger Swing trop tôt.
+            final String PREF = LookAndFeelMenu.PREF;
+            final Preferences preferences = Preferences.userNodeForPackage(Main.class);
+            final String classname = preferences.get(PREF, null);
+            if (classname != null) try {
+                UIManager.setLookAndFeel(classname);
+            } catch (Exception exception) {
+                preferences.remove(PREF);
+                Utilities.unexpectedException("fr.ird.seasview", "Main", "main", exception);
+            }
+        }
         /*
          * Interprète les arguments de la ligne de commange.
          * Les arguments non-valides provoqueront un message
@@ -488,20 +493,12 @@ public final class Main {
          */
         final Arguments arguments = new Arguments(args);
         final String    tilecache = arguments.getOptionalString("-tilecache");
-        final boolean    nativeLF = arguments.getFlag("-native");
         DataBase.MEDITERRANEAN_VERSION = arguments.getFlag("-Méditerranée");
         arguments.getRemainingArguments(0);
         if (tilecache != null) {
             final long value = Long.parseLong(tilecache)*(1024*1024);
             JAI.getDefaultInstance().getTileCache().setMemoryCapacity(value);
             // La capacité par défaut était de 64 Megs.
-        }
-        if (nativeLF) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception exception) {
-                Utilities.unexpectedException("fr.ird", "Main", "main", exception);
-            }
         }
         /*
          * Procède au chargement de la classe du pilote. Cette classe
@@ -533,7 +530,7 @@ public final class Main {
         DataBase.out = arguments.out;
         ControlPanel control = null;
         do try {
-            setup(new DataBase()).show();
+            setup(new DataBase());
             return;
         } catch (SQLException exception) {
             ExceptionMonitor.show(null, exception);

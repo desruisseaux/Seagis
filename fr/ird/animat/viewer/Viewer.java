@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat;
+package fr.ird.animat.viewer;
 
 // J2SE dependencies
 import java.awt.Graphics2D;
@@ -33,6 +33,10 @@ import javax.swing.JComponent;
 import org.geotools.gui.swing.MapPane;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
+
+// Animats
+import fr.ird.animat.Population;
+import fr.ird.animat.Environment;
 
 
 /**

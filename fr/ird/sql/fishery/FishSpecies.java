@@ -141,13 +141,28 @@ final class FishSpecies implements Species, Serializable {
      * Retourne le nom de cette espèce dans la langue spécifiée. Si aucun
      * nom n'est disponible dans cette langue, retourne <code>null</code>.
      */
-    public String getName(final Locale locale) {
+    public final String getName(Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+            if (locale != null) {
+                final String name = getName(locale);
+                if (name != null) {
+                    return name;
+                }
+                for (int i=0; i<names.length; i++) {
+                    if (locales[i] != null) {
+                        return names[i];
+                    }
+                }
+                return names.length!=0 ? names[0] : null;
+            }
+        }
         for (int i=0; i<locales.length; i++) {
             if (Utilities.equals(locale, locales[i])) {
                 return names[i];
             }
         }
-        if (locale != null) {
+        if (locale!=null && locale!=FAO) {
             final String language = locale.getLanguage();
             if (language.length() != 0) {
                 for (int i=0; i<locales.length; i++) {
@@ -166,25 +181,8 @@ final class FishSpecies implements Species, Serializable {
      * Retourne le nom de cette espèce. Le nom sera retourné
      * de préférence dans la langue par défaut du système.
      */
-    public String getName() {
-        final String name = getName(Locale.getDefault());
-        if (name != null) {
-            return name;
-        }
-        for (int i=0; i<names.length; i++) {
-            if (locales[i] != null) {
-                return names[i];
-            }
-        }
-        return names.length!=0 ? names[0] : null;
-    }
-
-    /**
-     * Retourne le nom de cette espèce. Le nom sera retourné
-     * de préférence dans la langue par défaut du système.
-     */
     public String toString() {
-        return getName();
+        return getName(null);
     }
 
     /**

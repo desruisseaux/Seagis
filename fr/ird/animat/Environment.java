@@ -25,257 +25,91 @@
  */
 package fr.ird.animat;
 
-// Divers
+// J2SE standard
 import java.util.Set;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.EventListener;
 import java.util.NoSuchElementException;
+import java.rmi.RemoteException;
+import java.rmi.Remote;
 
-// Evénements
-import javax.swing.event.EventListenerList;
+// OpenGIS
+import org.opengis.cv.CV_Coverage;
+
+// Animats
 import fr.ird.animat.event.EnvironmentChangeEvent;
 import fr.ird.animat.event.EnvironmentChangeListener;
-
-// Dépendences avec Geotools et resources
-import org.geotools.cv.Coverage;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
 
 
 /**
  * Représentation de l'environnement dans lequel évolueront les animaux. Cet environnement peut
- * contenir un nombre arbitraire de {@linkplain Population populations}, mais ne contient aucun
- * paramètre. Pour ajouter des paramètre à cet environnement, il est nécessaire de redéfinir les
- * méthodes suivantes:
- * <ul>
- *   <li>{@link #getParameters}</li>
- *   <li>{@link #getCoverage}</li>
- * </ul>
+ * contenir un nombre arbitraire de {@linkplain Population populations}, qui contiendront chacune
+ * un nombre arbitraire {@linkplain Animal d'animaux}. L'évolution d'un environnement est soumis
+ * au rythme d'une {@linkplain Clock horloge}, qui imposera son rythme à tous les animaux nés
+ * dans cet environnement.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Environment {
-    /**
-     * Ensemble des populations comprises dans cet environnement.
-     */
-    private final Set<Population> populations = new LinkedHashSet<Population>();
-
-    /**
-     * Version immutable de la population, retournée par {@link #getPopulation}.
-     */
-    private final Set<Population> immutablePopulations = Collections.unmodifiableSet(populations);
-
-    /**
-     * Liste des objets intéressés à être informés
-     * des changements apportés à cet environnement.
-     */
-    private final EventListenerList listenerList = new EventListenerList();
-
-    /**
-     * Evénement indiquant qu'un changement est survenu dans l'environnement.
-     */
-    private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
-
-    /**
-     * Classe à exécuter lorsque l'environnement a changé.
-     *
-     * @see #fireEnvironmentChanged()
-     */
-    private final Runnable fireEnvironmentChanged = new Runnable() {
-        public void run() {
-            assert Thread.holdsLock(getTreeLock());
-            final Object[] listeners = listenerList.getListenerList();
-            for (int i=listeners.length; (i-=2)>=0;) {
-                if (listeners[i] == EnvironmentChangeListener.class) {
-                    ((EnvironmentChangeListener)listeners[i+1]).environmentChanged(event);
-                }
-            }
-        }
-    };
-
-    /**
-     * The event queue.
-     */
-    final EventQueue queue;
-
-    /**
-     * Pas de temps courant des données.
-     */
-    private TimeStep time;
-
-    /**
-     * Construit un environnement par défaut.
-     *
-     * @param startTime Pas de temps de départ.
-     */
-    public Environment(final TimeStep startTime) {
-        if (startTime == null) {
-            throw new NullPointerException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
-                                           "startTime", startTime));
-        }
-        time = startTime;
-        queue = new EventQueue(this);
-    }
-
-    /**
-     * Ajoute une population à cet environnement. Si la population appartient déjà à cet
-     * environnement, rien ne sera fait. Sinon, si la population appartenait à un autre
-     * environnement, alors elle sera retirée de son ancien environnement avant d'être
-     * ajouté à celui-ci.
-     *
-     * @param population La population à ajouter.
-     *
-     * @see #getPopulations
-     * @see Population#kill
-     */
-    public void addPopulation(final Population population) {
-        synchronized (getTreeLock()) {
-            final Environment oldEnvironment = population.environment;
-            if (oldEnvironment != this) {
-                if (oldEnvironment != null) {
-                    oldEnvironment.populations.remove(this);
-                    population.environment = null;
-                    oldEnvironment.fireEnvironmentChanged();
-                }
-                populations.add(population);
-                population.environment = this;
-                fireEnvironmentChanged();
-            }
-        }
-    }
-
-    /**
-     * Utilisé par {@link Population#kill} seulement. Cette méthode existe
-     * uniquement parce que l'ensemble {@link #populations} est privé.
-     */
-    final void kill(final Population population) {
-        assert Thread.holdsLock(getTreeLock());
-        populations.remove(population);
-    }
-
+public interface Environment extends Remote {
     /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
+     * Les populations &quot;{@linkplain Population#kill mortes}&quot; ne
+     * sont pas comprises dans cet ensemble.
+     *
+     * @return Les populations évoluant dans cet environnement.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     *
+     * @see Population#getEnvironment
      */
-    public Set<Population> getPopulations() {
-        return immutablePopulations;
-    }
+    Set<Population> getPopulations() throws RemoteException;
 
     /**
-     * Retourne l'ensemble des paramètres compris dans cet environnement.
-     * L'implémentation par défaut retourne un ensemble vide.
+     * Retourne l'ensemble des paramètres compris dans cet environnement. Les {@link Animal animaux}
+     * vont généralement observer au moins quelque uns de ces paramètres à chaque pas de temps de la
+     * simulation. Chaque animal ne va pas nécessairement observer tous les paramètres, et chaque
+     * animal peut aussi observer des paramètres internes (par exemple la température de ses muscles)
+     * qui ne font pas partie des paramètres de l'environnement retournés par cette méthode.
+     *
+     * @return Les paramètres compris dans cet environnement.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      *
      * @see Animal#getObservations
      */
-    public Set<Parameter> getParameters() {
-        return Collections.EMPTY_SET;
-    }
+    Set<Parameter> getParameters() throws RemoteException;
 
     /**
-     * Retourne les données d'un paramètre sous forme d'un objet
-     * {@link Coverage}. L'implémentation par défaut lance toujours
-     * une exception de type {@link NoSuchElementException}.
+     * Retourne toute la {@linkplain CV_Coverage couverture spatiale des données} à la
+     * {@linkplain Clock#getTime date courante} pour un paramètre spécifié.
      *
      * @param  parameter Le paramètre désiré.
-     * @return L'objet {@link Coverage} contenant les données.
+     * @return La couverture spatiale des données pour le paramètre spécifié.
      *
-     * @throws NoSuchElementException si le paramètre spécifié n'existe pas
-     *         dans cet environnement.
+     * @throws NoSuchElementException si le paramètre spécifié n'existe pas dans cet environnement.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      *
      * @see Animal#getObservations
      */
-    public Coverage getCoverage(Parameter parameter) throws NoSuchElementException {
-        throw new NoSuchElementException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
-                                         "parameter", parameter));
-    }
+    CV_Coverage getCoverage(Parameter parameter) throws NoSuchElementException, RemoteException;
 
     /**
-     * Retourne le pas de temps courant. Tous les paramètres de cet environnement
-     * sont considérés constants pendant toute la durée du pas de temps.
-     */
-    public TimeStep getTimeStep() {
-        return time;
-    }
-
-    /**
-     * Avance l'horloge d'un pas de temps. Cette opération peut provoquer le chargement
-     * de nouvelles données et lancer un événement {@link EnvironmentChangeEvent}.
-     */
-    public void nextTimeStep() {
-        synchronized (getTreeLock()) {
-            time = time.next();
-            fireEnvironmentChanged();
-        }
-    }
-
-    /**
-     * Déclare un objet à informer des changements survenant dans cet
-     * environnement. Ces changements surviennent souvent suite à un
-     * appel de {@link #nextTimeStep}.
-     */
-    public void addEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        synchronized (getTreeLock()) {
-            listenerList.add(EnvironmentChangeListener.class, listener);
-        }
-    }
-
-    /**
-     * Retire un objet à informer des changements survenant dans cet environnement.
-     */
-    public void removeEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        synchronized (getTreeLock()) {
-            listenerList.remove(EnvironmentChangeListener.class, listener);
-        }
-    }
-
-    /**
-     * Préviens tous les objets intéressés que des données ont changés.
-     * Cette méthode peut être appelée par les classes dérivées suite à
-     * un chargement de nouvelles données.
+     * Déclare un objet à informer des changements survenant dans cet environnement.
+     * Ces changements surviennent à chaque fois que la simulation avance d'un pas de temps.
      *
-     * Cette méthode est habituellement appelée à l'intérieur d'un block synchronisé sur
-     * {@link #getTreeLock()}. L'appel de {@link EnvironmentChangeListener#environmentChanged}
-     * sera mise en attente jusqu'à ce que le verrou sur <code>getTreeLock()</code> soit relâché.
+     * @param  listener Écouteur à informer de tout changement dans cet environnement.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    protected void fireEnvironmentChanged() {
-        queue.invokeLater(fireEnvironmentChanged);
-    }
+    void addEnvironmentChangeListener(EnvironmentChangeListener listener) throws RemoteException;
 
     /**
-     * Retourne l'objet sur lequel se synchroniser lors des accès à l'environnement.
+     * Retire un objet qui ne souhaite plus être informé des changements survenant
+     * dans cet environnement.
+     *
+     * @param  listener Écouteur ne désirant plus être informé des changements.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    protected final Object getTreeLock() {
-        return queue.lock;
-    }
-
-    /**
-     * Libère les ressources utilisées par cet environnement. Toutes
-     * les populations contenues dans cet environnement seront détruites,
-     * et les éventuelles connections avec des bases de données seront
-     * fermées.
-     */
-    public void dispose() {
-        synchronized (getTreeLock()) {
-            /*
-             * On ne peut pas utiliser Iterator, parce que les appels
-             * de Population.kill() vont modifier l'ensemble.
-             */
-            final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
-            for (int i=0; i<pop.length; i++) {
-                pop[i].kill();
-            }
-            assert populations.isEmpty() : populations.size();
-            populations.clear(); // Par précaution.
-            /*
-             * Retire tous les 'listeners'.
-             */
-            final Object[] listeners = listenerList.getListenerList();
-            for (int i=listeners.length; (i-=2)>=0;) {
-                listenerList.remove((Class)         listeners[i  ],
-                                    (EventListener) listeners[i+1]);
-            }
-            assert listenerList.getListenerCount() == 0;
-        }
-    }
+    void removeEnvironmentChangeListener(EnvironmentChangeListener listener) throws RemoteException;
 }

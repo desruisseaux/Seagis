@@ -30,22 +30,38 @@ import java.awt.geom.Point2D;
 
 
 /**
- * Un paramètre observé par les {@linkplain Animal animaux}. La classe <code>Parameter</code>
- * ne contient pas les valeurs des observations,  mais donnent plutôt des indications sur ces
- * {@linkplain Observation observations}, un peu comme des noms de colonnes dans un tableau.
+ * Observations correspondant à un {@linkplain Parameter paramètre}. Un objet
+ * <code>Observation</code> comprend généralement une valeur et la position à
+ * laquelle cette observation a été faite. Un ensemble de ces observations
+ * est effectué à chaque pas de temps.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  *
- * @see Environment#getParameters
  * @see Animal#getObservations
+ * @see Environment#getParameters
  */
-public interface Parameter {
+public interface Observation {
     /**
-     * Retourne le nom de ce paramètre. En général, la méthode {@link #toString}
-     * retournera aussi ce même nom afin de faciliter l'insertion des paramètres
-     * dans une interface graphique <cite>Swing</cite> (par exemple une liste
-     * déroulante).
+     * Retourne le paramètre observé.
      */
-    String getName();
+    Parameter getParameter();
+
+    /**
+     * Retourne la valeur de l'observation. Si aucune observation n'est disponible
+     * (par exemple parce que l'animal se trouvait sous un nuage), alors cette méthode
+     * retourne {@link Float#NaN NaN}.
+     *
+     * @return La valeur de l'observation, ou {@link Float#NaN NaN}.
+     */
+    float getValue();
+
+    /**
+     * Retourne une position représentative de l'observation. Si une telle position
+     * n'est pas disponible, alors cette méthode retourne <code>null</code>.
+     *
+     * @return La position de l'observation en degrés de longitudes et de latitudes,
+     *         ou <code>null</code>.
+     */
+    Point2D getLocation();
 }

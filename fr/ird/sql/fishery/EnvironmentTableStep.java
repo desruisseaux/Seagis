@@ -107,7 +107,7 @@ final class EnvironmentTableStep extends Table {
     }
 
     /**
-     * Vérifie si cet objet <code>Parameter</code> est identique à l'objet spécifié.
+     * Vérifie si cet objet <code>EnvironmentTableStep</code> est identique à l'objet spécifié.
      * Seuls le paramètre et les coordonnées spatio-temporelles sont pris en compte.
      * Cela permet de placer cet objet <code>EnvironmentTableStep</code> comme clé
      * dans un {@link java.util.Map}.

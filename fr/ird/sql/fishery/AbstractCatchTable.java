@@ -186,7 +186,7 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
         final String[] columns = new String[species.size()];
         int index=0;
         for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
-            columns[index++] = it.next().getName(null);
+            columns[index++] = it.next().getName(Species.FAO);
         }
         assert index == columns.length;
         query = completeSelect(query, columns);

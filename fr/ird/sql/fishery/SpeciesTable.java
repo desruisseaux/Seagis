@@ -71,8 +71,8 @@ final class SpeciesTable extends Table {
      * Ces langues doivent apparaître dans le même ordre que les colonnes de
      * la requête SQL.
      */
-    private static final Locale[] locales=new Locale[] {
-        null,                // Code FAO
+    private static final Locale[] locales = new Locale[] {
+        Species.FAO,         // Code FAO
         Locale.ENGLISH,      // Anglais
         Locale.FRENCH,       // Français
         Species.LATIN        // Latin
@@ -81,7 +81,7 @@ final class SpeciesTable extends Table {
     /**
      * Couleurs par défaut à utiliser comme marques devant les pêches.
      */
-    private static final Color[] COLORS=new Color[] {
+    private static final Color[] COLORS = new Color[] {
         Color.blue,
         Color.red,
         Color.orange,
@@ -112,7 +112,7 @@ final class SpeciesTable extends Table {
      * @throws SQLException si l'accès à la base de données a échouée.
      */
     final synchronized Species getSpecies(final String code, int index) throws SQLException {
-        Species species=null;
+        Species species = null;
         statement.setString(ID_ARG, code);
         final ResultSet result=statement.executeQuery();
         while (result.next()) {
@@ -125,7 +125,7 @@ final class SpeciesTable extends Table {
             species = new FishSpecies(locales, names, COLORS[index]);
             if (lastSpecies!=null && !lastSpecies.equals(species)) {
                 throw new SQLException(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1,
-                                                        species.getName()));
+                                                        species.getName(null)));
             }
         }
         result.close();
@@ -143,11 +143,11 @@ final class SpeciesTable extends Table {
      * @throws SQLException si l'accès à la base de données a échouée.
      */
     public synchronized Set<Species> getSpecies(final ResultSetMetaData info) throws SQLException {
-        final int count=info.getColumnCount();
-        final List<Species> species=new ArrayList<Species>(count);
+        final int count = info.getColumnCount();
+        final List<Species> species = new ArrayList<Species>(count);
         for (int j=1; j<=count; j++) {
             statement.setString(ID_ARG, info.getColumnName(j));
-            final ResultSet result=statement.executeQuery();
+            final ResultSet result = statement.executeQuery();
             while (result.next()) {
                 final String[] names = new String[locales.length];
                 for (int i=0; i<names.length; i++) {

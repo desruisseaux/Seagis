@@ -77,6 +77,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 // Geotools dependencies
+import org.geotools.resources.Utilities;
 import org.geotools.resources.SwingUtilities;
 
 // Divers
@@ -286,18 +287,17 @@ public final class SpeciesChooser extends JPanel {
      * langue sera ajoutée dans la boîte déroulante "Langue".
      */
     public void add(final Species.Icon icon) {
-        final Locale[] loc=icon.getSpecies().getLocales();
-        StringBuffer buffer=null;
- check: for (int i=0; i<loc.length; i++)
-        {
-            final String name;
+        final Locale[] loc = icon.getSpecies().getLocales();
+        StringBuffer buffer = null;
+ check: for (int i=0; i<loc.length; i++) {
             final Locale locale = loc[i];
-            if (locale != null) {
-                for (int j=locales.getSize(); --j>=0;) {
-                    if (locale.equals(((LocaleEntry) locales.getElementAt(j)).locale)) {
-                        continue check;
-                    }
+            for (int j=locales.getSize(); --j>=0;) {
+                if (Utilities.equals(((LocaleEntry) locales.getElementAt(j)).locale, locale)) {
+                    continue check;
                 }
+            }
+            final String name;
+            if (locale!=null && locale!=Species.FAO) {
                 if (buffer==null) {
                     buffer = new StringBuffer();
                 }
@@ -309,11 +309,6 @@ public final class SpeciesChooser extends JPanel {
                 buffer.setCharAt(0, Character.toUpperCase(buffer.charAt(0)));
                 name = buffer.toString();
             } else {
-                for (int j=locales.getSize(); --j>=0;) {
-                    if (((LocaleEntry) locales.getElementAt(j)).locale==locale) {
-                        continue check;
-                    }
-                }
                 name = Resources.format(ResourceKeys.FAO_CODE);
             }
             locales.addElement(new LocaleEntry(locale, name));
@@ -387,8 +382,8 @@ public final class SpeciesChooser extends JPanel {
      * si l'utilisateur a cliqué sur "Ok".
      */
     public boolean showDialog(final Component owner) {
-        final boolean showCatch=showCatchAmount.isSelected();
-        final Color[] colors=new Color[speciesIcons.getSize()];
+        final boolean showCatch = showCatchAmount.isSelected();
+        final Color[] colors = new Color[speciesIcons.getSize()];
         for (int i=colors.length; --i>=0;) {
             colors[i] = ((Species.Icon) speciesIcons.getElementAt(i)).getColor();
         }
@@ -508,12 +503,12 @@ public final class SpeciesChooser extends JPanel {
     private String format(final Species species, final boolean isSpeciesList) {
         if (isSpeciesList || locale==Species.LATIN) {
             final String name = species.getName(locale);
-            return (name!=null) ? name : species.getName();
+            return (name!=null) ? name : species.getName(null);
         }
         final StringBuffer buffer=new StringBuffer("<HTML>");
         String name = species.getName(locale);
         if (name == null) {
-            name=species.getName();
+            name = species.getName(null);
         }
         buffer.append(name);
         name = species.getName(Species.LATIN);

@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat;
+package fr.ird.animat.impl;
 
 // J2SE dependencies
 import java.util.LinkedList;

@@ -42,7 +42,6 @@ import org.geotools.cs.GeographicCoordinateSystem;
 // Divers
 import org.geotools.units.Unit;
 import javax.media.jai.util.Range;
-import fr.ird.animat.Species;
 
 
 /**

@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat;
+package fr.ird.animat.viewer;
 
 // J2SE et JAI
 import java.awt.Paint;
@@ -61,6 +61,10 @@ import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.RenderingContext;
 
 // Animats
+import fr.ird.animat.Animal;
+import fr.ird.animat.Species;
+import fr.ird.animat.Parameter;
+import fr.ird.animat.Population;
 import fr.ird.animat.event.PopulationChangeEvent;
 import fr.ird.animat.event.PopulationChangeListener;
 
@@ -220,12 +224,12 @@ final class PopulationLayer extends RenderedMarks
             graphics.setStroke(new BasicStroke(0));
             graphics.setColor(Color.black);
             for (int i=0; i<animals.length; i++) {
-                final Map<Parameter,double[]> observations = animals[i].getObservations(date);
+                final Map<Parameter,float[]> observations = animals[i].getObservations(date);
                 if (observations != null) {
-                    for (final java.util.Iterator<Map.Entry<Parameter,double[]>> it=observations.entrySet().iterator(); it.hasNext();) {
-                        final Map.Entry<Parameter,double[]> obs = it.next();
+                    for (final java.util.Iterator<Map.Entry<Parameter,float[]>> it=observations.entrySet().iterator(); it.hasNext();) {
+                        final Map.Entry<Parameter,float[]> obs = it.next();
                         final Parameter param = obs.getKey();
-                        final double[] values = obs.getValue();
+                        final float[]  values = obs.getValue();
                         Point2D location = param.getLocation(values);
                         if (location != null) {
                             location = zoom.transform(location, location);
@@ -290,12 +294,12 @@ final class PopulationLayer extends RenderedMarks
         /**
          * Observations de l'animal courant.
          */
-        private Map<Parameter,double[]> observations;
+        private Map<Parameter,float[]> observations;
 
         /**
          * Position de l'animal courant, ou <code>null</code> si aucune.
          */
-        private double[] position;
+        private float[] position;
 
         /**
          * Construit un itérateur par défaut.

@@ -27,8 +27,6 @@ package fr.ird.animat.event;
 
 // Dependencies
 import java.util.EventObject;
-import fr.ird.animat.Parameter;
-import fr.ird.animat.Population;
 import fr.ird.animat.Environment;
 
 
@@ -48,8 +46,7 @@ public class EnvironmentChangeEvent extends EventObject {
      * Construit un nouvel événement.
      *
      * @param source  La source.
-     * @param parameters Paramètres qui ont changés,
-     *        ou <code>null</code> si aucun.
+     * @param parameters Paramètres qui ont changés, ou <code>null</code> si aucun.
      */
     public EnvironmentChangeEvent(final Environment source) {
         super(source);

@@ -23,27 +23,31 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.animat.event;
-
-// J2SE dependencies
-import java.util.EventListener;
-import java.rmi.RemoteException;
-import java.rmi.Remote;
+package fr.ird.animat.impl;
 
 
 /**
- * Définit un objet qui écoutera les changements survenant dans un environnement.
+ * Observations correspondant à un {@linkplain Parameter paramètre}. Un objet
+ * <code>Observation</code> comprend généralement une valeur et la position à
+ * laquelle cette observation a été faite. Un ensemble de ces observations
+ * sont effectuées à chaque pas de temps.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface EnvironmentChangeListener extends EventListener, Remote {
+public final class Observation {
     /**
-     * Appelée quand un environnement a changé.
-     *
-     * @param  event L'événement décrivant le changement d'environnement.
-     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
-     *         et que cette exécution a échouée.
+     * Le paramètre correspondant à cette observation.
      */
-    void environmentChanged(EnvironmentChangeEvent event) throws RemoteException;
+    private final Parameter parameters;
+
+    /**
+     * Les données 
+     */
+
+    /**
+     */
+    protected Observation(final Parameter parameters) {
+        this.parameters = parameters;
+    }
 }
