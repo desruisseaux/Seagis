@@ -108,9 +108,13 @@ public final class Console extends Arguments {
      *
      * @throws IOException si la connexion n'a pas pu être établie.
      */
-    private CoverageDataBase getDataBase() throws IOException {
+    private CoverageDataBase getDataBase(final boolean online) throws IOException {
         if (database == null) try {
-            database = new CoverageDataBase();
+            if (online) {
+                database = new CoverageDataBase();
+            } else {
+                database = new CoverageDataBase(null, "offline", null, null);
+            }
         } catch (SQLException exception) {
             throw new CatalogException(exception);
         }
@@ -144,7 +148,7 @@ public final class Console extends Arguments {
      * de {@link SeriesTable}.
      */
     private void series(final int leafType) throws IOException {
-        final SeriesTable series = getDataBase().getSeriesTable();
+        final SeriesTable series = getDataBase(true).getSeriesTable();
         final TreeModel    model = series.getTree(leafType);
         series.close();
         out.println();
@@ -158,7 +162,7 @@ public final class Console extends Arguments {
      * que le bon fonctionnement des classes d'interrogation.
      */
     private void formats() throws IOException {
-        final FormatTable formatTable = getDataBase().getFormatTable();
+        final FormatTable formatTable = getDataBase(true).getFormatTable();
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode(
               Resources.getResources(locale).getString(ResourceKeys.FORMATS));
         final List<FormatEntry> formats;
@@ -181,7 +185,7 @@ public final class Console extends Arguments {
      * le contenu de toute la base de données.
      */
     private void browse() throws IOException {
-        final CoverageDataBase   database = getDataBase();
+        final CoverageDataBase   database = getDataBase(true);
         final SeriesTable     seriesTable = database.getSeriesTable();
         final TreeModel         treeModel = seriesTable.getTree(SeriesTable.CATEGORY_LEAF);
         final JComponent         treePane = new JScrollPane(new JTree(treeModel));
@@ -220,15 +224,16 @@ public final class Console extends Arguments {
         boolean exit = true;
         getRemainingArguments(0);
         if (config) {
-            getDataBase().getSQLEditor().showDialog(null);
+            getDataBase(false).getSQLEditor().showDialog(null);
             exit = true;
+        } else {
+            if (formats && series) series(SeriesTable.CATEGORY_LEAF);
+            else if (subseries)    series(SeriesTable.SUBSERIES_LEAF);
+            else if (series)       series(SeriesTable.SERIES_LEAF);
+            else if (formats)      formats();
+            if (browse)           {browse(); exit=false;}
+            if (help)              help();
         }
-        if (formats && series) series(SeriesTable.CATEGORY_LEAF);
-        else if (subseries)    series(SeriesTable.SUBSERIES_LEAF);
-        else if (series)       series(SeriesTable.SERIES_LEAF);
-        else if (formats)      formats();
-        if (browse)           {browse(); exit=false;}
-        if (help)              help();
         if (database != null) {
             database.close();
             database = null;

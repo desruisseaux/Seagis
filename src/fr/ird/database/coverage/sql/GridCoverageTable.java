@@ -107,7 +107,7 @@ class GridCoverageTable extends Table implements CoverageTable {
                         "\"CRS\", "    +  // [12] CRS
                         "format\n"     +  // [13] FORMAT
              "FROM "       +SCHEMA+".\""+GRID_COVERAGES+"\" "+
-             "INNER JOIN " +SCHEMA+".\""+BOUNDING_BOX+"\" ON extent=\""+BOUNDING_BOX+"\".oid " +
+             "INNER JOIN " +SCHEMA+".\""+BOUNDING_BOX+"\" ON extent=\""+BOUNDING_BOX+"\".identifier " +
              "INNER JOIN " +SCHEMA+".\""+SUBSERIES+   "\" ON subseries=\""+SUBSERIES+"\".identifier\n"+
              "WHERE (x_max>? AND x_min<? AND y_max>? AND y_min<?) "+
                "AND (((end_time IS NULL) OR end_time>=?) AND ((start_time IS NULL) OR start_time<=?)) "+

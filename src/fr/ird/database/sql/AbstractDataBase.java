@@ -194,10 +194,14 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
         if (password == null) {
             password = getProperty(PASSWORD);
         }
-        if (user!=null && user.trim().length()!=0) {
-            this.connection = DriverManager.getConnection(source, user, password);
+        if (source.equals("offline")) {
+            this.connection = null;
         } else {
-            this.connection = DriverManager.getConnection(source);
+            if (user!=null && user.trim().length()!=0) {
+                this.connection = DriverManager.getConnection(source, user, password);
+            } else {
+                this.connection = DriverManager.getConnection(source);
+            }
         }
     }
 
@@ -266,7 +270,7 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
                                     "Elle n'a donc pas été enregistrée.");
             }
         }
-        try {
+        if (connection != null) try {
             connection.close();
         } catch (SQLException e) {
             throw new CatalogException(e);
@@ -291,9 +295,9 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
         final String home = System.getProperty("user.home");
         File path = new File(home, "Application Data");
         if (path.isDirectory()) {
-            path = new File(path, "SeasView");
+            path = new File(path, "Seagis");
         } else {
-            path = new File(home, ".SeasView");
+            path = new File(home, ".Seagis");
         }
         if (!path.exists()) {
             if (!path.mkdir()) {

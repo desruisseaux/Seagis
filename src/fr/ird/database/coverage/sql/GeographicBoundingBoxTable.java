@@ -58,7 +58,7 @@ final class GeographicBoundingBoxTable extends Table {
                    "MAX(y_max) "      + "AS y_max\n"      +
             "FROM "+SCHEMA+".\""+GRID_COVERAGES+"\" "+
             "INNER JOIN "+SCHEMA+".\""+SUBSERIES   +"\" ON subseries=\""+SUBSERIES+"\".identifier "+
-            "INNER JOIN "+SCHEMA+".\""+BOUNDING_BOX+"\" ON extent=\""+BOUNDING_BOX+"\".oid\n"+
+            "INNER JOIN "+SCHEMA+".\""+BOUNDING_BOX+"\" ON extent=\""+BOUNDING_BOX+"\".identifier\n"+
             "WHERE (visible=TRUE)");
 
 

@@ -25,8 +25,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import javax.imageio.IIOException;
 import javax.imageio.ImageReadParam;
 import javax.swing.event.EventListenerList;
@@ -275,6 +276,20 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
     }
 
     /**
+     * Transform a path file into an URL.
+     */
+    private static void encodeURL(final File path, final StringBuilder buffer, final String encoding)
+            throws UnsupportedEncodingException
+    {
+        final File parent = path.getParentFile();
+        if (parent != null) {
+            encodeURL(parent, buffer, encoding);
+        }
+        buffer.append('/');
+        buffer.append(URLEncoder.encode(path.getName(), encoding));
+    }
+
+    /**
      * Returns the source as a {@link File} or an {@link URL}, in this preference order.
      *
      * @param  local <code>true</code> if the file are going to be read from a local machine,
@@ -283,7 +298,7 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
      *         <code>true</code> and an {@link URL} object if <code>local</code> was
      *         <code>false</code>.
      */
-    private Object getInput(final boolean local) throws MalformedURLException {
+    private Object getInput(final boolean local) throws IOException {
         final File file = new File(parameters.pathname, filename+'.'+parameters.format.extension);
         if (!file.isAbsolute()) {
             if (local) {
@@ -292,17 +307,15 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
                 }
             }
             if (parameters.rootURL != null) {
-                String path = file.getPath().replace(File.separatorChar, '/');
-                final int lg = parameters.rootURL.length();
-                if (lg != 0) {
-                    final StringBuilder buffer = new StringBuilder(parameters.rootURL);
-                    if (buffer.charAt(lg-1) != '/') {
-                        buffer.append('/');
+                final StringBuilder buffer = new StringBuilder(parameters.rootURL);
+                final int last = buffer.length()-1;
+                if (last >= 0) {
+                    if (buffer.charAt(last) == '/') {
+                        buffer.setLength(last);
                     }
-                    buffer.append(path);
-                    path = buffer.toString();
                 }
-                return new URL(path);
+                encodeURL(file, buffer, "ISO-8859-1");
+                return new URL(buffer.toString());
             }
         }
         return (local) ? file : file.toURL();
@@ -317,7 +330,7 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
             if (input instanceof File) {
                 return (File) input;
             }
-        } catch (MalformedURLException exception) {
+        } catch (IOException exception) {
             Utilities.unexpectedException(CoverageDataBase.LOGGER.getName(),
                                  "GridCoverageEntry", "getFile", exception);
         }
@@ -333,7 +346,7 @@ final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEnt
             if (input instanceof URL) {
                 return (URL) input;
             }
-        } catch (MalformedURLException exception) {
+        } catch (IOException exception) {
             Utilities.unexpectedException(CoverageDataBase.LOGGER.getName(),
                                  "GridCoverageEntry", "getFile", exception);
         }
