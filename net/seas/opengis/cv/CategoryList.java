@@ -833,13 +833,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Effectue une recherche bi-linéaire de la valeur spécifiée. Cette
-     * méthode est identique à {@link Arrays#binarySearch(double[],double)},
-     * excepté qu'elle distingue les différentes valeurs NaN.
+     * méthode est semblable à {@link Arrays#binarySearch(double[],double)},
+     * excepté qu'elle peut distinguer différentes valeurs de NaN.
      */
     private static int binarySearch(final double[] array, final double key)
     {
         int low  = 0;
         int high = array.length-1;
+        final boolean keyIsNaN = Double.isNaN(key);
         while (low <= high)
         {
             final int mid = (low + high)/2;
@@ -850,13 +851,42 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             else if (midVal > key) cmp = +1; // Neither val is NaN, thisVal is larger
             else
             {
-                final long midBits = Double.doubleToRawLongBits(midVal);
-                final long keyBits = Double.doubleToRawLongBits(key);
-                cmp = (midBits == keyBits ?  0 :  // Values are equal
-                      (midBits  < keyBits ? -1 :  // (-0.0, 0.0) or (!NaN, NaN)
-                                            +1)); // (0.0, -0.0) or (NaN, !NaN)
+                /*
+                 * The following is an adaptation of evaluator's comments for bug #4471414
+                 * (http://developer.java.sun.com/developer/bugParade/bugs/4471414.html).
+                 * Extract from evaluator's comment:
+                 *
+                 *     [This] code is not guaranteed to give the desired results because
+                 *     of laxity in IEEE 754 regarding NaN values. There are actually two
+                 *     types of NaNs, signaling NaNs and quiet NaNs. Java doesn't support
+                 *     the features necessary to reliably distinguish the two.  However,
+                 *     the relevant point is that copying a signaling NaN may (or may not,
+                 *     at the implementors discretion) yield a quiet NaN -- a NaN with a
+                 *     different bit pattern (IEEE 754 6.2).  Therefore, on IEEE 754 compliant
+                 *     platforms it may be impossible to find a signaling NaN stored in an
+                 *     array since a signaling NaN passed as an argument to binarySearch may
+                 *     get replaced by a quiet NaN.
+                 */
+                final long midRawBits = Double.doubleToRawLongBits(midVal);
+                final long keyRawBits = Double.doubleToRawLongBits(key);
+                if (midRawBits != keyRawBits)
+                {
+                    final boolean midIsNaN = Double.isNaN(midVal);
+                    if (keyIsNaN)
+                    {
+                        // If (mid,key)==(!NaN, NaN): -1.
+                        // If two NaN arguments, compare NaN bits.
+                        cmp = (!midIsNaN || midRawBits<keyRawBits) ? -1 : +1;
+                    }
+                    else
+                    {
+                        // If (mid,key)==(NaN, !NaN): +1.
+                        // Otherwise, case for (-0.0, 0.0) and (0.0, -0.0).
+                        cmp = (!midIsNaN && midRawBits<keyRawBits) ? -1 : +1;
+                    }
+                }
+                else cmp = 0;
             }
-
             if      (cmp < 0) low  = mid + 1;
             else if (cmp > 0) high = mid - 1;
             else return mid; // key found

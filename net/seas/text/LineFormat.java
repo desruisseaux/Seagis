@@ -33,6 +33,7 @@ import java.text.ParseException;
 // Miscellaneous
 import java.util.Arrays;
 import net.seas.util.XArray;
+import net.seas.util.Version;
 import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
 
@@ -329,12 +330,18 @@ public class LineFormat
      */
     private Number getNumber(final int index) throws ParseException
     {
-        final Number number=ClassChanger.toNumber(data[index]);
-        if (number!=null)
+        Exception error = null;
+        if (data[index] instanceof Comparable) try
         {
-            return number;
+            return ClassChanger.toNumber((Comparable)data[index]);
         }
-        else throw new ParseException(Resources.format(Clé.UNPARSABLE_NUMBER¤1, data[index]), limits[index]);
+        catch (ClassNotFoundException exception)
+        {
+            error = exception;
+        }
+        ParseException exception = new ParseException(Resources.format(Clé.UNPARSABLE_NUMBER¤1, data[index]), limits[index]);
+        if (Version.MINOR>=4 && error!=null) exception.initCause(error);
+        throw exception;
     }
 
     /**

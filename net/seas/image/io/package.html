@@ -6,7 +6,33 @@
   </HEAD>
   <BODY>
     <P ALIGN="justify">Extensions to {@link javax.imageio.ImageReader} for
-    binary and ASCII files. {@link net.seas.image.io.SimpleImageReader} is
+    binary and ASCII files. The JAR file declares a service provider for
+    three image readers:</P>
+
+    <TABLE ALIGN="center" BORDER='3' CELLPADDING='6'>
+      <TR BGCOLOR="#F8F8F8">
+        <TD ALIGN="center">{@link javax.imageio.ImageReader} subclass</TD>
+        <TD ALIGN="center">Name</TD>
+        <TD ALIGN="center">MIME type</TD>
+      </TR>
+      <TR>
+        <TD>{@link net.seas.image.io.RawBinaryImageReader}</TD>
+        <TD>raw</TD>
+        <TD>image/raw</TD>
+      </TR>
+      <TR>
+        <TD>{@link net.seas.image.io.TextMatrixImageReader}</TD>
+        <TD>matrix</TD>
+        <TD>text/matrix</TD>
+      </TR>
+      <TR>
+        <TD>{@link net.seas.image.io.TextRecordImageReader}</TD>
+        <TD>gridded records</TD>
+        <TD>text/x-grid</TD>
+      </TR>
+    </TABLE>
+
+    <P ALIGN="justify">{@link net.seas.image.io.SimpleImageReader} is
     the base class for image decoders reading stream with few (if any)
     meta-data. Examples of such streams are matrix containing the pixels
     values in a binary form (RAW images), or ASCII files containing values

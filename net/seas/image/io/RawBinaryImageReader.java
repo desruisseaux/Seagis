@@ -81,7 +81,7 @@ import net.seas.resources.Resources;
  * <strong>Data type</strong> can be specified in two ways:
  *
  * <ul>
- *   <li>Call {@link RawBinaryImageReadParam#setDataType}.<.li>
+ *   <li>Call {@link RawBinaryImageReadParam#setDataType}.</li>
  *   <li>Define a <code>RawBinaryImageReader</code> subclass
  *       overriding {@link #getRawDataType}.</li>
  * </ul>
@@ -635,7 +635,7 @@ public class RawBinaryImageReader extends SimpleImageReader
      *
      * (Note: fields <code>vendorName</code> and <code>version</code> are only informatives).
      * There is no need to override any method in this example. However, developers
-     * can gain more control by creating subclasses of {@link TextRecordImageReader}
+     * can gain more control by creating subclasses of {@link RawBinaryImageReader}
      * <strong>and</strong> <code>Spi</code> and overriding some of their methods.
      *
      * @version 1.0

@@ -65,10 +65,13 @@ public class Angle implements Comparable<Angle>, Serializable
      */
     static
     {
-        ClassChanger.register(new ClassChanger(Angle.class)
+        ClassChanger.register(new ClassChanger(Angle.class, Double.class)
         {
-            protected Number convert(final Object o)
+            protected Number convert(final Comparable o)
             {return new Double(((Angle) o).theta);}
+
+            protected Comparable inverseConvert(final Number value)
+            {return new Angle(value.doubleValue());}
         });
     }
 

@@ -87,10 +87,15 @@ abstract class CategoryComparator implements Comparator<Category>
         if (cmp==0)
         {
             // Special test for NaN
-            final long bits1 = Double.doubleToRawLongBits(v1);
-            final long bits2 = Double.doubleToRawLongBits(v2);
-            if (bits1 < bits2) return -1;
-            if (bits1 > bits2) return +1;
+            final long    bits1  = Double.doubleToRawLongBits(v1);
+            final long    bits2  = Double.doubleToRawLongBits(v2);
+            final boolean isNaN1 = Double.isNaN(v1);
+            final boolean isNaN2 = Double.isNaN(v2);
+            if (!isNaN1 &&  isNaN2) return -1;
+            if ( isNaN1 && !isNaN2) return +1;
+            if (  bits1  <   bits2) return -1;
+            if (  bits1  >   bits2) return +1;
+            return 0;
         }
         return cmp;
     }

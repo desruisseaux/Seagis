@@ -112,7 +112,7 @@ final class CoordinateTransformProxy extends CoordinateTransform
     {
         ensureNonNull("sourceCS", sourceCS);
         ensureNonNull("targetCS", targetCS);
-        return sourceCS.getName(locale)+" \u21E8 "+targetCS.getName(locale);
+        return sourceCS.getName(locale)+"\u00A0\u21E8\u00A0"+targetCS.getName(locale);
     }
 
     /**
