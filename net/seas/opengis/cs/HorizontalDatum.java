@@ -83,7 +83,7 @@ public class HorizontalDatum extends Datum
     {return ellipsoid;}
 
     /**
-     * Gets preferred parameters for a Bursa Wolf transformation into WGS84. 
+     * Gets preferred parameters for a Bursa Wolf transformation into WGS84.
      * The 7 returned values correspond to (dx,dy,dz) in meters, (ex,ey,ez)
      * in arc-seconds, and scaling in parts-per-million.  This method will
      * always returns <code>null</code> for horizontal datums with type

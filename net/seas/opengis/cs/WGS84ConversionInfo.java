@@ -28,7 +28,7 @@ import net.seas.util.XClass;
 
 
 /**
- * Parameters for a geographic transformation into WGS84. 
+ * Parameters for a geographic transformation into WGS84.
  * The Bursa Wolf parameters should be applied to geocentric coordinates,
  * where the X axis points towards the Greenwich Prime Meridian, the Y axis
  * points East, and the Z axis points North.

@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.awt.geom.Dimension2D;
 
 
-/** 
+/**
  * Apporte quelques fonctionalitées qui manquent à la classe {@link Dimension2D}
  * standard du Java. Cette classe n'est que temporaire. Elle disparaîtra dans une
  * version future si <em>JavaSoft</em> définit des classes <code>Dimension2D.Float</code>

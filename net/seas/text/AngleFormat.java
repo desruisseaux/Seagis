@@ -647,7 +647,7 @@ public class AngleFormat extends Format
     }
 
     /**
-     * Procède à l'écriture d'un angle, d'une latitude ou d'une longitude. 
+     * Procède à l'écriture d'un angle, d'une latitude ou d'une longitude.
      *
      * @param  angle      Angle ou nombre à écrire.
      * @param  type       Type de l'angle ou du nombre:
@@ -773,7 +773,6 @@ public class AngleFormat extends Format
         while (Character.isSpaceChar(c=source.charAt(start++)));
         switch (c)
         {
-            case 248 : /* fall through */             // Degrés (DOS).
             case '°' : pos.setIndex(start); return 0; // Degrés.
             case '\'': pos.setIndex(start); return 1; // Minutes
             case '"' : pos.setIndex(start); return 2; // Secondes

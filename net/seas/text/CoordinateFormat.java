@@ -41,7 +41,7 @@ import net.seas.util.XClass;
 import net.seas.resources.Resources;
 
 
-/** 
+/**
  * Ecrit et lit des coordonnées exprimées selon un certain patron. Les coordonnées comprennent
  * une latitude et une longitude (possiblement dans l'ordre inverse) et de façon facultative une
  * altitude. Les coordonnées lues seront placées dans des objets {@link CoordinatePoint}.

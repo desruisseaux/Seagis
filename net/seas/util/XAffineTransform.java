@@ -32,7 +32,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import net.seas.util.XMath;
 
 
-/** 
+/**
  * Quelques méthodes statiques
  * relatives aux transformations affines.
  *

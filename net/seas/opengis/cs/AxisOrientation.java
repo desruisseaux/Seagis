@@ -53,7 +53,7 @@ public final class AxisOrientation implements Serializable
 
     /**
      * Unknown or unspecified axis orientation.
-     * This can be used for local or fitted coordinate systems. 
+     * This can be used for local or fitted coordinate systems.
      */
     public static final AxisOrientation OTHER = new AxisOrientation(0, Clé.OTHER);
 

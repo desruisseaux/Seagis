@@ -23,7 +23,7 @@
 package net.seas.awt.tree;
 
 
-/** 
+/**
  * General-purpose node in a tree data structure.
  *
  * @version 1.0
@@ -39,9 +39,9 @@ public class DefaultMutableTreeNode extends javax.swing.tree.DefaultMutableTreeN
     {super();}
 
     /**
-     * Creates a tree node with no parent, no children, but which allows 
+     * Creates a tree node with no parent, no children, but which allows
      * children, and initializes it with the specified user object.
-     * 
+     *
      * @param userObject an Object provided by the user that constitutes
      *                   the node's data
      */
@@ -52,7 +52,7 @@ public class DefaultMutableTreeNode extends javax.swing.tree.DefaultMutableTreeN
      * Creates a tree node with no parent, no children, initialized with
      * the specified user object, and that allows children only if
      * specified.
-     * 
+     *
      * @param userObject an Object provided by the user that constitutes
      *        the node's data
      * @param allowsChildren if true, the node is allowed to have child

@@ -88,6 +88,16 @@ abstract class MapProjection extends MathTransform
     static final double YMAX = Latitude.MAX_VALUE;
 
     /**
+     * Default semi-major axis length (from WGS 1984).
+     */
+    static final double SEMI_MAJOR = 6378137;
+
+    /**
+     * Default semi-minor axis length (from WGS 1984).
+     */
+    static final double SEMI_MINOR = SEMI_MAJOR*(1-1/298.257223563);
+
+    /**
      * Indique si le modèle terrestre est sphérique. La valeur <code>true</code>
      * indique que le modèle est sphérique, c'est-à-dire que les champs {@link #a}
      * et {@link #b} ont la même valeur.
@@ -147,17 +157,17 @@ abstract class MapProjection extends MathTransform
      * @param  parameters The parameter values in standard units.
      *         The following parameter are recognized:
      *         <ul>
-     *           <li>"semi_major" (mandatory)</li>
-     *           <li>"semi_minor" (mandatory)</li>
-     *           <li>"central_meridian" (optional, default to 0°)</li>
-     *           <li>"latitude_of_origin" (optional, default to 0°)</li>
+     *           <li>"semi_major"   (default to WGS 1984)</li>
+     *           <li>"semi_minor"   (default to WGS 1984)</li>
+     *           <li>"central_meridian"   (default to 0°)</li>
+     *           <li>"latitude_of_origin" (default to 0°)</li>
      *         </ul>
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
     public MapProjection(final Parameter[] parameters) throws MissingParameterException
     {
-        this.a                =                    Parameter.getValue(parameters, "semi_major");
-        this.b                =                    Parameter.getValue(parameters, "semi_minor");
+        this.a                =                    Parameter.getValue(parameters, "semi_major", SEMI_MAJOR);
+        this.b                =                    Parameter.getValue(parameters, "semi_minor", SEMI_MINOR);
         this.centralLongitude = longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true);
         this.centralLatitude  =  latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true);
         this.isSpherical      = (a==b);
@@ -178,7 +188,7 @@ abstract class MapProjection extends MathTransform
     {return 2;}
 
     /**
-     * Convertit en radians une longitude exprimée en degrés. Au passage, cette méthode vérifiera 
+     * Convertit en radians une longitude exprimée en degrés. Au passage, cette méthode vérifiera
      * si la longitude est bien dans les limites permises (±180°). Cette méthode est utile pour
      * vérifier la validité des paramètres de la projection, comme {@link #setCentralLongitude}.
      *
@@ -195,7 +205,7 @@ abstract class MapProjection extends MathTransform
     }
 
     /**
-     * Convertit en radians une latitude exprimée en degrés. Au passage, cette méthode vérifiera 
+     * Convertit en radians une latitude exprimée en degrés. Au passage, cette méthode vérifiera
      * si la latitude est bien dans les limites permises (±90°). Cette méthode est utile pour
      * vérifier la validité des paramètres de la projection, comme {@link #setCentralLongitude}.
      *
@@ -650,7 +660,7 @@ abstract class MapProjection extends MathTransform
         {
             final Point2D        origin = new Point2D.Double(); // Initialized at (0,0).
             final CoordinatePoint coord = new CoordinatePoint(inverseTransform(origin, origin));
-            buffer.append("Origin=(");
+            buffer.append("origin=(");
             buffer.append(new CoordinateFormat().format(coord));
             buffer.append(')');
         }

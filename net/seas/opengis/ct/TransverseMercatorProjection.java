@@ -51,43 +51,9 @@ import net.seas.resources.Resources;
  */
 final class TransverseMercatorProjection extends CylindricalProjection
 {
-    /*******************************************************
-     * Informations about a {@link TransverseMercatorProjection}.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     *******************************************************/
-    static final class Registration extends MathTransform.Registration
-    {
-        private final boolean modified;
-
-        public Registration(final boolean modified)
-        {
-            super(modified ? "Modified_Transverse_Mercator" : "Transverse_Mercator",
-                  modified ? Clé.MTM                        : Clé.UTM);
-            this.modified = modified;
-        }
-
-        /** Create a new map projection. */
-        public MathTransform create(final Parameter[] parameters)
-        {return new TransverseMercatorProjection(parameters, modified);}
-
-        /** Returns the default parameters. */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", 6378137.0),
-                new Parameter("semi_minor", 6356752.3142451794975639665996337),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0)
-            };
-        }
-    }
-
     /**
      * Functions needed for the UTM (Universal Tranverse Mercator)
-     * and MTM (Modified transverse Mercator) forward/inverse 
+     * and MTM (Modified transverse Mercator) forward/inverse
      * projections.
      *
      * NOTE: formulae used below are not those of Snyder, but rather those
@@ -106,9 +72,9 @@ final class TransverseMercatorProjection extends CylindricalProjection
     /**
      * Functions to compute meridinal distance and
      * inverse on the ellipsoid.
-     * 
+     *
      *    NOTE: formulae differ from those of Snyder.
-     *          Algorithms have been taken verbatim from the 'proj' package of 
+     *          Algorithms have been taken verbatim from the 'proj' package of
      *          the USGS, whose work is fully acknowledged.
      *
      * meridinal distance for ellipsoid and inverse
@@ -279,9 +245,9 @@ final class TransverseMercatorProjection extends CylindricalProjection
         cphi *= sphi;
         sphi *= sphi;
         return en0 * phi - cphi *
-              (en1 + sphi * 
-              (en2 + sphi * 
-              (en3 + sphi * 
+              (en1 + sphi *
+              (en2 + sphi *
+              (en3 + sphi *
               (en4))));
     }
 
@@ -306,7 +272,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         //   Transformation     //
         //////////////////////////
         x -= centralLongitude;
-        double sinphi = Math.sin(y); 
+        double sinphi = Math.sin(y);
         double cosphi = Math.cos(y);
         if (isSpherical)
         {
@@ -324,12 +290,12 @@ final class TransverseMercatorProjection extends CylindricalProjection
                 {
                     throw new TransformException(Resources.format(Clé.INFINITY_IN_PROJECTION));
                 }
-                else 
+                else
                     yy = 0.0;
             }
             else
                 yy = Math.acos(yy);
-            if (y<0) 
+            if (y<0)
                 yy = -yy;
             y = ak0 * yy;
         }
@@ -347,11 +313,11 @@ final class TransverseMercatorProjection extends CylindricalProjection
             y = ak0*(mlfn(y, sinphi, cosphi) + sinphi*al*x*
                       FC2 * ( 1.0 +
                       FC4 * als * (5.0 - t + n*(9.0 + 4.0*n) +
-                      FC6 * als * (61.0 + t * (t - 58.0) + n*(270.0 - 330.0*t) + 
+                      FC6 * als * (61.0 + t * (t - 58.0) + n*(270.0 - 330.0*t) +
                       FC8 * als * (1385.0 + t * ( t*(543.0 - t) - 3111.0))))));
 
-            x = ak0*al*(FC1 + FC3 * als*(1.0 - t + n + 
-                      FC5 * als * (5.0 + t*(t - 18.0) + n*(14.0 - 58.0*t) + 
+            x = ak0*al*(FC1 + FC3 * als*(1.0 - t + n +
+                      FC5 * als * (5.0 + t*(t - 18.0) + n*(14.0 - 58.0*t) +
                       FC7 * als * (61.0+ t*(t*(179.0 - t) - 479.0 ))))) + x0;
         }
 
@@ -410,7 +376,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             {
                 y = y<0.0 ? -(Math.PI/2) : (Math.PI/2);
                 x = centralLongitude;
-            } 
+            }
             else
             {
                 double sinphi = Math.sin(phi);
@@ -422,14 +388,14 @@ final class TransverseMercatorProjection extends CylindricalProjection
                 con *= t;
                 t *= t;
                 double ds = d*d;
-                y = phi - (con*ds / (1.0 - es)) * 
-                      FC2 * (1.0 - ds * 
-                      FC4 * (5.0 + t*(3.0 - 9.0*n) + n*(1.0 - 4*n) - ds * 
-                      FC6 * (61.0 + t*(90.0 - 252.0*n + 45.0*t) + 46.0*n - ds * 
+                y = phi - (con*ds / (1.0 - es)) *
+                      FC2 * (1.0 - ds *
+                      FC4 * (5.0 + t*(3.0 - 9.0*n) + n*(1.0 - 4*n) - ds *
+                      FC6 * (61.0 + t*(90.0 - 252.0*n + 45.0*t) + 46.0*n - ds *
                       FC8 * (1385.0 + t*(3633.0 + t*(4095.0 + 1574.0*t))))));
 
                 x = d*(FC1 - ds * FC3 * (1.0 + 2.0*t + n -
-                    ds*FC5*(5.0 + t*(28.0 + 24* t + 8.0*n) + 6.0*n - 
+                    ds*FC5*(5.0 + t*(28.0 + 24* t + 8.0*n) + 6.0*n -
                     ds*FC7*(61.0 + t*(662.0 + t*(1320.0 + 720.0*t))))))/cosphi + centralLongitude;
             }
         }
@@ -489,5 +455,53 @@ final class TransverseMercatorProjection extends CylindricalProjection
         buffer.append(name);
         buffer.append(" zone=");
         buffer.append(zone);
+    }
+
+    /**
+     * Informations about a {@link TransverseMercatorProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Registration extends MathTransform.Registration
+    {
+        /**
+         * <code>true</code> for Modified Mercator Projection (MTM), or
+         * <code>false</code> for Universal Mercator Projection (UTM).
+         */
+        private final boolean modified;
+
+        /**
+         * Construct a new registration.
+         *
+         * @param modified <code>true</code> for Modified Mercator Projection (MTM),
+         *       or <code>false</code> for Universal Mercator Projection (UTM).
+         */
+        public Registration(final boolean modified)
+        {
+            super(modified ? "Modified_Transverse_Mercator" : "Transverse_Mercator",
+                  modified ? Clé.MTM                        : Clé.UTM);
+            this.modified = modified;
+        }
+
+        /**
+         * Create a new map projection.
+         */
+        public MathTransform create(final Parameter[] parameters)
+        {return new TransverseMercatorProjection(parameters, modified);}
+
+        /**
+         * Returns the default parameters.
+         */
+        public Parameter[] getDefaultParameters()
+        {
+            return new Parameter[]
+            {
+                new Parameter("semi_major", SEMI_MAJOR),
+                new Parameter("semi_minor", SEMI_MINOR),
+                new Parameter("latitude_of_origin",  0),
+                new Parameter("central_meridian",    0)
+            };
+        }
     }
 }

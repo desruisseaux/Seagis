@@ -37,7 +37,7 @@ import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
 
 
-/** 
+/**
  * Classe facilitant la lecture de lignes de données en format texte. Le plus souvent,
  * on utilise cette classe pour lire les lignes d'une matrice. Certaines colonnes pourraient toutefois
  * contenir autre chose que des nombres. L'exemple ci-dessous créé un objet qui attendra des dates dans

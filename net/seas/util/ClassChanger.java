@@ -28,7 +28,7 @@ import java.lang.Long;
 import java.util.Date;
 
 
-/** 
+/**
  * Transforme un objet d'une classe vers une autre. Cette classe sert principalement
  * à convertir en {@link Number} des objets d'une autre classe, par exemple {@link Date}. Une méthode
  * statique, {@link #toNumber}, se charge d'effectuer ce genre de conversion en prenant en compte toutes

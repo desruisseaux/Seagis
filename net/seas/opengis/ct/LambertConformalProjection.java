@@ -49,36 +49,6 @@ import net.seas.resources.Resources;
  */
 final class LambertConformalProjection extends ConicProjection
 {
-    /*******************************************************
-     * Informations about a {@link LambertConformalProjection}.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     *******************************************************/
-    static final class Registration extends MathTransform.Registration
-    {
-        public Registration()
-        {super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);}
-
-        /** Create a new map projection. */
-        public MathTransform create(final Parameter[] parameters)
-        {return new LambertConformalProjection(parameters);}
-
-        /** Returns the default parameters. */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", 6378137.0),
-                new Parameter("semi_minor", 6356752.3142451794975639665996337),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0),
-                new Parameter("standard_parallel1",  0),
-                new Parameter("standard_parallel2",  0)
-            };
-        }
-    }
-
     /**
      * Variables internes
      * pour les calculs.
@@ -275,5 +245,42 @@ final class LambertConformalProjection extends ConicProjection
                Double.doubleToLongBits(this.n)    == Double.doubleToLongBits(that.n) &&
                Double.doubleToLongBits(this.F)    == Double.doubleToLongBits(that.F) &&
                Double.doubleToLongBits(this.rho0) == Double.doubleToLongBits(that.rho0);
+    }
+
+    /**
+     * Informations about a {@link LambertConformalProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Registration extends MathTransform.Registration
+    {
+        /**
+         * Construct a new registration.
+         */
+        public Registration()
+        {super("Lambert_Conformal_Conic_2SP", Clé.LAMBERT_CONFORMAL);}
+
+        /**
+         * Create a new map projection.
+         */
+        public MathTransform create(final Parameter[] parameters)
+        {return new LambertConformalProjection(parameters);}
+
+        /**
+         * Returns the default parameters.
+         */
+        public Parameter[] getDefaultParameters()
+        {
+            return new Parameter[]
+            {
+                new Parameter("semi_major", SEMI_MAJOR),
+                new Parameter("semi_minor", SEMI_MINOR),
+                new Parameter("latitude_of_origin",  0),
+                new Parameter("central_meridian",    0),
+                new Parameter("standard_parallel1",  0),
+                new Parameter("standard_parallel2",  0)
+            };
+        }
     }
 }

@@ -49,52 +49,6 @@ import net.seas.resources.Resources;
  */
 final class StereographicProjection extends PlanarProjection
 {
-    /*******************************************************
-     * Informations about a {@link StereographicProjection}.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     *******************************************************/
-    static final class Registration extends MathTransform.Registration
-    {
-        /** <code>true</code> for polar stereographic. */
-        private final boolean polar, auto;
-
-        /** Construct a default object. */
-        public Registration()
-        {
-            super("Stereographic", Clé.STEREOGRAPHIC);
-            polar = true;
-            auto  = true;
-        }
-
-        /** Construct an object for polar or oblique stereographic. */
-        public Registration(final boolean polar)
-        {
-            super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
-            this.polar = polar;
-            this.auto  = false;
-        }
-
-        /** Create a new map projection. */
-        public MathTransform create(final Parameter[] parameters)
-        {return new StereographicProjection(parameters, polar, auto);}
-
-        /** Returns the default parameters. */
-        public Parameter[] getDefaultParameters()
-        {
-            final double defaultLatitude = polar ? 90 : 0;
-            return new Parameter[]
-            {
-                new Parameter("semi_major", 6378137.0),
-                new Parameter("semi_minor", 6356752.3142451794975639665996337),
-                new Parameter("latitude_of_origin",   0),
-                new Parameter("central_meridian",    defaultLatitude),
-                new Parameter("latitude_true_scale", defaultLatitude)
-            };
-        }
-    }
-
     /**
      * Nombre maximal d'itérations permises lors
      * du calcul de la projection inverse.
@@ -163,11 +117,12 @@ final class StereographicProjection extends PlanarProjection
         //////////////////////////
         if (auto ? (Math.abs(Math.abs(centralLatitude)-(Math.PI/2)) < EPS) : polar)
         {
-            if (centralLatitude<0) mode = (isSpherical) ? SPHERICAL_SOUTH : ELLIPSOIDAL_SOUTH;
-            else                   mode = (isSpherical) ? SPHERICAL_NORTH : ELLIPSOIDAL_NORTH;
+            if (centralLatitude<0) {centralLatitude = -(Math.PI/2); mode = (isSpherical) ? SPHERICAL_SOUTH : ELLIPSOIDAL_SOUTH;}
+            else                   {centralLatitude = +(Math.PI/2); mode = (isSpherical) ? SPHERICAL_NORTH : ELLIPSOIDAL_NORTH;}
         }
         else if (Math.abs(centralLatitude)<EPS)
         {
+            centralLatitude = 0;
             mode = (isSpherical) ? SPHERICAL_EQUATORIAL : ELLIPSOIDAL_EQUATORIAL;
         }
         else
@@ -204,7 +159,7 @@ final class StereographicProjection extends PlanarProjection
         {
             default:
             {
-                throw new AssertionError(); // Should not happen.
+                throw new AssertionError(mode); // Should not happen.
             }
 
             case ELLIPSOIDAL_NORTH:
@@ -226,7 +181,7 @@ final class StereographicProjection extends PlanarProjection
             case SPHERICAL_NORTH:
             case SPHERICAL_SOUTH:
             {
-                if (Math.abs(latitudeTrueScale - (Math.PI/2)) >= EPS) 
+                if (Math.abs(latitudeTrueScale - (Math.PI/2)) >= EPS)
                     k0 = 1 + Math.sin(latitudeTrueScale);
                 else
                     k0 = 2;
@@ -281,7 +236,7 @@ final class StereographicProjection extends PlanarProjection
         {
             default:
             {
-                throw new AssertionError(); // Should not happen.
+                throw new AssertionError(mode); // Should not happen.
             }
             case ELLIPSOIDAL_NORTH:
             {
@@ -396,7 +351,7 @@ choice: switch (mode)
         {
             default:
             {
-                throw new AssertionError(); // Should not happen.
+                throw new AssertionError(mode); // Should not happen.
             }
             case SPHERICAL_NORTH:
             {
@@ -575,14 +530,72 @@ choice: switch (mode)
     }
 
     /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
+     * Informations about a {@link StereographicProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
      */
-    void toString(final StringBuffer buffer)
+    static final class Registration extends MathTransform.Registration
     {
-        super.toString(buffer);
-        buffer.append(", central latitude=");
-        buffer.append(new Latitude(Math.toDegrees(centralLatitude)));
-        buffer.append(']');
+        /**
+         * <code>true</code> for polar stereographic, or
+         * <code>false</code> for equatorial and oblique
+         * stereographic.
+         */
+        private final boolean polar;
+
+        /**
+         * <code>true</code> if polar/oblique/equatorial
+         * stereographic can be automatically choosen.
+         */
+        private final boolean auto;
+
+        /**
+         * Construct a new registration. The type (polar, oblique
+         * or equatorial) will be choosen automatically according
+         * the latitude or origin.
+         */
+        public Registration()
+        {
+            super("Stereographic", Clé.STEREOGRAPHIC);
+            polar = true;
+            auto  = true;
+        }
+
+        /**
+         * Construct an object for polar or oblique stereographic.
+         *
+         * @param polar <code>true</code> for polar stereographic, or
+         *              <code>false</code> for equatorial and oblique
+         *              stereographic.
+         */
+        public Registration(final boolean polar)
+        {
+            super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
+            this.polar = polar;
+            this.auto  = false;
+        }
+
+        /**
+         * Create a new map projection.
+         */
+        public MathTransform create(final Parameter[] parameters)
+        {return new StereographicProjection(parameters, polar, auto);}
+
+        /**
+         * Returns the default parameters.
+         */
+        public Parameter[] getDefaultParameters()
+        {
+            final double defaultLatitude = polar ? 90 : 0;
+            return new Parameter[]
+            {
+                new Parameter("semi_major", SEMI_MAJOR),
+                new Parameter("semi_minor", SEMI_MINOR),
+                new Parameter("latitude_of_origin",   0),
+                new Parameter("central_meridian",    defaultLatitude),
+                new Parameter("latitude_true_scale", defaultLatitude)
+            };
+        }
     }
 }

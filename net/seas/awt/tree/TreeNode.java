@@ -22,7 +22,7 @@
  */
 package net.seas.awt.tree;
 
-/** 
+/**
  * Defines the requirements for an object that can be used as a
  * tree node in a {@link javax.swing.JTree}.
  *

@@ -37,7 +37,7 @@ import java.awt.geom.PathIterator;
 import net.seas.util.XMath;
 
 
-/** 
+/**
  * Static utilities methods. Those methods operate on geometric
  * shapes from the <code>java.awt.geom</code> package.
  *

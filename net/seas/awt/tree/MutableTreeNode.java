@@ -22,7 +22,7 @@
  */
 package net.seas.awt.tree;
 
-/** 
+/**
  * Defines the requirements for a tree node object that can change.
  * It may changes by adding or removing child nodes, or by changing
  * the contents of a user object stored in the node.

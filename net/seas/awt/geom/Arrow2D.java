@@ -87,7 +87,7 @@ public class Arrow2D extends RectangularShape
      * Construit une flèche située aux coordonnées (<var>x</var>,<var>y</var>) avec
      * une longueur selon <var>x</var> de <code>length</code> et une hauteur selon
      * <var>y</var> de <code>height</code>.
-     * 
+     *
      * @param x Coordonnée <var>x</var> minimale.
      * @param y Coordonnée <var>y</var> minimale.
      * @param length Longueur selon l'axe des <var>x</var>, de la base à la pointe de la flèche.

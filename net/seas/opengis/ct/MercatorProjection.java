@@ -53,35 +53,6 @@ import net.seas.resources.Resources;
  */
 final class MercatorProjection extends CylindricalProjection
 {
-    /*******************************************************
-     * Informations about a {@link MercatorProjection}.
-     *
-     * @version 1.0
-     * @author Martin Desruisseaux
-     *******************************************************/
-    static final class Registration extends MathTransform.Registration
-    {
-        public Registration()
-        {super("Mercator_1SP", Clé.CYLINDRICAL_MERCATOR);}
-
-        /** Create a new map projection. */
-        public MathTransform create(final Parameter[] parameters)
-        {return new MercatorProjection(parameters);}
-
-        /** Returns the default parameters. */
-        public Parameter[] getDefaultParameters()
-        {
-            return new Parameter[]
-            {
-                new Parameter("semi_major", 6378137.0),
-                new Parameter("semi_minor", 6356752.3142451794975639665996337),
-                new Parameter("latitude_of_origin",  0),
-                new Parameter("central_meridian",    0),
-                new Parameter("latitude_true_scale", 0)
-            };
-        }
-    }
-
     /**
      * Global scale factor. Value <code>ak0</code>
      * is equals to <code>{@link #a a}*k0</code>.
@@ -100,9 +71,8 @@ final class MercatorProjection extends CylindricalProjection
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        final double latitudeOfOrigine = Parameter.getValue(parameters, "latitude_of_origin", 0);
-        final double latitudeTrueScale = Math.abs(latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale", latitudeOfOrigine), false));
-        centralLatitude = latitudeToRadians(latitudeOfOrigine, false); // Overwrite default value.
+        centralLatitude = latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), false);
+        final double latitudeTrueScale = Math.abs(centralLatitude);
 
         //////////////////////////
         //  Compute constants   //
@@ -231,14 +201,37 @@ final class MercatorProjection extends CylindricalProjection
     }
 
     /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
+     * Informations about a {@link MercatorProjection}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
      */
-    void toString(final StringBuffer buffer)
+    static final class Registration extends MathTransform.Registration
     {
-        super.toString(buffer);
-        buffer.append(", central latitude=");
-        buffer.append(new Latitude(Math.toDegrees(centralLatitude)));
-        buffer.append(']');
+        /**
+         * Construct a new registration.
+         */
+        public Registration()
+        {super("Mercator_1SP", Clé.CYLINDRICAL_MERCATOR);}
+
+        /**
+         * Create a new map projection.
+         */
+        public MathTransform create(final Parameter[] parameters)
+        {return new MercatorProjection(parameters);}
+
+        /**
+         * Returns the default parameters.
+         */
+        public Parameter[] getDefaultParameters()
+        {
+            return new Parameter[]
+            {
+                new Parameter("semi_major", SEMI_MAJOR),
+                new Parameter("semi_minor", SEMI_MINOR),
+                new Parameter("latitude_of_origin",  0),
+                new Parameter("central_meridian",    0)
+            };
+        }
     }
 }

@@ -197,8 +197,8 @@ public class XRectangle2D extends Rectangle2D implements Serializable
     {return (x>=xmin && y>=ymin && x<xmax && y<ymax);}
 
     /**
-     * Tests if the interior of this <code>Rectangle2D</code> 
-     * intersects the interior of a specified set of rectangular 
+     * Tests if the interior of this <code>Rectangle2D</code>
+     * intersects the interior of a specified set of rectangular
      * coordinates.
      *
      * @param x,&nbsp;y the coordinates of the upper left corner
@@ -308,12 +308,12 @@ public class XRectangle2D extends Rectangle2D implements Serializable
      * The resulting <code>Rectangle2D</code> is the smallest <code>Rectangle2D</code>
      * that contains both the original <code>Rectangle2D</code> and the specified point.
      * <p>
-     * After adding a point, a call to <code>contains</code> with the 
-     * added point as an argument does not necessarily return 
-     * <code>true</code>. The <code>contains</code> method does not 
-     * return <code>true</code> for points on the right or bottom 
-     * edges of a rectangle. Therefore, if the added point falls on 
-     * the left or bottom edge of the enlarged rectangle, 
+     * After adding a point, a call to <code>contains</code> with the
+     * added point as an argument does not necessarily return
+     * <code>true</code>. The <code>contains</code> method does not
+     * return <code>true</code> for points on the right or bottom
+     * edges of a rectangle. Therefore, if the added point falls on
+     * the left or bottom edge of the enlarged rectangle,
      * <code>contains</code> returns <code>false</code> for that point.
      *
      * @param newx,&nbsp;newy the coordinates of the new point

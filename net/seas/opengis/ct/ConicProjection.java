@@ -26,7 +26,7 @@
 package net.seas.opengis.ct;
 
 
-/** 
+/**
  * Classe de base des projections cartographiques coniques. Les projections
  * coniques consistent à projeter la surface de la Terre sur un cône tangeant ou sécant à la
  * Terre. Les parallèles apparaissent habituellement comme des arcs de cercles et les méridiens

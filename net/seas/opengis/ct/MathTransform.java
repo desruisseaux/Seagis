@@ -161,7 +161,7 @@ public abstract class MathTransform
     }
 
     /**
-     * Transforms a list of coordinate point ordinal values. 
+     * Transforms a list of coordinate point ordinal values.
      * This method is provided for efficiently transforming many points.
      * The supplied array of ordinal values will contain packed ordinal
      * values.  For example, if the source dimension is 3, then the ordinals
@@ -188,7 +188,7 @@ public abstract class MathTransform
     public abstract void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException;
 
     /**
-     * Transforms a list of coordinate point ordinal values. 
+     * Transforms a list of coordinate point ordinal values.
      * This method is provided for efficiently transforming many points.
      * The supplied array of ordinal values will contain packed ordinal
      * values.  For example, if the source dimension is 3, then the ordinals

@@ -26,7 +26,7 @@
 package net.seas.opengis.ct;
 
 
-/** 
+/**
  * Classe de base des projections cartographiques azimuthales (ou planaires).
  * On peut trouver plus de détails sur les projections azimuthales à l'adresse
  * <a href="http://everest.hunter.cuny.edu/mp/plane.html">http://everest.hunter.cuny.edu/mp/plane.html</a>.

@@ -84,7 +84,7 @@ public class ResourceBundle extends java.util.ResourceBundle
 
     /**
      * Construit une table des ressources.
-     * 
+     *
      * @param  locale {@link Locale} des ressources (à titre informatif).
      * @param  filename Nom du fichier binaire contenant les ressources.
      * @throws IOException si les ressources n'ont pas pu être ouvertes.

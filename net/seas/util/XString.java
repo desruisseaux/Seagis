@@ -24,6 +24,7 @@ package net.seas.util;
 
 // Miscellaneous
 import java.util.Arrays;
+import java.awt.Dimension;
 
 
 /**
@@ -45,7 +46,7 @@ public final class XString
      * Liste de chaînes de caractères ne contenant que des
      * espaces blancs. Ces chaînes auront différentes longueurs
      */
-    private static final String[] spacesFactory = new String[16];
+    private static final String[] spacesFactory = new String[20];
 
     /**
      * Renvoie une chaîne de caractères ne contenant que des espaces. Cette
@@ -54,9 +55,9 @@ public final class XString
      * enregistrements d'un tableau écrit avec une police non-proportionelle.
      *
      * Afin d'améliorer la performance, cette méthode tient une liste spéciale
-     * de chaînes courtes (moins de 16 caractères), qui seront retournées d'un
+     * de chaînes courtes (moins de 20 caractères), qui seront retournées d'un
      * appel à l'autre plutôt que de créer de nouvelles chaînes à chaque fois.
-     * 
+     *
      * @param  length Longueur souhaitée de la chaîne. Cette longueur peut
      *         être négative. Dans ce cas, la chaîne retournée aura une
      *         longueur de 0.
@@ -71,16 +72,13 @@ public final class XString
         {
             if (spacesFactory[length]==null)
             {
-                synchronized (spacesFactory)
+                if (spacesFactory[last]==null)
                 {
-                    if (spacesFactory[last]==null)
-                    {
-                        char[] blancs = new char[last];
-                        Arrays.fill(blancs, ' ');
-                        spacesFactory[last]=new String(blancs).intern();
-                    }
-                    spacesFactory[length] = spacesFactory[last].substring(0,length).intern();
+                    char[] blancs = new char[last];
+                    Arrays.fill(blancs, ' ');
+                    spacesFactory[last]=new String(blancs).intern();
                 }
+                spacesFactory[length] = spacesFactory[last].substring(0,length).intern();
             }
             return spacesFactory[length];
         }
@@ -90,5 +88,39 @@ public final class XString
             Arrays.fill(blancs, ' ');
             return new String(blancs);
         }
+    }
+
+    /**
+     * Retourne le nombre de ligne et de colonnes du texte spécifié. Les caractères
+     * <code>'\r'</code>, <code>'\n'</code> or <code>"\r\n"</code> sont acceptés comme
+     * séparateur de ligne. La largeur retournée sera la longueur de la ligne la plus
+     * longue.
+     */
+    public static Dimension getSize(final CharSequence text)
+    {
+        final int length = text.length();
+        int height = 0;
+        int width  = 0;
+        int lower  = 0;
+        int upper  = 0;
+        while (upper < length)
+        {
+            final char c=text.charAt(upper++);
+            if (c=='\r' || c=='\n')
+            {
+                final int lineWidth = upper-lower;
+                if (lineWidth>width) width=lineWidth;
+                if (c=='\r' && upper<length && text.charAt(upper)=='\n')
+                {
+                    upper++;
+                }
+                lower = upper;
+                height++;
+            }
+        }
+        final int lineWidth = upper-lower;
+        if (lineWidth>width) width=lineWidth;
+        if (lineWidth>0) height++;
+        return new Dimension(width, height);
     }
 }
