@@ -79,9 +79,9 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
     private static final int TIME_STEP = 5*DAY;
 
     /**
-     * Région geographique d'intérêt. Par défaut de 30°E à 80°E et 30°S à 10°N.
+     * Région geographique d'intérêt. Par défaut de 30°E à 90°E et 30°S à 30°N.
      */
-    private static final Rectangle2D GEOGRAPHIC_AREA = new Rectangle(30, -30, 50, 40);
+    private static final Rectangle2D GEOGRAPHIC_AREA = new Rectangle(30, -30, 60, 60);
 
     /**
      * Arrondie un nombre vers le haut.
