@@ -719,12 +719,18 @@ public class Coverage3D extends Coverage {
      * @throws CannotEvaluateException si la transformation n'a pas pu être faites.
      */
     private Point2D project(final Point2D point, final GridCoverage coverage) throws CannotEvaluateException {
-        final CoordinateSystem targetCS = coverage.getCoordinateSystem();
-        if (coordinateSystem.equals(targetCS, false)) {
-            return point;
+        // TODO: On ne prend que les deux première dimensions parce que, pour une raison non
+        //       élucidée, l'opération "NodataFilter" retourne un système de coordonnées 2D.
+        try {
+            final CoordinateSystem targetCS = CTSUtilities.getCoordinateSystem2D(coverage.getCoordinateSystem());
+            if (CTSUtilities.getCoordinateSystem2D(coordinateSystem).equals(targetCS, false)) {
+                return point;
+            }
+            // TODO: Implémenter la transformation de coordonnées.
+            throw new CannotEvaluateException("Système de coordonnées incompatibles.");
+        } catch (TransformException exception) {
+            throw new CannotEvaluateException(exception.getLocalizedMessage(), exception);
         }
-        // TODO: Implémenter la transformation de coordonnées.
-        throw new CannotEvaluateException("Système de coordonnées incompatibles.");
     }
 
     /**

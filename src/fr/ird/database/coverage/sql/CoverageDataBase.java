@@ -48,6 +48,9 @@ import java.util.logging.Level;
 import javax.imageio.spi.IIORegistry;
 import javax.media.jai.util.Range;
 
+// Geotools
+import org.geotools.gp.GridCoverageProcessor;
+
 // Seagis
 import fr.ird.database.SQLDataBase;
 import fr.ird.database.gui.swing.SQLEditor;
@@ -293,6 +296,32 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
         } else {
             throw new SQLException(Resources.format(ResourceKeys.ERROR_SERIES_NOT_FOUND_$1, new Integer(seriesID)));
         }
+    }
+
+    /**
+     * Retourne le processeur par défaut à utiliser pour appliquer des opérations sur les images
+     * lues. Les operations sont spécifiées par {@link CoverageTable#setOperation(String)} et
+     * appliquée lors de l'appel de {@link CoverageEntry#getGridCoverage}.
+     *
+     * @return Le processeur par défaut.
+     * @see CoverageTable#setOperation(String)
+     * @see CoverageEntry#getGridCoverage
+     */
+    public static GridCoverageProcessor getDefaultGridCoverageProcessor() {
+        return GridCoverageEntry.PROCESSOR;
+    }
+
+    /**
+     * Définit le processeur par défaut à utiliser pour appliquer des opérations sur les images
+     * lues. Les operations sont spécifiées par {@link CoverageTable#setOperation(String)} et
+     * appliquée lors de l'appel de {@link CoverageEntry#getGridCoverage}.
+     *
+     * @param processor Le processeur par défaut.
+     * @see CoverageTable#setOperation(String)
+     * @see CoverageEntry#getGridCoverage
+     */
+    public static void setDefaultGridCoverageProcessor(final GridCoverageProcessor processor) {
+        GridCoverageEntry.PROCESSOR = processor;
     }
 
     /**

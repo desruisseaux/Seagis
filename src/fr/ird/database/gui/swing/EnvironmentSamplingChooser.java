@@ -66,6 +66,15 @@ import fr.ird.resources.seagis.Resources;
 
 /**
  * Interface graphique pour lancer l'exécution de {@link EnvironmentTableFiller}.
+ * Cette interface présente trois colonnes dans lesquelles l'utilisateur peut sélectionner
+ * les séries temporelles, les décalages spatio-temporels et une opération à appliquer sur
+ * les données.  Une case à cocher, &quot;Autoriser les interpolations&quot;, activera les
+ * opérations suivantes:
+ *
+ * <ul>
+ *   <li>Remplissage de quelques données manquantes avec l'opération &quot;NodataFilter&quot;.</li>
+ *   <li>Interpolation bicubique ou bilinéare (si possible) avec l'opération &quot;Interpolate&quot;.</li>
+ * </ul>
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -210,10 +219,6 @@ public class EnvironmentSamplingChooser extends JPanel {
             });
             operationSelected(tabs, tabIndex);
         }
-        // TODO: Supprimer la ligne suivante quand EnvironmentTableFiller appellera
-        //       addParameter(ParameterEntry,OperationEntry,PositionEntry) plutôt que
-        //       addParameter(String,String,String).
-        column.setEnabled(false);
     }
 
     /**
@@ -256,19 +261,36 @@ public class EnvironmentSamplingChooser extends JPanel {
             logging.show(owner);
 
             final String                column = this.column.getText();
+            final boolean          interpolate = interpolationAllowed.isSelected();
             final OperationEntry     operation = (OperationEntry) this.operation.getSelectedItem();
             final Map<String,Object> arguments = new HashMap<String,Object>();
             arguments.put("mask1", kernels.getHorizontalEditor().getKernel());
             arguments.put("mask2", kernels.getVerticalEditor().getKernel());
+            GridCoverageProcessor.initialize();
 
-            filler.setInterpolationAllowed(interpolationAllowed.isSelected());
+            filler.setInterpolationAllowed(interpolate);
             filler.getSeries().retainAll(series.getSelectedElements());
             filler.getRelativePositions().retainAll(Arrays.asList(positions.getSelectedValues()));
             filler.getOperations().clear();
             filler.getOperations().add(new OperationEntry.Proxy(operation) {
+                /** Retourne le nom de l'opération à appliquer. */
+                public String getProcessorOperation() {
+                    String name = super.getProcessorOperation();
+                    if (!interpolate) {
+                        return name;
+                    }
+                    if (name==null || (name=name.trim()).length()==0) {
+                        return GridCoverageProcessor.NODATA_FILTER;
+                    }
+                    return GridCoverageProcessor.NODATA_FILTER + '-' + name;
+                }
+
+                /** Retourne le nom de la colonne dans laquelle écrire le résultat. */
                 public String getColumn() {
                     return column;
                 }
+
+                /** Retourne la valeur d'un paramètre de l'opération. */
                 public Object getParameter(final String name) {
                     return arguments.get(name);
                 }

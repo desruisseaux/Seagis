@@ -34,6 +34,7 @@ import java.awt.geom.Rectangle2D;
 // Ensembles
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -57,12 +58,14 @@ import org.geotools.resources.Utilities;
 
 // Seagis
 import fr.ird.database.Table;
+import fr.ird.database.IllegalRecordException;
 import fr.ird.database.coverage.SeriesTable;
 import fr.ird.database.coverage.SeriesEntry;
 import fr.ird.database.coverage.CoverageTable;
 import fr.ird.database.coverage.CoverageDataBase;
 import fr.ird.resources.seagis.ResourceKeys;
 import fr.ird.resources.seagis.Resources;
+import fr.ird.resources.XArray;
 
 
 /**
@@ -104,9 +107,10 @@ public class EnvironmentTableFiller implements Table {
      * la table "Environnement" à remplir pour chaque canal des images
      * de la série.
      *
-     * TODO: Cette liste devrait être construite à partir de la table "Parameters" de la
+     * @task TODO: Cette liste devrait être construite à partir de la table "Parameters" de la
      *       base de données des échantillons. Cette dernière contient toutes les informations
-     *       nécessaires à cet effet.
+     *       nécessaires à cet effet. Un code à cet effet (non testé) existe déjà dans le
+     *       constructeur.
      */
     private static final String[][] DEFAULT_SERIES = {
         {"SST (synthèse)",                    "SST"},
@@ -125,7 +129,7 @@ public class EnvironmentTableFiller implements Table {
      * dans la base de données. Le premier paramètre de la liste contiendra la valeur de la bande
      * 0; le second paramètre de la liste contiendra la valeur de la bande 1, etc.
      */
-    private final Map<SeriesEntry,String[]> series = new LinkedHashMap<SeriesEntry,String[]>();
+    private final Map<SeriesEntry,ParameterEntry[]> series = new LinkedHashMap<SeriesEntry,ParameterEntry[]>();
 
     /**
      * Liste des opérations applicables.
@@ -200,11 +204,44 @@ public class EnvironmentTableFiller implements Table {
         this.coverages   = coverages;
         this.samples     = samples;
         this.seriesTable = coverages.getSeriesTable();
-        for (int i=0; i<DEFAULT_SERIES.length; i++) {
-            final String[] param = DEFAULT_SERIES[i];
-            final String[] list = new String[param.length-1];
-            System.arraycopy(param, 1, list, 0, list.length);
-            series.put(seriesTable.getEntry(param[0]), list);
+        if (DEFAULT_SERIES == null) {
+            /*
+             * Obtient les séries à partir de la base de données.
+             * NOTE: Cette partie n'a pas encore été testée.
+             */
+            for (final ParameterEntry parameter : samples.getParameters(seriesTable)) {
+                int index = 0;
+                SeriesEntry entry;
+                while ((entry=parameter.getSeries(index++)) != null) {
+                    final int band = parameter.getBand();
+                    ParameterEntry[] list = series.get(entry);
+                    if (list == null) {
+                        list = new ParameterEntry[band+1];
+                    } else if (list.length <= band) {
+                        list = XArray.resize(list, band+1);
+                    }
+                    list[band] = parameter;
+                    series.put(entry, list);
+                }
+            }
+        } else {
+            /*
+             * Obtient les séries à partir de tableau des séries par défaut (codé en dur).
+             */
+            final Map<String,ParameterEntry> parameters = new HashMap<String,ParameterEntry>();
+            for (final ParameterEntry parameter : samples.getParameters(seriesTable)) {
+                if (parameters.put(parameter.getName(), parameter) != null) {
+                    throw new IllegalRecordException("Parameters", parameter.getName());
+                }
+            }
+            for (int i=0; i<DEFAULT_SERIES.length; i++) {
+                final String[] param = DEFAULT_SERIES[i];
+                final ParameterEntry[] list = new ParameterEntry[param.length-1];
+                for (int j=0; j<list.length; j++) {
+                    list[j] = parameters.get(param[j+1]);
+                }
+                series.put(seriesTable.getEntry(param[0]), list);
+            }
         }
         positions  = samples.getRelativePositions();
         operations = samples.getOperations();
@@ -331,7 +368,7 @@ public class EnvironmentTableFiller implements Table {
              * bandes (par exemple "SLA", "U" et "V").   On déclarera aussi toutes les positions
              * relatives, mais ces positions seront transmises de manière explicites plus loin.
              */
-            for (final Map.Entry<SeriesEntry,String[]> series : this.series.entrySet()) {
+            for (final Map.Entry<SeriesEntry,ParameterEntry[]> series : this.series.entrySet()) {
                 final Coverage3D       coverage;
                 final SamplePosition[]    tasks;
 
@@ -341,11 +378,10 @@ public class EnvironmentTableFiller implements Table {
                 tasks = SamplePosition.getInstances(sampleEntries, positions, coverage);
                 info(ResourceKeys.POSITIONS_TO_EVALUATE_$1, new Integer(tasks.length));
                 final EnvironmentTable table = samples.getEnvironmentTable(seriesTable);
-                final String[] parameters = series.getValue();
+                final ParameterEntry[] parameters = series.getValue();
                 for (final RelativePositionEntry position : positions) {
                     for (int i=0; i<parameters.length; i++) {
-                        // TODO: Utiliser la méthode qui prend des Entry plutôt que des String.
-                        table.addParameter(parameters[i], operation.getColumn(), position.getName(), false);
+                        table.addParameter(parameters[i], operation, position, false);
                     }
                 }
                 /*

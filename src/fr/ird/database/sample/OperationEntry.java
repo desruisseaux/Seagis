@@ -34,6 +34,7 @@ import org.geotools.gp.GridCoverageProcessor;
 
 // Seagis
 import fr.ird.database.Entry;
+import fr.ird.database.coverage.CoverageTable;
 
 
 /**
@@ -57,6 +58,8 @@ public interface OperationEntry extends Entry {
 
     /**
      * Retourne le nom de l'opération à utiliser avec {@link GridCoverageProcessor}.
+     * Si aucune opération ne doit être appliquée (autre que l'interpolation par défaut
+     * appliquée par {@link CoverageTable}, alors cette méthode retourne <code>null</code>.
      */
     public abstract String getProcessorOperation();
 

@@ -146,11 +146,12 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
                          CoordinateTransformationFactory.getDefault();
 
     /**
-     * L'objet à utiliser pour appliquer
-     * des opérations sur les images lues.
+     * L'objet à utiliser pour appliquer des opérations sur les images lues.
+     *
+     * @see CoverageDataBase#getDefaultGridCoverageProcessor
+     * @see CoverageDataBase#setDefaultGridCoverageProcessor
      */
-    static final GridCoverageProcessor PROCESSOR =
-                 GridCoverageProcessor.getDefault();
+    static GridCoverageProcessor PROCESSOR = GridCoverageProcessor.getDefault();
 
     /**
      * Ensemble des entrés qui ont déjà été retournées par {@link #canonicalize()}

@@ -42,7 +42,7 @@ final class OperationTable extends ColumnTable<fr.ird.database.sample.OperationE
      * Requête SQL pour obtenir le code d'une opération.
      */
     static final String SQL_SELECT =
-            "SELECT colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE colonne=? ORDER BY colonne";
+            "SELECT colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE colonne=? ORDER BY nom";
 
     /** Numéro de colonne. */ private static final int COLUMN    = 1;
     /** Numéro de colonne. */ private static final int PREFIX    = 2;
