@@ -46,11 +46,6 @@ public class AxisInfo implements Cloneable, Serializable
     //private static final long serialVersionUID = ?;
 
     /**
-     * Enumerated value for orientation.
-     */
-    public AxisOrientation orientation;
-
-    /**
      * Human readable name for axis. Possible values are
      * <code>X</code>, <code>Y</code>, <code>Long</code>,
      * <code>Lat</code> or any other short string.
@@ -58,22 +53,46 @@ public class AxisInfo implements Cloneable, Serializable
     public String name;
 
     /**
-     * Construct an object with
-     * all parameters set to 0.
+     * Enumerated value for orientation.
      */
-    public AxisInfo()
-    {}
+    public AxisOrientation orientation;
 
     /**
-     * Returns a string représentation of this axis.
+     * Construct an AxisInfo.
+     *
+     * @param name The axis name.
+     * @param orientation The axis orientation.
      */
-    public String toString()
+    public AxisInfo(final String name, final AxisOrientation orientation)
     {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        buffer.append(name);
-        buffer.append(']');
-        return buffer.toString();
+        this.name        = name;
+        this.orientation = orientation;
+    }
+
+    /**
+     * Returns a hash value for this axis.
+     */
+    public int hashCode()
+    {
+        int code=0;
+        if (orientation!=null) code ^= orientation.hashCode();
+        if (name       !=null) code ^= name.hashCode();
+        return code;
+    }
+
+    /**
+     * Compares the specified object
+     * with this axis for equality.
+     */
+    public boolean equals(final Object object)
+    {
+        if (object instanceof AxisInfo)
+        {
+            final AxisInfo that = (AxisInfo) object;
+            return XClass.equals(this.orientation, that.orientation) &&
+                   XClass.equals(this.name       , that.name);
+        }
+        else return false;
     }
 
     /**
@@ -95,28 +114,19 @@ public class AxisInfo implements Cloneable, Serializable
     }
 
     /**
-     * Compares the specified object
-     * with this axis for equality.
+     * Returns a string représentation of this axis.
      */
-    public boolean equals(final Object object)
+    public String toString()
     {
-        if (object instanceof AxisInfo)
+        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        buffer.append('[');
+        buffer.append(name);
+        if (orientation!=null)
         {
-            final AxisInfo that = (AxisInfo) object;
-            return XClass.equals(this.orientation, that.orientation) &&
-                   XClass.equals(this.name       , that.name);
+            buffer.append(',');
+            buffer.append(orientation.getName());
         }
-        else return false;
-    }
-
-    /**
-     * Returns a hash value for this axis.
-     */
-    public int hashCode()
-    {
-        int code=0;
-        if (orientation!=null) code ^= orientation.hashCode();
-        if (name       !=null) code ^= name.hashCode();
-        return code;
+        buffer.append(']');
+        return buffer.toString();
     }
 }
