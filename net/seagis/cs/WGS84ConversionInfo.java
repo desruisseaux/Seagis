@@ -105,11 +105,11 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
      */
     public Matrix getAffineTransform()
     {
-        // Note: (ex, ey, ez) is a rotation in microdegrees.
-        //       We need to convert it into radians (the 'R'
+        // Note: (ex, ey, ez) is a rotation in arc seconds.
+        //       We need to convert it into radians (the R
         //       factor in RS).
         final double  S = 1 + ppm/1E+6;
-        final double RS = (Math.PI/(180*1E+6)) * S;
+        final double RS = (Math.PI/(180*3600)) * S;
         return new Matrix(4,4, new double[]
         {
                  S,  -ez*RS,  +ey*RS,  dx,
