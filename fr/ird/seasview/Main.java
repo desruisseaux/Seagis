@@ -74,11 +74,11 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
 // Divers
-import fr.ird.util.Console;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
 // Geotools dependencies
+import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
 
@@ -490,46 +490,32 @@ public final class Main
      */
     public static void main(final String[] args)
     {
+        fr.ird.util.InterlineFormatter.init(Logger.getLogger("fr.ird"));
         /*
          * Interprète les arguments de la ligne de commange.
          * Les arguments non-valides provoqueront un message
          * d'erreur et l'arrêt du programme.
          */
-        try
+        final Arguments arguments = new Arguments(args);
+        final String    tilecache = arguments.getOptionalString("-tilecache");
+        final boolean    nativeLF = arguments.getFlag("-native");
+        arguments.getRemainingArguments(0);
+        if (tilecache!=null)
         {
-            final Console console  = new Console(args);
-            final String tilecache = console.getParameter("-tilecache");
-            final boolean nativeLF = console.hasFlag("-native");
-            console.checkRemainingArguments(0);
-            if (tilecache!=null)
-            {
-                final long value = Long.parseLong(tilecache)*(1024*1024);
-                JAI.getDefaultInstance().getTileCache().setMemoryCapacity(value);
-                // La capacité par défaut était de 64 Megs.
-            }
-            if (nativeLF)
-            {
-                try
-                {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
-                catch (Exception exception)
-                {
-                    Utilities.unexpectedException("fr.ird", "Main", "main", exception);
-                }
-            }
+            final long value = Long.parseLong(tilecache)*(1024*1024);
+            JAI.getDefaultInstance().getTileCache().setMemoryCapacity(value);
+            // La capacité par défaut était de 64 Megs.
         }
-        catch (RuntimeException exception)
+        if (nativeLF)
         {
-            System.out.print(Utilities.getShortClassName(exception));
-            final String message = exception.getLocalizedMessage();
-            if (message!=null)
+            try
             {
-                System.out.print(": ");
-                System.out.print(message);
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
-            System.out.println();
-            return;
+            catch (Exception exception)
+            {
+                Utilities.unexpectedException("fr.ird", "Main", "main", exception);
+            }
         }
         /*
          * Procède au chargement de la classe du pilote. Cette classe
@@ -542,7 +528,7 @@ public final class Main
         if (false) try
         {
             Class.forName("org.gjt.mm.mysql.Driver");
-            System.out.println("Utilise le pilote MySQL");
+            arguments.out.println("Utilise le pilote MySQL");
         }
         catch (ClassNotFoundException exception1)
         {
@@ -554,9 +540,10 @@ public final class Main
             {
                 // Ignore. On espère que l'utilisateur spécifiera
                 // un nom de base de données avec un pilote existant.
-                System.err.println("Pilote JDBC-ODBC introuvable");
+                arguments.out.println("Pilote JDBC-ODBC introuvable");
             }
         }
+        arguments.out.flush();
         /*
          * Lance le programme. Tans que la création de {@link DataBase}
          * échoue à cause d'un problème de connection avec la base de

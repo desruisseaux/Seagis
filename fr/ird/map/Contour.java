@@ -408,8 +408,7 @@ public abstract class Contour implements Shape, Cloneable, Serializable
                                                                 final CoordinateSystem targetCS)
         throws CannotCreateTransformException
     {
-        // TODO: RenderingHints should be declared in Geotools core
-        Object property = hints.get(org.geotools.gp.Operation.COORDINATE_TRANSFORMATION_FACTORY);
+        Object property = hints.get(org.geotools.gp.Hints.COORDINATE_TRANSFORMATION_FACTORY);
         final CoordinateTransformationFactory factory;
         if (property instanceof CoordinateTransformationFactory)
         {

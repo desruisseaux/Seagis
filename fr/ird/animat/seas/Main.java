@@ -47,14 +47,14 @@ import java.awt.event.WindowAdapter;
 import java.util.NoSuchElementException;
 
 // Utilitaires
-import fr.ird.util.Console;
+import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 
 
 /**
  * Point d'entré du programme de simulation.
  */
-public final class Main extends Console
+public final class Main extends Arguments
 {
     /**
      * La dynamique du modèle.
@@ -75,8 +75,8 @@ public final class Main extends Console
             final Properties properties;
             if (true)
             {
-                final String filename = getParameter("-run");
-                checkRemainingArguments(1);
+                final String filename = getOptionalString("-run");
+                getRemainingArguments(1);
                 if (filename==null)
                 {
                     out.println("Arguments: -run [fichier de propriétés]");
@@ -112,9 +112,8 @@ public final class Main extends Console
         }
         catch (Exception exception)
         {
-            out.print(Utilities.getShortClassName(exception));
-            out.print(": ");
-            out.println(exception.getLocalizedMessage());
+            exception.printStackTrace(out);
+            out.flush();
             System.exit(1);
         }
     }

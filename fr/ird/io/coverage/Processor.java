@@ -98,7 +98,7 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 // Miscellaneous
-import fr.ird.util.Console;
+import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 import org.geotools.io.DefaultFileFilter;
 
@@ -112,7 +112,7 @@ import org.geotools.io.DefaultFileFilter;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Processor extends Console
+public class Processor extends Arguments
 {
     /**
      * The grid coverage processor. Will be
@@ -177,12 +177,6 @@ public class Processor extends Console
     private transient JTabbedPane tabbedPane;
 
     /**
-     * Indique s'il faut afficher toute la trace
-     * de l'exception en cas d'erreur.
-     */
-    private boolean stackTrace=false;
-
-    /**
      * Point d'entré du programme.
      *
      * @param args Arguments spécifiés sur la ligne de commande.
@@ -243,16 +237,15 @@ public class Processor extends Console
         final int        groupID;
         try
         {
-            stackTrace       = hasFlag("-stackTrace");
-            sources          = getFiles  ("-sources");
-            updateDB         = hasFlag  ("-updateDB");
-            group            = getParameter("-group");
-            bathy            = getParameter("-bathy");
-            destination      = getParameter("-destination");
-            interpolation    = getParameter("-interpolation");
+            sources          = getFiles         ("-sources");
+            updateDB         = getFlag          ("-updateDB");
+            group            = getOptionalString("-group");
+            bathy            = getOptionalString("-bathy");
+            destination      = getOptionalString("-destination");
+            interpolation    = getOptionalString("-interpolation");
             isolineFactory   = new IsolineFactory("Méditerranée");
             this.destination = (destination!=null) ? new File(destination) : null;
-            checkRemainingArguments(0);
+            getRemainingArguments(0);
             if (sources==null)
             {
                 /////////////////////////////////////////////////////
@@ -383,7 +376,7 @@ public class Processor extends Console
      */
     private File[] getFiles(final String parameter)
     {
-        final String path = getParameter(parameter);
+        final String path = getOptionalString(parameter);
         if (path!=null)
         {
             File file = new File(path);
@@ -580,22 +573,9 @@ public class Processor extends Console
      */
     private void handleException(final Exception exception, final String methodName)
     {
-        if (stackTrace)
-        {
-            exception.printStackTrace(out);
-        }
-        else
-        {
-            out.print(Utilities.getShortClassName(exception));
-            out.print(": ");
-            out.println(exception.getLocalizedMessage());
-        }
+        exception.printStackTrace(out);
         out.flush();
-        //
-        // Log the error using FINE level (instead of WARNING)
-        // since we don't want it to be dumped on the console
-        // stream.
-        //
+
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
         final String message = exception.getLocalizedMessage();
         if (message!=null)

@@ -36,9 +36,9 @@ import java.text.NumberFormat;
 import java.text.BreakIterator;
 
 // Divers
-import fr.ird.util.Console;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 
 
@@ -132,7 +132,7 @@ public class PrintProgress extends Progress
      * La longueur par défaut des lignes sera de 80 caractères.
      */
     public PrintProgress()
-    {this(new PrintWriter(Console.getWriter(System.out)));}
+    {this(new PrintWriter(Arguments.getWriter(System.out)));}
 
     /**
      * Construit un objet qui écrira sur le périphérique de

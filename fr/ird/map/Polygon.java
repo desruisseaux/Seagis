@@ -76,9 +76,9 @@ import java.text.FieldPosition;
 
 // Miscellaneous
 import fr.ird.util.XArray;
-import fr.ird.util.Console;
 import fr.ird.util.Statistics;
 import org.geotools.resources.XMath;
+import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
@@ -1828,7 +1828,7 @@ public class Polygon extends Contour
     public static void print(final String[] titles, final Collection<Point2D>[] points, Writer out, Locale locale) throws IOException
     {
         if (locale == null) locale = Locale.getDefault();
-        if (out    == null)    out = Console.getWriter(System.out);
+        if (out    == null)    out = Arguments.getWriter(System.out);
 
         final int            width = 8; // Columns width.
         final int        precision = 3; // Significant digits.

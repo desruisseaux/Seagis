@@ -447,9 +447,14 @@ final class ImageTableImpl extends Table implements ImageTable
             this.startTime = newStartTime;
             this.endTime   = newEndTime;
 
-            final String startText = dateFormat.format(startTime);
-            final String   endText = dateFormat.format(  endTime);
-            log("setTimeRange", Level.CONFIG, ResourceKeys.SET_TIME_RANGE_$2, new String[]{startText, endText});
+            if (series != null)
+            {
+                // Don't log if this object is configured by ImageDataBase.
+                final String startText = dateFormat.format(startTime);
+                final String   endText = dateFormat.format(  endTime);
+                log("setTimeRange", Level.CONFIG, ResourceKeys.SET_TIME_RANGE_$3,
+                                    new String[]{startText, endText, series.getName()});
+            }
         }
     }
 
@@ -483,7 +488,12 @@ final class ImageTableImpl extends Table implements ImageTable
             statement.setDouble(ARG_YMAX, rect.getMaxY());
             geographicArea = new XRectangle2D(rect);
 
-            log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$1, getStringArea());
+            if (series != null)
+            {
+                // Don't log if this object is configured by ImageDataBase.
+                log("setGeographicArea", Level.CONFIG, ResourceKeys.SET_GEOGRAPHIC_AREA_$2,
+                                         new String[] {getStringArea(), series.getName()});
+            }
         }
     }
 
@@ -515,14 +525,19 @@ final class ImageTableImpl extends Table implements ImageTable
             if (pixelSize!=null)
             {
                 resolution = (Dimension2D)pixelSize.clone();
-                clé = ResourceKeys.SET_RESOLUTION_$2;
-                param = new Double[]{new Double(resolution.getWidth()),new Double(resolution.getHeight())};
+                clé = ResourceKeys.SET_RESOLUTION_$3;
+                param = new Object[]
+                {
+                    new Double(resolution.getWidth()),
+                    new Double(resolution.getHeight()),
+                    series.getName()
+                };
             }
             else
             {
                 resolution = null;
-                clé = ResourceKeys.UNSET_RESOLUTION;
-                param = null;
+                clé = ResourceKeys.UNSET_RESOLUTION_$1;
+                param = series.getName();
             }
             log("setPreferredResolution", Level.CONFIG, clé, param);
         }
@@ -560,20 +575,20 @@ final class ImageTableImpl extends Table implements ImageTable
         this.parameters = null;
         this.operation=operation;
         final int clé;
-        final String name;
+        final Object param;
         if (operation!=null)
         {
             opParam = operation.getParameterList();
-            name    = operation.getName();
-            clé     = ResourceKeys.SET_OPERATION_$1;
+            param   = new String[] {operation.getName(), series.getName()};
+            clé     = ResourceKeys.SET_OPERATION_$2;
         }
         else
         {
             opParam = null;
-            name    = null;
-            clé     = ResourceKeys.UNSET_OPERATION;
+            param   = series.getName();
+            clé     = ResourceKeys.UNSET_OPERATION_$1;
         }
-        log("setOperation", Level.CONFIG, clé, name);
+        log("setOperation", Level.CONFIG, clé, param);
         return opParam;
     }
 
@@ -700,7 +715,8 @@ final class ImageTableImpl extends Table implements ImageTable
             {
                 final ImageEntry check = new ImageEntryImpl(this, result);
                 if (!entry.equals(check))
-                    throw new IllegalRecordException(IMAGES, Resources.format(ResourceKeys.ERROR_DUPLICATED_IMAGE_$2, entry.getName(), check.getName()));
+                    throw new IllegalRecordException(IMAGES, Resources.format(
+                            ResourceKeys.ERROR_DUPLICATED_IMAGE_$2, entry.getName(), check.getName()));
             }
         }
         result.close();
@@ -1039,7 +1055,8 @@ final class ImageTableImpl extends Table implements ImageTable
         }
         catch (TransformException exception)
         {
-            final SQLException e = new SQLException(Resources.format(ResourceKeys.ERROR_INCOMPATIBLE_COORDINATES_$1, getStringArea()));
+            final SQLException e = new SQLException(Resources.format(
+                    ResourceKeys.ERROR_INCOMPATIBLE_COORDINATES_$1, getStringArea()));
             e.initCause(exception);
             throw e;
         }

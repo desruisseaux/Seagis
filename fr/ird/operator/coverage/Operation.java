@@ -29,19 +29,15 @@ package fr.ird.operator.coverage;
 import java.util.Map;
 import java.util.HashMap;
 
-// References
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.lang.ref.ReferenceQueue;
-
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-import org.geotools.resources.Utilities;
-
 // Logging
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
+
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.resources.Utilities;
+import org.geotools.util.WeakValueHashMap;
 
 
 /**
@@ -65,23 +61,7 @@ public abstract class Operation
      * and values are weak references to transformed images.
      * This map will be constructed only when first needed.
      */
-    private Map<GridCoverage,Reference> filtered;
-
-    /**
-     * Queue dans laquelle le ramasse-miettes placera les références vers les images
-     * qui ne sont plus utilisée. Le contenu de cette queue sera examinée de façon à
-     * éliminer toute les objets {@link Reference} aussitôt que leur référent ont été
-     * réclamé par le ramasse-miettes.
-     */
-    private static ReferenceQueue<GridCoverage> queue;
-
-    /**
-     * Thread used for removing enqueded objects from the {@link #filtered} map.
-     * Objects are removed as soon as reclamed by the garbage-collector in
-     * order to allows the source {@link GridCoverage} to be garbage-collected
-     * as well as the transformed {@link GridCoverage}.
-     */
-    private static Thread cleaner;
+    private Map filtered;
 
     /**
      * Construit un opérateur qui portera le nom spécifié.
@@ -104,14 +84,10 @@ public abstract class Operation
         // Check if a cached instance is available.
         if (filtered != null)
         {
-            final Reference ref = filtered.get(coverage);
-            if (ref!=null)
+            final GridCoverage result = (GridCoverage) filtered.get(coverage);
+            if (result!=null)
             {
-                final GridCoverage result = (GridCoverage) ref.get();
-                if (result!=null)
-                {
-                    return result;
-                }
+                return result;
             }
         }
         // Performs the operation. This call is usually fast. The real work
@@ -119,25 +95,11 @@ public abstract class Operation
         final GridCoverage result = doFilter(coverage);
         if (result != coverage)
         {
-            // Put the result in a cache for later use. If the
-            // cleaner thread was not yet started, start it now.
-            synchronized (Operation.class)
-            {
-                if (queue == null)
-                {
-                    queue = new ReferenceQueue<GridCoverage>();
-                }
-                if (cleaner==null || !cleaner.isAlive())
-                {
-                    cleaner = new Cleaner();
-                    cleaner.start();
-                }
-            }
             if (filtered == null)
             {
-                filtered = new HashMap<GridCoverage,Reference>();
+                filtered = new WeakValueHashMap();
             }
-            filtered.put(coverage, new Entry(coverage, result));
+            filtered.put(coverage, result);
         }
         return result;
     }
@@ -152,24 +114,6 @@ public abstract class Operation
      * @return Image transformée.
      */
     protected abstract GridCoverage doFilter(final GridCoverage coverage);
-
-    /**
-     * Remove a reference from the cache.
-     */
-    private synchronized void remove(final GridCoverage source)
-    {
-        if (filtered!=null)
-        {
-            if (filtered.remove(source)==null)
-            {
-                // Should not happen
-                final LogRecord record = new LogRecord(Level.WARNING, "Missing source");
-                record.setSourceClassName("Operation.Cleaner");
-                record.setSourceMethodName("run");
-                Logger.getLogger("fr.ird.operator").log(record);
-            }
-        }
-    }
 
     /**
      * Retourne le nom de cet opérateur. Cette méthode ne retourne pas
@@ -189,85 +133,4 @@ public abstract class Operation
      */
     public synchronized void dispose()
     {filtered = null;}
-
-    /**
-     * Thread used for removing enqueded objects from the {@link #filtered} map.
-     * Objects are removed as soon as reclamed by the garbage-collector in
-     * order to allows the source {@link GridCoverage} to be garbage-collected
-     * as well as the transformed {@link GridCoverage}.
-     *
-     * @version $Id$
-     * @author Martin Desruisseaux
-     */
-    private static final class Cleaner extends Thread
-    {
-        /**
-         * Construct a new thread.
-         */
-        public Cleaner()
-        {
-            super("Transformed GridCoverage cleaner");
-            setDaemon(true);
-        }
-
-        /**
-         * Wait for a reference to be enqueded, and remove the
-         * "source-transformed {@link GridCoverage}s" entry from
-         * the map.
-         */
-        public void run()
-        {
-            while (true)
-            {
-                try
-                {
-                    queue.remove().clear();
-                }
-                catch (InterruptedException exception)
-                {
-                    // Should not happen.
-                    Utilities.unexpectedException("fr.ird.operator", "Operation.Cleaner", "run", exception);
-                }
-            }
-        }
-    }
-
-    /**
-     * Référence vers une image source et vers le résultat de son filtrage.
-     * La référence faible est pour le résultat du filtrage. Toutefois, si
-     * ce résultat est réclamé par le ramasse-miette, alors l'image source
-     * sera aussitôt retirée de l'ensemble {@link Operation#filtered} de
-     * façon à permettre au ramasse miettes de réclamer ce dernier aussi.
-     *
-     * @version $Id$
-     * @author Martin Desruisseaux
-     */
-    private final class Entry extends WeakReference<GridCoverage>
-    {
-        /**
-         * The source image.
-         */
-        private final GridCoverage source;
-
-        /**
-         * Construit une référence vers l'images spécifiée.
-         *
-         * @param source Image source. Cette image sera retenue par une référence forte.
-         * @param result Image filtrée. Cette image sera retenue par une référence faible.
-         */
-        public Entry(final GridCoverage source, final GridCoverage result)
-        {
-            super(result, queue);
-            this.source = source;
-        }
-
-        /**
-         * Remove this reference.
-         */
-        public void clear()
-        {
-            super.clear();
-            remove(source);
-        }
-    }
 }

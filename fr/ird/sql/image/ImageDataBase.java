@@ -370,9 +370,12 @@ public class ImageDataBase extends DataBase
             endTime        = new Date();
         }
         final ImageTable table = new ImageTableImpl(connection, timezone);
+        // Initial setup of the table. We set the series last in order to
+        // avoid logging of "setGeographicArea" and "setTimeRange". Those
+        // two methods do not log anything as long as the series in null.
         table.setGeographicArea(geographicArea);
         table.setTimeRange     (startTime, endTime);
-        table.setSeries        (series);
+        table.setSeries        (series); // Should bet last
         return table;
     }
 

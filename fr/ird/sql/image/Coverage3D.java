@@ -342,7 +342,7 @@ public class Coverage3D extends Coverage
      * Prépare un enregistrement pour le journal.
      */
     private void log(final int clé, final Object[] parameters) {
-        final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE, clé);
+        final LogRecord record = Resources.getResources(null).getLogRecord(Level.INFO, clé);
         record.setSourceClassName("Coverage3D");
         record.setSourceMethodName("evaluate");
         record.setParameters(parameters);

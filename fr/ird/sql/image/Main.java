@@ -55,7 +55,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Iterator;
 import java.awt.Rectangle;
-import fr.ird.util.Console;
+import org.geotools.resources.Arguments;
 import fr.ird.resources.gui.Resources;
 import fr.ird.resources.gui.ResourceKeys;
 
@@ -88,7 +88,7 @@ import fr.ird.resources.gui.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class Main extends Console
+final class Main extends Arguments
 {
     /**
      * Pilote utilisée.
@@ -121,9 +121,9 @@ final class Main extends Console
     public Main(final String[] args)
     {
         super(args);
-        this.config   = hasFlag     ("-config");
-        String driver = getParameter("-driver");
-        String source = getParameter("-source");
+        this.config   = getFlag          ("-config");
+        String driver = getOptionalString("-driver");
+        String source = getOptionalString("-source");
         if (driver==null) driver=Table.getPreference(DataBase.DRIVER); else Table.preferences.put(DataBase.DRIVER, driver);
         if (source==null) source=Table.getPreference(DataBase.SOURCE); else Table.preferences.put(DataBase.SOURCE, source);
         this.driver = driver;
@@ -258,25 +258,20 @@ final class Main extends Console
      */
     public void run() throws SQLException
     {
-        final boolean formats = hasFlag("-formats");
-        final boolean  groups = hasFlag("-groups");
-        final boolean  series = hasFlag("-series");
-        final boolean  browse = hasFlag("-browse");
-        final boolean    help = hasFlag("-help") || (!groups && !series && !formats && !config && !browse);
-        try
-        {
-            checkRemainingArguments(0);
-            if (formats && (groups || series)) series(SeriesTable.CATEGORY_LEAF);
-            else if (groups)  series(SeriesTable.GROUP_LEAF);
-            else if (series)  series(SeriesTable.SERIES_LEAF);
-            else if (formats) formats();
-            if (browse)       browse();
-            if (help)         help();
-        }
-        catch (IllegalArgumentException exception)
-        {
-            out.println(exception.getLocalizedMessage());
-        }
+        final boolean formats = getFlag("-formats");
+        final boolean  groups = getFlag("-groups");
+        final boolean  series = getFlag("-series");
+        final boolean  browse = getFlag("-browse");
+        final boolean    help = getFlag("-help") || (!groups && !series && !formats && !config && !browse);
+
+        getRemainingArguments(0);
+        if (formats && (groups || series)) series(SeriesTable.CATEGORY_LEAF);
+        else if (groups)  series(SeriesTable.GROUP_LEAF);
+        else if (series)  series(SeriesTable.SERIES_LEAF);
+        else if (formats) formats();
+        if (browse)       browse();
+        if (help)         help();
+
         if (connection!=null)
         {
             connection.close();
