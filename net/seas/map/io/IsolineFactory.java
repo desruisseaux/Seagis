@@ -24,6 +24,7 @@ package net.seas.map.io;
 
 // Map components
 import net.seas.map.Isoline;
+import net.seagis.ct.TransformException;
 
 // Collections
 import java.util.Map;
@@ -86,6 +87,11 @@ import net.seagis.resources.Utilities;
  */
 public abstract class IsolineFactory
 {
+    /**
+     * The logger for warning and information messages.
+     */
+    private static final Logger logger = Logger.getLogger("net.seas.map");
+
     /**
      * Path to serialized {@link Isoline}s as a file. The first time an
      * isoline is requested,  all isolines will be read and serizalized
@@ -465,9 +471,33 @@ public abstract class IsolineFactory
          */
         final Isoline[] all = readAll();
         isolines = new HashMap<Float,Reference>(all.length + all.length/2);
+        final Resources resources = Resources.getResources(null);
         for (int i=0; i<all.length; i++)
         {
-            add(all[i]);
+            final Isoline iso = all[i];
+            add(iso);
+            LogRecord record;
+            try
+            {
+                final float factor = iso.compress(0.75f);
+                record = resources.getLogRecord(Level.FINE, ResourceKeys.ISOLINE_DECIMATED_$2,
+                                                new Float(iso.value), new Float(factor));
+            }
+            catch (TransformException exception)
+            {
+                final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
+                final String message = exception.getLocalizedMessage();
+                if (message!=null)
+                {
+                    buffer.append(": ");
+                    buffer.append(message);
+                }
+                record = new LogRecord(Level.WARNING, buffer.toString());
+                record.setThrown(exception);
+            }
+            record.setSourceClassName("IsolineFactory");
+            record.setSourceMethodName(sourceMethodName);
+            logger.log(record);
         }
         save(all);
         return all;
@@ -517,6 +547,11 @@ public abstract class IsolineFactory
         {
             isoline = (Isoline) in.readObject();
             add(isoline);
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
+                                     ResourceKeys.LOADING_ISOLINE_$1, new Float(isoline.value));
+            record.setSourceClassName("IsolineFactory");
+            record.setSourceMethodName("get");
+            logger.log(record);
         }
         catch (ClassNotFoundException exception)
         {
@@ -623,7 +658,7 @@ public abstract class IsolineFactory
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.WARNING, resourceKey, value);
         record.setSourceClassName("IsolineFactory");
         record.setSourceMethodName(sourceMethodName);
-        Logger.getLogger("net.seas.map").log(record);
+        logger.log(record);
     }
 
     /**

@@ -121,7 +121,6 @@ public final class DataBase
         threads.setMaxPriority(Thread.NORM_PRIORITY-3);
         readers.setMaxPriority(Thread.NORM_PRIORITY-2);
         builder.setMaxPriority(Thread.NORM_PRIORITY-1);
-        readers.setDaemon(true);
     }
 
     /**

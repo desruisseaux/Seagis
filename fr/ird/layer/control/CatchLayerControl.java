@@ -108,31 +108,35 @@ public final class CatchLayerControl extends LayerControl
     }
 
     /**
-     * Configure une couche en fonction de cet objet <code>LayerControl</code>.
-     * Si l'argument <code>layer</code> est nul, alors cette méthode retourne
-     * une nouvelle couche proprement configurée. Cette méthode peut être
+     * Configure des couches en fonction de cet objet <code>LayerControl</code>.
+     * Si l'argument <code>layers</code> est nul, alors cette méthode retourne
+     * de nouvelles couches proprement configurées. Cette méthode peut être
      * appelée de n'importe quel thread (généralement pas celui de <i>Swing</i>).
      *
-     * @param  layer Couche à configurer.
+     * @param  layers Couche à configurer.
      * @param  listeners Objets à informer des progrès d'une éventuelle lecture.
-     * @return Une couche proprement configurée, ou <code>null</code> si la configuration
-     *         se traduirait à toute fin pratique par la disparition de la couche (par
+     * @return Des couches proprement configurées, ou <code>null</code> si la configuration
+     *         se traduirait à toute fin pratique par la disparition des couches (par
      *         exemple parce qu'aucune espèce n'a été sélectionnée).
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException
+    public synchronized Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException
     {
-        CatchLayer catchLayer = (CatchLayer) layer;
-        if (catchLayer==null)
+        final CatchLayer layer;
+        if (layers!=null && layers.length==1 && layers[0] instanceof CatchLayer)
         {
-            catchLayer = new CatchLayer(catchTable);
+            layer = (CatchLayer) layers[0];
+        }
+        else
+        {
+            layer = new CatchLayer(catchTable);
         }
         if (controler!=null)
         {
-            catchLayer.defineIcons(controler.getIcons());
+            layer.defineIcons(controler.getIcons());
         }
-        catchLayer.setMarkType(markType);
-        return catchLayer;
+        layer.setMarkType(markType);
+        return new Layer[] {layer};
     }
 
     /**

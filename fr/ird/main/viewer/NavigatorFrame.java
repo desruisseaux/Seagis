@@ -113,9 +113,6 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *         Cette boîte de dialogue sera ensuite transformée et retenue afin de
      *         permettre à l'utilisateur de modifier ces coordonnées. Cet argument
      *         peut être nul si aucune boîte de dialogue n'a été construite.
-     * @param  threadGroup Groupe des threads qui seront lancés en arrière-plan.
-     * @param  readers Groupe dans lequel placer les threads qui liront des images en arrière-plan.
-     *         Ce thread sera en général un sous-groupe de <code>threadGroup</code>.
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
     public NavigatorFrame(final DataBase database, final CoordinateChooser chooser) throws SQLException

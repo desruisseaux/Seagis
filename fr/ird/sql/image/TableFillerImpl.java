@@ -369,7 +369,7 @@ final class TableFillerImpl extends Table implements TableFiller
     {
         if (dateFormat==null)
         {
-            dateFormat = new SimpleDateFormat("#dd/MM/yyyy HH:mm:ss#", Locale.US);
+            dateFormat = new SimpleDateFormat("#MM/dd/yyyy HH:mm:ss#", Locale.US);
             dateFormat.setTimeZone(timezone);
         }
         final StringBuffer buffer = new StringBuffer("INSERT INTO ");

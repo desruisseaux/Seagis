@@ -81,8 +81,8 @@ public final class ImageLayerControl extends LayerControl
      * Retourne une couche appropriée pour l'image spécifiée. Cette méthode peut être
      * appelée de n'importe quel Thread, généralement pas celui de <i>Swing</i>.
      *
-     * @param  layer Couche à configurer. Si non-nul, alors cette couche doit
-     *         avoir été créé précédemment par ce même objet <code>LayerControl</code>.
+     * @param  layers Couches à configurer. Si non-nul, alors ces couches doivent
+     *         avoir été créées précédemment par ce même objet <code>LayerControl</code>.
      * @param  entry Image à afficher. Il s'agit d'une image sélectionnée par
      *         l'utilisateur dans la liste déroulante qui apparaît à gauche de
      *         la mosaïque d'images.
@@ -92,7 +92,7 @@ public final class ImageLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
         GridCoverage coverage = entry.getGridCoverage(listeners);
         if (coverage==null)
@@ -108,9 +108,9 @@ public final class ImageLayerControl extends LayerControl
                     coverage = operation.filter(coverage);
             }
         }
-        final GridCoverageLayer clayer = new GridCoverageLayer(coverage);
-        clayer.setZOrder(Float.NEGATIVE_INFINITY);
-        return clayer;
+        final GridCoverageLayer layer = new GridCoverageLayer(coverage);
+        layer.setZOrder(Float.NEGATIVE_INFINITY);
+        return new Layer[] {layer};
     }
 
     /**

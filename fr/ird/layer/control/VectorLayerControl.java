@@ -114,7 +114,7 @@ public final class VectorLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer configLayer(Layer layer, ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public Layer[] configLayers(final Layer[] layers, ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
         if (!table.getSeries().equals(entry.getSeries()))
         {
@@ -123,33 +123,33 @@ public final class VectorLayerControl extends LayerControl
             if (entry==null) return null;
         }
         final GridCoverage coverage = entry.getGridCoverage(listeners);
-        final VectorLayer vectors;
-        if (layer instanceof VectorLayer)
+        final VectorLayer layer;
+        if (layers!=null && layers.length==1 && layers[0] instanceof VectorLayer)
         {
-            vectors = (VectorLayer) layer;
-            vectors.setData(coverage, bandU, bandV);
+            layer = (VectorLayer) layers[0];
+            layer.setData(coverage, bandU, bandV);
         }
         else
         {
-            layer = vectors = new VectorLayer(coverage, bandU, bandV);
+            layer = new VectorLayer(coverage, bandU, bandV);
         }
         synchronized(this)
         {
             if (controler!=null)
             {
-                vectors.setColor(controler.getColor());
+                layer.setColor(controler.getColor());
                 final int decimation = controler.getDecimation();
                 if (decimation!=0)
                 {
-                    vectors.setDecimation(decimation, decimation);
+                    layer.setDecimation(decimation, decimation);
                 }
                 else
                 {
-                    vectors.setAutoDecimation(16,16);
+                    layer.setAutoDecimation(16,16);
                 }
             }
         }
-        return vectors;
+        return new Layer[] {layer};
     }
 
     /**

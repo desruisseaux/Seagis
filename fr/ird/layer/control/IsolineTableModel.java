@@ -37,9 +37,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 // Resources
-import net.seas.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
+import net.seagis.resources.XArray;
 
 
 /**

@@ -228,29 +228,29 @@ public abstract class LayerControl
     {return selector.isSelected();}
 
     /**
-     * Configure une couche en fonction de cet objet <code>LayerControl</code>.
-     * Si l'argument <code>layer</code> est nul, alors cette méthode retourne
-     * une nouvelle couche proprement configurée. Cette méthode peut être
+     * Configure des couches en fonction de cet objet <code>LayerControl</code>.
+     * Si l'argument <code>layers</code> est nul, alors cette méthode retourne
+     * de nouvelles couches proprement configurées. Cette méthode peut être
      * appelée de n'importe quel thread (généralement pas celui de <i>Swing</i>).
      *
-     * @param  layer Couche à configurer. Si non-nul, alors cette couche doit
-     *         avoir été créé précédemment par ce même objet <code>LayerControl</code>.
+     * @param  layers Couche à configurer. Si non-nul, alors ces couches doivent
+     *         avoir été créées précédemment par ce même objet <code>LayerControl</code>.
      * @param  entry Image à afficher. Il s'agit d'une image sélectionnée par
      *         l'utilisateur dans la liste déroulante qui apparaît à gauche de
      *         la mosaïque d'images.
      * @param  listeners Objets à informer des progrès d'une éventuelle lecture.
-     * @return Une couche proprement configurée, ou <code>null</code> si la configuration
+     * @return Des couches proprement configurées, ou <code>null</code> si la configuration
      *         se traduirait à toute fin pratique par la disparition de la couche.
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public abstract Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
+    public abstract Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException;
 
     /**
-     * Fait apparaître un paneau de configuration pour une couche. Cette méthode est
-     * responsable d'appeler {@link #fireStateChanged} si l'état de cette couche a
-     * changé suite aux interventions de l'utilisateur. Les "listeners" réagiront
-     * habituellement en appelant {@link #configLayer} pour chacune de leurs couches.
+     * Fait apparaître un paneau de configuration pour les couches. Cette méthode est
+     * responsable d'appeler {@link #fireStateChanged} si l'état d'une couche a changé
+     * suite aux interventions de l'utilisateur. Les "listeners" réagiront habituellement
+     * en appelant {@link #configLayers} pour chacune de leurs couches.
      */
     protected abstract void showControler(final JComponent owner);
 

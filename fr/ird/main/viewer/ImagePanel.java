@@ -68,8 +68,9 @@ import fr.ird.awt.event.ImageChangeListener;
 import fr.ird.awt.event.ImageChangeEvent;
 
 // Miscellaneous
-import java.util.List;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import javax.media.jai.util.Range;
@@ -532,6 +533,7 @@ final class ImagePanel extends JPanel
         public Reader(final ThreadGroup readers)
         {
             super(readers, UNTITLED);
+            setDaemon(true);
             listeners.add(IIOReadWarningListener.class, this);
         }
 
@@ -625,8 +627,8 @@ final class ImagePanel extends JPanel
                     if (entry.equals(this.entry))
                     {
                         setName(Resources.format(ResourceKeys.LOADING_$1, entry.getName()));
+                        final List<Layer> visualLayers = new ArrayList<Layer>();
                         GridCoverage image = null;
-                        Layer[] visualLayers;
                         if (layers==null)
                         {
                             try
@@ -641,12 +643,8 @@ final class ImagePanel extends JPanel
                             }
                             if (image!=null)
                             {
-                                visualLayers=new Layer[]
-                                {
-                                    new GridCoverageLayer(image)
-                                };
+                                visualLayers.add(new GridCoverageLayer(image));
                             }
-                            else visualLayers = new Layer[0];
                         }
                         else
                         {
@@ -655,35 +653,38 @@ final class ImagePanel extends JPanel
                              * procède maintenant à la création de ces couches.
                              * Les choix des couches comprennent celle de l'image.
                              */
-                            visualLayers = new Layer[layers.length];
-                            int layerCount = 0;
                             for (int i=0; i<layers.length; i++)
                             {
-                                final Layer layer;
+                                final Layer[] newLayers;
                                 try
                                 {
                                     // Note: 'progress' may be null.
                                     listeners.add(IIOReadProgressListener.class, progress);
-                                    layer = layers[i].configLayer(null, entry, listeners);
+                                    newLayers = layers[i].configLayers(null, entry, listeners);
                                 }
                                 finally
                                 {
                                     listeners.remove(IIOReadProgressListener.class, progress);
                                 }
-                                if (layer == null) continue;
-                                if (layer instanceof GridCoverageLayer)
+                                if (newLayers != null)
                                 {
-                                    final GridCoverageLayer imageLayer = (GridCoverageLayer) layer;
-                                    image = imageLayer.getCoverage();
-                                    imageLayer.prefetch(mapPanel);
+                                    for (int j=0; j<newLayers.length; j++)
+                                    {
+                                        final Layer layer = newLayers[j];
+                                        if (layer instanceof GridCoverageLayer)
+                                        {
+                                            final GridCoverageLayer imageLayer = (GridCoverageLayer) layer;
+                                            image = imageLayer.getCoverage();
+                                            imageLayer.prefetch(mapPanel);
+                                        }
+                                        visualLayers.add(layer);
+                                    }
                                 }
-                                visualLayers[layerCount++] = layer;
                             }
-                            visualLayers = XArray.resize(visualLayers, layerCount);
                         }
                         if (entry.equals(this.entry))
                         {
-                            ImagePanel.this.setImage(visualLayers, entry, image);
+                            ImagePanel.this.setImage(visualLayers.toArray(new Layer[visualLayers.size()]), entry, image);
                         }
                     }
                 }

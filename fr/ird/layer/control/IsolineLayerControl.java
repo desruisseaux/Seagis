@@ -98,26 +98,22 @@ public final class IsolineLayerControl extends LayerControl
     {return Resources.format(ResourceKeys.BATHYMETRY);}
 
     /**
-     * Retourne une couche appropriée pour l'image spécifié. Cette méthode peut être
+     * Retourne des couches appropriées pour l'image spécifié. Cette méthode peut être
      * appelée de n'importe quel Thread, généralement pas celui de <i>Swing</i>.
      *
-     * @param  layer Couche à configurer. Si non-nul, alors cette couche doit
+     * @param  layers Couches à configurer. Si non-nul, alors ces couches doivent
      *         avoir été créé précédemment par ce même objet <code>LayerControl</code>.
      * @param  entry Image à afficher. Il s'agit d'une image sélectionnée par
      *         l'utilisateur dans la liste déroulante qui apparaît à gauche de
      *         la mosaïque d'images.
      * @param  listeners Objets à informer des progrès d'une éventuelle lecture.
-     * @return Une couche proprement configurée, ou <code>null</code> si la configuration
+     * @return Des couches proprement configurées, ou <code>null</code> si la configuration
      *         se traduirait à toute fin pratique par la disparition de la couche.
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
-        if (layer!=null)
-        {
-            // TODO: vérifier si c'est la bonne bathymétrie.
-        }
         final float[] values;
         synchronized(this)
         {
@@ -128,14 +124,15 @@ public final class IsolineLayerControl extends LayerControl
             else values = DEFAULT_VALUES;
         }
         IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
-        final Isoline[] isolines = factory.get(values);
-        final IsolineLayer[] layers = new IsolineLayer[Math.min(isolines.length, 1)]; // TODO: length should be isolines.length
-        for (int i=0; i<layers.length; i++)
+
+        final Isoline[]       isolines = factory.get(values);
+        final IsolineLayer[] isoLayers = new IsolineLayer[isolines.length];
+        for (int i=0; i<isoLayers.length; i++)
         {
-            layers[i] = new IsolineLayer(isolines[i]);
-            layers[i].setContour(Color.white);  // TODO: Set colors
+            isoLayers[i] = new IsolineLayer(isolines[i]);
+            isoLayers[i].setContour(Color.white);  // TODO: Set colors
         }
-        return (layers.length!=0) ? layers[0] : null; // TODO: display all isolines
+        return isoLayers;
     }
 
     /**
