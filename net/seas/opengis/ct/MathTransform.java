@@ -468,7 +468,7 @@ public abstract class MathTransform
      * Returns a hash value for this transform.
      */
     public int hashCode()
-    {return getDimSource() | (getDimTarget() << 3);}
+    {return getDimSource() + 37*getDimTarget();}
 
     /**
      * Compares the specified object with
@@ -494,8 +494,11 @@ public abstract class MathTransform
     /**
      * Returns an OpenGIS interface for this math transform.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    CT_MathTransform toOpenGIS()
+    Object toOpenGIS()
     {return new Export();}
 
 

@@ -54,13 +54,13 @@ public final class Adapters
      * Returns an OpenGIS interface for a math transform.
      */
     public static CT_MathTransform export(final MathTransform transform)
-    {return (transform!=null) ? transform.toOpenGIS() : null;}
+    {return (transform!=null) ? (CT_MathTransform)transform.toOpenGIS() : null;}
 
     /**
      * Returns an OpenGIS interface for a math transform factory.
      */
     public static CT_MathTransformFactory export(final MathTransformFactory factory)
-    {return (factory!=null) ? factory.toOpenGIS() : null;}
+    {return (factory!=null) ? (CT_MathTransformFactory)factory.toOpenGIS() : null;}
 
     /**
      * Construct an OpenGIS structure from a named parameter.

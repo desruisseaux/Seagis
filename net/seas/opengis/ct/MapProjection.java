@@ -409,8 +409,8 @@ abstract class MapProjection extends MathTransform
                 if (!(x>=XMIN && x<=XMAX)) throw badLongitudeException(x);
                 if (!(y>=YMIN && y<=YMAX)) throw badLatitudeException (y);
 
-                point.x = Math.toRadians(x);
-                point.y = Math.toRadians(y);
+                point.x = x;
+                point.y = y;
                 transform(point, point);
 
                 dest[dstOffset++] = point.x;
@@ -464,8 +464,8 @@ abstract class MapProjection extends MathTransform
                 if (!(x>=XMIN && x<=XMAX)) throw badLongitudeException(x);
                 if (!(y>=YMIN && y<=YMAX)) throw badLatitudeException (y);
 
-                point.x = Math.toRadians(x);
-                point.y = Math.toRadians(y);
+                point.x = x;
+                point.y = y;
                 transform(point, point);
 
                 dest[dstOffset++] = (float) x;
@@ -564,8 +564,8 @@ abstract class MapProjection extends MathTransform
                 point.y = src[srcOffset++];
 
                 inverseTransform(point, point);
-                final double x = Math.toDegrees(point.x);
-                final double y = Math.toDegrees(point.y);
+                final double x = point.x;
+                final double y = point.y;
 
                 if (!(x>=XMIN && x<=XMAX)) throw badLongitudeException(x);
                 if (!(y>=YMIN && y<=YMAX)) throw badLatitudeException (y);
@@ -618,8 +618,8 @@ abstract class MapProjection extends MathTransform
                 point.y = src[srcOffset++];
 
                 inverseTransform(point, point);
-                final double x = Math.toDegrees(point.x);
-                final double y = Math.toDegrees(point.y);
+                final double x = point.x;
+                final double y = point.y;
 
                 if (!(x>=XMIN && x<=XMAX)) throw badLongitudeException(x);
                 if (!(y>=YMIN && y<=YMAX)) throw badLatitudeException (y);
@@ -675,10 +675,10 @@ abstract class MapProjection extends MathTransform
      */
     public int hashCode()
     {
-        final long code = Double.doubleToLongBits(a-b)
-                        ^ Double.doubleToLongBits(a+b)
-                        ^ Double.doubleToLongBits(centralLongitude)
-                        ^ Double.doubleToLongBits(centralLatitude);
+        long code =      Double.doubleToLongBits(a);
+        code = code*37 + Double.doubleToLongBits(b);
+        code = code*37 + Double.doubleToLongBits(centralLongitude);
+        code = code*37 + Double.doubleToLongBits(centralLatitude);
         return (int) code ^ (int) (code >>> 32);
     }
 

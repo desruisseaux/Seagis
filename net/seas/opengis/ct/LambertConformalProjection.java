@@ -231,7 +231,7 @@ final class LambertConformalProjection extends ConicProjection
     public int hashCode()
     {
         final long code = Double.doubleToLongBits(F);
-        return (int) code ^ (int) (code >>> 32) ^ super.hashCode();
+        return ((int)code ^ (int)(code >>> 32)) + 37*super.hashCode();
     }
 
     /**

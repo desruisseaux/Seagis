@@ -57,7 +57,7 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cs.CS_CoordinateSystem
  */
-public abstract class CoordinateTransformation extends Info
+public class CoordinateTransformation extends Info
 {
     /**
      * Serial number for interoperability with different versions.
@@ -65,40 +65,106 @@ public abstract class CoordinateTransformation extends Info
     //private static final long serialVersionUID = ?;
 
     /**
-     * Construct a coordinate transformation.
-     *
-     * @param name The coordinate transform name.
+     * The source coordinate system.
      */
-    protected CoordinateTransformation(final String name)
-    {super(name);}
+    private final CoordinateSystem sourceCS;
 
     /**
-     * Human readable description of domain in source coordinate system.
+     * The destination coordinate system.
      */
-    public String getAreaOfUse()
-    {return null;}
+    private final CoordinateSystem targetCS;
+
+    /**
+     * The transform type.
+     */
+    private final TransformType type;
+
+    /**
+     * The math transform, or <code>null</code> if the transform has not
+     * been constructed yet. This math transform may be constructed only
+     * the first time {@link #getMathTransform} is called.
+     */
+    protected MathTransform transform;
+
+    /**
+     * Construct a coordinate transformation.
+     *
+     * @param sourceCS  The source coordinate system.
+     * @param targetCS  The destination coordinate system.
+     * @param type      The transform type.
+     * @param transform The math transform.
+     */
+    public CoordinateTransformation(final CoordinateSystem sourceCS, final CoordinateSystem targetCS, final TransformType type, final MathTransform transform)
+    {
+        this(sourceCS, targetCS, type);
+        this.transform = transform;
+        ensureNonNull("transform", transform);
+    }
+
+    /**
+     * Construct a coordinate transformation. Field {@link #transform} will
+     * be initially null. It is the subclass's responsability to initialize
+     * {@link #transform} the first time {@link #getMathTransform} is called.
+     *
+     * @param sourceCS  The source coordinate system.
+     * @param targetCS  The destination coordinate system.
+     * @param type      The transform type.
+     */
+    protected CoordinateTransformation(final CoordinateSystem sourceCS, final CoordinateSystem targetCS, final TransformType type)
+    {
+        super(getName(sourceCS, targetCS, null));
+        this.sourceCS  = sourceCS;
+        this.targetCS  = targetCS;
+        this.type      = type;
+        ensureNonNull("sourceCS", sourceCS);
+        ensureNonNull("targetCS", targetCS);
+        ensureNonNull("type",     type);
+    }
+
+    /**
+     * Construct a default transformation name.
+     *
+     * @param sourceCS  The source coordinate system.
+     * @param targetCS  The destination coordinate system.
+     * @param locale    The locale, or <code>null</code> for
+     *                  the default locale.
+     */
+    private static String getName(final CoordinateSystem sourceCS, final CoordinateSystem targetCS, final Locale locale)
+    {return sourceCS.getName(locale)+" \u21E8 "+targetCS.getName(locale);}
+
+    /**
+     * Gets the name of this coordinate transformation.
+     *
+     * @param locale The desired locale, or <code>null</code> for the default locale.
+     */
+    public String getName(final Locale locale)
+    {return (locale!=null) ? getName(sourceCS, targetCS, locale) : super.getName(locale);}
 
     /**
      * Gets the semantic type of transform.
      * For example, a datum transformation
      * or a coordinate conversion.
      */
-    public abstract TransformType getTransformType();
+    public TransformType getTransformType()
+    {return type;}
 
     /**
      * Gets the source coordinate system.
      */
-    public abstract CoordinateSystem getSourceCS();
+    public CoordinateSystem getSourceCS()
+    {return sourceCS;}
 
     /**
      * Gets the target coordinate system.
      */
-    public abstract CoordinateSystem getTargetCS();
+    public CoordinateSystem getTargetCS()
+    {return targetCS;}
 
     /**
      * Gets the math transform.
      */
-    public abstract MathTransform getMathTransform();
+    public MathTransform getMathTransform()
+    {return transform;}
 
     /**
      * Returns a hash value for this
@@ -106,10 +172,10 @@ public abstract class CoordinateTransformation extends Info
      */
     public int hashCode()
     {
-        int code = 0;
+        int code = 7851236;
         CoordinateSystem cs;
-        if ((cs=getSourceCS()) != null) code ^= cs.hashCode();
-        if ((cs=getTargetCS()) != null) code ^= cs.hashCode();
+        if ((cs=getSourceCS()) != null) code = code*37 + cs.hashCode();
+        if ((cs=getTargetCS()) != null) code = code*37 + cs.hashCode();
         return code;
     }
 
@@ -122,8 +188,7 @@ public abstract class CoordinateTransformation extends Info
         if (super.equals(object))
         {
             final CoordinateTransformation that = (CoordinateTransformation) object;
-            return XClass.equals(this.getAreaOfUse(),     that.getAreaOfUse()    ) &&
-                   XClass.equals(this.getTransformType(), that.getTransformType()) &&
+            return XClass.equals(this.getTransformType(), that.getTransformType()) &&
                    XClass.equals(this.getSourceCS(),      that.getSourceCS()     ) &&
                    XClass.equals(this.getTargetCS(),      that.getTargetCS()     );
                    // We do NOT check MathTransform, since creating MathTransform

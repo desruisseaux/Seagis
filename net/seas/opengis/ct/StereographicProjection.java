@@ -509,7 +509,7 @@ choice: switch (mode)
     public int hashCode()
     {
         final long code = Double.doubleToLongBits(k0);
-        return (int) code ^ (int) (code >>> 32) ^ super.hashCode();
+        return ((int)code ^ (int)(code >>> 32)) + 37*super.hashCode();
     }
 
     /**

@@ -248,8 +248,11 @@ public class MathTransformFactory
     /**
      * Returns an OpenGIS interface for this transform factory.
      * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
      */
-    final CT_MathTransformFactory toOpenGIS()
+    final Object toOpenGIS()
     {return new Export();}
 
 

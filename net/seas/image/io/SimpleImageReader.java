@@ -60,12 +60,12 @@ import net.seas.resources.Resources;
  * use in remote sensing.
  * <br><br>
  * This base class makes it easier to construct images from floating point values.
- * It provides default implementations for most {@link ImageReader} methods. Decoded
- * data can be stored as float values. Since <code>SimpleImageReader</code> does not
- * expect to know anything about image's color, it uses a grayscale color space scaled
- * to fit the range of values. Because displaying such an image can be very slow, users
- * who want to display image are strongly encouraged to change data type and color space
- * with <a href="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</a>
+ * It provides default implementations for most {@link ImageReader} methods. Since
+ * <code>SimpleImageReader</code> does not expect to know anything about image's
+ * color, it uses a grayscale color space scaled to fit the range of values.
+ * Displaying such an image may be very slow. Consequently, users who want
+ * to display image are encouraged to change data type and color space with
+ * <a href="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</a>
  * operators after reading.
  *
  * @version 1.0
@@ -84,23 +84,24 @@ public abstract class SimpleImageReader extends ImageReader
     private final int rawImageType;
 
     /**
-     * Construit un décodeur d'images de
-     * type {@link DataBuffer#TYPE_FLOAT}.
+     * Construct a new image reader storing pixels
+     * as {@link DataBuffer#TYPE_FLOAT}.
      *
-     * @param provider Le fournisseur
-     *        qui a construit ce décodeur.
+     * @param provider the {@link ImageReaderSpi} that is
+     *                 invoking this constructor, or null.
      */
     protected SimpleImageReader(final ImageReaderSpi provider)
     {this(provider, DataBuffer.TYPE_FLOAT);}
 
     /**
-     * Construit un décodeur d'images du type spécifié.
+     * Construct a new image reader storing pixels
+     * in buffer of the specified type.
      *
-     * @param provider Le fournisseur qui a construit ce décodeur.
-     * @param rawImageType Type par défaut des images. Ce type devrait
-     *        être une des constantes de {@link DataBuffer}, notamment
-     *        {@link DataBuffer#TYPE_INT}, {@link DataBuffer#TYPE_FLOAT}
-     *        ou {@link DataBuffer#TYPE_DOUBLE}.
+     * @param provider the {@link ImageReaderSpi} that is
+     *                 invoking this constructor, or null.
+     * @param rawImageType The buffer type. It should be a constant from
+     *        {@link DataBuffer}. Common types are {@link DataBuffer#TYPE_INT},
+     *        {@link DataBuffer#TYPE_FLOAT} and {@link DataBuffer#TYPE_DOUBLE}.
      */
     protected SimpleImageReader(final ImageReaderSpi provider, final int rawImageType)
     {
@@ -110,14 +111,14 @@ public abstract class SimpleImageReader extends ImageReader
 
     /**
      * Vérifie si l'index de l'image est dans la plage des valeurs
-     * autorisées. L'index maximal autorisé est obtenu en appellant
+     * autorisées. L'index maximal autorisé est obtenu en appelant
      * <code>{@link #getNumImages getNumImages}(false)</code>.
      *
      * @param  imageIndex Index dont on veut vérifier la validité.
      * @throws IndexOutOfBoundsException si l'index spécifié n'est pas valide.
      * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
      */
-    protected final void checkImageIndex(final int imageIndex) throws IndexOutOfBoundsException, IOException
+    final void checkImageIndex(final int imageIndex) throws IndexOutOfBoundsException, IOException
     {
         final int numImages = getNumImages(false);
         if (imageIndex<minIndex || (imageIndex>=numImages && numImages>=0))
@@ -125,18 +126,16 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne le nombre d'image dans le fichier à lire. L'implémentation par défaut
-     * vérifie si une source a été spécifiée (elle lance {@link IllegalStateException}
-     * si ce n'est pas le cas), et ensuite retourne toujours 1.
+     * Returns the number of images available from the current input source.
+     * Default implementation returns 1.
      *
-     * @param allowSearch si cette méthode est autorisé à parcourir
-     *                    le fichier pour obtenir cette information.
-     * @return Le nombre d'images, ou -1 si cette information aurait
-     *         nécessité un balayage du fichier et que ce n'est pas
-     *         permis.
+     * @param  allowSearch If true, the number of images will be returned
+     *         even if a search is required.
+     * @return The number of images, or -1 if <code>allowSearch</code>
+     *         is false and a search would be required.
      *
-     * @throws IllegalStateException si aucune source n'avait été spécifiée à {@link #setInput}.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IOException if an error occurs reading the information from the input source.
      */
     public int getNumImages(final boolean allowSearch) throws IllegalStateException, IOException
     {
@@ -145,12 +144,11 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne le nombre de bandes dans l'image à l'index spécifié. L'implémentation
-     * par défaut vérifie si <code>imageIndex</code> est dans les limites permises et
-     * retourne ensuite 1.
+     * Returns the number of bands available for the specified image.
+     * Default implementation returns 1.
      *
-     * @param  imageIndex Index de l'image dont on veut connaître le nombre de bandes.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     * @param  imageIndex  The image index.
+     * @throws IOException if an error occurs reading the information from the input source.
      */
     public int getNumBands(final int imageIndex) throws IOException
     {
@@ -230,11 +228,10 @@ public abstract class SimpleImageReader extends ImageReader
     {return Collections.singleton(getRawImageType(imageIndex)).iterator();}
 
     /**
-     * Retourne un objet par défaut permettant de spécifier les paramètres
-     * de la lecture. L'implémentation construit et retourne un objet
-     * {@link SimpleImageReadParam}.
+     * Returns a default <code>ImageReadParam</code>
+     * object appropriate for this format.
      */
-    public ImageReadParam getDefaultReadParam()
+    public SimpleImageReadParam getDefaultReadParam()
     {return new SimpleImageReadParam();}
 
     /**

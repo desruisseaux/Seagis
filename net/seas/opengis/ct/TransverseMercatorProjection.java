@@ -429,7 +429,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
     public int hashCode()
     {
         final long code = Double.doubleToLongBits(x0);
-        return (int) code ^ (int) (code >>> 32) ^ super.hashCode();
+        return ((int)code ^ (int)(code >>> 32)) + 37*super.hashCode();
     }
 
     /**

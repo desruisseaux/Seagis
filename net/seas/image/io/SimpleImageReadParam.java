@@ -22,14 +22,17 @@
  */
 package net.seas.image.io;
 
-// Divers
+// Miscellaneous
+import java.awt.Dimension;
 import javax.imageio.ImageReadParam;
 
 
 /**
- * Paramètres des images simples.  Cette classe ne contient aucune nouvelle méthode par rapport
- * à {@link ImageReadParam}. Elle sert simplement à indiquer que le décodeur qui a construit ce
- * bloc de paramètre est de la classe {@link SimpleImageReader}.
+ * A class describing how a stream is to be decoded. In the context of
+ * {@link SimpleImageReader}, the stream may not contains enough information
+ * for an optimal decoding. For example the stream may not contains image's
+ * width and height. The <code>SimpleImageReadParam</code> gives a chance
+ * to specify those missing informations.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -37,8 +40,34 @@ import javax.imageio.ImageReadParam;
 public class SimpleImageReadParam extends ImageReadParam
 {
     /**
-     * Construit un bloc de paramètres initialement vide.
+     * The expected image size, or <code>null</code> if unknow.
+     */
+    private Dimension size;
+
+    /**
+     * Construct a new <code>SimpleImageReadParam</code>
+     * with default parameters.
      */
     public SimpleImageReadParam()
     {}
+
+    /**
+     * Set the expected image size (in pixels), or <code>null</code>
+     * if unknow. This is the image's size in the input stream; it is
+     * not dependent of any subsampling or scale setting. Some
+     * {@link SimpleImageReader} may use this information when
+     * they are unable to figure out the image's size by themselves.
+     */
+    public void setExpectedSize(final Dimension size)
+    {this.size = (size!=null) ? new Dimension(size) : null;}
+
+    /**
+     * Returns the expected image size set by the last call to
+     * {@link #setExpectedSize}. This size is not fetched from
+     * the input stream. Consequently, it may not be accurate.
+     * This method returns <code>null</code> if the expected
+     * size has not been set.
+     */
+    public Dimension getExpectedSize()
+    {return (size!=null) ? (Dimension)size.clone() : null;}
 }

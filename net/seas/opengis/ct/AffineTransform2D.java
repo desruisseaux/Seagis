@@ -40,6 +40,11 @@ import net.seas.util.XClass;
 final class AffineTransform2D extends MathTransform
 {
     /**
+     * The identity transform for 2D coordinate systems.
+     */
+    public static final MathTransform IDENTITY = new AffineTransform2D(new AffineTransform());
+
+    /**
      * The affine transform.
      */
     private final AffineTransform transform;

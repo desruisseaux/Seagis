@@ -136,7 +136,7 @@ final class ConcatenedTransform extends MathTransform
      * Returns a hash value for this transform.
      */
     public int hashCode()
-    {return transform1.hashCode() ^ transform2.hashCode();}
+    {return transform1.hashCode() + 37*transform2.hashCode();}
 
     /**
      * Compares the specified object with

@@ -44,8 +44,6 @@ public final class XClass
     /**
      * Retourne le nom court de la classe de l'objet spécifié. Cette méthode retournera
      * par exemple <code>String</code> au lieu de <code>java.lang.String</code>. Si la
-     * classe spécifiée est privée, alors cette méthode remonte la hierarchie jusqu'à ce
-     * qu'il trouve une qui ne l'est pas.
      */
     public static String getShortClassName(final Object object)
     {return (object!=null) ? getShortName(object.getClass()) : "<*>";}
@@ -53,17 +51,9 @@ public final class XClass
     /**
      * Retourne le nom court de la classe spécifiée. Cette méthode retournera
      * par exemple <code>String</code> au lieu de <code>java.lang.String</code>.
-     * Si la classe spécifiée est privée, alors cette méthode remonte la
-     * hierarchie jusqu'à ce qu'il trouve une qui ne l'est pas.
      */
-    public static String getShortName(Class classe)
+    public static String getShortName(final Class classe)
     {
-        while (Modifier.isPrivate(classe.getModifiers()))
-        {
-            final Class c=classe.getSuperclass();
-            if (c==null) break;
-            classe=c;
-        }
         String name = classe.getName();
         int   lower = name.lastIndexOf('.');
         int   upper = name.length();

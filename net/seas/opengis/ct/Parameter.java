@@ -143,7 +143,7 @@ public final class Parameter implements Cloneable, Serializable
     {
         final long longCode = Double.doubleToLongBits(value);
         int code = (int)(longCode >>> 32) ^ (int)longCode;
-        if (name!=null) code ^= name.hashCode();
+        if (name!=null) code = code*37 + name.hashCode();
         return code;
     }
 

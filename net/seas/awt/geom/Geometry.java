@@ -152,7 +152,7 @@ public final class Geometry
 
     /**
      * Retourne le point sur le segment de droite <code>(x1,y1)-(x2,y2)</code> qui se trouve le
-     * plus près du point <code>point</code> spécifié. Appellons <code>result</code> le point
+     * plus près du point <code>(x,y)</code> spécifié. Appellons <code>result</code> le point
      * retourné par cette méthode. Il est garanti que <code>result</code> répond aux conditions
      * suivantes (aux erreurs d'arrondissements près):
      *
@@ -160,10 +160,10 @@ public final class Geometry
      *   <li><code>result</code> est un point du segment de droite <code>(x1,y1)-(x2,y2)</code>. Il
      *       ne trouve pas au delà des points extrêmes <code>(x1,y1)</code> et <code>(x2,y2)</code>
      *       de ce segment.</li>
-     *   <li>La distance entre les points <code>result</code> et <code>point</code>
+     *   <li>La distance entre les points <code>result</code> et <code>(x,y)</code>
      *       est la plus courte distance possible pour les points qui respectent la
      *       condition précédente. Cette distance peut être calculée par
-     *       <code>point.distance(result)</code>.</li>
+     *       <code>new&nbsp;Point2D.Double(x,y).distance(result)</code>.</li>
      * </ul>
      *
      * @see #colinearPoint(double,double , double,double , double,double , double)
