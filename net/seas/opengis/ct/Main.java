@@ -28,7 +28,6 @@ import net.seas.opengis.cs.Ellipsoid;
 // Miscellaneous
 import java.io.IOException;
 import java.awt.geom.Point2D;
-import java.text.NumberFormat;
 
 import net.seas.util.XClass;
 import net.seas.util.Console;
@@ -68,25 +67,18 @@ final class Main extends Console
     protected void run()
     {
         final boolean list = getFlag("-list");
-        final boolean test = getFlag("-test");
         super.run();
-        if      (test) availableTransforms(true);
-        else if (list) availableTransforms(false);
+        if (list) availableTransforms();
     }
 
     /**
      * Print a table of available transforms.
-     *
-     * @param test <code>true</code> to run the test, or
-     *        <code>false</code> to do nothing more than
-     *        list transforms.
      */
-    public void availableTransforms(final boolean test)
+    public void availableTransforms()
     {
         final Resources resources = Resources.getResources(null);
         final String[] transforms = factory.getAvailableTransforms();
         final TableWriter   table = new TableWriter(out, "  \u2502  ");
-        String[]  transformErrors = null;
 
         out.println();
         out.print(' ');
@@ -101,60 +93,6 @@ final class Main extends Console
         table.write(resources.getString(Clé.CLASSIFICATION_NAME));
         table.nextColumn();
         table.write(resources.getString(Clé.LOCALIZED_NAME¤1, locale.getDisplayLanguage()));
-        if (test)
-        {
-            table.nextColumn();
-            table.write("Erreur (m)");
-
-            ///////////////////////
-            ///   Perform test  ///
-            ///////////////////////
-            final double            x0 = 360*Math.random()-180;
-            final double            y0 = 180*Math.random()- 90;
-            final Point2D.Double point = new Point2D.Double(x0,y0);
-            final int[]          count = new int[transforms.length];
-            final double[]         sum = new double[transforms.length];
-            final MapProjection[]   tr = new MapProjection[transforms.length];
-            final Ellipsoid  ellipsoid = Ellipsoid.WGS84;
-            for (int i=0; i<tr.length; i++)
-            {
-                final MathTransform mtr = factory.createParameterizedTransform(transforms[i], ellipsoid, point);
-                if (mtr instanceof MapProjection) tr[i] = (MapProjection) mtr;
-            }
-
-            for (int j=0; j<10000; j++)
-            {
-                final double x = x0 + Math.max(-180, Math.min(+180, (20*Math.random()-10)));
-                final double y = y0 + Math.max( -90, Math.min( +90, (20*Math.random()-10)));
-                for (int i=0; i<tr.length; i++)
-                {
-                    final MapProjection projection=tr[i];
-                    if (projection==null) continue;
-                    point.x = x;
-                    point.y = y;
-                    try
-                    {
-                        projection.inverseTransform(projection.transform(point, point), point);
-                        sum  [i] += ellipsoid.orthodromicDistance(x, y, point.x, point.y);
-                        count[i]++;
-                    }
-                    catch (TransformException exception)
-                    {
-                        transformErrors[i] = exception.getLocalizedMessage();
-                        tr[i] = null;
-                    }
-                }
-            }
-            final NumberFormat nf = NumberFormat.getInstance(locale);
-            nf.setMinimumFractionDigits(6);
-            nf.setMaximumFractionDigits(6);
-            transformErrors = new String[transforms.length];
-            for (int i=0; i<transforms.length; i++)
-            {
-                if (transformErrors[i]==null && count[i]!=0)
-                    transformErrors[i] = nf.format(sum[i]/count[i]);
-            }
-        }
         
         ////////////////////////////////
         ///   Write transforms list  ///
@@ -166,12 +104,6 @@ final class Main extends Console
             table.write(transforms[i]);
             table.nextColumn();
             table.write(factory.getName(transforms[i], locale));
-            if (transformErrors!=null && transformErrors[i]!=null)
-            {
-                table.nextColumn();
-                table.setAlignment(TableWriter.ALIGN_RIGHT);
-                table.write(transformErrors[i]);
-            }
             table.nextLine();
         }
         table.writeHorizontalSeparator();
@@ -209,11 +141,15 @@ final class Main extends Console
         {
             new Main(args).run();
         }
+        catch (IllegalArgumentException exception)
+        {
+            System.err.println(exception.getLocalizedMessage());
+        }
         catch (RuntimeException exception)
         {
-            System.out.print(XClass.getShortClassName(exception));
-            System.out.print(": ");
-            System.out.println(exception.getLocalizedMessage());
+            System.err.print(XClass.getShortClassName(exception));
+            System.err.print(": ");
+            System.err.println(exception.getLocalizedMessage());
         }
     }
 }
