@@ -61,6 +61,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.ActionListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 // Collections
 import java.util.Map;
@@ -137,6 +139,7 @@ public final class SpeciesChooser extends JPanel {
 
     /**
      * Liste des espèces sélectionnables.
+     * Ce modèle ne contiendra que des items {@link Species.Icon}.
      */
     private final MutableComboBoxModel speciesIcons = new DefaultComboBoxModel();
 
@@ -244,8 +247,9 @@ public final class SpeciesChooser extends JPanel {
             c.gridy=0; c.weightx=1;                panel.add(list,         c);
             c.gridy=1; c.weighty=1; c.fill=c.BOTH; panel.add(colorChooser, c);
             tabs.addTab(Resources.format(ResourceKeys.COLOR), panel);
-            list.addItemListener(listener);
-            list.setRenderer    (renderer);
+            list.addPopupMenuListener(listener);
+            list.addItemListener     (listener);
+            list.setRenderer         (renderer);
         }
         tabs.addChangeListener(listener);
         add(tabs, BorderLayout.CENTER);
@@ -429,7 +433,9 @@ public final class SpeciesChooser extends JPanel {
     /**
      * Classe de l'objet chargé de répondre à certains événements.
      */
-    private final class Listener extends MouseAdapter implements ItemListener, ChangeListener, ActionListener {
+    private final class Listener extends MouseAdapter
+            implements ItemListener, ChangeListener, ActionListener, PopupMenuListener
+    {
         /**
          * Index du dernier panneau sélectionné.
          */
@@ -446,6 +452,35 @@ public final class SpeciesChooser extends JPanel {
                 if (index >= 0) {
                     showControler((Species.Icon) speciesIcons.getElementAt(index));
                 }
+            }
+        }
+
+        /**
+         * Appelée lorsque l'utilisateur a fait apparaître le menu déroulant des espèces,
+         * puis a annulée son action. Cette méthode peut n'être jamais appelée dans certain
+         * look-and-feel.
+         */
+        public void popupMenuCanceled(final PopupMenuEvent event) {
+        }
+
+        /**
+         * Appelée lorsque le menu déroulant s'apprête à disparaître. Cette méthode peut
+         * n'être jamais appelée dans certain look-and-feel.
+         */
+        public void popupMenuWillBecomeInvisible(final PopupMenuEvent event) {
+        }
+    
+        /**
+         * Appelée lorsque l'utilisateur fait apparaître le menu déroulant des espèces. Cette
+         * méthode met immédiatement à jours la couleur de l'espèce sélectionnée, afin qu'elle
+         * apparaisse correctement dans le menu. Cette méthode peut n'être jamais appelée dans
+         * certain look-and-feel. C'est pourquoi {@link #itemStateChanged} fera quand-même cette
+         * même mise à jour.
+         */
+        public void popupMenuWillBecomeVisible(final PopupMenuEvent event) {
+            final Species.Icon icon = (Species.Icon) speciesIcons.getSelectedItem();
+            if (icon != null) {
+                icon.setColor(colorChooser.getColor());
             }
         }
 
