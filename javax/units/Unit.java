@@ -128,6 +128,18 @@ public abstract class Unit implements Serializable
     public static final Unit KILOGRAM = get("kg");
 
     /**
+     * Convenience constant for "Degrees Minutes Secondes" unit.
+     * For example, this "unit" convert 12.5° into 123000 (i.e.
+     * the concatenation of 12°30'00"). In a strict sence, this
+     * is a formatting issue rather than an unit transformation
+     * issue. Such transformation would be better handle by the
+     * {@link net.seagis.pt.AngleFormat} class. However, this
+     * "unit" appears really often in the EPSG database, and we
+     * need it for interoperability with legacy libraries.
+     */
+    public static final Unit DMS = (Unit) new DMSUnit().intern();
+
+    /**
      * Symbole des unités de cet objet <code>Unit</code> (par exemple "kg").
      * Ce champs sera initialisé lors de la construction de chaque objet
      * <code>Unit</code> et ne sera jamais nul. Ce symbole peut commencer
