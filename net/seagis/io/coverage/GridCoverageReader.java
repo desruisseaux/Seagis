@@ -32,6 +32,7 @@ package net.seagis.io.coverage;
 import net.seagis.pt.Envelope;
 import net.seagis.gc.GridRange;
 import net.seagis.gc.GridCoverage;
+import net.seagis.cv.CategoryList;
 import net.seagis.cs.CoordinateSystem;
 
 // Input/output
@@ -58,6 +59,7 @@ import java.util.Iterator;
 
 // Resources
 import java.util.Locale;
+import java.util.MissingResourceException;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
 
@@ -205,7 +207,7 @@ public abstract class GridCoverageReader
                 if (!reuseLast)
                 {
                     reader = (ImageReader) it.next();
-                    reader.setLocale(locale);
+                    setReaderLocale(locale);
                 }
                 reuseLast = false;
                 final Class[] types = reader.getOriginatingProvider().getInputTypes();
@@ -240,7 +242,7 @@ public abstract class GridCoverageReader
     private static boolean contains(final Class[] types, final Class type)
     {
         for (int i=0; i<types.length; i++)
-            if (type.isAssignableFrom(type))
+            if (types[i].isAssignableFrom(type))
                 return true;
         return false;
     }
@@ -373,6 +375,43 @@ public abstract class GridCoverageReader
     }
 
     /**
+     * Returns the category lists for each band of the {@link GridCoverage}
+     * to be read. If there is no category lists, then this method returns
+     * <code>null</code>. The default implementation always returns <code>null</code>.
+     *
+     * @param  index The index of the image to be queried.
+     * @return The category lists for the {@link GridCoverage} at the specified index.
+     *         This array's length must be equals to the number of bands in {@link GridCoverage}.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IndexOutOfBoundsException if the supplied index is out of bounds.
+     * @throws IOException if an error occurs reading the width information from the input source.
+     */
+    public synchronized CategoryList[] getCategoryLists(final int index) throws IOException
+    {
+        checkImageIndex(index);
+        return null;
+    }
+
+    /**
+     * Tells if pixel values map directly geophysics values. This method
+     * Returns <code>true</code> if pixel values map directly geophysics
+     * values, or <code>false</code> if they must be translated first
+     * using {@link CategoryList}. The default implementation returns
+     * <code>true</code>.
+     *
+     * @param  index The index of the image to be queried.
+     * @return <code>true</code> if pixel values map directly geophysics values.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IndexOutOfBoundsException if the supplied index is out of bounds.
+     * @throws IOException if an error occurs reading the width information from the input source.
+     */
+    public synchronized boolean isGeophysics(final int index) throws IOException
+    {
+        checkImageIndex(index);
+        return true;
+    }
+
+    /**
      * Read the grid coverage. The default implementation gets the
      * default {@link ImageReadParam} and checks if it is an instance of
      * {@link RawBinaryImageReadParam}. If it is, this method then invokes
@@ -398,9 +437,13 @@ public abstract class GridCoverageReader
             final Dimension  size = new Dimension(range.getLength(0), range.getLength(1));
             rawParam.setStreamImageSize(size);
         }
-        final CoordinateSystem  cs = getCoordinateSystem(index);
+        final String          name = getName(index);
         final Envelope    envelope = getEnvelope(index);
-        return new GridCoverage(getName(index), reader.readAsRenderedImage(index, param), cs, envelope);
+        final CoordinateSystem  cs = getCoordinateSystem(index);
+        final CategoryList[]  catg = getCategoryLists(index);
+        final boolean isGeophysics = isGeophysics(index);
+        final RenderedImage  image = reader.readAsRenderedImage(index, param);
+        return new GridCoverage(name, image, cs, envelope, catg, isGeophysics, null, null);
     }
 
     /**
@@ -428,9 +471,55 @@ public abstract class GridCoverageReader
     public synchronized void setLocale(final Locale locale)
     {
         this.locale = locale;
+        setReaderLocale(locale);
+    }
+
+    /**
+     * Set the locale for the {@link ImageReader}.
+     */
+    private void setReaderLocale(final Locale locale)
+    {
         if (reader!=null)
-            reader.setLocale(locale);
-        // TODO: set locale for PropertyParser.
+        {
+            final Locale[] list = reader.getAvailableLocales();
+            for (int i=list.length; --i>=0;)
+            {
+                if (locale.equals(list[i]))
+                {
+                    reader.setLocale(locale);
+                    return;
+                }
+            }
+            final String language = getISO3Language(locale);
+            if (language!=null)
+            {
+                for (int i=list.length; --i>=0;)
+                {
+                    if (language.equals(getISO3Language(list[i])))
+                    {
+                        reader.setLocale(list[i]);
+                        return;
+                    }
+                }
+            }
+            reader.setLocale(null);
+        }
+    }
+
+    /**
+     * Returns the ISO language code for the specified
+     * locale, or <code>null</code> if not available.
+     */
+    private static String getISO3Language(final Locale locale)
+    {
+        try
+        {
+            return locale.getISO3Language();
+        }
+        catch (MissingResourceException exception)
+        {
+            return null;
+        }
     }
 
     /**

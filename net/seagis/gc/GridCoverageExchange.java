@@ -43,6 +43,11 @@ import javax.imageio.ImageIO;
 import javax.imageio.IIOException;
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
 
+// Resources
+import java.util.Locale;
+import net.seagis.resources.gcs.Resources;
+import net.seagis.resources.gcs.ResourceKeys;
+
 
 /**
  * Support for creation of grid coverages from persistent formats as well
@@ -57,6 +62,12 @@ import javax.imageio.IIOException;
  */
 public class GridCoverageExchange
 {
+    /**
+     * The locale to use for formatting messages,
+     * or <code>null</code> for a default locale.
+     */
+    private Locale locale;
+
     /**
      * Default constructor.
      */
@@ -79,7 +90,7 @@ public class GridCoverageExchange
     public GridCoverage createFromName(final String name) throws IOException
     {
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        return null;
+        throw new IIOException(Resources.getResources(locale).getString(ResourceKeys.ERROR_NO_IMAGE_READER));
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
         throw new UnsupportedOperationException("JDK 1.4 required!");
 //----- END OF JDK 1.3 FALLBACK -------
@@ -112,9 +123,25 @@ public class GridCoverageExchange
     public void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException
     {
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        // TODO: Temporary implementation. More works are needed here...
         ImageIO.write(gridCoverage.getRenderedImage(false), fileFormat, fileName);
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
         throw new UnsupportedOperationException("JDK 1.4 required!");
 //----- END OF JDK 1.3 FALLBACK -------
     }
+
+    /**
+     * Sets the current {@link Locale} of this <code>GridCoverageExchange</code>
+     * to the given value. A value of <code>null</code> removes any previous
+     * setting, and indicates that the reader should localize as it sees fit.
+     */
+    public void setLocale(final Locale locale)
+    {this.locale = locale;}
+
+    /**
+     * Returns the currently set {@link Locale},
+     * or <code>null</code> if none has been set.
+     */
+    public Locale getLocale()
+    {return locale;}
 }

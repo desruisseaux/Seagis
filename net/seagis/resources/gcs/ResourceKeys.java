@@ -76,11 +76,12 @@ public interface ResourceKeys
     public static final int ERROR_POINT_OUTSIDE_COVERAGE_$1      =    51;
     public static final int ERROR_RANGE_OVERLAP_$4               =    52;
     public static final int ERROR_RGB_OUT_OF_RANGE_$1            =    53;
-    public static final int ERROR_UNDEFINED_PROPERTY_$1          =    54;
-    public static final int ERROR_UNEXPECTED_IMAGE_SIZE          =    55;
-    public static final int ERROR_UNKNOW_INTERPOLATION_$1        =    56;
-    public static final int ERROR_UNKNOW_PARAMETER_NAME_$1       =    57;
-    public static final int ERROR_UNPARSABLE_NUMBER_$1           =    58;
-    public static final int ERROR_UNSPECIFIED_IMAGE_SIZE         =    59;
-    public static final int ERROR_UNSUPPORTED_DATA_TYPE          =    60;
+    public static final int ERROR_UNDEFINED_PROPERTY             =    54;
+    public static final int ERROR_UNDEFINED_PROPERTY_$1          =    55;
+    public static final int ERROR_UNEXPECTED_IMAGE_SIZE          =    56;
+    public static final int ERROR_UNKNOW_INTERPOLATION_$1        =    57;
+    public static final int ERROR_UNKNOW_PARAMETER_NAME_$1       =    58;
+    public static final int ERROR_UNPARSABLE_NUMBER_$1           =    59;
+    public static final int ERROR_UNSPECIFIED_IMAGE_SIZE         =    60;
+    public static final int ERROR_UNSUPPORTED_DATA_TYPE          =    61;
 }

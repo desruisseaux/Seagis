@@ -164,17 +164,4 @@ public abstract class GridCoverageCodec
         throw new UnsupportedOperationException("J2SE 1.4 required!");
 //----- END OF JDK 1.3 FALLBACK -------
     }
-
-    /**
-     * Returns the grid coverage.
-     */
-    protected GridCoverage getGridCoverage(final PropertySource properties, final RenderedImage image)
-    {
-        final GridRange range = getGridRange(properties);
-        if (range.getLength(0)!=image.getWidth() || range.getLength(1)!=image.getHeight())
-        {
-            throw new IllegalArgumentException("Unexpected image size"); // TODO
-        }
-        return new GridCoverage("Image", image, getCoordinateSystem(properties), getEnvelope(properties));
-    }
 }

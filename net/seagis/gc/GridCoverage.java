@@ -454,8 +454,9 @@ public class GridCoverage extends Coverage
             final int   band  = 0; // TODO: make available as a parameter.
             final int[] bands = new int[]{band};
 
-            final RenderedImage reducedImage = JAI.create("BandSelect", new ParameterBlock().addSource(image).add(bands));
-            final CategoryList[]  reducedCat = new CategoryList[bands.length];
+            final RenderedImage reducedImage = (bands.length==numBands && isIncreasing(bands)) ?
+                    image : JAI.create("BandSelect", new ParameterBlock().addSource(image).add(bands));
+            final CategoryList[] reducedCat = new CategoryList[bands.length];
             for (int i=0; i<bands.length; i++) reducedCat[i]=categories[bands[i]];
     
             this.data  = image;
@@ -469,6 +470,17 @@ public class GridCoverage extends Coverage
         this.images           = USE_PYRAMID ? new ImageMIPMap(image, AffineTransform.getScaleInstance(DOWN_SAMPLER, DOWN_SAMPLER), null) : null;
         this.maxLevel         = Math.max((int) (Math.log((double)MIN_SIZE/(double)Math.max(image.getWidth(), image.getHeight()))/LOG_DOWN_SAMPLER), 0);
         this.sampleDimensions = (SampleDimension[]) dimensions.clone();
+    }
+
+    /**
+     * Check if all numbers in <code>bands</code> are
+     * increasing from 0 to <code>bands.length-1</code>.
+     */
+    private static boolean isIncreasing(final int[] bands)
+    {
+        for (int i=0; i<bands.length; i++)
+            if (bands[i]!=i) return false;
+        return true;
     }
 
     /**

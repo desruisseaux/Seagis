@@ -31,6 +31,7 @@ package net.seagis.io.coverage;
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.pt.Envelope;
 import net.seagis.gc.GridRange;
+import net.seagis.cv.CategoryList;
 import net.seagis.gc.GridCoverage;
 import net.seagis.cs.CoordinateSystem;
 
@@ -46,6 +47,7 @@ import javax.imageio.IIOException;
 import javax.imageio.spi.ImageReaderSpi;
 
 // Resources
+import java.util.Locale;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
 
@@ -72,6 +74,11 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     protected PropertyParser properties;
 
     /**
+     * File extension (by default the same than format name).
+     */
+    private final String extension;
+
+    /**
      * Construct a new <code>ExoreferencedGridCoverageReader</code>
      * using the specified {@link PropertyParser}.
      *
@@ -81,11 +88,25 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
      * @param parser The {@link PropertyParser} to use for reading geographic metadata.
      */
     public ExoreferencedGridCoverageReader(final String formatName, final PropertyParser parser)
+    {this(formatName, formatName, parser);}
+
+    /**
+     * Construct a new <code>ExoreferencedGridCoverageReader</code>
+     * using the specified {@link PropertyParser}.
+     *
+     * @param formatName The name for this format. This format name should be
+     *        understood by {@link ImageIO#getImageReadersByFormatName(String)},
+     *        unless {@link #getImageReaders} is overriden.
+     * @param extension Filename's extensions for file of this format.
+     * @param parser The {@link PropertyParser} to use for reading geographic metadata.
+     */
+    public ExoreferencedGridCoverageReader(final String formatName, final String extension, final PropertyParser parser)
     {
         super(formatName);
         properties=parser;
         if (parser==null)
             throw new IllegalArgumentException();
+        this.extension = extension;
     }
 
     /**
@@ -141,8 +162,8 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     /**
      * Returns the filename for image data. This method is invoked by
      * {@link #setInput} after {@link #properties} has been loaded.
-     * Default implementation just replace the file extension by
-     * {@link #formatName}.
+     * Default implementation just replace the file extension by the
+     * <code>extension</code> argument specified to the constructor.
      *
      * @param  filename The filename part of metadata file. This
      *         is the filename part of the file supplied by users
@@ -154,7 +175,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
     {
         int ext = filename.lastIndexOf('.');
         if (ext<0) ext=filename.length();
-        return filename.substring(0, ext)+'.'+formatName;
+        return filename.substring(0, ext)+'.'+extension;
     }
 
     /**
@@ -181,7 +202,7 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
             // errors due to badly formatted input file.
             // Failing to parse the properties is really
             // a checked exception.
-            throw new IIOException("Undefined property", exception); // TODO
+            throw new IIOException(getString(ResourceKeys.ERROR_UNDEFINED_PROPERTY), exception);
         }
     }
 
@@ -209,7 +230,114 @@ public class ExoreferencedGridCoverageReader extends GridCoverageReader
             // errors due to badly formatted input file.
             // Failing to parse the properties is really
             // a checked exception.
-            throw new IIOException("Undefined property", exception); // TODO
+            throw new IIOException(getString(ResourceKeys.ERROR_UNDEFINED_PROPERTY), exception);
         }
+    }
+
+    /**
+     * Returns the grid range for the {@link GridCoverage} to be read.
+     * The default implementation try to invoke
+     * <code>{@link #properties}.{@link #getGridRange() getGridRange()}</code>,
+     * and fallback to <code>super.getGridRange(index)</code> if the later fails.
+     *
+     * @param  index The index of the image to be queried.
+     * @return The grid range for the {@link GridCoverage} at the specified index.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IndexOutOfBoundsException if the supplied index is out of bounds.
+     * @throws IOException if an error occurs reading the width information from the input source.
+     */
+    public synchronized GridRange getGridRange(final int index) throws IOException
+    {
+        checkImageIndex(index);
+        try
+        {
+            return properties.getGridRange();
+        }
+        catch (RuntimeException propertyError)
+        {
+            try
+            {
+                return super.getGridRange(index);
+            }
+            catch (IIOException imageError)
+            {
+                // We have been unable to fetch the grid range from the image file.
+                // Some file format doesn't hold any informations about grid range,
+                // so this failure may be normal. The "real" failure cause is then
+                // the failure to parse properties ('propertyError'). Consequently,
+                // we retrown the exception with 'propertyError' as its cause.
+                final IIOException error = new IIOException(imageError.getLocalizedMessage(), propertyError);
+                error.setStackTrace(imageError.getStackTrace());
+                throw imageError;
+            }
+        }
+    }
+
+    /**
+     * Returns the category lists for each band of the {@link GridCoverage}
+     * to be read. If there is no category lists, then this method returns
+     * <code>null</code>. The default implementation invokes
+     * <code>{@link #properties}.{@link #getCategoryLists() getCategoryLists()}</code>.
+     *
+     * @param  index The index of the image to be queried.
+     * @return The category lists for the {@link GridCoverage} at the specified index.
+     *         This array's length must be equals to the number of bands in {@link GridCoverage}.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IndexOutOfBoundsException if the supplied index is out of bounds.
+     * @throws IOException if an error occurs reading the width information from the input source.
+     */
+    public synchronized CategoryList[] getCategoryLists(final int index) throws IOException
+    {
+        checkImageIndex(index);
+        try
+        {
+            return properties.getCategoryLists();
+        }
+        catch (RuntimeException exception)
+        {
+            // RuntimeException includes many potential
+            // errors due to badly formatted input file.
+            // Failing to parse the properties is really
+            // a checked exception.
+            throw new IIOException(getString(ResourceKeys.ERROR_UNDEFINED_PROPERTY), exception);
+        }
+    }
+
+    /**
+     * Tells if pixel values map directly geophysics values. The default implementation
+     * invokes <code>{@link #properties}.{@link #isGeophysics() isGeophysics()}</code>.
+     *
+     * @param  index The index of the image to be queried.
+     * @return <code>true</code> if pixel values map directly geophysics values.
+     * @throws IllegalStateException if the input source has not been set.
+     * @throws IndexOutOfBoundsException if the supplied index is out of bounds.
+     * @throws IOException if an error occurs reading the width information from the input source.
+     */
+    public synchronized boolean isGeophysics(final int index) throws IOException
+    {
+        checkImageIndex(index);
+        try
+        {
+            return properties.isGeophysics();
+        }
+        catch (RuntimeException exception)
+        {
+            // RuntimeException includes many potential
+            // errors due to badly formatted input file.
+            // Failing to parse the properties is really
+            // a checked exception.
+            throw new IIOException(getString(ResourceKeys.ERROR_UNDEFINED_PROPERTY), exception);
+        }
+    }
+
+    /**
+     * Sets the current {@link Locale} of this <code>GridCoverageReader</code>
+     * to the given value. A value of <code>null</code> removes any previous
+     * setting, and indicates that the reader should localize as it sees fit.
+     */
+    public synchronized void setLocale(final Locale locale)
+    {
+        super.setLocale(locale);
+        properties.setLocale(locale);
     }
 }

@@ -40,6 +40,7 @@ import net.seagis.cs.ProjectedCoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
 import net.seagis.ct.CoordinateTransformationFactory;
 import net.seagis.ct.TransformException;
+import net.seagis.cv.CategoryList;
 import net.seagis.gc.GridCoverage;
 import net.seagis.gc.GridRange;
 import net.seagis.pt.AngleFormat;
@@ -772,7 +773,7 @@ public class PropertyParser
      * Returns the envelope. Default implementation fetchs the property values
      * for keys <code>"ULX"</code>, <code>"ULY"</code>, <code>"Resolution"</code>
      * and transform the resulting strings into an {@link Envelope} object.
-     *
+     * <br><br>
      * <STRONG>DO NOT RELY ON THE CURRENT IMPLEMENTATION</STRONG>.
      * This default implementation may be changed in a future version.
      * Always override this method if you want to be safe.
@@ -801,7 +802,7 @@ public class PropertyParser
      * Returns the grid range. Default implementation fetchs the property values
      * for keys <code>"Image width"</code> and <code>"Image height"</code>,
      * and transform the resulting strings into a {@link GridRange} object.
-     *
+     * <br><br>
      * <STRONG>DO NOT RELY ON THE CURRENT IMPLEMENTATION</STRONG>.
      * This default implementation may be changed in a future version.
      * Always override this method if you want to be safe.
@@ -818,6 +819,24 @@ public class PropertyParser
         upper[1] = getAsInt("Image height");
         return new GridRange(lower, upper);
     }
+
+    /**
+     * Returns the category lists for each band of the {@link GridCoverage}
+     * to be read. If there is no category lists, then this method returns
+     * <code>null</code>. The default implementation always returns <code>null</code>.
+     */
+    public CategoryList[] getCategoryLists()
+    {return null;}
+
+    /**
+     * Tells if pixel values map directly geophysics values. This method
+     * Returns <code>true</code> if pixel values map directly geophysics
+     * values, or <code>false</code> if they must be translated first
+     * using {@link CategoryList}. The default implementation returns
+     * <code>true</code>.
+     */
+    public boolean isGeophysics()
+    {return true;}
 
     /**
      * Sets the current {@link Locale} of this <code>PropertyParser</code>

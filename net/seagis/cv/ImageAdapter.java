@@ -38,8 +38,13 @@ import javax.media.jai.ImageLayout;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.PointOpImage;
 import javax.media.jai.RasterFactory;
+
+import java.awt.image.PixelInterleavedSampleModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.IndexColorModel;
 import java.awt.image.WritableRaster;
 import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
 import java.awt.image.ColorModel;
 import java.awt.Rectangle;
 import java.awt.Dimension;
@@ -97,7 +102,19 @@ abstract class ImageAdapter extends PointOpImage
             layout = layout.unsetTileLayout(); // Lets JAI choose a default tile size.
         }
         final ColorModel colors = categories.getColorModel(geophysicsValue, image.getSampleModel().getNumBands());
-        return layout.setSampleModel(colors.createCompatibleSampleModel(image.getWidth(), image.getHeight())).setColorModel(colors);
+        SampleModel model = colors.createCompatibleSampleModel(image.getWidth(), image.getHeight());
+        if (colors instanceof IndexColorModel && model.getClass().equals(ComponentSampleModel.class))
+        {
+            // TODO: IndexColorModel seems to badly choose his sample model. As of JDK 1.4-rc1, it
+            //       construct a ComponentSampleModel, which is drawn very slowly to the screen. A
+            //       much faster sample model is PixelInterleavedSampleModel, which is the sample
+            //       model used by BufferedImage for TYPE_BYTE_INDEXED. Java2D seems to be optimized
+            //       for this sample model when used with IndexColorModel.
+            final int w = model.getWidth();
+            final int h = model.getHeight();
+            model = new PixelInterleavedSampleModel(colors.getTransferType(), w, h, 1, w, new int[1]);
+        }
+        return layout.setSampleModel(model).setColorModel(colors);
     }
 
     /**
