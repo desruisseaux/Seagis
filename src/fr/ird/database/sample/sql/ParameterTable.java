@@ -62,6 +62,12 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
     private final SeriesTable seriesTable;
 
     /**
+     * La table des combinaisons qui ont servit à construire un paramètre.
+     * Ne sera construite que la première fois où elle sera nécessaire.
+     */
+    private transient CombinationTable combinations;
+
+    /**
      * Construit une table des paramètres/opérations.
      *
      * @param  connection Connection vers une base de données des échantillons.
@@ -122,11 +128,17 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
     protected fr.ird.database.sample.ParameterEntry getEntry(final ResultSet results)
             throws SQLException
     {
-        return new ParameterEntry(results.getInt(    ID),
-                                  results.getString( NAME),
-                                  getSeries(results, SERIES),
-                                  getSeries(results, SERIES2),
-                                  results.getInt(    BAND));
+        final ParameterEntry entry;
+        entry = new ParameterEntry(results.getInt(    ID),
+                                   results.getString( NAME),
+                                   getSeries(results, SERIES),
+                                   getSeries(results, SERIES2),
+                                   results.getInt(    BAND));
+        if (combinations == null) {
+            combinations = new CombinationTable(this);
+        }
+        entry.initComponents(combinations.getComponents(entry));
+        return entry;
     }
 
     /**
@@ -139,5 +151,16 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
             return false;
         }
         return super.accept(entry);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public synchronized void close() throws SQLException {
+        if (combinations != null) {
+            combinations.close();
+            combinations = null;
+        }
+        super.close();
     }
 }

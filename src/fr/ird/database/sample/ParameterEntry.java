@@ -25,6 +25,9 @@
  */
 package fr.ird.database.sample;
 
+// J2SE
+import java.util.List;
+
 // Seagis
 import fr.ird.database.Entry;
 import fr.ird.database.coverage.SeriesEntry;
@@ -53,6 +56,17 @@ public interface ParameterEntry extends Entry {
      * Retourne le numéro de la bande à utiliser dans les images.
      */
     public abstract int getBand();
+
+    /**
+     * Retourne les composantes consituant ce paramètre, ou <code>null</code> s'il n'y en a pas.
+     * Un paramètre peut être le résultat d'une combinaison (par forcément linéaire) de d'autres
+     * paramètres. L'interface {@link Component} spécifie un de ces paramètre ainsi que son poids
+     * relatif.
+     *
+     * @return La liste de tous les paramètres composant celui-ci, ou <code>null</code> s'il n'y
+     *         en a pas.
+     */
+    public abstract List<Component> getComponents();
 
     /**
      * Une des composantes d'un {@linkplain ParameterEntry paramètre}.   Un tableau d'objets

@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.Handler;
 import javax.media.jai.KernelJAI;
+import javax.media.jai.util.CaselessStringKey;
 
 // geotools
 import org.geotools.resources.XArray;
@@ -267,12 +268,12 @@ public class EnvironmentSamplingChooser extends JPanel {
             handler.setLevel(Level.FINE);
             logging.show(owner);
 
-            final String                column = this.column.getText();
-            final boolean         nodataFilter = nodataFilterAllowed.isSelected();
-            final OperationEntry     operation = (OperationEntry) this.operation.getSelectedItem();
-            final Map<String,Object> arguments = new HashMap<String,Object>();
-            arguments.put("mask1", kernels.getHorizontalEditor().getKernel());
-            arguments.put("mask2", kernels.getVerticalEditor().getKernel());
+            final String            column = this.column.getText();
+            final boolean     nodataFilter = nodataFilterAllowed.isSelected();
+            final OperationEntry operation = (OperationEntry) this.operation.getSelectedItem();
+            final Map<CaselessStringKey,Object> arguments = new HashMap<CaselessStringKey,Object>();
+            arguments.put(new CaselessStringKey("Mask1"), kernels.getHorizontalEditor().getKernel());
+            arguments.put(new CaselessStringKey("Mask2"), kernels.getVerticalEditor().getKernel());
             if (nodataFilter) {
                 GridCoverageProcessor.initialize();
             }
@@ -300,7 +301,7 @@ public class EnvironmentSamplingChooser extends JPanel {
 
                 /** Retourne la valeur d'un paramètre de l'opération. */
                 public Object getParameter(final String name) {
-                    return arguments.get(name);
+                    return arguments.get(new CaselessStringKey(name));
                 }
             });
             try {

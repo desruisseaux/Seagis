@@ -26,8 +26,9 @@
 package fr.ird.database.sample.sql;
 
 // J2SE
+import java.util.List;
+import java.util.ArrayList;
 import java.sql.ResultSet;
-import java.sql.Connection;
 import java.sql.SQLException;
 
 
@@ -52,13 +53,34 @@ final class CombinationTable extends Table {
     /** Numéro d'argument. */ private static final int TARGET_ARG = 1;
 
     /**
+     * La table des paramètres. Cette table a été spécifiée au constructeur et n'appartient
+     * pas à cet objet <code>CombinationTable</code>. Elle ne doit donc pas être fermée par
+     * la méthode {@link #close}.
+     */
+    private final ParameterTable parameters;
+
+    /**
+     * La table des positions relatives.
+     * Ne sera construite que la première fois où elle sera nécessaire.
+     */
+    private transient RelativePositionTable positions;
+
+    /**
+     * La table des opérations.
+     * Ne sera construite que la première fois où elle sera nécessaire.
+     */
+    private transient OperationTable operations;
+
+    /**
      * Construit une nouvelle connexion vers la table des combinaisons.
      *
-     * @param  connection La connexion vers la base de données.
+     * @param  parameters La table des paramètres.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    public CombinationTable(final Connection connection) throws SQLException {
-        super(connection.prepareStatement(preferences.get(COMBINATIONS, SQL_SELECT)));
+    public CombinationTable(final ParameterTable parameters) throws SQLException {
+        super(parameters.statement.getConnection().prepareStatement(
+              preferences.get(COMBINATIONS, SQL_SELECT)));
+        this.parameters = parameters;
     }
 
     /**
@@ -69,11 +91,51 @@ final class CombinationTable extends Table {
      * @return Les composantes du paramètre spécifié, ou <code>null</code> s'il n'y en a pas.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public void getComponents(final ParameterEntry entry) throws SQLException {
+    public synchronized List<fr.ird.database.sample.ParameterEntry.Component>
+           getComponents(final ParameterEntry entry) throws SQLException
+    {
         statement.setInt(TARGET_ARG, entry.getID());
+        ArrayList<fr.ird.database.sample.ParameterEntry.Component> components = null;
         final ResultSet results = statement.executeQuery();
         while (results.next()) {
+            final int source       = results.getInt(SOURCE);
+            final int position     = results.getInt(POSITION);
+            final int operation    = results.getInt(OPERATION);
+            final double weight    = results.getDouble(WEIGHT);
+            final double logarithm = results.getDouble(LOGARITHM);
+            if (positions == null) {
+                positions = new RelativePositionTable(statement.getConnection(),
+                                                      RelativePositionTable.BY_ID);
+            }
+            if (operations == null) {
+                operations = new OperationTable(statement.getConnection(),
+                                                OperationTable.BY_ID);
+            }
+            if (components == null) {
+                components = new ArrayList<fr.ird.database.sample.ParameterEntry.Component>();
+            }
+            components.add(entry.new Component(parameters.getEntry(source),
+                                               positions .getEntry(position),
+                                               operations.getEntry(operation),
+                                               weight, logarithm));
         }
         results.close();
+        components.trimToSize();
+        return components;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public synchronized void close() throws SQLException {
+        if (positions != null) {
+            positions.close();
+            positions = null;
+        }
+        if (operations != null) {
+            operations.close();
+            operations = null;
+        }
+        super.close();
     }
 }

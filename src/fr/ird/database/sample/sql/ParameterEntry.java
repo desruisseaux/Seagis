@@ -26,6 +26,8 @@
 package fr.ird.database.sample.sql;
 
 // J2SE
+import java.util.List;
+import java.util.Collections;
 import java.io.Serializable;
 
 // Geotools
@@ -47,7 +49,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-    private static final long serialVersionUID = -6274380414853033347L;
+//    private static final long serialVersionUID = -6274380414853033347L;
 
     /**
      * Un numéro unique identifiant cette entré.
@@ -71,6 +73,11 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     private final int band;
 
     /**
+     * Les composantes constituant ce paramètres, ou <code>null</code> s'il n'y en a pas.
+     */
+    private List<fr.ird.database.sample.ParameterEntry.Component> components;
+
+    /**
      * Construit une entré.
      */
     public ParameterEntry(final int         ID,
@@ -84,6 +91,24 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
         this.series    = series;
         this.series2   = series2;
         this.band      = band;
+    }
+
+    /**
+     * Définit les composantes constituant ce paramètre. Cette méthode ne peut être appelée
+     * qu'une seule fois après la construction de cette entrée.
+     *
+     * @param  c Les composantes constituant ce paramètre, ou <code>null</code>.
+     * @throws IllegalStateException si ce paramètre a déjà été initialisé.
+     */
+    final void initComponents(final List<fr.ird.database.sample.ParameterEntry.Component> c)
+            throws IllegalStateException
+    {
+        if (c != null) {
+            if (components != null) {
+                throw new IllegalStateException();
+            }
+            components = Collections.unmodifiableList(c);
+        }
     }
 
     /**
@@ -119,6 +144,13 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
      */
     public int getBand() {
         return band;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public List<fr.ird.database.sample.ParameterEntry.Component> getComponents() {
+        return components;
     }
     
     /**
@@ -217,10 +249,10 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
          * position relative et de l'opération sont tous sur 8 bits.
          */
         public int getID() {
-            return (ParameterEntry.this.getID() <<  0) ^
-                   (source             .getID() <<  8) ^
-                   (position           .getID() << 16) ^
-                   (operation          .getID() << 24);
+            return (ParameterEntry.this.getID() << 24) ^
+                   (source             .getID() << 16) ^
+                   (position           .getID() <<  8) ^
+                   (operation          .getID() <<  0);
         }
 
         /**
