@@ -146,4 +146,10 @@ final class AffineTransform2D extends XAffineTransform implements MathTransform2
         }
         return inverse;
     }
+
+    /**
+     * Returns the WKT for this affine transform.
+     */
+    public String toString()
+    {return MatrixTransform.toString(new Matrix(this));}
 }

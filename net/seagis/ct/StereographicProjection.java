@@ -99,6 +99,12 @@ final class StereographicProjection extends PlanarProjection
     private final double sinphi0, cosphi0, chi1, sinChi1, cosChi1;
 
     /**
+     * Latitude of true scale, in radians. Used
+     * for {@link #toString} implementation.
+     */
+    private final double latitudeTrueScale;
+
+    /**
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
@@ -123,7 +129,7 @@ final class StereographicProjection extends PlanarProjection
         //////////////////////////
         super(parameters);
         final double defaultLatitude = parameters.getValue("latitude_of_origin", polar ? 90 : 0);
-        final double latitudeTrueScale = Math.abs(latitudeToRadians(parameters.getValue("latitude_true_scale", defaultLatitude), true));
+        latitudeTrueScale = Math.abs(latitudeToRadians(parameters.getValue("latitude_true_scale", defaultLatitude), true));
 
         //////////////////////////
         //  Compute constants   //
@@ -235,7 +241,7 @@ final class StereographicProjection extends PlanarProjection
      */
     protected Point2D transform(double x, double y, final Point2D ptDst) throws TransformException
     {
-        x -= centralLongitude;
+        x -= centralMeridian;
         final double coslat = Math.cos(y);
         final double sinlat = Math.sin(y);
         final double coslon = Math.cos(x);
@@ -372,7 +378,7 @@ choice: switch (mode)
             case SPHERICAL_SOUTH:
             {
                 // (20-17) call atan2(x,y) to properly deal with y==0
-                x = (Math.abs(x)<TOL && Math.abs(y)<TOL) ? centralLongitude : Math.atan2(x, y) + centralLongitude;
+                x = (Math.abs(x)<TOL && Math.abs(y)<TOL) ? centralMeridian : Math.atan2(x, y) + centralMeridian;
                 if (Math.abs(rho)<TOL)
                     y = centralLatitude;
                 else
@@ -388,7 +394,7 @@ choice: switch (mode)
                 if (Math.abs(rho)<TOL)
                 {
                     y = 0.0;
-                    x = centralLongitude;
+                    x = centralMeridian;
                 }
                 else
                 {
@@ -398,7 +404,7 @@ choice: switch (mode)
                     y = Math.asin(y * sinc/rho); // (20-14)  with phi1=0
                     final double t  = x*sinc;
                     final double ct = rho*cosc;
-                    x = (Math.abs(t)<TOL && Math.abs(ct)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
+                    x = (Math.abs(t)<TOL && Math.abs(ct)<TOL) ? centralMeridian : Math.atan2(t, ct)+centralMeridian;
                 }
                 break;
             }
@@ -407,7 +413,7 @@ choice: switch (mode)
                 if (Math.abs(rho) < TOL)
                 {
                     y = centralLatitude;
-                    x = centralLongitude;
+                    x = centralMeridian;
                 }
                 else
                 {
@@ -417,7 +423,7 @@ choice: switch (mode)
                     final double ct = rho*cosphi0*cosc - y*sinphi0*sinc; // (20-15)
                     final double t  = x*sinc;
                     y = Math.asin(cosc*sinphi0 + y*sinc*cosphi0/rho);
-                    x = (Math.abs(ct)<TOL && Math.abs(t)<TOL) ? centralLongitude : Math.atan2(t, ct)+centralLongitude;
+                    x = (Math.abs(ct)<TOL && Math.abs(t)<TOL) ? centralMeridian : Math.atan2(t, ct)+centralMeridian;
                 }
                 break;
             }
@@ -440,7 +446,7 @@ choice: switch (mode)
                     final double phi = (Math.PI/2) - 2.0*Math.atan(t*Math.pow((1-esinphi)/(1+esinphi), halfe));
                     if (Math.abs(phi-phi0) < TOL)
                     {
-                        x = (Math.abs(rho)<TOL) ? centralLongitude : Math.atan2(x, -y) + centralLongitude;
+                        x = (Math.abs(rho)<TOL) ? centralMeridian : Math.atan2(x, -y) + centralMeridian;
                         y = (mode==ELLIPSOIDAL_NORTH) ? phi : -phi;
                         break choice;
                     }
@@ -470,8 +476,8 @@ choice: switch (mode)
                     final double phi = 2.0 * Math.atan (t*Math.pow((1+esinphi)/(1-esinphi), halfe)) - (Math.PI/2);
                     if (Math.abs(phi-phi0) < TOL)
                     {
-                        x = (Math.abs(rho)<TOL) ? centralLongitude :
-                             Math.atan2(x*since, rho*cosChi1*cosce - y*sinChi1*since) + centralLongitude;
+                        x = (Math.abs(rho)<TOL) ? centralMeridian :
+                             Math.atan2(x*since, rho*cosChi1*cosce - y*sinChi1*since) + centralMeridian;
                         y = phi;
                         break choice;
                     }
@@ -526,6 +532,16 @@ choice: switch (mode)
                    Double.doubleToLongBits(this.cosChi1) == Double.doubleToLongBits(that.cosChi1);
         }
         return false;
+    }
+
+    /**
+     * Implémentation de la partie entre crochets
+     * de la chaîne retournée par {@link #toString()}.
+     */
+    void toString(final StringBuffer buffer)
+    {
+        super.toString(buffer);
+        addParameter(buffer, "latitude_true_scale", Math.toDegrees(latitudeTrueScale));
     }
 
     /**

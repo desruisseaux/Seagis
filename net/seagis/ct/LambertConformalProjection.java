@@ -63,6 +63,12 @@ import net.seagis.resources.css.ResourceKeys;
 final class LambertConformalProjection extends ConicProjection
 {
     /**
+     * Standards parallels in radians, for
+     * {@link #toString} implementation.
+     */
+    private final double phi1, phi2;
+
+    /**
      * Variables internes
      * pour les calculs.
      */
@@ -80,8 +86,8 @@ final class LambertConformalProjection extends ConicProjection
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        final double phi1= latitudeToRadians(parameters.getValue("standard_parallel1", 30), true);
-        final double phi2= latitudeToRadians(parameters.getValue("standard_parallel2", 45), true);
+        phi1= latitudeToRadians(parameters.getValue("standard_parallel1", 30), true);
+        phi2= latitudeToRadians(parameters.getValue("standard_parallel2", 45), true);
 
         //////////////////////////
         //  Compute constants   //
@@ -161,7 +167,7 @@ final class LambertConformalProjection extends ConicProjection
                 rho = Math.pow(tsfn(y, Math.sin(y)), n);
             rho *= F;
         }
-        x = n * (x-centralLongitude);
+        x = n * (x-centralMeridian);
         y = a * (rho0 - rho * Math.cos(x));
         x = a * (rho * Math.sin(x));
 
@@ -190,7 +196,7 @@ final class LambertConformalProjection extends ConicProjection
                 x = -x;
                 y = -y;
             }
-            x = centralLongitude + Math.atan2(x, y)/n;
+            x = centralMeridian + Math.atan2(x, y)/n;
             if (isSpherical)
             {
                 y = 2.0 * Math.atan(Math.pow(F/rho, 1.0/n)) - (Math.PI/2);
@@ -202,7 +208,7 @@ final class LambertConformalProjection extends ConicProjection
         }
         else
         {
-            x = centralLongitude;
+            x = centralMeridian;
             y = n < 0 ? -(Math.PI/2) : (Math.PI/2);
         }
         if (ptDst!=null)
@@ -237,6 +243,17 @@ final class LambertConformalProjection extends ConicProjection
                    Double.doubleToLongBits(this.rho0) == Double.doubleToLongBits(that.rho0);
         }
         return false;
+    }
+
+    /**
+     * Implémentation de la partie entre crochets
+     * de la chaîne retournée par {@link #toString()}.
+     */
+    void toString(final StringBuffer buffer)
+    {
+        super.toString(buffer);
+        addParameter(buffer, "standard_parallel1", Math.toDegrees(phi1));
+        addParameter(buffer, "standard_parallel2", Math.toDegrees(phi2));
     }
 
     /**

@@ -86,6 +86,12 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
     static final double TOL=1E-10;
 
     /**
+     * Classification string for this projection
+     * (e.g. "Transverse_Mercator").
+     */
+    private final String classification;
+
+    /**
      * Indique si le modèle terrestre est sphérique. La valeur <code>true</code>
      * indique que le modèle est sphérique, c'est-à-dire que les champs {@link #a}
      * et {@link #b} ont la même valeur.
@@ -124,7 +130,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      * only  because {@link TransverseMercatorProjection} need to modify it at
      * construction time.
      */
-    protected double centralLongitude;
+    protected double centralMeridian;
 
     /**
      * Central latitude in <u>radians</u>. Default value is 0, the equator.
@@ -154,11 +160,12 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      */
     protected MapProjection(final Projection parameters) throws MissingParameterException
     {
-        this.a                =                    parameters.getValue("semi_major");
-        this.b                =                    parameters.getValue("semi_minor");
-        this.centralLongitude = longitudeToRadians(parameters.getValue("central_meridian",   0), true);
-        this.centralLatitude  =  latitudeToRadians(parameters.getValue("latitude_of_origin", 0), true);
-        this.isSpherical      = (a==b);
+        this.classification  =                    parameters.getClassName();
+        this.a               =                    parameters.getValue("semi_major");
+        this.b               =                    parameters.getValue("semi_minor");
+        this.centralMeridian = longitudeToRadians(parameters.getValue("central_meridian",   0), true);
+        this.centralLatitude =  latitudeToRadians(parameters.getValue("latitude_of_origin", 0), true);
+        this.isSpherical     = (a==b);
         this.es = 1.0 - (b*b)/(a*a);
         this.e  = Math.sqrt(es);
 
@@ -709,7 +716,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
     {
         long code =      Double.doubleToLongBits(a);
         code = code*37 + Double.doubleToLongBits(b);
-        code = code*37 + Double.doubleToLongBits(centralLongitude);
+        code = code*37 + Double.doubleToLongBits(centralMeridian);
         code = code*37 + Double.doubleToLongBits(centralLatitude);
         return (int) code ^ (int) (code >>> 32);
     }
@@ -725,10 +732,10 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
         if (super.equals(object))
         {
             final MapProjection that = (MapProjection) object;
-            return Double.doubleToLongBits(this.a)                == Double.doubleToLongBits(that.a) &&
-                   Double.doubleToLongBits(this.b)                == Double.doubleToLongBits(that.b) &&
-                   Double.doubleToLongBits(this.centralLongitude) == Double.doubleToLongBits(that.centralLongitude) &&
-                   Double.doubleToLongBits(this.centralLatitude)  == Double.doubleToLongBits(that.centralLatitude);
+            return Double.doubleToLongBits(this.a)               == Double.doubleToLongBits(that.a) &&
+                   Double.doubleToLongBits(this.b)               == Double.doubleToLongBits(that.b) &&
+                   Double.doubleToLongBits(this.centralMeridian) == Double.doubleToLongBits(that.centralMeridian) &&
+                   Double.doubleToLongBits(this.centralLatitude) == Double.doubleToLongBits(that.centralLatitude);
         }
         return false;
     }
@@ -740,8 +747,9 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      */
     public final String toString()
     {
-        StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
-        buffer.append('[');
+        final StringBuffer buffer=new StringBuffer("PARAM_MT[\"");
+        buffer.append(classification);
+        buffer.append('"');
         toString(buffer);
         buffer.append(']');
         return buffer.toString();
@@ -753,20 +761,10 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      */
     void toString(final StringBuffer buffer)
     {
-        try
-        {
-            Point2D origin = new Point2D.Double(); // Initialized at (0,0).
-            origin = inverseTransform(origin, origin);
-            buffer.append("origin=(");
-            buffer.append(new Latitude(origin.getY()));
-            buffer.append(", ");
-            buffer.append(new Longitude(origin.getX()));
-            buffer.append(')');
-        }
-        catch (TransformException exception)
-        {
-            // Ignore.
-        }
+        addParameter(buffer, "semi_major",         a);
+        addParameter(buffer, "semi_minor",         b);
+        addParameter(buffer, "central_meridian",   Math.toDegrees(centralMeridian));
+        addParameter(buffer, "latitude_of_origin", Math.toDegrees(centralLatitude));
     }
 
     /**
@@ -814,6 +812,9 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
             }
             else return false;
         }
+
+        public final String toString()
+        {return "INVERSE_MT["+MapProjection.this+']';}
     }
 
     /**

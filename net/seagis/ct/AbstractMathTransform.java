@@ -405,6 +405,8 @@ public abstract class AbstractMathTransform implements MathTransform
 
     /**
      * Returns a string représentation of this transform.
+     * Subclasses should override this method in order to
+     * returns Well Know Text (WKT) instead.
      */
     public String toString()
     {
@@ -415,6 +417,34 @@ public abstract class AbstractMathTransform implements MathTransform
         buffer.append(getDimTarget());
         buffer.append("D]");
         return buffer.toString();
+    }
+
+    /**
+     * Add the <code>", PARAMETER["<name>", <value>]"</code> string
+     * to the specified string buffer. This is a convenience method
+     * for constructing WKT for "PARAM_MT".
+     */
+    static void addParameter(final StringBuffer buffer, final String key, final double value)
+    {
+        buffer.append(", PARAMETER[\"");
+        buffer.append(key);
+        buffer.append("\",");
+        buffer.append(value);
+        buffer.append(']');
+    }
+
+    /**
+     * Add the <code>", PARAMETER["<name>", <value>]"</code> string
+     * to the specified string buffer. This is a convenience method
+     * for constructing WKT for "PARAM_MT".
+     */
+    static void addParameter(final StringBuffer buffer, final String key, final int value)
+    {
+        buffer.append(", PARAMETER[\"");
+        buffer.append(key);
+        buffer.append("\",");
+        buffer.append(value);
+        buffer.append(']');
     }
 
     /**

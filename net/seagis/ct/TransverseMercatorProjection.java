@@ -230,7 +230,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         //   [1.. 60] for UTM   //
         //////////////////////////
         t  = centralLongitudeZone1 - 0.5*zoneWidth; // Longitude du début de la 1ère zone.
-        t  = Math.toDegrees(centralLongitude) - t;  // Nombre de degrés de longitudes entre la longitude centrale et la longitude 1.
+        t  = Math.toDegrees(centralMeridian) - t;   // Nombre de degrés de longitudes entre la longitude centrale et la longitude 1.
         t  = Math.floor(t/zoneWidth + EPS);         // Nombre de zones entre la longitudes centrale et la longitude 1.
         t -= zoneCount*Math.floor(t/zoneCount);     // Si négatif, ramène dans l'intervale 0 à (zoneCount-1).
         zone = ((int) t)+1;
@@ -240,7 +240,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         /////////////////////////////////
         t  = centralLongitudeZone1 + (zone-1)*zoneWidth;
         t -= 360*Math.floor((t+180)/360); // Bring back into [-180..+180] range.
-        centralLongitude = Math.toRadians(t);
+        centralMeridian = Math.toRadians(t);
     }
 
     /**
@@ -274,7 +274,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
         {
             throw new TransformException(Resources.format(ResourceKeys.ERROR_POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
         }
-        x -= centralLongitude;
+        x -= centralMeridian;
         double sinphi = Math.sin(y);
         double cosphi = Math.cos(y);
         if (isSpherical)
@@ -345,7 +345,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             t = Math.cos(y/ak0);
             double phi = Math.asin(Math.sqrt((1.0-t*t)/(1.0+d*d)));
             y = y<0.0 ? -phi : phi;
-            x = (Math.abs(d)>EPS10 || Math.abs(t)>EPS10) ? Math.atan2(d,t)+centralLongitude : centralLongitude;
+            x = (Math.abs(d)>EPS10 || Math.abs(t)>EPS10) ? Math.atan2(d,t)+centralMeridian : centralMeridian;
         }
         else
         {
@@ -368,7 +368,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
             if (Math.abs(phi) >= (Math.PI/2))
             {
                 y = y<0.0 ? -(Math.PI/2) : (Math.PI/2);
-                x = centralLongitude;
+                x = centralMeridian;
             }
             else
             {
@@ -389,7 +389,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
 
                 x = d*(FC1 - ds * FC3 * (1.0 + 2.0*t + n -
                     ds*FC5*(5.0 + t*(28.0 + 24* t + 8.0*n) + 6.0*n -
-                    ds*FC7*(61.0 + t*(662.0 + t*(1320.0 + 720.0*t))))))/cosphi + centralLongitude;
+                    ds*FC7*(61.0 + t*(662.0 + t*(1320.0 + 720.0*t))))))/cosphi + centralMeridian;
             }
         }
         if (ptDst!=null)
@@ -432,10 +432,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
     void toString(final StringBuffer buffer)
     {
         super.toString(buffer);
-        buffer.append(", ");
-        buffer.append(name);
-        buffer.append(" zone=");
-        buffer.append(zone);
+        addParameter(buffer, "zone", zone);
     }
 
     /**

@@ -238,4 +238,35 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
         }
         return false;
     }
+
+    /**
+     * Returns the WKT for this math transform.
+     */
+    public final String toString()
+    {
+        final StringBuffer buffer = new StringBuffer("CONCAT_MT[");
+        addWKT(buffer, this, true);
+        buffer.append(']');
+        return buffer.toString();
+    }
+
+    /**
+     * Append to a string buffer the WKT
+     * for the specified math transform.
+     */
+    private static void addWKT(final StringBuffer buffer, final MathTransform transform, final boolean first)
+    {
+        if (transform instanceof ConcatenedTransform)
+        {
+            final ConcatenedTransform concat = (ConcatenedTransform) transform;
+            addWKT(buffer, concat.transform1, first);
+            addWKT(buffer, concat.transform2, false);
+        }
+        else
+        {
+            if (!first)
+                buffer.append(", ");
+            buffer.append(transform);
+        }
+    }
 }

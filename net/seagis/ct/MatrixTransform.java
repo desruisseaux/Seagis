@@ -150,6 +150,43 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
     }
 
     /**
+     * Returns the WKT for this math transform.
+     */
+    public String toString()
+    {return toString(matrix);}
+
+    /**
+     * Returns the WKT for an affine transform
+     * using the specified matrix.
+     */
+    static String toString(final Matrix matrix)
+    {
+        final int numRow = matrix.getNumRows();
+        final int numCol = matrix.getNumColumns();
+        final StringBuffer buffer = new StringBuffer("PARAM_MT[\"Affine\"");
+        final StringBuffer eltBuf = new StringBuffer("elt_");
+        addParameter(buffer, "Num_row", numRow);
+        addParameter(buffer, "Num_col", numCol);
+        for (int j=0; j<numRow; j++)
+        {
+            for (int i=0; i<numCol; i++)
+            {
+                final double value = matrix.get(j,i);
+                if (value != (i==j ? 1 : 0))
+                {
+                    eltBuf.setLength(4);
+                    eltBuf.append(j);
+                    eltBuf.append('_');
+                    eltBuf.append(i);
+                    addParameter(buffer, eltBuf.toString(), value);
+                }
+            }
+        }
+        buffer.append(']');
+        return buffer.toString();
+    }
+
+    /**
      * The provider for {@link MatrixTransform}.
      *
      * @version 1.0
@@ -170,13 +207,12 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
             super("Affine", ResourceKeys.AFFINE_TRANSFORM, null);
             put("Num_row", numRow, POSITIVE_RANGE);
             put("Num_col", numCol, POSITIVE_RANGE);
-            final StringBuffer buffer=new StringBuffer();
+            final StringBuffer buffer=new StringBuffer("elt_");
             for (int j=0; j<=numRow; j++)
             {
                 for (int i=0; i<=numCol; i++)
                 {
-                    buffer.setLength(0);
-                    buffer.append("elt_");
+                    buffer.setLength(4);
                     buffer.append(j);
                     buffer.append('_');
                     buffer.append(i);

@@ -116,7 +116,7 @@ final class MercatorProjection extends CylindricalProjection
         {
             throw new TransformException(Resources.format(ResourceKeys.ERROR_POLE_PROJECTION_$1, new Latitude(Math.toDegrees(y))));
         }
-        x = (x-centralLongitude)*ak0;
+        x = (x-centralMeridian)*ak0;
         if (isSpherical)
         {
             y =  ak0*Math.log(Math.tan((Math.PI/4) + 0.5*y));
@@ -139,7 +139,7 @@ final class MercatorProjection extends CylindricalProjection
      */
     protected Point2D inverseTransform(double x, double y, final Point2D ptDst) throws TransformException
     {
-        x = x/ak0 + centralLongitude;
+        x = x/ak0 + centralMeridian;
         y = Math.exp(-y/ak0);
         if (isSpherical)
         {

@@ -246,4 +246,25 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         }
         return false;
     }
+
+    /**
+     * Returns the WKT for this math transform.
+     */
+    public String toString()
+    {
+        final StringBuffer buffer = new StringBuffer("PASSTHROUGH_MT[");
+        buffer.append(firstAffectedOrdinate);
+        buffer.append(',');
+        if (numTrailingOrdinates!=0)
+        {
+            // TODO: This parameter is not part of OpenGIS specification!
+            //       We should returns a more complex WKT here, using an
+            //       affine transform to change the coordinates order.
+            buffer.append(numTrailingOrdinates);
+            buffer.append(',');
+        }
+        buffer.append(transform);
+        buffer.append(']');
+        return buffer.toString();
+    }
 }
