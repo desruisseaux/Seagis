@@ -184,7 +184,7 @@ public class MapPanel extends ZoomPane
     {
         public void zoomChanged     (final ZoomChangeEvent     event) {MapPanel.this.zoomChanged (event);}
         public void mouseClicked    (final MouseEvent          event) {MapPanel.this.mouseClicked(event);}
-        public void componentResized(final ComponentEvent      event) {}
+        public void componentResized(final ComponentEvent      event) {MapPanel.this.zoomChanged (null );}
         public void componentMoved  (final ComponentEvent      event) {}
         public void componentShown  (final ComponentEvent      event) {}
         public void componentHidden (final ComponentEvent      event) {clearCache();}
@@ -948,8 +948,24 @@ public class MapPanel extends ZoomPane
      */
     private void zoomChanged(final ZoomChangeEvent event)
     {
-        final AffineTransform change = (event!=null) ? event.getChange() : null;
-        if (change!=null && change.isIdentity()) return;
+        AffineTransform change = (event!=null) ? event.getChange() : null;
+        if (change!=null) try
+        {
+            if (change.isIdentity()) return;
+            // NOTE: 'change' is a transformation in LOGICAL coordinates.
+            //       But 'Layer.zoomChanged(...)' expect a transformation
+            //       in PIXEL coordinates. Compute the matrix now...
+            final AffineTransform matrix = zoom.createInverse();
+            matrix.preConcatenate(change);
+            matrix.preConcatenate(zoom);
+            change = matrix;
+        }
+        catch (NoninvertibleTransformException exception)
+        {
+            // Should not happen.
+            Utilities.unexpectedException("net.seas.map", "MapPanel", "zoomChanged", exception);
+            change = null;
+        }
         for (int i=layerCount; --i>=0;)
         {
             /*

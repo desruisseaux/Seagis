@@ -71,8 +71,8 @@ final class CategoryTable extends Table
     private static final PaletteFactory FACTORY = new PaletteFactory(
             /* parent factory */ null,
             /* class loader   */ CategoryTable.class.getClassLoader(),
-            /* root directory */ new File("applicationData/colors"),
-            /* extension      */ null, // TODO: Should be ".pal"
+            /* root directory */ null, // TODO new File("applicationData/colors"),
+            /* extension      */ ".pal",
             /* character set  */ Charset.forName("ISO-8859-1"),
             /* locale         */ Locale.US);
 

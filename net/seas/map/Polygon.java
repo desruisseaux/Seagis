@@ -1172,7 +1172,7 @@ public class Polygon extends Contour
          * La projection cartographique sera appliquée par {@link #toArray}.
          */
         array=toArray(array, drawingDecimation);
-        assert((array.length & 1) == 0);
+        assert (array.length & 1) == 0;
         final int pointCount = array.length/2;
         transform.transform(array, 0, array, 0, pointCount);
         if (pointCount*drawingDecimation>=500) // Log only big arrays
@@ -1199,7 +1199,7 @@ public class Polygon extends Contour
         if (cache!=null && cache.get()==array)
         {
             cache.lockCount--;
-            assert(cache.lockCount>=0);
+            assert cache.lockCount >= 0;
         }
     }
 
@@ -1314,7 +1314,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getFirstPoints", exception);
         }
-        assert(points.length==0 || Utilities.equals(getFirstPoint(null), points[0]));
+        assert points.length==0 || Utilities.equals(getFirstPoint(null), points[0]);
     }
 
     /**
@@ -1341,7 +1341,7 @@ public class Polygon extends Contour
             // has already successfully projected every points.
             unexpectedException("getLastPoints", exception);
         }
-        assert(points.length==0 || Utilities.equals(getLastPoint(null), points[points.length-1]));
+        assert points.length==0 || Utilities.equals(getLastPoint(null), points[points.length-1]);
     }
 
     /**
@@ -1443,7 +1443,7 @@ public class Polygon extends Contour
                 final int thisCount =          getPointCount();
                 final int thatCount = toAppend.getPointCount();
                 resolution = (resolution*thisCount + toAppend.resolution*thatCount) / (thisCount + thatCount);
-                assert(resolution > 0);
+                assert resolution > 0;
             }
         }
     }
@@ -1507,7 +1507,7 @@ public class Polygon extends Contour
         if (Segment.equals(sub, data)) return this;
         final Polygon subPoly=new Polygon(coordinateTransform);
         subPoly.data=sub;
-        assert(subPoly.getPointCount() == (upper-lower));
+        assert subPoly.getPointCount() == (upper-lower);
         return subPoly;
     }
 
@@ -1588,12 +1588,17 @@ public class Polygon extends Contour
         final Statistics stats = Segment.getResolution(data, coordinateTransform);
         if (stats!=null)
         {
-            final float resolution = (float)stats.mean();
-            setResolution(resolution + factor*stats.standardDeviation(false));
-            data = Segment.freeze(data, false, true); // Apply the compression algorithm
-            return 1-(resolution/getResolution());
+            final double resolution = stats.mean();
+            final double newResolution = resolution + factor*stats.standardDeviation(false);
+            if (newResolution > 0)
+            {
+                setResolution(newResolution);
+                data = Segment.freeze(data, false, true); // Apply the compression algorithm
+                return (float) (1-(resolution/getResolution()));
+            }
+            data = Segment.freeze(data, false, false); // No compression
         }
-        else return 0;
+        return 0;
     }
 
     /**

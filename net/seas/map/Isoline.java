@@ -66,7 +66,13 @@ public class Isoline extends Contour
      * Numéro de version pour compatibilité avec des
      * bathymétries enregistrées sous d'anciennes versions.
      */
-    private static final long serialVersionUID = 1056743477082776958L;
+    private static final long serialVersionUID = 7006680587688349800L;
+
+    /**
+     * The value for this isoline. In the case
+     * of isobath, the value is the altitude.
+     */
+    public final float value;
 
     /**
      * Système de coordonnées.
@@ -102,11 +108,16 @@ public class Isoline extends Contour
     /**
      * Construct an initialy empty isoline.
      *
+     * @param value The value for this isoline. In the case
+     *        of isobath, the value is the altitude.
      * @param coordinateSystem The coordinate system to use for all
      *        points in this isoline, or <code>null</code> if unknow.
      */
-    public Isoline(final CoordinateSystem coordinateSystem)
-    {this.coordinateSystem = coordinateSystem;}
+    public Isoline(final float value, final CoordinateSystem coordinateSystem)
+    {
+        this.value = value;
+        this.coordinateSystem = coordinateSystem;
+    }
 
     /**
      * Construct an isoline with the same data than
@@ -115,6 +126,7 @@ public class Isoline extends Contour
      */
     public Isoline(final Isoline isoline)
     {
+        this.value            = isoline.value;
         this.coordinateSystem = isoline.coordinateSystem;
         this.polygonCount     = isoline.polygonCount;
         this.sorted           = isoline.sorted;
@@ -724,7 +736,7 @@ public class Isoline extends Contour
      * @param  factor Facteur contrôlant la baisse de résolution.  Les valeurs élevées
      *         déciment davantage de points, ce qui réduit d'autant la consommation de
      *         mémoire. Ce facteur est généralement positif, mais il peut aussi être 0
-     *         où même légèrement négatif.
+     *         ou même légèrement négatif.
      * @return Un pourcentage estimant la baisse de résolution. Par exemple la valeur 0.2
      *         indique que la distance moyenne entre deux points a augmenté d'environ 20%.
      * @throws TransformException Si une erreur est survenue lors d'une projection cartographique.
@@ -798,7 +810,7 @@ public class Isoline extends Contour
              * {@link RenderingContext#clip}. Clipped isolines should not be
              * public anyways (except for very short time).
              */
-             final Isoline isoline = new Isoline(coordinateSystem);
+             final Isoline isoline = new Isoline(value, coordinateSystem);
              isoline.polygons      = XArray.resize(clipPolygons, clipPolygonCount);
              isoline.polygonCount  = clipPolygonCount;
              isoline.bounds        = clipRegion;
@@ -832,7 +844,8 @@ public class Isoline extends Contour
         if (super.equals(object))
         {
             final Isoline that = (Isoline) object;
-            if (this.polygonCount == that.polygonCount)
+            if (Float.floatToIntBits(this.value) == Float.floatToIntBits(that.value) &&
+                this.polygonCount == that.polygonCount)
             {
                 // Compare ignoring order. Note: we don't call any synchronized
                 // methods on 'that' in order to avoid dead lock.

@@ -578,6 +578,14 @@ public abstract class Layer implements Serializable
      * Méthode appelée automatiquement chaque fois que le zoom a changé.
      * Cette méthode met à jour les coordonnées des formes géométriques
      * déclarées dans les objets {@link Layer}.
+     * <br><br>
+     * Note: La transformation affine donné en argument à cette méthode doit
+     * représenter une transformation <strong>dans l'espace des pixels</strong>.
+     * Or, la transformation affine spécifiée par {@link ZoomPane#fireZoomChange}
+     * représente une transformation dans l'espace des coordonnées logiques. Soit
+     * <var>C</var> la transformation spécifiée par {@link ZoomPane}, et <var>Z</var>
+     * le zoom {@link ZoomPane#zoom}. Alors la transformation donnée à cette méthode
+     * doit être <code>ZCZ<sup>-1</sup></code>.
      *
      * @param change Transformation à utiliser pour transformer les coordonnées,
      *        ou <code>null</code> si elle n'est pas connue. Dans ce dernier cas,
