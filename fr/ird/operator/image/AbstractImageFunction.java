@@ -23,7 +23,7 @@
  *
  *          mailto:Michel.Petit@mpl.ird.fr
  */
-package fr.ird.image;
+package fr.ird.operator.image;
 
 // Image, colors and geometry
 import java.awt.Color;
@@ -52,8 +52,9 @@ import org.geotools.resources.CTSUtilities;
 
 // Rendering
 import javax.swing.JFrame;
-import net.seas.map.MapPanel;
-import net.seas.map.layer.GridCoverageLayer;
+import fr.ird.util.Utilities;
+import fr.ird.map.MapPanel;
+import fr.ird.map.layer.GridCoverageLayer;
 
 
 /**
