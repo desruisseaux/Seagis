@@ -189,6 +189,19 @@ public class Coverage3D extends Coverage {
     private transient long timeLower=Long.MAX_VALUE, timeUpper=Long.MIN_VALUE;
 
     /**
+     * La date et heure (en nombre de millisecondes depuis le 1er janvier 1970 UTC)
+     * à laquelle a été interpolée l'image {@link #interpolated}.
+     */
+    private transient long timeInterpolated = Long.MIN_VALUE;
+
+    /**
+     * L'image interpolée lors du dernier appel de {@link #getGridCoverage2D}. Mémorisée ici
+     * afin d'éviter de reconstruire cette image plusieurs fois lors d'appels successifs de
+     * {@link #getGridCoverage2D} avec la même date.
+     */
+    private transient GridCoverage interpolated;
+
+    /**
      * L'objet à utiliser pour effectuer des opérations sur les images
      * (notamment modifier les interpolations). Ne sera construit que
      * la première fois où il sera nécessaire.
@@ -202,6 +215,7 @@ public class Coverage3D extends Coverage {
         in.defaultReadObject();
         timeLower = Long.MAX_VALUE;
         timeUpper = Long.MIN_VALUE;
+        timeInterpolated = Long.MIN_VALUE;
     }
 
     /**
@@ -637,9 +651,6 @@ public class Coverage3D extends Coverage {
     /**
      * Returns a 2 dimensional grid coverage for the given date.
      *
-     * NOTE: current implementation doesn't returns an interpolated image.
-     *       We will fix that in a future version.
-     *
      * @param  time The date where to evaluate.
      * @return The grid coverage at the specified time, or <code>null</code>
      *         if the requested date fall in a hole in the data.
@@ -660,6 +671,9 @@ public class Coverage3D extends Coverage {
 
         final long timeMillis = time.getTime();
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
+        if (timeMillis==timeInterpolated && interpolated!=null) {
+            return interpolated;
+        }
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
         if (interpolationAllowed) {
             final GridCoverageProcessor processor = getGridCoverageProcessor();
@@ -669,8 +683,9 @@ public class Coverage3D extends Coverage {
             param.setParameter("source1",  upper);
             param.setParameter("weights0", new double[]{1-ratio});
             param.setParameter("weights1", new double[]{  ratio});
-            return processor.doOperation(operation, param);
-            // TODO: We should cache the result, since it may be reused often.
+            interpolated = processor.doOperation(operation, param);
+            timeInterpolated = timeMillis; // Set only if previous line has been successfull.
+            return interpolated;
         } else {
             return (ratio <= 0.5) ? lower : upper;
         }

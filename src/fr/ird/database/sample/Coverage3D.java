@@ -27,6 +27,7 @@ package fr.ird.database.sample;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
+import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.Arrays;
 import java.util.Date;
@@ -61,6 +62,12 @@ public class Coverage3D extends fr.ird.database.coverage.Coverage3D {
      * La valeur par défaut est de 24 heures.
      */
     private static final long TIME_UNCERTAINTY = 24*60*60*1000L;
+
+    /**
+     * Petite valeur à utiliser lors des vérifications. Cette valeur devrait être près
+     * de celle du type <code>float</code> (et non celle du type <code>double</code>).
+     */
+    private static final double EPS = 1E-5;
 
     /**
      * La longueur du demi-axe le long de l'axe des <var>x</var>.
@@ -131,6 +138,12 @@ public class Coverage3D extends fr.ird.database.coverage.Coverage3D {
             coord = sample.getCoordinate();
         }
         adjust(time);
+        if (isDefaultImplementation) {
+            // Faster and more accurate than 'getGridCoverage2D()'
+            dest = evaluate(coord, time, dest);
+            assert testGridCoverage2D(coord, time, dest);
+            return dest;
+        }
         final Coverage coverage = getCoverage(sample, time);
         if (coverage == null) {
             final int numBands = getNumSampleDimensions();
@@ -142,9 +155,6 @@ public class Coverage3D extends fr.ird.database.coverage.Coverage3D {
         }
         if (coverage instanceof Evaluator) {
             return ((Evaluator) coverage).evaluate(getShape(sample, coord), dest);
-        }
-        if (isDefaultImplementation) {
-            return evaluate(coord, time, dest);
         }
         if (coverage instanceof GridCoverage) {
             return ((GridCoverage) coverage).evaluate(coord, dest);
@@ -169,6 +179,36 @@ public class Coverage3D extends fr.ird.database.coverage.Coverage3D {
      */
     protected Coverage getCoverage(final SampleEntry sample, final Date time) {
         return getGridCoverage2D(time);
+    }
+
+    /**
+     * Compare les valeurs calculées par {@link #getGridCoverage2D} avec le tableau de
+     * valeurs spécifié. Cette méthode sert à vérifier la cohérence des interpolations.
+     */
+    private boolean testGridCoverage2D(final Point2D coord, final Date time, final double[] values) {
+        final GridCoverage coverage;
+        try {
+            coverage = getGridCoverage2D(time);
+        } catch (IllegalArgumentException exception) {
+            // This is just used in an assertion;
+            // do not prevent the code to work like usual.
+            SampleDataBase.LOGGER.warning(exception.getLocalizedMessage());
+            return true;
+        }
+        if (coverage != null) {
+            final double[] tests = coverage.evaluate(coord, (double[])null);
+            if (tests.length != values.length) {
+                return false;
+            }
+            for (int i=0; i<values.length; i++) {
+                final double v = values[i];
+                final double t = tests [i];
+                if (Math.abs(t-v) > EPS*Math.max(Math.abs(t), Math.abs(v))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

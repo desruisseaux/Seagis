@@ -171,11 +171,11 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
     private static final LinkedList<GridCoverageEntry> LAST_INVOKED = new LinkedList<GridCoverageEntry>();
 
     /**
-     * Nombre maximal d'entrés à conserver dans la {@link #LAST_INVOKED}.
+     * Nombre maximal d'entrés à conserver dans la liste {@link #LAST_INVOKED}.
      *
      * @task TODO: Une meilleure mesure serait la mémoire occupée...
      */
-    private static final int ENTRY_CAPACITY = 12;
+    private static final int ENTRY_CAPACITY = 8;
 
     /**
      * Petite valeur utilisée pour contourner les erreurs d'arrondissement.
