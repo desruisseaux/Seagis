@@ -368,7 +368,12 @@ public class CoordinateTransformationFactory
         // The following is equivalents to swap axis order first (the previous 'matrix' operation,
         // which ensures that axis are in (x,y) order), and then apply Bursa Wolf transformation.
         // The last operation rotate the system to bring the prime meridian on Greenwich.
-        if (wolf!=null)  matrix.preConcatenate(wolf.getAffineTransform2D());
+        if (wolf!=null)
+        {
+            // WRONG!!! Bursa Wolf parameters my be applied on GeocentricCoordinateSystem!
+            // matrix.preConcatenate(wolf.getAffineTransform2D());
+            throw new CannotCreateTransformException("Not implemented"); // TODO
+        }
         if (meridian!=0) matrix.preConcatenate(AffineTransform.getTranslateInstance(meridian, 0));
         return matrix;
     }
