@@ -38,7 +38,7 @@ public final class Latitude extends Angle
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -1589650396631178685L;
 
     /**
      * Minimum legal value for latitude (-90°).
