@@ -145,7 +145,7 @@ public class BasicTest extends TestCase {
         V.set(2,0, +1);
         final Matrix  M0 = getSymbolicMatrix("");
         final Matrix  M1 = getSymbolicMatrix("'");
-        final Matrix  M2 = M1; //getSymbolicMatrix("\"");
+        final Matrix  M2 = getSymbolicMatrix("\"");
         final Variable S = M0.get(0,0).monomials[0].factors[0].variable;
         final Variable X = M0.get(2,1).monomials[0].factors[0].variable;
         final Variable Y = M0.get(0,2).monomials[0].factors[0].variable;
@@ -174,8 +174,10 @@ public class BasicTest extends TestCase {
         Equation rx, ry, rz;
         rx = ex.substitute(ey).solve(X).simplify();  // x = f(z)
         ry = ey.substitute(ex).solve(Y).simplify();  // y = f(z)
-//      rz = ez.substitute(rx).substitute(ry).solve(Z).simplify();
-        rz = ez.substitute(ex).solve(Z).simplify();
+        rz = ez.substitute(ey).solve(Z).simplify();  // z = f(x)
+
+        final EquationSystem system = new EquationSystem(new Equation[] {rx,ry,rz});
+        if (false) system.solve(new Variable[] {X,Y,Z});
 
         if (true) {
             out.println();
