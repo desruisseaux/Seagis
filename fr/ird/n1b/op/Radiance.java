@@ -142,6 +142,6 @@ public abstract class Radiance extends PointOpImage
         if (satellite.isKLM())
             return RadianceKLM.getInputParameterList();
         else 
-            return RadianceKLM.getInputParameterList();
+            return RadianceAJ.getInputParameterList();
     }            
 }

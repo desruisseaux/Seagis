@@ -35,14 +35,6 @@ import org.geotools.pt.Envelope;
  * Corrige la température des pixels acquis de jour en la ramenant à la température des 
  * pixels acquis de nuit. <BR><BR>
  *
- * Ce traitement se base sur un objet de type <CODE>StatisticGrid</CODE> contenant des 
- * statistiques sur les pixels acquis de jour, de nuit à une latitude donnée. A partir de 
- * ces statistiques, pour chaque latitude est calculé un <i>delta en degré</i> contenant 
- * la différence entre la température moyenne des pixels acquis de nuit et la température 
- * moyenne des pixels acquis de jour. Ce delta est ensuite appliqué au pixel de jour pour
- * obtenir une moyenne des température équivalente entre les pixels acquis de nuit, de jour
- * à une latitude donnée.
- *
  * @author Remi Eve
  * @version $Id$
  */
@@ -77,7 +69,7 @@ public class SSTDayPixelCorrection extends PointOpImage
                                   final Point2D         origine,
                                   final double          resolution,
                                   final StatisticGrid   stat, 
-                                  final ImageLayout     layout, 
+                                  final ImageLayout     layout,                                   
                                   final Map             configuration)      
     {
         super(source, mask, layout, configuration, false);                
@@ -85,7 +77,7 @@ public class SSTDayPixelCorrection extends PointOpImage
         this.stat = stat;
         this.origine = origine;
         this.resolution = resolution;        
-
+        
         /* Extraction des catégories et des intervalles de valeur indexés pour chacune 
            des catégories. */
         final Category catTemperature = Utilities.getCategory(Utilities.SAMPLE_SST_INDEXED, Utilities.TEMPERATURE);        
@@ -99,13 +91,14 @@ public class SSTDayPixelCorrection extends PointOpImage
      *
      * @param source            SST Source.
      * @param mask              Masque associé à l'image source.
+     * @param stat              Statistiques.
      * @param configuration     Configuration du traitement réalisé par JAI.
      * @return une image SST pour laquelle les pixels acquis de jour ont été corrigés.
      */
     public static GridCoverage get(final GridCoverage          source,                                   
                                    final GridCoverage          mask,           
                                    final StatisticGrid         stat,
-                                   final Map            configuration)
+                                   final Map                   configuration)
     {
         if (source == null)
             throw new IllegalArgumentException("Source is null.");        
@@ -161,38 +154,32 @@ public class SSTDayPixelCorrection extends PointOpImage
             iTarget.startLines();
             while (!iTarget.finishedLines())
             {
+                int col = (int)destRect.getX();
                 iSource.startPixels();            
                 iMask.startPixels();            
                 iTarget.startPixels();  
-                
                 /* Calcul du delta entre la temperature moyenne des pixels acquis de nuit 
-                   et la température moyenne des pixels acquis de jour. */
-                final int index    = stat.getIndex(origine.getY() - (row-sources[0].getMinY())*resolution);
-                final int numDay   = stat.getCountDay(index),
-                          numNight = stat.getCountNight(index);
-                double delta = 0;
-                if (numDay > 0 && numNight > 0)
-                    delta = stat.getAvgTempOfNight(index) - stat.getAvgTempOfDay(index);                
+                   et la température moyenne des pixels acquis de jour pour la latitude 
+                   donnée. */
+                final double latitude = origine.getY() - (row-sources[0].getMinY())*resolution;
+                final int    index = stat.getIndex(latitude);
+                final double delta = stat.getDelta(index);
                 while (!iTarget.finishedPixels())
-                {                    
-                    final Double sst = new Double(iSource.getSampleDouble());
-                    
-                    /* Si le pixel est un pixel acquis de jour, alors on lui ajoute le 
-                       "delta".*/
-                    if (iMask.getSampleDouble() == MatrixDayNight.DAY)                        
+                {                             
+                    final Double sst = new Double(iSource.getSampleDouble());                    
+                    double coef      = 0.0;
+                    if (rTemperature.contains(sst))
                     {
-                        if (rTemperature.contains(sst))
-                        {
-                            iTarget.setSample(sst.doubleValue() + delta);
-                        }
-                        else
-                            iTarget.setSample(sst.doubleValue());
+                        /* Le pixel est une temperature. On calcul le pourcentage de delta
+                           à appliquer : 0% pour la nuit, 100% pour le jour et un pourcentage
+                           intermediaire pour des pixels appartenant à la transition. */
+                        coef = 1.0 - iMask.getSampleDouble()/MatrixDayNight.NIGHT;                    
                     }
-                    else
-                        iTarget.setSample(sst.doubleValue());                                            
+                    iTarget.setSample(sst.doubleValue()+delta*coef);                                                            
                     iSource.nextPixel();                
                     iMask.nextPixel();                
-                    iTarget.nextPixel();                    
+                    iTarget.nextPixel();    
+                    col++;
                 }        
                 iSource.nextLine();
                 iMask.nextLine();

@@ -290,6 +290,7 @@ public final class SSTWeightedAverage extends SourcelessOpImage
     {            
         /* Creation d'un tableau contenant la somme des coefficients de la zone en cours. */
         final double[][] coef = new double[(int)destRect.getWidth()][(int)destRect.getHeight()];        
+        final int[][]  sample = new int[(int)destRect.getWidth()][(int)destRect.getHeight()];        
         
         // Par defaut, l'image générée a pour valeur NoData. 
         final double pNoData = ((Integer)rNoData.getMinValue()).intValue();
@@ -329,25 +330,24 @@ public final class SSTWeightedAverage extends SourcelessOpImage
             
             /* Synthèse de la région commune. */                    
             final Rectangle destRect_ = destRect.intersection(srcRect);            
-            iTarget             = RectIterFactory.createWritable(dest ,destRect_);
             final RectIter iSrc = RectIterFactory.create(imageSrc,destRect_);            
-            iTarget.startBands();        
+            final RectIter iTgt = RectIterFactory.create(imageSrc,destRect_);            
             iSrc.startBands();        
-            while (!iTarget.finishedBands())
+            while (!iSrc.finishedBands())
             {
-                iTarget.startLines();
                 iSrc.startLines();
+                iTgt.startLines();
                 int row = (int)destRect_.getY() - (int)destRect.getY();
-                while (!iTarget.finishedLines())
+                while (!iSrc.finishedLines())
                 {
-                    iTarget.startPixels();                
                     iSrc.startPixels();                 
+                    iTgt.startPixels();                 
                     int col = (int)destRect_.getX() - (int)destRect.getX();
-                    while (!iTarget.finishedPixels())
+                    while (!iSrc.finishedPixels())
                     {   
                         if (!iSrc.finishedPixels() && !iSrc.finishedLines())
                         {
-                            final Integer tgt = new Integer(iTarget.getSample());                                                       
+                            final Integer tgt = new Integer(iTgt.getSample());                                                                                   
                             final Integer src = new Integer(iSrc.getSample());    
 
                             /* Le pixel cible est un pixel température, on passe au pixel
@@ -357,35 +357,58 @@ public final class SSTWeightedAverage extends SourcelessOpImage
                                 /* Le pixel de l'image est un pixel LAND, on l'affecte. */ 
                                 if (rLand.contains(src))
                                 {
-                                    iTarget.setSample(src.intValue());                                    
+                                    sample[col][row] = src.intValue();                 
+                                    coef[col][row] = 1;
                                 } else if (rTemperature.contains(src))
                                 {
                                     /* Si l'image contient un pixel de température. */
-                                    double sst = (coef[col][row] == 0) ? 0 : (coef[col][row] * tgt.intValue());                                        
-                                    sst += src.intValue()*coefficients[i];
-                                    coef[col][row] += coefficients[i];
-                                    sst/=coef[col][row];
-                                    iTarget.setSample(sst);
+                                    coef[col][row]   += coefficients[i];
+                                    sample[col][row] += src.intValue()*coefficients[i];
                                 } 
                                 else if (rCloud.contains(src) && rNoData.contains(tgt))
                                 {
                                     /* Le pixel de l'image est un pixel CLOUD et le pixel
                                        cible est un pixel NO_DATA.*/
-                                    iTarget.setSample(src.intValue());
+                                    sample[col][row] = src.intValue();
+                                    coef[col][row] = 1;
                                 }
                             }                                                                                    
                         }
                         iSrc.nextPixel();        
+                        iTgt.nextPixel();                                
+                        col++;
+                    }        
+                    iSrc.nextLine();        
+                    iTgt.nextLine();                            
+                    row++;
+                }
+                iTgt.nextBand();                        
+                iSrc.nextBand();        
+            }
+            
+            /* Calcul de la moyenne pondéré et écriture dans la tuile. */
+            iTarget             = RectIterFactory.createWritable(dest ,destRect_);
+            iTarget.startBands();        
+            while (!iTarget.finishedBands())
+            {
+                iTarget.startLines();
+                int row = (int)destRect_.getY() - (int)destRect.getY();
+                while (!iTarget.finishedLines())
+                {
+                    iTarget.startPixels();                
+                    int col = (int)destRect_.getX() - (int)destRect.getX();
+                    while (!iTarget.finishedPixels())
+                    {   
+                        if (!iTarget.finishedPixels() && !iTarget.finishedLines())
+                            iTarget.setSample((double)sample[col][row]/coef[col][row]);
                         iTarget.nextPixel();
                         col++;
                     }        
                     iTarget.nextLine();
-                    iSrc.nextLine();        
                     row++;
                 }
                 iTarget.nextBand();
-                iSrc.nextBand();        
-            }
+            }            
         }
     }    
 }

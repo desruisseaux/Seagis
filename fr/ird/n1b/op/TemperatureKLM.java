@@ -72,7 +72,8 @@ final class TemperatureKLM extends Temperature
     /**
      * Constante definissant les parametres accessibles.
      */
-    public static final String TEMPERATURE_CONSTANT      = "Temperature constant";
+    public static final String CENTRAL_WAVE_LENGHT      = "WAVE",
+                               RADIANCE_TO_TEMPERATURE  = "RADIANCE TO TEMPERATURE COEFFICIENT";
     
     /** 
      * Constantes de radiation utilisees pour le calcul de la temperature de brillance. 
@@ -109,10 +110,10 @@ final class TemperatureKLM extends Temperature
                              final Map configuration) 
     {
         super(image, layout, configuration);                
-        final double[] array = (double[])parameters.getObjectParameter(TEMPERATURE_CONSTANT);
+        final double[] array = (double[])parameters.getObjectParameter(RADIANCE_TO_TEMPERATURE);
         a = array[0];
         b = array[1];
-        vc = array[2];
+        vc = parameters.getDoubleParameter(CENTRAL_WAVE_LENGHT);
     }    
     
     /**
@@ -187,9 +188,12 @@ final class TemperatureKLM extends Temperature
     public static ParameterList getInputParameterList() 
     {        
         final String descriptor       = "TEMPERATURE";
-        final String[] paramNames     = {TEMPERATURE_CONSTANT};
-        final Class[]  paramClasses   = {double[].class};
-        final Object[]  paramDefaults = {null};
+        final String[] paramNames     = {RADIANCE_TO_TEMPERATURE,
+                                         CENTRAL_WAVE_LENGHT};
+        final Class[]  paramClasses   = {double[].class,
+                                         Double.class};
+        final Object[]  paramDefaults = {null,
+                                         null};
         final ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
                                                                                                paramNames,
                                                                                                paramClasses,
