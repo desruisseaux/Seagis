@@ -35,6 +35,7 @@ import java.awt.GridBagConstraints;
 import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.JOptionPane;
@@ -76,6 +77,11 @@ public class ExtractorControlPanel extends JPanel {
      * Le nom sous lequel enregistrer l'URL de la base de données dans les préférences.
      */
     private static final String KEY_DATABASE = "ExtractTo";
+
+    /**
+     * Le de la requête à utiliser pour obtenir les données de pêches.
+     */
+    private static final String KEY_CATCHTABLE = "CatchTable";
     
     /**
      * Liste des paramètres. Il s'agit de codes apparaissant dans la table d'environnement
@@ -93,6 +99,11 @@ public class ExtractorControlPanel extends JPanel {
      * d'environnement, tel que "valeur", "sobel3", "isotrope3", etc.
      */
     private final JList operations;
+
+    /**
+     * Table des captures à joindre.
+     */
+    private final JTextField catchTable = new JTextField(PREFERENCES.get(KEY_CATCHTABLE, ""));
 
     /**
      * Le nom de la table dans laquelle écrire le résultat.
@@ -128,7 +139,7 @@ public class ExtractorControlPanel extends JPanel {
          * Construit l'interface utilisateur.
          */
         setBorder(BorderFactory.createEmptyBorder(9,9,9,9));
-        JPanel panel = new JPanel(new GridLayout(1,3));
+        JComponent panel = new JPanel(new GridLayout(1,3));
         panel.add(new JLabel("Paramètres", JLabel.CENTER));
         panel.add(new JLabel("Temps",      JLabel.CENTER));
         panel.add(new JLabel("Opérations", JLabel.CENTER));
@@ -140,6 +151,12 @@ public class ExtractorControlPanel extends JPanel {
         panel.add(new JScrollPane(operations));
         add(panel, BorderLayout.CENTER);
 
+        final JComponent fields = new JPanel(new BorderLayout(6,12));
+        final JLabel catchLabel = new JLabel("Joindre les captures:");
+        catchLabel.setBorder(BorderFactory.createEmptyBorder(0,18,0,0));
+        fields.add(catchLabel, BorderLayout.WEST);
+        fields.add(catchTable, BorderLayout.CENTER);
+
         panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Destination"));
         final GridBagConstraints c = new GridBagConstraints();
@@ -149,7 +166,8 @@ public class ExtractorControlPanel extends JPanel {
         c.weightx=1; c.gridx=1; c.insets.left=6;
         c.gridy=0; panel.add(table,    c);
         c.gridy=1; panel.add(database, c);
-        add(panel, BorderLayout.SOUTH);
+        fields.add(panel, BorderLayout.SOUTH);
+        add(fields, BorderLayout.SOUTH);
 
         setPreferredSize(new Dimension(400,300));
     }
@@ -159,7 +177,7 @@ public class ExtractorControlPanel extends JPanel {
      */
     private static final Number[] getAvailableTimeOffsets() {
         int offset = 5;
-        final Number[] values = new Number[35];
+        final Number[] values = new Number[36];
         for (int i=0; i<values.length; i++) {
             values[i] = new Integer(offset--);
         }
@@ -174,6 +192,7 @@ public class ExtractorControlPanel extends JPanel {
      * @throws SQLException si la base de données n'a pas pu être configurée.
      */
     private int configTable() throws SQLException {
+        final String   catchTable = this.catchTable.getText().trim();
         final Object[] parameters = this.parameters.getSelectedValues();
         final Object[] operations = this.operations.getSelectedValues();
         final Object[] timeOffset = this.timeOffset.getSelectedValues();
@@ -185,6 +204,8 @@ public class ExtractorControlPanel extends JPanel {
                 }
             }
         }
+        PREFERENCES.put(KEY_CATCHTABLE, catchTable);
+        environment.setCatchTable(catchTable.length()!=0 ? catchTable : null);
         return parameters.length * operations.length * timeOffset.length;
     }
 

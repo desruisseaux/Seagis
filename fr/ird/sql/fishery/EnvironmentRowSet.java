@@ -103,7 +103,7 @@ final class EnvironmentRowSet implements RowSet, ResultSetMetaData {
     private ResultSet last;
 
     /**
-     * Construit un objet <code>CouplingResultSet</code>.
+     * Construit un objet <code>EnvironmentRowSet</code>.
      *
      * @param  results Les objets <code>results</code>.
      * @param  labels Les titres des colonnes.

@@ -41,12 +41,17 @@ import fr.ird.sql.DataBase;
 
 /**
  * Une étape dans la construction d'une table des paramètres environnementaux.
- * Cette étape comprend les données environnemental d'un paramètre à une coordonnées
+ * Cette étape comprend les données environnementales d'un paramètre à une coordonnées
  * spatio-temporelle données. La table {@link EnvironmentRowSet} représentera les
  * données d'un ensemble de paramètres à différentes coordonnées spatio-temporelles.
  *
  * @version $Id$
  * @author Martin Desruisseaux
+ *
+ * @see CatchTableStep
+ * @see EnvironmentTableStep
+ * @see EnvironmentRowSet
+ * @see EnvironmentTable
  */
 final class EnvironmentTableStep extends Table {
     /**
@@ -176,7 +181,6 @@ final class EnvironmentTableStep extends Table {
      * Retourne les valeurs environnementales en utilisant la connexion spécifiée.
      *
      * @param  connection Connection à utiliser (nécessaire parce que {@link #statement} peut être nul).
-     * @param  columns Nom des colonnes (ou "opérations") à extraire.
      * @return Ensemble des valeurs environnementales pour ce paramètre.
      * @throws SQLException si la connection à la base de données a échouée.
      */

@@ -618,6 +618,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                         final EnvironmentControlPanel panel = new EnvironmentControlPanel(
                               new EnvironmentTableFiller(database.getImageDataBase(),
                                                          database.getFisheryDataBase()));
+                        setWaitCursor(false);
                         panel.showDialog(Desktop.this);
                     }
                 };
@@ -633,6 +634,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                         final DataBase database = getDataBase();
                         final EnvironmentTable table = database.getFisheryDataBase().getEnvironmentTable();
                         final ExtractorControlPanel panel = new ExtractorControlPanel(table);
+                        setWaitCursor(false);
                         panel.showAndStart(Desktop.this);
                         table.close();
                     }

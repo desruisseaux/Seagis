@@ -394,6 +394,7 @@ public class FisheryDataBase extends DataBase {
      *  <b>-o</b> <i>operation</i>   Ajoute une opération (exemple: "valeur", "sobel3", etc.).
      *  <b>-p</b> <i>parameter</i>   Ajoute un paramètre (exemple: "SST", "CHL", etc.).
      *  <b>-t</b> <i>timeLag</i>     Ajoute un écart de temps en jours (exemple: 0, -5, etc.).
+     *  <b>-catchs</b> <i>table</i>  Table ou requête des captures (exemple "Présences par espèces").
      *  <b>-locale</b> <i>name</i>   Langue et conventions d'affichage (exemple: "fr_CA")
      *  <b>-encoding</b> <i>name</i> Page de code pour les sorties     (exemple: "cp850")
      *  <b>-Xout</b> <i>filename</i> Fichier de destination (le périphérique standard par défaut)
@@ -419,6 +420,7 @@ public class FisheryDataBase extends DataBase {
         final boolean     config = console.getFlag("-config");
         final Integer maxRecords = console.getOptionalInteger("-count");
         final String      copyTo = console.getOptionalString("-copyTo");
+        final String  catchTable = console.getOptionalString("-catchs");
         if (config) {
             getSQLEditor().showDialog(null);
             System.exit(0);
@@ -465,6 +467,7 @@ public class FisheryDataBase extends DataBase {
                         }
                     }
                 }
+                table.setCatchTable(catchTable);
                 if (copyTo != null) {
                     table.copyToTable(null, copyTo, new ProgressPrinter(console.out));
                 } else {

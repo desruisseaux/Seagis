@@ -109,7 +109,12 @@ abstract class Table implements fr.ird.sql.Table {
      * @param  The value to substitute to "[?]".
      * @return The modified string.
      */
-    static String replaceQuestionMark(final String query, final String value) {
+    static String replaceQuestionMark(final String query, String value) {
+        if (Character.isUnicodeIdentifierPart(value.charAt(0))) {
+            if (value.indexOf(' ') >= 0) {
+                value = '[' + value + ']'; // TODO: Use " instead when we will abandon Access.
+            }
+        }
         final String PARAM = "[?]";
         final StringBuffer buffer = new StringBuffer(query);
         for (int index=-1; (index=buffer.indexOf(PARAM, index+1))>=0;) {

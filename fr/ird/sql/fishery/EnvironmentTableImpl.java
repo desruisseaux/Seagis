@@ -26,6 +26,7 @@
 package fr.ird.sql.fishery;
 
 // Requêtes SQL
+import java.sql.Types;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
@@ -48,6 +49,7 @@ import java.util.LinkedHashMap;
 // Entrés/sorties et divers
 import java.io.Writer;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -97,6 +99,16 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     /** Numéro d'argument. */ private static final int ARG_VALUE     = 5;
 
     /**
+     * Table des captures à joindre avec les paramètres environnementaux retournés par
+     * {@link #getRowSet}, ou <code>null</code> si aucune. Il ne s'agit pas nécessairement
+     * de la table <code>&quot;Captures&quot;</code>. Il pourrait s'agir d'une requête, comme
+     * par exemple <code>&quot;Présences par espèces&quot;<code>.
+     *
+     * @see #setCatchTable
+     */
+    private CatchTableStep catchTableStep;
+
+    /**
      * Liste des paramètres et des opérations à prendre en compte. Les clés sont des
      * objets  {@link EnvironmentTableStep}  représentant le paramètre ainsi que sa
      * position spatio-temporelle.
@@ -141,6 +153,47 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
     protected EnvironmentTableImpl(final Connection connection) throws SQLException {
         super(null);
         this.connection = connection;
+    }
+
+    /**
+     * Spécifie le nom d'une table des captures à joindre avec les paramètres environnementaux
+     * retournés par {@link #getRowSet}. Il ne s'agit pas nécessairement de la table
+     * <code>&quot;Captures&quot;</code>. Il pourrait s'agir d'une requête, comme par exemple
+     * <code>&quot;Présences par espèces&quot;<code>. Cette requête doit obligatoirement avoir une
+     * colonne &quot;ID&quot; contenant le numéro identifiant la capture, suivit de préférence par
+     * les colonnes &quot;date&quot;, &quot;x&quot; et &quot;y&quot; contenant les coordonnées
+     * spatio-temporelles de la capture. Les colonnes suivantes contiennent les captures par
+     * espèces.
+     *
+     * @param table Le nom de la table des captures, ou <code>null</code> si aucune.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public synchronized void setCatchTable(final String table) throws SQLException {
+        if (!Utilities.equals(table, getCatchTable())) {
+            if (catchTableStep != null) {
+                catchTableStep.close();
+                catchTableStep = null;
+            }
+            final LogRecord record = Resources.getResources(null).getLogRecord(Level.CONFIG,
+                                     ResourceKeys.JOIN_TABLE_$1, (table!=null) ? table : "<aucune>");
+            record.setSourceClassName("EnvironmentTable");
+            record.setSourceMethodName("setCatchTable");
+            logger.log(record);
+            if (table != null) {
+                catchTableStep = new CatchTableStep(connection, table);
+            }
+        }
+    }
+
+    /**
+     * Retourne le nom d'une table des captures à joindre avec les paramètres environnementaux
+     * retournés par {@link #getRowSet}, ou <code>null</code> si aucune.
+     *
+     * @return Le nom de la table des captures, ou <code>null</code> si aucune.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public synchronized String getCatchTable() throws SQLException {
+        return catchTableStep!=null ? catchTableStep.table : null;
     }
 
     /**
@@ -264,8 +317,14 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         }
         final List<String> titles = new ArrayList<String>();
         final StringBuffer buffer = new StringBuffer();
-        titles.add("Capture");
-
+        titles.add("capture");
+        if (catchTableStep != null) {
+            final String[] columns = catchTableStep.getColumns();
+            // Skip the first column, which should be the ID.
+            for (int i=1; i<columns.length; i++) {
+                titles.add(columns[i]);
+            }
+        }
         for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
             final EnvironmentTableStep step = it.next();
             int t = step.timeLag;
@@ -313,9 +372,12 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             progress.setDescription("Initialisation");
             progress.started();
         }
-        int i=0;
-        final ResultSet[]   results = new ResultSet[parameters.size()];
+        int i = (catchTableStep!=null) ? 1 : 0;
+        final ResultSet[]   results = new ResultSet[parameters.size() + i];
         final Connection connection = this.connection;
+        if (catchTableStep != null) {
+            results[0] = catchTableStep.getResultSet();
+        }
         for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
             EnvironmentTableStep step = it.next();
             results[i++] = step.getResultSet(connection);
@@ -343,15 +405,38 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         final String   lineSeparator = System.getProperty("line.separator", "\n");
         final int        columnCount = meta.getColumnCount();
         final int[]            width = new int[columnCount];
+        final boolean[]       isDate = new boolean[columnCount];
         for (int i=0; i<columnCount; i++) {
             final String title = meta.getColumnLabel(i+1);
             out.write(title);
             int length = title.length();
-            width[i] = Math.max(i==0 ? 11 : 7, length);
+            final int type = meta.getColumnType(i+1);
+            switch (type) {
+                case Types.DATE: // Fall through
+                case Types.TIME: // Fall through
+                case Types.TIMESTAMP: {
+                    isDate[i] = true;
+                    width [i] = 8;
+                    break;
+                }
+                default: {
+                    width[i] = Math.max(i==0 ? 11 : 7, length);
+                    break;
+                }
+            }
+            if (false) {
+                // Ajoute le code du type entre parenthèses.
+                final String code = String.valueOf(type);
+                out.write('(');
+                out.write(code);
+                out.write(')');
+                length += (code.length() + 2);
+            }
             out.write(Utilities.spaces(width[i]-length + 1));
         }
         int count = 0;
         out.write(lineSeparator);
+        DateFormat dateFormat = null;
         final NumberFormat format = NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(2);
         format.setMaximumFractionDigits(2);
@@ -360,8 +445,13 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 final String value;
                 if (i==0) {
                     value = String.valueOf(result.getInt(i+1));
+                } else if (!isDate[i]) {
+                    value = format.format(result.getDouble(i+1));
                 } else {
-                    value = String.valueOf(format.format(result.getDouble(i+1)));
+                    if (dateFormat == null) {
+                        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+                    }
+                    value = dateFormat.format(result.getDate(i+1));
                 }
                 out.write(Utilities.spaces(width[i]-value.length()));
                 out.write(value);
@@ -395,6 +485,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         final ResultSet       source = getRowSet(progress);
         final ResultSetMetaData meta = source.getMetaData();
         final int        columnCount = meta.getColumnCount();
+        final boolean[]       isDate = new boolean[columnCount];
         final Statement      creator;
         final ResultSet         dest;
         /*
@@ -405,14 +496,37 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         if (true) {
             final StringBuffer buffer = new StringBuffer("CREATE TABLE ");
             buffer.append(tableName);
-            buffer.append('(');
+            buffer.append("(\"");
             for (int i=0; i<columnCount; i++) {
                 if (i!=0) {
-                    buffer.append(',');
+                    buffer.append(", \"");
                 }
                 buffer.append(meta.getColumnName(i+1));
-                buffer.append(' ');
-                buffer.append((i==0) ? "INTEGER" : "REAL");
+                buffer.append("\" ");
+                if (i==0) {
+                    buffer.append("INTEGER");
+                } else {
+                    switch (meta.getColumnType(i+1)) {
+                        case Types.DATE: // Fall through
+                        case Types.TIME: // Fall through
+                        case Types.TIMESTAMP: {
+                            isDate[i] = true;
+                            buffer.append("TIMESTAMP");
+                            break;
+                        }
+                        case Types.TINYINT:     // Fall through (not strictly true, but hey,
+                        case Types.SMALLINT: {  // we are fighthing against Access!!
+                            // We should really uses a boolean type, but Access
+                            // replace 'True' by '-1' while we really wanted '1'.
+                            buffer.append("SMALLINT");
+                            break;
+                        }
+                        default: {
+                            buffer.append("REAL");
+                            break;
+                        }
+                    }
+                }
                 buffer.append(" NOT NULL");
             }
             buffer.append(')');
@@ -452,7 +566,11 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             dest.moveToInsertRow();
             dest.updateInt(1, ID);
             for (int i=2; i<=columnCount; i++) {
-                dest.updateFloat(i, source.getFloat(i));
+                if (isDate[i-1]) {
+                    dest.updateTimestamp(i, source.getTimestamp(i));
+                } else {
+                    dest.updateFloat(i, source.getFloat(i));
+                }
             }
             dest.insertRow();
             count++;
@@ -633,6 +751,10 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         if (parameterTable != null) {
             parameterTable.close();
             parameterTable = null;
+        }
+        if (catchTableStep != null) {
+            catchTableStep.close();
+            catchTableStep = null;
         }
         clear();
         super.close();

@@ -70,6 +70,30 @@ public interface EnvironmentTable extends Table {
     public static final int END_POINT = 100;
 
     /**
+     * Spécifie le nom d'une table des captures à joindre avec les paramètres environnementaux
+     * retournés par {@link #getRowSet}. Il ne s'agit pas nécessairement de la table
+     * <code>&quot;Captures&quot;</code>. Il pourrait s'agir d'une requête, comme par exemple
+     * <code>&quot;Présences par espèces&quot;<code>. Cette requête doit obligatoirement avoir une
+     * colonne &quot;ID&quot; contenant le numéro identifiant la capture, suivit de préférence par
+     * les colonnes &quot;date&quot;, &quot;x&quot; et &quot;y&quot; contenant les coordonnées
+     * spatio-temporelles de la capture. Les colonnes suivantes contiennent les captures par
+     * espèces.
+     *
+     * @param table Le nom de la table des captures, ou <code>null</code> si aucune.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public abstract void setCatchTable(final String table) throws SQLException;
+
+    /**
+     * Retourne le nom d'une table des captures à joindre avec les paramètres environnementaux
+     * retournés par {@link #getRowSet}, ou <code>null</code> si aucune.
+     *
+     * @return Le nom de la table des captures, ou <code>null</code> si aucune.
+     * @throws SQLException si l'accès à la base de données a échouée.
+     */
+    public abstract String getCatchTable() throws SQLException;
+
+    /**
      * Retourne la liste des paramètres environnementaux disponibles. Les paramètres
      * environnementaux sont représentés par des noms courts tels que "CHL" ou "SST".
      *

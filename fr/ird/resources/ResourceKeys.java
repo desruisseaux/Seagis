@@ -99,6 +99,7 @@ public interface ResourceKeys
     public static final int JAVA_VENDOR_$1                           =    15;
     public static final int JAVA_VERSION_$1                          =    16;
     public static final int JDBC_DRIVER                              =   126;
+    public static final int JOIN_TABLE_$1                            =   248;
     public static final int KEEP_DATA_$3                             =   127;
     public static final int KERNEL                                   =    17;
     public static final int LANGUAGE                                 =   128;
