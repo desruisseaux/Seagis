@@ -382,15 +382,15 @@ public class Arrow2D extends RectangularShape
         {
             switch (code)
             {
-                case 0: coords[0]=(float) x;       coords[1]=(float) halfBottom0;   break;
-                case 1: coords[0]=(float) base;            coords[1]=(float) halfBottom1;  break;
-                case 2: coords[0]=(float) base;            coords[1]=(float) y;            break;
-                case 3: coords[0]=(float) (x+length);  coords[1]=(float) center;    break;
-                case 4: coords[0]=(float) base;            coords[1]=(float) (y+height);   break;
-                case 5: coords[0]=(float) base;            coords[1]=(float) halfTop1;    break;
-                case 6: coords[0]=(float) x;       coords[1]=(float) halfTop0;    break;
-                case 7: coords[0]=(float) x;       coords[1]=(float) halfBottom0;   break;
-                case 8:                                 return SEG_CLOSE;
+                case 0: coords[0]=(float) x;          coords[1]=(float) halfBottom0; break;
+                case 1: coords[0]=(float) base;       coords[1]=(float) halfBottom1; break;
+                case 2: coords[0]=(float) base;       coords[1]=(float) y;           break;
+                case 3: coords[0]=(float) (x+length); coords[1]=(float) center;      break;
+                case 4: coords[0]=(float) base;       coords[1]=(float) (y+height);  break;
+                case 5: coords[0]=(float) base;       coords[1]=(float) halfTop1;    break;
+                case 6: coords[0]=(float) x;          coords[1]=(float) halfTop0;    break;
+                case 7: coords[0]=(float) x;          coords[1]=(float) halfBottom0; break;
+                case 8:  return SEG_CLOSE;
                 default: throw new NoSuchElementException();
             }
             if (at!=null) at.transform(coords, 0, coords, 0, 1);
@@ -406,15 +406,15 @@ public class Arrow2D extends RectangularShape
         {
             switch (code)
             {
-                case 0: coords[0]=x;       coords[1]=halfBottom0;   break;
-                case 1: coords[0]=base;            coords[1]=halfBottom1;  break;
-                case 2: coords[0]=base;            coords[1]=y;            break;
-                case 3: coords[0]=x+length;        coords[1]=center;    break;
-                case 4: coords[0]=base;            coords[1]=y+height;    break;
-                case 5: coords[0]=base;            coords[1]=halfTop1;    break;
-                case 6: coords[0]=x;       coords[1]=halfTop0;    break;
-                case 7: coords[0]=x;       coords[1]=halfBottom0;   break;
-                case 8:                         return SEG_CLOSE;
+                case 0: coords[0]=x;        coords[1]=halfBottom0; break;
+                case 1: coords[0]=base;     coords[1]=halfBottom1; break;
+                case 2: coords[0]=base;     coords[1]=y;           break;
+                case 3: coords[0]=x+length; coords[1]=center;      break;
+                case 4: coords[0]=base;     coords[1]=y+height;    break;
+                case 5: coords[0]=base;     coords[1]=halfTop1;    break;
+                case 6: coords[0]=x;        coords[1]=halfTop0;    break;
+                case 7: coords[0]=x;        coords[1]=halfBottom0; break;
+                case 8:  return SEG_CLOSE;
                 default: throw new NoSuchElementException();
             }
             if (at!=null) at.transform(coords, 0, coords, 0, 1);
