@@ -109,4 +109,14 @@ public interface SeriesTable extends Table
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
     public abstract int getImageCount(final SeriesEntry series) throws SQLException;
+
+    /**
+     * Retourne le format d'un groupe d'images.
+     *
+     * @param  groupID Numéro ID de la table <code>Groups</code> de la base de données.
+     * @return Le format utilisé par le groupe spécifié, ou <code>null</code> si aucun
+     *         groupe identifié par l'ID specifié n'a été trouvé.
+     * @throws SQLException si l'interrogation de la base de données a échouée.
+     */
+    public abstract FormatEntry getFormat(final int groupID) throws SQLException;
 }

@@ -23,6 +23,9 @@
 package net.seas.map;
 
 // OpenGIS dependencies (SEAGIS)
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
+import net.seagis.pt.AngleFormat;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.ct.MathTransform2D;
 import net.seagis.ct.TransformException;
@@ -33,7 +36,6 @@ import net.seagis.ct.CannotCreateTransformException;
 // Miscellaneous
 import java.awt.geom.Point2D;
 import java.awt.event.MouseEvent;
-import net.seas.text.CoordinateFormat;
 
 
 /**
@@ -56,7 +58,7 @@ public class MouseCoordinateFormat
     /**
      * Formateur des coordonnées géographiques.
      */
-    private final CoordinateFormat coordinateFormat=new CoordinateFormat("DD°MM.m'");
+    private final AngleFormat angleFormat=new AngleFormat("DD°MM.m'");
 
     /**
       * Buffer pour l'écriture des coordonnées.
@@ -135,7 +137,9 @@ public class MouseCoordinateFormat
                     transformation = geoEvent.getTransformToTarget(transformation);
                     point = ((MathTransform2D) transformation.getMathTransform()).transform(point, point);
                     buffer.setLength(0);
-                    coordinateFormat.format(point.getX(), point.getY(), buffer, null);
+                    angleFormat.format(new  Latitude(point.getY()), buffer, null);
+                    buffer.append(' ');
+                    angleFormat.format(new Longitude(point.getX()), buffer, null);
                     if (valueVisible)
                     {
                         final int length=buffer.length();

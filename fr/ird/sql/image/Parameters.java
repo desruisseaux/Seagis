@@ -116,7 +116,7 @@ final class Parameters implements Serializable
     /**
      * Format à utiliser pour lire les images.
      */
-    public final FormatEntry format;
+    public final FormatEntryImpl format;
 
     /**
      * Chemin relatif des images.
@@ -172,7 +172,7 @@ final class Parameters implements Serializable
      * @param dateFormat Formatteur à utiliser pour écrire des dates pour l'utilisateur.
      */
     public Parameters(final SeriesEntry              series,
-                      final FormatEntry              format,
+                      final FormatEntryImpl          format,
                       final String                   pathname,
                       final Operation                operation,
                       final ParameterList            parameters,

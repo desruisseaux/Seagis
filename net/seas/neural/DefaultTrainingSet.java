@@ -28,7 +28,7 @@ import java.io.ObjectOutputStream;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.ParseException;
-import net.seas.text.LineFormat;
+import net.seagis.io.LineFormat;
 
 // Miscellaneous
 import java.util.Random;

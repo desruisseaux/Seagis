@@ -75,7 +75,7 @@ import java.text.Format;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import net.seas.text.AngleFormat;
+import net.seagis.pt.AngleFormat;
 
 // Miscellaneous
 import java.util.Arrays;
@@ -204,20 +204,20 @@ public class CoordinateChooser extends JPanel
 
         tmin = new JSpinner(new SpinnerDateModel(minTime, minTime, maxTime, timeField));
         tmax = new JSpinner(new SpinnerDateModel(maxTime, minTime, maxTime, timeField));
-        xmin = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(Longitude.MIN_VALUE)));
-        xmax = new JSpinner(new AngleFormat.SpinnerModel(new Longitude(Longitude.MAX_VALUE)));
-        ymin = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude( Latitude.MIN_VALUE)));
-        ymax = new JSpinner(new AngleFormat.SpinnerModel(new  Latitude( Latitude.MAX_VALUE)));
+        xmin = new JSpinner(new AngleSpinnerModel(new Longitude(Longitude.MIN_VALUE)));
+        xmax = new JSpinner(new AngleSpinnerModel(new Longitude(Longitude.MAX_VALUE)));
+        ymin = new JSpinner(new AngleSpinnerModel(new  Latitude( Latitude.MIN_VALUE)));
+        ymax = new JSpinner(new AngleSpinnerModel(new  Latitude( Latitude.MAX_VALUE)));
         xres = new JSpinner(new SpinnerNumberModel(1, 0, 360*60, 1));
         yres = new JSpinner(new SpinnerNumberModel(1, 0, 180*60, 1));
 
         final AngleFormat   angleFormat = new AngleFormat("D°MM.m'", locale);
         final DateFormat     dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
         final NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
-        xmin.setEditor(new AngleFormat.SpinnerEditor(xmin, angleFormat));
-        xmax.setEditor(new AngleFormat.SpinnerEditor(xmax, angleFormat));
-        ymin.setEditor(new AngleFormat.SpinnerEditor(ymin, angleFormat));
-        ymax.setEditor(new AngleFormat.SpinnerEditor(ymax, angleFormat));
+        xmin.setEditor(new AngleSpinnerModel.Editor(xmin, angleFormat));
+        xmax.setEditor(new AngleSpinnerModel.Editor(xmax, angleFormat));
+        ymin.setEditor(new AngleSpinnerModel.Editor(ymin, angleFormat));
+        ymax.setEditor(new AngleSpinnerModel.Editor(ymax, angleFormat));
 
         setup(tmin, 10,   dateFormat);
         setup(tmax, 10,   dateFormat);

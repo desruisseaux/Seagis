@@ -67,7 +67,7 @@ import javax.imageio.ImageReader;
 import javax.swing.event.EventListenerList;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
-import net.seas.image.io.IIOReadProgressAdapter;
+import net.seagis.io.image.IIOReadProgressAdapter;
 
 // Journal
 import java.util.logging.Level;

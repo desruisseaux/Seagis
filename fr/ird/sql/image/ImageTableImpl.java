@@ -279,7 +279,7 @@ final class ImageTableImpl extends Table implements ImageTable
      * Ensemble des formats déjà lue. Autant que possible,
      * on réutilisera les formats qui ont déjà été créés.
      */
-    private final Map<Integer,FormatEntry> formats=new HashMap<Integer,FormatEntry>();
+    private final Map<Integer,FormatEntryImpl> formats=new HashMap<Integer,FormatEntryImpl>();
 
     /**
      * Requète SQL faisant le lien avec la base de données.
@@ -835,11 +835,11 @@ final class ImageTableImpl extends Table implements ImageTable
      * @param  formatID Numéro identifiant le format voulu.
      * @throws SQLException si le format spécifié n'a pas été trouvé.
      */
-    private FormatEntry getFormat(final int formatID) throws SQLException
+    private FormatEntryImpl getFormat(final int formatID) throws SQLException
     {
         assert Thread.holdsLock(this);
         final Integer ID   = new Integer(formatID);
-        FormatEntry format = formats.get(ID);
+        FormatEntryImpl format = formats.get(ID);
         if (format==null)
         {
             if (formatTable==null)

@@ -383,9 +383,9 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          *     utiliserait le même format.
          *
          *  3) Les demandes d'annulation de lecture ({@link #abort}) sur
-         *     <code>FormatEntry.getAbortLock()</code>, afine de pouvoir
+         *     <code>FormatEntryImpl.getAbortLock()</code>, afine de pouvoir
          *     être faite pendant qu'une lecture est en cours. Cette
-         *     synchronisation est gérée en interne par <code>FormatEntry</code>.
+         *     synchronisation est gérée en interne par <code>FormatEntryImpl</code>.
          */
 
         // TODO: si on permet d'obtenir des images à différents index, il
@@ -516,7 +516,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable
          * A ce stade, nous disposons maintenant des coordonnées en pixels
          * de la région à charger. Procède maintenant à la lecture.
          */
-        final FormatEntry format = parameters.format;
+        final FormatEntryImpl format = parameters.format;
         final CategoryList[] categoryLists;
         synchronized (format)
         {

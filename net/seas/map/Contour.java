@@ -398,10 +398,28 @@ public abstract class Contour implements Shape, Cloneable, Serializable
                                                                 final String sourceMethodName) throws CannotCreateTransformException
     {
         final LogRecord record = Resources.getResources(null).getLogRecord(Level.FINE,
-                                 Clé.INITIALIZING_TRANSFORMATION¤2, sourceCS, targetCS);
+                                 Clé.INITIALIZING_TRANSFORMATION¤2, toString(sourceCS), toString(targetCS));
         record.setSourceClassName (sourceClassName);
         record.setSourceMethodName(sourceMethodName);
         LOGGER.log(record);
         return TRANSFORMS.createFromCoordinateSystems(sourceCS, targetCS);
+    }
+
+    /**
+     * Returns a string representation of a coordinate system.
+     */
+    private static final String toString(final CoordinateSystem cs)
+    {
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(cs));
+        buffer.append('[');
+        final String name = cs.getName(null);
+        if (name!=null)
+        {
+            buffer.append('"');
+            buffer.append(name);
+            buffer.append('"');
+        }
+        buffer.append(']');
+        return buffer.toString();
     }
 }

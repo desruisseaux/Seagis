@@ -32,6 +32,9 @@ import java.sql.SQLException;
 import fr.ird.sql.SQLEditor;
 import fr.ird.sql.DataBase;
 
+// Images
+import javax.imageio.spi.IIORegistry;
+
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +73,11 @@ public class ImageDataBase extends DataBase
      */
     static
     {
-        Codecs.register();
+        final IIORegistry registry = IIORegistry.getDefaultInstance();
+        registry.registerServiceProvider(new fr.ird.io.image.Aviso_ASC());
+        registry.registerServiceProvider(new fr.ird.io.image.USRelaxed_ASC());
+        // Note: previous SPIs (Aviso_ASC, etc.) will be discarted, since
+        //       IIORegistry register only singletons for each leaf class.
     }
 
     /**
@@ -96,15 +103,16 @@ public class ImageDataBase extends DataBase
      */
     private static final String[] DEFAULT_PROPERTIES=
     {
-        "IMAGE_COUNT",  SeriesTableImpl.SQL_COUNT,
-        "SERIES_TREE",  SeriesTableImpl.SQL_TREE,
-        "SERIES_BY_ID", SeriesTableImpl.SQL_SELECT_BY_ID,
-        Table.SERIES,   SeriesTableImpl.SQL_SELECT,
-        Table.IMAGES,    ImageTableImpl.SQL_SELECT,
-        Table.FORMATS,      FormatTable.SQL_SELECT,
-        Table.BANDS,          BandTable.SQL_SELECT,
-        Table.CATEGORIES, CategoryTable.SQL_SELECT,
-        Table.AREAS,                    SQL_AREA,
+        "IMAGE_COUNT",     SeriesTableImpl.SQL_COUNT,
+        "SERIES_TREE",     SeriesTableImpl.SQL_TREE,
+        "SERIES_BY_ID",    SeriesTableImpl.SQL_SELECT_BY_ID,
+        Table.SERIES,      SeriesTableImpl.SQL_SELECT,
+        Table.IMAGES,       ImageTableImpl.SQL_SELECT,
+        Table.FORMATS,         FormatTable.SQL_SELECT,
+        "FORMAT_FOR_GROUP_ID", FormatTable.SQL_FOR_GROUP_ID,
+        Table.BANDS,             BandTable.SQL_SELECT,
+        Table.CATEGORIES,    CategoryTable.SQL_SELECT,
+        Table.AREAS,                       SQL_AREA,
     };
 
     /**
@@ -121,6 +129,7 @@ public class ImageDataBase extends DataBase
         Clé.SQL_SERIES,
         Clé.SQL_IMAGES,
         Clé.SQL_FORMAT,
+        Clé.SQL_FORMAT_FOR_GROUP_ID,
         Clé.SQL_BANDS,
         Clé.SQL_CATEGORIES,
         Clé.SQL_AREA
@@ -435,8 +444,8 @@ public class ImageDataBase extends DataBase
      */
     public static File[] getSynchronizedDirectories()
     {
-        final File[] directories=new File[FormatEntry.synchronizedDirectories.length];
-        System.arraycopy(FormatEntry.synchronizedDirectories, 0, directories, 0, directories.length);
+        final File[] directories=new File[FormatEntryImpl.synchronizedDirectories.length];
+        System.arraycopy(FormatEntryImpl.synchronizedDirectories, 0, directories, 0, directories.length);
         return directories;
     }
 
@@ -475,7 +484,7 @@ public class ImageDataBase extends DataBase
         final File[] dir=new File[directories.length];
         for (int i=0; i<dir.length; i++)
             dir[i]=directories[i].getCanonicalFile();
-        FormatEntry.synchronizedDirectories = dir;
+        FormatEntryImpl.synchronizedDirectories = dir;
     }
 
     /**

@@ -48,6 +48,7 @@ import java.util.ArrayList;
 // Divers et resources
 import java.util.Locale;
 import java.io.Serializable;
+import net.seagis.cv.CategoryList;
 import fr.ird.resources.Resources;
 
 
@@ -64,12 +65,12 @@ import fr.ird.resources.Resources;
 final class SeriesTableImpl extends Table implements SeriesTable
 {
     /**
-     * Requêtes SQL utilisées par cette classe pour obtenir une série à partir de son nom.
+     * Requête SQL utilisée par cette classe pour obtenir une série à partir de son nom.
      */
     static final String SQL_SELECT = "SELECT ID, name FROM "+SERIES+" WHERE name LIKE ?";
 
     /**
-     * Requêtes SQL utilisées par cette classe pour obtenir une série à partir de son numéro ID.
+     * Requête SQL utilisée par cette classe pour obtenir une série à partir de son numéro ID.
      */
     static final String SQL_SELECT_BY_ID = "SELECT ID, name FROM "+SERIES+" WHERE ID=?";
 
@@ -127,18 +128,24 @@ final class SeriesTableImpl extends Table implements SeriesTable
     /**
      * Requète SQL retournant une série à partir de son nom.
      */
-    private PreparedStatement selectByName;
+    private transient PreparedStatement selectByName;
 
     /**
      * Requète SQL retournant une série à partir de son numéro ID.
      */
-    private PreparedStatement selectByID;
+    private transient PreparedStatement selectByID;
 
     /**
      * Requête utilisée pour compter le nombre d'images appartenant à une série.
      * Cette requête ne sera construite que lorsqu'elle sera nécessaire.
      */
     private transient PreparedStatement count;
+
+    /**
+     * Table des formats. Ce champ ne sera construit
+     * que la première fois où il sera nécessaire.
+     */
+    private transient FormatTable formats;
 
     /**
      * Construit un objet en utilisant la connection spécifiée.
@@ -246,7 +253,6 @@ final class SeriesTableImpl extends Table implements SeriesTable
      */
     public synchronized TreeModel getTree(final int leafType) throws SQLException
     {
-        FormatTable       formats = null;
         final Locale       locale = null;
         final Statement statement = connection.createStatement();
         final ResultSet resultSet = statement.executeQuery(preferences.get("SERIES_TREE", SQL_TREE));
@@ -325,7 +331,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
                             {
                                 formats=new FormatTable(statement.getConnection());
                             }
-                            final FormatEntry format = formats.getEntry(resultSet.getInt(GROUPS_FORMAT));
+                            final FormatEntryImpl format = formats.getEntry(resultSet.getInt(GROUPS_FORMAT));
                             node.add(format.getTree(locale));
                         }
                         break;
@@ -335,10 +341,6 @@ final class SeriesTableImpl extends Table implements SeriesTable
                 branch.add(node);
                 branch=node;
             }
-        }
-        if (formats!=null)
-        {
-            formats.close();
         }
         resultSet.close();
         statement.close();
@@ -366,6 +368,23 @@ final class SeriesTableImpl extends Table implements SeriesTable
     }
 
     /**
+     * Retourne le format d'un groupe d'images.
+     *
+     * @param  groupID Numéro ID de la table <code>Groups</code> de la base de données.
+     * @return Le format utilisé par le groupe spécifié, ou <code>null</code> si aucun
+     *         groupe identifié par l'ID specifié n'a été trouvé.
+     * @throws SQLException si l'interrogation de la base de données a échouée.
+     */
+    public synchronized FormatEntry getFormat(final int groupID) throws SQLException
+    {
+        if (formats==null)
+        {
+            formats=new FormatTable(connection);
+        }
+        return formats.forGroupID(groupID);
+    }
+
+    /**
      * Libère les ressources utilisées par cet objet.
      * Appelez cette méthode lorsque vous n'aurez plus
      * besoin de consulter cette table.
@@ -378,6 +397,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
         if (selectByName != null) {selectByName.close(); selectByName = null;}
         if (selectByID   != null) {selectByID  .close(); selectByID   = null;}
         if (count        != null) {count       .close(); count        = null;}
+        if (formats      != null) {formats     .close(); formats      = null;}
     }
 
 

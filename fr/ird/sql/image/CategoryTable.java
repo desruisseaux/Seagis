@@ -36,7 +36,7 @@ import java.sql.PreparedStatement;
 
 // Images et couleurs
 import java.awt.Color;
-import net.seas.image.io.PaletteFactory;
+import net.seagis.io.image.PaletteFactory;
 
 // Collections
 import java.util.List;

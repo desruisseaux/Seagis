@@ -45,6 +45,11 @@ import fr.ird.resources.Resources;
 final class FormatTable extends Table
 {
     /**
+     * Requête SQL utilisée par cette classe pour obtenir un format à partir d'un groupe.
+     */
+    static final String SQL_FOR_GROUP_ID = "SELECT format FROM "+GROUPS+" WHERE ID=?";
+
+    /**
      * Requête SQL utilisée pour obtenir le type MIME du format
      * (par exemple "image/png") dans la table des formats.
      */
@@ -63,6 +68,11 @@ final class FormatTable extends Table
     /** Numéro de colonne. */ private static final int EXTENSION  = 4;
     /** Numéro de colonne. */ private static final int GEOPHYSICS = 5;
     /** Numéro d'argument. */ private static final int ARG_ID     = 1;
+
+    /**
+     * Requète SQL retournant un format à partir d'un groupe.
+     */
+    private PreparedStatement selectByGroupID;
 
     /**
      * Requète SQL faisant le lien
@@ -85,6 +95,39 @@ final class FormatTable extends Table
     {statement = connection.prepareStatement(preferences.get(FORMATS, SQL_SELECT));}
 
     /**
+     * Retourne le format correspondant à un groupe d'images.
+     *
+     * @param  groupID Numéro ID de la table <code>Groups</code> de la base de données.
+     * @return Le format utilisé par le groupe spécifié, ou <code>null</code> si aucun
+     *         groupe identifié par l'ID specifié n'a été trouvé.
+     * @throws SQLException si l'interrogation de la base de données a échouée.
+     */
+    public synchronized FormatEntry forGroupID(final int ID) throws SQLException
+    {
+        if (selectByGroupID==null)
+        {
+            selectByGroupID = statement.getConnection().prepareStatement(preferences.get("FORMAT_FOR_GROUP_ID", SQL_FOR_GROUP_ID));
+        }
+        selectByGroupID.setInt(1, ID);
+        final ResultSet resultSet = selectByGroupID.executeQuery();
+        FormatEntry entry = null;
+        while (resultSet.next())
+        {
+            final int formatID = resultSet.getInt(1);
+            if (entry==null)
+            {
+                entry = getEntry(formatID);
+            }
+            else if (entry.getID() != formatID)
+            {
+                throw new SQLException();
+            }
+        }
+        resultSet.close();
+        return entry;
+    }
+
+    /**
      * Retourne l'entré correspondant au format identifié
      * par le numéro <code>formatID</code> spécifié.
      *
@@ -93,7 +136,7 @@ final class FormatTable extends Table
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de
      *                      données, ou si le format spécifié n'a pas été trouvé.
      */
-    public FormatEntry getEntry(final int ID) throws SQLException
+    public FormatEntryImpl getEntry(final int ID) throws SQLException
     {return getEntry(new Integer(ID));}
 
     /**
@@ -105,7 +148,7 @@ final class FormatTable extends Table
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de
      *                      données, ou si le format spécifié n'a pas été trouvé.
      */
-    final synchronized FormatEntry getEntry(final Integer key) throws SQLException
+    final synchronized FormatEntryImpl getEntry(final Integer key) throws SQLException
     {
         statement.setInt(ARG_ID, key.intValue());
         ResultSet result=statement.executeQuery();
@@ -136,7 +179,7 @@ final class FormatTable extends Table
         {
             bands = new BandTable(statement.getConnection());
         }
-        final FormatEntry entry = new FormatEntry(formatID, name, mimeType, extension, geophysics, bands.getCategoryList(formatID));
+        final FormatEntryImpl entry = new FormatEntryImpl(formatID, name, mimeType, extension, geophysics, bands.getCategoryList(formatID));
         logger.fine(Resources.format(Clé.CONSTRUCTED_DECODER¤1, name));
         return entry;
     }
@@ -151,10 +194,15 @@ final class FormatTable extends Table
      */
     public synchronized void close() throws SQLException
     {
-        if (bands!=null)
+        if (selectByGroupID != null)
+        {
+            selectByGroupID.close();
+            selectByGroupID = null;
+        }
+        if (bands != null)
         {
             bands.close();
-            bands=null;
+            bands = null;
         }
         statement.close();
         logger.fine(Resources.format(Clé.CLOSE_FORMAT_TABLE));

@@ -33,9 +33,9 @@ import java.util.ConcurrentModificationException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import javax.media.jai.util.Range;
-import net.seas.util.ClassChanger;
 import net.seas.resources.Resources;
 import net.seagis.resources.Utilities;
+import net.seagis.resources.ClassChanger;
 
 
 /**
