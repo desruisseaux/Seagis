@@ -46,8 +46,10 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.media.jai.JAI;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
-import org.geotools.ct.TransformException;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.MonolineFormatter;
 

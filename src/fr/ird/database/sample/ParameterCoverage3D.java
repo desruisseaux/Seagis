@@ -45,10 +45,12 @@ import java.awt.Color;
 import javax.media.jai.JAI;
 import javax.media.jai.ParameterList;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.cv.Coverage; // Pour Javadoc
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;

@@ -56,11 +56,13 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.rmi.RemoteException;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.units.Unit;
 import org.geotools.resources.Utilities;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.renderer.j2d.MarkIterator;
 import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.renderer.j2d.GeoMouseEvent;
@@ -260,7 +262,7 @@ public class SampleLayer extends RenderedMarks {
      * @param samples The samples, or <code>null</code> if none.
      */
     public void setSamples(final Collection<SampleEntry> samples) {
-        if ((samples instanceof List<SampleEntry>) && (samples instanceof RandomAccess)) {
+        if ((samples instanceof List) && (samples instanceof RandomAccess)) {
             this.samples = (List<SampleEntry>) samples;
         } else if (samples != null) {
             this.samples = new ArrayList<SampleEntry>(samples);

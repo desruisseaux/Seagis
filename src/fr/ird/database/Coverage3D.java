@@ -37,6 +37,9 @@ import java.awt.image.renderable.RenderableImage;
 import java.util.Date;
 import javax.media.jai.util.Range;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
@@ -45,7 +48,6 @@ import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform2D;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.MathTransformFactory;
 import org.geotools.ct.CoordinateTransformation;
 import org.geotools.ct.CoordinateTransformationFactory;
@@ -59,7 +61,7 @@ import org.geotools.cv.CannotEvaluateException;
 import org.geotools.cv.PointOutsideCoverageException;
 
 // Geotools (resources)
-import org.geotools.resources.XRectangle2D;
+import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
 import fr.ird.resources.seagis.Resources;

@@ -63,11 +63,13 @@ import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.MathTransform2D;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.CoordinateTransformationFactory;
 
 // Geotools (GCS)
@@ -84,8 +86,8 @@ import org.geotools.util.WeakHashSet;
 import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.XDimension2D;
-import org.geotools.resources.XRectangle2D;
+import org.geotools.resources.geometry.XDimension2D;
+import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
 import fr.ird.resources.seagis.Resources;

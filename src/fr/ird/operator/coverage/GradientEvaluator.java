@@ -43,7 +43,6 @@ import org.geotools.cs.Ellipsoid;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.CTSUtilities;
 
 // Sesgis dependencies

@@ -300,7 +300,7 @@ search: while (ID != Integer.MAX_VALUE) {
         return last.getObject(columnIndex);
     }
 
-    public Object getObject(int columnIndex, Map map) throws SQLException {
+    public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
         columnIndex = toResultSet(columnIndex);
         if (columnIndex == 0) {
             return new Integer(ID);
@@ -562,7 +562,7 @@ search: while (ID != Integer.MAX_VALUE) {
         return getObject(findColumn(columnName));
     }
 
-    public Object getObject(String columnName, Map map) throws SQLException {
+    public Object getObject(String columnName, Map<String, Class<?>> map) throws SQLException {
         return getObject(findColumn(columnName), map);
     }
 
@@ -1460,8 +1460,8 @@ search: while (ID != Integer.MAX_VALUE) {
      * <code>RowSet</code> object, which specifies the custom mapping
      * of SQL user-defined types, if any.
      */
-    public Map getTypeMap() throws SQLException {
-        final Map map = new HashMap();
+    public Map<String, Class<?>> getTypeMap() throws SQLException {
+        final Map<String, Class<?>> map = new HashMap<String, Class<?>>();
         for (int i=0; i<results.length; i++) {
             map.putAll(results[i].getStatement().getConnection().getTypeMap());
         }
@@ -1472,7 +1472,7 @@ search: while (ID != Integer.MAX_VALUE) {
      * Installs the given <code>java.util.Map</code> object as the default
      * type map for this <code>RowSet</code> object.
      */
-    public void setTypeMap(java.util.Map map) throws SQLException {
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         throw unsupportedOperation();
     }
     

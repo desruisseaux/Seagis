@@ -43,6 +43,9 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import javax.media.jai.ParameterList;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
@@ -50,12 +53,11 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.HorizontalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.MathTransform2D;
 import org.geotools.gp.Operation;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.XDimension2D;
+import org.geotools.resources.geometry.XDimension2D;
 
 // Seagis
 import fr.ird.resources.seagis.Resources;

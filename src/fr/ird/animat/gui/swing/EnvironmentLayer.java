@@ -48,14 +48,16 @@ import java.rmi.server.RemoteObject;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 
-// OpenGIS dependencies
+// OpenGIS (ancien)
 import org.opengis.cv.CV_Coverage;
+
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
 
 // Geotools dependencies
 import org.geotools.gp.Adapters;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
-import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.renderer.j2d.RenderedGridCoverage;

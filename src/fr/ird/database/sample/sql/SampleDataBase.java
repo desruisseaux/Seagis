@@ -295,7 +295,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
     public fr.ird.database.sample.SampleTable getSampleTable(final Collection<Species> species)
             throws SQLException
     {
-        final Set<Species> speciesSet = (species instanceof Set<Species>) ?
+        final Set<Species> speciesSet = (species instanceof Set) ?
               (Set<Species>) species : new LinkedHashSet<Species>(species);
         switch (getSampleTableType()) {
             case  1: return new PunctualSampleTable(connection, timezone, speciesSet);

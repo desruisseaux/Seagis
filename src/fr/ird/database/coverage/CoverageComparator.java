@@ -28,6 +28,9 @@ package fr.ird.database.coverage;
 // J2SE
 import java.util.Comparator;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.cs.AxisInfo;
@@ -36,7 +39,6 @@ import org.geotools.cs.Ellipsoid;
 import org.geotools.cs.AxisOrientation;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.MathTransform;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.CoordinateTransformation;
 import org.geotools.ct.CannotCreateTransformException;
 import org.geotools.ct.CoordinateTransformationFactory;

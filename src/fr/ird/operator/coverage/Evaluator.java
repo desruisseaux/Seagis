@@ -48,7 +48,7 @@ import org.geotools.ct.MathTransform1D;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cv.CannotEvaluateException;
-import org.geotools.resources.XAffineTransform;
+import org.geotools.resources.geometry.XAffineTransform;
 import org.geotools.resources.Utilities;
 import org.geotools.util.NumberRange;
 

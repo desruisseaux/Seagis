@@ -39,7 +39,6 @@ import javax.media.jai.iterator.RectIterFactory;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
-import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.Utilities;
 
 // Sesgis dependencies

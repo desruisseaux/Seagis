@@ -36,9 +36,11 @@ import java.sql.SQLException;
 // JAI dependencies
 import javax.media.jai.util.Range;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools dependencies
 import org.geotools.resources.Utilities;
-import org.geotools.ct.TransformException;
 import org.geotools.cs.GeographicCoordinateSystem;
 
 // Seagis dependencies

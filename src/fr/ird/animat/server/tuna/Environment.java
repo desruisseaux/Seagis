@@ -42,13 +42,15 @@ import java.sql.SQLException;
 // JAI
 import javax.media.jai.util.Range;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // OpenGIS et Geotools
 import org.opengis.cv.CV_Coverage;
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.cv.PointOutsideCoverageException;
-import org.geotools.ct.TransformException;
-import org.geotools.resources.XDimension2D;
+import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.Utilities;
 
 // Base de données et animats

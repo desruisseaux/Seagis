@@ -56,6 +56,9 @@ import java.util.logging.LogRecord;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.pt.CoordinatePoint;
@@ -63,7 +66,6 @@ import org.geotools.pt.MismatchedDimensionException;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.ct.MathTransform;
-import org.geotools.ct.TransformException;
 import org.geotools.ct.CoordinateTransformation;
 import org.geotools.ct.CoordinateTransformationFactory;
 import org.geotools.resources.CTSUtilities;

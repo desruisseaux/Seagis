@@ -33,12 +33,14 @@ import java.util.logging.LogRecord;
 import java.util.Arrays;
 import java.util.Date;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.cv.Coverage;
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
 
 // Base de données environnementales et de pêches
 import fr.ird.operator.coverage.Evaluator;

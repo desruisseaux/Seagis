@@ -43,8 +43,8 @@ import java.sql.SQLException;
 // Geotools
 import org.geotools.cs.Ellipsoid;
 import org.geotools.resources.XMath;
-import org.geotools.resources.Geometry;
 import org.geotools.resources.Arguments;
+import org.geotools.resources.geometry.ShapeUtilities;
 
 // Seagis
 import fr.ird.database.Table;
@@ -121,7 +121,7 @@ public class SampleTableFiller implements Table {
                 double x1 = Double.NaN;
                 double y1 = Double.NaN;
                 final double[] coords = new double[6];
-                final PathIterator it = shape.getPathIterator(null, Geometry.getFlatness(shape));
+                final PathIterator it = shape.getPathIterator(null, ShapeUtilities.getFlatness(shape));
                 while (!it.isDone()) {
                     switch (it.currentSegment(coords)) {
                         default: {
@@ -266,7 +266,7 @@ public class SampleTableFiller implements Table {
     private double computeCoastDistances(final Shape coast, final double px, final double py) {
         final double[]    coords = new double[6];
         final Rectangle2D bounds = coast.getBounds2D();
-        final PathIterator  iter = coast.getPathIterator(null, Geometry.getFlatness(coast));
+        final PathIterator  iter = coast.getPathIterator(null, ShapeUtilities.getFlatness(coast));
         double smallestDistance  = Double.POSITIVE_INFINITY;
         double x0=Double.NaN;
         double y0=Double.NaN;
@@ -296,7 +296,7 @@ public class SampleTableFiller implements Table {
             // APPROXIMATION IS THERE: 'nearestColinearPoint' is for a cartesian
             // coordinate system, not an ellipsoidal surface. This approximation
             // still okay if <code>coast</code> is build of many small segments.
-            final Point2D point = Geometry.nearestColinearPoint(x1, y1, x2, y2, px, py);
+            final Point2D point = ShapeUtilities.nearestColinearPoint(x1, y1, x2, y2, px, py);
             final double distance = ellipsoid.orthodromicDistance(point.getX(), point.getY(), px, py);
             if (distance<smallestDistance) {
                 smallestDistance=distance;

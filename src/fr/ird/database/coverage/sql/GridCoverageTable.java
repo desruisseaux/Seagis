@@ -73,8 +73,8 @@ import org.geotools.util.RangeSet;
 // Geotools dependencies (resources)
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.XDimension2D;
-import org.geotools.resources.XRectangle2D;
+import org.geotools.resources.geometry.XDimension2D;
+import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
 import fr.ird.resources.seagis.Resources;

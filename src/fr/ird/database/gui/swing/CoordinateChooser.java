@@ -50,7 +50,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
 // Geotools
-import org.geotools.resources.XDimension2D;
+import org.geotools.resources.geometry.XDimension2D;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.tree.TreeNode;
 import org.geotools.gui.swing.tree.Trees;

@@ -48,10 +48,12 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import javax.media.jai.ParameterList;
 
+// OpenGIS
+import org.opengis.referencing.operation.TransformException;
+
 // Geotools
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
-import org.geotools.ct.TransformException;
 import org.geotools.gp.GridCoverageProcessor; // Pour javadoc
 import org.geotools.cv.PointOutsideCoverageException;
 import org.geotools.resources.Utilities;
