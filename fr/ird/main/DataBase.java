@@ -37,6 +37,7 @@ import fr.ird.layer.control.LayerControl;
 import fr.ird.layer.control.ImageLayerControl;
 import fr.ird.layer.control.CatchLayerControl;
 import fr.ird.layer.control.VectorLayerControl;
+import fr.ird.layer.control.IsolineLayerControl;
 
 // Logger
 import java.util.logging.Logger;
@@ -213,6 +214,7 @@ public final class DataBase
             layers.add(new VectorLayerControl(currents, 1, 2));
         }
         final FisheryDataBase fisheries = getFisheryDataBase();
+        layers.add(new IsolineLayerControl());
         layers.add(new CatchLayerControl(fisheries));
         return layers.toArray(new LayerControl[layers.size()]);
     }

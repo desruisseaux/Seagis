@@ -25,25 +25,22 @@
  */
 package fr.ird.layer.control;
 
-// OpenGIS dependencies (SEAGIS)
-import net.seagis.gc.GridCoverage;
-
-// Databases and images
+// Input/output and images
 import java.io.IOException;
 import java.sql.SQLException;
 import fr.ird.sql.image.ImageEntry;
+import java.io.FileNotFoundException;
 
 // Map components
 import net.seas.map.Layer;
-import net.seas.map.layer.GridCoverageLayer;
-import fr.ird.operator.coverage.Operation;
+import net.seas.map.Isoline;
+import net.seas.map.layer.IsolineLayer;
 
 // Graphical user interface
 import java.awt.Color;
 import javax.swing.JComponent;
-import javax.swing.JToggleButton;
-import javax.swing.AbstractButton;
 import javax.swing.event.EventListenerList;
+import net.seas.awt.ExceptionMonitor;
 
 // Miscellaneous
 import java.util.Date;
@@ -52,33 +49,56 @@ import fr.ird.resources.ResourceKeys;
 
 
 /**
- * Couche contenant une image. Certaines opérations pourront être
- * appliquées sur les images, comme par exemple une convolution.
+ * Couche contenant une bathymétrie.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public final class ImageLayerControl extends LayerControl
+public final class IsolineLayerControl extends LayerControl
 {
+    /**
+     * Factories for isolines.
+     */
+    private static final IsolineFactory[] FACTORIES;
+    static
+    {
+        try
+        {
+            FACTORIES = new IsolineFactory[]
+            {
+                new IsolineFactory("Méditerranée")
+            };
+        }
+        catch (FileNotFoundException exception)
+        {
+            throw new ExceptionInInitializerError(exception);
+        }
+    }
+
+    /**
+     * The default set of selected values.
+     */
+    private static final float[] DEFAULT_VALUES = new float[1];
+
     /**
      * Objet à utiliser pour configurer l'affichage des images.
      */
-    private transient ImageControlPanel controler;
+    private transient IsolineControlPanel controler;
 
     /**
-     * Construit une couche des images.
+     * Construit une couche de la bathymétrie.
      */
-    public ImageLayerControl()
-    {super(true);}
+    public IsolineLayerControl()
+    {super(false);}
 
     /**
      * Retourne le nom de cette couche.
      */
     public String getName()
-    {return Resources.format(ResourceKeys.IMAGES);}
+    {return Resources.format(ResourceKeys.BATHYMETRY);}
 
     /**
-     * Retourne une couche appropriée pour l'image spécifiée. Cette méthode peut être
+     * Retourne une couche appropriée pour l'image spécifié. Cette méthode peut être
      * appelée de n'importe quel Thread, généralement pas celui de <i>Swing</i>.
      *
      * @param  layer Couche à configurer. Si non-nul, alors cette couche doit
@@ -94,23 +114,28 @@ public final class ImageLayerControl extends LayerControl
      */
     public Layer configLayer(final Layer layer, final ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
-        GridCoverage coverage = entry.getGridCoverage(listeners);
-        if (coverage==null)
+        if (layer!=null)
         {
-            return null;
+            // TODO: vérifier si c'est la bonne bathymétrie.
         }
+        final float[] values;
         synchronized(this)
         {
             if (controler!=null)
             {
-                final Operation operation=controler.getSelectedOperation();
-                if (operation!=null)
-                    coverage = operation.filter(coverage);
+                values = controler.getSelectedValues();
             }
+            else values = DEFAULT_VALUES;
         }
-        final GridCoverageLayer clayer = new GridCoverageLayer(coverage);
-        clayer.setZOrder(Float.NEGATIVE_INFINITY);
-        return clayer;
+        IsolineFactory factory = FACTORIES[0]; // TODO: Select the right factory
+        final Isoline[] isolines = factory.get(values);
+        final IsolineLayer[] layers = new IsolineLayer[Math.min(isolines.length, 1)]; // TODO: length should be isolines.length
+        for (int i=0; i<layers.length; i++)
+        {
+            layers[i] = new IsolineLayer(isolines[i]);
+            layers[i].setContour(Color.white);  // TODO: Set colors
+        }
+        return (layers.length!=0) ? layers[0] : null; // TODO: display all isolines
     }
 
     /**
@@ -120,24 +145,32 @@ public final class ImageLayerControl extends LayerControl
      */
     protected void showControler(final JComponent owner)
     {
-        final Operation oldOperation;
-        final Operation newOperation;
+        final Object oldContent;
         synchronized(this)
         {
             if (controler==null)
             {
-                controler = new ImageControlPanel();
+                controler = new IsolineControlPanel();
+                for (int i=0; i<FACTORIES.length; i++) try
+                {
+                    controler.addValues(FACTORIES[i].getAvailableValues());
+                }
+                catch (IOException exception)
+                {
+                    ExceptionMonitor.show(owner, exception);
+                }
+                controler.setSelectedValues(DEFAULT_VALUES); // Must be last.
             }
-            oldOperation = controler.getSelectedOperation();
+            oldContent = controler.mark();
         }
         if (controler.showDialog(owner)) synchronized(this)
         {
-            newOperation = controler.getSelectedOperation();
+            final Object newContent = controler.mark();
             fireStateChanged(new Edit()
             {
                 protected void edit(final boolean redo)
                 {
-                    controler.setSelectedOperation(redo ? newOperation : oldOperation);
+                    controler.reset(redo ? newContent : oldContent);
                 }
             });
         }

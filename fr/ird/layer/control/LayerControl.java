@@ -121,8 +121,8 @@ public abstract class LayerControl
                     protected void edit(final boolean redo)
                     {
                         final boolean s = redo ? selected : !selected;
-                        selector.setSelected(selected);
-                        trigger .setEnabled (selected);
+                        selector.setSelected(s);
+                        trigger .setEnabled (s);
                     }
                 });
             }
@@ -334,22 +334,6 @@ public abstract class LayerControl
          */
         protected Edit()
         {}
-
-        /**
-         * Indique si cette édition peut être annulée. L'implémentation
-         * par défaut retournera toujours <code>false</code> si la couche
-         * n'est pas affichée.
-         */
-        public boolean canUndo()
-        {return super.canUndo() && selector.isEnabled();}
-
-        /**
-         * Indique si cette édition peut être refaite. L'implémentation
-         * par défaut retournera toujours <code>false</code> si la couche
-         * n'est pas affichée.
-         */
-        public boolean canRedo()
-        {return super.canRedo() && selector.isEnabled();}
 
         /**
          * Annule cette édition.  L'implémentation par défaut appelle

@@ -49,15 +49,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InvalidClassException;
 import java.net.URISyntaxException;
 
 // Compression
+import java.util.zip.CRC32;
 import java.util.zip.ZipFile;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import java.util.zip.CheckedOutputStream;
 
 // Logging
 import java.util.logging.Level;
@@ -152,7 +155,13 @@ public abstract class IsolineFactory
     /**
      * Parse an input source and read all isolines that it contains.
      * This method is invoked the first time the user calls {@link #get}.
-     * If possible, isolines will be saved in a cache file for future use.
+     * Typical implementation will looks like this:
+     *
+     * <blockquote><pre>
+     *  final GEBCOReader reader = new GEBCOReader();
+     *  reader.setInput(new File("myInputFile.asc"));
+     *  return reader.read();
+     * </pre></blockquote>
      *
      * @return All parsed isolines.
      * @throws IOException if the reader can't be created.
@@ -234,8 +243,7 @@ public abstract class IsolineFactory
      * Most voluminous data (like the array of points defining ploygons) are
      * shared among all clones.
      *
-     * @param  values The requested values. Values should be in increasing order.
-     *         An exception may be thrown if this condition is not respected.
+     * @param  values The requested values.
      * @return An array of isoline clones at the specified values. This array has
      *         the same length then <code>values</code>. Some array's element may
      *         be <code>null</code>  if there is no isoline for the corresponding
@@ -244,7 +252,9 @@ public abstract class IsolineFactory
      */
     public synchronized Isoline[] get(final float[] values) throws IOException
     {
-        final Isoline[] result = new Isoline[values.length];
+        final float[]   sortedValues = (float[]) values.clone();
+        final Isoline[] sortedResult = new Isoline[values.length];
+        Arrays.sort(sortedValues);
         Object input = null;
         if (isolines==null)
         {
@@ -257,16 +267,26 @@ public abstract class IsolineFactory
             input = open("get");
             if (isolines==null)
             {
-                return result;
+                // All elements are null.
+                return sortedResult;
             }
         }
         /*
          * For each requested isoline, try to fetch
          * the isoline from the memory cache.
          */
-  fill: for (int i=0; i<values.length; i++)
+  fill: for (int i=0; i<sortedValues.length; i++)
         {
-            final Float key = new Float(values[i]);
+            float floatValue = sortedValues[i];
+            Float key = new Float(floatValue);
+            if (floatValue==0 && !isolines.containsKey(key))
+            {
+                // Special case for the 0 isoline: +0 and -0 are not equals for
+                // the 'Float' class. If the user asked for the 0 meter isoline,
+                // we may have to look at the -0 meter isoline instead.
+                floatValue = -floatValue;
+                key = new Float(floatValue);
+            }
             final Reference reference = isolines.get(key);
             if (reference!=null)
             {
@@ -275,7 +295,7 @@ public abstract class IsolineFactory
                 {
                     // An isoline has been found in the cache. Put
                     // it in they array (we will clone it later).
-                    result[i] = iso;
+                    sortedResult[i] = iso;
                     continue fill;
                 }
             }
@@ -290,7 +310,7 @@ public abstract class IsolineFactory
              * we know that one should be available.  Try to load
              * it from the serialized cache.
              */
-            final String value = getName(values[i]);
+            final String value = getName(floatValue);
             if (input==null)
             {
                 input = open("get");
@@ -305,7 +325,7 @@ public abstract class IsolineFactory
                 final ZipEntry entry = zip.getEntry(value);
                 if (entry!=null)
                 {
-                    result[i] = load(new BufferedInputStream(zip.getInputStream(entry)), true);
+                    sortedResult[i] = load(new BufferedInputStream(zip.getInputStream(entry)), true);
                     continue fill;
                 }
             }
@@ -321,7 +341,7 @@ public abstract class IsolineFactory
                 {
                     if (entry.getName().equalsIgnoreCase(value))
                     {
-                        result[i] = load(zip, false);
+                        sortedResult[i] = load(zip, false);
                         zip.closeEntry();
                         continue fill;
                     }
@@ -342,10 +362,21 @@ public abstract class IsolineFactory
          * garbage collection (which would defect the purpose
          * of this cache).
          */
-        for (int i=0; i<result.length; i++)
+        final Isoline[] result = new Isoline[sortedResult.length];
+        for (int i=0; i<values.length; i++)
         {
-            if (result[i] != null)
-                result[i] = new Cloned(result[i]);
+            final int index = Arrays.binarySearch(sortedValues, values[i]);
+            if (index < 0)
+            {
+                // Should not happen
+                warning("get", ResourceKeys.ERROR_MISSING_ISOLINE_$1, new Float(values[i]));
+                continue;
+            }
+            final Isoline iso = sortedResult[index];
+            if (iso != null)
+            {
+                result[i] = new Cloned(iso);
+            }
         }
         return result;
     }
@@ -527,11 +558,9 @@ public abstract class IsolineFactory
      */
     private void save(final Isoline[] isolines) throws IOException
     {
-        if (cacheFile==null)
-        {
-            return;
-        }
-        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile)));
+        final ZipOutputStream out = new ZipOutputStream(
+                (cacheFile!=null) ? new FileOutputStream(cacheFile) :
+                                    cacheURL.openConnection().getOutputStream());
         out.setComment("Serialized Java objects: net.seas.map.Isoline");
         out.setLevel(Deflater.BEST_COMPRESSION);
         /*
@@ -542,18 +571,26 @@ public abstract class IsolineFactory
          *   - Then all values are written as 'float'.
          */
         Arrays.sort(isolines);
+        final ByteArrayOutputStream buffer = new ByteArrayOutputStream(4096);
         if (true)
         {
-            final ZipEntry entry = new ZipEntry("index");
-            entry.setMethod(ZipEntry.STORED);
-            out.putNextEntry(entry);
-            final DataOutputStream stream = new DataOutputStream(out);
-            stream.writeInt(isolines.length);
+            final CheckedOutputStream checked = new CheckedOutputStream(buffer, new CRC32());
+            final DataOutputStream dataStream = new DataOutputStream(checked);
+            dataStream.writeInt(isolines.length);
             for (int i=0; i<isolines.length; i++)
             {
-                stream.writeFloat(isolines[i].value);
+                dataStream.writeFloat(isolines[i].value);
             }
-            stream.flush();
+            dataStream.close();
+            final int size = buffer.size();
+
+            final ZipEntry entry = new ZipEntry("index");
+            entry.setMethod(ZipEntry.STORED);
+            entry.setCompressedSize(size);
+            entry.setSize(size);
+            entry.setCrc(checked.getChecksum().getValue());
+            out.putNextEntry(entry);
+            buffer.writeTo(out);
             out.closeEntry();
         }
         /*
@@ -561,14 +598,15 @@ public abstract class IsolineFactory
          */
         for (int i=0; i<isolines.length; i++)
         {
+            buffer.reset();
             final Isoline isoline = isolines[i];
-            final ZipEntry  entry = new ZipEntry(getName(isoline.value));
+            final ObjectOutputStream dataStream = new ObjectOutputStream(buffer);
+            dataStream.writeObject(isoline);
+            dataStream.close();
+
+            final ZipEntry entry = new ZipEntry(getName(isoline.value));
             out.putNextEntry(entry);
-
-            final ObjectOutputStream stream = new ObjectOutputStream(out);
-            stream.writeObject(isoline);
-            stream.flush();
-
+            buffer.writeTo(out);
             out.closeEntry();
         }
         out.close();
