@@ -418,8 +418,8 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
         public Provider(final int numRow, final int numCol)
         {
             super("Affine", ResourceKeys.AFFINE_TRANSFORM, null);
-            put("Num_row", numRow, POSITIVE_RANGE); // Add integer (not double) parameter
-            put("Num_col", numCol, POSITIVE_RANGE); // Add integer (not double) parameter
+            putInt("Num_row", numRow, POSITIVE_RANGE); // Add integer (not double) parameter
+            putInt("Num_col", numCol, POSITIVE_RANGE); // Add integer (not double) parameter
             final StringBuffer buffer=new StringBuffer("elt_");
             for (int j=0; j<=numRow; j++)
             {

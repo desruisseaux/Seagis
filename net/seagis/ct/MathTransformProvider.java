@@ -220,7 +220,7 @@ public abstract class MathTransformProvider
      * @throws IllegalStateException If {@link #getParameterList}
      *         has already been invoked prior to this call.
      */
-    final void put(final String parameter, final int defaultValue, final Range range) throws IllegalStateException
+    final void putInt(final String parameter, final int defaultValue, final Range range) throws IllegalStateException
     {put(parameter, Integer.class, new Integer(defaultValue), range);}
 
     /**

@@ -521,7 +521,7 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
             super(inverse ? "Geocentric_To_Ellipsoid" : "Ellipsoid_To_Geocentric", 0/*ResourceKeys.GEOCENTRIC_TRANSFORM*/, null); // TODO
             put("semi_major", Double.NaN, POSITIVE_RANGE);
             put("semi_minor", Double.NaN, POSITIVE_RANGE);
-            put("dim_geoCS", 3, DIM_RANGE); // Custom parameter: NOT AN OPENGIS SPECIFICATION
+            putInt("dim_geoCS", 3, DIM_RANGE); // Custom parameter: NOT AN OPENGIS SPECIFICATION
             this.inverse = inverse;
         }
 
