@@ -82,9 +82,8 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
     }
 
     /**
-     * Retourne la {@link Observation#getValue valeur d'une observation}. L'implémentation
-     * par défaut retourne <code>data[0]</code> à la condition que <code>data</code> ne soit
-     * pas nul et aie une longueur d'au moins <code>1</code>.
+     * Retourne la {@link Observation#getValue valeur d'une observation}.
+     * L'implémentation par défaut retourne <code>data[0]</code>.
      *
      * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
      *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
@@ -92,14 +91,12 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
      * @return La valeur de l'observation, ou {@link Float#NaN} si aucune valeur n'est disponible.
      */
     protected float getValue(final float[] data) {
-        return (data!=null && data.length!=0) ? data[0] : Float.NaN;
+        return data[0];
     }
 
     /**
      * Retourne la {@linkplain Observation#getLocation position d'une observation}.
      * L'implémentation par défaut retourne (<code>data[1]</code>,<code>data[2]</code>)
-     * à la condition que <code>data</code> ne soit pas nul et aie une longueur d'au
-     * moins <code>3</code>.
      *
      * @param  data Les valeurs extraites d'une {@linkplain Coverage couverture} de données à
      *         la position de l'animal. Ces valeurs sont généralement obtenues par la methode
@@ -108,14 +105,7 @@ public class Parameter implements fr.ird.animat.Parameter, Serializable {
      *         disposible ou si cette information ne s'applique pas à ce paramètre.
      */
     protected Point2D getLocation(final float[] data) {
-        if (data!=null && data.length>=3) {
-            final float x = data[1];
-            final float y = data[2];
-            if (!Float.isNaN(x) && !Float.isNaN(y)) {
-                return new Point2D.Float(x,y);
-            }
-        }
-        return null;
+        return new Point2D.Float(data[1],data[2]);
     }
 
     /**

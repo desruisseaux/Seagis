@@ -28,6 +28,8 @@ package fr.ird.animat.impl;
 // J2SE
 import java.util.Set;
 import java.util.Date;
+import java.util.Iterator;
+import java.io.Serializable;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -35,9 +37,11 @@ import java.rmi.server.RemoteObject;
 
 // Geotools
 import org.geotools.cs.Ellipsoid;
+import org.geotools.cv.Coverage;
 
-// Animats
+// Seagis
 import fr.ird.animat.Species;
+import fr.ird.util.ArraySet;
 
 
 /**
@@ -63,15 +67,30 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     private static final int Y_OFFSET = 2;
 
     /**
-     * La population à laquelle appartient cet animal, ou <code>null</code>
-     * si l'animal est mort.
+     * La longueur des enregistrements lorsqu'ils comprennent la position de l'observation.
+     */
+    private static final int LOCATED_LENGTH = 3;
+
+    /**
+     * La longueur des enregistrements lorsqu'ils ne comprennent que la valeur de l'observation.
+     */
+    private static final int SCALAR_LENGTH = 1;
+
+    /**
+     * La population à laquelle appartient cet animal, ou <code>null</code> si l'animal est mort.
+     *
+     * @see #getPopulation
+     * @see #migrate
      */
     private Population population;
 
     /**
      * Espèce à laquelle appartient cet animal.
+     *
+     * @see #getSpecies
+     * @see #metamorphose
      */
-    private final Species species;
+    private Species species;
 
     /**
      * Horloge de l'animal. Chaque animal peut avoir une horloge qui lui est propre.
@@ -114,6 +133,8 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *
      * @return La population à laquelle appartient cet animal,
      *         ou <code>null</code> si l'animal est mort.
+     *
+     * @see #migrate
      */
     public Population getPopulation() {
         return population;
@@ -123,6 +144,8 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      * Retourne l'espèce à laquelle appartient cet animal.
      *
      * @return L'espèce à laquelle appartient cet animal.
+     *
+     * @see #metamorphose
      */
     public Species getSpecies() {
         return species;
@@ -145,12 +168,11 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     }
 
     /**
-     * Retourne les paramètres intéressant l'animal au pas de temps courant. Ces paramètres sont
-     * souvent les mêmes durant toute la durée de vie de l'animal. Toutefois, les changements en
-     * cours de route sont autorisés. Pour connaître les paramètres observés par l'animal durant
-     * un pas de temps passé, on peut utiliser {@link #getObservations}.
+     * Retourne tous les paramètres susceptibles d'intéresser cet animal. Cet ensemble de
+     * paramètres doit être immutable et constant pendant toute la durée de vie de l'animal.
      *
-     * @return Les paramètres intéressant l'animal pendant le pas de temps courant.
+     * @return L'ensemble des paramètres suceptibles d'intéresser l'animal durant les pas de
+     *         temps passés, pendant le pas de temps courant ou dans un pas de temps futur.
      */
     public abstract Set<fr.ird.animat.Parameter> getParameters();
 
@@ -164,18 +186,22 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      *         pendant la durée de vie de cet animal.
      */
     public Set<fr.ird.animat.Observation> getObservations(Date time) {
-        // TODO: La ligne suivante suppose que les paramètres observés n'ont pas changé durant
-        //       la simulation, ce qui n'est pas garantit.
         final Set<fr.ird.animat.Parameter> parameters = getParameters();
-        final fr.ird.animat.Observation[] obs = new fr.ird.animat.Observation[parameters.size()];
-        int offset = clock.getStepSequenceNumber(time);
-//TODO        offset *= recordLength;
-        for (int i=0; i<obs.length; i++) {
-            final Parameter param = null; // TODO
+        final Observation[] obs = new Observation[parameters.size()];
+        int i=0,offset=0;
+        for (final Iterator it=parameters.iterator(); it.hasNext();) {
+            final Parameter param = (Parameter) it.next();
             obs[i] = new Observation(param, offset);
-//TODO            offset += recordLength;
+            offset += param.isLocalized() ? LOCATED_LENGTH : SCALAR_LENGTH;
+            i++;
         }
-        return null; // TODO
+        final float[] data = new float[offset];
+        offset *= clock.getStepSequenceNumber(time);
+        System.arraycopy(observations, offset, data, 0, data.length);
+        while (--i>=0) {
+            obs[i].observations = data;
+        }
+        return new ArraySet((fr.ird.animat.Observation[]) obs);
     }
 
     /**
@@ -205,11 +231,27 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
     protected abstract void move(float duration);
 
     /**
-     * Définit les observations de l'animal pour le pas de temps courant.
+     * Mémorise des observations sur l'environnement actuel de l'animal.
+     *
+     * @throws IllegalStateException si cet animal est mort.
      */
-    protected void setObservations(final float[] observations) {
-        final int timeStep = clock.getStepSequenceNumber();
-        // TODO
+    protected void observe() throws IllegalStateException {
+        synchronized (getTreeLock()) {
+            final Population population = getPopulation();
+            if (population == null) {
+                throw new IllegalStateException("L'animal est mort.");
+            }
+            final Environment environment = population.getEnvironment();
+            float[] samples = environment.tmpSamples;
+            float[] buffer  = environment.tmpObservations;
+            final Set<fr.ird.animat.Parameter> parameters = getParameters();
+            for (final Iterator<fr.ird.animat.Parameter> it=parameters.iterator(); it.hasNext();) {
+                final Parameter parameter = (Parameter) it.next();
+                final Coverage coverage = environment.getCoverage(parameter);
+                samples = coverage.evaluate(null, samples); // TODO
+            }
+            final int timeStep = clock.getStepSequenceNumber();
+        }
     }
 
     /**
@@ -222,12 +264,18 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      * peut considérer qu'il a rejoint une nouvelle population d'individus avec une autre
      * dynamique.
      *
+     * @param  population La nouvelle population de cet animal.
+     * @throws IllegalStateException si cet animal était mort.
+     *
+     * @see #getPopulation
      * @see Population#getAnimals
-     * @see #kill
      */
-    public void migrate(final Population population) {
+    public void migrate(final Population population) throws IllegalStateException {
         synchronized (getTreeLock()) {
             final Population oldPopulation = this.population;
+            if (oldPopulation == null) {
+                throw new IllegalStateException("L'animal est mort.");
+            }
             if (oldPopulation != population) {
                 oldPopulation.animals.remove(this);
                 this.population = population;
@@ -235,6 +283,15 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
                 oldPopulation.firePopulationChanged();
                 population.firePopulationChanged();
             }
+        }
+    }
+
+    /**
+     * 
+     */
+    public void metamorphose(final Species species) {
+        synchronized (getTreeLock()) {
+            this.species = species;
         }
     }
 
@@ -267,11 +324,30 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class Observation implements fr.ird.animat.Observation {
+    private static final class Observation implements fr.ird.animat.Observation, Serializable {
+        /**
+         * Numéro de série pour compatibilité entre différentes versions.
+         */
+//        private static final long serialVersionUID = -1934991927931117874L;
+
         /**
          * Le paramètre observé.
          */
         private final Parameter parameter;
+
+        /**
+         * L'ensemble des observations de cet animal pour le pas de temps examiné.
+         * Ce tableau n'est qu'un extrait du tableau {@link Animal#observations},
+         * qui contient la totalité des observations de l'animal. Nous n'utilisons
+         * qu'un extrait afin d'accélérer les transfert via le réseau dans le cas
+         * d'une utilisation avec les RMI. Toutefois, tous les objets {@link Observation}
+         * d'un même pas de temps partageront une référence vers le même tableau
+         * <code>observations</code>, afin de diminuer la charge sur le ramasse-miette.
+         *
+         * Ce champ sera ajusté par {@link Animal#getObservations} après la
+         * construction de cet objet.
+         */
+        float[] observations;
 
         /**
          * Position de l'observation dans le tableau {@link #observations}.
@@ -281,19 +357,15 @@ public abstract class Animal extends RemoteObject implements fr.ird.animat.Anima
         /**
          * Construit une observation pour le paramètre spécifié.
          *
-         * @param parameter Le paramètre observé.
-         * @param offset    Le début de l'enregistrement pour cette observation.
+         * @param parameter    Le paramètre observé.
+         * @param offset       Index du premier élément à prendre en compte dans
+         *                     {@link #observation}.
          */
-        public Observation(final Parameter parameter, final int offset) {
+        public Observation(final Parameter parameter,
+                           final int offset)
+        {
             this.parameter = parameter;
             this.offset    = offset;
-        }
-        
-        /**
-         * Retourne l'animal qui a fait cette observation.
-         */
-        public Animal getAnimal() {
-            return Animal.this;
         }
 
         /**

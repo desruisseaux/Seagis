@@ -34,6 +34,8 @@ import java.util.NoSuchElementException;
 import javax.swing.event.EventListenerList;
 import java.rmi.server.RemoteServer;
 import java.rmi.RemoteException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 // OpenGIS et Geotools
 import org.geotools.cv.Coverage;
@@ -113,6 +115,29 @@ public class Environment extends RemoteServer implements fr.ird.animat.Environme
      * dans {@link #queue}, seront synchronisés sur cette horloge.
      */
     private final Clock clock;
+
+    /**
+     * Un buffer utilisé temporairement pour contenir les informations extraites des bandes
+     * des objets {@link Coverage}. Ce buffer est réutilisé par {@link Animal#observe} autant
+     * que possible afin de réduire la quantité d'objets créés sur le tas. Cela suppose
+     * évidemment qu'il n'y aura pas deux animaux utilisant ce buffer en même temps.
+     */
+    transient float[] tmpSamples = new float[50];
+
+    /**
+     * Un buffer utilisé temporairement par {@link Animal#observe} pour stoker des observations.
+     * Cela suppose évidemment qu'il n'y aura pas deux animaux utilisant ce buffer en même temps.
+     */
+    transient float[] tmpObservations = new float[50];
+
+    /**
+     * Reconstruit les informations qui n'ont pas été sauvegardées lors de la serialisation.
+     */
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        tmpSamples      = new float[50];
+        tmpObservations = new float[50];
+    }
 
     /**
      * Construit un environnement par défaut.
