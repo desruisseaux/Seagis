@@ -55,6 +55,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
 // Resources
+import net.seagis.resources.Naming;
 import net.seagis.resources.WeakHashSet;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
@@ -135,13 +136,6 @@ public class MathTransformFactory
     {
         if (DEFAULT==null)
         {
-            /*
-             * NOTE: Current implementation of  Projection.getParameterList() assume
-             *       that the default  MathTransformFactory.getMathTransformProvider
-             *       looks only for projections.  Implementation needs update if the
-             *       array below contains some transforms of an other kind than
-             *       MapProjection.
-             */
             DEFAULT = new MathTransformFactory(new MathTransformProvider[]
             {
                 new           MercatorProjection.Provider(),
@@ -152,6 +146,15 @@ public class MathTransformFactory
                 new TransverseMercatorProjection.Provider(false), // Universal
                 new TransverseMercatorProjection.Provider(true)   // Modified
             });
+            for (int i=DEFAULT.providers.length; --i>=0;)
+            {
+                final MathTransformProvider provider = DEFAULT.providers[i];
+                if (provider instanceof MapProjection.Provider)
+                {
+                    // Register only projections.
+                    Naming.PROJECTIONS.bind(provider.getClassName(), provider.getParameterListDescriptor());
+                }
+            }
         }
         return DEFAULT;
     }
@@ -441,7 +444,7 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no transform for the specified classification.
      *
      * @deprecated Use <code>getMathTransformProvider(classification).getName(locale)</code> instead.
-     *             This method will be removed in the next version.
+     *             This method will be removed in the next release.
      */
     public String getName(final String classification, final Locale locale) throws NoSuchElementException
     {return getMathTransformProvider(classification).getName(locale);}
@@ -459,7 +462,7 @@ public class MathTransformFactory
      *         specified classification.
      *
      * @deprecated getMathTransformProvider(classification).getParameterList() instead.
-     *             This method will be removed in the next version.
+     *             This method will be removed in the next release.
      */
     public ParameterList getParameterList(final String classification) throws NoSuchElementException
     {return getMathTransformProvider(classification).getParameterList();}

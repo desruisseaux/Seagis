@@ -39,19 +39,19 @@ import org.opengis.cs.CS_ProjectionParameter;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.ParameterListDescriptor;
-import net.seagis.ct.MissingParameterException;
 import net.seagis.ct.MathTransformProvider;
-import net.seagis.ct.MathTransformFactory;
+import net.seagis.ct.MissingParameterException;
+
+// Collections
+import java.util.Map;
 
 // Miscellaneous
-import java.util.Map;
-import java.util.Arrays;
+import javax.units.Unit;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
-import java.util.NoSuchElementException;
-import javax.units.Unit;
 
 // Resources
+import net.seagis.resources.Naming;
 import net.seagis.resources.Utilities;
 
 
@@ -106,7 +106,8 @@ public class Projection extends Info
 
     /**
      * Creates a projection. The set of parameters (<code>parameters</code>) may be queried with
-     * <code>{@link MathTransformFactory#getMathTransformProvider MathTransformFactory.getMathTransformProvider}(classification).{@link
+     * <code>{@link net.seagis.ct.MathTransformFactory#getMathTransformProvider
+     *              MathTransformFactory.getMathTransformProvider}(classification).{@link
      *              MathTransformProvider#getParameterList getParameterList()}</code>.
      *
      * @param name           Name to give new object.
@@ -140,22 +141,12 @@ public class Projection extends Info
     }
 
     /**
-     * Returns a default parameter list for the specified classification name.
-     * <STRONG>Note: This method has a lot of indirect dependencies to the CT
-     * package</STRONG>.
+     * Returns a parameter list for the specified classification.
+     * If there is no special parameter descriptor for the specified
+     * classification, then a default descriptor is used.
      */
     static ParameterList getParameterList(final String classification)
-    {
-        try
-        {
-            return MathTransformFactory.getDefault().getMathTransformProvider(classification).getParameterList();
-        }
-        catch (NoSuchElementException exception)
-        {
-            // Ignore: use a default parameters set.
-        }
-        return new ParameterListImpl(MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);
-    }
+    {return Naming.PROJECTIONS.getParameterList(classification, MathTransformProvider.DEFAULT_PROJECTION_DESCRIPTOR);}
 
     /**
      * Initialize a list of parameter from the specified ellipsoid and points.
@@ -197,7 +188,10 @@ public class Projection extends Info
      */
     private static ParameterList clone(final ParameterList list)
     {
-        if (list==null) return null;
+        if (list==null)
+        {
+            return null;
+        }
         final ParameterListDescriptor descriptor = list.getParameterListDescriptor();
         final ParameterList copy = new ParameterListImpl(descriptor);
         final String[] names = descriptor.getParamNames();
