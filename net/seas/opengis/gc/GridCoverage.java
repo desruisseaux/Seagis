@@ -22,8 +22,9 @@
  */
 package net.seas.opengis.gc;
 
-// Coverage
+// OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cv.Coverage;
+import net.seas.opengis.cs.CoordinateSystem;
 
 // Miscellaneous
 import javax.media.jai.Histogram;
@@ -42,10 +43,10 @@ import javax.media.jai.Histogram;
 public abstract class GridCoverage extends Coverage
 {
     /**
-     * Default constructor.
+     * Construct a grid coverage with the specified coordinate system.
      */
-    public GridCoverage()
-    {}
+    public GridCoverage(final CoordinateSystem coordinateSystem)
+    {super(coordinateSystem);}
 
     /**
      * Returns <code>true</code> if grid data can be edited.

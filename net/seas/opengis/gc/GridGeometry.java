@@ -64,7 +64,7 @@ public class GridGeometry implements Serializable
 
     /**
      * The math transform. If <code>null</code>, will be
-     * computed from {@link #transformJAI} when requested.
+     * computed from <code>transformJAI</code> when requested.
      */
     private MathTransform transform;
 

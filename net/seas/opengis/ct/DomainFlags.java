@@ -149,7 +149,7 @@ public final class DomainFlags extends EnumeratedParameter
 
     /**
      * <FONT COLOR="#FF6633">Returns a combination of two domain flags.</FONT>
-     * This is equivalent to <code>getEnum(this.{@link #value}&nbsp;|&nbsp;flags.value)</code>.
+     * This is equivalent to <code>getEnum(this.getValue()&nbsp;|&nbsp;flags.getValue())</code>.
      */
     public DomainFlags or(final DomainFlags flags)
     {return getEnum(getValue() | flags.getValue());}

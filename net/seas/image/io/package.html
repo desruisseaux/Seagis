@@ -13,7 +13,31 @@
     written as decimal numbers. Such kinds of stream are not uncommon in the
     remote sensing field. They often contain geophysical values (e.g.
     temperature in Celsius degrees, elevation in metres, etc.) better
-    represented as float numbers than integers.</P>
+    represented as floating point numbers than integers. For example,
+    a user may want to read an ASCII file containing gridded elevation
+    on the ocean floor (left side below). {@link net.seas.image.io.TextRecordImageReader}
+    can read such file, detect automatically minimum and maximum values (in order
+    to scale the grayscale palette) and produce the image below:</P>
+
+    <P ALIGN="justify"></P>
+    <TABLE ALIGN="center">
+      <TR>
+        <TD><PRE>
+Longitude Latitude Altitude
+59.9000   -30.0000   -3022&nbsp;
+59.9333   -30.0000   -3194&nbsp;
+59.9667   -30.0000   -3888&nbsp;
+60.0000   -30.0000   -3888&nbsp;
+45.0000   -29.9667   -2502&nbsp;
+45.0333   -29.9667   -2502&nbsp;
+45.0667   -29.9667   -2576&nbsp;
+45.1000   -29.9667   -2576&nbsp;
+</PRE>etc...</TD>
+        <TD>
+          <IMG SRC="{@docRoot}/doc-files/images/io/Sandwell.jpeg">
+        </TD>
+      </TR>
+    </TABLE>
 
     <P ALIGN="justify">By default, {@link net.seas.image.io.SimpleImageReader}
     store decoded image using data type {@link java.awt.image.DataBuffer#TYPE_FLOAT}
