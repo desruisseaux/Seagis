@@ -56,6 +56,7 @@ import javax.media.jai.iterator.WritableRectIter;
 // Geometry
 import java.awt.Shape;
 import java.awt.Rectangle;
+import java.awt.Dimension;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
@@ -533,7 +534,8 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
             final Rectangle2D        srcRect = (area!=null) ? area.getBounds2D() : bounds;
             final Rectangle          dstRect = (Rectangle) XAffineTransform.transform(transform, srcRect, new Rectangle());
             final ColorModel      colorModel = catg[0].getCategoryList().getColorModel(true, catg.length);
-            final SampleModel    sampleModel = colorModel.createCompatibleSampleModel(ImageAdapter.toTileSize(dstRect.width), ImageAdapter.toTileSize(dstRect.height));
+            final Dimension         tileSize = net.seagis.resources.Images.toTileSize(dstRect.getSize());
+            final SampleModel    sampleModel = colorModel.createCompatibleSampleModel(tileSize.width, tileSize.height);
             final TiledImage           image = new TiledImage(dstRect.x, dstRect.y, dstRect.width, dstRect.height, 0, 0, sampleModel, colorModel);
             final CoordinatePoint coordinate = new CoordinatePoint(getDimension());
             final Point2D.Double     point2D = new Point2D.Double();

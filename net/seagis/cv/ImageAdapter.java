@@ -96,13 +96,9 @@ abstract class ImageAdapter extends PointOpImage
      */
     protected static ImageLayout getLayout(final RenderedImage image, final CategoryList categories, final boolean geophysicsValue)
     {
-        ImageLayout layout = new ImageLayout(image);
-        if (image.getNumXTiles()==1 && image.getNumYTiles()==1)
-        {
-            layout = layout.unsetTileLayout(); // Lets JAI choose a default tile size.
-        }
-        final ColorModel colors = categories.getColorModel(geophysicsValue, image.getSampleModel().getNumBands());
-        SampleModel model = colors.createCompatibleSampleModel(image.getWidth(), image.getHeight());
+        ImageLayout layout = net.seagis.resources.Images.getImageLayout(image);
+        ColorModel  colors = categories.getColorModel(geophysicsValue, image.getSampleModel().getNumBands());
+        SampleModel  model = colors.createCompatibleSampleModel(image.getWidth(), image.getHeight());
         if (colors instanceof IndexColorModel && model.getClass().equals(ComponentSampleModel.class))
         {
             // TODO: IndexColorModel seems to badly choose his sample model. As of JDK 1.4-rc1, it
@@ -115,20 +111,6 @@ abstract class ImageAdapter extends PointOpImage
             model = new PixelInterleavedSampleModel(colors.getTransferType(), w, h, 1, w, new int[1]);
         }
         return layout.setSampleModel(model).setColorModel(colors);
-    }
-
-    /**
-     * Returns a tile size close to 512 for the specified image size.
-     */
-    static int toTileSize(final int size)
-    {
-        for (int i=0; i<=384; i++)
-        {
-            int c;
-            if (size % (c=512-i) == 0) return c;
-            if (size % (c=512+i) == 0) return c;
-        }
-        return 128;
     }
 
     /**

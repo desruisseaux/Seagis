@@ -32,6 +32,7 @@
 package net.seagis.gp;
 
 // Images (Java2D)
+import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 
@@ -63,6 +64,7 @@ import net.seagis.ct.CoordinateTransformationFactory;
 
 // Resources
 import java.util.Locale;
+import net.seagis.resources.Images;
 import net.seagis.resources.OpenGIS;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;
@@ -114,8 +116,7 @@ final class Resampler extends GridCoverage
                       final MathTransformFactory            factory) throws TransformException
     {
         super(sourceCoverage.getName(null),
-              JAI.create("Null", sourceCoverage.getRenderedImage(true)),
-              transformation.getTargetCS(),
+              getRenderedImage(sourceCoverage), transformation.getTargetCS(),
               OpenGIS.transform(transformation.getMathTransform(), sourceCoverage.getEnvelope()),
               getCategories(sourceCoverage), true, new GridCoverage[] {sourceCoverage}, null);
 
@@ -140,12 +141,17 @@ final class Resampler extends GridCoverage
         final RenderedImage sourceImage = operation.getSourceImage(0);
         final Warp                 warp = new WarpTransform(sourceCoverage.getGridGeometry(), (MathTransform2D) transform, gridGeometry, factory);
         final ParameterBlock      param = new ParameterBlock().addSource(sourceImage).add(warp).add(interpolation);
+        operation.setParameterBlock(param); // Must be invoked before setOperationName.
         operation.setOperationName("Warp");
-        operation.setParameterBlock(param);
         // We had to set the operation's parameters last  because the construction of
         // 'WarpTransform' requires the geometry of this grid coverage. The trick was
         // to initialize this 'Resampler' with a null operation, and change the
         // operation here.
+
+        final RenderingHints hints = operation.getRenderingHints();
+        hints.add(Images.getRenderingHints(data));
+        operation.setRenderingHints(hints);
+System.out.println(data);
 
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert sourceImage == sourceCoverage.getRenderedImage(true);
@@ -196,6 +202,17 @@ final class Resampler extends GridCoverage
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
             throw e;
         }
+    }
+
+    /**
+     * Returns a grid coverage rendered image as a {@link RenderedOp}.
+     * This method wrap <code>GridCoverage.getRenderedImage(true)</code>
+     * in a "Null" operation.
+     */
+    private static RenderedOp getRenderedImage(final GridCoverage sourceCoverage)
+    {
+        final RenderedImage image = sourceCoverage.getRenderedImage(true);
+        return JAI.create("Null", image, Images.getRenderingHints(image));
     }
 
     /**

@@ -45,11 +45,11 @@ import javax.media.jai.ParameterListDescriptor;
 // Input/output
 import java.io.Writer;
 import java.io.IOException;
+import java.io.Serializable;
 import net.seagis.io.TableWriter;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import net.seagis.resources.Utilities;
 import net.seagis.resources.gcs.Resources;
 import net.seagis.resources.gcs.ResourceKeys;

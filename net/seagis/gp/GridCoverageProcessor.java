@@ -44,6 +44,8 @@ import java.util.Collections;
 import java.util.AbstractSet;
 
 // Parameters
+import javax.media.jai.JAI;
+import javax.media.jai.TileCache;
 import javax.media.jai.Interpolation;
 import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListImpl;
@@ -74,6 +76,27 @@ import net.seagis.resources.gcs.ResourceKeys;
  */
 public class GridCoverageProcessor
 {
+    /**
+     * Augment the amout of memory
+     * allocated for the tile cache.
+     */
+    static
+    {
+        final long targetCapacity = 0x4000000; // 64 Mo.
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        if (Runtime.getRuntime().maxMemory() > 2*targetCapacity)
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        if (true)
+//----- END OF JDK 1.3 FALLBACK -------
+        {
+            final TileCache cache = JAI.getDefaultInstance().getTileCache();
+            if (cache.getMemoryCapacity() < targetCapacity)
+            {
+                cache.setMemoryCapacity(targetCapacity);
+            }
+        }
+    }
+
     /**
      * The default grid coverage processor. Will
      * be constructed only when first requested.

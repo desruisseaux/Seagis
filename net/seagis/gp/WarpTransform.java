@@ -58,6 +58,18 @@ final class WarpTransform extends Warp
     private final MathTransform2D inverse;
 
     /**
+     * Construct a new <code>WarpTransform</code> with an
+     * identity transform. This is a temporary placeholder
+     * during the creation of {@link Resampler} object.
+     *
+     * @param factory The {@link MathTransformFactory} to use.
+     */
+    public WarpTransform(final MathTransformFactory factory)
+    {
+        inverse = factory.createAffineTransform(new AffineTransform());
+    }
+
+    /**
      * Construct a new <code>WarpTransform</code>.
      *
      * @param  source The source image's {@link GridGeometry}.
