@@ -85,9 +85,9 @@
       <LI><P ALIGN="justify">Some OpenGIS interfaces have been omitted in
           order to avoid redundancies with standard Java classes or other
           OpenGIS classes:<BR>&nbsp;
-          <TABLE cellpadding="6" border="1" bgcolor=lightgoldenrodyellow>
+          <TABLE cellpadding="3" border="1" bgcolor=lightgoldenrodyellow>
             <TR>
-              <TD align="center" bgcolor=bisque><STRONG>Omitted class</STRONG></TD>
+              <TD align="center" bgcolor=bisque><STRONG>Omitted class or method</STRONG></TD>
               <TD align="center" bgcolor=bisque><STRONG>Replacement</STRONG></TD>
             </TR>
             <TR>
@@ -106,10 +106,30 @@
               <TD nowrap>{@link org.opengis.gp.GP_GridAnalysis}</TD>
               <TD nowrap>{@link net.seas.opengis.cv.SampleDimension}.</TD>
             </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.cv.CV_SampleDimension#getOffset()}</TD>
+              <TD nowrap>Not needed for SEAGIS since it support floating-point images.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.cv.CV_SampleDimension#getScale()}</TD>
+              <TD nowrap>Not needed for SEAGIS since it support floating-point images.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.gp.GC_ValueInBytePacking}</TD>
+              <TD nowrap>No replacement at this time.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.gp.GC_ByteInValuePacking}</TD>
+              <TD nowrap>{@link java.nio.ByteOrder}.</TD>
+            </TR>
+            <TR>
+              <TD nowrap>{@link org.opengis.gp.GP_ParameterType}</TD>
+              <TD nowrap>An instance of {@link java.lang.Class}.</TD>
+            </TR>
           </TABLE></P></LI>
 
       <LI><P ALIGN="justify">Some convenient classes and methods have been added:<BR>&nbsp;
-          <TABLE cellpadding="6" border="1" bgcolor=lightgoldenrodyellow>
+          <TABLE cellpadding="3" border="1" bgcolor=lightgoldenrodyellow>
             <TR>
               <TD align="center" bgcolor=bisque><STRONG>Added class or method</STRONG></TD>
               <TD align="center" bgcolor=bisque><STRONG>Purpose</STRONG></TD>
