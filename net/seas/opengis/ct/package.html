@@ -6,5 +6,29 @@
   </HEAD>
   <BODY>
     <P ALIGN="justify">Coordinate Transformations implementation.</P>
+
+    <P>&nbsp;</P>
+    <H2><A NAME="differences">Differences with the <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H2>
+    <UL>
+      <LI>Omitted the <CODE>CT_</CODE> prefix for all classes and interfaces.</LI>
+      <LI>Made all enumeration classes immutable. Enumeration constants are instances
+          of the actual enumeration class instead of integers. Names are uppercase,
+          with no <CODE>CT_TT</CODE> or <CODE>CT_DF</CODE> prefix.</LI>
+      <LI>The following methods are curently not implemented. They may be
+          implemented in a future version:
+          <UL>
+             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>derivative</STRONG>({@link net.seas.opengis.pt.CoordinatePoint})</CODE></LI>
+             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getCodomainConvexHull</STRONG>({@link net.seas.opengis.pt.ConvexHull})</CODE></LI>
+             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getWKT</STRONG>()</CODE></LI>
+             <LI><CODE>{@link net.seas.opengis.ct.MathTransform}.<STRONG>getXML</STRONG>()</CODE></LI>
+          </UL></LI>
+      <LI>Changed signature of various <CODE>transform(...)</CODE> methods in
+          {@link net.seas.opengis.ct.MathTransform}. New signatures are similar
+          to {@link java.awt.geom.AffineTransform}'s transform methods, which
+          should be familiar to many Java programmers. They offer better
+          performance for local use (as opposed to RMI use). Note that the
+          "old" signatures in the standard OpenGIS interfaces are better suited
+          for RMI use than the "new" ones.</LI>
+    </UL>
   </BODY>
 </HTML>
