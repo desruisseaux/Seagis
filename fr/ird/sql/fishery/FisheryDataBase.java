@@ -466,7 +466,7 @@ public class FisheryDataBase extends DataBase {
                     }
                 }
                 if (copyTo != null) {
-                    table.copyToTable(copyTo, new ProgressPrinter(console.out));
+                    table.copyToTable(null, copyTo, new ProgressPrinter(console.out));
                 } else {
                     table.print(console.out, (maxRecords!=null) ? maxRecords.intValue() : 20);
                 }

@@ -27,6 +27,7 @@ package fr.ird.sql.fishery;
 
 // SQL database
 import javax.sql.RowSet;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 // J2SE dependencies
@@ -204,12 +205,16 @@ public interface EnvironmentTable extends Table {
      * spécifiée. Aucune table ne doit exister sous ce nom avant l'appel de
      * cette méthode. Cette méthode construira elle-même la table nécessaire.
      *
+     * @param  connection La connection vers la base de données dans laquelle créer la table,
+     *         or <code>null</code> pour créer une table dans la base de données courante.
      * @param  tableName Nom de la table à créer.
      * @param  progress Objet à utiliser pour informer des progrès, ou <code>null</code> si aucun.
      * @return Le nombre d'enregistrement copiés dans la nouvelle table.
      * @throws Si un problème est survenu lors des accès aux bases de données.
      */
-    public abstract int copyToTable(final String tableName, final ProgressListener progress) throws SQLException;
+    public abstract int copyToTable(final Connection     connection,
+                                    final String          tableName,
+                                    final ProgressListener progress) throws SQLException;
 
     /**
      * Définit la valeur des paramètres environnementaux pour une capture. Cette méthode

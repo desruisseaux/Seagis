@@ -180,8 +180,7 @@ final class EnvironmentTableStep extends Table {
      * @return Ensemble des valeurs environnementales pour ce paramètre.
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public synchronized ResultSet getResultSet(final Connection connection) throws SQLException 
-    {
+    public synchronized ResultSet getResultSet(final Connection connection) throws SQLException {
         if (statement == null) {
             //
             // Complète la requète SQL en ajoutant les noms de

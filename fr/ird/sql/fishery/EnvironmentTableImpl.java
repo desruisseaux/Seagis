@@ -380,12 +380,16 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * spécifiée. Aucune table ne doit exister sous ce nom avant l'appel de
      * cette méthode. Cette méthode construira elle-même la table nécessaire.
      *
+     * @param  connection La connection vers la base de données dans laquelle créer la table,
+     *         or <code>null</code> pour créer une table dans la base de données courante.
      * @param  tableName Nom de la table à créer.
      * @param  progress Objet à utiliser pour informer des progrès, ou <code>null</code> si aucun.
      * @return Le nombre d'enregistrement copiés dans la nouvelle table.
      * @throws Si un problème est survenu lors des accès aux bases de données.
      */
-    public synchronized int copyToTable(final String tableName, final ProgressListener progress)
+    public synchronized int copyToTable(final Connection     connection,
+                                        final String          tableName,
+                                        final ProgressListener progress)
             throws SQLException
     {
         final ResultSet       source = getRowSet(progress);
@@ -413,8 +417,8 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             }
             buffer.append(')');
             final String sqlCreate = buffer.toString();
-            creator = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                                 ResultSet.CONCUR_UPDATABLE);
+            creator = (connection!=null ? connection : this.connection).createStatement(
+                           ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             creator.execute(sqlCreate);
             buffer.setLength(0);
             buffer.append("SELECT * FROM ");
