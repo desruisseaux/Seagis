@@ -53,24 +53,37 @@ import fr.ird.resources.seagis.ResourceKeys;
 public abstract class AbstractDataBase extends UnicastRemoteObject implements DataBase {
     /**
      * Key for fetching the JDBC driver for a connection to a SQL database.
+     * Examples:
+     * <ul>
+     *   <li><pre>sun.jdbc.odbc.JdbcOdbcDriver</pre></li>
+     *   <li><pre>org.postgresql.Driver</pre></li>
+     * </ul>
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey DRIVER = new ConfigurationKey("Driver", null, "sun.jdbc.odbc.JdbcOdbcDriver");
+    public static final ConfigurationKey DRIVER = new ConfigurationKey("Driver",
+            Resources.formatInternational(ResourceKeys.SQL_DRIVER), "sun.jdbc.odbc.JdbcOdbcDriver");
 
     /**
      * Key for fetching the URL of a SQL database.
+     * Examples:
+     * <ul>
+     *   <li><pre>jdbc:odbc:SEAGIS</pre></li>
+     *   <li><pre>jdbc:postgresql://seagis.mydomain.com/coverages</pre></li>
+     * </ul>
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey SOURCE = new ConfigurationKey("Sources", null, "jdbc:odbc:SEAGIS");
+    public static final ConfigurationKey SOURCE = new ConfigurationKey("Sources",
+            Resources.formatInternational(ResourceKeys.SQL_SOURCE), "jdbc:odbc:SEAGIS");
 
     /**
      * Key for fetching the user name during a connection to a database.
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey USER = new ConfigurationKey("User", null, null);
+    public static final ConfigurationKey USER = new ConfigurationKey("User",
+            Resources.formatInternational(ResourceKeys.SQL_LOGIN), null);
 
     /**
      * Key for fetching the user name during a connection to a database.
@@ -78,14 +91,16 @@ public abstract class AbstractDataBase extends UnicastRemoteObject implements Da
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey PASSWORD = new ConfigurationKey("Password", null, null);
+    public static final ConfigurationKey PASSWORD = new ConfigurationKey("Password",
+            Resources.formatInternational(ResourceKeys.SQL_PASSWORD), null);
 
     /**
      * Key for fetching the default timezone for dates in the database.
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey TIMEZONE = new ConfigurationKey("TimeZone", null, "UTC");
+    public static final ConfigurationKey TIMEZONE = new ConfigurationKey("TimeZone",
+            Resources.formatInternational(ResourceKeys.SQL_TIME_ZONE), "UTC");
 
     /**
      * Le nom de la classe du dernier pilote chargé.

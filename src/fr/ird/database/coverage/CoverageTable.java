@@ -262,18 +262,17 @@ public interface CoverageTable extends Table {
     /**
      * Obtient les plages de temps et de coordonnées des images, ainsi que la liste des entrées
      * correspondantes. L'objet retourné ne contiendra que les informations demandées. Par exemple
-     * si l'argument <code>t</code> est <code>false</code>, alors {@link CoverageRanges#t} sera
-     * <code>null</code>.
+     * si {@link CoverageRanges#t} est <code>null</code>, alors la plage de temps ne sera pas
+     * examinée.
      *
-     * @param x <code>true</code> pour obtenir les plages de longitudes.
-     * @param y <code>true</code> pour obtenir les plages de latitudes.
-     * @param t <code>true</code> pour obtenir les plages de temps.
-     * @param entries <code>true</code> pour obtenir les entrés
-     *        (comme dans à un appel à {@link #getEntries}).
-     * @return Un objet contenant les plages demandées ansi que la liste des entrées.
+     * @param  L'objet dans lequel ajouter les plages de cette séries. Pour chaque champs nul
+     *         dans cet objet, les informations correspondantes ne seront pas interroger.
+     * @return Un objet contenant les plages demandées ansi que la liste des entrées. Il ne
+     *         s'agira pas nécessairement du même objet que celui qui a été spécifié en argument;
+     *         ça dépendra si cette méthode est appelée localement ou sur une machine distante.
      * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
-    public CoverageRanges getRanges(boolean x, boolean y, boolean t, boolean entries) throws RemoteException;
+    public CoverageRanges getRanges(CoverageRanges ranges) throws RemoteException;
 
     /**
      * Ajoute une entrée dans la table "<code>GridCoverages</code>". La méthode

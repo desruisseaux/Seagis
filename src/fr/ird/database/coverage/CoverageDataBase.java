@@ -28,6 +28,8 @@ import org.geotools.resources.geometry.XRectangle2D;
 // Seagis
 import fr.ird.database.DataBase;
 import fr.ird.database.ConfigurationKey;
+import fr.ird.resources.seagis.Resources;
+import fr.ird.resources.seagis.ResourceKeys;
 
 
 /**
@@ -39,10 +41,21 @@ import fr.ird.database.ConfigurationKey;
 public interface CoverageDataBase extends DataBase {
     /**
      * Key for fetching the home directory of grid coverage files.
+     * This property may be <code>null</code> if the files are not
+     * accessible locally.
      *
      * @see #getProperty
      */
-    public static final ConfigurationKey ROOT_DIRECTORY = new ConfigurationKey("RootDirectory", null, "/home/data/");
+    public static final ConfigurationKey ROOT_DIRECTORY = new ConfigurationKey("RootDirectory",
+            Resources.formatInternational(ResourceKeys.SQL_DIRECTORY), null);
+
+    /**
+     * Key for fetching the home URL of grid coverage files.
+     *
+     * @see #getProperty
+     */
+    public static final ConfigurationKey ROOT_URL = new ConfigurationKey("RootURL",
+            Resources.formatInternational(ResourceKeys.SQL_URL), "ftp://localhost/");
 
     /**
      * The logger for events relative to this object.

@@ -68,6 +68,13 @@ final class FormatTable extends Table {
     private transient SampleDimensionTable bands;
 
     /**
+     * Count the number of time this object were uneeded. This field is used by
+     * {@link GridCoverageTable#getFormat} only in order to close this table when
+     * it doesn't seems to be needed anymore.
+     */
+    transient int countBeforeClose;
+
+    /**
      * Construit un objet en utilisant la connection spécifiée.
      *
      * @param database The database where this table come from.
@@ -89,7 +96,7 @@ final class FormatTable extends Table {
     /**
      * Retourne l'entré correspondant au format identifié par le nom spécifié.
      *
-     * @param  key Numéro ID du format.
+     * @param  key nom du format.
      * @return L'entré correspondant au format spécifié.
      * @throws RemoteException si une erreur est survenu lors de l'accès au catalogue.
      */

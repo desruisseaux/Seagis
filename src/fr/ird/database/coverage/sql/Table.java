@@ -41,8 +41,8 @@ import fr.ird.database.coverage.CoverageDataBase;
  */
 abstract class Table extends UnicastRemoteObject implements fr.ird.database.Table {
     /* Default schema name for SQL instructions. */ static final String SCHEMA            = "images";
-    /* Default table  name for SQL instructions. */ static final String PHENOMENONS       = "Parameters";
-    /* Default table  name for SQL instructions. */ static final String PROCEDURES        = "Operations";
+    /* Default table  name for SQL instructions. */ static final String PHENOMENONS       = "Phenomenons";
+    /* Default table  name for SQL instructions. */ static final String PROCEDURES        = "Procedures";
     /* Default table  name for SQL instructions. */ static final String SERIES            = "Series";
     /* Default table  name for SQL instructions. */ static final String SUBSERIES         = "SubSeries";
     /* Default table  name for SQL instructions. */ static final String GRID_COVERAGES    = "GridCoverages";

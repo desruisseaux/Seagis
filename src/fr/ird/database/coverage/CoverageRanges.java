@@ -59,13 +59,12 @@ public class CoverageRanges implements Serializable {
     public final RangeSet t;
     
     /**
-     * Liste dans des images qui auront été lues,
-     * ou <code>null</code> si cette information n'a pas été demandée.
+     * Liste des images, ou <code>null</code> si cette information n'a pas été demandée.
      */
     public final List<CoverageEntry> entries;
 
     /** 
-     * Constructeur.
+     * Construit des plages initialement vides pour les dimensions spécifiées.
      *
      * @param x <code>true</code> pour obtenir les plages de longitudes.
      * @param y <code>true</code> pour obtenir les plages de latitudes.

@@ -12,26 +12,16 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
-// J2SE
+// J2SE dependencies
 import java.util.Date;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.rmi.RemoteException;
 
-// Geotools
+// Geotools dependencies
 import org.geotools.units.Unit;
 import org.geotools.cs.Ellipsoid;
 import org.geotools.cs.Projection;
@@ -40,6 +30,10 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.ProjectedCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
+
+// Seagis dependencies
+import fr.ird.database.coverage.CoverageDataBase;
+
 
 /**
  * Table des systèmes de coordonnées utilisés par les images.
@@ -99,7 +93,7 @@ final class CoordinateSystemTable extends Table {
      * @task TODO: NE PAS CODER CETTE INFORMATION EN DUR!!
      *             Puiser cette information dans la base de données plutôt.
      */
-    private static final int WGS84_ID = 1001462621;
+    private static final String WGS84_ID = "Géographique";
 
     /**
      * La projection de Mercator dans la base de données.
@@ -107,7 +101,7 @@ final class CoordinateSystemTable extends Table {
      * @task TODO: NE PAS CODER CETTE INFORMATION EN DUR!!
      *             Puiser cette information dans la base de données plutôt.
      */
-    private static final int MERCATOR_ID = -187629553;
+    private static final String MERCATOR_ID = "Mercator";
 
     /**
      * Convertit un jour julien en date.
@@ -129,7 +123,11 @@ final class CoordinateSystemTable extends Table {
     /**
      * Construit une table.
      */
-    public CoordinateSystemTable(final Connection connection) throws RemoteException {
+    public CoordinateSystemTable(final CoverageDataBase database,
+                                 final Connection     connection)
+            throws RemoteException
+    {
+        super(database);
         // TODO
     }
 
@@ -140,22 +138,20 @@ final class CoordinateSystemTable extends Table {
      *
      * @task TODO: Puiser les informations dans la bases de données plutôt que de les coder en dur.
      */
-    public CoordinateSystem getCoordinateSystem(final int ID) throws SQLException {
-        switch (ID) {
-            case WGS84_ID:    return WGS84;
-            case MERCATOR_ID: return MERCATOR;
-            default: throw new SQLException("Projection non supportée (pour l'instant).");
-        }
+    public CoordinateSystem getCoordinateSystem(final String ID) throws SQLException {
+        if (WGS84_ID   .equals(ID)) return WGS84;
+        if (MERCATOR_ID.equals(ID)) return MERCATOR;
+        throw new SQLException("Projection non supportée (pour l'instant).");
     }
 
     /**
-     * Retourne le numéro identifiant le système de coordonnées spécifié.
+     * Retourne l'identifiant pour le système de coordonnées spécifié.
      *
      * @throws SQLException si l'interrogation de la base de données a échouée.
      *
      * @task TODO: Puiser les informations dans la bases de données plutôt que de les coder en dur.
      */
-    public int getID(final CoordinateSystem cs) throws SQLException {
+    public String getID(final CoordinateSystem cs) throws SQLException {
         if (WGS84.equals(cs, false)) {
             return WGS84_ID;
         }

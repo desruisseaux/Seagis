@@ -12,20 +12,10 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
-// J2SE
+// J2SE and JAI dependencies
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
@@ -36,12 +26,14 @@ import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.awt.geom.Rectangle2D;
-
-// JAI
 import javax.media.jai.util.Range;
 
-// SEAGIS.
+// Seagis dependencies.
+import fr.ird.database.ConfigurationKey;
 import fr.ird.database.CatalogException;
+import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.resources.seagis.ResourceKeys;
+
 
 /**
  * Interrogation de la table des couvertures géographiques.
@@ -49,23 +41,23 @@ import fr.ird.database.CatalogException;
  * @author Martin Desruisseaux
  * @version $Id$
  */
-final class GridGeometryTable extends Table {
+final class GeographicBoundingBoxTable extends Table {
     /**
      * Requête SQL utilisée pour obtenir les coordonnées
      * et la plage de temps couverte par les images.
      */
-    static final String SQL_SELECT = configuration.get(Configuration.KEY_GRID_GEOMETRIES);
-    // static final String SQL_SELECT =
-    //         "SELECT Min("+GRID_COVERAGES +".start_time) AS start_time, "+
-    //                "Max("+GRID_COVERAGES +".end_time) AS end_time, "+
-    //                "Min("+GRID_GEOMETRIES+".xmin) AS xmin, "+
-    //                "Min("+GRID_GEOMETRIES+".ymin) AS ymin, "+
-    //                "Max("+GRID_GEOMETRIES+".xmax) AS xmax, "+
-    //                "Max("+GRID_GEOMETRIES+".ymax) AS ymax\n"+
-    //         "FROM ("+GRID_COVERAGES+' '+
-    //         "INNER JOIN "+SUBSERIES      +" ON "+GRID_COVERAGES+".subseries="+SUBSERIES     +".ID) "+
-    //         "INNER JOIN "+GRID_GEOMETRIES+" ON "+GRID_COVERAGES+".geometry="+GRID_GEOMETRIES+".ID\n"+
-    //         "WHERE (visible=TRUE)";
+    static final ConfigurationKey SELECT = createKey(BOUNDING_BOX, ResourceKeys.SQL_GRID_GEOMETRIES,
+            "SELECT MIN(start_time) " + "AS start_time, " +
+                   "MAX(end_time) "   + "AS end_time, "   +
+                   "MIN(x_min) "      + "AS x_min, "      +
+                   "MIN(y_min) "      + "AS y_min, "      +
+                   "MAX(x_max) "      + "AS x_max, "      +
+                   "MAX(y_max) "      + "AS y_max\n"      +
+            "FROM "+SCHEMA+".\""+GRID_COVERAGES+"\" "+
+            "INNER JOIN "+SCHEMA+".\""+SUBSERIES   +"\" ON subseries=\""+SUBSERIES+"\".identifier "+
+            "INNER JOIN "+SCHEMA+".\""+BOUNDING_BOX+"\" ON extent=\""+BOUNDING_BOX+"\".oid\n"+
+            "WHERE (visible=TRUE)");
+
 
     /** Date de début des images de la base de données.      */ private long  startTime;
     /** Date de fin des images de la base de données.        */ private long  endTime;
@@ -82,31 +74,32 @@ final class GridGeometryTable extends Table {
     /**
      * Construit une table utilisant la connexion spécifiée.
      */
-    public GridGeometryTable(final Connection connection, final TimeZone timezone) throws RemoteException {
-        try {
-            final Statement statement = connection.createStatement();
-            final ResultSet result = statement.executeQuery(configuration.get(Configuration.KEY_GRID_GEOMETRIES));
-            if (result.next()) {
-                boolean wasNull=false;
-                final Calendar      calendar = new GregorianCalendar(timezone);
-                final Calendar localCalendar = new GregorianCalendar();
-                final Date         startTime = getTimestamp(1, result, calendar, localCalendar); wasNull |= (startTime==null);
-                final Date           endTime = getTimestamp(2, result, calendar, localCalendar); wasNull |= (  endTime==null);
-                xmin=result.getFloat(3); wasNull |= result.wasNull();
-                ymin=result.getFloat(4); wasNull |= result.wasNull();
-                xmax=result.getFloat(5); wasNull |= result.wasNull();
-                ymax=result.getFloat(6); wasNull |= result.wasNull();
-                if (!wasNull) {
-                    this.startTime = startTime.getTime();
-                    this.  endTime =   endTime.getTime();
-                    this.isValid   = true;
-                }
+    public GeographicBoundingBoxTable(final CoverageDataBase database,
+                                      final Connection     connection,
+                                      final TimeZone         timezone)
+            throws RemoteException, SQLException
+    {
+        super(database);
+        final Statement statement = connection.createStatement();
+        final ResultSet result = statement.executeQuery(getProperty(SELECT));
+        if (result.next()) {
+            boolean wasNull = false;
+            final Calendar      calendar = new GregorianCalendar(timezone);
+            final Calendar localCalendar = new GregorianCalendar();
+            final Date         startTime = getTimestamp(1, result, calendar, localCalendar); wasNull |= (startTime==null);
+            final Date           endTime = getTimestamp(2, result, calendar, localCalendar); wasNull |= (  endTime==null);
+            xmin = result.getFloat(3); wasNull |= result.wasNull();
+            ymin = result.getFloat(4); wasNull |= result.wasNull();
+            xmax = result.getFloat(5); wasNull |= result.wasNull();
+            ymax = result.getFloat(6); wasNull |= result.wasNull();
+            if (!wasNull) {
+                this.startTime = startTime.getTime();
+                this.  endTime =   endTime.getTime();
+                this.isValid   = true;
             }
-            result.close();
-            statement.close();
-        } catch (SQLException e) {
-            throw new CatalogException(e);
-        }            
+        }
+        result.close();
+        statement.close();
     }
 
     /**

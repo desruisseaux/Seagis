@@ -18,26 +18,57 @@ package fr.ird.database.coverage.sql;
 // J2SE dependencies
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
+import java.awt.geom.Rectangle2D;
+import javax.swing.tree.TreeModel;
 
 // JUnit dependencies
 import junit.framework.*;
 
 // Geotools dependencies
+import org.geotools.pt.Envelope;
 import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Arguments;
 import org.geotools.util.MonolineFormatter;
+import org.geotools.gui.swing.tree.*;
 
 // Seagis dependencies
 import fr.ird.database.sql.AbstractDataBase;
+import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageRanges;
 
 
 /**
  * Tests connections to the database and queries.
+ * There is few really usefull tests in this class.
+ * Most tests really just verify if methods can be
+ * run without raising an exception.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public class QueriesTest extends TestCase {
+    /**
+     * Name of a format to use for tests.
+     */
+    private static final String FORMAT =
+            "ASC Anomalie de hauteur de l'eau et courants géostrophiques";
+
+    /**
+     * Name of a series to use for tests.
+     */
+    private static final String SERIES = "SLA (Monde - TP)";
+
+    /**
+     * Timezone to use for tests.
+     */
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+
+    /**
+     * The entry for {@link #SERIES}.
+     */
+    private static SeriesEntry series;
+
     /**
      * The connection to the database.
      */
@@ -102,9 +133,67 @@ public class QueriesTest extends TestCase {
     public void testSampleDimension() throws Exception {
         final SampleDimensionTable table = new SampleDimensionTable(null, connection);
         assertEquals(0, table.getSampleDimensions("dummy").length);
-        final SampleDimension[] bd;
-        bd = table.getSampleDimensions("ASC Anomalie de hauteur de l'eau et courants géostrophiques");
-        assertEquals(3, bd.length);
+        assertEquals(3, table.getSampleDimensions(FORMAT ).length);
+        table.close();
+    }
+
+    /**
+     * Test the format table.
+     */
+    public void testFormat() throws Exception {
+        final FormatTable table = new FormatTable(null, connection);
+        final FormatEntry entry = table.getEntry(FORMAT);
+        assertEquals(FORMAT, entry.getName());
+        assertEquals(3, entry.getSampleDimensions().length);
+        assertEquals(entry, entry);
+        table.close();
+    }
+
+    /**
+     * Test the series table.
+     */
+    public void testSeries() throws Exception {
+        final SeriesTable table = new SeriesTable(null, connection);
+        TreeModel tree = table.getTree(SeriesTable.CATEGORY_LEAF);
+        series = table.getEntry(SERIES);
+        table.close();
+    }
+
+    /**
+     * Test the series table.
+     */
+    public void testBoundingBox() throws Exception {
+        final GeographicBoundingBoxTable table = new GeographicBoundingBoxTable(null, connection, UTC);
+        assertFalse  (table.getGeographicArea().isEmpty());
+        assertNotNull(table.getTimeRange());
+        table.close();
+    }
+
+    /**
+     * Test the coverage table.
+     */
+    public void testGridCoverage() throws Exception {
+        if (series == null) {
+            testSeries();
+        }
+        final GridCoverageTable table = new GridCoverageTable(null, connection, UTC);
+        table.setSeries(series);
+        table.setGeographicArea(new Rectangle2D.Float(-180, -90, 360, 180));
+        table.setTimeRange(new Date(0), new Date());
+        assertNull   (table.getOperation());
+        assertNull   (table.getPreferredResolution());
+        assertNotNull(table.getTimeRange());
+        assertEquals (table.getEnvelope().getSubEnvelope(0, 2), new Envelope(table.getGeographicArea()));
+        assertNotNull(table.getRanges(new CoverageRanges(true,true,true,true)));
+        final GridCoverageEntry entry = (GridCoverageEntry) table.getEntry();
+        assertSame   (entry, table.getEntry());
+        assertSame   (entry, table.getEntry(entry.getName()));
+        assertNotNull(entry.getURL());
+        assertNotNull(entry.getGridGeometry());
+        assertFalse  (entry.getGeographicArea().isEmpty());
+        assertEquals (entry.getEnvelope().getSubEnvelope(0, 2), new Envelope(entry.getGeographicArea()));
+        assertTrue   (entry.getStartTime().before(entry.getEndTime()));
+        assertTrue   (entry.getGeographicArea().intersects(table.getGeographicArea()));
         table.close();
     }
 }

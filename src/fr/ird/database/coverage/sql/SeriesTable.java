@@ -69,7 +69,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * Requête SQL utilisée par cette classe pour obtenir les sous-séries d'une série.
      */
     static final ConfigurationKey SELECT_SUBSERIES = createKey(SERIES+":SubSeries", ResourceKeys.SQL_SERIES_BY_SUBSERIES,
-        "SELECT oid, format FROM "+SCHEMA+".\""+SUBSERIES+" WHERE series=?");
+        "SELECT identifier, format FROM "+SCHEMA+".\""+SUBSERIES+"\" WHERE series=?");
 
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des séries.
@@ -77,26 +77,26 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
      * les constantes {@link #SERIES_ID}, {@link #SERIES_NAME} et compagnie.
      */
     static final ConfigurationKey SELECT_TREE = createKey(SERIES+":Tree", ResourceKeys.SQL_SERIES_TREE,
-            "SELECT \"" +   SUBSERIES + "\".oid, "           +   // [01] SUBSERIES_ID
-                    '"' +      SERIES + "\".name, "          +   // [02] SERIES_NAME
-                    '"' +      SERIES + "\".description, "   +   // [03] SERIES_REMARKS
-                    '"' +  PROCEDURES + "\".name, "          +   // [04] PROCEDURE_NAME
-                    '"' +  PROCEDURES + "\".description, "   +   // [05] PROCEDURE_REMARKS
-                    '"' + PHENOMENONS + "\".name, "          +   // [06] PHENOMENON_NAME
-                    '"' + PHENOMENONS + "\".description, "   +   // [07] PHENOMENON_REMARKS
-                    '"' +   SUBSERIES + "\".format, "        +   // [08] FORMAT
-                    '"' +      SERIES + "\".period\n"        +   // [09] PERIOD
-              "FROM \"" + PHENOMENONS + "\", "               +
-                    '"' + PROCEDURES  + "\", "               +
-                    '"' + SERIES      + "\", "               +
-                    '"' + SUBSERIES   + "\"\n"               +
-             "WHERE \"" + PHENOMENONS + "\".name=parameter " +
-               "AND \"" + PROCEDURES  + "\".name=operation " +
-               "AND \"" + SERIES      + "\".name=series "    +
-               "AND "   +               "visible=TRUE\n"     +
-          "ORDER BY \"" + PHENOMENONS + "\".name, "          +
-                    '"' + PROCEDURES  + "\".name, "          +
-                    '"' + SERIES      + "\".name");
+            "SELECT \"" +   SUBSERIES  + "\".identifier, "    +   // [01] SUBSERIES_ID
+                    '"' +      SERIES  + "\".name, "          +   // [02] SERIES_NAME
+                    '"' +      SERIES  + "\".description, "   +   // [03] SERIES_REMARKS
+                    '"' +  PROCEDURES  + "\".name, "          +   // [04] PROCEDURE_NAME
+                    '"' +  PROCEDURES  + "\".description, "   +   // [05] PROCEDURE_REMARKS
+                    '"' + PHENOMENONS  + "\".name, "          +   // [06] PHENOMENON_NAME
+                    '"' + PHENOMENONS  + "\".description, "   +   // [07] PHENOMENON_REMARKS
+                    '"' +   SUBSERIES  + "\".format, "        +   // [08] FORMAT
+                    '"' +      SERIES  + "\".period\n"        +   // [09] PERIOD
+              "FROM "   + SCHEMA+".\"" + PHENOMENONS + "\", " +
+                          SCHEMA+".\"" + PROCEDURES  + "\", " +
+                          SCHEMA+".\"" + SERIES      + "\", " +
+                          SCHEMA+".\"" + SUBSERIES   + "\"\n" +
+             "WHERE \"" + PHENOMENONS  + "\".name=phenomenon "+
+               "AND \"" + PROCEDURES   + "\".name=procedure " +
+               "AND \"" + SERIES       + "\".name=series "    +
+               "AND "   +                "visible=TRUE\n"     +
+          "ORDER BY \"" + PHENOMENONS  + "\".name, "          +
+                    '"' + PROCEDURES   + "\".name, "          +
+                    '"' + SERIES       + "\".name");
 
 
     /** Numéro de colonne. */ private static final int SUBSERIES_ID       =  1;

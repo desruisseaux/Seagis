@@ -12,16 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Library General Public License for more details (http://www.gnu.org/).
- *
- *
- * Contact: Michel Petit
- *          Maison de la télédétection
- *          Institut de Recherche pour le développement
- *          500 rue Jean-François Breton
- *          34093 Montpellier
- *          France
- *
- *          mailto:Michel.Petit@mpl.ird.fr
  */
 package fr.ird.database.coverage.sql;
 
@@ -30,13 +20,15 @@ import java.sql.ResultSet;
 import java.sql.SQLWarning;
 import java.sql.SQLException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
+import java.net.URL;
+import java.net.MalformedURLException;
 import javax.imageio.IIOException;
 import javax.imageio.ImageReadParam;
 import javax.swing.event.EventListenerList;
@@ -92,8 +84,9 @@ import org.geotools.resources.geometry.XRectangle2D;
 
 // Seagis
 import fr.ird.database.CatalogException;
-import fr.ird.resources.seagis.Resources;
 import fr.ird.database.coverage.CoverageEntry;
+import fr.ird.database.coverage.CoverageDataBase;
+import fr.ird.resources.seagis.Resources;
 
 
 /**
@@ -107,7 +100,7 @@ import fr.ird.database.coverage.CoverageEntry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class GridCoverageEntry implements CoverageEntry, Serializable {
+final class GridCoverageEntry extends UnicastRemoteObject implements CoverageEntry {
     /**
      * Clé sous laquelle mémoriser l'objet {@link CoverageEntry}
      * source dans les propriétés de {@link GridCoverage}.
@@ -194,7 +187,6 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      */
     private static final int MIN_SIZE = 8;
 
-    /** Numéro identifiant l'image.      */ private final    int ID;
     /** Nom du fichier.                  */ private final String filename;
     /** Date du début de l'acquisition.  */ private final   long startTime;
     /** Date de la fin de l'acquisition. */ private final   long endTime;
@@ -234,48 +226,37 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      *
      * @param  table  Table d'où proviennent les enregistrements.
      * @param  result Prochain enregistrement à lire.
-     * @throws RemoteException si l'accès au catalogue a échoué.
+     * @throws SQLException si l'accès au catalogue a échoué.
      */
-    GridCoverageEntry(final GridCoverageTable table, final ResultSet result) throws RemoteException {
-        try {
-            final int    seriesID;
-            final int    formatID;
-            final int    csID;
-            final String pathname;
-            final Date   startTime;
-            final Date     endTime;
-            ID         = result.getInt      (GridCoverageTable.ID);
-            seriesID   = result.getInt      (GridCoverageTable.SERIES);
-            pathname   = result.getString   (GridCoverageTable.PATHNAME).intern();
-            filename   = result.getString   (GridCoverageTable.FILENAME);
-            startTime  = table .getTimestamp(GridCoverageTable.START_TIME, result);
-            endTime    = table .getTimestamp(GridCoverageTable.END_TIME,   result);
-            xmin       = result.getFloat    (GridCoverageTable.XMIN);
-            xmax       = result.getFloat    (GridCoverageTable.XMAX);
-            ymin       = result.getFloat    (GridCoverageTable.YMIN);
-            ymax       = result.getFloat    (GridCoverageTable.YMAX);
-            width      = result.getShort    (GridCoverageTable.WIDTH);
-            height     = result.getShort    (GridCoverageTable.HEIGHT);
-            csID       = result.getInt      (GridCoverageTable.COORDINATE_SYSTEM);
-            formatID   = result.getInt      (GridCoverageTable.FORMAT);
-            parameters = table .getParameters(seriesID, formatID, csID, pathname);
-            // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
-            // NOTE: Les coordonnées xmin, xmax, ymin et ymax ne sont PAS exprimées selon le système de
-            //       coordonnées de l'image, mais plutôt selon le système de coordonnées de la table
-            //       d'images. La transformation sera effectuée par 'getEnvelope()'.
-            this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
-            this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
-        } catch (SQLException e) {
-            throw new CatalogException(e);
-        }
-    }
-
-    /**
-     * Retourne le numéro identifiant cette image dans la base de données.
-     * Dans une même base de données, chaque image porte un numéro unique.
-     */
-    public int getID() {
-        return ID;
+    GridCoverageEntry(final GridCoverageTable table, final ResultSet result)
+            throws RemoteException, SQLException
+    {
+        final String seriesID;
+        final String formatID;
+        final String crsID;
+        final String pathname;
+        final Date   startTime;
+        final Date     endTime;
+        seriesID   = result.getString    (GridCoverageTable.SERIES);
+        pathname   = result.getString    (GridCoverageTable.PATHNAME).intern();
+        filename   = result.getString    (GridCoverageTable.FILENAME);
+        startTime  = table .getTimestamp (GridCoverageTable.START_TIME, result);
+        endTime    = table .getTimestamp (GridCoverageTable.END_TIME,   result);
+        xmin       = result.getFloat     (GridCoverageTable.XMIN);
+        xmax       = result.getFloat     (GridCoverageTable.XMAX);
+        ymin       = result.getFloat     (GridCoverageTable.YMIN);
+        ymax       = result.getFloat     (GridCoverageTable.YMAX);
+        width      = result.getShort     (GridCoverageTable.WIDTH);
+        height     = result.getShort     (GridCoverageTable.HEIGHT);
+        crsID      = result.getString    (GridCoverageTable.CRS);
+        formatID   = result.getString    (GridCoverageTable.FORMAT);
+        parameters = table .getParameters(seriesID, formatID, crsID, pathname);
+        // TODO: mémoriser les coordonnées dans un Rectangle2D et lancer une exception s'il est vide.
+        // NOTE: Les coordonnées xmin, xmax, ymin et ymax ne sont PAS exprimées selon le système de
+        //       coordonnées de l'image, mais plutôt selon le système de coordonnées de la table
+        //       d'images. La transformation sera effectuée par 'getEnvelope()'.
+        this.startTime = (startTime!=null) ? startTime.getTime() : Long.MIN_VALUE;
+        this.  endTime = (  endTime!=null) ?   endTime.getTime() : Long.MAX_VALUE;
     }
 
     /**
@@ -303,17 +284,69 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
     }
 
     /**
-     * Retourne le nom du fichier de l'image avec son chemin complet.
+     * Returns the source as a {@link File} or an {@link URL}, in this preference order.
+     *
+     * @param  local <code>true</code> if the file are going to be read from a local machine,
+     *         or <code>false</code> if it is going to be read through internet.
+     * @return The input, usually a {@link File} object if <code>local</code> was
+     *         <code>true</code> and an {@link URL} object if <code>local</code> was
+     *         <code>false</code>.
      */
-    public File getFile() {
+    private Object getInput(final boolean local) throws MalformedURLException {
         final File file = new File(parameters.pathname, filename+'.'+parameters.format.extension);
         if (!file.isAbsolute()) {
-            final File directory = Table.directory;
-            if (directory != null) {
-                return new File(directory, file.getPath());
+            if (local) {
+                if (parameters.rootDirectory != null) {
+                    return new File(parameters.rootDirectory, file.getPath());
+                }
+            }
+            if (parameters.rootURL != null) {
+                String path = file.getPath().replace(File.separatorChar, '/');
+                final int lg = parameters.rootURL.length();
+                if (lg != 0) {
+                    final StringBuilder buffer = new StringBuilder(parameters.rootURL);
+                    if (buffer.charAt(lg-1) != '/') {
+                        buffer.append('/');
+                    }
+                    buffer.append(path);
+                    path = buffer.toString();
+                }
+                return new URL(path);
             }
         }
-        return file;
+        return (local) ? file : file.toURL();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public File getFile() {
+        try {
+            final Object input = getInput(true);
+            if (input instanceof File) {
+                return (File) input;
+            }
+        } catch (MalformedURLException exception) {
+            Utilities.unexpectedException(CoverageDataBase.LOGGER.getName(),
+                                 "GridCoverageEntry", "getFile", exception);
+        }
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public URL getURL() {
+        try {
+            final Object input = getInput(false);
+            if (input instanceof URL) {
+                return (URL) input;
+            }
+        } catch (MalformedURLException exception) {
+            Utilities.unexpectedException(CoverageDataBase.LOGGER.getName(),
+                                 "GridCoverageEntry", "getFile", exception);
+        }
+        return null;
     }
 
     /**
@@ -624,7 +657,7 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
                 param.setSourceSubsampling(xSubsampling,   ySubsampling,
                                            xSubsampling/2, ySubsampling/2);
                 if (image == null) {
-                    image = format.read(getFile(), imageIndex, param, listenerList,
+                    image = format.read(getInput(true), imageIndex, param, listenerList,
                                         new Dimension(width, height), this);
                     if (image == null) {
                         return null;
@@ -708,7 +741,7 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
     /**
      * {@inheritDoc}
      */
-    public void abort() {
+    public void abort() throws RemoteException {
         parameters.format.abort(this);
     }
 
@@ -751,10 +784,9 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      * l'utilisateur).
      */
     private boolean equalsStrict(final GridCoverageEntry that) {
-        return             this.ID       == that.ID          &&
-          Utilities.equals(this.filename,   that.filename  ) &&
-          Utilities.equals(this.parameters, that.parameters) &&
-          sameSize(that) && sameCoordinates(that);
+        return Utilities.equals(this.filename,   that.filename  ) &&
+               Utilities.equals(this.parameters, that.parameters) &&
+               sameSize(that) && sameCoordinates(that);
     }
 
     /**
@@ -786,7 +818,7 @@ final class GridCoverageEntry implements CoverageEntry, Serializable {
      * Retourne un code représentant cette entrée.
      */
     public int hashCode() {
-        return ID;
+        return (int)serialVersionUID ^ filename.hashCode();
     }
 
     /**

@@ -16,6 +16,7 @@
 package fr.ird.database.coverage;
 
 // J2SE et JAI
+import java.net.URL;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -68,14 +69,20 @@ public interface CoverageEntry extends Entry {
     public abstract SeriesEntry getSeries() throws RemoteException;
 
     /**
-     * Retourne le nom du fichier de l'image avec son chemin complet.
-     * Si l'image n'est pas accessible localement (par exemple si elle
-     * est produite par un serveur distant), alors cette méthode peut
-     * retourner <code>null</code>.
+     * Retourne le chemin absolu de l'image, ou <code>null</code> si le fichier n'est
+     * pas accessible localement. Dans ce dernier cas, {@link #getURL} devrait être
+     * utilisé à la place.
      *
      * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
      */
     public abstract File getFile() throws RemoteException;
+
+    /**
+     * Retourne l'URL de l'image, ou <code>null</code> si le fichier n'est pas accessible.
+     *
+     * @throws RemoteException si un problème est survenu lors de la communication avec le serveur.
+     */
+    public abstract URL getURL() throws RemoteException;
 
     /**
      * Retourne des informations sur la géométrie de l'image. Ces informations
@@ -247,6 +254,7 @@ public interface CoverageEntry extends Entry {
         /** Redirige vers {@link #entry}. */ public String            getName()             throws RemoteException {return entry.getName();}
         /** Redirige vers {@link #entry}. */ public String            getRemarks()          throws RemoteException {return entry.getRemarks();}
         /** Redirige vers {@link #entry}. */ public File              getFile()             throws RemoteException {return entry.getFile();}
+        /** Redirige vers {@link #entry}. */ public URL               getURL()              throws RemoteException {return entry.getURL();}
         /** Redirige vers {@link #entry}. */ public GridGeometry      getGridGeometry()     throws RemoteException {return entry.getGridGeometry();}
         /** Redirige vers {@link #entry}. */ public CoordinateSystem  getCoordinateSystem() throws RemoteException {return entry.getCoordinateSystem();}
         /** Redirige vers {@link #entry}. */ public Envelope          getEnvelope()         throws RemoteException {return entry.getEnvelope();}

@@ -108,6 +108,16 @@ final class Parameters implements Serializable {
     public final Dimension2D resolution;
 
     /**
+     * Root images directory, for access through a local network.
+     */
+    public final String rootDirectory;
+
+    /**
+     * Root URL directory (usually a FTP server), for access through a distant network.
+     */
+    public final String rootURL;
+
+    /**
      * Formatteur à utiliser pour écrire des dates pour l'utilisateur. Les caractères et
      * les conventions linguistiques dépendront de la langue de l'utilisateur. Toutefois,
      * le fuseau horaire devrait être celui de la région d'étude plutôt que celui du pays
@@ -145,7 +155,9 @@ final class Parameters implements Serializable {
                       final CoordinateSystem imageCS,
                       final Rectangle2D      geographicArea,
                       final Dimension2D      resolution,
-                      final DateFormat       dateFormat)
+                      final DateFormat       dateFormat,
+                      final String           rootDirectory,
+                      final String           rootURL)
     {
         this.series         = series;
         this.format         = format;
@@ -157,6 +169,8 @@ final class Parameters implements Serializable {
         this.geographicArea = geographicArea;
         this.resolution     = resolution;
         this.dateFormat     = dateFormat;
+        this.rootDirectory  = rootDirectory;
+        this.rootURL        = rootURL;
     }
 
     /**
@@ -174,7 +188,9 @@ final class Parameters implements Serializable {
                    Utilities.equals(this.imageCS        , that.imageCS         ) &&
                    Utilities.equals(this.geographicArea , that.geographicArea  ) &&
                    Utilities.equals(this.resolution     , that.resolution      ) &&
-                   Utilities.equals(this.dateFormat     , that.dateFormat      );
+                   Utilities.equals(this.dateFormat     , that.dateFormat      ) &&
+                   Utilities.equals(this.rootDirectory  , that.rootDirectory   ) &&
+                   Utilities.equals(this.rootURL        , that.rootURL         );
         }
         return false;
     }

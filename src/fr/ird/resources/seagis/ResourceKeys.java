@@ -100,6 +100,7 @@ public interface ResourceKeys
     public static final int SQL_SOURCE                       =   111;
     public static final int SQL_SPECIES                      =    60;
     public static final int SQL_TIME_ZONE                    =   112;
+    public static final int SQL_URL                          =   113;
     public static final int START_TIME                       =    61;
     public static final int TABLE_ERROR_$2                   =    62;
     public static final int TIMEZONE                         =    63;
