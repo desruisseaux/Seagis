@@ -81,10 +81,13 @@ public abstract class CoordinateSystemAuthorityFactory
      * @param  code Value allocated by authority.
      * @return The ellipsoid object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
+     * @throws BackingStoreException if some other kind of failure occured in the backing
+     *         store. Most common failure cause include {@link java.sql.SQLException} or
+     *         {@link java.io.IOException}.
      *
      * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createEllipsoid
      */
-    public Ellipsoid createEllipsoid(final String code) throws NoSuchAuthorityCodeException
+    public Ellipsoid createEllipsoid(final String code) throws BackingStoreException
     {throw new NoSuchAuthorityCodeException(code);}
 
     /**
@@ -93,11 +96,14 @@ public abstract class CoordinateSystemAuthorityFactory
      * @param  code Value allocated by authority.
      * @return The unit object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
+     * @throws BackingStoreException if some other kind of failure occured in the backing
+     *         store. Most common failure cause include {@link java.sql.SQLException} or
+     *         {@link java.io.IOException}.
      *
      * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createLinearUnit
      * @see org.opengis.cs.CS_CoordinateSystemAuthorityFactory#createAngularUnit
      */
-    public Unit createUnit(final String code) throws NoSuchAuthorityCodeException
+    public Unit createUnit(final String code) throws BackingStoreException
     {throw new NoSuchAuthorityCodeException(code);}
 
     /**

@@ -105,10 +105,9 @@ public class Projection extends Info
     }
 
     /**
-     * Creates a projection. The set of parameters (<code>parameters</code>) may be queried with
-     * <code>{@link net.seagis.ct.MathTransformFactory#getMathTransformProvider
-     *              MathTransformFactory.getMathTransformProvider}(classification).{@link
-     *              MathTransformProvider#getParameterList getParameterList()}</code>.
+     * Creates a projection. The set of parameters (<code>parameters</code>) may be queried
+     * with the <code>{@link CoordinateSystemFactory#createProjectionParameterList}</code>
+     * method.
      *
      * @param name           Name to give new object.
      * @param classification Classification string for projection (e.g. "Transverse_Mercator").
