@@ -1,0 +1,470 @@
+/*
+ * SEAS - Surveillance de l'Environnement Assistée par Satellites
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ * Contacts:
+ *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
+ *             Institut de Recherche pour le Développement
+ *             mailto:seasnet@teledetection.fr
+ *
+ *     CANADA: Observatoire du Saint-Laurent
+ *             Institut Maurice-Lamontagne
+ *             mailto:osl@osl.gc.ca
+ */
+package net.seas.image.io;
+
+// Entrés/sorties
+import java.net.URL;
+import java.io.File;
+import java.io.IOException;
+import java.net.URLConnection;
+
+import java.io.Reader;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.LineNumberReader;
+import java.io.InputStreamReader;
+import java.io.InputStream;
+import javax.imageio.stream.ImageInputStream;
+
+// Divers
+import java.util.Locale;
+import java.nio.charset.Charset;
+import java.awt.image.DataBuffer;
+import javax.imageio.spi.ImageReaderSpi;
+import net.seas.awt.ExceptionMonitor;
+import net.seas.resources.Resources;
+
+
+/**
+ * Classe de base des décodeurs d'images dont les données sont écrites sous forme de texte.
+ *
+ * @version 1.0
+ * @author Martin Desruisseaux
+ */
+public abstract class TextImageReader extends SimpleImageReader
+{
+    /**
+     * Flot à utiliser pour lire les données. Ce flot sera construit à
+     * partir de {@link #input} la première fois qu'il sera demandé.
+     */
+    private BufferedReader reader;
+
+    /**
+     * Construit un décodeur d'images
+     * de type {@link DataBuffer#TYPE_FLOAT}.
+     *
+     * @param provider Le fournisseur
+     *        qui a construit ce décodeur.
+     */
+    protected TextImageReader(final ImageReaderSpi provider)
+    {super(provider);}
+
+    /**
+     * Construit un décodeur d'images.
+     *
+     * @param provider Le fournisseur qui a construit ce décodeur.
+     * @param rawImageType Type par défaut des images. Ce type devrait
+     *        être une des constantes de {@link DataBuffer}, notamment
+     *        {@link DataBuffer#TYPE_INT}, {@link DataBuffer#TYPE_FLOAT}
+     *        ou {@link DataBuffer#TYPE_DOUBLE}.
+     */
+    protected TextImageReader(final ImageReaderSpi provider, final int rawImageType)
+    {super(provider, rawImageType);}
+
+    /**
+     * Retourne l'encodage des caractères qui seront à lire. L'implémentation
+     * par défaut retourne l'encodage spécifié dans l'objet {@link Spi} qui a
+     * créé ce décodeur. Les classes dérivées peuvent redéfinir cette méthode
+     * pour déterminer l'encodage d'une façon plus élaborée.
+     *
+     * @param  input Flot à lire.
+     * @return Encodage du flot à lire, ou <code>null</code> pour utiliser
+     *         l'encodage par défaut de la plateforme locale.
+     * @throws IOException si une lecture du flot <code>input</code> était
+     *         nécessaire et a échoué.
+     *
+     * @see Spi#charset
+     */
+    public Charset getCharset(final InputStream input) throws IOException
+    {return (originatingProvider instanceof Spi) ? ((Spi)originatingProvider).charset : null;}
+
+    /**
+     * Retourne l'entré {@link #input} sous forme d'objet {@link BufferedReader}. Si possible,
+     * cette méthode tentera de retourner plus spécifiquement un objet {@link LineNumberReader}.
+     * Cette méthode convertira automatiquement les objets de classes {@link File}, {@link URL},
+     * {@link Reader}, {@link InputStream} et {@link ImageInputStream}.
+     * <br><br>
+     * Cette méthode ne construira un nouveau objet {@link Reader} que la première fois
+     * où elle sera appelée. Tous les appels subséquents retourneront le {@link Reader}
+     * ouvert. En conséquent, ce flot <strong>ne doit pas</strong> être fermé. Les méthodes
+     * <code>setInput(...)</code> et {@link #reset()} s'occuperont de le fermer si nécessaire.
+     *
+     * @return {@link #getInput} sous forme de flot {@link LineNumberReader} si possible,
+     *         ou {@link BufferedReader} sinon.
+     * @throws IOException si le flot n'a pas pu être ouvert.
+     */
+    protected final BufferedReader getReader() throws IOException
+    {
+        if (reader==null)
+        {
+            final Object input=getInput();
+            if (input==null)
+            {
+                throw new IllegalStateException(Resources.format(Clé.NO_IMAGE_INPUT));
+            }
+            if (input instanceof BufferedReader)
+            {
+                return reader = (BufferedReader) input;
+            }
+            if (input instanceof Reader)
+            {
+                return reader = new LineReader((Reader) input);
+            }
+            if (input instanceof InputStream)
+            {
+                final InputStream stream = (InputStream) input;
+                return reader = new LineReader(stream, getCharset(stream));
+            }
+            if (input instanceof File)
+            {
+                final InputStream stream = new FileInputStream((File) input);
+                return reader = new LineReader(stream, getCharset(stream));
+            }
+            if (input instanceof URL)
+            {
+                final InputStream stream = ((URL) input).openStream();
+                return reader = new LineReader(stream, getCharset(stream));
+            }
+            if (input instanceof URLConnection)
+            {
+                final InputStream stream = ((URLConnection) input).getInputStream();
+                return reader = new LineReader(stream, getCharset(stream));
+            }
+            final InputStream stream = new InputStreamAdapter((ImageInputStream) input);
+            reader = new LineReader(stream, getCharset(stream));
+        }
+        return reader;
+    }
+
+    /**
+     * Ferme le flot {@link #reader}, à la condition que
+     * c'était un flot que nous avions ouvert nous-même.
+     */
+    private void close()
+    {
+        if (input instanceof File || input instanceof URL)
+        {
+            if (reader!=null) try
+            {
+                reader.close();
+            }
+            catch (IOException exception)
+            {
+                ExceptionMonitor.unexpectedException("net.seas.image.io", "TextImageReader", "close", exception);
+            }
+        }
+        reader = null;
+    }
+
+    /**
+     * Spécifie le flot à utiliser en entré. Si un autre flot
+     * était ouvert avant l'appel de cette méthode, il sera fermé.
+     */
+    public void setInput(final Object input, final boolean seekForwardOnly, final boolean ignoreMetadata)
+    {
+        close();
+        super.setInput(input, seekForwardOnly, ignoreMetadata);
+    }
+
+    /**
+     * Retourne la position du flot spécifié, ou <code>-1</code> si cette position est
+     * inconnue. Note: la position retournée est <strong>approximative</strong>.  Elle
+     * est utile pour afficher un rapport des progrès, mais sans plus.
+     *
+     * @param  reader Flot dont on veut connaître la position.
+     * @return Position approximative du flot, ou <code>-1</code>
+     *         si cette position n'a pas pu être obtenue.
+     * @throws IOException si l'opération a échouée.
+     */
+    protected static long getStreamPosition(final Reader reader) throws IOException
+    {return (reader instanceof LineReader) ? ((LineReader) reader).getPosition() : -1;}
+
+    /**
+     * Retourne une chaîne de caractères donnant la position actuelle du flot. La
+     * chaîne retournée sera par exemple "Ligne 14 dans le fichier HUV18204.asc".
+     * Cette méthode retourne <code>null</code> si la position du flot n'a pas pu
+     * être déterminée.
+     *
+     * @param message Un message optionel à placer après la position, ou
+     *        <code>null</code> s'il n'y en a pas.
+     */
+    protected final String getPositionString(final String message)
+    {
+        final String file;
+        final Object input = getInput();
+             if (input instanceof File) file = ((File) input).getName();
+        else if (input instanceof  URL) file = ((URL ) input).getFile();
+        else file = null;
+        final Integer line = (reader instanceof LineNumberReader) ? new Integer(((LineNumberReader) reader).getLineNumber()) : null;
+
+        final Resources resources = Resources.getResources(null);
+        final String position;
+        if (file!=null)
+            if (line!=null)  position=resources.getString(Clé.FILE_POSITION¤2, file, line);
+            else             position=resources.getString(Clé.FILE¤1,          file      );
+        else if (line!=null) position=resources.getString(Clé.LINE¤1,                line);
+        else                 position=null;
+
+        if (position!=null)
+            if (message!=null) return position+": "+message;
+            else return position;
+        else return message;
+    }
+
+    /**
+     * Remet ce décodeur dans son état initial.
+     * Si un flot avait été ouvert, il sera fermé.
+     */
+    public void reset()
+    {
+        close();
+        super.reset();
+    }
+
+
+
+
+    /**
+     * Classe de base des descripteurs de décodeurs {@link TextImageReader}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    public static abstract class Spi extends ImageReaderSpi
+    {
+        /**
+         * Liste des types d'entrés acceptés.
+         */
+        private static final Class[] INPUT_TYPES = new Class[]
+        {
+            File.class,
+            URL.class,
+            URLConnection.class,
+            Reader.class,
+            InputStream.class,
+            ImageInputStream.class
+        };
+
+        /**
+         * Liste des extensions standards acceptés.
+         */
+        private static final String[] EXTENSIONS = new String[] {".txt",".TXT",".asc",".ASC",".dat",".DAT"};
+
+        /**
+         * Encodage des caractères à lire, ou <code>null</code> pour utiliser l'encodage
+         * par défaut de la plateforme locale.  Ce champ est initialement nul et devrait
+         * être initialisé par les classes dérivées qui souhaite utiliser un encodage
+         * spécifique.
+         *
+         * @see TextImageReader#getCharset
+         */
+        protected Charset charset;
+
+        /**
+         * Construit un descripteur. Ce constructeur
+         * initialisera les champs suivants:
+         *
+         * <ul>
+         *   <li>Nom du format d'image ({@link #names names}):
+         *       Un tableau de longueur 1 contenant l'argument <code>name</code>.
+         *
+         *   <li>Type MIME ({@link #MIMETypes MIMETypes}):
+         *       Un tableau de longueur 1 contenant l'argument <code>mime</code>.
+         *
+         *   <li>Extensions des fichiers ({@link #suffixes suffixes}):
+         *       "<code>.txt</code>", "<code>.asc</code>" et "<code>.dat</code>".</li>
+         *
+         *   <li>Type d'entrés ({@link #inputTypes inputTypes}):
+         *       {@link File, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
+         * </ul>
+         *
+         * Les autres champs devront être initialisés
+         * par les constructeurs des classes dérivées.
+         *
+         * @param name Nom de ce décodeur, ou <code>null</code> pour ne
+         *             pas initialiser le champ {@link #names names}.
+         * @param mime Nom MIME de ce décodeur, ou <code>null</code> pour ne
+         *             pas initialiser le champ {@link #MIMETypes MIMETypes}.
+         */
+        public Spi(final String name, final String mime)
+        {
+            if (name!=null) names     = new String[] {name};
+            if (mime!=null) MIMETypes = new String[] {mime};
+            suffixes   = EXTENSIONS;
+            inputTypes = INPUT_TYPES;
+        }
+
+        /**
+         * Vérifie si le flot spécifié semble être un fichier ASCII lisible.
+         * Cette méthode tente simplement de lire les premières lignes du fichier.
+         * La valeur retournée par cette méthode n'est qu'à titre indicative.
+         * <code>true</code> n'implique pas que la lecture va forcément réussir,
+         * et <code>false</code> n'implique pas que la lecture va obligatoirement
+         * échouer.
+         *
+         * @param  source Source dont on veut tester la lisibilité.
+         * @return <code>true</code> si la source <u>semble</u> être lisible.
+         * @throws IOException si une erreur est survenue lors de la lecture.
+         */
+        public boolean canDecodeInput(final Object source) throws IOException
+        {return canDecodeInput(source, 1024);}
+
+        /**
+         * Vérifie si le flot spécifié semble être un fichier ASCII lisible.
+         * Cette méthode tente simplement de lire les premières lignes du fichier.
+         * La valeur retournée par cette méthode n'est qu'à titre indicative.
+         * <code>true</code> n'implique pas que la lecture va forcément réussir,
+         * et <code>false</code> n'implique pas que la lecture va obligatoirement
+         * échouer.
+         *
+         * @param  source Source dont on veut tester la lisibilité.
+         * @param  readAheadLimit Nombre maximal de caractères à lire. Si ce
+         *         nombre est dépassé sans que cette méthode ait pu déterminer
+         *         si la source est lisible ou pas, alors cette méthode retourne
+         *         <code>false</code>.
+         * @return <code>true</code> si la source <u>semble</u> être lisible.
+         * @throws IOException si une erreur est survenue lors de la lecture.
+         */
+        public boolean canDecodeInput(final Object source, final int readAheadLimit) throws IOException
+        {
+            if (source instanceof Reader)
+            {
+                final Reader input = (Reader)source;
+                if (input.markSupported())
+                {
+                    input.mark(readAheadLimit);
+                    final boolean result = canDecodeReader(input, readAheadLimit);
+                    input.reset();
+                    return result;
+                }
+            }
+            if (source instanceof InputStream)
+            {
+                return canDecodeInput((InputStream) source, readAheadLimit, false);
+            }
+            if (source instanceof File)
+            {
+                return canDecodeInput(new FileInputStream((File) source), readAheadLimit, true);
+            }
+            if (source instanceof URL)
+            {
+                return canDecodeInput(((URL) source).openStream(), readAheadLimit, true);
+            }
+            if (source instanceof URLConnection)
+            {
+                return canDecodeInput(((URLConnection) source).getInputStream(), readAheadLimit, false);
+            }
+            if (source instanceof ImageInputStream)
+            {
+                return canDecodeInput(new InputStreamAdapter((ImageInputStream) source), readAheadLimit, false);
+            }
+            return false;
+        }
+
+        /**
+         * Vérifie si le flot spécifié semble être un fichier ASCII lisible.
+         * Cette méthode tente simplement de lire la première ligne du fichier.
+         *
+         * @param  input Source dont on veut tester la lisibilité.
+         * @param  canClose <code>true</code> si on peut fermer le flot après avoir vérifié sa
+         *         première ligne. Si cet argument est <code>false</code>, alors cette méthode
+         *         utilisera {@link InputStream#mark} et {@link InputStream#reset} si ces
+         *         opérations sont autorisées.
+         * @param  readAheadLimit Nombre maximal de caractères à lire. Si ce
+         *         nombre est dépassé sans que cette méthode ait pu déterminer
+         *         si la source est lisible ou pas, alors cette méthode retourne
+         *         <code>false</code>.
+         * @return <code>true</code> si la source <u>semble</u> être lisible.
+         * @throws IOException si une erreur est survenue lors de la lecture.
+         */
+        private boolean canDecodeInput(final InputStream input, final int readAheadLimit, final boolean canClose) throws IOException
+        {
+            if (!canClose)
+            {
+                if (!input.markSupported()) return false;
+                input.mark(readAheadLimit);
+            }
+            final Reader reader = (charset!=null) ? new InputStreamReader(input, charset) : new InputStreamReader(input);
+            final boolean canDecode = canDecodeReader(reader, readAheadLimit);
+            if (canClose) input.close();
+            else          input.reset();
+            return canDecode;
+        }
+
+        /**
+         * Vérifie si le flot spécifié semble être un fichier ASCII lisible.
+         * Cette méthode tente simplement de lire la première ligne du fichier.
+         * Il est de la responsabilité de l'appelant d'utiliser {@link Reader#mark},
+         * {@link Reader#reset} et/ou {@link Reader#close} aux endroits appropriés.
+         *
+         * @param  input Source dont on veut tester la lisibilité.
+         * @param  readAheadLimit Nombre maximal de caractères à lire. Si ce
+         *         nombre est dépassé sans que cette méthode ait pu déterminer
+         *         si la source est lisible ou pas, alors cette méthode retourne
+         *         <code>false</code>.
+         * @return <code>true</code> si la source <u>semble</u> être lisible.
+         * @throws IOException si une erreur est survenue lors de la lecture.
+         */
+        private boolean canDecodeReader(final Reader input, final int readAheadLimit) throws IOException
+        {
+            int           lower = 0;
+            int           upper = 0;
+            boolean      skipLF = false;
+            final char[] buffer = new char[readAheadLimit];
+            while (upper < buffer.length)
+            {
+                final int stop = upper + input.read(buffer, upper, Math.min(64, buffer.length-upper));
+                if (stop <= upper) return false;
+                do
+                {
+                    switch (buffer[upper])
+                    {
+                        default:   skipLF=false;  continue;
+                        case '\r': skipLF=true;   break;
+                        case '\n': if (!skipLF)   break;
+                                   else lower++;  continue;
+                    }
+                    final Boolean canDecode = canDecodeLine(new String(buffer, lower, upper-lower));
+                    if (canDecode!=null) return canDecode.booleanValue();
+                    lower = upper;
+                }
+                while (++upper < stop);
+            }
+            return false;
+        }
+
+        /**
+         * Vérifie si la ligne spécifiée peut être décodée. Cette méthode est appelée
+         * automatiquement par {@link #canDecodeInput(Object,int)} avec en argument une
+         * des premières lignes trouvées dans la source.
+         *
+         * @param  line Une des premières lignes du flot à lire.
+         * @return {@link Boolean#TRUE} si la ligne peut être décodée, {@link Boolean#FALSE}
+         *         si elle ne peut pas être décodée ou <code>null</code> si on ne sait pas
+         *         encore. Dans ce dernier cas, cette méthode sera appelée une nouvelle fois
+         *         avec la ligne suivante en argument.
+         */
+        protected abstract Boolean canDecodeLine(final String line);
+    }
+}
