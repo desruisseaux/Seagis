@@ -48,7 +48,7 @@ public final class XClass
      * qu'il trouve une qui ne l'est pas.
      */
     public static String getShortClassName(final Object object)
-    {return getShortName(object.getClass());}
+    {return (object!=null) ? getShortName(object.getClass()) : "<*>";}
 
     /**
      * Retourne le nom court de la classe spécifiée. Cette méthode retournera
