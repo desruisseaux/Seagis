@@ -296,13 +296,13 @@ public class Coverage3D extends Coverage
              * Snap the date to the closest image.
              */
             index = ~index;
+            long time;
             if (index==entries.length)
             {
                 if (index==0) return; // No entries in this coverage!
-                index--;
+                time = getTime(entries[--index]);
             }
-            long time;
-            if (index>=1)
+            else if (index>=1)
             {
                 time = date.getTime();
                 final long lowerTime = getTime(entries[index-1]);

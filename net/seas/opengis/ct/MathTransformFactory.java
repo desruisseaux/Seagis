@@ -128,6 +128,20 @@ public class MathTransformFactory
     {this.providers = (MathTransformProvider[]) providers.clone();}
 
     /**
+     * Creates an identity transform of the specified dimension.
+     *
+     * @param  dimension The source and target dimension.
+     * @return The identity transform.
+     */
+    public MathTransform createIdentityTransform(final int dimension)
+    {
+        final Matrix matrix = new Matrix(dimension);
+        for (int i=0; i<dimension; i++)
+            matrix.set(i, i, 1.0);
+        return createAffineTransform(matrix);
+    }
+
+    /**
      * Creates an affine transform from a matrix.
      *
      * @param matrix The matrix used to define the affine transform.
@@ -139,7 +153,7 @@ public class MathTransformFactory
     /**
      * Creates an affine transform from a matrix.
      *
-     * @param matrix The matrix used to define the affine transform.
+     * @param  matrix The matrix used to define the affine transform.
      * @return The affine transform.
      *
      * @see org.opengis.ct.CT_MathTransformFactory#createAffineTransform
@@ -196,6 +210,41 @@ public class MathTransformFactory
      */
     public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
     {return pool.intern(getProvider(classification).create(parameters));}
+
+    /**
+     * Creates a transform which passes through a subset of ordinates to another transform.
+     * This allows transforms to operate on a subset of ordinates. For example, if you have
+     * (<var>latitidue</var>,<var>longitude</var>,<var>height</var>) coordinates, then you
+     * may wish to convert the height values from feet to meters without affecting the
+     * latitude and longitude values.
+     *
+     * @param  firstAffectedOrdinate Index of the first affected ordinate.
+     * @param  transform The sub transform.
+     * @param  numTrailingOrdinates Number of trailing ordinates to pass through.
+     *         Affected ordinates will range from <code>firstAffectedOrdinate</code>
+     *         inclusive to <code>dimTarget-numTrailingOrdinates</code> exclusive.
+     * @return A pass through transform with the following dimensions:<br>
+     *         <pre>
+     * Source: firstAffectedOrdinate + subTransform.getDimSource() + numTrailingOrdinates
+     * Target: firstAffectedOrdinate + subTransform.getDimTarget() + numTrailingOrdinates</pre>
+     *
+     * @see org.opengis.ct.CT_MathTransformFactory#createPassThroughTransform
+     */
+    public MathTransform createPassThroughTransform(final int firstAffectedOrdinate, final MathTransform subTransform, final int numTrailingOrdinates)
+    {
+        if (firstAffectedOrdinate < 0) throw new IllegalArgumentException(String.valueOf(firstAffectedOrdinate));
+        if (numTrailingOrdinates  < 0) throw new IllegalArgumentException(String.valueOf(numTrailingOrdinates ));
+        if (firstAffectedOrdinate==0 && numTrailingOrdinates==0)
+        {
+            return subTransform;
+        }
+        if (subTransform.isIdentity())
+        {
+            // The AffineTransform is easier to concatenate with other transforms.
+            return createIdentityTransform(firstAffectedOrdinate + numTrailingOrdinates);
+        }
+        return pool.intern(new PassThroughTransform(firstAffectedOrdinate, subTransform, numTrailingOrdinates));
+    }
 
     /**
      * Convenience method for creating a transform from a projection.
@@ -328,7 +377,7 @@ public class MathTransformFactory
          * Creates a transform which passes through a subset of ordinates to another transform.
          */
         public CT_MathTransform createPassThroughTransform(final int firstAffectedOrdinate, final CT_MathTransform subTransform) throws RemoteException
-        {throw new UnsupportedOperationException("Not implemented");}
+        {return adapters.export(MathTransformFactory.this.createPassThroughTransform(firstAffectedOrdinate, adapters.wrap(subTransform), 0));}
 
         /**
          * Creates a transform from a classification name and parameters.

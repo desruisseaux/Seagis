@@ -169,7 +169,7 @@ public abstract class MathTransform extends Info
 
     /**
      * Transforms the specified <code>ptSrc</code> and stores the result in
-     * <code>ptDst</code>. This is an convenience method for interoperability
+     * <code>ptDst</code>. This is a convenience method for interoperability
      * with <a href="http://java.sun.com/products/java-media/2D">Java2D</a>.
      * This method will fail if this transform doesn't map two-dimensional spaces.
      *
@@ -265,7 +265,7 @@ public abstract class MathTransform extends Info
     }
 
     /**
-     * Transform the specified shape. This is an convenience method for interoperability
+     * Transform the specified shape.  This is a convenience method for interoperability
      * with <a href="http://java.sun.com/products/java-media/2D">Java2D</a>. This method
      * will fail if this transform doesn't map two-dimensional spaces.
      * <br><br>
@@ -441,6 +441,19 @@ public abstract class MathTransform extends Info
         }
         return Geometry.toPrimitive(path);
     }
+
+    /**
+     * Returns a Java2D affine transform equivalents to this math transform.
+     * This is a convenience method for interoperability with
+     * <a href="http://java.sun.com/products/java-media/2D">Java2D</a>. This
+     * method will fail if this transform doesn't map two-dimensional spaces.
+     *
+     * @return A Java2D affine transform equivalents to this math transform.
+     * @throws IllegalStateException if this math transform is not affine or
+     *         not two-dimensional.
+     */
+    public AffineTransform toAffineTransform2D() throws IllegalStateException
+    {throw new IllegalStateException(Resources.format(Clé.NOT_A_TRANSFORM2D));}
 
     /**
      * Creates the inverse transform of this object. The target of the inverse transform

@@ -61,11 +61,17 @@ final class ConcatenedTransform extends MathTransform
         super("ConcatenedTransform");
         this.transform1 = transform1;
         this.transform2 = transform2;
-        if (transform1.getDimTarget() != transform2.getDimSource())
+        if (!compatibles())
         {
             throw new IllegalArgumentException(Resources.format(Clé.COORDINATE_SYSTEM_DIMENSION_MISMATCH¤2, transform1.getName(null), transform2.getName(null)));
         }
     }
+
+    /**
+     * Check if transforms are compatibles.
+     */
+    private final boolean compatibles()
+    {return transform1.getDimTarget() == transform2.getDimSource();}
 
     /**
      * Transforms the specified <code>ptSrc</code> and stores the result in <code>ptDst</code>.
@@ -88,9 +94,18 @@ final class ConcatenedTransform extends MathTransform
      */
     public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-        final double[] tmp = new double[numPts*transform1.getDimTarget()];
-        transform1.transform(srcPts, srcOff, tmp, 0, numPts);
-        transform2.transform(tmp, 0, dstPts, dstOff, numPts);
+        assert(compatibles());
+        if (getDimSource() == getDimTarget())
+        {
+            transform1.transform(srcPts, srcOff, dstPts, dstOff, numPts);
+            transform2.transform(dstPts, dstOff, dstPts, dstOff, numPts);
+        }
+        else
+        {
+            final double[] tmp = new double[numPts*transform1.getDimTarget()];
+            transform1.transform(srcPts, srcOff, tmp, 0, numPts);
+            transform2.transform(tmp, 0, dstPts, dstOff, numPts);
+        }
     }
 
     /**
@@ -98,9 +113,18 @@ final class ConcatenedTransform extends MathTransform
      */
     public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-        final float[] tmp = new float[numPts*transform1.getDimTarget()];
-        transform1.transform(srcPts, srcOff, tmp, 0, numPts);
-        transform2.transform(tmp, 0, dstPts, dstOff, numPts);
+        assert(compatibles());
+        if (getDimSource() == getDimTarget())
+        {
+            transform1.transform(srcPts, srcOff, dstPts, dstOff, numPts);
+            transform2.transform(dstPts, dstOff, dstPts, dstOff, numPts);
+        }
+        else
+        {
+            final float[] tmp = new float[numPts*transform1.getDimTarget()];
+            transform1.transform(srcPts, srcOff, tmp, 0, numPts);
+            transform2.transform(tmp, 0, dstPts, dstOff, numPts);
+        }
     }
 
     /**

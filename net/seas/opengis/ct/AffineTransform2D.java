@@ -88,6 +88,14 @@ final class AffineTransform2D extends MathTransform implements Serializable
     {return isIdentity() ? shape : transform.createTransformedShape(shape);}
 
     /**
+     * Returns a Java2D affine transform equivalents to this math transform.
+     * This is a convenience method for interoperability with
+     * <a href="http://java.sun.com/products/java-media/2D">Java2D</a>.
+     */
+    public AffineTransform toAffineTransform2D()
+    {return new AffineTransform(transform);}
+
+    /**
      * Creates the inverse transform of this object.
      */
     public MathTransform inverse() throws NoninvertibleTransformException

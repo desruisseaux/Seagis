@@ -108,5 +108,67 @@
     interpolation if "Bicubic" failed at a particular location, etc. This behavior
     can be provided with the following "Type" argument:
     <code>new String[]{"Bicubic", "Bilinear", "NearestNeighbor"}</code>.</P>
+
+    <P>&nbsp;</P>
+    <H2>Resample</H2>
+    <P ALIGN="justify">Resample a grid coverage using a different grid geometry.
+    This operation provides the following functionality:</P>
+    <UL>
+      <LI><strong>Resampling</strong><br>
+          The grid coverage can be resampled at a different cell resolution.
+          Some implementations may be able to do resampling efficiently at any
+          resolution. Also a non-rectilinear grid coverage can be accessed as
+          rectilinear grid coverage with this operation.</LI>
+      <LI><strong>Reprojecting</strong><br>
+          The new grid geometry can have a different coordinate system than the
+          underlying grid geometry. For example, a grid coverage can be
+          reprojected from a geodetic coordinate system to Universal Transverse
+          Mercator coordinate system.</LI>
+      <LI><strong>Subsetting</strong><br>
+          A subset of a grid can be viewed as a separate coverage by using this
+          operation with a grid geometry which as the same geoferencing and a
+          region. Grid range in the grid geometry defines the region to subset
+          in the grid coverage.</LI>
+    </UL>
+
+    <P><STRONG>Name:</STRONG>&nbsp;<CODE>"Resample"</CODE><BR>
+       <STRONG>Parameters:</STRONG></P>
+    <table border=1 cellpadding=9>
+      <tr>
+        <td align="center" bgcolor="#F0F0F0"><strong>Name</strong></td>
+        <td align="center" bgcolor="#F0F0F0"><strong>Class</strong></td>
+        <td align="center" bgcolor="#F0F0F0"><strong>Default value</strong></td>
+        <td align="center" bgcolor="#F0F0F0"><strong>Minimum value</strong></td>
+        <td align="center" bgcolor="#F0F0F0"><strong>Maximum value</strong></td>
+      </tr>
+      <tr>
+        <td>"Source"</td>
+        <td>{@link net.seas.opengis.gc.GridCoverage}</td>
+        <td align="center">N/A</td>
+        <td align="center">N/A</td>
+        <td align="center">N/A</td>
+      </tr>
+      <tr>
+        <td>"InterpolationType"</td>
+        <td>{@link java.lang.CharSequence}</td>
+        <td>"NearestNieghbor"</td>
+        <td align="center">N/A</td>
+        <td align="center">N/A</td>
+      </tr>
+      <tr>
+        <td>"CoordinateSystem"</td>
+        <td>{@link net.seas.opengis.cs.CoordinateSystem}</td>
+        <td>Same as source grid coverage</td>
+        <td align="center">N/A</td>
+        <td align="center">N/A</td>
+      </tr>
+      <tr>
+        <td>"GridGeometry"</td>
+        <td>{@link net.seas.opengis.gc.GridGeometry}</td>
+        <td>(automatic)</td>
+        <td align="center">N/A</td>
+        <td align="center">N/A</td>
+      </tr>
+    </table>
   </BODY>
 </HTML>
