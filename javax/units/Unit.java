@@ -12,10 +12,10 @@ package javax.units;
  */
 public final class Unit
 {
-	/**
-	 * Don't allow instance creation, since
-	 * this is not the official Unit class.
-	 */
-	private Unit()
-	{}
+    /**
+     * Don't allow instance creation, since
+     * this is not the official Unit class.
+     */
+    private Unit()
+    {}
 }
