@@ -356,6 +356,35 @@ public class Envelope implements Dimensioned, Cloneable, Serializable
     }
 
     /**
+     * Returns a new envelope that encompass only some dimensions of this envelope.
+     * This method copy this envelope's ordinates into a new envelope, beginning at
+     * dimension <code>lower</code> and extending to dimension <code>upper-1</code>.
+     * Thus the dimension of the subenvelope is <code>upper-lower</code>.
+     *
+     * @param  lower The first dimension to copy, inclusive.
+     * @param  upper The last  dimension to copy, exclusive.
+     * @return The subenvelope.
+     * @throws IndexOutOfBoundsException if an index is out of bounds.
+     */
+    public Envelope getSubEnvelope(final int lower, final int upper)
+    {
+        final int curDim = ord.length/2;
+        final int newDim = upper-lower;
+        if (lower<0 || lower>curDim)
+        {
+            throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2, "lower", new Integer(lower)));
+        }
+        if (newDim<0 || upper>curDim)
+        {
+            throw new IndexOutOfBoundsException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2, "upper", new Integer(upper)));
+        }
+        final Envelope envelope = new Envelope(newDim);
+        System.arraycopy(ord, lower,        envelope.ord, 0,      newDim);
+        System.arraycopy(ord, lower+curDim, envelope.ord, newDim, newDim);
+        return envelope;
+    }
+
+    /**
      * Returns a {@link Rectangle2D} with the same bounds as this <code>Envelope</code>.
      * This is a convenience method for interoperability with Java2D.
      *
