@@ -101,6 +101,8 @@ public class Simulation extends fr.ird.animat.server.Simulation {
     {
         super(name, new Environment(configuration));
         this.delay = (int)configuration.pause;
+        setProperty("GRAYSCALE_IMAGES",  Boolean.toString(configuration.grayscaleImages ));
+        setProperty("FISHERIES_VISIBLE", Boolean.toString(configuration.fisheriesVisible));
         shutdown = new Thread(THREAD_GROUP, (Environment)getEnvironment(), "Simulation shutdown");
         Runtime.getRuntime().addShutdownHook(shutdown);
         /*

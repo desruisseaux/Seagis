@@ -128,7 +128,7 @@ final class RuleSimulationPane extends SimulationPane {
         super(simulation);
         final Environment environment = environmentLayer.environment;
         final TimeZone timezone = environment.getClock().getTimeZone();
-        if (environment instanceof SampleSource) {
+        if (getBoolean("FISHERIES_VISIBLE", true) && environment instanceof SampleSource) {
             samples = new SampleLayer((SampleSource)environment);
             samples.setTimeZone(timezone);
             mapPane.getRenderer().addLayer(samples);

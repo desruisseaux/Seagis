@@ -94,4 +94,10 @@ public final class Simulation_Stub
 	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
 	}
     }
+
+    public String getProperty(final String name)
+	throws java.rmi.RemoteException
+    {
+        return null; // TODO: not yet implemented.
+    }
 }

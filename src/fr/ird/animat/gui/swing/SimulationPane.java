@@ -104,6 +104,9 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
          */
         mapPane.setPaintingWhileAdjusting(true);
         environmentLayer = new EnvironmentLayer(environment);
+        if (!getBoolean("GRAYSCALE_IMAGES", true)) {
+            environmentLayer.setColorMap(null);
+        }
         final Renderer renderer = mapPane.getRenderer();
         renderer.addLayer(environmentLayer);
         renderer.addLayer(new RenderedMapScale());
@@ -136,6 +139,19 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
         add(split,   BorderLayout.CENTER);
         add(status,  BorderLayout.SOUTH );
         mapPane.reset();
+    }
+
+    /**
+     * Retourne la valeur booléenne de la propriété définie.
+     * Si la propriété n'est pas définie, alors la valeur par
+     * défaut spécifiée est retournée.
+     */
+    final boolean getBoolean(final String property, final boolean défaut) throws RemoteException {
+        final String value = simulation.getProperty(property);
+        if (value == null) {
+            return défaut;
+        }
+        return Boolean.valueOf(value).booleanValue();
     }
 
     /**

@@ -80,6 +80,19 @@ final class Configuration {
     public final long pause;
 
     /**
+     * Indique si les images doivent être affichées en tons de gris. Une image en
+     * tons de gris fait mieux ressortir les autres indications colorées, comme la
+     * position des pêches ainsi que des bancs de thons virtuels. Si ce drapeau est
+     * <code>false</code>, alors les images garderont leurs palette d'origine.
+     */
+    public final boolean grayscaleImages;
+
+    /**
+     * Indique si les positions de pêches doivent être affichées.
+     */
+    public final boolean fisheriesVisible;
+
+    /**
      * Distance maximale (en miles nautiques) que peut parcourir un thon en une journée.
      */
     public final double dailyDistance;
@@ -157,6 +170,11 @@ final class Configuration {
             ////    PAUSE ENTRE CHAQUE PAS DE TEMPS
             ////
             pause = Math.round(1000*Double.parseDouble(getProperty(properties, "PAUSE")));
+            ////
+            ////    MODE D'AFFICHAGE
+            ////
+            grayscaleImages  = Boolean.valueOf(getProperty(properties, "GRAYSCALE_IMAGES" )).booleanValue();
+            fisheriesVisible = Boolean.valueOf(getProperty(properties, "FISHERIES_VISIBLE")).booleanValue();
             ////
             ////    RESOLUTION SPATIALE DES PIXELS
             ////

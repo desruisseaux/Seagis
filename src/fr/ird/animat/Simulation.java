@@ -81,4 +81,17 @@ public interface Simulation extends Remote {
      *         et que cette exécution a échouée.
      */
     Environment getEnvironment() throws RemoteException;
+
+    /**
+     * Retourne une propriété de la simulation. La liste des propriétés peut contenir des
+     * informations supplémentaires qui ne figure pas parmis les autres méthodes de cette
+     * interface.
+     *
+     * @param  name Le nom de la propriété.
+     * @return La valeur de la propriété spécifiée, ou <code>null</code> si aucune
+     *         propriété n'est définie pour le nom spécifiée.
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
+     */
+    String getProperty(String name) throws RemoteException;
 }

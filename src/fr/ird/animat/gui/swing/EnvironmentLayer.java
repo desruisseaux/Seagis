@@ -102,6 +102,12 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
     private final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
 
     /**
+     * La palette de couleurs à utiliser pour l'affichage de l'image,
+     * ou <code>null</code> pour conserver la palette originale.
+     */
+    private Map[] colorMap = COLOR_MAP;
+
+    /**
      * La date et heure de l'image actuellement affichée,
      * ou <code>null</code> si aucune image n'est affichée.
      */
@@ -222,11 +228,23 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
      * will remove the current grid coverage.
      */
     public void setGridCoverage(GridCoverage coverage) throws TransformException {
-        if (coverage != null) {
-            coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
+        if (coverage!=null && colorMap!=null) {
+            coverage = processor.doOperation("Recolor", coverage, "ColorMaps", colorMap);
         }
         super.setGridCoverage(coverage);
         colors.setColors(coverage);
+    }
+
+    /**
+     * Définit la palette de couleurs à appliquer sur toutes les images affichées par cette
+     * couche. Une valeur nulle indique que l'afficheur devra conserver la palette originale
+     * de chaque image.
+     *
+     * @param colorMap Les palettes de couleurs, ou <code>null</code>
+     *        pour ne pas imposer de palette.
+     */
+    public void setColorMap(final Map[] colorMap) {
+        this.colorMap = colorMap;
     }
 
     /**

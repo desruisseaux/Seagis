@@ -25,6 +25,11 @@
  */
 package fr.ird.animat.server;
 
+// Collections
+import java.util.Map;
+import java.util.HashMap;
+import javax.media.jai.util.CaselessStringKey;
+
 // Remote Method Invocation (RMI)
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -89,6 +94,11 @@ public class Simulation extends RemoteServer implements fr.ird.animat.Simulation
      * la méthode {@link Environment#nextTimeStep} retournera <code>false</code>.
      */
     private boolean finished;
+
+    /**
+     * Les propriétés de la simulation, ou <code>null</code> s'il n'y en a pas.
+     */
+    private Map<CaselessStringKey,String> properties;
 
     /**
      * Construit une nouvelle simulation avec le nom spécifiée.
@@ -269,5 +279,28 @@ public class Simulation extends RemoteServer implements fr.ird.animat.Simulation
         } catch (NotBoundException exception) {
             throw new UnknownHostException("Le serveur n'a pas été trouvé ou n'est pas prêt.", exception);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public String getProperty(final String name) {
+        if (properties != null) {
+            return properties.get(new CaselessStringKey(name.trim()));
+        }
+        return null;
+    }
+
+    /**
+     * Ajoute ou remplace une propriété.
+     *
+     * @param name Le nom de la propriété à ajouter ou remplacer.
+     * @param value La valeur de la propriété.
+     */
+    protected void setProperty(final String name, final String value) {
+        if (properties == null) {
+            properties = new HashMap<CaselessStringKey,String>();
+        }
+        properties.put(new CaselessStringKey(name.trim()), value);
     }
 }
