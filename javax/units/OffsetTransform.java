@@ -54,6 +54,11 @@ import javax.units.resources.ResourceKeys;
 final class OffsetTransform extends UnitTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -5512331418450968824L;
+
+    /**
      * Nombre à soustraire à {@link #fromUnit}
      * pour obtenir {@link #toUnit}.
      */

@@ -54,6 +54,11 @@ import javax.units.resources.ResourceKeys;
 final class ScaledTransform extends UnitTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 4620148316930810993L;
+
+    /**
      * Facteur par lequel diviser {@link #fromUnit}
      * pour obtenir {@link #toUnit}.
      */

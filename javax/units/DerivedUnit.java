@@ -58,6 +58,11 @@ import javax.units.resources.ResourceKeys;
 /*public*/ final class DerivedUnit extends SimpleUnit
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -4476414709268904273L;
+
+    /**
      * Unité sans dimensions. Cette
      * unité n'aura aucun symbole.
      */

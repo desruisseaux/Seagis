@@ -78,6 +78,11 @@ import javax.units.resources.ResourceKeys;
 /*public*/ final class OffsetUnit extends Unit
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 6259444767590765138L;
+
+    /**
      * La constante à ajouter aux mesures exprimées selon ces
      * unités pour obtenir des mesures exprimées selon les unités
      * {@link #unit}. Cette constante sera par exemple 273.15 pour

@@ -58,6 +58,11 @@ import net.seagis.resources.WeakHashSet;
 /*public*/ final class PrefixSet implements Serializable
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -8301096197856692402L;
+
+    /**
      * Banque des objets qui ont été précédemment créés et
      * enregistrés par un appel à la méthode {@link #intern}.
      */

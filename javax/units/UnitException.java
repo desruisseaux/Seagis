@@ -52,6 +52,11 @@ package javax.units;
 public class UnitException extends RuntimeException
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -6935210984697824869L;
+
+    /**
      * Première unités en cause lors de l'exception. Il peut s'agir des unités <var>A</var> dans l'expression
      * <code>A.{@link Unit#multiply multiply}(B)</code> ou <code>A.{@link Unit#convert convert}(values, B)</code>.
      * Ce champ peut être nul s'il ne s'applique pas.

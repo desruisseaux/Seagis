@@ -52,6 +52,11 @@ import java.io.ObjectStreamException;
 final class CompoundTransform extends UnitTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 6193871497550654092L;
+
+    /**
      * Première transformation à
      * appliquer lors des conversions.
      */

@@ -68,6 +68,11 @@ import java.io.ObjectStreamException;
 /*public*/ final class BaseUnit extends SimpleUnit
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -2736303035387288589L;
+
+    /**
      * Construit une unité fondamentale.
      *
      * @param quantityName Nom de la quantité (exemple: "Mass").

@@ -72,6 +72,11 @@ import javax.units.resources.ResourceKeys;
 /*public*/ final class ScaledUnit extends Unit
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -5387831470112872874L;
+
+    /**
      * Inverse d'une petite valeur servant à éviter des erreurs d'arrondissements.
      * Cette valeur est définie arbitrairement à 2^24, soit environ 1.678E+7.
      */

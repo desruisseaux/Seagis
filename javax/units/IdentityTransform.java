@@ -52,6 +52,11 @@ import java.io.ObjectStreamException;
 final class IdentityTransform extends UnitTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -228762891600718327L;
+
+    /**
      * Construit un objet qui aura la charge de convertir
      * des données exprimées selon les unités spécifiées.
      */

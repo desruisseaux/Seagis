@@ -62,6 +62,11 @@ import net.seagis.resources.WeakHashSet;
 /*public*/ final class Factor implements Serializable
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -7448171508684390207L;
+
+    /**
      * Banque des objets qui ont été précédemment créés et
      * enregistrés par un appel à la méthode {@link #intern}.
      */

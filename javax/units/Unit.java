@@ -90,11 +90,13 @@ public abstract class Unit implements Serializable
 
     /**
      * Convenience constant for base unit of angle.
+     * Not a SI unit, but provides here for convenience.
      */
     public static final Unit RADIAN = get("rad");
 
     /**
      * Convenience constant for unit of angle.
+     * Not a SI unit, but provides here for convenience.
      */
     public static final Unit DEGREE = get("°");
 
@@ -110,11 +112,13 @@ public abstract class Unit implements Serializable
 
     /**
      * Convenience constant for unit of time.
+     * Not a SI unit, but provides here for convenience.
      */
     public static final Unit MILLISECOND = get("ms");
 
     /**
      * Convenience constant for unit of time.
+     * Not a SI unit, but provides here for convenience.
      */
     public static final Unit DAY = get("d");
 
@@ -122,11 +126,6 @@ public abstract class Unit implements Serializable
      * Convenience constant for base unit of mass.
      */
     public static final Unit KILOGRAM = get("kg");
-
-    /**
-     * Convenience constant for unit of mass.
-     */
-    public static final Unit TON = get("ton");
 
     /**
      * Symbole des unités de cet objet <code>Unit</code> (par exemple "kg").

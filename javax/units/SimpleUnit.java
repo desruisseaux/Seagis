@@ -52,6 +52,11 @@ import javax.units.resources.Units;
 /*public*/ abstract class SimpleUnit extends Unit
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -1702845175242358392L;
+
+    /**
      * La quantité de cette unité. Cette quantité peut être par exemple
      * "mass" pour les kilogramme ou "speed" pour les mètres par seconde),
      * ou <code>null</code> si elle n'est pas connue.

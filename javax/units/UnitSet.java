@@ -61,6 +61,11 @@ import net.seagis.resources.Utilities;
 final class UnitSet implements Serializable
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = -7375402196770611553L;
+
+    /**
      * Nom et chemin du fichier dans lequel
      * enregistrer les unités sous une forme
      * binaire.

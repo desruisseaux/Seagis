@@ -52,6 +52,11 @@ import java.io.ObjectStreamException;
 final class InverseTransform extends UnitTransform
 {
     /**
+     * Serial number for interoperability with different versions.
+     */
+    private static final long serialVersionUID = 8539885091744917242L;
+
+    /**
      * Construit un objet qui aura la charge de convertir
      * des données exprimées selon les unités spécifiées.
      */
