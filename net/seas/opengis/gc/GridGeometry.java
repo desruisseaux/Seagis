@@ -64,11 +64,11 @@ public abstract class GridGeometry
     {return range;}
 
     /**
-     * Returns the math transform which allows for the transformations from
-     * grid coordinates to real world earth coordinates. The transform is
-     * often an affine transformation. The coordinate system of the real world
-     * coordinates is given by {@link Coverage#getCoordinateSystem}. If no math
-     * transform is available, this method returns <code>null</code>.
+     * Returns the math transform which allows for the transformations from grid
+     * coordinates to real world earth coordinates. The transform is often an
+     * affine transformation. The coordinate system of the real world coordinates
+     * is given by {@link net.seas.opengis.cv.Coverage#getCoordinateSystem}. If no
+     * math transform is available, this method returns <code>null</code>.
      */
     public abstract MathTransform gridToCoordinateSystem();
 }

@@ -22,6 +22,12 @@
  */
 package net.seas.opengis.gp;
 
+// Dependencies
+import net.seas.opengis.gc.GridCoverage;
+
+// Miscellaneous
+import javax.media.jai.ParameterList;
+
 
 /**
  * Allows for different ways of accessing the grid coverage values.
@@ -42,4 +48,13 @@ public abstract class GridCoverageProcessor
      */
     public GridCoverageProcessor()
     {}
+
+    /**
+     * Apply a process operation to a grid coverage.
+     *
+     * @param  operationName Name of the operation to be applied to the grid coverage..
+     * @param  parameters List of name value pairs for the parameters required for the operation.
+     * @return The result as a grid coverage.
+     */
+    public abstract GridCoverage doOperation(final String operationName, final ParameterList parameters);
 }

@@ -29,11 +29,10 @@ import java.awt.image.IndexColorModel;
 
 // Miscellaneous
 import java.util.Locale;
-import java.io.Serializable;
 import java.io.ObjectStreamException;
 import java.util.NoSuchElementException;
+import javax.media.jai.EnumeratedParameter;
 import net.seas.resources.Resources;
-import net.seas.util.XClass;
 
 
 /**
@@ -45,7 +44,7 @@ import net.seas.util.XClass;
  *
  * @see org.opengis.cv.CV_ColorInterpretation
  */
-public final class ColorInterpretation implements Serializable
+public final class ColorInterpretation extends EnumeratedParameter
 {
     /**
      * Serial number for interoperability with different versions.
@@ -53,49 +52,49 @@ public final class ColorInterpretation implements Serializable
     // private static final long serialVersionUID = ?; // TODO
 
     /** Band is not associated with a color model component. */
-    public static final ColorInterpretation UNDEFINED       = new ColorInterpretation(0, Clé.UNDEFINED);
+    public static final ColorInterpretation UNDEFINED       = new ColorInterpretation("UNDEFINED",       0, Clé.UNDEFINED);
 
     /** Band is an index into a lookup table. */
-    public static final ColorInterpretation GRAY_INDEX      = new ColorInterpretation(1, Clé.GRAY);
+    public static final ColorInterpretation GRAY_INDEX      = new ColorInterpretation("GRAY_INDEX",      1, Clé.GRAY);
 
     /** Band is a color index into a color table. */
-    public static final ColorInterpretation PALETTE_INDEX   = new ColorInterpretation(2, Clé.PALETTE);
+    public static final ColorInterpretation PALETTE_INDEX   = new ColorInterpretation("PALETTE_INDEX",   2, Clé.PALETTE);
 
     /** Bands correspond to RGB color model components.
         Alpha band may or may not be present.*/
-    public static final ColorInterpretation RED_BAND        = new ColorInterpretation(3, Clé.RED);
+    public static final ColorInterpretation RED_BAND        = new ColorInterpretation("RED_BAND",        3, Clé.RED);
 
     /** Bands correspond to RGB color model components.
         Alpha band may or may not be present.*/
-    public static final ColorInterpretation GREEN_BAND      = new ColorInterpretation(4, Clé.GREEN);
+    public static final ColorInterpretation GREEN_BAND      = new ColorInterpretation("GREEN_BAND",      4, Clé.GREEN);
 
     /** Bands correspond to RGB color model components.
         Alpha band may or may not be present.*/
-    public static final ColorInterpretation BLUE_BAND       = new ColorInterpretation(5, Clé.BLUE);
+    public static final ColorInterpretation BLUE_BAND       = new ColorInterpretation("BLUE_BAND",       5, Clé.BLUE);
 
     /** Bands correspond to RGB color model components. */
-    public static final ColorInterpretation ALPHA_BAND      = new ColorInterpretation(6, Clé.TRANSPARENCY);
+    public static final ColorInterpretation ALPHA_BAND      = new ColorInterpretation("ALPHA_BAND",      6, Clé.TRANSPARENCY);
 
     /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation HUE_BAND        = new ColorInterpretation(7, Clé.HUE);
+    public static final ColorInterpretation HUE_BAND        = new ColorInterpretation("HUE_BAND",        7, Clé.HUE);
 
     /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation SATURATION_BAND = new ColorInterpretation(8, Clé.SATURATION);
+    public static final ColorInterpretation SATURATION_BAND = new ColorInterpretation("SATURATION_BAND", 8, Clé.SATURATION);
 
     /** Bands correspond to HSL color model. */
-    public static final ColorInterpretation LIGHTNESS_BAND  = new ColorInterpretation(9, Clé.LIGHTNESS);
+    public static final ColorInterpretation LIGHTNESS_BAND  = new ColorInterpretation("LIGHTNESS_BAND",  9, Clé.LIGHTNESS);
 
     /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation CYAN_BAND       = new ColorInterpretation(10, Clé.CYAN);
+    public static final ColorInterpretation CYAN_BAND       = new ColorInterpretation("CYAN_BAND",      10, Clé.CYAN);
 
     /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation MAGENTA_BAND    = new ColorInterpretation(11, Clé.MAGENTA);
+    public static final ColorInterpretation MAGENTA_BAND    = new ColorInterpretation("MAGENTA_BAND",   11, Clé.MAGENTA);
 
     /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation YELLOW_BAND     = new ColorInterpretation(12, Clé.YELLOW);
+    public static final ColorInterpretation YELLOW_BAND     = new ColorInterpretation("YELLOW_BAND",    12, Clé.YELLOW);
 
     /** Bands correspond to CMYK color model. */
-    public static final ColorInterpretation BLACK_BAND      = new ColorInterpretation(13, Clé.BLACK);
+    public static final ColorInterpretation BLACK_BAND      = new ColorInterpretation("BLACK_BAND",     13, Clé.BLACK);
 
     /**
      * Color interpretation by value. Used to
@@ -118,18 +117,12 @@ public final class ColorInterpretation implements Serializable
     private transient final int clé;
 
     /**
-     * The enum value. This field is public for compatibility
-     * with {@link org.opengis.cv.CV_ColorInterpretation}.
-     */
-    public final int value;
-
-    /**
      * Construct a new enum with the specified value.
      */
-    private ColorInterpretation(final int value, final int clé)
+    private ColorInterpretation(final String name, final int value, final int clé)
     {
-        this.value = value;
-        this.clé   = clé;
+        super(name, value);
+        this.clé = clé;
     }
 
     /**
@@ -223,42 +216,6 @@ public final class ColorInterpretation implements Serializable
     {return Resources.getResources(locale).getString(clé);}
 
     /**
-     * Returns a hash value for this enum.
-     */
-    public int hashCode()
-    {return value;}
-
-    /**
-     * Compares the specified object with
-     * this enum for equality.
-     */
-    public boolean equals(final Object object)
-    {
-        if (object instanceof ColorInterpretation)
-        {
-            final ColorInterpretation that = (ColorInterpretation) object;
-            return this.value == that.value;
-        }
-        else return false;
-    }
-
-    /**
-     * Returns a string représentation of this enum.
-     */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        final String name = getName(null);
-        if (name!=null)
-            buffer.append(name);
-        else
-            buffer.append(value);
-        buffer.append(']');
-        return buffer.toString();
-    }
-
-    /**
      * Use a single instance of {@link ColorInterpretation} after deserialization.
      * It allow client code to test <code>enum1==enum2</code> instead of
      * <code>enum1.equals(enum2)</code>.
@@ -268,6 +225,7 @@ public final class ColorInterpretation implements Serializable
      */
     private Object readResolve() throws ObjectStreamException
     {
+        final int value = getValue();
         if (value>=0 && value<ENUMS.length) return ENUMS[value]; // Canonicalize
         else return ENUMS[0]; // Collapse unknow value to a single canonical one
     }
