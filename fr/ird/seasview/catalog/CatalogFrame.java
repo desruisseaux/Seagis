@@ -125,9 +125,7 @@ public class CatalogFrame extends InternalFrame {
         series   = database.getSeriesTable();
         tree     = series.getTree(SeriesTable.CATEGORY_LEAF);
         series.close();
-
         times.setFont(new Font("SansSerif", Font.BOLD, 12));
-        times.setLegendVisible(true);
 
         final JTree        treeView = new JTree(tree);
         final JComponent scrollView = new JScrollPane(treeView);

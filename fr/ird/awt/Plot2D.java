@@ -25,9 +25,9 @@
 package fr.ird.awt;
 
 // Base class and axis
-import fr.ird.awt.axis.Axis;
-import fr.ird.awt.axis.Graduation;
-import fr.ird.awt.axis.AbstractGraduation;
+import org.geotools.axis.Axis2D;
+import org.geotools.axis.Graduation;
+import org.geotools.axis.AbstractGraduation;
 import fr.ird.awt.series.Series;
 
 // Graphics and geometry
@@ -66,13 +66,13 @@ public class Plot2D extends ZoomPane
      * The set of <var>x</var> axis. There is usually
      * only one axis, but more axis are allowed.
      */
-    private final List<Axis> xAxis = new ArrayList<Axis>(3);
+    private final List<Axis2D> xAxis = new ArrayList<Axis2D>(3);
 
     /**
      * The set of <var>y</var> axis. There is usually
      * only one axis, but more axis are allowed.
      */
-    private final List<Axis> yAxis = new ArrayList<Axis>(3);
+    private final List<Axis2D> yAxis = new ArrayList<Axis2D>(3);
 
     /**
      * The set of series to plot.
@@ -134,7 +134,7 @@ public class Plot2D extends ZoomPane
             {
                 bounds = series.getPath().getBounds2D();
             }
-            final Axis axis = new Axis();
+            final Axis2D axis = new Axis2D();
             final AbstractGraduation grad = (AbstractGraduation) axis.getGraduation();
             grad.setMinimum(bounds.getMinX());
             grad.setMaximum(bounds.getMaxX());
@@ -147,7 +147,7 @@ public class Plot2D extends ZoomPane
             {
                 bounds = series.getPath().getBounds2D();
             }
-            final Axis axis = new Axis();
+            final Axis2D axis = new Axis2D();
             final AbstractGraduation grad = (AbstractGraduation) axis.getGraduation();
             grad.setMinimum(bounds.getMinY());
             grad.setMaximum(bounds.getMaxY());
@@ -173,14 +173,14 @@ public class Plot2D extends ZoomPane
         double xmax = Double.NEGATIVE_INFINITY;
         double ymin = Double.POSITIVE_INFINITY;
         double ymax = Double.NEGATIVE_INFINITY;
-        for (final Iterator<Axis> it=xAxis.iterator(); it.hasNext();)
+        for (final Iterator<Axis2D> it=xAxis.iterator(); it.hasNext();)
         {
             double value;
             final Graduation grad = it.next().getGraduation();
             if ((value=grad.getMinimum()) < xmin) xmin=value;
             if ((value=grad.getMaximum()) > xmax) xmax=value;
         }
-        for (final Iterator<Axis> it=yAxis.iterator(); it.hasNext();)
+        for (final Iterator<Axis2D> it=yAxis.iterator(); it.hasNext();)
         {
             double value;
             final Graduation grad = it.next().getGraduation();
@@ -205,18 +205,18 @@ public class Plot2D extends ZoomPane
         super.validate();
         int width  = getWidth();
         int height = getHeight();
-        for (Iterator<Axis> it=xAxis.iterator(); it.hasNext();)
+        for (Iterator<Axis2D> it=xAxis.iterator(); it.hasNext();)
         {
-            final Axis axis = it.next();
+            final Axis2D axis = it.next();
             axis.setLabelClockwise(true);
             axis.setLine(60, height-60, width-30, height-60);
             // TODO: Déclarer des constantes.
             // TODO: Positionner les 2ème, 3ème... axes en fonction
             //       de la position des axes qui précèdent.
         }
-        for (Iterator<Axis> it=yAxis.iterator(); it.hasNext();)
+        for (Iterator<Axis2D> it=yAxis.iterator(); it.hasNext();)
         {
-            final Axis axis = it.next();
+            final Axis2D axis = it.next();
             axis.setLabelClockwise(false);
             axis.setLine(60, height-60, 60, 30);
             // TODO: Déclarer des constantes.
@@ -241,9 +241,9 @@ public class Plot2D extends ZoomPane
         final AffineTransform zoomTr = graphics.getTransform();
         for (Iterator<Series> it=series.iterator(); it.hasNext();)
         {
-            final Axis xAxis = this.xAxis.get(0); // TODO: trouver le bon axe
-            final Axis yAxis = this.yAxis.get(0); // TODO: trouver le bon axe
-            final AffineTransform transform = Axis.createAffineTransform(xAxis, yAxis);
+            final Axis2D xAxis = this.xAxis.get(0); // TODO: trouver le bon axe
+            final Axis2D yAxis = this.yAxis.get(0); // TODO: trouver le bon axe
+            final AffineTransform transform = Axis2D.createAffineTransform(xAxis, yAxis);
             final Series series = it.next();
             final Shape path = series.getPath();
             graphics.transform(transform);
@@ -257,11 +257,11 @@ public class Plot2D extends ZoomPane
         graphics.setTransform(oldTransform);
         graphics.setStroke(new BasicStroke(0));
         graphics.setColor(Color.black);
-        for (final Iterator<Axis> it=xAxis.iterator(); it.hasNext();)
+        for (final Iterator<Axis2D> it=xAxis.iterator(); it.hasNext();)
         {
             it.next().paint(graphics);
         }
-        for (final Iterator<Axis> it=yAxis.iterator(); it.hasNext();)
+        for (final Iterator<Axis2D> it=yAxis.iterator(); it.hasNext();)
         {
             it.next().paint(graphics);
         }
@@ -288,7 +288,7 @@ public class Plot2D extends ZoomPane
      *    </li>
      *  </ul>
      */
-    private static void translatePerpendicularly(final Axis axis, final double tx, final double ty)
+    private static void translatePerpendicularly(final Axis2D axis, final double tx, final double ty)
     {
         synchronized (axis)
         {

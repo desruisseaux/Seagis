@@ -82,11 +82,11 @@ import org.geotools.units.Unit;
 import java.text.Format;
 
 // Axis and graduation
-import fr.ird.awt.axis.Axis;
-import fr.ird.awt.axis.Graduation;
-import fr.ird.awt.axis.DateGraduation;
-import fr.ird.awt.axis.NumberGraduation;
-import fr.ird.awt.axis.AbstractGraduation;
+import org.geotools.axis.Axis2D;
+import org.geotools.axis.Graduation;
+import org.geotools.axis.DateGraduation;
+import org.geotools.axis.NumberGraduation;
+import org.geotools.axis.AbstractGraduation;
 
 // Resources
 import fr.ird.resources.Resources;
@@ -152,11 +152,11 @@ public class RangeBars extends ZoomPane {
 
     /**
      * Axe des <var>x</var> servant à écrire les valeurs des plages. Les
-     * méthodes de {@link Axis} peuvent être appellées pour modifier le format
+     * méthodes de {@link Axis2D} peuvent être appellées pour modifier le format
      * des nombres, une étiquette, des unités ou pour spécifier "à la main" les
      * minimums et maximums.
      */
-    private final Axis axis;
+    private final Axis2D axis;
 
     /**
      * Valeur minimale à avoir été spécifiée avec {@link #addRange}.
@@ -356,10 +356,10 @@ public class RangeBars extends ZoomPane {
         super(horizontal ? (TRANSLATE_X|SCALE_X|RESET) : (TRANSLATE_Y|SCALE_Y|RESET));
         this.horizontal     = horizontal;
         this.verticalLabels = verticalLabels;
-        axis = new Axis(graduation);
+        axis = new Axis2D(graduation);
         axis.setLabelClockwise(horizontal);
-        axis.setLabelFont(new Font("SansSerif", Font.BOLD,  11));
-        axis.setFont     (new Font("SansSerif", Font.PLAIN, 10));
+        axis.setRenderingHint(Graduation.LABEL_FONT,      new Font("SansSerif", Font.BOLD,  11));
+        axis.setRenderingHint(Graduation.TICK_LABEL_FONT, new Font("SansSerif", Font.PLAIN, 10));
         LookAndFeel.installColors(this, "Label.background", "Label.foreground");
         setMagnifierEnabled(false);
         /*
@@ -553,26 +553,18 @@ public class RangeBars extends ZoomPane {
     }
 
     /**
-     * Spécifie si la légende de l'axe peut être affichée. Appeller cette
-     * méthode avec la valeur <code>false</code> désactivera l'affichage de
-     * la légende même si {@link #getLegend} retourne une chaine non-nulle.
-     */
-    public void setLegendVisible(final boolean visible) {
-        axis.setLabelVisible(visible);
-    }
-
-    /**
-     * Spécifie la légende de l'axe.
+     * Spécifie la légende de l'axe. La valeur <code>null</code>
+     * signifie qu'il ne faut pas afficher de légende.
      */
     public void setLegend(final String label) {// No 'synchronized' needed here
-        ((AbstractGraduation) axis.getGraduation()).setAxisLabel(label);
+        ((AbstractGraduation) axis.getGraduation()).setLabel(label);
     }
 
     /**
      * Retourne la légende de l'axe.
      */
     public String getLegend() { // No 'synchronized' needed here
-        return axis.getGraduation().getAxisLabel();
+        return axis.getGraduation().getLabel(false);
     }
 
     /**
@@ -872,9 +864,10 @@ public class RangeBars extends ZoomPane {
      */
     public void setFont(final Font font) {
         super.setFont(font);
-        axis.setLabelFont(font);
+        axis.setRenderingHint(Graduation.LABEL_FONT, font);
         final int size = font.getSize();
-        axis.setFont(font.deriveFont(Font.PLAIN, size-(size>=14 ? 2 : 1)));
+        axis.setRenderingHint(Graduation.TICK_LABEL_FONT,
+                              font.deriveFont(Font.PLAIN, size-(size>=14 ? 2 : 1)));
         clearCache();
     }
 

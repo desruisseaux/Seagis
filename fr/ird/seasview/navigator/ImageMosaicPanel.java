@@ -147,7 +147,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
         this     .setRightComponent(mosaic);
         controler.setTopComponent(bars);
         bars     .setMinimumSize(size);
-        rangeBars.setLegendVisible(false);
+        rangeBars.setLegend(null);
         rangeBars.setRangeAdjustable(false);
         rangeBars.getModel().addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent event) {

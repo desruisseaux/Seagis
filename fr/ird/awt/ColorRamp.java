@@ -55,11 +55,11 @@ import java.beans.PropertyChangeListener;
 import javax.media.jai.util.Range;
 
 // Axis
-import fr.ird.awt.axis.Graduation;
-import fr.ird.awt.axis.TickIterator;
-import fr.ird.awt.axis.NumberGraduation;
-import fr.ird.awt.axis.AbstractGraduation;
-import fr.ird.awt.axis.LogarithmicNumberGraduation;
+import org.geotools.axis.Graduation;
+import org.geotools.axis.TickIterator;
+import org.geotools.axis.NumberGraduation;
+import org.geotools.axis.AbstractGraduation;
+import org.geotools.axis.LogarithmicNumberGraduation;
 
 // Geotools dependencies
 import org.geotools.ct.MathTransform1D;
@@ -84,8 +84,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ColorRamp extends JComponent
-{
+public class ColorRamp extends JComponent {
     /**
      * Margin (in pixel) on each sides: top, left,
      * right and bottom of the color ramp.
@@ -170,8 +169,7 @@ public class ColorRamp extends JComponent
      * Construct an initially empty <code>ColorRamp</code>. Colors
      * can be set using on of the <code>setColors(...)</code> methods.
      */
-    public ColorRamp()
-    {
+    public ColorRamp() {
         setOpaque(true);
         setUI(ui);
     }
@@ -181,8 +179,9 @@ public class ColorRamp extends JComponent
      * If the graduation is not yet defined, then
      * this method returns <code>null</code>.
      */
-    public Graduation getGraduation()
-    {return graduation;}
+    public Graduation getGraduation() {
+        return graduation;
+    }
 
     /**
      * Returns the underlying {@link IndexColorModel} used by this
@@ -191,8 +190,9 @@ public class ColorRamp extends JComponent
      * colors are delimited by the <code>lower</code> and <code>upper</code>
      * bounds.
      */
-    public IndexColorModel getColorRamp()
-    {return colors;}
+    public IndexColorModel getColorRamp() {
+        return colors;
+    }
 
     /**
      * Tests if two {@link IndexColorModel} has the same colors.
@@ -203,17 +203,18 @@ public class ColorRamp extends JComponent
      * @param   off2 The first color to check into <code>c2</code>.
      * @param length Number of colors to check.
      */
-    private static boolean equals(final IndexColorModel c1, int off1, final IndexColorModel c2, int off2, int length)
+    private static boolean equals(final IndexColorModel c1, int off1,
+                                  final IndexColorModel c2, int off2, int length)
     {
-        if (c1!=c2 || off1!=off2)
-        {
-            if (c1==null || c2==null)
-            {
+        if (c1!=c2 || off1!=off2) {
+            if (c1==null || c2==null) {
                 return false;
             }
-            while (--length >= 0)
-                if (c1.getRGB(off1++) != c2.getRGB(off2++))
+            while (--length >= 0) {
+                if (c1.getRGB(off1++) != c2.getRGB(off2++)) {
                     return false;
+                }
+            }
         }
         return true;
     }
@@ -247,8 +248,7 @@ public class ColorRamp extends JComponent
          * some colors in the [lower..upper] range are different.
          */
         boolean changed = !Utilities.equals(graduation, this.graduation);
-        if (changed)
-        {
+        if (changed) {
             final int length = upper-lower;
             changed = (length != this.upper-this.lower) ||
                       !equals(colors, lower, this.colors, this.lower, length);
@@ -257,16 +257,19 @@ public class ColorRamp extends JComponent
          * Register the new graduation.
          * and store the new values.
          */
-        if (graduation != this.graduation)
-        {
-            if (this.graduation!=null)
+        if (graduation != this.graduation) {
+            if (this.graduation != null) {
                 this.graduation.removePropertyChangeListener(ui);
-            if (graduation!=null)
+            }
+            if (graduation != null) {
                 graduation.addPropertyChangeListener(ui);
+            }
         }
-        if (graduation != null)
-        {
-            this.units  = graduation.getUnitLabel();
+        if (graduation != null) {
+            final Unit unit = graduation.getUnit();
+            if (unit != null) {
+                this.units = unit.toString();
+            }
         }
         this.graduation = graduation;
         this.colors     = colors;
@@ -293,8 +296,7 @@ public class ColorRamp extends JComponent
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    private boolean setColorRamp(final SampleDimension band, final IndexColorModel colors)
-    {
+    private boolean setColorRamp(final SampleDimension band, final IndexColorModel colors) {
         /*
          * Looks for what seems to be the "main" category. We look for the
          * quantitative category (if there is one) with the widest sample range.
@@ -302,23 +304,19 @@ public class ColorRamp extends JComponent
         double maxRange=0;
         Category category=null;
         final List categories = band.getCategories();
-        for (int i=categories.size(); --i>=0;)
-        {
+        for (int i=categories.size(); --i>=0;) {
             final Category candidate = ((Category) categories.get(i)).geophysics(false);
-            if (candidate!=null && candidate.isQuantitative())
-            {
+            if (candidate!=null && candidate.isQuantitative()) {
                 final Range range = candidate.getRange();
                 final double rangeValue = ((Number)range.getMaxValue()).doubleValue() -
                                           ((Number)range.getMinValue()).doubleValue();
-                if (rangeValue >= maxRange)
-                {
+                if (rangeValue >= maxRange) {
                     maxRange = rangeValue;
                     category = candidate;
                 }
             }
         }
-        if (category==null)
-        {
+        if (category == null) {
             return setColorRamp(null, null, 0, 0);
         }
         /*
@@ -329,32 +327,28 @@ public class ColorRamp extends JComponent
         final int  lower = ((Number)range.getMinValue()).intValue();
         final int  upper = ((Number)range.getMaxValue()).intValue();
         double min,max;
-        try
-        {
+        try {
             final MathTransform1D tr = category.getSampleToGeophysics();
             min = tr.transform(lower);
             max = tr.transform(upper);
-        }
-        catch (TransformException cause)
-        {
+        } catch (TransformException cause) {
             IllegalArgumentException e = new IllegalArgumentException(Resources.format(
                             ResourceKeys.ERROR_BAD_ARGUMENT_$2, "category", category));
             e.initCause(cause);
             throw e;
         }
-        if (min > max)
-        {
+        if (min > max) {
             // This case occurs typically when displaying a color ramp for
             // sea bathymetry, for which floor level are negative numbers.
             min = -min;
             max = -max;
         }
-        if (!(min <= max))
-        {
+        if (!(min <= max)) {
             throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2,
                                                              "category", category));
         }
-        AbstractGraduation graduation = (this.graduation instanceof AbstractGraduation) ? (AbstractGraduation) this.graduation : null;
+        AbstractGraduation graduation = (this.graduation instanceof AbstractGraduation) ?
+                                        (AbstractGraduation) this.graduation : null;
         graduation = createGraduation(graduation, category, band.getUnits());
         /*
          * Set the color ramp using the new graduation. We want that
@@ -382,10 +376,8 @@ public class ColorRamp extends JComponent
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    public boolean setColorRamp(SampleDimension band)
-    {
-        if (band==null)
-        {
+    public boolean setColorRamp(SampleDimension band) {
+        if (band == null) {
             return setColorRamp(null, null, 0, 0);
         }
         band = band.geophysics(false);
@@ -410,10 +402,8 @@ public class ColorRamp extends JComponent
      * @see #getColorRamp()
      * @see #getGraduation()
      */
-    public boolean setColorRamp(GridCoverage coverage)
-    {
-        if (coverage==null)
-        {
+    public boolean setColorRamp(GridCoverage coverage) {
+        if (coverage == null) {
             return setColorRamp(null, null, 0, 0);
         }
         coverage = coverage.geophysics(false);
@@ -428,8 +418,9 @@ public class ColorRamp extends JComponent
      * It should be one of the following constants:
      * ({@link SwingConstants#HORIZONTAL} or {@link SwingConstants#VERTICAL}).
      */
-    public int getOrientation()
-    {return (horizontal) ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL;}
+    public int getOrientation() {
+        return (horizontal) ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL;
+    }
 
     /**
      * Set the component's orientation (horizontal or vertical).
@@ -437,13 +428,11 @@ public class ColorRamp extends JComponent
      * @param orient {@link SwingConstants#HORIZONTAL}
      *        or {@link SwingConstants#VERTICAL}.
      */
-    public void setOrientation(final int orient)
-    {
-        switch (orient)
-        {
+    public void setOrientation(final int orient) {
+        switch (orient) {
             case SwingConstants.HORIZONTAL: horizontal=true;  break;
             case SwingConstants.VERTICAL:   horizontal=false; break;
-            default: throw new IllegalArgumentException();
+            default: throw new IllegalArgumentException(String.valueOf(orient));
         }
     }
 
@@ -451,15 +440,17 @@ public class ColorRamp extends JComponent
      * Tests if graduation labels are paint on top of the
      * colors ramp. Default value is <code>true</code>.
      */
-    public boolean isLabelVisibles()
-    {return labelVisibles;}
+    public boolean isLabelVisibles() {
+        return labelVisibles;
+    }
 
     /**
      * Sets whatever the graduation labels should
      * be painted on top of the colors ramp.
      */
-    public void setLabelVisibles(final boolean visible)
-    {labelVisibles=visible;}
+    public void setLabelVisibles(final boolean visible) {
+        labelVisibles = visible;
+    }
 
     /**
      * Sets the label colors. A <code>null</code>
@@ -467,8 +458,7 @@ public class ColorRamp extends JComponent
      *
      * @see #getForeground
      */
-    public void setForeground(final Color color)
-    {
+    public void setForeground(final Color color) {
         super.setForeground(color);
         autoForeground=(color==null);
     }
@@ -478,8 +468,7 @@ public class ColorRamp extends JComponent
      * The default color will be black or white, depending
      * of the background color at the specified index.
      */
-    private Color getForeground(final int colorIndex)
-    {
+    private Color getForeground(final int colorIndex) {
         final int R=colors.getRed  (colorIndex);
         final int G=colors.getGreen(colorIndex);
         final int B=colors.getBlue (colorIndex);
@@ -498,12 +487,10 @@ public class ColorRamp extends JComponent
      *         the color ramp in behind them), or <code>null</code> if
      *         no label has been painted.
      */
-    private Rectangle2D paint(final Graphics2D graphics, final Rectangle bounds)
-    {
+    private Rectangle2D paint(final Graphics2D graphics, final Rectangle bounds) {
         final int lower = this.lower;
         final int upper = this.upper;
-        if (lower<upper)
-        {
+        if (lower < upper) {
             int R,G,B;
             int i=lower;
             int lastIndex=0;
@@ -516,43 +503,33 @@ public class ColorRamp extends JComponent
             final double dy = (double)(bounds.height-2*MARGIN)/(upper-lower);
             final Rectangle2D.Double rect=new Rectangle2D.Double();
             rect.setRect(bounds);
-            while (++i<=upper)
-            {
-                if (i!=upper)
-                {
+            while (++i<=upper) {
+                if (i != upper) {
                     CR=colors.getRed  (i);
                     CG=colors.getGreen(i);
                     CB=colors.getBlue (i);
-                    if (R==CR && G==CG && B==CB)
-                    {
+                    if (R==CR && G==CG && B==CB) {
                         continue;
                     }
                 }
-                final int index=i-lower;
-                if (horizontal)
-                {
+                final int index = i-lower;
+                if (horizontal) {
                     rect.x      = ox+dx*lastIndex;
                     rect.width  = dx*(index-lastIndex);
-                    if (lastIndex==0)
-                    {
+                    if (lastIndex == 0) {
                         rect.x     -= MARGIN;
                         rect.width += MARGIN;
                     }
-                    if (i==upper)
-                    {
+                    if (i == upper) {
                         rect.width += MARGIN;
                     }
-                }
-                else
-                {
+                } else {
                     rect.y      = oy-dy*index;
                     rect.height = dy*(index-lastIndex);
-                    if (lastIndex==0)
-                    {
+                    if (lastIndex == 0) {
                         rect.height += MARGIN;
                     }
-                    if (i==upper)
-                    {
+                    if (i == upper) {
                         rect.y      -= MARGIN;
                         rect.height += MARGIN;
                     }
@@ -566,27 +543,23 @@ public class ColorRamp extends JComponent
             }
         }
         Rectangle2D labelBounds=null;
-        if (labelVisibles && graduation!=null)
-        {
+        if (labelVisibles && graduation!=null) {
             /*
              * Prépare l'écriture de la graduation. On vérifie quelle longueur
              * (en pixels) a la rampe de couleurs et on calcule les coéfficients
              * qui permettront de convertir les valeurs logiques en coordonnées
              * pixels.
              */
-            double x=bounds.getCenterX();
-            double y=bounds.getCenterY();
+            double x = bounds.getCenterX();
+            double y = bounds.getCenterY();
             final double axisRange   = graduation.getRange();
             final double axisMinimum = graduation.getMinimum();
             final double visualLength, scale, offset;
-            if (horizontal)
-            {
+            if (horizontal) {
                 visualLength = bounds.getWidth() - 2*MARGIN;
                 scale        = visualLength/axisRange;
                 offset       = (bounds.getMinX()+MARGIN) - scale*axisMinimum;
-            }
-            else
-            {
+            } else {
                 visualLength = bounds.getHeight() - 2*MARGIN;
                 scale        = -visualLength/axisRange;
                 offset       = (bounds.getMaxY()-MARGIN) + scale*axisMinimum;
@@ -603,57 +576,56 @@ public class ColorRamp extends JComponent
              * demandé à pâlir un peu l'arrière plan de la graduation (ça aide
              * un peu à la lecture), il faudra préparer un
              */
-            for (final TickIterator ticks=reuse=graduation.getTickIterator(hints, reuse); ticks.hasNext(); ticks.nextMajor())
+            for (final TickIterator ticks=reuse=graduation.getTickIterator(hints, reuse);
+                                    ticks.hasNext(); ticks.nextMajor())
             {
-                if (ticks.isMajorTick())
-                {
-                    final GlyphVector glyph = font.createGlyphVector(context, ticks.getLabel());
+                if (ticks.isMajorTick()) {
+                    final GlyphVector glyph = font.createGlyphVector(context, ticks.currentLabel());
                     final Rectangle2D rectg = glyph.getVisualBounds();
                     final double      width = rectg.getWidth();
                     final double     height = rectg.getHeight();
-                    final double      value = ticks.getValue();
+                    final double      value = ticks.currentValue();
                     final double   position = value*scale+offset;
-                    final int    colorIndex = Math.min(Math.max((int)Math.round((value-axisMinimum)*ratio),0)+lower, upper-1);
-                    if (horizontal) x=position; else y=position;
+                    final int    colorIndex = Math.min(Math.max((int)Math.round(
+                                              (value-axisMinimum)*ratio),0)+lower, upper-1);
+                    if (horizontal) x=position;
+                    else            y=position;
                     rectg.setRect(x-0.5*width, y-0.5*height, width, height);
-                    if (autoForeground)
-                    {
+                    if (autoForeground) {
                         graphics.setColor(getForeground(colorIndex));
                     }
                     graphics.drawGlyphVector(glyph, (float)rectg.getMinX(), (float)rectg.getMaxY());
-                    if (labelBounds!=null) labelBounds.add(rectg);
-                    else labelBounds=rectg;
+                    if (labelBounds != null) {
+                        labelBounds.add(rectg);
+                    } else {
+                        labelBounds = rectg;
+                    }
                 }
             }
             /*
              * Ecrit les unités.
              */
-            if (units!=null)
-            {
+            if (units != null) {
                 final GlyphVector glyph = font.createGlyphVector(context, units);
                 final Rectangle2D rectg = glyph.getVisualBounds();
                 final double      width = rectg.getWidth();
                 final double     height = rectg.getHeight();
-                if (horizontal)
-                {
+                if (horizontal) {
                     double left = bounds.getMaxX()-width;
-                    if (labelBounds!=null)
-                    {
+                    if (labelBounds != null) {
                         final double check = labelBounds.getMaxX()+4;
-                        if (check<left) left=check;
+                        if (check<left) {
+                            left = check;
+                        }
                     }
                     rectg.setRect(left, y-0.5*height, width, height);
-                }
-                else
-                {
+                } else {
                     rectg.setRect(x-0.5*width, bounds.getMinY()+height, width, height);
                 }
-                if (autoForeground)
-                {
+                if (autoForeground) {
                     graphics.setColor(getForeground(Math.max(lower, upper-1)));
                 }
-                if (labelBounds==null || !labelBounds.intersects(rectg))
-                {
+                if (labelBounds==null || !labelBounds.intersects(rectg)) {
                     graphics.drawGlyphVector(glyph, (float)rectg.getMinX(), (float)rectg.getMaxY());
                 }
             }
@@ -677,18 +649,18 @@ public class ColorRamp extends JComponent
      * @return A graduation for the supplied category. The minimum, maximum
      *         and units doesn't need to bet set at this stage.
      */
-    protected AbstractGraduation createGraduation(final AbstractGraduation reuse, final Category category, final Unit units)
+    protected AbstractGraduation createGraduation(final AbstractGraduation reuse,
+                                                  final Category category, final Unit units)
     {
         // TODO: How to detect if the category is logarithmic?
-        if (true)
-        {
-            if (reuse==null || !reuse.getClass().equals(NumberGraduation.class))
+        if (true) {
+            if (reuse==null || !reuse.getClass().equals(NumberGraduation.class)) {
                 return new NumberGraduation(units);
-        }
-        else
-        {
-            if (reuse==null || !reuse.getClass().equals(LogarithmicNumberGraduation.class))
+            }
+        } else {
+            if (reuse==null || !reuse.getClass().equals(LogarithmicNumberGraduation.class)) {
                 return new LogarithmicNumberGraduation(units);
+            }
         }
         return reuse;
     }
@@ -696,24 +668,20 @@ public class ColorRamp extends JComponent
     /**
      * Returns a string representation for this color ramp.
      */
-    public String toString()
-    {
+    public String toString() {
         int count=0;
         int i=lower;
-        if (i<upper)
-        {
-            int last=colors.getRGB(i);
-            while (++i<upper)
-            {
-                int c=colors.getRGB(i);
-                if (c!=last)
-                {
-                    last=c;
+        if (i < upper) {
+            int last = colors.getRGB(i);
+            while (++i<upper) {
+                int c = colors.getRGB(i);
+                if (c!=last) {
+                    last = c;
                     count++;
                 }
             }
         }
-        return "ColorRamp["+count+" colors]";
+        return Utilities.getShortClassName(this)+'['+count+" colors]";
     }
 
     /**
@@ -721,11 +689,9 @@ public class ColorRamp extends JComponent
      * This method is invoked by <em>Swing</em> and shouldn't be
      * directly used.
      */
-    public void addNotify()
-    {
+    public void addNotify() {
         super.addNotify();
-        if (graduation!=null)
-        {
+        if (graduation != null) {
             graduation.removePropertyChangeListener(ui); // Avoid duplication
             graduation.addPropertyChangeListener(ui);
         }
@@ -735,10 +701,8 @@ public class ColorRamp extends JComponent
      * Notifies this component that it no longer has a parent component.
      * This method is invoked by <em>Swing</em> and shouldn't be directly used.
      */
-    public void removeNotify()
-    {
-        if (graduation!=null)
-        {
+    public void removeNotify() {
+        if (graduation != null) {
             graduation.removePropertyChangeListener(ui);
         }
         super.removeNotify();
@@ -756,21 +720,22 @@ public class ColorRamp extends JComponent
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class UI extends ComponentUI implements PropertyChangeListener
-    {
+    private final class UI extends ComponentUI implements PropertyChangeListener {
         /**
-         * Retourne la dimension minimale
-         * de cette rampe de couleurs.
+         * Retourne la dimension minimale de cette rampe de couleurs.
          */
-        public Dimension getMinimumSize(final JComponent c)
-        {return (((ColorRamp) c).horizontal) ? new Dimension(2*MARGIN,16) : new Dimension(16,2*MARGIN);}
+        public Dimension getMinimumSize(final JComponent c) {
+            return (((ColorRamp) c).horizontal) ? new Dimension(2*MARGIN,16)
+                                                : new Dimension(16,2*MARGIN);
+        }
 
         /**
-         * Retourne la dimension préférée
-         * de cette rampe de couleurs.
+         * Retourne la dimension préférée de cette rampe de couleurs.
          */
-        public Dimension getPreferredSize(final JComponent c)
-        {return (((ColorRamp) c).horizontal) ? new Dimension(256,16) : new Dimension(16,256);}
+        public Dimension getPreferredSize(final JComponent c) {
+            return (((ColorRamp) c).horizontal) ? new Dimension(256,16)
+                                                : new Dimension(16,256);
+        }
 
         /**
          * Dessine la rampe de couleurs vers le graphique spécifié.  Cette méthode a
@@ -780,11 +745,9 @@ public class ColorRamp extends JComponent
          * On n'a pas cet avantage lorsque l'on ne fait que redéfinir
          * {@link JComponent#paintComponent}.
          */
-        public void paint(final Graphics graphics, final JComponent component)
-        {
+        public void paint(final Graphics graphics, final JComponent component) {
             final ColorRamp ramp = (ColorRamp) component;
-            if (ramp.colors!=null)
-            {
+            if (ramp.colors != null) {
                 final Rectangle bounds=ramp.getBounds();
                 bounds.x=0;
                 bounds.y=0;
@@ -796,7 +759,8 @@ public class ColorRamp extends JComponent
          * Méthode appelée automatiquement chaque
          * fois qu'une propriété de l'axe a changée.
          */
-        public void propertyChange(final PropertyChangeEvent event)
-        {repaint();}
+        public void propertyChange(final PropertyChangeEvent event) {
+            repaint();
+        }
     }
 }
