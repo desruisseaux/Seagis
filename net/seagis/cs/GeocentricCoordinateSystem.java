@@ -31,6 +31,7 @@ package net.seagis.cs;
 // OpenGIS dependencies
 import org.opengis.cs.CS_LinearUnit;
 import org.opengis.cs.CS_PrimeMeridian;
+import org.opengis.cs.CS_HorizontalDatum;
 import org.opengis.cs.CS_GeocentricCoordinateSystem;
 
 // Miscellaneous
@@ -64,7 +65,7 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -7519238793973433332L;
+    private static final long serialVersionUID = -6577810243397267703L;
 
     /**
      * The linear unit.
@@ -87,7 +88,7 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
     private final AxisInfo[] axis;
 
     /**
-     * Construct a coordinate system.
+     * Construct a geocentric coordinate system.
      *
      * @param name     The coordinate system name.
      * @param unit     The linear unit.
@@ -107,6 +108,24 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
         ensureNonNull("meridian", meridian);
         ensureLinearUnit(unit);
         this.axis = (AxisInfo[]) axis.clone();
+    }
+
+    /**
+     * Construct a geocentric coordinate system.
+     *
+     * @param properties The set of properties (see {@link Info}).
+     * @param unit       The linear unit.
+     * @param datum      The horizontal datum.
+     * @param meridian   The prime meridian.
+     * @param axis       The axis info. This is usually an array of lenght 3.
+     */
+    GeocentricCoordinateSystem(final Map properties, final Unit unit, final HorizontalDatum datum, final PrimeMeridian meridian, final AxisInfo[] axis)
+    {
+        super(properties);
+        this.unit     = unit;
+        this.datum    = datum;
+        this.meridian = meridian;
+        this.axis     = (AxisInfo[]) axis.clone();
     }
 
     /**
@@ -190,5 +209,58 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
                    Utilities.equals(this.meridian, that.meridian);
         }
         return false;
+    }
+
+    /**
+     * Returns an OpenGIS interface for this local coordinate
+     * system. The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
+     */
+    final Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////                                         ////////////////
+    ////////////////             OPENGIS ADAPTER             ////////////////
+    ////////////////                                         ////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Wrap a {@link LocalCoordinateSystem} object for use with OpenGIS.
+     * This class is suitable for RMI use.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Export extends CoordinateSystem.Export implements CS_GeocentricCoordinateSystem
+    {
+        /**
+         * Construct a remote object.
+         */
+        protected Export(final Object adapters)
+        {super(adapters);}
+
+        /**
+         * Gets the local datum.
+         */
+        public CS_HorizontalDatum getHorizontalDatum() throws RemoteException
+        {return adapters.export(GeocentricCoordinateSystem.this.getHorizontalDatum());}
+        
+        /**
+         * Gets the units used along all the axes.
+         */
+        public CS_LinearUnit getLinearUnit() throws RemoteException
+        {return (CS_LinearUnit)adapters.export(GeocentricCoordinateSystem.this.getUnits());}
+        
+        /**
+         * Returns the PrimeMeridian.
+         */
+        public CS_PrimeMeridian getPrimeMeridian() throws RemoteException
+        {return adapters.export(GeocentricCoordinateSystem.this.getPrimeMeridian());}
     }
 }

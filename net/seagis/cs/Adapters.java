@@ -156,6 +156,12 @@ public class Adapters
     {return (cs!=null) ? (CS_LocalCoordinateSystem)cs.cachedOpenGIS(this) : null;}
 
     /**
+     * Returns an OpenGIS interface for a geocentric coordinate system.
+     */
+    public CS_GeocentricCoordinateSystem export(final GeocentricCoordinateSystem cs)
+    {return (cs!=null) ? (CS_GeocentricCoordinateSystem)cs.cachedOpenGIS(this) : null;}
+
+    /**
      * Returns an OpenGIS interface for a vertical coordinate system.
      */
     public CS_VerticalCoordinateSystem export(final VerticalCoordinateSystem cs)
@@ -331,6 +337,7 @@ public class Adapters
         if (cs==null) return null;
         if (cs instanceof   CS_CompoundCoordinateSystem) return wrap(  (CS_CompoundCoordinateSystem)cs);
         if (cs instanceof      CS_LocalCoordinateSystem) return wrap(     (CS_LocalCoordinateSystem)cs);
+        if (cs instanceof CS_GeocentricCoordinateSystem) return wrap((CS_GeocentricCoordinateSystem)cs);
         if (cs instanceof   CS_VerticalCoordinateSystem) return wrap(  (CS_VerticalCoordinateSystem)cs);
         if (cs instanceof CS_HorizontalCoordinateSystem) return wrap((CS_HorizontalCoordinateSystem)cs);
         if (cs instanceof CoordinateSystem.Export)
@@ -375,6 +382,33 @@ public class Adapters
             // Accept null value.
         }
         return new LocalCoordinateSystem(map(cs), datum, unit, axes);
+    }
+
+    /**
+     * Returns a geocentric coordinate system for an OpenGIS interface.
+     * @throws RemoteException if a remote call failed.
+     */
+    public GeocentricCoordinateSystem wrap(final CS_GeocentricCoordinateSystem cs) throws RemoteException
+    {
+        if (cs==null) return null;
+        if (cs instanceof CoordinateSystem.Export)
+        {
+            return (GeocentricCoordinateSystem) ((CoordinateSystem.Export)cs).unwrap();
+        }
+        if (cs.getDimension()!=3)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ILLEGAL_DIMENSION));
+        }
+        final Unit              unit = wrap(cs.getLinearUnit());
+        final HorizontalDatum  datum = wrap(cs.getHorizontalDatum());
+        final PrimeMeridian meridian = wrap(cs.getPrimeMeridian());
+        final AxisInfo[]        axes = new AxisInfo[cs.getDimension()];
+        for (int i=0; i<axes.length; i++)
+        {
+            axes[i] = wrap(cs.getAxis(i));
+            // Accept null value.
+        }
+        return new GeocentricCoordinateSystem(map(cs), unit, datum, meridian, axes);
     }
 
     /**
