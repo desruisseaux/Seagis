@@ -47,7 +47,23 @@ public final class Format
     
     /** Identifiant des champs les plus utilises dans les differents formats. */
      public final static String TBM_SPACECRAFT_ID           = "Spacecraft Unique ID",
+                                TBM_DATA_TYPE               = "Data type",
+                                TBM_PROCESSING_CENTER       = "Processing center",
+                                TBM_YEAR_DAY                = "Year day",                                
+                                TBM_START_TIME              = "Start-time",
+                                TBM_STOP_TIME               = "Stop-time",
+                                TBM_PROCESSING_BLOCK_ID     = "Processing Block ID",                                
+                                TBM_SOURCE                  = "Source",                                
                                 TBM_CHANNEL_SELECTED        = "Channels selected",                                
+                                TBM_TOTAL_SELECTIVE_COPY    = "Total / Selective copy",
+                                TBM_BEGINNING_LATITUDE      = "Beginning Latitude",
+                                TBM_BEGINNING_LONGITUDE     = "Beginning Longitude",
+                                TBM_ENDING_LATITUDE         = "Ending Latitude",
+                                TBM_ENDING_LONGITUDE        = "Ending Longitude",
+                                TBM_START_HOUR              = "Start Hour",
+                                TBM_START_MINUTE            = "Start Minute",
+                                TBM_NUMBER_OF_MINUTE        = "Number of minutes",
+                                TBM_APPENDED_DATA_SELECTION = "Appended data selection",
                                 HEADER_NUMBER_OF_SCANS      = "Number of scans",
                                 HEADER_START_TIME           = "Start-Time",
                                 HEADER_STOP_TIME            = "Stop-Time",                                     
@@ -60,8 +76,12 @@ public final class Format
                                 DATA_AJ_CALIBRATION_COEF_CHANNEL_3 = "Calibration coefficients channel 3",
                                 DATA_AJ_CALIBRATION_COEF_CHANNEL_4 = "Calibration coefficients channel 4",
                                 DATA_AJ_CALIBRATION_COEF_CHANNEL_5 = "Calibration coefficients channel 5",
+                                DATA_AJ_PRT1                    =  "PRT Reading 1",
+                                DATA_AJ_PRT2                    =  "PRT Reading 2",
+                                DATA_AJ_PRT3                    =  "PRT Reading 3",
+                                DATA_AJ_HRPT                    =  "Telemetry - HRPT",
                                 DATA_EARTH_LOCATION         = "Earth location",
-                                DATA_PACKED_VIDEO_DATA      = "Packed video data",                                
+                                DATA_PACKED_VIDEO_DATA      = "Packed video data",                                                                
                                 HEADER_KLM_WAVE_CHANNEL_3B      = "Channel 3b central wave number",
                                 HEADER_KLM_CONSTANT1_CHANNEL_3B = "Channel 3b constant 1",
                                 HEADER_KLM_CONSTANT2_CHANNEL_3B = "Channel 3b constant 2",
@@ -71,6 +91,30 @@ public final class Format
                                 HEADER_KLM_WAVE_CHANNEL_5       = "Channel 5 central wave number",
                                 HEADER_KLM_CONSTANT1_CHANNEL_5  = "Channel 5 constant 1",
                                 HEADER_KLM_CONSTANT2_CHANNEL_5  = "Channel 5 constant 2",
+                                HEADER_KLM_TEMPERATURE1_COEFF1   = "IR Target Temperature 1 Conversion Coefficient 1",
+                                HEADER_KLM_TEMPERATURE1_COEFF2   = "IR Target Temperature 1 Conversion Coefficient 2",
+                                HEADER_KLM_TEMPERATURE1_COEFF3   = "IR Target Temperature 1 Conversion Coefficient 3",
+                                HEADER_KLM_TEMPERATURE1_COEFF4   = "IR Target Temperature 1 Conversion Coefficient 4",
+                                HEADER_KLM_TEMPERATURE1_COEFF5   = "IR Target Temperature 1 Conversion Coefficient 5",
+                                HEADER_KLM_TEMPERATURE1_COEFF6   = "IR Target Temperature 1 Conversion Coefficient 6",
+                                HEADER_KLM_TEMPERATURE2_COEFF1   = "IR Target Temperature 2 Conversion Coefficient 1",
+                                HEADER_KLM_TEMPERATURE2_COEFF2   = "IR Target Temperature 2 Conversion Coefficient 2",
+                                HEADER_KLM_TEMPERATURE2_COEFF3   = "IR Target Temperature 2 Conversion Coefficient 3",
+                                HEADER_KLM_TEMPERATURE2_COEFF4   = "IR Target Temperature 2 Conversion Coefficient 4",
+                                HEADER_KLM_TEMPERATURE2_COEFF5   = "IR Target Temperature 2 Conversion Coefficient 5",
+                                HEADER_KLM_TEMPERATURE2_COEFF6   = "IR Target Temperature 2 Conversion Coefficient 6",
+                                HEADER_KLM_TEMPERATURE3_COEFF1   = "IR Target Temperature 3 Conversion Coefficient 1",
+                                HEADER_KLM_TEMPERATURE3_COEFF2   = "IR Target Temperature 3 Conversion Coefficient 2",
+                                HEADER_KLM_TEMPERATURE3_COEFF3   = "IR Target Temperature 3 Conversion Coefficient 3",
+                                HEADER_KLM_TEMPERATURE3_COEFF4   = "IR Target Temperature 3 Conversion Coefficient 4",
+                                HEADER_KLM_TEMPERATURE3_COEFF5   = "IR Target Temperature 3 Conversion Coefficient 5",
+                                HEADER_KLM_TEMPERATURE3_COEFF6   = "IR Target Temperature 3 Conversion Coefficient 6",
+                                HEADER_KLM_TEMPERATURE4_COEFF1   = "IR Target Temperature 4 Conversion Coefficient 1",
+                                HEADER_KLM_TEMPERATURE4_COEFF2   = "IR Target Temperature 4 Conversion Coefficient 2",
+                                HEADER_KLM_TEMPERATURE4_COEFF3   = "IR Target Temperature 4 Conversion Coefficient 3",
+                                HEADER_KLM_TEMPERATURE4_COEFF4   = "IR Target Temperature 4 Conversion Coefficient 4",
+                                HEADER_KLM_TEMPERATURE4_COEFF5   = "IR Target Temperature 4 Conversion Coefficient 5",
+                                HEADER_KLM_TEMPERATURE4_COEFF6   = "IR Target Temperature 4 Conversion Coefficient 6", 
                                 DATA_KLM_SLOPE_1_CHANNEL_1  = "Visible prelaunch cal channel 1 - slope 1",                                
                                 DATA_KLM_SLOPE_2_CHANNEL_1  = "Visible prelaunch cal channel 1 - slope 2",                                                                
                                 DATA_KLM_SLOPE_1_CHANNEL_2  = "Visible prelaunch cal channel 2 - slope 1",                                
@@ -96,7 +140,13 @@ public final class Format
                                 DATA_KLM_COEFFICIENT2_CHANNEL_5  = "IR Operational cal Channel 5 coefficient2",
                                 DATA_KLM_COEFFICIENT3_CHANNEL_5  = "IR Operational cal Channel 5 coefficient3",
                                 DATA_KLM_AVHRR_DIGITAL_B_DATA    = "States of channel and selected channel 3",
-                                DATA_KLM_SPACECRAFT_ALTITUDE     = "Spacecraft altitude above reference ellipsoid in km";
+                                DATA_KLM_SPACECRAFT_ALTITUDE     = "Spacecraft altitude above reference ellipsoid in km",
+                                DATA_KLM_PRT1                    =  "PRT Reading 1",
+                                DATA_KLM_PRT2                    =  "PRT Reading 2",
+                                DATA_KLM_PRT3                    =  "PRT Reading 3",
+                                DATA_KLM_BACK_SCAN               =  "Back Scan",
+                                DATA_KLM_SPACE_DATA              =  "Space data";                                ;
+                                
     /** Variable interne. */    
     private final Map<String,Field> fields = new HashMap<String,Field>();
 
@@ -171,23 +221,23 @@ public final class Format
         {
             case Format.FORMAT_AJ :
                 TBM = new Format("Blank",             30);
-                TBM.add("Processing center",           3);// start data set name
-                TBM.add("Data type",                1, 4);
+                TBM.add(TBM_PROCESSING_CENTER,         3);// start data set name
+                TBM.add(TBM_DATA_TYPE,              1, 4);
                 TBM.add(TBM_SPACECRAFT_ID,          1, 2);
-                TBM.add("Year day",                 1, 6);// each data set has a unique 
-                TBM.add("Start-time",               1, 5);// data set name.
-                TBM.add("Stop-time",                1, 5);
-                TBM.add("Processing Block ID",      1, 8);
-                TBM.add("Source",                   1, 2);// end data set name
-                TBM.add("Total / Selective copy",   7, 1);
-                TBM.add("Beginning Latitude",          3);
-                TBM.add("Ending Latitude",             3);
-                TBM.add("Beginning Longitude",         4);
-                TBM.add("Ending Longitude",            4);
-                TBM.add("Start Hour",                  2);
-                TBM.add("Start Minute",                2);
-                TBM.add("Number of minutes",           3);
-                TBM.add("Appended data selection",     1);
+                TBM.add(TBM_YEAR_DAY,               1, 6);// each data set has a unique 
+                TBM.add(TBM_START_TIME,             1, 5);// data set name.
+                TBM.add(TBM_STOP_TIME,              1, 5);
+                TBM.add(TBM_PROCESSING_BLOCK_ID,    1, 8);
+                TBM.add(TBM_SOURCE,                 1, 2);// end data set name
+                TBM.add(TBM_TOTAL_SELECTIVE_COPY,   7, 1);
+                TBM.add(TBM_BEGINNING_LATITUDE,        3);
+                TBM.add(TBM_ENDING_LATITUDE,           3);
+                TBM.add(TBM_BEGINNING_LONGITUDE,       4);
+                TBM.add(TBM_ENDING_LONGITUDE,          4);
+                TBM.add(TBM_START_HOUR,                2);
+                TBM.add(TBM_START_MINUTE,              2);
+                TBM.add(TBM_NUMBER_OF_MINUTE,          3);
+                TBM.add(TBM_APPENDED_DATA_SELECTION,   1);
                 TBM.add(TBM_CHANNEL_SELECTED,         20);
                 break;
                 
@@ -195,23 +245,23 @@ public final class Format
             // diverses autres informations.
             case Format.FORMAT_KLM :
                 TBM = new Format("Request criteria",  30);
-                TBM.add("Processing center",           3);// start data set name
-                TBM.add("Data type",                1, 4);
+                TBM.add(TBM_PROCESSING_CENTER,         3);// start data set name
+                TBM.add(TBM_DATA_TYPE,              1, 4);
                 TBM.add(TBM_SPACECRAFT_ID,          1, 2);
-                TBM.add("Year day",                 1, 6);// each data set has a unique 
-                TBM.add("Start-time",               1, 5);// data set name.
-                TBM.add("Stop-time",                1, 5);
-                TBM.add("Processing Block ID",      1, 8);
-                TBM.add("Source",                   1, 2);// end data set name                
-                TBM.add("Total / Selective copy",   1, 1);
-                TBM.add("Beginning Latitude",          3);
-                TBM.add("Ending Latitude",             3);
-                TBM.add("Beginning Longitude",         4);
-                TBM.add("Ending Longitude",            4);
-                TBM.add("Start Hour",                  2);
-                TBM.add("Start Minute",                2);
-                TBM.add("Number of minutes",           3);
-                TBM.add("Appended data selection",     1);
+                TBM.add(TBM_YEAR_DAY,               1, 6);// each data set has a unique 
+                TBM.add(TBM_START_TIME,             1, 5);// data set name.
+                TBM.add(TBM_STOP_TIME,              1, 5);
+                TBM.add(TBM_PROCESSING_BLOCK_ID,    1, 8);
+                TBM.add(TBM_SOURCE,                 1, 2);// end data set name                
+                TBM.add(TBM_TOTAL_SELECTIVE_COPY,   1, 1);
+                TBM.add(TBM_BEGINNING_LATITUDE,        3);
+                TBM.add(TBM_ENDING_LATITUDE,           3);
+                TBM.add(TBM_BEGINNING_LONGITUDE,       4);
+                TBM.add(TBM_ENDING_LONGITUDE,          4);
+                TBM.add(TBM_START_HOUR,                2);
+                TBM.add(TBM_START_MINUTE,              2);
+                TBM.add(TBM_NUMBER_OF_MINUTE,          3);
+                TBM.add(TBM_APPENDED_DATA_SELECTION,   1);
                 TBM.add(TBM_CHANNEL_SELECTED,         20);
                 TBM.add("Divers informations ARS",   395);
                 break;                
@@ -255,7 +305,34 @@ public final class Format
                 HEADER.add(HEADER_START_TIME,               8);
                 HEADER.add(HEADER_STOP_TIME,             4, 8);                
                 HEADER.add(HEADER_NUMBER_OF_SCANS,      24, 2);
-                HEADER.add(HEADER_KLM_WAVE_CHANNEL_3B, 150, 4);                
+                
+                HEADER.add("HEADER_KLM_ALGO_OPTION",    68, 2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF1,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF2,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF3,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF4,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF5,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE1_COEFF6,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF1,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF2,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF3,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF4,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF5,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE2_COEFF6,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF1,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF2,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF3,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF4,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF5,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE3_COEFF6,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF1,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF2,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF3,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF4,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF5,  2);
+                HEADER.add(HEADER_KLM_TEMPERATURE4_COEFF6,  2);
+                                
+                HEADER.add(HEADER_KLM_WAVE_CHANNEL_3B,  32, 4);                
                 HEADER.add(HEADER_KLM_CONSTANT1_CHANNEL_3B, 4);
                 HEADER.add(HEADER_KLM_CONSTANT2_CHANNEL_3B, 4);
                 HEADER.add(HEADER_KLM_WAVE_CHANNEL_4,       4);                
@@ -291,8 +368,8 @@ public final class Format
                 DATA.add(DATA_AJ_CALIBRATION_COEF_CHANNEL_4,    8);
                 DATA.add(DATA_AJ_CALIBRATION_COEF_CHANNEL_5,    8);
                 DATA.add("Solar zenithal angle",            1, 51);
-                DATA.add(DATA_EARTH_LOCATION,                 204);
-                DATA.add("Telemetry",                         140);
+                DATA.add(DATA_EARTH_LOCATION,                 204);                              
+                DATA.add(DATA_AJ_HRPT,                        140);
                 DATA.add(DATA_PACKED_VIDEO_DATA,            13656);
                 DATA.add("Other",                             696);
                 break;
@@ -326,9 +403,15 @@ public final class Format
                 DATA.add(DATA_KLM_COEFFICIENT3_CHANNEL_5,         4);                                                                
                 DATA.add(DATA_KLM_SPACECRAFT_ALTITUDE,        38, 2);                                                
                 DATA.add(DATA_EARTH_LOCATION,              312, 408);                
-                DATA.add(DATA_PACKED_VIDEO_DATA,         216, 13656);                
+                DATA.add("DATA_KLM_RAMP_CALIBRATION",       32,  10);                
+                DATA.add(DATA_KLM_PRT1,                           2);
+                DATA.add(DATA_KLM_PRT2,                           2);
+                DATA.add(DATA_KLM_PRT3,                           2);                
+                DATA.add(DATA_KLM_BACK_SCAN,                  4, 60);                
+                DATA.add(DATA_KLM_SPACE_DATA,                   100); 
+                DATA.add(DATA_PACKED_VIDEO_DATA,            4,13656); 
                 DATA.add(DATA_KLM_AVHRR_DIGITAL_B_DATA,       10, 2);                                
-                DATA.add("Other",                               939);                
+                DATA.add("Other",                               939);                       
                 break;                
         }
         return DATA;
