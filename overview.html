@@ -40,9 +40,13 @@
     </UL>
 
     <P ALIGN="justify">Factory classes allow the creation of OpenGIS objects (RMI enabled)
-    backed by SEAGIS classes. Internally, interoperability between OpenGIS interfaces and
-    SEAGIS classes is assured through a set of RMI-aware adapters.</P>
-
+    backed by SEAGIS classes, and conversely (SEAGIS classes used as a wrapper around
+    OpenGIS's interfaces). Internally, interoperability between OpenGIS interfaces and
+    SEAGIS classes is assured through a set of RMI-aware adapters. Adapters are designed
+    in such a way that the API never hides a {@link java.rmi.RemoteException} into an
+    unchecked exception. {@link java.rmi.RemoteException} are either declared to be thrown
+    when applicable, or cough and rethrown as an other checked exception (e.g.
+    {@link net.seagis.ct.TransformException}) with the remote exception as its cause.</P>
 
     <P>&nbsp;</P>
     <H2><A NAME="dependencies">JAR files and dependencies</A></H2>
