@@ -65,7 +65,7 @@ import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
-import fr.ird.io.IsolineFactory;
+import fr.ird.seasview.layer.IsolineFactory;
 
 // Logging
 import java.util.logging.Level;
@@ -81,13 +81,13 @@ import java.text.NumberFormat;
 import java.util.StringTokenizer;
 
 // Map display
-import net.seas.map.Layer;
-import net.seas.map.Isoline;
-import net.seas.map.MapPanel;
-import net.seas.map.io.GEBCOReader;
-import net.seas.map.io.IsolineReader;
-import net.seas.map.layer.IsolineLayer;
-import net.seas.map.layer.GridCoverageLayer;
+import fr.ird.map.Layer;
+import fr.ird.map.Isoline;
+import fr.ird.map.MapPanel;
+import fr.ird.map.io.GEBCOReader;
+import fr.ird.map.io.IsolineReader;
+import fr.ird.map.layer.IsolineLayer;
+import fr.ird.map.layer.GridCoverageLayer;
 
 // Swing components
 import java.awt.EventQueue;
@@ -98,7 +98,7 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 // Miscellaneous
-import net.seas.util.Console;
+import fr.ird.util.Console;
 import org.geotools.resources.Utilities;
 import org.geotools.io.DefaultFileFilter;
 

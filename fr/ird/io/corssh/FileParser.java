@@ -49,8 +49,8 @@ import java.awt.Shape;
 // Divers...
 import java.util.Arrays;
 import java.util.Iterator;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import org.geotools.resources.Utilities;
 
 

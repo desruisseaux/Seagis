@@ -40,9 +40,9 @@ import java.text.FieldPosition;
 import java.util.ConcurrentModificationException;
 import java.io.Serializable;
 import java.util.Arrays;
-import net.seas.util.XArray;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.util.XArray;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import org.geotools.resources.Utilities;
 
 

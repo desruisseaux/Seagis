@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 
 
 /**
