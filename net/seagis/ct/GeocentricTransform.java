@@ -1,0 +1,371 @@
+/*
+ * SEAGIS - An OpenSource implementation of OpenGIS specification
+ *          (C) 2000, Frank Warmerdam (for the PROJ.4 package)
+ *          (C) 2002, Institut de Recherche pour le Développement
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Lesser General Public
+ *    License along with this library; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * Contacts:
+ *     FRANCE: Surveillance de l'Environnement Assistée par Satellite
+ *             Institut de Recherche pour le Développement / US-Espace
+ *             mailto:seasnet@teledetection.fr
+ *
+ *    This package contains formulas from the PROJ package of USGS.
+ *    USGS's work is fully acknowledged here.
+ */
+package net.seagis.ct;
+
+// OpenGIS dependencies (SEAGIS)
+import net.seagis.pt.Matrix;
+import net.seagis.cs.Ellipsoid;
+import net.seagis.pt.CoordinatePoint;
+
+// Miscellaneous
+import javax.units.Unit;
+import java.io.Serializable;
+import javax.media.jai.ParameterList;
+
+// Resources
+import net.seagis.resources.Utilities;
+import net.seagis.resources.css.Resources;
+import net.seagis.resources.css.ResourceKeys;
+import net.seagis.resources.XAffineTransform;
+
+
+/**
+ * Transforms three dimensional geographic points  to geocentric
+ * coordinate points. Input points must be longitudes, latitudes
+ * and heights above the ellipsoid.
+ *
+ * @version 1.00
+ * @author Frank Warmerdam
+ * @author Martin Desruisseaux
+ */
+class GeocentricTransform extends AbstractMathTransform implements Serializable
+{
+    /**
+     * Serial number for interoperability with different versions.
+     */
+    //private static final long serialVersionUID = ?;
+
+    /**
+     * Cosine of 67.5 degrees.
+     */
+    private static final double COS_67P5 = 0.38268343236508977;
+
+    /**
+     * Toms region 1 constant.
+     */
+    private static final double AD_C = 1.0026000;
+
+    /**
+     * Semi-major axis of ellipsoid in meters.
+     */
+    private final double a;
+
+    /**
+     * Semi-minor axis of ellipsoid in meters.
+     */
+    private final double b;
+
+    /**
+     * Square of semi-major axis (@link #a}²).
+     */
+    private final double a2;
+
+    /**
+     * Square of semi-minor axis ({@link #b}²).
+     */
+    private final double b2;
+
+    /**
+     * Eccentricity squared.
+     */
+    private final double e2;
+
+    /**
+     * 2nd eccentricity squared.
+     */
+    private final double ep2;
+
+    /**
+     * Construct a transform.
+     *
+     * @param ellipsoid The ellipsoid.
+     */
+    protected GeocentricTransform(final Ellipsoid ellipsoid)
+    {this(ellipsoid.getSemiMajorAxis(), ellipsoid.getSemiMinorAxis(), ellipsoid.getAxisUnit());}
+
+    /**
+     * Construct a transform.
+     *
+     * @param semiMajor The semi-major axis length.
+     * @param semiMinor The semi-minor axis length.
+     * @param units The axis units.
+     */
+    protected GeocentricTransform(final double semiMajor, final double semiMinor, final Unit units)
+    {
+        a   = Unit.METRE.convert(semiMajor, units);
+        b   = Unit.METRE.convert(semiMinor, units);
+        a2  = a*a;
+        b2  = b*b;
+        e2  = (a2 - b2) / a2;
+        ep2 = (a2 - b2) / b2;
+        checkArgument("a", a, Double.MAX_VALUE);
+        checkArgument("b", b, a);
+    }
+
+    /**
+     * Check an argument value. The argument must be greater
+     * than 0 and finite, otherwise an exception is thrown.
+     *
+     * @param name  The argument name.
+     * @param value The argument value.
+     * @param max   The maximal legal argument value.
+     */
+    private static void checkArgument(final String name, final double value, final double max) throws IllegalArgumentException
+    {
+        if (!(value>=0 && value<=max)) // Use '!' in order to trap NaN
+        {
+            throw new IllegalArgumentException(Resources.format(
+                      ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2, name, new Double(value)));
+        }
+    }
+
+    /**
+     * Converts geodetic coordinates (longitude, latitude, height) to
+     * geocentric coordinates (x, y, z) according to the current ellipsoid
+     * parameters.
+     */
+    public void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    {
+        int step = 0;
+        if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*getDimSource()>dstOff)
+        {
+            step = -getDimSource();
+            srcOff -= (numPts-1)*step;
+            dstOff -= (numPts-1)*step;
+        }
+        TransformException error=null;
+        while (--numPts >= 0)
+        {
+            final double L = Math.toRadians(srcPts[srcOff++]); // Longitude
+            final double P = Math.toRadians(srcPts[srcOff++]); // Latitude
+            final double h = srcPts[srcOff++]; // Height above the ellipsoid (metres).
+
+            final double cosLat = Math.cos(P);
+            final double sinLat = Math.sin(P);
+            final double rn     = a / Math.sqrt(1 - e2 * (sinLat*sinLat));
+
+            dstPts[dstOff++] = (rn + h) * cosLat * Math.cos(L); // X
+            dstPts[dstOff++] = (rn + h) * cosLat * Math.sin(L); // Y
+            dstPts[dstOff++] = (rn * (1-e2) + h) * sinLat;      // Z
+            srcOff += step;
+            dstOff += step;
+        }
+    }
+
+    /**
+     * Converts geodetic coordinates (longitude, latitude, height) to
+     * geocentric coordinates (x, y, z) according to the current ellipsoid
+     * parameters.
+     */
+    public void transform(final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
+    {
+        int step = 0;
+        if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*getDimSource()>dstOff)
+        {
+            step = -getDimSource();
+            srcOff -= (numPts-1)*step;
+            dstOff -= (numPts-1)*step;
+        }
+        TransformException error=null;
+        while (--numPts >= 0)
+        {
+            final double L = Math.toRadians(srcPts[srcOff++]); // Longitude
+            final double P = Math.toRadians(srcPts[srcOff++]); // Latitude
+            final double h = srcPts[srcOff++]; // Height above the ellipsoid (metres).
+
+            final double cosLat = Math.cos(P);
+            final double sinLat = Math.sin(P);
+            final double rn     = a / Math.sqrt(1 - e2 * (sinLat*sinLat));
+
+            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.cos(L)); // X
+            dstPts[dstOff++] = (float) ((rn + h) * cosLat * Math.sin(L)); // Y
+            dstPts[dstOff++] = (float) ((rn * (1-e2) + h) * sinLat);      // Z
+            srcOff += step;
+            dstOff += step;
+        }
+    }
+
+    /**
+     * Converts geocentric coordinates (x, y, z) to geodetic coordinates
+     * (longitude, latitude, height), according to the current ellipsoid
+     * parameters. The method used here is derived from "An Improved
+     * Algorithm for Geocentric to Geodetic Coordinate Conversion", by
+     * Ralph Toms, Feb 1996.
+     */
+    protected final void inverseTransform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    {
+        int step = 0;
+        final int dimSource = getDimSource();
+        final boolean hasHeight = (dimSource>=3);
+        if (srcPts==dstPts && srcOff<dstOff && srcOff+numPts*dimSource>dstOff)
+        {
+            step    = -dimSource;
+            srcOff -= (numPts-1)*step;
+            dstOff -= (numPts-1)*step;
+        }
+        while (--numPts >= 0)
+        {
+            final double x = srcPts[srcOff++];
+            final double y = srcPts[srcOff++];
+            final double z = srcPts[srcOff++];
+
+            // Note: The Java version of 'atan2' work correctly for x==0.
+            //       No need for special handling like in the C version.
+            //       No special handling neither for latitude. Formulas
+            //       below are generic enough, considering that 'atan'
+            //       work correctly with infinities (1/0).
+
+            // Note: Variable names follow the notation used in Toms, Feb 1996
+            final double      W2 = x*x + y*y;                       // square of distance from Z axis
+            final double      W  = Math.sqrt(W2);                   // distance from Z axis
+            final double      T0 = z * AD_C;                        // initial estimate of vertical component
+            final double      S0 = Math.sqrt(T0*T0 + W2);           // initial estimate of horizontal component
+            final double  sin_B0 = T0 / S0;                         // sin(B0), B0 is estimate of Bowring aux variable
+            final double  cos_B0 = W / S0;                          // cos(B0)
+            final double sin3_B0 = sin_B0 * sin_B0 * sin_B0;        // cube of sin(B0)
+            final double      T1 = z + b * ep2 * sin3_B0;           // corrected estimate of vertical component
+            final double     sum = W - a*e2*(cos_B0*cos_B0*cos_B0); // numerator of cos(phi1)
+            final double      S1 = Math.sqrt(T1*T1 + sum * sum);    // corrected estimate of horizontal component
+            final double  sin_p1 = T1 / S1;                         // sin(phi1), phi1 is estimated latitude
+            final double  cos_p1 = sum / S1;                        // cos(phi1)
+
+            dstPts[dstOff++] = Math.toDegrees(Math.atan2(y      , x     )); // Longitude
+            dstPts[dstOff++] = Math.toDegrees(Math.atan (sin_p1 / cos_p1)); // Latitude
+            if (hasHeight)                                                  // Height (metres)
+            {
+                final double height;
+                final double rn = a/Math.sqrt(1-e2*(sin_p1*sin_p1)); // Earth radius at location
+                if      (cos_p1 >= +COS_67P5) height = W / +cos_p1 - rn;
+                else if (cos_p1 <= -COS_67P5) height = W / -cos_p1 - rn;
+                else                          height = z / sin_p1 + rn*(e2 - 1.0);
+                dstPts[dstOff++] = height;
+            }
+            srcOff += step;
+            dstOff += step;
+        }
+    }
+
+    /**
+     * Gets the dimension of input points, which is 3.
+     */
+    public int getDimSource()
+    {return 3;}
+
+    /**
+     * Gets the dimension of output points, which
+     * is the same than {@link #getDimSource()}.
+     */
+    public final int getDimTarget()
+    {return getDimSource();}
+
+    /**
+     * Tests whether this transform does not move any points.
+     * This method returns always <code>false</code>.
+     */
+    public final boolean isIdentity()
+    {return false;}
+
+    /**
+     * Returns a hash value for this transform.
+     */
+    public final int hashCode()
+    {
+        final long code = Double.doubleToLongBits( a ) +
+                      37*(Double.doubleToLongBits( b ) +
+                      37*(Double.doubleToLongBits( a2) +
+                      37*(Double.doubleToLongBits( b2) +
+                      37*(Double.doubleToLongBits( e2) +
+                      37*(Double.doubleToLongBits(ep2))))));
+        return (int) code ^ (int) (code >>> 32);
+    }
+
+    /**
+     * Compares the specified object with
+     * this math transform for equality.
+     */
+    public final boolean equals(final Object object)
+    {
+        if (object==this) return true; // Slight optimization
+        if (super.equals(object))
+        {
+            final GeocentricTransform that = (GeocentricTransform) object;
+            return Double.doubleToLongBits(this. a ) == Double.doubleToLongBits(that. a ) &&
+                   Double.doubleToLongBits(this. b ) == Double.doubleToLongBits(that. b ) &&
+                   Double.doubleToLongBits(this. a2) == Double.doubleToLongBits(that. a2) &&
+                   Double.doubleToLongBits(this. b2) == Double.doubleToLongBits(that. b2) &&
+                   Double.doubleToLongBits(this. e2) == Double.doubleToLongBits(that. e2) &&
+                   Double.doubleToLongBits(this.ep2) == Double.doubleToLongBits(that.ep2);
+        }
+        return false;
+    }
+
+    /**
+     * Returns the WKT for this math transform.
+     */
+    public final String toString()
+    {
+        final StringBuffer buffer = new StringBuffer("PARAM_MT[\"Ellipsoid_To_Geocentric\"");
+        addParameter(buffer, "semi_major", a);
+        addParameter(buffer, "semi_minor", b);
+        buffer.append(']');
+        return buffer.toString();
+    }
+
+    /**
+     * The provider for {@link GeographicToGeocentricTransform}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Provider extends MathTransformProvider
+    {
+        /**
+         * Create a provider.
+         */
+        public Provider()
+        {
+            super("Ellipsoid_To_Geocentric", 0/*ResourceKeys.GEOCENTRIC_TRANSFORM*/, null); // TODO
+            put("semi_major", Double.NaN, POSITIVE_RANGE);
+            put("semi_minor", Double.NaN, POSITIVE_RANGE);
+        }
+
+        /**
+         * Returns a transform for the specified parameters.
+         *
+         * @param  parameters The parameter values in standard units.
+         * @return A {@link MathTransform} object of this classification.
+         */
+        public MathTransform create(final ParameterList parameters)
+        {
+            final double semiMajor = parameters.getDoubleParameter("semi_major");
+            final double semiMinor = parameters.getDoubleParameter("semi_minor");
+            return new GeocentricTransform(semiMajor, semiMinor, Unit.METRE);
+        }
+    }
+}
