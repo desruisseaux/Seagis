@@ -48,6 +48,7 @@ import org.geotools.gc.GridCoverage;
 import org.geotools.util.NumberRange;
 import org.geotools.resources.Arguments;
 import org.geotools.resources.XDimension2D;
+import org.geotools.resources.ImageUtilities;
 import org.geotools.resources.MonolineFormatter;
 
 // SEAGIS dependencies
@@ -170,6 +171,8 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
      */
     public static void main(final String[] args) throws SQLException, IOException {
         // HACK: Pour vérifier le décodeur d'image PNG.
+        ImageUtilities.allowNativeCodec("png", false, false);
+        ImageUtilities.allowNativeCodec("png", true , false);
         new org.geotools.gui.swing.About().showDialog(null);
 
         MonolineFormatter.init("org.geotools");

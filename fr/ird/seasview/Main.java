@@ -483,6 +483,8 @@ public final class Main {
     public static void main(final String[] args) {
         org.geotools.resources.Geotools.init();
         org.geotools.resources.MonolineFormatter.init("fr.ird");
+        org.geotools.resources.ImageUtilities.allowNativeCodec("png", false, false);
+        org.geotools.resources.ImageUtilities.allowNativeCodec("png", true , false);
         final Arguments arguments = new Arguments(args);
         if (false) {
             LookAndFeelMenu.initLookAndFeel();
