@@ -89,8 +89,13 @@ public interface MathTransform2D extends MathTransform
      * matrix of the non-translating portion of the approximate affine map at
      * the point.
      *
-     * @param  point The coordinate point where to evaluate the derivative.
+     * @param  point The coordinate point where to evaluate the derivative. Null value is
+     *         accepted only if the derivative is the same everywhere. For example affine
+     *         transform accept null value since they produces identical derivative no
+     *         matter the coordinate value. But most map projection will requires a non-null
+     *         value.
      * @return The derivative at the specified point as a 2&times;2 matrix.
+     * @throws NullPointerException if the derivative dependents on coordinate and <code>point</code> is <code>null</code>.
      * @throws TransformException if the derivative can't be evaluated at the specified point.
      */
     public abstract Matrix derivative(final Point2D point) throws TransformException;

@@ -213,8 +213,13 @@ public interface MathTransform
      *    <sub> </sub>          <sub>  </sub>   <sub>  </sub>   <sub>  </sub>   <sub>  </sub>   [ x<sub>3</sub> ]
      * </pre>
      *
-     * @param  point The coordinate point where to evaluate the derivative.
+     * @param  point The coordinate point where to evaluate the derivative. Null value is
+     *         accepted only if the derivative is the same everywhere. For example affine
+     *         transform accept null value since they produces identical derivative no
+     *         matter the coordinate value. But most map projection will requires a non-null
+     *         value.
      * @return The derivative at the specified point (never <code>null</code>).
+     * @throws NullPointerException if the derivative dependents on coordinate and <code>point</code> is <code>null</code>.
      * @throws MismatchedDimensionException if <code>point</code> doesn't have the expected dimension.
      * @throws TransformException if the derivative can't be evaluated at the specified point.
      *
