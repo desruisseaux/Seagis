@@ -210,6 +210,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final CompoundCoordinateSystem that = (CompoundCoordinateSystem) cs;
@@ -225,6 +226,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      */
     public boolean equals(final Object object)
     {
+        if (object==this) return true;
         if (super.equals(object))
         {
             final CompoundCoordinateSystem that = (CompoundCoordinateSystem) object;

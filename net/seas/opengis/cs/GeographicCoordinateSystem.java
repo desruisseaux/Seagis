@@ -228,6 +228,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final GeographicCoordinateSystem that = (GeographicCoordinateSystem) cs;

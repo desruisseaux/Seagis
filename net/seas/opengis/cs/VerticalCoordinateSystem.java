@@ -184,6 +184,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final VerticalCoordinateSystem that = (VerticalCoordinateSystem) cs;

@@ -154,6 +154,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final HorizontalCoordinateSystem that = (HorizontalCoordinateSystem) cs;

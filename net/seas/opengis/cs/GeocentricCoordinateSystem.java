@@ -152,6 +152,7 @@ public abstract class GeocentricCoordinateSystem extends CoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final GeocentricCoordinateSystem that = (GeocentricCoordinateSystem) cs;

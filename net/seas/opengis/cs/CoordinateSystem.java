@@ -219,7 +219,10 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
      * this coordinate system for equality.
      */
     public boolean equals(final Object object)
-    {return super.equals(object) && equivalents((CoordinateSystem)object);}
+    {
+        if (object==this) return true; // Slight optimization
+        return super.equals(object) && equivalents((CoordinateSystem)object);
+    }
 
     /**
      * Returns a string representation of this info.

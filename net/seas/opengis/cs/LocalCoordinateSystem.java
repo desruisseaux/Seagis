@@ -171,14 +171,22 @@ public class LocalCoordinateSystem extends CoordinateSystem
     {return units[dimension];}
 
     /**
-     * Compares the specified object with
-     * this coordinate system for equality.
+     * Returns  <code>true</code> if this coordinate system is equivalents to
+     * the specified coordinate system. Two coordinate systems are considered
+     * equivalent if the {@link net.seas.opengis.ct.CoordinateTransform} from
+     * <code>this</code> to  <code>cs</code>  would be the identity transform.
+     * The default implementation compare datum, units and axis, but ignore
+     * name, alias and other meta-data informations.
+     *
+     * @param  cs The coordinate system (may be <code>null</code>).
+     * @return <code>true</code> if both coordinate systems are equivalent.
      */
-    public boolean equals(final Object object)
+    public boolean equivalents(final CoordinateSystem cs)
     {
-        if (super.equals(object))
+        if (cs==this) return true;
+        if (super.equivalents(cs))
         {
-            final LocalCoordinateSystem that = (LocalCoordinateSystem) object;
+            final LocalCoordinateSystem that = (LocalCoordinateSystem) cs;
             return XClass.equals(this.datum, that.datum) &&
                    Arrays.equals(this.units, that.units) &&
                    Arrays.equals(this.axes , that.axes );

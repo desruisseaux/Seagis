@@ -173,6 +173,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
      */
     public boolean equivalents(final CoordinateSystem cs)
     {
+        if (cs==this) return true;
         if (super.equivalents(cs))
         {
             final ProjectedCoordinateSystem that = (ProjectedCoordinateSystem) cs;
