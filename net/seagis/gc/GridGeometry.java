@@ -319,7 +319,7 @@ public class GridGeometry implements Dimensioned, Serializable
     {
         if (gridToCoordinateSystem2D!=null)
             return gridToCoordinateSystem2D;
-        else throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_TRANSFORM2D_AVAILABLE));
+        else throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_NO_TRANSFORM2D_AVAILABLE));
     }
 
     /**
