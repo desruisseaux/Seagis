@@ -104,9 +104,6 @@ abstract class Table implements fr.ird.sql.Table {
      * Journal des évènements.
      */
     static final Logger logger = Logger.getLogger("fr.ird.sql");
-    static {
-        fr.ird.util.InterlineFormatter.init(logger);
-    }
 
     /**
      * Propriétés de la base de données. Ces propriétés peuvent contenir

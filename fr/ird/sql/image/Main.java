@@ -272,6 +272,7 @@ final class Main extends Arguments {
      * de données ainsi que le bon fonctionnement de cette classe.
      */
     public static void main(final String[] args) throws SQLException {
+        org.geotools.resources.MonolineFormatter.init("fr.ird");
         new Main(args).run();
     }
 }

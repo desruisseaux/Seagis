@@ -414,6 +414,7 @@ public class FisheryDataBase extends DataBase {
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
     public static void main(final String[] args) throws SQLException {
+        org.geotools.resources.MonolineFormatter.init("fr.ird");
         final Arguments  console = new Arguments(args);
         final boolean     config = console.getFlag("-config");
         final Integer maxRecords = console.getOptionalInteger("-count");

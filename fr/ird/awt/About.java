@@ -23,6 +23,7 @@
 package fr.ird.awt;
 
 // User interface
+import java.awt.Dimension;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
@@ -30,6 +31,8 @@ import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import javax.swing.event.ListDataListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -40,6 +43,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JTree;
 import javax.swing.Icon;
 import javax.swing.Box;
 
@@ -48,6 +52,10 @@ import java.net.URL;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ImageWriterSpi;
+import javax.imageio.spi.ImageReaderWriterSpi;
 
 // Manifest
 import java.util.jar.Manifest;
@@ -60,9 +68,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 // Miscellaneous
+import java.util.Map;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
@@ -80,7 +90,8 @@ import org.geotools.resources.SwingUtilities;
  * build from the <code>META-INF/Manifest.mf</code> file.   This manifest should contains
  * entries for <code>Implementation-Title</code>, <code>Implementation-Version</code> and
  * <code>Implementation-Vendor</code> values, as suggested in the
- * <A HREF="http://java.sun.com/docs/books/tutorial/jar/basics/manifest.html#versioning">Java tutorial</A>.
+ * <A HREF="http://java.sun.com/docs/books/tutorial/jar/basics/manifest.html#versioning">Java
+ * tutorial</A>.
  * In addition to the above-cited standard entries,   the <code>About</code> class also
  * understand the <code>Compilation-Date</code> entry. This entry can contains the date
  * (using the <code>"yyyy-MM-dd HH:mm:ss"</code> pattern) the package was compiled. If presents,
@@ -89,8 +100,7 @@ import org.geotools.resources.SwingUtilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class About extends JPanel
-{
+public class About extends JPanel {
     /**
      * Unité à utiliser pour les affichages
      * de la quantité de mémoire utilisée.
@@ -111,7 +121,7 @@ public class About extends JPanel
     /**
      * The localized resources to use.
      */
-    private final Resources resources = Resources.getResources(null);
+    private final Resources resources;
 
     /**
      * Construct a new dialog box for the specified application class.  This constructor
@@ -125,8 +135,9 @@ public class About extends JPanel
      *                    from the manifest file (<code>META-INF/Manifest.mf</code>).
      * @param tasks       Group of running threads, or <code>null</code> if there is none.
      */
-    public About(final Object logo, final Class application, final ThreadGroup tasks)
-    {this(logo, getAttributes(application), application.getClassLoader(), tasks);}
+    public About(final Object logo, final Class application, final ThreadGroup tasks) {
+        this(logo, getAttributes(application), application.getClassLoader(), tasks);
+    }
 
     /**
      * Construct a new dialog box from the specified manifest attributes.
@@ -137,8 +148,9 @@ public class About extends JPanel
      * @param attributes  The manifest attributes containing application name and version number.
      * @param tasks       Group of running threads, or <code>null</code> if there is none.
      */
-    public About(final Object logo, final Attributes attributes, final ThreadGroup tasks)
-    {this(logo, attributes, null, tasks);}
+    public About(final Object logo, final Attributes attributes, final ThreadGroup tasks) {
+        this(logo, attributes, null, tasks);
+    }
 
     /**
      * Construct a new dialog box.
@@ -150,11 +162,15 @@ public class About extends JPanel
      * @param loader      The application's class loader.
      * @param tasks       Group of running threads, or <code>null</code> if there is none.
      */
-    private About(final Object logo, final Attributes attributes, ClassLoader loader, final ThreadGroup tasks)
+    private About(final Object logo, final Attributes attributes,
+                  ClassLoader loader, final ThreadGroup tasks)
     {
-        super(new BorderLayout());
-        if (loader==null)
-        {
+        super(new GridBagLayout());
+        final GridBagConstraints gc = new GridBagConstraints();
+        gc.weightx=1; gc.weighty=1;
+        final Locale locale = Locale.getDefault();
+        resources = Resources.getResources(locale);
+        if (loader == null) {
             loader = getClass().getClassLoader();
             // TODO: it would be nice to fetch the caller's class loader instead
         }
@@ -171,133 +187,182 @@ public class About extends JPanel
         String application = attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
         String version     = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         String vendor      = attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
-        try
-        {
+        try  {
             final String dateString = attributes.getValue(TIMESTAMP);
-            if (dateString!=null)
-            {
+            if (dateString != null) {
                 final Date         date = getDateFormat().parse(dateString);
                 final DateFormat format = DateFormat.getDateInstance(DateFormat.LONG);
-                if (version!=null && version.trim().length()!=0)
-                {
+                if (version!=null && version.trim().length()!=0) {
                     StringBuffer buffer = new StringBuffer(version);
                     buffer.append(" (");
-                    buffer=format.format(date, buffer, new FieldPosition(0));
+                    buffer = format.format(date, buffer, new FieldPosition(0));
                     buffer.append(')');
                     version = buffer.toString();
                 }
-                else version = format.format(date);
+                else {
+                    version = format.format(date);
+                }
             }
-        }
-        catch (ParseException exception)
-        {
+        } catch (ParseException exception) {
             Utilities.unexpectedException("fr.ird.awt", "About", "<init>", exception);
         }
         /*
          * If the user supplied a logo, load it and display it in the dialog's upper part (NORTH).
          * The tabbed pane will be added below the logo, in the dialog's central part (CENTER).
          */
-        if (logo!=null)
-        {
+        if (logo != null) {
             final JComponent title;
-            if (logo instanceof JComponent)
-            {
+            if (logo instanceof JComponent) {
                 title = (JComponent) logo;
-            }
-            else if (logo instanceof Icon)
-            {
+            } else if (logo instanceof Icon) {
                 title = new JLabel((Icon) logo);
-            }
-            else
-            {
+            } else {
                 final String text = String.valueOf(logo);
                 final URL url = loader.getResource(text);
-                if (url==null)
-                {
+                if (url == null) {
                     final JLabel label = new JLabel(text);
                     label.setHorizontalAlignment(JLabel.CENTER);
-                    label.setBorder(BorderFactory.createEmptyBorder(6/*top*/, 6/*left*/, 6/*bottom*/, 6/*right*/));
+                    label.setBorder(BorderFactory.createEmptyBorder(
+                                6/*top*/, 6/*left*/, 6/*bottom*/, 6/*right*/));
                     title = label;
+                } else {
+                    title = new JLabel(new ImageIcon(url));
                 }
-                else title = new JLabel(new ImageIcon(url));
             }
             title.setBorder(BorderFactory.createCompoundBorder(
                             BorderFactory.createEmptyBorder(0/*top*/, 0/*left*/, 6/*bottom*/, 0/*right*/),
                             BorderFactory.createCompoundBorder(
                             BorderFactory.createLoweredBevelBorder(), title.getBorder())));
-            add(title, BorderLayout.NORTH);
+            gc.gridx=0; gc.gridy=0; gc.insets.top=9;
+            add(title, gc);
         }
         final JTabbedPane        tabs = new JTabbedPane();
-        final JLabel totalMemoryLabel = new JLabel(resources.getString(ResourceKeys.TOTAL_MEMORY_$1, new Float(totalMemory)));
-        final JLabel percentUsedLabel = new JLabel(resources.getString(ResourceKeys.MEMORY_USE_$1,   new Float(1-freeMemory/totalMemory)));
-        add(tabs, BorderLayout.CENTER);
+        final JLabel totalMemoryLabel = new JLabel(resources.getString(ResourceKeys.TOTAL_MEMORY_$1,
+                                                   new Float(totalMemory)));
+        final JLabel percentUsedLabel = new JLabel(resources.getString(ResourceKeys.MEMORY_USE_$1,
+                                                   new Float(1-freeMemory/totalMemory)));
+        gc.gridx=0; gc.gridy=1; gc.fill=gc.BOTH;
+        add(tabs, gc);
         /*
          * MAIN TAB (Application name and version informations)
          */
-        if (true)
-        {
+        if (true) {
             final JPanel pane = new JPanel(new GridBagLayout());
             final GridBagConstraints c=new GridBagConstraints();
             c.gridx=0; c.weightx=1;
-            c.gridy=0;                  pane.add(new JLabel(                                                  application), c);
-            c.gridy++;                  pane.add(new JLabel(resources.getString(ResourceKeys.VERSION_$1,      version)   ), c);
+            c.gridy=0; c.insets.top=12; pane.add(new JLabel(                                                  application), c);
+            c.gridy++; c.insets.top= 0; pane.add(new JLabel(resources.getString(ResourceKeys.VERSION_$1,      version)   ), c);
             c.gridy++;                  pane.add(new JLabel(                                                  vendor     ), c);
             c.gridy++; c.insets.top= 6; pane.add(new JLabel(resources.getString(ResourceKeys.JAVA_VERSION_$1, System.getProperty("java.version"))), c);
             c.gridy++; c.insets.top= 0; pane.add(new JLabel(resources.getString(ResourceKeys.JAVA_VENDOR_$1,  System.getProperty("java.vendor" ))), c);
             c.gridy++; c.insets.top= 6; pane.add(new JLabel(resources.getString(ResourceKeys.OS_NAME_$1,      System.getProperty("os.name"     ))), c);
             c.gridy++; c.insets.top= 0; pane.add(new JLabel(resources.getString(ResourceKeys.OS_VERSION_$2,   System.getProperty("os.version"),
                                                                                                               System.getProperty("os.arch"     ))), c);
-            c.gridy++; c.insets.top=12; pane.add(totalMemoryLabel, c);
+            c.gridy++; c.insets.top=12; pane.add(totalMemoryLabel, c); c.insets.bottom=12;
             c.gridy++; c.insets.top= 0; pane.add(percentUsedLabel, c);
             tabs.addTab(resources.getString(ResourceKeys.SYSTEM), pane);
         }
         /*
          * RUNNING TASKS TAB
          */
-        if (tasks!=null)
-        {
+        if (tasks != null) {
+            updater = new ThreadList(tasks, totalMemoryLabel, percentUsedLabel, resources);
             final JPanel pane = new JPanel(new BorderLayout());
-            final JList  list = new JList(updater=new ThreadList(tasks, totalMemoryLabel, percentUsedLabel, resources));
+            final JList  list = new JList(updater);
             pane.add(new JLabel(resources.getString(ResourceKeys.RUNNING_TASKS)), BorderLayout.NORTH);
             pane.add(new JScrollPane(list), BorderLayout.CENTER);
+            pane.setBorder(BorderFactory.createEmptyBorder(9,9,9,9));
             tabs.addTab(resources.getString(ResourceKeys.TASKS), pane);
         }
         else updater=null;
         /*
          * IMAGE ENCODERS/DECODERS TAB
          */
-        final JPanel   pane = new JPanel(new GridLayout(1,2,3,3));
-        final String[] readers = ImageIO.getReaderMIMETypes();
-        final String[] writers = ImageIO.getWriterMIMETypes();
-        Arrays.sort(readers);
-        Arrays.sort(writers);
-        Box c;
-        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(resources.getString(ResourceKeys.DECODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(readers))); pane.add(c);
-        c=Box.createVerticalBox(); c.add(Box.createVerticalStrut(3)); c.add(new JLabel(resources.getString(ResourceKeys.ENCODERS), JLabel.CENTER)); c.add(Box.createVerticalStrut(3)); c.add(new JScrollPane(new JList(writers))); pane.add(c);
-        tabs.addTab(resources.getString(ResourceKeys.IMAGES), pane);
+        if (true) {
+            final JPanel pane = new JPanel(new GridLayout(1,2,3,3));
+            final Dimension size = new Dimension(200, 200);
+            pane.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+            boolean writer = false;
+            do {
+                final String[] mimeTypes;
+                final int      titleKey;
+                final Class    category;
+                if (writer) {
+                    titleKey  = ResourceKeys.ENCODERS;
+                    mimeTypes = ImageIO.getWriterMIMETypes();
+                    category  = ImageWriterSpi.class;
+                } else {
+                    titleKey  = ResourceKeys.DECODERS;
+                    mimeTypes = ImageIO.getReaderMIMETypes();
+                    category  = ImageReaderSpi.class;
+                }
+                Arrays.sort(mimeTypes);
+                final String title = resources.getString(titleKey);
+                final DefaultMutableTreeNode root = new DefaultMutableTreeNode(title);
+                final Map<String,DefaultMutableTreeNode> mimeMap = new HashMap<String,DefaultMutableTreeNode>();
+                for (int i=0; i<mimeTypes.length; i++) {
+                    patchMimes(mimeTypes);
+                    final DefaultMutableTreeNode child = new DefaultMutableTreeNode(mimeTypes[i]);
+                    root.add(child);
+                    mimeMap.put(mimeTypes[i], child);
+                }
+                for (final Iterator it=IIORegistry.getDefaultInstance().getServiceProviders(category, true); it.hasNext();) {
+                    final ImageReaderWriterSpi spi = (ImageReaderWriterSpi) it.next();
+                    final String name = spi.getDescription(locale);
+                    final String[] mimes = spi.getMIMETypes();
+                    patchMimes(mimes);
+                    for (int i=0; i<mimes.length; i++) {
+                        final DefaultMutableTreeNode child = mimeMap.get(mimes[i]);
+                        if (child != null) {
+                            child.add(new DefaultMutableTreeNode(name, false));
+                        }
+                    }
+                }
+                final JTree tree = new JTree(root);
+                tree.setRootVisible(false);
+                final JComponent scrollTree = new JScrollPane(tree);
+                scrollTree.setPreferredSize(size);
+                final Box c = Box.createVerticalBox();
+                c.add(Box.createVerticalStrut(3));
+                c.add(new JLabel(title, JLabel.CENTER));
+                c.add(Box.createVerticalStrut(3));
+                c.add(scrollTree);
+                pane.add(c);
+            } while ((writer = !writer));
+            tabs.addTab(resources.getString(ResourceKeys.IMAGES), pane);
+        }
+    }
+
+    /**
+     * Patch the mime type, replacing "" by "raw" for JAI I/O codec.
+     */
+    private static void patchMimes(String[] mimes) {
+        for (int i=0; i<mimes.length; i++) {
+            String name = mimes[i].trim();
+            if (name.length() == 0) {
+                name = "raw";
+            }
+            mimes[i] = name;
+        }
     }
 
     /**
      * Returns attribute for the specified class.
      */
-    private static Attributes getAttributes(final Class classe)
-    {
+    private static Attributes getAttributes(final Class classe) {
         final InputStream stream = classe.getClassLoader().getResourceAsStream("META-INF/Manifest.mf");
-        if (stream!=null) try
-        {
+        if (stream != null) try {
             final Manifest manifest = new Manifest(stream);
             stream.close();
             String name = classe.getName().replace('.','/');
-            int index; while ((index=name.lastIndexOf('/'))>=0)
-            {
+            int index;
+            while ((index=name.lastIndexOf('/'))>=0) {
                 final Attributes attributes = manifest.getAttributes(name.substring(0, index+1));
                 if (attributes!=null) return attributes;
                 name = name.substring(0, index);
             }
             return manifest.getMainAttributes();
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             Utilities.unexpectedException("fr.ird.awt", "About", "getAttributes", exception);
         }
         // Use empty manifest attributes.
@@ -307,8 +372,9 @@ public class About extends JPanel
     /**
      * Returns a neutral date format for timestamp.
      */
-    private static DateFormat getDateFormat()
-    {return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CANADA);}
+    private static DateFormat getDateFormat() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CANADA);
+    }
 
     /**
      * Modèle représentant la liste des processus actif dans un {@link ThreadGroup}.
@@ -317,8 +383,7 @@ public class About extends JPanel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class ThreadList extends AbstractListModel implements Runnable
-    {
+    private static final class ThreadList extends AbstractListModel implements Runnable {
         /**
          * Processus qui met à jour <code>ThreadList</code>,
          * ou <code>null</code> s'il n'y en a pas. On peut
@@ -357,7 +422,8 @@ public class About extends JPanel
          * Construit une liste des processus actifs
          * dans le groupe <code>tasks</code> spécifié.
          */
-        public ThreadList(final ThreadGroup tasks, final JLabel totalMemory, final JLabel percentUsed, final Resources resources)
+        public ThreadList(final ThreadGroup tasks, final JLabel totalMemory,
+                          final JLabel percentUsed, final Resources resources)
         {
             this.tasks       = tasks;
             this.totalMemory = totalMemory;
@@ -368,29 +434,30 @@ public class About extends JPanel
         /**
          * Retourne le nombre d'éléments dans la liste.
          */
-        public int getSize() // NO synchronized here
-        {return names.length;}
+        public int getSize() { // NO synchronized here
+            return names.length;
+        }
 
         /**
          * Retourne un des éléments de la liste.
          */
-        public Object getElementAt(final int index) // NO synchronized here
-        {return names[index];}
+        public Object getElementAt(final int index) { // NO synchronized here
+            return names[index];
+        }
 
         /**
          * Ajoute un objet à la liste des objets intéressés
          * à être informé des changements apportés à la liste.
          */
-        public synchronized void addListDataListener(final ListDataListener listener)
-        {super.addListDataListener(listener);}
+        public synchronized void addListDataListener(final ListDataListener listener) {
+            super.addListDataListener(listener);
+        }
 
         /**
          * Démarre le thread.
          */
-        public synchronized void start()
-        {
-            if (worker==null)
-            {
+        public synchronized void start() {
+            if (worker == null) {
                 worker=new Thread(this, Resources.format(ResourceKeys.ABOUT));
                 worker.setPriority(Thread.MIN_PRIORITY);
                 worker.setDaemon(true);
@@ -404,60 +471,69 @@ public class About extends JPanel
          * qu'elle soit interrompue en donnant la valeur nulle à
          * {@link #tasks}.
          */
-        public synchronized void run()
-        {
+        public synchronized void run() {
             String oldTotalMemory = null;
             String oldPercentUsed = null;
-            while (worker==Thread.currentThread() && listenerList.getListenerCount()!=0)
-            {
+            while (worker==Thread.currentThread() && listenerList.getListenerCount()!=0) {
                 final Runtime     system = Runtime.getRuntime();
                 final float  freeMemoryN = system.freeMemory()  / MEMORY_UNIT;
                 final float totalMemoryN = system.totalMemory() / MEMORY_UNIT;
-                String   totalMemoryText = resources.getString(ResourceKeys.TOTAL_MEMORY_$1, new Float(totalMemoryN));
-                String   percentUsedText = resources.getString(ResourceKeys.MEMORY_USE_$1,   new Float(1-freeMemoryN/totalMemoryN));
+                String   totalMemoryText = resources.getString(ResourceKeys.TOTAL_MEMORY_$1,
+                                                            new Float(totalMemoryN));
+                String   percentUsedText = resources.getString(ResourceKeys.MEMORY_USE_$1,
+                                                            new Float(1-freeMemoryN/totalMemoryN));
 
                 Thread[] threadArray = new Thread[tasks.activeCount()];
                 String[] threadNames = new String[tasks.enumerate(threadArray)];
-                int c=0; for (int i=0; i<threadNames.length; i++)
-                    if (threadArray[i]!=worker)
+                int c=0; for (int i=0; i<threadNames.length; i++) {
+                    if (threadArray[i]!=worker) {
                         threadNames[c++]=threadArray[i].getName();
+                    }
+                }
                 threadNames = XArray.resize(threadNames, c);
 
-                if (Arrays.equals(names, threadNames))      threadNames    =null;
-                if (totalMemoryText.equals(oldTotalMemory)) totalMemoryText=null; else oldTotalMemory=totalMemoryText;
-                if (percentUsedText.equals(oldPercentUsed)) percentUsedText=null; else oldPercentUsed=percentUsedText;
-                if (threadNames!=null || totalMemoryText!=null || percentUsedText!=null)
-                {
+                if (Arrays.equals(names, threadNames)) {
+                    threadNames = null;
+                }
+                if (totalMemoryText.equals(oldTotalMemory)) {
+                    totalMemoryText=null;
+                } else {
+                    oldTotalMemory=totalMemoryText;
+                }
+                if (percentUsedText.equals(oldPercentUsed)) {
+                    percentUsedText = null;
+                } else {
+                    oldPercentUsed = percentUsedText;
+                }
+                if (threadNames!=null || totalMemoryText!=null || percentUsedText!=null) {
                     final String[]     names = threadNames;
                     final String totalMemory = totalMemoryText;
                     final String percentUsed = percentUsedText;
-                    EventQueue.invokeLater(new Runnable()
-                    {
-                        public void run()
-                        {update(names, totalMemory, percentUsed);}
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            update(names, totalMemory, percentUsed);
+                        }
                     });
                 }
-                try
-                {
+                try {
                     wait(4000);
-                }
-                catch (InterruptedException exception)
-                {
+                } catch (InterruptedException exception) {
                     // Quelqu'un a réveillé ce thread.
                     // Retourne donc au travail.
                 }
             }
-            worker=null;
+            worker = null;
         }
 
         /**
          * Met à jour le contenu de la liste. Cette méthode
          * est appelée périodiquement dans le thread de Swing.
          */
-        private synchronized void update(final String[] newNames, final String totalMemory, final String percentUsed)
+        private synchronized void update(final String[] newNames,
+                                         final String totalMemory,
+                                         final String percentUsed)
         {
-            if (newNames!=null)
-            {
+            if (newNames != null) {
                 final int count = Math.max(names.length, newNames.length);
                 names = newNames;
                 fireContentsChanged(this, 0, count-1);
@@ -472,15 +548,12 @@ public class About extends JPanel
      * always invoke {@link #start} before showing the dialog,
      * and {@link #stop} after disposing it.
      */
-    public void showDialog(final Component owner)
-    {
-        try
-        {
+    public void showDialog(final Component owner) {
+        try {
             start();
-            SwingUtilities.showMessageDialog(owner, this, resources.getMenuLabel(ResourceKeys.ABOUT), JOptionPane.PLAIN_MESSAGE);
-        }
-        finally
-        {
+            SwingUtilities.showMessageDialog(owner, this,
+                            resources.getMenuLabel(ResourceKeys.ABOUT), JOptionPane.PLAIN_MESSAGE);
+        } finally {
             stop();
         }
     }
@@ -492,10 +565,11 @@ public class About extends JPanel
      * construct) in order to free resources. <code>stop()</code> is not automatically
      * invoked by the garbage collector.
      */
-    protected void start()
-    {
-        final ThreadList updater=this.updater;
-        if (updater!=null) updater.start();
+    protected void start() {
+        final ThreadList updater = this.updater;
+        if (updater != null) {
+            updater.start();
+        }
     }
 
     /**
@@ -503,10 +577,11 @@ public class About extends JPanel
      * after {@link #start}</strong> in order to free resources. <code>stop()</code> is
      * not automatically invoked by the garbage collector.
      */
-    protected void stop()
-    {
-        final ThreadList updater=this.updater;
-        if (updater!=null) updater.worker=null; // Stop the thread.
+    protected void stop() {
+        final ThreadList updater = this.updater;
+        if (updater != null) {
+            updater.worker = null; // Stop the thread.
+        }
         // Le thread avait une référence indirecte vers 'this' via 'ListDataListener'
     }
 
@@ -516,6 +591,7 @@ public class About extends JPanel
      *
      * @param attributes Attributes in which setting the compilation date.
      */
-    public static void touch(final Attributes attributes)
-    {attributes.putValue(TIMESTAMP, getDateFormat().format(new Date()));}
+    public static void touch(final Attributes attributes) {
+        attributes.putValue(TIMESTAMP, getDateFormat().format(new Date()));
+    }
 }

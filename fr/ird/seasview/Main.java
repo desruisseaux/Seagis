@@ -469,7 +469,8 @@ public final class Main {
      * </ul>
      */
     public static void main(final String[] args) {
-        fr.ird.util.InterlineFormatter.init(Logger.getLogger("fr.ird"));
+        org.geotools.resources.Geotools.init();
+        org.geotools.resources.MonolineFormatter.init("fr.ird");
         /*
          * Interprète les arguments de la ligne de commange.
          * Les arguments non-valides provoqueront un message

@@ -554,6 +554,7 @@ public class ImageDataBase extends DataBase {
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
     public static void main(final String[] args) throws SQLException {
+        org.geotools.resources.MonolineFormatter.init("fr.ird");
         final Main console = new Main(args);
         if (console.config) {
             getSQLEditor().showDialog(null);
