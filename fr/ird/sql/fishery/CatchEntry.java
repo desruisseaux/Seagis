@@ -1,0 +1,103 @@
+/*
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2000 Institut de Recherche pour le Développement
+ *
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Library General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Library General Public License for more details (http://www.gnu.org/).
+ *
+ *
+ * Contact: Michel Petit
+ *          Maison de la télédétection
+ *          Institut de Recherche pour le développement
+ *          500 rue Jean-François Breton
+ *          34093 Montpellier
+ *          France
+ *
+ *          mailto:Michel.Petit@mpl.ird.fr
+ */
+package fr.ird.sql.fishery;
+
+// Animats et base de données
+import fr.ird.sql.Entry;
+import fr.ird.animat.Species;
+
+// Coordonnées spatio-temporelles
+import java.util.Date;
+import java.awt.Shape;
+import java.awt.geom.Point2D;
+
+// Divers
+import java.util.Set;
+import javax.units.Unit;
+import javax.media.jai.util.Range;
+
+
+/**
+ * Données d'une capture. Une capture peut ne pas avoir été fait en un point précis,
+ * mais plutôt dans une certaine région. La méthode {@link #getCoordinate} retourne
+ * les coordonnées d'un point que l'on suppose représentatif (par exemple au milieu
+ * de la zone de pêche), tandis que {@link #getShape} retourne une forme qui représente
+ * la région de la capture (par exemple la ligne d'une pêche à la palangre).
+ *
+ * @version 1.0
+ * @author Martin Desruisseaux
+ */
+public interface CatchEntry extends Entry
+{
+    /**
+     * Retourne une coordonnée représentative de la
+     * capture, en degrés de longitude et latitude.
+     */
+    public abstract Point2D getCoordinate();
+
+    /**
+     * Retourne une forme représentant la zone de pêche. Par exemple dans le cas d'une
+     * palangre, la forme retournée peut être un objet {@link java.awt.geom.Line2D} ou
+     * {@link java.awt.geom.QuadCurve2D} représentant la trajectoire de la ligne de
+     * pêche. Si les informations disponibles ne permettent pas de connaître cette zone,
+     * alors cette méthode retourne <code>null</code>.
+     */
+    public abstract Shape getShape();
+
+    /**
+     * Retourne la plage de temps pendant laquelle a été faite la capture.
+     * Les éléments de la plage retournée seront du type {@link Date}.
+     */
+    public abstract Range getTimeRange();
+
+    /**
+     * Retourne l'ensemble des espèces pêchées. Il n'est pas obligatoire
+     * que {@link #getCatchAmount(Species)} retourne une valeur différente
+     * de zéro pour chacune de ces espèces.
+     */
+    public abstract Set<Species> getSpecies();
+
+    /**
+     * Retourne la quantité de poissons pêchés pour une expèce donnée.
+     */
+    public abstract float getCatchAmount(final Species species);
+
+    /**
+     * Retourne la quantité totale de poissons pêchés, toutes espèces confondues.
+     * La quantité retournée par cette méthode doit être la somme des quantitées
+     * <code>{@link #getCatchAmount getCatchAmount}(i)</code>   où  <var>i</var>
+     * varie de 0 inclusivement jusqu'à <code>{@link #getSpecies()}.size()</code>
+     * exclusivement.
+     */
+    public abstract float getCatchAmount();
+
+    /**
+     * Retourne les unités des captures. Ca peut être par exemple des kilogrammes
+     * ou des tonnes de poissons pêchés, ou plus simplement un comptage du nombre
+     * d'individus. Dans ce dernier cas, l'unité retournée sera sans dimension.
+     */
+    public abstract Unit getUnit();
+}

@@ -1,0 +1,202 @@
+/*
+ * Remote sensing images: database and visualisation
+ * Copyright (C) 2000 Institut de Recherche pour le Développement
+ *
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Library General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Library General Public License for more details (http://www.gnu.org/).
+ *
+ *
+ * Contact: Michel Petit
+ *          Maison de la télédétection
+ *          Institut de Recherche pour le développement
+ *          500 rue Jean-François Breton
+ *          34093 Montpellier
+ *          France
+ *
+ *          mailto:Michel.Petit@mpl.ird.fr
+ */
+package fr.ird.sql.fishery;
+
+// Graphisme
+import java.awt.Color;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+
+// Divers
+import java.util.Set;
+import java.util.Locale;
+import java.util.HashSet;
+import fr.ird.animat.Species;
+import javax.vecmath.MismatchedSizeException;
+
+
+/**
+ * Représentation d'une espèce animale. Chaque objet {@link Animal} devra appartenir à une espèce.
+ * Bien que son nom suggère que <code>Species</code> se réfère à la classification des espèces, ce
+ * n'est pas nécessairement le cas. On peut aussi utiliser plusieurs objets <code>Species</code>
+ * pour représenter des groupes d'individus qui appartiennent à la même espèce animale, mais qui
+ * sont de tailles différentes (par exemple les juvéniles versus les adultes).
+ *
+ * @version 1.0
+ * @author Martin Desruisseaux
+ */
+final class FishSpecies implements Species
+{
+    /**
+     * Langues dans lesquelles un nom d'espèce est disponible.
+     */
+    private final Locale[] locales;
+
+    /**
+     * Nom de cette espèce dans une des langues de {@link #locales}.
+     */
+    private final String[] names;
+
+    /**
+     * Couleur par défaut à utiliser pour le traçage.
+     */
+    private final Color defaultColor;
+
+    /**
+     * Couleur à utiliser pour le traçage.
+     */
+    private Color color;
+
+    /**
+     * Petit icone représentant cette espèce. Cet icône sera typiquement placé
+     * devant l'étiquette dans les listes déroulantes des boîtes de dialogue.
+     */
+    private Icon icon;
+
+    /**
+     * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
+     * selon plusieurs langues. A chaque nom ({@link String}) est associé une
+     * langue ({@link Locale}). Par convention, un objet <code>Locale</code>
+     * nul signifie que le nom correspondant n'est pas exprimé selon une langue
+     * en particulier, mais représente plutôt un code ou un numéro d'identification.
+     * Il peut s'agir en particulier des codes à trois lettres de la FAO.
+     *
+     * @param locales Langues des noms de cette espèces. Ce tableau doit avoir
+     *        la même longueur que l'argument <code>names</code>. <strong>NOTE:
+     *        Ce tableau n'est pas cloné</strong>.  Evitez donc de le modifier
+     *        après la construction.
+     * @param names  Nom de cette espèce selon chacune des langues énumérées dans
+     *        l'argument <code>locales</code>. <strong>NOTE: Ce tableau n'est pas
+     *        cloné</strong>. Evitez donc de le modifier après la construction.
+     * @param color Couleur par défaut à utiliser pour le traçage.
+     *
+     * @throws IllegalArgumentException Si un des éléments du tableau
+     *         <code>locales</code> apparaît plus d'une fois.
+     */
+    public FishSpecies(final Locale[] locales, final String[] names, final Color color) throws IllegalArgumentException
+    {
+        this.locales = locales;
+        this.names   = names;
+        if (locales.length!=names.length)
+            throw new MismatchedSizeException();
+
+        final Set<Locale> set = new HashSet<Locale>();
+        for (int i=0; i<locales.length; i++)
+        {
+            if (!set.add(locales[i])) // Accepte null
+                throw new IllegalArgumentException();
+            if (names[i]==null)
+                throw new NullPointerException();
+        }
+        this.color = defaultColor = color;
+    }
+
+    /**
+     * Retourne les langues dans lesquelles peuvent
+     * être exprimées le nom de cette espèce.
+     */
+    public Locale[] getLocales()
+    {return (Locale[]) locales.clone();}
+
+    /**
+     * Retourne le nom de cette espèce dans la langue spécifiée. Si aucun
+     * nom n'est disponible dans cette langue, retourne <code>null</code>.
+     */
+    public String getName(final Locale locale)
+    {
+        if (locale==null)
+        {
+            for (int i=0; i<locales.length; i++)
+                if (locale==locales[i])
+                    return names[i];
+            return null;
+        }
+
+        for (int i=0; i<locales.length; i++)
+            if (locale.equals(locales[i]))
+                return names[i];
+
+        final String language=locale.getLanguage();
+        if (language.length()!=0)
+        {
+            for (int i=0; i<locales.length; i++)
+                if (locales[i]!=null)
+                    if (language.equals(locales[i].getLanguage()))
+                        return names[i];
+        }
+        return null;
+    }
+
+    /**
+     * Retourne le nom de cette espèce. Le nom sera retourné
+     * de préférence dans la langue par défaut du système.
+     */
+    public String getName()
+    {
+        final String name = getName(Locale.getDefault());
+        if (name!=null) return name;
+        for (int i=0; i<names.length; i++)
+            if (locales[i]!=null)
+                return names[i];
+        return names.length!=0 ? names[0] : null;
+    }
+
+    /**
+     * Retourne un petit icone représentant cette espèce. Cet icône sera typiquement
+     * placé devant l'étiquette dans les listes déroulantes des boîtes de dialogue.
+     *
+     * @param color Couleur préférée de l'icône, ou <code>null</code> pour
+     *        utiliser une couleur par défaut.
+     */
+    public synchronized Icon getIcon(Color color)
+    {
+        if (color==null) color=defaultColor;
+        if (icon==null || !color.equals(this.color))
+        {
+            final int             width = 20;
+            final int            height = 10;
+            final int[]      components = new int[]{color.getRed(), color.getGreen(), color.getBlue()};
+            final BufferedImage   image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            final WritableRaster raster = image.getWritableTile(0,0);
+            for (int y=0; y<height; y++)
+                for (int x=0; x<width; x++)
+                    raster.setPixel(x,y,components);
+            image.releaseWritableTile(0,0);
+            icon = new ImageIcon(image);
+            this.color = color;
+        }
+        return icon;
+    }
+
+    /**
+     * Retourne le nom de cette espèce. Le nom sera retourné
+     * de préférence dans la langue par défaut du système.
+     */
+    public String toString()
+    {return getName();}
+}

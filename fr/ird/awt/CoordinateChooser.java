@@ -27,9 +27,9 @@ package fr.ird.awt;
 
 // Base de données
 import java.sql.SQLException;
-import fr.ird.image.sql.DataBase;
-import fr.ird.image.sql.SeriesEntry;
-import fr.ird.image.sql.SeriesTable;
+import fr.ird.sql.image.DataBase;
+import fr.ird.sql.image.SeriesEntry;
+import fr.ird.sql.image.SeriesTable;
 
 // Interface utilisateur
 import java.awt.EventQueue;
@@ -63,7 +63,7 @@ import fr.ird.resources.Resources;
 
 /**
  * Boîte de dialogue invitant l'utilisateur à sélectionner une plage de dates et de coordonnées.
- * Ces informations peuvent servir à configurer une table {@link fr.ird.image.sql.ImageTable}
+ * Ces informations peuvent servir à configurer une table {@link fr.ird.sql.image.ImageTable}
  * en fonction des choix de l'utilisateur.
  *
  * @version 1.0

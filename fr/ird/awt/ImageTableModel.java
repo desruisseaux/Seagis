@@ -27,10 +27,9 @@ package fr.ird.awt;
 
 // Base de données d'images
 import java.sql.SQLException;
-import fr.ird.image.sql.DataBase;
-import fr.ird.image.sql.ImageTable;
-import fr.ird.image.sql.ImageEntry;
-import fr.ird.image.sql.SeriesEntry;
+import fr.ird.sql.image.ImageTable;
+import fr.ird.sql.image.ImageEntry;
+import fr.ird.sql.image.SeriesEntry;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seas.opengis.cs.AxisInfo;
@@ -282,7 +281,8 @@ public class ImageTableModel extends AbstractTableModel
     public ImageTableModel(final ImageTable table) throws SQLException
     {
         this(table.getSeries());
-        entries = table.getEntries();
+        final List<ImageEntry> entryList = table.getEntries();
+        entries = entryList.toArray(new ImageEntry[entryList.size()]);
     }
 
     /**
@@ -296,7 +296,8 @@ public class ImageTableModel extends AbstractTableModel
      */
     public void setEntries(final ImageTable table) throws SQLException
     {
-        final ImageEntry[] newEntries = table.getEntries();
+        final List<ImageEntry> entryList = table.getEntries();
+        final ImageEntry[] newEntries = entryList.toArray(new ImageEntry[entryList.size()]);
         synchronized (this)
         {
             final ImageEntry[] oldEntries = entries;
