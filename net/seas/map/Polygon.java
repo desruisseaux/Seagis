@@ -27,6 +27,7 @@ import net.seagis.cs.Ellipsoid;
 import net.seagis.cs.Projection;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cs.CoordinateSystemFactory;
+import net.seagis.cs.CompoundCoordinateSystem;
 import net.seagis.cs.ProjectedCoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
 import net.seagis.ct.CannotCreateTransformException;
@@ -277,7 +278,7 @@ public class Polygon extends Contour
      *        points in this polygon, or <code>null</code> if unknow.
      */
     public Polygon(final CoordinateSystem coordinateSystem)
-    {this(getIdentityTransform(coordinateSystem));}
+    {this(getIdentityTransform(getCoordinateSystem2D(coordinateSystem)));}
 
     /**
      * Construct a new polyline with the same data than the specified
@@ -355,8 +356,9 @@ public class Polygon extends Contour
      *         Cet argument peut être nul si le système de coordonnées n'est pas connu.
      * @return Tableau de polylignes. Peut avoir une longueur de 0, mais ne sera jamais nul.
      */
-    public static Polygon[] getInstances(final Shape shape, final CoordinateSystem coordinateSystem)
+    public static Polygon[] getInstances(final Shape shape, CoordinateSystem coordinateSystem)
     {
+        coordinateSystem = getCoordinateSystem2D(coordinateSystem);
         if (shape instanceof Polygon)
         {
             return new Polygon[] {(Polygon) shape};
@@ -466,6 +468,25 @@ public class Polygon extends Contour
     }
 
     /**
+     * Retourne les deux premières dimensions du système de coordonnées spécifié.
+     *
+     * @param  cs Le système de coordonnées. Ce système doit avoir au moins 2 dimensions.
+     * @return Un système de coordonnées à exactement deux dimensions.
+     * @throws IllegalArgumentException si <code>coordinateSystem</code> ne peut
+     *         pas être ramené à un système de coordonnées à deux dimensions.
+     */
+    private static CoordinateSystem getCoordinateSystem2D(final CoordinateSystem cs) throws IllegalArgumentException
+    {
+        if (cs==null) return null;
+        if (cs.getDimension()==2) return cs;
+        if (cs instanceof CompoundCoordinateSystem)
+        {
+            return getCoordinateSystem2D(((CompoundCoordinateSystem) cs).getHeadCS());
+        }
+        throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_CANT_REDUCE_TO_TWO_DIMENSIONS_$1, cs.getName(null)));
+    }
+
+    /**
      * Returns a math transform for the specified transformations.
      * If no transformation is available, or if it is the identity
      * transform, then this method returns <code>null</code>. This
@@ -494,6 +515,7 @@ public class Polygon extends Contour
      */
     public synchronized void setCoordinateSystem(CoordinateSystem coordinateSystem) throws TransformException
     {
+        coordinateSystem = getCoordinateSystem2D(coordinateSystem);
         if (coordinateSystem==null)
         {
             coordinateSystem = getSourceCS();
