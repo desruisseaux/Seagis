@@ -44,8 +44,8 @@ public class Resources extends ResourceBundle {
      */
     public Resources() {
         super(// Set 'true' in front of language to use as default.
-              false ? Resources_fr.FILEPATH :
-               true ? Resources_en.FILEPATH :
+                true ? Resources_fr.FILEPATH :
+               false ? Resources_en.FILEPATH :
                null);
     }
 
