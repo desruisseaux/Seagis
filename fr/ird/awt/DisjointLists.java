@@ -51,6 +51,7 @@ import java.util.Collection;
 
 // Miscellaneous
 import java.net.URL;
+import java.util.Arrays;
 
 // Geotools dependencies
 import org.geotools.resources.XArray;
@@ -167,30 +168,52 @@ public class DisjointLists extends JPanel {
     }
 
     /**
-     * Action invoked when the user pressed a button.
+     * Action invoked when the user pressed a button. This action
+     * invokes {@link Model#move} with selected indices.
      */
     private static final class Action implements ActionListener {
         /**
+         * The source and target lists.
          */
         private final JList source, target;
 
         /**
+         * <code>true</code> if we should move all items on action/
          */
-        public Action(final JList source, final JList target) {
+        private final boolean all;
+
+        /**
+         * Construct a new "move" action.
+         */
+        public Action(final JList source, final JList target, final boolean all) {
             this.source = source;
             this.target = target;
+            this.all    = all;
         }
 
         /**
+         * Invoked when the user pressed a "move" button.
          */
         public void actionPerformed(final ActionEvent event) {
-            final int[] indices = source.getSelectedIndices();
-            final Model  source = (Model)this.source.getModel();
-            final Model  target = (Model)this.target.getModel();
-            for (int i=0; i<indices.length; i++) {
-                final int lower = indices[i];
-                final int upper = lower+1;
+            final Model source = (Model)this.source.getModel();
+            final Model target = (Model)this.target.getModel();
+            if (all) {
+                source.move(0, source.getSize(), target);
+                return;
+            }
+            final int[] indices = this.source.getSelectedIndices();
+            Arrays.sort(indices);
+            for (int i=0; i<indices.length;) {
+                int lower = indices[i];
+                int upper = lower+1;
+                while (++i<indices.length && indices[i]==upper) {
+                    upper++;
+                }
                 source.move(lower, upper, target);
+                final int length = (upper-lower);
+                for (int j=i; j<indices.length; j++) {
+                    indices[j] -= length;
+                }
             }
         }
     }
@@ -230,12 +253,14 @@ public class DisjointLists extends JPanel {
          * Setup buttons
          */
         final ClassLoader loader = getClass().getClassLoader();
-        final JButton add        = getButton(loader, "StepBack",    "<",  "Ajouter");
-        final JButton remove     = getButton(loader, "StepForward", ">",  "Retirer");
+        final JButton add        = getButton(loader, "StepBack",    "<",  "Ajouter les éléments sélectionnés");
+        final JButton remove     = getButton(loader, "StepForward", ">",  "Retirer les éléments sélectionnés");
         final JButton addAll     = getButton(loader, "Rewind",      "<<", "Ajouter tout");
         final JButton removeAll  = getButton(loader, "FastForward", ">>", "Retirer tout");
-        add   .addActionListener(new Action(right, left));
-        remove.addActionListener(new Action(left, right));
+        add      .addActionListener(new Action(right, left, false));
+        remove   .addActionListener(new Action(left, right, false));
+        addAll   .addActionListener(new Action(right, left,  true));
+        removeAll.addActionListener(new Action(left, right,  true));
 
         /*
          * Build UI
@@ -288,6 +313,20 @@ public class DisjointLists extends JPanel {
     }
 
     /**
+     * Returns all elements in the list on the left side.
+     *
+     * @return All elements on the left side.
+     */
+    public Collection getSelectedElements() {
+        final Model model = (Model) left.getModel();
+        final Object[] list = new Object[model.getSize()];
+        for (int i=0; i<list.length; i++) {
+            list[i] = model.getElementAt(i);
+        }
+        return Arrays.asList(list);
+    }
+
+    /**
      * Display this component in a dialog box and wait for the user to press "Ok".
      * This method can be invoked from any thread.
      *
@@ -305,7 +344,9 @@ public class DisjointLists extends JPanel {
     public static void main(final String[] args) {
         final DisjointLists test = new DisjointLists();
         test.addElements(java.util.Arrays.asList(args));
-        test.showDialog(null, "Test");
+        if (test.showDialog(null, "Test")) {
+            System.out.println(test.getSelectedElements());
+        }
         System.exit(0);
     }
 }
