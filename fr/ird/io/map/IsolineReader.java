@@ -20,7 +20,7 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package fr.ird.map.io;
+package fr.ird.io.map;
 
 // Maps
 import org.geotools.renderer.geom.Isoline;

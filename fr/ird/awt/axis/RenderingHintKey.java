@@ -36,18 +36,19 @@ import java.awt.RenderingHints;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class RenderingHintKey extends RenderingHints.Key
-{
+final class RenderingHintKey extends RenderingHints.Key {
     /**
      * Construct a rendering hint key.
      */
-    protected RenderingHintKey(final int key)
-    {super(key);}
+    protected RenderingHintKey(final int key) {
+        super(key);
+    }
 
     /**
      * Returns <code>true</code> if the specified
      * object is a valid value for this key.
      */
-    public boolean isCompatibleValue(final Object value)
-    {return (value instanceof Number);}
+    public boolean isCompatibleValue(final Object value) {
+        return (value instanceof Number);
+    }
 }

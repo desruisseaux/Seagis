@@ -230,7 +230,7 @@ final class ImageCanvas extends JPanel {
         final RenderedLayer[] visualLayers = mapPanel.getRenderer().getLayers();
         for (int i=0; i<visualLayers.length; i++) {
             if (visualLayers[i] instanceof RenderedGridCoverage) {
-                final GridCoverage image=((RenderedGridCoverage) visualLayers[i]).getCoverage();
+                final GridCoverage image=((RenderedGridCoverage) visualLayers[i]).getGridCoverage();
                 if (image != null) {
                     images.add(image);
                 }
@@ -648,7 +648,7 @@ final class ImageCanvas extends JPanel {
                                         final RenderedLayer layer = newLayers[j];
                                         if (layer instanceof RenderedGridCoverage) {
                                             final RenderedGridCoverage imageLayer = (RenderedGridCoverage) layer;
-                                            image = imageLayer.getCoverage();
+                                            image = imageLayer.getGridCoverage();
 // TODO                                     imageLayer.prefetch(mapPanel);
                                         }
                                         visualLayers.add(layer);

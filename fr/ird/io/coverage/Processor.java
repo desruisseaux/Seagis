@@ -84,8 +84,8 @@ import java.util.StringTokenizer;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.geom.Isoline;
 import org.geotools.gui.swing.MapPane;
-import fr.ird.map.io.GEBCOReader;
-import fr.ird.map.io.IsolineReader;
+import fr.ird.io.map.GEBCOReader;
+import fr.ird.io.map.IsolineReader;
 import org.geotools.renderer.j2d.RenderedIsoline;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
 

@@ -232,7 +232,6 @@ public class CatchLayer extends RenderedMarks {
         this.icons            = layer.icons;
         this.markType         = layer.markType;
         this.typicalAmplitude = layer.typicalAmplitude;
-        setTools(new Tools());
     }
 
     /**
@@ -260,7 +259,6 @@ public class CatchLayer extends RenderedMarks {
         typicalAmplitude = super.getTypicalAmplitude();
         markType         = POSITIONS_ONLY;
         validate();
-        setTools(new Tools());
     }
 
     /**
@@ -568,29 +566,24 @@ public class CatchLayer extends RenderedMarks {
     }
 
     /**
-     * The tools for {@link CatchLayer}.
+     * Returns a string representation for the catch at the specified index.
+     * This string will be displayed as a tool tip when the mouse cursor is
+     * over the catch.
      */
-    private final class Tools extends RenderedMarks.Tools {
-        /**
-         * Returns a string representation for the catch at the specified index.
-         * This string will be displayed as a tool tip when the mouse cursor is
-         * over the catch.
-         */
-        protected String getToolTipText(final int index) {
-            if (format == null) {
-                format = NumberFormat.getNumberInstance();
-                buffer = new StringBuffer();
-                dummy  = new FieldPosition(0);
-            }
-            buffer.setLength(0);
-            final CatchEntry c=catchs.get(index);
-            format.format(c.getCatch(), buffer, dummy);
-            final Unit unit = c.getUnit();
-            if (unit != null) {
-                buffer.append(' ');
-                buffer.append(unit);
-            }
-            return buffer.toString();
+    protected String getToolTipText(final int index) {
+        if (format == null) {
+            format = NumberFormat.getNumberInstance();
+            buffer = new StringBuffer();
+            dummy  = new FieldPosition(0);
         }
+        buffer.setLength(0);
+        final CatchEntry c=catchs.get(index);
+        format.format(c.getCatch(), buffer, dummy);
+        final Unit unit = c.getUnit();
+        if (unit != null) {
+            buffer.append(' ');
+            buffer.append(unit);
+        }
+        return buffer.toString();
     }
 }

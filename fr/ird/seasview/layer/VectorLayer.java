@@ -142,7 +142,6 @@ public class VectorLayer extends RenderedGridMarks {
      */
     public VectorLayer() {
         super();
-        setTools(new Tools());
     }
 
     /**
@@ -309,26 +308,21 @@ public class VectorLayer extends RenderedGridMarks {
     }
 
     /**
-     * Tools for {@link VectorLayer}.
+     * Retourne l'amplitude de la flèche.
      */
-    private final class Tools extends RenderedGridMarks.Tools {
-        /**
-         * Retourne l'amplitude de la flèche.
-         */
-        protected String getToolTipText(final int index) {
-            if (angleFormat == null) {
-                buffer = new StringBuffer();
-                angleFormat = new AngleFormat("D.dd°");
-            }
-            double amplitude = getAmplitude(index);
-            double angle     = getDirection(index);
-            angle = 90-Math.toDegrees(angle);
-            angle -= 360*Math.floor(angle/360);
-
-            buffer.setLength(0);
-            buffer.append(theme.getLabel(amplitude, (Locale)null));
-            buffer.append("  ");
-            return angleFormat.format(angle, buffer, null).toString();
+    protected String getToolTipText(final int index) {
+        if (angleFormat == null) {
+            buffer = new StringBuffer();
+            angleFormat = new AngleFormat("D.dd°");
         }
+        double amplitude = getAmplitude(index);
+        double angle     = getDirection(index);
+        angle = 90-Math.toDegrees(angle);
+        angle -= 360*Math.floor(angle/360);
+
+        buffer.setLength(0);
+        buffer.append(theme.getLabel(amplitude, (Locale)null));
+        buffer.append("  ");
+        return angleFormat.format(angle, buffer, null).toString();
     }
 }

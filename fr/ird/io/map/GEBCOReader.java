@@ -20,7 +20,7 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package fr.ird.map.io;
+package fr.ird.io.map;
 
 // Geotools depencies
 import org.geotools.cs.CoordinateSystem;

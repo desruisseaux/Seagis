@@ -35,7 +35,7 @@ import java.net.URISyntaxException;
 // Map components
 import org.geotools.renderer.geom.Isoline;
 import org.geotools.ct.TransformException;
-import fr.ird.map.io.GEBCOReader;
+import fr.ird.io.map.GEBCOReader;
 
 
 /**
@@ -44,7 +44,7 @@ import fr.ird.map.io.GEBCOReader;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class IsolineFactory extends fr.ird.map.io.IsolineFactory {
+public final class IsolineFactory extends fr.ird.io.map.IsolineFactory {
     /**
      * The source directory for isolines data.
      */
