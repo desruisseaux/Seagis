@@ -372,7 +372,6 @@ final class WritableGridCoverageTable extends GridCoverageTable {
             buffer.append(ID);
             buffer.append(", ");
         }
-        buffer.append("'WGS 1984', ");
         buffer.append(area.getMinX()); buffer.append(", ");
         buffer.append(area.getMaxX()); buffer.append(", ");
         buffer.append(area.getMinY()); buffer.append(", ");
