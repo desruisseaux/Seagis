@@ -55,7 +55,7 @@ public class HorizontalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 3506060221517273330L;
+    private static final long serialVersionUID = -1424482162002300865L;
 
     /**
      * The default WGS 1984 datum.

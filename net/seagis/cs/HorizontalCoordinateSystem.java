@@ -57,7 +57,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -9058204611188320317L;
+    private static final long serialVersionUID = 350661821531782559L;
 
     /**
      * The horizontal datum.

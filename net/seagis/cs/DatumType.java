@@ -62,7 +62,7 @@ public abstract class DatumType extends EnumeratedParameter
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -3231606206426977300L;
+    private static final long serialVersionUID = 4829955972189625202L;
 
     /**
      * The pool of local datum. This pool
@@ -314,7 +314,7 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * Serial number for interoperability with different versions.
          */
-//      private static final long serialVersionUID = 7172421404798913210L;
+        private static final long serialVersionUID = -9026322423891329754L;
 
         /**
          * Lowest possible value for horizontal datum types.
@@ -376,7 +376,7 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * Serial number for interoperability with different versions.
          */
-//      private static final long serialVersionUID = -5713408139450202831L;
+        private static final long serialVersionUID = -916273252180448822L;
 
         /**
          * Lowest possible value for vertical datum types.
@@ -431,7 +431,7 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * Serial number for interoperability with different versions.
          */
-//      private static final long serialVersionUID = 4053105964515210660L;
+        private static final long serialVersionUID = 731901694455984836L;
 
         /**
          * Lowest possible value for temporal datum types.
@@ -487,7 +487,7 @@ public abstract class DatumType extends EnumeratedParameter
         /**
          * Serial number for interoperability with different versions.
          */
-//      private static final long serialVersionUID = -2000541174931444868L;
+        private static final long serialVersionUID = 412409825333947716L;
 
         /**
          * Lowest possible value for local datum types.

@@ -72,7 +72,7 @@ public class LocalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -8344742184879699719L;
+    private static final long serialVersionUID = -2067954038057402418L;
 
     /**
      * The local datum.

@@ -62,7 +62,7 @@ public class Ellipsoid extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -5674009719911850463L;
+    private static final long serialVersionUID = -1047804526105439230L;
 
     /**
      * WGS 1984 ellipsoid. This ellipsoid is used in GPS system

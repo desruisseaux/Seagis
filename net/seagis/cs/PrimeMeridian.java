@@ -55,7 +55,7 @@ public class PrimeMeridian extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -963498800353363758L;
+    private static final long serialVersionUID = 7570594768127669147L;
 
     /**
      * The Greenwich meridian, with angular measures in degrees.

@@ -81,7 +81,7 @@ public abstract class CoordinateSystem extends Info implements Dimensioned
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -8188440674216625687L;
+    private static final long serialVersionUID = -4539963180028417479L;
 
     /**
      * Construct a coordinate system.

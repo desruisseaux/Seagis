@@ -64,7 +64,7 @@ public class Projection extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 3127605870668403003L;
+    private static final long serialVersionUID = 2153398430020498215L;
 
     /**
      * Classification string for projection (e.g. "Transverse_Mercator").

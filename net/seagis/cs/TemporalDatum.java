@@ -48,7 +48,7 @@ public class TemporalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -3132187036753923869L;
+    private static final long serialVersionUID = 6313740402733520130L;
 
     /**
      * Default datum for Universal Time Clock (UTC).

@@ -50,7 +50,7 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -7104458538855128443L;
+    private static final long serialVersionUID = 3427461418504464735L;
 
     /** Bursa Wolf shift in meters. */
     public double dx;

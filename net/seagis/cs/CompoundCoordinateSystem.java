@@ -64,7 +64,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 6105762862621220984L;
+    private static final long serialVersionUID = -488997059924367289L;
 
     /**
      * First sub-coordinate system.

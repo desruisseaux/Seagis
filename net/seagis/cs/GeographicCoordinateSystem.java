@@ -73,7 +73,7 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -80914667908100423L;
+    private static final long serialVersionUID = -2024367470686889008L;
 
     /**
      * A geographic coordinate system using WGS84 datum.

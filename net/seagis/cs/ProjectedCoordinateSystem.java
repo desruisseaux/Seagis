@@ -64,7 +64,7 @@ public class ProjectedCoordinateSystem extends HorizontalCoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -4074962239062277502L;
+    private static final long serialVersionUID = 5412822472156531329L;
 
     /**
      * The angular unit.

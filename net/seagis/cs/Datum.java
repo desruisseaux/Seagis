@@ -63,7 +63,7 @@ public class Datum extends Info
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -2517981790443397612L;
+    private static final long serialVersionUID = 2175857309476007487L;
 
     /**
      * The datum type.

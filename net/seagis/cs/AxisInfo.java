@@ -53,7 +53,7 @@ public class AxisInfo implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 2949229234384551980L;
+    private static final long serialVersionUID = 6799874182734710227L;
 
     /**
      * Default axis info for <var>x</var> values.
@@ -195,7 +195,7 @@ public class AxisInfo implements Serializable
         /**
          * Serial number for interoperability with different versions.
          */
-//      private static final long serialVersionUID = -4483288472675548351L;
+        private static final long serialVersionUID = 7625005531024599865L;
 
         /**
          * The key for localization.

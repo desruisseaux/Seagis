@@ -89,7 +89,7 @@ public class Info implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 6074780819696693524L;
+    private static final long serialVersionUID = -771181600202966524L;
 
     /**
      * The non-localized object name.

@@ -52,7 +52,7 @@ public class VerticalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 7861978578511459295L;
+    private static final long serialVersionUID = 1663224345779675117L;
 
     /**
      * Creates a vertical datum from an enumerated type value.

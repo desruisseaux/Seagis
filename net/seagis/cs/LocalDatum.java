@@ -56,7 +56,7 @@ public class LocalDatum extends Datum
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 5604979072241525415L;
+    private static final long serialVersionUID = 426762179497761085L;
 
     /**
      * Creates a local datum.

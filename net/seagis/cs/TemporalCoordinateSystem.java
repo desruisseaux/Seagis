@@ -54,7 +54,7 @@ public class TemporalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = -1445221105136473835L;
+    private static final long serialVersionUID = 4436983518157910233L;
 
     /**
      * The temporal datum.

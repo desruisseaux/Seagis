@@ -71,7 +71,7 @@ public final class AxisOrientation extends EnumeratedParameter implements Compar
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 535984769497144121L;
+    private static final long serialVersionUID = 4649182002820021468L;
 
     // NOTE: The following enum values are from the OpenGIS specification.
     //       IF THOSE VALUES CHANGE, THEN inverse() AND absolute() MUST BE

@@ -59,7 +59,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     /**
      * Serial number for interoperability with different versions.
      */
-//  private static final long serialVersionUID = 3670736517382316475L;
+    private static final long serialVersionUID = -8629573233560414552L;
 
     /**
      * The vertical datum.
