@@ -270,7 +270,7 @@ final class SemiVariance {
             out.writeObject(parserMap);
             out.close();
         }
-        return InterleavedParser.getInstance((Parser[])parsers.toArray(new Parser[parsers.size()]));
+        return InterleavedParser.getInstance(parsers.toArray(new Parser[parsers.size()]));
     }
 
     /**

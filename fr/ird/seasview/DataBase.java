@@ -233,7 +233,7 @@ public final class DataBase {
         final SampleDataBase fisheries = getSampleDataBase();
         layers.add(new IsolineLayerControl());
         layers.add(new SampleLayerControl(fisheries));
-        return (LayerControl[])layers.toArray(new LayerControl[layers.size()]);
+        return layers.toArray(new LayerControl[layers.size()]);
     }
 
     /**

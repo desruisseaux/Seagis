@@ -149,7 +149,7 @@ final class MultiFilesParser extends Parser implements Serializable {
                 return (index>0 && name.substring(index).equalsIgnoreCase(".dat"));
             }
         });
-        return (File[])files.toArray(new File[files.size()]);
+        return files.toArray(new File[files.size()]);
     }
 
     /**

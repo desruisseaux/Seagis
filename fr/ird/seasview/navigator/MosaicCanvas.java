@@ -483,7 +483,7 @@ final class MosaicCanvas extends JPanel {
                     ((ImageCanvas) c).getImages(images);
                 }
             }
-            return (GridCoverage[])images.toArray(new GridCoverage[images.size()]);
+            return images.toArray(new GridCoverage[images.size()]);
         }
     }
 

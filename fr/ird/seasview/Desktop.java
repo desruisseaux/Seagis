@@ -180,7 +180,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
      * l'état dépendra de la fenêtre active.
      */
     final void setActions(final Collection<Action> actions) {
-        this.actions = (Action[])actions.toArray(new Action[actions.size()]);
+        this.actions = actions.toArray(new Action[actions.size()]);
         stateChanged();
     }
 

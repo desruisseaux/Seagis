@@ -237,6 +237,6 @@ public class GEBCOReader extends IsolineReader {
                 isoline.add(points, 0, points.length);
             }
         }
-        return (GeometryCollection[])isolines.values().toArray(new GeometryCollection[isolines.size()]);
+        return isolines.values().toArray(new GeometryCollection[isolines.size()]);
     }
 }

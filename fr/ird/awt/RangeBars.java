@@ -578,7 +578,7 @@ public class RangeBars extends ZoomPane {
      * pas de répercussions sur <code>this</code>.
      */
     public synchronized String[] getLabels() {
-        return (String[])ranges.keySet().toArray(new String[ranges.size()]);
+        return ranges.keySet().toArray(new String[ranges.size()]);
     }
 
     /**
