@@ -406,6 +406,28 @@ public class ResourceBundle extends java.util.ResourceBundle
     }
 
     /**
+     * Gets a string for the given key and append "..." to it.
+     * This is method is typically used for creating menu label.
+     *
+     * @param  key The key for the desired string.
+     * @return The string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
+     */
+    public final String getMenuLabel(final int keyID) throws MissingResourceException
+    {return getString(keyID)+"...";}
+
+    /**
+     * Gets a string for the given key and append ": " to it.
+     * This is method is typically used for creating menu label.
+     *
+     * @param  key The key for the desired string.
+     * @return The string for the given key.
+     * @throws MissingResourceException If no object for the given key can be found.
+     */
+    public final String getLabel(final int keyID) throws MissingResourceException
+    {return getString(keyID)+": ";}
+
+    /**
      * Gets a string for the given key from this resource bundle or one of its parents.
      *
      * @param  key The key for the desired string.
@@ -538,6 +560,68 @@ public class ResourceBundle extends java.util.ResourceBundle
      */
     public final String getString(final int keyID, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
     {return getString(keyID, new Object[] {arg0, arg1, arg2, arg3, arg4});}
+
+    /**
+     * Get a localized log record.
+     *
+     * @param  level The log record level.
+     * @param  key   The resource key.
+     * @return The log record.
+     */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+    public LogRecord getLogRecord(final Level level, final int key)
+    {return getLogRecord(level, key, null);}
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+    /**
+     * Get a localized log record.
+     *
+     * @param  level The log record level.
+     * @param  key   The resource key.
+     * @param  arg0  The parameter for the log message, or <code>null</code>.
+     * @return The log record.
+     */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+    public LogRecord getLogRecord(final Level level, final int key, final Object arg0)
+    {
+        final LogRecord record = new LogRecord(level, String.valueOf(key));
+        record.setResourceBundle(this);
+        if (arg0!=null)
+        {
+            record.setParameters(toArray(arg0));
+        }
+        return record;
+    }
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+    /**
+     * Get a localized log record.
+     *
+     * @param  level The log record level.
+     * @param  key   The resource key.
+     * @param  arg0  The first parameter.
+     * @param  arg1  The second parameter.
+     * @return The log record.
+     */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+    public LogRecord getLogRecord(final Level level, final int key, final Object arg0, final Object arg1)
+    {return getLogRecord(level, key, new Object[]{arg0, arg1});}
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+    /**
+     * Get a localized log record.
+     *
+     * @param  level The log record level.
+     * @param  key   The resource key.
+     * @param  arg0  The first parameter.
+     * @param  arg1  The second parameter.
+     * @param  arg2  The third parameter.
+     * @return The log record.
+     */
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+    public LogRecord getLogRecord(final Level level, final int key, final Object arg0, final Object arg1, final Object arg2)
+    {return getLogRecord(level, key, new Object[]{arg0, arg1, arg2});}
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
     /**
      * Returns a string representation of this object.
