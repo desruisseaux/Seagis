@@ -127,7 +127,7 @@ public class CatchLayer extends MarkLayer
     ////                                                             ////
     /////////////////////////////////////////////////////////////////////
     /**
-     * Colors to use for each catch if the {@link #catchs} list.
+     * Colors to use for each catch in the {@link #catchs} list.
      * This is usually the color for the dominant species.
      */
     private Color[] colors;
@@ -300,7 +300,8 @@ public class CatchLayer extends MarkLayer
                 case GEAR_COVERAGES: shape=capture.getShape(); break;
                 default: throw new IllegalStateException();
             }
-            colors [i] = getIcon(capture.getDominantSpecies()).getColor();
+            final Species species = capture.getDominantSpecies();
+            colors [i] = (species!=null) ? getIcon(species).getColor() : Color.black;
             useFill[i] = (shape==null);
             /*
              * Expand the bounding box by the

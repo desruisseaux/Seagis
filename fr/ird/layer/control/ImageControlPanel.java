@@ -101,7 +101,8 @@ final class ImageControlPanel extends JPanel
     {
         final Resources             resources = Resources.getResources(null);
         final GridCoverageProcessor processor = GridCoverageProcessor.getDefault();
-        if (true) addOperation(new ProcessorOperation(processor, "Colormap", resources.getString(ResourceKeys.GRAY_SCALE)));
+        if (true) addOperation(new ProcessorOperation(processor, "Colormap",          resources.getString(ResourceKeys.GRAY_SCALE    )));
+        if (true) addOperation(new ProcessorOperation(processor, "GradientMagnitude", resources.getString(ResourceKeys.GRADIENT_SOBEL)));
 //      if (true ) for (int i=0; i<=10; i++) addImageOperation(new Convolution(i)); // TODO (JUST A TRY)
 //      if (false) addImageOperation(new ColorSmoother(ColorSmoother.KEEP_UPPER_COLOR));
 //      if (false) addImageOperation(new ThemeEraser("Quadrillage", 1));

@@ -124,12 +124,10 @@ public class WindowProgress extends Progress
     private final JComponent content;
 
     /**
-     * Modèle servant à informer l'utilisateur des progrès.
-     * En général, ce modèle sera utilisé par une barre des
-     * progrès du type {@link JProgressBar}. Sa plage doit
+     * Barre des progrès. La plage de cette barre doit
      * obligatoirement aller au moins de 0 à 100.
      */
-    private final BoundedRangeModel progress;
+    private final JProgressBar progressBar;
 
     /**
      * Description de l'opération en cours. Des exemples de descriptions
@@ -204,11 +202,11 @@ public class WindowProgress extends Progress
          * Procède à la création de la barre des progrès.
          * Le modèle de cette barre sera retenu pour être
          */
-        final JProgressBar bar=new JProgressBar();
-        progress=bar.getModel();
-        bar.setBorder(BorderFactory.createCompoundBorder(
-                      BorderFactory.createEmptyBorder(6,9,6,9),
-                      bar.getBorder()));
+        progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setBorder(BorderFactory.createCompoundBorder(
+                              BorderFactory.createEmptyBorder(6,9,6,9),
+                              progressBar.getBorder()));
         /*
          * Dispose les éléments à l'intérieur de la fenêtre.
          * On leur donnera une bordure vide pour laisser un
@@ -219,7 +217,7 @@ public class WindowProgress extends Progress
                           BorderFactory.createEmptyBorder(VMARGIN,HMARGIN,VMARGIN,HMARGIN),
                           BorderFactory.createEtchedBorder()));
         content.add(description);
-        content.add(bar);
+        content.add(progressBar);
     }
 
     /**
@@ -524,13 +522,14 @@ public class WindowProgress extends Progress
          */
         public void run()
         {
+            final BoundedRangeModel model = progressBar.getModel();
             switch (task)
             {
                 case   +LABEL: description.setText(text);  return;
                 case   -LABEL: text=description.getText(); return;
-                case PROGRESS: progress.setValue(value);   return;
-                case  STARTED: progress.setRangeProperties(  0,1,0,100,false); window.setVisible(true             ); break;
-                case COMPLETE: progress.setRangeProperties(100,1,0,100,false); window.setVisible(warningArea!=null); break;
+                case PROGRESS: model.setValue(value); progressBar.setIndeterminate(false); return;
+                case  STARTED: model.setRangeProperties(  0,1,0,100,false); window.setVisible(true); break;
+                case COMPLETE: model.setRangeProperties(100,1,0,100,false); window.setVisible(warningArea!=null); break;
             }
             synchronized (WindowProgress.this)
             {
