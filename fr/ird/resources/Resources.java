@@ -45,7 +45,10 @@ public class Resources extends ResourceBundle
      */
     public Resources()
     {
-        super(Resources_fr.FILEPATH);
+        super(// Set 'true' in front of language to use as default.
+              false ? Resources_fr.FILEPATH :
+               true ? Resources_en.FILEPATH :
+               null);
     }
 
     /**
@@ -59,7 +62,7 @@ public class Resources extends ResourceBundle
      * Returns the name of the logger to use.
      */
     protected String getLoggerName()
-    {return "net.seas";}
+    {return "fr.ird";}
 
     /**
      * Returns resources in the given locale.
@@ -125,35 +128,4 @@ public class Resources extends ResourceBundle
      */
     public static String format(final int key, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException
     {return getResources(null).getString(key, arg0, arg1, arg2);}
-
-    /**
-     * Gets a string for the given key are replace all occurence of "{0}",
-     * "{1}", with values of <code>arg0</code>, <code>arg1</code>, etc.
-     *
-     * @param  key The key for the desired string.
-     * @param  arg0 Value to substitute to "{0}".
-     * @param  arg1 Value to substitute to "{1}".
-     * @param  arg2 Value to substitute to "{2}".
-     * @param  arg3 Value to substitute to "{3}".
-     * @return The formatted string for the given key.
-     * @throws MissingResourceException If no object for the given key can be found.
-     */
-    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1, arg2, arg3);}
-
-    /**
-     * Gets a string for the given key are replace all occurence of "{0}",
-     * "{1}", with values of <code>arg0</code>, <code>arg1</code>, etc.
-     *
-     * @param  key The key for the desired string.
-     * @param  arg0 Value to substitute to "{0}".
-     * @param  arg1 Value to substitute to "{1}".
-     * @param  arg2 Value to substitute to "{2}".
-     * @param  arg3 Value to substitute to "{3}".
-     * @param  arg4 Value to substitute to "{4}".
-     * @return The formatted string for the given key.
-     * @throws MissingResourceException If no object for the given key can be found.
-     */
-    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1, arg2, arg3, arg4);}
 }

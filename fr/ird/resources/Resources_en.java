@@ -24,21 +24,21 @@ package fr.ird.resources;
 
 
 /**
- * French language resource.
+ * English language resource.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class Resources_fr extends Resources
+public class Resources_en extends Resources
 {
     /**
      * The resource file, using UTF-8 encoding.
      */
-    static final String FILEPATH = "fr/ird/resources/resources_fr.utf";
+    static final String FILEPATH = "fr/ird/resources/resources_en.utf";
 
     /**
-     * Construct resources for French.
+     * Construct resources for English.
      */
-    public Resources_fr()
+    public Resources_en()
     {super(FILEPATH);}
 }
