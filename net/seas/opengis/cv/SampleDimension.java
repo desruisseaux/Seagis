@@ -40,10 +40,19 @@ import javax.units.Unit;
 public abstract class SampleDimension
 {
     /**
-     * Default constructor.
+     * The category list for this sample dimension,
+     * or <code>null</code> if there is none.
      */
-    public SampleDimension()
-    {}
+    private final CategoryList categories;
+
+    /**
+     * Default constructor.
+     *
+     * @param categories The category list for this sample
+     *        dimension, or <code>null</code> if there is none.
+     */
+    public SampleDimension(final CategoryList categories)
+    {this.categories = categories;}
 
     /**
      * Get the sample dimension name.
@@ -53,12 +62,46 @@ public abstract class SampleDimension
     /**
      * Get the sample dimension title or description.
      * This string may be <code>null</code> if no description is present.
+     * The default implementation returns the name of what seem to be the
+     * "main" category, i.e. the quantative category (if there is one) with
+     * the widest sample range.
      *
      * @param  locale The locale, or <code>null</code> for the default one.
      * @return The localized description. If no description was available
      *         in the specified locale, a default locale is used.
      */
-    public abstract String getDescription(final Locale locale);
+    public String getDescription(final Locale locale)
+    {
+        if (categories!=null)
+        {
+            float range=0;
+            Category category=null;
+            for (int i=categories.size(); --i>=0;)
+            {
+                final Category candidate = categories.get(i);
+                if (candidate!=null && candidate.isQuantitative())
+                {
+                    final float candidateRange = candidate.upper - candidate.lower;
+                    if (candidateRange > range)
+                    {
+                        range = candidateRange;
+                        category = candidate;
+                    }
+                }
+            }
+            if (category!=null)
+                return category.getName(locale);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the category list for the values contained in a sample dimension.
+     * This allows for names to be assigned to numerical values. If no categories
+     * exist, <code>null</code> is returned.
+     */
+    public CategoryList getCategoryList()
+    {return categories;}
 
     // NOTE: "getPaletteInterpretation()" is not available in SEAGIS since
     //       palette are backed by IndexColorModel, which support only RGB.
@@ -71,34 +114,34 @@ public abstract class SampleDimension
      */
     public abstract ColorInterpretation getColorInterpretation();
 
-    // NOTE: "scale" and "offset" methods are NOT needed for SEAGIS
-    //       since Java Advanced Imaging support floating-point images.
+    // NOTE: "scale" and "offset" functionality are handled by Category.
 
     /**
      * Returns the unit information for this sample dimension.
      * May returns <code>null</code> is this dimension has no units.
      */
-    public abstract Unit getUnits();
+    public Unit getUnits()
+    {return (categories!=null) ? categories.getUnits() : null;}
 
     /**
      * Returns the minimum value occurring in this sample dimension.
      */
-    public abstract Number getMinimumValue();
+    public abstract double getMinimumValue();
 
     /**
      * Returns the maximum value occurring in this sample dimension.
      */
-    public abstract Number getMaximumValue();
+    public abstract double getMaximumValue();
 
     /**
      * Determine the mode grid value in this sample dimension.
      */
-    public abstract Number getModeValue();
+    public abstract double getModeValue();
 
     /**
      * Determine the median grid value in this sample dimension.
      */
-    public abstract Number getMedianValue();
+    public abstract double getMedianValue();
 
     /**
      * Determine the mean grid value in this sample dimension.
@@ -111,13 +154,5 @@ public abstract class SampleDimension
      */
     public abstract double getStandardDeviation();
 
-    /**
-     * Determine the histogram of the grid values for this sample dimension.
-     *
-     * @param  miniumEntryValue Minimum value stored in the first histogram entry.
-     * @param  maximumEntryValue Maximum value stored in the last histogram entry.
-     * @param  numberEntries Number of entries in the histogram.
-     * @return The histogram.
-     */
-    public abstract int[] getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries);
+    // No histogram. It is moved in GridCoverage instead.
 }

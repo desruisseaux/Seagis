@@ -25,6 +25,10 @@ package net.seas.opengis.gc;
 // Coverage
 import net.seas.opengis.cv.Coverage;
 
+// Miscellaneous
+import javax.media.jai.Histogram;
+
+
 /**
  * Basic access to grid data values.
  * Each band in an image is represented as a sample dimension.
@@ -70,4 +74,14 @@ public abstract class GridCoverage extends Coverage
         // TODO: Waiting for multiarray package (JSR-083)!
         //       Same for setDataBlock*
 //  }
+
+    /**
+     * Determine the histogram of the grid values for this coverage.
+     *
+     * @param  miniumEntryValue Minimum value stored in the first histogram entry.
+     * @param  maximumEntryValue Maximum value stored in the last histogram entry.
+     * @param  numberEntries Number of entries in the histogram.
+     * @return The histogram.
+     */
+    public abstract Histogram getHistogram(double minimumEntryValue, double maximumEntryValue, int numberEntries);
 }

@@ -231,6 +231,22 @@ public final class Envelope implements Cloneable, Serializable
     {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}
 
     /**
+     * <FONT COLOR="#FF6633">Returns a {@link Rectangle2D} with the same bounds
+     * as this <code>Envelope</code>.</FONT> This is a convenience method for
+     * interoperability with Java2D.
+     *
+     * @throws IllegalStateException if this envelope is not two-dimensional.
+     */
+    public Rectangle2D toRectangle2D() throws IllegalStateException
+    {
+        if (ord.length == 4)
+        {
+            return new Rectangle2D.Double(ord[0], ord[1], ord[2]-ord[0], ord[3]-ord[1]);
+        }
+        throw new IllegalStateException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2, new Integer(getDimension()), new Integer(2)));
+    }
+
+    /**
      * Returns a hash value for this envelope.
      * This value need not remain consistent between
      * different implementations of the same class.

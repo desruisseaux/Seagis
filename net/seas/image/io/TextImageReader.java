@@ -581,7 +581,7 @@ public abstract class TextImageReader extends SimpleImageReader
                 final LineFormat reader = (locale!=null) ? new LineFormat(locale) : new LineFormat();
                 if (reader.setLine(line) >= 1)
                 {
-                    return Boolean.TRUE;
+                    return isValueCountAcceptable(reader.getValueCount());
                 }
             }
             catch (ParseException exception)
@@ -590,5 +590,15 @@ public abstract class TextImageReader extends SimpleImageReader
             }
             return null;
         }
+
+        /**
+         * Vérifie si la ligne a un nombre de valeurs acceptable. Cette méthode est appelée
+         * automatiquement par {@link #canDecodeLine} avec en argument le nombre de valeurs
+         * dans une des premières lignes trouvées dans la source. Cette indication n'est
+         * qu'approximative et il est correct de retourner {@link Boolean#FALSE} de façon
+         * conservative. L'implémentation par défaut retourne toujours {@link Boolean#TRUE}.
+         */
+        Boolean isValueCountAcceptable(final int count)
+        {return Boolean.TRUE;}
     }
 }

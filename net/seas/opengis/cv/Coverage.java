@@ -27,8 +27,21 @@ import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
 
+
+// Images
+import java.awt.Image;
+import java.awt.image.RenderedImage;
+import java.awt.image.renderable.RenderableImage;
+
 // Collections
 import java.util.List;
+import java.util.Vector;
+import javax.media.jai.PropertySource;
+import javax.media.jai.PropertySourceImpl;
+
+// Miscellaneous
+import net.seas.util.XArray;
+import java.awt.geom.Rectangle2D;
 
 
 /**
@@ -38,7 +51,7 @@ import java.util.List;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public abstract class Coverage
+public abstract class Coverage implements PropertySource
 {
     /**
      * The default constructor.
@@ -153,4 +166,116 @@ public abstract class Coverage
      * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
     public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
+
+    /**
+     * TODO
+     */
+    public abstract RenderableImage getRenderableImage();
+
+    /**
+     * Returns the list of metadata keywords for a coverage. If no metadata
+     * is available, the array will be empty (but not <code>null</code>).
+     * The default implementation always returns an empty array.
+     */
+    public String[] getPropertyNames() // getMetadataNames()
+    {return new String[0];}
+
+    /**
+     * Returns an array of strings recognized as names that begin with the
+     * supplied prefix. If no property names match, an empty array will be
+     * returned. The comparison is done in a case-independent manner.
+     */
+    public String[] getPropertyNames(final String prefix)
+    {
+        int count=0;
+        final int length = prefix.length();
+        final String[] names = getPropertyNames();
+        for (int i=0; i<names.length; i++)
+        {
+            final String name = names[i];
+            if (name.length() >= length  &&  prefix.equalsIgnoreCase(name.substring(0, length)))
+            {
+                names[count++] = name;
+            }
+        }
+        return XArray.resize(names, count);
+    }
+
+    /**
+     * Returns the class expected to be returned by a request for
+     * the property with the specified name.  If this information
+     * is unavailable, <code>null</code> will be returned
+     */
+    public Class getPropertyClass(final String propertyName)
+    {return null;}
+
+    /**
+     * Retrieve the metadata value for a given metadata name. If the metadata name
+     * is not recognized, {@link Image#UndefinedProperty} will be returned.
+     * The default implementation always returns <code>null</code>.
+     *
+     * @param name Metadata keyword for which to retrieve metadata.
+     */
+    public Object getProperty(final String name) // getMetadataValue(String)
+    {return Image.UndefinedProperty;}
+
+    /**
+     * TODO
+     */
+    private abstract class Renderable extends PropertySourceImpl implements RenderableImage
+    {
+        /**
+         * The envelope as a {@link Rectangle2D}.
+         */
+        final Rectangle2D envelope;
+
+        /**
+         * Default constructor.
+         *
+         * @throws IllegalStateException if the coverage is not two-dimensional.
+         */
+        public Renderable() throws IllegalStateException
+        {
+            super(null, Coverage.this);
+            envelope = getEnvelope().toRectangle2D();
+        }
+
+        /**
+         * Returns <code>null</code> to indicate
+         * that no information is available.
+         */
+        public Vector getSources()
+        {return null;}
+
+        /**
+         * Returns true if successive renderings with the same arguments
+         * may produce different results. It is always safe to return true.
+         */
+        public boolean isDynamic()
+        {return true;}
+
+        /**
+         * Gets the width in user coordinate space.
+         */
+        public float getWidth()
+        {return (float)envelope.getWidth();}
+
+        /**
+         * Gets the height in user coordinate space.
+         */
+        public float getHeight()
+        {return (float)envelope.getHeight();}
+
+        /**
+         * Gets the minimum X coordinate of the rendering-independent image data.
+         */
+        public float getMinX()
+        {return (float)envelope.getX();}
+
+        /**
+         * Gets the minimum Y coordinate of the rendering-independent image data.
+         */
+        public float getMinY()
+        {return (float)envelope.getY();}
+    }
 }

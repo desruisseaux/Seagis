@@ -481,5 +481,15 @@ public class TextMatrixImageReader extends TextImageReader
          */
         public ImageReader createReaderInstance(final Object extension) throws IOException
         {return new TextMatrixImageReader(this);}
+
+        /**
+         * Vérifie si la ligne a un nombre de valeurs acceptable. Cette méthode est appelée
+         * automatiquement par {@link #canDecodeLine} avec en argument le nombre de valeurs
+         * dans une des premières lignes trouvées dans la source. Cette indication n'est
+         * qu'approximative et il est correct de retourner {@link Boolean#FALSE} de façon
+         * conservative.
+         */
+        Boolean isValueCountAcceptable(final int count)
+        {return count>10 ? Boolean.TRUE : Boolean.FALSE;}
     }
 }

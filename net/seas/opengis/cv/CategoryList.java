@@ -24,13 +24,7 @@ package net.seas.opengis.cv;
 
 // Images
 import java.awt.Color;
-import java.awt.image.Raster;
-import java.awt.image.ColorModel;
-import java.awt.image.RenderedImage;
-import java.awt.image.WritableRaster;
 import java.awt.image.IndexColorModel;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.WritableRectIter;
 
 // Miscellaneous
 import javax.units.Unit;
@@ -138,6 +132,29 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     private transient Category lastCategory;
 
     /**
+     * Construct a category list for qualitative categories.
+     *
+     * @param names  Sequence of category names for the values contained in a sample dimension.
+     *               This allows for names to be assigned to numerical values. The first entry
+     *               in the sequence relates to a cell value of zero. For example:
+     *               [0]=“Background“, [1]=“Water”, [2]=“Forest”, [3]=“Urban”.
+     */
+    public CategoryList(final String[] names)
+    {this(Category.list(names));}
+
+    /**
+     * Construct a category list for qualitative categories.
+     *
+     * @param names  Sequence of category names for the values contained in a sample dimension.
+     *               This allows for names to be assigned to numerical values. The first entry
+     *               in the sequence relates to a cell value of zero. For example:
+     *               [0]=“Background“, [1]=“Water”, [2]=“Forest”, [3]=“Urban”.
+     * @param colors Color to assign to each category.
+     */
+    public CategoryList(final String[] names, final Color[] colors)
+    {this(Category.list(names, colors));}
+
+    /**
      * Construct a category list for a sample dimension (band) with no unit.
      * This constructor is appropriate if the category list contains only
      * qualitative categories.
@@ -185,12 +202,12 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             for (int i=j+1; i<byIndex.length; i++)
             {
                 final Category check = byIndex[i];
-                if (!(categ.lower>check.upper || categ.upper<check.lower)) // Do not accept NaN
+                if (!(categ.lower>=check.upper || categ.upper<check.lower)) // Do not accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
                                                        new Float(categ.lower), new Float(categ.upper),
                                                        new Float(check.lower), new Float(check.upper)));
 
-                if (categ.minimum<=check.maximum && categ.maximum>=check.minimum) // Accept NaN
+                if (categ.minimum<check.maximum && categ.maximum>=check.minimum) // Accept NaN
                     throw new IllegalArgumentException(Resources.format(Clé.RANGE_OVERLAP¤4,
                                                        new Float(categ.minimum), new Float(categ.maximum),
                                                        new Float(check.minimum), new Float(check.maximum)));
@@ -243,7 +260,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                  * en cherchant l'index le plus élevé des thèmes.
                  */
                 assert(CategoryComparator.BY_INDEX.isSorted(byIndex));
-                final int mapSize = Math.round(byIndex[byIndex.length-1].upper)+1;
+                final int mapSize = Math.round(byIndex[byIndex.length-1].upper);
                 final int[]  ARGB = new int[mapSize];
                 /*
                  * Interpole les codes de couleurs dans la palette. Les couleurs
@@ -252,7 +269,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                 for (int i=0; i<byIndex.length; i++)
                 {
                     final Category category = byIndex[i];
-                    PaletteFactory.expand(category.getColors(), ARGB, Math.round(category.lower), Math.round(category.upper)+1);
+                    PaletteFactory.expand(category.getColors(), ARGB, Math.round(category.lower), Math.round(category.upper));
                 }
                 colors = PaletteFactory.getIndexColorModel(ARGB);
             }
@@ -277,48 +294,6 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
-     * Convertit une image de valeurs de pixels en image de nombres réels.
-     *
-     * @param image Image de valeurs de pixels. Les pixels de cette image
-     *              doivent correspondre aux thèmes de <code>this</code>.
-     * @return Image de nombres réels. Toutes les valeurs de cette image
-     *         seront exprimées selon les unités {@link #getUnit}. Les
-     *         pixels qui ne correspondent pas au paramètre géophysique
-     *         auront une valeur <code>NaN</code>.
-     */
-    public RenderedImage toNumeric(final RenderedImage image)
-    {
-        if (image instanceof ImageAdapter)
-        {
-            final ImageAdapter adapter = (ImageAdapter) image;
-            if (equals(adapter.categories))
-                return adapter.getNumeric();
-        }
-        return new ImageDecoder(image, this);
-    }
-
-    /**
-     * Convertit une image de nombres réels en valeurs de pixels.
-     *
-     * @param image Image de nombres réels. Toutes les valeurs de cette image
-     *              doivent être exprimées selon les unités {@link #getUnit}.
-     *              Les pixels qui ne correspondent pas au paramètre géophysique
-     *              peuvent avoir une des valeurs <code>NaN</code>.
-     * @return Image de valeurs de pixels. Les pixels de cette image
-     *         correspondront aux thèmes de <code>this</code>.
-     */
-    public RenderedImage toThematic(final RenderedImage image)
-    {
-        if (image instanceof ImageAdapter)
-        {
-            final ImageAdapter adapter = (ImageAdapter) image;
-            if (equals(adapter.categories))
-                return adapter.getThematic();
-        }
-        return new ImageEncoder(image, this);
-    }
-
-    /**
      * Retourne la catégorie appropriée pour convertir la valeur du pixel
      * spécifié en valeur géophysique. Si aucune catégorie ne convient,
      * alors cette méthode retourne <code>null</code>.
@@ -331,7 +306,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      */
     final Category getDecoder(final float sample, Category category)
     {
-        if (category==null || !(sample>=category.lower && sample<=category.upper)) // Le '!' est important à cause des NaN.
+        if (category==null || !(sample>=category.lower && sample<category.upper)) // Le '!' est important à cause des NaN.
         {
             /*
              * Si la catégorie n'est pas la même que la dernière fois,
@@ -342,7 +317,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
             {
                 category=byIndex[i];
                 assert(index[i]==category.lower);
-                if (!(sample>=category.lower && sample<=category.upper))
+                if (!(sample>=category.lower && sample<category.upper))
                 {
                     return null;
                 }
@@ -365,7 +340,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      */
     final Category getEncoder(final float value, Category category)
     {
-        if (category==null || (!(value>=category.minimum && value<=category.maximum)) && // Le '!' est important à cause des NaN
+        if (category==null || (!(value>=category.minimum && value<category.maximum)) && // Le '!' est important à cause des NaN
                                Float.floatToRawIntBits(value)!=Float.floatToRawIntBits(category.minimum))
         {
             /*
@@ -399,14 +374,14 @@ public class CategoryList extends AbstractList<Category> implements Serializable
                 else
                 {
                     category = byValues[i];
-                    if (value > category.maximum  &&  i+1 < byValues.length)
+                    if (value >= category.maximum  &&  i+1 < byValues.length)
                     {
                         // Vérifie si la valeur ne serait pas plus proche du prochain thème.
                         final Category upper = byValues[i+1];
                         // assert: if 'upper.minimum' was smaller than 'value',
                         //         it should has been found by 'binarySearch'.
                         assert(upper.minimum > value);
-                        if (upper.minimum-value < value-category.maximum)
+                        if (upper.minimum-value <= value-category.maximum)
                         {
                             category = upper;
                         }
