@@ -23,6 +23,7 @@
 package net.seas.opengis.pt;
 
 // Miscellaneous
+import java.util.Arrays;
 import java.io.Serializable;
 import net.seas.util.XClass;
 import java.awt.geom.Point2D;
@@ -47,50 +48,46 @@ import net.seas.resources.Resources;
 public final class Envelope implements Cloneable, Serializable
 {
     /**
-     * Serial number for compatibility with different versions.
+     * Serial number for interoperability with different versions.
      */
-    private static final long serialVersionUID = 2728048901796327047L;
+    private static final long serialVersionUID = -3698298355829867895L;
 
     /**
-     * Point containing minimum ordinate values.
+     * Minimum and maximum ordinate values. The first half contains minimum
+     * ordinates, while the last half contains maximum ordinates.
      */
-    private final CoordinatePoint minCP;
+    private final double[] ord;
 
     /**
-     * Point containing maximum ordinate values.
-     */
-    private final CoordinatePoint maxCP;
-
-    /**
-     * Check if two points have the same dimension.
+     * Check if a point has the expected dimension.
      *
-     * @param  P1 First point to check.
-     * @param  P2 Second point to check.
-     * @throws IllegalArgumentException if the two points don't have the same dimension.
+     * @param  P the point to check.
+     * @param  dimension The expected dimension
+     * @throws IllegalArgumentException if the point don't have the expected dimension.
      */
-    private static void checkDimension(final CoordinatePoint P1, final CoordinatePoint P2) throws IllegalArgumentException
-    {
-        if (P1.ord.length != P2.ord.length)
-            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION));
-    }
+    private static void checkDimension(final CoordinatePoint P, final int dimension) throws IllegalArgumentException
+    {if (P.ord.length != dimension) throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_DIMENSION));}
 
     /**
      * Check if ordinate values in the minimum point are less than or
      * equal to the corresponding ordinate value in the maximum point.
      *
-     * @param  minCP Point containing minimum ordinate values.
-     * @param  maxCP Point containing maximum ordinate values.
-     * @throws IllegalArgumentException if the two positions don't have the same dimension.
      * @throws IllegalArgumentException if an ordinate value in the minimum point is not
      *         less than or equal to the corresponding ordinate value in the maximum point.
      */
-    private static void checkCoherence(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws IllegalArgumentException
+    private void checkCoherence() throws IllegalArgumentException
     {
-        checkDimension(minCP, maxCP);
-        for (int i=0; i<minCP.ord.length; i++)
-            if (!(minCP.ord[i] <= maxCP.ord[i])) // Use '!' in order to catch 'NaN'.
+        final int dimension = ord.length/2;
+        for (int i=0; i<dimension; i++)
+            if (!(ord[i] <= ord[dimension+i])) // Use '!' in order to catch 'NaN'.
                 throw new IllegalArgumentException(Resources.format(Clé.BAD_ORDINATE¤1, new Integer(i+1)));
     }
+
+    /**
+     * Construct a copy of the specified envelope.
+     */
+    private Envelope(final Envelope envelope)
+    {ord = (double[]) envelope.ord.clone();}
 
     /**
      * Construct a box defined by two positions.
@@ -103,9 +100,11 @@ public final class Envelope implements Cloneable, Serializable
      */
     public Envelope(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws IllegalArgumentException
     {
-        checkCoherence(minCP, maxCP);
-        this.minCP = minCP.clone();
-        this.maxCP = maxCP.clone();
+        checkDimension(minCP, maxCP.ord.length);
+        ord = new double[minCP.ord.length + maxCP.ord.length];
+        System.arraycopy(minCP.ord, 0, ord, 0,                minCP.ord.length);
+        System.arraycopy(maxCP.ord, 0, ord, minCP.ord.length, maxCP.ord.length);
+        checkCoherence();
     }
 
     /**
@@ -113,23 +112,12 @@ public final class Envelope implements Cloneable, Serializable
      */
     public Envelope(final Rectangle2D rect)
     {
-        minCP = new CoordinatePoint(rect.getMinX(), rect.getMinY());
-        maxCP = new CoordinatePoint(rect.getMaxX(), rect.getMaxY());
-        checkCoherence(minCP, maxCP);
-    }
-
-    /**
-     * Construct a box located a the specified point. The box has an
-     * initial width of 0 (i.e. <code>minCP==maxCP</code>). However,
-     * it may be expanded with calls to {@link #add}.
-     *
-     * @param CP The box location.
-     */
-    public Envelope(final CoordinatePoint CP)
-    {
-        minCP = CP.clone();
-        maxCP = CP.clone();
-        checkCoherence(minCP, maxCP);
+        ord = new double[]
+        {
+            rect.getMinX(), rect.getMinY(),
+            rect.getMaxX(), rect.getMaxY()
+        };
+        checkCoherence();
     }
 
     /**
@@ -145,12 +133,13 @@ public final class Envelope implements Cloneable, Serializable
      */
     public void add(final CoordinatePoint point) throws IllegalArgumentException
     {
-        checkDimension(point, minCP);
-        for (int i=0; i<point.ord.length; i++)
+        final int dimension = ord.length/2;
+        checkDimension(point, dimension);
+        for (int i=0; i<dimension; i++)
         {
-            final double ord = point.ord[i];
-            if (ord < minCP.ord[i]) minCP.ord[i]=ord;
-            if (ord > maxCP.ord[i]) maxCP.ord[i]=ord;
+            final double value = point.ord[i];
+            if (value < ord[i          ]) ord[i          ]=value;
+            if (value > ord[i+dimension]) ord[i+dimension]=value;
         }
     }
 
@@ -164,12 +153,13 @@ public final class Envelope implements Cloneable, Serializable
      */
     public boolean contains(final CoordinatePoint point) throws IllegalArgumentException
     {
-        checkDimension(point, minCP);
-        for (int i=0; i<point.ord.length; i++)
+        final int dimension = ord.length/2;
+        checkDimension(point, dimension);
+        for (int i=0; i<dimension; i++)
         {
-            final double ord = point.ord[i];
-            if (!(ord >= minCP.ord[i])) return false;
-            if (!(ord <= maxCP.ord[i])) return false;
+            final double value = point.ord[i];
+            if (!(value >= ord[i          ])) return false;
+            if (!(value <= ord[i+dimension])) return false;
             // Use '!' in order to take 'NaN' in acount.
         }
         return true;
@@ -180,21 +170,21 @@ public final class Envelope implements Cloneable, Serializable
      * the specified dimension.
      */
     public double getMinimum(final int dimension)
-    {return minCP.ord[dimension];}
+    {return ord[dimension];}
 
     /**
      * Returns the maximal ordinate along
      * the specified dimension.
      */
     public double getMaximum(final int dimension)
-    {return maxCP.ord[dimension];}
+    {return ord[dimension+ord.length/2];}
 
     /**
      * Returns the center ordinate along
      * the specified dimension.
      */
     public double getCenter(final int dimension)
-    {return 0.5*(minCP.ord[dimension] + maxCP.ord[dimension]);}
+    {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}
 
     /**
      * Returns a hash value for this envelope.
@@ -202,12 +192,7 @@ public final class Envelope implements Cloneable, Serializable
      * different implementations of the same class.
      */
     public int hashCode()
-    {
-        int code = 0;
-        if (minCP!=null) code ^= minCP.hashCode();
-        if (maxCP!=null) code ^= maxCP.hashCode();
-        return code;
-    }
+    {return CoordinatePoint.hashCode(ord);}
 
     /**
      * Compares the specified object with
@@ -218,8 +203,7 @@ public final class Envelope implements Cloneable, Serializable
         if (object instanceof Envelope)
         {
             final Envelope that = (Envelope) object;
-            return XClass.equals(this.minCP, that.minCP) &&
-                   XClass.equals(this.maxCP, that.maxCP);
+            return Arrays.equals(this.ord, that.ord);
         }
         return false;
     }
@@ -228,7 +212,7 @@ public final class Envelope implements Cloneable, Serializable
      * Returns a deep copy of this envelope.
      */
     public Envelope clone()
-    {return new Envelope(minCP, maxCP);}
+    {return new Envelope(this);}
 
     /**
      * Returns a string representation of this envelope.
@@ -236,13 +220,5 @@ public final class Envelope implements Cloneable, Serializable
      * It is usually provided for debugging purposes.
      */
     public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
-        buffer.append('[');
-        buffer.append(minCP);
-        buffer.append(", ");
-        buffer.append(maxCP);
-        buffer.append(']');
-        return buffer.toString();
-    }
+    {return CoordinatePoint.toString(this, ord);}
 }
