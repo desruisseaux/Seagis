@@ -792,7 +792,19 @@ public class Coverage3D extends Coverage {
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
         for (int i=0; i<last.length; i++) {
-            dest[i] = (float)(dest[i] + ratio*(last[i]-dest[i]));
+            final float lower = dest[i];
+            final float upper = last[i];
+            float value = (float)(lower + ratio*(upper-lower));
+            if (Float.isNaN(value)) {
+                if (!Float.isNaN(lower)) {
+                    assert Float.isNaN(upper) : upper;
+                    value = lower;
+                } else if (!Float.isNaN(upper)) {
+                    assert Float.isNaN(lower) : lower;
+                    value = upper;
+                }
+            }
+            dest[i] = value;
         }
         return dest;
     }
@@ -836,7 +848,19 @@ public class Coverage3D extends Coverage {
         assert (timeMillis>=timeLower && timeMillis<=timeUpper) : time;
         final double ratio = (double)(timeMillis-timeLower) / (double)(timeUpper-timeLower);
         for (int i=0; i<last.length; i++) {
-            dest[i] += ratio*(last[i]-dest[i]);
+            final double lower = dest[i];
+            final double upper = last[i];
+            double value = (lower + ratio*(upper-lower));
+            if (Double.isNaN(value)) {
+                if (!Double.isNaN(lower)) {
+                    assert Double.isNaN(upper) : upper;
+                    value = lower;
+                } else if (!Double.isNaN(upper)) {
+                    assert Double.isNaN(lower) : lower;
+                    value = upper;
+                }
+            }
+            dest[i] = value;
         }
         return dest;
     }

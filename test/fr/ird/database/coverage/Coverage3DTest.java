@@ -96,7 +96,22 @@ public class Coverage3DTest extends TestCase {
         final CoverageTable table = database.getCoverageTable("Chlorophylle-a (Monde)");
         coverage = new Coverage3D(table);
         coverage.setInterpolationAllowed(false);
-        assertEquals(0.0851138f, evaluate(66.61, -3.21, "24/12/1997"), 0.0001f);
+        assertEquals(0.0851138f, evaluate(66.6100,  -3.2100, "24/12/1997"), 0.0001f);
+        assertEquals(0.0851138f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
+        assertTrue  (Float.isNaN(evaluate(52.6300,  +3.6600, "15/06/1999")));
+        table.close();
+    }
+
+    /**
+     * Teste quelques valeurs de hauteur de l'eau.
+     */
+    public void testSLA() throws Exception {
+        final CoverageTable table = database.getCoverageTable("SLA (Monde - TP/ERS)");
+        coverage = new Coverage3D(table);
+        coverage.setInterpolationAllowed(false);
+        assertEquals( 20.4f, evaluate(60.9576, -11.6657, "15/03/1998"), 0.0001f);
+        assertEquals(-10.9f, evaluate(61.7800,  -3.5100, "06/01/1997"), 0.0001f);
+        assertEquals( 20.5f, evaluate(49.6000,  -5.8600, "03/03/1993"), 0.0001f);
         table.close();
     }
 
