@@ -61,7 +61,7 @@ public final class Utilities
             factory = new PaletteFactory(
             /* parent factory */ null,
             /* class loader   */ PaletteFactory.class.getClassLoader(),
-            /* root directory */ new File("applicationData/colors"),
+            /* root directory */ new File("application-data/colors"),
             /* extension      */ ".pal",
             /* character set  */ Charset.forName("ISO-8859-1"),
             /* locale         */ Locale.US);

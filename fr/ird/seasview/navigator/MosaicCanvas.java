@@ -298,7 +298,7 @@ final class MosaicCanvas extends JPanel
             if (count==0)
             {
                 final List<JLabel> labels=new ArrayList<JLabel>();
-                labels.add(new JLabel(InternalFrame.getIcon("applicationData/images/Cover.gif")));
+                labels.add(new JLabel(InternalFrame.getIcon("application-data/images/Cover.png")));
                 final String message=resources.getString(ResourceKeys.IMAGES_TABLE_INSTRUCTIONS);
                 int lower=0, upper;
                 while ((upper=message.indexOf('\n', lower)) >= lower)

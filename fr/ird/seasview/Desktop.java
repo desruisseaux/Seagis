@@ -678,7 +678,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
                 {
                     protected void run()
                     {
-                        final About about=new About("applicationData/images/About.gif",
+                        final About about=new About("application-data/images/About.png",
                                                     Desktop.class, getDataBase().threads);
                         setWaitCursor(false);
                         about.showDialog(Desktop.this);

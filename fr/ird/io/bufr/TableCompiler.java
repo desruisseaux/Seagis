@@ -34,7 +34,7 @@ import org.geotools.resources.Utilities;
 /**
  * Classe chargée de compiler les tables ASCII. Les tables BUFR A, B et D seront lues et
  * mémorisées dans des objets {@link Map},  puis enregistrées en binaire dans le fichier
- * "<code>applicationData/serialized/BUFR-Tables.dat</code>". Ce fichier binaire aura le
+ * "<code>application-data/serialized/BUFR-Tables.dat</code>". Ce fichier binaire aura le
  * contenu suivant (dans l'ordre):
  *
  * <ul>
@@ -61,7 +61,7 @@ final class TableCompiler
     /**
      * Nom et chemin du fichier binaire qui contiendra les tables.
      */
-    public static final String TABLES = "applicationData/serialized/BUFR-Tables.dat";
+    public static final String TABLES = "application-data/serialized/BUFR-Tables.dat";
 
     /**
      * Lance la compilation des tables BUFR.
@@ -87,7 +87,7 @@ final class TableCompiler
             // Copie les entrées dans un objet {@link HashMap},
             // mais en transformant les clés en {@link Byte}.
             //
-            for (final Iterator<Map.Entry<String,String>> it=properties.entrySet().iterator(); it.hasNext();)
+            for (final Iterator it=properties.entrySet().iterator(); it.hasNext();)
             {
                 final Map.Entry<String,String> entry = (Map.Entry) it.next();
                 table.put(new Byte(entry.getKey()), entry.getValue());

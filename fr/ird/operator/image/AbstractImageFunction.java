@@ -230,7 +230,7 @@ public abstract class AbstractImageFunction implements ImageFunction
 
     /**
      * Set the color palette by name. The name must be one of valid
-     * color palettes in the <code>"applicationData/colors"</code>
+     * color palettes in the <code>"application-data/colors"</code>
      * directory.
      *
      * @throws IOException if the color palette can't be read.

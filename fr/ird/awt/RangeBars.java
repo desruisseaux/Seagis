@@ -103,7 +103,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * de données, un peu comme le ferait un histogramme.
  *
  * <p>&nbsp;</p>
- * <p align="center"><img src="{@docRoot}/doc-files/images/window/RangeBars.gif"></p>
+ * <p align="center"><img src="doc-files/RangeBars.png"></p>
  * <p>&nbsp;</p>
  *
  * @version 1.0

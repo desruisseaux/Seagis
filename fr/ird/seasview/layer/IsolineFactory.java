@@ -48,12 +48,12 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
     /**
      * The source directory for isolines data.
      */
-    private static final String SOURCE_DIRECTORY = "compilerData/map/";
+    private static final String SOURCE_DIRECTORY = "application-data/maps/gebco/";
 
     /**
      * The directory for cached data.
      */
-    private static final String CACHE_DIRECTORY = "applicationData/cache/";
+    private static final String CACHE_DIRECTORY = "application-data/maps/serialized/";
 
     /**
      * The extension for source file.
@@ -145,7 +145,10 @@ public final class IsolineFactory extends fr.ird.map.io.IsolineFactory
             }
         }
         FileNotFoundException e = new FileNotFoundException(path);
-        if (cause!=null) e.initCause(cause);
+        if (cause!=null)
+        {
+            e.initCause(cause);
+        }
         throw e;
     }
 

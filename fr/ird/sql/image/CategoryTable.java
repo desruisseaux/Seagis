@@ -163,7 +163,7 @@ final class CategoryTable extends Table
     /**
      * Optient une couleur uniforme ou une palette de couleur. L'argument <code>colors</code>
      * peut être un code RGB d'une seule couleur (par exemple "#D2C8A0"), ou un lien URL vers
-     * une palette de couleurs (par exemple "applicationData/colors/SST-Nasa.pal").
+     * une palette de couleurs (par exemple "application-data/colors/SST-Nasa.pal").
      *
      * @param  colors Identificateur de la ou les couleurs désirées.
      * @return Palette de couleurs demandée.

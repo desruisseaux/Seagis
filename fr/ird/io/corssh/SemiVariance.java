@@ -123,7 +123,7 @@ final class SemiVariance
      * Fichier dans lequel placer un objet {@link MultiFilesParser}
      * pré-initialisé. C'est plus rapide que d'en construire un nouveau.
      */
-    private static final String CACHE = "applicationData/cache/MultiFilesParser.serialized";
+    private static final String CACHE = "application-data/cache/MultiFilesParser.serialized";
 
     /**
      * Nombre maximal d'enregistrements à charger en mémoire à la fois. Plutôt que de charger
