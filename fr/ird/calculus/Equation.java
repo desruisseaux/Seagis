@@ -81,7 +81,40 @@ public final class Equation {
     }
 
     /**
-     * Multiply both size of the equation by the given factor.
+     * Returns the equation in the form <code>polynomial = 0</code>.
+     */
+    final Polynomial getPolynomial() {
+        if (right == null) return left;
+        if (left  == null) return right;
+        return left.substract(right);
+    }
+
+    /**
+     * Add both sides of the equation.
+     */
+    public Equation add(final Equation equation) {
+        final Polynomial p1 = (left ==null) ? equation.left  : equation.left ==null ? left  :  left.add(equation.left );
+        final Polynomial p2 = (right==null) ? equation.right : equation.right==null ? right : right.add(equation.right);
+        if (p1==left && p2==right) {
+            return this;
+        }
+        return new Equation(p1, p2);
+    }
+
+    /**
+     * Substract both sides of the equation.
+     */
+    public Equation substract(final Equation equation) {
+        final Polynomial p1 = (left ==null) ? equation.left .multiply(-1) : equation.left ==null ? left  :  left.substract(equation.left );
+        final Polynomial p2 = (right==null) ? equation.right.multiply(-1) : equation.right==null ? right : right.substract(equation.right);
+        if (p1==left && p2==right) {
+            return this;
+        }
+        return new Equation(p1, p2);
+    }
+
+    /**
+     * Multiply both sides of the equation by the given factor.
      */
     public Equation multiply(final double factor) {
         final Polynomial p1 = (left !=null) ?  left.multiply(factor) : null;
@@ -93,7 +126,7 @@ public final class Equation {
     }
 
     /**
-     * Solve the equation for the givan variable.
+     * Solve the equation for the given variable.
      */
     public Equation solve(final Variable variable) {
         Polynomial polynomial = left;
@@ -117,8 +150,8 @@ public final class Equation {
     }
 
     /**
-     * Substitute the specified variable by the given polynomial
-     * on both side of the equation. The specified equation must
+     * Substitutes the specified variable by the given polynomial
+     * on both sides of the equation. The specified equation must
      * be in the form <code>x = polynomial</code>.
      */
     public Equation substitute(final Equation equation) {
@@ -133,7 +166,7 @@ public final class Equation {
     }
 
     /**
-     * Simplify the polynomial on each hand side of this equation.
+     * Simplify the polynomial on each hand sides of this equation.
      */
     public Equation simplify() {
         final Polynomial p1 = (left !=null) ?  left.simplify() : null;

@@ -248,8 +248,8 @@ final class Monomial extends Element {
      * Constructs a string representation for this monomial.
      */
     void toString(final StringBuilder buffer) {
-        if (coefficient != 1) {
-            if (coefficient == -1) {
+        if (coefficient!=1 || factors.length==0) {
+            if (coefficient==-1 && factors.length!=0) {
                 buffer.append('-');
             } else {
                 if (coefficient == (int)coefficient) {

@@ -184,6 +184,35 @@ public final class Matrix {
     }
 
     /**
+     * Returns the matrix as a numerical matrix. This operation is possible only
+     * if all polynomial contains only one coefficient.
+     *
+     * @throws IllegalStateException si la matrice n'est pas entièrement numérique.
+     */
+    public GMatrix toNumericalMatrix() throws IllegalStateException {
+        final GMatrix matrix = new GMatrix(height, width);
+        for (int j=0; j<height; j++) {
+            for (int i=0; i<width; i++) {
+                Polynomial p = get(j,i);
+                if (p == null) {
+                    matrix.setElement(j, i, 0);
+                    continue;
+                }
+                p = p.simplify();
+                if (p.monomials.length == 1) {
+                    final Monomial m = p.monomials[0];
+                    if (m.factors.length == 0) {
+                        matrix.setElement(j, i, m.coefficient);
+                        continue;
+                    }
+                }
+                throw new IllegalStateException("Not a numerical matrix");
+            }
+        }
+        return matrix;
+    }
+
+    /**
      * Returns a string representation of this matrix.
      */
     public String toString() {
