@@ -26,6 +26,7 @@
 package fr.ird.database.sample.sql;
 
 // J2SE
+import java.util.List;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,7 +42,7 @@ import fr.ird.database.coverage.SeriesTable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterEntry> {
+final class ParameterTable extends ColumnTable<ParameterEntry> {
     /**
      * Requête SQL pour obtenir le code d'un paramètre environnemental.
      */
@@ -125,9 +126,7 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
      * Retourne un objet {@link ParameterEntry} correspondant à la ligne courante
      * de l'objet {@link ResultSet} spécifié.
      */
-    protected fr.ird.database.sample.ParameterEntry getEntry(final ResultSet results)
-            throws SQLException
-    {
+    protected ParameterEntry getEntry(final ResultSet results) throws SQLException {
         final ParameterEntry entry;
         entry = new ParameterEntry(results.getInt(    ID),
                                    results.getString( NAME),
@@ -135,7 +134,7 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
                                    getSeries(results, SERIES2),
                                    results.getInt(    BAND));
         if (combinations == null) {
-            combinations = new CombinationTable(this);
+            combinations = new CombinationTable(statement.getConnection());
         }
         entry.initComponents(combinations.getComponents(entry));
         return entry;
@@ -146,11 +145,30 @@ final class ParameterTable extends ColumnTable<fr.ird.database.sample.ParameterE
      * Cette méthode cache l'entré qui porte le numéro 0, c'est-à-dire l'entré
      * désignant la série identitée.
      */
-    protected boolean accept(final fr.ird.database.sample.ParameterEntry entry) {
-        if (entry.getID() == 0) {
+    protected boolean accept(final ParameterEntry entry) {
+        if (entry.isIdentity()) {
             return false;
         }
         return super.accept(entry);
+    }
+
+    /**
+     * Initialise l'entré spécifiée. Cette méthode est appelée après que toutes les
+     * requêtes SQL ont été complétées. On évite ainsi des appels recursifs (notamment
+     * <code>ParameterTable</code> qui interroge {@link ColumnTable}, qui interroge
+     * <code>ParameterTable</code>, etc.), ce qui pourraient entraîner la création
+     * de plusieurs {@link java.sql.ResultSet}s pour le même {@link java.sql.Statement}.
+     *
+     * @param  entry L'entré à initialiser.
+     * @throws SQLException si l'initialisation a échouée.
+     */
+    protected void setup(final ParameterEntry entry) throws SQLException {
+        final List<ParameterEntry.Component> components = entry.getComponents();
+        if (components != null) {
+            for (final ParameterEntry.Component component : components) {
+                component.initSource(getEntry(component.getSource().getID()));
+            }
+        }
     }
 
     /**

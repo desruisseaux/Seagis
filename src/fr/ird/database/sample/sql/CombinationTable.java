@@ -29,6 +29,7 @@ package fr.ird.database.sample.sql;
 import java.util.List;
 import java.util.ArrayList;
 import java.sql.ResultSet;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 
@@ -53,13 +54,6 @@ final class CombinationTable extends Table {
     /** Numéro d'argument. */ private static final int TARGET_ARG = 1;
 
     /**
-     * La table des paramètres. Cette table a été spécifiée au constructeur et n'appartient
-     * pas à cet objet <code>CombinationTable</code>. Elle ne doit donc pas être fermée par
-     * la méthode {@link #close}.
-     */
-    private final ParameterTable parameters;
-
-    /**
      * La table des positions relatives.
      * Ne sera construite que la première fois où elle sera nécessaire.
      */
@@ -74,13 +68,11 @@ final class CombinationTable extends Table {
     /**
      * Construit une nouvelle connexion vers la table des combinaisons.
      *
-     * @param  parameters La table des paramètres.
+     * @param  Connection connection vers la base de données.
      * @throws SQLException si la construction de cette table a échouée.
      */
-    public CombinationTable(final ParameterTable parameters) throws SQLException {
-        super(parameters.statement.getConnection().prepareStatement(
-              preferences.get(COMBINATIONS, SQL_SELECT)));
-        this.parameters = parameters;
+    public CombinationTable(final Connection connection) throws SQLException {
+        super(connection.prepareStatement(preferences.get(COMBINATIONS, SQL_SELECT)));
     }
 
     /**
@@ -91,11 +83,10 @@ final class CombinationTable extends Table {
      * @return Les composantes du paramètre spécifié, ou <code>null</code> s'il n'y en a pas.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public synchronized List<fr.ird.database.sample.ParameterEntry.Component>
-           getComponents(final ParameterEntry entry) throws SQLException
-    {
+    public List<ParameterEntry.Component> getComponents(final ParameterEntry entry) throws SQLException {
+        // Synchronisation assurée par 'ParameterTable'
         statement.setInt(TARGET_ARG, entry.getID());
-        ArrayList<fr.ird.database.sample.ParameterEntry.Component> components = null;
+        ArrayList<ParameterEntry.Component> components = null;
         final ResultSet results = statement.executeQuery();
         while (results.next()) {
             final int source       = results.getInt(SOURCE);
@@ -112,22 +103,25 @@ final class CombinationTable extends Table {
                                                 OperationTable.BY_ID);
             }
             if (components == null) {
-                components = new ArrayList<fr.ird.database.sample.ParameterEntry.Component>();
+                components = new ArrayList<ParameterEntry.Component>();
             }
-            components.add(entry.new Component(parameters.getEntry(source),
+            components.add(entry.new Component(source, // Ne pas interroger 'ParameterTable' maintenant.
                                                positions .getEntry(position),
                                                operations.getEntry(operation),
                                                weight, logarithm));
         }
         results.close();
-        components.trimToSize();
+        if (components != null) {
+            components.trimToSize();
+        }
         return components;
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized void close() throws SQLException {
+    public void close() throws SQLException {
+        // Synchronisation assurée par 'ParameterTable'
         if (positions != null) {
             positions.close();
             positions = null;

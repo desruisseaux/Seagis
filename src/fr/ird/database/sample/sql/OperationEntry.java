@@ -148,7 +148,8 @@ final class OperationEntry implements fr.ird.database.sample.OperationEntry, Ser
     }
 
     /**
-     * Retourne le nom de cette entrée.
+     * Retourne le nom de cette entré, comme {@link #getName}. Ce nom est
+     * souvent destiné à apparaître dans une interface <cite>Swing</cite>.
      */
     public String toString() {
         return name;

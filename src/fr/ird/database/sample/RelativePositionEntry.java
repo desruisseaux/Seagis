@@ -57,6 +57,24 @@ public interface RelativePositionEntry extends Entry {
     public abstract Point2D getCoordinate(final SampleEntry sample);
 
     /**
+     * Applique le déplacement relatif sur les coordonnées spatio-temporelles spécifiées.
+     * La coordonnée spatiale et la date sont habituellement obtenues par
+     * {@link SampleEntry#getCoordinate} et {@link SampleEntry#getTime} respectivement.
+     * Toutefois, si l'échantillon {@link SampleEntry} est disponible, alors il vaut mieux
+     * appeler les méthodes {@link #getCoordinate} et {@link #getTime} de cet objet, car elles
+     * peuvent faire un travail plus élaboré en fonction de la classe de l'échantillon.
+     *
+     * @param coordinate La position spatiale de l'échantillon, ou <code>null</code>.
+     *                   La nouvelle position écrasera la date courante dans cet objet.
+     * @param time       La date de l'échantillon, ou <code>null</code>.
+     *                   La nouvelle date écrasera la date courante dans cet objet.
+     *
+     * @see #getCoordinate
+     * @see #getTime
+     */
+    public abstract void applyOffset(final Point2D coordinate, final Date time);
+
+    /**
      * Indique si cette position relative devrait être sélectionnée par défaut.
      * Cette information peut être utilisée dans une interface utilisateur afin
      * de pré-selectionner un jeu de positions courrament utilisé.

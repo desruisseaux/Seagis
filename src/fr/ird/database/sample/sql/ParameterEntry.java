@@ -37,6 +37,10 @@ import org.geotools.gp.GridCoverageProcessor;
 // Seagis
 import fr.ird.database.Entry;
 import fr.ird.database.coverage.SeriesEntry;
+import fr.ird.database.sample.OperationEntry;
+import fr.ird.database.sample.RelativePositionEntry;
+import fr.ird.resources.seagis.ResourceKeys;
+import fr.ird.resources.seagis.Resources;
 
 
 /**
@@ -49,7 +53,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     /**
      * Numéro de série pour compatibilité entre différentes versions.
      */
-//    private static final long serialVersionUID = -6274380414853033347L;
+    private static final long serialVersionUID = 9109706885404672276L;
 
     /**
      * Un numéro unique identifiant cette entré.
@@ -75,7 +79,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     /**
      * Les composantes constituant ce paramètres, ou <code>null</code> s'il n'y en a pas.
      */
-    private List<fr.ird.database.sample.ParameterEntry.Component> components;
+    private List<Component> components;
 
     /**
      * Construit une entré.
@@ -86,11 +90,11 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
                           final SeriesEntry series2,
                           final int         band)
     {
-        this.ID        = ID;
-        this.name      = name;
-        this.series    = series;
-        this.series2   = series2;
-        this.band      = band;
+        this.ID      = ID;
+        this.name    = name;
+        this.series  = series;
+        this.series2 = series2;
+        this.band    = band;
     }
 
     /**
@@ -100,7 +104,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
      * @param  c Les composantes constituant ce paramètre, ou <code>null</code>.
      * @throws IllegalStateException si ce paramètre a déjà été initialisé.
      */
-    final void initComponents(final List<fr.ird.database.sample.ParameterEntry.Component> c)
+    final void initComponents(final List<ParameterEntry.Component> c)
             throws IllegalStateException
     {
         if (c != null) {
@@ -128,6 +132,13 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     /**
      * {@inheritDoc}
      */
+    public boolean isIdentity() {
+        return ID == 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public SeriesEntry getSeries(final int n) {
         switch (n) {
             case 0:  return series;
@@ -149,7 +160,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     /**
      * {@inheritDoc}
      */
-    public List<fr.ird.database.sample.ParameterEntry.Component> getComponents() {
+    public List<ParameterEntry.Component> getComponents() {
         return components;
     }
     
@@ -161,10 +172,19 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
     }
 
     /**
-     * Retourne le nom de cette entrée.
+     * Retourne le nom de cette entrée. Si ce paramètre est constitué d'un certain nombre de
+     * composantes, le nombre de composantes sera écrit entre parenthèse. Ce nom est souvent
+     * destiné à apparaître dans une interface <cite>Swing</cite>.
      */
     public String toString() {
-        return name;
+        if (components == null) {
+            return name;
+        }
+        final StringBuffer buffer = new StringBuffer(name);
+        buffer.append(" (");
+        buffer.append(Resources.format(ResourceKeys.COMPONENT_COUNT_$1, new Integer(components.size())));
+        buffer.append(')');
+        return buffer.toString();
     }
 
     /**
@@ -201,19 +221,21 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
         private static final long serialVersionUID = 9013631151104037206L;
 
         /**
-         * Le paramètre source.
+         * Le paramètre source. Les composantes seront initiallement construit avec un objet
+         * {@link ParameterEntry} temporaire. L'objet définitif sera affecté plus tard, lors
+         * de l'appel de {@link #initSource}.
          */
-        private final fr.ird.database.sample.ParameterEntry source;
+        private fr.ird.database.sample.ParameterEntry source;
 
         /**
          * La position relative du paramètre source.
          */
-        private final fr.ird.database.sample.RelativePositionEntry position;
+        private final RelativePositionEntry position;
 
         /**
          * L'opération à appliquer sur le paramètre source.
          */
-        private final fr.ird.database.sample.OperationEntry operation;
+        private final OperationEntry operation;
 
         /**
          * Le poid à donner au paramètre source.
@@ -230,17 +252,28 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
         /**
          * Construit une nouvelle composante.
          */
-        public Component(final fr.ird.database.sample.ParameterEntry        source,
-                         final fr.ird.database.sample.RelativePositionEntry position,
-                         final fr.ird.database.sample.OperationEntry        operation,
+        public Component(final int                   source,
+                         final RelativePositionEntry position,
+                         final OperationEntry        operation,
                          final double                weight,
                          final double                logarithm)
         {
-            this.source    = source;
+            this.source    = new ParameterEntry(source, null, null, null, 0);
             this.position  = position;
             this.operation = operation;
             this.weight    = weight;
             this.logarithm = logarithm;
+        }
+
+        /**
+         * Donne la valeur définitive au {@link #getSource paramètre source}.
+         * Cette méthode doit être appelée une seule fois après la construction.
+         */
+        final void initSource(final fr.ird.database.sample.ParameterEntry source) {
+            if (this.source.getSeries(0) != null) {
+                throw new IllegalStateException();
+            }
+            this.source = source;
         }
 
         /**
@@ -286,14 +319,14 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
         /**
          * {@inheritDoc}
          */
-        public fr.ird.database.sample.RelativePositionEntry getRelativePosition() {
+        public RelativePositionEntry getRelativePosition() {
             return position;
         }
 
         /**
          * {@inheritDoc}
          */
-        public fr.ird.database.sample.OperationEntry getOperation() {
+        public OperationEntry getOperation() {
             return operation;
         }
 
@@ -309,7 +342,7 @@ final class ParameterEntry implements fr.ird.database.sample.ParameterEntry, Ser
          */
         public double transform(double value) {
             if (logarithm != 0) {
-                value = Math.log(value * logarithm);
+                value = Math.log(1 + value*logarithm);
             }
             return value;
         }

@@ -23,6 +23,7 @@ public interface ResourceKeys
 {
     public static final int ABORT_IMAGE_READING_$2           =     0;
     public static final int CLOSE_FORMAT_TABLE               =     1;
+    public static final int COMPONENT_COUNT_$1               =    96;
     public static final int CONFIRM_OVERWRITE                =     2;
     public static final int CONFIRM_OVERWRITE_ALL_$2         =     3;
     public static final int CONSTRUCT_DECODER_$1             =     4;

@@ -37,7 +37,7 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class RelativePositionTable extends ColumnTable<fr.ird.database.sample.RelativePositionEntry> {
+final class RelativePositionTable extends ColumnTable<RelativePositionEntry> {
     /**
      * La requête SQL à utiliser pour obtnir une position relative.
      */
@@ -83,9 +83,7 @@ final class RelativePositionTable extends ColumnTable<fr.ird.database.sample.Rel
     /**
      * Retourne une entrée pour la ligne courante de l'objet {@link ResultSet} spécifié.
      */
-    protected fr.ird.database.sample.RelativePositionEntry getEntry(final ResultSet results)
-            throws SQLException
-    {
+    protected RelativePositionEntry getEntry(final ResultSet results) throws SQLException {
         return new RelativePositionEntry(results.getInt    (ID),
                                          results.getString (NAME),
                               Math.round(results.getDouble (TIME_LAG)*DAY),

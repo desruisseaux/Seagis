@@ -133,6 +133,15 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
     /**
      * {@inheritDoc}
      */
+    public void applyOffset(final Point2D coordinate, final Date time) {
+        if (time != null) {
+            time.setTime(time.getTime() + timeLag);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public boolean isDefault() {
         return isDefault;
     }
@@ -145,7 +154,8 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
     }
 
     /**
-     * Retourne le nom de cette entré, comme {@link #getName}.
+     * Retourne le nom de cette entré, comme {@link #getName}. Ce nom est
+     * souvent destiné à apparaître dans une interface <cite>Swing</cite>.
      */
     public String toString() {
         return (name==null || name.length()==0) ? Resources.format(ResourceKeys.UNNAMED) : name;

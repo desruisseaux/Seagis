@@ -43,6 +43,15 @@ import fr.ird.database.coverage.SeriesEntry;
  */
 public interface ParameterEntry extends Entry {
     /**
+     * Retourne <code>true</code> si ce paramètre est le <cite>paramètre identité</cite>.
+     * Le &quot;paramètre identité&quot; est un paramètre artificiel représentant une image
+     * dont toutes les valeurs auraient la valeur 1. Il est utilisé dans des expressions de
+     * la forme <code>y = C0 + C1*x + C2*x² + ...</code>, ou <code>C0</code> peut s'écrire
+     * <code>C0&times;identité</code>.
+     */
+    public abstract boolean isIdentity();
+
+    /**
      * Retourne la série d'image à utiliser pour ce paramètre.
      *
      * @param n 0 pour la série principale, ou 1 pour la série de rechange à utiliser si
@@ -64,9 +73,9 @@ public interface ParameterEntry extends Entry {
      * relatif.
      *
      * @return La liste de tous les paramètres composant celui-ci, ou <code>null</code> s'il n'y
-     *         en a pas.
+     *         en a pas. Cette liste est immutable.
      */
-    public abstract List<Component> getComponents();
+    public abstract List<+Component> getComponents();
 
     /**
      * Une des composantes d'un {@linkplain ParameterEntry paramètre}.   Un tableau d'objets

@@ -37,12 +37,12 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class OperationTable extends ColumnTable<fr.ird.database.sample.OperationEntry> {
+final class OperationTable extends ColumnTable<OperationEntry> {
     /**
      * Requête SQL pour obtenir le code d'une opération.
      */
     static final String SQL_SELECT =
-            "SELECT ID, colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE colonne=? ORDER BY ID";
+            "SELECT ID, colonne, préfix, opération, nom, remarques FROM "+OPERATIONS+" WHERE ID=? ORDER BY ID";
 
     /** Numéro de colonne. */ private static final int ID        = 1;
     /** Numéro de colonne. */ private static final int COLUMN    = 2;
@@ -78,24 +78,10 @@ final class OperationTable extends ColumnTable<fr.ird.database.sample.OperationE
     }
 
     /**
-     * Retourne la requête SQL du type spécifié. Cette méthode interprète BY_NAME
-     * comme BY_ID, étant donné que la table des opérations n'a pas de numéro ID.
-     */
-    String getQuery(int type) throws SQLException {
-        switch (type) {
-            case BY_ID:   throw new IllegalArgumentException();
-            case BY_NAME: type = BY_ID; // Fall through
-            default:      return super.getQuery(type);
-        }
-    }
-
-    /**
      * Retourne un objet {@link OperationEntry} correspondant à la ligne courante
      * de l'objet {@link ResultSet} spécifié.
      */
-    protected fr.ird.database.sample.OperationEntry getEntry(final ResultSet results)
-            throws SQLException
-    {
+    protected OperationEntry getEntry(final ResultSet results) throws SQLException {
         return new OperationEntry(results.getInt   (ID),
                                   results.getString(COLUMN),
                                   results.getString(PREFIX),

@@ -108,7 +108,7 @@ abstract class ColumnTable<T extends Entry> extends Table {
      * @return La requête à utiliser pour la construction d'un objet {@link PreparedStatement}.
      * @throws SQLException si la requête n'a pas pu être construite.
      */
-    String getQuery(final int type) throws SQLException {
+    private String getQuery(final int type) throws SQLException {
         String query = getQuery();
         switch (type) {
             default: {
@@ -140,7 +140,7 @@ abstract class ColumnTable<T extends Entry> extends Table {
      * l'utilisateur a changé les noms des colonnes "ID" et "nom". Il procède comme suit:
      *
      * 1) Recherche dans la requête les deux premières colonnees après la clause SELECT.
-     * 2) Recherche le premier nom dans la clause WHERE, et le remplacer par le deuxième nom.
+     * 2) Recherche le premier nom dans la clause WHERE, et le remplace par le deuxième nom.
      */
     private static String IDtoName(final String query) throws SQLException {
         String  id       = null;
@@ -237,6 +237,15 @@ abstract class ColumnTable<T extends Entry> extends Table {
                                                 ResourceKeys.ERROR_KEY_NOT_FOUND_$2, table, key));
         }
         pool.put(key, entry);
+        try {
+            setup(entry);
+        } catch (SQLException exception) {
+            pool.remove(key);
+            throw exception;
+        } catch (RuntimeException exception) {
+            pool.remove(key);
+            throw exception;
+        }
         return entry;
     }
 
@@ -281,6 +290,10 @@ abstract class ColumnTable<T extends Entry> extends Table {
             }
         }
         results.close();
+        // TODO: The 'for (T entry : set)' syntax crash the compiler here.
+        for (final java.util.Iterator<T> it=set.iterator(); it.hasNext();) {
+            setup(it.next());
+        }
         return set;
     }
 
@@ -290,6 +303,18 @@ abstract class ColumnTable<T extends Entry> extends Table {
      */
     protected boolean accept(final T entry) {
         return true;
+    }
+
+    /**
+     * Initialise l'entré spécifiée. Cette méthode est appelée après que toutes les requêtes SQL
+     * ont été complétées. On évite ainsi des appels recursifs qui pourraient entraîner la création
+     * de plusieurs {@link ResultSet}s pour le même {@link Statement}, ce que ne supportent pas
+     * tous les pilotes JDBC. L'implémentation par défaut ne fait rien.
+     *
+     * @param  entry L'entré à initialiser.
+     * @throws SQLException si l'initialisation a échouée.
+     */
+    protected void setup(final T entry) throws SQLException {
     }
 
     /**
