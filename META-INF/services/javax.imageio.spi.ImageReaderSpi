@@ -1,3 +1,4 @@
+org.geotools.io.image.RawBinaryImageReader$Spi
 fr.ird.io.image.MSLA_RAW
 fr.ird.io.image.Canarias_RAW
 fr.ird.io.image.USRelaxed_ASC
