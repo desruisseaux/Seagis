@@ -36,7 +36,12 @@ import java.awt.geom.Point2D;
 import java.io.Serializable;
 import net.seagis.pt.Matrix;
 import net.seagis.pt.CoordinatePoint;
+import javax.media.jai.ParameterList;
+
+// Resources
 import net.seagis.resources.Utilities;
+import net.seagis.resources.css.Resources;
+import net.seagis.resources.css.ResourceKeys;
 import net.seagis.resources.XAffineTransform;
 
 
@@ -142,5 +147,86 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
             return Utilities.equals(this.matrix, that.matrix);
         }
         return false;
+    }
+
+    /**
+     * The provider for {@link MatrixTransform}.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    static final class Provider extends MathTransformProvider
+    {
+        /**
+         * Create a provider for affine transforms of the specified
+         * dimension. Created affine transforms will have a size of
+         * <code>numRow&nbsp;&times;&nbsp;numCol</code>.
+         *
+         * @param numRow The number of matrix's rows.
+         * @param numCol The number of matrix's columns.
+         */
+        public Provider(final int numRow, final int numCol)
+        {
+            super("Affine", ResourceKeys.AFFINE_TRANSFORM, null);
+            put("Num_row", numRow, POSITIVE_RANGE);
+            put("Num_col", numCol, POSITIVE_RANGE);
+            final StringBuffer buffer=new StringBuffer();
+            for (int j=0; j<=numRow; j++)
+            {
+                for (int i=0; i<=numCol; i++)
+                {
+                    buffer.setLength(0);
+                    buffer.append("elt_");
+                    buffer.append(j);
+                    buffer.append('_');
+                    buffer.append(i);
+                    put(buffer.toString(), (i==j) ? 1 : 0, null);
+                }
+            }
+        }
+
+        /**
+         * Returns a transform for the specified parameters.
+         *
+         * @param  parameters The parameter values in standard units.
+         * @return A {@link MathTransform} object of this classification.
+         */
+        public MathTransform create(final ParameterList parameters)
+        {return staticCreate(parameters);}
+
+        /**
+         * Static version of {@link #create}, for use by
+         * {@link MathTransformFactory#createParameterizedTransform}.
+         */
+        public static MathTransform staticCreate(final ParameterList parameters)
+        {
+            final int numRow = parameters.getIntParameter("Num_row");
+            final int numCol = parameters.getIntParameter("Num_col");
+            final Matrix matrix = new Matrix(numRow, numCol);
+            for (int i=Math.min(numRow, numCol); --i>=0;)
+            {
+                matrix.set(i,i,1);
+            }
+            final String[] names = parameters.getParameterListDescriptor().getParamNames();
+            if (names!=null)
+            {
+                for (int i=0; i<names.length; i++)
+                {
+                    final String name = names[i];
+                    if (name.regionMatches(true, 0, "elt_", 0, 4))
+                    {
+                        final int separator = name.lastIndexOf('_');
+                        final int row = Integer.parseInt(name.substring(4, separator));
+                        final int col = Integer.parseInt(name.substring(separator+1));
+                        matrix.set(row, col, parameters.getDoubleParameter(name));
+                    }
+                }
+            }
+            if (numRow==3 && matrix.isAffine())
+            {
+                return new AffineTransform2D(matrix.toAffineTransform2D());
+            }
+            return new MatrixTransform(matrix);
+        }
     }
 }

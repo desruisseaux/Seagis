@@ -136,11 +136,11 @@ public class MathTransformFactory
         if (DEFAULT==null)
         {
             /*
-             * NOTE: Current implementation of  Projection.getParameterList()
-             *       assume that the default MathTransformFactory.getProvider
-             *       looks only for projections.  Implementation needs update
-             *       if the array below contains some transforms  of an other
-             *       kind than MapProjection.
+             * NOTE: Current implementation of  Projection.getParameterList() assume
+             *       that the default  MathTransformFactory.getMathTransformProvider
+             *       looks only for projections.  Implementation needs update if the
+             *       array below contains some transforms of an other kind than
+             *       MapProjection.
              */
             DEFAULT = new MathTransformFactory(new MathTransformProvider[]
             {
@@ -350,8 +350,22 @@ public class MathTransformFactory
      * @see org.opengis.ct.CT_MathTransformFactory#createParameterizedTransform
      * @see #getAvailableTransforms
      */
-    public MathTransform createParameterizedTransform(final String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
-    {return (MathTransform) pool.intern(getProvider(classification).create(parameters));}
+    public MathTransform createParameterizedTransform(String classification, final ParameterList parameters) throws NoSuchElementException, MissingParameterException
+    {
+        final MathTransform transform;
+        classification = classification.trim();
+        if (classification.equalsIgnoreCase("Affine"))
+        {
+            // Special case for "Affine", since the ParameterListDescriptor
+            // depends of the matrix size.
+            transform = MatrixTransform.Provider.staticCreate(parameters);
+        }
+        else
+        {
+            transform = getMathTransformProvider(classification).create(parameters);
+        }
+        return (MathTransform) pool.intern(transform);
+    }
 
     /**
      * Convenience method for creating a transform from a projection.
@@ -372,11 +386,14 @@ public class MathTransformFactory
      */
     public String[] getAvailableTransforms()
     {
-        final String[] names = new String[providers.length];
-        for (int i=0; i<names.length; i++)
+        final String[] names = new String[providers.length+1];
+        int i; for (i=0; i<names.length; i++)
         {
             names[i] = providers[i].getClassName();
         }
+        // Special case for "Affine", since the ParameterListDescriptor
+        // depends of the matrix size.
+        names[i] = "Affine";
         return names;
     }
 
@@ -393,11 +410,11 @@ public class MathTransformFactory
      * @return Localized classification name (e.g. "<cite>Mercator transverse</cite>").
      * @throws NoSuchElementException if there is no transform for the specified classification.
      *
-     * @deprecated Use <code>getProvider(classification).getName(locale)</code> instead.
+     * @deprecated Use <code>getMathTransformProvider(classification).getName(locale)</code> instead.
      *             This method will be removed in the next version.
      */
     public String getName(final String classification, final Locale locale) throws NoSuchElementException
-    {return getProvider(classification).getName(locale);}
+    {return getMathTransformProvider(classification).getName(locale);}
 
     /**
      * Get the parameter list from a classification name.
@@ -411,28 +428,28 @@ public class MathTransformFactory
      * @throws NoSuchElementException if there is no transform for the
      *         specified classification.
      *
-     * @deprecated getProvider(classification).getParameterList() instead.
+     * @deprecated getMathTransformProvider(classification).getParameterList() instead.
      *             This method will be removed in the next version.
      */
     public ParameterList getParameterList(final String classification) throws NoSuchElementException
-    {return getProvider(classification).getParameterList();}
+    {return getMathTransformProvider(classification).getParameterList();}
 
     /**
      * Returns the provider for the specified classification. This provider
      * may be used to query parameter list for a classification name (e.g.
-     * <code>getProvider("Transverse_Mercator").getParameterList()</code>),
+     * <code>getMathTransformProvider("Transverse_Mercator").getParameterList()</code>),
      * or the transform name in a given locale (e.g.
-     * <code>getProvider("Transverse_Mercator").getName({@link Locale#FRENCH})</code>)
+     * <code>getMathTransformProvider("Transverse_Mercator").getName({@link Locale#FRENCH})</code>)
      *
      * @param  classification The classification name of the transform
      *         (e.g. "Transverse_Mercator"). It should be one of the name
      *         returned by {@link #getAvailableTransforms}. Leading and
      *         trailing spaces are ignored. Comparisons are case-insensitive.
-     * @return The provider.
+     * @return The provider for a math transform.
      * @throws NoSuchElementException if there is no provider registered
      *         with the specified classification name.
      */
-    public MathTransformProvider getProvider(String classification) throws NoSuchElementException
+    public MathTransformProvider getMathTransformProvider(String classification) throws NoSuchElementException
     {
         classification = classification.trim();
         for (int i=0; i<providers.length; i++)
@@ -440,6 +457,38 @@ public class MathTransformFactory
                 return providers[i];
         throw new NoSuchElementException(Resources.format(ResourceKeys.ERROR_NO_TRANSFORM_FOR_CLASSIFICATION_$1, classification));
     }
+
+    /**
+     * Create a provider for affine transforms of the specified
+     * dimension. Created affine transforms will have a size of
+     * <code>numRow&nbsp;&times;&nbsp;numCol</code>.
+     * <br><br>
+     * <table align="center" border='2'>
+     *   <tr bgcolor="#B9DCFF"><th>Parameter</th> <th>Description</th></tr>
+     *   <tr><td><code>Num_row</code></td> <td>Number of rows in matrix</td></tr>
+     *   <tr><td><code>Num_col</code></td> <td>Number of columns in matrix</td></tr>
+     *   <tr><td><code>elt_&lt;r&gt;_&lt;c&gt;</code></td> <td>Element of matrix</td></tr>
+     * </table>
+     * <br>
+     * For the element parameters, <code>&lt;r&gt;</code> and <code>&lt;c&gt;</code>
+     * should be substituted by printed decimal numbers. The values of <var>r</var>
+     * should be from 0 to <code>(num_row-1)</code>, and the values of <var>c</var>
+     * should be from 0 to <code>(num_col-1)</code>. Any undefined matrix elements
+     * are assumed to be zero for <code>(r!=c)</code>, and one for <code>(r==c)</code>.
+     * This corresponds to the identity transformation when the number of rows and columns
+     * are the same. The number of columns corresponds to one more than the dimension of
+     * the source coordinates and the number of rows corresponds to one more than the
+     * dimension of target coordinates. The extra dimension in the matrix is used to
+     * let the affine map do a translation.
+     *
+     * @param  numRow The number of matrix's rows.
+     * @param  numCol The number of matrix's columns.
+     * @return The provider for an affine transform.
+     * @throws IllegalArgumentException if <code>numRow</code>
+     *         or <code>numCol</code> is not a positive number.
+     */
+    public MathTransformProvider getAffineTransformProvider(final int numRow, final int numCol) throws IllegalArgumentException
+    {return new MatrixTransform.Provider(numRow, numCol);}
 
     /**
      * Returns an OpenGIS interface for this transform factory.

@@ -34,17 +34,23 @@ package net.seagis.ct;
 // OpenGIS (SEAGIS) dependencies
 import net.seagis.pt.Matrix;
 import net.seagis.cs.AxisInfo;
+import net.seagis.cs.Ellipsoid;
 import net.seagis.cs.Projection;
 import net.seagis.cs.PrimeMeridian;
+import net.seagis.cs.HorizontalDatum;
 import net.seagis.cs.AxisOrientation;
 import net.seagis.cs.CoordinateSystem;
+import net.seagis.cs.WGS84ConversionInfo;
 import net.seagis.cs.ProjectedCoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
 import net.seagis.cs.HorizontalCoordinateSystem;
+import net.seagis.pt.Dimensioned;
+import net.seagis.resources.Utilities;
 
 // Miscellaneous
 import javax.units.Unit;
-import net.seagis.resources.Utilities;
+import java.util.Arrays;
+import java.awt.geom.AffineTransform;
 
 
 /**
@@ -65,9 +71,16 @@ public class CoordinateTransformationFactory
     private static CoordinateTransformationFactory DEFAULT;
 
     /**
+     * Number for temporary created objects. This number is
+     * incremented each time {@link #getTemporaryName} is
+     * invoked.
+     */
+    private static volatile int temporaryID;
+
+    /**
      * The underlying math transform factory.
      */
-    private final MathTransformFactory factory;
+    protected final MathTransformFactory factory;
 
     /**
      * Construct a coordinate transformation factory.
@@ -88,12 +101,6 @@ public class CoordinateTransformationFactory
         }
         return DEFAULT;
     }
-
-    /**
-     * Returns the underlying math transform factory.
-     */
-    protected MathTransformFactory getMathTransformFactory()
-    {return factory;}
 
     /**
      * Creates a transformation between two coordinate systems.
@@ -139,17 +146,9 @@ public class CoordinateTransformationFactory
             {
                 return createTransformationStep(source, (ProjectedCoordinateSystem) targetCS);
             }
-            if (targetCS instanceof GeographicCoordinateSystem) try
+            if (targetCS instanceof GeographicCoordinateSystem)
             {
-                return createTransformationStep((GeographicCoordinateSystem) targetCS, source).inverse();
-            }
-            catch (NoninvertibleTransformException exception)
-            {
-                final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-                e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-                throw e;
+                return createTransformationStep(source, (GeographicCoordinateSystem) targetCS);
             }
         }
         // TODO: implement non-2D cases (1D, 3D, 4D...)
@@ -157,55 +156,11 @@ public class CoordinateTransformationFactory
     }
 
     /**
-     * Returns an affine transform between two coordinate systems. Only units and
-     * axis order (e.g. transforming from (NORTH,WEST) to (EAST,NORTH)) are taken
-     * in account. Other attributes (especially the datum) must be checked before
-     * invoking this method.
-     */
-    private Matrix createAffineTransform(final CoordinateSystem sourceCS, final CoordinateSystem targetCS) throws CannotCreateTransformException
-    {
-        final AxisOrientation[] sourceAxis = new AxisOrientation[sourceCS.getDimension()];
-        final AxisOrientation[] targetAxis = new AxisOrientation[targetCS.getDimension()];
-        for (int i=0; i<sourceAxis.length; i++) sourceAxis[i]=sourceCS.getAxis(i).orientation;
-        for (int i=0; i<targetAxis.length; i++) targetAxis[i]=targetCS.getAxis(i).orientation;
-        final Matrix matrix;
-        try
-        {
-            matrix = Matrix.createAffineTransform(sourceAxis, targetAxis);
-        }
-        catch (RuntimeException exception)
-        {
-            final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-            throw e;
-        }
-
-        // Convert units (Optimized case where the conversion
-        // can be applied right into the AffineTransform).
-        final int dimension = matrix.getNumRows()-1;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        assert dimension == matrix.getNumColumns()-1;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-        for (int i=0; i<dimension; i++)
-        {
-            // TODO: check if units conversion is really linear.
-            final Unit sourceUnit = sourceCS.getUnits(i);
-            final Unit targetUnit = targetCS.getUnits(i);
-            final double offset = targetUnit.convert(0, sourceUnit);
-            final double scale  = targetUnit.convert(1, sourceUnit)-offset;
-            matrix.set(i,i,         scale*matrix.get(i,i));
-            matrix.set(i,dimension, scale*matrix.get(i,dimension)+offset);
-        }
-        return matrix;
-    }
-
-    /**
      * Creates a transformation between two geographic coordinate systems.
      * This method is automatically invoked by <code>createFromCoordinateSystems</code>. The default
      * implementation can adjust axis order and orientation (e.g. transforming from (NORTH,WEST) to
-     * (EAST,NORTH)), adjust for prime meridian and perform units conversion.
+     * (EAST,NORTH)), adjust for prime meridian, performs units conversion and apply Bursa Wolf
+     * transformation.
      *
      * @param  sourceCS Input coordinate system.
      * @param  targetCS Output coordinate system.
@@ -214,28 +169,36 @@ public class CoordinateTransformationFactory
      */
     protected CoordinateTransformation createTransformationStep(final GeographicCoordinateSystem sourceCS, final GeographicCoordinateSystem targetCS) throws CannotCreateTransformException
     {
-        if (!Utilities.equals(sourceCS.getHorizontalDatum(), targetCS.getHorizontalDatum()))
+        final AffineTransform matrix = createAffineTransformToWGS84(sourceCS);
+        if (matrix==null)
         {
-            // TODO: implement transformation using WGS84ConversionInfo.
-            throw new CannotCreateTransformException("Not implemented");
+            // TODO: fallback on GeocentricCoordinateSystem
+            throw new CannotCreateTransformException("Need Bursa Wolf parameters");
         }
-        final Matrix matrix = createAffineTransform(sourceCS, targetCS);
-        for (int i=targetCS.getDimension(); --i>=0;)
+        final AffineTransform targetToWGS84 = createAffineTransformToWGS84(targetCS);
+        if (targetToWGS84==null)
         {
-            // Find longitude ordinate, and apply a rotation if prime meridian are different.
-            final AxisOrientation orientation = targetCS.getAxis(i).orientation;
-            if (AxisOrientation.EAST.equals(orientation.absolute()))
-            {
-                final Unit              unit = targetCS.getUnits(i);
-                final double sourceLongitude = sourceCS.getPrimeMeridian().getLongitude(unit);
-                final double targetLongitude = targetCS.getPrimeMeridian().getLongitude(unit);
-                final int   lastMatrixColumn = matrix.getNumColumns()-1;
-                double rotate = targetLongitude - sourceLongitude;
-                if (AxisOrientation.WEST.equals(orientation)) rotate = -rotate;
-                matrix.set(i, lastMatrixColumn, matrix.get(i, lastMatrixColumn)-rotate);
-            }
+            // TODO: fallback on GeocentricCoordinateSystem
+            throw new CannotCreateTransformException("Need Bursa Wolf parameters");
         }
-        final MathTransform transform = getMathTransformFactory().createAffineTransform(matrix);
+        try
+        {
+            // Apply transform from source to WGS84 first (the current
+            // 'matrix' matrix), then the transform from WGS84 to target.
+            matrix.preConcatenate(targetToWGS84.createInverse());
+        }
+        catch (java.awt.geom.NoninvertibleTransformException exception)
+        {
+            final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
+        // TODO: Need to bring back the longitude in the [-180,180) range
+        //       and the latitude to the [-90,90] range, with longitude==0
+        //       if abs(latitude)==90.
+        final MathTransform transform = factory.createAffineTransform(matrix);
         return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
     }
 
@@ -258,19 +221,21 @@ public class CoordinateTransformationFactory
      */
     protected CoordinateTransformation createTransformationStep(final ProjectedCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS) throws CannotCreateTransformException
     {
-        if (Utilities.equals(sourceCS.getProjection(),      targetCS.getProjection()) &&
-            Utilities.equals(sourceCS.getHorizontalDatum(), targetCS.getHorizontalDatum()))
-        {
-            // This special case is necessary for createTransformationStep(GeographicCS,ProjectedCS)
-            final MathTransformFactory factory = getMathTransformFactory();
-            final MathTransform transform = factory.createAffineTransform(createAffineTransform(sourceCS, targetCS));
-            return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
-        }
         final GeographicCoordinateSystem sourceGeo = sourceCS.getGeographicCoordinateSystem();
         final GeographicCoordinateSystem targetGeo = targetCS.getGeographicCoordinateSystem();
-        final CoordinateTransformation step1 = createFromCoordinateSystems(sourceCS,  sourceGeo);
-        final CoordinateTransformation step2 = createFromCoordinateSystems(sourceGeo, targetGeo);
-        final CoordinateTransformation step3 = createFromCoordinateSystems(targetGeo, targetCS );
+        if (Utilities.equals(sourceCS.getProjection(),      targetCS.getProjection())      &&
+            Utilities.equals(sourceCS.getHorizontalDatum(), targetCS.getHorizontalDatum()))
+        {
+            // This special case is necessary for createTransformationStep(GeographicCS,ProjectedCS).
+            // 'swapAndScaleAxis(...) takes care of axis orientation and units. Datum and projection
+            // have just been checked above. Prime meridien is not checked (TODO: should we do???)
+            final Matrix matrix = swapAndScaleAxis(sourceCS, targetCS);
+            final MathTransform transform = factory.createAffineTransform(matrix);
+            return createFromMathTransform(sourceCS, targetCS, TransformType.CONVERSION, transform);
+        }
+        final CoordinateTransformation step1 = createTransformationStep(sourceCS,  sourceGeo);
+        final CoordinateTransformation step2 = createTransformationStep(sourceGeo, targetGeo);
+        final CoordinateTransformation step3 = createTransformationStep(targetGeo, targetCS );
         return concatenate(step1, step2, step3);
     }
 
@@ -285,28 +250,47 @@ public class CoordinateTransformationFactory
      */
     protected CoordinateTransformation createTransformationStep(final GeographicCoordinateSystem sourceCS, final ProjectedCoordinateSystem targetCS) throws CannotCreateTransformException
     {
-        final Projection      projection = targetCS.getProjection();
-        GeographicCoordinateSystem geoCS = targetCS.getGeographicCoordinateSystem();
-        ProjectedCoordinateSystem  prjCS = targetCS;
-        if (!isStandard(geoCS, Unit.DEGREE) || geoCS.getPrimeMeridian().getLongitude(Unit.DEGREE)!=0)
-        {
-            geoCS = new GeographicCoordinateSystem(geoCS.getName(null), geoCS.getHorizontalDatum());
+        final ProjectedCoordinateSystem stepProjCS = normalize(targetCS);
+        final GeographicCoordinateSystem stepGeoCS = stepProjCS.getGeographicCoordinateSystem();
+        final Projection                projection = stepProjCS.getProjection();
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            assert isStandard(geoCS, Unit.DEGREE);
+        assert normalize(stepProjCS) == stepProjCS;
+        assert normalize(stepGeoCS, projection) == stepGeoCS;
+        assert projection.equals(targetCS.getProjection());
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
-        }
-        if (!isStandard(prjCS, Unit.METRE))
-        {
-            prjCS = new ProjectedCoordinateSystem(prjCS.getName(null), geoCS, projection);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
-            assert isStandard(prjCS, Unit.METRE);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
-        }
-        final MathTransform    mapProjection = factory.createParameterizedTransform(projection.getClassName(), projection.getParameters());
-        final CoordinateTransformation step1 = createFromCoordinateSystems(sourceCS, geoCS);
-        final CoordinateTransformation step2 = createFromMathTransform(geoCS, prjCS, TransformType.CONVERSION, mapProjection);
-        final CoordinateTransformation step3 = createFromCoordinateSystems(prjCS, targetCS);
+
+        final MathTransform    mapProjection = factory.createParameterizedTransform(projection);
+        final CoordinateTransformation step1 = createTransformationStep(sourceCS, stepGeoCS);
+        final CoordinateTransformation step2 = createFromMathTransform(stepGeoCS, stepProjCS, TransformType.CONVERSION, mapProjection);
+        final CoordinateTransformation step3 = createTransformationStep(stepProjCS, targetCS);
         return concatenate(step1, step2, step3);
+    }
+
+    /**
+     * Creates a transformation between a projected and a geographic coordinate systems. This method is
+     * automatically invoked by <code>createFromCoordinateSystems</code>. the default implementation returns
+     * <code>{@link #createTransformationStep(GeographicCoordinateSystem, ProjectedCoordinateSystem)
+     * createTransformationStep}(targetCS, sourceCS).{@link MathTransform#inverse() inverse()}</code>.
+     *
+     * @param  sourceCS Input coordinate system.
+     * @param  targetCS Output coordinate system.
+     * @return A coordinate transformation from <code>sourceCS</code> to <code>targetCS</code>.
+     * @throws CannotCreateTransformException if no transformation path has been found.
+     */
+    protected CoordinateTransformation createTransformationStep(final ProjectedCoordinateSystem sourceCS, final GeographicCoordinateSystem targetCS) throws CannotCreateTransformException
+    {
+        try
+        {
+            return createTransformationStep(targetCS, sourceCS).inverse();
+        }
+        catch (NoninvertibleTransformException exception)
+        {
+            final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
     }
 
     /**
@@ -314,12 +298,16 @@ public class CoordinateTransformationFactory
      */
     private CoordinateTransformation concatenate(final CoordinateTransformation step1, final CoordinateTransformation step2, final CoordinateTransformation step3)
     {
-        if (!step1.getTargetCS().equivalents(step2.getSourceCS()) ||
-            !step2.getTargetCS().equivalents(step3.getSourceCS()))
+        if (!step1.getTargetCS().equivalents(step2.getSourceCS()))
         {
-            throw new IllegalArgumentException();
+            // Current message is for debugging purpose only.
+            throw new IllegalArgumentException(String.valueOf(step1));
         }
-        final MathTransformFactory factory = getMathTransformFactory();
+        if (!step2.getTargetCS().equivalents(step3.getSourceCS()))
+        {
+            // Current message is for debugging purpose only.
+            throw new IllegalArgumentException(String.valueOf(step3));
+        }
         final MathTransform step  = factory.createConcatenatedTransform(step1.getMathTransform(),
                                     factory.createConcatenatedTransform(step2.getMathTransform(),
                                                                         step3.getMathTransform()));
@@ -357,17 +345,190 @@ public class CoordinateTransformationFactory
     }
 
     /**
-     * Returns <code>true</code> if the specified coordinate system
-     * use standard axis and standard units.
+     * Returns an affine transform between an arbitrary geographic coordinate system
+     * and the {@link GeographicCoordinateSystem#WGS84}. If no transform can't be
+     * computed because the Bursa Wolf transformation is unknow, then this method
+     * returns <code>null</code>.
+     */
+    private AffineTransform createAffineTransformToWGS84(final GeographicCoordinateSystem geoCS) throws CannotCreateTransformException
+    {
+        final HorizontalDatum    datum = geoCS.getHorizontalDatum();
+        final Ellipsoid      ellipsoid = datum.getEllipsoid();
+        final WGS84ConversionInfo wolf = datum.getWGS84Parameters();
+        final double          meridian = geoCS.getPrimeMeridian().getLongitude(Unit.DEGREE);
+        if (wolf==null && !ellipsoid.equals(Ellipsoid.WGS84))
+        {
+            // Bursa Wolf transformation is unknow.
+            return null;
+        }
+        final AffineTransform matrix = swapAndScaleAxis(geoCS, GeographicCoordinateSystem.WGS84).toAffineTransform2D();
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert !geoCS.equals(GeographicCoordinateSystem.WGS84) || matrix.isIdentity();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        // The following is equivalents to swap axis order first (the previous 'matrix' operation,
+        // which ensures that axis are in (x,y) order), and then apply Bursa Wolf transformation.
+        // The last operation rotate the system to bring the prime meridian on Greenwich.
+        if (wolf!=null)  matrix.preConcatenate(wolf.getAffineTransform2D());
+        if (meridian!=0) matrix.preConcatenate(AffineTransform.getTranslateInstance(meridian, 0));
+        return matrix;
+    }
+
+    /**
+     * Returns an affine transform between two coordinate systems. Only units and
+     * axis order (e.g. transforming from (NORTH,WEST) to (EAST,NORTH)) are taken
+     * in account. Other attributes (especially the datum) must be checked before
+     * invoking this method.
+     *
+     * @param sourceCS The source coordinate system. If <code>null</code>, then
+     *        (x,y,z,t) axis order is assumed.
+     * @param targetCS The target coordinate system. If <code>null</code>, then
+     *        (x,y,z,t) axis order is assumed.
+     */
+    private Matrix swapAndScaleAxis(final CoordinateSystem sourceCS, final CoordinateSystem targetCS) throws CannotCreateTransformException
+    {
+        final AxisOrientation[] sourceAxis = getAxisOrientations(sourceCS, targetCS);
+        final AxisOrientation[] targetAxis = getAxisOrientations(targetCS, sourceCS);
+        final Matrix matrix;
+        try
+        {
+            matrix = Matrix.createAffineTransform(sourceAxis, targetAxis);
+        }
+        catch (RuntimeException exception)
+        {
+            final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert !Arrays.equals(sourceAxis, targetAxis) || matrix.isIdentity();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+        // Convert units (Optimized case where the conversion
+        // can be applied right into the AffineTransform).
+        final int dimension = matrix.getNumRows()-1;
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert dimension == matrix.getNumColumns()-1;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        for (int i=0; i<dimension; i++)
+        {
+            // TODO: check if units conversion is really linear.
+            final Unit sourceUnit = sourceCS.getUnits(i);
+            final Unit targetUnit = targetCS.getUnits(i);
+            final double offset = targetUnit.convert(0, sourceUnit);
+            final double scale  = targetUnit.convert(1, sourceUnit)-offset;
+            matrix.set(i,i,         scale*matrix.get(i,i));
+            matrix.set(i,dimension, scale*matrix.get(i,dimension)+offset);
+        }
+        return matrix;
+    }
+
+    /**
+     * Returns the axis orientation for the specified coordinate system.
+     * If <code>cs</code> is <code>null</code>, then an array of length
+     * <code>dim.getDimension()</code> is created and filled with
+     * <code>(x,y,z,t)</code> axis orientation.
+     */
+    private static AxisOrientation[] getAxisOrientations(final CoordinateSystem cs, final Dimensioned dim)
+    {
+        final AxisOrientation[] axis;
+        if (cs!=null)
+        {
+            axis = new AxisOrientation[cs.getDimension()];
+            for (int i=0; i<axis.length; i++)
+                axis[i] = cs.getAxis(i).orientation;
+        }
+        else
+        {
+            axis = new AxisOrientation[dim.getDimension()];
+            switch (axis.length)
+            {
+                default: for (int i=4; i<axis.length; i++) axis[i]=AxisOrientation.OTHER; // fall through
+                case 4:  axis[3] = AxisOrientation.FUTURE; // fall through
+                case 3:  axis[2] = AxisOrientation.UP;     // fall through
+                case 2:  axis[1] = AxisOrientation.NORTH;  // fall through
+                case 1:  axis[0] = AxisOrientation.EAST;   // fall through
+                case 0:  break;
+            }
+        }
+        return axis;
+    }
+
+    /**
+     * Makes sure that the specified {@link GeographicCoordinateSystem} use standard axis
+     * (longitude and latitude in degrees), Greenwich prime meridian and an ellipsoid
+     * matching projection's parameters. If <code>cs</code> already meets all those
+     * conditions, then it is returned unchanged. Otherwise, a new normalized geographic
+     * coordinate system is created and returned.
+     */
+    private static GeographicCoordinateSystem normalize(GeographicCoordinateSystem cs, final Projection projection)
+    {
+        final double semiMajor = projection.getValue("semi_major");
+        final double semiMinor = projection.getValue("semi_minor");
+        HorizontalDatum  datum = cs.getHorizontalDatum();
+        Ellipsoid    ellipsoid = datum.getEllipsoid();
+        if (!hasStandardAxis(cs, Unit.DEGREE) || cs.getPrimeMeridian().getLongitude(Unit.DEGREE)!=0)
+        {
+            cs = null; // Signal that it needs to be reconstructed.
+        }
+        if (ellipsoid.getSemiMajorAxis()!=semiMajor || ellipsoid.getSemiMinorAxis()!=semiMinor)
+        {
+            // Those objects are temporary. We assume it is not
+            // a big deal if their name are not very explicit...
+            ellipsoid = new Ellipsoid(getTemporaryName(), semiMajor, semiMinor, Unit.METRE);
+            datum     = new HorizontalDatum(getTemporaryName(), ellipsoid);
+            cs        = null; // Signal that it needs to be reconstructed.
+        }
+        if (cs != null)
+        {
+            return cs;
+        }
+        return new GeographicCoordinateSystem(getTemporaryName(), datum);
+    }
+
+    /**
+     * Makes sure that a {@link ProjectedCoordinateSystem} use standard axis
+     * (x and y in metres) and a normalized {@link GeographicCoordinateSystem}.
+     * If <code>cs</code> already meets all those conditions, then it is
+     * returned unchanged. Otherwise, a new normalized projected coordinate
+     * system is created and returned.
+     */
+    private static ProjectedCoordinateSystem normalize(final ProjectedCoordinateSystem cs)
+    {
+        final Projection                      projection = cs.getProjection();
+        final GeographicCoordinateSystem           geoCS = cs.getGeographicCoordinateSystem();
+        final GeographicCoordinateSystem normalizedGeoCS = normalize(geoCS, projection);
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        assert normalize(normalizedGeoCS, projection) == normalizedGeoCS;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+
+        if (hasStandardAxis(cs, Unit.METRE) && normalizedGeoCS==geoCS)
+        {
+            return cs;
+        }
+        return new ProjectedCoordinateSystem(getTemporaryName(), normalizedGeoCS, projection);
+    }
+
+    /**
+     * Returns <code>true</code> if the specified coordinate
+     * system use standard axis and standard units.
      *
      * @param cs   The coordinate system to test.
      * @paral unit The standard units.
      */
-    private static boolean isStandard(final HorizontalCoordinateSystem cs, final Unit unit)
+    private static boolean hasStandardAxis(final HorizontalCoordinateSystem cs, final Unit unit)
     {
         return unit                 .equals(cs.getUnits(0))             &&
                unit                 .equals(cs.getUnits(1))             &&
                AxisOrientation.EAST .equals(cs.getAxis (0).orientation) &&
                AxisOrientation.NORTH.equals(cs.getAxis (1).orientation);
     }
+
+    /**
+     * Returns a temporary name for generated objects. The first object
+     * has a name like "Temporary-1", the second is "Temporary-2", etc.
+     */
+    private static String getTemporaryName()
+    {return "Temporary-" + (++temporaryID);}
 }
