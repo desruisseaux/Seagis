@@ -108,19 +108,18 @@ public final class CoordinatePoint implements Cloneable, Serializable
     {return ord.length;}
 
     /**
-     * <FONT COLOR="#FF6633">Convenience method for checking the point's dimension validity.</FONT>
+     * Convenience method for checking the point's dimension validity.
      * This method is usually call for argument checking.
      *
      * @param  expectedDimension Expected dimension for this point.
-     * @throws IllegalArgumentException if this point doesn't have the expected dimension.
+     * @throws MismatchedDimensionException if this point doesn't have the expected dimension.
      */
-    public final void ensureDimensionMatch(final int expectedDimension) throws IllegalArgumentException
+    final void ensureDimensionMatch(final int expectedDimension) throws MismatchedDimensionException
     {
         final int dimension = getDimension();
         if (dimension != expectedDimension)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.BAD_POINT_DIMENSION¤2,
-                                               new Integer(dimension), new Integer(expectedDimension)));
+            throw new MismatchedDimensionException(dimension, expectedDimension);
         }
     }
 

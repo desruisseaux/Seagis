@@ -23,6 +23,7 @@
 package net.seas.opengis.pt;
 
 // OpenGIS dependencies
+import org.opengis.pt.PT_Matrix;
 import org.opengis.pt.PT_Envelope;
 import org.opengis.pt.PT_CoordinatePoint;
 
@@ -82,6 +83,17 @@ public class Adapters
     }
 
     /**
+     * Returns an OpenGIS structure for a matrix.
+     * Changes to the returned structure will not affect the original matrix.
+     */
+    public PT_Matrix export(final Matrix matrix)
+    {
+        final PT_Matrix m = new PT_Matrix();
+        m.elt = matrix.getMatrix();
+        return m;
+    }
+
+    /**
      * Returns a coordinate point from an OpenGIS's structure.
      * Changes to the returned point will not affect the original structure.
      */
@@ -94,4 +106,11 @@ public class Adapters
      */
     public Envelope wrap(final PT_Envelope envelope)
     {return (envelope!=null) ? new Envelope(envelope.minCP.ord, envelope.maxCP.ord) : null;}
+
+    /**
+     * Returns a matrix from an OpenGIS's structure.
+     * Changes to the returned matrix will not affect the original structure.
+     */
+    public Matrix wrap(final PT_Matrix matrix)
+    {return (matrix!=null) ? new Matrix(matrix.elt) : null;}
 }

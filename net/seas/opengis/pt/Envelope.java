@@ -123,11 +123,11 @@ public final class Envelope implements Cloneable, Serializable
      *
      * @param  minCP Point containing minimum ordinate values.
      * @param  maxCP Point containing maximum ordinate values.
-     * @throws IllegalArgumentException if the two positions don't have the same dimension.
+     * @throws MismatchedDimensionException if the two positions don't have the same dimension.
      * @throws IllegalArgumentException if an ordinate value in the minimum point is not
      *         less than or equal to the corresponding ordinate value in the maximum point.
      */
-    public Envelope(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws IllegalArgumentException
+    public Envelope(final CoordinatePoint minCP, final CoordinatePoint maxCP) throws MismatchedDimensionException
     {this(minCP.ord, maxCP.ord);}
 
     /**
@@ -135,21 +135,34 @@ public final class Envelope implements Cloneable, Serializable
      *
      * @param  minCP Minimum ordinate values.
      * @param  maxCP Maximum ordinate values.
-     * @throws IllegalArgumentException if the two positions don't have the same dimension.
+     * @throws MismatchedDimensionException if the two positions don't have the same dimension.
      * @throws IllegalArgumentException if an ordinate value in the minimum point is not
      *         less than or equal to the corresponding ordinate value in the maximum point.
      */
-    Envelope(final double[] minCP, final double[] maxCP) throws IllegalArgumentException
+    Envelope(final double[] minCP, final double[] maxCP) throws MismatchedDimensionException
     {
         if (minCP.length != maxCP.length)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2,
-                                               new Integer(minCP.length), new Integer(maxCP.length)));
+            throw new MismatchedDimensionException(minCP.length, maxCP.length);
         }
         ord = new double[minCP.length + maxCP.length];
         System.arraycopy(minCP, 0, ord, 0,            minCP.length);
         System.arraycopy(maxCP, 0, ord, minCP.length, maxCP.length);
         checkCoherence();
+    }
+
+    /**
+     * <FONT COLOR="#FF6633">Determines whether or not this envelope
+     * is empty.</FONT> An envelope is non-empty only if it has a
+     * length greater that 0 along all dimensions.
+     */
+    public boolean isEmpty()
+    {
+        final int dimension = ord.length/2;
+        for (int i=0; i<dimension; i++)
+            if (!(ord[i] < ord[i+dimension])) // Use '!' in order to catch NaN
+                return true;
+        return false;
     }
 
     /**
@@ -161,9 +174,10 @@ public final class Envelope implements Cloneable, Serializable
      * ordinate have been ignored).
      *
      * @param  point The point to add.
-     * @throws IllegalArgumentException if the point doesn't have the expected dimension.
+     * @throws MismatchedDimensionException if the specified point doesn't have
+     *         the expected dimension.
      */
-    public void add(final CoordinatePoint point) throws IllegalArgumentException
+    public void add(final CoordinatePoint point) throws MismatchedDimensionException
     {
         final int dimension = ord.length/2;
         point.ensureDimensionMatch(dimension);
@@ -176,14 +190,37 @@ public final class Envelope implements Cloneable, Serializable
     }
 
     /**
+     * <FONT COLOR="#FF6633">Adds an envelope object to this envelope.</FONT>
+     * The resulting envelope is the union of the two <code>Envelope</code>
+     * objects.
+     *
+     * @param  envelope the <code>Envelope</code> to add to this envelope.
+     * @throws MismatchedDimensionException if the specified envelope doesn't
+     *         have the expected dimension.
+     */
+    public void add(final Envelope envelope) throws MismatchedDimensionException
+    {
+        final int dimension = ord.length/2;
+        envelope.ensureDimensionMatch(dimension);
+        for (int i=0; i<dimension; i++)
+        {
+            final double min = envelope.ord[i          ];
+            final double max = envelope.ord[i+dimension];
+            if (min < ord[i          ]) ord[i          ]=min;
+            if (max > ord[i+dimension]) ord[i+dimension]=max;
+        }
+    }
+
+    /**
      * <FONT COLOR="#FF6633">Tests if a specified coordinate is inside the boundary of this envelope.</FONT>
      *
      * @param  point The point to text.
      * @return <code>true</code> if the specified coordinates are inside the boundary
      *         of this envelope; <code>false</code> otherwise.
-     * @throws IllegalArgumentException if the point doesn't have the expected dimension.
+     * @throws MismatchedDimensionException if the specified point doesn't have
+     *         the expected dimension.
      */
-    public boolean contains(final CoordinatePoint point) throws IllegalArgumentException
+    public boolean contains(final CoordinatePoint point) throws MismatchedDimensionException
     {
         final int dimension = ord.length/2;
         point.ensureDimensionMatch(dimension);
@@ -192,9 +229,25 @@ public final class Envelope implements Cloneable, Serializable
             final double value = point.ord[i];
             if (!(value >= ord[i          ])) return false;
             if (!(value <= ord[i+dimension])) return false;
-            // Use '!' in order to take 'NaN' in acount.
+            // Use '!' in order to take 'NaN' in account.
         }
         return true;
+    }
+
+    /**
+     * Convenience method for checking the envelope's dimension validity.
+     * This method is usually call for argument checking.
+     *
+     * @param  expectedDimension Expected dimension for this envelope.
+     * @throws MismatchedDimensionException if this envelope doesn't have the expected dimension.
+     */
+    void ensureDimensionMatch(final int expectedDimension) throws MismatchedDimensionException
+    {
+        final int dimension = getDimension();
+        if (dimension != expectedDimension)
+        {
+            throw new MismatchedDimensionException(dimension, expectedDimension);
+        }
     }
 
     /**
@@ -229,6 +282,15 @@ public final class Envelope implements Cloneable, Serializable
      */
     public double getCenter(final int dimension)
     {return 0.5*(ord[dimension] + ord[dimension+ord.length/2]);}
+
+    /**
+     * <FONT COLOR="#FF6633">Returns the envelope length
+     * along the specified dimension.</FONT> This length
+     * is equals to the maximum ordinate minus the minimal
+     * ordinate.
+     */
+    public double getLength(final int dimension)
+    {return ord[dimension+ord.length/2] - ord[dimension];}
 
     /**
      * <FONT COLOR="#FF6633">Returns a {@link Rectangle2D} with the same bounds
