@@ -34,8 +34,8 @@ import net.seas.util.XArray;
  * This class catch all occurrences of <code>"\r"</code>, <code>"\n"</code> and
  * <code>"\r\n"</code>, and replace them by the platform depend EOL string
  * (<code>"\r\n"</code> on Windows, <code>"\n"</code> on Unix), or any other EOL
- * explicitly set at construction time. This writer will also remove trailing blanks
- * in every line.
+ * explicitly set at construction time. This writer also remove trailing blanks
+ * before end of lines.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -239,10 +239,23 @@ public class LineWriter extends FilterWriter
      */
     public void write(final char cbuf[], int offset, int length) throws IOException
     {
+        if (offset<0 || length<0 || (offset+length)>cbuf.length)
+        {
+            throw new IndexOutOfBoundsException();
+        }
+        if (length==0)
+        {
+            return;
+        }
         synchronized (lock)
         {
-            int upper = offset;
-            while (--length>=0)
+            if (skipCR && cbuf[offset]=='\n')
+            {
+                offset++;
+                length--;
+            }
+            int upper=offset;
+            for (; length!=0; length--)
             {
                 switch (cbuf[upper++])
                 {
@@ -250,23 +263,24 @@ public class LineWriter extends FilterWriter
                     {
                         writeLine(cbuf, offset, upper-1);
                         writeEOL();
+                        if (length!=0 && cbuf[upper]=='\n')
+                        {
+                            upper++;
+                            length--;
+                        }
                         offset=upper;
-                        skipCR=true;
                         break;
                     }
                     case '\n':
                     {
-                        if (!skipCR || (upper-offset)!=1)
-                        {
-                            writeLine(cbuf, offset, upper-1);
-                            writeEOL();
-                        }
+                        writeLine(cbuf, offset, upper-1);
+                        writeEOL();
                         offset=upper;
-                        skipCR=false;
                         break;
                     }
                 }
             }
+            skipCR = (cbuf[upper-1]=='\r');
             /*
              * Write the remainding characters and
              * put trailing blanks into the buffer.
@@ -300,10 +314,23 @@ public class LineWriter extends FilterWriter
      */
     public void write(final String string, int offset, int length) throws IOException
     {
+        if (offset<0 || length<0 || (offset+length)>string.length())
+        {
+            throw new IndexOutOfBoundsException();
+        }
+        if (length==0)
+        {
+            return;
+        }
         synchronized (lock)
         {
-            int upper = offset;
-            while (--length>=0)
+            if (skipCR && string.charAt(offset)=='\n')
+            {
+                offset++;
+                length--;
+            }
+            int upper=offset;
+            for (; length!=0; length--)
             {
                 switch (string.charAt(upper++))
                 {
@@ -311,23 +338,24 @@ public class LineWriter extends FilterWriter
                     {
                         writeLine(string, offset, upper-1);
                         writeEOL();
+                        if (length!=0 && string.charAt(upper)=='\n')
+                        {
+                            upper++;
+                            length--;
+                        }
                         offset=upper;
-                        skipCR=true;
                         break;
                     }
                     case '\n':
                     {
-                        if (!skipCR || (upper-offset)!=1)
-                        {
-                            writeLine(string, offset, upper-1);
-                            writeEOL();
-                        }
+                        writeLine(string, offset, upper-1);
+                        writeEOL();
                         offset=upper;
-                        skipCR=false;
                         break;
                     }
                 }
             }
+            skipCR = (string.charAt(upper-1)=='\r');
             /*
              * Write the remainding characters and
              * put trailing blanks into the buffer.

@@ -32,10 +32,8 @@ import net.seas.util.XString;
 
 
 /**
- * Write characters to a stream while expanding tabulations into spaces.
- * Tabulations are aligned at fixed positions. Its mean that the number
- * of spaces replacing a <code>'\t'</code> character will vary depending
- * the horizontal position where they appear.
+ * Write characters to a stream while expanding tabulations (<code>'\t'</code>)
+ * into spaces.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -46,7 +44,7 @@ public class TabExpanderWriter extends FilterWriter
      * Tabulation frequency (in number of spaces).
      */
     private int tabWidth = 8;
-    
+
     /**
      * Current column position.
      * Columns are numbered from 0.
@@ -88,9 +86,9 @@ public class TabExpanderWriter extends FilterWriter
      * apparait à la colonne #9.
      *
      * @param  tabWidth Nombre de caractères que représente chaque
-     *        tabulations. Ce nombre doit être supérieur à 0.
+     *         tabulations. Ce nombre doit être supérieur à 0.
      * @throws IllegalArgumentException si <code>tabWidth</code>
-     *        est inférieur ou égal à 0.
+     *         est inférieur ou égal à 0.
      */
     public void setTabWidth(final int tabWidth) throws IllegalArgumentException
     {
