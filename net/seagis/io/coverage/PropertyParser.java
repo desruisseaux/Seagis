@@ -204,6 +204,13 @@ public class PropertyParser
     }
 
     /**
+     * Returns the source file name or URL. This is the path specified
+     * during the last call to a <code>load(...)</code> method.
+     */
+    public String getSource()
+    {return source;}
+
+    /**
      * Read all properties from a text file. Default implementation
      * invokes {@link #parseLine} for each non-empty line found in
      * the file.
@@ -855,7 +862,7 @@ public class PropertyParser
     public void listProperties(final Writer out) throws IOException
     {
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        final String comments = (String) get(null);
+        final String comments = (String) get(null,null);
         if (comments!=null)
         {
             int stop = comments.length();

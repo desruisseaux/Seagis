@@ -165,8 +165,9 @@ public class MathTransformFactory
      * @param  dimension The source and target dimension.
      * @return The identity transform.
      */
-    public MathTransform createIdentityTransform(final int dimension)
+    public MathTransform createIdentityTransform(int dimension)
     {
+        dimension++; // Affine transform has one more row/column than dimension.
         final Matrix matrix = new Matrix(dimension);
         for (int i=0; i<dimension; i++)
             matrix.set(i, i, 1.0);
@@ -347,12 +348,23 @@ public class MathTransformFactory
      */
     public MathTransform createPassThroughTransform(final int firstAffectedOrdinate, final MathTransform subTransform, final int numTrailingOrdinates)
     {
-        if (firstAffectedOrdinate < 0) throw new IllegalArgumentException(String.valueOf(firstAffectedOrdinate));
-        if (numTrailingOrdinates  < 0) throw new IllegalArgumentException(String.valueOf(numTrailingOrdinates ));
+        if (firstAffectedOrdinate < 0)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2,
+                                         "firstAffectedOrdinate", new Integer(firstAffectedOrdinate)));
+        }
+        if (numTrailingOrdinates < 0)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2,
+                                           "numTrailingOrdinates", new Integer(numTrailingOrdinates)));
+        }
         if (firstAffectedOrdinate==0 && numTrailingOrdinates==0)
         {
             return subTransform;
         }
+        //
+        // Optimize the "Identity transform" case.
+        //
         if (subTransform.isIdentity())
         {
             final int dimension = subTransform.getDimSource();
@@ -362,7 +374,72 @@ public class MathTransformFactory
                 return createIdentityTransform(firstAffectedOrdinate + dimension + numTrailingOrdinates);
             }
         }
+        //
+        // Optimize the "Pass through case": this is done
+        // right into PassThroughTransform's constructor.
+        //
         return (MathTransform) pool.intern(new PassThroughTransform(firstAffectedOrdinate, subTransform, numTrailingOrdinates));
+    }
+
+    /**
+     * Creates a transform which retains only a portion of an other transform. For example
+     * if the source coordinate system has (<var>longitude</var>, <var>latitude</var>,
+     * <var>height</var>) values, then a sub-transform may be used to keep only the
+     * (<var>longitude</var>, <var>latitude</var>) part. In most cases, the created
+     * sub-transform is non-invertible since it loose informations.
+     * <br><br>
+     * This transform is a special case of a non-square matrix transform with less
+     * rows than columns. However, using a <code>createSubMathTransfom(...)</code>
+     * method makes it easier to optimize some common cases.
+     *
+     * @param transform The transform.
+     * @param lower Index of the first ordinate to keep.
+     * @param upper Index of the first ordinate. Must be greater than <code>lower</code>.
+     */
+    public MathTransform createSubMathTransform(final int lower, final int upper, final MathTransform transform)
+    {
+        if (lower<0 || lower>=upper)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2,
+                                                                         "lower", new Integer(lower)));
+        }
+        final int dimTarget = transform.getDimTarget();
+        if (upper > dimTarget)
+        {
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ILLEGAL_ARGUMENT_$2,
+                                                                         "upper", new Integer(upper)));
+        }
+        if (lower==0 && upper==dimTarget)
+        {
+            return transform;
+        }
+        if (transform instanceof PassThroughTransform)
+        {
+            // Special case for pass through transform:
+            // Compute lower and upper values relatives
+            // to the underlying sub-transform.
+            final PassThroughTransform passThrough = (PassThroughTransform) transform;
+            final int lowerTr = lower - passThrough.firstAffectedOrdinate;
+            final int upperTr = upper - passThrough.firstAffectedOrdinate;
+            final int passDim = passThrough.transform.getDimTarget();
+            if (lowerTr>=0 && upperTr<=passDim)
+            {
+                return createSubMathTransform(lowerTr, upperTr, passThrough.transform);
+            }
+            if (lowerTr<=0 && upperTr>=passDim)
+            {
+                return createPassThroughTransform(-lowerTr, passThrough.transform, upperTr-passDim);
+            }
+        }
+        // General case: use a matrix.
+        final int dimOutput = upper-lower;
+        final Matrix matrix = new Matrix(dimOutput+1, dimTarget+1);
+        for (int i=lower; i<upper; i++)
+        {
+            matrix.set(i-lower, i, 1);
+        }
+        matrix.set(dimOutput, dimTarget, 1); // Affine transform has one more row/column than dimension.
+        return createConcatenatedTransform(transform, createAffineTransform(matrix));
     }
 
     /**

@@ -62,18 +62,18 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
     /**
      * Index of the first affected ordinate.
      */
-    private final int firstAffectedOrdinate;
+    protected final int firstAffectedOrdinate;
 
     /**
      * Number of unaffected ordinates after the affected ones.
      * Always 0 when used through the strict OpenGIS API.
      */
-    private final int numTrailingOrdinates;
+    protected final int numTrailingOrdinates;
 
     /**
      * The sub transform.
      */
-    private final MathTransform transform;
+    protected final MathTransform transform;
 
     /**
      * The inverse transform. This field
@@ -92,9 +92,19 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
      */
     public PassThroughTransform(final int firstAffectedOrdinate, final MathTransform transform, final int numTrailingOrdinates)
     {
-        this.firstAffectedOrdinate = firstAffectedOrdinate;
-        this.numTrailingOrdinates  = numTrailingOrdinates;
-        this.transform             = transform;
+        if (transform instanceof PassThroughTransform)
+        {
+            final PassThroughTransform passThrough = (PassThroughTransform) transform;
+            this.firstAffectedOrdinate = passThrough.firstAffectedOrdinate + firstAffectedOrdinate;
+            this.numTrailingOrdinates  = passThrough.numTrailingOrdinates  + numTrailingOrdinates;
+            this.transform             = passThrough.transform;
+        }
+        else
+        {
+            this.firstAffectedOrdinate = firstAffectedOrdinate;
+            this.numTrailingOrdinates  = numTrailingOrdinates;
+            this.transform             = transform;
+        }
     }
     
     /**
@@ -196,7 +206,9 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         //                      [                  ]
         //                      [                  ]
         for (int j=0; j<firstAffectedOrdinate; j++)
+        {
             matrix.set(j,j,1);
+        }
 
         //  Set central part:   [ 1  0  0  0  0  0 ]
         //                      [ 0  1  0  0  0  0 ]
@@ -212,7 +224,10 @@ final class PassThroughTransform extends AbstractMathTransform implements Serial
         //                      [ 0  0  0  0  0  1 ]
         final int offset = nCols-nRows;
         for (int j=pointDim-numTrailingOrdinates; j<pointDim; j++)
+        {
+            matrix.set(j, j,        0);
             matrix.set(j, j+offset, 1);
+        }
 
         return matrix;
     }
