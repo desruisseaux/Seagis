@@ -36,7 +36,7 @@ import fr.ird.database.coverage.CoverageEntry;
 
 
 /**
- * Evénements représentant un changement d'image.
+ * Evénement représentant un changement d'image.
  *
  * @version $Id$
  * @author Martin Desruisseaux

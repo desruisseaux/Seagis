@@ -232,8 +232,8 @@ final class ShapeBroker implements Shape, PathIterator {
     }
 
     /**
-     * Make sure the specified condition is true. Otherwise,
-     * throws a {@link IllegalPathStateException}.
+     * Make sure the specified condition is true.
+     * Otherwise, throws a {@link IllegalPathStateException}.
      */
     private static void ensure(final boolean check) {
         if (!check) {

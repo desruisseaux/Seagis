@@ -30,7 +30,7 @@ import java.util.EventListener;
 
 
 /**
- * Interface des objets interessés à être informé des changements d'images.
+ * Interface des objets interessés à être informés des changements d'images.
  *
  * @version $Id$
  * @author Martin Desruisseaux

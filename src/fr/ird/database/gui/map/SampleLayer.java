@@ -72,7 +72,7 @@ import fr.ird.database.sample.SampleEntry;
 
 /**
  * Base class for layers showing sample positions. Default implementation show the
- * geographic extent of each catch (as returned by {@link SampleEntry#getShape}) using
+ * geographic extent of each sample (as returned by {@link SampleEntry#getShape}) using
  * the dominant species's color.
  *
  * @version $Id$
@@ -94,34 +94,34 @@ public class SampleLayer extends RenderedMarks {
 
     /**
      * The display type for marks. May be one of the following constants:
-     * {@link #POSITIONS_ONLY}, {@link #GEAR_COVERAGES} or {@link #CATCH_AMOUNTS}.
+     * {@link #SAMPLE_POSITIONS}, {@link #SAMPLE_COVERAGES} or {@link #SAMPLE_VALUES}.
      */
-    private int markType = POSITIONS_ONLY;
+    private int markType = SAMPLE_POSITIONS;
 
     /**
      * The mark type for displaying only catch positions. Samples are drawn
      * using an ellipse or any other shape returned by {@link #getMarkShape}.
      */
-    public static final int POSITIONS_ONLY = 0;
+    public static final int SAMPLE_POSITIONS = 0;
 
     /**
      * The mark type for displaying the geographic coverage of fishering gears.
      * For example, longlines may be displayed as straight or curved lines.
      */
-    public static final int GEAR_COVERAGES = 1;
+    public static final int SAMPLE_COVERAGES = 1;
 
     /**
      * The mark type for a graph of catch amount by species. For
      * example, the graph may be a pie showing catch by species.
      */
-    public static final int CATCH_AMOUNTS = 2;
+    public static final int SAMPLE_VALUES = 2;
 
 
 
     /////////////////////////////////////////////////////////////////////
     ////                                                             ////
-    ////    Specific to GEAR_COVERAGES mark type                     ////
-    ////    (except 'colors' which is shared with POSITIONS_ONLY)    ////
+    ////    Specific to SAMPLE_COVERAGES mark type                   ////
+    ////    (except 'colors' which is shared with SAMPLE_POSITIONS)  ////
     ////                                                             ////
     /////////////////////////////////////////////////////////////////////
     /**
@@ -130,14 +130,14 @@ public class SampleLayer extends RenderedMarks {
     private Color nullColor = Color.BLACK;
 
     /**
-     * Colors to use for each catch in the {@link #samples} list.
+     * Colors to use for each sample in the {@link #samples} list.
      * This is usually the color for the dominant species.
      */
     private Color[] colors;
 
     /**
      * Tell if {@link #paint} should use {@link Graphics2D#fill}
-     * for a particular catch. If <code>false</code>, then only
+     * for a particular sample. If <code>false</code>, then only
      * {@link Graphics2D#draw} will be used.
      */
     private boolean[] useFill;
@@ -152,7 +152,7 @@ public class SampleLayer extends RenderedMarks {
 
     /////////////////////////////////////////////////////////////////////
     ////                                                             ////
-    ////    Specific to CATCH_AMOUNTS mark type                      ////
+    ////    Specific to SAMPLE_VALUES mark type                      ////
     ////                                                             ////
     /////////////////////////////////////////////////////////////////////
     /**
@@ -250,7 +250,7 @@ public class SampleLayer extends RenderedMarks {
      */
     final void updateTypicalAmplitude() {
         final int oldMarkType = markType;
-        markType = CATCH_AMOUNTS; // Needed for "amplitude" calculations.
+        markType = SAMPLE_VALUES; // Needed for "amplitude" calculations.
         try {
             typicalAmplitude = super.getTypicalAmplitude();
         } finally {
@@ -281,7 +281,7 @@ public class SampleLayer extends RenderedMarks {
 
     /**
      * Validate {@link #colors}, {@link #useFill} and {@link #hasShape}
-     * after new catch entries have been specified.
+     * after new sample entries have been specified.
      */
     private void validate() {
         hasShape = false;
@@ -292,16 +292,16 @@ public class SampleLayer extends RenderedMarks {
             final SampleEntry sample = samples.get(i);
             final Shape shape;
             switch (markType) {
-                case CATCH_AMOUNTS : // fall through
-                case POSITIONS_ONLY: shape=null;              break;
-                case GEAR_COVERAGES: shape=sample.getShape(); break;
+                case SAMPLE_VALUES    : // fall through
+                case SAMPLE_POSITIONS : shape=null;              break;
+                case SAMPLE_COVERAGES : shape=sample.getShape(); break;
                 default: throw new IllegalStateException();
             }
             final Species species = sample.getDominantSpecies();
             colors [i] = (species!=null) ? getIcon(species).getColor() : nullColor;
             useFill[i] = (shape==null);
             /*
-             * Expand the bounding box by the catch's geographic extent.
+             * Expand the bounding box by the sample's geographic extent.
              */
             if (!useFill[i]) {
                 hasShape = true;
@@ -312,7 +312,7 @@ public class SampleLayer extends RenderedMarks {
                     geographicArea.add(bounds);
                 }
             } else {
-                // The geographic extent for this catch is unknow.
+                // The geographic extent for this sample is unknow.
                 // Just expand the bounding box by the coordinate point.
                 final Point2D point = sample.getCoordinate();
                 if (point != null) {
@@ -354,15 +354,15 @@ public class SampleLayer extends RenderedMarks {
      */
     public double getTypicalAmplitude() {
         switch (markType) {
-            case GEAR_COVERAGES: // fall through
-            case POSITIONS_ONLY: return 1;
-            case CATCH_AMOUNTS : return typicalAmplitude;
+            case SAMPLE_COVERAGES : // fall through
+            case SAMPLE_POSITIONS : return 1;
+            case SAMPLE_VALUES    : return typicalAmplitude;
             default: throw new IllegalStateException();
         }
     }
 
     /**
-     * Returns an iterator for iterating through catch marks.
+     * Returns an iterator for iterating through sample marks.
      */
     public MarkIterator getMarkIterator() {
         return new Iterator();
@@ -396,17 +396,17 @@ public class SampleLayer extends RenderedMarks {
     }
 
     /**
-     * Sets the mark type for catch positions. Mark may be only a circle showing
-     * positions, a shape showing the gear coverage, or a plot showing catch amounts
+     * Sets the mark type for sample positions. Mark may be only a circle showing
+     * positions, a shape showing the gear coverage, or a plot showing sample amounts
      * by species.
      *
      * @param type One of the following constants:
-     *             {@link #POSITIONS_ONLY},
-     *             {@link #GEAR_COVERAGES} or
-     *             {@link #CATCH_AMOUNTS}.
+     *             {@link #SAMPLE_POSITIONS},
+     *             {@link #SAMPLE_COVERAGES} or
+     *             {@link #SAMPLE_VALUES}.
      */
     public void setMarkType(final int type) {
-        if (type>=POSITIONS_ONLY && type<=CATCH_AMOUNTS) {
+        if (type>=SAMPLE_POSITIONS && type<=SAMPLE_VALUES) {
             if (markType != type) {
                 this.markType = type;
                 validate();
@@ -419,14 +419,14 @@ public class SampleLayer extends RenderedMarks {
     }
 
     /**
-     * Returns the mark type for catch positions.
+     * Returns the mark type for sample positions.
      */
     public int getMarkType() {
         return markType;
     }
 
     /**
-     * An iterator for iterating through catch data.
+     * An iterator for iterating through sample data.
      */
     private final class Iterator extends MarkIterator {
         /**
@@ -471,35 +471,35 @@ public class SampleLayer extends RenderedMarks {
         }
 
         /**
-         * Returns <code>true</code> if a catch is to be displayed.
+         * Returns <code>true</code> if a sample is to be displayed.
          */
         public boolean visible() {
             switch (markType) {
-                case CATCH_AMOUNTS : // fall through
-                case POSITIONS_ONLY: return super.visible();
-                case GEAR_COVERAGES: return !(hasShape && useFill[index]);
+                case SAMPLE_VALUES    : // fall through
+                case SAMPLE_POSITIONS : return super.visible();
+                case SAMPLE_COVERAGES : return !(hasShape && useFill[index]);
                 default: throw new IllegalStateException();
             }
         }
 
         /**
-         * Returns a catch "amplitude". If samples are to be displayed as
-         * a plot of the catch amount by species, then this method returns
-         * a number proportional to the square root of catch amount. This
+         * Returns a sample "amplitude". If samples are to be displayed as
+         * a plot of the sample amount by species, then this method returns
+         * a number proportional to the square root of sample amount. This
          * ensure that a plot with twice the samples will appears as a circle
          * with twice the superficy.
          */
         public double amplitude() {
             switch (markType) {
-                case GEAR_COVERAGES: // fall through
-                case POSITIONS_ONLY: return super.amplitude();
-                case CATCH_AMOUNTS : return Math.sqrt(samples.get(index).getValue());
+                case SAMPLE_COVERAGES : // fall through
+                case SAMPLE_POSITIONS : return super.amplitude();
+                case SAMPLE_VALUES    : return Math.sqrt(samples.get(index).getValue());
                 default: throw new IllegalStateException();
             }
         }
 
         /**
-         * Returns a coordinates for a catch. If the catch cover a wide area (for
+         * Returns a coordinates for a sample. If the sample cover a wide area (for
          * example a longline), the returned coordinate may be some middle point.
          */
         public Point2D position() {
@@ -507,17 +507,17 @@ public class SampleLayer extends RenderedMarks {
         }
 
         /**
-         * Returns the geographic extent for a catch, if there is one. If may be for example
+         * Returns the geographic extent for a sample, if there is one. If may be for example
          * a {@link Line2D} object where (x1,y1) and (x2,y2) are equal to starting and ending
          * points (in geographic coordinate) for a longline. If there is no known geographic
-         * extent for the specified catch, or if the geographic extent is not to be displayed,
+         * extent for the specified sample, or if the geographic extent is not to be displayed,
          * then this method returns <code>null</code>.
          */
         public Shape geographicArea() {
             switch (markType) {
-                case CATCH_AMOUNTS : // fall through
-                case POSITIONS_ONLY: return super.geographicArea();
-                case GEAR_COVERAGES: return samples.get(index).getShape();
+                case SAMPLE_VALUES    : // fall through
+                case SAMPLE_POSITIONS : return super.geographicArea();
+                case SAMPLE_COVERAGES : return samples.get(index).getShape();
                 default: throw new IllegalStateException();
             }
         }
@@ -526,7 +526,7 @@ public class SampleLayer extends RenderedMarks {
          * Returns a shape model for the mark, or <code>null</code> if there
          * is none. The shape use pixels coordinates and is centered at (0,0).
          *
-         * @param  index The catch index.
+         * @param  index The sample index.
          * @return A model for the mark. For efficienty raisons, this method
          *         may reuse and modify a previously returned mark model. You
          *         must copy the returned shape if you want to protect it from
@@ -534,9 +534,9 @@ public class SampleLayer extends RenderedMarks {
          */
         public Shape markShape() {
             switch (markType) {
-                case GEAR_COVERAGES: // fall through
-                case POSITIONS_ONLY: return super.markShape();
-                case CATCH_AMOUNTS: {
+                case SAMPLE_COVERAGES: // fall through
+                case SAMPLE_POSITIONS: return super.markShape();
+                case SAMPLE_VALUES: {
                     final SampleEntry   sample = samples.get(index);
                     final Set<Species> species = sample.getSpecies();
                     final int            count = species.size();
@@ -553,7 +553,7 @@ public class SampleLayer extends RenderedMarks {
                     }
                     /*
                      * At this stage, we know that we have to draw a plot
-                     * of catch amount for at least two species.   Create
+                     * of sample amount for at least two species.  Create
                      * necessary objects if they were not already created.
                      */
                     if (circle == null) {
@@ -584,7 +584,7 @@ public class SampleLayer extends RenderedMarks {
         }
 
         /**
-         * Draw a mark for a catch position.
+         * Draw a mark for a sample position.
          */
         protected void paint(final Graphics2D      graphics,
                              final Shape           geographicArea,
@@ -597,8 +597,8 @@ public class SampleLayer extends RenderedMarks {
             assert count == samples.size();
             assert index < count : index;
             switch (markType) {
-                case POSITIONS_ONLY: // fall through
-                case GEAR_COVERAGES: {
+                case SAMPLE_POSITIONS: // fall through
+                case SAMPLE_COVERAGES: {
                     graphics.setColor(colors[index]);
                     if (useFill[index]) {
                         graphics.fill(markShape);
@@ -607,7 +607,7 @@ public class SampleLayer extends RenderedMarks {
                     graphics.draw(markShape);
                     break;
                 }
-                case CATCH_AMOUNTS: {
+                case SAMPLE_VALUES: {
                     final SampleEntry   sample = samples.get(index);
                     final Set<Species> species = sample.getSpecies();
                     final int            count = species.size();
@@ -635,9 +635,9 @@ public class SampleLayer extends RenderedMarks {
         }
 
         /**
-         * Returns a string representation for the catch at the specified index.
+         * Returns a string representation for the sample at the specified index.
          * This string will be displayed as a tool tip when the mouse cursor is
-         * over the catch.
+         * over the sample.
          */
         protected String getToolTipText(final GeoMouseEvent event) {
             if (format == null) {
