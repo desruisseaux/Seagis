@@ -65,6 +65,7 @@ import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
+import fr.ird.io.IsolineFactory;
 
 // Logging
 import java.util.logging.Level;
@@ -113,16 +114,6 @@ import net.seagis.io.DefaultFileFilter;
  */
 public class Processor extends Console
 {
-    /**
-     * The bathymetry to put over images.
-     */
-    private static final String SOURCE_BATHY = "compilerData/map/Méditerranée.asc";
-
-    /**
-     * Cache to use for serialized bathymetry.
-     */
-    private static final String CACHED_BATHY = "applicationData/cache/Méditerranée.serialized";
-
     /**
      * The grid coverage processor. Will be
      * constructed only when first needed.
@@ -173,7 +164,12 @@ public class Processor extends Console
     /**
      * Isolignes formant la bathymétrie.
      */
-    private final Isoline[] isolines;
+    private final IsolineFactory isolineFactory;
+
+    /**
+     * Isolignes a afficher sur les images.
+     */
+    private final float[] isolines;
 
     /**
      * Panneau dans lequel placer les images affichées.
@@ -181,6 +177,12 @@ public class Processor extends Console
      * fois où elle sera nécessaire.
      */
     private transient JTabbedPane tabbedPane;
+
+    /**
+     * Indique s'il faut afficher toute la trace
+     * de l'exception en cas d'erreur.
+     */
+    private boolean stackTrace=false;
 
     /**
      * Point d'entré du programme.
@@ -243,16 +245,24 @@ public class Processor extends Console
         final int        groupID;
         try
         {
-            sources       = getFiles  ("-sources");
-            updateDB      = hasFlag  ("-updateDB");
-            group         = getParameter("-group");
-            bathy         = getParameter("-bathy");
-            destination   = getParameter("-destination");
-            interpolation = getParameter("-interpolation");
-            checkRemainingArguments(0);
+            stackTrace       = hasFlag("-stackTrace");
+            sources          = getFiles  ("-sources");
+            updateDB         = hasFlag  ("-updateDB");
+            group            = getParameter("-group");
+            bathy            = getParameter("-bathy");
+            destination      = getParameter("-destination");
+            interpolation    = getParameter("-interpolation");
+            isolineFactory   = new IsolineFactory("Méditerranée");
             this.destination = (destination!=null) ? new File(destination) : null;
+            checkRemainingArguments(0);
             if (sources==null)
             {
+                /////////////////////////////////////////////////////
+                ////                                             ////
+                ////    If no input was specified, display       ////
+                ////    the help screen and stop the program.    ////
+                ////                                             ////
+                /////////////////////////////////////////////////////
                 out.println("Usage: -sources       [fichiers] (exemple: \"*.txt\")\n"+
                             "       -destination   [Répertoire de destination]\n"+
                             "       -interpolation [NearestNeighbor (défaut) | Bilinear | Bicubic]\n"+
@@ -267,12 +277,12 @@ public class Processor extends Console
                             "être affichées.\n"+
                             "\n"+
                             "Les profondeurs bathymétriques disponibles sont (en mètres):");
-                isolines = getIsolines();
                 String str; int length=8,spaces=8;
+                isolines = isolineFactory.getAvailableValues();
                 for (int i=isolines.length; --i>=0;)
                 {
                     out.print(Utilities.spaces(spaces));
-                    out.print(str = String.valueOf(-Math.round(isolines[i].value)));
+                    out.print(str = String.valueOf(-Math.round(isolines[i])));
                     if (i!=0)
                     {
                         out.print(','); spaces=1;
@@ -283,6 +293,11 @@ public class Processor extends Console
                 }
                 throw new ThreadDeath(); // Stop the program.
             }
+            /////////////////////////////////////////////
+            ////                                     ////
+            ////    Open the database connection.    ////
+            ////                                     ////
+            /////////////////////////////////////////////
             if (group==null)
             {
                 throw new MissingParameterException("L'argument -group est obligatoire", "group");
@@ -297,7 +312,6 @@ public class Processor extends Console
                 database.close();
                 throw new IllegalArgumentException("Code de groupe inconnu: "+groupID);
             }
-            isolines    = getIsolines(bathy);
             categories  = format.getCategoryLists();
             if (updateDB)
             {
@@ -305,6 +319,21 @@ public class Processor extends Console
                 tableFiller.setGroup(groupID);
             }
             else tableFiller = null;
+            /////////////////////////////////////////////
+            ////                                     ////
+            ////    Get the requested bathymetry.    ////
+            ////                                     ////
+            /////////////////////////////////////////////
+            if (bathy!=null)
+            {
+                final StringTokenizer tk = new StringTokenizer(bathy, ",");
+                isolines = new float[tk.countTokens()];
+                for (int i=0; tk.hasMoreTokens(); i++)
+                {
+                    isolines[i] = -Float.parseFloat(tk.nextToken());
+                }
+            }
+            else isolines = null;
         }
         catch (Exception exception)
         {
@@ -348,88 +377,6 @@ public class Processor extends Console
         {
             handleException(exception, methodName);
         }
-    }
-
-    /**
-     * Read isolines and retains only the
-     * ones specified in the argument list.
-     */
-    private Isoline[] getIsolines(final String args) throws IOException, TransformException
-    {
-        if (args==null) return null;
-        final Isoline[] isolines = getIsolines();
-        final List<Isoline> keep = new ArrayList<Isoline>(isolines.length);
-        final StringTokenizer tk = new StringTokenizer(args, ",");
-        while (tk.hasMoreTokens())
-        {
-            final float value = -Float.parseFloat(tk.nextToken());
-            for (int i=0; i<isolines.length; i++)
-                if (isolines[i].value == value)
-                    keep.add(isolines[i]);
-        }
-        return keep.toArray(new Isoline[keep.size()]);
-    }
-
-    /**
-     * Read all isolines. This method first try to load isolines
-     * from "applicationData/cache/Méditerranée.serialized".  If
-     * this loading fails, then try to load
-     * "compilerData/map/Méditerranée.asc".
-     */
-    private Isoline[] getIsolines() throws IOException, TransformException
-    {
-        final ClassLoader loader = Processor.class.getClassLoader();
-        final URL cacheURL = loader.getResource(CACHED_BATHY);
-        if (cacheURL!=null)
-        {
-            final ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(cacheURL.openStream()));
-            try
-            {
-                final Isoline[] isolines = (Isoline[]) in.readObject();
-                in.close();
-                return isolines;
-            }
-            catch (IOException exception)
-            {
-                Utilities.unexpectedException("fr.ird", "Processor", "getIsolines", exception);
-                in.close();
-            }
-            catch (ClassNotFoundException exception)
-            {
-                Utilities.unexpectedException("fr.ird", "Processor", "getIsolines", exception);
-                in.close();
-            }
-        }
-        //
-        // Failed to load the bathymetry from the cache.
-        // Try to load it from the GEBCO ASCII file.
-        //
-        final GEBCOReader reader = new GEBCOReader();
-        final URL sourceURL = loader.getResource(SOURCE_BATHY);
-        if (sourceURL==null)
-        {
-            throw new FileNotFoundException(SOURCE_BATHY);
-        }
-        reader.setInput(sourceURL);
-        final Isoline[] isolines = reader.read();
-        final NumberFormat pf=NumberFormat.getPercentInstance(locale);
-        for (int i=0; i<isolines.length; i++)
-        {
-            final Isoline iso=isolines[i];
-            out.print("Isoligne ");
-            out.print(iso.value);
-            out.print(" décimée de ");
-            out.println(pf.format(iso.compress(0.75f)));
-        }
-        //
-        // Save the bathymetry in the cache for future use.
-        // The working directory must be set to the fr.ird
-        // root.
-        //
-        final ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(CACHED_BATHY)));
-        out.writeObject(isolines);
-        out.close();
-        return isolines;
     }
 
     /**
@@ -524,9 +471,13 @@ public class Processor extends Console
         {
             for (int i=0; i<isolines.length; i++)
             {
-                final IsolineLayer layer = new IsolineLayer(isolines[i]);
-                layer.setContour(Color.white);
-                map.addLayer(layer);
+                final Isoline isoline = isolineFactory.get(isolines[i]);
+                if (isoline!=null)
+                {
+                    final IsolineLayer layer = new IsolineLayer(isoline);
+                    layer.setContour(Color.white);
+                    map.addLayer(layer);
+                }
             }
         }
         EventQueue.invokeLater(new Runnable()
@@ -588,8 +539,8 @@ public class Processor extends Console
             gr.setColor(Color.white);
             for (int i=0; i<isolines.length; i++)
             {
-                final Isoline isoline = isolines[i];
-                try
+                final Isoline isoline = isolineFactory.get(isolines[i]);
+                if (isoline!=null) try
                 {
                     isoline.setCoordinateSystem(coverage.getCoordinateSystem());
                     gr.draw(isoline);
@@ -631,9 +582,17 @@ public class Processor extends Console
      */
     private void handleException(final Exception exception, final String methodName)
     {
-        out.print(Utilities.getShortClassName(exception));
-        out.print(": ");
-        out.println(exception.getLocalizedMessage());
+        if (stackTrace)
+        {
+            exception.printStackTrace(out);
+        }
+        else
+        {
+            out.print(Utilities.getShortClassName(exception));
+            out.print(": ");
+            out.println(exception.getLocalizedMessage());
+        }
+        out.flush();
         //
         // Log the error using FINE level (instead of WARNING)
         // since we don't want it to be dumped on the console

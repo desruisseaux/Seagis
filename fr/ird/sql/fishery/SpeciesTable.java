@@ -158,7 +158,9 @@ final class SpeciesTable extends Table
             {
                 final String[] names = new String[locales.length];
                 for (int i=0; i<names.length; i++)
+                {
                     names[i] = result.getString(i+1);
+                }
                 final Species sp = new FishSpecies(locales, names, COLORS[species.size() % COLORS.length]);
                 species.add(sp);
             }

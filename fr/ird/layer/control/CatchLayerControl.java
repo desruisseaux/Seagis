@@ -51,6 +51,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import javax.swing.event.EventListenerList;
 
+// Resources
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
+
 
 /**
  * Contrôleur d'une couche {@link CatchLayer}.
@@ -103,9 +107,7 @@ public final class CatchLayerControl extends LayerControl
      * Retourne le nom de cette couche.
      */
     public String getName()
-    {
-        return "Captures"; // TODO
-    }
+    {return Resources.format(ResourceKeys.CATCHS);}
 
     /**
      * Configure des couches en fonction de cet objet <code>LayerControl</code>.
@@ -126,9 +128,11 @@ public final class CatchLayerControl extends LayerControl
         if (layers!=null && layers.length==1 && layers[0] instanceof CatchLayer)
         {
             layer = (CatchLayer) layers[0];
+            layer.setTimeRange(entry.getTimeRange());
         }
         else
         {
+            catchTable.setTimeRange(entry.getTimeRange());
             layer = new CatchLayer(catchTable);
         }
         if (controler!=null)
@@ -162,14 +166,16 @@ public final class CatchLayerControl extends LayerControl
                     final Set<Species> tmpSpecies = new LinkedHashSet<Species>(2*icons.length);
                     final Set<Species> newSpecies;  // Will be set later
                     final int         oldMarkType = markType;
-                    final int         newMarkType = (icons!=null) ? CatchLayer.CATCH_AMOUNTS : CatchLayer.GEAR_COVERAGES;
-                    this.markType = newMarkType;
+                    final int         newMarkType = controler.isCatchAmountSelected() ?
+                                                             CatchLayer.CATCH_AMOUNTS :
+                                                             CatchLayer.GEAR_COVERAGES;
                     for (int i=0; i<icons.length; i++)
                     {
                         tmpSpecies.add(icons[i].getSpecies());
                     }
                     catchTable.setSpecies(tmpSpecies);
                     newSpecies = catchTable.getSpecies(); // Get a more compact and immutable view.
+                    this.markType = newMarkType;
                     fireStateChanged(new Edit()
                     {
                         protected void edit(final boolean redo)

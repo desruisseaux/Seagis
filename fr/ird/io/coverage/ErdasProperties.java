@@ -61,7 +61,9 @@ final class ErdasProperties extends AbstractProperties
         "False easting",   "false_easting",      // e.g.: "False easting = 0.00000000"
         "False northing",  "false_northing",     // e.g.: "False northing = 0.00000000"
         "x_size",          "Image width",        // e.g.: "x_size = 2459"
-        "y_size",          "Image height"        // e.g.: "y_size = 2128"
+        "y_size",          "Image height",       // e.g.: "y_size = 2128"
+        "ncol",            "Image width",        // e.g.: "ncol : 2038"
+        "nlig",            "Image height"        // e.g.: "nlig : 1130"
     };
 
     /**
@@ -98,6 +100,7 @@ final class ErdasProperties extends AbstractProperties
                     if (!Character.isSpaceChar(c))
                     {
                         if (c=='=') scan++;
+                        if (c==':') scan++;
                         if (scan==keyLength) break;
                         add(key, line.substring(scan));
                         return true;
@@ -127,8 +130,11 @@ final class ErdasProperties extends AbstractProperties
             final String cmp = KEYS[i];
             if (cmp!=null && cmp.equalsIgnoreCase(key))
             {
-                key = KEYS[i-1];
-                break;
+                if (super.get(KEYS[i-1], null)!=null)
+                {
+                    key = KEYS[i-1];
+                    break;
+                }
             }
         }
         /*

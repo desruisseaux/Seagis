@@ -59,6 +59,9 @@ import fr.ird.resources.ResourceKeys;
  */
 public class FisheryDataBase extends DataBase
 {
+    /** TODO: Temporary switch */
+    private static final boolean SEINES = true;
+
     /**
      * Retourne une des préférences du système.  Cette méthode définit les
      * paramètres par défaut qui seront utilisés lorsque l'utilisateur n'a
@@ -84,8 +87,9 @@ public class FisheryDataBase extends DataBase
      */
     private static final String[] DEFAULT_PROPERTIES=
     {
-        Table.SPECIES, SpeciesTable      .SQL_SELECT,
-        Table.CATCHS,  LonglineCatchTable.SQL_SELECT
+        Table.SPECIES,   SpeciesTable      .SQL_SELECT,
+        Table.LONGLINES, LonglineCatchTable.SQL_SELECT,
+        Table.SEINES,    SeineCatchTable   .SQL_SELECT
     };
 
     /**
@@ -97,7 +101,8 @@ public class FisheryDataBase extends DataBase
     private static final int[] PROPERTY_NAMES=
     {
         ResourceKeys.SQL_SPECIES,
-        ResourceKeys.SQL_LONGLINES
+        ResourceKeys.SQL_LONGLINES,
+        ResourceKeys.SQL_SEINES
     };
 
     /**
@@ -108,8 +113,14 @@ public class FisheryDataBase extends DataBase
     private static String getDefaultURL()
     {
         Table.logger.log(loadDriver(getPreference(DRIVER)));
+        if (SEINES) return "jdbc:odbc:SEAS-Sennes"; // TODO: temporary patch
         return getPreference(SOURCE);
     }
+
+    /**
+     * La table des captures à utiliser.
+     */
+    private final String catchTable = SEINES ? Table.SEINES : Table.LONGLINES;
 
     /**
      * Ouvre une connection avec une base de données par défaut.
@@ -143,7 +154,7 @@ public class FisheryDataBase extends DataBase
     {
         final SpeciesTable   spTable = new SpeciesTable(connection);
         final Statement    statement = connection.createStatement();
-        final ResultSet       result = statement.executeQuery("SELECT * FROM "+Table.CATCHS);
+        final ResultSet       result = statement.executeQuery("SELECT * FROM "+catchTable);
         final Set<Species>   species = spTable.getSpecies(result.getMetaData());
         result   .close();
         statement.close();
@@ -161,7 +172,16 @@ public class FisheryDataBase extends DataBase
      */
     public CatchTable getCatchTable(final Collection<Species> species) throws SQLException
     {
-        return new LonglineCatchTable(connection, timezone, new LinkedHashSet<Species>(species));
+        final Set<Species> speciesSet = (species instanceof Set<Species>) ?
+              (Set<Species>) species : new LinkedHashSet<Species>(species);
+        if (SEINES)
+        {
+            return new SeineCatchTable(connection, timezone, speciesSet);
+        }
+        else
+        {
+            return new LonglineCatchTable(connection, timezone, speciesSet);
+        }
     }
 
     /**

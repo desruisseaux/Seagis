@@ -35,6 +35,7 @@ import java.io.FileNotFoundException;
 import net.seas.map.Layer;
 import net.seas.map.Isoline;
 import net.seas.map.layer.IsolineLayer;
+import fr.ird.io.IsolineFactory;
 
 // Graphical user interface
 import java.awt.Color;

@@ -77,6 +77,7 @@ public class ImageDataBase extends DataBase
         final IIORegistry registry = IIORegistry.getDefaultInstance();
         registry.registerServiceProvider(new fr.ird.io.image.Aviso_ASC());
         registry.registerServiceProvider(new fr.ird.io.image.USRelaxed_ASC());
+        registry.registerServiceProvider(new net.seagis.io.image.RawBinaryImageReader.Spi());
         // Note: previous SPIs (Aviso_ASC, etc.) will be discarted, since
         //       IIORegistry register only singletons for each leaf class.
     }

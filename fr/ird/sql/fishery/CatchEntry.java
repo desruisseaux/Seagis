@@ -33,6 +33,7 @@ import fr.ird.animat.Species;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 // Divers
 import java.util.Set;
@@ -79,6 +80,18 @@ public interface CatchEntry extends Entry
      * Les éléments de la plage retournée seront du type {@link Date}.
      */
     public abstract Range getTimeRange();
+
+    /**
+     * Verifie si cette capture intercepte le rectangle spécifié.
+     * La réponse retournée par cette méthode ne doit être prise
+     * qu'à titre indicatif. Par exemple dans le cas d'une palangre,
+     * cette méthode peut supposer que la palangre a été mouillée
+     * en ligne droite (alors que la réalité a probablement été un
+     * peu différente). Dans tous les cas, cette méthode tente de
+     * retourner la meilleure réponse d'après les données dont elle
+     * dispose.
+     */
+    public abstract boolean intersects(final Rectangle2D rect);
 
     /**
      * Retourne l'espèce la plus pêchée dans cette capture. Si aucune espèce

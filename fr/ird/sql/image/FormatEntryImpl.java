@@ -29,6 +29,7 @@ package fr.ird.sql.image;
 import net.seagis.cv.Category;
 import net.seagis.cv.CategoryList;
 import net.seagis.resources.Utilities;
+import net.seagis.io.image.RawBinaryImageReadParam;
 
 // Images
 import java.awt.image.ColorModel;
@@ -388,7 +389,29 @@ final class FormatEntryImpl implements FormatEntry, Serializable
                     }
                 }
                 reader.setInput(inputObject, true, true);
-                checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex), expected, file);
+                /*
+                 * If we are going to read a RAW binary file, set the expected
+                 * image size. This is necessary since RAW binary files don't
+                 * know their image's size.
+                 */
+                if (param instanceof RawBinaryImageReadParam)
+                {
+                    final RawBinaryImageReadParam rawParam = (RawBinaryImageReadParam) param;
+                    if (rawParam.getStreamImageSize()==null)
+                    {
+                        rawParam.setStreamImageSize(expected);
+                    }
+                }
+                else
+                {
+                    // Don't perform this check if we are reading a RAW image,
+                    // since the RAW image doesn't know its size by itself.
+                    checkSize(reader.getWidth(imageIndex), reader.getHeight(imageIndex), expected, file);
+                }
+                /*
+                 * Read the file, close it in the
+                 * "finally" block and returns.
+                 */
                 final RenderedImage image = reader.readAsRenderedImage(imageIndex, param);
                 return !aborted ? image : null;
             }

@@ -102,10 +102,10 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
-//      {"SLA (Réunion)",            "gr_SLA", "gr_U", "gr_V"},
-//      {"SST (synthèse)",           "gr_SST"},
-//      {"Chlorophylle-a (Réunion)", "[gr_Chl-a]"},
-        {"Bathymétrie",              "gr_profondeur"}
+//      {"SLA (Réunion)",            "SLA", "U", "V"},
+        {"SST (synthèse)",           "SST"},
+//      {"Chlorophylle-a (Réunion)", "[Chl-a]"},
+//      {"Bathymétrie",              "profondeur"}
     };
 
     /**
@@ -151,10 +151,6 @@ public final class EnvironmentTableFiller
     {
         final ImageTable         images = this.images.getImageTable(series[0]);
         final CatchTable         pêches = this.pêches.getCatchTable();
-//      if (series[0].equals(SERIES[0][0]))
-//      {
-//          pêches.setTimeRange(new Date(98, 9, 26), new Date());
-//      }
         final EnvironmentTable[] update = new EnvironmentTable[TEST_ONLY ? 0 : series.length-1];
         final List<CatchEntry>   catchs = pêches.getEntries();
         for (int i=0; i<update.length; i++)

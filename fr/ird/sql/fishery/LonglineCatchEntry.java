@@ -36,40 +36,24 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import net.seagis.pt.Latitude;
-import net.seagis.pt.Longitude;
-import net.seagis.pt.AngleFormat;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
 
 // Divers
 import javax.units.Unit;
-import java.text.DateFormat;
-import java.text.FieldPosition;
 import javax.media.jai.util.Range;
 import fr.ird.animat.Species;
 
 
 /**
- * Données d'une capture à la palangre. Un objet <code>PalangreCatch</code>
- * correspond à une entrée de la table "Fisheries" de la base de données des
- * pêches.
+ * Données d'une capture à la palangre. Un objet <code>LonglineCatchEntry</code>
+ * correspond à une entrée de la table "Captures" de la base de données "Palangres".
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
 final class LonglineCatchEntry extends AbstractCatchEntry
 {
-    /**
-     * Objet à utiliser par défaut pour les écritures des dates.
-     */
-    private static DateFormat dateFormat;
-
-    /**
-     * Objet à utiliser par défaut pour les écritures des coordonnées.
-     */
-    private static AngleFormat angleFormat;
-
     /**
      * Date et heure de la capture, en nombre de
      * millisecondes écoulées depuis le 1 janvier 1970.
@@ -182,6 +166,18 @@ final class LonglineCatchEntry extends AbstractCatchEntry
     }
 
     /**
+     * Verifie si cette capture intercepte le rectangle spécifié.
+     * Cette méthode suppose que la palangre a été mouillée en
+     * ligne droite.
+     */
+    public boolean intersects(final Rectangle2D rect)
+    {
+        if (Float.isNaN(x1) || Float.isNaN(y1)) return rect.contains(x2, y2);
+        if (Float.isNaN(x2) || Float.isNaN(y2)) return rect.contains(x1, y1);
+        return rect.intersectsLine(x1, y1, x2, y2);
+    }
+
+    /**
      * Retourne une date représentative de la pêche. Dans le cas des pêches
      * qui s'étendent sur une certaine période de temps, ça pourrait être par
      * exemple la date du milieu.
@@ -204,22 +200,6 @@ final class LonglineCatchEntry extends AbstractCatchEntry
      */
     public Unit getUnit()
     {return null;} // TODO: dimensionless
-
-    /**
-     * Retourne une chaîne de caractères
-     * représentant cette capture.
-     */
-    public String toString()
-    {
-        if (dateFormat ==null)  dateFormat=DateFormat.getDateInstance();
-        if (angleFormat==null) angleFormat=new AngleFormat();
-        final FieldPosition dummy=new FieldPosition(0);
-        final StringBuffer buffer=new StringBuffer("CatchEntry[");
-        dateFormat .format(new Date     (date),        buffer, dummy); buffer.append(", ");
-        angleFormat.format(new Latitude (mean(y1,y2)), buffer, dummy); buffer.append(' ');
-        angleFormat.format(new Longitude(mean(x1,x2)), buffer, dummy); buffer.append(']');
-        return buffer.toString();
-    }
 
     /**
      * Vérifie si cette capture est

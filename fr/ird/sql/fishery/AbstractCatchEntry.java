@@ -25,8 +25,23 @@
  */
 package fr.ird.sql.fishery;
 
-// Miscellaneous
+// Geometry
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+// Collections
 import java.util.Set;
+
+// Formatting
+import java.text.DateFormat;
+import java.text.FieldPosition;
+
+// Formatting (SEAGIS)
+import net.seagis.pt.Latitude;
+import net.seagis.pt.Longitude;
+import net.seagis.pt.AngleFormat;
+
+// Miscellaneous
 import fr.ird.animat.Species;
 
 
@@ -36,12 +51,17 @@ import fr.ird.animat.Species;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
+abstract class AbstractCatchEntry extends SpeciesSet implements CatchEntry
 {
     /**
-     * TODO: Temporary workaround for generic javac's bug.
+     * Objet à utiliser par défaut pour les écritures des dates.
      */
-    private final Species[] species;
+    private static DateFormat dateFormat;
+
+    /**
+     * Objet à utiliser par défaut pour les écritures des coordonnées.
+     */
+    private static AngleFormat angleFormat;
 
     /**
      * Index de la dernière espèce interrogée.
@@ -56,7 +76,7 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
 
     /**
      * Quantité de poissons capturés pour chaque espèce. Ce tableau devra
-     * obligatoirement avoir la même longueur que {@link #species}.
+     * obligatoirement avoir une longueur égale au nombre d'espèces.
      */
     protected final float[] amount;
 
@@ -72,8 +92,7 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
      */
     protected AbstractCatchEntry(final int ID, final Species[] species)
     {
-//      super(species);
-        this.species = species; // TODO: Temporary workaround.
+        super(species);
         this.ID     = ID;
         this.amount = new float[species.length];
     }
@@ -122,10 +141,7 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
      * zéro pour chacune de ces espèces.
      */
     public final Set<Species> getSpecies()
-    {
-    //  return this;
-        return new SpeciesSet(species); // TODO: Temporary workaround.
-    }
+    {return this;}
 
     /**
      * Retourne la quantité de poissons pêchés pour une espèce donnée.
@@ -174,4 +190,21 @@ abstract class AbstractCatchEntry /*extends SpeciesSet*/ implements CatchEntry
      */
     public final int hashCode()
     {return ID;}
+
+    /**
+     * Retourne une chaîne de caractères
+     * représentant cette capture.
+     */
+    public String toString()
+    {
+        if (dateFormat ==null)  dateFormat=DateFormat.getDateInstance();
+        if (angleFormat==null) angleFormat=new AngleFormat();
+        final FieldPosition dummy = new FieldPosition(0);
+        final StringBuffer buffer = new StringBuffer("CatchEntry[");
+        final Point2D  coordinate = getCoordinate();
+        dateFormat .format(getTime(),                        buffer, dummy); buffer.append(", ");
+        angleFormat.format(new Latitude (coordinate.getY()), buffer, dummy); buffer.append(' ');
+        angleFormat.format(new Longitude(coordinate.getX()), buffer, dummy); buffer.append(']');
+        return buffer.toString();
+    }
 }

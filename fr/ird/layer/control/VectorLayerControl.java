@@ -95,7 +95,10 @@ public final class VectorLayerControl extends LayerControl
      * Retourne le nom de cette couche.
      */
     public String getName()
-    {return table.getSeries().getName();}
+    {
+        return "Courants géostrophiques"; // TODO
+        // return table.getSeries().getName();
+    }
 
     /**
      * Configure une couche en fonction de cet objet <code>LayerControl</code>.

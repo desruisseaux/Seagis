@@ -46,9 +46,6 @@ import java.util.ArrayList;
 
 // Divers
 import fr.ird.animat.Species;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-import javax.media.jai.util.Range;
 
 
 /**
@@ -64,21 +61,20 @@ final class LonglineCatchTable extends AbstractCatchTable
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des pêches.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
-     * les constantes [@link #START_TIME}, [@link #LONGITUDE} et compagnie.
+     * les constantes [@link #DATE}, [@link #START_LONGITUDE} et compagnie.
      */
     static final String SQL_SELECT=
-                    "SELECT "+  /*[01] ID              */ CATCHS+".ID, "          +
-                                /*[02] DATE            */ CATCHS+".date, "        +
-                                /*[03] START_LONGITUDE */ CATCHS+".x1, "          +
-                                /*[04] START_LATITUDE  */ CATCHS+".y1, "          +
-                                /*[05] END_LONGITUDE   */ CATCHS+".x2, "          +
-                                /*[06] END_LATITUDE    */ CATCHS+".y2, "          +
-                                /*[07] EFFORT_UNIT     */ CATCHS+".nb_hameçons\n" +
+                    "SELECT "+  /*[01] ID              */ LONGLINES+".ID, "          +
+                                /*[02] DATE            */ LONGLINES+".date, "        +
+                                /*[03] START_LONGITUDE */ LONGLINES+".x1, "          +
+                                /*[04] START_LATITUDE  */ LONGLINES+".y1, "          +
+                                /*[05] END_LONGITUDE   */ LONGLINES+".x2, "          +
+                                /*[06] END_LATITUDE    */ LONGLINES+".y2, "          +
+                                /*[07] EFFORT_UNIT     */ LONGLINES+".nb_hameçons\n" +
 
-                    "FROM "+CATCHS+" "+
-                    "WHERE (date>=? AND date<=?) "+
-//                    "AND (max(x1,x2)>=? AND min(x1,x2)<=?) "+
-//                    "AND (max(y1,y2)>=? AND min(y1,y2)<=?)\n"+
+                    "FROM "+LONGLINES+" "+
+                    "WHERE valid=TRUE "+
+                      "AND (date>=? AND date<=?) "+
                     "ORDER BY date";
 
     // IMPORTANT: Les données DOIVENT être classées en ordre croissant de date
@@ -92,47 +88,10 @@ final class LonglineCatchTable extends AbstractCatchTable
     /** Numéro de colonne. */ static final int END_LONGITUDE   =  5;
     /** Numéro de colonne. */ static final int END_LATITUDE    =  6;
     /** Numéro de colonne. */ static final int EFFORT_UNIT     =  7;
-    /** Numéro de colonne. */ static final int CATCH_AMOUNT    =  8;
+    /** Numéro de colonne. */ static final int CATCH_AMOUNT    =  8; // Used by LonglineCatchEntry
 
     /** Numéro d'argument. */ private static final int ARG_START_TIME  =  1;
     /** Numéro d'argument. */ private static final int ARG_END_TIME    =  2;
-    /** Numéro d'argument. */ private static final int ARG_XMIN        =  3;
-    /** Numéro d'argument. */ private static final int ARG_YMIN        =  4;
-    /** Numéro d'argument. */ private static final int ARG_XMAX        =  5;
-    /** Numéro d'argument. */ private static final int ARG_YMAX        =  6;
-
-    /**
-     * Coordonnées géographiques demandées par l'utilisateur. Ces
-     * coordonnées sont spécifiées par {@link #setGeographicArea}.
-     * Ces coordonnées peuvent être réduites lors de l'appel de
-     * {@link #packEnvelope}.
-     */
-    private final Rectangle2D geographicArea = new Rectangle2D.Double();
-
-    /**
-     * Date de début et de fin de la plage de temps demandée par l'utilisateur.
-     * Cette plage est spécifiée par {@link #setTimeRange}. Cette plage peut
-     * être réduite lors de l'appel de {@link #packEnvelope}.
-     */
-    private long startTime, endTime;
-
-    /**
-     * Indique si la méthode {@link #packEnvelope} a été appelée.
-     */
-    private boolean packed;
-
-    /**
-     * Objet à utiliser pour les mises à jour. Cet
-     * objet ne sera construit que la première fois
-     * où il sera nécessaire.
-     */
-    private transient Statement update;
-
-    /**
-     * Retourne la requête SQL à utiliser pour un ensemble d'espèce spécifié.
-     */
-    private static String getQuery(final Set<Species> species)
-    {return completeQuery(preferences.get(CATCHS, SQL_SELECT), CATCHS, species);}
 
     /**
      * Construit un objet en utilisant la connection spécifiée.
@@ -146,31 +105,7 @@ final class LonglineCatchTable extends AbstractCatchTable
      */
     protected LonglineCatchTable(final Connection connection, final TimeZone timezone, final Set<Species> species) throws SQLException
     {
-        super(connection.prepareStatement(getQuery(species)), timezone, species);
-        setTimeRange(new Date(0), new Date());
-        setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
-    }
-
-    /**
-     * Spécifie l'ensemble des espèces à prendre en compte lors des interrogations de
-     * la base de données. Les objets {@link CatchEntry} retournés par cette table ne
-     * contiendront des informations que sur ces espèces, et la méthode {@link CatchEntry#getCatch()}
-     * (qui retourne la quantité totale de poisson capturé) ignorera toute espèce qui
-     * n'apparait pas dans l'ensemble <code>species</code>.
-     *
-     * @param species Ensemble des espèces à prendre en compte.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
-     */
-    public synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException
-    {
-        if (!species.equals(newSpecies))
-        {
-            final Connection connection = statement.getConnection();
-            statement.close();
-            statement = null; // Au cas où l'instruction suivante échourait.
-            statement = connection.prepareStatement(getQuery(newSpecies));
-            this.species = new SpeciesSet(newSpecies);
-        }
+        super(connection, LONGLINES, preferences.get(LONGLINES, SQL_SELECT), timezone, species);
     }
 
     /**
@@ -184,26 +119,11 @@ final class LonglineCatchTable extends AbstractCatchTable
      */
     public synchronized void setGeographicArea(final Rectangle2D rect) throws SQLException
     {
-//      statement.setDouble(ARG_XMIN, rect.getMinX());
-//      statement.setDouble(ARG_XMAX, rect.getMaxX());
-//      statement.setDouble(ARG_YMIN, rect.getMinY());
-//      statement.setDouble(ARG_YMAX, rect.getMaxY());
+        // Il est difficile de construire une requête en SQL standard
+        // qui vérifiera si la palangre intercepte un rectangle. On
+        // vérifiera plutôt à l'intérieur de {@link #getEntries}.
         geographicArea.setRect(rect);
-        packed=false;
-    }
-
-    /**
-     * Retourne les coordonnées géographiques de la région des captures.  Cette région
-     * ne sera pas plus grande que la région qui a été spécifiée lors du dernier appel
-     * de la méthode {@link #setGeographicArea}.  Elle peut toutefois être plus petite
-     * de façon à n'englober que les données de pêches présentes dans la base de données.
-     *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
-     */
-    public synchronized Rectangle2D getGeographicArea() throws SQLException
-    {
-        packEnvelope();
-        return (Rectangle2D) geographicArea.clone();
+        packed = false;
     }
 
     /**
@@ -223,22 +143,7 @@ final class LonglineCatchTable extends AbstractCatchTable
         time.setTime(endTimeMillis);
         statement.setTimestamp(ARG_END_TIME, time, calendar);
         this.endTime = endTimeMillis;
-        this.packed  = false;
-    }
-
-    /**
-     * Retourne la plage de dates des pêches. Cette plage de dates ne sera pas plus grande que
-     * la plage de dates spécifiée lors du dernier appel de la méthode {@link #setTimeRange}.
-     * Elle peut toutefois être plus petite de façon à n'englober que les données de pêches
-     * présentes dans la base de données.
-     *
-     * @param  La plage de dates des données de pêches. Cette plage sera constituée d'objets {@link Date}.
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
-     */
-    public synchronized Range getTimeRange() throws SQLException
-    {
-        packEnvelope();
-        return new Range(Date.class, new Date(startTime), new Date(endTime));
+        packed = false;
     }
 
     /**
@@ -249,10 +154,8 @@ final class LonglineCatchTable extends AbstractCatchTable
      *
      * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
      */
-    private void packEnvelope() throws SQLException
+    protected void packEnvelope() throws SQLException
     {
-        if (packed) return;
-
         // TODO:
         // Faire "String CatchTable.getMinMaxQuery(String query)" (qui coupe avant "ORDER BY").
         // Faire "static LonglineCatchTable.setGeographicArea(PreparedStatement statement, Rectangle2D area)"
@@ -293,7 +196,6 @@ final class LonglineCatchTable extends AbstractCatchTable
         {
             geographicArea.setRect(xmin, ymin, xmax-xmin, ymax-ymin);
         }
-        packed = true;
     }
 
     /**
@@ -311,100 +213,10 @@ final class LonglineCatchTable extends AbstractCatchTable
         final List<CatchEntry> list = new ArrayList<CatchEntry>();
         while (result.next())
         {
-            list.add(new LonglineCatchEntry(this, result));
+            final CatchEntry entry = new LonglineCatchEntry(this, result);
+            if (entry.intersects(geographicArea)) list.add(entry);
         }
         result.close();
         return list;
-    }
-
-    /**
-     * Retourne un itérateur qui balayera la liste des captures dans la région et dans la
-     * plage de dates préalablement sélectionnées. Ces plages auront été spécifiées à l'aide
-     * des différentes méthodes <code>set...</code> de cette classe. Cette méthode ne retourne
-     * jamais <code>null</code>, mais peut retourner un itérateur qui ne balayera aucun élément.
-     *
-     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
-     */
-//  public synchronized DataIterator getCatchIterator() throws SQLException
-//  {
-//      final ResultSet result=statement.executeQuery();
-//      final boolean hasFirst=result.next();
-//      return new DataIterator()
-//      {
-//          private boolean hasNext = hasFirst;
-//
-//          public boolean hasNext()
-//          {return hasNext;}
-//
-//          public LocatedData next() throws SQLException
-//          {
-//              final LongLineCatch c=new LongLineCatch(LongLineTable.this, result);
-//              if ((hasNext=result.next())==false) result.close();
-//              return c;
-//          }
-//      };
-//  }
-
-    /**
-     * Définie une valeur réelle pour une capture données.  Cette méthode peut être utilisée
-     * pour mettre à jour certaine informations relatives à la capture. La capture spécifiée
-     * doit exister dans la base de données.
-     *
-     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
-     * @param columnName Nom de la colonne à mettre à jour.
-     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
-     *                   <code>capture</code>, colonne <code>columnName</code>.
-     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
-     *         de la base de données a échouée pour une autre raison.
-     */
-    public synchronized void setValue(final CatchEntry capture, final String columnName, final float value) throws SQLException
-    {
-        if (update==null)
-        {
-            update = statement.getConnection().createStatement();
-        }
-        if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+value+" WHERE ID="+capture.getID())==0)
-        {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
-        }
-    }
-
-    /**
-     * Définie une valeur booléenne pour une capture données. Cette méthode peut être utilisée
-     * pour mettre à jour certaine informations relatives à la capture.   La capture spécifiée
-     * doit exister dans la base de données.
-     *
-     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
-     * @param columnName Nom de la colonne à mettre à jour.
-     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
-     *                   <code>capture</code>, colonne <code>columnName</code>.
-     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
-     *         de la base de données a échouée pour une autre raison.
-     */
-    public synchronized void setValue(final CatchEntry capture, final String columnName, final boolean value) throws SQLException
-    {
-        if (update==null)
-        {
-            update = statement.getConnection().createStatement();
-        }
-        // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
-        if (update.executeUpdate("UPDATE "+CATCHS+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID())==0)
-        {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
-        }
-    }
-
-    /**
-     * Libère les ressources utilisées par cet objet.
-     * Appelez cette méthode lorsque vous n'aurez plus
-     * besoin de consulter cette table.
-     *
-     * @throws SQLException si un problème est survenu
-     *         lors de la disposition des ressources.
-     */
-    public synchronized void close() throws SQLException
-    {
-        if (update!=null) update.close();
-        super.close();
     }
 }

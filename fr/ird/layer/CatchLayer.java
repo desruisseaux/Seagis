@@ -31,7 +31,6 @@ import net.seas.map.layer.MarkLayer;
 // Data bases
 import java.sql.SQLException;
 import fr.ird.animat.Species;
-import fr.ird.sql.image.ImageEntry;
 import fr.ird.sql.fishery.CatchEntry;
 import fr.ird.sql.fishery.CatchTable;
 
@@ -63,7 +62,6 @@ import javax.units.Unit;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import javax.media.jai.util.Range;
-import javax.swing.event.EventListenerList;
 
 
 /**
@@ -74,7 +72,7 @@ import javax.swing.event.EventListenerList;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class CatchLayer extends MarkLayer implements ImageAdjustable
+public class CatchLayer extends MarkLayer
 {
     /**
      * Connection to the catch table.
@@ -252,20 +250,14 @@ public class CatchLayer extends MarkLayer implements ImageAdjustable
     }
 
     /**
-     * Ajust this layer's content for the specified image. This method invokes
-     * {@link #setTimeRange} with a time range equals to the image's time range.
-     * This method can be invoked from any thread (may not be the <i>Swing</i>
-     * thread).
+     * Query the underlying {@link CatchTable} for a new set of catchs to display.
+     * This is a convenience method for {@link #setTimeRange(Date,Date)}.
      *
-     * @param  image The image to adjust for.
-     * @param  listeners Listener for reporting progress, or <code>null</code> if none.
-     * @throws SQLException If an access to the underlying database failed.
+     * @param  timeRange the time range for catchs to display.
+     * @throws SQLException If a SQL query failed.
      */
-    public void adjust(final ImageEntry image, final EventListenerList listeners) throws SQLException
-    {
-        final Range timeRange = image.getTimeRange();
-        setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());
-    }
+    public void setTimeRange(final Range timeRange) throws SQLException
+    {setTimeRange((Date) timeRange.getMinValue(), (Date) timeRange.getMaxValue());}
 
     /**
      * Query the underlying {@link CatchTable} for a new set of catchs to display.

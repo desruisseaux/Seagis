@@ -366,15 +366,9 @@ public final class SpeciesChooser extends JPanel
 
     /**
      * Returns all icons currently selected in this <code>SpeciesChooser</code>.
-     * If user asked for positions only, then it doesn't make sence to select
-     * species and this method returns <code>null</code>.
      */
     public Species.Icon[] getSelectedIcons()
     {
-        if (showPositionOnly.isSelected())
-        {
-            return null;
-        }
         final int[]                  indices = list.getSelectedIndices();
         final Species.Icon[] selectedSpecies = new Species.Icon[indices.length];
         for (int i=0; i<selectedSpecies.length; i++)
@@ -383,6 +377,13 @@ public final class SpeciesChooser extends JPanel
         }
         return selectedSpecies;
     }
+
+    /**
+     * Returns <code>true</code> if the user request catch amounts,
+     * or <code>false</code> if he request positions only.
+     */
+    public boolean isCatchAmountSelected()
+    {return showCatchAmount.isSelected();}
 
     /**
      * Fait apparaître la boîte de dialogue demandant à l'utilisateur

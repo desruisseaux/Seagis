@@ -27,6 +27,7 @@ package fr.ird.io.coverage;
 
 // OpenGIS dependencies (SEAGIS)
 import net.seagis.pt.Envelope;
+import net.seagis.cs.HorizontalDatum;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cs.CompoundCoordinateSystem;
 import net.seagis.cs.TemporalCoordinateSystem;
@@ -42,6 +43,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.NoSuchElementException;
+
+// Logging
+import java.util.logging.Logger;
 
 
 /**
@@ -155,6 +159,22 @@ abstract class AbstractProperties extends PropertyParser
     {
         final CoordinateSystem cs = super.getCoordinateSystem();
         return new CompoundCoordinateSystem(cs.getName(null), cs, UTC);
+    }
+
+    /**
+     * Returns the datum. Default to WGS 84.
+     */
+    public HorizontalDatum getDatum()
+    {
+        try
+        {
+            return super.getDatum();
+        }
+        catch (NoSuchElementException exception)
+        {
+            Logger.getLogger("net.seagis.gcs").warning(exception.getLocalizedMessage());
+            return HorizontalDatum.WGS84;
+        }
     }
 
     /**

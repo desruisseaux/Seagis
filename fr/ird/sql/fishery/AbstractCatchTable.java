@@ -25,7 +25,7 @@
  */
 package fr.ird.sql.fishery;
 
-// Base de données
+// Java DataBase Connectivity
 import java.sql.Timestamp;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -33,30 +33,37 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
-// Temps
+// Time
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-// Cartographie
+// Geographic coordinates
+import java.awt.geom.Rectangle2D;
 import net.seagis.resources.Utilities;
 import net.seagis.cs.CoordinateSystem;
 import net.seagis.cs.GeographicCoordinateSystem;
 
-// Collections
+// Utilities
 import java.util.Set;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
-// Divers
+// Miscellaneous
+import fr.ird.sql.DataBase;
 import fr.ird.animat.Species;
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 import javax.media.jai.util.Range;
 
 
 /**
- * Objet interrogeant la base de données pour obtenir la liste des pêches
- * qu'elle contient. Ces pêches pourront être sélectionnées dans une certaine
- * région géographique et à certaines dates.
+ * Base class for {@link CatchTable} implementations. {@link CatchTable}
+ * allows for querying fishery data in some pre-selected geographic area
+ * and time range. This base class is suitable both for longline and seine
+ * fisheries.
  *
  * @version 1.0
  * @author Martin Desruisseaux
@@ -64,9 +71,20 @@ import javax.media.jai.util.Range;
 abstract class AbstractCatchTable extends Table implements CatchTable
 {
     /**
-     * Calendrier utilisé pour préparer les dates.
-     * Ce calendrier utilisera le fuseau horaire
-     * spécifié lors de la construction.
+     * The SQL instruction to use for query fishery data. The "SELECT" clause
+     * in this instruction <strong>do not</strong> include species. Species
+     * will be added on the fly when needed.
+     */
+    private final String sqlSelect;
+
+    /**
+     * The table name.
+     */
+    private final String table;
+
+    /**
+     * The calendar for computing dates. This calendar
+     * use the time zone specified at construction time.
      */
     protected final Calendar calendar;
 
@@ -85,10 +103,41 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     protected SpeciesSet species;
 
     /**
+     * Coordonnées géographiques demandées par l'utilisateur. Ces
+     * coordonnées sont spécifiées par {@link #setGeographicArea}.
+     * Ces coordonnées peuvent être réduites lors de l'appel de
+     * {@link #packEnvelope}.
+     */
+    protected final Rectangle2D geographicArea = new Rectangle2D.Double();
+
+    /**
+     * Date de début et de fin de la plage de temps demandée par l'utilisateur.
+     * Cette plage est spécifiée par {@link #setTimeRange}. Cette plage peut
+     * être réduite lors de l'appel de {@link #packEnvelope}.
+     */
+    protected long startTime, endTime;
+
+    /**
+     * Indique si la méthode {@link #packEnvelope} a été appelée. Ce
+     * champ <strong>doit</strong> être remis à <code>false</code> par les
+     * méthodes <code>setTimeRange</code> and <code>setGeographicArea</code>.
+     */
+    protected boolean packed;
+
+    /**
+     * Objet à utiliser pour les mises à jour. Cet
+     * objet ne sera construit que la première fois
+     * où il sera nécessaire.
+     */
+    private transient Statement update;
+
+    /**
      * Construit une objet qui interrogera la
      * base de données en utilisant la requête
      * spécifiée.
      *
+     * @param  connection Connection vers une base de données de pêches.
+     * @param  table Le nom de la table dans laquelle puiser les données.
      * @param  statement Interrogation à soumettre à la base de données.
      * @param  timezone Fuseau horaire des dates inscrites dans la base
      *         de données. Cette information est utilisée pour convertir
@@ -96,18 +145,23 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      * @param  species Ensemble des espèces demandées.
      * @throws SQLException si <code>FisheryTable</code> n'a pas pu construire sa requête SQL.
      */
-    protected AbstractCatchTable(final PreparedStatement statement, final TimeZone timezone, final Set<Species> species) throws SQLException
+    protected AbstractCatchTable(final Connection connection, final String table, final String statement, final TimeZone timezone, final Set<Species> species) throws SQLException
     {
-        super(statement);
-        this.species  = new SpeciesSet(species);
-        this.calendar = new GregorianCalendar(timezone);
+        super(connection.prepareStatement(completeQuery(statement, table, species)));
+        this.table     = table;
+        this.sqlSelect = statement;
+        this.species   = new SpeciesSet(species);
+        this.calendar  = new GregorianCalendar(timezone);
+
+        setTimeRange(new Date(0), new Date());
+        setGeographicArea(new Rectangle2D.Double(-180, -90, 360, 180));
     }
 
     /**
      * Complète la requète SQL en ajouter les noms de colonnes des espèces
      * spécifiées juste avant la première clause "FROM" dans la requête SQL.
      */
-    static String completeQuery(String query, final String table, final Set<Species> species)
+    private static String completeQuery(String query, final String table, final Set<Species> species)
     {
         int index = query.toUpperCase().indexOf("FROM");
         if (index>=0)
@@ -129,6 +183,32 @@ abstract class AbstractCatchTable extends Table implements CatchTable
             query=buffer.toString();
         }
         return query;
+    }
+
+    /**
+     * Spécifie l'ensemble des espèces à prendre en compte lors des interrogations de
+     * la base de données. Les objets {@link CatchEntry} retournés par cette table ne
+     * contiendront des informations que sur ces espèces, et la méthode {@link CatchEntry#getCatch()}
+     * (qui retourne la quantité totale de poisson capturé) ignorera toute espèce qui
+     * n'apparait pas dans l'ensemble <code>species</code>.
+     *
+     * @param species Ensemble des espèces à prendre en compte.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public final synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException
+    {
+        if (!species.equals(newSpecies))
+        {
+            final Rectangle2D area = getGeographicArea();
+            final Range  timeRange = getTimeRange();
+            final Connection connection = statement.getConnection();
+            statement.close();
+            statement = null; // Au cas où l'instruction suivante échourait.
+            statement = connection.prepareStatement(completeQuery(sqlSelect, table, newSpecies));
+            this.species = new SpeciesSet(newSpecies);
+            setTimeRange(timeRange);
+            setGeographicArea(area);
+        }
     }
 
     /**
@@ -175,8 +255,8 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     }
 
     /**
-     * Retourne l'ensemble des espèces comprises dans la requête de cette table.
-     * L'ensemble retourné est immutable.
+     * Retourne l'ensemble des espèces comprises dans la requête
+     * de cette table. L'ensemble retourné est immutable.
      */
     public final Set<Species> getSpecies()
     {return species;}
@@ -189,6 +269,53 @@ abstract class AbstractCatchTable extends Table implements CatchTable
     {return GeographicCoordinateSystem.WGS84;}
 
     /**
+     * Retourne les coordonnées géographiques de la région des captures.  Cette région
+     * ne sera pas plus grande que la région qui a été spécifiée lors du dernier appel
+     * de la méthode {@link #setGeographicArea}.  Elle peut toutefois être plus petite
+     * de façon à n'englober que les données de pêches présentes dans la base de données.
+     *
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public final synchronized Rectangle2D getGeographicArea() throws SQLException
+    {
+        if (!packed)
+        {
+            packEnvelope();
+            packed = true;
+        }
+        return (Rectangle2D) geographicArea.clone();
+    }
+
+    /**
+     * Retourne la plage de dates des pêches. Cette plage de dates ne sera pas plus grande que
+     * la plage de dates spécifiée lors du dernier appel de la méthode {@link #setTimeRange}.
+     * Elle peut toutefois être plus petite de façon à n'englober que les données de pêches
+     * présentes dans la base de données.
+     *
+     * @param  La plage de dates des données de pêches. Cette plage sera constituée d'objets {@link Date}.
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public final synchronized Range getTimeRange() throws SQLException
+    {
+        if (!packed)
+        {
+            packEnvelope();
+            packed = true;
+        }
+        return new Range(Date.class, new Date(startTime), new Date(endTime));
+    }
+
+    /**
+     * Calcule les coordonnées géographiques et la plage de temps couvertes
+     * par les données de pêches. La plage de temps aura été spécifiée avec
+     * {@link #setTimeRange} et les limites de la région géographique avec
+     * {@link #setGeographicArea}.
+     *
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    protected abstract void packEnvelope() throws SQLException;
+
+    /**
      * Définit la plage de dates dans laquelle on veut rechercher des données de pêches.
      * Toutes les pêches qui interceptent cette plage de temps seront prises en compte
      * lors du prochain appel de {@link #getEntries}.
@@ -199,4 +326,76 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      */
     public final void setTimeRange(final Range timeRange) throws SQLException
     {setTimeRange((Date)timeRange.getMinValue(), (Date)timeRange.getMaxValue());}
+
+    /**
+     * Définie une valeur réelle pour une capture données.  Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture. La capture spécifiée
+     * doit exister dans la base de données.
+     *
+     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
+     * @param columnName Nom de la colonne à mettre à jour.
+     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
+     *                   <code>capture</code>, colonne <code>columnName</code>.
+     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
+     *         de la base de données a échouée pour une autre raison.
+     */
+    public final void setValue(final CatchEntry capture, final String columnName, final float value) throws SQLException
+    {
+        setValue(capture, "UPDATE "+table+" SET "+columnName+"="+value+" WHERE ID="+capture.getID());
+    }
+
+    /**
+     * Définie une valeur booléenne pour une capture données. Cette méthode peut être utilisée
+     * pour mettre à jour certaine informations relatives à la capture.   La capture spécifiée
+     * doit exister dans la base de données.
+     *
+     * @param capture    Capture à mettre à jour. Cette capture définit la ligne à mettre à jour.
+     * @param columnName Nom de la colonne à mettre à jour.
+     * @param value      Valeur à inscrire dans la base de données à la ligne de la capture
+     *                   <code>capture</code>, colonne <code>columnName</code>.
+     * @throws SQLException si la capture spécifiée n'existe pas, ou si la mise à jour
+     *         de la base de données a échouée pour une autre raison.
+     */
+    public final void setValue(final CatchEntry capture, final String columnName, final boolean value) throws SQLException
+    {
+        // Note: PostgreSQL demande que "TRUE" et "FALSE" soient en majuscules. MySQL n'a pas de type boolean.
+        setValue(capture, "UPDATE "+table+" SET "+columnName+"="+(value ? "TRUE" : "FALSE")+" WHERE ID="+capture.getID());
+    }
+
+    /**
+     * Execute une requête de mise à jour pour une capture données.
+     *
+     * @param  capture Capture à mettre à jour.
+     * @param  sql Requête à exécuter.
+     * @throws Si la mise à jour de la base de données a échouée.
+     */
+    private synchronized void setValue(final CatchEntry capture, final String sql) throws SQLException
+    {
+        if (update==null)
+        {
+            update = statement.getConnection().createStatement();
+        }
+        if (update.executeUpdate(sql)==0)
+        {
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_CATCH_NOT_FOUND_$1, capture));
+        }
+        final LogRecord record = new LogRecord(DataBase.SQL_UPDATE, sql);
+        record.setSourceClassName ("CatchTable");
+        record.setSourceMethodName("setValue");
+        logger.log(record);
+    }
+
+    /**
+     * Libère les ressources utilisées par cet objet.
+     * Appelez cette méthode lorsque vous n'aurez plus
+     * besoin de consulter cette table.
+     *
+     * @throws SQLException si un problème est survenu
+     *         lors de la disposition des ressources.
+     */
+    public final synchronized void close() throws SQLException
+    {
+        if (update!=null) update.close();
+        super.close();
+    }
 }
