@@ -30,6 +30,7 @@ import java.sql.Timestamp;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
+import java.sql.SQLWarning;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
@@ -445,8 +446,16 @@ abstract class SampleTable extends Table implements fr.ird.database.sample.Sampl
         }
         update.setObject(ARG_VALUE, value);
         update.setInt(ARG_ID, sample.getID());
-        if (update.executeUpdate() == 0) {
-            throw new SQLException(Resources.format(ResourceKeys.ERROR_SAMPLE_NOT_FOUND_$1, sample));
+        switch (update.executeUpdate()) {
+            case 1: {
+                break;
+            }
+            case 0: {
+                throw new SQLWarning(Resources.format(ResourceKeys.ERROR_SAMPLE_NOT_FOUND_$1, sample));
+            }
+            default: {
+                throw new SQLWarning(Resources.format(ResourceKeys.ERROR_DUPLICATED_RECORD_$1, sample));
+            }
         }
     }
 

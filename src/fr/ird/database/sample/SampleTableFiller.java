@@ -25,27 +25,26 @@
  */
 package fr.ird.database.sample;
 
-// Base de données et entrés/sorties
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-
-// Divers
+// J2SE
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Map;
 import java.awt.Shape;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
+import java.sql.SQLException;
 
 // Geotools
 import org.geotools.cs.Ellipsoid;
 import org.geotools.resources.XMath;
 import org.geotools.resources.Geometry;
-import org.geotools.renderer.geom.GeometryCollection;
+import org.geotools.resources.Arguments;
 
 // Seagis
 import fr.ird.database.Table;
@@ -172,6 +171,7 @@ public class SampleTableFiller implements Table {
         });
         for (int i=0; i<samples.length; i++) {
             final SampleEntry  sample = samples[i];
+            final CruiseEntry  cruise = sample.getCruise();
             final long           time = sample.getTime().getTime();
             final Point2D       coord = sample.getCoordinate();
             double   smallestDistance = Double.POSITIVE_INFINITY;
@@ -182,6 +182,12 @@ public class SampleTableFiller implements Table {
                     if (Math.abs(time - candidate.getTime().getTime()) > maxTimeLag) {
                         break;
                     }
+                    if (cruise != null) {
+                        if (cruise.equals(candidate.getCruise())) {
+                            // Ignore les positions qui proviennent du même bateau.
+                            continue;
+                        }
+                    }
                     final double distance = ellipsoid.orthodromicDistance(coord, candidate.getCoordinate());
                     if (distance < smallestDistance) {
                         smallestDistance = distance;
@@ -191,6 +197,37 @@ public class SampleTableFiller implements Table {
             while ((scanDirection = -scanDirection) >= 0);
             if (!Double.isInfinite(smallestDistance) && !Double.isNaN(smallestDistance)) {
                 table.setValue(sample, columnName, (float)(smallestDistance/1000)); // TODO: units
+            }
+        }
+    }
+
+    /**
+     * Calcule la vitesse des bateaux en mesurant la distance orthodromique entre un point et la
+     * position de la journée précédente.
+     *
+     * @param  columnName Nom de la colonne dans laquelle écrire les vitesses.
+     * @throws SQLException si une erreur est survenue lors d'un accès à la base de données.
+     */
+    public void computeSpeed(final String columnName) throws SQLException {
+        final Map<CruiseEntry,SampleEntry> positions = new HashMap<CruiseEntry,SampleEntry>();
+        for (final SampleEntry sample : table.getEntries()) {
+            final CruiseEntry cruise = sample.getCruise();
+            if (cruise != null) {
+                final Point2D coord = sample.getCoordinate();
+                final Date    time  = sample.getTime();
+                if (coord!=null && time!=null) {
+                    final SampleEntry last = positions.put(cruise, sample);
+                    if (last != null) {
+                        assert cruise.equals(last.getCruise()) : cruise;
+                        double distance = ellipsoid.orthodromicDistance(coord, last.getCoordinate());
+                        final double delay;
+                        delay = (time.getTime() - last.getTime().getTime()) / (24*60*60*1000.0);
+                        distance /= delay;
+                        if (!Double.isNaN(distance) && !Double.isInfinite(distance)) {
+                            table.setValue(sample, columnName, (float)(distance/1000)); // TODO: units
+                        }
+                    }
+                }
             }
         }
     }
@@ -286,18 +323,19 @@ public class SampleTableFiller implements Table {
 
     /**
      * Lance le calcul des distances les plus courtes entre les données de pêches.
-     *
-     * @throws SQLException si une erreur est survenue lors d'un accès à la base de données.
-     * @throws IOException si une erreur est survenue lors de la lecture de la bathymétrie.
      */
-//    public static void main(final String[] args) throws SQLException, IOException {
-//        final GEBCOReader reader = new GEBCOReader();
-//        reader.setInput(new File("compilerData/Océan Indien.asc"));
-//        final GeometryCollection  coast = reader.read(0);
-//        final SampleTableFiller  worker = new SampleTableFiller();
-//        worker.computeAnchorDistances              ("distance");
-//        worker.computeInterSampleDistances(0, "distance_pêche");
-//        worker.computeCoastDistances  (coast, "distance_côte" );
-//        worker.close();
-//    }
+    public static void main(final String[] args) throws SQLException {
+        final Arguments arguments = new Arguments(args);
+        SampleTableFiller worker = null;
+        try {
+            worker = new SampleTableFiller();
+            worker.computeSpeed("vitesse");
+            worker.computeInterSampleDistances(12*60*60*1000, "voisin");
+        } catch (Exception exception) {
+            exception.printStackTrace(arguments.out);
+        }
+        if (worker != null) {
+            worker.close();
+        }
+    }
 }
