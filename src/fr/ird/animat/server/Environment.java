@@ -305,7 +305,7 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
              * On ne peut pas utiliser Iterator, parce que les appels
              * de Population.kill() vont modifier l'ensemble.
              */
-            final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
+            final Population[] pop = populations.toArray(new Population[populations.size()]);
             for (int i=0; i<pop.length; i++) {
                 pop[i].kill();
             }

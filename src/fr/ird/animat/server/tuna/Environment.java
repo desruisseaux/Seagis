@@ -239,7 +239,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
             toClose = new DataBase[0];
         }
         final Collection<String> species = configuration.species;
-        samples = samplesDB.getSampleTable((String[])species.toArray(new String[species.size()]));
+        samples = samplesDB.getSampleTable(species.toArray(new String[species.size()]));
         samples.setTimeRange(timeRange);
     }
 

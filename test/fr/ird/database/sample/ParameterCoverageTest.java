@@ -72,7 +72,7 @@ public class ParameterCoverageTest extends TestCase {
     /**
      * Liste des paramètres déclarées dans la base de données.
      */
-    private Collection<+ParameterEntry> parameters;
+    private Collection<? extends ParameterEntry> parameters;
 
     /**
      * Objet à utiliser pour lire et écrire des dates.
@@ -146,13 +146,21 @@ public class ParameterCoverageTest extends TestCase {
         final float SST = 10.0f; // Doit correspondre au coefficient dans la base de données.
         final float SLA =  0.1f; // Doit correspondre au coefficient dans la base de données.
         final float C   = -500f; // Doit correspondre au coefficient dans la base de données.
-        setParameter("PP-Test");
+        setParameter("PP-Test1");// C + SST0 + SST5 + SLA
         assertEquals(C+SST*(26.21554f+28.90020f)+SLA* 3.084735f, evaluate(39.80,  -17.90,  "18/08/1999"), 1.0f);
         assertEquals(C+SST*(25.67984f+26.49956f)+SLA* 22.43602f, evaluate(38.05,  -19.23,  "18/08/1999"), 0.5f);
         assertEquals(C+SST*(25.86468f+28.69938f)+SLA* 3.027869f, evaluate(40.10,  -18.33,  "19/08/1999"), 0.5f);
         assertEquals(C+SST*(26.79711f+27.14296f)+SLA*-2.475523f, evaluate(47.53,  -11.95,  "21/08/1999"), 0.5f);
         assertEquals(C+SST*(29.60495f+29.55049f)+SLA*-13.31123f, evaluate(53.36,    3.65,  "14/11/1999"), 5.0f);
         assertEquals(C+SST*(28.23608f+28.09617f)+SLA*-10.75712f, evaluate(56.95,   -3.53,  "25/11/1999"), 0.5f);
+
+        setParameter("PP-Test2");// C + SST0 * SST5.   L'erreur est C*(SST0*E5 + SST5*E0 + E1*E2)
+        assertEquals(C+SST*(26.21554f*28.90020f), evaluate(39.80,  -17.90,  "18/08/1999"),  40f);
+        assertEquals(C+SST*(25.67984f*26.49956f), evaluate(38.05,  -19.23,  "18/08/1999"),   6f);
+        assertEquals(C+SST*(25.86468f*28.69938f), evaluate(40.10,  -18.33,  "19/08/1999"),   6f);
+        assertEquals(C+SST*(26.79711f*27.14296f), evaluate(47.53,  -11.95,  "21/08/1999"),   6f);
+        assertEquals(C+SST*(29.60495f*29.55049f), evaluate(53.36,    3.65,  "14/11/1999"), 120f);
+        assertEquals(C+SST*(28.23608f*28.09617f), evaluate(56.95,   -3.53,  "25/11/1999"),   6f);
     }
 
     /**

@@ -438,7 +438,7 @@ public class SampleDataBase extends SQLDataBase implements fr.ird.database.sampl
             parameters.add("CHL");
             parameters.add("SST");
             parameters.add("SLA");
-            positions .add("");
+            positions .add("+00");
             positions .add("-05");
         }
         if (!operations.isEmpty() && !parameters.isEmpty() && !positions.isEmpty()) {

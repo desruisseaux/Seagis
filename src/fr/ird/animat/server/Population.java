@@ -177,7 +177,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
              * On ne peut pas utiliser Iterator, parce que les appels
              * de Animals.kill() vont modifier l'ensemble.
              */
-            final Animal[] pop = (Animal[]) animals.toArray(new Animal[animals.size()]);
+            final Animal[] pop = animals.toArray(new Animal[animals.size()]);
             for (int i=0; i<pop.length; i++) {
                 pop[i].kill();
             }

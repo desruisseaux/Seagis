@@ -70,7 +70,7 @@ abstract class Table implements fr.ird.database.Table {
      *        aucune.
      */
     protected Table(final PreparedStatement statement) {
-        this.statement=statement;
+        this.statement = statement;
     }
 
     /**

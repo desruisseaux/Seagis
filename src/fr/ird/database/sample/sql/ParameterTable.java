@@ -270,7 +270,7 @@ final class ParameterTable
      * @throws SQLException si l'initialisation a échouée.
      */
     protected void postCreateEntry(final ParameterEntry entry) throws SQLException {
-        if (entry.linearModel != null) {
+        if (entry.linearModel == null) {
             entry.linearModel = getLinearModelTable().getTerms(entry);
         }
     }
@@ -297,7 +297,7 @@ final class ParameterTable
         if (linearModels == null) {
             linearModels = new LinearModelTable(new DescriptorTable(this));
         }
-        assert linearModels.getDescriptorTable().getParameterTable(BY_ID) == this;
+        assert linearModels.getDescriptorTable().getParameterTable(0) == this;
         return linearModels;
     }
 
@@ -317,8 +317,9 @@ final class ParameterTable
      */
     public synchronized void close() throws SQLException {
         if (linearModels != null) {
-            linearModels.close();
-            linearModels = null;
+            final Table table = linearModels;
+            linearModels = null; // Set to null first to avoid never-ending loop.
+            table.close();
         }
         super.close();
     }

@@ -134,8 +134,9 @@ final class LinearModelTable extends Table {
      */
     public synchronized void close() throws SQLException {
         if (descriptors != null) {
-            descriptors.close();
-            descriptors = null;
+            final Table table = descriptors;
+            descriptors = null; // Set to null first to avoid never-ending loop.
+            table.close();
         }
         super.close();
     }

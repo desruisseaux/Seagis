@@ -65,7 +65,8 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      */
     static final String SQL_SELECT =
             "SELECT nom, position, paramètre, opération, distribution, scale, offset, log " +
-            "FROM "+DESCRIPTORS+" INNER JOIN "+DISTRIBUTIONS+" ON distribution = "+DISTRIBUTIONS+".ID " +
+            "FROM "+DESCRIPTORS+" INNER JOIN "    +DISTRIBUTIONS +
+             " ON "+DESCRIPTORS+".distribution = "+DISTRIBUTIONS+".ID " +
             "WHERE nom LIKE ?";
 
     /** Numéro de colonne. */ private static final int NAME         = 1;
@@ -244,14 +245,17 @@ final class DescriptorTable extends SingletonTable<DescriptorEntry, DescriptorEn
      * <code>DescriptorTable</code>.
      *
      * @param  type Le type de requête: {@link #BY_NAME}, {@link #BY_ID} or {@link #LIST}.
+     *         Par convention, la valeur 0 est synonyme de {@link #BY_ID}, excepté que les
+     *         assertions ne seront pas effectuées afin d'éviter une boucle sans fin avec
+     *         {@link ParameterTable#getLinearModelTable}.
      * @return La table des paramètres.
      * @throws SQLException si la table n'a pas pu être construite.
      */
     public synchronized ParameterTable getParameterTable(final int type) throws SQLException {
         if (parameters == null) {
-            parameters = new ParameterTable(this, type);
+            parameters = new ParameterTable(this, type!=0 ? type : BY_ID);
         }
-        assert parameters.getLinearModelTable().getDescriptorTable() == this;
+        assert type==0 || parameters.getLinearModelTable().getDescriptorTable() == this;
         return parameters;
     }
 

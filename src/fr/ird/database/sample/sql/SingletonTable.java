@@ -189,6 +189,15 @@ abstract class SingletonTable<T extends Entry, Timpl extends T> extends Table {
     }
 
     /**
+     * Retourne le type de l'instruction SQL courante. Sera une des constantes
+     * {@link #LIST}, {@link #BY_ID} ou {@link #BY_NAME}, ou 0 si le type n'a
+     * pas encore été définit.
+     */
+    final int getType() {
+        return type;
+    }
+
+    /**
      * Retourne la connexion à la base de données. Cette méthode n'a généralement pas besoin d'être
      * redéfinie, sauf s'il existe une possibilité que {@link #statement} soit nul.
      *

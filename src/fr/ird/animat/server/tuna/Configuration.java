@@ -124,7 +124,7 @@ final class Configuration {
      * utilisé pour construire les objets  {@link Species}  en partageant le même tableau pour
      * chaque espèce.
      */
-    final fr.ird.animat.server.Parameter[] parameterArray;
+    final Parameter[] parameterArray;
 
     /**
      * Construit une configuration à partir du fichier spécifié.
@@ -213,10 +213,11 @@ final class Configuration {
         final int paramCount = parameters.size();
         if (false) {
             // Inclus HEADING
-            parameterArray = (fr.ird.animat.server.Parameter[])parameters.toArray(new fr.ird.animat.server.Parameter[paramCount+1]);
-            parameterArray[paramCount] = Parameter.HEADING;
+            // TODO: Changer le type en fr.ird.animat.server.Parameter
+            parameterArray = parameters.toArray(new Parameter[paramCount+1]);
+//          parameterArray[paramCount] = Parameter.HEADING;
         } else {
-            parameterArray = (fr.ird.animat.server.Parameter[])parameters.toArray(new fr.ird.animat.server.Parameter[paramCount]);
+            parameterArray = parameters.toArray(new Parameter[paramCount]);
         }
     }
 

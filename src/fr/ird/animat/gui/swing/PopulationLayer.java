@@ -225,7 +225,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
         synchronized (getTreeLock()) {
             assert population.equals(this.population) : population;
             final Collection<? extends Animal> col = population.getAnimals();
-            animals = (Animal[])col.toArray(new Animal[col.size()]);
+            animals = col.toArray(new Animal[col.size()]);
             observations = new Map[animals.length];
             bounds = population.getSpatialBounds();
             setPreferredArea((bounds!=null) ? bounds.getBounds2D() : null);
