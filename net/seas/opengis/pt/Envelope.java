@@ -243,7 +243,7 @@ public final class Envelope implements Cloneable, Serializable
         {
             return new Rectangle2D.Double(ord[0], ord[1], ord[2]-ord[0], ord[3]-ord[1]);
         }
-        throw new IllegalStateException(Resources.format(Clé.MISMATCHED_POINT_DIMENSION¤2, new Integer(getDimension()), new Integer(2)));
+        throw new IllegalStateException(Resources.format(Clé.NOT_TWO_DIMENSIONAL¤1, new Integer(getDimension())));
     }
 
     /**

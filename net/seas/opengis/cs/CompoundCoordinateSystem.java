@@ -81,6 +81,7 @@ public class CompoundCoordinateSystem extends CoordinateSystem
         this.tail = tail;
         ensureNonNull("head", head);
         ensureNonNull("tail", tail);
+        checkAxis();
     }
 
     /**

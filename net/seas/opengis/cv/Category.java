@@ -54,15 +54,10 @@ public class Category implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = -4387326509458680963L;
 
     /**
-     * A default category for no data.
-     */
-    static final Category NODATA = new Category(Resources.format(Clé.NODATA), Color.black, 0);
-
-    /**
-     * The category name.
+     * The category name (may not be localized).
      */
     private final String name;
 
@@ -146,7 +141,7 @@ public class Category implements Serializable
     {
         if (names.length!=colors.length)
         {
-            throw new IllegalArgumentException(Resources.format(Clé.ARRAY_LENGTH_MISMATCH));
+            throw new IllegalArgumentException(Resources.format(Clé.MISMATCHED_ARRAY_LENGTH));
         }
         final Category[] categories = new Category[names.length];
         for (int i=0; i<categories.length; i++)
@@ -294,19 +289,23 @@ public class Category implements Serializable
      * <code>0xff800001</code> through <code>0xffffffff</code>.
      * The standard {@link Float#NaN} has bit fields <code>0x7fc00000</code>.
      */
-    private static float toNaN(final int index) throws IllegalArgumentException
+    private static float toNaN(final int index) throws IndexOutOfBoundsException
     {
         if (index>=0 && index<=0x3FFFFF)
         {
             return Float.intBitsToFloat(0x7FC00000 + index);
         }
-        else throw new IllegalArgumentException(String.valueOf(index));
+        else throw new IndexOutOfBoundsException(String.valueOf(index));
     }
 
     /**
-     * Returns the category name in the specified locale. If no name is available
-     * for the specified locale, then an arbitrary locale may be used. The default
-     * implementation returns the category name as specified to the constructor.
+     * Returns the category name localized in the specified locale. If no name is
+     * available for the specified locale, then an arbitrary locale may be used.
+     * The default implementation returns the <code>name</code> argument specified
+     * at construction time.
+     *
+     * @param  locale The desired locale, or <code>null</code> for the default locale.
+     * @return The category name, localized if possible.
      */
     public String getName(final Locale locale)
     {return name;}
@@ -336,6 +335,15 @@ public class Category implements Serializable
      */
     public boolean isQuantitative()
     {return !Float.isNaN(C0) && !Float.isNaN(C1);}
+
+    /**
+     * Returns <code>true</code> if {@link #toValue} just returns his argument with no change.
+     * This method always returns <code>false</code> for qualitative categories,
+     * since qualitative categories change sample values into <code>NaN</code>
+     * values.
+     */
+    public boolean isIdentity()
+    {return C0==0 && C1==1;}
 
     /**
      * Compute the geophysics value from a sample value. This method doesn't
@@ -506,13 +514,19 @@ public class Category implements Serializable
         /**
          * Serial number for interoperability with different versions.
          */
-        // private static final long serialVersionUID = ?; // TODO
+        private static final long serialVersionUID = -8013388870292811110L;
 
         /**
          * Construct a logarithmic category.
          */
         public Logarithmic(final String name, final Color[] colors, final float lower, final float upper, final float C0, final float C1) throws IllegalArgumentException
         {super(name, colors, lower, upper, C0, C1);}
+
+        /**
+         * Returns <code>false</code>, since {@link #toValue} always change some values.
+         */
+        public boolean isIdentity()
+        {return false;}
 
         /**
          * Compute the geophysics value from a sample value.

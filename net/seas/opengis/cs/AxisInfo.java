@@ -70,6 +70,8 @@ public class AxisInfo implements Serializable
     {
         this.name        = name;
         this.orientation = orientation;
+        Info.ensureNonNull("name",        name);
+        Info.ensureNonNull("orientation", orientation);
     }
 
     /**

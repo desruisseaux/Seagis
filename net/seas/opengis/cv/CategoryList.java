@@ -35,6 +35,7 @@ import java.util.AbstractList;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import net.seas.util.XClass;
+import net.seas.util.XMath;
 import net.seas.resources.Resources;
 
 
@@ -63,7 +64,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     /**
      * Serial number for interoperability with different versions.
      */
-    // private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 6541392455379362454L;
 
     /**
      * Liste des catégories constituant cet objet <code>CategoryList</code>.
@@ -86,9 +87,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     private final float[] index, values;
 
     /**
-     * Unités des mesures géophysiques représentées par les thèmes.
-     * Ce champ peut être nul s'il ne s'applique pas ou si les
-     * unités ne sont pas connues.
+     * Unités des mesures géophysiques représentées par les catégories.
+     * Ce champ peut être nul s'il ne s'applique pas ou si les unités
+     * ne sont pas connues.
      */
     private final Unit unit;
 
@@ -133,6 +134,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Construct a category list for qualitative categories.
+     * This category list will have no unit.
      *
      * @param names  Sequence of category names for the values contained in a sample dimension.
      *               This allows for names to be assigned to numerical values. The first entry
@@ -144,6 +146,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Construct a category list for qualitative categories.
+     * This category list will have no unit.
      *
      * @param names  Sequence of category names for the values contained in a sample dimension.
      *               This allows for names to be assigned to numerical values. The first entry
@@ -155,9 +158,8 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     {this(Category.list(names, colors));}
 
     /**
-     * Construct a category list for a sample dimension (band) with no unit.
-     * This constructor is appropriate if the category list contains only
-     * qualitative categories.
+     * Construct a category list for a sample
+     * dimension (band) with no unit.
      *
      * @param  categories The category list.
      *
@@ -165,16 +167,29 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      *         <code>[{@link Category#lower lower}..{@link Category#upper upper}]</code> overlap.
      */
     public CategoryList(final Category[] categories) throws IllegalArgumentException
-    {this(categories, null, 0);}
+    {this(categories, null);}
 
     /**
-     * Construct a category list for a sample dimension (band). This constructor
-     * is appropriate if the category list contains at least one quantitative
-     * category.
+     * Construct a category list for a sample
+     * dimension (band) with the specified units.
      *
      * @param  categories The category list.
-     * @param  units      The unit information for this category list's dimension.
-     *                    May be <code>null</code> is this dimension has no units.
+     * @param  units      The unit information for this category list's.
+     *                    May be <code>null</code> if no category has units.
+     *
+     * @throws IllegalArgumentException If two category ranges
+     *         <code>[{@link Category#lower lower}..{@link Category#upper upper}]</code> overlap.
+     */
+    public CategoryList(final Category[] categories, final Unit units) throws IllegalArgumentException
+    {this(categories, units, getFractionDigitCount(categories));}
+
+    /**
+     * Construct a category list for a sample dimension (band) with
+     * the specified units.
+     *
+     * @param  categories The category list.
+     * @param  units      The unit information for this category list's.
+     *                    May be <code>null</code> if no category has units.
      * @param  ndigits    Number of significant digits after the dot. This is used
      *                    when formatting quantity values. For example, if this
      *                    category list contains a category for temperature and
@@ -185,7 +200,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * @throws IllegalArgumentException If two category ranges
      *         <code>[{@link Category#lower lower}..{@link Category#upper upper}]</code> overlap.
      */
-    public CategoryList(final Category[] categories, final Unit units, final int ndigits) throws IllegalArgumentException
+    private CategoryList(final Category[] categories, final Unit units, final int ndigits) throws IllegalArgumentException
     {
         this.unit     = units;
         this.ndigits  = ndigits;
@@ -218,6 +233,30 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
+     * Compute the smallest number of fraction digits necessary to resolve
+     * all quantitative values.  This method assume that geophysics values
+     * in the range {@link Category#minimum} to {@link Category#maximum}
+     * are stored as integer sample values in the range {@link Category#lower}
+     * to {@link Category#upper}.
+     */
+    private static int getFractionDigitCount(final Category[] categories)
+    {
+        int ndigits = 0;
+        for (int i=0; i<categories.length; i++)
+        {
+            final Category category = categories[i];
+            final double ln = XMath.log10(((double)category.maximum - (double)category.minimum)/
+                                          ((double)category.upper   - (double)category.lower));
+            if (!Double.isNaN(ln))
+            {
+                final int n = -(int)(Math.floor(ln+1E-6));
+                if (n>ndigits && n<=6) ndigits=n;
+            }
+        }
+        return ndigits;
+    }
+
+    /**
      * Returns the number of categories in this list.
      */
     public int size()
@@ -225,6 +264,10 @@ public class CategoryList extends AbstractList<Category> implements Serializable
 
     /**
      * Returns the category at the specified index.
+     * This index may not be related to sample value.
+     *
+     * @param  index An index in the range <code>[0..{@link #size()}-1]</code>.
+     * @return The category at the specified index.
      */
     public Category get(final int index)
     {return byIndex[index];}
@@ -242,7 +285,7 @@ public class CategoryList extends AbstractList<Category> implements Serializable
      * build up the color model from each category's colors (as returned by
      * {@link Category#getColors}).
      */
-    public synchronized IndexColorModel getColorModel()
+    final synchronized IndexColorModel getIndexColorModel()
     {
         if (colors==null)
         {
@@ -278,9 +321,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
     }
 
     /**
-     * Retourne un thème à utiliser pour représenter les données manquantes.
-     * Si aucun thème ne représente une valeur <code>NaN</code>, alors cette
-     * méthode retourne un thème arbitraire.
+     * Retourne une catégorie à utiliser pour représenter les données manquantes.
+     * Si aucune catégorie ne représente une valeur <code>NaN</code>, alors cette
+     * méthode retourne une catégorie arbitraire.
      */
     final Category getBlank()
     {
@@ -290,7 +333,9 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         for (int i=0; i<byIndex.length; i++)
             if (Float.isNaN(byIndex[i].minimum))
                 return byIndex[i];
-        return Category.NODATA;
+        if (byIndex.length!=0)
+            return byIndex[0];
+        return new Category(Resources.format(Clé.NODATA), Color.black, 0);
     }
 
     /**
@@ -583,8 +628,10 @@ public class CategoryList extends AbstractList<Category> implements Serializable
         final float maximum;
         if (byValues.length!=0)
         {
-            minimum = byValues[0                ].minimum;
-            maximum = byValues[byValues.length-1].maximum;
+            int max = byValues.length;
+            while (--max >= 1  &&  Float.isNaN(byValues[max].maximum));
+            minimum = byValues[0  ].minimum;
+            maximum = byValues[max].maximum;
         }
         else
         {

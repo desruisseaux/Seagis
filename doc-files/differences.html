@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Differences between SEAGIS and OpenGIS's API</TITLE>
+  </HEAD>
+  <BODY>
+    <H1><A NAME="differences">Differences between SEAGIS's API <A HREF="http://www.opengis.org">OpenGIS</A> specification</A></H1>
+    <P ALIGN="justify">The <CODE>net.seas.opengis</CODE> package and sub-packages
+    are basically a <CODE>org.opengis</CODE>'s mirror. Most classes have a 1 to 1
+    equivalent. However, the SEAGIS's API is modified in order to make it more
+    "Java friendly" and ease interoperability with other Java packages (specially
+    <A HREF="http://java.sun.com/products/java-media/2D">Java2D</A> and
+    <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>).
+    The main differences are listed below:</P>
+
+    <H2>Naming convention</H2>
+    <P ALIGN="justify">The OpenGIS specification requires that every class and interface
+    name begin with a two letters prefix (e.g. <STRONG><CODE>CS_</CODE></STRONG> in
+    <CODE>org.opengis.cs.CS_CoordinateSystem</CODE> and <STRONG><CODE>CT_</CODE></STRONG>
+    in <CODE>org.opengis.ct.CT_CoordinateTransformation</CODE>). Those prefix are
+    redundant with package name and are omitted in SEAS classes.</P>
+
+    <H2>Enumeration classes</H2>
+    <P ALIGN="justify">The OpenGIS's specification define enumeration classes,
+    but use them only for parameters and return values in method calls. Enumeration
+    constants are declared as integer. In the SEAGIS's API, all enumeration classes
+    are immutable. Ennumeration constants are instances of the actual enumeration
+    class instead of integers. Names are uppercase, with no redundant prefix like
+    <CODE>CT_TT</CODE>, <CODE>CT_DF</CODE> or <CODE>CS_AO</CODE>.</P>
+
+    <H2>Localization support</H2>
+    <P ALIGN="justify">SEAGIS provides localization support. Methods
+    defined as <CODE>getName()</CODE> by OpenGIS are redifined as
+    <CODE>getName(Locale)</CODE> by SEAGIS.</P>
+
+    <H2>Classes hiearchy changes</H2>
+    <UL>
+      <LI><P ALIGN="justify">The <CODE>CoordinateTransform</CODE> class has been moved
+          as a <CODE>MathTransform</CODE>'s subclass  (since coordinate transforms are
+          kind of math transforms with additional semantic). <CODE>MathTransform</CODE>
+          is itself a <CODE>Info</CODE>'s subclass (since it shares many common methods).
+          Note that <CODE>CoordinateTransformation</CODE> has been renamed
+          <CODE>CoordinateTransform</CODE> for consistency with this new hierarchy.</P></LI>
+    </UL>
+
+    <H2>Method's name changes</H2>
+    <UL>
+      <LI><P ALIGN="justify">OpenGIS's <CODE>getMetadataValue(String)</CODE> methods are
+          functionally equivalent to Java's <CODE>getProperty(String)</CODE> methods.
+          SEAGIS follow the Java's convention (i.e. "MetadataValue" has been renamed
+          "Property") in order to ease interoperability with interfaces like
+          <CODE>javax.media.jai.PropertySource</CODE>.</P></LI>
+    </UL>
+
+    <H2>Method's signature changes</H2>
+    <UL>
+      <LI><P ALIGN="justify">Changed signature of various <CODE>MathTransform.transform(...)</CODE>
+          methods. New signatures are similar to <CODE>AffineTransform</CODE>'s transform methods,
+          which should be familiar to many Java programmers. They offer better performance
+          for local use (as opposed to RMI use). Note that the OpenGIS's signatures
+          are better suited for RMI use.</P></LI>
+    </UL>
+
+    <H2>Method's behavior changes</H2>
+    <UL>
+      <LI><P ALIGN="justify"><CODE>Ellipsoid.getInverseFlattening()</CODE> returns
+          <CODE>Double.POSITIVE_INFINITY</CODE> instead of 0 for perfect spheres.
+          Infinity is the mathematically correct value.</P></LI>
+    </UL>
+
+    <H2>Classes replacement</H2>
+    <P ALIGN="justify">Some OpenGIS interfaces have been omitted in
+    order to avoid redundancies with standard Java classes or other
+    OpenGIS classes:<BR>&nbsp;
+      <TABLE align="center" cellpadding="6" border="3" bgcolor=lightgoldenrodyellow>
+        <TR>
+          <TD align="center" bgcolor=bisque><STRONG>Omitted class or method</STRONG></TD>
+          <TD align="center" bgcolor=bisque><STRONG>Replacement</STRONG></TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>PT_Matrix</CODE></TD>
+          <TD nowrap>Not yet choosen. Maybe <A HREF="http://math.nist.gov/javanumerics/jama/"><CODE>Jama.Matrix</CODE></A>.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>CS_Unit</CODE> and subclass</TD>
+          <TD nowrap><CODE>javax.units.Unit</CODE> from <A HREF="http://jcp.org/jsr/detail/108.jsp">JSR-108</A>.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>GC_Parameter[]</CODE>,<BR>
+                     <CODE>CT_Parameter[]</CODE> and<BR>
+                     <CODE>CS_ProjectionParameter[]</CODE></TD>
+          <TD nowrap><CODE>javax.media.jai.ParameterList</CODE></TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>GP_ParameterType</CODE></TD>
+          <TD nowrap>Instances of <CODE>java.lang.Class</CODE></TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>GP_GridAnalysis</CODE></TD>
+          <TD nowrap>Methods moved in <CODE>GridCoverage</CODE> and <CODE>SampleDimension</CODE>.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>CV_SampleDimension.getScale()</CODE><BR>
+                     <CODE>CV_SampleDimension.getOffset()</CODE></TD>
+          <TD nowrap><CODE>net.seas.opengis.cv.Category</CODE>.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>CV_PaletteInterpretation</CODE></TD>
+          <TD nowrap>No replacement at this time.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>GC_ValueInBytePacking</CODE></TD>
+          <TD nowrap>No replacement at this time.</TD>
+        </TR>
+        <TR>
+          <TD nowrap><CODE>GC_ByteInValuePacking</CODE></TD>
+          <TD nowrap><CODE>java.nio.ByteOrder</CODE></TD>
+        </TR>
+      </TABLE></P>
+  </BODY>
+</HTML>

@@ -26,11 +26,13 @@ package net.seas.opengis.cv;
 import net.seas.opengis.pt.Envelope;
 import net.seas.opengis.pt.CoordinatePoint;
 import net.seas.opengis.cs.CoordinateSystem;
-
+import net.seas.opengis.cs.AxisOrientation;
 
 // Images
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
 
 // Collections
@@ -40,12 +42,25 @@ import javax.media.jai.PropertySource;
 import javax.media.jai.PropertySourceImpl;
 
 // Miscellaneous
-import net.seas.util.XArray;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.AffineTransform;
+import net.seas.resources.Resources;
+import net.seas.util.XArray;
 
 
 /**
- * Base class of all coverage type.
+ * Base class of all coverage type. {@linkplain net.seas.opengis.cv.GridCoverage Grid coverages}
+ * are typically 2D while other coverages may be 3D or 4D. The number of dimensions may be queried
+ * in many ways:
+ *
+ * <ul>
+ *   <li><code>getSourceCoordinateSystem().getDimension();</code></li>
+ *   <li><code>getSampleDimensions().size();</code></li>
+ *   <li><code>getDimensionNames().length;</code></li>
+ *   <li><code>getDimension();</code></li>
+ * </ul>
+ *
+ * All those methods should returns the same number.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
@@ -60,13 +75,18 @@ public abstract class Coverage implements PropertySource
     {}
 
     /**
-     * Returns the coordinate system. This specifies the coordinate
-     * system used when accessing a coverage or grid coverage with the “evaluate” methods.
-     * It is also the coordinate system of the coordinates used with the math
-     * transform {@link net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
-     * gridToCoordinateSystem()}. This coordinate system is usually different than
-     * the grid coordinate system of the grid. A grid coverage can be accessed
-     * (re-projected) with new coordinate system with the
+     * Returns the dimension of the grid coverage.
+     */
+    public int getDimension()
+    {return getSampleDimensions().size();}
+
+    /**
+     * Returns the coordinate system. This specifies the coordinate system used when
+     * accessing a coverage or grid coverage with the “evaluate” methods. It is also
+     * the coordinate system of the coordinates used with the math transform  {@link
+     * net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem}. This coordinate
+     * system is usually different than the grid coordinate system of the grid. A grid
+     * coverage can be accessed (re-projected) with new coordinate system with the
      * {@link net.seas.opengis.gp.GridCoverageProcessor} component.
      * In this case, a new instance of a grid coverage is created.
      *
@@ -74,7 +94,6 @@ public abstract class Coverage implements PropertySource
      *         does not have an associated coordinate system.
      *
      * @see net.seas.opengis.gc.GridGeometry#gridToCoordinateSystem
-     * @see net.seas.opengis.gp.GridCoverageProcessor#move
      */
     public abstract CoordinateSystem getCoordinateSystem();
 
@@ -86,13 +105,19 @@ public abstract class Coverage implements PropertySource
     public abstract Envelope getEnvelope();
 
     /**
-     * The names of each dimension in the coverage. Typically
-     * these names are “x”, “y”, “z” and “t”. Grid coverages are typically 2D (x,y)
-     * while other coverages may be 3D (x,y,z) or 4D (x,y,z,t). The number of
-     * dimensions of the coverage is the number of entries in the list of dimension
-     * names.
+     * Returns the names of each dimension in the coverage. Typically these names
+     * are “x”, “y”, “z” and “t”. Grid coverages are typically 2D (x,y) while other
+     * coverages may be 3D (x,y,z) or 4D (x,y,z,t). The number of dimensions of the
+     * coverage is the number of entries in the list of dimension names.
      */
-    public abstract String[] getDimensionNames();
+    public String[] getDimensionNames()
+    {
+        final List<SampleDimension> dim = getSampleDimensions();
+        final String[] names = new String[dim.size()];
+        for (int i=0; i<names.length; i++)
+            names[i] = dim.get(i).getName();
+        return names;
+    }
 
     /**
      * Retrieve sample dimension information for the coverage.
@@ -101,7 +126,7 @@ public abstract class Coverage implements PropertySource
      * the no data values, minimum and maximum values and a color table if one is associated
      * with the dimension. A coverage must have at least one sample dimension.
      */
-    public abstract List<SampleDimension> getSampleDimensions() throws IndexOutOfBoundsException;
+    public abstract List<SampleDimension> getSampleDimensions();
 
     /**
      * Return a sequence of boolean values for a given point in the coverage.
@@ -168,37 +193,46 @@ public abstract class Coverage implements PropertySource
     public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
 
     /**
-     * TODO
+     * <FONT COLOR="#FF6633">Returns this grid coverage as a renderable image.</FONT>
+     * This method allows interoperability with Java2D, but will work only for
+     * two-dimensional coverages.
+     *
+     * @return This grid coverage as a renderable image.
+     * @throws IllegalStateException if this coverage is not two-dimensional.
      */
-    public abstract RenderableImage getRenderableImage();
+    public abstract RenderableImage getRenderableImage() throws IllegalStateException;
 
     /**
-     * Returns the list of metadata keywords for a coverage. If no metadata
-     * is available, the array will be empty (but not <code>null</code>).
-     * The default implementation always returns an empty array.
+     * Returns an array of metadata keywords for this coverage.
+     * If no properties are available, <code>null</code> will be
+     * returned.
      */
-    public String[] getPropertyNames() // getMetadataNames()
-    {return new String[0];}
+    public String[] getPropertyNames()
+    {return null;}
 
     /**
      * Returns an array of strings recognized as names that begin with the
-     * supplied prefix. If no property names match, an empty array will be
-     * returned. The comparison is done in a case-independent manner.
+     * supplied prefix. If no property names match, <code>null</code> will
+     * be returned. The comparison is done in a case-independent manner.
      */
     public String[] getPropertyNames(final String prefix)
     {
         int count=0;
         final int length = prefix.length();
         final String[] names = getPropertyNames();
-        for (int i=0; i<names.length; i++)
+        if (names!=null)
         {
-            final String name = names[i];
-            if (name.length() >= length  &&  prefix.equalsIgnoreCase(name.substring(0, length)))
+            for (int i=0; i<names.length; i++)
             {
-                names[count++] = name;
+                final String name = names[i];
+                if (name!=null && name.length()>=length && prefix.equalsIgnoreCase(name.substring(0, length)))
+                {
+                    names[count++] = name;
+                }
             }
+            return (count!=0) ? XArray.resize(names, count) : null;
         }
-        return XArray.resize(names, count);
+        return names;
     }
 
     /**
@@ -212,27 +246,31 @@ public abstract class Coverage implements PropertySource
     /**
      * Retrieve the metadata value for a given metadata name. If the metadata name
      * is not recognized, {@link Image#UndefinedProperty} will be returned.
-     * The default implementation always returns <code>null</code>.
      *
      * @param name Metadata keyword for which to retrieve metadata.
      */
-    public Object getProperty(final String name) // getMetadataValue(String)
+    public Object getProperty(final String name)
     {return Image.UndefinedProperty;}
 
     /**
-     * TODO
+     * <FONT COLOR="#FF6633">Base class for a renderable view of grid coverage.</FONT>
+     * Renderable images allow interoperability with Java2D for two-dimensional coverage
+     * (which may or may not be a grid coverage).
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
      */
-    private abstract class Renderable extends PropertySourceImpl implements RenderableImage
+    protected abstract class Renderable extends PropertySourceImpl implements RenderableImage
     {
         /**
          * The envelope as a {@link Rectangle2D}.
          */
-        final Rectangle2D envelope;
+        private final Rectangle2D envelope;
 
         /**
-         * Default constructor.
+         * Construct a renderable image.
          *
-         * @throws IllegalStateException if the coverage is not two-dimensional.
+         * @throws IllegalStateException if the underlying coverage is not two-dimensional.
          */
         public Renderable() throws IllegalStateException
         {
@@ -242,40 +280,91 @@ public abstract class Coverage implements PropertySource
 
         /**
          * Returns <code>null</code> to indicate
-         * that no information is available.
+         * that no source information is available.
          */
         public Vector getSources()
         {return null;}
 
         /**
          * Returns true if successive renderings with the same arguments
-         * may produce different results. It is always safe to return true.
+         * may produce different results. The default implementation returns
+         * <code>false</code>.
+         *
+         * @see net.seas.opengis.gc.GridCoverage#isDataEditable
          */
         public boolean isDynamic()
-        {return true;}
+        {return false;}
 
         /**
-         * Gets the width in user coordinate space.
+         * Gets the width in coverage coordinate space.
+         *
+         * @see Coverage#getEnvelope
+         * @see Coverage#getCoordinateSystem
          */
         public float getWidth()
         {return (float)envelope.getWidth();}
 
         /**
-         * Gets the height in user coordinate space.
+         * Gets the height in coverage coordinate space.
+         *
+         * @see Coverage#getEnvelope
+         * @see Coverage#getCoordinateSystem
          */
         public float getHeight()
         {return (float)envelope.getHeight();}
 
         /**
          * Gets the minimum X coordinate of the rendering-independent image data.
+         *
+         * @see Coverage#getEnvelope
+         * @see Coverage#getCoordinateSystem
          */
         public float getMinX()
         {return (float)envelope.getX();}
 
         /**
          * Gets the minimum Y coordinate of the rendering-independent image data.
+         *
+         * @see Coverage#getEnvelope
+         * @see Coverage#getCoordinateSystem
          */
         public float getMinY()
         {return (float)envelope.getY();}
+
+        /**
+         * Creates a rendered omage with width <code>width</code>
+         * and height <code>height</code> in pixels.
+         *
+         * @param  width  The width of rendered image in pixels, or 0.
+         * @param  height The height of rendered image in pixels, or 0.
+         * @param  hints  Rendering hints, or <code>null</code>.
+         * @return A rendered image containing the rendered data
+         */
+        public RenderedImage createScaledRendering(int width, int height, final RenderingHints hints)
+        {
+            final double coverageWidth  = envelope.getWidth();
+            final double coverageHeight = envelope.getHeight();
+            if (!(width>0)) // Use '!' in order to catch NaN
+            {
+                if (!(height>0))
+                {
+                    throw new IllegalArgumentException(Resources.format(Clé.UNSPECIFIED_IMAGE_SIZE));
+                }
+                width = (int)Math.round(height * (coverageWidth/coverageHeight));
+            }
+            else if (!(height>0))
+            {
+                height = (int)Math.round(width * (coverageHeight/coverageWidth));
+            }
+            CoordinateSystem  cs = getCoordinateSystem();
+            AxisOrientation  aoX = cs.getAxis(0).orientation;
+            AxisOrientation  aoY = cs.getAxis(1).orientation;
+            // TODO: take axis orientation in account
+            double scaleX =  width/coverageWidth;
+            double scaleY = height/coverageHeight;
+            double transX = -scaleX * envelope.getX();
+            double transY = -scaleY * envelope.getY();
+            return createRendering(new RenderContext(new AffineTransform(scaleX, 0, 0, scaleY, transX, transY), hints));
+        }
     }
 }

@@ -40,24 +40,35 @@ import javax.units.Unit;
 public abstract class SampleDimension
 {
     /**
+     * The sample dimension name.
+     */
+    private final String name;
+
+    /**
      * The category list for this sample dimension,
-     * or <code>null</code> if there is none.
+     * or <code>null</code> if this sample dimension
+     * has no category.
      */
     private final CategoryList categories;
 
     /**
-     * Default constructor.
+     * Construct a sample dimension with a set of categories.
      *
-     * @param categories The category list for this sample
-     *        dimension, or <code>null</code> if there is none.
+     * @param name The sample dimension name.
+     * @param categories The category list for this sample dimension, or
+     *        <code>null</code> if this sample dimension has no category.
      */
-    public SampleDimension(final CategoryList categories)
-    {this.categories = categories;}
+    public SampleDimension(final String name, final CategoryList categories)
+    {
+        this.name       = name.trim();
+        this.categories = categories;
+    }
 
     /**
      * Get the sample dimension name.
      */
-    public abstract String getName();
+    public String getName()
+    {return name;}
 
     /**
      * Get the sample dimension title or description.

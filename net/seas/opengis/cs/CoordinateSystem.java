@@ -35,6 +35,7 @@ import net.seas.opengis.pt.Envelope;
 
 // Miscellaneous
 import net.seas.util.XClass;
+import net.seas.resources.Resources;
 import java.rmi.RemoteException;
 
 
@@ -87,7 +88,35 @@ public abstract class CoordinateSystem extends Info
     {super(properties);}
 
     /**
-     * Dimension of the coordinate system.
+     * Make sure there is no axis among the same direction
+     * (e.g. two north axis, or a east and a west axis).
+     * This methods may be invoked from subclasses constructors.
+     *
+     * @throws IllegalArgumentException if two axis have the same direction.
+     */
+    final void checkAxis() throws IllegalArgumentException
+    {
+        final int dimension = getDimension();
+        for (int i=0; i<dimension; i++)
+        {
+            final AxisOrientation check = getAxis(i).orientation.absolute();
+            if (!check.equals(AxisOrientation.OTHER))
+            {
+                for (int j=i+1; j<dimension; j++)
+                {
+                    if (check.equals(getAxis(j).orientation.absolute()))
+                    {
+                        final String nameI = getAxis(i).orientation.getName(null);
+                        final String nameJ = getAxis(j).orientation.getName(null);
+                        throw new IllegalArgumentException(Resources.format(Clé.NON_ORTHOGONAL_AXIS¤2, nameI, nameJ));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the dimension of the coordinate system.
      */
     public abstract int getDimension();
 

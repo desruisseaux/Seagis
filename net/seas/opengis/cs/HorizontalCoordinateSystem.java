@@ -31,6 +31,7 @@ import java.util.Map;
 import javax.units.Unit;
 import net.seas.util.XClass;
 import net.seas.resources.Resources;
+import java.awt.geom.AffineTransform;
 import java.rmi.RemoteException;
 
 
@@ -82,6 +83,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
         ensureNonNull("datum", datum);
         ensureNonNull("axis0", axis0);
         ensureNonNull("axis1", axis1);
+        checkAxis();
     }
 
     /**
@@ -104,7 +106,7 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
     /**
      * Returns the dimension of this coordinate system, which is 2.
      */
-    public int getDimension()
+    public final int getDimension()
     {return 2;}
 
     /**
@@ -126,6 +128,66 @@ public abstract class HorizontalCoordinateSystem extends CoordinateSystem
             case 1:  return axis1;
             default: throw new IndexOutOfBoundsException(Resources.format(Clé.INDEX_OUT_OF_BOUNDS¤1, new Integer(dimension)));
         }
+    }
+
+    /**
+     * TODO
+     */
+    private AffineTransform toStandardAxis()
+    {return toStandardAxis(getAxis(0).orientation, getAxis(1).orientation);}
+
+    /**
+     * x and y coordinates in the range [0..1] will still in this
+     * range after the transformation.
+     *
+     * TODO: complete documentation and make public.
+     */
+    private AffineTransform toStandardAxis(final AxisOrientation axis0, final AxisOrientation axis1)
+    {
+        double scaleX     = 1;
+        double scaleY     = 1;
+        double translateX = 0;
+        double translateY = 0;
+        final AxisOrientation absAxis0 = axis0.absolute();
+        final AxisOrientation absAxis1 = axis1.absolute();
+        final boolean  isAxis0Positive = axis0.equals(absAxis0);
+        final boolean  isAxis1Positive = axis1.equals(absAxis1);
+        if (absAxis0.equals(AxisOrientation.NORTH))
+        {
+            if (absAxis1.equals(AxisOrientation.EAST))
+            {
+                if (!isAxis1Positive)
+                {
+                    scaleX     = -1;
+                    translateX =  1;
+                }
+                if (!isAxis0Positive)
+                {
+                    scaleY     = -1;
+                    translateY =  1;
+                }
+                return new AffineTransform(scaleX, 0, 0, scaleY, translateX, translateY);
+            }
+        }
+        else if (absAxis0.equals(AxisOrientation.EAST))
+        {
+            if (absAxis1.equals(AxisOrientation.NORTH))
+            {
+                if (!isAxis0Positive)
+                {
+                    scaleX     = -1;
+                    translateX =  1;
+                }
+                if (!isAxis1Positive)
+                {
+                    scaleY     = -1;
+                    translateY =  1;
+                }
+                // TODO: verify that!!!
+                return new AffineTransform(0, scaleX, scaleY, 0, translateX, translateY);
+            }
+        }
+        return null;
     }
 
     /**

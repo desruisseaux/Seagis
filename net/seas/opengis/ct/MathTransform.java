@@ -136,7 +136,9 @@ public abstract class MathTransform extends Info
      *              result of transforming <code>ptSrc</code>, or
      *              <code>null</code>.
      * @return the coordinate point after transforming <code>ptSrc</code>
-     *         and storing the result in <code>ptDst</code>.
+     *         and storing the result in <code>ptDst</code>, or a newly
+     *         created point if <code>ptDst</code> was null or its dimension
+     *         was not suitable.
      * @throws TransformException if the point can't be transformed.
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException

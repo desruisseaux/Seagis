@@ -85,6 +85,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
         ensureNonNull("unit",  unit );
         ensureNonNull("axis",  axis );
         ensureLinearUnit(unit);
+        checkAxis();
     }
 
     /**
@@ -107,7 +108,7 @@ public class VerticalCoordinateSystem extends CoordinateSystem
     /**
      * Returns the dimension of this coordinate system, which is 1.
      */
-    public int getDimension()
+    public final int getDimension()
     {return 1;}
 
     /**

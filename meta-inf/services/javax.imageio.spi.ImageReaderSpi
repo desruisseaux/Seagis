@@ -1,0 +1,3 @@
+net.seas.image.io.RawBinaryImageReader$Spi
+net.seas.image.io.TextMatrixImageReader$Spi
+net.seas.image.io.TextRecordImageReader$Spi
