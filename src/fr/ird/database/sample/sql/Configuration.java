@@ -93,7 +93,7 @@ public class Configuration extends fr.ird.database.Configuration
      * Constructeur.
      */
     private Configuration() 
-    {
+    {        
         super(SampleDataBase.getDefaultFileOfConfiguration());    
     }    
     
