@@ -32,6 +32,7 @@ import java.awt.Paint;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.Graphics2D;
+import java.awt.BorderLayout;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -51,6 +52,7 @@ import java.sql.SQLException;
 import java.sql.DriverManager;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.imageio.ImageIO;
 import java.io.PrintWriter;
 import java.io.IOException;
@@ -58,6 +60,7 @@ import java.io.File;
 
 // Geotools
 import org.geotools.gui.swing.MapPane;
+import org.geotools.gui.swing.ColorBar;
 import org.geotools.renderer.j2d.Renderer;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedGeometries;
@@ -150,7 +153,7 @@ public class SampleDensity extends RenderedLayer {
         final BufferedImage image = new BufferedImage((int)Math.round(bounds.getWidth())  *2,
                                                       (int)Math.round(bounds.getHeight()) *2,
                                                       BufferedImage.TYPE_BYTE_INDEXED,
-                                                      Utilities.getPaletteFactory().getIndexColorModel("rainbow"));
+                                                      Utilities.getPaletteFactory().getIndexColorModel("white-cyan-red"));
         final int    width   = image.getWidth();
         final int    height  = image.getHeight();
         final int    xmin    = image.getMinX();
@@ -210,12 +213,13 @@ public class SampleDensity extends RenderedLayer {
         out = arguments.out;
 
         final Driver driver = (Driver)Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
-        final MapPane          mapPane = new MapPane(GeographicCoordinateSystem.WGS84);
-        final GeometryCollection coast = new GEBCOFactory("Océan_Indien").get(0);
-        final Renderer        renderer = mapPane.getRenderer();
-        // Note: on veut réellement getBounds() plutôt que getBounds2D() sur la ligne suivante,
+        final MapPane           mapPane = new MapPane(GeographicCoordinateSystem.WGS84);
+        final GeometryCollection  coast = new GEBCOFactory("Océan_Indien").get(0);
+        final GridCoverage gridCoverage = getDensityCoverage(coast.getBounds(), month);
+        // Note: on veut réellement getBounds() plutôt que getBounds2D() sur la ligne précédente,
         //       afin d'arrondir les coordonnées au degré près.
-        renderer.addLayer(new RenderedGridCoverage(getDensityCoverage(coast.getBounds(), month)));
+        final Renderer renderer = mapPane.getRenderer();
+        renderer.addLayer(new RenderedGridCoverage(gridCoverage));
         renderer.addLayer(new RenderedGeometries(coast));
         renderer.addLayer(new SampleDensity(month));
         mapPane.setBackground(Color.WHITE);
@@ -231,9 +235,13 @@ public class SampleDensity extends RenderedLayer {
         graphics.dispose();
         ImageIO.write(image, "png", new File("P:\\Distribution des données.png"));
 
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.add(mapPane.createScrollPane(), BorderLayout.CENTER);
+        panel.add(new ColorBar(gridCoverage), BorderLayout.SOUTH);
+
         final JFrame frame = new JFrame("Distribution des pêches");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(mapPane.createScrollPane());
+        frame.getContentPane().add(panel);
         frame.setSize(WIDTH, HEIGHT);
         frame.pack();
         frame.show();

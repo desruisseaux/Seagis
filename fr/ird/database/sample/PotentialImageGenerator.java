@@ -31,6 +31,9 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -40,9 +43,11 @@ import javax.media.jai.JAI;
 import javax.media.jai.util.Range;
 
 // Geotools dependencies
+import org.geotools.pt.Envelope;
 import org.geotools.gc.GridCoverage;
 import org.geotools.util.NumberRange;
 import org.geotools.resources.Arguments;
+import org.geotools.resources.XDimension2D;
 import org.geotools.resources.MonolineFormatter;
 
 // SEAGIS dependencies
@@ -56,7 +61,7 @@ import fr.ird.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class PotentialImageGenerator {
+public final class PotentialImageGenerator extends ParameterCoverage3D {
     /**
      * Nombre de millisecondes dans une journée; utilisé pour l'arrondissement des dates.
      */
@@ -65,7 +70,17 @@ public final class PotentialImageGenerator {
     /**
      * Heure de la journée à laquelle calculer les images.
      */
-    private static final int DAY_TIME = 0;
+    private static final int DAY_TIME = (12*60*60*1000);
+
+    /**
+     * Le pas de temps entre deux images.
+     */
+    private static final int TIME_STEP = 7*DAY;
+
+    /**
+     * Région geographique d'intérêt. Par défaut de 30°E à 80°E et 30°S à 10°N.
+     */
+    private static final Rectangle2D GEOGRAPHIC_AREA = new Rectangle(30, -30, 50, 40);
 
     /**
      * Arrondie un nombre vers le haut.
@@ -104,6 +119,40 @@ public final class PotentialImageGenerator {
     }
 
     /**
+     * Construit un générateur de carte de potentiel par défaut.
+     */
+    public PotentialImageGenerator() throws SQLException {
+        super();
+    }
+
+    /**
+     * Retourne une envelope englobant les coordonnées spatio-temporelles des données.
+     * Cette envelope sera l'intersection de {@linkplain ParameterCoverage3D#getEnvelope()
+     * l'envelope par défaut} et de l'envelope de la zone d'étude.
+     */
+    public Envelope getEnvelope() {
+        final Envelope envelope = super.getEnvelope();
+        for (int dimension=0; dimension<=1; dimension++) {
+            final double min, max;
+            switch (dimension) {
+                case 0:  min=GEOGRAPHIC_AREA.getMinX(); max=GEOGRAPHIC_AREA.getMaxX(); break;
+                case 1:  min=GEOGRAPHIC_AREA.getMinY(); max=GEOGRAPHIC_AREA.getMaxY(); break;
+                default: throw new AssertionError(dimension);
+            }
+            envelope.setRange(dimension, Math.max(envelope.getMinimum(dimension), min),
+                                         Math.min(envelope.getMaximum(dimension), max));
+        }
+        return envelope;
+    }
+
+    /**
+     * Retourne la taille par défaut des pixels des images à produire.
+     */
+    protected Dimension2D getDefaultPixelSize() {
+        return new XDimension2D.Double(0.125, 0.125);
+    }
+
+    /**
      * Lance la création d'une série d'images de potentiel de pêche
      * à partir de la ligne de commande. Les arguments sont:
      *
@@ -120,6 +169,9 @@ public final class PotentialImageGenerator {
      * @throws IOException si l'image ne peut pas être enregistrée.
      */
     public static void main(final String[] args) throws SQLException, IOException {
+        // HACK: Pour vérifier le décodeur d'image PNG.
+        new org.geotools.gui.swing.About().showDialog(null);
+
         MonolineFormatter.init("org.geotools");
         MonolineFormatter.init("fr.ird");
         final Arguments arguments = new Arguments(args);
@@ -139,7 +191,7 @@ public final class PotentialImageGenerator {
         final double offset = -2;
         final double scale  = 1.0/64;
         JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
-        final ParameterCoverage3D coverage3D = new ParameterCoverage3D();
+        final ParameterCoverage3D coverage3D = new PotentialImageGenerator();
         try {
             coverage3D.setParameter(parameter);
             coverage3D.setOutputRange(new NumberRange(1*scale+offset, 255*scale+offset));
@@ -147,7 +199,7 @@ public final class PotentialImageGenerator {
             final Range timeRange = coverage3D.getTimeRange();
             final Date       time = (Date) timeRange.getMinValue();
             final Date    endTime = (Date) timeRange.getMaxValue();
-            time   .setTime( ceil(   time.getTime(), DAY));
+            time   .setTime( ceil(   time.getTime(), DAY) + DAY_TIME);
             endTime.setTime(floor(endTime.getTime(), DAY));
             while (!time.after(endTime)) {
                 final String filename = df.format(time);
@@ -156,7 +208,7 @@ public final class PotentialImageGenerator {
                 arguments.out.println(filename);
                 final GridCoverage coverage = coverage3D.getGridCoverage2D(time);
                 Utilities.save(coverage.geophysics(false).getRenderedImage(), filepath.getPath());
-                time.setTime(time.getTime() + DAY);
+                time.setTime(time.getTime() + TIME_STEP);
             }
         } finally {
             // Ferme la base de données seulement après la création de l'image,
