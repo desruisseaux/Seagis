@@ -69,12 +69,12 @@ import fr.ird.resources.seagis.Resources;
  * Interface graphique pour lancer l'exécution de {@link EnvironmentTableFiller}.
  * Cette interface présente trois colonnes dans lesquelles l'utilisateur peut sélectionner
  * les séries temporelles, les décalages spatio-temporels et une opération à appliquer sur
- * les données.  Des cases à cocher, &quot;Autoriser un filtrage des données manquantes&quot;
- * et &quot;Autoriser les interpolations&quot;, activeront les opérations suivantes:
+ * les données.  Des cases à cocher, "Autoriser un filtrage des données manquantes"
+ * et "Autoriser les interpolations", activeront les opérations suivantes:
  *
  * <ul>
- *   <li>Remplissage de quelques données manquantes avec l'opération &quot;NodataFilter&quot;.</li>
- *   <li>Interpolation bicubique ou bilinéare (si possible) avec l'opération &quot;Interpolate&quot;.</li>
+ *   <li>Remplissage de quelques données manquantes avec l'opération "NodataFilter".</li>
+ *   <li>Interpolation bicubique ou bilinéare (si possible) avec l'opération "Interpolate".</li>
  * </ul>
  *
  * @version $Id$
@@ -83,7 +83,7 @@ import fr.ird.resources.seagis.Resources;
 public class EnvironmentSamplingChooser extends JPanel {
     /**
      * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
-     * &quot;NodataFilter&quot;.
+     * "NodataFilter".
      *
      * @see fr.ird.database.coverage.sql.GridCoverageProcessor#NODATA_FILTER
      */

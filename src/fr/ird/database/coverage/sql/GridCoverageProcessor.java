@@ -37,7 +37,7 @@ import org.geotools.gp.OperationNotFoundException;
 
 /**
  * Implémentation de {@link org.geotools.gp.GridCoverageProcessor} qui peut
- * appliquer l'opération &quot;NodataFilter&quot; avant certaines autres opérations.
+ * appliquer l'opération "NodataFilter" avant certaines autres opérations.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -45,7 +45,7 @@ import org.geotools.gp.OperationNotFoundException;
 final class GridCoverageProcessor extends org.geotools.gp.GridCoverageProcessor {
     /**
      * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
-     * &quot;NodataFilter&quot;.
+     * "NodataFilter".
      */
     public static final String NODATA_FILTER = "NodataFilter";
 
@@ -65,7 +65,7 @@ final class GridCoverageProcessor extends org.geotools.gp.GridCoverageProcessor 
 
     /**
      * Opération déléguant son travail à une autre opération, mais après avoir appliqué
-     * l'opération &quot;NodataFilter&quot;.
+     * l'opération "NodataFilter".
      *
      * @version $Id$
      * @author Martin Desruisseaux

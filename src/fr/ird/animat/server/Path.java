@@ -60,7 +60,7 @@ import fr.ird.animat.Clock;
  * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes
  * et de latitudes selon l'ellipsoïde {@linkplain Ellipsoid#WGS84 WGS84}.
  * Les déplacements sont exprimées en milles nautiques, et les directions
- * en degrés géographiques (c'est-à-dire par rapport au nord &quot;vrai&quot;).
+ * en degrés géographiques (c'est-à-dire par rapport au nord "vrai").
  * Les déplacements et le cap sont calculés en utilisant une projection
  * de Mercator mobile, toujours centrée sur la position actuelle.
  *

@@ -32,7 +32,7 @@ import java.sql.SQLException;
 
 
 /**
- * Interrogation de la table &quot;Opérations&quot;.
+ * Interrogation de la table "Opérations".
  *
  * @version $Id$
  * @author Martin Desruisseaux

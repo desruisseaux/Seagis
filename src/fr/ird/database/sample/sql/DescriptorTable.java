@@ -46,9 +46,9 @@ import fr.ird.database.coverage.SeriesTable;
  *   <li>une distribution statistique des valeurs obtenues.</li>
  * </ul>
  *
- * Par exemple le paramètre &quot;SST&quot; sur lequel on applique l'opération &quot;sobel3&quot;,
- * évalué 5 jours avant la pêche, donnera un descripteur du paysage océanique que l'on peut appeler
- * <code>&quot;grSST-05&quot;</code>.
+ * Par exemple le paramètre "SST" sur lequel on applique l'opération "sobel3",
+ * évalué 5 jours avant la pêche, donnera un descripteur du paysage océanique
+ * que l'on peut appeler <code>"grSST-05"</code>.
  *
  * Les informations nécessaires à la construction des descripteurs sont puisées dans trois tables:
  * {@link ParameterTable}, {@link RelativePositionTable} et {@link OperationTable}. De ces trois

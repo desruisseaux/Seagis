@@ -37,7 +37,7 @@ import fr.ird.database.Entry;
  */
 public interface SeriesEntry extends Entry {
     /**
-     * Retourne la période &quot;normale&quot; des images de cette série
+     * Retourne la période "normale" des images de cette série
      * (en nombre de jours), ou {@link Double#NaN} si elle est inconnue.
      */
     public abstract double getPeriod();

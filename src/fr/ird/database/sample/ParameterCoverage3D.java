@@ -86,7 +86,7 @@ import fr.ird.resources.seagis.Resources;
 public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.sample.Coverage3D {
     /**
      * Le prefix à ajouter devant les noms des opérations pour ajouter l'opération
-     * &quot;NodataFilter&quot;.
+     * "NodataFilter".
      *
      * @see fr.ird.database.coverage.sql.GridCoverageProcessor#NODATA_FILTER
      * @see #getProcessorOperation
@@ -961,10 +961,9 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
      *
      * <ul>
      *   <li><code>-parameter=<var>P</var></code> où <var>P</var> est un des paramètre énuméré
-     *       dans la table &quot;Paramètre&quot; de la base de données des échantillons (par
-     *       exemple &quot;PP1&quot;).</li>
+     *       dans la table "Paramètre" de la base de données des échantillons (par exemple "PP1").</li>
      *   <li><code>-date=<var>date</var> est la date (en heure universelle) de l'image à générer
-     *       (par exemple &quot;18/08/1999&quot;). Son format dépend des conventions du système,
+     *       (par exemple "18/08/1999"). Son format dépend des conventions du système,
      *       qui peut être spécifié par l'argument <code>-locale</code>.</li>
      *   <li><code>-file=<var>file</var> est un nom de fichier optionel dans lequel enregistrer
      *       le résultat. Si cet argument est omis, alors l'image sera affichée à l'écran sans

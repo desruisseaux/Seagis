@@ -49,8 +49,8 @@ import fr.ird.database.Entry;
  * {@linkplain ParameterEntry paramètres environnementaux}.
  *
  * La variable dépendante <var>y</var> sera stockée dans un nouveau paramètre environnemental
- * (par exemple un paramètre appelé &quot;potentiel de pêche&quot;). Elle pourra donc servir
- * d'entrée à un autre modèle linéaire.
+ * (par exemple un paramètre appelé "potentiel de pêche"). Elle pourra donc servir d'entrée à
+ * un autre modèle linéaire.
  *
  * @version $Id$
  * @author Martin Desruisseaux

@@ -69,10 +69,10 @@ import fr.ird.resources.seagis.ResourceKeys;
 
 /**
  * Insère de nouvelles entrées dans les tables de la base de données d'images. Par exemple,
- * cette classe peut être utilisée pour ajouter de nouvelles entrées dans la table
- * &quot;Images&quot;, ce qui peut impliquer l'ajout d'entrés dans la table &quot;Areas&quot;
- * en même temps. Cette interface peut ajouter de nouvelles lignes aux tables existantes, mais
- * ne modifie jamais les lignes existantes.
+ * cette classe peut être utilisée pour ajouter de nouvelles entrées dans la table "Images",
+ * ce qui peut impliquer l'ajout d'entrés dans la table "Areas" en même temps. Cette classe
+ * peut ajouter de nouvelles lignes aux tables existantes, mais ne modifie jamais les lignes
+ * existantes.
  *
  * @version $Id$
  * @author Martin Desruisseaux

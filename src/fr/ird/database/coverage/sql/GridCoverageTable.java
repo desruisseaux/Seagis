@@ -861,7 +861,7 @@ class GridCoverageTable extends Table implements CoverageTable {
     }
 
     /**
-     * Ajoute une entrée dans la table &quot;<code>GridCoverages</code>&quot;.
+     * Ajoute une entrée dans la table "<code>GridCoverages</code>".
      * Cette méthode sera redéfinie dans {@link WritableGridCoverageTable}.
      */
     public Integer addGridCoverage(final GridCoverage coverage, final String filename) throws SQLException {

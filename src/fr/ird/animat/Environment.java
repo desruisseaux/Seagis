@@ -62,8 +62,8 @@ public interface Environment extends Remote {
 
     /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
-     * Les populations &quot;{@linkplain Population#kill mortes}&quot; ne
-     * sont pas comprises dans cet ensemble.
+     * Les populations "{@linkplain Population#kill mortes}" ne sont pas
+     * comprises dans cet ensemble.
      *
      * @return Les populations évoluant dans cet environnement.
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante

@@ -44,14 +44,14 @@ import fr.ird.animat.event.AnimalChangeListener;
 
 /**
  * Représentation d'un animal. Chaque animal doit appartenir à une {@linkplain Species espèce}
- * ainsi qu'à une {@linkplain Population population}. Le terme &quot;animal&quot; est ici utilisé
+ * ainsi qu'à une {@linkplain Population population}. Le terme "animal" est ici utilisé
  * au sens large. Un développeur pourrait très bien considérer la totalité d'un banc de poissons
  * comme une sorte de méga-animal.
  * <br><br>
  * Toutes les coordonnées spatiales sont exprimées en degrées de longitudes et de latitudes
  * selon l'ellipsoïde {@linkplain Ellipsoid#WGS84 WGS84}. Les déplacements sont exprimées en
  * milles nautiques, et les directions en degrés géographiques (c'est-à-dire par rapport au
- * nord &quot;vrai&quot;). Les intervalles de temps sont exprimés en nombre de jours.
+ * nord "vrai"). Les intervalles de temps sont exprimés en nombre de jours.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -82,7 +82,7 @@ public interface Animal extends Remote {
      * horloge sera toujours identique à celui de {@linkplain Environment#getClock l'horloge
      * de l'environnement} (puisque le temps s'écoule de la même façon pour tous les animaux),
      * mais {@link Clock#getAge l'âge} peut être différent. Cet âge dépend de l'instant du
-     * &quot;pas de temps 0&quot;, qui correspond à la naissance de l'animal.
+     * "pas de temps 0", qui correspond à la naissance de l'animal.
      *
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
@@ -105,10 +105,10 @@ public interface Animal extends Remote {
      * nombre de {@linkplain Parameter paramètres} observés n'est pas nécessairement égal au
      * nombre de {@linkplain Environment#getParameters paramètres de l'environnement}, car un
      * animal peut ignorer les paramètres qui ne l'intéresse pas. A l'inverse, un animal peut
-     * aussi faire quelques observations &quot;internes&quot; (par exemple la température de
-     * ses muscles) qui ne font pas partie des paramètres de son environnement externe. En
-     * général, {@linkplain fr.ird.animat.server.Parameter#HEADING le cap et la position} de
-     * l'animal feront partis des paramètres &quot;internes&quot; observés.
+     * aussi faire quelques observations "internes" (par exemple la température de ses muscles)
+     * qui ne font pas partie des paramètres de son environnement externe. En général,
+     * {@linkplain fr.ird.animat.server.Parameter#HEADING le cap et la position} de
+     * l'animal feront partis des paramètres "internes" observés.
      *
      * @param  time Date pour laquelle on veut les observations, ou <code>null</code> pour les
      *         dernières observations (c'est-à-dire celle qui ont été faites après le dernier

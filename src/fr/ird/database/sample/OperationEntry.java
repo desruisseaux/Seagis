@@ -48,13 +48,13 @@ import fr.ird.database.coverage.CoverageTable;
 public interface OperationEntry extends Entry {
     /**
      * Retourne le nom de colonne de l'opération. Cette colonne apparaît dans la table
-     * &quot;Environnement&quot;, par exemple &quot;pixel&quot; ou &quot;sobel3&quot;.
+     * "Environnement", par exemple "pixel" ou "sobel3".
      */
     public abstract String getColumn();
 
     /**
      * Retourne le préfix à utiliser dans les noms composites. Les noms composites seront
-     * de la forme &quot;operation - paramètre - temps&quot;, par exemple "grSST-15".
+     * de la forme "operation - paramètre - temps", par exemple "grSST-15".
      */
     public abstract String getPrefix();
 

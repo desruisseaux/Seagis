@@ -45,8 +45,8 @@ import org.geotools.util.ProgressListener;
 /**
  * Table faisant le lien entre les échantillons et les paramètres environnementaux aux
  * positions de cet échantillons. Les paramètres environnementaux sont enregistrées dans
- * la table <code>&quot;Environments&quot;</code>. Cette classe interroge cette table en
- * la réarangeant d'une façon plus appropriée pour l'analyse avec des logiciels statistiques
+ * la table <code>"Environments"</code>. Cette classe interroge cette table en la
+ * réarangeant d'une façon plus appropriée pour l'analyse avec des logiciels statistiques
  * classiques. Les paramètres environnementaux correspondant à un même échantillons (SST 5
  * jours avant, 10 jours avant, etc.) sont juxtaposés sur une même ligne.
  *
@@ -57,12 +57,11 @@ public interface EnvironmentTable extends Table {
     /**
      * Spécifie le nom d'une table des échantillons à joindre avec les paramètres environnementaux
      * retournés par {@link #getRowSet}. Il ne s'agit pas nécessairement de la table
-     * <code>&quot;Samples&quot;</code>. Il pourrait s'agir d'une requête, comme par exemple
-     * <code>&quot;Présences par espèces&quot;<code>. Cette requête doit obligatoirement avoir une
-     * colonne &quot;ID&quot; contenant le numéro identifiant l'échantillons, suivit de préférence
-     * par les colonnes &quot;date&quot;, &quot;x&quot; et &quot;y&quot; contenant les coordonnées
-     * spatio-temporelles de l'échantillons. Les colonnes suivantes contiennent les échantillons par
-     * espèces.
+     * <code>"Samples"</code>. Il pourrait s'agir d'une requête, comme par exemple
+     * <code>"Présences par espèces"<code>. Cette requête doit obligatoirement avoir une
+     * colonne "ID" contenant le numéro identifiant l'échantillons, suivit de préférence
+     * par les colonnes "date", "x" et "y" contenant les coordonnées spatio-temporelles
+     * de l'échantillons. Les colonnes suivantes contiennent les échantillons par espèces.
      *
      * @param table Le nom de la table des échantillons, ou <code>null</code> si aucune.
      * @throws SQLException si l'accès à la base de données a échouée.

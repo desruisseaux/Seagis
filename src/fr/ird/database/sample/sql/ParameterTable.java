@@ -41,7 +41,7 @@ import fr.ird.resources.seagis.Resources;
 
 
 /**
- * Interrogation de la table &quot;Paramètres&quot;. Contrairement à la plupart des autres tables,
+ * Interrogation de la table "Paramètres". Contrairement à la plupart des autres tables,
  * les appels des méthodes <code>getEntry(...)</code> de <code>ParameterTable</code> peuvent être
  * récursifs. En effet, chaque paramètre peut être associé à un modèle linéaire.
  * Or les {@linkplain LinearModelTerm termes du modèle linéaire} sont composés de

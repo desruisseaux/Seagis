@@ -47,7 +47,7 @@ import fr.ird.database.coverage.SeriesEntry;
 public interface ParameterEntry extends Entry {
     /**
      * Retourne <code>true</code> si ce paramètre est le <cite>paramètre identité</cite>.
-     * Le &quot;paramètre identité&quot; est un paramètre artificiel représentant une image
+     * Le "paramètre identité" est un paramètre artificiel représentant une image
      * dont tous les pixels auraient la valeur 1. Il est utilisé dans des expressions de
      * la forme <code>y = C0 + C1*x + C2*x² + ...</code>, ou <code>C0</code> peut s'écrire
      * <code>C0&times;identité</code>.

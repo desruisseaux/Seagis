@@ -111,8 +111,8 @@ final class EnvironmentTable extends Table implements fr.ird.database.sample.Env
     /**
      * Table des échantillons à joindre avec les paramètres environnementaux retournés par
      * {@link #getRowSet}, ou <code>null</code> si aucune. Il ne s'agit pas nécessairement
-     * de la table <code>&quot;Samples&quot;</code>. Il pourrait s'agir d'une requête,
-     * comme par exemple <code>&quot;Présences par espèces&quot;<code>.
+     * de la table <code>"Samples"</code>. Il pourrait s'agir d'une requête, comme par exemple
+     * <code>"Présences par espèces"<code>.
      *
      * @see #setSampleTable
      */

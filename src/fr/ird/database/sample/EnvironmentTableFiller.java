@@ -69,12 +69,12 @@ import fr.ird.resources.XArray;
 
 
 /**
- * Remplit la table &quot;Environnement&quot; de la base de données des échantillons à partir des
- * données satellitaires. La table &quot;Environnement&quot; contient les valeurs de paramètres
+ * Remplit la table "Environnement" de la base de données des échantillons à partir des
+ * données satellitaires. La table "Environnement" contient les valeurs de paramètres
  * environnementaux (température, chlorophylle-a, hauteur de l'eau, etc.) aux positions des
  * échantillons. Lorsque <code>EnvironmentTableFiller</code> trouve une données environnementale
  * à une position d'un échantillon, il met à jour la cellule correspondante de la table
- * &quot;Environnement&quot;. S'il ne trouve pas de données ou que la donnée est manquante
+ * "Environnement". S'il ne trouve pas de données ou que la donnée est manquante
  * (par exemple sous un nuage), alors <code>EnvironmentTableFiller</code> <strong>laisse
  * inchangée</strong> la cellule correspondante.
  * <br><br>
@@ -336,7 +336,7 @@ public class EnvironmentTableFiller implements Table {
     }
 
     /**
-     * Lance le remplissage de la table &quot;Environnement&quot;.
+     * Lance le remplissage de la table "Environnement".
      *
      * @throws SQLException si un problème est survenu lors des accès à la base de données.
      * @throws TransformException si une transformation de coordonnées était nécessaire et

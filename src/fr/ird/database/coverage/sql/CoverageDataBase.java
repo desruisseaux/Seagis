@@ -304,7 +304,7 @@ public class CoverageDataBase extends SQLDataBase implements fr.ird.database.cov
      * lues. Les operations sont spécifiées par {@link CoverageTable#setOperation(String)} et
      * appliquée lors de l'appel de {@link CoverageEntry#getGridCoverage}. Le processeur par
      * défaut accepte la combinaison d'un certain nombre d'opérations séparées par des point
-     * virgules, par exemple <code>&quot;NodataFilter;GradientMagnitude&quot;</code>.
+     * virgules, par exemple <code>"NodataFilter;GradientMagnitude"</code>.
      *
      * @return Le processeur par défaut.
      * @see CoverageTable#setOperation(String)

@@ -74,7 +74,7 @@ import fr.ird.animat.event.AnimalChangeListener;
  * {@linkplain Species l'espèce} initiales d'un animal doivent être spécifiées dès sa naissance
  * (c'est-à-dire dès la création d'un objet <code>Animal</code>) mais peuvent être changées par
  * la suite, soit par la {@linkplain #migrate migration} vers une autre population, ou soit par
- * la {@linkplain #metamorphose métamorphose} en une autre &quot;espèce&quot;.
+ * la {@linkplain #metamorphose métamorphose} en une autre "espèce".
  *
  * @version $Id$
  * @author Martin Desruisseaux

@@ -295,7 +295,7 @@ public interface CoverageTable extends Table {
                           final List<CoverageEntry> entryList) throws SQLException;
 
     /**
-     * Ajoute une entrée dans la table &quot;<code>GridCoverages</code>&quot;. La méthode
+     * Ajoute une entrée dans la table "<code>GridCoverages</code>". La méthode
      * {@link #setSeries} doit d'abord avoir été appelée au moins une fois.
      *
      * @param  coverage L'image à ajouter. Cette image doit avoir au moins trois dimensions,
