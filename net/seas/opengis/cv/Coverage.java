@@ -97,8 +97,15 @@ public abstract class Coverage
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid
      * coverage coordinate system.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               {@link #getNumSampleDimensions()} long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public abstract boolean[] evaluateAsBoolean(CoordinatePoint coord) throws PointOutsideCoverageException;
+    public abstract boolean[] evaluate(CoordinatePoint coord, boolean[] dest) throws PointOutsideCoverageException;
 
     /**
      * Return a sequence of unsigned byte values for a given point in the coverage.
@@ -106,8 +113,15 @@ public abstract class Coverage
      * interpolation type used when accessing grid values for points which fall
      * between grid cells is nearest neighbor. The coordinate system of the
      * point is the same as the grid coverage coordinate system.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               {@link #getNumSampleDimensions()} long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public abstract short[] evaluateAsByte(CoordinatePoint coord) throws PointOutsideCoverageException;
+    public abstract short[] evaluate(CoordinatePoint coord, short[] dest) throws PointOutsideCoverageException;
 
     /**
      * Return a sequence of integer values for a given point in the coverage.
@@ -115,8 +129,15 @@ public abstract class Coverage
      * interpolation type used when accessing grid values for points which fall
      * between grid cells is nearest neighbor. The coordinate system of the
      * point is the same as the grid coverage coordinate system.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               {@link #getNumSampleDimensions()} long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public abstract int[] evaluateAsInteger(CoordinatePoint coord) throws PointOutsideCoverageException;
+    public abstract int[] evaluate(CoordinatePoint coord, int[] dest) throws PointOutsideCoverageException;
 
     /**
      * Return an sequence of double values for a given point in the coverage. A value
@@ -124,6 +145,13 @@ public abstract class Coverage
      * type used when accessing grid values for points which fall between grid cells is
      * nearest neighbor. The coordinate system of the point is the same as the grid coverage
      * coordinate system.
+     *
+     * @param  coord The coordinate point where to evaluate.
+     * @param  dest  An array in which to store values, or <code>null</code> to
+     *               create a new array. If non-null, this array must be at least
+     *               {@link #getNumSampleDimensions()} long.
+     * @return The <code>dest</code> array, or a newly created array if <code>dest</code> was null.
+     * @throws PointOutsideCoverageException if <code>coord</code> is outside coverage.
      */
-    public abstract double[] evaluateAsDouble(CoordinatePoint coord) throws PointOutsideCoverageException;
+    public abstract double[] evaluate(CoordinatePoint coord, double[] dest) throws PointOutsideCoverageException;
 }

@@ -34,6 +34,8 @@ import javax.units.Unit;
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
+ *
+ * @see org.opengis.cv.CV_SampleDimension
  */
 public abstract class SampleDimension
 {
@@ -52,6 +54,20 @@ public abstract class SampleDimension
      *         in the specified locale, a default locale is used.
      */
     public abstract String getDescription(final Locale locale);
+
+    // NOTE: "getPaletteInterpretation()" is not available in SEAGIS since
+    //       palette are backed by IndexColorModel, which support only RGB.
+
+    /**
+     * Returns the color interpretation of the sample dimension. A sample
+     * dimension can be an index into a color palette or be a color model
+     * component. If the sample dimension is not assigned a color interpretation
+     * the value is {@link ColorInterpretation#UNDEFINED}.
+     */
+    public abstract ColorInterpretation getColorInterpretation();
+
+    // NOTE: "scale" and "offset" methods are NOT needed for SEAGIS
+    //       since Java Advanced Imaging support floating-point images.
 
     /**
      * Returns the unit information for this sample dimension.
