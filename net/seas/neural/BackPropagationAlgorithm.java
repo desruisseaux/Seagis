@@ -40,7 +40,7 @@ final class BackPropagationAlgorithm extends TrainingAlgorithm
      * iterations. The {@link #train} routines below make not attempt to do
      * this as there is no general rule for how it should be done.
      */
-    private final double learningFactor = 0.4;
+    private final double learningFactor = 0.3;
 
     /**
      * Construct a back propagation algorithm

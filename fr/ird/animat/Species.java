@@ -27,7 +27,6 @@ package fr.ird.animat;
 
 // Divers
 import java.awt.Color;
-import javax.swing.Icon;
 import java.util.Locale;
 
 
@@ -71,11 +70,33 @@ public interface Species
     public abstract String getName();
 
     /**
-     * Retourne un petit icone représentant cette espèce. Cet icône sera typiquement
-     * placé devant l'étiquette dans les listes déroulantes des boîtes de dialogue.
-     *
-     * @param color Couleur préférée de l'icône, ou <code>null</code> pour
-     *        utiliser une couleur par défaut.
+     * Construit un nouvel icone représentant cette espèce.
      */
-    public abstract Icon getIcon(final Color color);
+    public abstract Icon getIcon();
+
+    /**
+     * Icône représentant cette espèce.  Un icône peut servir à positionner sur une
+     * carte plusieurs individus d'une même espèce, et peut aussi apparaître devant
+     * une étiquette dans les listes déroulantes.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    public static interface Icon extends javax.swing.Icon
+    {
+        /**
+         * Retourne l'espèce associée à cet icône.
+         */
+        public abstract Species getSpecies();
+
+        /**
+         * Retourne la couleur de cet icône.
+         */
+        public abstract Color getColor();
+
+        /**
+         * Change la couleur de cet icône.
+         */
+        public abstract void setColor(Color color);
+    }
 }

@@ -27,9 +27,9 @@ package fr.ird.awt;
 
 // Base de données
 import java.sql.SQLException;
-import fr.ird.sql.image.DataBase;
 import fr.ird.sql.image.SeriesEntry;
 import fr.ird.sql.image.SeriesTable;
+import fr.ird.sql.image.ImageDataBase;
 
 // Interface utilisateur
 import java.awt.EventQueue;
@@ -103,13 +103,13 @@ public class CoordinateChooser extends net.seas.awt.CoordinateChooser
      *         Aucune référence ne sera retenue après la construction.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CoordinateChooser(final DataBase database) throws SQLException
+    public CoordinateChooser(final ImageDataBase database) throws SQLException
     {this(database, database.getTimeRange());}
 
     /**
      * Constructeur privé.
      */
-    private CoordinateChooser(final DataBase database, final Range timeRange) throws SQLException
+    private CoordinateChooser(final ImageDataBase database, final Range timeRange) throws SQLException
     {
         super((Date)timeRange.getMinValue(), (Date)timeRange.getMaxValue());
         setGeographicArea(database.getGeographicArea());
@@ -247,15 +247,5 @@ public class CoordinateChooser extends net.seas.awt.CoordinateChooser
         final String    message   = resources.getString(Clé.NO_SERIES_SELECTION);
         final String    title     = resources.getString(Clé.BAD_ENTRY);
         SwingUtilities.showMessageDialog(owner, message, title, JOptionPane.ERROR_MESSAGE);
-    }
-
-    /**
-     * Fait apparaître la boîte de dialogue et termine le programme.
-     * Cette méthode ne sert qu'à tester l'apparence de la boîte.
-     */
-    public static void main(final String[] args) throws SQLException
-    {
-        new CoordinateChooser(new DataBase()).showSeriesDialog(null,null);
-        System.exit(0);
     }
 }

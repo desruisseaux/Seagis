@@ -39,6 +39,10 @@ import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+// Cartographie
+import net.seas.opengis.cs.CoordinateSystem;
+import net.seas.opengis.cs.GeographicCoordinateSystem;
+
 // Collections
 import java.util.Set;
 import java.util.Iterator;
@@ -179,6 +183,13 @@ abstract class AbstractCatchTable extends Table implements CatchTable
      */
     public final Set<Species> getSpecies()
     {return speciesSet;}
+
+    /**
+     * Retourne le système de coordonnées utilisées
+     * pour les positions de pêches dans cette table.
+     */
+    public final CoordinateSystem getCoordinateSystem()
+    {return GeographicCoordinateSystem.WGS84;}
 
     /**
      * Définit la plage de dates dans laquelle on veut rechercher des données de pêches.

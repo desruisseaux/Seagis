@@ -39,6 +39,9 @@ import java.util.Date;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 
+// Cartographie
+import net.seas.opengis.cs.CoordinateSystem;
+
 
 /**
  * Interface interrogeant la base de données pour obtenir la liste des pêches
@@ -56,6 +59,14 @@ public interface CatchTable extends Table
      * @throws SQLException si un accès à la base de données était nécessaire et a échoué.
      */
     public abstract Set<Species> getSpecies() throws SQLException;
+
+    /**
+     * Retourne le système de coordonnées utilisées
+     * pour les positions de pêches dans cette table.
+     *
+     * @throws SQLException si une erreur est survenu lors de l'accès à la base de données.
+     */
+    public abstract CoordinateSystem getCoordinateSystem() throws SQLException;
 
     /**
      * Retourne les coordonnées géographiques de la région des captures.  Cette région

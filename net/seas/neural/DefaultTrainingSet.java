@@ -16,14 +16,25 @@
 package net.seas.neural;
 
 // Input/output
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
+// Formating
+import java.text.NumberFormat;
+import java.text.FieldPosition;
+import java.text.ParseException;
+import net.seas.text.LineFormat;
 
 // Miscellaneous
 import java.util.Random;
 import net.seas.util.XClass;
 import net.seas.util.XArray;
+import net.seas.util.XString;
 import net.seas.resources.Resources;
 import java.util.NoSuchElementException;
 
@@ -39,7 +50,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Serial number for compatibility with previous versions.
      */
-    private static final long serialVersionUID = -1506517850821210260L;
+    //private static final long serialVersionUID = ?; // TODO
 
     /**
      * Number of inputs values per instance.
@@ -67,13 +78,67 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * will return data at this position. Index of first input value into {@link #data}
      * is equals to <code>position * (numInputs + numOutputs)</code>.
      */
-    private int position = -1;
+    private transient int position = -1;
 
     /**
      * Construct a initially empty training set.
      */
     public DefaultTrainingSet()
     {}
+
+    /**
+     * Construct a training set with data from the specified file.
+     * The file should contains a matrix of numbers. The matrix may
+     * have any number of rows, but the number of columns should be
+     * equals to <code>numInputs+numOutputs</code>.
+     *
+     * @param file The file to parse.
+     * @param numInputs The expected number of input parameters.
+     * @param numInputs The expected number of output parameters.
+     * @throws IOException if the file can't be opened or parsed.
+     */
+    public DefaultTrainingSet(final File file, final int numInputs, final int numOutputs) throws IOException
+    {
+        this.numInputs  = numInputs;
+        this.numOutputs = numOutputs;
+        final BufferedReader reader = new BufferedReader(new FileReader(file));
+        load(reader);
+        reader.close();
+    }
+
+    /**
+     * Add a matrix of data from the specified stream to this training set.
+     *
+     *
+     * @param reader The input stream to parse. Line will be read
+     *        until end-of-stream, but the stream will not be closed.
+     * @throws IOException if the stream can't be parsed.
+     */
+    private void load(final BufferedReader reader) throws IOException
+    {
+        final double[]   inputs = new double[numInputs];
+        final double[]  outputs = new double[numOutputs];
+        final double[] dataline = new double[numInputs + numOutputs];
+        final LineFormat  linef = new LineFormat();
+        try
+        {
+            String line;
+            while ((line=reader.readLine())!=null)
+            {
+                linef.setLine(line);
+                linef.getValues(dataline);
+                System.arraycopy(dataline, 0,          inputs, 0,  numInputs);
+                System.arraycopy(dataline, numInputs, outputs, 0, numOutputs);
+                add(inputs, outputs);
+            }
+        }
+        catch (ParseException exception)
+        {
+            final IOException e = new IOException(exception.getLocalizedMessage());
+            e.initCause(exception);
+            throw e;
+        }
+    }
 
     /**
      * Returns the index into the {@link #data}
@@ -250,30 +315,112 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     }
 
     /**
+     * Normalize inputs and outputs data. Mean and standard deviation are first computed
+     * for all inputs and outputs node.  Then, values are normalized (assuming that data
+     * have a normal distribution) as in the following pseudo-code:
+     *
+     * <blockquote><pre>
+     * value = (value-mean)/standardDeviation
+     * </pre></blockquote>
+     */
+    public void normalize()
+    {
+        final double mean[] = new double[numInputs + numOutputs];
+        final double stdv[] = new double[numInputs + numOutputs];
+        statistics(mean, stdv);
+        for (int j=count; --j>=0;)
+        {
+            final int index = toIndex(j);
+            for (int i=mean.length; --i>=0;)
+            {
+                final double dev = stdv[i];
+                if (!Double.isNaN(dev))
+                {
+                    data[index+i] = (data[index+i] - mean[i]) / dev;
+                }
+            }
+        }
+    }
+
+    /**
+     * Compute statistics.
+     *
+     * @param mean Arrays in which to store means values. All elements must be initially 0.
+     * @param stdv Arrays in which to store standard deviation. All elements must be initially 0.
+     */
+    private void statistics(final double[] mean, final double[] stdv)
+    {
+        final int n[] = new int[Math.min(mean.length, stdv.length)];
+        for (int j=count; --j>=0;)
+        {
+            final int index = toIndex(j);
+            for (int i=n.length; --i>=0;)
+            {
+                final double value = data[index+i];
+                if (!Double.isNaN(value))
+                {
+                    mean[i] += value;
+                    stdv[i] += value*value;
+                    n   [i]++;
+                }
+            }
+        }
+        for (int i=n.length; --i>=0;)
+        {
+            final int    ni   = n[i];
+            final double sum  = mean[i];
+            final double sum2 = stdv[i];
+            stdv[i]  = Math.sqrt((sum2 - sum*sum/ni) / (ni-1));
+            mean[i] /= ni;
+        }
+    }
+
+    /**
      * Returns a string representation of this training set.
      */
     public String toString()
     {
-        final double sum[] = new double[numInputs + numOutputs];
-        for (int i=0; i<count; i++)
-        {
-            final int index = toIndex(i);
-            for (int j=0; j<sum.length; j++)
-            {
-                sum[j] += data[index+j];
-            }
-        }
-        final StringBuffer buffer=new StringBuffer(XClass.getShortClassName(this));
+        final double mean[] = new double[numInputs + numOutputs];
+        final double stdv[] = new double[numInputs + numOutputs];
+        statistics(mean, stdv);
+
+              StringBuffer  buffer = new StringBuffer(XClass.getShortClassName(this));
+        final String lineSeparator = System.getProperty("line.separator", "\n");
+        final NumberFormat numbers = NumberFormat.getNumberInstance();
+        final FieldPosition  dummy = new FieldPosition(0);
+        numbers.setMinimumFractionDigits(3);
+        numbers.setMaximumFractionDigits(3);
         buffer.append('[');
         buffer.append(count);
-        buffer.append(" sets.");
-        for (int i=0; i<sum.length; i++)
+        buffer.append(" sets]");
+        buffer.append(lineSeparator);
+        for (int i=0; i<mean.length; i++)
         {
-            buffer.append(i==0 ? " Main=" : ", ");
-            buffer.append((float) (sum[i]/count));
+            final int n = i<numInputs ? i : i-numInputs;
+            buffer.append("    ");
+            buffer.append(i<numInputs ? " in #" : "out #");
+            if (n>=0 && n<10) buffer.append('0');
+            buffer.append(n);
+            buffer.append(':');
+            buffer=format('\u03BC', numbers, mean[i], buffer, dummy);
+            buffer=format('\u03C3', numbers, stdv[i], buffer, dummy);
+            buffer.append(lineSeparator);
         }
-        buffer.append(']');
         return buffer.toString();
+    }
+
+    /**
+     * Helper method for {@link #toString}: Format a number.
+     */
+    private static StringBuffer format(char var, NumberFormat numbers, double value, StringBuffer buffer, FieldPosition dummy)
+    {
+        buffer.append(' ');
+        buffer.append(var);
+        buffer.append('=');
+        final int p = buffer.length();
+        buffer=numbers.format(value, buffer, dummy);
+        buffer.insert(p, XString.spaces(11-(buffer.length()-p)));
+        return buffer;
     }
 
     /**
@@ -283,5 +430,14 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     {
         trimToSize();
         out.defaultWriteObject();
+    }
+
+    /**
+     * Set transients fields after reading.
+     */
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException
+    {
+        in.defaultReadObject();
+        position = -1;
     }
 }

@@ -279,34 +279,4 @@ public class NetworkPane extends ZoomPane
      */
     public void reset()
     {reset(getZoomableBounds(null), false);}
-
-    /**
-     */
-    public static void main(String[] args)
-    {
-        final FeedForwardNet network = new FeedForwardNet(new int[]{2,2,1});
-        final DefaultTrainingSet test = new DefaultTrainingSet();
-        test.add(new double[]{0,0}, new double[]{1});
-        test.add(new double[]{0,1}, new double[]{0});
-        test.add(new double[]{1,0}, new double[]{0});
-        test.add(new double[]{1,1}, new double[]{1});
-
-        System.out.println(network.getError(test));
-        System.out.println(network.train(test));
-        System.out.println(network.getError(test));
-        System.out.println(network);
-
-        javax.swing.JFrame frame;
-        frame = new javax.swing.JFrame();
-        frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new NetworkPane(network).createScrollPane());
-        frame.pack();
-        frame.show();
-
-        frame = new javax.swing.JFrame();
-        frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new HistoryPane(network).createScrollPane());
-        frame.pack();
-        frame.show();
-    }
 }

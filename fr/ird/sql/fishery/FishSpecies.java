@@ -27,7 +27,6 @@ package fr.ird.sql.fishery;
 
 // Graphisme
 import java.awt.Color;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -53,6 +52,16 @@ import javax.vecmath.MismatchedSizeException;
 final class FishSpecies implements Species
 {
     /**
+     * Default width for icons, in pixels.
+     */
+    private static final int WIDTH = 20;
+
+    /**
+     * Default height for icons, in pixels.
+     */
+    private static final int HEIGHT = 10;
+
+    /**
      * Langues dans lesquelles un nom d'espèce est disponible.
      */
     private final Locale[] locales;
@@ -63,20 +72,9 @@ final class FishSpecies implements Species
     private final String[] names;
 
     /**
-     * Couleur par défaut à utiliser pour le traçage.
+     * Couleur par défaut des icône.
      */
     private final Color defaultColor;
-
-    /**
-     * Couleur à utiliser pour le traçage.
-     */
-    private Color color;
-
-    /**
-     * Petit icone représentant cette espèce. Cet icône sera typiquement placé
-     * devant l'étiquette dans les listes déroulantes des boîtes de dialogue.
-     */
-    private Icon icon;
 
     /**
      * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
@@ -113,7 +111,7 @@ final class FishSpecies implements Species
             if (names[i]==null)
                 throw new NullPointerException();
         }
-        this.color = defaultColor = color;
+        defaultColor = color;
     }
 
     /**
@@ -167,31 +165,10 @@ final class FishSpecies implements Species
     }
 
     /**
-     * Retourne un petit icone représentant cette espèce. Cet icône sera typiquement
-     * placé devant l'étiquette dans les listes déroulantes des boîtes de dialogue.
-     *
-     * @param color Couleur préférée de l'icône, ou <code>null</code> pour
-     *        utiliser une couleur par défaut.
+     * Retourne un icone représentant cette espèce.
      */
-    public synchronized Icon getIcon(Color color)
-    {
-        if (color==null) color=defaultColor;
-        if (icon==null || !color.equals(this.color))
-        {
-            final int             width = 20;
-            final int            height = 10;
-            final int[]      components = new int[]{color.getRed(), color.getGreen(), color.getBlue()};
-            final BufferedImage   image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            final WritableRaster raster = image.getWritableTile(0,0);
-            for (int y=0; y<height; y++)
-                for (int x=0; x<width; x++)
-                    raster.setPixel(x,y,components);
-            image.releaseWritableTile(0,0);
-            icon = new ImageIcon(image);
-            this.color = color;
-        }
-        return icon;
-    }
+    public Species.Icon getIcon()
+    {return new Icon();}
 
     /**
      * Retourne le nom de cette espèce. Le nom sera retourné
@@ -199,4 +176,81 @@ final class FishSpecies implements Species
      */
     public String toString()
     {return getName();}
+
+    /**
+     * Icone de l'espèce.
+     *
+     * @version 1.0
+     * @author Martin Desruisseaux
+     */
+    private final class Icon extends ImageIcon implements Species.Icon
+    {
+        /**
+         * Couleur de l'icône.
+         */
+        private Color color;
+
+        /**
+         * Construit un icône.
+         */
+        public Icon()
+        {
+            super(prepare(null, defaultColor));
+            this.color = defaultColor;
+        }
+
+        /**
+         * Retourne l'espèce associé à cet icône.
+         */
+        public Species getSpecies()
+        {return FishSpecies.this;}
+
+        /**
+         * Retourne la couleur de cet icône.
+         */
+        public Color getColor()
+        {return color;}
+
+        /**
+         * Change la couleur de cet icône.
+         */
+        public synchronized void setColor(final Color color)
+        {
+            setImage(prepare((BufferedImage) getImage(), color));
+            this.color = color;
+        }
+
+        /**
+         * Retourne une chaîne de caractères représentant cet objet.
+         */
+        public String toString()
+        {return FishSpecies.this.toString()+'['+color+']';}
+    }
+
+    /**
+     * Write the icon in the specified image with the specified color.
+     *
+     * @param  image The image to write to, or <code>null</code> to create a new imagE.
+     * @param  color The color to use for icon.
+     * @return <code>image</code>, or a new image if <code>image</code> was null.
+     */
+    private static BufferedImage prepare(BufferedImage image, final Color color)
+    {
+        if (image==null)
+        {
+            image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        }
+        final int[] components = new int[]
+        {
+            color.getRed(),
+            color.getGreen(),
+            color.getBlue()
+        };
+        final WritableRaster raster = image.getWritableTile(0,0);
+        for (int y=raster.getHeight(); --y>=0;)
+            for (int x=raster.getWidth(); --x>=0;)
+                raster.setPixel(x,y,components);
+        image.releaseWritableTile(0,0);
+        return image;
+    }
 }
