@@ -55,6 +55,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
 
 // Resources
+import net.seagis.resources.Utilities;
 import net.seagis.resources.WeakHashSet;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
@@ -216,6 +217,24 @@ public class MathTransformFactory
     }
 
     /**
+     * Tests if one math transform is the inverse of the other. This implementation
+     * can't detect every case. It just detect the case when <code>tr2</code> is an
+     * instance of {@link AbstractMathTransform.Inverse}.
+     */
+    private static boolean areInverse(final MathTransform tr1, final MathTransform tr2)
+    {
+        if (tr2 instanceof AbstractMathTransform.Inverse)
+        {
+            return Utilities.equals(tr1, ((AbstractMathTransform.Inverse) tr2).inverse());
+            // TODO: we could make this test more general (just compare with tr2.inverse(),
+            //       no matter if it is an instance of AbstractMathTransform.Inverse or not,
+            //       and catch the exception if one is thrown). Would it be too expensive to
+            //       create inconditionnaly the inverse transform?
+        }
+        return false;
+    }
+
+    /**
      * Creates a transform by concatenating two existing transforms.
      * A concatenated transform acts in the same way as applying two
      * transforms, one after the other. The dimension of the output
@@ -248,6 +267,18 @@ public class MathTransformFactory
                 // case where an 'AffineTransform' can be used.
                 return createAffineTransform(matrix2.multiply(matrix1));
             }
+        }
+        /*
+         * If one transform is the inverse of the
+         * other, returns the identity transform.
+         */
+        if (areInverse(tr1, tr2) || areInverse(tr2, tr1))
+        {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            assert tr1.getDimSource()==tr2.getDimTarget();
+            assert tr1.getDimTarget()==tr2.getDimSource();
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            return createIdentityTransform(tr1.getDimSource());
         }
         /*
          * If one or both math transform are instance of {@link ConcatenedTransform},
