@@ -444,6 +444,7 @@ public class TextRecordImageReader extends TextImageReader
      */
     private RecordList getRecords(final int imageIndex) throws IOException
     {
+        clearAbortRequest();
         checkImageIndex(imageIndex);
         if (imageIndex >= nextImageIndex)
         {
@@ -505,6 +506,11 @@ public class TextRecordImageReader extends TextImageReader
                         {
                             processImageProgress(position * (100f/length));
                             nextProgressPosition = position + PROGRESS_INTERVAL;
+                            if (abortRequested())
+                            {
+                                processReadAborted();
+                                return records;
+                            }
                         }
                     }
                 }

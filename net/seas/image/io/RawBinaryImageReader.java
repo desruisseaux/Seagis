@@ -311,6 +311,7 @@ public class RawBinaryImageReader extends SimpleImageReader
      */
     public BufferedImage read(final int imageIndex, final ImageReadParam param) throws IOException
     {
+        clearAbortRequest();
         /*
          * Extract user's parameters.
          */

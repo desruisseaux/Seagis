@@ -141,12 +141,13 @@ public class TextMatrixImageReader extends TextImageReader
      *
      * @param  imageIndex the index of the image to be read.
      * @param  all <code>true</code> to read all data, or <code>false</code> to read only the first line.
-     * @param  progress <code>true</code>
      * @return <code>true</code> if reading has been aborted.
      * @throws IOException If an error occurs reading the width information from the input source.
      */
-    private boolean load(final int imageIndex, final boolean all, final boolean progress) throws IOException
+    private boolean load(final int imageIndex, final boolean all) throws IOException
     {
+        clearAbortRequest();
+        if (all) processImageStarted(imageIndex);
         float[] values = (data!=null) ? new float[width] : null;
         int     offset = width*height;
 
@@ -193,10 +194,9 @@ public class TextMatrixImageReader extends TextImageReader
                 break;
             }
             /*
-             * If we are performing a full
-             * read, update progress.
+             * Update progress.
              */
-            if (progress && height<=expectedHeight)
+            if (height<=expectedHeight)
             {
                 processImageProgress(height*100f/expectedHeight);
                 if (abortRequested())
@@ -211,6 +211,7 @@ public class TextMatrixImageReader extends TextImageReader
             data = XArray.resize(data, offset);
             expectedHeight = height;
         }
+        if (all) processImageComplete();
         return false;
     }
 
@@ -226,7 +227,7 @@ public class TextMatrixImageReader extends TextImageReader
         checkImageIndex(imageIndex);
         if (data==null)
         {
-            load(imageIndex, false, false);
+            load(imageIndex, false);
         }
         return width;
     }
@@ -244,7 +245,7 @@ public class TextMatrixImageReader extends TextImageReader
         checkImageIndex(imageIndex);
         if (data==null || !completed)
         {
-            load(imageIndex, true, false);
+            load(imageIndex, true);
         }
         return height;
     }
@@ -312,13 +313,11 @@ public class TextMatrixImageReader extends TextImageReader
         /*
          * Read data if it was not already done.
          */
-        processImageStarted(imageIndex);
         if (data==null || !completed)
         {
-            if (load(imageIndex, true, true))
+            if (load(imageIndex, true))
                 return null;
         }
-        processImageComplete();
         /*
          * If a direct mapping is possible, perform it.
          */
@@ -374,7 +373,7 @@ public class TextMatrixImageReader extends TextImageReader
         checkBandIndex(imageIndex, bandIndex);
         if (range==null)
         {
-            load(imageIndex, true, false);
+            load(imageIndex, true);
             float minimum = Float.POSITIVE_INFINITY;
             float maximum = Float.NEGATIVE_INFINITY;
             for (int i=0; i<data.length; i++)
