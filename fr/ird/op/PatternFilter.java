@@ -26,7 +26,7 @@
 package fr.ird.op;
 
 // SEAGIS
-import fr.ird.image.sst.n1b.Utilities;
+import fr.ird.n1b.image.sst.Utilities;
 
 // JAI / J2SE
 import javax.media.jai.KernelJAI;
