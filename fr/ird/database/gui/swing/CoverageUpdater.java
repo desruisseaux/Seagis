@@ -181,7 +181,7 @@ public class CoverageUpdater extends JFrame implements ChangeListener, ListSelec
     /**
      * Progression de la tache.
      */
-    protected JProgress progress;
+    protected ImageProgress progress;
 
     
     ///////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ public class CoverageUpdater extends JFrame implements ChangeListener, ListSelec
         initComponents();
         
         // Création de la fenetre de progression des tâches.
-        progress = new JProgress(this, true);
+        progress = new ImageProgress(this, true);
         progress.setSize(250,100);  
         final Dimension size = getToolkit().getScreenSize();
         progress.setLocation((int)(size.getWidth()  / 2 - 125), (int)(size.getHeight() / 2 - 50));
