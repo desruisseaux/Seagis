@@ -605,11 +605,19 @@ public class ParameterCoverage3D extends Coverage3D implements fr.ird.database.s
                         if (source.isIdentity()) {
                             continue;
                         }
+                        final RelativePositionEntry position = descriptor.getRelativePosition();
                         Envelope toIntersect = null;
                         key.operation  = descriptor.getOperation();
-                        key.timeOffset = descriptor.getRelativePosition().getTypicalTimeOffset();
+                        key.timeOffset = position.getTypicalTimeOffset();
                         for (int i=0; ((key.series=source.getSeries(i))!=null); i++) {
                             final Envelope toAdd = coverages.get(key).getEnvelope();
+                            final Date startTime = temporalCS.toDate(toAdd.getMinimum(temporalDimension));
+                            final Date   endTime = temporalCS.toDate(toAdd.getMaximum(temporalDimension));
+                            position.applyOppositeOffset(null, startTime);
+                            position.applyOppositeOffset(null,   endTime);
+                            toAdd.setRange(temporalDimension,
+                                           temporalCS.toValue(startTime),
+                                           temporalCS.toValue(  endTime));
                             if (toIntersect == null) {
                                 toIntersect = toAdd;
                             } else {

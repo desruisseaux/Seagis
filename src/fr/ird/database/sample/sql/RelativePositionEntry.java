@@ -138,6 +138,15 @@ final class RelativePositionEntry implements fr.ird.database.sample.RelativePosi
             time.setTime(time.getTime() + timeOffset);
         }
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void applyOppositeOffset(Point2D coordinate, Date time) {
+        if (time != null) {
+            time.setTime(time.getTime() - timeOffset);
+        }
+    }
 
     /**
      * {@inheritDoc}

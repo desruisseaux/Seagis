@@ -75,6 +75,17 @@ public interface RelativePositionEntry extends Entry {
     public abstract void applyOffset(final Point2D coordinate, final Date time);
 
     /**
+     * Applique le même déplacement que <code>applyOffset(...)</code>, mais dans la
+     * direction opposée.
+     *
+     * @param coordinate La position spatiale ou <code>null</code>.
+     *                   La nouvelle position écrasera la position courante dans cet objet.
+     * @param time       La date ou <code>null</code>.
+     *                   La nouvelle date écrasera la date courante dans cet objet.
+     */
+    public abstract void applyOppositeOffset(final Point2D coordinate, final Date time);
+
+    /**
      * Retourne l'écart de temps typique entre les échantillons et la date à laquelle évaluer le
      * paramètre environnemental. Cet écart de temps n'est qu'à titre indicatif et n'a pas à être
      * précis; la manière la plus précise d'obtenir la date pour un échantillon reste la méthode

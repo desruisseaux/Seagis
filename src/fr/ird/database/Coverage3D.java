@@ -80,12 +80,12 @@ public abstract class Coverage3D extends Coverage {
     /**
      * The temporal coordinate system.
      */
-    private final TemporalCoordinateSystem temporalCS;
+    protected final TemporalCoordinateSystem temporalCS;
 
     /**
      * The dimension of the temporal coordinate system.
      */
-    private final int temporalDimension;
+    protected final int temporalDimension;
 
     /**
      * Construit une couverture utilisant le système de coordonnées spécifié.
