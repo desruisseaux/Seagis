@@ -102,17 +102,17 @@ public final class EnvironmentTableFiller
      */
     private static final String[][] SERIES =
     {
-//      {"SLA (Réunion)",            "SLA", "U", "V"},
-        {"SST (synthèse)",           "SST"},
-//      {"Chlorophylle-a (Réunion)", "[Chl-a]"},
-//      {"Bathymétrie",              "profondeur"}
+        {"SLA (Réunion)",            "grSLA", "grU", "grV"},
+        {"SST (synthèse)",           "grSST"},
+        {"Chlorophylle-a (Réunion)", "grCHL"},
+        {"Bathymétrie",              "grZ"}
     };
 
     /**
      * Opération à appliquer sur les données, ou <code>null</code>
      * pour n'en appliquer aucune.
      */
-    private static final String OPERATION = null;//"GradientMagnitude";
+    private static final String OPERATION = "GradientMagnitude";
 
     /**
      * Connection vers la base de données d'images.
@@ -161,8 +161,8 @@ public final class EnvironmentTableFiller
         final CatchCoverage coverage = new CatchCoverage(images);
         images.close();
 
-        if (false) computePointData(catchs, coverage, update);
-        if (true)  computeAreaData (catchs, coverage, update);
+        if (true)  computePointData(catchs, coverage, update);
+        if (false) computeAreaData (catchs, coverage, update);
 
         for (int i=0; i<update.length; i++)
         {

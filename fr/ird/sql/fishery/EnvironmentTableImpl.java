@@ -55,7 +55,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
                                 /*[02] PARAMETER */ ENVIRONMENTS+".[?] "       +
 
                     "FROM "+ENVIRONMENTS+" "+
-                    "WHERE ID=? AND position=? AND écart_temps=0";
+                    "WHERE ID=? AND position=? AND temps=0";
 
     /** Numéro de colonne. */ static final int POSITION  =  1;
     /** Numéro de colonne. */ static final int PARAMETER =  2;
@@ -189,9 +189,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable
             }
             int n;
             n=update.executeUpdate("UPDATE "+ENVIRONMENTS+" SET "+parameter+"="+value+" "+
-                                   "WHERE ID="+capture.getID()+" AND position="+position+" AND écart_temps="+timeLag);
+                                   "WHERE ID="+capture.getID()+" AND position="+position+" AND temps="+timeLag);
             if (n!=0) return;
-            n=update.executeUpdate("INSERT INTO "+ENVIRONMENTS+" (ID,position,écart_temps,"+parameter+") "+
+            n=update.executeUpdate("INSERT INTO "+ENVIRONMENTS+" (ID,position,temps,"+parameter+") "+
                                    "VALUES("+capture.getID()+","+position+","+timeLag+","+value+")");
         }
     }
