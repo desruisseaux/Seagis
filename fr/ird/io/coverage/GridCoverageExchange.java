@@ -25,15 +25,10 @@
  */
 package fr.ird.io.coverage;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-import org.geotools.cv.SampleDimension;
-import org.geotools.io.coverage.GridCoverageReader;
-import org.geotools.io.coverage.ExoreferencedGridCoverageReader;
-
-// Input/output
+// J2SE
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 // Images
 import javax.imageio.ImageIO;
@@ -41,8 +36,11 @@ import javax.imageio.IIOException;
 import java.awt.image.RenderedImage;
 import javax.imageio.spi.IIORegistry;
 
-// Resources
-import java.util.Locale;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
+import org.geotools.io.coverage.GridCoverageReader;
+import org.geotools.io.coverage.ExoreferencedGridCoverageReader;
 
 
 /**

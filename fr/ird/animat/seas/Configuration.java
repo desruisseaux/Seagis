@@ -41,7 +41,6 @@ import java.net.URL;
 import java.util.Set;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
@@ -56,7 +55,6 @@ import java.text.SimpleDateFormat;
 
 // Animats
 import fr.ird.animat.impl.Clock;
-import fr.ird.animat.Parameter;
 
 
 /**
@@ -197,10 +195,10 @@ final class Configuration {
         final int paramCount = parameters.size();
         if (false) {
             // Inclus HEADING
-            parameterArray = parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount+1]);
-            parameterArray[paramCount] = fr.ird.animat.impl.Parameter.HEADING;
+            parameterArray = (fr.ird.animat.impl.Parameter[])parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount+1]);
+            parameterArray[paramCount] = Parameter.HEADING;
         } else {
-            parameterArray = parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount]);
+            parameterArray = (fr.ird.animat.impl.Parameter[])parameters.toArray(new fr.ird.animat.impl.Parameter[paramCount]);
         }
     }
 
@@ -279,8 +277,8 @@ final class Configuration {
                 }
             }
             try {
-                parameters.add(new fr.ird.animat.seas.Parameter(args[0], args[1], args[2],
-                                                                Float.parseFloat(args[3])));
+                parameters.add(new Parameter(args[0], args[1], args[2],
+                                             Float.parseFloat(args[3])));
             } catch (NumberFormatException exception) {
                 final IOException e = new IOException(exception.getLocalizedMessage());
                 e.initCause(exception);
@@ -296,8 +294,8 @@ final class Configuration {
      */
     final long getTimeLag() {
         long timelag = Long.MAX_VALUE;
-        for (final Iterator<Parameter> it=parameters.iterator(); it.hasNext();) {
-            final long dt = ((fr.ird.animat.seas.Parameter) it.next()).timelag;
+        for (final Parameter param : parameters) {
+            final long dt = param.timelag;
             if (dt < timelag) {
                 timelag = dt;
             }
@@ -312,9 +310,9 @@ final class Configuration {
         final StringBuffer buffer = new StringBuffer("Configuration");
         final String lineSeparator = System.getProperty("line.separator", "\n");
         buffer.append(lineSeparator);
-        for (final Iterator<Parameter> it=parameters.iterator(); it.hasNext();) {
+        for (final Parameter param : parameters) {
             buffer.append("    ");
-            buffer.append(it.next());
+            buffer.append(param);
             buffer.append(lineSeparator);
         }
         return buffer.toString();

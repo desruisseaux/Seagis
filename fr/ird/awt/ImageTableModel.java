@@ -25,18 +25,6 @@
  */
 package fr.ird.awt;
 
-// Base de données d'images
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.image.SeriesEntry;
-
-// Geotools dependencies
-import org.geotools.cs.AxisInfo;
-import org.geotools.gc.GridCoverage;
-import org.geotools.cs.CoordinateSystem;
-
-
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
@@ -57,10 +45,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Collection;
 import java.util.Collections;
-import fr.ird.util.XArray;
 
 // Tables et évenements
 import java.awt.EventQueue;
+import java.sql.SQLException;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.UndoableEditEvent;
@@ -100,6 +88,19 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import javax.media.jai.util.Range;
+
+// Geotools
+import org.geotools.cs.AxisInfo;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cs.CoordinateSystem;
+
+// Base de données d'images
+import fr.ird.sql.image.ImageTable;
+import fr.ird.sql.image.ImageEntry;
+import fr.ird.sql.image.SeriesEntry;
+
+// Seagis
+import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -147,8 +148,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class ImageTableModel extends AbstractTableModel
-{
+public class ImageTableModel extends AbstractTableModel {
     /**
      * Numéro de série (pour compatibilité avec des versions antérieures).
      */
@@ -166,8 +166,7 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Liste des titres des colonnes.
      */
-    private final String[] titles=new String[]
-    {
+    private final String[] titles = new String[] {
         /*[0]*/ Resources.format(ResourceKeys.NAME),
         /*[1]*/ Resources.format(ResourceKeys.END_TIME),
         /*[2]*/ Resources.format(ResourceKeys.DURATION)
@@ -176,8 +175,7 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Liste des classes des valeurs des colonnes.
      */
-    private static final Class[] CLASS=new Class[]
-    {
+    private static final Class[] CLASS = new Class[] {
         /*[0]:Name*/ String.class,
         /*[1]:Date*/   Date.class,
         /*[2]:Time*/ String.class
@@ -236,8 +234,7 @@ public class ImageTableModel extends AbstractTableModel
      * @param series Séries que représentera cette table, ou
      *        <code>null</code> si elle n'est pas connue.
      */
-    public ImageTableModel(final SeriesEntry series)
-    {
+    public ImageTableModel(final SeriesEntry series) {
         this.series  = series;
         numberFormat = NumberFormat.getNumberInstance();
         dateFormat   = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
@@ -252,10 +249,8 @@ public class ImageTableModel extends AbstractTableModel
      *
      * @param table Table dont on veut copier le contenu.
      */
-    public ImageTableModel(final ImageTableModel table)
-    {
-        synchronized (table)
-        {
+    public ImageTableModel(final ImageTableModel table) {
+        synchronized (table) {
             series       =                table.series;
             numberFormat = (NumberFormat) table.numberFormat.clone();
             dateFormat   =   (DateFormat) table.  dateFormat.clone();
@@ -263,10 +258,8 @@ public class ImageTableModel extends AbstractTableModel
             entries      = (ImageEntry[]) table.     entries.clone();
 
             final ImageEntry[] entries = this.entries;
-            for (int i=entries.length; --i>=0;)
-            {
-                if (entries[i] instanceof ProxyEntry)
-                {
+            for (int i=entries.length; --i>=0;) {
+                if (entries[i] instanceof ProxyEntry) {
                     final ProxyEntry oldProxy = (ProxyEntry) entries[i];
                     final ProxyEntry newProxy = new ProxyEntry(unwrap(oldProxy.getEntry()));
                     newProxy.flags = oldProxy.flags;
@@ -283,21 +276,18 @@ public class ImageTableModel extends AbstractTableModel
      * @param  table Table dans laquelle puiser la liste des images.
      * @throws SQLException si l'interrogation de la table a échouée.
      */
-    public ImageTableModel(final ImageTable table) throws SQLException
-    {
+    public ImageTableModel(final ImageTable table) throws SQLException {
         this(table.getSeries());
         final List<ImageEntry> entryList = table.getEntries();
-        entries = entryList.toArray(new ImageEntry[entryList.size()]);
+        entries = (ImageEntry[]) entryList.toArray(new ImageEntry[entryList.size()]);
         if (REVERSE_ORDER) reverse(entries);
     }
 
     /**
      * Renverse l'ordre des éléments du tableau spécifié.
      */
-    private static void reverse(final ImageEntry[] entries)
-    {
-        for (int i=entries.length/2; --i>=0;)
-        {
+    private static void reverse(final ImageEntry[] entries) {
+        for (int i=entries.length/2; --i>=0;) {
             final int j = entries.length-1-i;
             final ImageEntry tmp = entries[i];
             entries[i] = entries[j];
@@ -314,11 +304,9 @@ public class ImageTableModel extends AbstractTableModel
      * @param  table Table dans laquelle puiser la liste des images.
      * @throws SQLException si l'interrogation de la table a échouée.
      */
-    public void setEntries(final ImageTable table) throws SQLException
-    {
+    public void setEntries(final ImageTable table) throws SQLException {
         final List<ImageEntry> entryList;
-        synchronized (table)
-        {
+        synchronized (table) {
             entryList = table.getEntries();
             series    = table.getSeries();
         }
@@ -332,31 +320,27 @@ public class ImageTableModel extends AbstractTableModel
      *
      * @param entryList Liste des nouvelles entrées.
      */
-    public synchronized void setEntries(final List<ImageEntry> entryList)
-    {
-        final ImageEntry[] newEntries = entryList.toArray(new ImageEntry[entryList.size()]);
-        if (REVERSE_ORDER) reverse(newEntries);
-
+    public synchronized void setEntries(final List<ImageEntry> entryList) {
+        final ImageEntry[] newEntries = (ImageEntry[])entryList.toArray(new ImageEntry[entryList.size()]);
+        if (REVERSE_ORDER) {
+            reverse(newEntries);
+        }
         final ImageEntry[] oldEntries = entries;
         this.entries = newEntries;
         final Map<ImageEntry,ProxyEntry> proxies = getProxies(oldEntries, null);
-        if (proxies!=null)
-        {
-            for (int i=newEntries.length; --i>=0;)
-            {
+        if (proxies != null) {
+            for (int i=newEntries.length; --i>=0;) {
                 final ProxyEntry proxy = proxies.get(newEntries[i]);
-                if (proxy!=null) newEntries[i] = proxy;
+                if (proxy != null) {
+                    newEntries[i] = proxy;
+                }
             }
         }
-        if (EventQueue.isDispatchThread())
-        {
+        if (EventQueue.isDispatchThread()) {
             fireTableDataChanged();
             commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
-        }
-        else EventQueue.invokeLater(new Runnable()
-        {
-            public void run()
-            {
+        } else EventQueue.invokeLater(new Runnable() {
+            public void run() {
                 fireTableDataChanged();
                 commitEdit(oldEntries, newEntries, ResourceKeys.DEFINE);
             }
@@ -376,16 +360,16 @@ public class ImageTableModel extends AbstractTableModel
      * @return L'argument <code>proxies</code>, ou un nouvel objet {@link Map}
      *         si <code>proxies</code> était nul.
      */
-    private static Map<ImageEntry,ProxyEntry> getProxies(final ImageEntry[] entries, Map<ImageEntry,ProxyEntry> proxies)
+    private static Map<ImageEntry,ProxyEntry> getProxies(final ImageEntry[] entries,
+                                                         Map<ImageEntry,ProxyEntry> proxies)
     {
-        if (entries!=null)
-        {
-            for (int i=entries.length; --i>=0;)
-            {
-                final ImageEntry entry=entries[i];
-                if (entry instanceof ProxyEntry)
-                {
-                    if (proxies==null) proxies=new HashMap<ImageEntry,ProxyEntry>();
+        if (entries != null) {
+            for (int i=entries.length; --i>=0;) {
+                final ImageEntry entry = entries[i];
+                if (entry instanceof ProxyEntry) {
+                    if (proxies == null) {
+                        proxies = new HashMap<ImageEntry,ProxyEntry>();
+                    }
                     final ProxyEntry proxy = (ProxyEntry) entry;
                     proxies.put(proxy.getEntry(), proxy);
                 }
@@ -398,10 +382,8 @@ public class ImageTableModel extends AbstractTableModel
      * Si <code>entry</code> est de la classe {@link ProxyEntry},
      * retourne l'objet {@link ImageEntry} qu'il enveloppait.
      */
-    private static ImageEntry unwrap(ImageEntry entry)
-    {
-        while (entry instanceof ProxyEntry)
-        {
+    private static ImageEntry unwrap(ImageEntry entry) {
+        while (entry instanceof ProxyEntry) {
             entry = ((ProxyEntry) entry).getEntry();
         }
         return entry;
@@ -418,12 +400,10 @@ public class ImageTableModel extends AbstractTableModel
      * @throws SQLException si une interrogation de la base de données était
      *         nécessaire et a échoué.
      */
-    public synchronized ImageEntry[] getEntries() throws SQLException
-    {
+    public synchronized ImageEntry[] getEntries() throws SQLException {
         final ImageEntry[] entries = this.entries;
         final ImageEntry[] out = new ImageEntry[(entries!=null) ? entries.length : 0];
-        for (int i=out.length; --i>=0;)
-        {
+        for (int i=out.length; --i>=0;) {
             out[i] = unwrap(entries[i]);
         }
         return out;
@@ -437,11 +417,9 @@ public class ImageTableModel extends AbstractTableModel
      *
      * @param  row Index de l'entré désiré.
      */
-    public synchronized ImageEntry getEntryAt(final int row)
-    {
+    public synchronized ImageEntry getEntryAt(final int row) {
         ImageEntry entry = entries[row];
-        if (!(entry instanceof ProxyEntry))
-        {
+        if (!(entry instanceof ProxyEntry)) {
             entries[row] = entry = new ProxyEntry(entry);
         }
         return entry;
@@ -453,12 +431,10 @@ public class ImageTableModel extends AbstractTableModel
      * {@link ImageEntry#getID}. Cette méthode peut retourner un tableau
      * de longueur 0, mais ne retourne jamais <code>null</code>.
      */
-    public synchronized int[] getEntryIDs()
-    {
+    public synchronized int[] getEntryIDs() {
         final ImageEntry[] entries=this.entries;
         final int[] IDs = new int[(entries!=null) ? entries.length : 0];
-        for (int i=0; i<IDs.length; i++)
-        {
+        for (int i=0; i<IDs.length; i++) {
             IDs[i] = entries[i].getID();
         }
         return IDs;
@@ -471,12 +447,10 @@ public class ImageTableModel extends AbstractTableModel
      * retourner un tableau de longueur 0, mais ne retourne jamais
      * <code>null</code>.
      */
-    public synchronized int[] getEntryIDs(int[] rows)
-    {
+    public synchronized int[] getEntryIDs(int[] rows) {
         final ImageEntry[] entries=this.entries;
         final int[] IDs = new int[rows.length];
-        for (int i=0; i<IDs.length; i++)
-        {
+        for (int i=0; i<IDs.length; i++) {
             IDs[i] = entries[rows[i]].getID();
         }
         return IDs;
@@ -493,17 +467,17 @@ public class ImageTableModel extends AbstractTableModel
      *         la même longueur que <code>IDs</code>. Les images qui n'ont pas
      *         été trouvées dans la table auront l'index -1.
      */
-    public synchronized int[] indexOf(final int[] IDs)
-    {
+    public synchronized int[] indexOf(final int[] IDs) {
         final ImageEntry[] entries = this.entries;
         final int[] sortedIDs  = (int[]) IDs.clone();
         final int[] sortedRows = new int[IDs.length];
         Arrays.sort(sortedIDs);
         Arrays.fill(sortedRows, -1);
-        for (int i=entries.length; --i>=0;)
-        {
+        for (int i=entries.length; --i>=0;) {
             final int index = Arrays.binarySearch(sortedIDs, entries[i].getID());
-            if (index >= 0) sortedRows[index]=i;
+            if (index >= 0) {
+                sortedRows[index]=i;
+            }
         }
         /*
          * Replace les numéros de ligne dans l'ordre qui correspond à 'IDs'.
@@ -514,13 +488,14 @@ public class ImageTableModel extends AbstractTableModel
          */
         final int[] rows = new int[sortedRows.length];
         Arrays.fill(rows, -1);
-        for (int i=sortedIDs.length; --i>=0;)
-        {
+        for (int i=sortedIDs.length; --i>=0;) {
             final int ID  = sortedIDs [i];
             final int row = sortedRows[i];
-            if (row >= 0)
-                for (int j=IDs.length; --j>=0;)
+            if (row >= 0) {
+                for (int j=IDs.length; --j>=0;) {
                     if (IDs[j]==ID) rows[j]=row;
+                }
+            }
         }
         return rows;
     }
@@ -529,9 +504,8 @@ public class ImageTableModel extends AbstractTableModel
      * Retire une entrée de cette table. Si <code>toRemove</code> est
      * nul ou n'apparaît pas dans la table, alors il sera ignoré.
      */
-    public synchronized void remove(final ImageEntry toRemove)
-    {
-        final Set<ImageEntry> singleton=new HashSet<ImageEntry>();
+    public synchronized void remove(final ImageEntry toRemove) {
+        final Set<ImageEntry> singleton = new HashSet<ImageEntry>();
         singleton.add(toRemove);
         remove(singleton);
 
@@ -545,19 +519,18 @@ public class ImageTableModel extends AbstractTableModel
      * <code>row</code> correspond au numéro (à partir de 0)  de
      * la ligne à supprimer.
      */
-    public synchronized void remove(final int row)
-    {remove(entries[row]);}
+    public synchronized void remove(final int row) {
+        remove(entries[row]);
+    }
 
     /**
      * Retire plusieurs entrées de cette table. Les entrées
      * nulles ainsi que celles qui n'apparaissent pas dans
      * cette table seront ignorées.
      */
-    public synchronized void remove(final ImageEntry[] toRemove)
-    {
-        final Set<ImageEntry> toRemoveSet=new HashSet<ImageEntry>(Math.max(2*toRemove.length, 11));
-        for (int i=0; i<toRemove.length; i++)
-        {
+    public synchronized void remove(final ImageEntry[] toRemove) {
+        final Set<ImageEntry> toRemoveSet = new HashSet<ImageEntry>(Math.max(2*toRemove.length, 11));
+        for (int i=0; i<toRemove.length; i++) {
             toRemoveSet.add(unwrap(toRemove[i]));
         }
         remove(toRemoveSet);
@@ -569,11 +542,9 @@ public class ImageTableModel extends AbstractTableModel
      * à supprimer. Ces numéros de lignes peuvent être dans n'importe quel
      * ordre.
      */
-    public synchronized void remove(final int[] rows)
-    {
+    public synchronized void remove(final int[] rows) {
         final Set<ImageEntry> toRemoveSet=new HashSet<ImageEntry>(Math.max(2*rows.length, 11));
-        for (int i=0; i<rows.length; i++)
-        {
+        for (int i=0; i<rows.length; i++) {
             toRemoveSet.add(unwrap(entries[rows[i]]));
         }
         remove(toRemoveSet);
@@ -586,14 +557,12 @@ public class ImageTableModel extends AbstractTableModel
      * appelée de n'importe quel thread (pas nécessairement
      * celui de <i>Swing</i>).
      */
-    private synchronized void remove(final Set<ImageEntry> toRemove)
-    {
-        if (!EventQueue.isDispatchThread())
-        {
-            EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {remove(toRemove);}
+    private synchronized void remove(final Set<ImageEntry> toRemove) {
+        if (!EventQueue.isDispatchThread()) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    remove(toRemove);
+                }
             });
             return;
         }
@@ -601,20 +570,14 @@ public class ImageTableModel extends AbstractTableModel
         ImageEntry[] entries = oldEntries;
         int entriesLength = entries.length;
         int upper = entriesLength;
-        for (int i=upper; --i>=-1;)
-        {
-            if (i<0 || !toRemove.contains(unwrap(entries[i])))
-            {
+        for (int i=upper; --i>=-1;) {
+            if (i<0 || !toRemove.contains(unwrap(entries[i]))) {
                 final int lower=i+1;
-                if (upper!=lower)
-                {
-                    if (entries==oldEntries)
-                    {
+                if (upper != lower) {
+                    if (entries == oldEntries) {
                         // Créé une copie, de façon à ne pas modifier le tableau 'entries' original.
                         entries = XArray.remove(entries, lower, upper-lower);
-                    }
-                    else
-                    {
+                    } else {
                         // Si le tableau est déjà une copie, travaille directement sur lui.
                         System.arraycopy(entries, upper, entries, lower, entriesLength-upper);
                     }
@@ -641,33 +604,33 @@ public class ImageTableModel extends AbstractTableModel
      * @param  rows Ligne à copier.
      * @return Objet transférable contenant les lignes copiées.
      */
-    public synchronized Transferable copy(final int[] rows)
-    {
-        if (fieldPosition==null) fieldPosition=new FieldPosition(0);
+    public synchronized Transferable copy(final int[] rows) {
+        if (fieldPosition == null) {
+            fieldPosition = new FieldPosition(0);
+        }
         final StringBuffer buffer = new StringBuffer(256); // On n'utilise pas le buffer des cellules.
-        final int[] clés = new int[]
-        {
+        final int[] clés = new int[] {
             ResourceKeys.NAME,
             ResourceKeys.START_TIME,
             ResourceKeys.END_TIME
         };
-        for (int i=0; i<clés.length;)
-        {
+        for (int i=0; i<clés.length;) {
             buffer.append(Resources.format(clés[i++]));
             buffer.append((i<clés.length) ? '\t' : '\n');
         }
-        for (int i=0; i<rows.length; i++)
-        {
+        for (int i=0; i<rows.length; i++) {
             Date date;
             final ImageEntry entry = unwrap(entries[rows[i]]);
             final Range  timeRange = entry.getTimeRange();
             buffer.append(entry.getName());
             buffer.append('\t');
-            if ((date=(Date)timeRange.getMinValue()) != null)
+            if ((date=(Date)timeRange.getMinValue()) != null) {
                 dateFormat.format(date, buffer, fieldPosition);
+            }
             buffer.append('\t');
-            if ((date=(Date)timeRange.getMaxValue()) != null)
+            if ((date=(Date)timeRange.getMaxValue()) != null) {
                 dateFormat.format(date, buffer, fieldPosition);
+            }
             buffer.append('\n');
             // Note: on devrait utiliser System.getProperty("line.separator", "\n"),
             //       mais ça donne un résultat bizarre quand on colle dans Excel. Il
@@ -682,26 +645,30 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Retourne le nombre de lignes de ce tableau.
      */
-    public int getRowCount()
-    {return entries.length;}
+    public int getRowCount() {
+        return entries.length;
+    }
 
     /**
      * Retourne le nombre de colonnes de ce tableau.
      */
-    public int getColumnCount()
-    {return titles.length;}
+    public int getColumnCount() {
+        return titles.length;
+    }
 
     /**
      * Retourne le nom de la colonne spécifiée.
      */
-    public String getColumnName(final int column)
-    {return titles[column];}
+    public String getColumnName(final int column) {
+        return titles[column];
+    }
 
     /**
      * Retourne la classe des objets de la colonne spécifiée.
      */
-    public Class getColumnClass(final int column)
-    {return CLASS[column];}
+    public Class getColumnClass(final int column) {
+        return CLASS[column];
+    }
 
     /**
      * Retourne la valeur de la cellule aux index spécifiés.
@@ -710,29 +677,23 @@ public class ImageTableModel extends AbstractTableModel
      * @param  column Numéro de colonne de la cellule, à partir de 0.
      * @return Valeur de la cellule aux index spécifiés.
      */
-    public synchronized Object getValueAt(final int row, final int column)
-    {
+    public synchronized Object getValueAt(final int row, final int column) {
         ImageEntry entry = entries[row];
-        if (!(entry instanceof ProxyEntry))
-        {
+        if (!(entry instanceof ProxyEntry)) {
             entries[row] = entry = new ProxyEntry(entry);
         }
-        switch (column)
-        {
+        switch (column) {
             default:   return null;
             case NAME: return entry.getName();
             case DATE: return entry.getTimeRange().getMaxValue();
-            case DURATION:
-            {
+            case DURATION: {
                 if (buffer        == null) buffer        = new StringBuffer ( );
                 if (fieldPosition == null) fieldPosition = new FieldPosition(0);
                 buffer.setLength(0);
-
                 final Range range = entry.getTimeRange();
                 final Date time   = (Date) range.getMaxValue();
                 final Date start  = (Date) range.getMinValue();
-                if (time!=null && start!=null)
-                {
+                if (time!=null && start!=null) {
                     final long millis = time.getTime()-start.getTime();
                     final long days   = millis/(24L*60*60*1000);
                     time.setTime(millis);
@@ -750,8 +711,7 @@ public class ImageTableModel extends AbstractTableModel
     /**
      * Convertit une date en chaîne de caractères.
      */
-    private String format(final Date date)
-    {
+    private String format(final Date date) {
         if (buffer        == null) buffer        = new StringBuffer ( );
         if (fieldPosition == null) fieldPosition = new FieldPosition(0);
         buffer.setLength(0);
@@ -764,59 +724,59 @@ public class ImageTableModel extends AbstractTableModel
      * pas connue ou si cette table contient des images de plusieurs séries
      * différentes, alors cette méthode peut retourner <code>null</code>.
      */
-    public SeriesEntry getSeries()
-    {return series;}
+    public SeriesEntry getSeries() {
+        return series;
+    }
 
     /**
      * Retourne le fuseau horaire utilisé pour les écritures de dates.
      */
-    public synchronized TimeZone getTimeZone()
-    {return dateFormat.getTimeZone();}
+    public synchronized TimeZone getTimeZone() {
+        return dateFormat.getTimeZone();
+    }
 
     /**
      * Définit le fuseau horaire à utiliser pour l'écriture des dates.
      */
-    public synchronized void setTimeZone(final TimeZone timezone)
-    {
+    public synchronized void setTimeZone(final TimeZone timezone) {
         dateFormat.setTimeZone(timezone);
-        if (entries.length!=0)
+        if (entries.length != 0) {
             fireTableChanged(new TableModelEvent(this, 0, entries.length-1, DATE));
+        }
     }
 
     /**
      * Ajoute un objet à la liste des objets intéressés à être
      * informés chaque fois qu'une édition anulable a été faite.
      */
-    public void addUndoableEditListener(final UndoableEditListener listener)
-    {listenerList.add(UndoableEditListener.class, listener);}
+    public void addUndoableEditListener(final UndoableEditListener listener) {
+        listenerList.add(UndoableEditListener.class, listener);
+    }
 
     /**
      * Retire un objet de la liste des objets intéressés à être
      * informés chaque fois qu'une édition anulable a été faite.
      */
-    public void removeUndoableEditListener(final UndoableEditListener listener)
-    {listenerList.remove(UndoableEditListener.class, listener);}
+    public void removeUndoableEditListener(final UndoableEditListener listener) {
+        listenerList.remove(UndoableEditListener.class, listener);
+    }
 
     /**
      * Prend en compte des changements qui viennent d'être apportées à la table.
      * Cette méthode mettra à jour la variable {@link #backup} et préviendra tous
      * les objets qui étaient intéressés à être informés des changements anulables.
      */
-    private void commitEdit(final ImageEntry[] oldEntries, final ImageEntry[] newEntries, final int clé) // NO synchronized!
+    private void commitEdit(final ImageEntry[] oldEntries, final ImageEntry[] newEntries,
+                            final int clé) // NO synchronized!
     {
         final String name = Resources.format(clé).toLowerCase();
-        if (oldEntries!=newEntries)
-        {
+        if (oldEntries != newEntries) {
             final Object[] listeners=listenerList.getListenerList();
-            if (listeners.length!=0)
-            {
-                UndoableEditEvent event=null;
-                for (int i=listeners.length; (i-=2)>=0;)
-                {
-                    if (listeners[i]==UndoableEditListener.class)
-                    {
-                        if (event==null) event=new UndoableEditEvent(this, new AbstractUndoableEdit()
-                        {
+            if (listeners.length != 0) {
+                UndoableEditEvent event = null;
+                for (int i=listeners.length; (i-=2)>=0;) {
+                    if (listeners[i]==UndoableEditListener.class) {
+                        if (event==null) event=new UndoableEditEvent(this, new AbstractUndoableEdit() {
                             public void undo() throws CannotUndoException {super.undo(); entries=oldEntries; fireTableDataChanged();}
                             public void redo() throws CannotRedoException {super.redo(); entries=newEntries; fireTableDataChanged();}
                             public String getPresentationName() {return name;}
@@ -834,22 +794,21 @@ public class ImageTableModel extends AbstractTableModel
      * appropriée. Cette méthode peut être appelée à partir de n'importe quel
      * thread (pas nécessairement celui de <i>Swing</i>).
      */
-    private void fireTableRowsUpdated(ImageEntry entry) // NO synchronized
-    {
+    private void fireTableRowsUpdated(ImageEntry entry) { // NO synchronized
         entry = unwrap(entry);
         final ImageEntry[] entries = this.entries;
-        for (int i=entries.length; --i>=0;)
-        {
-            if (entry.equals(unwrap(entries[i])))
-            {
-                final int row=i;
-                if (EventQueue.isDispatchThread())
+        for (int i=entries.length; --i>=0;) {
+            if (entry.equals(unwrap(entries[i]))) {
+                final int row = i;
+                if (EventQueue.isDispatchThread()) {
                     fireTableRowsUpdated(row, row);
-                else EventQueue.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {fireTableRowsUpdated(row, row);}
-                });
+                } else {
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            fireTableRowsUpdated(row, row);
+                        }
+                    });
+                }
             }
         }
     }
@@ -863,8 +822,7 @@ public class ImageTableModel extends AbstractTableModel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final class ProxyEntry extends ImageEntry.Proxy
-    {
+    private final class ProxyEntry extends ImageEntry.Proxy {
         /**
          * Numéro de série (pour compatibilité avec des versions antérieures).
          */
@@ -878,8 +836,7 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Construit un proxy.
          */
-        public ProxyEntry(final ImageEntry entry)
-        {
+        public ProxyEntry(final ImageEntry entry) {
             super(entry);
             FileChecker.add(this);
         }
@@ -887,30 +844,25 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Retourne l'entré enveloppée par ce proxy.
          */
-        final ImageEntry getEntry()
-        {return entry;}
+        final ImageEntry getEntry() {
+            return entry;
+        }
 
         /**
          * Procède à la lecture d'une image. Si la lecture a réussi sans avoir été
          * annulée par l'utilisateur, alors le drapeau {@link #VIEWED} sera levé.
          * Si la lecture a échoué, alors le drapeau {@link #CORRUPTED} sera levé.
          */
-        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
-        {
-            try
-            {
+        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
+            try {
                 final GridCoverage image=entry.getGridCoverage(listenerList);
                 if (image!=null) setFlag(VIEWED, true);
                 setFlag((byte)(MISSING|CORRUPTED), false);
                 return image;
-            }
-            catch (FileNotFoundException exception)
-            {
+            } catch (FileNotFoundException exception) {
                 setFlag(MISSING, true);
                 throw exception;
-            }
-            catch (IOException exception)
-            {
+            } catch (IOException exception) {
                 setFlag(CORRUPTED, true);
                 throw exception;
             }
@@ -920,12 +872,10 @@ public class ImageTableModel extends AbstractTableModel
          * Place ou retire les drapeaux spécifiés. Si l'appel de cette méthode a modifié
          * l'état des drapeaux, alors {@link #fireTableRowsUpdated} sera appelée.
          */
-        public synchronized void setFlag(byte f, final boolean set)
-        {
+        public synchronized void setFlag(byte f, final boolean set) {
             if (set) f |= flags;
             else     f  = (byte) (flags & ~f);
-            if (flags != f)
-            {
+            if (flags != f) {
                 flags = f;
                 fireTableRowsUpdated(entry);
             }
@@ -940,8 +890,7 @@ public class ImageTableModel extends AbstractTableModel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private final static class FileChecker extends Thread
-    {
+    private final static class FileChecker extends Thread {
         /**
          * Thread ayant la charge de vérifier si des fichiers existent.
          */
@@ -950,7 +899,7 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Liste des fichiers dont on veut vérifier l'existence.
          */
-        private final LinkedList<ProxyEntry> list=new LinkedList<ProxyEntry>();
+        private final LinkedList<ProxyEntry> list = new LinkedList<ProxyEntry>();
 
         /**
          * Construit un thread qui vérifiera l'existence des fichiers. Le processus démarrera
@@ -959,8 +908,7 @@ public class ImageTableModel extends AbstractTableModel
          * appelle ce constructeur). L'exécution continuera lorsque la méthode {@link #add}
          * aura terminé, ce qui garantit qu'il y aura au moins une image à vérifier.
          */
-        private FileChecker()
-        {
+        private FileChecker() {
             super("FileChecker");
             setPriority(MIN_PRIORITY);
             setDaemon(true);
@@ -970,10 +918,10 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Ajoute une entrée à la liste des images à vérifier.
          */
-        public static synchronized void add(final ProxyEntry entry)
-        {
-            if (thread==null)
-                thread=new FileChecker();
+        public static synchronized void add(final ProxyEntry entry) {
+            if (thread == null) {
+                thread = new FileChecker();
+            }
             thread.list.add(entry);
         }
 
@@ -983,11 +931,9 @@ public class ImageTableModel extends AbstractTableModel
          * méthode signalera que le thread va mourrir en donnant la valeur
          * <code>null</code> à {@link #thread].
          */
-        private static synchronized ProxyEntry next(final LinkedList<ProxyEntry> list)
-        {
-            if (list.isEmpty())
-            {
-                thread=null;
+        private static synchronized ProxyEntry next(final LinkedList<ProxyEntry> list) {
+            if (list.isEmpty()) {
+                thread = null;
                 return null;
             }
             return list.removeFirst();
@@ -998,14 +944,13 @@ public class ImageTableModel extends AbstractTableModel
          * n'existe pas, le drapeau {@link ProxyEntry#MISSING} sera lévé
          * pour l'objet {@link ProxyEntry} correspondant.
          */
-        public void run()
-        {
+        public void run() {
             ProxyEntry entry;
-            while ((entry=next(list)) != null)
-            {
+            while ((entry=next(list)) != null) {
                 final File file=entry.getFile();
-                if (file!=null)
+                if (file != null) {
                     entry.setFlag(ProxyEntry.MISSING, !file.isFile());
+                }
             }
         }
     }
@@ -1019,8 +964,7 @@ public class ImageTableModel extends AbstractTableModel
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    public static class CellRenderer extends DefaultTableCellRenderer
-    {
+    public static class CellRenderer extends DefaultTableCellRenderer {
         /**
          * Couleur par défaut de la police.
          */
@@ -1034,24 +978,25 @@ public class ImageTableModel extends AbstractTableModel
         /**
          * Construit un objet <code>CellRenderer</code>.
          */
-        public CellRenderer()
-        {
+        public CellRenderer() {
             super();
-            foreground=super.getForeground();
-            background=super.getBackground();
+            foreground = super.getForeground();
+            background = super.getBackground();
         }
 
         /**
          * Définit la couleur de la police.
          */
-        public void setForeground(final Color foreground)
-        {super.setForeground(this.foreground=foreground);}
+        public void setForeground(final Color foreground) {
+            super.setForeground(this.foreground=foreground);
+        }
 
         /**
          * Définit la couleur de l'arrière-plan.
          */
-        public void setBackground(final Color background)
-        {super.setBackground(this.background=background);}
+        public void setBackground(final Color background) {
+            super.setBackground(this.background=background);
+        }
 
         /**
          * Retourne une composante à utiliser pour dessiner le contenu des
@@ -1064,19 +1009,15 @@ public class ImageTableModel extends AbstractTableModel
         {
             Color foreground = this.foreground;
             Color background = this.background;
-            if (row>=0)
-            {
+            if (row >= 0) {
                 final TableModel model=table.getModel();
-                if (model instanceof ImageTableModel)
-                {
+                if (model instanceof ImageTableModel) {
                     final ImageTableModel imageTable = (ImageTableModel) model;
-                    if (value instanceof Date)
-                    {
+                    if (value instanceof Date) {
                         value = imageTable.format((Date) value);
                     }
                     final ImageEntry entry = imageTable.entries[row];
-                    if (entry instanceof ProxyEntry)
-                    {
+                    if (entry instanceof ProxyEntry) {
                         final byte flags = ((ProxyEntry) entry).flags;
                         if ((flags & ProxyEntry.VIEWED   ) != 0) {foreground=Color.blue ;                      }
                         if ((flags & ProxyEntry.MISSING  ) != 0) {foreground=Color.red  ;                      }

@@ -25,12 +25,6 @@
  */
 package fr.ird.awt;
 
-// Base de données
-import java.sql.SQLException;
-import fr.ird.sql.image.SeriesEntry;
-import fr.ird.sql.image.SeriesTable;
-import fr.ird.sql.image.ImageDataBase;
-
 // Interface utilisateur
 import java.awt.EventQueue;
 import java.awt.Dimension;
@@ -45,6 +39,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
 
+// Divers
+import java.util.Date;
+import java.sql.SQLException;
+import javax.media.jai.util.Range;
+
 // Arborescence
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
@@ -52,17 +51,18 @@ import javax.swing.tree.TreeSelectionModel;
 import org.geotools.gui.swing.tree.TreeNode;
 import org.geotools.gui.swing.tree.Trees;
 
-// Divers
-import java.util.Date;
-import fr.ird.util.XArray;
-import javax.media.jai.util.Range;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-
 // Geotools dependencies
 import org.geotools.resources.XDimension2D;
 import org.geotools.resources.SwingUtilities;
 import org.geotools.gui.swing.CoordinateChooser;
+
+// Seagis
+import fr.ird.sql.image.SeriesEntry;
+import fr.ird.sql.image.SeriesTable;
+import fr.ird.sql.image.ImageDataBase;
+import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.Resources;
+import fr.ird.util.XArray;
 
 
 /**
@@ -73,8 +73,7 @@ import org.geotools.gui.swing.CoordinateChooser;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class CoordinateChooserDB extends CoordinateChooser
-{
+public class CoordinateChooserDB extends CoordinateChooser {
     /**
      * Résolution par défaut proposée à l'utilisateur,
      * en degrés de longitude et de latitude.
@@ -107,14 +106,14 @@ public class CoordinateChooserDB extends CoordinateChooser
      *         Aucune référence ne sera retenue après la construction.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CoordinateChooserDB(final ImageDataBase database) throws SQLException
-    {this(database, database.getTimeRange());}
+    public CoordinateChooserDB(final ImageDataBase database) throws SQLException {
+        this(database, database.getTimeRange());
+    }
 
     /**
      * Constructeur privé.
      */
-    private CoordinateChooserDB(final ImageDataBase database, final Range timeRange) throws SQLException
-    {
+    private CoordinateChooserDB(final ImageDataBase database, final Range timeRange) throws SQLException {
         super((Date)timeRange.getMinValue(), (Date)timeRange.getMaxValue());
         setGeographicArea(database.getGeographicArea());
         setPreferredResolution(new XDimension2D.Double(DEFAULT_RESOLUTION, DEFAULT_RESOLUTION));
@@ -137,18 +136,14 @@ public class CoordinateChooserDB extends CoordinateChooser
      * Retourne les séries sélectionnées par l'utilisateur. Si aucune série n'a
      * été sélectionnée, alors cette méthode retourne un tableau de longueur 0.
      */
-    public SeriesEntry[] getSeries()
-    {
-        final TreePath paths[]=treeSelection.getSelectionPaths();
-        if (paths!=null)
-        {
+    public SeriesEntry[] getSeries() {
+        final TreePath paths[] = treeSelection.getSelectionPaths();
+        if (paths != null) {
             int count=0;
             final SeriesEntry[] series = new SeriesEntry[paths.length];
-            for (int i=0; i<paths.length; i++)
-            {
-                final Object node=((TreeNode) paths[i].getLastPathComponent()).getUserObject();
-                if (node instanceof SeriesEntry)
-                {
+            for (int i=0; i<paths.length; i++) {
+                final Object node = ((TreeNode) paths[i].getLastPathComponent()).getUserObject();
+                if (node instanceof SeriesEntry) {
                     series[count++] = (SeriesEntry) node;
                 }
             }
@@ -162,10 +157,11 @@ public class CoordinateChooserDB extends CoordinateChooser
      * ou n'apparaît pas dans l'arborescence, alors aucun changement
      * ne sera fait.
      */
-    public void setSeries(final SeriesEntry series)
-    {
-        final TreePath[] paths=Trees.getPathsToUserObject(treeModel, series);
-        if (paths.length==0) return;
+    public void setSeries(final SeriesEntry series) {
+        final TreePath[] paths = Trees.getPathsToUserObject(treeModel, series);
+        if (paths.length==0) {
+            return;
+        }
         treeSelection.setSelectionPath(paths[0]);
     }
 
@@ -174,16 +170,19 @@ public class CoordinateChooserDB extends CoordinateChooser
      * Par défaut, l'utilisateur ne peut sélectionner qu'une seule série à
      * la fois.
      */
-    public void setMultiSeriesAllowed(final boolean allowed)
-    {treeSelection.setSelectionMode(allowed ? TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION : TreeSelectionModel.SINGLE_TREE_SELECTION);}
+    public void setMultiSeriesAllowed(final boolean allowed) {
+        treeSelection.setSelectionMode(allowed ? TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
+                                               : TreeSelectionModel.SINGLE_TREE_SELECTION);
+    }
 
     /**
      * Indique si les séries doivent être affichées
      * à la droite du paneau servant à sélectionner
      * les coordonnées spatio-temporelles.
      */
-    public void setSeriesVisible(final boolean visible)
-    {setAccessory(visible ? treeView : null);}
+    public void setSeriesVisible(final boolean visible) {
+        setAccessory(visible ? treeView : null);
+    }
 
     /**
      * Fait apparaître une boîte de dialogue demandant à l'utilisateur de choisir une ou des séries.
@@ -199,19 +198,17 @@ public class CoordinateChooserDB extends CoordinateChooser
      * @return Les séries sélectionnées si l'utilisateur a cliqué sur "Ok",
      *         ou <code>null</code> sinon.
      */
-    public SeriesEntry[] showSeriesDialog(final Component owner, final String title)
-    {
+    public SeriesEntry[] showSeriesDialog(final Component owner, final String title) {
         /*
          * Make sure that this method is
          * invoked from the Sqing thread.
          */
-        if (!EventQueue.isDispatchThread())
-        {
-            final SeriesEntry[][] series=new SeriesEntry[1][];
-            SwingUtilities.invokeAndWait(new Runnable()
-            {
-                public void run()
-                {series[0]=showSeriesDialog(owner, title);}
+        if (!EventQueue.isDispatchThread()) {
+            final SeriesEntry[][] series = new SeriesEntry[1][];
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    series[0]=showSeriesDialog(owner, title);
+                }
             });
             return series[0];
         }
@@ -219,12 +216,12 @@ public class CoordinateChooserDB extends CoordinateChooser
          * If series still attached to the coordinate chooser
          * (as the "accessory"), invoke the usual method.
          */
-        if (getAccessory() == treeView)
-        {
-            while (showDialog(owner, title))
-            {
-                final SeriesEntry[] series=getSeries();
-                if (series.length!=0) return series;
+        if (getAccessory() == treeView) {
+            while (showDialog(owner, title)) {
+                final SeriesEntry[] series = getSeries();
+                if (series.length!=0) {
+                    return series;
+                }
                 showMessageDialog(owner);
             }
             return null;
@@ -233,10 +230,11 @@ public class CoordinateChooserDB extends CoordinateChooser
          * If series was hidden, show series
          * in a separated dialog box.
          */
-        while (SwingUtilities.showOptionDialog(owner, treeView, title))
-        {
-            final SeriesEntry[] series=getSeries();
-            if (series.length!=0) return series;
+        while (SwingUtilities.showOptionDialog(owner, treeView, title)) {
+            final SeriesEntry[] series = getSeries();
+            if (series.length!=0) {
+                return series;
+            }
             showMessageDialog(owner);
         }
         return null;
@@ -245,8 +243,7 @@ public class CoordinateChooserDB extends CoordinateChooser
     /**
      * Affiche un message indiquant qu'aucune série n'a été sélectionnée.
      */
-    private void showMessageDialog(final Component owner)
-    {
+    private void showMessageDialog(final Component owner) {
         final Resources resources = Resources.getResources(getLocale());
         final String    message   = resources.getString(ResourceKeys.ERROR_NO_SERIES_SELECTION);
         final String    title     = resources.getString(ResourceKeys.ERROR_BAD_ENTRY);

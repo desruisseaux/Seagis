@@ -44,12 +44,11 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class DefaultTrainingSet implements TrainingSet, Serializable
-{
+public class DefaultTrainingSet implements TrainingSet, Serializable {
     /**
      * Serial number for compatibility with previous versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 5759942767264503511L;
 
     /**
      * Number of inputs values per instance.
@@ -82,8 +81,8 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Construct a initially empty training set.
      */
-    public DefaultTrainingSet()
-    {}
+    public DefaultTrainingSet() {
+    }
 
     /**
      * Construct a training set with data from the specified file.
@@ -96,8 +95,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * @param numInputs The expected number of output parameters.
      * @throws IOException if the file can't be opened or parsed.
      */
-    public DefaultTrainingSet(final File file, final int numInputs, final int numOutputs) throws IOException
-    {
+    public DefaultTrainingSet(final File file, final int numInputs, final int numOutputs) throws IOException {
         this.numInputs  = numInputs;
         this.numOutputs = numOutputs;
         final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -113,26 +111,21 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      *        until end-of-stream, but the stream will not be closed.
      * @throws IOException if the stream can't be parsed.
      */
-    private void load(final BufferedReader reader) throws IOException
-    {
+    private void load(final BufferedReader reader) throws IOException {
         final double[]   inputs = new double[numInputs];
         final double[]  outputs = new double[numOutputs];
         final double[] dataline = new double[numInputs + numOutputs];
         final LineFormat  linef = new LineFormat();
-        try
-        {
+        try {
             String line;
-            while ((line=reader.readLine())!=null)
-            {
+            while ((line=reader.readLine()) != null) {
                 linef.setLine(line);
                 linef.getValues(dataline);
                 System.arraycopy(dataline, 0,          inputs, 0,  numInputs);
                 System.arraycopy(dataline, numInputs, outputs, 0, numOutputs);
                 add(inputs, outputs);
             }
-        }
-        catch (ParseException exception)
-        {
+        } catch (ParseException exception) {
             final IOException e = new IOException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
@@ -143,19 +136,18 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * Returns the index into the {@link #data}
      * array for the specified instance index.
      */
-    private int toIndex(final int record)
-    {return record * (numInputs + numOutputs);}
+    private int toIndex(final int record) {
+        return record * (numInputs + numOutputs);
+    }
 
     /**
      * Add all data from the specified training set.
      */
-    public synchronized void addAll(final TrainingSet set)
-    {
+    public synchronized void addAll(final TrainingSet set) {
         set.rewind();
         double[]  inputs = null;
         double[] outputs = null;
-        while (set.next())
-        {
+        while (set.next()) {
             inputs  = set.getTestInputs ( inputs);
             outputs = set.getTestOutputs(outputs);
             add(inputs, outputs);
@@ -168,18 +160,15 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * @param  inputs The set of input values. Values will be copied.
      * @param outputs The set of output values. Values will be copied.
      */
-    public synchronized void add(final double[] inputs, final double[] outputs)
-    {
-        if (count==0)
-        {
+    public synchronized void add(final double[] inputs, final double[] outputs) {
+        if (count == 0) {
             numInputs  =  inputs.length;
             numOutputs = outputs.length;
         }
         if (numInputs  !=  inputs.length) throw new IllegalArgumentException(); // TODO
         if (numOutputs != outputs.length) throw new IllegalArgumentException(); // TODO
         int length = numInputs + numOutputs;
-        if (length*(count+1) > data.length)
-        {
+        if (length*(count+1) > data.length) {
             data = XArray.resize(data, length*(count + Math.min(count, 512)));
         }
         length *= count++;
@@ -192,8 +181,9 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * size. An application can use this operation to minimize the storage
      * of a training set.
      */
-    public synchronized void trimToSize()
-    {data = XArray.resize(data, toIndex(count));}
+    public synchronized void trimToSize() {
+        data = XArray.resize(data, toIndex(count));
+    }
     
     /**
      * Instructs the training set to move on a new training instance
@@ -203,8 +193,9 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * @return <code>true</code> if the new current training instance is
      *        valid; <code>false</code> if there are no more instances.
      */
-    public boolean next()
-    {return ++position < count;}
+    public boolean next() {
+        return ++position < count;
+    }
 
     /**
      * Returns a vector of the values associated with each input node
@@ -214,15 +205,14 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      *         new one. If non-null, values in this array will be overrided.
      * @return The current set of input values.
      */
-    public double[] getTestInputs(double[] dest)
-    {
-        if (position<0 || position>=count)
-        {
+    public double[] getTestInputs(double[] dest) {
+        if (position<0 || position>=count) {
             throw new NoSuchElementException();
         }
-        if (dest==null) dest=new double[numInputs];
-        if (dest.length != numInputs)
-        {
+        if (dest == null) {
+            dest = new double[numInputs];
+        }
+        if (dest.length != numInputs) {
             throw new IllegalArgumentException(); // TODO
         }
         System.arraycopy(data, toIndex(position), dest, 0, numInputs);
@@ -239,15 +229,14 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      *         new one. If non-null, values in this array will be overrided.
      * @return The current set of output values.
      */
-    public double[] getTestOutputs(double[] dest)
-    {
-        if (position<0 || position>=count)
-        {
+    public double[] getTestOutputs(double[] dest) {
+        if (position<0 || position>=count) {
             throw new NoSuchElementException();
         }
-        if (dest==null) dest=new double[numOutputs];
-        if (dest.length != numOutputs)
-        {
+        if (dest == null) {
+            dest = new double[numOutputs];
+        }
+        if (dest.length != numOutputs) {
             throw new IllegalArgumentException(); // TODO
         }
         System.arraycopy(data, toIndex(position)+numInputs, dest, 0, numOutputs);
@@ -259,14 +248,11 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      *
      * @param  inputs The new inputs values for the current training instance.
      */
-    public void updateTestInputs(final double[] inputs)
-    {
-        if (position<0 || position>=count)
-        {
+    public void updateTestInputs(final double[] inputs) {
+        if (position<0 || position>=count) {
             throw new NoSuchElementException();
         }
-        if (inputs.length != numInputs)
-        {
+        if (inputs.length != numInputs) {
             throw new IllegalArgumentException(); // TODO
         }
         System.arraycopy(inputs, 0, data, toIndex(position), numInputs);
@@ -277,14 +263,11 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      *
      * @param  inputs The new outputs values for the current training instance.
      */
-    public void updateTestOutputs(final double[] outputs)
-    {
-        if (position<0 || position>=count)
-        {
+    public void updateTestOutputs(final double[] outputs) {
+        if (position<0 || position>=count) {
             throw new NoSuchElementException();
         }
-        if (outputs.length != numOutputs)
-        {
+        if (outputs.length != numOutputs) {
             throw new IllegalArgumentException(); // TODO
         }
         System.arraycopy(outputs, 0, data, toIndex(position)+numInputs, numOutputs);
@@ -293,18 +276,17 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Move the cursor before the first training instance.
      */
-    public void rewind()
-    {position = -1;}
+    public void rewind() {
+        position = -1;
+    }
 
     /**
      * Randomly permute instances in this training set.
      */
-    public void shuffle()
-    {
+    public void shuffle() {
         final Random random = new Random();
         final double[] buffer = new double[numInputs + numOutputs];
-        for (int i=count; i>=1; i--)
-        {
+        for (int i=count; i>=1; i--) {
             final int index0 = toIndex(i-1);
             final int index1 = toIndex(random.nextInt(i));
             System.arraycopy(data, index0, buffer,    0, buffer.length);
@@ -322,19 +304,15 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * value = (value-mean)/standardDeviation
      * </pre></blockquote>
      */
-    public void normalize()
-    {
+    public void normalize() {
         final double mean[] = new double[numInputs + numOutputs];
         final double stdv[] = new double[numInputs + numOutputs];
         statistics(mean, stdv);
-        for (int j=count; --j>=0;)
-        {
+        for (int j=count; --j>=0;) {
             final int index = toIndex(j);
-            for (int i=mean.length; --i>=0;)
-            {
+            for (int i=mean.length; --i>=0;) {
                 final double dev = stdv[i];
-                if (!Double.isNaN(dev))
-                {
+                if (!Double.isNaN(dev)) {
                     data[index+i] = (data[index+i] - mean[i]) / dev;
                 }
             }
@@ -347,25 +325,20 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
      * @param mean Arrays in which to store means values. All elements must be initially 0.
      * @param stdv Arrays in which to store standard deviation. All elements must be initially 0.
      */
-    private void statistics(final double[] mean, final double[] stdv)
-    {
+    private void statistics(final double[] mean, final double[] stdv) {
         final int n[] = new int[Math.min(mean.length, stdv.length)];
-        for (int j=count; --j>=0;)
-        {
+        for (int j=count; --j>=0;) {
             final int index = toIndex(j);
-            for (int i=n.length; --i>=0;)
-            {
+            for (int i=n.length; --i>=0;) {
                 final double value = data[index+i];
-                if (!Double.isNaN(value))
-                {
+                if (!Double.isNaN(value)) {
                     mean[i] += value;
                     stdv[i] += value*value;
                     n   [i]++;
                 }
             }
         }
-        for (int i=n.length; --i>=0;)
-        {
+        for (int i=n.length; --i>=0;) {
             final int    ni   = n[i];
             final double sum  = mean[i];
             final double sum2 = stdv[i];
@@ -377,8 +350,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Returns a string representation of this training set.
      */
-    public String toString()
-    {
+    public String toString() {
         final double mean[] = new double[numInputs + numOutputs];
         final double stdv[] = new double[numInputs + numOutputs];
         statistics(mean, stdv);
@@ -393,8 +365,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
         buffer.append(count);
         buffer.append(" sets]");
         buffer.append(lineSeparator);
-        for (int i=0; i<mean.length; i++)
-        {
+        for (int i=0; i<mean.length; i++) {
             final int n = i<numInputs ? i : i-numInputs;
             buffer.append("    ");
             buffer.append(i<numInputs ? " in #" : "out #");
@@ -411,7 +382,8 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Helper method for {@link #toString}: Format a number.
      */
-    private static StringBuffer format(char var, NumberFormat numbers, double value, StringBuffer buffer, FieldPosition dummy)
+    private static StringBuffer format(char var, NumberFormat numbers, double value,
+                                       StringBuffer buffer, FieldPosition dummy)
     {
         buffer.append(' ');
         buffer.append(var);
@@ -425,8 +397,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Trim this training set before to save it.
      */
-    private void writeObject(final ObjectOutputStream out) throws IOException
-    {
+    private void writeObject(final ObjectOutputStream out) throws IOException {
         trimToSize();
         out.defaultWriteObject();
     }
@@ -434,8 +405,7 @@ public class DefaultTrainingSet implements TrainingSet, Serializable
     /**
      * Set transients fields after reading.
      */
-    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException
-    {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         position = -1;
     }

@@ -27,8 +27,7 @@ import java.io.Serializable;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-abstract class AbstractTransfertFunction implements TransfertFunction, Serializable
-{
+abstract class AbstractTransfertFunction implements TransfertFunction, Serializable {
     /**
      * Serial number for compatibility with previous versions.
      */
@@ -44,14 +43,16 @@ abstract class AbstractTransfertFunction implements TransfertFunction, Serializa
      *
      * @param name The transfert function name.
      */
-    public AbstractTransfertFunction(final String name)
-    {this.name = name;}
+    public AbstractTransfertFunction(final String name) {
+        this.name = name;
+    }
 
     /**
      * Returns the transfert function name.
      */
-    public String toString()
-    {return name;}
+    public String toString() {
+        return name;
+    }
 
     // TODO: canocalize deserialized functions.
 }

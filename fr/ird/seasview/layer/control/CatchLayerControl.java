@@ -47,7 +47,6 @@ import javax.swing.JComponent;
 import java.util.Set;
 import java.util.Date;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import javax.swing.event.EventListenerList;
 

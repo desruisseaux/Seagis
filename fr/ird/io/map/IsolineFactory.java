@@ -25,7 +25,6 @@ package fr.ird.io.map;
 // Collections
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Arrays;
 
 // References
@@ -211,8 +210,8 @@ public abstract class IsolineFactory {
         }
         int count = 0;
         final float[] values = new float[isolines.size()];
-        for (final Iterator<Float> it=isolines.keySet().iterator(); it.hasNext();) {
-            values[count++] = it.next().floatValue();
+        for (final Float value : isolines.keySet()) {
+            values[count++] = value.floatValue();
         }
         if (count != values.length) {
             // Should not happen

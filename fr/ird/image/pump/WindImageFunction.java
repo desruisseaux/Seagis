@@ -136,7 +136,7 @@ class WindImageFunction extends AbstractImageFunction {
                 list.add(file);
             }
         }
-        this.files = list.toArray(new File[list.size()]);
+        this.files = (File[])list.toArray(new File[list.size()]);
     }
 
     /**

@@ -25,9 +25,6 @@
  */
 package fr.ird.image.work;
 
-// Geotools dependencies
-import org.geotools.cv.SampleDimension;
-
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
@@ -41,27 +38,28 @@ import java.io.BufferedWriter;
 import java.io.StringWriter;
 import java.io.FileWriter;
 import java.io.Writer;
-import org.geotools.io.LineWriter;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Deflater;
 
-// Images
+// Images et divers
 import java.awt.image.DataBuffer;
 import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import javax.media.jai.PlanarImage;
-import fr.ird.sql.image.ImageEntry;
-
-// Divers
 import java.util.Hashtable;
-import fr.ird.util.XArray;
 
 // Geotools dependencies
+import org.geotools.io.LineWriter;
+import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
 import org.geotools.gui.swing.ExceptionMonitor;
+
+// Seagis
+import fr.ird.util.XArray;
+import fr.ird.sql.image.ImageEntry;
 
 
 /**
@@ -71,8 +69,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Result implements Serializable
-{
+public class Result implements Serializable {
     /**
      * Numéro de série (pour compatibilité entre différentes versions).
      */
@@ -87,8 +84,8 @@ public class Result implements Serializable
     /**
      * Construit un objet par défaut.
      */
-    public Result()
-    {}
+    public Result() {
+    }
 
     /**
      * Lit un objet qui avait précédemment été enregistré
@@ -98,25 +95,19 @@ public class Result implements Serializable
      * @return Objet lu dans le fichiet spécifié.
      * @throws IOException si une erreur est survenue lors de l'enregistrement.
      */
-    public static Result load(final File file) throws IOException
-    {
+    public static Result load(final File file) throws IOException {
         final ObjectInputStream input = new ObjectInputStream(
                                         new InflaterInputStream(
                                         new FileInputStream(file)));
-        try
-        {
+        try {
             final Result result = (Result) input.readObject();
             input.close();
             return result;
-        }
-        catch (ClassNotFoundException exception)
-        {
+        } catch (ClassNotFoundException exception) {
             IOException e=new IOException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
-        }
-        catch (ClassCastException exception)
-        {
+        } catch (ClassCastException exception) {
             IOException e=new IOException(exception.getLocalizedMessage());
             e.initCause(exception);
             throw e;
@@ -129,8 +120,7 @@ public class Result implements Serializable
      * @param  file Fichier dans lequel enregistrer cet objet.
      * @throws IOException si une erreur est survenue lors de l'enregistrement.
      */
-    public synchronized void save(final File file) throws IOException
-    {
+    public synchronized void save(final File file) throws IOException {
         final ObjectOutputStream output = new ObjectOutputStream(
                                           new DeflaterOutputStream(
                                           new FileOutputStream(file), new Deflater(Deflater.BEST_COMPRESSION)));
@@ -147,16 +137,16 @@ public class Result implements Serializable
      * <br><br>
      * L'implémentation par défaut retourne toujours <code>null</code>.
      */
-    public WritableRaster getRaster()
-    {return null;}
+    public WritableRaster getRaster() {
+        return null;
+    }
 
     /**
      * Retourne les données sous forme d'une image. Si les données ne peuvent pas être représentées
      * sous forme d'image, alors cette méthode retourne <code>null</code>. L'implémentation par défaut
      * enveloppe dans une image la tuile retournée par {@link #getRaster}.
      */
-    public RenderedImage getImage(final SampleDimension[] bands)
-    {
+    public RenderedImage getImage(final SampleDimension[] bands) {
         final WritableRaster raster = getRaster(); if (raster==null) return null;
         final ColorModel     colors = PlanarImage.createColorModel(raster.getSampleModel());
         final Hashtable  properties = new Hashtable();
@@ -171,8 +161,7 @@ public class Result implements Serializable
      * @param  file Fichier dans lequel écrire une description de cet objet.
      * @throws IOException si une erreur est survenue lors de l'écriture.
      */
-    public synchronized void write(final File file) throws IOException
-    {
+    public synchronized void write(final File file) throws IOException {
         final Writer output = new BufferedWriter(new FileWriter(file));
         write(output);
         output.close();
@@ -186,15 +175,12 @@ public class Result implements Serializable
      * @param  output Flot dans lequel écrire une description de cet objet.
      * @throws IOException si une erreur est survenue lors de l'écriture.
      */
-    public synchronized void write(final Writer output) throws IOException
-    {
+    public synchronized void write(final Writer output) throws IOException {
         final String lineSeparator = System.getProperty("line.separator", "\n");
         output.write("ID des images utilisées:");
         output.write(lineSeparator);
-        if (imageIDs.length!=0)
-        {
-            for (int i=0; i<imageIDs.length; i++)
-            {
+        if (imageIDs.length != 0) {
+            for (int i=0; i<imageIDs.length; i++) {
                 output.write(String.valueOf(imageIDs[i]));
                 output.write(lineSeparator);
             }
@@ -205,15 +191,11 @@ public class Result implements Serializable
      * Retourne le contenu de cet objet sous forme de chaîne de caractères.
      * L'implémentation par défaut appelle {@link #write(Writer)}.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringWriter output = new StringWriter();
-        try
-        {
+        try {
             write(new LineWriter(output, "\n"));
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             // Should not happen.
             unexpectedException(Utilities.getShortClassName(this), "toString", exception);
         }
@@ -225,29 +207,29 @@ public class Result implements Serializable
      * ont été pris en compte pour la construction
      * de cet objet.
      */
-    protected synchronized void add(final ImageEntry image)
-    {
+    protected synchronized void add(final ImageEntry image) {
         final int ID = image.getID();
-        if (imageIDs!=null)
-        {
+        if (imageIDs != null) {
             final int last = imageIDs.length;
             imageIDs = XArray.resize(imageIDs, last+1);
             imageIDs[last] = ID;
+        } else {
+            imageIDs = new int[] {ID};
         }
-        else imageIDs = new int[] {ID};
     }
 
     /**
      * Indique si l'image spécifiée fait partie des images qui
      * ont été prises en compte dans le calcul des résultats.
      */
-    protected synchronized boolean contains(final ImageEntry image)
-    {
-        if (imageIDs!=null)
-        {
+    protected synchronized boolean contains(final ImageEntry image) {
+        if (imageIDs != null) {
             final int ID = image.getID();
-            for (int i=0; i<imageIDs.length; i++)
-                if (imageIDs[i]==ID) return true;
+            for (int i=0; i<imageIDs.length; i++) {
+                if (imageIDs[i]==ID) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -256,8 +238,9 @@ public class Result implements Serializable
      * Signale qu'une erreur inatendue est survenue. Cette méthode
      * écrira l'erreur dans un journal de l'application.
      */
-    static void unexpectedException(final String className, final String method, final Throwable exception)
-    {Utilities.unexpectedException("fr.ird.image.work", className, method, exception);}
+    static void unexpectedException(final String className, final String method, final Throwable exception) {
+        Utilities.unexpectedException("fr.ird.image.work", className, method, exception);
+    }
 
     /**
      * Affiche sous forme de texte le contenu d'un objet {@link Result}.
@@ -270,18 +253,15 @@ public class Result implements Serializable
      *       sortie se fera vers le périphérique de sortie standard.</li>
      * </ul>
      */
-    public static void main(final String[] args)
-    {
+    public static void main(final String[] args) {
         File   in = null;
         File  out = null;
-        switch (args.length)
-        {
+        switch (args.length) {
             case 2: out = new File(args[1]); // fall through
             case 1: in  = new File(args[0]); // fall through
             case 0: break;
         }
-        if (in==null)
-        {
+        if (in == null) {
             System.out.println("Arguments: [input] [output]\n"+
                                "  - [input]  est le nom du fichier binaire d'entré.\n"+
                                "  - [output] est le nom du fichier texte de sortie.\n"+
@@ -289,21 +269,17 @@ public class Result implements Serializable
                                "             le périphérique de sortie standard.");
             return;
         }
-        try
-        {
+        try {
             final Result result = load(in);
             final Writer output = (out!=null) ? (Writer) new BufferedWriter(new FileWriter(out))
                                               : (Writer) new OutputStreamWriter(System.out);
             result.write(output);
             output.close();
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             System.out.flush();
             System.err.print(Utilities.getShortClassName(exception));
             final String message=exception.getLocalizedMessage();
-            if (message!=null)
-            {
+            if (message != null) {
                 System.err.print(": ");
                 System.err.print(message);
             }

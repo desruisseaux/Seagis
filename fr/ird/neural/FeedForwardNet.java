@@ -18,8 +18,8 @@ package fr.ird.neural;
 
 // Miscellaneous
 import java.io.Serializable;
-import fr.ird.resources.Resources;
 import org.geotools.resources.Utilities;
+import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
 
@@ -30,8 +30,7 @@ import fr.ird.resources.ResourceKeys;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-public class FeedForwardNet implements Serializable
-{
+public class FeedForwardNet implements Serializable {
     /**
      * Serial number for compatibility with previous versions.
      */
@@ -78,27 +77,21 @@ public class FeedForwardNet implements Serializable
      *        neurons in the output layer. Other integers (if any) are the number of neurons
      *        in hidden layers.
      */
-    public FeedForwardNet(final int[] numNeuronsPerLayer)
-    {
+    public FeedForwardNet(final int[] numNeuronsPerLayer) {
         Neuron[] previousLayer = null;
         final int numLayers = numNeuronsPerLayer.length;
         neurons = new Neuron[numLayers][];
-        for (int j=0; j<numLayers; j++)
-        {
+        for (int j=0; j<numLayers; j++) {
             final Neuron[] currentLayer;
             final int numNeuronsInLayer = numNeuronsPerLayer[j];
-            if (j != numLayers-1)
-            {
+            if (j != numLayers-1) {
                 currentLayer = new Neuron[numNeuronsInLayer + 1];
                 currentLayer[numNeuronsInLayer] = new Neuron(1);
-            }
-            else
-            {
+            } else {
                 // If filling the last layer (the output layer), ommit bias.
                 currentLayer = new Neuron[numNeuronsInLayer];
             }
-            for (int i=0; i<numNeuronsInLayer; i++)
-            {
+            for (int i=0; i<numNeuronsInLayer; i++) {
                 currentLayer[i] = new Neuron(previousLayer);
             }
             neurons[j] = previousLayer = currentLayer;
@@ -108,8 +101,7 @@ public class FeedForwardNet implements Serializable
          * We set input labels last in order to overwrite
          * output labels if this network has only 1 layer.
          */
-        switch (neurons.length)
-        {
+        switch (neurons.length) {
             default: setLabels(neurons[neurons.length-1], "out ", getNumOutputs()); // fall through
             case 1:  setLabels(neurons[0],                 "in ", getNumInputs());  // fall through
             case 0:  break;
@@ -124,12 +116,10 @@ public class FeedForwardNet implements Serializable
      * @param count  The number of label. Sometime equals to <code>layer.length</code>,
      *               but may be less in order to ignore the bias neuron (which is last).
      */
-    private static void setLabels(final Neuron[] layer, final String prefix, int count)
-    {
+    private static void setLabels(final Neuron[] layer, final String prefix, int count) {
         final StringBuffer buffer = new StringBuffer(prefix);
         final int length = buffer.length();
-        while (--count>=0)
-        {
+        while (--count >= 0) {
             buffer.append(count);
             layer[count].label = buffer.toString();
             buffer.setLength(length);
@@ -139,16 +129,17 @@ public class FeedForwardNet implements Serializable
     /**
      * Returns the transfert function for this neural network.
      */
-    public TransfertFunction getTransfertFunction()
-    {return transfertFunction;}
+    public TransfertFunction getTransfertFunction() {
+        return transfertFunction;
+    }
 
     /**
      * Sets the transfert function for this neural network.
      */
-    public void setTransfertFunction(final TransfertFunction function)
-    {
-        if (function==null)
+    public void setTransfertFunction(final TransfertFunction function) {
+        if (function == null) {
             throw new IllegalArgumentException();
+        }
         transfertFunction = function;
     }
 
@@ -158,16 +149,17 @@ public class FeedForwardNet implements Serializable
      * to the returned object will change the underlying algorithm
      * for this network.
      */
-    public TrainingAlgorithm getTrainingAlgorithm()
-    {return trainingAlgorithm;}
+    public TrainingAlgorithm getTrainingAlgorithm() {
+        return trainingAlgorithm;
+    }
 
     /**
      * Sets the training algorithm for this neural network.
      */
-    public void setTrainingAlgorithm(final TrainingAlgorithm algorithm)
-    {
-        if (algorithm==null)
+    public void setTrainingAlgorithm(final TrainingAlgorithm algorithm) {
+        if (algorithm == null) {
             throw new IllegalArgumentException();
+        }
         this.trainingAlgorithm = algorithm;
     }
 
@@ -175,8 +167,9 @@ public class FeedForwardNet implements Serializable
      * Returns the number of layers in this network.
      * This include input, output and hidden layers.
      */
-    public int getNumLayers()
-    {return neurons.length;}
+    public int getNumLayers() {
+        return neurons.length;
+    }
 
     /**
      * Returns the total number of neurons or nodes in the
@@ -186,11 +179,9 @@ public class FeedForwardNet implements Serializable
      *
      * @return The number of neurons in this network.
      */
-    public int getNumNeurons()
-    {
+    public int getNumNeurons() {
         int num = 0;
-        for (int j=neurons.length; --j>=0;)
-        {
+        for (int j=neurons.length; --j>=0;) {
             num += neurons[j].length;
         }
         return num;
@@ -204,14 +195,11 @@ public class FeedForwardNet implements Serializable
      * @return The number of connections between nodes
      *         in this network.
      */
-    public int getNumConnections()
-    {
+    public int getNumConnections() {
         int num = 0;
-        for (int j=neurons.length; --j>=0;)
-        {
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer = neurons[j];
-            for (int i=layer.length; --i>=0;)
-            {
+            for (int i=layer.length; --i>=0;) {
                 num += layer[i].getNumInputs();
             }
         }
@@ -227,10 +215,8 @@ public class FeedForwardNet implements Serializable
      * @see #setInputs
      * @see #getNumOutputs
      */
-    public final int getNumInputs()
-    {
-        switch (neurons.length)
-        {
+    public final int getNumInputs() {
+        switch (neurons.length) {
             case 0:  return 0;
             case 1:  return neurons[0].length; // Input layer == output layer: no bias node.
             default: return neurons[0].length-1;
@@ -243,8 +229,7 @@ public class FeedForwardNet implements Serializable
      * @see #getOutputs
      * @see #getNumInputs
      */
-    public final int getNumOutputs()
-    {
+    public final int getNumOutputs() {
         final int numLayers = neurons.length;
         return (numLayers!=0) ? neurons[numLayers-1].length : 0;
     }
@@ -253,10 +238,8 @@ public class FeedForwardNet implements Serializable
      * Returns the label of a specified input node.
      * This is usually a parameter name.
      */
-    public String getInputLabel(final int inputNum)
-    {
-        if (inputNum >= getNumInputs())
-        {
+    public String getInputLabel(final int inputNum) {
+        if (inputNum >= getNumInputs()) {
             // The bias node is not a valid node.
             throw new ArrayIndexOutOfBoundsException(inputNum);
         }
@@ -268,10 +251,8 @@ public class FeedForwardNet implements Serializable
      * parameter name set once for ever. Neurons's labels are displayed
      * when this network is inserted into a widget.
      */
-    public void setInputLabel(final int inputNum, final String label)
-    {
-        if (inputNum >= getNumInputs())
-        {
+    public void setInputLabel(final int inputNum, final String label) {
+        if (inputNum >= getNumInputs()) {
             // Do not allows overwriting the bias value.
             throw new ArrayIndexOutOfBoundsException(inputNum);
         }
@@ -282,15 +263,11 @@ public class FeedForwardNet implements Serializable
      * Returns the label of a specified output node.
      * This is usually a parameter name.
      */
-    public String getOutputLabel(final int outputNum)
-    {
+    public String getOutputLabel(final int outputNum) {
         final int numLayers = neurons.length;
-        if (numLayers!=0)
-        {
+        if (numLayers != 0) {
             return neurons[numLayers-1][outputNum].label;
-        }
-        else
-        {
+        } else {
             throw new ArrayIndexOutOfBoundsException(outputNum);
         }
     }
@@ -300,15 +277,11 @@ public class FeedForwardNet implements Serializable
      * parameter name set once for ever. Neurons's labels are displayed
      * when this network is inserted into a widget.
      */
-    public void setOutputLabel(final int outputNum, final String label)
-    {
+    public void setOutputLabel(final int outputNum, final String label) {
         final int numLayers = neurons.length;
-        if (numLayers!=0)
-        {
+        if (numLayers != 0) {
             neurons[numLayers-1][outputNum].label = label;
-        }
-        else
-        {
+        } else {
             throw new ArrayIndexOutOfBoundsException(outputNum);
         }
     }
@@ -321,10 +294,8 @@ public class FeedForwardNet implements Serializable
      * @see #setInput
      * @see #getNumInputs
      */
-    public double getInput(final int inputNum)
-    {
-        if (inputNum >= getNumInputs())
-        {
+    public double getInput(final int inputNum) {
+        if (inputNum >= getNumInputs()) {
             // The bias node is not a valid node.
             throw new ArrayIndexOutOfBoundsException(inputNum);
         }
@@ -339,15 +310,12 @@ public class FeedForwardNet implements Serializable
      * @see #setInputs
      * @see #getNumInputs
      */
-    public double[] getInputs()
-    {
+    public double[] getInputs() {
         // Remember, inputs[] includes a bias node but values[] does not!
         final double[] values = new double[getNumInputs()];
-        if (neurons.length != 0)
-        {
+        if (neurons.length != 0) {
             final Neuron[] inputs=neurons[0];
-            for (int i=0; i<values.length; i++)
-            {
+            for (int i=0; i<values.length; i++) {
                 values[i] = inputs[i].output;
             }
         }
@@ -362,10 +330,8 @@ public class FeedForwardNet implements Serializable
      * @see #getInput
      * @see #getNumInputs
      */
-    public void setInput(final int inputNum, final double value)
-    {
-        if (inputNum >= getNumInputs())
-        {
+    public void setInput(final int inputNum, final double value) {
+        if (inputNum >= getNumInputs()) {
             // Do not allows overwriting the bias value.
             throw new ArrayIndexOutOfBoundsException(inputNum);
         }
@@ -380,21 +346,17 @@ public class FeedForwardNet implements Serializable
      * @see #getInputs
      * @see #getNumInputs
      */
-    public void setInputs(final double[] values)
-    {
+    public void setInputs(final double[] values) {
         // Remember, inputs[] includes a bias node but the values[] vector does not!
-        if (values.length == getNumInputs())
-        {
-            if (neurons.length != 0)
-            {
+        if (values.length == getNumInputs()) {
+            if (neurons.length != 0) {
                 isValid = false;
                 final Neuron[] inputs=neurons[0];
-                for (int i=0; i<values.length; i++)
+                for (int i=0; i<values.length; i++) {
                     inputs[i].output = values[i];
+                }
             }
-        }
-        else
-        {
+        } else {
             throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_INPUT_LENGTH_MISMATCH));
         }
     }
@@ -408,16 +370,14 @@ public class FeedForwardNet implements Serializable
      * @see #setInputs
      * @see #getNumOutputs
      */
-    public double getOutput(final int outputNum)
-    {
+    public double getOutput(final int outputNum) {
         final int numLayers = neurons.length;
-        if (numLayers!=0)
-        {
-            if (!isValid) validate(false);
+        if (numLayers != 0) {
+            if (!isValid) {
+                validate(false);
+            }
             return neurons[numLayers-1][outputNum].output;
-        }
-        else
-        {
+        } else {
             throw new ArrayIndexOutOfBoundsException(outputNum);
         }
     }
@@ -430,16 +390,15 @@ public class FeedForwardNet implements Serializable
      * @see #setInputs
      * @see #getNumOutputs
      */
-    public double[] getOutputs()
-    {
+    public double[] getOutputs() {
         final double[] values = new double[getNumOutputs()];
         final int numLayers = neurons.length;
-        if (numLayers!=0)
-        {
-            if (!isValid) validate(false);
+        if (numLayers != 0) {
+            if (!isValid) {
+                validate(false);
+            }
             final Neuron[] outputs = new Neuron[numLayers-1];
-            for (int i=0; i<outputs.length; i++)
-            {
+            for (int i=0; i<outputs.length; i++) {
                 values[i] = outputs[i].output;
             }
         }
@@ -455,15 +414,12 @@ public class FeedForwardNet implements Serializable
      *        the network. If <code>false</code>, then {@link Neuron#gradient} will
      *        <strong>not</strong> be computed.
      */
-    private void validate(final boolean isTraining)
-    {
+    private void validate(final boolean isTraining) {
         // Starting the loop at j=0 would not hurt, but is not necessary
         // since neurons in layer 0 have no inputs neurons.
-        for (int j=1; j<neurons.length; j++)
-        {
+        for (int j=1; j<neurons.length; j++) {
             final Neuron[] layer = neurons[j];
-            for (int i=0; i<layer.length; i++)
-            {
+            for (int i=0; i<layer.length; i++) {
                 layer[i].validate(transfertFunction, isTraining);
             }
         }
@@ -481,31 +437,24 @@ public class FeedForwardNet implements Serializable
      * @param training The training set. Only the current instance of
      *        this training set will be used.
      */
-    final void initialize(final TrainingSet training)
-    {
+    final void initialize(final TrainingSet training) {
         setInputs(training.getTestInputs(null));
         validate(true); // Validate for training: compute gradients.
         boolean isOutputLayer = true;
-        for (int j=neurons.length; --j>=0;)
-        {
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer = neurons[j];
-            if (isOutputLayer)
-            {
+            if (isOutputLayer) {
                 final double[] targetOutputs = training.getTestOutputs(null);
-                if (targetOutputs.length != layer.length)
-                {
-                    throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_OUTPUT_LENGTH_MISMATCH));
+                if (targetOutputs.length != layer.length) {
+                    throw new IllegalArgumentException(Resources.format(
+                                    ResourceKeys.ERROR_OUTPUT_LENGTH_MISMATCH));
                 }
-                for (int i=0; i<layer.length; i++)
-                {
+                for (int i=0; i<layer.length; i++) {
                     layer[i].error = targetOutputs[i] - layer[i].output;
                 }
                 isOutputLayer = false;
-            }
-            else
-            {
-                for (int i=0; i<layer.length; i++)
-                {
+            } else {
+                for (int i=0; i<layer.length; i++) {
                     layer[i].error = 0;
                 }
             }
@@ -523,10 +472,10 @@ public class FeedForwardNet implements Serializable
      * @return <code>true</code> if the tolerance factor has been
      *         reached before the allowed time has been elapsed.
      */
-    public boolean train(final TrainingSet testGenerator)
-    {
+    public boolean train(final TrainingSet testGenerator) {
         trainHistory = trainingAlgorithm.train(this, testGenerator);
-        return (trainHistory!=null && trainHistory.length!=0 && trainHistory[trainHistory.length-1] <= trainingAlgorithm.getTolerance());
+        return (trainHistory!=null && trainHistory.length!=0 &&
+                trainHistory[trainHistory.length-1] <= trainingAlgorithm.getTolerance());
     }
 
     /**
@@ -537,21 +486,18 @@ public class FeedForwardNet implements Serializable
      *         that can provide training instances.
      * @return The RMS error of this network.
      */
-    public double getError(final TrainingSet testGenerator)
-    {
+    public double getError(final TrainingSet testGenerator) {
         double sum = 0;
         int  count = 0;
         testGenerator.rewind();
         double[]  inputs = null;
         double[] outputs = null;
-        while (testGenerator.next())
-        {
+        while (testGenerator.next()) {
              inputs = testGenerator.getTestInputs ( inputs);
             outputs = testGenerator.getTestOutputs(outputs);
             setInputs(inputs);
             double e2i = 0;
-            for (int k=outputs.length; --k>=0;)
-            {
+            for (int k=outputs.length; --k>=0;) {
                 final double error = outputs[k] - getOutput(k);
                 e2i += error * error;
             }
@@ -566,9 +512,8 @@ public class FeedForwardNet implements Serializable
     /**
      * Returns a string representation of this network.
      */
-    public String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(Resources.format(ResourceKeys.NEURAL_NETWORK_SUMMARY_$5, new Object[] {
                       new Integer(getNumInputs()),

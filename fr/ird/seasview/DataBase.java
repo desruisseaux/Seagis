@@ -234,7 +234,7 @@ public final class DataBase {
         final FisheryDataBase fisheries = getFisheryDataBase();
         layers.add(new IsolineLayerControl());
         layers.add(new CatchLayerControl(fisheries));
-        return layers.toArray(new LayerControl[layers.size()]);
+        return (LayerControl[])layers.toArray(new LayerControl[layers.size()]);
     }
 
     /**

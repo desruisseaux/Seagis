@@ -49,7 +49,6 @@ import org.geotools.util.NumberRange;
 // seagis dependencies
 import fr.ird.animat.Observation;
 import fr.ird.animat.impl.Animal;
-
 import fr.ird.operator.coverage.Evaluator;
 import fr.ird.operator.coverage.MinimumEvaluator;
 import fr.ird.operator.coverage.MaximumEvaluator;

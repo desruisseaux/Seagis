@@ -25,17 +25,6 @@
  */
 package fr.ird.seasview.layer;
 
-// Map components
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.ct.TransformException;
-import org.geotools.renderer.j2d.MarkIterator;
-import org.geotools.renderer.j2d.RenderedMarks;
-import org.geotools.renderer.j2d.GeoMouseEvent;
-
-// Data bases
-import fr.ird.animat.Species;
-import fr.ird.sql.fishery.CatchEntry;
-
 // Collections
 import java.util.Map;
 import java.util.Set;
@@ -64,8 +53,19 @@ import java.awt.font.GlyphVector;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.rmi.RemoteException;
+
+// Geotools
 import org.geotools.units.Unit;
 import org.geotools.resources.Utilities;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.ct.TransformException;
+import org.geotools.renderer.j2d.MarkIterator;
+import org.geotools.renderer.j2d.RenderedMarks;
+import org.geotools.renderer.j2d.GeoMouseEvent;
+
+// Seagis
+import fr.ird.animat.Species;
+import fr.ird.sql.fishery.CatchEntry;
 
 
 /**
@@ -207,7 +207,7 @@ public class CatchLayer extends RenderedMarks {
      * Construct an initially empty layer.
      */
     public CatchLayer() {
-        this.catchs = Collections.EMPTY_LIST;
+        this.catchs = (List)Collections.EMPTY_LIST;
         this.icons  = new HashMap<Species,Species.Icon>();
     }
 
@@ -263,7 +263,7 @@ public class CatchLayer extends RenderedMarks {
      * @param catchs The catchs, or <code>null</code> if none.
      */
     public void setCatchs(final List<CatchEntry> catchs) {
-        this.catchs = (catchs!=null) ? catchs : Collections.EMPTY_LIST;
+        this.catchs = (catchs!=null) ? catchs : (List)Collections.EMPTY_LIST;
         invalidate();
         validate();
         repaint();
@@ -562,8 +562,8 @@ public class CatchLayer extends RenderedMarks {
                     /*
                      * Construct the pie.
                      */
-                    for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
-                        final double angleExtent = scale * capture.getCatch(it.next());
+                    for (final Species sp : species) {
+                        final double angleExtent = scale * capture.getCatch(sp);
                         arc.setAngleStart (angleStart );
                         arc.setAngleExtent(angleExtent);
                         angleStart += angleExtent;
@@ -608,8 +608,8 @@ public class CatchLayer extends RenderedMarks {
                         graphics.fill(markShape);
                     } else {
                         final ShapeBroker broker = new ShapeBroker(markShape);
-                        for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
-                            graphics.setColor(getIcon(it.next()).getColor());
+                        for (final Species sp : species) {
+                            graphics.setColor(getIcon(sp).getColor());
                             graphics.fill(broker);
                             if (broker.finished()) {
                                 break;

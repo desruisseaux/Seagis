@@ -210,7 +210,7 @@ public final class ExportChooser extends JPanel {
      * Retourne les entrées des images qui seront à écrire.
      */
     public synchronized ImageEntry[] getEntries() {
-        return entries.toArray(new ImageEntry[entries.size()]);
+        return (ImageEntry[])entries.toArray(new ImageEntry[entries.size()]);
     }
 
     /**

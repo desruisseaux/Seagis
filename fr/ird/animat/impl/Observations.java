@@ -28,7 +28,6 @@ package fr.ird.animat.impl;
 // J2SE
 import java.util.Map;
 import java.util.Set;
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.AbstractMap;
 import java.util.AbstractSet;

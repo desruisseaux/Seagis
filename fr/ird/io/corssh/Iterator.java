@@ -38,8 +38,7 @@ import java.util.ConcurrentModificationException;
  *
  * <blockquote><pre>
  * Iterator it = ...
- * while (it.next())
- * {
+ * while (it.next()) {
  *     double x = it.getX();
  *     double y = it.getY();
  *     // etc...
@@ -54,8 +53,7 @@ import java.util.ConcurrentModificationException;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface Iterator
-{
+public interface Iterator {
     /**
      * Avance la position de l'itérateur vers l'enregistrement suivant. Au moment
      * de sa création, l'itérateur est positionné avant le premier enregistrement.

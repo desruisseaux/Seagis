@@ -32,11 +32,9 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-// Temps
+// Coordonnées spatio-temporelles
 import java.util.Date;
 import java.util.TimeZone;
-
-// Coordonnées
 import java.awt.geom.Rectangle2D;
 
 // Collections

@@ -25,15 +25,6 @@
  */
 package fr.ird.seasview;
 
-// Base de données
-import java.sql.SQLException;
-import fr.ird.sql.image.ImageTable;
-import fr.ird.sql.image.ImageEntry;
-import fr.ird.sql.fishery.EnvironmentTable;
-import fr.ird.sql.fishery.fill.EnvironmentTableFiller;
-import fr.ird.sql.fishery.fill.EnvironmentControlPanel;
-import fr.ird.sql.fishery.fill.ExtractorControlPanel;
-
 // Interface utilisateur
 import java.awt.Color;
 import java.awt.Cursor;
@@ -45,13 +36,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
-
-// Viewers
-import fr.ird.awt.About;
-import fr.ird.awt.TimeZoneChooser;
-import fr.ird.awt.CoordinateChooserDB;
-import fr.ird.seasview.catalog.CatalogFrame;
-import fr.ird.seasview.navigator.NavigatorFrame;
 
 // Evénements
 import java.awt.EventQueue;
@@ -72,24 +56,36 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.Deflater;
 
-// Ensembles
+// Divers
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
-
-// Journal
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.sql.SQLException;
 
-// Temps et divers
-import java.util.Date;
-import java.util.TimeZone;
+// Geotools
 import org.geotools.io.DefaultFileFilter;
+import org.geotools.gui.swing.ExceptionMonitor;
+
+// Base de données
+import fr.ird.sql.image.ImageTable;
+import fr.ird.sql.image.ImageEntry;
+import fr.ird.sql.fishery.EnvironmentTable;
+import fr.ird.sql.fishery.fill.EnvironmentTableFiller;
+import fr.ird.sql.fishery.fill.EnvironmentControlPanel;
+import fr.ird.sql.fishery.fill.ExtractorControlPanel;
+
+// Afficheurs
+import fr.ird.awt.About;
+import fr.ird.awt.TimeZoneChooser;
+import fr.ird.awt.CoordinateChooserDB;
+import fr.ird.seasview.catalog.CatalogFrame;
+import fr.ird.seasview.navigator.NavigatorFrame;
 import fr.ird.resources.ResourceKeys;
 import fr.ird.resources.Resources;
-
-// Geotools dependencies
-import org.geotools.gui.swing.ExceptionMonitor;
 
 
 /**
@@ -182,7 +178,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
      * l'état dépendra de la fenêtre active.
      */
     final void setActions(final Collection<Action> actions) {
-        this.actions = actions.toArray(new Action[actions.size()]);
+        this.actions = (Action[])actions.toArray(new Action[actions.size()]);
         stateChanged();
     }
 
@@ -255,7 +251,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener {
                 }
             }
             list.add(message.substring(lower));
-            messageObject=list.toArray();
+            messageObject = list.toArray();
         }
         if (yesNoOptions) {
             return JOptionPane.showInternalConfirmDialog(this, messageObject, title,

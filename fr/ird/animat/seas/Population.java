@@ -28,7 +28,6 @@ package fr.ird.animat.seas;
 // J2SE
 import java.util.Set;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Collection;
 import java.awt.geom.Point2D;
 import java.rmi.RemoteException;
@@ -65,12 +64,11 @@ final class Population extends fr.ird.animat.impl.Population {
             throw new ServerException("Échec lors de l'obtention "+
                                       "des positions initiales des animaux", exception);
         }
-        for (final Iterator<CatchEntry> it=entries.iterator(); it.hasNext();) {
-            final CatchEntry   entry   = it.next();
+        for (final CatchEntry entry : entries) {
             final Point2D      coord   = entry.getCoordinate();
             final Set<Species> species = entry.getSpecies();
-            for (final Iterator<Species> its=species.iterator(); its.hasNext();) {
-                newAnimal(its.next(), coord);
+            for (final Species sp : species) {
+                newAnimal(sp, coord);
             }
         }
     }

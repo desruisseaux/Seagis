@@ -155,7 +155,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
     public EnvironmentLayer(final Environment environment) throws RemoteException {
         super(null);
         this.environment = environment;
-        final Iterator<Parameter> parameters = environment.getParameters().iterator();
+        final Iterator<+Parameter> parameters = environment.getParameters().iterator();
         if (parameters.hasNext()) {
             parameter = parameters.next();
             setCoverage(adapters.wrap(environment.getCoverage(parameter)));
@@ -373,14 +373,14 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
                  */
                 Set<Population> change = event.getPopulationRemoved();
                 if (change != null) {
-                    for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
-                        listeners.firePropertyChange("population", it.next(), null);
+                    for (final Population population : change) {
+                        listeners.firePropertyChange("population", population, null);
                     }
                 }
                 change = event.getPopulationAdded();
                 if (change != null) {
-                    for (final Iterator<Population> it=change.iterator(); it.hasNext();) {
-                        listeners.firePropertyChange("population", null, it.next());
+                    for (final Population population : change) {
+                        listeners.firePropertyChange("population", null, population);
                     }
                 }
             }

@@ -38,8 +38,7 @@ import fr.ird.sql.Entry;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface SeriesEntry extends Entry
-{
+public interface SeriesEntry extends Entry {
     /**
      * Retourne la période "normale" des images de cette série (en nombre
      * de jours), ou {@link Double#NaN} si elle est inconnue.

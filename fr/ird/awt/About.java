@@ -317,8 +317,8 @@ public class About extends JPanel {
             } while ((writer = !writer));
             final String title = buffer.toString();
             final DefaultMutableTreeNode root = new DefaultMutableTreeNode(title);
-            for (final Iterator<DefaultMutableTreeNode> it=mimes.values().iterator(); it.hasNext();) {
-                root.add(it.next());
+            for (DefaultMutableTreeNode node : mimes.values()) {
+                root.add(node);
             }
             final JTree tree = new JTree(root);
             tree.setRootVisible(false);

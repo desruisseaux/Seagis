@@ -26,11 +26,11 @@
 package fr.ird.sql.image;
 
 // Divers
-import fr.ird.sql.Table;
+import java.util.List;
 import java.sql.SQLException;
 import javax.swing.tree.TreeModel;
 import org.geotools.gui.swing.tree.TreeNode;
-import java.util.List;
+import fr.ird.sql.Table;
 
 
 /**
@@ -43,8 +43,7 @@ import java.util.List;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface SeriesTable extends Table
-{
+public interface SeriesTable extends Table {
     /**
      * Argument pour {@link #getTree} indiquant que l'arborescence
      * ne doit pas aller plus loin que les séries.

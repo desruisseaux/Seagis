@@ -33,23 +33,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
-// Geotools dependencies (CTS)
-import org.geotools.pt.Envelope;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.CompoundCoordinateSystem;
-
-// Geotools dependencies (GCS)
-import org.geotools.gp.Operation;
-import org.geotools.gp.GridCoverageProcessor;
-import org.geotools.gp.OperationNotFoundException;
-import org.geotools.util.RangeSet;
-
-// Geotools dependencies (resources)
-import org.geotools.resources.CTSUtilities;
-import org.geotools.resources.Utilities;
-import org.geotools.resources.XDimension2D;
-import org.geotools.resources.XRectangle2D;
-
 // Géométrie
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
@@ -67,19 +50,35 @@ import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.ArrayList;
-
-// Journal
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
 // Divers
 import java.io.File;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.Range;
+
+// Geotools dependencies (CTS)
+import org.geotools.pt.Envelope;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+
+// Geotools dependencies (GCS)
+import org.geotools.gp.Operation;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.gp.OperationNotFoundException;
+import org.geotools.util.RangeSet;
+
+// Geotools dependencies (resources)
+import org.geotools.resources.Utilities;
+import org.geotools.resources.CTSUtilities;
+import org.geotools.resources.XDimension2D;
+import org.geotools.resources.XRectangle2D;
+
+// Seagis
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -593,8 +592,7 @@ final class ImageTableImpl extends Table implements ImageTable {
     public ImageEntry getEntry() throws SQLException {
         ImageEntry best = null;
         final ImageComparator comparator=new ImageComparator(this);
-        for (final Iterator<ImageEntry> it=getEntries().iterator(); it.hasNext();) {
-            final ImageEntry entry = it.next();
+        for (final ImageEntry entry : getEntries()) {
             if (best==null || comparator.compare(entry, best) <= -1) {
                 best = entry;
             }
@@ -793,7 +791,7 @@ final class ImageTableImpl extends Table implements ImageTable {
         if (entryList != null) {
             final List<ImageEntry> newEntries = entryList.subList(startIndex, entryList.size());
             final int size = newEntries.size();
-            ImageEntryImpl.intern(newEntries.toArray(new ImageEntry[size]));
+            ImageEntryImpl.intern((ImageEntry[])newEntries.toArray(new ImageEntry[size]));
             log("getEntries", Level.FINE, ResourceKeys.FOUND_IMAGES_$1, new Integer(size));
         }
     }
@@ -953,7 +951,7 @@ final class ImageTableImpl extends Table implements ImageTable {
         parameters = new Parameters(series, getFormat(formatID), pathname, operation, opParam,
                                     getCoordinateSystem(), coordinateSystemTable.getCoordinateSystem(series),
                                     geographicArea, resolution, dateFormat);
-        parameters = (Parameters)pool.intern(parameters);
+        parameters = (Parameters)pool.canonicalize(parameters);
         return parameters;
     }
 }

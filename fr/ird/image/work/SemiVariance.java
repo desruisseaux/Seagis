@@ -25,14 +25,7 @@
  */
 package fr.ird.image.work;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-import org.geotools.cs.Ellipsoid;
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
-
 // Images
-import fr.ird.sql.image.ImageEntry;
 import java.awt.image.RenderedImage;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RandomIter;
@@ -47,7 +40,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import org.geotools.resources.XAffineTransform;
 
 // Entrés/sorties et formattage
 import java.io.File;
@@ -56,12 +48,20 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Arrays;
 
-// Divers
+// Resources
+import org.geotools.gc.GridCoverage;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.TransformException;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.resources.XAffineTransform;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XMath;
-import java.util.Arrays;
+
+// Seagis
+import fr.ird.sql.image.ImageEntry;
 
 
 /**
@@ -70,8 +70,7 @@ import java.util.Arrays;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class SemiVariance extends Result
-{
+public final class SemiVariance extends Result {
     /**
      * Numéro de série (pour compatibilité entre différentes versions).
      */
@@ -140,8 +139,7 @@ public final class SemiVariance extends Result
      * @param interval Intervalle (en mètres) entre chaque points du semi-variogramme.
      * @param radius   Rayon (en mètres) autour duquel calculer la semi-variance.
      */
-    public SemiVariance(final double interval, final double radius)
-    {
+    public SemiVariance(final double interval, final double radius) {
         this.interval    = interval;
         this.radius      = radius;
         this.count1D     = new long  [(int)Math.ceil(radius/interval)];
@@ -160,15 +158,13 @@ public final class SemiVariance extends Result
      * @param  out Flot vers où écrire les résultats.
      * @throws IOException si l'écriture a échouée.
      */
-    public void write(final Writer out) throws IOException
-    {
+    public void write(final Writer out) throws IOException {
         final int    metres2output = 1000; // Facteur par lequel diviser les mètres.
         final String lineSeparator = System.getProperty("line.separator", "\n");
         final NumberFormat  format = NumberFormat.getNumberInstance();
         format.setMaximumFractionDigits(12);
         format.setGroupingUsed(false);
-        if (format instanceof DecimalFormat)
-        {
+        if (format instanceof DecimalFormat) {
             final DecimalFormat        decimal = (DecimalFormat) format;
             final DecimalFormatSymbols symbols = decimal.getDecimalFormatSymbols();
             symbols.setNaN("#N/A");
@@ -187,13 +183,11 @@ public final class SemiVariance extends Result
         /*
          * Ecrit la semi-variance 1D.
          */
-        if (count1D!=null)
-        {
+        if (count1D != null) {
             out.write("Distance (km)\tSemi-variance\tCompte");
             out.write(lineSeparator);
-            for (int i=0; i<count1D.length; i++)
-            {
-                final long c=count1D[i];
+            for (int i=0; i<count1D.length; i++) {
+                final long c = count1D[i];
                 out.write(format.format((distance1D[i]/c) / metres2output));
                 out.write('\t');
                 out.write(format.format(Math.sqrt(sumSq1D[i]/c)));
@@ -206,18 +200,17 @@ public final class SemiVariance extends Result
         /*
          * Ecrit la semi-variance 2D.
          */
-        if (count2D!=null)
-        {
+        if (count2D != null) {
             out.write("Semi-variance 2D");
             out.write(lineSeparator);
             /*
              * Ecrit d'abord les distance en longitudes.
              */
-            for (int i=0; i<distance2Dx.length; i++)
-            {
+            for (int i=0; i<distance2Dx.length; i++) {
                 long c=0;
-                for (int j=i; j<count2D.length; j+=distance2Dx.length)
+                for (int j=i; j<count2D.length; j+=distance2Dx.length) {
                     c += count2D[j];
+                }
                 out.write('\t');
                 out.write(format.format((distance2Dx[i]/c)/metres2output));
             }
@@ -225,15 +218,13 @@ public final class SemiVariance extends Result
             /*
              * Ecrit les distance en latitudes et les semi-variances.
              */
-            for (int j=0; j<distance2Dy.length; j++)
-            {
+            for (int j=0; j<distance2Dy.length; j++) {
                 long c=0;
                 final int lower = j*distance2Dx.length;
                 final int upper = lower + distance2Dx.length;
                 for (int i=lower; i<upper; i++) c+=count2D[i];
                 out.write(format.format((distance2Dy[j]/c)/metres2output));
-                for (int i=lower; i<upper; i++)
-                {
+                for (int i=lower; i<upper; i++) {
                     out.write('\t');
                     out.write(format.format(Math.sqrt(sumSq2D[i]/count2D[i])));
                 }
@@ -249,8 +240,7 @@ public final class SemiVariance extends Result
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class Worker extends SimpleWorker
-    {
+    private static final class Worker extends SimpleWorker {
         /**
          * Intervalle (en mètres) à utiliser pour la distance, et
          * rayon en mètres autour duquel calculer la semi-variance.
@@ -275,8 +265,7 @@ public final class SemiVariance extends Result
          * @param interval Intervalle (en mètres) entre chaque points du semi-variogramme.
          * @param radius   Rayon (en mètres) autour duquel calculer la semi-variance.
          */
-        public Worker(final double interval, final double radius)
-        {
+        public Worker(final double interval, final double radius) {
             super("Semi-variance");
             this.interval = interval;
             this.radius   = radius;
@@ -286,22 +275,18 @@ public final class SemiVariance extends Result
          * Calcule les statistiques de l'image spécifiée, et ajoute les
          * statistiques obtenues à celles qui ont été calculées précédemment.
          */
-        protected Result run(final ImageEntry imageEntry, Result lastResult) throws IOException
-        {
+        protected Result run(final ImageEntry imageEntry, Result lastResult) throws IOException {
             final SemiVariance result;
-            if (lastResult instanceof SemiVariance)
-            {
+            if (lastResult instanceof SemiVariance) {
                 result = (SemiVariance) lastResult;
-                if (!result.contains(imageEntry) || result.interval!=interval || result.radius!=radius)
-                {
+                if (!result.contains(imageEntry) || result.interval!=interval || result.radius!=radius) {
                     throw new IllegalArgumentException("Résultat incompatible.");
                 }
-                if (result.lineCount == imageEntry.getGridGeometry().getGridRange().getLength(1))
+                if (result.lineCount == imageEntry.getGridGeometry().getGridRange().getLength(1)) {
                     return null; // Le résultat est déjà complet.
-            }
-            else
-            {
-                result=new SemiVariance(interval, radius);
+                }
+            } else {
+                result = new SemiVariance(interval, radius);
                 result.add(imageEntry);
             }
             final GridCoverage coverage = getGridCoverage(imageEntry).geophysics(true);
@@ -347,8 +332,7 @@ public final class SemiVariance extends Result
             } catch (TransformException exception) {
                 throw new IllegalArgumentException(exception.getLocalizedMessage());
             }
-            if (coordSystem instanceof GeographicCoordinateSystem)
-            {
+            if (coordSystem instanceof GeographicCoordinateSystem) {
                 /*
                  * Calcul des semi-variances dans le cas où le système de coordonnées est un
                  * ellipsoïde. Cette implémentation utilise un code spécial qui calculera
@@ -362,8 +346,7 @@ public final class SemiVariance extends Result
                 final double  semiMinorAxisLength = ellipsoid.getSemiMinorAxis();
                 final AffineTransform referencing = AffineTransform.getScaleInstance(Math.PI/180, Math.PI/180); // Degrés --> radians.
                 referencing.concatenate((AffineTransform)coverage.getGridGeometry().getGridToCoordinateSystem2D());
-                if (referencing.getShearX()!=0 || referencing.getShearY()!=0)
-                {
+                if (referencing.getShearX()!=0 || referencing.getShearY()!=0) {
                     throw new UnsupportedOperationException(String.valueOf(referencing)); // TODO
                 }
                 double[] precomputedDistance1D = new double[0]; // Will be expanded when necessary
@@ -375,13 +358,11 @@ public final class SemiVariance extends Result
                  * fois pour toutes les distances entres les pixels. On profite du fait que ce calcul
                  * dépend de la latitude où on se trouve, mais pas de la longitude.
                  */
-                for (int y=ymin+result.lineCount; y<ymax; y++)
-                {
+                for (int y=ymin+result.lineCount; y<ymax; y++) {
                     progress(progressScale*(y-ymin));
                           int searchWidth;  // To be computed below
                     final int searchHeight; // To be computed below
-                    if (true)
-                    {
+                    if (true) {
                         /*
                          * Calcule les coordonnées géographique du point centré
                          * horizontalement et à la ligne <var>y</var> verticalement.
@@ -399,14 +380,11 @@ public final class SemiVariance extends Result
                          * en pixels. Cette largeur et hauteur devrait être constante tant
                          * que la latitude ne change pas.
                          */
-                        try
-                        {
+                        try {
                             coordinate.y = searchRadius*inverseApparentRadius; // Hauteur en radians.
                             coordinate.x = coordinate.y/cos_y;                 // Largeur en radians.
                             XAffineTransform.inverseDeltaTransform(referencing, coordinate, coordinate);
-                        }
-                        catch (NoninvertibleTransformException exception)
-                        {
+                        } catch (NoninvertibleTransformException exception) {
                             // Should not happen
                             exceptionOccurred("run", exception);
                             coordinate.x=bounds.width;
@@ -414,7 +392,9 @@ public final class SemiVariance extends Result
                         }
                         searchWidth  = Math.min(Math.abs((int)Math.ceil(coordinate.x))+1, xmax-xmin);
                         searchHeight = Math.min(Math.abs((int)Math.ceil(coordinate.y))+1, ymax-y   );
-                        if (!(searchWidth>0 && searchHeight>0)) continue;
+                        if (!(searchWidth>0 && searchHeight>0)) {
+                            continue;
+                        }
                         /*
                          * Calcule une fois pour toutes les distances qui correspondent aux
                          * positions relatives des pixels.  On ne calcule ces distances que
@@ -425,10 +405,8 @@ public final class SemiVariance extends Result
                         if (indice >    precomputedIndex1D.length)    precomputedIndex1D = new int   [indice];
                         if (indice >    precomputedIndex2D.length)    precomputedIndex2D = new int   [indice];
                         indice = 0;
-                        for (int j=0; j<searchHeight; j++)
-                        {
-                            for (int i=0; i<searchWidth; i++)
-                            {
+                        for (int j=0; j<searchHeight; j++) {
+                            for (int i=0; i<searchWidth; i++) {
                                 coordinate.x = i+xCenter;
                                 coordinate.y = j+y;
                                 referencing.transform(coordinate, coordinate);
@@ -447,7 +425,7 @@ public final class SemiVariance extends Result
                                 indice++;
                             }
                         }
-                        assert(indice == searchWidth*searchHeight);
+                        assert indice == searchWidth*searchHeight;
                     }
                     /*
                      * Examine maintenant toutes les colonnes de la ligne courante.
@@ -455,10 +433,8 @@ public final class SemiVariance extends Result
                      * on calculera le variogramme en utilisant les pixels de son
                      * voisinage.
                      */
-                    for (int x=xmin; x<xmax; x++)
-                    {
-                        if (isStopped())
-                        {
+                    for (int x=xmin; x<xmax; x++) {
+                        if (isStopped()) {
                             /*
                              * Si l'utilisateur a demandé à interrompre le calcul,
                              * on arrête maintenant et on retourne le résultat tel
@@ -469,8 +445,7 @@ public final class SemiVariance extends Result
                             return result;
                         }
                         final double value = iterator.getSampleDouble(x, y, band);
-                        if (!Double.isNaN(value))
-                        {
+                        if (!Double.isNaN(value)) {
                             count++;
                             sum   += value;
                             sumSq += (value*value);
@@ -484,29 +459,24 @@ public final class SemiVariance extends Result
                             indice=0;
                             final int stopX = x + searchWidth;
                             final int stopY = y + searchHeight;
-                            for (int ay=y; ay<stopY; ay++)
-                            {
+                            for (int ay=y; ay<stopY; ay++) {
                                 assert((indice % searchWidth)==0);
                                 final int        baseIndice = indice;
                                 final double distanceAlongY = precomputedDistance1D[indice];
                                       int           pixelXY = (ay-ymin)*width + (x-xmin);
-                                for (int ax=x; ax<stopX; ax++)
-                                {
+                                for (int ax=x; ax<stopX; ax++) {
                                     final float compare = data[pixelXY++];
-                                    if (!Float.isNaN(compare))
-                                    {
+                                    if (!Float.isNaN(compare)) {
                                         assert(compare==iterator.getSampleFloat(ax, ay, band));
                                         final double delta2 = (compare-value)*(compare-value);
                                         int index = precomputedIndex1D[indice];
-                                        if (index>=0 && index<count1D.length)
-                                        {
+                                        if (index>=0 && index<count1D.length) {
                                             count1D   [index]++;
                                             sumSq1D   [index] += delta2;
                                             distance1D[index] += precomputedDistance1D[indice];
                                         }
                                         index = precomputedIndex2D[indice];
-                                        if (index>=0 && index<count2D.length)
-                                        {
+                                        if (index>=0 && index<count2D.length) {
                                             count2D    [index]++;
                                             sumSq2D    [index] += delta2;
                                             assert(indice-baseIndice < searchWidth);
@@ -518,7 +488,7 @@ public final class SemiVariance extends Result
                                     indice++;
                                 }
                             }
-                            assert(indice == searchWidth*searchHeight);
+                            assert indice == searchWidth*searchHeight;
                         }
                     }
                     /*
@@ -527,21 +497,18 @@ public final class SemiVariance extends Result
                      * de la méthode, afin de ne pas être obligé de tout recommencer si on doit
                      * interrompre le calcul.
                      */
-                    synchronized (result)
-                    {
+                    synchronized (result) {
                         result.sum   += sum;
                         result.sumSq += sumSq;
                         result.count += count;
-                        for (int i=0; i<count1D.length; i++)
-                        {
+                        for (int i=0; i<count1D.length; i++) {
                             result.   count1D [i] +=    count1D [i];
                             result.   sumSq1D [i] +=    sumSq1D [i];
                             result.distance1D [i] += distance1D [i];
                             result.distance2Dx[i] += distance2Dx[i];
                             result.distance2Dy[i] += distance2Dy[i];
                         }
-                        for (int i=0; i<count2D.length; i++)
-                        {
+                        for (int i=0; i<count2D.length; i++) {
                             result.count2D[i] += count2D[i];
                             result.sumSq2D[i] += sumSq2D[i];
                         }
@@ -561,14 +528,11 @@ public final class SemiVariance extends Result
                      * Enregistre l'état actuel des travaux, pour ne pas être obligé
                      * de tout recommencé en cas d'interruption.
                      */
-                    if ((y & 0x3F)==0)
-                    {
+                    if ((y & 0x3F)==0) {
                         save(imageEntry, result);
                     }
                 }
-            }
-            else
-            {
+            } else {
                 /*
                  * Calcule du variogramme dans le cas plus général où on se
                  * fie à {@link CoordinateSystem} pour calculer les distances.
@@ -589,19 +553,15 @@ public final class SemiVariance extends Result
          *                           contient un bouton permettant l'arrêt du calcul à tout moment.</li>
          * </ul>
          */
-        public static void main(final String[] args)
-        {
+        public static void main(final String[] args) {
             final Worker worker = new Worker(1852, 500000); // 0-500 km avec une résolution de 1 nautique.
-            try
-            {
+            try {
                 worker.setDestination(new File("\\\\ADAGIO\\Analyses\\Semi-variances"));
             //  worker.setImages("(aucune)");
                 worker.setup(args);
                 worker.run();
                 System.exit(0);
-            }
-            catch (Throwable error)
-            {
+            } catch (Throwable error) {
                 worker.exceptionOccurred("main", error);
                 System.exit(1);
             }

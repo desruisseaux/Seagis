@@ -51,8 +51,7 @@ import org.geotools.resources.XArray;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class IsolineTableModel extends AbstractTableModel
-{
+final class IsolineTableModel extends AbstractTableModel {
     /**
      * Column index for values.
      */
@@ -71,8 +70,7 @@ final class IsolineTableModel extends AbstractTableModel
     /**
      * A row in the table.
      */
-    private static final class Entry implements Comparable, Cloneable
-    {
+    private static final class Entry implements Comparable, Cloneable {
         /** The isoline value. */ public float   value;
         /** The visible state. */ public boolean visible;
         /** The isoline color. */ public Color   color = Color.black;
@@ -80,24 +78,19 @@ final class IsolineTableModel extends AbstractTableModel
         /**
          * Compares this entry with the specified entry for order.
          */
-        public int compareTo(final Object other)
-        {return Float.compare(value, ((Entry)other).value);}
+        public int compareTo(final Object other) {
+            return Float.compare(value, ((Entry)other).value);
+        }
 
         /**
          * Returns a clone of this entry.
          */
-        public Object clone()
-        {
-            try
-            {
+        public Object clone() {
+            try {
                 return super.clone();
-            }
-            catch (CloneNotSupportedException exception)
-            {
+            } catch (CloneNotSupportedException exception) {
                 // Should not happen, since we are cloneable.
-                InternalError e = new InternalError();
-                e.initCause(exception);
-                throw e;
+                throw new AssertionError(exception);
             }
         }
     }
@@ -123,27 +116,26 @@ final class IsolineTableModel extends AbstractTableModel
      * @param inverse True if the value sign should be inversed.
      *        This is useful for a table of depth instead of bathymetry.
      */
-    public IsolineTableModel(final boolean inverse)
-    {this.inverse = inverse;}
+    public IsolineTableModel(final boolean inverse) {
+        this.inverse = inverse;
+    }
 
     /**
      * Add an array of values to this table.
      * Values already present will be ignored.
      */
-    public void add(final float[] values)
-    {
+    public void add(final float[] values) {
         Entry entry = null;
-        for (int i=0; i<values.length; i++)
-        {
-            if (entry==null)
-            {
+        for (int i=0; i<values.length; i++) {
+            if (entry == null) {
                 entry = new Entry();
             }
             entry.value = values[i];
-            if (inverse) entry.value = -entry.value;
+            if (inverse) {
+                entry.value = -entry.value;
+            }
             final int insertAt = Collections.binarySearch(entries, entry);
-            if (insertAt < 0)
-            {
+            if (insertAt < 0) {
                 // The entry is not already present.
                 // Add it at the insertion point.
                 entries.add(~insertAt, entry);
@@ -155,16 +147,15 @@ final class IsolineTableModel extends AbstractTableModel
     /**
      * Remove an array of values from this table.
      */
-    public void remove(final float[] values)
-    {
+    public void remove(final float[] values) {
         final Entry entry = new Entry();
-        for (int i=0; i<values.length; i++)
-        {
+        for (int i=0; i<values.length; i++) {
             entry.value = values[i];
-            if (inverse) entry.value = -entry.value;
+            if (inverse) {
+                entry.value = -entry.value;
+            }
             final int removeAt = Collections.binarySearch(entries, entry);
-            if (removeAt >= 0)
-            {
+            if (removeAt >= 0) {
                 entries.remove(removeAt);
             }
         }
@@ -174,15 +165,12 @@ final class IsolineTableModel extends AbstractTableModel
      * Returns an array of values with the
      * visible state set to <code>true</code>.
      */
-    public float[] getSelectedValues()
-    {
+    public float[] getSelectedValues() {
         int count = 0;
         final float[] values = new float[entries.size()];
-        for (int i=0; i<values.length; i++)
-        {
+        for (int i=0; i<values.length; i++) {
             final Entry entry = (Entry) entries.get(i);
-            if (entry.visible)
-            {
+            if (entry.visible) {
                 values[count] = entry.value;
                 if (inverse) values[count] = -values[count];
                 count++;
@@ -195,16 +183,13 @@ final class IsolineTableModel extends AbstractTableModel
      * Define the set of selected values. All
      * other values will be left unselected.
      */
-    public void setSelectedValues(float[] values)
-    {
+    public void setSelectedValues(float[] values) {
         values = (float[]) values.clone();
         Arrays.sort(values);
-        for (final Iterator it=entries.iterator(); it.hasNext();)
-        {
+        for (final Iterator it=entries.iterator(); it.hasNext();) {
             final Entry entry = (Entry) it.next();
             entry.visible = (Arrays.binarySearch(values, entry.value) >= 0);
-            if (!entry.visible && entry.value==0)
-            {
+            if (!entry.visible && entry.value==0) {
                 // Special case for 0, since -0 != +0 for binarySearch.
                 entry.visible = (Arrays.binarySearch(values, -entry.value) >= 0);
             }
@@ -215,11 +200,9 @@ final class IsolineTableModel extends AbstractTableModel
      * Returns the name of the column
      * at <code>column</code> index.
      */
-    public String getColumnName(final int column)
-    {
+    public String getColumnName(final int column) {
         int key;
-        switch (column)
-        {
+        switch (column) {
             case VALUE:   key = inverse ? ResourceKeys.DEPTH : ResourceKeys.ALTITUDE; break;
             case VISIBLE: key = ResourceKeys.VISIBLE;  break;
             case COLOR:   key = ResourceKeys.COLOR;    break;
@@ -232,10 +215,8 @@ final class IsolineTableModel extends AbstractTableModel
      * Returns the most specific superclass
      * for all the cell values in the column.
      */
-    public Class getColumnClass(final int column)
-    {
-        switch (column)
-        {
+    public Class getColumnClass(final int column) {
+        switch (column) {
             case VALUE:   return Float.class;
             case VISIBLE: return Boolean.class;
             case COLOR:   return Color.class;
@@ -249,8 +230,9 @@ final class IsolineTableModel extends AbstractTableModel
      * @return the number of columns in the model
      * @see #getRowCount
      */
-    public int getColumnCount()
-    {return 3;}
+    public int getColumnCount() {
+        return 3;
+    }
 
     /**
      * Returns the number of rows in the model.
@@ -258,8 +240,9 @@ final class IsolineTableModel extends AbstractTableModel
      * @return the number of rows in the model
      * @see #getColumnCount
      */
-    public int getRowCount()
-    {return entries.size();}
+    public int getRowCount() {
+        return entries.size();
+    }
 
     /**
      * Returns the value for the cell at <code>column</code>
@@ -269,11 +252,9 @@ final class IsolineTableModel extends AbstractTableModel
      * @param  column the column whose value is to be queried
      * @return the value Object at the specified cell
      */
-    public Object getValueAt(final int row, final int column)
-    {
+    public Object getValueAt(final int row, final int column) {
         final Entry entry = (Entry) entries.get(row);
-        switch (column)
-        {
+        switch (column) {
             case VALUE:   return new Float(entry.value);
             case VISIBLE: return entry.visible ? Boolean.TRUE : Boolean.FALSE;
             case COLOR:   return entry.color;
@@ -285,11 +266,9 @@ final class IsolineTableModel extends AbstractTableModel
      * Sets the value in the cell at <code>column</code>
      * and <code>row</code> index to <code>value</code>.
      */
-    public void setValueAt(final Object value, final int row, final int column)
-    {
+    public void setValueAt(final Object value, final int row, final int column) {
         final Entry entry = (Entry) entries.get(row);
-        switch (column)
-        {
+        switch (column) {
             case VISIBLE: entry.visible = ((Boolean)value).booleanValue(); break;
         }
     }
@@ -298,10 +277,8 @@ final class IsolineTableModel extends AbstractTableModel
      * Returns <code>true</code> if the cell at
      * <code>row</code> and <code>column</code> is editable.
      */
-    public boolean isCellEditable(final int row, final int column)
-    {
-        switch (column)
-        {
+    public boolean isCellEditable(final int row, final int column) {
+        switch (column) {
             default:      return false;
             case VISIBLE: return true;
             case COLOR:   return true;
@@ -315,11 +292,9 @@ final class IsolineTableModel extends AbstractTableModel
      * <code>mark()</code> was invoked. This method is used
      * for undoing or redoing action.
      */
-    final Object mark()
-    {
+    final Object mark() {
         final Entry[] array = (Entry[]) entries.toArray(new Entry[entries.size()]);
-        for (int i=0; i<array.length; i++)
-        {
+        for (int i=0; i<array.length; i++) {
             array[i] = (Entry) array[i].clone();
         }
         return array;
@@ -332,11 +307,11 @@ final class IsolineTableModel extends AbstractTableModel
      *
      * @param mark The opaque object returned by {@link #mark}.
      */
-    final void reset(final Object mark)
-    {
+    final void reset(final Object mark) {
         final Entry[] list = (Entry[]) mark;
         entries.clear();
-        for (int i=0; i<list.length; i++)
+        for (int i=0; i<list.length; i++) {
             entries.add(list[i]);
+        }
     }
 }

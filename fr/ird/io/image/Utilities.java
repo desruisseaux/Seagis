@@ -45,8 +45,7 @@ import javax.media.jai.iterator.RectIterFactory;
  * @version $Id$
  * @author Laurent Demagistri
  */
-public class Utilities
-{
+public class Utilities {
     /**
      * Enregistre une image en binaire. Chaque pixel sera codé
      * avec le type <code>float</code>.
@@ -55,8 +54,7 @@ public class Utilities
      * @param  file Le fichier dans lequel écrire l'image.
      * @throws IOException si l'écriture des données a échouée.
      */
-    public static void writeRawFloat(RenderedImage image, File file) throws IOException
-    {
+    public static void writeRawFloat(RenderedImage image, File file) throws IOException {
         FileOutputStream fileOutput = new FileOutputStream(file);
         DataOutputStream dataOutput = new DataOutputStream(new BufferedOutputStream(fileOutput));
         final RectIter rectIter = RectIterFactory.create(image, null);

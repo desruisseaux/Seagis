@@ -25,22 +25,12 @@
  */
 package fr.ird.sql.fishery.fill;
 
-// Geotools dependencies
-import org.geotools.cs.Ellipsoid;
-
-// Database
-import java.sql.SQLException;
-import fr.ird.sql.fishery.CatchEntry;
-import fr.ird.sql.fishery.CatchTable;
-import fr.ird.sql.fishery.FisheryDataBase;
-
-// Input/output
+// Base de données et entrés/sorties
 import java.io.File;
 import java.io.IOException;
-import fr.ird.io.map.GEBCOReader;
-import fr.ird.io.map.IsolineReader;
+import java.sql.SQLException;
 
-// Miscellaneous
+// Divers
 import java.util.List;
 import java.awt.Shape;
 import java.awt.geom.Line2D;
@@ -48,8 +38,18 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.IllegalPathStateException;
+
+// Geotools
+import org.geotools.cs.Ellipsoid;
 import org.geotools.resources.Geometry;
 import org.geotools.renderer.geom.GeometryCollection;
+
+// Seagis
+import fr.ird.io.map.GEBCOReader;
+import fr.ird.io.map.IsolineReader;
+import fr.ird.sql.fishery.CatchEntry;
+import fr.ird.sql.fishery.CatchTable;
+import fr.ird.sql.fishery.FisheryDataBase;
 
 
 /**

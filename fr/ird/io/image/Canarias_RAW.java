@@ -41,10 +41,8 @@ import org.geotools.io.image.RawBinaryImageReader;
  * Data type is <code>float</code> and pad values are 0 and all values
  * equals or greater than 99.
  */
-public class Canarias_RAW extends RawBinaryImageReader.Spi
-{
-    public Canarias_RAW()
-    {
+public class Canarias_RAW extends RawBinaryImageReader.Spi {
+    public Canarias_RAW() {
         super("RAW-Canarias", "image/raw-canarias");
         vendorName = "Institut de Recherche pour le Développement";
         version    = "1.0";
@@ -53,22 +51,23 @@ public class Canarias_RAW extends RawBinaryImageReader.Spi
         pluginClassName = "fr.ird.io.image.Canarias_RAW$Reader";
     }
 
-    public String getDescription(final Locale locale)
-    {return "Images RAW de la station des Canaries";}
+    public String getDescription(final Locale locale) {
+        return "Images RAW de la station des Canaries";
+    }
 
-    public ImageReader createReaderInstance() throws IOException
-    {return new Reader(this);}
+    public ImageReader createReaderInstance() throws IOException {
+        return new Reader(this);
+    }
 
     /**
      * The image reader for {@link Canarias_RAW}.
      */
-    private static final class Reader extends RawBinaryImageReader
-    {
-        public Reader(final ImageReaderSpi provider)
-        {super(provider);}
+    private static final class Reader extends RawBinaryImageReader {
+        public Reader(final ImageReaderSpi provider) {
+            super(provider);
+        }
 
-        protected double transform(final double value)
-        {
+        protected double transform(final double value) {
             if (value<=00.0) return LAND;
             if (value>=99.0) return NODATA;
             if (value<=0.01) return NODATA;

@@ -60,7 +60,7 @@ class SpeciesSet extends AbstractSet<Species> implements Serializable {
      * à partir d'un autre ensemble.
      */
     public SpeciesSet(final Collection<Species> species) {
-        this(species.toArray(new Species[species.size()]));
+        this((Species[])species.toArray(new Species[species.size()]));
     }
 
     /**

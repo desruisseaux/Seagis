@@ -69,7 +69,6 @@ import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -102,8 +101,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Worker implements Runnable
-{
+public abstract class Worker implements Runnable {
     /**
      * Liste d'objets {@link ImageEntry} enregistrés sur le disque.
      * Cette liste sera utilisée si on n'a pas réussi à se connecter
@@ -153,8 +151,9 @@ public abstract class Worker implements Runnable
      *
      * @param name Nom de l'opération.
      */
-    public Worker(final String name)
-    {this.name=name;}
+    public Worker(final String name) {
+        this.name = name;
+    }
 
     /**
      * Fait apparaître un paneau indiquant qu'un calcul est en cours. Ce
@@ -163,14 +162,10 @@ public abstract class Worker implements Runnable
      *
      * @param title Titre de la fenêtre.
      */
-    public void showBusyPane(final String title)
-    {
-        try
-        {
+    public void showBusyPane(final String title) {
+        try {
             new ProgressPanel(this).show(title);
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             exceptionOccurred("showBusyPane", exception);
         }
     }
@@ -178,21 +173,24 @@ public abstract class Worker implements Runnable
     /**
      * Spécifie un objet à informer des progrès du calcul.
      */
-    public void addProgressListener(final ProgressListener progress)
-    {listenerList.add(progress);}
+    public void addProgressListener(final ProgressListener progress) {
+        listenerList.add(progress);
+    }
 
     /**
      * Indique qu'un objet n'est plus intéressé
      * à être informé des progrès du calcul.
      */
-    public void removeProgressListener(final ProgressListener progress)
-    {listenerList.remove(progress);}
+    public void removeProgressListener(final ProgressListener progress) {
+        listenerList.remove(progress);
+    }
 
     /**
      * Spécifie les images à utiliser en entrés pour les opérations.
      */
-    public synchronized void setImages(final List<ImageEntry> entries)
-    {this.entries = entries.toArray(new ImageEntry[entries.size()]);}
+    public synchronized void setImages(final List<ImageEntry> entries) {
+        this.entries = (ImageEntry[])entries.toArray(new ImageEntry[entries.size()]);
+    }
 
     /**
      * Spécifie une série d'images à utiliser en entrés pour les opérations.
@@ -208,8 +206,9 @@ public abstract class Worker implements Runnable
      *
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public void setImages(final String series) throws SQLException
-    {setImages(series, null, null, null);}
+    public void setImages(final String series) throws SQLException {
+        setImages(series, null, null, null);
+    }
 
     /**
      * Spécifie une série d'images à utiliser en entrés pour les opérations.
@@ -225,23 +224,21 @@ public abstract class Worker implements Runnable
      *                       ou <code>null</code> pour ne pas imposer de limites géographiques.
      * @throws SQLException si la connection à la base de données a échouée.
      */
-    public synchronized void setImages(String series, Date startTime, Date endTime, final Rectangle2D geographicArea) throws SQLException
+    public synchronized void setImages(String series, Date startTime, Date endTime,
+                                       final Rectangle2D geographicArea) throws SQLException
     {
         final ImageDataBase database = new ImageDataBase();
-        if (series==null)
-        {
+        if (series == null) {
             series = "SST (synthèse)";
         }
         final ImageTable table = database.getImageTable(series);
-        if (startTime!=null || endTime!=null)
-        {
+        if (startTime!=null || endTime!=null) {
             final Range range = table.getTimeRange();
             if (startTime == null) startTime = (Date) range.getMinValue();
             if (  endTime == null)   endTime = (Date) range.getMaxValue();
             table.setTimeRange(startTime, endTime);
         }
-        if (geographicArea!=null)
-        {
+        if (geographicArea != null) {
             table.setGeographicArea(geographicArea);
         }
         setImages(table.getEntries());
@@ -255,13 +252,10 @@ public abstract class Worker implements Runnable
      * été appelée), alors cette méthode retournera les images d'une série par
      * défaut.
      */
-    private synchronized ImageEntry[] getImages()
-    {
-        if (entries==null) try
-        {
+    private synchronized ImageEntry[] getImages() {
+        if (entries==null) try {
             setImages((String)null);
-            if (entries!=null) try
-            {
+            if (entries!=null) try {
                 /*
                  * Si des images ont pu être obtenues, sauvegarde la liste des images afin de
                  * permettre plus tard une utilisation pas d'autres processus qui n'auraient
@@ -270,38 +264,29 @@ public abstract class Worker implements Runnable
                 final ObjectOutputStream output=new ObjectOutputStream(new DeflaterOutputStream(new FileOutputStream(new File(FALL_BACK))));
                 output.writeObject(entries);
                 output.close();
-            }
-            catch (IOException exception)
-            {
+            } catch (IOException exception) {
                 exceptionOccurred("getImages", exception);
             }
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             /*
              * Si la connection avec la base de données a échouée, essaie d'utiliser
              * les images par défauts qui avaient été sauvegardées en binaires lors
              * d'une exécution précédente.
              */
             final InputStream input = getClass().getClassLoader().getResourceAsStream(FALL_BACK);
-            if (input!=null)
-            {
-                try
-                {
+            if (input != null) {
+                try {
                     final ObjectInputStream objectInput=new ObjectInputStream(new InflaterInputStream(input));
                     entries = (ImageEntry[]) objectInput.readObject();
                     objectInput.close();
-                }
-                catch (IOException ioexception)
-                {
+                } catch (IOException ioexception) {
+                    exceptionOccurred("getImages", ioexception);
+                } catch (ClassNotFoundException ioexception) {
                     exceptionOccurred("getImages", ioexception);
                 }
-                catch (ClassNotFoundException ioexception)
-                {
-                    exceptionOccurred("getImages", ioexception);
-                }
+            } else {
+                exceptionOccurred("getImages", exception);
             }
-            else exceptionOccurred("getImages", exception);
         }
         return (entries!=null) ? (ImageEntry[]) entries.clone() : new ImageEntry[0];
     }
@@ -311,8 +296,9 @@ public abstract class Worker implements Runnable
      * Les résultats pourront être de la forme d'images PNG, de fichier texte
      * ou de fichiers binaires.
      */
-    public void setDestination(final File directory)
-    {this.destination = directory;}
+    public void setDestination(final File directory) {
+        this.destination = directory;
+    }
 
     /**
      * Obtient le nom de fichier de sortie à utiliser pour l'image spécifiée.
@@ -320,15 +306,14 @@ public abstract class Worker implements Runnable
      * mais sera dans le répertoire de destination qui aura été spécifié avec
      * {@link #setDestination} plutôt que dans le répertoire de l'image.
      */
-    final File getOutputFile(final ImageEntry image)
-    {
+    final File getOutputFile(final ImageEntry image) {
         final String filename = image.getFile().getName();
         final int    extIndex = filename.lastIndexOf('.');
-        if (extIndex>0 && filename.charAt(extIndex-1)!='.')
-        {
+        if (extIndex>0 && filename.charAt(extIndex-1)!='.') {
             return new File(destination, filename.substring(0, extIndex)+".data");
+        } else {
+            return null;
         }
-        else return null;
     }
 
     /**
@@ -337,39 +322,33 @@ public abstract class Worker implements Runnable
      *
      * @see #stop()
      */
-    public synchronized void run()
-    {
+    public synchronized void run() {
         final File destination=this.destination;
         final File imageFile = new File(destination, name+".png");
-        if (imageFile.exists())
-        {
+        if (imageFile.exists()) {
             System.out.print("Saute ");
             System.out.println(imageFile.getPath());
             return;
         }
-
         stopped = false;
-        for (int i=listenerList.size(); --i>=0;)
+        for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).started();
-
+        }
         final Result result = run(getImages(), null); // TODO: sauvegarder le travail?
-        for (int i=listenerList.size(); --i>=0;)
+        for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).complete();
+        }
         /*
          * Si le résultat peut produire une image,
          * enregistre cette image au format PNG.
          */
-        if (result!=null)
-        {
-            final List<SampleDimension>[] lists = sortByFrequency(this.bands);
+        if (result != null) {
+            final List<SampleDimension>[=] lists = sortByFrequency(this.bands);
             final List<SampleDimension> bands = (lists!=null && lists.length!=0) ? lists[0] : null;
-            final RenderedImage image = result.getImage(bands.toArray(new SampleDimension[bands.size()]));
-            if (image!=null) try
-            {
+            final RenderedImage image = result.getImage((SampleDimension[])bands.toArray(new SampleDimension[bands.size()]));
+            if (image != null) try {
                 ImageIO.write(image, "png", imageFile);
-            }
-            catch (IOException exception)
-            {
+            } catch (IOException exception) {
                 exceptionOccurred("run", exception);
             }
         }
@@ -390,8 +369,9 @@ public abstract class Worker implements Runnable
      * qu'elles doivent cesser leur exécution et si possible retourner un {@link Result}
      * cohérent, quoi que incomplet.
      */
-    public final void stop()
-    {stopped=true;}
+    public final void stop() {
+        stopped = true;
+    }
 
     /**
      * Indique si l'utilisateur a demandé l'interruption de l'opération. La méthode
@@ -401,16 +381,17 @@ public abstract class Worker implements Runnable
      * @see #run()
      * @see #stop()
      */
-    protected final boolean isStopped()
-    {return stopped;}
+    protected final boolean isStopped() {
+        return stopped;
+    }
 
     /**
      * Spécifie une chaîne de caractère qui décrit l'opération en cours.
      */
-    protected void setDescription(final String description)
-    {
-        for (int i=listenerList.size(); --i>=0;)
+    protected void setDescription(final String description) {
+        for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).setDescription(description);
+        }
     }
 
     /**
@@ -418,10 +399,10 @@ public abstract class Worker implements Runnable
      * pourcentage variant de 0 à 100 inclusivement. Si la valeur spécifiée est en
      * dehors de ces limites, elle sera automatiquement ramenée entre 0 et 100.
      */
-    protected void progress(final float percent)
-    {
-        for (int i=listenerList.size(); --i>=0;)
+    protected void progress(final float percent) {
+        for (int i=listenerList.size(); --i>=0;) {
             listenerList.get(i).progress(percent);
+        }
     }
 
     /**
@@ -431,15 +412,12 @@ public abstract class Worker implements Runnable
      * @param method Nom de la méthode dans laquelle est survenue l'exception.
      * @param exception L'exception survenue.
      */
-    protected void exceptionOccurred(final String method, final Throwable exception)
-    {
-        if (listenerList.size()!=0)
-        {
-            for (int i=listenerList.size(); --i>=0;)
+    protected void exceptionOccurred(final String method, final Throwable exception) {
+        if (listenerList.size() != 0) {
+            for (int i=listenerList.size(); --i>=0;) {
                 listenerList.get(i).exceptionOccurred(exception);
-        }
-        else
-        {
+            }
+        } else {
             Result.unexpectedException(Utilities.getShortClassName(this), method, exception);
         }
     }
@@ -452,11 +430,9 @@ public abstract class Worker implements Runnable
      * @return Image de l'entré spécifiée.
      * @throws IOException si une erreur de lecture est survenue.
      */
-    protected GridCoverage getGridCoverage(final ImageEntry entry) throws IOException
-    {
+    protected GridCoverage getGridCoverage(final ImageEntry entry) throws IOException {
         final GridCoverage image = entry.getGridCoverage(null);
-        if (image!=null)
-        {
+        if (image != null) {
             final List<SampleDimension> list = Arrays.asList(image.getSampleDimensions());
             final Integer value = bands.get(list);
             final int count = (value!=null) ? value.intValue()+1 : 1;
@@ -472,14 +448,11 @@ public abstract class Worker implements Runnable
      * décroissant de fréquence d'utilisation. Cela signifie que le premier élément de la liste
      * sera le <code>SampleDimension[]</code> le plus utilisé par le plus grand nombre d'images.
      */
-    private static List<SampleDimension>[] sortByFrequency(final Map<List<SampleDimension>,Integer> bands)
-    {
+    private static List<SampleDimension>[=] sortByFrequency(final Map<List<SampleDimension>,Integer> bands) {
         final Set<List<SampleDimension>> listSet = bands.keySet();
-        final List<SampleDimension>[]  listArray = listSet.toArray(new List<SampleDimension>[listSet.size()]);
-        Arrays.sort(listArray, new Comparator<List<SampleDimension>>()
-        {
-            public int compare(final List<SampleDimension> list1, final List<SampleDimension> list2)
-            {
+        final List<SampleDimension>[=] listArray = (List<SampleDimension>[=])listSet.toArray(new List<SampleDimension>[listSet.size()]);
+        Arrays.sort(listArray, new Comparator<List<SampleDimension>>() {
+            public int compare(final List<SampleDimension> list1, final List<SampleDimension> list2) {
                 final Integer c1 = bands.get(list1);
                 final Integer c2 = bands.get(list2);
                 return c2.compareTo(c1); // Ordre décroissant
@@ -498,12 +471,11 @@ public abstract class Worker implements Runnable
      *         la région à prendre en compte dans le calcul.
      * @return Coordonnées en pixels de la région de <code>image</code> à traiter.
      */
-    static Rectangle getBounds(final GridCoverage coverage, final Shape area)
-    {
+    static Rectangle getBounds(final GridCoverage coverage, final Shape area) {
         final GridRange  range = coverage.getGridGeometry().getGridRange();
-        final Rectangle bounds = new Rectangle(range.getLower(0), range.getLower(1), range.getLength(0), range.getLength(1));
-        if (area!=null)
-        {
+        final Rectangle bounds = new Rectangle(range.getLower (0), range.getLower (1),
+                                               range.getLength(0), range.getLength(1));
+        if (area!=null) {
 // TODO
 //          final AffineTransform transform = coverage.getGridGeometry().getGridToCoordinateSystem2D();
 //          transform.translate(-0.5, -0.5);
@@ -517,8 +489,7 @@ public abstract class Worker implements Runnable
      * façon à ce qu'il soit entièrement compris à l'intérieur de l'image.
      * Le rectangle <code>bounds</code> est retourné par commodité.
      */
-    static Rectangle clip(final Rectangle bounds, final RenderedImage image)
-    {
+    static Rectangle clip(final Rectangle bounds, final RenderedImage image) {
         final int xmin = image.getMinX();
         final int ymin = image.getMinY();
         final int xmax = bounds.x + bounds.width;
@@ -542,45 +513,37 @@ public abstract class Worker implements Runnable
      *                           contient un bouton permettant l'arrêt du calcul à tout moment.</li>
      * </ul>
      */
-    synchronized void setup(final String[] args) throws Exception
-    {
+    synchronized void setup(final String[] args) throws Exception {
         final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
         Date startTime = null;
         Date   endTime = null;
         String  series = null;
-        for (int i=0; i<args.length; i++)
-        {
+        for (int i=0; i<args.length; i++) {
             String arg = args[i];
-            if (arg!=null)
-            {
+            if (arg != null) {
                 arg = arg.trim().toLowerCase();
-                if (arg.equalsIgnoreCase("-mail"))
-                {
-                    addProgressListener(new ProgressMailer("salam.teledetection.fr", "martin.desruisseaux@teledetection.fr"));
+                if (arg.equalsIgnoreCase("-mail")) {
+                    addProgressListener(new ProgressMailer("salam.teledetection.fr",
+                                                           "martin.desruisseaux@teledetection.fr"));
                     continue;
                 }
-                if (arg.equalsIgnoreCase("-print"))
-                {
+                if (arg.equalsIgnoreCase("-print")) {
                     addProgressListener(new ProgressPrinter());
                     continue;
                 }
-                if (arg.equalsIgnoreCase("-show"))
-                {
+                if (arg.equalsIgnoreCase("-show")) {
                     showBusyPane(name);
                     continue;
                 }
-                if (arg.startsWith("series="))
-                {
+                if (arg.startsWith("series=")) {
                     series = arg.substring(7);
                     continue;
                 }
-                if (arg.startsWith("start="))
-                {
+                if (arg.startsWith("start=")) {
                     startTime = dateFormat.parse(arg.substring(6));
                     continue;
                 }
-                if (arg.startsWith("end="))
-                {
+                if (arg.startsWith("end=")) {
                     endTime = dateFormat.parse(arg.substring(4));
                     continue;
                 }
@@ -589,8 +552,7 @@ public abstract class Worker implements Runnable
                 System.exit(0);
             }
         }
-        if (series!=null || startTime!=null || endTime!=null)
-        {
+        if (series!=null || startTime!=null || endTime!=null) {
             setImages(series, startTime, endTime, null);
         }
     }

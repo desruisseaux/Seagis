@@ -25,23 +25,23 @@
  */
 package fr.ird.sql.image;
 
-// Base de données
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import fr.ird.sql.DataBase;
-
-// Journal
-import java.util.logging.Logger;
-
-// Divers
+// J2SE
 import java.io.File;
 import java.util.Date;
 import java.util.Calendar;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import fr.ird.resources.Resources;
-import fr.ird.util.WeakHashSet;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
+
+// Geotools
+import org.geotools.util.WeakHashSet;
 import org.geotools.resources.Utilities;
+
+// Seagis
+import fr.ird.sql.DataBase;
+import fr.ird.resources.Resources;
 
 
 /**
@@ -98,7 +98,7 @@ abstract class Table implements fr.ird.sql.Table {
      * de retourner des objets qui existent déjà en mémoire et, ultimement, éviter de
      * recharger plusieurs fois la même image.
      */
-    static final WeakHashSet<Object> pool=new WeakHashSet<Object>();
+    static final WeakHashSet pool = new WeakHashSet();
 
     /**
      * Journal des évènements.

@@ -26,8 +26,7 @@ package fr.ird.neural;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-public interface TransfertFunction
-{
+public interface TransfertFunction {
     /**
      * Log sigmoid transfert function. This transfert function output approximatively 1
      * for any <var>q</var> greater than 5 and 0 for <var>q</var> smaller than than -5.
@@ -46,13 +45,14 @@ public interface TransfertFunction
      *   </tr>
      * </table>
      */
-    public static final TransfertFunction SIGMOID = new AbstractTransfertFunction("SIGMOID")
-    {
-        public double transfert(final double q)
-        {return 1 / (1 + Math.exp(-q));}
+    public static final TransfertFunction SIGMOID = new AbstractTransfertFunction("SIGMOID") {
+        public double transfert(final double q) {
+            return 1 / (1 + Math.exp(-q));
+        }
 
-        public double derivative(final double q, final double a)
-        {return a*(1-a);}
+        public double derivative(final double q, final double a) {
+            return a*(1-a);
+        }
     };
 
     /**

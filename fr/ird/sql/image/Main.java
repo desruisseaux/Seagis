@@ -31,15 +31,11 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
-import fr.ird.sql.DataBase;
 
 // Modèles (table et arborescence)
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.table.TableCellRenderer;
-import org.geotools.gui.swing.tree.Trees;
-import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
-import fr.ird.awt.ImageTableModel;
 
 // Interface utilisateur
 import javax.swing.JTree;
@@ -53,9 +49,16 @@ import javax.swing.JScrollPane;
 // Utilitaires
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.Iterator;
 import java.awt.Rectangle;
+
+// Geotools
 import org.geotools.resources.Arguments;
+import org.geotools.gui.swing.tree.Trees;
+import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
+
+// Seagis
+import fr.ird.sql.DataBase;
+import fr.ird.awt.ImageTableModel;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -223,8 +226,7 @@ final class Main extends Arguments {
         final ImageTable      imageTable = new ImageTableImpl(connection, TimeZone.getTimeZone(Table.getPreference(DataBase.TIMEZONE)));
         imageTable.setGeographicArea(new Rectangle(-180, -90, 360, 180));
         imageTable.setTimeRange(new Date(0), new Date());
-        for (final Iterator<SeriesEntry> it=seriesTable.getSeries().iterator(); it.hasNext();) {
-            final SeriesEntry currentSeries = it.next();
+        for (final SeriesEntry currentSeries : seriesTable.getSeries()) {
             imageTable.setSeries(currentSeries);
             final JTable table = new JTable(new ImageTableModel(imageTable));
             table.setDefaultRenderer(String.class, renderer);

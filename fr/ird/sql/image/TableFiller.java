@@ -41,8 +41,7 @@ import org.geotools.gc.GridCoverage;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface TableFiller
-{
+public interface TableFiller {
     /**
      * Set the group into which inserting new image. Images
      * will be inserted using the {@link #addImage} method.

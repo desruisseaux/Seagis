@@ -91,7 +91,7 @@ public class SQLEditor extends JPanel {
      *   <li>L'instruction SQL actuelle.</li>
      * </ul>
      */
-    private final List<String[]> toDisplay=new ArrayList<String[]>();
+    private final List<String[]> toDisplay = new ArrayList<String[]>();
 
     /**
      * Préférences à éditer.
@@ -109,18 +109,18 @@ public class SQLEditor extends JPanel {
      * Avant de changer la requête à éditer, le contenu de ce champ devra être
      * copié dans <code>toDisplay.get(index)[VALUE]</code>.
      */
-    private final JTextArea valueArea=new JTextArea(5,40);
+    private final JTextArea valueArea = new JTextArea(5,40);
 
     /**
      * Modèle pour l'affichage de la liste des noms descriptifs des instructions SQL.
      * Ce modèle s'occupe des transferts entre <code>valueArea</code> et <code>toDisplay</code>.
      */
-    private final Model model=new Model();
+    private final Model model = new Model();
 
     /**
      * Liste des instructions SQL.
      */
-    private final JList sqlList=new JList(model);
+    private final JList sqlList = new JList(model);
 
     /**
      * Modèle pour l'affichage de la liste des
@@ -152,7 +152,8 @@ public class SQLEditor extends JPanel {
          * Retourne l'instruction à l'index spécifié.
          */
         public Object getElementAt(final int index) {
-            return toDisplay.get(index)[NAME];
+            final String[] record = toDisplay.get(index);
+            return record[NAME];
         }
 
         /**

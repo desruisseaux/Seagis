@@ -27,7 +27,6 @@ package fr.ird.animat.viewer;
 
 // J2SE
 import java.util.Set;
-import java.util.Iterator;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.rmi.RemoteException;
@@ -137,16 +136,14 @@ final class PopulationMonitor extends JSplitPane
     /**
      * Ajoute les populations spécifiées.
      */
-    private void addPopulations(final Set<Population> populations) throws RemoteException {
+    private void addPopulations(final Set<+Population> populations) throws RemoteException {
         if (populations == null) {
             return;
         }
         final MutableTreeNode root = (MutableTreeNode)tree.getRoot();
-        for (final Iterator<Population> it=populations.iterator(); it.hasNext();) {
-            final Population population = it.next();
+        for (final Population population : populations) {
             final TreeNode branch = new TreeNode(this, population, population.getEnvironment().getClock());
-            for (final Iterator<Animal> ita=population.getAnimals().iterator(); ita.hasNext();) {
-                final Animal animal = ita.next();
+            for (final Animal animal : population.getAnimals()) {
                 branch.add(new TreeNode(this, animal, animal.getClock()));
             }
             tree.insertNodeInto(branch, root, root.getChildCount());
@@ -167,8 +164,7 @@ final class PopulationMonitor extends JSplitPane
         final Set<Population> removed = event.getPopulationRemoved();
         if (removed != null) {
             final MutableTreeNode root = (MutableTreeNode)tree.getRoot();
-            for (final Iterator<Population> it=removed.iterator(); it.hasNext();) {
-                final Population population = it.next();
+            for (final Population population : removed) {
                 population.removePopulationChangeListener(this);
                 for (int i=root.getChildCount(); --i>=0;) {
                     final MutableTreeNode branch = (MutableTreeNode)root.getChildAt(i);
@@ -210,8 +206,8 @@ final class PopulationMonitor extends JSplitPane
      */
     public void dispose() throws RemoteException {
         environment.removeEnvironmentChangeListener(this);
-        for (final Iterator<Population> it=environment.getPopulations().iterator(); it.hasNext();) {
-            it.next().removePopulationChangeListener(this);
+        for (final Population population : environment.getPopulations()) {
+            population.removePopulationChangeListener(this);
         }
         plot.dispose();
     }

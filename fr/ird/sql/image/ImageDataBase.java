@@ -25,19 +25,12 @@
  */
 package fr.ird.sql.image;
 
-// Base de données
+// Base de données et E/S
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
-import fr.ird.sql.SQLEditor;
-import fr.ird.sql.DataBase;
-
-// Images
-import javax.imageio.spi.IIORegistry;
-
-// Entrés/sorties
-import java.io.File;
 import java.io.IOException;
+import java.io.File;
 
 // Coordonnées spatio-temporelles
 import java.util.Date;
@@ -46,16 +39,18 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.awt.geom.Rectangle2D;
 
-// Journal
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-
 // Divers
 import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
+import java.util.logging.LogRecord;
+import java.util.logging.Level;
+import javax.imageio.spi.IIORegistry;
 import javax.media.jai.util.Range;
+
+// Seagis
+import fr.ird.sql.DataBase;
+import fr.ird.sql.SQLEditor;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -316,8 +311,7 @@ public class ImageDataBase extends DataBase {
         if (series == null) {
             int maxImageCount = Integer.MIN_VALUE;
             final SeriesTable table = getSeriesTable();
-            for (final Iterator<SeriesEntry> it=table.getSeries().iterator(); it.hasNext();) {
-                final SeriesEntry entry = it.next();
+            for (final SeriesEntry entry : table.getSeries()) {
                 final int imageCount = table.getImageCount(entry);
                 if (imageCount >= maxImageCount) {
                     this.series   = entry;

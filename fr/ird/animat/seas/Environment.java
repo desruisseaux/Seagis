@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.TreeMap;
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.NoSuchElementException;
@@ -170,8 +169,7 @@ final class Environment extends fr.ird.animat.impl.Environment implements Fisher
         Range    timeRange = null;
         boolean    closedb = false;
         final Map<String,Coverage3D> coverageBySeries = new HashMap<String,Coverage3D>();
-        for (final Iterator<fr.ird.animat.Parameter> it=config.parameters.iterator(); it.hasNext();) {
-            final Parameter parameter = (Parameter) it.next();
+        for (final Parameter parameter : config.parameters) {
             Coverage3D coverage3D = coverageBySeries.get(parameter.series);
             if (coverage3D == null) {
                 /*
@@ -234,7 +232,7 @@ final class Environment extends fr.ird.animat.impl.Environment implements Fisher
             toClose = new DataBase[0];
         }
         final Collection<String> species = configuration.species;
-        catchs = fisheries.getCatchTable(species.toArray(new String[species.size()]));
+        catchs = fisheries.getCatchTable((String[])species.toArray(new String[species.size()]));
         catchs.setTimeRange(timeRange);
     }
 
@@ -278,7 +276,7 @@ final class Environment extends fr.ird.animat.impl.Environment implements Fisher
      * Retourne l'ensemble des paramètres compris dans cet environnement. Cet ensemble
      * dépendra de la {@linkplain Configuration configuration} donnée au constructeur.
      */
-    public Set<fr.ird.animat.Parameter> getParameters() {
+    public Set<+Parameter> getParameters() {
         return configuration.parameters;
     }
 
@@ -341,8 +339,7 @@ final class Environment extends fr.ird.animat.impl.Environment implements Fisher
         synchronized (getTreeLock()) {
             int count = 0;
             final String[] names = new String[coverages.size()];
-            for (final Iterator<Entry> it=coverages.values().iterator(); it.hasNext();) {
-                final Entry entry = it.next();
+            for (final Entry entry : coverages.values()) {
                 if (entry.isValid) {
                     final String name;
                     if (entry.coverage != null) {
@@ -397,8 +394,8 @@ final class Environment extends fr.ird.animat.impl.Environment implements Fisher
      */
     public boolean nextTimeStep() {
         synchronized (getTreeLock()) {
-            for (final Iterator<Entry> it=coverages.values().iterator(); it.hasNext();) {
-                it.next().isValid = false;
+            for (final Entry entry : coverages.values()) {
+                entry.isValid = false;
             }
             final Comparable min = getClock().getTimeRange().getMinValue();
             final Comparable max = timeRange.getMaxValue();

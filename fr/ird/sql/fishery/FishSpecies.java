@@ -31,8 +31,8 @@ import java.util.Locale;
 import java.io.ObjectStreamException;
 
 // Divers
-import fr.ird.util.WeakHashSet;
 import fr.ird.animat.impl.Species;
+import org.geotools.util.WeakHashSet;
 import org.geotools.resources.Utilities;
 
 
@@ -51,7 +51,7 @@ final class FishSpecies extends Species {
     /**
      * Ensemble des espèces déjà créée.
      */
-    private static final WeakHashSet<FishSpecies> pool = new WeakHashSet<FishSpecies>();
+    private static final WeakHashSet pool = new WeakHashSet();
 
     /**
      * Construit une nouvelle espèce. Le nom de cette espèce peut être exprimé
@@ -85,7 +85,7 @@ final class FishSpecies extends Species {
      * habituellement appelée après la construction.
      */
     public FishSpecies intern() {
-        return pool.intern(this);
+        return (FishSpecies)pool.canonicalize(this);
     }
 
     /**

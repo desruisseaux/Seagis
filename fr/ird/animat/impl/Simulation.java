@@ -25,9 +25,6 @@
  */
 package fr.ird.animat.impl;
 
-// Utilitaires
-import java.util.Iterator;
-
 // Remote Method Invocation (RMI)
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -157,8 +154,8 @@ public class Simulation extends RemoteServer implements fr.ird.animat.Simulation
             long time = System.currentTimeMillis();
             synchronized (environment.getTreeLock()) {
                 final float duration = environment.getClock().getStepDuration();
-                for (final Iterator<fr.ird.animat.Population> it=environment.getPopulations().iterator(); it.hasNext();) {
-                    ((Population) it.next()).evoluate(duration);
+                for (final Population population : environment.getPopulations()) {
+                    population.evoluate(duration);
                 }
                 if (!environment.nextTimeStep()) {
                     finished = true;

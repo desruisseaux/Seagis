@@ -25,33 +25,33 @@
  */
 package fr.ird.io.corssh;
 
-// Gestion des entrés/sorties
+// Entrés/sorties
 import java.io.File;
 import java.io.IOException;
 import java.io.EOFException;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.FileImageInputStream;
 
-// Gestion du temps
+// Temps et formattage
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-
-// Ecriture de dates et de nombres
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 
-// Géométrie
-import java.awt.Shape;
-
 // Divers...
+import java.awt.Shape;
 import java.util.Arrays;
 import java.util.Iterator;
+
+// Geotools
+import org.geotools.resources.Utilities;
+
+// Seagis
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.resources.Utilities;
 
 
 /**
@@ -60,8 +60,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class FileParser extends Parser
-{
+final class FileParser extends Parser {
     /**
      * Longueur des enregistrements des
      * fichiers AVISO, en nombre d'octets.
@@ -181,8 +180,9 @@ final class FileParser extends Parser
      * @param in Fichier CORSSH à lire.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public FileParser(final File in) throws IOException
-    {this(new FileImageInputStream(in), in.getPath());}
+    public FileParser(final File in) throws IOException {
+        this(new FileImageInputStream(in), in.getPath());
+    }
 
     /**
      * Construit un interpréteur qui lira le fichier spécifié. Après la construction
@@ -195,11 +195,10 @@ final class FileParser extends Parser
      *         d'un éventuel message d'erreur. Il peut être nul s'il n'est pas connu.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    private FileParser(final ImageInputStream in, final String filename) throws IOException
-    {
+    private FileParser(final ImageInputStream in, final String filename) throws IOException {
         this.in=in;
         this.filename=filename;
-        origine=in.getStreamPosition();
+        origine = in.getStreamPosition();
         log("<init>", getResource(ResourceKeys.OPEN_$1));
     }
 
@@ -207,25 +206,28 @@ final class FileParser extends Parser
      * Retourne le nom du fichier, ou
      * "(sans nom)" s'il n'a pas été nommé.
      */
-    private final String getFilename()
-    {return (filename!=null) ? filename : Resources.format(ResourceKeys.UNNAMED);}
+    private final String getFilename() {
+        return (filename!=null) ? filename : Resources.format(ResourceKeys.UNNAMED);
+    }
 
     /**
      * Retourne la ressource identifiée par la clé spécifiée.
      * Le nom de fichier {@link #filename} sera utilisé pour
      * la construction de la ressource.
      */
-    private final String getResource(final int clé)
-    {return Resources.format(clé, getFilename());}
+    private final String getResource(final int clé) {
+        return Resources.format(clé, getFilename());
+    }
 
     /**
      * Retourne la ressource identifiée par la clé spécifiée.
      * Le nom de fichier {@link #filename} sera utilisé pour
      * la construction de la ressource.
      */
-    private final String getResource(final int clé, Object arg)
-    {
-        if (arg instanceof Date) arg=getDateTimeInstance().format(arg);
+    private final String getResource(final int clé, Object arg) {
+        if (arg instanceof Date) {
+            arg = getDateTimeInstance().format(arg);
+        }
         return Resources.format(clé, getFilename(), arg);
     }
 
@@ -258,8 +260,9 @@ final class FileParser extends Parser
      *         la date demandée est postérieure aux dates de tous les enregistrements
      *         trouvés dans le fichier.
      */
-    public final void seek(final Date date) throws IOException
-    {seek(date, null);}
+    public final void seek(final Date date) throws IOException {
+        seek(date, null);
+    }
 
     /**
      * Implémentation de la recherche d'un enregistrement. Cette méthode respecte la même spécification
@@ -278,8 +281,7 @@ final class FileParser extends Parser
      *         la date demandée est postérieure aux dates de tous les enregistrements
      *         trouvés dans le fichier.
      */
-    final void seek(final Date date, final Iterator<File> previous) throws IOException
-    {
+    final void seek(final Date date, final Iterator<File> previous) throws IOException {
         /*
          * Procède à la lecture du premier en-tête du fichier. Cet
          * enregistrement doit exister, à moins que le fichier ne
@@ -291,8 +293,7 @@ final class FileParser extends Parser
         long timeInterval = TIME_INTERVAL;    // Intervalle de temps estimé entre deux enregistrements.
         final long   time = date.getTime();   // Date de l'enregistrement désiré.
         long      endTime = time;             // Date du dernier enregistrement trouvé ou permis.
-        nextPass: do
-        {
+        nextPass: do {
             /*
              * L'enregistrement courant  (lu par le dernier 'nextRecordOrHeader')  doit être un en-tête.
              * Si la date demandée est postérieure à la date de l'en-tête, alors il faudra chercher dans
@@ -305,8 +306,7 @@ final class FileParser extends Parser
             final long   startOfPass = in.getStreamPosition();  // Position du flot sur le premier enregistrement de la passe courante.
             long       startOfRecord = startOfPass;             // Position du prochain enregistrement à lire.
             int              nRecord = 0;                       // Numéro de l'enregistrement courant (valide après le 'nextRecordOrHeader' plus bas).
-            if (time >= currentTime)
-            {
+            if (time >= currentTime) {
                 /*
                  * Tente maintenant de prédire le numéro d'enregistrement qui devrait
                  * correspondre à la date spécifiée. Ce numéro est calculé en suposant
@@ -320,8 +320,7 @@ final class FileParser extends Parser
                 int lower          = 0;                            // Numéro d'enregistrement minimal autorisé.
                 int upper          = cpRecordCount-1;              // Numéro d'enregistrement maximal autorisé.
                 nRecord = (int) ((time-currentTime)/timeInterval); // Numéro de l'enregistrement courant (valide après le 'nextRecordOrHeader' plus bas).
-                do
-                {
+                do {
                     if (nRecord < lower) nRecord=lower;
                     if (nRecord > upper) nRecord=upper;
                     startOfRecord = startOfPass + nRecord*RECORD_LENGTH;
@@ -342,13 +341,11 @@ final class FileParser extends Parser
                      */
                     final long timeLastTry = currentTime;
                     currentTime = getDate().getTime();
-                    if (nRecordLastTry!=nRecord)
-                    {
+                    if (nRecordLastTry != nRecord) {
                         timeInterval = Math.max(1, (int) ((currentTime-timeLastTry)/(nRecord-nRecordLastTry)));
                     }
                     nRecordLastTry=nRecord;
-                    if (currentTime < time)
-                    {
+                    if (currentTime < time) {
                         /*
                          * Il faut avancer. D'abord, on fixe la limite inférieure. Ensuite, s'il ne sera pas possible d'avancer
                          * plus loin (parce qu'on a déjà atteint la limite supérieure), alors on balayera la passe suivante à la
@@ -365,20 +362,16 @@ final class FileParser extends Parser
                          *                                             position désirée
                          */
                         lower=nRecord+1;
-                        if (nRecord==upper)
-                        {
-                            if (lower==cpRecordCount)
-                            {
-                                endTime=currentTime;
+                        if (nRecord == upper) {
+                            if (lower == cpRecordCount) {
+                                endTime = currentTime;
                                 continue nextPass;
                             }
                             recordLeft = cpRecordCount-lower;
                             log("seek", getResource(ResourceKeys.SEEK_TO_DATE_$2, new Date(endTime)));
                             return;
                         }
-                    }
-                    else if (currentTime > time)
-                    {
+                    } else if (currentTime > time) {
                         /*
                          * Il faut reculer. Si on ne peut par reculer parce qu'on était déjà au début de la plage
                          * permise, alors on se repositionne au début de l'enregistrement et on termine la méthode.
@@ -391,13 +384,16 @@ final class FileParser extends Parser
                          *                                   |
                          *                            position désirée
                          */
-                        if (nRecord==lower) break;
-                        endTime=currentTime;
-                        upper=nRecord-1;
+                        if (nRecord == lower) {
+                            break;
+                        }
+                        endTime = currentTime;
+                        upper = nRecord-1;
+                    } else {
+                        break; // On est tombé pile sur la date cherchée!
                     }
-                    else break; // On est tombé pile sur la date cherchée!
                     nRecord += (int) ((time-currentTime)/timeInterval);
-                    assert(lower<=upper);
+                    assert lower <= upper : lower-upper;
                 }
                 while (true);
             }
@@ -411,19 +407,15 @@ final class FileParser extends Parser
              */
             final Date selectedDate = getDate();
             long previousRecord = startOfRecord-RECORD_LENGTH;
-            if (previousRecord < startOfPass)
-            {
+            if (previousRecord < startOfPass) {
                 // Si on était au début de la passe,
                 // il faut aussi sauter l'en-tête.
                 previousRecord -= RECORD_LENGTH;
             }
-            if (previousRecord >= origine)
-            {
+            if (previousRecord >= origine) {
                 in.seek(previousRecord);
                 nextRecordMandatory();
-            }
-            else
-            {
+            } else {
                 /*
                  * Nous étions déjà au début du fichier. Il est donc impossible d'obtenir un enregistrement
                  * précédent dans ce fichier. S'il est possible de chercher un enregistrement dans le fichier
@@ -431,25 +423,20 @@ final class FileParser extends Parser
                  * à 0.
                  */
                 Arrays.fill(record, (byte) 0);
-                if (previous!=null)
-                {
-                    while (previous.hasNext())
-                    {
-                        boolean hasFoundRecord=false;
+                if (previous != null) {
+                    while (previous.hasNext()) {
+                        boolean hasFoundRecord = false;
                         final FileParser p=new FileParser((File) previous.next());
-                        while (p.nextRecordOrHeader())
-                        {
+                        while (p.nextRecordOrHeader()) {
                             p.recordLeft = p.getField(RECORD_COUNT);
-                            if (p.recordLeft != 0)
-                            {
+                            if (p.recordLeft != 0) {
                                 p.skipRecords(p.recordLeft-1);
                                 p.nextRecordMandatory();
-                                assert(p.recordLeft==0);
-                                hasFoundRecord=true;
+                                assert p.recordLeft==0 : p.recordLeft;
+                                hasFoundRecord = true;
                             }
                         }
-                        if (hasFoundRecord)
-                        {
+                        if (hasFoundRecord) {
                             System.arraycopy(p.record, 0, record, 0, record.length);
                             break;
                         }
@@ -459,15 +446,16 @@ final class FileParser extends Parser
             }
             in.seek(startOfRecord);
             recordLeft = cpRecordCount-nRecord;
-            assert(selectedDate.getTime() >= time);
-            assert(isBlank() || getDate().getTime() < time);
+            assert selectedDate.getTime() >= time;
+            assert isBlank() || getDate().getTime() < time;
             log("seek", getResource(ResourceKeys.SEEK_TO_DATE_$2, selectedDate));
             return;
         }
         while (nextRecordOrHeader());
         Arrays.fill(record, (byte)0);
         in.seek(origine);
-        throw new EOFException(Resources.format(ResourceKeys.ERROR_DATE_TOO_LATE_$3, getFilename(), date, new Date(endTime)));
+        throw new EOFException(Resources.format(ResourceKeys.ERROR_DATE_TOO_LATE_$3,
+                               getFilename(), date, new Date(endTime)));
     }
 
     /**
@@ -479,10 +467,8 @@ final class FileParser extends Parser
      * @throws EOFException si un début d'enregistrement fut trouvé mais n'est pas complet.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    private boolean nextRecordOrHeader() throws IOException
-    {
-        switch (in.read(record))
-        {
+    private boolean nextRecordOrHeader() throws IOException {
+        switch (in.read(record)) {
             case -1:            return false;
             case RECORD_LENGTH: return true;
             default: throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_FIELDS_$1));
@@ -494,8 +480,7 @@ final class FileParser extends Parser
      * {@link #nextRecordOrHeader} classique,  celle-ci lance une exception s'il ne
      * reste plus d'enregistrements à lire.
      */
-    private final void nextRecordMandatory() throws IOException
-    {
+    private final void nextRecordMandatory() throws IOException {
         if (!nextRecordOrHeader()) throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
         recordLeft--; // On n'utilise pas de 'assert' car 'seek' peut utiliser des valeurs momentanément invalides.
     }
@@ -513,20 +498,17 @@ final class FileParser extends Parser
      * @throws EOFException si un début d'enregistrement fut trouvé mais n'est pas complet.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public boolean nextRecord() throws IOException
-    {
+    public boolean nextRecord() throws IOException {
         assert(recordLeft>=0);
-        while (recordLeft==0)
-        {
-            if (!nextRecordOrHeader())
-            {
+        while (recordLeft==0) {
+            if (!nextRecordOrHeader()) {
                 Arrays.fill(record, (byte)0);
                 return false;
             }
             recordLeft = getField(RECORD_COUNT);
-            if (recordLeft < 0)
-            {
-                throw new IOException(Resources.format(ResourceKeys.ERROR_BAD_RECORD_COUNT_$1, new Integer(recordLeft)));
+            if (recordLeft < 0) {
+                throw new IOException(Resources.format(ResourceKeys.ERROR_BAD_RECORD_COUNT_$1,
+                                      new Integer(recordLeft)));
             }
         }
         nextRecordMandatory();
@@ -539,10 +521,12 @@ final class FileParser extends Parser
      * la construction d'un objet {@link Parser}, l'enregistrement courant est initialement
      * blanc.
      */
-    public boolean isBlank()
-    {
-        for (int i=0; i<record.length; i++)
-            if (record[i]!=0) return false;
+    public boolean isBlank() {
+        for (int i=0; i<record.length; i++) {
+            if (record[i]!=0) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -565,8 +549,7 @@ final class FileParser extends Parser
      *   <tr><td>                       </td><td> {@link #BAROMETRIC}  </td></tr>
      * </table>
      */
-    public int getField(int field)
-    {
+    public int getField(int field) {
         return ((int) (record[  field] & 0xFF) <<  0) |
                ((int) (record[++field] & 0xFF) <<  8) |
                ((int) (record[++field] & 0xFF) << 16) |
@@ -592,11 +575,9 @@ final class FileParser extends Parser
      *   <tr><td> {@link #BAROMETRIC}  </td><td> mètres </td></tr>
      * </table>
      */
-    public double getValue(final int field)
-    {
+    public double getValue(final int field) {
         final int z = getField(field);
-        switch (field)
-        {
+        switch (field) {
             // Note: les valeurs minimales et maximales suivantes sont fournies dans la documentation d'AVISO.
             case LATITUDE:     return (z>= -90000000 && z<=  +90000000) ? z/DEGREES_TO_INT : Double.NaN; // microdegres
             case LONGITUDE:    return (z>=         0 && z<= +360000000) ? z/DEGREES_TO_INT : Double.NaN; // microdegres
@@ -615,11 +596,10 @@ final class FileParser extends Parser
      * lisant les champs {@link #JULIANDAY}, {@link #SECOND} et {@link #MICROSECOND},
      * en supposant que ces champs utilisent le fuseau horaire UTC.
      */
-    public Date getDate()
-    {
-        if (isBlank())
+    public Date getDate() {
+        if (isBlank()) {
             return null;
-
+        }
         calendar.clear();
         calendar.set(EPOCH_YEAR, 0, getField(JULIANDAY), 0, 0, getField(SECOND));
         final int ms=getField(MICROSECOND);
@@ -640,13 +620,12 @@ final class FileParser extends Parser
      * @return La date du premier enregistrement.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public Date getStartTime() throws IOException
-    {
-        if (startTime==Long.MAX_VALUE)
-        {
+    public Date getStartTime() throws IOException {
+        if (startTime == Long.MAX_VALUE) {
             count();
-            if (startTime==Long.MAX_VALUE)
+            if (startTime==Long.MAX_VALUE) {
                 throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
+            }
         }
         return new Date(startTime);
     }
@@ -661,13 +640,12 @@ final class FileParser extends Parser
      * @return La date du dernier enregistrement.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public Date getEndTime() throws IOException
-    {
-        if (endTime==Long.MIN_VALUE)
-        {
+    public Date getEndTime() throws IOException {
+        if (endTime == Long.MIN_VALUE) {
             count();
-            if (endTime==Long.MIN_VALUE)
+            if (endTime == Long.MIN_VALUE) {
                 throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
+            }
         }
         return new Date(endTime);
     }
@@ -682,9 +660,10 @@ final class FileParser extends Parser
      * @return Le nombre de passe dans le fichier courant.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public int getPassCount() throws IOException
-    {
-        if (passCount==0) count();
+    public int getPassCount() throws IOException {
+        if (passCount == 0) {
+            count();
+        }
         return passCount;
     }
 
@@ -699,9 +678,10 @@ final class FileParser extends Parser
      * @return Le nombre d'enregistrement dans le fichier courant.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public long getRecordCount() throws IOException
-    {
-        if (recordCount==0) count();
+    public long getRecordCount() throws IOException {
+        if (recordCount == 0) {
+            count();
+        }
         return recordCount;
     }
 
@@ -710,8 +690,7 @@ final class FileParser extends Parser
      * tous le fichier.  Le fichier sera remis à sa position initiale après l'appel
      * de cette méthode.
      */
-    private void count() throws IOException
-    {
+    private void count() throws IOException {
         recordCount         = 0;
         passCount           = 0;
         startTime           = Long.MAX_VALUE;
@@ -721,25 +700,21 @@ final class FileParser extends Parser
         final byte[] backup = new byte[record.length];
         final int recordBak = recordLeft;
         in.seek(origine);
-        while (nextRecordOrHeader())
-        {
+        while (nextRecordOrHeader()) {
             final int n = recordLeft = getField(RECORD_COUNT);
-            if (n!=0)
-            {
-                if (firstpass)
-                {
+            if (n != 0) {
+                if (firstpass) {
                     nextRecordMandatory();
                     startTime=getDate().getTime();
                     firstpass=false;
                 }
-                if (recordLeft>=1) // Peut être 0 si le premier et le dernier enregistrement se confondent.
-                {
+                if (recordLeft >= 1) { // Peut être 0 si le premier et le dernier enregistrement se confondent.
                     skipRecords(recordLeft-1);
                     nextRecordMandatory();
                 }
                 endTime=getDate().getTime();
             }
-            assert(recordLeft==0);
+            assert recordLeft==0 : recordLeft;
             recordCount += n;
             passCount++;
         }
@@ -757,21 +732,22 @@ final class FileParser extends Parser
      * @throws EOFException s'il ne restait pas au moins <code>n</code> enregistrements.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    private void skipRecords(final long n) throws IOException
-    {
-        if (n>=0 && n<Long.MAX_VALUE/RECORD_LENGTH)
-        {
+    private void skipRecords(final long n) throws IOException {
+        if (n>=0 && n<Long.MAX_VALUE/RECORD_LENGTH) {
             Arrays.fill(record, (byte)0);
             final long  toSkip = n * (long)RECORD_LENGTH;
             final long skipped = in.skipBytes(toSkip);
             recordLeft -= (int)(skipped/RECORD_LENGTH);
-            assert(recordLeft >= 0) : recordLeft;
-            if ((skipped % RECORD_LENGTH)!=0)
+            assert recordLeft >= 0 : recordLeft;
+            if ((skipped % RECORD_LENGTH)!=0) {
                 throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_FIELDS_$1));
-            if (skipped != toSkip)
+            }
+            if (skipped != toSkip) {
                 throw new EOFException(getResource(ResourceKeys.ERROR_MISSING_RECORDS_$1));
+            }
+        } else {
+            throw new IllegalArgumentException(Long.toString(n));
         }
-        else throw new IllegalArgumentException(Long.toString(n));
     }
 
     /**
@@ -780,8 +756,7 @@ final class FileParser extends Parser
      *
      * @throws IOException si une erreur est survenue lors de la fermeture.
      */
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         Arrays.fill(record, (byte)0);
         in.close();
         log("close", getResource(ResourceKeys.CLOSE_$1));
@@ -795,25 +770,20 @@ final class FileParser extends Parser
      *
      *  <pre>12/10/92 00:53:54   16°30,0'N  259°39,3'E   -14,447   -14,480     0,028</pre>
      */
-    public String toString()
-    {
-        if (!isBlank())
-        {
-            if (dateFormat==null)
-            {
+    public String toString() {
+        if (!isBlank()) {
+            if (dateFormat == null) {
                 dateFormat=getDateTimeInstance();
             }
             final FieldPosition pos=new FieldPosition(0);
             final StringBuffer buffer=new StringBuffer();
             dateFormat.format(getDate(), buffer, pos);
-            if (angleFormat==null)
-            {
+            if (angleFormat == null) {
                 angleFormat = NumberFormat.getNumberInstance();
                 angleFormat.setMinimumFractionDigits(4);
                 angleFormat.setMaximumFractionDigits(4);
             }
-            if (numberFormat==null)
-            {
+            if (numberFormat == null) {
                 numberFormat = NumberFormat.getNumberInstance();
                 numberFormat.setMinimumFractionDigits(3);
                 numberFormat.setMaximumFractionDigits(3);
@@ -825,8 +795,9 @@ final class FileParser extends Parser
             last=buffer.length(); numberFormat.format(getField(MEAN      )/ METRES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
             last=buffer.length(); numberFormat.format(getField(BAROMETRIC)/ METRES_TO_INT, buffer, pos); buffer.insert(last, Utilities.spaces(10-(buffer.length()-last)));
             return buffer.toString();
+        } else {
+            return "(pas de données)"; // TODO: localize
         }
-        else return "(pas de données)"; // TODO: localize
     }
 
     /**
@@ -839,12 +810,10 @@ final class FileParser extends Parser
      * <var>start time</var> est un argument optionel spécifiant la date du premier enregistrement à afficher.
      * <var>max</var>        est un argument optionel indiquant le nombre maximal de lignes à afficher. La valeur par défaut est de 10.
      */
-    public static void main(final String[] args) throws Exception
-    {
-        int n=10;
+    public static void main(final String[] args) throws Exception {
+        int n = 10;
         Date start=null;
-        switch (args.length)
-        {
+        switch (args.length) {
             default: System.out.println("Usage: FileParser [filename] [date] [max]"); break;
             case 3:  n=Integer.parseInt(args[2]);                // fallthrough
             case 2:  start=getDateTimeInstance().parse(args[1]); // fallthrough

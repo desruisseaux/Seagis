@@ -25,22 +25,20 @@
  */
 package fr.ird.sql.fishery;
 
-// Pêches et base de données
-import fr.ird.sql.Table;
-import fr.ird.animat.Species;
-import java.sql.SQLException;
-
-// Ensembles
+// J2SE et JAI
 import java.util.Set;
 import java.util.List;
-
-// Coordonnées spatio-temporelles
 import java.util.Date;
+import java.sql.SQLException;
 import java.awt.geom.Rectangle2D;
 import javax.media.jai.util.Range;
 
-// Cartographie
+// Geotools
 import org.geotools.cs.CoordinateSystem;
+
+// Seagis
+import fr.ird.sql.Table;
+import fr.ird.animat.Species;
 
 
 /**

@@ -45,12 +45,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 
-// Geotools dependencies
-import org.geotools.cs.Ellipsoid;
-import org.geotools.resources.XMath;
-import org.geotools.resources.Utilities;
-import org.geotools.resources.XRectangle2D;
-
 // Formatage
 import java.util.Locale;
 import java.text.DateFormat;
@@ -58,13 +52,11 @@ import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import org.geotools.gui.headless.ProgressPrinter;
-import org.geotools.gui.headless.ProgressMailer;
-import org.geotools.util.ProgressListener;
 
 // Ensembles
 import java.util.Map;
 import java.util.List;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -73,8 +65,16 @@ import java.util.logging.Level;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
 
-// Utilitaires
-import java.util.Arrays;
+// Geotools
+import org.geotools.cs.Ellipsoid;
+import org.geotools.resources.XMath;
+import org.geotools.resources.Utilities;
+import org.geotools.resources.XRectangle2D;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.headless.ProgressPrinter;
+import org.geotools.gui.headless.ProgressMailer;
+
+// Seagis
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
@@ -102,8 +102,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class SemiVariance
-{
+final class SemiVariance {
     /**
      * Retourne une approximation de l'arc cosinus.  Cette méthode n'existe que pour contourner
      * l'HALUCINANTE LENTEUR de la fonction {@link Math#acos} standard. Cette dernière, appelée
@@ -116,8 +115,9 @@ final class SemiVariance
      * à des distances de 1555 kilomètres à l'équateur). Pour les valeurs de <var>a</var> inférieures
      * ou égales à 0.97, cette méthode utilise la fonction <code>Math.acos(double)</code> standard.
      */
-    private static double acos(final double a)
-    {return (a>0.97) ? Math.sqrt(1-a*a) : Math.acos(a);}
+    private static double acos(final double a) {
+        return (a>0.97) ? Math.sqrt(1-a*a) : Math.acos(a);
+    }
 
     /**
      * Fichier dans lequel placer un objet {@link MultiFilesParser}
@@ -153,10 +153,10 @@ final class SemiVariance
      * La largeur, la hauteur et la position de cette forme changeront constamment en
      * fonction du point étudié.
      */
-    private final RectangularShape area = new XRectangle2D()
-    {
-        public Rectangle2D getBounds2D()
-        {return this;} // Slight optimization (safe in the 'Buffer' context).
+    private final RectangularShape area = new XRectangle2D() {
+        public Rectangle2D getBounds2D() {
+            return this; // Slight optimization (safe in the 'Buffer' context).
+        }
     };
 
 
@@ -202,16 +202,17 @@ final class SemiVariance
     /**
      * Initialise un objet qui ne contiendra aucune donnée.
      */
-    public SemiVariance()
-    {}
+    public SemiVariance() {
+    }
 
     /**
      * Spécifie une boîte de dialogue (ou autre composante) dans laquelle informer
      * des progrès des calculs. La valeur <code>null</code> signifie que les progrès
      * ne doivent pas être reportés.
      */
-    public synchronized void setProgress(final ProgressListener progress)
-    {this.progress=progress;}
+    public synchronized void setProgress(final ProgressListener progress) {
+        this.progress = progress;
+    }
 
     /**
      * Retourne un objet {@link Parser} approprié pour lire les fichiers ou les répertoires spécifiés.
@@ -222,64 +223,54 @@ final class SemiVariance
      * @param  files Fichiers ou répertoires à ouvrir.
      * @throws IOException si des fichiers ou des répertoires n'ont pas pu être ouvert.
      */
-    private static synchronized Parser getParser(final File[] files) throws IOException
-    {
+    private static synchronized Parser getParser(final File[] files) throws IOException {
         Map<File,Parser>  parserMap = null;
         boolean            modified = false;
         final List<Parser>  parsers = new ArrayList<Parser>();
         final File        cacheFile = new File(CACHE);
-        for (int i=0; i<files.length; i++)
-        {
+        for (int i=0; i<files.length; i++) {
             Parser parser;
-            final File file=files[i];
-            if (file.isDirectory())
-            {
+            final File file = files[i];
+            if (file.isDirectory()) {
                 /*
                  * Si le fichier spécifié est un répertoire, tente de récupérer
                  * un objet {@link MultiFileParser} qui aurait déjà été construit
                  * lors d'une exécution antérieure.
                  */
-                if (parserMap==null)
-                {
-                    if (cacheFile.isFile()) try
-                    {
-                        final ObjectInputStream in=new ObjectInputStream(new FileInputStream(cacheFile));
+                if (parserMap == null) {
+                    if (cacheFile.isFile()) try {
+                        final ObjectInputStream in = new ObjectInputStream(new FileInputStream(cacheFile));
                         parserMap = (Map) in.readObject(); // TODO: unchecked assignment
                         in.close();
-                    }
-                    catch (ClassNotFoundException exception)
-                    {
+                    } catch (ClassNotFoundException exception) {
                         IOException e=new IOException(exception.getLocalizedMessage());
                         e.initCause(exception);
                         throw e;
                     }
-                    if (parserMap==null) parserMap=new HashMap<File,Parser>();
+                    if (parserMap == null) {
+                        parserMap = new HashMap<File,Parser>();
+                    }
                 }
                 parser = parserMap.get(file);
-                if (parser==null)
-                {
-                    parser=new MultiFilesParser(file);
+                if (parser == null) {
+                    parser = new MultiFilesParser(file);
                     parserMap.put(file, parser);
-                    modified=true;
+                    modified = true;
                 }
-            }
-            else if (file.isFile())
-            {
+            } else if (file.isFile()) {
                 parser = new FileParser(file);
-            }
-            else
-            {
-                throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
+            } else {
+                throw new FileNotFoundException(Resources.format(
+                            ResourceKeys.ERROR_FILE_NOT_FOUND_$1, file.getPath()));
             }
             parsers.add(parser);
         }
-        if (modified)
-        {
-            final ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(cacheFile));
+        if (modified) {
+            final ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(cacheFile));
             out.writeObject(parserMap);
             out.close();
         }
-        return InterleavedParser.getInstance(parsers.toArray(new Parser[parsers.size()]));
+        return InterleavedParser.getInstance((Parser[])parsers.toArray(new Parser[parsers.size()]));
     }
 
     /**
@@ -297,7 +288,8 @@ final class SemiVariance
      *                        ou si une opération de lecture ou d'écriture a échouée.
      * @throws ArithmeticException s'il y a eu un débordement de capacité.
      */
-    public void compute(final File[] files, final Shape geographicArea, Date startTime, Date endTime) throws IOException, ArithmeticException
+    public void compute(final File[] files, final Shape geographicArea, Date startTime, Date endTime)
+            throws IOException, ArithmeticException
     {
         final Parser parser = getParser(files);
         final Buffer buffer = new Buffer(parser, geographicArea);
@@ -321,7 +313,8 @@ final class SemiVariance
      * @throws IOException si une opération de lecture ou d'écriture a échouée.
      * @throws ArithmeticException s'il y a eu un débordement de capacité.
      */
-    private synchronized void compute(final Buffer buffer, final Date startTime, final Date endTime) throws IOException, ArithmeticException
+    private synchronized void compute(final Buffer buffer, final Date startTime, final Date endTime)
+            throws IOException, ArithmeticException
     {
         Parser.logger.entering(getClass().getName(), "compute", new Date[] {startTime, endTime});
         /*
@@ -349,14 +342,12 @@ final class SemiVariance
         final Date         endSearchTime = new Date(0);
         final double semiMajorAxisLength;
         final double semiMinorAxisLength;
-        if (true)
-        {
+        if (true) {
             final Ellipsoid ellipsoid = Parser.getCoordinateSystem().getHorizontalDatum().getEllipsoid();
             semiMajorAxisLength       = ellipsoid.getSemiMajorAxis();
             semiMinorAxisLength       = ellipsoid.getSemiMinorAxis();
         }
-        if (progress!=null)
-        {
+        if (progress != null) {
             progress.setDescription(Resources.format(ResourceKeys.COMPUTING_STATISTICS));
             progress.started();
         }
@@ -379,8 +370,7 @@ final class SemiVariance
          */
         long lastTimeCheck = startTimeMillis-1;
         long startWindowTime = startTimeMillis;
-window: while (startWindowTime < endTimeMillis)
-        {
+window: while (startWindowTime < endTimeMillis) {
             final long endWindowTime;
             switch (buffer.setTimeRange(new Date(startWindowTime-timeMargin),
                                         new Date(  endTimeMillis+timeMargin), maxRecordCount))
@@ -390,11 +380,10 @@ window: while (startWindowTime < endTimeMillis)
                 case Buffer.MAXRECORDS_REACHED: endWindowTime = buffer.getEndTime().getTime()-timeMargin; break;
                 default: throw new IllegalStateException(); // Should not happen
             }
-            assert(endWindowTime   <= endTimeMillis);
-            assert(startWindowTime <  endWindowTime);
+            assert endWindowTime   <= endTimeMillis;
+            assert startWindowTime <  endWindowTime;
             final int recordCount = buffer.getRecordCount();
-            for (int i=buffer.search(new Date(startWindowTime)); i<recordCount; i++)
-            {
+            for (int i=buffer.search(new Date(startWindowTime)); i<recordCount; i++) {
                 /*
                  * Construit un histogramme de la hauteur (ou de l'anomalie de la hauteur)
                  * de l'eau en utilisant tous les points du buffer qui se trouvent dans la
@@ -404,19 +393,15 @@ window: while (startWindowTime < endTimeMillis)
                 final Point2D point = buffer.getPoint (i);
                 final long    time  = buffer.getMillis(i);
                 final int     value = buffer.getField (i);
-                if (progress!=null && (i&0x0FFF)==0)
-                {
+                if (progress!=null && (i&0x0FFF)==0) {
                     progress.progress((time-startTimeMillis)*timeToPercent);
                 }
-                if (time < lastTimeCheck) // On accepte les dates identiques
-                {
+                if (time < lastTimeCheck) { // On accepte les dates identiques
                     throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_NOT_INCREASING));
                 }
-                if (time >= endWindowTime)
-                {
+                if (time >= endWindowTime) {
                     assert(startWindowTime!=time); // Boucle sans fin.
-                    if (lastTimeCheck >= startWindowTime)
-                    {
+                    if (lastTimeCheck >= startWindowTime) {
                         final DateFormat  dateFormat = Parser.getDateTimeInstance();
                         Parser.log(getClass().getName(), "compute", Resources.format(ResourceKeys.COMPUTATION_DONE_$2,
                                    dateFormat.format(new Date(startWindowTime)),
@@ -435,8 +420,7 @@ window: while (startWindowTime < endTimeMillis)
                  * calulera ensuite  la différence de hauteur en fonction de l'écart de temps ou
                  * de la distance, comme une fonction <code>dz(dt,dx)</code>.
                  */
-                if (computeVariances)
-                {
+                if (computeVariances) {
                     final double             x_degrees = point.getX();
                     final double             y_degrees = point.getY();
                     double                   y_radians = Math.toRadians(y_degrees);
@@ -465,8 +449,7 @@ window: while (startWindowTime < endTimeMillis)
                      *       maintenance du code. On compte sur le compilateur pour sortir lui-même
                      *       les expressions constantes de la boucle.
                      */
-                    while (nears.next())
-                    {
+                    while (nears.next()) {
                         final long near_time=nears.getTime();
                         final long  dt = near_time-time; assert(dt>0);
                         final float dl = Math.abs((float)y_degrees);
@@ -475,8 +458,7 @@ window: while (startWindowTime < endTimeMillis)
                         final double dx = acos(sin_y*Math.sin(y_radians) +
                                                cos_y*Math.cos(y_radians) *
                                                Math.cos(Math.toRadians(nears.getX()-x_degrees))) / inverseApparentRadius;
-                        if (!Double.isNaN(dx))
-                        {
+                        if (!Double.isNaN(dx)) {
                             final int indexDT = (int)((dt+T_INCREMENT/2)/T_INCREMENT); if (indexDT>=T_COUNT) continue;
                             final int indexDX = (int)((dx+X_INCREMENT/2)/X_INCREMENT); if (indexDX>=X_COUNT) continue;
                             final int indexDL = (int)((dl+L_INCREMENT/2)/L_INCREMENT); if (indexDL>=L_COUNT) continue;
@@ -494,16 +476,15 @@ window: while (startWindowTime < endTimeMillis)
                             sumDZsqr[indexDZ] += (long)dz*(long)dz;
                             count   [indexDZ]++;
 
-                            if (sumDZsqr[indexDZ] < 0)
-                            {
+                            if (sumDZsqr[indexDZ] < 0) {
                                 // {@link #write} écrira "NaN" pour cette valeur (parce que Math.sqrt(-1)==NaN).
                                 final ArithmeticException exception = new ArithmeticException(Resources.format(ResourceKeys.ERROR_OVERFLOW));
                                 Parser.logger.throwing(getClass().getName(), "compute", exception);
                                 throw exception;
                             }
-                            assert(count   [indexDZ] >= 0);
-                            assert(sumDZabs[indexDZ] >= 0);
-                            assert(sumDZsqr[indexDZ] >= 0); // Vérifie les débordements de capacité.
+                            assert count   [indexDZ] >= 0;
+                            assert sumDZabs[indexDZ] >= 0;
+                            assert sumDZsqr[indexDZ] >= 0; // Vérifie les débordements de capacité.
                         }
                     }
                 }
@@ -518,8 +499,9 @@ window: while (startWindowTime < endTimeMillis)
              */
             break;
         }
-        if (progress!=null)
+        if (progress != null) {
             progress.complete();
+        }
         Parser.logger.exiting(getClass().getName(), "compute");
     }
 
@@ -527,11 +509,11 @@ window: while (startWindowTime < endTimeMillis)
      * Retourne le nombre d'enregistrements qui
      * ont servit au calcul des statistiques.
      */
-    public long getRecordCount()
-    {
+    public long getRecordCount() {
         long n=0;
-        for (int i=histogram.length; --i>=0;)
+        for (int i=histogram.length; --i>=0;) {
             n += histogram[i];
+        }
         return n;
     }
 
@@ -541,11 +523,11 @@ window: while (startWindowTime < endTimeMillis)
      * chaque paire comprennent la distance entre deux points, l'écart
      * de temps et la différence de hauteur de d'anomalie de hauteur.
      */
-    public long getPairCount()
-    {
+    public long getPairCount() {
         long n=0;
-        for (int i=count.length; --i>=0;)
+        for (int i=count.length; --i>=0;) {
             n += count[i];
+        }
         return n;
     }
 
@@ -570,14 +552,12 @@ window: while (startWindowTime < endTimeMillis)
      * @param  semiVariance Fichier dans lequel écrire les semi-variances, ou <code>null</code> pour ne pas les écrires.
      * @throws IOException si l'écriture a échoué.
      */
-    public synchronized void write(final File histogram, final File semiVariance) throws IOException
-    {
+    public synchronized void write(final File histogram, final File semiVariance) throws IOException {
         final String lineSeparator = System.getProperty("line.separator","\n");
         final NumberFormat  format = NumberFormat.getNumberInstance();
         format.setGroupingUsed(false);
         format.setMaximumFractionDigits(12);
-        if (format instanceof DecimalFormat)
-        {
+        if (format instanceof DecimalFormat) {
             final DecimalFormat        decimal = (DecimalFormat) format;
             final DecimalFormatSymbols symbols = decimal.getDecimalFormatSymbols();
             symbols.setNaN("#N/A");
@@ -590,14 +570,12 @@ window: while (startWindowTime < endTimeMillis)
          * <var>z<sub>i+½</sub></var> entre deux bornes, tandis que la seconde colonne contient
          * le nombre d'occurence de <var>z</var> autour de cette valeur.
          */
-        if (histogram!=null)
-        {
+        if (histogram != null) {
             final int   zmin = this.histogram.length * Z_INCREMENT / -2;
             final Writer out = new BufferedWriter(new FileWriter(histogram));
             out.write("Hauteur (cm)\tCompte");
             out.write(lineSeparator);
-            for (int i=0; i<this.histogram.length; i++)
-            {
+            for (int i=0; i<this.histogram.length; i++) {
                 out.write(format.format(((i+0.5)*Z_INCREMENT + zmin) / Z_FACTOR));
                 out.write('\t');
                 out.write(format.format(this.histogram[i]));
@@ -611,26 +589,24 @@ window: while (startWindowTime < endTimeMillis)
          * de l'écart de temps (<var>dt</var>) entre ces deux points.  Ce calcul n'est pas
          * disponible si <code>setComputeVariances(false)</code> a été appelée.
          */
-        if (semiVariance!=null)
-        {
+        if (semiVariance != null) {
             final Writer out = new BufferedWriter(new FileWriter(semiVariance));
-            out.write("Latitude (°)\tÉcart de temps (jours)\tDistance (km)\tMoyenne des écarts (cm)\tRMS (cm)\tNombre");
+            out.write("Latitude (°)\t"            +
+                      "Écart de temps (jours)\t"  +
+                      "Distance (km)\t"           +
+                      "Moyenne des écarts (cm)\t" +
+                      "RMS (cm)\t"                +
+                      "Nombre");
             out.write(lineSeparator);
-            for (int li=0; li<L_COUNT; li++)
-            {
-                for (int ti=0; ti<T_COUNT; ti++)
-                {
-                    for (int xi=0; xi<X_COUNT; xi++)
-                    {
+            for (int li=0; li<L_COUNT; li++) {
+                for (int ti=0; ti<T_COUNT; ti++) {
+                    for (int xi=0; xi<X_COUNT; xi++) {
                         final int i=(li*T_COUNT + ti)*X_COUNT + xi;
                         final int n = count[i];
-                        if (n!=0)
-                        {
-                            for (int column=0; column<=5; column++)
-                            {
+                        if (n != 0) {
+                            for (int column=0; column<=5; column++) {
                                 final double value;
-                                switch (column)
-                                {
+                                switch (column) {
                                     case 0: value=(((double)sumDLa  [i])/n + li*L_INCREMENT)     / L_FACTOR; break;
                                     case 1: value=(((double)sumDTa  [i])/n + ti*T_INCREMENT)     / T_FACTOR; break;
                                     case 2: value=(((double)sumDXa  [i])/n + xi*X_INCREMENT)     / X_FACTOR; break;
@@ -639,7 +615,9 @@ window: while (startWindowTime < endTimeMillis)
                                     case 5: value=n;                                                         break;
                                     default: throw new AssertionError(column);
                                 }
-                                if (column!=0) out.write('\t');
+                                if (column!=0) {
+                                    out.write('\t');
+                                }
                                 out.write(format.format(value));
                             }
                             out.write(lineSeparator);
@@ -655,14 +633,12 @@ window: while (startWindowTime < endTimeMillis)
      * Retourne une chaîne de caractères donnant
      * quelques informations sur cet objet.
      */
-    public String toString()
-    {
+    public String toString() {
         final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(getRecordCount());
         buffer.append(" records");
-        if (computeVariances)
-        {
+        if (computeVariances) {
             buffer.append(", ");
             buffer.append(getPairCount());
             buffer.append(" pairs");
@@ -688,18 +664,15 @@ window: while (startWindowTime < endTimeMillis)
      *     start /b /wait /low java -server fr.ird.io.corssh.SemiVariance <i>[arguments]</i>
      * </pre></blockquote>
      */
-    public static void main(final String[] args) throws Exception
-    {
+    public static void main(final String[] args) throws Exception {
         String startTimeText = "01/01/1992 00:00";
         String   endTimeText = "01/01/2002 00:00";
-        String[] directories = new String[]
-        {
+        String[] directories = new String[] {
             "E:/PELOPS/Images/CORSSH/Topex-Poseidon",
             "E:/PELOPS/Images/CORSSH/ERS-1",
             "E:/PELOPS/Images/CORSSH/ERS-2"
         };
-        switch (args.length)
-        {
+        switch (args.length) {
             default:  directories = XArray.remove((String[])args.clone(), 0, 2); // fall through
             case 2:   endTimeText = args[1]; // fall through
             case 1: startTimeText = args[0]; // fall through
@@ -714,17 +687,14 @@ window: while (startWindowTime < endTimeMillis)
         final File[]     directoryFiles = new File[directories.length];
         for (int i=0; i<directories.length; i++) directoryFiles[i]=new File(directories[i]);
         stats.setProgress(progress);
-        try
-        {
+        try {
             stats.compute(directoryFiles, geographicArea, startTime, endTime);
         }
-        catch (ArithmeticException exception)
-        {
+        catch (ArithmeticException exception) {
             progress.exceptionOccurred(exception);
             // Enregistre quand-même
         }
-        catch (Throwable error)
-        {
+        catch (Throwable error) {
             System.gc();
             progress.exceptionOccurred(error);
             return;

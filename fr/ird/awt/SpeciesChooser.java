@@ -73,7 +73,6 @@ import java.awt.geom.Ellipse2D;
 // Collections
 import java.util.Map;
 import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -260,8 +259,8 @@ public final class SpeciesChooser extends JPanel {
         this();
         if (database != null) try {
             final Collection<Species> sp = database.getSpecies();
-            for (final Iterator<Species> it=sp.iterator(); it.hasNext();) {
-                add(it.next().getIcon());
+            for (final Species spi : sp) {
+                add(spi.getIcon());
             }
         } catch (RemoteException exception) {
             throw new fr.ird.sql.RemoteException(

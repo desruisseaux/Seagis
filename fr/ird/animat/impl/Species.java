@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.HashSet;
-import java.util.Iterator;
 import javax.swing.ImageIcon;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
@@ -130,7 +129,7 @@ public class Species extends RemoteObject implements fr.ird.animat.Species {
      * Les paramètres représentés comme un ensemble de type {@link Set}.
      * Cet ensemble ne sera construit que la première fois où il sera demandé.
      */
-    private transient Set<fr.ird.animat.Parameter> parameterSet;
+    private transient Set<Parameter> parameterSet;
 
     /**
      * Index du paramètre {@link Parameter#HEADING}, ou -1 si ce paramètre ne fait pas parti
@@ -405,11 +404,11 @@ public class Species extends RemoteObject implements fr.ird.animat.Species {
      * Retourne tous les {@linkplain Parameter paramètres} susceptibles d'intéresser les
      * {@linkplain Animal animaux} de cette espèce. L'ensemble retourné est immutable.
      */
-    public Set<fr.ird.animat.Parameter> getObservedParameters() {
+    public Set<+Parameter> getObservedParameters() {
         if (parameterSet == null) {
             // Pas besoin de synchroniser. Ce n'est pas très
             // grave si deux instances de cet objet existent.
-            parameterSet = new ArraySet<fr.ird.animat.Parameter>(parameters);
+            parameterSet = new ArraySet<Parameter>(parameters);
         }
         return parameterSet;
     }
@@ -555,8 +554,8 @@ public class Species extends RemoteObject implements fr.ird.animat.Species {
     final void export(final int port) throws RemoteException {
         if (exportCount++ == 0) {
             UnicastRemoteObject.exportObject(this, port);
-            for (final Iterator<fr.ird.animat.Parameter> it=getObservedParameters().iterator(); it.hasNext();) {
-                ((Parameter) it.next()).export(port);
+            for (final Parameter parameter : getObservedParameters()) {
+                parameter.export(port);
             }
         }
     }
@@ -572,8 +571,8 @@ public class Species extends RemoteObject implements fr.ird.animat.Species {
     final void unexport() {
         if (--exportCount == 0) {
             Animal.unexport("Species", this);
-            for (final Iterator<fr.ird.animat.Parameter> it=getObservedParameters().iterator(); it.hasNext();) {
-                ((Parameter) it.next()).unexport();
+            for (final Parameter parameter : getObservedParameters()) {
+                parameter.unexport();
             }
         }
     }

@@ -25,20 +25,20 @@
  */
 package fr.ird.sql.fishery;
 
-// Animats et base de données
-import fr.ird.sql.Entry;
-import fr.ird.animat.Species;
-
-// Coordonnées spatio-temporelles
+// J2SE et JAI
+import java.util.Set;
 import java.util.Date;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-
-// Divers
-import java.util.Set;
-import org.geotools.units.Unit;
 import javax.media.jai.util.Range;
+
+// Geotools
+import org.geotools.units.Unit;
+
+// Animats et base de données
+import fr.ird.sql.Entry;
+import fr.ird.animat.Species;
 
 
 /**
@@ -51,8 +51,7 @@ import javax.media.jai.util.Range;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface CatchEntry extends Entry
-{
+public interface CatchEntry extends Entry {
     /**
      * Retourne une coordonnée représentative de la
      * capture, en degrés de longitude et latitude.

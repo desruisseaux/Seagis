@@ -58,8 +58,7 @@ import org.geotools.renderer.geom.Arrow2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class MarkColorChooser extends JColorChooser
-{
+final class MarkColorChooser extends JColorChooser {
     /**
      * Image à placer en arrière-plan dans l'aperçu,
      * ou <code>null</code> s'il n'y en a pas.
@@ -97,16 +96,14 @@ final class MarkColorChooser extends JColorChooser
      *        de couleurs, sans les autres paneaux qui servent à contrôler les
      *        composantes RGBs.
      */
-    public MarkColorChooser(final boolean simplified)
-    {
+    public MarkColorChooser(final boolean simplified) {
         final Preview preview = new Preview();
         preview.setBorder(BorderFactory.createCompoundBorder(
                           BorderFactory.createEmptyBorder(/*top*/6,/*left*/6,/*bottom*/6,/*right*/6),
                           BorderFactory.createLoweredBevelBorder()));
         setPreviewPanel(preview);
         getSelectionModel().addChangeListener(preview);
-        if (simplified)
-        {
+        if (simplified) {
             final AbstractColorChooserPanel[] panels = getChooserPanels();
             removeChooserPanel(panels[2]);
             removeChooserPanel(panels[1]);
@@ -119,10 +116,10 @@ final class MarkColorChooser extends JColorChooser
      * s'il n'y en a pas. Cette image sera centrée dans la zone "aperçu" de la
      * boîte de dialogue.
      */
-    public void setBackground(final RenderedImage image)
-    {
+    public void setBackground(final RenderedImage image) {
         this.image=image;
-        transform = (image!=null) ? AffineTransform.getTranslateInstance(-0.5*image.getWidth(), -0.5*image.getHeight()) : null;
+        transform = (image!=null) ? AffineTransform.getTranslateInstance(-0.5*image.getWidth(),
+                                                                         -0.5*image.getHeight()) : null;
     }
 
     /**
@@ -131,8 +128,7 @@ final class MarkColorChooser extends JColorChooser
      * sera centrée dans la zone "aperçu" de la boîte de dialogue. Les dimensions
      * de cette forme détermineront les dimensions en pixels de la zone d'aperçu.
      */
-    public void setShape(final Shape shape)
-    {
+    public void setShape(final Shape shape) {
         shapeBounds = shape.getBounds();
         this.shape  = shape;
     }
@@ -142,9 +138,9 @@ final class MarkColorChooser extends JColorChooser
      * {@link #setShape} pour disperser un peu les exemplaires de la forme
      * dans la zone d'aperçu.
      */
-    public void duplicateShape(final int count)
-    {
-        final AffineTransform transform = AffineTransform.getTranslateInstance(-1.25*shape.getBounds2D().getWidth(), 0);
+    public void duplicateShape(final int count) {
+        final AffineTransform transform = AffineTransform.getTranslateInstance(
+                                                        -1.25*shape.getBounds2D().getWidth(), 0);
         transform.rotate(Math.toRadians(-30));
         transform.scale(0.75, 0.75);
         final GeneralPath path = new GeneralPath(shape);
@@ -160,10 +156,8 @@ final class MarkColorChooser extends JColorChooser
      * @return Un rectangle englobant les coordonnées
      *         de la forme dont la couleur variera.
      */
-    private Rectangle paintPreview(final Graphics2D graphics)
-    {
-        if (image!=null)
-        {
+    private Rectangle paintPreview(final Graphics2D graphics) {
+        if (image != null) {
             graphics.drawRenderedImage(image, transform);
         }
         graphics.setColor(getColor());
@@ -175,8 +169,7 @@ final class MarkColorChooser extends JColorChooser
      * Classe de la composante qui affichera un apperçu des
      * composantes cartographiques avec leur nouvelle couleur.
      */
-    private final class Preview extends JComponent implements ChangeListener
-    {
+    private final class Preview extends JComponent implements ChangeListener {
         /**
          * Utilisé temporairement pour éviter des création trop fréquentes.
          */
@@ -185,20 +178,16 @@ final class MarkColorChooser extends JColorChooser
         /**
          * Construit un visualisateur d'aperçus.
          */
-        public Preview()
-        {
-            setUI(new ComponentUI()
-            {
-                public Dimension getPreferredSize(final JComponent c)
-                {
+        public Preview() {
+            setUI(new ComponentUI() {
+                public Dimension getPreferredSize(final JComponent c) {
                     final Dimension size=shapeBounds.getSize();
                     size.width  += 24; // Note: se souvenir que de la place
                     size.height += 24; //    est utilisée pour les bordures
                     return size;
                 }
 
-                public void paint(final Graphics g, final JComponent c)
-                {
+                public void paint(final Graphics g, final JComponent c) {
                     final Insets insets=getInsets(Preview.this.insets);
                     final Graphics2D graphics = (Graphics2D) g;
                     final int centerX = getWidth()/2;
@@ -215,7 +204,10 @@ final class MarkColorChooser extends JColorChooser
          * Méthode appelée automatiquement chaque fois que
          * l'utilisateur sélectionne une nouvelle couleur.
          */
-        public void stateChanged(final ChangeEvent event)
-        {if (paintBounds!=null) repaint(paintBounds);}
+        public void stateChanged(final ChangeEvent event) {
+            if (paintBounds != null) {
+                repaint(paintBounds);
+            }
+        }
     }
 }

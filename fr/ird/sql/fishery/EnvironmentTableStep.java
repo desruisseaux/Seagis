@@ -171,7 +171,7 @@ final class EnvironmentTableStep extends Table {
      */
     public synchronized String[] getColumns() {
         if (columns != null) {
-            return columns.toArray(new String[columns.size()]);
+            return (String[])columns.toArray(new String[columns.size()]);
         } else {
             return new String[0];
         }

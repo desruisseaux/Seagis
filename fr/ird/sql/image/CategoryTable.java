@@ -25,21 +25,11 @@
  */
 package fr.ird.sql.image;
 
-// Geotools dependencies
-import org.geotools.cv.Category;
-import org.geotools.ct.MathTransform1D;
-import org.geotools.ct.MathTransformFactory;
-import org.geotools.cs.FactoryException;
-
 // Base de données
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
-
-// Collections
-import java.util.List;
-import java.util.ArrayList;
 
 // Entrés/sorties
 import java.net.URL;
@@ -50,16 +40,25 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
 
-// Formatage
-import java.util.Locale;
-import java.nio.charset.Charset;
-import java.text.ParseException;
-
 // Divers
 import java.awt.Color;
-import fr.ird.util.Utilities;
+import java.util.Locale;
+import java.util.List;
+import java.util.ArrayList;
+import java.nio.charset.Charset;
+import java.text.ParseException;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
+
+// Geotools
+import org.geotools.cv.Category;
+import org.geotools.ct.MathTransform1D;
+import org.geotools.ct.MathTransformFactory;
+import org.geotools.cs.FactoryException;
+import org.geotools.util.NumberRange;
+
+// Seagis
+import fr.ird.util.Utilities;
 
 
 /**
@@ -142,7 +141,7 @@ final class CategoryTable extends Table {
              * une chaîne de caractère qui indique soit le code RGB d'une couleur
              * uniforme, ou soit l'adresse URL d'une palette de couleurs.
              */
-            Color[] colors=null;
+            Color[] colors = null;
             if (colorID != null) try {
                 colors = decode(colorID);
             } catch (IOException exception) {
@@ -155,7 +154,7 @@ final class CategoryTable extends Table {
              * l'enregistrement qui vient d'être lu.
              */
             Category category;
-            final Range range = new Range(Integer.class, new Integer(lower), new Integer(upper));
+            final NumberRange range = new NumberRange(lower, upper);
             if (!isQuantifiable) {
                 category = new Category(name, colors, range, (MathTransform1D)null);
             } else {
@@ -180,7 +179,7 @@ final class CategoryTable extends Table {
             categories.add(category);
         }
         result.close();
-        return categories.toArray(new Category[categories.size()]);
+        return (Category[])categories.toArray(new Category[categories.size()]);
     }
 
     /**

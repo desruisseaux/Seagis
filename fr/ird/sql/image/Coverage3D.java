@@ -25,24 +25,6 @@
  */
 package fr.ird.sql.image;
 
-// Geotools dependencies (CTS)
-import org.geotools.pt.Envelope;
-import org.geotools.pt.CoordinatePoint;
-import org.geotools.pt.MismatchedDimensionException;
-import org.geotools.ct.MathTransform;
-import org.geotools.ct.TransformException;
-
-// Geotools dependencies (GCS)
-import org.geotools.gc.GridRange;
-import org.geotools.gc.GridGeometry;
-import org.geotools.gc.GridCoverage;
-import org.geotools.cv.Coverage;
-import org.geotools.cv.SampleDimension;
-import org.geotools.cv.ColorInterpretation;
-import org.geotools.cv.CannotEvaluateException;
-import org.geotools.cv.PointOutsideCoverageException;
-import org.geotools.gp.GridCoverageProcessor;
-
 // Géométrie
 import java.awt.Shape;
 import java.awt.geom.Point2D;
@@ -74,6 +56,26 @@ import java.util.logging.LogRecord;
 import java.util.Date;
 import java.util.Locale;
 import javax.media.jai.util.Range;
+
+// Geotools dependencies (CTS)
+import org.geotools.pt.Envelope;
+import org.geotools.pt.CoordinatePoint;
+import org.geotools.pt.MismatchedDimensionException;
+import org.geotools.ct.MathTransform;
+import org.geotools.ct.TransformException;
+
+// Geotools dependencies (GCS)
+import org.geotools.gc.GridRange;
+import org.geotools.gc.GridGeometry;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.Coverage;
+import org.geotools.cv.SampleDimension;
+import org.geotools.cv.ColorInterpretation;
+import org.geotools.cv.CannotEvaluateException;
+import org.geotools.cv.PointOutsideCoverageException;
+import org.geotools.gp.GridCoverageProcessor;
+
+// Seagis
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -199,7 +201,7 @@ public class Coverage3D extends Coverage {
     public Coverage3D(final ImageTable table) throws SQLException {
         super(table.getSeries().getName(), table.getCoordinateSystem(), null, null);
         final List<ImageEntry> entryList = table.getEntries();
-        this.entries  = entryList.toArray(new ImageEntry[entryList.size()]);
+        this.entries  = (ImageEntry[])entryList.toArray(new ImageEntry[entryList.size()]);
         this.bands    = (entries.length!=0) ? entries[0].getSampleDimensions() : new SampleDimension[0];
         for (int i=1; i<entries.length; i++) {
             if (!Arrays.equals(bands, entries[i].getSampleDimensions())) {

@@ -40,38 +40,27 @@ import javax.swing.BorderFactory;
 import javax.swing.ToolTipManager;
 import javax.swing.tree.TreeModel;
 
-// Time
+// Utilities
 import java.util.Date;
 import java.util.TimeZone;
-
-// Collections
-import java.util.Iterator;
 import java.util.Collection;
-
-// Ranges and plot
-import fr.ird.awt.RangeBars;
-import org.geotools.util.RangeSet;
-
-// Images database
 import java.sql.SQLException;
+
+// Geotools
+import org.geotools.util.RangeSet;
+import org.geotools.util.ProgressListener;
+import org.geotools.gui.swing.ProgressWindow;
+import org.geotools.gui.swing.ExceptionMonitor;
+
+// Seagis
+import fr.ird.awt.RangeBars;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
 import fr.ird.sql.image.ImageDataBase;
-
-// Dialog box
-import org.geotools.util.ProgressListener;
-import org.geotools.gui.swing.ProgressWindow;
-
-// Main framework
 import fr.ird.seasview.Task;
 import fr.ird.seasview.DataBase;
 import fr.ird.seasview.InternalFrame;
-
-// Geotools dependencies
-import org.geotools.gui.swing.ExceptionMonitor;
-
-// Miscellaneous
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -156,8 +145,7 @@ public class CatalogFrame extends InternalFrame {
             final Collection<SeriesEntry> list = series.getSeries();
             final float factor = 100f/list.size();
             int index = 0;
-            for (final Iterator<SeriesEntry> it=list.iterator(); it.hasNext();) {
-                final SeriesEntry entry = it.next();
+            for (final SeriesEntry entry : list) {
                 final String name = entry.getName();
                 progress.setDescription(name);
                 progress.progress(factor*index++);

@@ -38,10 +38,8 @@ import org.geotools.io.image.TextRecordImageReader;
  *
  * Locale is US, charset is ISO-LATIN-1 and pad value is 9999.
  */
-public class Aviso_ASC extends TextRecordImageReader.Spi
-{
-    public Aviso_ASC()
-    {
+public class Aviso_ASC extends TextRecordImageReader.Spi {
+    public Aviso_ASC() {
         super("Aviso", "text/x-grid-CLS"); // TODO: rename x-grid-Aviso
         vendorName = "Institut de Recherche pour le Développement";
         version    = "1.0";
@@ -50,6 +48,7 @@ public class Aviso_ASC extends TextRecordImageReader.Spi
         padValue   = 9999;
     }
 
-    public String getDescription(final Locale locale)
-    {return "Données sur une grille par Aviso";}
+    public String getDescription(final Locale locale) {
+        return "Données sur une grille par Aviso";
+    }
 }

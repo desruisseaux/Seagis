@@ -140,5 +140,5 @@ public interface Species extends Remote {
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
      */
-    Set<Parameter> getObservedParameters() throws RemoteException;
+    Set<+Parameter> getObservedParameters() throws RemoteException;
 }

@@ -25,7 +25,7 @@
  */
 package fr.ird.sql.fishery.fill;
 
-// J2SE
+// J2SE et JAI
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -38,8 +38,6 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.Handler;
-
-// JAI
 import javax.media.jai.KernelJAI;
 
 // geotools
@@ -50,11 +48,9 @@ import org.geotools.gui.swing.CoordinateChooser;
 import org.geotools.gui.swing.GradientKernelEditor;
 import org.geotools.gui.swing.LoggingPanel;
 
-// Base de données SEAS
+// Seagis
 import fr.ird.sql.image.SeriesTable;
 import fr.ird.sql.image.SeriesEntry;
-
-// Divers
 import fr.ird.awt.DisjointLists;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;

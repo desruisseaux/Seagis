@@ -22,9 +22,6 @@
  */
 package fr.ird.io.map;
 
-// Maps
-import org.geotools.renderer.geom.GeometryCollection;
-
 // Input/output
 import java.net.URL;
 import java.io.File;
@@ -33,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
+// Geotools
+import org.geotools.renderer.geom.GeometryCollection;
 
 // Resources
 import fr.ird.resources.Resources;

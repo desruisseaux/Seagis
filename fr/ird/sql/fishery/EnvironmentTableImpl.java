@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.List;
 import java.util.Date;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -56,11 +55,11 @@ import java.util.logging.LogRecord;
 
 // Geotools
 import org.geotools.resources.Utilities;
+import org.geotools.util.ProgressListener;
 
 // Resources
 import fr.ird.util.XArray;
 import fr.ird.sql.DataBase;
-import org.geotools.util.ProgressListener;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -325,8 +324,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 titles.add(columns[i]);
             }
         }
-        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
-            final EnvironmentTableStep step = it.next();
+        for (final EnvironmentTableStep step : parameters.values()) {
             int t = step.timeLag;
             buffer.setLength(0);
             buffer.append(parameterTable.getParameterName(step.parameter));
@@ -345,7 +343,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                 prefixLength = prefix.length();
             }
         }
-        return titles.toArray(new String[titles.size()]);
+        return (String[])titles.toArray(new String[titles.size()]);
     }
 
     /**
@@ -378,8 +376,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
         if (catchTableStep != null) {
             results[0] = catchTableStep.getResultSet();
         }
-        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
-            EnvironmentTableStep step = it.next();
+        for (final EnvironmentTableStep step : parameters.values()) {
             results[i++] = step.getResultSet(connection);
             if (progress != null) {
                 progress.progress((100f/results.length) * i);
@@ -634,8 +631,7 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
             throw new IllegalArgumentException("Trop peu de valeurs.");
         }
         int index = 0;
-        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
-            EnvironmentTableStep step = it.next();
+        for (final EnvironmentTableStep step : parameters.values()) {
             int parameter = step.parameter;
             int position  = step.position;
             int timeLag   = step.timeLag;
@@ -726,8 +722,8 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
      * @throws SQLException si l'accès à la base de données a échoué.
      */
     public synchronized void clear() throws SQLException {
-        for (final Iterator<EnvironmentTableStep> it=parameters.values().iterator(); it.hasNext();) {
-            it.next().close();
+        for (final EnvironmentTableStep step : parameters.values()) {
+            step.close();
         }
         parameters.clear();
     }

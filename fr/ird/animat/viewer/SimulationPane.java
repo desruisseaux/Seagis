@@ -29,7 +29,6 @@ package fr.ird.animat.viewer;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
@@ -111,12 +110,11 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
         /*
          * Ajoute toutes les populations.
          */
-        final Set<Population> populations = environment.getPopulations();
+        final Set<+Population> populations = environment.getPopulations();
         int size = populations.size();
         size += size/2;
         populationLayers = new HashMap<Population,PopulationLayer>(size);
-        for (final Iterator<Population> it=populations.iterator(); it.hasNext();) {
-            final Population population = it.next();
+        for (final Population population : populations) {
             final PopulationLayer layer = new PopulationLayer(population);
             environmentLayer.addPropertyChangeListener(layer);
             populationLayers.put(population, layer);

@@ -680,7 +680,7 @@ final class ImageCanvas extends JPanel {
                             }
                         }
                         if (entry.equals(this.entry)) {
-                            ImageCanvas.this.setImage(visualLayers.toArray(
+                            ImageCanvas.this.setImage((RenderedLayer[])visualLayers.toArray(
                                              new RenderedLayer[visualLayers.size()]), entry, image);
                         }
                     }

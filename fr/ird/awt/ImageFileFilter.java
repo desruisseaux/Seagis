@@ -142,7 +142,7 @@ final class ImageFileFilter extends FileFilter {
             final String[]          suffix = spi.getFileSuffixes();
             set.add(new ImageFileFilter(spi, description, suffix));
         }
-        final ImageFileFilter[] array = set.toArray(new ImageFileFilter[set.size()]);
+        final ImageFileFilter[] array = (ImageFileFilter[])set.toArray(new ImageFileFilter[set.size()]);
         Arrays.sort(array, new Comparator<ImageFileFilter>() {
             public int compare(final ImageFileFilter a, final ImageFileFilter b) {
                 return a.name.toLowerCase(locale).compareTo(b.name.toLowerCase(locale));

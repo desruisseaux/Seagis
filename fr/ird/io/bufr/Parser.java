@@ -54,8 +54,7 @@ import fr.ird.util.XArray;
  * <a href="http://www.wmo.ch/web/www/reports/Guide-binary-1B.html">http://www.wmo.ch/web/www/reports/Guide-binary-1B.html</a>
  * </p>
  */
-final class Parser
-{
+final class Parser {
     //    0 = 0000    4 = 0100    8 = 1000    C = 1100
     //    1 = 0001    5 = 0101    9 = 1001    D = 1101
     //    2 = 0010    6 = 0110    A = 1010    E = 1110
@@ -151,16 +150,12 @@ final class Parser
      *
      * @throws IOException si la construction du décodeur a échouée.
      */
-    public Parser() throws IOException
-    {
-        final ObjectInputStream in=new ObjectInputStream(getClass().getClassLoader().getResourceAsStream(TableCompiler.TABLES));
-        try
-        {
+    public Parser() throws IOException {
+        final ObjectInputStream in = new ObjectInputStream(getClass().getClassLoader().getResourceAsStream(TableCompiler.TABLES));
+        try {
             tableA  = (Map) in.readObject();
             tableBD = (Map) in.readObject();
-        }
-        catch (ClassNotFoundException exception)
-        {
+        } catch (ClassNotFoundException exception) {
             throw new IIOException(exception.getLocalizedMessage(), exception);
         }
         in.close();
@@ -171,15 +166,15 @@ final class Parser
      * des fins de déboguage. Cette méthode doit être appelée au DEBUT d'une nouvelle section, avant
      * toute lecture réelle (parce qu'elle peut écraser {@link #buffer}).
      */
-    private void beginSection(final String method, final int section, final ImageInputStream input) throws IOException
+    private void beginSection(final String method, final int section, final ImageInputStream input)
+            throws IOException
     {
         final long pos=input.getStreamPosition();
-        final StringBuffer msg=new StringBuffer("Reading section ");  // TODO: localize
+        final StringBuffer msg = new StringBuffer("Reading section ");  // TODO: localize
         msg.append(section);
         msg.append(" from position ");
         msg.append(pos-origine);
-        if (section>0 && section<5)
-        {
+        if (section>0 && section<5) {
             input.readFully(buffer, 0, 4);
             input.seek(pos);
             msg.append(" (");
@@ -198,8 +193,7 @@ final class Parser
      *
      * @throws IOException si la lecture a échouée.
      */
-    public void open(final ImageInputStream input) throws IOException
-    {
+    public void open(final ImageInputStream input) throws IOException {
         origine=input.getStreamPosition();
         calendar.clear();
         /*
@@ -207,8 +201,10 @@ final class Parser
          */
         beginSection("open",0,input);
         input.readFully(buffer, 0, 8); // La section 0 contient toujours 8 octets.
-        if (!new String(buffer, 0, 4).equals("BUFR")) throw new IIOException("Not a BUFR"); // TODO: localize
-        length=((version=buffer[7])>=2) ? getInt3(4) : Math.max(-1, input.length()-origine);
+        if (!new String(buffer, 0, 4).equals("BUFR")) {
+            throw new IIOException("Not a BUFR"); // TODO: localize
+        }
+        length = ((version=buffer[7])>=2) ? getInt3(4) : Math.max(-1, input.length()-origine);
         /*
          * Décode la section 1 du fichier BUFR.
          */
@@ -223,8 +219,7 @@ final class Parser
                      buffer[15],        // Heures (0-23).
                      buffer[16]);       // Minutes (0-59).
         date=calendar.getTime().getTime();
-        if ((buffer[7] & 128)!=0)
-        {
+        if ((buffer[7] & 128)!=0) {
             /*
              * Décode la section 2 du fichier BUFR.
              */
@@ -244,14 +239,12 @@ final class Parser
         final int[] replication=new int[3];
         final int[] operators  =new int[6];
         int index=0,lengthLeft=getInt3(0)-7;
-        while (lengthLeft>=2)
-        {
+        while (lengthLeft >= 2) {
             lengthLeft -= 2;
             input.readFully(buffer, 7, 2);
             index=addDescriptor(getInt2(7), index, replication, operators);
         }
-        if (replication[0]!=0)
-        {
+        if (replication[0] != 0) {
             throw new IIOException("Opérateur de copie (section 3) incomplet."); // TODO: localize
         }
         descriptors = XArray.resize(descriptors, index);
@@ -274,24 +267,21 @@ final class Parser
      * @return Index du prochain élément libre dans le tableau {@link #descriptor}.
      * @throws IIOException si le code FXY spécifié n'a pas été reconnu.
      */
-    private int addDescriptor(int FXY, int index, final int[] replication, final int[] operators) throws IIOException
+    private int addDescriptor(int FXY, int index, final int[] replication, final int[] operators)
+            throws IIOException
     {
         final int F = (FXY & 0xC000) >>> 14; // Les 2 premiers bits.
         final int X = (FXY & 0x3F00) >>>  8; // Les 6 bits suivants.
         final int Y = (FXY & 0x00FF) >>>  0; // Les 8 bits suivants.
-        switch (F)
-        {
-            case 1:
-            {
+        switch (F) {
+            case 1: {
                 ////////////////////////////////
                 ////  Replication operator  ////
                 ////////////////////////////////
-                if (Y==0)
-                {
+                if (Y == 0) {
                     throw new IIOException("Delayed replication not supported"); // TODO: localize
                 }
-                if (replication[1]!=0)
-                {
+                if (replication[1] != 0) {
                     throw new IIOException("Opérateurs de copies (section 3) imbriqués."); // TODO: localize
                 }
                 replication[0] = X;
@@ -299,48 +289,40 @@ final class Parser
                 replication[2] = index;
                 return index;
             }
-            case 2:
-            {
+            case 2: {
                 ////////////////////////////////
                 ////  Operation descriptor  ////
                 ////////////////////////////////
-                switch (X)
-                {
-                    case 1:
-                    {
+                switch (X) {
+                    case 1: {
                         // Change data width: Add (Y-128) bits to the data width for each data element
                         // in Table B, other than CCITT IA5 (character) data, code or flag tables.
                         operators[0] = Y-128;
                         return index;
                     }
-                    case 2:
-                    {
+                    case 2: {
                         // Change scale: Multiply scale given for each non-code
                         // data elements in Table B by 10(Y-128).
                         operators[1] = Y-128;
                         return index;
                     }
-                    case 3:
-                    {
+                    case 3: {
                         // Change reference: Subsequent element values descriptors define new reference
                         // values for corresponding Table B entries. Each new reference value is represented
                         // by Y bits in the Data Section. Definition of new reference values in concluded by
                         // encoding this operator with Y=255. Negative reference values shall be represented
                         // by a positive integer with the left-most bit (bit 1) set to 1.
                     }
-                    case 4:
-                    {
+                    case 4: {
                         // Add associated: Precede each data element field with Y bits of information. This
                         // operation associates a data field (e.g. quality control infor-mation) of Y bits
                         // with each data element.
                     }
-                    case 5:
-                    {
+                    case 5: {
                         // Signify character Y characters (CCITT international Alphabet No. 5) are inserted
                         // as a data field of Y x 8 bits in length.
                     }
-                    case 6:
-                    {
+                    case 6: {
                         // Signify data width for the immediately following local descriptor:
                         // Y bits of data are described by the immediately following descriptor
                     }
@@ -348,35 +330,28 @@ final class Parser
                 // Fall through (pour lancer l'exception).
             }
             case 3: // Fall through
-            case 0:
-            {
+            case 0: {
                 ///////////////////////////////
                 ////  Sequence descriptor  ////
                 ////  Element descriptor   ////
                 ///////////////////////////////
                 final Object value=tableBD.get(new Short((short)FXY));
-                if (value instanceof Descriptor)
-                {
-                    if (index >= descriptors.length)
+                if (value instanceof Descriptor) {
+                    if (index >= descriptors.length) {
                         descriptors = XArray.resize(descriptors, index*2);
+                    }
                     descriptors[index++] = ((Descriptor) value).rescale(operators[1], operators[0]);
-                }
-                else if (value instanceof short[])
-                {
+                } else if (value instanceof short[]) {
                     final short[] sequence=(short[]) value;
-                    final int[] replicationNextLevel=new int[3];
-                    for (int i=0; i<sequence.length; i++)
-                    {
+                    final int[] replicationNextLevel = new int[3];
+                    for (int i=0; i<sequence.length; i++) {
                         index=addDescriptor(sequence[i], index, replicationNextLevel, operators);
                     }
-                    if (replicationNextLevel[0]!=0)
-                    {
+                    if (replicationNextLevel[0] != 0) {
                         throw new IIOException("Opérateur de copie (section 3) incomplet."); // TODO: localize
                     }
-                }
-                else
-                {
-                    final StringBuffer buffer=new StringBuffer();
+                } else {
+                    final StringBuffer buffer = new StringBuffer();
                     buffer.append(F); buffer.append('\u00A0'); int length=buffer.length();
                     buffer.append(X); for (int i=buffer.length(); i<4; i++) buffer.insert(length, '0'); buffer.append('\u00A0'); length=buffer.length();
                     buffer.append(Y); for (int i=buffer.length(); i<8; i++) buffer.insert(length, '0');
@@ -390,14 +365,11 @@ final class Parser
          * Vérifie maintenant si on vient d'atteindre la fin d'une séquence
          * que l'on doit recopier. Si oui, procède à la copie.
          */
-        if (replication[0]>0)
-        {
-            if (--replication[0]==0)
-            {
-                final int lower=replication[2];
-                final int count=index-lower;
-                while (replication[1]>0)
-                {
+        if (replication[0] > 0) {
+            if (--replication[0] == 0) {
+                final int lower = replication[2];
+                final int count = index-lower;
+                while (replication[1] > 0) {
                     replication[1]--;
                     System.arraycopy(descriptors, lower, descriptors, index, count);
                     index += count;
@@ -411,11 +383,10 @@ final class Parser
      * Procède à la lecture des données de la table. Cette
      * méthode ne peut être appelée qu'après {@link #open}.
      */
-    public void read(final ImageInputStream input) throws IOException
-    {
-        final int subsetCount=this.subsetCount;
-        final Descriptor[] descriptors=this.descriptors;
-        final float[][] data=new float[descriptors.length][];
+    public void read(final ImageInputStream input) throws IOException {
+        final int subsetCount = this.subsetCount;
+        final Descriptor[] descriptors = this.descriptors;
+        final float[][] data = new float[descriptors.length][];
         /*
          * Décode la section 4 du fichier BUFR.
          */
@@ -423,8 +394,7 @@ final class Parser
         input.readFully(buffer, 0, 4);
         final int length = getInt3(0);
         long bitsRead=0;
-        if (!compressed)
-        {
+        if (!compressed) {
             /*
              * Décodage des données dans leur forme non-compressée. Ces données sont constituées d'une suite
              * d'enregistrements (observations). Chaque enregistrement contient une valeur pour chaque paramètres
@@ -439,20 +409,17 @@ final class Parser
              *         ¦                                                                              ¦
              *         +------------------------------------------------------------------------------+
              */
-            for (int j=0; j<descriptors.length; j++)
+            for (int j=0; j<descriptors.length; j++) {
                 data[j]=new float[subsetCount];
-            for (int i=0; i<subsetCount; i++)
-            {
-                for (int j=0; j<descriptors.length; j++)
-                {
-                    final Descriptor d=descriptors[j];
-                    data[j][i]=d.decode(input.readBits(d.width));
+            }
+            for (int i=0; i<subsetCount; i++) {
+                for (int j=0; j<descriptors.length; j++) {
+                    final Descriptor d = descriptors[j];
+                    data[j][i] = d.decode(input.readBits(d.width));
                     bitsRead += d.width;
                 }
             }
-        }
-        else
-        {
+        } else {
             /*
              * Décodage des données dans leur forme compressée. Contrairement à la forme non-compressée,
              * la forme compressée contient une suite de valeurs pour un paramètres donné, plutôt qu'une
@@ -468,8 +435,7 @@ final class Parser
              *    ¦   observation 1,...observation n              observation 1,...observation n         ¦
              *    +--------------------------------------------------------------------------------------+
              */
-            for (int j=0; j<descriptors.length; j++)
-            {
+            for (int j=0; j<descriptors.length; j++) {
                 // NOTE POUR LE JDK 1.4 (TODO):
                 // VERIFIER DANS LA VERSION FINALE QUE
                 // input.readBits(0) RETOURNE 0 ET QUE
@@ -479,15 +445,17 @@ final class Parser
                 final int bitsWidth = (int)input.readBits(6); // Peut être 0 si toutes les valeurs sont égales à 'minimum'.
                 final long localPad = (1L << bitsWidth)-1;
                 bitsRead += (d.width+6);
-                for (int i=0; i<subsetCount; i++)
-                {
+                for (int i=0; i<subsetCount; i++) {
                     // Cet algorithme gère correctement les cas particuliers où "bitsWidth==0"
                     // (toutes les valeurs sont identiques) et "minimum==missing value" (toutes
                     // les valeurs sont manquantes).
                     final long localValue = input.readBits(bitsWidth);
                     final float value;
-                    if (localValue==localPad) value=Float.NaN;
-                    else value = d.decode(localValue+minimum);
+                    if (localValue == localPad) {
+                        value = Float.NaN;
+                    } else {
+                        value = d.decode(localValue+minimum);
+                    }
                 }
                 bitsRead += bitsWidth*subsetCount;
             }
@@ -496,29 +464,35 @@ final class Parser
          * Ignore les octets restants.
          */
         long bytesFullyRead = bitsRead >> 3;
-        if ((bitsRead & 0x07)!=0) bytesFullyRead--;
+        if ((bitsRead & 0x07)!=0) {
+            bytesFullyRead--;
+        }
         input.skipBytes(length-14 - bytesFullyRead); // TODO: pourquoi 14 au lieu de 4?
         /*
          * Décode la section 5 du fichier BUFR.
          */
         beginSection("read",5,input);
         input.readFully(buffer, 0, 4);
-        if (!new String(buffer, 0, 4).equals("7777")) throw new IIOException("Missing end section"); // TODO: localize
+        if (!new String(buffer, 0, 4).equals("7777")) {
+            throw new IIOException("Missing end section"); // TODO: localize
+        }
     }
 
     /**
      * Retourne en entier codé sur 2 octets dans
      * {@link #buffer}, à partir de l'index spécifié.
      */
-    private int getInt2(final int offset)
-    {return ((buffer[offset]&0xFF) << 8) | (buffer[offset+1]&0xFF);}
+    private int getInt2(final int offset) {
+        return ((buffer[offset]&0xFF) << 8) | (buffer[offset+1]&0xFF);
+    }
 
     /**
      * Retourne en entier codé sur 3 octets dans
      * {@link #buffer}, à partir de l'index spécifié.
      */
-    private int getInt3(final int offset)
-    {return ((buffer[offset]&0xFF) << 16) | ((buffer[offset+1]&0xFF) << 8) | (buffer[offset+2]&0xFF);}
+    private int getInt3(final int offset) {
+        return ((buffer[offset]&0xFF) << 16) | ((buffer[offset+1]&0xFF) << 8) | (buffer[offset+2]&0xFF);
+    }
 
     /**
      * Définit la table maîtresse du fichier. Cette méthode est appelée automatiquement
@@ -529,64 +503,71 @@ final class Parser
      * @param  table Numéro de la table maitresse.
      * @throws IIOException si la table spécifiée n'est pas supportée.
      */
-    protected void setMasterTable(final int table) throws IIOException
-    {if (table!=0) throw new IIOException("Unsupported master table: "+table);} // TODO: localize
+    protected void setMasterTable(final int table) throws IIOException {
+        if (table != 0) {
+            throw new IIOException("Unsupported master table: "+table); // TODO: localize
+        }
+    }
 
     /**
      * Retourne la date déclarée dans le fichier.
      */
-    public Date getDate()
-    {return new Date(date);}
+    public Date getDate() {
+        return new Date(date);
+    }
 
     /**
      * Retourne la catégorie des données du fichier.
      * Si la catégorie n'est pas connue, alors cette
      * méthode retourne <code>null</code>.
      */
-    public String getCategory()
-    {return tableA.get(new Byte(category));}
+    public String getCategory() {
+        return tableA.get(new Byte(category));
+    }
 
     /**
      * Indique si les données sont des observations.
      * La valeur <code>false</code> signifie que les
      * données proviennent par exemple d'une prédiction.
      */
-    public boolean isObservation()
-    {return observation;}
+    public boolean isObservation() {
+        return observation;
+    }
 
     /**
      * Indique si les données sont compressées.
      */
-    public boolean isCompressed()
-    {return compressed;}
+    public boolean isCompressed() {
+        return compressed;
+    }
 
     /**
      * Retourne une représentation de ce décodeur
      * sous forme de chaîne de caractères.
      */
-    public String toString()
-    {return "Parser[version "+version+", "+length+" bytes]";}
+    public String toString() {
+        return "Parser[version "+version+", "+length+" bytes]";
+    }
 
     /**
      *
      */
-    public static void main(final String[] args) throws IOException
-    {
+    public static void main(final String[] args) throws IOException {
         final String filename = (args.length!=0) ? args[0] : "E:/Martin Desruisseaux/Données/Bufr/58.8X.trt1509.17.F";
         final ImageInputStream input=new javax.imageio.stream.FileImageInputStream(new java.io.File(filename));
 //      input.skipBytes(32);
         final Parser parser=new Parser();
         parser.open(input);
-        if (true)
-        {
+        if (true) {
             System.out.println(parser);
             System.out.println(parser.getDate());
             System.out.println(parser.getCategory());
             System.out.println(parser.isObservation());
             System.out.println(parser.isCompressed());
             System.out.println(parser.subsetCount);
-            for (int i=0; i<parser.descriptors.length; i++)
+            for (int i=0; i<parser.descriptors.length; i++) {
                 System.out.println(parser.descriptors[i]);
+            }
         }
 //      parser.read(input);
         input.close();

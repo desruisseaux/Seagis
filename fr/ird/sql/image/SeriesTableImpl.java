@@ -25,30 +25,28 @@
  */
 package fr.ird.sql.image;
 
-// Base de données
-import fr.ird.sql.Entry;
+// J2SE
+import java.util.Locale;
+import java.util.List;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.DefaultTreeModel;
 
-// Arborescence
+// Geotools
+import org.geotools.cv.SampleDimension;
 import org.geotools.gui.swing.tree.TreeNode;
 import org.geotools.gui.swing.tree.MutableTreeNode;
 import org.geotools.gui.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
 
-// Ensembles
-import java.util.List;
-import java.util.Arrays;
-import java.util.ArrayList;
-
-// Divers et resources
-import java.util.Locale;
-import java.io.Serializable;
-import org.geotools.cv.SampleDimension;
+// Seagis
+import fr.ird.sql.Entry;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 

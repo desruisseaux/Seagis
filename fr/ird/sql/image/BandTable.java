@@ -145,10 +145,10 @@ final class BandTable extends Table {
                                                         new Integer(lastBand), new Integer(band)));
             }
             lastBand = band;
-            mappers.add((SampleDimension)pool.intern(mapper));
+            mappers.add((SampleDimension)pool.canonicalize(mapper));
         }
         result.close();
-        return mappers.toArray(new SampleDimension[mappers.size()]);
+        return (SampleDimension[])mappers.toArray(new SampleDimension[mappers.size()]);
     }
 
     /**

@@ -36,8 +36,7 @@ import org.geotools.resources.XMath;
  *
  *           <code>(b+reference)/(10^scale)</code>.
  */
-final class Descriptor implements Serializable
-{
+final class Descriptor implements Serializable {
     /** Nom du paramètre.             */ public final String   name;
     /** Unités.                       */ public final String  units;
     /** Puissance de 10 de l'échelle. */ public final int     scale;
@@ -47,7 +46,8 @@ final class Descriptor implements Serializable
     /**
      * Construit un paramètre.
      */
-    public Descriptor(final String name, final String units, final int scale, final int reference, final int width)
+    public Descriptor(final String name, final String units, final int scale,
+                      final int reference, final int width)
     {
         this.name      = name .trim();
         this.units     = units.trim();
@@ -60,9 +60,10 @@ final class Descriptor implements Serializable
      * Transforme une valeur géophysique en valeur codée dans le fichier BUFR.
      * Les valeurs {@link Float#NaN} sont codées comme valeurs manquantes.
      */
-    public long encore(final float value)
-    {
-        if (Float.isNaN(value)) return (1L << width)-1;
+    public long encode(final float value) {
+        if (Float.isNaN(value)) {
+            return (1L << width)-1;
+        }
         return Math.round(value * XMath.pow10(scale)) - reference;
     }
 
@@ -70,9 +71,10 @@ final class Descriptor implements Serializable
      * Transforme une valeur codée dans le fichier BUFR en valeur géophysique.
      * Les valeurs manquantes sont retournées comme valeur {@link Float#NaN}.
      */
-    public float decode(final long value)
-    {
-        if (value == (1L << width)-1) return Float.NaN;
+    public float decode(final long value) {
+        if (value == (1L << width)-1) {
+            return Float.NaN;
+        }
         return (float) ((value + reference) / XMath.pow10(scale));
     }
 
@@ -81,9 +83,10 @@ final class Descriptor implements Serializable
      * <code>scale</code> et <code>width</code> ont été ajoutées aux champs du même
      * nom.
      */
-    final Descriptor rescale(final int scale, final int width)
-    {
-        if (scale==0 && width==0) return this;
+    final Descriptor rescale(final int scale, final int width) {
+        if (scale==0 && width==0) {
+            return this;
+        }
         return new Descriptor(name, units, this.scale+scale, reference, this.width+width);
     }
 
@@ -91,6 +94,7 @@ final class Descriptor implements Serializable
      * Retourne une chaîne de caractère
      * représentant ce paramètre.
      */
-    public String toString()
-    {return name.toLowerCase()+" ("+units+')';}
+    public String toString() {
+        return name.toLowerCase()+" ("+units+')';
+    }
 }

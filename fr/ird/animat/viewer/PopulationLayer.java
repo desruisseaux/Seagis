@@ -129,7 +129,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * Les observations pour chaque animal. Ces observations seront obtenues avec
      * {@link Animal#getObservations} la première fois où elles seront demandées.
      */
-    private transient Map<Parameter,Observation>[] observations;
+    private transient Map<Parameter,Observation>[=] observations;
 
     /**
      * La date des données à afficher. Cette date sera constamment
@@ -220,8 +220,8 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     private void refresh(final Population population) throws RemoteException {
         synchronized (getTreeLock()) {
             assert population.equals(this.population) : population;
-            final Collection<Animal> col = population.getAnimals();
-            animals = col.toArray(new Animal[col.size()]);
+            final Collection<+Animal> col = population.getAnimals();
+            animals = (Animal[])col.toArray(new Animal[col.size()]);
             observations = new Map<Parameter,Observation>[animals.length];
             bounds = population.getSpatialBounds();
             setPreferredArea((bounds!=null) ? bounds.getBounds2D() : null);
@@ -307,8 +307,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
                     //       à travers le réseau chaque fois que 'getObservations' est appelée.
                     final Map<Parameter,Observation> observations = getObservations(i);
                     if (observations != null) {
-                        for (final java.util.Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
-                            final Map.Entry<Parameter,Observation> entry = it.next();
+                        for (final Map.Entry<Parameter,Observation> entry : observations.entrySet()) {
                             final Parameter param = entry.getKey();
                             final Observation obs = entry.getValue();
                             Point2D location = obs.location();

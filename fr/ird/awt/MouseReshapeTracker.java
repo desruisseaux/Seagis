@@ -137,8 +137,7 @@ import org.geotools.gui.swing.ExceptionMonitor;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-class MouseReshapeTracker extends MouseInputAdapter implements Shape
-{
+class MouseReshapeTracker extends MouseInputAdapter implements Shape {
     /**
      * Minimum width the rectangle should have, in pixels.
      */
@@ -302,8 +301,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
     /**
      * Cursor codes corresponding to a given {@link adjustingSides} value.
      */
-    private static final int[] CURSORS = new int[]
-    {
+    private static final int[] CURSORS = new int[] {
         Cursor.     MOVE_CURSOR, // 0000 =       |      |       |
         Cursor. N_RESIZE_CURSOR, // 0001 =       |      |       | NORTH
         Cursor. S_RESIZE_CURSOR, // 0010 =       |      | SOUTH |
@@ -325,8 +323,7 @@ class MouseReshapeTracker extends MouseInputAdapter implements Shape
      * not correspond to the binary combinations of the four
      * cardinal corners.
      */
-    private static final int[] SWING_TO_CUSTOM=new int[]
-    {
+    private static final int[] SWING_TO_CUSTOM = new int[] {
         SwingConstants.NORTH,      NORTH,
         SwingConstants.SOUTH,      SOUTH,
         SwingConstants.EAST,       EAST,

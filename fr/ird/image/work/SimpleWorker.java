@@ -25,15 +25,13 @@
  */
 package fr.ird.image.work;
 
-// Images
-import fr.ird.sql.image.ImageEntry;
-
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
 
-// Divers
+// Seagis
 import fr.ird.util.XArray;
+import fr.ird.sql.image.ImageEntry;
 
 
 /**
@@ -57,16 +55,16 @@ import fr.ird.util.XArray;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class SimpleWorker extends Worker
-{
+public abstract class SimpleWorker extends Worker {
     /**
      * Construit un objet qui effectuera des opérations sur une série
      * d'images. Le type d'opération dépendra de la classe dérivée.
      *
      * @param name Nom de l'opération.
      */
-    public SimpleWorker(final String name)
-    {super(name);}
+    public SimpleWorker(final String name) {
+        super(name);
+    }
 
     /**
      * Démarre le travail sur une série d'images. L'implémentation par défaut
@@ -81,10 +79,8 @@ public abstract class SimpleWorker extends Worker
      *
      * @see #stop()
      */
-    protected Result run(ImageEntry[] entries, final Result ignore)
-    {
-        while (entries.length!=0)
-        {
+    protected Result run(ImageEntry[] entries, final Result ignore) {
+        while (entries.length != 0) {
             final int index = (int)(entries.length*Math.random());
             if (index<0 || index>=entries.length) continue;
             final ImageEntry entry = entries[index];
@@ -94,17 +90,16 @@ public abstract class SimpleWorker extends Worker
             Result result=null;
             String operation="run";
             final File outputFile=getOutputFile(entry);
-            try
-            {
+            try {
                 operation="load"; if (outputFile.exists()) result=Result.load(outputFile);
                 operation="run";  result=run(entry, result);
                 operation="save"; if (result!=null) result.save(outputFile);
-            }
-            catch (IOException exception)
-            {
+            } catch (IOException exception) {
                 exceptionOccurred(operation, exception);
             }
-            if (isStopped()) break;
+            if (isStopped()) {
+                break;
+            }
         }
         return null;
     }
@@ -155,15 +150,12 @@ public abstract class SimpleWorker extends Worker
      * sans être obligé de tout recommencer la prochaine fois que l'on redémarrera
      * le calcul.
      */
-    protected void save(final ImageEntry entry, final Result result)
-    {
-        try
-        {
-            if (result!=null)
+    protected void save(final ImageEntry entry, final Result result) {
+        try {
+            if (result != null) {
                 result.save(getOutputFile(entry));
-        }
-        catch (IOException exception)
-        {
+            }
+        } catch (IOException exception) {
             exceptionOccurred("save", exception);
         }
     }

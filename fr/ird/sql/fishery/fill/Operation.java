@@ -25,24 +25,18 @@
  */
 package fr.ird.sql.fishery.fill;
 
-// Géométrie
+// J2SE et JAI
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-
-// Journal
+import java.sql.SQLException;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-
-// Divers
-import java.util.Date;
-import java.sql.SQLException;
-
-// JAI
 import javax.media.jai.ParameterList;
 
-// Geotools dependencies
-import org.geotools.gp.GridCoverageProcessor; // For javadoc
+// Geotools
+import org.geotools.gp.GridCoverageProcessor; // Pour javadoc
 import org.geotools.cv.PointOutsideCoverageException;
 
 // Base de données des pêches

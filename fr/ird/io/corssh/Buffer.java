@@ -37,13 +37,17 @@ import java.text.DateFormat;
 import java.text.FieldPosition;
 
 // Divers...
-import java.util.ConcurrentModificationException;
-import java.io.Serializable;
 import java.util.Arrays;
+import java.io.Serializable;
+import java.util.ConcurrentModificationException;
+
+// Geotools
+import org.geotools.resources.Utilities;
+
+// Seagis
 import fr.ird.util.XArray;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.resources.Utilities;
 
 
 /**
@@ -72,8 +76,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Buffer implements Serializable
-{
+public final class Buffer implements Serializable {
     // TODO: Cette classe vérifie si les dates sont en ordre strictement croissant.
     //       Si on permet d'intercaller des données de plusieurs satellites, il faudra
     //       assouplir la vérification pour se contenter d'un ordre croissant.
@@ -320,8 +323,7 @@ public final class Buffer implements Serializable
      *                       sera utilisée pour déterminer si une coordonnée (<i>latitude</i>,<i>longitude</i>)
      *                       est à l'intérieur de la région géographique.
      */
-    public Buffer(final Parser parser, final Shape geographicArea)
-    {
+    public Buffer(final Parser parser, final Shape geographicArea) {
         this.parser         = parser;
         this.geographicArea = geographicArea;
         final Rectangle2D areaBounds = geographicArea.getBounds2D();
@@ -344,8 +346,9 @@ public final class Buffer implements Serializable
      * @throws IOException Si un problème est survenu lors de la lecture, ou si les
      *         dates lues dans le fichier ne sont pas en ordre strictement croissant.
      */
-    public int setTimeRange(final Date startTime, final Date endTime) throws IOException
-    {return setTimeRange(startTime, endTime, Integer.MAX_VALUE);}
+    public int setTimeRange(final Date startTime, final Date endTime) throws IOException {
+        return setTimeRange(startTime, endTime, Integer.MAX_VALUE);
+    }
 
     /**
      * Spécifie la plage de temps des données à charger. Seules les données comprises dans la région
@@ -364,20 +367,19 @@ public final class Buffer implements Serializable
      * @throws IOException Si un problème est survenu lors de la lecture, ou si les
      *         dates lues dans le fichier ne sont pas en ordre strictement croissant.
      */
-    public synchronized int setTimeRange(final Date startTime, final Date endTime, final int maxRecordCount) throws IOException
+    public synchronized int setTimeRange(final Date startTime, final Date endTime,
+                                         final int maxRecordCount) throws IOException
     {
         modification++; // Must be first.
         final DateFormat  dateFormat = Parser.getDateTimeInstance();
         final StringBuffer logBuffer = new StringBuffer();
-
         Arrays.fill(index, null); indexValid=false;
         final Shape geographicArea = this.geographicArea;
         final long startTimeMillis = startTime.getTime();
         final long   endTimeMillis =   endTime.getTime();
         int          stopCondition =   ENDTIME_REACHED;
         int[] data=this.data;
-        if (recordCount!=0)
-        {
+        if (recordCount != 0) {
             /*
              * Repère le début des données qui existent déjà. Si les données demandées par l'utilisateur
              * commencent à ou après la date du premier enregistrement en mémoire, on peut recopier au
@@ -386,18 +388,15 @@ public final class Buffer implements Serializable
              */
             final int oldRecordCount=recordCount;
             final int index=search(startTimeMillis);
-            if (index<recordCount && getMillis(data, index*RECORD_LENGTH)>=startTimeMillis)
-            {
+            if (index<recordCount && getMillis(data, index*RECORD_LENGTH)>=startTimeMillis) {
                 final int copyCount = recordCount-index;
                 System.arraycopy(data, index*RECORD_LENGTH, data, 0, copyCount*RECORD_LENGTH);
                 recordCount = copyCount;
                 recordCount = search(endTimeMillis);
-                if (maxRecordCount < recordCount)
-                {
+                if (maxRecordCount < recordCount) {
                     recordCount   = maxRecordCount;
                     stopCondition = MAXRECORDS_REACHED;
                 }
-
                 // En cas de bug, vaux mieux avoir des 0 que des fausses données.
                 Arrays.fill(data, copyCount*RECORD_LENGTH, data.length, 0);
                 assert(isOrdered());
@@ -406,8 +405,7 @@ public final class Buffer implements Serializable
                 logBuffer.append(Resources.format(ResourceKeys.KEEP_DATA_$3, dateFormat.format(getStartTime()),
                                                   dateFormat.format(getEndTime()),
                                                   new Double((double)recordCount/(double)oldRecordCount)));
-                if (recordCount < copyCount)
-                {
+                if (recordCount < copyCount) {
                     // L'utilisateur a rapproché la date de fin.
                     // Il est inutile de procéder à une lecture,
                     // mais la position de 'parser' ne sera plus
@@ -415,18 +413,18 @@ public final class Buffer implements Serializable
                     parserPositioned = false;
                     log("setTimeRange", logBuffer.toString());
                     return stopCondition;
+                } else {
+                    logBuffer.append("; ");
                 }
-                else logBuffer.append("; ");
-            }
-            else
-            {
+            } else {
                 // L'utilisateur a demandé une date antérieure à celle de
                 // la première donnée en mémoire. Il faudra tout relire.
                 recordCount      = 0;
                 parserPositioned = false;
             }
+        } else {
+            parserPositioned = false;
         }
-        else parserPositioned=false;
         /*
          * Date du dernier enregistrement. Cette information servira initialement à positionner
          * le flot après la dernière donnée en mémoire. Elle servira ensuite à vérifier que les
@@ -438,54 +436,46 @@ public final class Buffer implements Serializable
         long       lastTime = (recordCount!=0) ? getMillis(data, (recordCount-1)*RECORD_LENGTH) : startTimeMillis-1;
         long      firstTime = lastTime;
         final Parser parser = this.parser;
-        if (parser.isBlank() || !parserPositioned)
-        {
+        if (parser.isBlank() || !parserPositioned) {
             parser.seek(new Date(lastTime+1));
             parserPositioned = parser.nextRecord();
         }
-        if (parserPositioned)
-        {
-            firstTime=parser.getTime();
-            assert(firstTime!=Long.MIN_VALUE);
-            do // while (parser.nextRecord())
-            {
-                final long time=parser.getTime();
-                assert(time!=Long.MIN_VALUE);
-                if (time>=endTimeMillis)
-                {
+        if (parserPositioned) {
+            firstTime = parser.getTime();
+            assert firstTime!=Long.MIN_VALUE;
+            do { // while (parser.nextRecord())
+                final long time = parser.getTime();
+                assert time!=Long.MIN_VALUE;
+                if (time >= endTimeMillis) {
                     stopCondition = ENDTIME_REACHED;
                     break;
                 }
-                if (recordCount>=maxRecordCount)
-                {
+                if (recordCount >= maxRecordCount) {
                     stopCondition = MAXRECORDS_REACHED;
                     break;
                 }
-                if (time<lastTime) // Accept identical time
-                {
+                if (time < lastTime) { // Accept identical time
                     throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_NOT_INCREASING));
                 }
                 lastTime = time;
                 final int longitude = parser.getField(Parser.LONGITUDE); if (longitude==Parser.LONGITUDE_OVER_LAND) continue;
                 final int latitude  = parser.getField(Parser.LATITUDE);
-                if (geographicArea.contains(longitude/Parser.DEGREES_TO_INT, latitude/Parser.DEGREES_TO_INT))
-                {
+                if (geographicArea.contains(longitude/Parser.DEGREES_TO_INT, latitude/Parser.DEGREES_TO_INT)) {
                     /*
                      * Copie en mémoire (dans le tableau {@link #data}) les informations qui nous
                      * intéressent de l'enregistrement courant de l'interpréteur <code>parser</code>.
                      */
                     final int index  = recordCount * RECORD_LENGTH;
                     final int length = index       + RECORD_LENGTH;
-                    if (length>data.length)
-                    {
-                        if (maxRecordCount==Integer.MAX_VALUE || data.length!=0)
-                        {
+                    if (length > data.length) {
+                        if (maxRecordCount==Integer.MAX_VALUE || data.length!=0) {
                             final int minCapacity = Math.max(data.length+MIN_INCREASE, length);
                             final int maxCapacity = Math.min(data.length+MAX_INCREASE, Math.min(maxRecordCount, Integer.MAX_VALUE/RECORD_LENGTH)*RECORD_LENGTH);
                             final int    capacity = Math.max(minCapacity, Math.min(maxCapacity, 2*data.length));
                             data = resize(capacity);
+                        } else {
+                            data = resize(maxRecordCount);
                         }
-                        else data = resize(maxRecordCount);
                     }
                     data[index +  LATITUDE] = latitude;
                     data[index + LONGITUDE] = longitude;
@@ -493,7 +483,7 @@ public final class Buffer implements Serializable
                     data[index +   DATELOW] = (int) (time       );
                     data[index +     VALUE] = getField(parser);
                     recordCount++;
-                    assert(getMillis(data, index)==time);
+                    assert getMillis(data, index) == time : time;
                 }
             }
             while (parser.nextRecord());
@@ -503,16 +493,12 @@ public final class Buffer implements Serializable
          */
         final int capacity = (recordCount*RECORD_LENGTH) + (MIN_INCREASE*4);
         if (capacity<data.length) data = resize(capacity);
-        assert(isOrdered());
-
-        if (firstTime < lastTime)
-        {
+        assert isOrdered();
+        if (firstTime < lastTime) {
             logBuffer.append(Resources.format(ResourceKeys.LOADING_$2,
                                               dateFormat.format(new Date(firstTime)),
                                               dateFormat.format(new Date( lastTime))));
-        }
-        else if (logBuffer.length()==0)
-        {
+        } else if (logBuffer.length()==0) {
             logBuffer.append(Resources.format(ResourceKeys.ERROR_NO_DATA_BETWEEN_$2,
                                               dateFormat.format(startTime),
                                               dateFormat.format(  endTime)));
@@ -527,11 +513,11 @@ public final class Buffer implements Serializable
      * Cette méthode va aussi envoyer un enregistrement au journal pour informer de cette
      * opération. Le nouveau tableau {@link #data} est retourné par commodité.
      */
-    private int[] resize(final int capacity)
-    {
+    private int[] resize(final int capacity) {
         final int oldCapacity = data.length;
         data = XArray.resize(data, capacity);
-        log("setTimeRange", Resources.format(ResourceKeys.RESIZE_$2, new Integer(oldCapacity/1024), new Integer(capacity/1024)));
+        log("setTimeRange", Resources.format(ResourceKeys.RESIZE_$2,
+            new Integer(oldCapacity/1024), new Integer(capacity/1024)));
         return data;
     }
 
@@ -541,22 +527,23 @@ public final class Buffer implements Serializable
      * @param method  Nom de la méthode qui appelle celle-ci.
      * @param message Message à archiver.
      */
-    private void log(final String method, final String message)
-    {Parser.log(getClass().getName(), method, message);}
+    private void log(final String method, final String message) {
+        Parser.log(getClass().getName(), method, message);
+    }
 
     /**
      * Indique si les enregistrements de {@link #data} sont en ordre croissant
      * de dates. En général, c'est toujours le cas. Cette méthode ne sera qu'à
      * vérifier si un bug ne se serait pas introduit dans cette classe...
      */
-    private boolean isOrdered()
-    {
-        long dateCheck=Long.MAX_VALUE;
-        final int[] data=this.data;
-        for (int i=recordCount*RECORD_LENGTH; (i-=RECORD_LENGTH)>=0;)
-        {
+    private boolean isOrdered() {
+        long dateCheck = Long.MAX_VALUE;
+        final int[] data = this.data;
+        for (int i=recordCount*RECORD_LENGTH; (i-=RECORD_LENGTH)>=0;) {
             final long time = getMillis(data,i);
-            if (time > dateCheck) return false; // Accept identical time
+            if (time > dateCheck) { // Accept identical time
+                return false;
+            }
             dateCheck = time;
         }
         return true;
@@ -567,12 +554,12 @@ public final class Buffer implements Serializable
      * sont en ordre croissant. Cette vérification sert
      * dans des instructions <code>assert</code>.
      */
-    private static boolean isOrdered(final int[] data)
-    {
+    private static boolean isOrdered(final int[] data) {
         int z = Integer.MAX_VALUE;
-        for (int i=data.length; --i>=0;)
-        {
-            if (data[i] >= z) return false;
+        for (int i=data.length; --i>=0;) {
+            if (data[i] >= z) {
+                return false;
+            }
             z=data[i];
         }
         return true;
@@ -583,27 +570,17 @@ public final class Buffer implements Serializable
      * donnée ne se trouve présentement en mémoire, alors cette méthode
      * retourne <code>null</code>.
      */
-    public synchronized Date getStartTime()
-    {return (recordCount!=0) ? getTime(0) : null;}
+    public synchronized Date getStartTime() {
+        return (recordCount!=0) ? getTime(0) : null;
+    }
 
     /**
      * Retourne la date du dernier enregistrement en mémoire. Si aucune
      * donnée ne se trouve présentement en mémoire, alors cette méthode
      * retourne <code>null</code>.
      */
-    public synchronized Date getEndTime()
-    {return (recordCount!=0) ? getTime(recordCount-1) : null;}
-
-    /**
-     * Retourne la date de l'enregistrement spécifié.
-     *
-     * @param n Numéro de l'enregistrement, de 0 jusqu'à
-     *          <code>{@link #getRecordCount}-1</code>.
-     */
-    public synchronized Date getTime(final int n)
-    {
-        if (n>=0 && n<recordCount) return new Date(getMillis(data, n*RECORD_LENGTH));
-        else throw new ArrayIndexOutOfBoundsException(n);
+    public synchronized Date getEndTime() {
+        return (recordCount!=0) ? getTime(recordCount-1) : null;
     }
 
     /**
@@ -612,8 +589,23 @@ public final class Buffer implements Serializable
      * @param n Numéro de l'enregistrement, de 0 jusqu'à
      *          <code>{@link #getRecordCount}-1</code>.
      */
-    final long getMillis(final int n) // TODO: méthode temporaire pour accélérer SemiVariance
-    {return getMillis(data, n*RECORD_LENGTH);}
+    public synchronized Date getTime(final int n) {
+        if (n>=0 && n<recordCount) {
+            return new Date(getMillis(data, n*RECORD_LENGTH));
+        } else {
+            throw new ArrayIndexOutOfBoundsException(n);
+        }
+    }
+
+    /**
+     * Retourne la date de l'enregistrement spécifié.
+     *
+     * @param n Numéro de l'enregistrement, de 0 jusqu'à
+     *          <code>{@link #getRecordCount}-1</code>.
+     */
+    final long getMillis(final int n) { // TODO: méthode temporaire pour accélérer SemiVariance
+        return getMillis(data, n*RECORD_LENGTH);
+    }
 
     /**
      * Retourne la date d'un enregistrement, en nombre de
@@ -623,9 +615,8 @@ public final class Buffer implements Serializable
      * @param index Index de l'enregistrement dont on veut la date. Cet
      *        index doit avoir été déjà multiplié par {@link #RECORD_LENGTH}.
      */
-    private static long getMillis(final int[] data, final int index)
-    {
-        assert((index % RECORD_LENGTH)==0);
+    private static long getMillis(final int[] data, final int index) {
+        assert (index % RECORD_LENGTH)==0 : index;
         return (((long)data[index+DATEHI ]) << 32) |
                (((long)data[index+DATELOW]) & 0xFFFFFFFFL);
     }
@@ -639,13 +630,12 @@ public final class Buffer implements Serializable
      * @param n Numéro de l'enregistrement, de 0 jusqu'à
      *          <code>{@link #getRecordCount}-1</code>.
      */
-    public synchronized float getHeight(final int n)
-    {
-        if (n>=0 && n<recordCount)
-        {
+    public synchronized float getHeight(final int n) {
+        if (n>=0 && n<recordCount) {
             return (float) (data[n*RECORD_LENGTH+VALUE] / Parser.METRES_TO_INT);
+        } else {
+            throw new ArrayIndexOutOfBoundsException(n);
         }
-        else throw new ArrayIndexOutOfBoundsException(n);
     }
 
     /**
@@ -657,8 +647,9 @@ public final class Buffer implements Serializable
      * @param n Numéro de l'enregistrement, de 0 jusqu'à
      *          <code>{@link #getRecordCount}-1</code>.
      */
-    final int getField(final int n) // TODO: méthode temporaire pour accélérer SemiVariance
-    {return data[n*RECORD_LENGTH+VALUE];}
+    final int getField(final int n) { // TODO: méthode temporaire pour accélérer SemiVariance
+        return data[n*RECORD_LENGTH+VALUE];
+    }
 
     /**
      * Retourne les coordonnées de l'enregistrement spécifié.
@@ -666,15 +657,15 @@ public final class Buffer implements Serializable
      * @param n Numéro de l'enregistrement, de 0 jusqu'à
      *          <code>{@link #getRecordCount}-1</code>.
      */
-    public synchronized Point2D getPoint(int n)
-    {
-        if (n>=0 && n<recordCount)
-        {
+    public synchronized Point2D getPoint(int n) {
+        if (n>=0 && n<recordCount) {
             n *= RECORD_LENGTH;
-            final int[] data=this.data;
-            return new Point2D.Double(data[n+LONGITUDE]/Parser.DEGREES_TO_INT, data[n+LATITUDE]/Parser.DEGREES_TO_INT);
+            final int[] data = this.data;
+            return new Point2D.Double(data[n+LONGITUDE]/Parser.DEGREES_TO_INT,
+                                      data[n+ LATITUDE]/Parser.DEGREES_TO_INT);
+        } else {
+            throw new ArrayIndexOutOfBoundsException(n);
         }
-        else throw new ArrayIndexOutOfBoundsException(n);
     }
 
     /**
@@ -682,15 +673,14 @@ public final class Buffer implements Serializable
      * ce nombre doit toujours être strictement égal à {@link #recordCount}
      * (sauf si l'index n'a pas encore été construit).
      */
-    private int getIndexCount()
-    {
+    private int getIndexCount() {
         int count = 0;
         final int[][] index = this.index;
-        for (int i=index.length; --i>=0;)
-        {
+        for (int i=index.length; --i>=0;) {
             final int[] cell=index[i];
-            if (cell!=null)
+            if (cell != null) {
                 count += cell.length;
+            }
         }
         return count;
     }
@@ -700,8 +690,7 @@ public final class Buffer implements Serializable
      * index remplacera complètement l'ancien. Cette méthode doit être appelée
      * chaque fois que les données en mémoire ont changées.
      */
-    private void buildIndex()
-    {
+    private void buildIndex() {
         final int[][] index = this.index;
         final int[]    data = this.data;
         final int     count = this.recordCount * RECORD_LENGTH;
@@ -710,21 +699,20 @@ public final class Buffer implements Serializable
         final int     width = this.width;
         final int    height = this.height;
         Arrays.fill(index, null); // Normalement déjà fait.
-        for (int i=0; i<count; i+=RECORD_LENGTH) // On doit utiliser l'ordre croissant.
-        {
+        for (int i=0; i<count; i+=RECORD_LENGTH) { // On doit utiliser l'ordre croissant.
             final int k = Math.max(0, Math.min(   ROW_COUNT-1, (data[i+ LATITUDE]-ymin)/height))*COLUMN_COUNT +
                           Math.max(0, Math.min(COLUMN_COUNT-1, (data[i+LONGITUDE]-xmin)/width));
             int[] cell=index[k];
-            if (cell!=null)
-            {
+            if (cell != null) {
                 final int length = cell.length;
                 cell = XArray.resize(cell, length+1);
                 cell[length] = i; // Conserve l'ordre croissant.
+            } else {
+                cell = new int[] {i};
             }
-            else cell=new int[] {i};
             index[k] = cell;
         }
-        assert(getIndexCount()==recordCount);
+        assert getIndexCount()==recordCount : recordCount;
         indexValid = true;
     }
 
@@ -743,16 +731,19 @@ public final class Buffer implements Serializable
      *                     ou <code>false</code> pour les balayer dans n'importe quel ordre.
      * @return Iterateur balayant les enregistrements compris dans la région <code>shape</code>.
      */
-    private Iterator getPointsInside(final Shape shape, final Rectangle2D bounds, int lowerRecord, int upperRecord, final boolean sorted)
+    private Iterator getPointsInside(final Shape shape, final Rectangle2D bounds,
+                                     int lowerRecord, int upperRecord, final boolean sorted)
     {
         lowerRecord *= RECORD_LENGTH;
         upperRecord *= RECORD_LENGTH;
-        if (!indexValid) buildIndex();
-
+        if (!indexValid) {
+            buildIndex();
+        }
         int count=0;
         int[] indexInside = this.indexInside;
-        if (indexInside==null) this.indexInside = indexInside = new int[64];
-
+        if (indexInside == null) {
+            this.indexInside = indexInside = new int[64];
+        }
         final int[]        data = this.data;
         final int[][]     index = this.index;
         final boolean delimited = (lowerRecord>0 || upperRecord<recordCount);
@@ -760,33 +751,32 @@ public final class Buffer implements Serializable
         final int      maxXCell = Math.max(0, Math.min(COLUMN_COUNT-1, ((int)Math.floor(bounds.getMaxX()*Parser.DEGREES_TO_INT)-xmin) / width ));
         final int      minYCell = Math.max(0, Math.min(   ROW_COUNT-1, ((int)Math.floor(bounds.getMinY()*Parser.DEGREES_TO_INT)-ymin) / height));
         final int      maxYCell = Math.max(0, Math.min(   ROW_COUNT-1, ((int)Math.floor(bounds.getMaxY()*Parser.DEGREES_TO_INT)-ymin) / height));
-
-        for (int yCell=minYCell; yCell<=maxYCell; yCell++)
-        {
+        for (int yCell=minYCell; yCell<=maxYCell; yCell++) {
             final int row = yCell*COLUMN_COUNT;
-            for (int xCell=minXCell; xCell<=maxXCell; xCell++)
-            {
+            for (int xCell=minXCell; xCell<=maxXCell; xCell++) {
                 final int[] cell = index[row+xCell];
-                if (cell != null)
-                {
+                if (cell != null) {
                     assert(isOrdered(cell));
                     int i;
-                    if (delimited)
-                    {
+                    if (delimited) {
                         i = Arrays.binarySearch(cell, lowerRecord);
                         if (i<0) i = ~i;
+                    } else {
+                        i=0;
                     }
-                    else i=0;
-                    while (i<cell.length)
-                    {
+                    while (i<cell.length) {
                         final int recordPos = cell[i++];
-                        assert((recordPos % RECORD_LENGTH)==0);
-                        assert( recordPos >= lowerRecord);
-                        if (recordPos >= upperRecord) break;
+                        assert (recordPos % RECORD_LENGTH)==0 : recordPos;
+                        assert  recordPos >= lowerRecord : lowerRecord-recordPos;
+                        if (recordPos >= upperRecord) {
+                            break;
+                        }
                         if (shape.contains(data[recordPos+LONGITUDE]/Parser.DEGREES_TO_INT,
                                            data[recordPos+ LATITUDE]/Parser.DEGREES_TO_INT))
                         {
-                            if (count >= indexInside.length) this.indexInside = indexInside = XArray.resize(indexInside, count*2);
+                            if (count >= indexInside.length) {
+                                this.indexInside = indexInside = XArray.resize(indexInside, count*2);
+                            }
                             indexInside[count++] = recordPos;
                         }
                     }
@@ -795,10 +785,11 @@ public final class Buffer implements Serializable
         }
         final int[] points=new int[count];
         System.arraycopy(indexInside, 0, points, 0, count);
-        if (sorted) Arrays.sort(indexInside);
+        if (sorted) {
+            Arrays.sort(indexInside);
+        }
         final int mod = modification;
-        return new Iterator()
-        {
+        return new Iterator() {
             private int i   = -1;
             private int pos = -1;
             public boolean  next() {if (++i<points.length) {pos=points[i]; return true;} else return false;}
@@ -807,8 +798,11 @@ public final class Buffer implements Serializable
             public int  getField() {final    int z=data[pos+    VALUE];                       check(); return z;}
             public long  getTime() {final   long t=getMillis(data, pos);                      check(); return t;}
 
-            private final void check() throws ConcurrentModificationException
-            {if (mod!=modification) throw new ConcurrentModificationException();}
+            private final void check() throws ConcurrentModificationException {
+                if (mod != modification) {
+                    throw new ConcurrentModificationException();
+                }
+            }
         };
     }
 
@@ -821,8 +815,9 @@ public final class Buffer implements Serializable
      * @param  shape Région géographique pour laquelle on veut des enregistrements.
      * @return Itérateur balayant les enregistrements compris dans la région <code>shape</code>.
      */
-    public synchronized Iterator getPointsInside(final Shape shape)
-    {return getPointsInside(shape, shape.getBounds2D(), 0, recordCount, false);}
+    public synchronized Iterator getPointsInside(final Shape shape) {
+        return getPointsInside(shape, shape.getBounds2D(), 0, recordCount, false);
+    }
 
     /**
      * Retourne tous les enregistrements qui se trouvent dans la région géographique
@@ -836,8 +831,9 @@ public final class Buffer implements Serializable
      * @return Itérateur balayant les enregistrements compris dans la région <code>shape</code>
      *         et la plage de temps <code>[startTime..endTime]</code>.
      */
-    public synchronized Iterator getPointsInside(final Shape shape, final Date startTime, final Date endTime)
-    {return getPointsInside(shape, shape.getBounds2D(), search(startTime.getTime()), search(endTime.getTime()), false);}
+    public synchronized Iterator getPointsInside(final Shape shape, final Date startTime, final Date endTime) {
+        return getPointsInside(shape, shape.getBounds2D(), search(startTime.getTime()), search(endTime.getTime()), false);
+    }
 
     /**
      * Trouve le numéro de l'enregistrement dont la date est égale ou supérieur à la date spécifiée.
@@ -846,9 +842,8 @@ public final class Buffer implements Serializable
      * avant la première donnée ou après la dernière donnée, respectivement). Si aucune donnée n'est
      * actuellement mémorisée, alors cette méthode retourne 0 (ce qui est cohérent avec les autres cas).
      */
-    public synchronized int search(final Date date)
-    {
-        assert(isOrdered());
+    public synchronized int search(final Date date) {
+        assert isOrdered();
         return search(date.getTime());
     }
 
@@ -861,36 +856,37 @@ public final class Buffer implements Serializable
      * aucune donnée n'est actuellement mémorisée, alors cette méthode retourne 0 (ce qui est cohérent
      * avec les autres cas).
      */
-    private int search(final long date)
-    {
+    private int search(final long date) {
         // Note: placer 'assert(isOrdered())' ici aurait un coût prohibitif.
-        final int[] data=this.data;
+        final int[] data = this.data;
         int index = 0;
         int lower = 0;
         int upper = recordCount-1;
-        while (lower <= upper)
-        {
+        while (lower <= upper) {
             index = (lower + upper) >>> 1;
-            assert(index>=0 && index<recordCount) : index;
+            assert index>=0 && index<recordCount : index;
             final long time=getMillis(data, index*RECORD_LENGTH);
             if (time<date) {lower=index+1; continue;}
             if (time>date) {upper=index-1; continue;}
             // If an exact match has been found,
             // move to the first ocurence.
-            while (index!=0 && getMillis(data, (index-1)*RECORD_LENGTH)==time) index--;
+            while (index!=0 && getMillis(data, (index-1)*RECORD_LENGTH)==time) {
+                index--;
+            }
             return index;
         }
-        assert(lower>=0 && lower<=recordCount);
-        assert(lower == 0           || getMillis(data, (lower-1)*RECORD_LENGTH) < date);
-        assert(lower >= recordCount || getMillis(data, (lower  )*RECORD_LENGTH) > date);
+        assert lower>=0 && lower<=recordCount;
+        assert lower == 0           || getMillis(data, (lower-1)*RECORD_LENGTH) < date;
+        assert lower >= recordCount || getMillis(data, (lower  )*RECORD_LENGTH) > date;
         return lower;
     }
 
     /**
      * Retourne le nombre d'enregistrement présentement en mémoire.
      */
-    public synchronized int getRecordCount()
-    {return recordCount;}
+    public synchronized int getRecordCount() {
+        return recordCount;
+    }
 
     /**
      * Retourne la mesure codée dans l'enregistrement courant de <code>parser</code>.
@@ -903,8 +899,9 @@ public final class Buffer implements Serializable
      * Les classes dérivées peuvent redéfinir cette méthode pour retourner une
      * autre mesure. La mesure retournée doit être exprimée en millimètres.
      */
-    protected int getField(final Parser parser)
-    {return parser.getField(Parser.HEIGHT)-parser.getField(Parser.MEAN);}
+    protected int getField(final Parser parser) {
+        return parser.getField(Parser.HEIGHT)-parser.getField(Parser.MEAN);
+    }
 
     /**
      * Ferme les fichiers qui étaient ouverts
@@ -912,26 +909,25 @@ public final class Buffer implements Serializable
      *
      * @throws IOException si la fermeture a échoué.
      */
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         parser.close();
-        data=new int[0];
+        data = new int[0];
     }
 
     /**
      * Renvoie une chaîne de caractère contenant quelques
      * informations sur l'état de cet objet {@link Buffer}.
      */
-    public synchronized String toString()
-    {
-        final StringBuffer buffer=new StringBuffer(Utilities.getShortClassName(this));
+    public synchronized String toString() {
+        final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(this));
         buffer.append('[');
         buffer.append(recordCount);
         buffer.append(" records");
-        if (recordCount!=0)
-        {
-            final FieldPosition dummy=new FieldPosition(0);
-            if (dateFormat==null) dateFormat=Parser.getDateTimeInstance();
+        if (recordCount != 0) {
+            final FieldPosition dummy = new FieldPosition(0);
+            if (dateFormat == null) {
+                dateFormat=Parser.getDateTimeInstance();
+            }
             buffer.append(" from "); dateFormat.format(getStartTime(), buffer, dummy);
             buffer.append(" to ");   dateFormat.format(  getEndTime(), buffer, dummy);
         }

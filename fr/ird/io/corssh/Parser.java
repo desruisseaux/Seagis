@@ -31,26 +31,26 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.io.OutputStreamWriter;
 
-// Coordonnées spatio-temporelles
+// Divers
 import java.awt.Shape;
 import java.util.Date;
 import java.util.TimeZone;
-import org.geotools.cs.Ellipsoid;
-import org.geotools.cs.DatumType;
-import org.geotools.cs.HorizontalDatum;
-import org.geotools.cs.GeographicCoordinateSystem;
-
-// Journal
+import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 
-// Divers
+// Geotools
 import org.geotools.units.Unit;
-import java.text.DateFormat;
-import java.text.NumberFormat;
-import fr.ird.resources.Resources;
+import org.geotools.cs.Ellipsoid;
+import org.geotools.cs.DatumType;
+import org.geotools.cs.HorizontalDatum;
+import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.resources.Utilities;
+
+// Seagis
+import fr.ird.resources.Resources;
 
 
 /**
@@ -122,8 +122,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public abstract class Parser
-{
+public abstract class Parser {
     /**
      * Journal vers lequel envoyer des informations sur les opérations effectuées.
      * Les opérations répertoriées comprennent par exemple les ouvertures et les
@@ -264,8 +263,8 @@ public abstract class Parser
      * enregistrements du fichiers peuvent être lus par des appels à
      * {@link #nextRecord}.
      */
-    protected Parser()
-    {}
+    protected Parser() {
+    }
 
     /**
      * Positionne le flot au début du premier enregistrement dont la date est égale ou supérieure à la
@@ -374,8 +373,7 @@ public abstract class Parser
      * l'on retourne {@link Long#MIN_VALUE} pour une dat manquante est propre à
      * {@link InterleavedParser}.
      */
-    long getTime()
-    {
+    long getTime() {
         final Date date=getDate();
         return (date!=null) ? date.getTime() : Long.MIN_VALUE;
     }
@@ -461,8 +459,7 @@ public abstract class Parser
     /**
      * Retourne l'objet à utiliser pour lire et écrire des dates.
      */
-    static DateFormat getDateTimeInstance()
-    {
+    static DateFormat getDateTimeInstance() {
         DateFormat dateFormat;
         dateFormat=DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -473,10 +470,8 @@ public abstract class Parser
      * Retourne le système de coordonnées utilisé pour les
      * données altimétriques des satellites Topex/Poseidon.
      */
-    static synchronized GeographicCoordinateSystem getCoordinateSystem()
-    {
-        if (coordinateSystem==null)
-        {
+    static synchronized GeographicCoordinateSystem getCoordinateSystem() {
+        if (coordinateSystem == null) {
             final String name = "Topex/Poseidon";
             final Ellipsoid   ellipsoid = Ellipsoid.createEllipsoid(name, 6378136.3, 6356751.6, Unit.METRE);
             final HorizontalDatum datum = new HorizontalDatum(name, DatumType.GEOCENTRIC, ellipsoid, null);
@@ -492,8 +487,7 @@ public abstract class Parser
      * @param method   Nom de la méthode qui appelle celle-ci.
      * @param message  Message à archiver.
      */
-    static void log(final String classname, final String method, final String message)
-    {
+    static void log(final String classname, final String method, final String message) {
         final LogRecord record = new LogRecord(Level.FINE, message);
         record.setSourceClassName(classname);
         record.setSourceMethodName(method);
@@ -506,8 +500,9 @@ public abstract class Parser
      * @param method  Nom de la méthode qui appelle celle-ci.
      * @param message Message à archiver.
      */
-    final void log(final String method, final String message)
-    {log(getClass().getName(), method, message);}
+    final void log(final String method, final String message) {
+        log(getClass().getName(), method, message);
+    }
 
     /**
      * Affiche les premiers enregistrements d'un fichier CORSSH d'AVISO.
@@ -517,12 +512,10 @@ public abstract class Parser
      * @param n      Nombre maximal de lignes à afficher.
      * @throws IOException si une lecture a échouée.
      */
-    static void main(final Parser parser, final Date start, int n) throws IOException
-    {
+    static void main(final Parser parser, final Date start, int n) throws IOException {
         final Writer out = new OutputStreamWriter(System.out, "Cp850");
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        if (true)
-        {
+        if (true) {
             String text;
             final NumberFormat format = NumberFormat.getNumberInstance();
             final double duration = (parser.getEndTime().getTime()-parser.getStartTime().getTime())/(24*60*60*1000.0);
@@ -530,15 +523,13 @@ public abstract class Parser
             text=format.format(parser.getRecordCount()); out.write("    Record count="); out.write(Utilities.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
             text=format.format(duration);                out.write(" Duration (days)="); out.write(Utilities.spaces(12-text.length())); out.write(text); out.write(lineSeparator);
         }
-        if (start!=null)
-        {
+        if (start != null) {
             parser.seek(start);
             out.write(parser.toString());
             out.write(" (previous)");
             out.write(lineSeparator);
         }
-        while (--n>=0 && parser.nextRecord())
-        {
+        while (--n>=0 && parser.nextRecord()) {
             out.write(parser.toString());
             out.write(lineSeparator);
         }

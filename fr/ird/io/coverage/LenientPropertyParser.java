@@ -25,6 +25,17 @@
  */
 package fr.ird.io.coverage;
 
+// J2SE
+import java.io.File;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import javax.imageio.IIOException;
+import java.util.logging.Logger;
+
 // Geotools dependencies
 import org.geotools.pt.Envelope;
 import org.geotools.cs.Ellipsoid;
@@ -37,19 +48,6 @@ import org.geotools.io.coverage.PropertyParser;
 import org.geotools.io.coverage.PropertyException;
 import org.geotools.io.coverage.MissingPropertyException;
 import org.geotools.units.Unit;
-
-// Time and file parsing
-import java.io.File;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import javax.imageio.IIOException;
-
-// Logging
-import java.util.logging.Logger;
 
 
 /**

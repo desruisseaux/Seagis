@@ -25,14 +25,6 @@
  */
 package fr.ird.seasview.navigator;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-
-// Map components
-import org.geotools.gui.swing.MapPane;
-import org.geotools.renderer.j2d.MouseCoordinateFormat;
-import fr.ird.seasview.layer.control.LayerControl;
-
 // User interface
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -51,10 +43,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import org.geotools.gui.swing.event.ZoomChangeEvent;
-import org.geotools.gui.swing.event.ZoomChangeListener;
 
-// Logger
+// Utilities
+import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,18 +55,20 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 
-// Collections
-import java.util.List;
-import java.util.ArrayList;
+// Geotools dependencies
+import org.geotools.gc.GridCoverage;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.gui.swing.StatusBar;
+import org.geotools.gui.swing.event.ZoomChangeEvent;
+import org.geotools.gui.swing.event.ZoomChangeListener;
+import org.geotools.renderer.j2d.MouseCoordinateFormat;
+import org.geotools.resources.Utilities;
 
-// Database
+// Seagis
 import fr.ird.seasview.DataBase;
-
-// Miscellaneous
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.resources.Utilities;
-import org.geotools.gui.swing.StatusBar;
+import fr.ird.seasview.layer.control.LayerControl;
 
 
 /**
@@ -489,7 +483,7 @@ final class MosaicCanvas extends JPanel {
                     ((ImageCanvas) c).getImages(images);
                 }
             }
-            return images.toArray(new GridCoverage[images.size()]);
+            return (GridCoverage[])images.toArray(new GridCoverage[images.size()]);
         }
     }
 

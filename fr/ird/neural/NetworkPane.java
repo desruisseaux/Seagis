@@ -53,8 +53,7 @@ import java.util.HashMap;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class NetworkPane extends ZoomPane
-{
+public class NetworkPane extends ZoomPane {
     /**
      * The neural network to display.
      */
@@ -122,8 +121,7 @@ public class NetworkPane extends ZoomPane
     /**
      * Construct a pane for the specified neural network.
      */
-    public NetworkPane(final FeedForwardNet network)
-    {
+    public NetworkPane(final FeedForwardNet network) {
         super(TRANSLATE_X | TRANSLATE_Y | UNIFORM_SCALE | RESET);
         this.network = network;
         setBackground(Color.white);
@@ -138,28 +136,25 @@ public class NetworkPane extends ZoomPane
      *
      * @param neurons The neurons network.
      */
-    private void updateWeightAmplitude(final Neuron[][] neurons)
-    {
+    private void updateWeightAmplitude(final Neuron[][] neurons) {
         maxWeight = 0;
-        for (int j=neurons.length; --j>=0;)
-        {
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer = neurons[j];
-            for (int i=layer.length; --i>=0;)
-            {
+            for (int i=layer.length; --i>=0;) {
                 final double[] weights = layer[i].weights;
-                if (weights!=null)
-                {
-                    for (int k=weights.length; --k>=0;)
-                    {
+                if (weights != null) {
+                    for (int k=weights.length; --k>=0;) {
                         final double weight = Math.abs(weights[k]);
-                        if (weight > maxWeight)
+                        if (weight > maxWeight) {
                             maxWeight = weight;
+                        }
                     }
                 }
             }
         }
-        if (!(maxWeight > 0))
+        if (!(maxWeight > 0)) {
             maxWeight = 1;
+        }
     }
 
     /**
@@ -169,20 +164,20 @@ public class NetworkPane extends ZoomPane
      *
      * @param neurons The neurons network.
      */
-    private void updatePositions(final Neuron[][] neurons)
-    {
+    private void updatePositions(final Neuron[][] neurons) {
         nodePositions.clear();
         bounds = null;
-        for (int j=neurons.length; --j>=0;)
-        {
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer = neurons[j];
             final int margin = ((layer.length-1)*horizontalSpace)/-2;
-            for (int i=layer.length; --i>=0;)
-            {
+            for (int i=layer.length; --i>=0;) {
                 final Point position = new Point(margin+i*horizontalSpace, j*verticalSpace);
                 nodePositions.put(layer[i], position);
-                if (bounds!=null) bounds.add(position);
-                else bounds = new Rectangle(position);
+                if (bounds!=null) {
+                    bounds.add(position);
+                } else {
+                    bounds = new Rectangle(position);
+                }
             }
         }
     }
@@ -192,19 +187,15 @@ public class NetworkPane extends ZoomPane
      * connections. The bias is painted in a different color. Connections color may
      * vary according their weight.
      */
-    protected void paintComponent(final Graphics2D graphics)
-    {
+    protected void paintComponent(final Graphics2D graphics) {
         graphics.transform(zoom);
         final Font font = graphics.getFont();
         final FontRenderContext fontContext = graphics.getFontRenderContext();
-
-        final Neuron[][] neurons=network.neurons;
-        boolean isPaintingOutputLayer=true;
-        for (int j=neurons.length; --j>=0;)
-        {
+        final Neuron[][] neurons = network.neurons;
+        boolean isPaintingOutputLayer = true;
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer = neurons[j];
-            for (int i=layer.length; --i>=0;)
-            {
+            for (int i=layer.length; --i>=0;) {
                 final Neuron  neuron = layer[i];
                 final Point position = nodePositions.get(neuron);
                 /*
@@ -212,11 +203,9 @@ public class NetworkPane extends ZoomPane
                  * drawn black, weak connections are drawn white.
                  */
                 final Neuron[] inputs = neuron.inputs;
-                if (inputs!=null)
-                {
+                if (inputs != null) {
                     final double[] weights=neuron.weights;
-                    for (int k=inputs.length; --k>=0;)
-                    {
+                    for (int k=inputs.length; --k>=0;) {
                         final float c = 1-(float)(Math.abs(weights[k]) / maxWeight);
                         final Point inputPos = nodePositions.get(inputs[k]);
                         graphics.setColor(new Color(c,c,c));
@@ -237,19 +226,17 @@ public class NetworkPane extends ZoomPane
                  * Paint labels.
                  */
                 final String label=neuron.label;
-                if (label!=null)
-                {
+                if (label != null) {
                     graphics.setColor(getForeground());
                     final GlyphVector glyphs = font.createGlyphVector(fontContext, label);
                     final Rectangle2D labelBounds = glyphs.getLogicalBounds();
                     final float x = (float)(position.x - labelBounds.getCenterX());
-                    if (isPaintingOutputLayer)
-                    {
+                    if (isPaintingOutputLayer) {
                         graphics.drawGlyphVector(glyphs, x, position.y+textOffset);
                     }
-                    if (j==0)
-                    {
-                        graphics.drawGlyphVector(glyphs, x, position.y-textOffset + (float)labelBounds.getMaxY());
+                    if (j == 0) {
+                        graphics.drawGlyphVector(glyphs, x,
+                                    position.y-textOffset + (float)labelBounds.getMaxY());
                     }
                 }
             }
@@ -261,15 +248,15 @@ public class NetworkPane extends ZoomPane
      * Returns the bounding box of the drawing area, in logical
      * coordinates. This is used internally by {@link ZoomPane}.
      */
-    public Rectangle2D getArea()
-    {
-        if (bounds!=null)
-        {
+    public Rectangle2D getArea() {
+        if (bounds != null) {
             final int width  = (int)shape.getWidth()  + textOffset;
             final int height = (int)shape.getHeight() + textOffset;
-            return new Rectangle(bounds.x-width, bounds.y-height, bounds.width+2*width, bounds.height+2*height);
+            return new Rectangle(bounds.x-width, bounds.y-height,
+                                 bounds.width+2*width, bounds.height+2*height);
+        } else {
+            return bounds;
         }
-        else return bounds;
     }
 
     /**
@@ -277,6 +264,7 @@ public class NetworkPane extends ZoomPane
      * {@link #zoom} de façon à annuler tout
      * zoom.
      */
-    public void reset()
-    {reset(getZoomableBounds(null), false);}
+    public void reset() {
+        reset(getZoomableBounds(null), false);
+    }
 }

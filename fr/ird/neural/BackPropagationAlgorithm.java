@@ -27,12 +27,11 @@ package fr.ird.neural;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-final class BackPropagationAlgorithm extends TrainingAlgorithm
-{
+final class BackPropagationAlgorithm extends TrainingAlgorithm {
     /**
      * Serial number for compatibility with previous versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 453456380523241019L;
 
     /**
      * The learning factor (between 0 and 1) used for network training.
@@ -46,8 +45,8 @@ final class BackPropagationAlgorithm extends TrainingAlgorithm
      * Construct a back propagation algorithm
      * with a default learning factor.
      */
-    public BackPropagationAlgorithm()
-    {}
+    public BackPropagationAlgorithm() {
+    }
 
     /**
      * Adjust the strengths of the connections (weights) between
@@ -57,13 +56,10 @@ final class BackPropagationAlgorithm extends TrainingAlgorithm
      *
      * @param neurons Neural network to have the input weights adjusted for.
      */
-    protected void adjustWeights(final Neuron[][] neurons)
-    {
-        for (int j=neurons.length; --j>=0;)
-        {
+    protected void adjustWeights(final Neuron[][] neurons) {
+        for (int j=neurons.length; --j>=0;) {
             final Neuron[] layer=neurons[j];
-            for (int i=layer.length; --i>=0;)
-            {
+            for (int i=layer.length; --i>=0;) {
                 adjustWeights(layer[i]);
             }
         }
@@ -77,25 +73,21 @@ final class BackPropagationAlgorithm extends TrainingAlgorithm
      *
      * @param neuron Neuron to have the input weights adjusted for.
      */
-    private void adjustWeights(final Neuron neuron)
-    {
+    private void adjustWeights(final Neuron neuron) {
         final Neuron[] inputNeurons = neuron.inputs;
-        if (inputNeurons != null)
-        {
+        if (inputNeurons != null) {
             // Determine how much we should adjust the input weights:
             // Delta = error * dr/dq
             final double   error = neuron.error;
             double delta = error * neuron.gradient;
 
             // If the node is WAY off, then try something drastic (this is an "engineering" solution).
-            if (Math.abs(error)>0.9 && Math.abs(delta)<0.1)
-            {
+            if (Math.abs(error)>0.9 && Math.abs(delta)<0.1) {
                 delta = error * 0.1;
             }
             // Loop over all the input nodes adjusting the weights
             // to them proportional to their contribution.
-            for (int i=inputNeurons.length; --i>=0;)
-            {
+            for (int i=inputNeurons.length; --i>=0;) {
                 final double input = inputNeurons[i].output;
                 neuron.weights[i]     += learningFactor * delta * input;
                 inputNeurons[i].error += delta * neuron.weights[i];

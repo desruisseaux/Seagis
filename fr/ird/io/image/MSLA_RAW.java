@@ -39,10 +39,8 @@ import org.geotools.io.image.RawBinaryImageReader;
  * RAW images for MSLA data. Data type if {@link DataBuffer#TYPE_SHORT}
  * and pad value is 9999.
  */
-public class MSLA_RAW extends RawBinaryImageReader.Spi
-{
-    public MSLA_RAW()
-    {
+public class MSLA_RAW extends RawBinaryImageReader.Spi {
+    public MSLA_RAW() {
         super("RAW-MSLA", "image/raw-msla");
         vendorName = "Institut de Recherche pour le Développement";
         version    = "1.0";
@@ -51,24 +49,27 @@ public class MSLA_RAW extends RawBinaryImageReader.Spi
         pluginClassName = "fr.ird.io.image.MSLA_RAW$Reader";
     }
 
-    public String getDescription(final Locale locale)
-    {return "Images RAW des données altimétriques MSLA";}
+    public String getDescription(final Locale locale) {
+        return "Images RAW des données altimétriques MSLA";
+    }
 
-    public ImageReader createReaderInstance() throws IOException
-    {return new Reader(this);}
+    public ImageReader createReaderInstance() throws IOException {
+        return new Reader(this);
+    }
 
     /**
      * The image reader for {@link MSLA_RAW}.
      */
-    private static final class Reader extends RawBinaryImageReader
-    {
-        public Reader(final ImageReaderSpi provider)
-        {super(provider);}
+    private static final class Reader extends RawBinaryImageReader {
+        public Reader(final ImageReaderSpi provider) {
+            super(provider);
+        }
 
         /**
          * Convert values from millimeters to centimeters.
          */
-        protected double transform(final double value)
-        {return super.transform(value)/10;}
+        protected double transform(final double value) {
+            return super.transform(value)/10;
+        }
     }
 }

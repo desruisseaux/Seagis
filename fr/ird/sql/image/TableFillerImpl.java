@@ -31,9 +31,23 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
-import fr.ird.sql.DataBase;
 
-// Geotools dependencies
+// Geometry
+import java.awt.Dimension;
+import java.awt.geom.Rectangle2D;
+
+// Miscellaneous
+import java.io.File;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+
+// Geotools
+import org.geotools.units.Unit;
 import org.geotools.pt.Envelope;
 import org.geotools.gc.GridRange;
 import org.geotools.gc.GridCoverage;
@@ -44,25 +58,10 @@ import org.geotools.cs.CompoundCoordinateSystem;
 import org.geotools.cs.TemporalCoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
-// Geometry
-import java.awt.Dimension;
-import java.awt.geom.Rectangle2D;
-
-// Logging
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-
-// Miscellaneous
-import java.io.File;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+// Seagis
+import fr.ird.sql.DataBase;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.units.Unit;
-
 
 /**
  * Implementation of {@link TableFiller}.

@@ -32,11 +32,9 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-// Temps
+// Coordonnées spatio-temporelles
 import java.util.Date;
 import java.util.TimeZone;
-
-// Coordonnées
 import java.awt.geom.Rectangle2D;
 
 // Collections
@@ -44,7 +42,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
-// Divers
+// Seagis
 import fr.ird.animat.Species;
 
 

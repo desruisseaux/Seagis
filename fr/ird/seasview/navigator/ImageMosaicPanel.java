@@ -53,7 +53,6 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,8 +190,7 @@ final class ImageMosaicPanel extends ImagePanel { //implements ChangeListener
             }
         });
         synchronized (table) {
-            for (final Iterator<SeriesEntry> it=series.iterator(); it.hasNext();) {
-                final SeriesEntry series = it.next();
+            for (final SeriesEntry series : this.series) {
                 table.setSeries(series);
                 entries.put(series, addSeriesImpl(table));
             }

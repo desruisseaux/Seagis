@@ -38,8 +38,7 @@ import org.geotools.io.image.PaletteFactory;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Utilities
-{
+public final class Utilities {
     /**
      * The palette factory.
      */
@@ -48,16 +47,14 @@ public final class Utilities
     /**
      * Do not allows instantiation of this class.
      */
-    private Utilities()
-    {}
+    private Utilities() {
+    }
 
     /**
      * Gets the default palette factory.
      */
-    public static synchronized PaletteFactory getPaletteFactory()
-    {
-        if (factory==null)
-        {
+    public static synchronized PaletteFactory getPaletteFactory() {
+        if (factory == null) {
             factory = new PaletteFactory(
             /* parent factory */ null,
             /* class loader   */ PaletteFactory.class.getClassLoader(),

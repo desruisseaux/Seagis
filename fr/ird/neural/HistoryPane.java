@@ -45,8 +45,7 @@ import java.awt.geom.Rectangle2D;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class HistoryPane extends ZoomPane
-{
+public final class HistoryPane extends ZoomPane {
     /**
      * The neural network to display.
      */
@@ -60,8 +59,7 @@ public final class HistoryPane extends ZoomPane
     /**
      * Construct a pane for the specified neural network.
      */
-    public HistoryPane(final FeedForwardNet network)
-    {
+    public HistoryPane(final FeedForwardNet network) {
         super(TRANSLATE_X | TRANSLATE_Y | SCALE_X | SCALE_Y | RESET);
         this.network = network;
         updateMaxError();
@@ -71,23 +69,21 @@ public final class HistoryPane extends ZoomPane
     /**
      * Update the maximum error.
      */
-    private void updateMaxError()
-    {
+    private void updateMaxError() {
         maxError = 0;
         final float[] history = network.trainHistory;
-        for (int i=history.length; --i>=0;)
-        {
+        for (int i=history.length; --i>=0;) {
             final float error = history[i];
-            if (error > maxError)
+            if (error > maxError) {
                 maxError = error;
+            }
         }
     }
 
     /**
      * Draw the history.
      */
-    protected void paintComponent(final Graphics2D graphics)
-    {
+    protected void paintComponent(final Graphics2D graphics) {
         graphics.transform(zoom);
         graphics.setStroke(new BasicStroke(0));
         graphics.setColor(Color.black);
@@ -95,8 +91,7 @@ public final class HistoryPane extends ZoomPane
         graphics.setColor(Color.blue);
         final Line2D.Float line=new Line2D.Float();
         final float[] history = network.trainHistory;
-        for (int i=1; i<history.length; i++)
-        {
+        for (int i=1; i<history.length; i++) {
             line.x1 = i-1;
             line.y1 = history[i-1];
             line.x2 = i;
@@ -108,6 +103,7 @@ public final class HistoryPane extends ZoomPane
     /**
      * Returns the bounding box of the drawing area.
      */
-    public Rectangle2D getArea()
-    {return new Rectangle2D.Float(0, 0, network.trainHistory.length, maxError);}
+    public Rectangle2D getArea() {
+        return new Rectangle2D.Float(0, 0, network.trainHistory.length, maxError);
+    }
 }

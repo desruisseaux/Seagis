@@ -39,25 +39,24 @@ import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+// Utilities
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import javax.media.jai.util.Range;
+import java.rmi.RemoteException;
+
 // Geographic coordinates
 import java.awt.geom.Rectangle2D;
 import org.geotools.resources.Utilities;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
 
-// Utilities
-import java.util.Set;
-import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.rmi.RemoteException;
-
-// Miscellaneous
+// Seagis
 import fr.ird.sql.DataBase;
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import javax.media.jai.util.Range;
 
 
 /**
@@ -188,9 +187,9 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
     {
         final String[] columns = new String[species.size()];
         int index=0;
-        for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
+        for (final Species sp : species) {
             try {
-                columns[index++] = it.next().getName(Species.FAO);
+                columns[index++] = sp.getName(Species.FAO);
             } catch (RemoteException exception) {
                 throw new fr.ird.sql.RemoteException(
                             "L'obtention du code de la FAO a échouée.", exception);

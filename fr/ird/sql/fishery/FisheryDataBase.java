@@ -32,29 +32,26 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.ResultSetMetaData;
-import fr.ird.sql.SQLEditor;
-import fr.ird.sql.DataBase;
 
-// Divers
-import java.util.TimeZone;
-import java.io.IOException;
-
-// Collections
+// Collections et divers
 import java.util.Set;
 import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.TimeZone;
+import java.io.IOException;
 
 // Geotools
 import org.geotools.resources.Arguments;
+import org.geotools.gui.headless.ProgressPrinter;
 
-// Divers
+// Seagis
+import fr.ird.sql.DataBase;
+import fr.ird.sql.SQLEditor;
 import fr.ird.animat.Species;
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.gui.headless.ProgressPrinter;
 
 
 /**
@@ -457,13 +454,11 @@ public class FisheryDataBase extends DataBase {
             final FisheryDataBase database = new FisheryDataBase();
             try {
                 final EnvironmentTable table = database.getEnvironmentTable();
-                for (final Iterator<String> o=operations.iterator(); o.hasNext();) {
-                    final String operation = o.next();
-                    for (final Iterator<String> p=parameters.iterator(); p.hasNext();) {
-                        final String parameter = p.next();
-                        for (final Iterator<Number> t=timeLags.iterator(); t.hasNext();) {
-                            final int timeLag = t.next().intValue();
-                            table.addParameter(operation, parameter, EnvironmentTable.CENTER,  timeLag);
+                for (final String operation : operations) {
+                    for (final String parameter : parameters) {
+                        for (final Number timeLag : timeLags) {
+                            table.addParameter(operation, parameter, EnvironmentTable.CENTER,
+                                               timeLag.intValue());
                         }
                     }
                 }

@@ -56,8 +56,7 @@ import org.geotools.resources.Utilities;
  * @author Martin Desruisseaux
  * @version $Id$
  */
-final class TableCompiler
-{
+final class TableCompiler {
     /**
      * Nom et chemin du fichier binaire qui contiendra les tables.
      */
@@ -70,11 +69,9 @@ final class TableCompiler
      *       - Changer le format des tables A et B pour les mettres comme D.
      *       - Remplasser le format actuel des tables par XML?
      */
-    public static void main(final String[] args) throws IOException
-    {
-        final ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(TABLES));
-        if (true)
-        {
+    public static void main(final String[] args) throws IOException {
+        final ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(TABLES));
+        if (true) {
             //////////////////////////////////////////////
             ////                                      ////
             ////  Procède à la lecture de la table A  ////
@@ -87,15 +84,13 @@ final class TableCompiler
             // Copie les entrées dans un objet {@link HashMap},
             // mais en transformant les clés en {@link Byte}.
             //
-            for (final Iterator it=properties.entrySet().iterator(); it.hasNext();)
-            {
+            for (final Iterator it=properties.entrySet().iterator(); it.hasNext();) {
                 final Map.Entry<String,String> entry = (Map.Entry) it.next();
                 table.put(new Byte(entry.getKey()), entry.getValue());
             }
             out.writeObject(table);
         }
-        if (true)
-        {
+        if (true) {
             //////////////////////////////////////////////
             ////                                      ////
             ////  Procède à la lecture de la table B  ////
@@ -103,11 +98,12 @@ final class TableCompiler
             //////////////////////////////////////////////
             final Map<Short,Object> table = new HashMap<Short,Object>();
             BufferedReader in = new BufferedReader(new InputStreamReader(getTableInputStream('B')));
-            String line; while ((line=in.readLine())!=null)
-            {
-                line=line.trim();
+            String line; while ((line=in.readLine())!=null) {
+                line = line.trim();
                 final int length=line.length();
-                if (length==0 || line.charAt(0)=='#') continue;
+                if (length==0 || line.charAt(0)=='#') {
+                    continue;
+                }
                 /*
                  * Sépare la ligne en ses éléments (les colonnes sont séparées
                  * par des tabulations, puis place le résultat dans 'table'.
@@ -120,13 +116,11 @@ final class TableCompiler
                 int reference=0;
                 int     width=0;
                 int index=0, lower=0, upper;
-                do
-                {
+                do {
                     upper = line.indexOf('\t', lower);
                     value = (upper>=0 ? line.substring(lower, upper) : line.substring(lower)).trim();
                     lower = upper+1;
-                    switch (index++)
-                    {
+                    switch (index++) {
                         case 0: key       =                  value ; break;
                         case 1: name      =                  value ; break;
                         case 2: units     =                  value ; break;
@@ -135,8 +129,9 @@ final class TableCompiler
                         case 5: width     = Integer.parseInt(value); break;
                     }
                 }
-                while (upper>=0);
-                if (index<6 || table.put(new Short(getFXYKey(key)), new Descriptor(name,units,scale,reference,width))!=null)
+                while (upper >= 0);
+                if (index<6 || table.put(new Short(getFXYKey(key)),
+                                         new Descriptor(name,units,scale,reference,width))!=null)
                 {
                     throw new IOException(line);
                 }
@@ -147,21 +142,20 @@ final class TableCompiler
             ////  Procède à la lecture de la table D  ////
             ////                                      ////
             //////////////////////////////////////////////
-            in=new BufferedReader(new InputStreamReader(getTableInputStream('D')));
-            while ((line=in.readLine())!=null)
-            {
-                line=line.trim();
-                final int length=line.length();
-                if (length==0 || line.charAt(0)=='#') continue;
-                line=line.substring(line.lastIndexOf('"')+1).trim();
-
+            in = new BufferedReader(new InputStreamReader(getTableInputStream('D')));
+            while ((line=in.readLine())!=null) {
+                line = line.trim();
+                final int length = line.length();
+                if (length==0 || line.charAt(0)=='#') {
+                    continue;
+                }
+                line = line.substring(line.lastIndexOf('"')+1).trim();
                 final StringTokenizer tokens = new StringTokenizer(line, " ");
                 final Short              key = new Short(getFXYKey(tokens.nextToken()));
                 final int              count = Integer.parseInt   (tokens.nextToken()) ;
                 final short[]         values = new short[count];
                 for (int i=0; i<count; i++) values[i]=getFXYKey(tokens.nextToken());
-                if (tokens.hasMoreTokens() || table.put(key, values)!=null)
-                {
+                if (tokens.hasMoreTokens() || table.put(key, values)!=null) {
                     throw new IOException(line);
                 }
             }
@@ -176,10 +170,8 @@ final class TableCompiler
      * de caractère spécifiée. Des exemples de chaines valides
      * seraient "002044", "025042" ou "312201".
      */
-    private static short getFXYKey(final String FXY)
-    {
-        if (FXY.length()==6)
-        {
+    private static short getFXYKey(final String FXY) {
+        if (FXY.length() == 6) {
             final int F = Integer.parseInt(FXY.substring(0,1));
             final int X = Integer.parseInt(FXY.substring(1,3));
             final int Y = Integer.parseInt(FXY.substring(3,6));
@@ -196,28 +188,28 @@ final class TableCompiler
      * @return Flot ASCII vers la table demandée.
      * @throws FileNotFoundException si la ressource n'a pas été trouvée.
      */
-    private static InputStream getTableInputStream(final char table) throws FileNotFoundException
-    {
+    private static InputStream getTableInputStream(final char table) throws FileNotFoundException {
         final String name = "compilerData/bufr/Table-"+table+".txt";
-        final InputStream in=TableCompiler.class.getClassLoader().getResourceAsStream(name);
-        if (in==null) throw new FileNotFoundException(name);
+        final InputStream in = TableCompiler.class.getClassLoader().getResourceAsStream(name);
+        if (in == null) {
+            throw new FileNotFoundException(name);
+        }
         return in;
     }
 
     /**
      * Reformate la table B des fichiers BUFR.
      */
-    private static void reformat(final File input, final File output) throws IOException
-    {
+    private static void reformat(final File input, final File output) throws IOException {
         final String lineSeparator=System.getProperty("line.separator", "\n");
         final BufferedReader in=new BufferedReader(new FileReader(input));
         final Writer        out=new FileWriter(output);
-        String line; while ((line=in.readLine())!=null)
-        {
-            if (line.trim().length()==0) continue;
-            String nextLine=in.readLine();
-            if (nextLine==null)
-            {
+        String line; while ((line=in.readLine())!=null) {
+            if (line.trim().length()==0) {
+                continue;
+            }
+            String nextLine = in.readLine();
+            if (nextLine == null) {
                 System.err.println("Il manque une ligne à la fin du fichier.");
                 break;
             }
@@ -228,7 +220,6 @@ final class TableCompiler
             final String scale     = line.substring( 84, 95);
             final String reference = line.substring( 95,110);
             final String bitCount  = line.substring(110    );
-
             out.write(FXY);
             out.write('\t');
             out.write(name);
@@ -249,14 +240,14 @@ final class TableCompiler
     /**
      * Vérifie que les caractères spécifiés sont tous blancs.
      */
-    private static void ensureWhite(final String check)
-    {
-        boolean nonwhite=false;
-        for (int i=check.length(); --i>=0;)
-            if (check.charAt(i)!=' ')
-                nonwhite=true;
-        if (nonwhite)
-        {
+    private static void ensureWhite(final String check) {
+        boolean nonwhite = false;
+        for (int i=check.length(); --i>=0;) {
+            if (check.charAt(i)!=' ') {
+                nonwhite = true;
+            }
+        }
+        if (nonwhite) {
             System.err.print("Caractères invalides: ");
             System.err.println(check);
         }

@@ -32,9 +32,11 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
-// Map components
-import org.geotools.renderer.geom.GeometryCollection;
+// Geotools
 import org.geotools.ct.TransformException;
+import org.geotools.renderer.geom.GeometryCollection;
+
+// Seagis
 import fr.ird.io.map.GEBCOReader;
 
 

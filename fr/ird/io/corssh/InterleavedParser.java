@@ -30,9 +30,13 @@ import java.util.Date;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.Serializable;
+
+// Geotools
+import org.geotools.resources.Utilities;
+
+// Seagis
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
-import org.geotools.resources.Utilities;
 
 
 /**
@@ -45,8 +49,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class InterleavedParser extends Parser implements Serializable
-{
+final class InterleavedParser extends Parser implements Serializable {
     /**
      * Pour compatibilités entre différentes versions de cette classe.
      */
@@ -78,12 +81,10 @@ final class InterleavedParser extends Parser implements Serializable
      * des deux interpréteurs spécifiés. Les données seront
      * toujours lus en ordre chronologique.
      */
-    public InterleavedParser(final Parser parser1, final Parser parser2)
-    {
+    public InterleavedParser(final Parser parser1, final Parser parser2) {
         this.parser1 = parser1;
         this.parser2 = parser2;
-        if (parser1==null || parser2==null || parser1==parser2 || use(parser1,parser2,false))
-        {
+        if (parser1==null || parser2==null || parser1==parser2 || use(parser1,parser2,false)) {
             throw new IllegalArgumentException();
         }
     }
@@ -92,18 +93,17 @@ final class InterleavedParser extends Parser implements Serializable
      * Retourne un objet {@link Parser} qui combinera
      * les données de tous les interpréteurs spécifiés.
      */
-    public static Parser getInstance(final Parser[] parsers)
-    {return getInstance(parsers, 0, parsers.length);}
+    public static Parser getInstance(final Parser[] parsers) {
+        return getInstance(parsers, 0, parsers.length);
+    }
 
     /**
      * Construit l'arborescence des objets {@link Parser} qui
      * combinera les données de tous les interpréteurs spécifiés.
      */
-    private static Parser getInstance(final Parser[] parsers, final int lower, final int upper)
-    {
-        assert(lower<=upper);
-        switch (upper-lower)
-        {
+    private static Parser getInstance(final Parser[] parsers, final int lower, final int upper) {
+        assert lower<=upper : lower-upper;
+        switch (upper-lower) {
             case  0: return null;
             case  1: return parsers[lower];
             default: return new InterleavedParser(getInstance(parsers, lower, (lower+upper)/2),
@@ -116,10 +116,8 @@ final class InterleavedParser extends Parser implements Serializable
      * <code>check1</code> et <code>check2</code>, directement ou
      * indirectement.
      */
-    private boolean use(final Parser check1, final Parser check2, final boolean inclusive)
-    {
-        if (inclusive)
-        {
+    private boolean use(final Parser check1, final Parser check2, final boolean inclusive) {
+        if (inclusive) {
             if (parser1==check1 || parser2==check2) return true;
             if (parser1==check2 || parser2==check1) return true;
         }
@@ -133,11 +131,9 @@ final class InterleavedParser extends Parser implements Serializable
      * Cette méthode retourne {@link Long#MIN_VALUE} si l'interpréteur n'a pas de
      * données à ou après la date spécifiée.
      */
-    private static boolean seek(final Parser parser, final Date date) throws IOException
-    {
+    private static boolean seek(final Parser parser, final Date date) throws IOException {
         final Date endTime = parser.getEndTime();
-        if (endTime!=null && !endTime.before(date))
-        {
+        if (endTime!=null && !endTime.before(date)) {
             parser.seek(date);
             return true;
         }
@@ -155,8 +151,7 @@ final class InterleavedParser extends Parser implements Serializable
      *         la date demandée est postérieure aux dates de tous les enregistrements
      *         trouvés dans le fichier.
      */
-    public void seek(final Date date) throws IOException
-    {
+    public void seek(final Date date) throws IOException {
         final boolean find1, find2;
         current = null;
         time1   = Long.MIN_VALUE;
@@ -170,31 +165,24 @@ final class InterleavedParser extends Parser implements Serializable
          * Si les deux {@link Parser} ont la même date,  on choisira
          * arbitrairement {@link #parser2}.
          */
-        if (find1)
-        {
-            if (find2)
-            {
+        if (find1) {
+            if (find2) {
                 // Special case if record position has been set BEFORE first record
                 // (i.e. the requested date is before any available record's date).
                 // In this case,  we must select the earliest record instead of the
                 // latest. Note that if only one one record time is MIN_VALUE, then
                 // the second algorithm below (select the latest date) will work as
                 // expected.
-                if (time1==Long.MIN_VALUE && time2==Long.MIN_VALUE)
-                {
+                if (time1==Long.MIN_VALUE && time2==Long.MIN_VALUE) {
                     final Date start1 = parser1.getStartTime();
                     final Date start2 = parser2.getStartTime();
-                    if (start1==null && start2==null)
-                    {
+                    if (start1==null && start2==null) {
                         throw new EOFException(Resources.format(ResourceKeys.ERROR_NO_DATA_AFTER_DATE_$1, date));
                     }
-                    if (start2==null || (start1!=null && start1.before(start2)))
-                    {
+                    if (start2==null || (start1!=null && start1.before(start2))) {
                         current = parser1;
                         time2   = nextTime(parser2);
-                    }
-                    else
-                    {
+                    } else {
                         current = parser2;
                         time1   = nextTime(parser1);
                     }
@@ -205,13 +193,10 @@ final class InterleavedParser extends Parser implements Serializable
                 // 'nextRecord()' call. The other (non-selected) record
                 // must be set on its first valid record now (no matter
                 // if its date is before or after the requested date).
-                if (time1 <= time2)
-                {
+                if (time1 <= time2) {
                     current = parser2;
                     time1   = nextTime(parser1);
-                }
-                else
-                {
+                } else {
                     current = parser1;
                     time2   = nextTime(parser2);
                 }
@@ -220,8 +205,7 @@ final class InterleavedParser extends Parser implements Serializable
             current = parser1;
             return;
         }
-        if (find2)
-        {
+        if (find2) {
             current = parser2;
             return;
         }
@@ -237,22 +221,15 @@ final class InterleavedParser extends Parser implements Serializable
      * @throws EOFException si un début d'enregistrement fut trouvé mais n'est pas complet.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public boolean nextRecord() throws IOException
-    {
-        if (current==null)
-        {
+    public boolean nextRecord() throws IOException {
+        if (current == null) {
             time1 = nextTime(parser1);
             time2 = nextTime(parser2);
-        }
-        else
-        {
-            if (current.nextRecord())
-            {
+        } else {
+            if (current.nextRecord()) {
                 if (current==parser1) time1=parser1.getTime();
                 if (current==parser2) time2=parser2.getTime();
-            }
-            else
-            {
+            } else {
                 if (current==parser1) time1=Long.MIN_VALUE;
                 if (current==parser2) time2=Long.MIN_VALUE;
             }
@@ -262,22 +239,19 @@ final class InterleavedParser extends Parser implements Serializable
          * le plus ancien. Si les deux {@link Parser} ont la même date, on
          * choisira arbitrairement {@link #parser1}.
          */
-        if (time1 != Long.MIN_VALUE)
-        {
-            if (time2 != Long.MIN_VALUE)
-            {
+        if (time1 != Long.MIN_VALUE) {
+            if (time2 != Long.MIN_VALUE) {
                 current = (time1 <= time2) ? parser1 : parser2;
                 return true;
             }
             current = parser1;
             return true;
         }
-        if (time2 != Long.MIN_VALUE)
-        {
+        if (time2 != Long.MIN_VALUE) {
             current = parser2;
             return true;
         }
-        current=null;
+        current = null;
         return false;
     }
 
@@ -286,27 +260,31 @@ final class InterleavedParser extends Parser implements Serializable
      * la date de l'enregistrement courant, ou {@link Long#MIN_VALUE}
      * s'il n'y en a plus.
      */
-    private static long nextTime(final Parser parser) throws IOException
-    {return parser.nextRecord() ? parser.getTime() : Long.MIN_VALUE;}
+    private static long nextTime(final Parser parser) throws IOException {
+        return parser.nextRecord() ? parser.getTime() : Long.MIN_VALUE;
+    }
 
     /**
      * Indique si l'enregistrement courant est blanc. Un enregistrement est considéré blanc
      * si tous ses champs (tels que retournés par {@link #getField}) ont la valeur 0.
      */
-    public boolean isBlank()
-    {return current==null || current.isBlank();}
+    public boolean isBlank() {
+        return current==null || current.isBlank();
+    }
 
     /**
      * Retourne la valeur codée du champ spécifié.
      */
-    public int getField(final int field)
-    {return (current!=null) ? current.getField(field) : 0;}
+    public int getField(final int field) {
+        return (current!=null) ? current.getField(field) : 0;
+    }
 
     /**
      * Retourne la valeur réelle du champ spécifié.
      */
-    public double getValue(final int field)
-    {return (current!=null) ? current.getValue(field) : 0;}
+    public double getValue(final int field) {
+        return (current!=null) ? current.getValue(field) : 0;
+    }
 
     /**
      * Retourne la date codée dans l'enregistrement courant,   en nombre de secondes
@@ -317,8 +295,7 @@ final class InterleavedParser extends Parser implements Serializable
      *       redéfinition et de se fier plutôt à l'implémentation par défaut, qui est
      *       valide même lorsque l'utilisateur redéfinie {@link #getDate}.
      */
-    final long getTime()
-    {
+    final long getTime() {
         if (current==parser1) return time1;
         if (current==parser2) return time2;
         return Long.MIN_VALUE;
@@ -327,8 +304,7 @@ final class InterleavedParser extends Parser implements Serializable
     /**
      * Retourne la date codée dans l'enregistrement courant.
      */
-    public Date getDate()
-    {
+    public Date getDate() {
         final long time = getTime();
         final Date date = (time!=Long.MIN_VALUE) ? new Date(time) : null;
         assert Utilities.equals(date, current.getDate());
@@ -341,8 +317,7 @@ final class InterleavedParser extends Parser implements Serializable
      * @return La date du premier enregistrement, ou <code>null</code> s'il n'y a pas de données.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public Date getStartTime() throws IOException
-    {
+    public Date getStartTime() throws IOException {
         final Date startTime1 = parser1.getStartTime();
         final Date startTime2 = parser2.getStartTime();
         if (startTime1==null) return startTime2;
@@ -356,8 +331,7 @@ final class InterleavedParser extends Parser implements Serializable
      * @return La date du dernier enregistrement, ou <code>null</code> s'il n'y a pas de données.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public Date getEndTime() throws IOException
-    {
+    public Date getEndTime() throws IOException {
         final Date endTime1 = parser1.getEndTime();
         final Date endTime2 = parser2.getEndTime();
         if (endTime1==null) return endTime2;
@@ -371,8 +345,9 @@ final class InterleavedParser extends Parser implements Serializable
      * @return Le nombre de passe dans le fichier courant.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public int getPassCount() throws IOException
-    {return parser1.getPassCount() + parser2.getPassCount();}
+    public int getPassCount() throws IOException {
+        return parser1.getPassCount() + parser2.getPassCount();
+    }
 
     /**
      * Retourne le nombre d'enregistrements que contient le fichier,
@@ -381,8 +356,9 @@ final class InterleavedParser extends Parser implements Serializable
      * @return Le nombre de passe dans le fichier courant.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public long getRecordCount() throws IOException
-    {return parser1.getRecordCount() + parser2.getRecordCount();}
+    public long getRecordCount() throws IOException {
+        return parser1.getRecordCount() + parser2.getRecordCount();
+    }
 
     /**
      * Ferme le flot qui fournissait les données. Après l'appel de
@@ -390,8 +366,7 @@ final class InterleavedParser extends Parser implements Serializable
      *
      * @throws IOException si une erreur est survenue lors de la fermeture.
      */
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         parser1.close();
         parser2.close();
     }
@@ -399,6 +374,7 @@ final class InterleavedParser extends Parser implements Serializable
     /**
      * Retourne une chaîne de caractères représentant cet enregistrement.
      */
-    public String toString()
-    {return (current!=null) ? current.toString() : Resources.format(ResourceKeys.BLANK);}
+    public String toString() {
+        return (current!=null) ? current.toString() : Resources.format(ResourceKeys.BLANK);
+    }
 }

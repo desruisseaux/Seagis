@@ -28,12 +28,11 @@ import fr.ird.util.XArray;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-public abstract class TrainingAlgorithm implements Serializable
-{
+public abstract class TrainingAlgorithm implements Serializable {
     /**
      * Serial number for compatibility with previous versions.
      */
-    //private static final long serialVersionUID = ?; // TODO
+    private static final long serialVersionUID = 2113700815679678152L;
 
     /**
      * Tolerance to train network to (mean error across
@@ -49,36 +48,40 @@ public abstract class TrainingAlgorithm implements Serializable
     /**
      * Construct a train algorithm with default parameters.
      */
-    public TrainingAlgorithm()
-    {}
+    public TrainingAlgorithm() {
+    }
 
     /**
      * Returns the tolerance to train network to (RMS error
      * across all the outputs accross a training set).
      */
-    public synchronized double getTolerance()
-    {return tolerance;}
+    public synchronized double getTolerance() {
+        return tolerance;
+    }
 
     /**
      * Set the tolerance to train network to (RMS error
      * across all the outputs accross a training set).
      */
-    public synchronized void setTolerance(final double tolerance)
-    {this.tolerance = Math.abs(tolerance);}
+    public synchronized void setTolerance(final double tolerance) {
+        this.tolerance = Math.abs(tolerance);
+    }
 
     /**
      * The maximum amount of time allowed for training.
      * @return The maximum amount of time in millisecond.
      */
-    public synchronized long getMaxTime()
-    {return maxTime;}
+    public synchronized long getMaxTime() {
+        return maxTime;
+    }
 
     /**
      * Set the maximum amount of time allowed for training.
      * @param maxTime The maximum amount of time in millisecond.
      */
-    public synchronized void setMaxTime(final long maxTime)
-    {this.maxTime = Math.abs(maxTime);}
+    public synchronized void setMaxTime(final long maxTime) {
+        this.maxTime = Math.abs(maxTime);
+    }
 
     /**
      * Train a network to match a set of input patterns to a set of
@@ -93,14 +96,12 @@ public abstract class TrainingAlgorithm implements Serializable
      *         outputs to train the network to reproduce.
      * @return An history of RMS errors for each iteration.
      */
-    public float[] train(final FeedForwardNet network, final TrainingSet testGenerator)
-    {
+    public float[] train(final FeedForwardNet network, final TrainingSet testGenerator) {
         // Gets parameters.
         final long  startTime = System.currentTimeMillis();
         final long     maxTime;
         final double tolerance;
-        synchronized (this)
-        {
+        synchronized (this) {
             maxTime   = getMaxTime();
             tolerance = getTolerance();
         }
@@ -112,19 +113,16 @@ public abstract class TrainingAlgorithm implements Serializable
         long checkTime   = maxTime/history.length;
         long ellapsedTime;
         history[0] = (float)network.getError(testGenerator);
-        do
-        {
+        do {
             testGenerator.rewind();
-            while (testGenerator.next())
-            {
+            while (testGenerator.next()) {
                 testGenerator.shuffle();
                 network.initialize(testGenerator);
                 adjustWeights(network.neurons);
             }
             // Determine the RMS error of the network after training.
             final double error = network.getError(testGenerator);
-            if (error < tolerance)
-            {
+            if (error < tolerance) {
                 // TODO: Make a last and unconditional update to the error history.
                 break;
             }
@@ -136,22 +134,18 @@ public abstract class TrainingAlgorithm implements Serializable
              * time slice. Then, we will record only one error after this number
              * of iterations (more specifically, we will record the maximum error).
              */
-            if (historyCount >= history.length)
-            {
+            if (historyCount >= history.length) {
                 history = XArray.resize(history, historyCount*2);
                 // Extra elements are initialized to 0.
             }
-            if ((float)error > history[historyCount])
-            {
+            if ((float)error > history[historyCount]) {
                 history[historyCount] = (float) error;
             }
-            if (historyDecim!=0)
-            {
-                if (iteration % historyDecim == 0)
+            if (historyDecim != 0) {
+                if (iteration % historyDecim == 0) {
                     historyCount++;
-            }
-            else if (ellapsedTime > checkTime)
-            {
+                }
+            } else if (ellapsedTime > checkTime) {
                 historyDecim = Math.max(1, iteration);
             }
             iteration++;

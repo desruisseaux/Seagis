@@ -36,15 +36,13 @@ import org.geotools.resources.ResourceBundle;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Resources extends ResourceBundle
-{
+public class Resources extends ResourceBundle {
     /**
      * Construct a resource bundle using english language.
      * This is the default when no resource are available
      * in user language.
      */
-    public Resources()
-    {
+    public Resources() {
         super(// Set 'true' in front of language to use as default.
               false ? Resources_fr.FILEPATH :
                true ? Resources_en.FILEPATH :
@@ -55,14 +53,16 @@ public class Resources extends ResourceBundle
      * Construct a resource bundle
      * using the specified UTF8 file.
      */
-    Resources(final String filepath)
-    {super(filepath);}
+    Resources(final String filepath) {
+        super(filepath);
+    }
 
     /**
      * Returns the name of the logger to use.
      */
-    protected String getLoggerName()
-    {return "fr.ird";}
+    protected String getLoggerName() {
+        return "fr.ird";
+    }
 
     /**
      * Returns resources in the given locale.
@@ -71,9 +71,10 @@ public class Resources extends ResourceBundle
      * @return Resources in the given locale.
      * @throws MissingResourceException if resources can't be found.
      */
-    public static Resources getResources(Locale locale) throws MissingResourceException
-    {
-        if (locale==null) locale = Locale.getDefault();
+    public static Resources getResources(Locale locale) throws MissingResourceException {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
         return (Resources) getBundle(Resources.class.getName(), locale);
         /*
          * We rely on cache capability of {@link java.util.ResourceBundle}.
@@ -87,8 +88,9 @@ public class Resources extends ResourceBundle
      * @return The string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key) throws MissingResourceException
-    {return getResources(null).getString(key);}
+    public static String format(final int key) throws MissingResourceException {
+        return getResources(null).getString(key);
+    }
 
     /**
      * Gets a string for the given key are replace all occurence of "{0}"
@@ -99,8 +101,9 @@ public class Resources extends ResourceBundle
      * @return The formatted string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key, final Object arg0) throws MissingResourceException
-    {return getResources(null).getString(key, arg0);}
+    public static String format(final int key, final Object arg0) throws MissingResourceException {
+        return getResources(null).getString(key, arg0);
+    }
 
     /**
      * Gets a string for the given key are replace all occurence of "{0}",
@@ -112,8 +115,9 @@ public class Resources extends ResourceBundle
      * @return The formatted string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key, final Object arg0, final Object arg1) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1);}
+    public static String format(final int key, final Object arg0, final Object arg1) throws MissingResourceException {
+        return getResources(null).getString(key, arg0, arg1);
+    }
 
     /**
      * Gets a string for the given key are replace all occurence of "{0}",
@@ -126,8 +130,9 @@ public class Resources extends ResourceBundle
      * @return The formatted string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1, arg2);}
+    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2) throws MissingResourceException {
+        return getResources(null).getString(key, arg0, arg1, arg2);
+    }
 
     /**
      * Gets a string for the given key are replace all occurence of "{0}",
@@ -141,8 +146,9 @@ public class Resources extends ResourceBundle
      * @return The formatted string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1, arg2, arg3);}
+    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3) throws MissingResourceException {
+        return getResources(null).getString(key, arg0, arg1, arg2, arg3);
+    }
 
     /**
      * Gets a string for the given key are replace all occurence of "{0}",
@@ -157,6 +163,7 @@ public class Resources extends ResourceBundle
      * @return The formatted string for the given key.
      * @throws MissingResourceException If no object for the given key can be found.
      */
-    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException
-    {return getResources(null).getString(key, arg0, arg1, arg2, arg3, arg4);}
+    public static String format(final int key, final Object arg0, final Object arg1, final Object arg2, final Object arg3, final Object arg4) throws MissingResourceException {
+        return getResources(null).getString(key, arg0, arg1, arg2, arg3, arg4);
+    }
 }

@@ -25,17 +25,6 @@
  */
 package fr.ird.io.coverage;
 
-// Geotools dependencies
-import org.geotools.gp.Operation;
-import org.geotools.gc.GridCoverage;
-import org.geotools.cv.SampleDimension;
-import org.geotools.ct.TransformException;
-import org.geotools.gp.GridCoverageProcessor;
-import org.geotools.ct.MissingParameterException;
-import org.geotools.cs.GeographicCoordinateSystem;
-import org.geotools.cs.CompoundCoordinateSystem;
-import org.geotools.cs.CoordinateSystem;
-
 // Images
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -48,10 +37,6 @@ import javax.media.jai.ParameterList;
 
 // Image database
 import java.sql.SQLException;
-import fr.ird.sql.image.FormatEntry;
-import fr.ird.sql.image.SeriesTable;
-import fr.ird.sql.image.TableFiller;
-import fr.ird.sql.image.ImageDataBase;
 
 // Input/output
 import java.net.URL;
@@ -65,7 +50,6 @@ import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
-import fr.ird.seasview.layer.IsolineFactory;
 
 // Logging
 import java.util.logging.Level;
@@ -80,27 +64,42 @@ import java.util.ArrayList;
 import java.text.NumberFormat;
 import java.util.StringTokenizer;
 
-// Map display
-import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.renderer.geom.GeometryCollection;
-import org.geotools.gui.swing.MapPane;
-import fr.ird.io.map.GEBCOReader;
-import fr.ird.io.map.IsolineReader;
-import org.geotools.renderer.j2d.RenderedGeometries;
-import org.geotools.renderer.j2d.RenderedGridCoverage;
-
 // Swing components
 import java.awt.EventQueue;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
-// Miscellaneous
+// Geotools dependencies
+import org.geotools.gp.Operation;
+import org.geotools.gc.GridCoverage;
+import org.geotools.cv.SampleDimension;
+import org.geotools.ct.TransformException;
+import org.geotools.gp.GridCoverageProcessor;
+import org.geotools.ct.MissingParameterException;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.cs.CompoundCoordinateSystem;
+import org.geotools.cs.CoordinateSystem;
+
+// Geotools (miscellaneous)
 import org.geotools.resources.Arguments;
 import org.geotools.resources.Utilities;
 import org.geotools.io.DefaultFileFilter;
+import org.geotools.gui.swing.MapPane;
+import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedGeometries;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
+import org.geotools.renderer.geom.GeometryCollection;
+
+// Seagis
+import fr.ird.sql.image.FormatEntry;
+import fr.ird.sql.image.SeriesTable;
+import fr.ird.sql.image.TableFiller;
+import fr.ird.sql.image.ImageDataBase;
+import fr.ird.io.map.GEBCOReader;
+import fr.ird.io.map.IsolineReader;
+import fr.ird.seasview.layer.IsolineFactory;
 
 
 /**
@@ -112,8 +111,7 @@ import org.geotools.io.DefaultFileFilter;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class Processor extends Arguments
-{
+public class Processor extends Arguments {
     /**
      * The grid coverage processor. Will be
      * constructed only when first needed.
@@ -183,33 +181,24 @@ public class Processor extends Arguments
      *        Si cette méthode est appelée sans arguments, alors
      *        un résumé des commandes disponibles sera affichée.
      */
-    public static void main(String[] args)
-    {
-        if (args.length==0)
-        {
-            if (false) // Debug code for SST
-            {
-                args = new String[]
-                {
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            if (false) { // Debug code for SST
+                args = new String[] {
                     "-group=365245516",
                     "-sources=D:/Pouponnière/Méditerranée/Température/sst020807.txt"
                 };
             }
-            if (false) // Debug code for Chlorophylle-a
-            {
-                args = new String[]
-                {
+            if (false) { // Debug code for Chlorophylle-a
+                args = new String[] {
                     "-group=2041402270",
                     "-sources=D:/Pouponnière/Méditerranée/Chlorophylle/chl_020703.txt"
                 };
             }
         }
-        try
-        {
+        try {
             new Processor(args).run();
-        }
-        catch (ThreadDeath stop)
-        {
+        } catch (ThreadDeath stop) {
             // Construction failed. Error message
             // has already been printed. Nothing
             // else to do (except finish the program).
@@ -225,8 +214,7 @@ public class Processor extends Arguments
      *
      * @param args Command line arguments.
      */
-    public Processor(final String[] args)
-    {
+    public Processor(final String[] args) {
         super(args);
         final String       group;
         final String       bathy;
@@ -235,8 +223,7 @@ public class Processor extends Arguments
         final String destination;
         final boolean   updateDB;
         final int        groupID;
-        try
-        {
+        try {
             sources          = getFiles         ("-sources");
             updateDB         = getFlag          ("-updateDB");
             group            = getOptionalString("-group");
@@ -246,8 +233,7 @@ public class Processor extends Arguments
             isolineFactory   = new IsolineFactory("Méditerranée");
             this.destination = (destination!=null) ? new File(destination) : null;
             getRemainingArguments(0);
-            if (sources==null)
-            {
+            if (sources == null) {
                 /////////////////////////////////////////////////////
                 ////                                             ////
                 ////    If no input was specified, display       ////
@@ -270,12 +256,10 @@ public class Processor extends Arguments
                             "Les profondeurs bathymétriques disponibles sont (en mètres):");
                 String str; int length=8,spaces=8;
                 isolines = isolineFactory.getAvailableValues();
-                for (int i=isolines.length; --i>=0;)
-                {
+                for (int i=isolines.length; --i>=0;) {
                     out.print(Utilities.spaces(spaces));
                     out.print(str = String.valueOf(-Math.round(isolines[i])));
-                    if (i!=0)
-                    {
+                    if (i != 0) {
                         out.print(','); spaces=1;
                         if ((length += str.length()) <= 40) continue;
                     }
@@ -289,8 +273,7 @@ public class Processor extends Arguments
             ////    Open the database connection.    ////
             ////                                     ////
             /////////////////////////////////////////////
-            if (group==null)
-            {
+            if (group == null) {
                 throw new MissingParameterException("L'argument -group est obligatoire", "group");
             }
             groupID  = Integer.parseInt(group);
@@ -298,41 +281,36 @@ public class Processor extends Arguments
             series   = database.getSeriesTable();
             format   = series.getFormat(groupID);
             series.close();
-            if (format==null)
-            {
+            if (format == null) {
                 database.close();
                 throw new IllegalArgumentException("Code de groupe inconnu: "+groupID);
             }
             bands = format.getSampleDimensions();
-            for (int i=0; i<bands.length; i++)
-            {
+            for (int i=0; i<bands.length; i++) {
                 // In images to be read, bands contain already geophysics values.
                 bands[i] = bands[i].geophysics(true);
             }
-            if (updateDB)
-            {
+            if (updateDB) {
                 tableFiller = database.getTableFiller();
                 tableFiller.setGroup(groupID);
+            } else {
+                tableFiller = null;
             }
-            else tableFiller = null;
             /////////////////////////////////////////////
             ////                                     ////
             ////    Get the requested bathymetry.    ////
             ////                                     ////
             /////////////////////////////////////////////
-            if (bathy!=null)
-            {
+            if (bathy != null) {
                 final StringTokenizer tk = new StringTokenizer(bathy, ",");
                 isolines = new float[tk.countTokens()];
-                for (int i=0; tk.hasMoreTokens(); i++)
-                {
+                for (int i=0; tk.hasMoreTokens(); i++) {
                     isolines[i] = -Float.parseFloat(tk.nextToken());
                 }
+            } else {
+                isolines = null;
             }
-            else isolines = null;
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             handleException(exception, "<init>");
             throw new ThreadDeath(); // Stop the program.
         }
@@ -344,33 +322,29 @@ public class Processor extends Arguments
      * built, in order to execute the instructions parsed on
      * the command line.
      */
-    public void run()
-    {
+    public void run() {
         String methodName = "run";
-        try
-        {
-            if (destination==null)
-            {
+        try {
+            if (destination == null) {
                 methodName="verify";
                 Thread.currentThread().setPriority(Thread.MIN_PRIORITY+2);
-                for (int i=0; i<sources.length; i++)
+                for (int i=0; i<sources.length; i++) {
                     verify(sources[i]);
-            }
-            else
-            {
-                methodName="process";
-                for (int i=0; i<sources.length; i++)
-                    if (!process(sources[i])) break;
+                }
+            } else {
+                methodName = "process";
+                for (int i=0; i<sources.length; i++) {
+                    if (!process(sources[i])) {
+                        break;
+                    }
+                }
             }
             methodName="close";
-            if (tableFiller!=null)
-            {
+            if (tableFiller != null) {
                 tableFiller.close();
             }
             database.close();
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             handleException(exception, methodName);
         }
     }
@@ -379,17 +353,16 @@ public class Processor extends Arguments
      * Returns a list of files for the specified parameter.
      * This method is for internal use by the constructor.
      */
-    private File[] getFiles(final String parameter)
-    {
+    private File[] getFiles(final String parameter) {
         final String path = getOptionalString(parameter);
-        if (path!=null)
-        {
+        if (path != null) {
             File file = new File(path);
             String name = file.getName();
-            if (name.indexOf('*')>=0 || name.indexOf('?')>=0)
-            {
+            if (name.indexOf('*')>=0 || name.indexOf('?')>=0) {
                 file = file.getParentFile();
-                if (file==null) file=new File(".");
+                if (file == null) {
+                    file=new File(".");
+                }
                 return file.listFiles((FileFilter) new DefaultFileFilter(name));
             }
             return new File[] {file};
@@ -402,33 +375,27 @@ public class Processor extends Arguments
      * <code>true</code>,  then the grid coverage will be reprojected
      * to {@link GeographicCoordinateSystem#WGS84}.
      */
-    private GridCoverage load(final File file, final boolean reproject) throws IOException
-    {
-        if (exchange==null)
-        {
+    private GridCoverage load(final File file, final boolean reproject) throws IOException {
+        if (exchange == null) {
             exchange = new GridCoverageExchange(bands);
             exchange.setLocale(locale);
         }
         GridCoverage coverage = exchange.createFromName(file.getPath());
-        if (reproject)
-        {
+        if (reproject) {
             CoordinateSystem sourceCS = coverage.getCoordinateSystem();
             CoordinateSystem targetCS = GeographicCoordinateSystem.WGS84;
-            if (sourceCS instanceof CompoundCoordinateSystem)
-            {
+            if (sourceCS instanceof CompoundCoordinateSystem) {
                 targetCS = new CompoundCoordinateSystem(targetCS.getName(null), targetCS,
                                       ((CompoundCoordinateSystem) sourceCS).getTailCS());
             }
-            if (processor==null)
-            {
+            if (processor == null) {
                 processor = GridCoverageProcessor.getDefault();
             }
             final Operation operation = processor.getOperation("Resample");
             final ParameterList param = operation.getParameterList();
             param.setParameter("Source",           coverage);
             param.setParameter("CoordinateSystem", targetCS);
-            if (interpolation!=null)
-            {
+            if (interpolation != null) {
                 param.setParameter("InterpolationType", interpolation);
             }
             coverage = processor.doOperation(operation, param);
@@ -443,15 +410,13 @@ public class Processor extends Arguments
      * @param  file The file to process.
      * @throws IOException if an error occured while reading the file.
      */
-    private void verify(final File file) throws IOException
-    {
+    private void verify(final File file) throws IOException {
         final GridCoverage coverage = load(file, false);
         out.println();
         out.println(exchange.getLastProperties());
         out.println(coverage.getCoordinateSystem());
 
-        if (tabbedPane==null)
-        {
+        if (tabbedPane == null) {
             tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
             final JFrame frame = new JFrame("Images");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -463,21 +428,17 @@ public class Processor extends Arguments
         final RenderedGridCoverage image = new RenderedGridCoverage(coverage);
         image.setZOrder(Float.NEGATIVE_INFINITY);
         map.getRenderer().addLayer(image);
-        if (isolines != null)
-        {
-            for (int i=0; i<isolines.length; i++)
-            {
+        if (isolines != null) {
+            for (int i=0; i<isolines.length; i++) {
                 final GeometryCollection isoline = isolineFactory.get(isolines[i]);
-                if (isoline!=null)
-                {
+                if (isoline != null) {
                     final RenderedGeometries layer = new RenderedGeometries(isoline);
                     layer.setContour(Color.white);
                     map.getRenderer().addLayer(layer);
                 }
             }
         }
-        EventQueue.invokeLater(new Runnable()
-        {
+        EventQueue.invokeLater(new Runnable() {
             public void run()
             {tabbedPane.addTab(coverage.getName(locale), map.createScrollPane());}
         });
@@ -492,8 +453,7 @@ public class Processor extends Arguments
      * @throws IOException if an error occured while reading or writing the image.
      * @throws SQLException if an error occured while updating the database.
      */
-    private boolean process(final File file) throws IOException, SQLException
-    {
+    private boolean process(final File file) throws IOException, SQLException {
         String filename = file.getName();
         out.print(filename);
         out.print(": Chargement...\r");
@@ -502,13 +462,11 @@ public class Processor extends Arguments
 
         filename = exchange.getOutputFilename();
         final int index = filename.lastIndexOf('.');
-        if (index>=0)
-        {
+        if (index >= 0) {
             filename = filename.substring(0, index);
         }
         final File output = new File(destination, filename+".png");
-        if (output.exists())
-        {
+        if (output.exists()) {
             out.print  ("Le fichier \"");
             out.print  (output.getPath());
             out.println("\" existe déjà.");
@@ -521,8 +479,7 @@ public class Processor extends Arguments
         out.flush();
         final BufferedImage image = ((PlanarImage) coverage.getRenderedImage()).getAsBufferedImage();
 
-        if (isolines!=null) try
-        {
+        if (isolines != null) try {
             out.print(filename);
             out.print(": Bathymétrie...\r");
             out.flush();
@@ -533,23 +490,17 @@ public class Processor extends Arguments
             gr.transform(tr.createInverse());
             gr.setStroke(new BasicStroke((float)Math.sqrt(pt.x*pt.x + pt.y*pt.y)));
             gr.setColor(Color.white);
-            for (int i=0; i<isolines.length; i++)
-            {
+            for (int i=0; i<isolines.length; i++) {
                 final GeometryCollection isoline = isolineFactory.get(isolines[i]);
-                if (isoline!=null) try
-                {
+                if (isoline!=null) try {
                     isoline.setCoordinateSystem(coverage.getCoordinateSystem());
                     gr.draw(isoline);
-                }
-                catch (TransformException exception)
-                {
+                } catch (TransformException exception) {
                     handleException(exception, "process");
                 }
             }
             gr.dispose();
-        }
-        catch (NoninvertibleTransformException exception)
-        {
+        } catch (NoninvertibleTransformException exception) {
             handleException(exception, "process");
         }
 
@@ -565,8 +516,7 @@ public class Processor extends Arguments
         record.setSourceMethodName("process");
         silentLog(record);
 
-        if (tableFiller!=null)
-        {
+        if (tableFiller != null) {
             tableFiller.addImage(coverage, filename);
         }
         return true;
@@ -576,14 +526,12 @@ public class Processor extends Arguments
      * Invoked when an operation failed. The exception message
      * is printed and the exception trace is logged.
      */
-    private void handleException(final Exception exception, final String methodName)
-    {
+    private void handleException(final Exception exception, final String methodName) {
         exception.printStackTrace(out);
 
         final StringBuffer buffer = new StringBuffer(Utilities.getShortClassName(exception));
         final String message = exception.getLocalizedMessage();
-        if (message!=null)
-        {
+        if (message != null) {
             buffer.append(": ");
             buffer.append(message);
         }
@@ -592,8 +540,7 @@ public class Processor extends Arguments
         record.setSourceMethodName(methodName);
         record.setThrown          (exception);
         silentLog(record);
-        if (exchange != null)
-        {
+        if (exchange != null) {
             out.println();
             out.println("Dernières informations:");
             out.println(exchange.getLastProperties());
@@ -604,21 +551,19 @@ public class Processor extends Arguments
     /**
      * Log a message to the stream, but not to the console.
      */
-    private static void silentLog(final LogRecord record)
-    {
+    private static void silentLog(final LogRecord record) {
         Logger logger = Logger.getLogger("fr.ird.io.coverage");
-        while (logger!=null)
-        {
+        while (logger != null) {
             final Handler[] handlers = logger.getHandlers();
-            for (int i=0; i<handlers.length; i++)
-            {
+            for (int i=0; i<handlers.length; i++) {
                 final Handler handler = handlers[i];
-                if (!(handler instanceof ConsoleHandler))
-                {
+                if (!(handler instanceof ConsoleHandler)) {
                     handler.publish(record);
                 }
             }
-            if (!logger.getUseParentHandlers()) break;
+            if (!logger.getUseParentHandlers()) {
+                break;
+            }
             logger = logger.getParent();
         }
     }

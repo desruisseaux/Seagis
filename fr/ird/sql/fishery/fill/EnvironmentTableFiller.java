@@ -35,7 +35,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
-import java.util.Iterator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
@@ -46,11 +45,9 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-
-// JAI
 import javax.media.jai.ParameterList;
 
-// Geotools dependencies
+// Geotools
 import org.geotools.gc.GridCoverage;
 import org.geotools.pt.CoordinatePoint;
 import org.geotools.resources.Utilities;
@@ -250,7 +247,7 @@ public final class EnvironmentTableFiller {
             table.setCatchRange(250, Double.POSITIVE_INFINITY);
         }
         final List<CatchEntry> list = table.getEntries();
-        final CatchEntry[] catchs = list.toArray(new CatchEntry[list.size()]);
+        final CatchEntry[] catchs = (CatchEntry[])list.toArray(new CatchEntry[list.size()]);
         table.close();
         return catchs;
     }
@@ -345,8 +342,7 @@ public final class EnvironmentTableFiller {
         }
 
         // Calcule les données environnementales pour une série à la fois.
-        for (final Iterator<Map.Entry<SeriesEntry,String[]>> it=series.entrySet().iterator(); it.hasNext();) {
-            final Map.Entry<SeriesEntry,String[]> series = it.next();
+        for (final Map.Entry<SeriesEntry,String[]> series : this.series.entrySet()) {
             imageTable.setSeries(series.getKey());
             final CatchCoverage coverage = new CatchCoverage(imageTable);
             coverage.setInterpolationAllowed(true);

@@ -22,27 +22,25 @@
  */
 package fr.ird.io.map;
 
-// Geotools depencies
-import org.geotools.cs.CoordinateSystem;
-import org.geotools.cs.GeographicCoordinateSystem;
-
-// Maps
-import org.geotools.renderer.geom.GeometryCollection;
-
 // Input/output
 import java.io.File;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.BufferedReader;
 
-// Collections
+// Miscellaneous
 import java.util.Map;
 import java.util.TreeMap;
-
-// Miscellaneous
 import java.util.Locale;
 import java.text.ParseException;
+
+// Geotools depencies
 import org.geotools.io.LineFormat;
+import org.geotools.cs.CoordinateSystem;
+import org.geotools.cs.GeographicCoordinateSystem;
+import org.geotools.renderer.geom.GeometryCollection;
+
+// Seagis
 import fr.ird.resources.Resources;
 import fr.ird.resources.ResourceKeys;
 
@@ -239,6 +237,6 @@ public class GEBCOReader extends IsolineReader {
                 isoline.add(points, 0, points.length);
             }
         }
-        return isolines.values().toArray(new GeometryCollection[isolines.size()]);
+        return (GeometryCollection[])isolines.values().toArray(new GeometryCollection[isolines.size()]);
     }
 }

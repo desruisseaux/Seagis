@@ -29,7 +29,6 @@ package fr.ird.animat.viewer;
 import java.util.List;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -81,8 +80,8 @@ final class CatchLayer extends fr.ird.seasview.layer.CatchLayer {
     public CatchLayer(final Fisheries fisheries) throws RemoteException {
         this.fisheries = fisheries;
         try {
-            for (final Iterator<Species> it=fisheries.getSpecies().iterator(); it.hasNext();) {
-                setColor(it.next(), COLOR);
+            for (final Species sp : fisheries.getSpecies()) {
+                setColor(sp, COLOR);
             }
             setColor(null, COLOR);
         } catch (SQLException exception) {

@@ -30,9 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLWarning;
 import java.sql.SQLException;
 
-// Images
-import java.awt.image.RenderedImage;
-
 // Entrés/sorties
 import java.io.File;
 import java.io.IOException;
@@ -41,8 +38,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 import javax.imageio.IIOException;
 import javax.imageio.ImageReadParam;
-
-// Evénements
 import javax.swing.event.EventListenerList;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
@@ -54,7 +49,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 
 // Références faibles
-import fr.ird.util.WeakHashSet;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
@@ -63,17 +57,19 @@ import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.Collections;
-import fr.ird.resources.Resources;
+import java.awt.image.RenderedImage;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;
 
-// Geotools dependencies
+// Geotools (CTS)
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.ct.MathTransform2D;
 import org.geotools.ct.TransformException;
 import org.geotools.ct.CoordinateTransformationFactory;
+
+// Geotools (GCS)
 import org.geotools.cv.Category;
 import org.geotools.cv.SampleDimension;
 import org.geotools.gc.GridRange;
@@ -81,11 +77,17 @@ import org.geotools.gc.GridGeometry;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gp.Operation;
 import org.geotools.gp.GridCoverageProcessor;
+
+// Geotools (resources)
+import org.geotools.util.WeakHashSet;
 import org.geotools.resources.XArray;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XDimension2D;
 import org.geotools.resources.XRectangle2D;
+
+// Seagis
+import fr.ird.resources.Resources;
 
 
 /**
@@ -150,7 +152,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * qui existent déjà en mémoire afin de leur donner une chance de faire un
      * meilleur travail de cache sur les images.
      */
-    private static final WeakHashSet<Object> pool = Table.pool;
+    private static final WeakHashSet pool = Table.pool;
 
     /**
      * Petite valeur utilisée pour contourner
@@ -794,7 +796,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * <code>u.equals(v)</code> est vrai.
      */
     final ImageEntryImpl intern() {
-        return (ImageEntryImpl) pool.intern(this);
+        return (ImageEntryImpl) pool.canonicalize(this);
     }
 
     /**
@@ -802,7 +804,7 @@ final class ImageEntryImpl implements ImageEntry, Serializable {
      * Ce tableau peut contenir des éléments nuls.
      */
     static void intern(final ImageEntry[] entries) {
-        pool.intern(entries);
+        pool.canonicalize(entries);
     }
 
     /**

@@ -25,23 +25,23 @@
  */
 package fr.ird.sql.image;
 
-// Geotools dependencies
+// J2SE et JAI
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.awt.geom.Rectangle2D;
+import javax.media.jai.util.Range;
+import javax.swing.event.EventListenerList;
+
+// Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.gc.GridCoverage;
 import org.geotools.gc.GridGeometry;
 import org.geotools.cv.SampleDimension;
 import org.geotools.cs.CoordinateSystem;
 
-// Entrés/sorties
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-
-// Divers
+// Seagis
 import fr.ird.sql.Entry;
-import java.awt.geom.Rectangle2D;
-import javax.media.jai.util.Range;
-import javax.swing.event.EventListenerList;
 
 
 /**
@@ -55,8 +55,7 @@ import javax.swing.event.EventListenerList;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface ImageEntry extends Entry
-{
+public interface ImageEntry extends Entry {
     /**
      * Clé sous laquelle mémoriser l'objet <code>ImageEntry</code> source
      * dans les propriétés de {@link GridCoverage}. Cette propriétés permet
@@ -209,8 +208,7 @@ public interface ImageEntry extends Entry
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    public static class Proxy implements ImageEntry, Serializable
-    {
+    public static class Proxy implements ImageEntry, Serializable {
         /**
          * Numéro de série (pour compatibilité avec des versions antérieures).
          */
@@ -236,15 +234,17 @@ public interface ImageEntry extends Entry
         /**
          * Redirige vers {@link #entry}.
          */
-        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException
-        {return entry.getGridCoverage(listenerList);}
+        public GridCoverage getGridCoverage(final EventListenerList listenerList) throws IOException {
+            return entry.getGridCoverage(listenerList);
+        }
 
         /**
          * Retourne <code>true</code> si les deux objets sont de la
          * même classe et enveloppent des objets {@link ImageEntry}
          * égaux.
          */
-        public boolean equals(final Object other)
-        {return (other!=null && getClass().equals(other.getClass()) && ((Proxy) other).entry.equals(entry));}
+        public boolean equals(final Object other) {
+            return (other!=null && getClass().equals(other.getClass()) && ((Proxy) other).entry.equals(entry));
+        }
     }
 }

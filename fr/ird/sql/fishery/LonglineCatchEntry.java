@@ -36,12 +36,12 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
+import javax.media.jai.util.Range;
+
+// Geotools
+import org.geotools.units.Unit;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.GeographicCoordinateSystem;
-
-// Divers
-import org.geotools.units.Unit;
-import javax.media.jai.util.Range;
 
 
 /**

@@ -39,13 +39,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 
 // Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
-import javax.media.jai.ParameterList;
-import java.util.logging.LogRecord;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import javax.media.jai.ParameterList;
 
-// Geotools dependencies
+// Geotools
 import org.geotools.pt.Envelope;
 import org.geotools.cs.CoordinateSystem;
 import org.geotools.cs.CompoundCoordinateSystem;
@@ -58,6 +56,10 @@ import org.geotools.gp.Operation;
 import org.geotools.resources.Utilities;
 import org.geotools.resources.CTSUtilities;
 import org.geotools.resources.XDimension2D;
+
+// Seagis
+import fr.ird.resources.Resources;
+import fr.ird.resources.ResourceKeys;
 
 
 /**
@@ -229,6 +231,6 @@ final class Parameters implements Serializable {
      * l'objet lu existait déjà en mémoire.
      */
     private Object readResolve() throws ObjectStreamException {
-        return Table.pool.intern(this);
+        return Table.pool.canonicalize(this);
     }
 }

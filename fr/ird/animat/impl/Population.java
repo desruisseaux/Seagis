@@ -28,7 +28,6 @@ package fr.ird.animat.impl;
 // Utilitaires
 import java.util.Set;
 import java.util.Locale;
-import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
@@ -69,12 +68,12 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * Ensemble des animaux de cette population. Cet ensemble est accédé par
      * les méthodes {@link Animal#migrate} et {@link Animal#kill} seulement.
      */
-    final Set<fr.ird.animat.Animal> animals = new LinkedHashSet<fr.ird.animat.Animal>();
+    final Set<Animal> animals = new LinkedHashSet<Animal>();
 
     /**
      * Liste immutable des animaux de cette population.
      */
-    private final Set<fr.ird.animat.Animal> immutableAnimals = Collections.unmodifiableSet(animals);
+    private final Set<Animal> immutableAnimals = Collections.unmodifiableSet(animals);
 
     /**
      * Les limites de la distribution geographique de cette population,
@@ -138,7 +137,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     /**
      * Retourne l'ensemble des animaux que contient cette population.
      */
-    public Set<fr.ird.animat.Animal> getAnimals() {
+    public Set<+Animal> getAnimals() {
         return immutableAnimals;
     }
     
@@ -152,8 +151,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     public Shape getSpatialBounds() {
         synchronized (getTreeLock()) {
             if (bounds == null) {
-                for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                    final Animal animal = (Animal) it.next();
+                for (final Animal animal : animals) {
                     final Rectangle2D b = animal.path.getBounds2D();
                     if (bounds == null) {
                         bounds = b;
@@ -216,8 +214,8 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      */
     public void evoluate(final float duration) {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                ((Animal) it.next()).move(duration);
+            for (final Animal animal : animals) {
+                animal.move(duration);
             }
             bounds = null;
         }
@@ -230,8 +228,8 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      */
     protected void observe() {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                ((Animal) it.next()).observe();
+            for (final Animal animal : animals) {
+                animal.observe();
             }
         }
     }
@@ -276,8 +274,8 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     final int getListenerCount() {
         int count = listenerList.getListenerCount();
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                count += ((Animal) it.next()).getListenerCount();
+            for (final Animal animal : animals) {
+                count += animal.getListenerCount();
             }
         }
         return count;
@@ -369,8 +367,8 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      */
     final void export(final int port) throws RemoteException {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                ((Animal) it.next()).export(port);
+            for (final Animal animal : animals) {
+                animal.export(port);
             }
             UnicastRemoteObject.exportObject(this, port);
         }
@@ -383,8 +381,8 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      */
     final void unexport() {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
-                ((Animal) it.next()).unexport();
+            for (final Animal animal : animals) {
+                animal.unexport();
             }
             Animal.unexport("Population", this);
         }

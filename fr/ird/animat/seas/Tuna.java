@@ -29,7 +29,6 @@ package fr.ird.animat.seas;
 import java.util.Map;
 import java.util.Date;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
@@ -91,8 +90,7 @@ final class Tuna extends Animal {
         final Species species = (Species) getSpecies();
         final double maximumDistance = species.dailyDistance * duration;
         final Map<Parameter,Observation> observations = getObservations(null);
-        for (final Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
-            final Map.Entry<Parameter,Observation> entry = it.next();
+        for (final Map.Entry<Parameter,Observation> entry : observations.entrySet()) {
             final fr.ird.animat.impl.Parameter parameter = (fr.ird.animat.impl.Parameter) entry.getKey();
             final Point2D position = entry.getValue().location();
             if (position != null) {

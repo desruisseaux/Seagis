@@ -31,7 +31,6 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.LinkedHashMap;
 import java.rmi.RemoteException;
@@ -201,15 +200,13 @@ final class AnimalMonitor extends JPanel implements Runnable {
                 if (nextTimeStep >= capacity) {
                     capacity = Math.max(lastStep+1, nextTimeStep+Math.min(nextTimeStep, 1024));
                     times = XArray.resize(times, capacity);
-                    for (final Iterator<Map.Entry<Parameter,float[]>> it=entrySet().iterator(); it.hasNext();) {
-                        final Map.Entry<Parameter,float[]> entry = it.next();
+                    for (final Map.Entry<Parameter,float[]> entry : entrySet()) {
                         entry.setValue(XArray.resize(entry.getValue(), capacity));
                     }
                 }
                 times[nextTimeStep] = date.getTime();
                 final Map<Parameter,Observation> observations = animal.getObservations(date);
-                for (final Iterator<Map.Entry<Parameter,Observation>> it=observations.entrySet().iterator(); it.hasNext();) {
-                    final Map.Entry<Parameter,Observation> entry = it.next();
+                for (final Map.Entry<Parameter,Observation> entry : observations.entrySet()) {
                     final Parameter parameter = entry.getKey();
                     float[] values = get(parameter);
                     if (values == null) {
@@ -229,8 +226,7 @@ final class AnimalMonitor extends JPanel implements Runnable {
          */
         public synchronized void trimToSize() {
             times = XArray.resize(times, nextTimeStep);
-            for (final Iterator<Map.Entry<Parameter,float[]>> it=entrySet().iterator(); it.hasNext();) {
-                final Map.Entry<Parameter,float[]> entry = it.next();
+            for (final Map.Entry<Parameter,float[]> entry : entrySet()) {
                 entry.setValue(XArray.resize(entry.getValue(), nextTimeStep));
             }
         }
@@ -240,8 +236,7 @@ final class AnimalMonitor extends JPanel implements Runnable {
          */
         public synchronized void refresh(final Plot2D plot) {
             plot.clear(false);
-            for (final Iterator<Map.Entry<Parameter,float[]>> it=entrySet().iterator(); it.hasNext();) {
-                final Map.Entry<Parameter,float[]> entry = it.next();
+            for (final Map.Entry<Parameter,float[]> entry : entrySet()) {
                 try {
                     final Parameter  parameter = entry.getKey();
                     final float[]       values = entry.getValue();

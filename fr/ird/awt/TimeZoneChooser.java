@@ -70,8 +70,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public class TimeZoneChooser extends JPanel
-{
+public class TimeZoneChooser extends JPanel {
     /**
      * Liste des fuseaux horaires.
      */
@@ -89,8 +88,9 @@ public class TimeZoneChooser extends JPanel
      *
      * @param message Message à placer en haut de la liste.
      */
-    public TimeZoneChooser(final String message)
-    {this(message, TimeZone.getAvailableIDs());}
+    public TimeZoneChooser(final String message) {
+        this(message, TimeZone.getAvailableIDs());
+    }
 
     /**
      * Construit un objet <code>TimeZoneChooser</code> qui
@@ -103,47 +103,44 @@ public class TimeZoneChooser extends JPanel
      *        Il s'agit du décalage à ajouter à l'heure UTC pour
      *        obtenir l'heure locale.
      */
-    public TimeZoneChooser(final String message, final int rawOffset)
-    {this(message, TimeZone.getAvailableIDs(rawOffset));}
+    public TimeZoneChooser(final String message, final int rawOffset) {
+        this(message, TimeZone.getAvailableIDs(rawOffset));
+    }
 
     /**
      * Construit un objet <code>TimeZoneChooser</code> qui
      * proposera un choix parmi les fuseaux horaire spécifiés.
      */
-    private TimeZoneChooser(final String message, final String[] IDs)
-    {
+    private TimeZoneChooser(final String message, final String[] IDs) {
         super(new BorderLayout());
         Arrays.sort(IDs);
         list=new JList(IDs);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         add(new JScrollPane(list), BorderLayout.CENTER);
         setTimeZone(TimeZone.getDefault());
-        addComponentListener(new ComponentAdapter()
-        {
+        addComponentListener(new ComponentAdapter() {
             /*
              * "Workaround" pour forcer l'apparition du fuseau horaire
              * sélectionné dans la fenêtre. 'ensureIndexIsVisible(int)'
              * ne fonctionne pas lorsque la fenêtre n'est pas visible.
              */
-            public void componentResized(final ComponentEvent event)
-            {
-                final int index=list.getSelectedIndex();
-                if (index>=0) list.ensureIndexIsVisible(index);
+            public void componentResized(final ComponentEvent event) {
+                final int index = list.getSelectedIndex();
+                if (index >= 0) {
+                    list.ensureIndexIsVisible(index);
+                }
             }
         });
-        list.addListSelectionListener(new ListSelectionListener()
-        {
+        list.addListSelectionListener(new ListSelectionListener() {
             /*
              * Prévient cette classe chaque fois que l'utilisateur
              * a sélectionné un nouveau fuseau horaire.
              */
-            public void valueChanged(final ListSelectionEvent event)
-            {
-                if (!event.getValueIsAdjusting())
-                {
-                    final TimeZone old=selected;
-                    final Object value=list.getSelectedValue();
-                    selected = value!=null ? TimeZone.getTimeZone(value.toString()) : null;
+            public void valueChanged(final ListSelectionEvent event) {
+                if (!event.getValueIsAdjusting()) {
+                    final TimeZone old = selected;
+                    final Object value = list.getSelectedValue();
+                    selected = (value!=null) ? TimeZone.getTimeZone(value.toString()) : null;
                     firePropertyChange("TimeZone", old, selected);
                 }
             }
@@ -157,17 +154,17 @@ public class TimeZoneChooser extends JPanel
     /**
      * Sélectionne le fuseau horaire spécifié.
      */
-    public void setTimeZone(final TimeZone timezone)
-    {list.setSelectedValue((timezone!=null) ? timezone.getID() : null, true);}
+    public void setTimeZone(final TimeZone timezone) {
+        list.setSelectedValue((timezone!=null) ? timezone.getID() : null, true);
+    }
 
     /**
      * Retourne le fuseau horaire présentement sélectionné,
      * ou <code>null</code> si aucun fuseau horaire n'a été
      * sélectionné.
      */
-    public TimeZone getTimeZone()
-    {
-        final Object value=list.getSelectedValue();
+    public TimeZone getTimeZone() {
+        final Object value = list.getSelectedValue();
         return (value!=null) ? TimeZone.getTimeZone(value.toString()) : null;
     }
 
@@ -179,13 +176,11 @@ public class TimeZoneChooser extends JPanel
      * @return Le fuseau horaire sélectionné si l'utilisateur a cliqué sur "ok",
      *         ou <code>null</code> s'il a cliqué sur "annuler".
      */
-    public TimeZone showDialog(final Component owner)
-    {
+    public TimeZone showDialog(final Component owner) {
         final Resources resources = Resources.getResources((owner!=null) ? owner.getLocale() : null);
-        if (SwingUtilities.showOptionDialog(owner, this, resources.getString(ResourceKeys.TIME_ZONE)))
-        {
+        if (SwingUtilities.showOptionDialog(owner, this, resources.getString(ResourceKeys.TIME_ZONE))) {
             return getTimeZone();
         }
-        else return null;
+        return null;
     }
 }

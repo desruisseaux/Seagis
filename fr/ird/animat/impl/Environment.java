@@ -27,7 +27,6 @@ package fr.ird.animat.impl;
 
 // Utilitaires
 import java.util.Set;
-import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
@@ -70,12 +69,12 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * Ensemble des populations comprises dans cet environnement. Cet ensemble est accédé
      * par le constructeur de {@link Population} et {@link Population#kill} seulement.
      */
-    final Set<fr.ird.animat.Population> populations = new LinkedHashSet<fr.ird.animat.Population>();
+    final Set<Population> populations = new LinkedHashSet<Population>();
 
     /**
      * Version immutable de la population, retournée par {@link #getPopulation}.
      */
-    private final Set<fr.ird.animat.Population> immutablePopulations = Collections.unmodifiableSet(populations);
+    private final Set<Population> immutablePopulations = Collections.unmodifiableSet(populations);
 
     /**
      * Liste des objets intéressés à être informés
@@ -143,7 +142,7 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
      */
-    public Set<fr.ird.animat.Population> getPopulations() {
+    public Set<+Population> getPopulations() {
         return immutablePopulations;
     }
 
@@ -153,8 +152,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      *
      * @see Animal#getObservations
      */
-    public Set<fr.ird.animat.Parameter> getParameters() {
-        return Collections.EMPTY_SET;
+    public Set<+Parameter> getParameters() {
+        return (Set<Parameter>)Collections.EMPTY_SET;
     }
 
     /**
@@ -230,8 +229,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
             }
             if (report.numAnimals == 0) {
                 int numAnimals = 0;
-                for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
-                    numAnimals = ((Population) it.next()).getAnimals().size();
+                for (final Population population : populations) {
+                    numAnimals += population.getAnimals().size();
                 }
                 report.numAnimals = numAnimals;
             }
@@ -282,8 +281,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
             fullReport.add(report);
             report = new Report();
             clock.nextTimeStep();
-            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
-                ((Population) it.next()).observe();
+            for (final Population population : populations) {
+                population.observe();
             }
             fireEnvironmentChanged(new EnvironmentChangeEvent(this, EnvironmentChangeEvent.DATE_CHANGED,
                                                               clock.getTime(), null, null));
@@ -370,8 +369,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     final int getListenerCount() {
         int count = listenerList.getListenerCount();
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
-                count += ((Population) it.next()).getListenerCount();
+            for (final Population population : populations) {
+                count += population.getListenerCount();
             }
         }
         return count;
@@ -467,8 +466,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      */
     final void export(final int port) throws RemoteException {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
-                ((Population) it.next()).export(port);
+            for (final Population population : populations) {
+                population.export(port);
             }
             UnicastRemoteObject.exportObject(this, port);
             this.port = port;
@@ -482,8 +481,8 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      */
     final void unexport() {
         synchronized (getTreeLock()) {
-            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
-                ((Population) it.next()).unexport();
+            for (final Population population : populations) {
+                population.unexport();
             }
             Animal.unexport("Environment", this);
             this.port = -1;

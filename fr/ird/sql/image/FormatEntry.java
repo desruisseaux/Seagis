@@ -26,9 +26,9 @@
 package fr.ird.sql.image;
 
 // Divers
-import fr.ird.sql.Entry;
 import org.geotools.cv.SampleDimension;
 import org.geotools.resources.Utilities;
+import fr.ird.sql.Entry;
 
 
 /**
@@ -38,8 +38,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface FormatEntry extends Entry
-{
+public interface FormatEntry extends Entry {
     /**
      * Retourne les listes des bandes {@link SampleDimension} qui permettent
      * de décoder les valeurs des paramètres géophysiques. Cette méthode peut

@@ -527,8 +527,7 @@ public class RangeBars extends ZoomPane {
         }
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
-        for (final Iterator<RangeSet> it=ranges.values().iterator(); it.hasNext();) {
-            final RangeSet rangeSet = it.next();
+        for (final RangeSet rangeSet : ranges.values()) {
             final int size = rangeSet.size();
             if (size != 0) {
                 double tmp;
@@ -581,7 +580,7 @@ public class RangeBars extends ZoomPane {
      * pas de répercussions sur <code>this</code>.
      */
     public synchronized String[] getLabels() {
-        return ranges.keySet().toArray(new String[ranges.size()]);
+        return (String[])ranges.keySet().toArray(new String[ranges.size()]);
     }
 
     /**
@@ -623,7 +622,7 @@ public class RangeBars extends ZoomPane {
      * Si aucune donnée n'a été mémorisée sous ces étiquettes, retourne
      * <code>null</code>.
      */
-    public synchronized Comparable getMinimum(final String labels[]) {
+    public synchronized Comparable getMinimum(final String[] labels) {
         Comparable min = null;
         for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);
@@ -642,7 +641,7 @@ public class RangeBars extends ZoomPane {
      * Si aucune donnée n'a été mémorisée sous ces étiquettes, retourne
      * <code>null</code>.
      */
-    public synchronized Comparable getMaximum(final String labels[]) {
+    public synchronized Comparable getMaximum(final String[] labels) {
         Comparable max = null;
         for (int i=0; i<labels.length; i++) {
             final RangeSet rangeSet = ranges.get(labels[i]);

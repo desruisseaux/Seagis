@@ -42,8 +42,7 @@ package fr.ird.neural;
  * @author Joseph A. Huwaldt
  * @author Martin Desruisseaux
  */
-public interface TrainingSet
-{
+public interface TrainingSet {
     /**
      * Instructs the training set to create or move on to
      * a new training instance (combination of inputs and

@@ -60,8 +60,7 @@ import org.geotools.resources.Utilities;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class MultiFilesParser extends Parser implements Serializable
-{
+final class MultiFilesParser extends Parser implements Serializable {
     /**
      * Pour compatibilités entre différentes versions de cette classe.
      */
@@ -88,8 +87,7 @@ final class MultiFilesParser extends Parser implements Serializable
     /**
      * Met à jour les champs internes après la lecture d'un objet {@link MultiFilesParser}.
      */
-    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException
-    {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         parserIndex = -1;
     }
@@ -104,8 +102,9 @@ final class MultiFilesParser extends Parser implements Serializable
      * @throws IOException si une erreur est survenue lors de la lecture d'un fichier CORSSH.
      * @throws IOException si une incohérence fut détectée dans les dates des fichiers.
      */
-    public MultiFilesParser(final File directory) throws IOException
-    {this(getFiles(directory));}
+    public MultiFilesParser(final File directory) throws IOException {
+        this(getFiles(directory));
+    }
 
     /**
      * Construit un fournisseur qui puisera les données dans les fichiers spécifiés.
@@ -114,19 +113,16 @@ final class MultiFilesParser extends Parser implements Serializable
      * @throws IOException si une erreur est survenue lors de la lecture d'un fichier CORSSH.
      * @throws IOException si une incohérence fut détectée dans les dates des fichiers.
      */
-    public MultiFilesParser(final File[] list) throws IOException
-    {
+    public MultiFilesParser(final File[] list) throws IOException {
         files=new DatedFile[list.length];
-        for (int i=0; i<list.length; i++)
-        {
+        for (int i=0; i<list.length; i++) {
             files[i] = new DatedFile(list[i]);
         }
         Arrays.sort(files);
-        for (int i=1; i<files.length; i++)
-        {
-            if (files[i-1].endTime >= files[i].startTime)
-            {
-                throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_OVERLAP_$3, files[i-1].file.getName(), files[i].file.getName(),
+        for (int i=1; i<files.length; i++) {
+            if (files[i-1].endTime >= files[i].startTime) {
+                throw new IOException(Resources.format(ResourceKeys.ERROR_DATES_OVERLAP_$3,
+                                      files[i-1].file.getName(), files[i].file.getName(),
                                       getDateTimeInstance().format(new Date(files[i].startTime))));
             }
         }
@@ -142,13 +138,10 @@ final class MultiFilesParser extends Parser implements Serializable
      *         spécifié ainsi que tous ses sous-répertoires.
      * @throws FileNotFoundException si le répertoire <code>directory</code> n'a pas été trouvé.
      */
-    private static File[] getFiles(final File directory) throws FileNotFoundException
-    {
-        final List<File> files=new ArrayList<File>();
-        getFiles(directory, files, new FileFilter()
-        {
-            public boolean accept(final File file)
-            {
+    private static File[] getFiles(final File directory) throws FileNotFoundException {
+        final List<File> files = new ArrayList<File>();
+        getFiles(directory, files, new FileFilter() {
+            public boolean accept(final File file) {
                 if (file.isDirectory()) return true;
                 if (!file.isFile()) return false;
                 final String name=file.getName();
@@ -156,7 +149,7 @@ final class MultiFilesParser extends Parser implements Serializable
                 return (index>0 && name.substring(index).equalsIgnoreCase(".dat"));
             }
         });
-        return files.toArray(new File[files.size()]);
+        return (File[])files.toArray(new File[files.size()]);
     }
 
     /**
@@ -168,19 +161,20 @@ final class MultiFilesParser extends Parser implements Serializable
      * @param  filter Filtre à utiliser pour ne retenir que les fichiers .DAT.
      * @throws FileNotFoundException si le répertoire <code>directory</code> n'a pas été trouvé.
      */
-    private static void getFiles(final File directory, final List<File> files, final FileFilter filter) throws FileNotFoundException
+    private static void getFiles(final File directory, final List<File> files, final FileFilter filter)
+            throws FileNotFoundException
     {
-        final File[] fileArray=directory.listFiles(filter);
-        if (fileArray!=null)
-        {
-            for (int i=0; i<fileArray.length; i++)
-            {
+        final File[] fileArray = directory.listFiles(filter);
+        if (fileArray != null) {
+            for (int i=0; i<fileArray.length; i++) {
                 final File file=fileArray[i];
                 if (file.isDirectory()) getFiles(file, files, filter);
                 else if (file.isFile()) files.add(file);
             }
+        } else {
+            throw new FileNotFoundException(Resources.format(
+                        ResourceKeys.ERROR_DIRECTORY_NOT_FOUND_$1, directory.getPath()));
         }
-        else throw new FileNotFoundException(Resources.format(ResourceKeys.ERROR_DIRECTORY_NOT_FOUND_$1, directory.getPath()));
     }
 
     /**
@@ -191,16 +185,13 @@ final class MultiFilesParser extends Parser implements Serializable
      *         le fichier courant sans en ouvrir un autre.
      * @throws IOException si une opération E/S a échouée.
      */
-    private void setParser(final int index) throws IOException
-    {
-        if (parser!=null)
-        {
+    private void setParser(final int index) throws IOException {
+        if (parser != null) {
             parser.close();
-            parser=null;
+            parser = null;
         }
         parserIndex= -1; // Au cas où le bloc suivant échouerait.
-        if (index >= 0)
-        {
+        if (index >= 0) {
             parser = new FileParser(files[index].file);
             parserIndex = index;
         }
@@ -216,33 +207,34 @@ final class MultiFilesParser extends Parser implements Serializable
      *         la date demandée est postérieure aux dates de tous les enregistrements
      *         de tous les fichiers.
      */
-    public void seek(final Date date) throws IOException
-    {
-        final long time=date.getTime();
-        int index=Arrays.binarySearch(files, new DatedFile(time));
-        if (index<0) index=~index;
-        assert(index>=files.length || files[index].endTime>=time);
-        if (index != parserIndex)
-        {
-            if (index >= files.length)
+    public void seek(final Date date) throws IOException {
+        final long time = date.getTime();
+        int index = Arrays.binarySearch(files, new DatedFile(time));
+        if (index<0) {
+            index = ~index;
+        }
+        assert index>=files.length || files[index].endTime>=time : index;
+        if (index != parserIndex) {
+            if (index >= files.length) {
                 throw new EOFException(Resources.format(ResourceKeys.ERROR_NO_DATA_AFTER_DATE_$1, date));
+            }
             setParser(index);
         }
-        parser.seek(date, new Iterator<File>()
-        {
+        parser.seek(date, new Iterator<File>() {
             private int index = parserIndex-1;
 
-            public boolean hasNext()
-            {return index>=0;}
+            public boolean hasNext() {
+                return index>=0;
+            }
 
-            public File next()
-            {
+            public File next() {
                 if (hasNext()) return files[index--].file;
                 else throw new NoSuchElementException();
             }
 
-            public void remove()
-            {throw new UnsupportedOperationException();}
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
         });
     }
 
@@ -259,15 +251,16 @@ final class MultiFilesParser extends Parser implements Serializable
      * @throws EOFException si un début d'enregistrement fut trouvé mais n'est pas complet.
      * @throws IOException si une erreur est survenue lors de la lecture.
      */
-    public boolean nextRecord() throws IOException
-    {
-        if (parser!=null && parser.nextRecord()) return true;
-        while (parserIndex+1 < files.length)
-        {
+    public boolean nextRecord() throws IOException {
+        if (parser!=null && parser.nextRecord()) {
+            return true;
+        }
+        while (parserIndex+1 < files.length) {
             // 'setParser' mettre à jour la variable 'parserIndex'
             setParser(parserIndex+1);
-            if (parser.nextRecord())
+            if (parser.nextRecord()) {
                 return true;
+            }
         }
         return false;
     }
@@ -278,22 +271,25 @@ final class MultiFilesParser extends Parser implements Serializable
      * la construction d'un objet {@link Parser}, l'enregistrement courant est initialement
      * blanc.
      */
-    public boolean isBlank()
-    {return (parser==null || parser.isBlank());}
+    public boolean isBlank() {
+        return (parser==null || parser.isBlank());
+    }
 
     /**
      * Retourne la valeur codée du champ spécifié. La valeur du champ sera puisée
      * dans l'enregistrement le lors du dernier appel à la méthode {@link #nextRecord}.
      */
-    public int getField(final int field)
-    {return (parser!=null) ? parser.getField(field) : 0;}
+    public int getField(final int field) {
+        return (parser!=null) ? parser.getField(field) : 0;
+    }
 
     /**
      * Retourne la valeur réelle du champ spécifié. La valeur du champ sera puisée
      * dans l'enregistrement lu lors du dernier appel à la méthode {@link #nextRecord}.
      */
-    public double getValue(final int field)
-    {return (parser!=null) ? parser.getValue(field) : 0;}
+    public double getValue(final int field) {
+        return (parser!=null) ? parser.getValue(field) : 0;
+    }
 
     /**
      * Retourne la date codée dans l'enregistrement courant,   en nombre de secondes
@@ -304,28 +300,30 @@ final class MultiFilesParser extends Parser implements Serializable
      *       redéfinition et de se fier plutôt à l'implémentation par défaut, qui est
      *       valide même lorsque l'utilisateur redéfinie {@link #getDate}.
      */
-    long getTime()
-    {return (parser!=null) ? parser.getTime() : Long.MIN_VALUE;}
+    long getTime() {
+        return (parser!=null) ? parser.getTime() : Long.MIN_VALUE;
+    }
 
     /**
      * Retourne la date codée dans l'enregistrement courant.
      */
-    public Date getDate()
-    {return (parser!=null) ? parser.getDate() : null;}
+    public Date getDate() {
+        return (parser!=null) ? parser.getDate() : null;
+    }
 
     /**
      * Retourne la date du premier enregistrement dans l'ensemble des fichiers
      * disponibles. Si aucun fichier n'est disponible, retourne <code>null</code>.
      */
-    public Date getStartTime()
-    {return (files.length!=0) ? new Date(files[0].startTime) : null;}
+    public Date getStartTime() {
+        return (files.length!=0) ? new Date(files[0].startTime) : null;
+    }
 
     /**
      * Retourne la date du dernier enregistrement dans l'ensemble des fichiers
      * disponibles. Si aucun fichier n'est disponible, retourne <code>null</code>.
      */
-    public Date getEndTime()
-    {
+    public Date getEndTime() {
         final int length=files.length;
         return (files.length!=0) ? new Date(files[length-1].endTime) : null;
     }
@@ -333,11 +331,11 @@ final class MultiFilesParser extends Parser implements Serializable
     /**
      * Retourne le nombre de passes que contient le fichier.
      */
-    public int getPassCount()
-    {
+    public int getPassCount() {
         int passCount = 0;
-        for (int i=0; i<files.length; i++)
+        for (int i=0; i<files.length; i++) {
             passCount += files[i].passCount;
+        }
         return passCount;
     }
 
@@ -345,11 +343,11 @@ final class MultiFilesParser extends Parser implements Serializable
      * Retourne le nombre d'enregistrements,
      * excluant les enregistrements d'en-tête.
      */
-    public long getRecordCount() throws IOException
-    {
+    public long getRecordCount() throws IOException {
         long recordCount = 0;
-        for (int i=0; i<files.length; i++)
+        for (int i=0; i<files.length; i++) {
             recordCount += files[i].recordCount;
+        }
         return recordCount;
     }
 
@@ -358,14 +356,16 @@ final class MultiFilesParser extends Parser implements Serializable
      *
      * @throws IOException si une erreur est survenue lors de la fermeture.
      */
-    public void close() throws IOException
-    {setParser(-1);}
+    public void close() throws IOException {
+        setParser(-1);
+    }
 
     /**
      * Retourne une chaîne de caractères représentant l'enregistrement courant.
      */
-    public String toString()
-    {return (parser!=null) ? parser.toString() : Resources.format(ResourceKeys.BLANK);}
+    public String toString() {
+        return (parser!=null) ? parser.toString() : Resources.format(ResourceKeys.BLANK);
+    }
 
     /**
      * Nom d'un fichier CORSSH et date de son premier enregistrement.
@@ -375,8 +375,7 @@ final class MultiFilesParser extends Parser implements Serializable
      * @version $Id$
      * @author Martin Desruisseaux
      */
-    private static final class DatedFile implements Comparable, Serializable
-    {
+    private static final class DatedFile implements Comparable, Serializable {
         /**
          * Pour compatibilités entre différentes versions de cette classe.
          */
@@ -392,8 +391,7 @@ final class MultiFilesParser extends Parser implements Serializable
          * Construit un objet qui représentera un nom de fichier CORSSH
          * avec les dates de ses premier et dernier enregistrement.
          */
-        public DatedFile(final File file) throws IOException
-        {
+        public DatedFile(final File file) throws IOException {
             final Parser parser=new FileParser(file);
             this.file        = file;
             this.startTime   = parser.getStartTime().getTime();
@@ -409,8 +407,7 @@ final class MultiFilesParser extends Parser implements Serializable
          * être utilisé pour repérer le premier fichier CORSSH contenant
          * des données à la date spécifiée.
          */
-        DatedFile(final long date)
-        {
+        DatedFile(final long date) {
             this.file        = null;
             this.startTime   = date;
             this.endTime     = date;
@@ -422,8 +419,7 @@ final class MultiFilesParser extends Parser implements Serializable
          * Compare les dates du dernier enregistrement
          * de deux objets <code>DatedFile</code>.
          */
-        public int compareTo(final Object o)
-        {
+        public int compareTo(final Object o) {
             final long other = ((DatedFile) o).endTime;
             if (endTime < other) return -1;
             if (endTime > other) return +1;
@@ -435,8 +431,7 @@ final class MultiFilesParser extends Parser implements Serializable
          * le nom du fichier ainsi que les dates des premiers et derniers enregistrements trouvés dans
          * le fichier.
          */
-        final StringBuffer toString(StringBuffer b, final DateFormat f, final Date d, final FieldPosition p)
-        {
+        final StringBuffer toString(StringBuffer b, final DateFormat f, final Date d, final FieldPosition p) {
             int i;
             i=b.length(); b.append(file.getName());                b.append(   Utilities.spaces(Math.max(15-(b.length()-i), 1)));
             i=b.length(); d.setTime(startTime); b=f.format(d,b,p); b.insert(i, Utilities.spaces(Math.max(22-(b.length()-i), 1)));
@@ -451,8 +446,10 @@ final class MultiFilesParser extends Parser implements Serializable
          * le nom du fichier ainsi que les dates des premiers et derniers enregistrements trouvés dans
          * le fichier.
          */
-        public String toString()
-        {return toString(new StringBuffer(), getDateTimeInstance(), new Date(0), new FieldPosition(0)).toString();}
+        public String toString() {
+            return toString(new StringBuffer(), getDateTimeInstance(),
+                            new Date(0), new FieldPosition(0)).toString();
+        }
     }
 
     /**
@@ -462,14 +459,12 @@ final class MultiFilesParser extends Parser implements Serializable
      * colonne étant séparés par des espaces. Les fichiers apparaîtront dans
      * l'ordre chronologique de la date de leur dernier enregistrement.
      */
-    public String list()
-    {
+    public String list() {
         StringBuffer     buffer = new StringBuffer();
         final DateFormat format = getDateTimeInstance();
         final FieldPosition pos = new FieldPosition(0);
         final Date       date   = new Date(0);
-        for (int i=0; i<files.length; i++)
-        {
+        for (int i=0; i<files.length; i++) {
             buffer = files[i].toString(buffer, format, date, pos);
             buffer.append('\n');
         }
@@ -486,17 +481,14 @@ final class MultiFilesParser extends Parser implements Serializable
      * De façon facultative, on peut spécifier une date de départ. Les 10 premiers
      * enregistrements à partir de cette date seront alors affichés.
      */
-    public static void main(final String[] args) throws Exception
-    {
+    public static void main(final String[] args) throws Exception {
         int n=10;
         Date start=null;
-        switch (args.length)
-        {
+        switch (args.length) {
             default: System.out.println("Usage: MultiFilesParser [directory] [date] [max]"); break;
             case 3:  n=Integer.parseInt(args[2]);                // fallthrough
             case 2:  start=getDateTimeInstance().parse(args[1]); // fallthrough
-            case 1:
-            {
+            case 1: {
                 final MultiFilesParser parser=new MultiFilesParser(new File(args[0]));
                 System.out.println(parser.list());
                 main(parser, start, n);
