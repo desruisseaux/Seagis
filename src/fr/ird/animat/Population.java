@@ -79,7 +79,7 @@ public interface Population extends Remote {
      * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
      *         et que cette exécution a échouée.
      */
-    Set<+Animal> getAnimals() throws RemoteException;
+    Set<? extends Animal> getAnimals() throws RemoteException;
 
     /**
      * Retourne les limites de la région géographique dans laquelle on retrouve

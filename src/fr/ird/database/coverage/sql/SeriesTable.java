@@ -262,7 +262,7 @@ final class SeriesTable extends Table implements fr.ird.database.coverage.Series
                     subseries.add(new Entry(SUBSERIES, name, ID, remarks));
                 }
                 subResults.close();
-                candidate.subseries = (Entry[]) subseries.toArray(new Entry[subseries.size()]);
+                candidate.subseries = subseries.toArray(new Entry[subseries.size()]);
             }
             if (entry == null) {
                 entry = candidate;

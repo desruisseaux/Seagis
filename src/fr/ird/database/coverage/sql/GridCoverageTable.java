@@ -684,7 +684,7 @@ class GridCoverageTable extends Table implements CoverageTable {
             final List<CoverageEntry> newEntries;
             newEntries = entryList.subList(startIndex, entryList.size());
             final int size = newEntries.size();
-            GridCoverageEntry.canonicalize((CoverageEntry[])newEntries.toArray(new CoverageEntry[size]));
+            GridCoverageEntry.canonicalize(newEntries.toArray(new CoverageEntry[size]));
             log("getEntries", Level.FINE, ResourceKeys.FOUND_COVERAGES_$1, new Integer(size));
         }
     }

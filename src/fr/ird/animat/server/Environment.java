@@ -142,7 +142,7 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     /**
      * Retourne l'ensemble des populations évoluant dans cet environnement.
      */
-    public Set<+Population> getPopulations() {
+    public Set<? extends Population> getPopulations() {
         return immutablePopulations;
     }
 
@@ -152,7 +152,7 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      *
      * @see Animal#getObservations
      */
-    public Set<+Parameter> getParameters() {
+    public Set<? extends Parameter> getParameters() {
         return (Set<Parameter>)Collections.EMPTY_SET;
     }
 

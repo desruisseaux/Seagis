@@ -204,13 +204,29 @@ final class Observations extends AbstractMap<Parameter,Observation> implements S
             if (entries == null) {
                 entries = new Entry[parameters.length];
             }
-            entrySet = new ArraySet<Map.Entry<Parameter, Observation>>(entries) {
-                protected Map.Entry<Parameter, Observation> create(final int index) {
-                    return new Entry(index);
-                }
-            };
+            entrySet = new EntrySet();
         }
         return entrySet;
+    }
+
+    /**
+     * Ensemble d'entrés {@link Entry}.
+     */
+    private final class EntrySet extends ArraySet<Map.Entry<Parameter, Observation>> {
+        /**
+         * Construit un ensemble.
+         */
+        public EntrySet() {
+            super(entries);
+        }
+
+        /**
+         * Construit à la volée l'élément suivant lorsqu'une première itération
+         * est faites sur les entrés, et qu'une de ces entrés n'existent pas encore.
+         */
+        protected Map.Entry<Parameter, Observation> create(final int index) {
+            return new Entry(index);
+        }
     }
 
     /**

@@ -129,8 +129,10 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     /**
      * Les observations pour chaque animal. Ces observations seront obtenues avec
      * {@link Animal#getObservations} la première fois où elles seront demandées.
+     *
+     * Les clés sont des objets {@link Parameter} et les valeurs sont des {@link Observation}.
      */
-    private transient Map<Parameter,Observation>[=] observations;
+    private transient Map[] observations;
 
     /**
      * La date des données à afficher. Cette date sera constamment
@@ -222,9 +224,9 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     private void refresh(final Population population) throws RemoteException {
         synchronized (getTreeLock()) {
             assert population.equals(this.population) : population;
-            final Collection<+Animal> col = population.getAnimals();
+            final Collection<? extends Animal> col = population.getAnimals();
             animals = (Animal[])col.toArray(new Animal[col.size()]);
-            observations = new Map<Parameter,Observation>[animals.length];
+            observations = new Map[animals.length];
             bounds = population.getSpatialBounds();
             setPreferredArea((bounds!=null) ? bounds.getBounds2D() : null);
         }
@@ -234,7 +236,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * Retourne les observations pour l'animal à l'index spécifié.
      */
     private Map<Parameter,Observation> getObservations(final int index) throws RemoteException {
-        Map<Parameter,Observation> obs = observations[index];
+        Map<Parameter,Observation> obs = (Map<Parameter,Observation>) observations[index];
         if (obs == null) {
             obs = animals[index].getObservations(date);
             observations[index] = obs;

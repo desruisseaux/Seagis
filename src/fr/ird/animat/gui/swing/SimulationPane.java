@@ -114,7 +114,7 @@ class SimulationPane extends JComponent implements PropertyChangeListener {
         /*
          * Ajoute toutes les populations.
          */
-        final Set<+Population> populations = environment.getPopulations();
+        final Set<? extends Population> populations = environment.getPopulations();
         int size = populations.size();
         size += size/2;
         populationLayers = new HashMap<Population,PopulationLayer>(size);

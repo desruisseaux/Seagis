@@ -52,15 +52,17 @@ public class ArraySet<Element> extends AbstractSet<Element> implements Serializa
     /**
      * The elements.
      */
-    private final Element[=] elements;
+    private final Element[] elements;
 
     /**
      * Construct a set from an arbitrary collection. This is the caller responsability
      * to ensure that this collection do not contains any duplicated elements. It will
      * be checked only if assertions are enabled.
+     *
+     * @task TODO: Unsafe cast from Object[] to Element[] here.
      */
     public ArraySet(final Collection<Element> elements) {
-        this((Element[=])elements.toArray(new Element[elements.size()]));
+        this((Element[])elements.toArray());
     }
 
     /**
@@ -69,7 +71,7 @@ public class ArraySet<Element> extends AbstractSet<Element> implements Serializa
      * object is constructed. Note that null elements in this array may be changed later
      * if the {@link #create} method has been overrided.
      */
-    public ArraySet(final Element[=] elements) {
+    public ArraySet(final Element[] elements) {
         this.elements = elements;
         assert !hasDuplicated(elements);
     }
@@ -145,8 +147,8 @@ public class ArraySet<Element> extends AbstractSet<Element> implements Serializa
     /**
      * Returns an array containing all of the elements in this collection.
      */
-    public Element[=] toArray() {
-        return (Element[=]) elements.clone();
+    public Element[] toArray() {
+        return (Element[]) elements.clone();
     }
 
     /**

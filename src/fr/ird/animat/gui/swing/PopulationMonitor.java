@@ -136,7 +136,7 @@ final class PopulationMonitor extends JSplitPane
     /**
      * Ajoute les populations spécifiées.
      */
-    private void addPopulations(final Set<+Population> populations) throws RemoteException {
+    private void addPopulations(final Set<? extends Population> populations) throws RemoteException {
         if (populations == null) {
             return;
         }

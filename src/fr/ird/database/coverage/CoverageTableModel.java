@@ -275,7 +275,7 @@ public class CoverageTableModel extends AbstractTableModel {
     public CoverageTableModel(final CoverageTable table) throws SQLException {
         this(table.getSeries());
         final List<CoverageEntry> entryList = table.getEntries();
-        entries = (CoverageEntry[]) entryList.toArray(new CoverageEntry[entryList.size()]);
+        entries = entryList.toArray(new CoverageEntry[entryList.size()]);
         if (REVERSE_ORDER) {
             reverse(entries);
         }
@@ -319,7 +319,7 @@ public class CoverageTableModel extends AbstractTableModel {
      * @param entryList Liste des nouvelles entrées.
      */
     public synchronized void setEntries(final List<CoverageEntry> entryList) {
-        final CoverageEntry[] newEntries = (CoverageEntry[])entryList.toArray(new CoverageEntry[entryList.size()]);
+        final CoverageEntry[] newEntries = entryList.toArray(new CoverageEntry[entryList.size()]);
         if (REVERSE_ORDER) {
             reverse(newEntries);
         }

@@ -137,7 +137,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     /**
      * Retourne l'ensemble des animaux que contient cette population.
      */
-    public Set<+Animal> getAnimals() {
+    public Set<? extends Animal> getAnimals() {
         return immutableAnimals;
     }
     

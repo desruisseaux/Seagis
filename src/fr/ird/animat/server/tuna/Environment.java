@@ -283,7 +283,7 @@ final class Environment extends fr.ird.animat.server.Environment implements Samp
      * Retourne l'ensemble des paramètres compris dans cet environnement. Cet ensemble
      * dépendra de la {@linkplain Configuration configuration} donnée au constructeur.
      */
-    public Set<+Parameter> getParameters() {
+    public Set<? extends Parameter> getParameters() {
         return configuration.parameters;
     }
 

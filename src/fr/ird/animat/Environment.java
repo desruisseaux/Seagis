@@ -71,7 +71,7 @@ public interface Environment extends Remote {
      *
      * @see Population#getEnvironment
      */
-    Set<+Population> getPopulations() throws RemoteException;
+    Set<? extends Population> getPopulations() throws RemoteException;
 
     /**
      * Retourne l'ensemble des paramètres compris dans cet environnement. Les {@link Animal animaux}
@@ -86,7 +86,7 @@ public interface Environment extends Remote {
      *
      * @see Animal#getObservations
      */
-    Set<+Parameter> getParameters() throws RemoteException;
+    Set<? extends Parameter> getParameters() throws RemoteException;
 
     /**
      * Retourne toute la {@linkplain CV_Coverage couverture spatiale des données} à la

@@ -179,7 +179,7 @@ final class CategoryTable extends Table {
             categories.add(category);
         }
         result.close();
-        return (Category[])categories.toArray(new Category[categories.size()]);
+        return categories.toArray(new Category[categories.size()]);
     }
 
     /**

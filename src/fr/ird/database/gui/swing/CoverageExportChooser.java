@@ -210,7 +210,7 @@ public final class CoverageExportChooser extends JPanel {
      * Retourne les entrées des images qui seront à écrire.
      */
     public synchronized CoverageEntry[] getEntries() {
-        return (CoverageEntry[])entries.toArray(new CoverageEntry[entries.size()]);
+        return entries.toArray(new CoverageEntry[entries.size()]);
     }
 
     /**

@@ -251,7 +251,7 @@ public class SeriesCoverage3D extends Coverage3D {
          * vérifie au passage qu'elles ont toutes les mêmes bandes.
          */
         final List<CoverageEntry> entryList = table.getEntries();
-        this.entries = (CoverageEntry[])entryList.toArray(new CoverageEntry[entryList.size()]);
+        this.entries = entryList.toArray(new CoverageEntry[entryList.size()]);
         this.bands   = (entries.length!=0) ? entries[0].getSampleDimensions() : new SampleDimension[0];
         for (int i=1; i<entries.length; i++) {
             if (!Arrays.equals(bands, entries[i].getSampleDimensions())) {

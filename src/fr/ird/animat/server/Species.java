@@ -404,7 +404,7 @@ public class Species extends RemoteObject implements fr.ird.animat.Species {
      * Retourne tous les {@linkplain Parameter paramètres} susceptibles d'intéresser les
      * {@linkplain Animal animaux} de cette espèce. L'ensemble retourné est immutable.
      */
-    public Set<+Parameter> getObservedParameters() {
+    public Set<? extends Parameter> getObservedParameters() {
         if (parameterSet == null) {
             // Pas besoin de synchroniser. Ce n'est pas très
             // grave si deux instances de cet objet existent.

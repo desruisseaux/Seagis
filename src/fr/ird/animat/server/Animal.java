@@ -65,7 +65,6 @@ import org.geotools.pt.CoordinatePoint;
 
 // Seagis
 import fr.ird.resources.XArray;
-import fr.ird.resources.ArraySet;
 import fr.ird.animat.event.AnimalChangeEvent;
 import fr.ird.animat.event.AnimalChangeListener;
 

@@ -51,8 +51,8 @@ public final class XArray {
      * @param  length Longueur du tableau désiré.
      * @return Tableau du même type que <code>array</code>, de longueur <code>length</code> et contenant les données de <code>array</code>.
      */
-    public static <Element> Element[=] resize(final Element[=] array, final int length) {
-        return (Element[=]) org.geotools.resources.XArray.resize(array, length);
+    public static <Element> Element[] resize(final Element[] array, final int length) {
+        return (Element[]) org.geotools.resources.XArray.resize(array, length);
     }
 
     /**
@@ -194,8 +194,8 @@ public final class XArray {
      *                Cette méthode peut retourner directement <code>dst</code>, mais la plupart du temps
      *                elle retournera un tableau nouvellement créé.
      */
-    public static <Element> Element[=] remove(final Element[=] array, final int index, final int length) {
-        return (Element[=]) org.geotools.resources.XArray.remove(array, index, length);
+    public static <Element> Element[] remove(final Element[] array, final int index, final int length) {
+        return (Element[]) org.geotools.resources.XArray.remove(array, index, length);
     }
 
     /**
@@ -331,8 +331,8 @@ public final class XArray {
      *                Cette méthode peut retourner directement <code>dst</code>, mais la plupart du temps
      *                elle retournera un tableau nouvellement créé.
      */
-    public static <Element> Element[=] insert(final Element[=] array, final int index, final int length) {
-        return (Element[=]) org.geotools.resources.XArray.insert(array, index, length);
+    public static <Element> Element[] insert(final Element[] array, final int index, final int length) {
+        return (Element[]) org.geotools.resources.XArray.insert(array, index, length);
     }
 
     /**
@@ -484,8 +484,8 @@ public final class XArray {
      *                méthode peut retourner directement <code>dst</code>, mais jamais <code>src</code>.
      *                La plupart du temps, elle retournera un tableau nouvellement créé.
      */
-    public static <Element> Element[=] insert(final Element[=] src, final int src_pos, final Element[=] dst, final int dst_pos, final int length) {
-        return (Element[=]) org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);
+    public static <Element> Element[] insert(final Element[] src, final int src_pos, final Element[] dst, final int dst_pos, final int length) {
+        return (Element[]) org.geotools.resources.XArray.insert(src, src_pos, dst, dst_pos, length);
     }
 
     /**

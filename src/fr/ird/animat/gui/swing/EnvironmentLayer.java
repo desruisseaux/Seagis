@@ -166,7 +166,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements ListModel, 
             throw new AssertionError(exception); // Should not happen
         }
         this.environment = environment;
-        final Iterator<+Parameter> parameters = environment.getParameters().iterator();
+        final Iterator<? extends Parameter> parameters = environment.getParameters().iterator();
         if (parameters.hasNext()) {
             parameter = parameters.next();
             setCoverage(adapters.wrap(environment.getCoverage(parameter)));

@@ -148,7 +148,7 @@ final class SampleDimensionTable extends Table {
             mappers.add((SampleDimension)POOL.canonicalize(mapper));
         }
         result.close();
-        return (SampleDimension[])mappers.toArray(new SampleDimension[mappers.size()]);
+        return mappers.toArray(new SampleDimension[mappers.size()]);
     }
 
     /**
