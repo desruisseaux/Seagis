@@ -32,6 +32,8 @@ package net.seagis.resources;
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.AbstractSet;
+import java.util.Iterator;
 
 // References
 import java.lang.ref.WeakReference;
@@ -48,15 +50,11 @@ import java.util.logging.LogRecord;
 /**
  * A set of object hold by weak references.
  * This class is used to implements caches.
- * <br><br>
- * Note: depart from this name, this class do not implements
- *       the {@link java.util.Set} interface. It may be done
- *       if a future version if it worth it.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public class WeakHashSet
+public class WeakHashSet extends AbstractSet
 {
     /**
      * A weak reference to an element.
@@ -297,6 +295,15 @@ public class WeakHashSet
     }
 
     /**
+     * Returns <code>true</code> if this set contains the specified element.
+     *
+     * @param  obj Object to be checked for containment in this set.
+     * @return <code>true</code> if this set contains the specified element.
+     */
+    public boolean contains(final Object obj)
+    {return obj==null || get(obj)!=null;}
+
+    /**
      * Returns an object equals to the specified object, if present. If
      * this set doesn't contains any object equals to <code>obj</code>,
      * then this method returns <code>null</code>.
@@ -323,6 +330,18 @@ public class WeakHashSet
         }
         return obj;
     }
+
+    /**
+     * Adds the specified element to this set if it is not already present.
+     * If this set already contains the specified element, the call leaves
+     * this set unchanged and returns <code>false</code>.
+     *
+     * @param  obj Element to be added to this set.
+     * @return <code>true</code> if this set did not already
+     *         contain the specified element.
+     */
+    public synchronized boolean add(final Object obj)
+    {return intern0(obj)==null;}
 
     /**
      * Returns an object equals to <code>obj</code> if such an object already
@@ -482,6 +501,14 @@ public class WeakHashSet
         }
         return XArray.resize(elements, index);
     }
+
+    /**
+     * Returns an iterator over the elements contained in this collection.
+     * No element from this set will be garbage collected as long as a
+     * reference to the iterator is hold.
+     */
+    public Iterator iterator()
+    {return Arrays.asList(toArray()).iterator();}
 
     /**
      * Returns a hash code value for the specified object.
