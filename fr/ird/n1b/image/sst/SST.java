@@ -171,9 +171,9 @@ import org.geotools.renderer.j2d.Hints;
 public final class SST 
 {   
     /** Constante définissant les paramètres accessibles. */
-    public static final String SLOPE_INTERCEPT_COEFFICIENT = "Slope, intercept coefficients",
-                               THERMAL_COEFFICIENT         = "Thermal calibration coefficient",
-                               WAVE_LENGTH                 = "Central wave length",
+    public static final String SLOPE_INTERCEPT_COEFFICIENT = "SLOPE INTERCEPT COEFFICIENTS",
+                               THERMAL_COEFFICIENT         = "THERMAL CALIBRATION COEFFICIENT",
+                               WAVE_LENGTH                 = "CENTRAL WAVE LENGHT",
                                TEMPERATURE_CONSTANT        = "Temperature constant";   
     
     /** Catégorie de l'image S.S.T.. */ 

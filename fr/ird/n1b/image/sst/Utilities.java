@@ -30,11 +30,14 @@ import java.io.File;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.FileImageOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import javax.imageio.stream.FileImageOutputStream;
 import java.awt.Color;
 import java.awt.Frame;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -63,6 +66,8 @@ import fr.ird.io.text.ParseHeader;
 import fr.ird.io.text.ParsePalette;
 import fr.ird.io.map.IsolineReader;
 import fr.ird.io.map.GEBCOReader;
+import fr.ird.n1b.io.ImageReaderN1B;
+import fr.ird.n1b.io.LocalizationGridN1B;
 import fr.ird.n1b.util.StatisticGrid;
 
 // GEOTOOLS
@@ -88,7 +93,7 @@ import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.renderer.j2d.Hints;
 
 /**
- * Fournie des méthodes et variables statiques utiles.
+ * Fournie des méthodes et variables statiques utiles pour les traitements SST.
  *
  * @author  Remi Eve
  * @version $Id$
@@ -171,7 +176,7 @@ public final class Utilities
                                               GeographicCoordinateSystem.WGS84.getAxis(0),
                                               new AxisInfo("Latitude", AxisOrientation.SOUTH));  
     }
-    
+
     /**
      * Dans la chaîne de traitement S.S.T., lors du calcul des <i>SST par passage(SST)</i>, 
      * des <i>SST journalières (SSTSup)</i> ou des <i>synthèses SST (SSTSynthese)</i>, une 
@@ -180,29 +185,30 @@ public final class Utilities
      * S.S.T. de générer un <CODE>GridCoverage</CODE> correctement localiser.
      *
      * @param file      L'image.
+     * @param header    Le fichier <i>header</i> associé.
      * @param name      Nom du <CODE>GridCoverage</CODE>.
      * @param cs        Le systeme de coordonnées.
      * @param sample    Le sample définissant la palette de couleur ainsi que les données 
      *                  de l'image.
-     *
      * @return un <CODE>GridCoverage</CODE> de l'image.
      */
-    public static GridCoverage getGridCoverage(final File              file,
+    public static GridCoverage getGridCoverage(final File              source,
+                                               final File              header,
                                                final String            name,
                                                final CoordinateSystem  cs,
                                                final SampleDimension[] sample,
                                                final Map configuration) throws IOException
     {        
         // Lecture en tuile.
-        ParameterBlock block = (new ParameterBlock()).add(file);
-        block = block.add(0);    // undefine
-        block = block.add(new Boolean(true)); // metadata
-        block = block.add(new Boolean(true)); // thumbnails
-        block = block.add(new Boolean(true)); // verify input
-        block = block.add(null); // listener
-        block = block.add(null); // locale
-        block = block.add(null); // ReadParam
-        block = block.add(null); // null            
+        ParameterBlock block = (new ParameterBlock()).add(source);
+        block = block.add(0);                   // undefine
+        block = block.add(new Boolean(true));   // metadata
+        block = block.add(new Boolean(true));   // thumbnails
+        block = block.add(new Boolean(true));   // verify input
+        block = block.add(null);                // listener
+        block = block.add(null);                // locale
+        block = block.add(null);                // ReadParam
+        block = block.add(null);                // null            
         ImageIO.setUseCache(true);
         final RenderedImage image = JAI.create("ImageRead", block); 
 
@@ -213,12 +219,10 @@ public final class Utilities
            associé. Ce fichier contient des informations permettant de connaitre la 
            situation géographique de la zone représentée par l'image. */
         final StringBuffer buffer = new StringBuffer();
-        buffer.append(file.getParentFile().getPath() + File.separatorChar + file.getName());        
-        final String header  = buffer.substring(0, buffer.length()-3).toString() + "hdr";                                
         
         // Extraction des informations du fichier <i>header</i>.
         final ParameterList paramHeaderIn  = ParseHeader.getInputDefaultParameterList();
-        paramHeaderIn.setParameter(ParseHeader.FILE, new File(header));
+        paramHeaderIn.setParameter(ParseHeader.FILE, header);
         final ParameterList paramHeaderOut = ParseHeader.parse(paramHeaderIn);
         final Point2D     ORIGINE = (Point2D)paramHeaderOut.getObjectParameter(ParseHeader.ORIGINE);
         final double[] RESOLUTION_ = (double[])paramHeaderOut.getObjectParameter(ParseHeader.RESOLUTION);                                                
@@ -251,10 +255,10 @@ public final class Utilities
         block1 = block1.add(transY);        
 
         // Construction du gridCoverage.
-        final double[] minCP = {ptOrigine.getOrdinate(0),         
-                                ptOrigine.getOrdinate(1) - height},
-                       maxCP = {ptOrigine.getOrdinate(0) + width, 
-                                ptOrigine.getOrdinate(1)};
+        final double[] minCP = {ptOrigine.getOrdinate(0)*RESOLUTION,         
+                                (ptOrigine.getOrdinate(1) - height)*RESOLUTION},
+                       maxCP = {(ptOrigine.getOrdinate(0) + width)*RESOLUTION, 
+                                ptOrigine.getOrdinate(1)*RESOLUTION};
         final Envelope envelope = new Envelope(minCP, maxCP);        
         return (new GridCoverage(name, 
                                  JAI.create("Translate", block1).createInstance(), 
@@ -264,7 +268,7 @@ public final class Utilities
                                  (GridCoverage[])null,
                                  (Map)null));         
     }    
-    
+
     /**
      * Retourne la catégorie nommée <CODE>name</CODE> appartenant au <CODE>sample</CODE>.
      *
@@ -311,7 +315,7 @@ public final class Utilities
         if (format == "raw")
             writeFloatingImageRaw(coverage, filename);
         else
-        ImageIO.write(coverage.geophysics(false).getRenderedImage(), format, new File(filename));        
+        ImageIO.write(coverage.getRenderedImage(), format, new File(filename));        
     }
 
     /**
@@ -323,16 +327,18 @@ public final class Utilities
     private static final void writeFloatingImageRaw(final GridCoverage coverage, 
                                                     final String filename) throws IOException
     {
-        final Raster raster = coverage.geophysics(true).getRenderedImage().getData();
+        final Raster raster = coverage.getRenderedImage().getData();
         final int width  = raster.getWidth(),
                   height = raster.getHeight();
+        final int minX = coverage.getRenderedImage().getMinX(),
+                  minY = coverage.getRenderedImage().getMinY();
         
         final FileImageOutputStream out = new FileImageOutputStream(new File(filename));
         final float[] array = new float[width];
         for (int h=0 ; h<height ; h++)
         {
             for (int w=0 ; w<width ; w++)
-                array[w] = (float)raster.getSampleDouble(w, h, 0);            
+                array[w] = (float)raster.getSampleFloat(w + minX, h + minY, 0);            
             out.writeFloats(array, 0, array.length);                
         }    
         out.close();
@@ -390,6 +396,63 @@ public final class Utilities
     }     
     
     /**
+     * Ecrit l'image <CODE>source</CODE> sur le disque en passant par un fichier 
+     * temporaire et en prenant en compte la taille des tuiles.
+     *
+     * @param source        L'image.
+     * @param tileWidth     Largeur de la tuile.
+     * @param tileHeight    Hauteur de la tuile.
+     * @param target        Le fichier de destination.
+     * @param tmp           Le fichier temporaire.
+     */
+    public static void writeImage(final RenderedImage source,
+                                  final int           tileWidth,
+                                  final int           tileHeight,
+                                  final File          target,
+                                  final File          tmp) throws IOException                                  
+    {   
+        // Extraction du format de l'image.
+        String format = target.getName().substring(target.getName().indexOf('.') + 1);
+        while (format.indexOf('.') != -1)
+            format = format.substring(format.indexOf('.') + 1);        
+        
+        // Ecriture en tuile.
+        ParameterBlock block = (new ParameterBlock()).add(tmp);
+        block = block.add(format);        // Format de l'image
+        block = block.add(Boolean.TRUE);  
+        block = block.add(Boolean.TRUE);  
+        block = block.add(Boolean.TRUE);  // Verify output
+        block = block.add(Boolean.FALSE);  
+        block = block.add(new java.awt.Dimension(tileWidth,tileHeight));  
+        block = block.add(null);  
+        block = block.add(null);  
+        block = block.add(null);  
+        block = block.add(null);  // Progress listener
+        block = block.add(Locale.FRENCH);  
+        block = block.add(null);  
+        block = block.add(null);              
+        final RenderedImage image = JAI.create("ImageWrite", block); 
+        
+        if (target.exists())
+        {
+            if (!target.delete())
+            {
+                throw new IOException("Impossible d'ecraser le fichier \"" + 
+                                      target + 
+                                      "\" par le fichier \"" + 
+                                      tmp + "\"");
+            }
+        }
+        if (!tmp.renameTo(target))
+        {
+            throw new IOException("Impossible de renommer le fichier \"" + 
+                                  tmp + 
+                                  "\" en \"" + 
+                                  target + "\"");
+        }
+    }  
+    
+    /**
      * Ecrit l'image <CODE>source</CODE> sur le disque en passant par un fichier temporaire.
      *
      * @param source    L'image.
@@ -404,8 +467,11 @@ public final class Utilities
         String format = target.getName().substring(target.getName().indexOf('.') + 1);
         while (format.indexOf('.') != -1)
             format = format.substring(format.indexOf('.') + 1);        
-        
+ 
+        if (tmp.exists())
+            tmp.delete();
         ImageIO.write(source, format, tmp);                      
+        
         if (target.exists())
         {
             if (!target.delete())
@@ -478,24 +544,6 @@ public final class Utilities
         out.close();
     }    
     
-    /**
-     * Copie d'un fichier.
-     *
-     * @param src   Fichier source.
-     * @param tgt   Fichier destination.
-     */
-    public static void copySatPos(final File src, final File tgt) throws IOException
-    {
-        final java.io.LineNumberReader readar = new java.io.LineNumberReader(new fr.ird.n1b.PushbackReader(new java.io.FileReader(src)));
-        final DataOutputStream out = new DataOutputStream(new FileOutputStream(tgt));
-        
-        String line;
-        while ((line=readar.readLine())!= null)
-            out.writeBytes(line + "\n");
-        readar.close();
-        out.close();
-    }    
-
     /**
      * Retourne un <CODE>GridCoverage</CODE> auquel a été superposé l'isoline.
      *
@@ -604,24 +652,42 @@ public final class Utilities
     }    
     
     /**
+     * Extrait les coordonnées longitude latitude des points de localisation du fichier
+     * N1B et génère un fichier contenant ces coordonnées.
      *
+     * @param source    Fichier source.
+     * @param target    Fichier généré.
      */
-    public static void main(String[] args)
+    public static void createFileLocalisation(final File source,
+                                              final File target) 
+                                              throws FileNotFoundException, IOException
     {
-       try 
-       {
-           final File directory = new File("C:/Partages/SATPOS/SATPOS nouveau format");
-           final File[] array = directory.listFiles();
-           
-           for (int i=0 ; i<array.length ; i++)
-           {
-               System.out.println(array[i]);
-                copySatPos(array[i], new File("C:/Partages/SATPOS/" + array[i].getName()));
-           }
-       }
-       catch (IOException e)
-       {
-           System.err.println(e);
-       }
+        // Ouverture du fichier N1B.
+        final FileImageInputStream stream = new FileImageInputStream(source);
+        final ImageReaderN1B reader       = (ImageReaderN1B)ImageReaderN1B.get(stream);                
+        final LocalizationGridN1B grid    = reader.getGridLocalization();        
+        
+        final BufferedWriter out = new BufferedWriter(new FileWriter(target));                                                                        
+        for (int row=0 ; row<reader.getHeight(0) ; row++)
+        {
+            for (int col=0 ; col<ImageReaderN1B.NB_CONTROL_POINT_LINE ; col++)
+            {
+                final Point pt = new Point(col, row);
+                final Point2D geo = grid.getLocalizationPoint(pt);
+                out.write(geo.getX() + "\t" + geo.getY() + "\t");
+            }
+            out.write("\n");
+        }
+        out.close();
+    }
+    
+    /**
+     * Retourne l'origine de l'image dans le système géographique.
+     * @return l'origine de l'image dans le système géographique.
+     */
+    public static Point2D getOrigine(final GridCoverage grid)
+    {
+        return new Point2D.Double(grid.getEnvelope().toRectangle2D().getMinX(), 
+                                  grid.getEnvelope().toRectangle2D().getMaxY());        
     }
 }
