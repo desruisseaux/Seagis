@@ -101,7 +101,7 @@ public class GridCoverageProcessor
             }
         }
 /*----- BEGIN JDK 1.4 DEPENDENCIES ----
-        Logger.getLogger("net.seagis.gcs").config(JAI.getBuildVersion());
+        Logger.getLogger("net.seagis.gcs").config("Java Advanced Imaging: "+JAI.getBuildVersion());
 ------- END OF JDK 1.4 DEPENDENCIES ---*/
     }
 
