@@ -358,7 +358,7 @@ public class RangeBars extends ZoomPane {
         this.verticalLabels = verticalLabels;
         axis = new Axis2D(graduation);
         axis.setLabelClockwise(horizontal);
-        axis.setRenderingHint(Graduation.LABEL_FONT,      new Font("SansSerif", Font.BOLD,  11));
+        axis.setRenderingHint(Graduation.AXIS_TITLE_FONT, new Font("SansSerif", Font.BOLD,  11));
         axis.setRenderingHint(Graduation.TICK_LABEL_FONT, new Font("SansSerif", Font.PLAIN, 10));
         LookAndFeel.installColors(this, "Label.background", "Label.foreground");
         setMagnifierEnabled(false);
@@ -557,14 +557,14 @@ public class RangeBars extends ZoomPane {
      * signifie qu'il ne faut pas afficher de légende.
      */
     public void setLegend(final String label) {// No 'synchronized' needed here
-        ((AbstractGraduation) axis.getGraduation()).setLabel(label);
+        ((AbstractGraduation) axis.getGraduation()).setTitle(label);
     }
 
     /**
      * Retourne la légende de l'axe.
      */
     public String getLegend() { // No 'synchronized' needed here
-        return axis.getGraduation().getLabel(false);
+        return axis.getGraduation().getTitle(false);
     }
 
     /**
@@ -864,7 +864,7 @@ public class RangeBars extends ZoomPane {
      */
     public void setFont(final Font font) {
         super.setFont(font);
-        axis.setRenderingHint(Graduation.LABEL_FONT, font);
+        axis.setRenderingHint(Graduation.AXIS_TITLE_FONT, font);
         final int size = font.getSize();
         axis.setRenderingHint(Graduation.TICK_LABEL_FONT,
                               font.deriveFont(Font.PLAIN, size-(size>=14 ? 2 : 1)));
