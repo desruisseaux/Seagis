@@ -402,7 +402,7 @@ public abstract class Clock implements fr.ird.animat.Clock, Serializable {
          */
         public int getStepSequenceNumber() {
             final long delta = time - initialTime;
-            assert delta>0 && (delta % duration)==0 : delta;
+            assert delta>=0 && (delta % duration)==0 : delta;
             return (int) (delta/duration);
         }
 

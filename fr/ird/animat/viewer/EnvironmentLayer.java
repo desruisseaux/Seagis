@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 
 // OpenGIS dependencies
@@ -69,7 +70,7 @@ import fr.ird.animat.event.EnvironmentChangeListener;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class EnvironmentLayer extends RenderedGridCoverage {
+final class EnvironmentLayer extends RenderedGridCoverage implements Runnable {
     /**
      * L'adapter à utiliser pour convertir les couches 
      */
@@ -101,12 +102,25 @@ final class EnvironmentLayer extends RenderedGridCoverage {
     /**
      * Paramètre à afficher.
      */
-    private Parameter parameter;
+    private final Parameter parameter;
 
     /**
      * La barre de couleurs à afficher en dessous de la carte.
      */
     final ColorBar colors = new ColorBar();
+
+    /**
+     * L'environnement dessiné par cette couche.
+     */
+    private final Environment environment;
+
+    /**
+     * Les instructions à exécuter si jamais la machine virtuelle était interrompue
+     * par l'utilisateur avec [Ctrl-C] ou quelque autre signal du genre.  Ce thread
+     * va retirer les "listeners" afin de ne pas encombrer le serveur, qui lui
+     * continuera à fonctionner.
+     */
+    private final Thread shutdownHook;
 
     /**
      * L'objet chargé d'écouter les modifications survenant dans l'environnement.
@@ -122,15 +136,39 @@ final class EnvironmentLayer extends RenderedGridCoverage {
      */
     public EnvironmentLayer(final Environment environment) throws RemoteException {
         super(null);
+        this.environment = environment;
         final Iterator<Parameter> parameters = environment.getParameters().iterator();
         if (parameters.hasNext()) {
-            listener  = new Listener();
             parameter = parameters.next();
             setCoverage(adapters.wrap(environment.getCoverage(parameter)));
-            environment.addEnvironmentChangeListener(listener);
         } else {
             parameter = null;
-            listener  = null;
+        }
+        listener = new Listener();
+        environment.addEnvironmentChangeListener(listener);
+        Runtime.getRuntime().addShutdownHook(shutdownHook = new Thread(this));
+    }
+
+    /**
+     * Exécuté automatiquement lorsque la machine virtuelle est en cours de fermeture.
+     */
+    public void run() {
+        try {
+            environment.removeEnvironmentChangeListener(listener);
+        } catch (RemoteException exception) {
+            // Logging during shutdown may fail silently. May be better than nothing...
+            failed("EnvironmentLayer", "shutdownHook", exception);
+        }
+    }
+
+    /**
+     * Libère les ressources utilisées par cette couche.
+     */
+    public void dispose() {
+        synchronized (getTreeLock()) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            run();
+            super.dispose();
         }
     }
 
@@ -166,11 +204,22 @@ final class EnvironmentLayer extends RenderedGridCoverage {
     }
 
     /**
+     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
+     */
+    static void failed(final String classe, final String method, final RemoteException exception) {
+        final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
+        record.setSourceClassName(classe);
+        record.setSourceMethodName(method);
+        record.setThrown(exception);
+        Logger.getLogger("fr.ird.animat.viewer").log(record);
+    }
+
+    /**
      * Objet ayant la charge de réagir aux changements survenant dans l'environnement.
      * Ces changements peuvent se produire sur une machine distante.
      */
-    private final class Listener extends RemoteObject implements EnvironmentChangeListener,
-                                                                 Runnable
+    private final class Listener extends UnicastRemoteObject implements EnvironmentChangeListener,
+                                                                        Runnable
     {
         /**
          * Liste des changements survenus récemment dans l'environnement. Cette
@@ -184,6 +233,13 @@ final class EnvironmentLayer extends RenderedGridCoverage {
         private transient Coverage coverage;
 
         /**
+         * Construit un objet par défaut. L'objet sera exporté
+         * immédiatement pour un éventuel usage avec les RMI.
+         */
+        public Listener() throws RemoteException {
+        }
+
+        /**
          * Appelée quand l'environnement a changé. Si la date a changée, l'image correspondant
          * au pas de temps courant sera chargée et affichée.  Les notifications d'ajouts et de
          * suppressions de populations seront transmis aux {@link #listeners} (afin de réduire
@@ -194,8 +250,10 @@ final class EnvironmentLayer extends RenderedGridCoverage {
                 throws RemoteException
         {
             events.addLast(event);
-            if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
-                coverage = adapters.wrap(event.getSource().getCoverage(parameter));
+            if (parameter != null) {
+                if (event.changeOccured(EnvironmentChangeEvent.DATE_CHANGED)) {
+                    coverage = adapters.wrap(event.getSource().getCoverage(parameter));
+                }
             }
             EventQueue.invokeLater(this);
         }

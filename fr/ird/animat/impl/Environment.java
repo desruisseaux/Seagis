@@ -25,13 +25,17 @@
  */
 package fr.ird.animat.impl;
 
-// J2SE standard
+// Utilitaires
 import java.util.Set;
+import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
 import java.util.NoSuchElementException;
 import javax.swing.event.EventListenerList;
+
+// Remote Method Invocation (RMI)
+import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
@@ -91,6 +95,12 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     private final Clock clock;
 
     /**
+     * Le numéro de port utilisé lorsque cet environnement a été exporté,
+     * or <code>-1</code> s'il n'a pas encore été exporté.
+     */
+    private int port = -1;
+
+    /**
      * Construit un environnement par défaut.
      *
      * @param clock Horloge de la simulation. Toute la simulation
@@ -111,8 +121,9 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * d'ajouter automatiquement la nouvelle population à cet environnement.
      *
      * @return La population créée.
+     * @throws RemoteException si l'exportation de la nouvelle population a échoué.
      */
-    public Population newPopulation() {
+    public Population newPopulation() throws RemoteException {
         synchronized (getTreeLock()) {
             return new Population(this);
         }
@@ -205,12 +216,62 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
     }
 
     /**
+     * Libère les ressources utilisées par cet environnement. Toutes
+     * les populations contenues dans cet environnement seront détruites,
+     * et les éventuelles connections avec des bases de données seront
+     * fermées.
+     */
+    public void dispose() {
+        synchronized (getTreeLock()) {
+            if (port >= 0) {
+                unexport();
+            }
+            /*
+             * On ne peut pas utiliser Iterator, parce que les appels
+             * de Population.kill() vont modifier l'ensemble.
+             */
+            final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
+            for (int i=0; i<pop.length; i++) {
+                pop[i].kill();
+            }
+            assert populations.isEmpty() : populations.size();
+            populations.clear(); // Par précaution.
+            /*
+             * Retire tous les 'listeners'.
+             */
+            final Object[] listeners = listenerList.getListenerList();
+            for (int i=listeners.length; (i-=2)>=0;) {
+                listenerList.remove((Class)         listeners[i  ],
+                                    (EventListener) listeners[i+1]);
+            }
+            assert listenerList.getListenerCount() == 0;
+            queue.dispose();
+        }
+    }
+
+    /**
+     * Libère les ressources utilisées par cet environnement.
+     */
+    protected void finalize() {
+        queue.dispose();
+    }
+
+
+
+
+    ////////////////////////////////////////////////////////
+    ////////                                        ////////
+    ////////    E V E N T   L I S T E N E R S       ////////
+    ////////                                        ////////
+    ////////////////////////////////////////////////////////
+
+    /**
      * Déclare un objet à informer des changements survenant dans cet
      * environnement. Ces changements surviennent souvent suite à un
      * appel de {@link #nextTimeStep}.
      */
     public void addEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        synchronized (getTreeLock()) {
+        synchronized (listenerList) {
             listenerList.add(EnvironmentChangeListener.class, listener);
         }
     }
@@ -219,9 +280,25 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * Retire un objet à informer des changements survenant dans cet environnement.
      */
     public void removeEnvironmentChangeListener(final EnvironmentChangeListener listener) {
-        synchronized (getTreeLock()) {
+        synchronized (listenerList) {
             listenerList.remove(EnvironmentChangeListener.class, listener);
         }
+    }
+
+    /**
+     * Retourne le nombre d'objets intéressés à être informés des changements apportés à
+     * l'environnement, à une population ou à l'état d'un des animaux. Cette information
+     * peut-être utilisée pour ce faire une idée du trafic qu'il pourrait y avoir sur le
+     * réseau lorsque la simulation est exécutée sur une machine distante.
+     */
+    final int getListenerCount() {
+        int count = listenerList.getListenerCount();
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
+                count += ((Population) it.next()).getListenerCount();
+            }
+        }
+        return count;
     }
 
     /**
@@ -253,7 +330,10 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
      * @param event Un objet décrivant le changement survenu.
      */
     protected void fireEnvironmentChanged(final EnvironmentChangeEvent event) {
-        final Object[] listeners = listenerList.getListenerList();
+        final Object[] listeners;
+        synchronized (listenerList) {
+            listeners = listenerList.getListenerList();
+        }
         queue.invokeLater(new Runnable() {
             public void run() {
                 assert Thread.holdsLock(getTreeLock());
@@ -285,41 +365,52 @@ public class Environment extends RemoteObject implements fr.ird.animat.Environme
         return queue.lock;
     }
 
+
+
+
+    //////////////////////////////////////////////////////////////////////////
+    ////////                                                          ////////
+    ////////    R E M O T E   M E T H O D   I N V O C A T I O N       ////////
+    ////////                                                          ////////
+    //////////////////////////////////////////////////////////////////////////
+
     /**
-     * Libère les ressources utilisées par cet environnement. Toutes
-     * les populations contenues dans cet environnement seront détruites,
-     * et les éventuelles connections avec des bases de données seront
-     * fermées.
+     * Retourne le numéro de port utilisé lorsque cet environnement a été exporté,
+     * or <code>-1</code> s'il n'a pas encore été exporté.
      */
-    public void dispose() {
+    final int getRMIPort() {
+        return port;
+    }
+
+    /**
+     * Exporte cet environnement et toutes les populations qu'il contient de façon à ce qu'elles
+     * puissent accepter les appels de machines distantes.
+     *
+     * @param  port Numéro de port, ou 0 pour choisir un port anonyme.
+     * @throws RemoteException si cet environnement n'a pas pu être exporté.
+     */
+    final void export(final int port) throws RemoteException {
         synchronized (getTreeLock()) {
-            /*
-             * On ne peut pas utiliser Iterator, parce que les appels
-             * de Population.kill() vont modifier l'ensemble.
-             */
-            final Population[] pop = (Population[]) populations.toArray(new Population[populations.size()]);
-            for (int i=0; i<pop.length; i++) {
-                pop[i].kill();
+            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
+                ((Population) it.next()).export(port);
             }
-            assert populations.isEmpty() : populations.size();
-            populations.clear(); // Par précaution.
-            /*
-             * Retire tous les 'listeners'.
-             */
-            final Object[] listeners = listenerList.getListenerList();
-            for (int i=listeners.length; (i-=2)>=0;) {
-                listenerList.remove((Class)         listeners[i  ],
-                                    (EventListener) listeners[i+1]);
-            }
-            assert listenerList.getListenerCount() == 0;
-            queue.dispose();
+            UnicastRemoteObject.exportObject(this, port);
+            this.port = port;
         }
     }
 
     /**
-     * Libère les ressources utilisées par cet environnement.
+     * Annule l'exportation de cet environnement. Si l'environnement ou une de ses populations
+     * était déjà en train d'exécuter une méthode, alors <code>unexport(...)</code> attendra
+     * quelques secondes avant de forcer l'arrêt de l'exécution.
      */
-    protected void finalize() {
-        queue.dispose();
+    final void unexport() {
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Population> it=populations.iterator(); it.hasNext();) {
+                ((Population) it.next()).unexport();
+            }
+            Animal.unexport("Environment", this);
+            this.port = -1;
+        }
     }
 }

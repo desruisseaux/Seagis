@@ -40,7 +40,7 @@ import java.awt.image.RenderedImage;
 import java.awt.font.GlyphVector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 
 // Utilitaires
@@ -80,7 +80,7 @@ import fr.ird.animat.event.PopulationChangeListener;
  * @version $Id$
  * @author Martin Desruisseaus
  */
-final class PopulationLayer extends RenderedMarks implements PropertyChangeListener {
+final class PopulationLayer extends RenderedMarks implements PropertyChangeListener, Runnable {
     /**
      * Longueur de la flèche représentant les thons.
      */
@@ -130,9 +130,22 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     private Shape bounds;
 
     /**
+     * La population dessinée par cette couche.
+     */
+    private final Population population;
+
+    /**
      * Couleurs et symboles des espèces.
      */
     private final Map<Species,Species.Icon> icons = new HashMap<Species,Species.Icon>();
+
+    /**
+     * Les instructions à exécuter si jamais la machine virtuelle était interrompue
+     * par l'utilisateur avec [Ctrl-C] ou quelque autre signal du genre.  Ce thread
+     * va retirer les "listeners" afin de ne pas encombrer le serveur, qui lui
+     * continuera à fonctionner.
+     */
+    private final Thread shutdownHook;
 
     /**
      * L'objet chargé d'écouter les modifications survenant dans la population.
@@ -148,9 +161,34 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * @param  manager Objet à utiliser pour redessiner les cartes.
      */
     public PopulationLayer(final Population population) throws RemoteException {
+        this.population = population;
         refresh(population);
         listener = new Listener();
         population.addPopulationChangeListener(listener);
+        Runtime.getRuntime().addShutdownHook(shutdownHook = new Thread(this));
+    }
+
+    /**
+     * Exécuté automatiquement lorsque la machine virtuelle est en cours de fermeture.
+     */
+    public void run() {
+        try {
+            population.removePopulationChangeListener(listener);
+        } catch (RemoteException exception) {
+            // Logging during shutdown may fail silently. May be better than nothing...
+            EnvironmentLayer.failed("PopulationLayer", "shutdownHook", exception);
+        }
+    }
+
+    /**
+     * Libère les ressources utilisées par cette couche.
+     */
+    public void dispose() {
+        synchronized (getTreeLock()) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            run();
+            super.dispose();
+        }
     }
 
     /**
@@ -158,6 +196,7 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      */
     private void refresh(final Population population) throws RemoteException {
         synchronized (getTreeLock()) {
+            assert population.equals(this.population) : population;
             final Collection<Animal> col = population.getAnimals();
             animals = col.toArray(new Animal[col.size()]);
             bounds = population.getSpatialBounds();
@@ -282,19 +321,8 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
     /**
      * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
      */
-    static void failed(final String classe, final String method, final RemoteException exception) {
-        final LogRecord record = new LogRecord(Level.WARNING, exception.getLocalizedMessage());
-        record.setSourceClassName(classe);
-        record.setSourceMethodName(method);
-        record.setThrown(exception);
-        Logger.getLogger("fr.ird.animat.viewer").log(record);
-    }
-
-    /**
-     * Appelée automatiquement lorsque l'exécution d'une méthode RMI a échouée.
-     */
     private static void failed(final String method, final RemoteException exception) {
-        failed("PopulationLayer.MarkIterator", method, exception);
+        EnvironmentLayer.failed("PopulationLayer.MarkIterator", method, exception);
     }
 
     /**
@@ -434,7 +462,14 @@ final class PopulationLayer extends RenderedMarks implements PropertyChangeListe
      * Objet ayant la charge de réagir aux changements survenant dans l'environnement.
      * Ces changements peuvent se produire sur une machine distante.
      */
-    private final class Listener extends RemoteObject implements PopulationChangeListener {
+    private final class Listener extends UnicastRemoteObject implements PopulationChangeListener {
+        /**
+         * Construit un objet par défaut. L'objet sera exporté
+         * immédiatement pour un éventuel usage avec les RMI.
+         */
+        public Listener() throws RemoteException {
+        }
+
         /**
          * Appelée quand la population a changée.
          */

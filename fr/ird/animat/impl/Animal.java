@@ -25,7 +25,7 @@
  */
 package fr.ird.animat.impl;
 
-// J2SE
+// Utilitaires
 import java.util.Set;
 import java.util.Map;
 import java.util.Date;
@@ -33,17 +33,31 @@ import java.util.Random;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Collections;
-import java.io.Serializable;
+import javax.swing.event.EventListenerList;
+
+// Journal des événements
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
+
+// Géométrie
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import java.rmi.server.RemoteObject;
-import java.rmi.RemoteException;
+
+// Entrés/sorties
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.ObjectOutputStream;
-import javax.swing.event.EventListenerList;
+
+// Remote Method Invocation (RMI)
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.NoSuchObjectException;
+import java.rmi.server.RemoteObject;
+import java.rmi.server.UnicastRemoteObject;
 
 // Geotools
 import org.geotools.cv.Coverage;
@@ -123,15 +137,22 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
      * (pour le {@linkplain Clock#getStepSequenceNumber pas de temps} 0) qu'après avoir
      * appelé {@link #observe}.
      *
-     * @param species L'espèce de cet animal.
-     * @param population La population à laquelle appartient cet animal.
-     * @param position Position initiale de l'animal, en degrés de longitudes et de latitudes.
+     * @param  species L'espèce de cet animal.
+     * @param  population La population à laquelle appartient cet animal.
+     * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
+     * @throws RemoteException si l'exportation de cet animal a échoué.
      */
-    protected Animal(final Species species, final Population population, final Point2D position) {
+    protected Animal(final Species species, final Population population, final Point2D position)
+            throws RemoteException
+    {
         this.population = population;
         this.species    = species;
         this.clock      = population.getEnvironment().getClock().getNewClock();
         this.path       = new Path(position);
+        final int port  = getRMIPort();
+        if (port >= 0) {
+            export(port);
+        }
         population.animals.add(this);
         population.firePopulationChanged(this, true);
     }
@@ -403,6 +424,15 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
         }
     }
 
+
+
+
+    ////////////////////////////////////////////////////////
+    ////////                                        ////////
+    ////////    E V E N T   L I S T E N E R S       ////////
+    ////////                                        ////////
+    ////////////////////////////////////////////////////////
+
     /**
      * Déclare un objet à informer des changements survenant dans l'état de cet animal.
      */
@@ -428,6 +458,16 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
                 }
             }
         }
+    }
+
+    /**
+     * Retourne le nombre d'objets intéressés à être informés des changements apportés à l'état
+     * de cet animal. Cette information peut-être utilisée pour ce faire une idée du trafic qu'il
+     * pourrait y avoir sur le réseau lorsque la simulation est exécutée sur une machine distante.
+     */
+    final int getListenerCount() {
+        final EventListenerList listenerList = this.listenerList;
+        return (listenerList!=null) ? listenerList.getListenerCount() : 0;
     }
 
     /**
@@ -474,6 +514,94 @@ public class Animal extends RemoteObject implements fr.ird.animat.Animal {
     protected final Object getTreeLock() {
         final Population population = this.population;
         return (population!=null) ? population.getTreeLock() : this;
+    }
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////
+    ////////                                                          ////////
+    ////////    R E M O T E   M E T H O D   I N V O C A T I O N       ////////
+    ////////                                                          ////////
+    //////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Retourne le numéro de port utilisé lorsque cet animal a été exporté,
+     * or <code>-1</code> s'il n'a pas encore été exporté.
+     */
+    final int getRMIPort() {
+        final Population population = this.population;
+        return (population!=null) ? population.getRMIPort() : -1;
+    }
+
+    /**
+     * Exporte cet animal de façon à ce qu'il puisse accepter les appels de machines distantes.
+     *
+     * @param  port Numéro de port, ou 0 pour choisir un port anonyme.
+     * @throws RemoteException si cet animal n'a pas pu être exporté.
+     */
+    final void export(final int port) throws RemoteException {
+        UnicastRemoteObject.exportObject(this, port);
+    }
+
+    /**
+     * Annule l'exportation de cet animal. Si l'animal était déjà en train d'exécuter une méthode,
+     * alors <code>unexport(...)</code> attendra un maximum d'une seconde avant de forcer l'arrêt
+     * de l'exécution.
+     */
+    final void unexport() {
+        unexport("Animal", this);
+    }
+
+    /**
+     * Annule l'exportation d'un objet. Si l'objet était déjà en train d'exécuter une méthode,
+     * alors <code>unexport(...)</code> attendra un maximum d'une seconde avant de forcer
+     * l'arrêt de l'exécution.
+     *
+     * @param classname Le nom de la classe annulant l'exportation. Utilisé en cas d'erreur
+     *                  pour formatter un message.
+     * @param remote    L'objet dont on veut annuler l'exportation.
+     */
+    static final void unexport(final String classname, final Remote remote) {
+        boolean force = false;
+        do {
+            for (int i=0; i<4; i++) {
+                try {
+                    if (UnicastRemoteObject.unexportObject(remote, force)) {
+                        if (force) {
+                            warning(classname, "La déconnexion a due être forcée", null);
+                        }
+                        return;
+                    }
+                } catch (NoSuchObjectException exception) {
+                    warning(classname, "L'objet était déjà déconnecté", exception);
+                    return;
+                }
+                try {
+                    Thread.currentThread().sleep(250);
+                } catch (InterruptedException exception) {
+                    // Retourne au travail...
+                }
+            }
+        } while ((force = !force) == true);
+        warning(classname, "La déconnexion a échouée", null);
+    }
+
+    /**
+     * Ajoute un avertissement dans le journal des événements.
+     *
+     * @param classname Le nom de la classe dans lequel l'avertissement est survenue.
+     * @param message   Le message d'avertissement.
+     * @param error     L'exception survenue, ou <code>null</code> s'il n'y en a pas.
+     */
+    static void warning(final String classname, final String message, final Exception error) {
+        final LogRecord record = new LogRecord(Level.WARNING, message);
+        record.setSourceClassName(classname);
+        record.setSourceMethodName("unexport");
+        if (error != null) {
+            record.setThrown(error);
+        }
+        Logger.getLogger("fr.ird.animat").log(record);
     }
 
     /**

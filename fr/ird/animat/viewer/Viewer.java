@@ -65,13 +65,13 @@ public final class Viewer extends JComponent {
      * sera un système géographique selon l'ellipsoïde
      * WGS84.
      */
-    private final MapPane map = new MapPane();
+    private final MapPane mapPane = new MapPane();
 
     /**
      * La barre d'état. Elle contiendra entre autres les coordonnées
      * géographiques pointées par la souris.
      */
-    private final StatusBar status = new StatusBar(map);
+    private final StatusBar status = new StatusBar(mapPane);
 
     /**
      * La simulation en cours.
@@ -105,10 +105,10 @@ public final class Viewer extends JComponent {
         /*
          * Ajoute l'échelle de la carte et l'environnement.
          */
-        map.setPaintingWhileAdjusting(true);
+        mapPane.setPaintingWhileAdjusting(true);
         environmentLayer = new EnvironmentLayer(environment);
         environmentLayer.addPropertyChangeListener(listener);
-        final Renderer renderer = map.getRenderer();
+        final Renderer renderer = mapPane.getRenderer();
         renderer.addLayer(new RenderedMapScale());
         renderer.addLayer(environmentLayer);
         /*
@@ -129,11 +129,12 @@ public final class Viewer extends JComponent {
          * Construit l'interface.
          */
         setLayout(new BorderLayout());
-        final JPanel mapPane = new JPanel(new BorderLayout());
-        mapPane.add(map.createScrollPane(),  BorderLayout.CENTER);
-        mapPane.add(environmentLayer.colors, BorderLayout.SOUTH );
-        add(mapPane, BorderLayout.CENTER);
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.add(mapPane.createScrollPane(),  BorderLayout.CENTER);
+        panel.add(environmentLayer.colors, BorderLayout.SOUTH );
+        add(panel, BorderLayout.CENTER);
         add(status,  BorderLayout.SOUTH );
+        mapPane.reset();
     }
 
     /**
@@ -147,8 +148,11 @@ public final class Viewer extends JComponent {
         public void propertyChange(final PropertyChangeEvent event) {
             try {
                 final String property = event.getPropertyName();
-                if (property.equalsIgnoreCase("population")) {
-                    final Renderer renderer = map.getRenderer();
+                if (property.equalsIgnoreCase("date")) {
+                    mapPane.repaint();
+                }
+                else if (property.equalsIgnoreCase("population")) {
+                    final Renderer renderer = mapPane.getRenderer();
                     Population population = (Population) event.getOldValue();
                     if (population != null) {
                         final PopulationLayer layer = populationLayers.remove(population);
@@ -165,7 +169,7 @@ public final class Viewer extends JComponent {
                     }
                 }
             } catch (RemoteException exception) {
-                PopulationLayer.failed("Viewer", "propertyChange", exception);
+                EnvironmentLayer.failed("Viewer", "propertyChange", exception);
             }
         }
     }

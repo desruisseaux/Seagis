@@ -25,17 +25,22 @@
  */
 package fr.ird.animat.impl;
 
-// J2SE
+// Utilitaires
 import java.util.Set;
 import java.util.Locale;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
+import javax.swing.event.EventListenerList;
+
+// Géométrie
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import javax.swing.event.EventListenerList;
+
+// Remote Method Invocation (RMI)
+import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.RemoteObject;
 import java.rmi.RemoteException;
 
@@ -87,11 +92,16 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * Construit une population initialement vide.
      *
      * @param environment Environnement Environnement de la population.
+     * @throws RemoteException si l'exportation de la population a échoué.
      */
-    protected Population(final Environment environment) {
+    protected Population(final Environment environment) throws RemoteException {
         this.environment = environment;
         environment.populations.add(this);
         environment.fireEnvironmentChanged(this, true);
+        final int port = getRMIPort();
+        if (port >= 0) {
+            export(port);
+        }
     }
 
     /**
@@ -111,9 +121,16 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * @param  species L'espèce de cet animal.
      * @param  position Position initiale de l'animal, en degrés de longitudes et de latitudes.
      * @return L'animal créé.
+     * @throws IllegalStateException si cette population est morte.
+     * @throws RemoteException si l'exportation di nouvel animal a échoué.
      */
-    public Animal newAnimal(fr.ird.animat.Species species, final Point2D position) {
+    public Animal newAnimal(fr.ird.animat.Species species, final Point2D position)
+            throws IllegalStateException, RemoteException
+    {
         synchronized (getTreeLock()) {
+            if (environment == null) {
+                throw new IllegalStateException("Cette population est morte.");
+            }
             return new Animal(Species.wrap(species), this, position);
         }
     }
@@ -202,6 +219,15 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
         }
     }
 
+
+
+
+    ////////////////////////////////////////////////////////
+    ////////                                        ////////
+    ////////    E V E N T   L I S T E N E R S       ////////
+    ////////                                        ////////
+    ////////////////////////////////////////////////////////
+
     /**
      * Déclare un objet à informer des changements survenant dans cette
      * population. Ces changements inclus les espèces qui s'ajoutent ou
@@ -209,7 +235,7 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * animaux.
      */
     public void addPopulationChangeListener(PopulationChangeListener listener) {
-        synchronized (getTreeLock()) {
+        synchronized (listenerList) {
             listenerList.add(PopulationChangeListener.class, listener);
         }
     }
@@ -219,9 +245,25 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * population.
      */
     public void removePopulationChangeListener(final PopulationChangeListener listener) {
-        synchronized (getTreeLock()) {
+        synchronized (listenerList) {
             listenerList.remove(PopulationChangeListener.class, listener);
         }
+    }
+
+    /**
+     * Retourne le nombre d'objets intéressés à être informés des changements apportés à la
+     * population ou à l'état d'un de ses animaux. Cette information peut-être utilisée pour
+     * ce faire une idée du trafic qu'il pourrait y avoir sur le réseau lorsque la simulation
+     * est exécutée sur une machine distante.
+     */
+    final int getListenerCount() {
+        int count = listenerList.getListenerCount();
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                count += ((Animal) it.next()).getListenerCount();
+            }
+        }
+        return count;
     }
 
     /**
@@ -251,7 +293,10 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
      * @param event Un objet décrivant le changement survenu.
      */
     protected void firePopulationChanged(final PopulationChangeEvent event) {
-        final Object[] listeners = listenerList.getListenerList();
+        final Object[] listeners;
+        synchronized (listenerList) {
+            listeners = listenerList.getListenerList();
+        }
         final Runnable run = new Runnable() {
             public void run() {
                 assert Thread.holdsLock(getTreeLock());
@@ -278,5 +323,53 @@ public class Population extends RemoteObject implements fr.ird.animat.Population
     protected final Object getTreeLock() {
         final Environment environment = this.environment;
         return (environment!=null) ? environment.getTreeLock() : this;
+    }
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////
+    ////////                                                          ////////
+    ////////    R E M O T E   M E T H O D   I N V O C A T I O N       ////////
+    ////////                                                          ////////
+    //////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Retourne le numéro de port utilisé lorsque cette population a été exportée,
+     * or <code>-1</code> s'il n'a pas encore été exportée.
+     */
+    final int getRMIPort() {
+        final Environment environment = this.environment;
+        return (environment!=null) ? environment.getRMIPort() : -1;
+    }
+
+    /**
+     * Exporte cette population et tous les animaux qu'elle contient de façon à ce qu'ils
+     * puissent accepter les appels de machines distantes.
+     *
+     * @param  port Numéro de port, ou 0 pour choisir un port anonyme.
+     * @throws RemoteException si cette population n'a pas pu être exportée.
+     */
+    final void export(final int port) throws RemoteException {
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                ((Animal) it.next()).export(port);
+            }
+            UnicastRemoteObject.exportObject(this, port);
+        }
+    }
+
+    /**
+     * Annule l'exportation de cette population. Si la population ou un de ses animaux était déjà
+     * en train d'exécuter une méthode, alors <code>unexport(...)</code> attendra quelques secondes
+     * avant de forcer l'arrêt de l'exécution.
+     */
+    final void unexport() {
+        synchronized (getTreeLock()) {
+            for (final Iterator<fr.ird.animat.Animal> it=animals.iterator(); it.hasNext();) {
+                ((Animal) it.next()).unexport();
+            }
+            Animal.unexport("Population", this);
+        }
     }
 }

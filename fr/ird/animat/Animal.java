@@ -83,8 +83,11 @@ public interface Animal extends Remote {
      * de l'environnement} (puisque le temps s'écoule de la même façon pour tous les animaux),
      * mais {@link Clock#getAge l'âge} peut être différent. Cet âge dépend de l'instant du
      * &quot;pas de temps 0&quot;, qui correspond à la naissance de l'animal.
+     *
+     * @throws RemoteException Si cette méthode devait être exécutée sur une machine distante
+     *         et que cette exécution a échouée.
      */
-    Clock getClock();
+    Clock getClock() throws RemoteException;;
 
     /**
      * Retourne le chemin suivit par l'animal depuis le début

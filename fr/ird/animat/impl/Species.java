@@ -42,6 +42,7 @@ import javax.vecmath.MismatchedSizeException;
 
 // Divers
 import org.geotools.resources.Utilities;
+import fr.ird.util.XEllipse2D;
 import fr.ird.util.ArraySet;
 
 
@@ -406,10 +407,10 @@ public class Species implements fr.ird.animat.Species, Serializable {
      * par la méthode {@link Animal#getPerceptionArea}.
      */
     protected RectangularShape getPerceptionArea() {
-        return new Ellipse2D.Double(-PERCEPTION_RADIUS,
-                                    -PERCEPTION_RADIUS,
-                                   2*PERCEPTION_RADIUS,
-                                   2*PERCEPTION_RADIUS);
+        return new XEllipse2D(-PERCEPTION_RADIUS,
+                              -PERCEPTION_RADIUS,
+                             2*PERCEPTION_RADIUS,
+                             2*PERCEPTION_RADIUS);
     }
 
     /**
