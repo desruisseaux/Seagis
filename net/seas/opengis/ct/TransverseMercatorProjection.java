@@ -324,6 +324,9 @@ final class TransverseMercatorProjection extends CylindricalProjection
         //////////////////////////
         //    Store result      //
         //////////////////////////
+        final double check;
+        assert (check=distance(ptSrc, x,y, true))<=MAX_ERROR : check;
+
         if (ptDst!=null)
         {
             ptDst.setLocation(x,y);
@@ -409,6 +412,9 @@ final class TransverseMercatorProjection extends CylindricalProjection
         //////////////////////////
         //    Store result      //
         //////////////////////////
+        final double check;
+        assert (check=distance(ptSrc, x,y, false))<=MAX_ERROR : check;
+
         if (ptDst!=null)
         {
             ptDst.setLocation(x,y);
