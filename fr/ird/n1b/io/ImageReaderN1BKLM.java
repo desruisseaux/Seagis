@@ -449,29 +449,48 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
      */
     public ParameterList getCalibrationParameter(int channel) throws IOException
     {
-        final String descriptor       = "AVHRR_KLM";
-        final String[] paramNames     = {THERMAL_COEFFICIENT, 
-                                         SLOPE_INTERCEPT_COEFFICIENT,
-                                         WAVE_LENGTH,
-                                         RADIANCE_CONSTANT};
-        final Class[]  paramClasses   = {CoefficientGrid.class,
-                                         CoefficientGrid.class,
-                                         Double.class, 
-                                         double[].class};
-        final Object[]  paramDefaults = {null,
-                                         null,
-                                         new Double(Double.NaN), 
-                                         null};
-        ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
-                                                                                         paramNames,
-                                                                                         paramClasses,
-                                                                                         paramDefaults,
-                                                                                         null));                                                         
-        parameters.setParameter(SLOPE_INTERCEPT_COEFFICIENT, getSlopeInterceptCoef(channel));
-        parameters.setParameter(THERMAL_COEFFICIENT, getIrOperationalCoef(channel));        
-        parameters.setParameter(WAVE_LENGTH, getCentralWave(channel));
-        parameters.setParameter(RADIANCE_CONSTANT, getConstant(channel));
-        return parameters;
+        if (channel == 3 || channel == 4 ||  channel == 5)
+        {
+            // Thermique.
+            final String descriptor       = "AVHRR_KLM";
+            final String[] paramNames     = {THERMAL_COEFFICIENT, 
+                                             WAVE_LENGTH,
+                                             RADIANCE_CONSTANT};
+            final Class[]  paramClasses   = {CoefficientGrid.class,
+                                             Double.class, 
+                                             double[].class};
+            final Object[]  paramDefaults = {null,
+                                             null, 
+                                             null};
+            ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
+                                                                                             paramNames,
+                                                                                             paramClasses,
+                                                                                             paramDefaults,
+                                                                                             null));                                                         
+            parameters.setParameter(THERMAL_COEFFICIENT, getIrOperationalCoef(channel));        
+            parameters.setParameter(WAVE_LENGTH, getCentralWave(channel));
+            parameters.setParameter(RADIANCE_CONSTANT, getConstant(channel));
+            return parameters;
+        }
+        else
+        {
+            // Visible.
+            final String descriptor       = "AVHRR_KLM";
+            final String[] paramNames     = {THERMAL_COEFFICIENT, 
+                                             SLOPE_INTERCEPT_COEFFICIENT};
+            final Class[]  paramClasses   = {CoefficientGrid.class,
+                                             CoefficientGrid.class};
+            final Object[]  paramDefaults = {null,
+                                             null};
+            ParameterList parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
+                                                                                             paramNames,
+                                                                                             paramClasses,
+                                                                                             paramDefaults,
+                                                                                             null));                                                         
+            parameters.setParameter(SLOPE_INTERCEPT_COEFFICIENT, getSlopeInterceptCoef(channel));
+            parameters.setParameter(THERMAL_COEFFICIENT, getIrOperationalCoef(channel));        
+            return parameters;        
+        }
     }    
 
     /**
