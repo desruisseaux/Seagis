@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.io.Serializable;
 import java.text.NumberFormat;
 import java.text.FieldPosition;
+//import javax.vecmath.SingularMatrixException;
 
 // Resources
 import net.seagis.resources.Utilities;
@@ -617,6 +618,18 @@ public final class Matrix implements Cloneable, Serializable
                 dstPts[dstOff++] = buffer[j]/w;
             }
             srcOff += inputDimension;
+        }
+    }
+
+    /**
+     * Inverts this matrix in place.
+     * <strong>Note: this method is not yet implemented</strong>.
+     */
+    public void invert()
+    {
+        if (!isIdentity())
+        {
+            throw new RuntimeException("Not yet implemented");
         }
     }
 
