@@ -126,6 +126,7 @@ public class GridCoverageProcessor
         final CaselessStringKey name = new CaselessStringKey(operation.getName());
         if (!operations.containsKey(name))
         {
+            assert(!operations.containsValue(operation));
             operations.put(name, operation);
         }
         else throw new IllegalStateException(Resources.format(Clé.OPERATION_ALREADY_BOUND¤1, operation.getName()));
