@@ -115,7 +115,7 @@ public class Console
             }
             if (encoding!=null)
             {
-                out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
+                out = new PrintWriter(new OutputStreamWriter(System.out, encoding), true);
                 if (Version.MINOR>=4 && !prefEnc)
                 {
                     Preferences.userNodeForPackage(Console.class).put(ENCODING, encoding);
@@ -123,7 +123,7 @@ public class Console
             }
             else
             {
-                out = new PrintWriter(System.out);
+                out = new PrintWriter(System.out, true);
             }
         }
         catch (UnsupportedEncodingException exception)

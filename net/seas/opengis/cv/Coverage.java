@@ -105,7 +105,7 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
     /**
      * The coordinate system, or <code>null</code> if there is none.
      */
-    private final CoordinateSystem coordinateSystem;
+    protected final CoordinateSystem coordinateSystem;
 
     /**
      * The names of each dimension in the coverage. Typically these names are

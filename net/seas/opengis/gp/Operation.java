@@ -39,6 +39,7 @@ import net.seas.io.TableWriter;
 
 // Miscellaneous
 import java.util.Locale;
+import java.io.Serializable;
 import net.seas.util.XClass;
 import net.seas.resources.Clé;
 import net.seas.resources.Resources;
@@ -54,8 +55,13 @@ import net.seas.resources.Resources;
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-public abstract class Operation
+public abstract class Operation implements Serializable
 {
+    /**
+     * Serial number for interoperability with different versions.
+     */
+    // private static final long serialVersionUID = ?; // TODO
+
     /**
      * The name of the processing operation.
      */

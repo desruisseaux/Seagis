@@ -93,7 +93,14 @@ final class Interpolator extends GridCoverage
     /**
      * Interpolation padding.
      */
-    private final int right, bottom;
+    private final int top, left;
+
+    /**
+     * The interpolation bounds. Interpolation will use pixel inside
+     * this rectangle. This rectangle is passed as an argument to
+     * {@link RectIterFactory}.
+     */
+    private final Rectangle bounds;
 
     /**
      * Arrays to use for passing arguments to interpolation.
@@ -203,8 +210,8 @@ final class Interpolator extends GridCoverage
         final int top    = interpolation.getTopPadding();
         final int bottom = interpolation.getBottomPadding();
 
-        this.right  = right;
-        this.bottom = bottom;
+        this.top  = top;
+        this.left = left;
 
         final int x = data.getMinX();
         final int y = data.getMinY();
@@ -213,6 +220,8 @@ final class Interpolator extends GridCoverage
         this.ymin = y + top;
         this.xmax = x + data.getWidth()  - right;
         this.ymax = y + data.getHeight() - bottom;
+
+        bounds = new Rectangle(0, 0, interpolation.getWidth(), interpolation.getHeight());
     }
 
     /**
@@ -335,8 +344,8 @@ final class Interpolator extends GridCoverage
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
-        int ix = (int)x0;
-        int iy = (int)y0;
+        final int    ix = (int)x0;
+        final int    iy = (int)y0;
         if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
         {
             if (fallback==null) return false;
@@ -355,27 +364,33 @@ final class Interpolator extends GridCoverage
             for (int i=0; i<rowCount; i++)
                 samples[i] = new int[colCount];
         }
-        /*
-         * Interpolate all bands. TODO: Would it be more efficient to use RectIter?
-         * We are going to read very few points, and we don't know how costly is
-         * RectIterFactory.create(...).
-         */
-        ix += right;
-        iy += bottom;
         if (dest==null)
             dest=new int[bandUp];
+        /*
+         * Builds up a RectIter and use it for interpolating all bands.
+         * There is very few points, so the cost of creating a RectIter
+         * may be important. But it seems to still lower than query tiles
+         * many time (which may involve more computation than necessary).
+         */
+        bounds.x = ix - left;
+        bounds.y = iy - top;
+        final RectIter iter = RectIterFactory.create(data, bounds);
         for (; band<bandUp; band++)
         {
-            for (int sy=iy,j=samples.length; --j>=0; --sy)
+            iter.startLines();
+            for (int j=0; j<samples.length; j++)
             {
+                iter.startPixels();
                 final int[] row=samples[j];
-                final int ty=data.YToTileY(sy);
-                for (int sx=ix,i=row.length; --i>=0; --sx)
+                for (int i=0; i<row.length; i++)
                 {
-                    final int tx=data.XToTileX(sx);
-                    row[i] = data.getTile(tx, ty).getSample(sx, sy, band);
+                    row[i] = iter.getSample(band);
+                    iter.nextPixel();
                 }
+                assert(iter.finishedPixels());
+                iter.nextLine();
             }
+            assert(iter.finishedLines());
             final int xfrac = (int) ((x-x0) * (1 << interpolation.getSubsampleBitsH()));
             final int yfrac = (int) ((y-y0) * (1 << interpolation.getSubsampleBitsV()));
             dest[band] = interpolation.interpolate(samples, xfrac, yfrac);
@@ -399,8 +414,8 @@ final class Interpolator extends GridCoverage
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
-        int ix = (int)x0;
-        int iy = (int)y0;
+        final int    ix = (int)x0;
+        final int    iy = (int)y0;
         if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
         {
             if (fallback==null) return false;
@@ -419,27 +434,33 @@ final class Interpolator extends GridCoverage
             for (int i=0; i<rowCount; i++)
                 samples[i] = new float[colCount];
         }
-        /*
-         * Interpolate all bands. TODO: Would it be more efficient to use RectIter?
-         * We are going to read very few points, and we don't know how costly is
-         * RectIterFactory.create(...).
-         */
-        ix += right;
-        iy += bottom;
         if (dest==null)
             dest=new float[bandUp];
+        /*
+         * Builds up a RectIter and use it for interpolating all bands.
+         * There is very few points, so the cost of creating a RectIter
+         * may be important. But it seems to still lower than query tiles
+         * many time (which may involve more computation than necessary).
+         */
+        bounds.x = ix - left;
+        bounds.y = iy - top;
+        final RectIter iter = RectIterFactory.create(data, bounds);
         for (; band<bandUp; band++)
         {
-            for (int sy=iy,j=samples.length; --j>=0; --sy)
+            iter.startLines();
+            for (int j=0; j<samples.length; j++)
             {
+                iter.startPixels();
                 final float[] row=samples[j];
-                final int ty=data.YToTileY(sy);
-                for (int sx=ix,i=row.length; --i>=0; --sx)
+                for (int i=0; i<row.length; i++)
                 {
-                    final int tx=data.XToTileX(sx);
-                    row[i] = data.getTile(tx, ty).getSampleFloat(sx, sy, band);
+                    row[i] = iter.getSampleFloat(band);
+                    iter.nextPixel();
                 }
+                assert(iter.finishedPixels());
+                iter.nextLine();
             }
+            assert(iter.finishedLines());
             final float value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
             if (Float.isNaN(value))
             {
@@ -474,8 +495,8 @@ final class Interpolator extends GridCoverage
     {
         final double x0 = Math.floor(x);
         final double y0 = Math.floor(y);
-        int ix = (int)x0;
-        int iy = (int)y0;
+        final int    ix = (int)x0;
+        final int    iy = (int)y0;
         if (!(ix>=xmin && ix<xmax && iy>=ymin && iy<ymax))
         {
             if (fallback==null) return false;
@@ -494,27 +515,33 @@ final class Interpolator extends GridCoverage
             for (int i=0; i<rowCount; i++)
                 samples[i] = new double[colCount];
         }
-        /*
-         * Interpolate all bands. TODO: Would it be more efficient to use RectIter?
-         * We are going to read very few points, and we don't know how costly is
-         * RectIterFactory.create(...).
-         */
-        ix += right;
-        iy += bottom;
         if (dest==null)
             dest=new double[bandUp];
+        /*
+         * Builds up a RectIter and use it for interpolating all bands.
+         * There is very few points, so the cost of creating a RectIter
+         * may be important. But it seems to still lower than query tiles
+         * many time (which may involve more computation than necessary).
+         */
+        bounds.x = ix - left;
+        bounds.y = iy - top;
+        final RectIter iter = RectIterFactory.create(data, bounds);
         for (; band<bandUp; band++)
         {
-            for (int sy=iy,j=samples.length; --j>=0; --sy)
+            iter.startLines();
+            for (int j=0; j<samples.length; j++)
             {
+                iter.startPixels();
                 final double[] row=samples[j];
-                final int ty=data.YToTileY(sy);
-                for (int sx=ix,i=row.length; --i>=0; --sx)
+                for (int i=0; i<row.length; i++)
                 {
-                    final int tx=data.XToTileX(sx);
-                    row[i] = data.getTile(tx, ty).getSampleDouble(sx, sy, band);
+                    row[i] = iter.getSampleDouble(band);
+                    iter.nextPixel();
                 }
+                assert(iter.finishedPixels());
+                iter.nextLine();
             }
+            assert(iter.finishedLines());
             final double value=interpolation.interpolate(samples, (float)(x-x0), (float)(y-y0));
             if (Double.isNaN(value))
             {

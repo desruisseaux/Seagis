@@ -512,7 +512,7 @@ public class ResourceBundle extends java.util.ResourceBundle
      * @return The log record.
      */
     public LogRecord getLogRecord(final Level level, final int key)
-    {return getLogRecord(level, key);}
+    {return getLogRecord(level, key, null);}
 
     /**
      * Get a localized log record.
@@ -526,7 +526,10 @@ public class ResourceBundle extends java.util.ResourceBundle
     {
         final LogRecord record = new LogRecord(level, String.valueOf(key));
         record.setResourceBundle(this);
-        if (arg0!=null) record.setParameters(toArray(arg0));
+        if (arg0!=null)
+        {
+            record.setParameters(toArray(arg0));
+        }
         return record;
     }
 
