@@ -62,6 +62,7 @@ import org.geotools.renderer.j2d.ImageType;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
+import org.geotools.cs.GeographicCoordinateSystem;
 import org.geotools.gui.swing.ExceptionMonitor;
 import org.geotools.gui.swing.StatusBar;
 import org.geotools.gui.swing.MapPane;
@@ -126,7 +127,7 @@ final class ImageCanvas extends JPanel {
     /**
      * Composante affichant la carte.
      */
-    public final MapPane mapPanel = new MapPane();
+    public final MapPane mapPanel = new MapPane(GeographicCoordinateSystem.WGS84);
 
     /**
      * Paneau qui contiendra la carte
