@@ -282,7 +282,7 @@ final class MosaicCanvas extends JPanel {
              * pour l'utilisateur.
              */
             if (count == 0) {
-                final List<JLabel> labels=new ArrayList<JLabel>();
+                final List<JLabel> labels = new ArrayList<JLabel>();
                 labels.add(new JLabel(InternalFrame.getIcon("application-data/images/Cover.png")));
                 final String message=resources.getString(ResourceKeys.IMAGES_TABLE_INSTRUCTIONS);
                 int lower=0, upper;
@@ -297,8 +297,8 @@ final class MosaicCanvas extends JPanel {
                  */
                 final JPanel panel = new JPanel(new GridBagLayout());
                 final GridBagConstraints c = new GridBagConstraints();
-                panel.setBackground(Color.black);
-                panel.setForeground(Color.white);
+                panel.setBackground(Color.BLACK);
+                panel.setForeground(Color.WHITE);
                 final int length=labels.size();
                 for (int i=0; i<length; i++) {
                     c.gridx=0; c.gridy=i;

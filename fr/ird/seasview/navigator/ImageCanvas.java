@@ -58,6 +58,7 @@ import javax.media.jai.util.Range;
 import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Utilities;
 import org.geotools.renderer.j2d.Renderer;
+import org.geotools.renderer.j2d.ImageType;
 import org.geotools.renderer.j2d.RenderedLayer;
 import org.geotools.renderer.j2d.RenderedMapScale;
 import org.geotools.renderer.j2d.RenderedGridCoverage;
@@ -159,15 +160,18 @@ final class ImageCanvas extends JPanel {
      */
     public ImageCanvas() {
         super(new BorderLayout());
-        mapPanel.setBackground(Color.black);
-        title   .setBackground(Color.black);
-        title   .setForeground(Color.yellow);
+        mapPanel.setBackground(Color.BLACK);
+        title   .setBackground(Color.BLACK);
+        title   .setForeground(Color.YELLOW);
         title   .setHorizontalAlignment(SwingConstants.CENTER);
         title   .setOpaque(true);
         setOpaque(false);
         setBorder(BorderFactory.createLoweredBevelBorder());
         add(title,    BorderLayout.NORTH );
         add(mapPanel, BorderLayout.CENTER);
+        mapPanel.getRenderer().setOffscreenBuffered(Float.NEGATIVE_INFINITY,
+                                                    Float.POSITIVE_INFINITY,
+                                                    ImageType.VOLATILE);
     }
 
     /**

@@ -76,8 +76,7 @@ import org.geotools.resources.Arguments;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class Publisher
-{
+public final class Publisher {
     /**
      * Nombre de pixels par degrés sur une image originale de température.
      */
@@ -149,8 +148,7 @@ public final class Publisher
     /**
      * Construit un formatteur.
      */
-    public Publisher(final String modelPathName, final String fileDateFormat, final Locale locale)
-    {
+    public Publisher(final String modelPathName, final String fileDateFormat, final Locale locale) {
         this.modelPathName   = modelPathName;
         this.fileDateFormat  = new SimpleDateFormat(fileDateFormat, locale);
         this.imageDateformat = new SimpleDateFormat("dd MMMM yyyy", locale);
@@ -164,8 +162,7 @@ public final class Publisher
      * @return Image de température dans sa maquette.
      * @throws IOException si la lecture a échouée.
      */
-    public RenderedImage createImage(final File pathname) throws IOException
-    {
+    public RenderedImage createImage(final File pathname) throws IOException {
         final BufferedImage maquette = ImageIO.read(new File(modelPathName));
         final Graphics2D    graphics = maquette.createGraphics();
         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -180,17 +177,14 @@ public final class Publisher
         // Dessine la date à sa position prévue.
         //
         final Date date = fileDateFormat.parse(pathname.getName(), new ParsePosition(0));
-        if (date==null)
-        {
+        if (date == null) {
             System.err.print("Le nom de fichier contient une date non-reconnue:  ");
             System.err.println(pathname.getName());
             System.err.print("Exemple de nom attendu pour la date d'aujourd'hui: ");
             System.err.println(fileDateFormat.format(new Date()));
-        }
-        else
-        {
+        } else {
             date.setTime(date.getTime() - 2L*24*60*60*1000);
-            graphics.setColor(Color.black);
+            graphics.setColor(Color.BLACK);
             graphics.setFont(new Font("Serif", Font.BOLD, 48));
             graphics.drawString(imageDateformat.format(date), dateAnchor.x, dateAnchor.y);
         }
@@ -206,34 +200,32 @@ public final class Publisher
         final int xmax = image.getWidth()+xmin;
         final int ymin = image.getMinY();
         final int ymax = image.getHeight()+ymin;
-        for (int x=xmin; x<=xmax; x+=SUB_GRAD_INTERVAL)
-        {
+        for (int x=xmin; x<=xmax; x+=SUB_GRAD_INTERVAL) {
             final boolean isMainGrad = (x % MAIN_GRAD_INTERVAL)==0;
             point.x=x; point.y=ymin; transform.transform(point, point); line.x1=point.x; line.y1=point.y;
             point.x=x; point.y=ymax; transform.transform(point, point); line.x2=point.x; line.y2=point.y;
             graphics.setStroke(isMainGrad ? normalLine     : dashedLine);
             graphics.setColor (isMainGrad ? Color.darkGray : Color.gray);
             graphics.draw(line);
-            if (isMainGrad)
-            {
+            if (isMainGrad) {
                 final double longitude = XMIN + (double)x/PIXELS_BY_DEGREES;
-                graphics.setColor(Color.black);
-                graphics.drawString(angleFormat.format(new Longitude(longitude)), (float)line.x2-12, (float)line.y2+15);
+                graphics.setColor(Color.BLACK);
+                graphics.drawString(angleFormat.format(new Longitude(longitude)),
+                                                       (float)line.x2-12, (float)line.y2+15);
             }
         }
-        for (int y=ymin; y<=ymax; y+=SUB_GRAD_INTERVAL)
-        {
+        for (int y=ymin; y<=ymax; y+=SUB_GRAD_INTERVAL) {
             final boolean isMainGrad = (y % MAIN_GRAD_INTERVAL)==0;
             point.x=xmin; point.y=y; transform.transform(point, point); line.x1=point.x; line.y1=point.y;
             point.x=xmax; point.y=y; transform.transform(point, point); line.x2=point.x; line.y2=point.y;
             graphics.setStroke(isMainGrad ? normalLine     : dashedLine);
             graphics.setColor (isMainGrad ? Color.darkGray : Color.gray);
             graphics.draw(line);
-            if (isMainGrad)
-            {
+            if (isMainGrad) {
                 final double latitude = YMAX - (double)y/PIXELS_BY_DEGREES;
-                graphics.setColor(Color.black);
-                graphics.drawString(angleFormat.format(new Latitude(latitude)), (float)line.x2+4, (float)line.y2+4);
+                graphics.setColor(Color.BLACK);
+                graphics.drawString(angleFormat.format(new Latitude(latitude)),
+                                                       (float)line.x2+4, (float)line.y2+4);
             }
         }
         graphics.dispose();
@@ -245,8 +237,7 @@ public final class Publisher
      * Appellez cette méthode sans arguments pour obtenir la liste
      * des options disponibles.
      */
-    public static void main(String[] args) throws IOException
-    {
+    public static void main(String[] args) throws IOException {
         final Arguments arguments = new Arguments(args);
         if (args.length == 0) {
             help(arguments.out);
@@ -258,14 +249,12 @@ public final class Publisher
             pattern = "'syn5J'yyyy_MM_dd";
         }
         args = arguments.getRemainingArguments(Integer.MAX_VALUE);
-        if (args.length == 0)
-        {
+        if (args.length == 0) {
             help(arguments.out);
             return;
         }
         final Publisher publisher = new Publisher(model, pattern, arguments.locale);
-        for (int i=0; i<args.length; i+=2)
-        {
+        for (int i=0; i<args.length; i+=2) {
             final File  input = new File(args[i+0]);
             final File output = new File(args[i+1]);
             arguments.out.println("Lecture de "+input.getName());
@@ -279,8 +268,7 @@ public final class Publisher
     /**
      * Affiche l'aide.
      */
-    private static void help(final PrintWriter out)
-    {
+    private static void help(final PrintWriter out) {
         out.println("Usage: -model=... -pattern=... [image source] [image destination]");
         out.println();
         out.println("  -model    spécifie le nom du fichier à utiliser comme maquette.");

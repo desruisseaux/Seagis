@@ -74,8 +74,7 @@ import fr.ird.resources.experimental.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-final class ProgressPanel implements ProgressListener, ActionListener, WindowListener
-{
+final class ProgressPanel implements ProgressListener, ActionListener, WindowListener {
     /**
      * Objet effectuant le calcul.  La méthode {@link Worker#stop}
      * de cet objet sera appelée lorsque l'utilisateur demandera à
@@ -117,11 +116,9 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      * @param  worker Travail en cours.
      * @throws IOException si une erreur de lecture est survenue.
      */
-    public ProgressPanel(final Worker worker) throws IOException
-    {
+    public ProgressPanel(final Worker worker) throws IOException {
         this.worker = worker;
-        if (worker!=null)
-        {
+        if (worker != null) {
             worker.addProgressListener(this);
         }
         final ClassLoader       loader = getClass().getClassLoader();
@@ -161,8 +158,7 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      * @param  title Titre de la fenêtre.
      * @throws IOException si une erreur de lecture est survenue.
      */
-    public void show(final String title)
-    {
+    public void show(final String title) {
         final JFrame frame=new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.getContentPane().add(panel);
@@ -178,22 +174,19 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      * Interrompt le calcul en cours. Cette méthode appelle {@link Worker#stop},
      * puis remplace l'affichage par un paneau indiquant que l'arrêt est en cours.
      */
-    private final void stop()
-    {
-        if (worker!=null)
-        {
+    private final void stop() {
+        if (worker != null) {
             worker.stop();
             worker.removeProgressListener(this);
         }
-        if (!stopped)
-        {
+        if (!stopped) {
             final JLabel label=new JLabel("Arrêt en cours...");
             label.setFont(new Font("Helvetica", Font.BOLD, 48));
             label.setForeground(Color.yellow);
 
             panel.removeAll();
             panel.add(label);
-            panel.setBackground(Color.black);
+            panel.setBackground(Color.BLACK);
             panel.revalidate();
             panel.repaint();
             stopped=true;
@@ -201,38 +194,47 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
     }
     
     /** Indique que l'opération a commencée. */
-    public void started()
-    {if (stopped && worker!=null) worker.stop();}
+    public void started() {
+        if (stopped && worker!=null) {
+            worker.stop();
+        }
+    }
     
     /** Indique que l'opération est terminée. */
-    public void complete()
-    {}
+    public void complete() {
+    }
     
     /** Retourne le message d'écrivant l'opération en cours. */
-    public String getDescription()
-    {return progressLabel.getText();}
+    public String getDescription() {
+        return progressLabel.getText();
+    }
     
     /** Spécifie un message qui décrit l'opération en cours. */
-    public void setDescription(final String description)
-    {progressLabel.setText(description!=null ? description : Resources.format(ResourceKeys.PROGRESSION));}
+    public void setDescription(final String description) {
+        progressLabel.setText(description!=null ? description : Resources.format(ResourceKeys.PROGRESSION));
+    }
     
     /** Envoie un message d'avertissement. */
-    public void warningOccurred(final String source, final String margin, final String warning)
-    {}
+    public void warningOccurred(final String source, final String margin, final String warning) {
+    }
     
     /** Indique qu'une exception est survenue pendant le traitement de l'opération. */
-    public void exceptionOccurred(final Throwable exception)
-    {ExceptionMonitor.show(panel, exception);}
+    public void exceptionOccurred(final Throwable exception) {
+        ExceptionMonitor.show(panel, exception);
+    }
     
     /**
      * Indique l'état d'avancement de l'opération. Le progrès est représenté par un
      * pourcentage variant de 0 à 100 inclusivement. Si la valeur spécifiée est en
      * dehors de ces limites, elle sera automatiquement ramenée entre 0 et 100.
      */
-    public void progress(float percent)
-    {
-        if (!(percent>=0)) percent=0; // Replace NaN by 0.
-        if (percent>100) percent=100;
+    public void progress(float percent) {
+        if (!(percent>=0)) {
+            percent = 0; // Replace NaN by 0.
+        }
+        if (percent>100) {
+            percent = 100;
+        }
         progress.setValue((int)percent);
     }
 
@@ -243,16 +245,17 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      * l'application; c'est {@link Worker} qui devra appeller {@link System#exit}
      * lorsqu'il aura terminé.
      */
-    public void actionPerformed(final ActionEvent event)
-    {stop();}
+    public void actionPerformed(final ActionEvent event) {
+        stop();
+    }
     
     /**
      * Méthode appelée automatiquement la première fois
      * une fenêtre est rendue visible. L'implémentation
      * par défaut ne fait rien.
      */
-    public void windowOpened(final WindowEvent event)
-    {}
+    public void windowOpened(final WindowEvent event) {
+    }
     
     /**
      * Méthode appelée automatiquement lorsque l'utilisateur demande à fermer
@@ -261,56 +264,57 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      * une seconde fois, la fenêtre disparaîtra mais le système continuera quand
      * même de tourner jusqu'à ce que {@link Worker} appelle {@link System#exit}.
      */
-    public void windowClosing(final WindowEvent event)
-    {
-        if (stopped)
-        {
-            if (worker!=null) worker.stop(); // Par prudence
+    public void windowClosing(final WindowEvent event) {
+        if (stopped) {
+            if (worker != null) {
+                worker.stop(); // Par prudence
+            }
             event.getWindow().dispose();
+        } else {
+            stop();
         }
-        else stop();
     }
     
     /**
      * Méthode appelée automatiquement lorsqu'une fenêtre a
      * été fermée. L'implémentation par défaut ne fait rien.
      */
-    public void windowClosed(final WindowEvent event)
-    {}
+    public void windowClosed(final WindowEvent event) {
+    }
     
     /**
      * Méthode appelée automatiquement lorsqu'une fenêtre a été
      * réduite en icône. L'implémentation par défaut ne fait rien.
      */
-    public void windowIconified(final WindowEvent event)
-    {}
+    public void windowIconified(final WindowEvent event) {
+    }
 
     /**
      * Méthode appelée automatiquement lorsqu'une fenêtre a été
      * réaffichée. L'implémentation par défaut ne fait rien.
      */
-    public void windowDeiconified(final WindowEvent event)
-    {}
+    public void windowDeiconified(final WindowEvent event) {
+    }
     
     /**
      * Méthode appelée automatiquement lorsqu'une fenêtre n'est
      * plus active. L'implémentation par défaut ne fait rien.
      */
-    public void windowDeactivated(final WindowEvent event)
-    {}
+    public void windowDeactivated(final WindowEvent event) {
+    }
     
     /**
      * Méthode appelée automatiquement lorsqu'une fenêtre redevient
      * active. L'implémentation par défaut ne fait rien.
      */
-    public void windowActivated(final WindowEvent event)
-    {}
+    public void windowActivated(final WindowEvent event) {
+    }
 
     /**
      * Méthode appelée lorsqu'il faut détruire la fenêtre.
      */
-    public void dispose()
-    {}
+    public void dispose() {
+    }
 
     /**
      * Fait apparaître une fenêtre indiquant qu'un calcul est en cours.
@@ -319,6 +323,7 @@ final class ProgressPanel implements ProgressListener, ActionListener, WindowLis
      *
      * @throws IOException si une erreur de lecture est survenue.
      */
-    public static void main(final String[] args) throws IOException
-    {new ProgressPanel(null).show(null);}
+    public static void main(final String[] args) throws IOException {
+        new ProgressPanel(null).show(null);
+    }
 }

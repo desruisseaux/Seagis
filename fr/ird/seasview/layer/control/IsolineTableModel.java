@@ -75,7 +75,7 @@ final class IsolineTableModel extends AbstractTableModel {
     private static final class Entry implements Comparable, Cloneable {
         /** The isoline value. */ public float   value;
         /** The visible state. */ public boolean visible;
-        /** The isoline color. */ public Color   color = Color.black;
+        /** The isoline color. */ public Color   color = Color.YELLOW;
 
         /**
          * Compares this entry with the specified entry for order.

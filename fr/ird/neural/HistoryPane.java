@@ -88,10 +88,10 @@ public final class HistoryPane extends ZoomPane {
     protected void paintComponent(final Graphics2D graphics) {
         graphics.transform(zoom);
         graphics.setStroke(new BasicStroke(0));
-        graphics.setColor(Color.black);
+        graphics.setColor(Color.BLACK);
         graphics.draw(getArea());
-        graphics.setColor(Color.blue);
-        final Line2D.Float line=new Line2D.Float();
+        graphics.setColor(Color.BLUE);
+        final Line2D.Float line = new Line2D.Float();
         final float[] history = network.trainHistory;
         for (int i=1; i<history.length; i++) {
             line.x1 = i-1;

@@ -122,7 +122,7 @@ class LenientPropertyParser extends PropertyParser {
     private final DateFormat outputDateFormat;
 
     /**
-     * The category lists to be returned by {@link #getSampleDimensions}.
+     * The sample dimensions to be returned by {@link #getSampleDimensions}.
      */
     private final SampleDimension[] bands;
 
@@ -305,7 +305,7 @@ class LenientPropertyParser extends PropertyParser {
     }
 
     /**
-     * Returns the to bands.
+     * Returns the sample dimensions.
      */
     public SampleDimension[] getSampleDimensions() {
         return bands;

@@ -132,8 +132,8 @@ public abstract class AbstractImageFunction implements ImageFunction {
             record.setThrown(exception);
             Logger.getLogger("fr.ird.operator.image").log(record);
             colors = new Color[] {
-                Color.black,
-                Color.white
+                Color.BLACK,
+                Color.WHITE
             };
         }
     }
@@ -559,7 +559,7 @@ public abstract class AbstractImageFunction implements ImageFunction {
         final Rectangle   pixelBounds = new Rectangle(0, 0, width, height);
         final GridGeometry   geometry = new GridGeometry(pixelBounds, coordBounds);
         final SampleDimension    band = new SampleDimension(new Category[] {
-            new Category("Donnée manquante", Color.black, 0),
+            new Category("Donnée manquante", Color.BLACK, 0),
             new Category(name, getColorPalette(), 1, 256, scale, minimum-scale)
         }, getUnit()).geophysics(true);
         return new GridCoverage(name, this, getCoordinateSystem(), geometry,
