@@ -45,6 +45,12 @@ import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
+import java.awt.image.Raster;
+import java.awt.Point;
+import java.awt.Color;
+import java.awt.color.ColorSpace;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
 
 import java.io.IOException;
 import java.io.DataInputStream;
@@ -59,6 +65,8 @@ import java.util.Iterator;
 // SEAGIS
 import fr.ird.util.CoefficientGrid;
 
+// GEOTOOLS.
+import org.geotools.resources.ImageUtilities;
 
 /**
  * D?codeur de fichier au format N1B pour les ensembles de donn?es
@@ -225,7 +233,14 @@ public abstract class ImageReaderN1B extends ImageReader
                          final boolean seekForwardOnly,
                          final boolean ignoreMetadata) 
     {        
+        if (!(input instanceof FileImageInputStream))
+            throw new IllegalArgumentException("Input n'est pas un objet valide.");
         super.setInput(input, seekForwardOnly, ignoreMetadata);        
+        if (metadata != null)
+        {
+            metadata.dispose();
+            metadata = null;
+        }
         try 
         {
             parseMetadata();
@@ -286,10 +301,19 @@ public abstract class ImageReaderN1B extends ImageReader
     public BufferedImage read(final int imageIndex, final ImageReadParam param) 
                                                                     throws IOException 
     {
-        checkIndex(imageIndex);        
-        BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
-                                                getHeight(imageIndex), 
-                                                BufferedImage.TYPE_USHORT_GRAY);        
+        checkIndex(imageIndex);                
+        final int[] bandTgt = {0};
+        if (param!=null)
+        {
+            if (param.getDestinationBands()!=null)
+                param.setDestinationBands(bandTgt);
+        }
+        
+        /* Creation du bufferedImage.*/
+        final BufferedImage image = getDestination(param, 
+                                                   getImageTypes(imageIndex), 
+                                                   NB_PIXEL_LINE,
+                                                   getHeight(imageIndex));                
         WritableRectIter rif = RectIterFactory.createWritable(image, null);
         extractPackedVideoData(rif, param);
         return image;
@@ -400,6 +424,24 @@ public abstract class ImageReaderN1B extends ImageReader
     // Autres méthodes //
     /////////////////////
     /////////////////////    
+    /**
+     * Allows any resources held by this object to be released. The result of calling any 
+     * other method (other than finalize) subsequent to a call to this method is undefined. 
+     * It is important for applications to call this method when they know they will no 
+     * longer be using this ImageReader. Otherwise, the reader may continue to hold on to 
+     * resources indefinitely. 
+     * The default implementation of this method in the superclass does nothing. Subclass 
+     * implementations should ensure that all resources, especially native resources, are 
+     * released. 
+     */
+    public void dispose()
+    {        
+        super.dispose();
+        if (metadata != null)
+            metadata.dispose();
+    }
+
+
     /**
      * Retourne le nombre de bandes de l'image.
      * @return le nombre de bandes de l'image.
@@ -542,15 +584,40 @@ public abstract class ImageReaderN1B extends ImageReader
     /////////////////////////
     /////////////////////////                
     /**
+     * Retourne le mot à l'<i>index</i> dans un bloc de donnée. Dans ce type de codage, les
+     * mots sont codés en paquet de trois mots (10 bits par mot) sur 4 bytes.
+     *
+     * @param word  index du mot dans le bloc de donnée.
+     * @return le mot à l'<i>index</i> dans le Le bloc de donnée.
+     */
+    protected final int getWordFromPacketData(final ImageInputStream input, 
+                                              final long base,
+                                              final int  index) throws IOException
+    {
+        input.seek(base + (index/3)*4);
+        final int word = input.readInt();
+        
+        int word_ = 0;
+        switch (index % 3)
+        {
+            case 0 : word_ = ((word >>> 20) & 1023); break;
+            case 1 : word_ = ((word >>> 10) & 1023); break;
+            case 2 : word_ = (word & 1023); break;            
+        }
+        return word_;
+    }    
+    
+    /**
      * Lecture des principales informations du Header et du TBM.
      * @exception   IOException si une input ou output exception survient.
      */
     private void parseMetadata() throws IOException 
     {
-        metadata = new Metadata();
+        metadata = new Metadata(this);
         metadata.put(Metadata.SPACECRAFT, getSpacecraft());        
         metadata.put(Metadata.START_TIME, getStartTime());
         metadata.put(Metadata.END_TIME,   getEndTime());        
+        metadata.put(Metadata.HEIGHT,     getHeight());        
         metadata.put(Metadata.DIRECTION,  getDirection());        
         metadata.put(Metadata.FORMAT,     getFormat());        
     }    
@@ -580,5 +647,5 @@ public abstract class ImageReaderN1B extends ImageReader
     protected Format getData()
     {
         return DATA;    
-    }       
+    }        
 }

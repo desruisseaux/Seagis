@@ -113,7 +113,8 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
      */
     public ParameterList getCalibrationParameter(final Channel channel) throws IOException
     {
-        final String descriptor       = "AVHRR_KLM";
+        final String descriptor = "AVHRR_KLM";
+        ParameterList parameters = null;
         if (channel.isThermal())
         {            
             // Thermique.
@@ -126,19 +127,28 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
             final Object[]  paramDefaults = {null,
                                              null, 
                                              null};
-            ParameterList parameters = new ParameterListImpl(
-                                        new ParameterListDescriptorImpl(descriptor,
-                                                                        paramNames,
-                                                                        paramClasses,
-                                                                        paramDefaults,
-                                                                        null));                                                         
+            parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
+                                                                               paramNames,
+                                                                               paramClasses,
+                                                                               paramDefaults,
+                                                                               null));                                                         
             parameters.setParameter("THERMAL CALIBRATION COEFFICIENT", 
                                     getIrOperational(channel));        
             parameters.setParameter("CENTRAL WAVE LENGHT", 
                                     getCentralWave(channel));
             parameters.setParameter("RADIANCE CONSTANT", 
                                     getConstant(channel));
-            return parameters;
+            
+            /* Temporairement, les valeurs THERMAL CALIBRATION COEFFICIENT seront celle
+               recalculé par l'algorithme de calibration des données HRPT. */
+            final ParameterList paramInCalib = CalibrationKLM.getInputDefaultParameterList();
+            paramInCalib.setParameter("SATELLITE", Satellite.get(metadata.getSpacecraft()));
+            paramInCalib.setParameter("CHANNEL", channel);
+            paramInCalib.setParameter("BACK SCAN", getBackScan(channel));
+            paramInCalib.setParameter("SPACE DATA", getSpaceData(channel));
+            paramInCalib.setParameter("TARGET TEMPERATURE DATA", getInternalTargetTemperatureData());
+            paramInCalib.setParameter("THERMAL", getIrOperational(channel));
+            parameters.setParameter("THERMAL CALIBRATION COEFFICIENT", CalibrationKLM.calibrate(paramInCalib));
         }
         else
         {
@@ -149,18 +159,17 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
                                              CoefficientGrid.class};
             final Object[]  paramDefaults = {null,
                                              null};
-            ParameterList parameters = new ParameterListImpl(
-                                            new ParameterListDescriptorImpl(descriptor,
-                                                                            paramNames,
-                                                                            paramClasses,
-                                                                            paramDefaults,
-                                                                            null));                                                         
+            parameters = new ParameterListImpl(new ParameterListDescriptorImpl(descriptor,
+                                                                               paramNames,
+                                                                               paramClasses,
+                                                                               paramDefaults,
+                                                                               null));                                                         
             parameters.setParameter("SLOPE INTERCEPT COEFFICIENTS", 
                                     getSlopeIntercept(channel));
             parameters.setParameter("THERMAL CALIBRATION COEFFICIENT", 
                                     getIrOperational(channel));        
-            return parameters;        
         }
+        return parameters;        
     }    
 
     /**
@@ -194,7 +203,13 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     }    
     
     /**
-     * Retourne les constantes <i>constant1</i> et <i>constant2</i>.
+     * Retourne les constantes <i>constant1</i> et <i>constant2</i> associé au 
+     * <i>channel</i>. Les constantes sont retournées dans un tableau contenant deux
+     * valeurs : 
+     * <UL>
+     *  <LI>Constante 1.</LI>
+     *  <LI>Constante 2.</LI>
+     * </UL>
      *
      * @param channel   Le canal désiré.
      * @return les constantes <i>constant1</i> et <i>constant2</i>.
@@ -226,12 +241,19 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     }    
 
     /**
-     * Retourne les coefficients thermique du <CODE>channel</CODE> désiré.
+     * Retourne les coefficients thermique du <CODE>channel</CODE> désiré. Les coefficients 
+     * sont retournées dans une grille de coefficients contenant pour chaque data record 
+     * les coefficients suivants : 
+     * <UL>
+     *  <LI>IR Operational Cal Coefficient 1 (a0)</LI>
+     *  <LI>IR Operational Cal Coefficient 2 (a1)</LI>
+     *  <LI>IR Operational Cal Coefficient 3 (a2)</LI>
+     * </UL>
      *
      * @param channel   Le canal.
      * @return les coefficients thermique du <CODE>channel</CODE> désiré.
      */
-    private CoefficientGrid getIrOperational(final Channel channel) throws IOException     
+    public CoefficientGrid getIrOperational(final Channel channel) throws IOException     
     {
         /* A chaque enregistrement et pour chaque canal, 3 valeurs sont disponibles : 
            a0, a1 et a2.
@@ -276,12 +298,21 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     }
     
     /**
-     * Retourne les coeffcients de calibration de canaux du visible ou proche du visible. 
+     * Retourne les coeffcients de calibration SLOPE et INTERCEPT des canaux thermiques.
+     * Les coefficients sont retournées dans une grille de coefficients contenant pour 
+     * chaque data record les coefficients suivants : 
+     * <UL>
+     *  <LI>Visible prelaunch slope 1.</LI>
+     *  <LI>Visible prelaunch intercept 1.</LI>
+     *  <LI>Visible prelaunch slope 2.</LI>
+     *  <LI>Visible prelaunch intercept 2.</LI>
+     *  <LI>Visible prelaunch intersection.</LI>
+     * </UL>
      *
      * @param channel   Le canal désiré.
      * @return les coeffcients de calibration de canaux du visible ou proche du visible. 
      */
-    private CoefficientGrid getSlopeIntercept(final Channel channel) throws IOException     
+    public CoefficientGrid getSlopeIntercept(final Channel channel) throws IOException     
     {
         /* A chaque enregistrement et pour chaque canal, 5 coefficients sont disponibles :
                 - Visible prelaunch cal ch3a slope 1
@@ -324,15 +355,244 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         long base = SIZE_TBM + SIZE_HEADER;        
         for (int row=0 ; row<getHeight(0) ; row++, base+=SIZE_DATA) 
         {
-            array[0] = (double)field[0].getUnsignedInteger(input, base)/1E7;            
-            array[1] = (double)field[1].getUnsignedInteger(input, base)/1E6;            
-            array[2] = (double)field[2].getUnsignedInteger(input, base)/1E7;            
-            array[3] = (double)field[3].getUnsignedInteger(input, base)/1E6;            
-            array[4] = (double)field[4].getUnsignedInteger(input, base);            
+            array[0] = field[0].getUnsignedInteger(input, base)/1E7;            
+            array[1] = field[1].getUnsignedInteger(input, base)/1E6;            
+            array[2] = field[2].getUnsignedInteger(input, base)/1E7;            
+            array[3] = field[3].getUnsignedInteger(input, base)/1E6;            
+            array[4] = field[4].getUnsignedInteger(input, base);            
             grid.setElement(row,  array);            
         }
         return grid;        
     }
+    
+    /**
+     * Retourne la température interne des "platinum resistance thermometers". Les 
+     * coefficients sont retournées dans une grille de coefficients contenant pour 
+     * chaque data record les coefficients suivants : 
+     * <UL>
+     *  <LI>PRT Reading 1.</LI>
+     *  <LI>PRT Reading 2.</LI>
+     *  <LI>PRT Reading 3.</LI>
+     * </UL><BR><BR>
+     *
+     * Tous les 5 scans, les PRTs contiennent une valeur de référence 0.
+     *
+     * @return le compte numérique PRT nécessaire au calcul des coefficients
+     * de calibration .
+     */
+    public CoefficientGrid getInternalTargetTemperatureData() throws IOException
+    {
+        /* A chaque enregistrement on extrait :
+               - PRT Reading 1
+               - PRT Reading 2
+               - PRT Reading 3
+           La constante ci-dessous indique le nombre de coefficients PRT(Platinium 
+           Resistance Thermometers) traités dans le bloc DATA. */
+        final int count = 3;     
+        
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final double[] array = new double[count] ;
+        final CoefficientGrid grid = new CoefficientGrid(getHeight(0),count);
+        final Field[] field = {getData().get(Format.DATA_KLM_PRT1),        
+                               getData().get(Format.DATA_KLM_PRT2),
+                               getData().get(Format.DATA_KLM_PRT3)};
+
+        long base = SIZE_TBM + SIZE_HEADER;                               
+        for(int row=0; row<getHeight(0); row++, base+=SIZE_DATA)
+        {
+            array[0] = field[0].getUnsignedShort(input, base) & 1023;
+            array[1] = field[1].getUnsignedShort(input, base) & 1023;
+            array[2] = field[2].getUnsignedShort(input, base) & 1023;            
+            grid.setElement(row, array);                   
+        }
+        return grid;        
+    }    
+    
+    /**
+     * Retourne les "Back Scan" associé à un canal thermique. Les coefficients sont 
+     * retournées dans une grille de coefficients contenant pour chaque data record les 
+     * coefficients suivants : 
+     * <UL>
+     *  <LI>Word 1.</LI>
+     *  <LI>Word 2.</LI>
+     *  <LI>...</LI>
+     *  <LI>Word 9.</LI>
+     *  <LI>Word 10.</LI>
+     * </UL>
+     *
+     * @param channel Canal désiré.
+     * @return les comptes numeriques du Back Scan nécessaire au calcul des coefficients 
+     * de calibration.
+     */
+    public CoefficientGrid getBackScan(final Channel channel) throws IOException
+    {         
+        final int numWord = 10;
+        final ImageInputStream input = (FileImageInputStream)this.input;                             
+        final CoefficientGrid grid   = new CoefficientGrid(getHeight(0), numWord); 
+        final double[] array = new double[numWord] ;
+        final Field fieldBackScan = getData().get(Format.DATA_KLM_BACK_SCAN);        
+                
+        DataInputStream bis  = null;
+        byte[] buffer = new byte[fieldBackScan.size];
+        long base     = SIZE_TBM + SIZE_HEADER ;     
+        int compteur  = 0;
+        int word      = 0;
+         
+        for (int row= 0; row<getHeight(0) ; row++, base+=SIZE_DATA) 
+        {             
+            input.seek(base + fieldBackScan.offset);
+            input.readFully(buffer);
+            bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(buffer)));                          
+            compteur = 0;
+            int i    = 0;
+            while (compteur <30) 
+            {                              
+                // Lecture du mot de 2 octets.
+                word = bis.readUnsignedShort();  
+                if (channel.equals(Channel.CHANNEL_3B))
+                {
+                    if ((compteur%3)==0)
+                        array[i++] = word;
+                } else if (channel.equals(Channel.CHANNEL_4))
+                {
+                    if ((compteur-1)%3 == 0)
+                        array[i++] = word;
+                } else if (channel.equals(Channel.CHANNEL_5))
+                {
+                    if ((compteur-2)%3 == 0 ) 
+                        array[i++] = word;
+                } else throw new IllegalArgumentException("Erreur de canal.");
+                compteur++;                    
+            }
+            grid.setElement(row, array);       
+            if (false)
+            {
+                for (int k=0; k<array.length ; k++)
+                    System.out.print(array[k] + "\t");
+                System.out.println("");
+            }
+            
+        } 
+        return grid;         
+    }     
+     
+    /**
+     * Retourne les "Space Data" d'un canal. Les coefficients sont retournées dans une 
+     * grille de coefficients contenant pour chaque data record les coefficients suivants : 
+     * <UL>
+     *  <LI>Word 1.</LI>
+     *  <LI>Word 2.</LI>
+     *  <LI>...</LI>
+     *  <LI>Word 9.</LI>
+     *  <LI>Word 10.</LI>
+     * </UL>
+     *
+     * @param channel   Canal désiré (1,2,3,4,5).
+     * @return les comptes numeriques du Space Data nécessaire pour calculer les 
+     * coefficients de calibrations.
+     */
+    public CoefficientGrid getSpaceData(final Channel channel) throws IOException 
+    {
+        final int numWord = 10;
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final CoefficientGrid  grid  = new CoefficientGrid(getHeight(0), numWord); 
+        final double[] array = new double[numWord] ;
+        final Field[] field = new Field[numWord];
+        
+        DataInputStream bis = null;
+        Field fieldBackScan = getData().get(Format.DATA_KLM_SPACE_DATA);
+        byte[] buffer = new byte[fieldBackScan.size];
+        long base = SIZE_TBM + SIZE_HEADER ;     
+        int compteur = 0;
+        int word     = 0;
+         
+        for (int row=0; row<getHeight(0) ; row++, base+=SIZE_DATA) 
+        {
+            input.seek(base + fieldBackScan.offset);
+            input.readFully(buffer);
+            bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(buffer)));
+             
+            compteur = 0;
+            int i = 0;
+            while (compteur <50) 
+            {  
+                // Lecture du mot de 2 octets.
+                word = bis.readUnsignedShort();  
+                if (channel.equals(Channel.CHANNEL_1))
+                {
+                    if ((compteur)%5==0)
+                        array[i++] = word;                    
+                } else if (channel.equals(Channel.CHANNEL_2))
+                {
+                    if ((compteur-1)%5==0)
+                        array[i++] = word;
+                } else if (channel.equals(Channel.CHANNEL_3)  || 
+                           channel.equals(Channel.CHANNEL_3A) ||
+                           channel.equals(Channel.CHANNEL_3B))
+                {
+                    if ((compteur-2)%5==0)
+                        array[i++] = word;
+                } else if (channel.equals(Channel.CHANNEL_4))
+                {
+                    if ((compteur-3)%5 == 0)
+                        array[i++] = word;
+                } else if (channel.equals(Channel.CHANNEL_5))
+                {
+                    if ((compteur-4)%5 == 0 ) 
+                        array[i++] = word;                            
+                }
+                compteur++;                    
+            }
+            grid.setElement(row, array);                   
+            if (false)
+            {
+                for (int k=0; k<array.length ; k++)
+                    System.out.print(array[k] + "\t");
+                System.out.println("");
+            }            
+        }
+        return grid;         
+    }   
+    
+    /**
+     *  Retourne les coefficients de température du corps noir. Les coefficients sont 
+     * retournées dans une grille de coefficients contenant pour chaque data record les 
+     * coefficients suivants : 
+     * <UL>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 1.</LI>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 2.</LI>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 3.</LI>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 4.</LI>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 5.</LI>
+     *  <LI>IR Target Temperature 1 Conversion Coefficient 6.</LI>
+     * </UL>
+     *
+     *  Note : les coeff d4 et d5 sont nulles.
+     *  @return les coefficients de température du corps noir. 
+     **/
+    public double[][] getIrTemperatureCoef() throws IOException
+    {
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final double[][] array = new double[4][6];        
+        final Field[] field = {getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF1),
+                               getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF2),
+                               getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF3),
+                               getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF4),
+                               getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF5),
+                               getHeader().get(Format.HEADER_KLM_TEMPERATURE1_COEFF6)};
+        
+        long base = SIZE_TBM ;     
+        for(int row=0; row<4 ; row++, base+=12)
+        {
+            array[row][0] = (double)field[0].getUnsignedShort(input, base)/1.0E2;        
+            array[row][1] = (double)field[1].getUnsignedShort(input, base)/1.0E5;            
+            array[row][2] = (double)field[2].getUnsignedShort(input, base)/1.0E8;            
+            array[row][3] = (double)field[3].getUnsignedShort(input, base)/1.0E11;            
+            array[row][4] = (double)field[4].getUnsignedShort(input, base)/1.0E14;
+            array[row][5] = (double)field[4].getUnsignedShort(input, base)/1.0E17;
+        }      
+        return array;        
+    }           
     
     ////////////////////////////////////////
     ////////////////////////////////////////
@@ -340,132 +600,117 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
     ////////////////////////////////////////
     ////////////////////////////////////////
     /**
-     * Extraction des <i>packed-video data</i> d'une bande.
+     * Extraction des <i>packed-video data</i>.
      *
      * @param iterator      Un itérateur sur une RenderedImage.
      * @param param         Paramètres de l'image.
-     * @exception   IOException si une input ou output exception survient.
      */
-    public void extractPackedVideoData(final WritableRectIter iterateur, 
-                                       final ImageReadParam   param) throws IOException 
+    public void extractPackedVideoData(final WritableRectIter iterator, 
+                                        final ImageReadParam   param) throws IOException 
     {
-        long base = SIZE_TBM + SIZE_HEADER;
-        final ImageInputStream input = (FileImageInputStream)this.input;
-        final int imageIndex = 0;
-        int[] bandeSrc = {0},
-              bandeDst = {0};
-        DataInputStream bis = null;
-        Field fieldPackedVideo = getData().get(Format.DATA_PACKED_VIDEO_DATA);
-        byte[] bufferMemoire = new byte[fieldPackedVideo.size];
-        int compteur   = 0, 
-            word       = 0,
-            decalage   = 0,
-            indiceLine = 0;
-        byte videoData = 0;                        
-        
-        // prise en compte des parametres eventuels
-        if (param != null)
+        /* Par defaut, l'ensemble des bandes sont extraites. */
+        int[] bandSrc = {0, 1, 2, 3, 4},
+              bandTgt = {0, 1, 2, 3, 4};
+              
+        /* Paramètres .*/
+        if (param!=null)
         {
-            if (param.getSourceBands() != null)
-                bandeSrc = param.getSourceBands();
-            
-            if (param.getDestinationBands() != null)
-                bandeDst = param.getDestinationBands();
-        }        
-        processImageStarted(0);        
-        
-        for (int indiceBande=0 ; indiceBande<bandeSrc.length && indiceBande<bandeDst.length ; indiceBande++)
-        {
-            if (bandeSrc[indiceBande] >= NUM_BANDE)
-                throw new IllegalArgumentException("Index de la bande source en dehors des limites de l'image.");        
-
-            iterateur.startBands();
-            iterateur.startLines();
-            iterateur.startPixels();
-
-            // On se positionne sur la bonne bande.
-            while(bandeDst[indiceBande] > 0 && iterateur.finishedBands() == false)
-                iterateur.nextBand();
-
-            if (bandeDst[indiceBande] > 0)
-                throw new IllegalArgumentException("Index de la bande de destination en dehors des limites de l'image.");        
-
-            // Parcours des lignes.
-            while(iterateur.finishedLines() == false)       
-            {
-                indiceLine++;
-                iterateur.startPixels();
-
-                // Pour optimiser le temps de lecture de ces données, elles sont lues en 
-                // direct dans le fichier.
-                input.seek(base + fieldPackedVideo.offset);                                   
-                compteur =0;
-
-                // Positionne le data record en mémoire tampon.
-                input.readFully(bufferMemoire);
-                bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(bufferMemoire)));
-
-                switch (bandeSrc[indiceBande]) 
-                {
-                    case 0 :
-                        compteur = 0;
-                        break;
-
-                    case 1 :
-                        compteur = 3;
-                        break;
-                        
-                    case 2 :
-                        compteur = 1;
-                        break;
-
-                    case 3 :
-                        compteur = 4;
-                        break;
-
-                    case 4 :
-                        compteur = 2;
-                        break;                                                                    
-                }
-
-                while (iterateur.finishedPixels() == false) 
-                {                              
-                    // Lecture du mot de 4 octets.
-                    word = bis.readInt();                
-
-                    switch (compteur) 
-                    {
-                        case 0 : 
-                            decalage = 20;
-                            break;
-
-                        case 1 :          
-                            decalage = 0;
-                            break;
-
-                        case 2 : case 4 :
-                            compteur = (compteur +1) % 5;
-                            continue;
-
-                        case 3 :     
-                            decalage = 10;
-                            break;
-                    }
-                    int tmp = (int)((word >>>decalage) & 1023);
-                    iterateur.setSample(tmp);
-                    iterateur.nextPixel();
-                    compteur = (compteur +1) % 5;
-                }
-                iterateur.nextLine();
-                if (indiceLine % 50 == 0)
-                    processImageProgress((float)(100.0/getHeight(imageIndex) * (indiceLine+1)) 
-                                    / Math.min(bandeSrc.length, bandeDst.length));
-                base += SIZE_DATA;
-            }
+            if (param.getSourceBands()!=null)
+                bandSrc = param.getSourceBands();
+            if (param.getDestinationBands()!=null)
+                bandTgt = param.getDestinationBands();
         }
-        processImageComplete();            
+                
+        /* On charge successivement chacune des bandes sources dans sa bande de destination. */        
+        final int length = bandSrc.length;
+        if (bandTgt.length!=length)
+            throw new IllegalArgumentException("Les nombres de bandes source et destination sont différents.");
+        //processImageStarted(0);        
+        for (int index=0 ; index<length ; index++)
+            extractBand(iterator, bandSrc[index], bandTgt[index]);
+        //processImageComplete();                    
     }
 
+    /**
+     * Extraction d'une bande source vers une bande destination.
+     *
+     * @param iterator      Un itérateur sur une RenderedImage.
+     * @param bandSrc       Bande source.
+     * @param bandTgt       Bande destination.
+     */    
+    public void extractBand(final WritableRectIter iterator, 
+                            final int              bandSrc,
+                            final int              bandTgt) throws IOException
+    {
+        /* Vérification des bandes. */
+        if (bandSrc<0 || bandSrc>=getNumBands())
+            throw new IllegalArgumentException("La bande source est inexistante.");
+        
+        final ImageInputStream input = (FileImageInputStream)this.input;
+        final Field field            = getData().get(Format.DATA_PACKED_VIDEO_DATA);        
+
+        /* On se place sur la bande de destination. */
+        int band = 0;
+        iterator.startBands();
+        while (band<bandTgt && !iterator.finishedBands())
+        {
+            iterator.nextBand();    
+            band++;
+        }
+        
+        if (band!=bandTgt)
+            throw new IllegalArgumentException("La bande cible est inexistante.");
+
+        /* Extraction des informations de la bande. */
+        int row      = 0,
+            compteur = 0;             
+        long base = SIZE_TBM + SIZE_HEADER;        
+        iterator.startLines();
+        iterator.startPixels();
+        while(iterator.finishedLines() == false)       
+        {
+            iterator.startPixels();
+            input.seek(base + field.offset);                                   
+            row++;
+            compteur =0;
+
+            // Mise en mémoire des données correspondants à la ligne.
+            final byte[] buffer = new byte[field.size];                
+            input.readFully(buffer);
+            final DataInputStream bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(buffer)));
+            switch (bandSrc) 
+            {
+                case 0 : compteur = 0; break;
+                case 1 : compteur = 3; break;                        
+                case 2 : compteur = 1; break;
+                case 3 : compteur = 4; break;
+                case 4 : compteur = 2; break;                                                                    
+            }
+
+            while (!iterator.finishedPixels()) 
+            {                              
+                /* Lecture des données par 4 octets. */
+                final int word = bis.readInt();                
+                int decalage = 0;
+                switch (compteur) 
+                {
+                    case 0 : decalage = 20; break;
+                    case 1 : decalage = 0;  break;
+                    case 2 : case 4 : compteur = (compteur +1) % 5; continue;
+                    case 3 : decalage = 10; break;
+                }
+                iterator.setSample((int)((word >>>decalage) & 1023));
+                iterator.nextPixel();
+                compteur = (compteur+1)%5;
+            }
+            iterator.nextLine();
+            /*if (row % 50 == 0)
+                processImageProgress((float)(100.0/getHeight(0) * (row+1)) 
+                                / Math.min(bandSrc.length, bandTgt.length));*/
+            base += SIZE_DATA;
+        }           
+    }
+    
     /**
      * Extraction des <i>packed-video data</i> d'un canal.
      *
@@ -481,13 +726,12 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         final int imageIndex = 0;
         int[] bandeSrc = {0},
               bandeDst = {0};
-        DataInputStream bis = null;
-        Field fieldPackedVideo = getData().get(Format.DATA_PACKED_VIDEO_DATA);
-        byte[] bufferMemoire = new byte[fieldPackedVideo.size];
+        final Field field = getData().get(Format.DATA_PACKED_VIDEO_DATA);
+        byte[] buffer = new byte[field.size];
         int compteur   = 0, 
             word       = 0,
             decalage   = 0,
-            indiceLine = 0;
+            row = 0;
         byte videoData = 0;                        
         
         processImageStarted(0);        
@@ -512,8 +756,8 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
             while(iterateur.finishedLines() == false)       
             {
                 boolean extract = true;
-                if ((channel.equals(Channel.CHANNEL_3A) && !(getStateChannel3(indiceLine)==1)) || 
-                    (channel.equals(Channel.CHANNEL_3B) && !(getStateChannel3(indiceLine)==0)))
+                if ((channel.equals(Channel.CHANNEL_3A) && !(getStateChannel3(row)==1)) || 
+                    (channel.equals(Channel.CHANNEL_3B) && !(getStateChannel3(row)==0)))
                     extract = false;                
                 
                 if (extract) 
@@ -522,12 +766,12 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
 
                     // Pour optimiser le temps de lecture de ces données, elles sont lues en 
                     // direct dans le fichier.
-                    input.seek(base + fieldPackedVideo.offset);                                   
+                    input.seek(base + field.offset);                                   
                     compteur =0;
 
                     // Positionne le data record en mémoire tampon.
-                    input.readFully(bufferMemoire);
-                    bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(bufferMemoire)));
+                    input.readFully(buffer);
+                    DataInputStream bis = new DataInputStream(new BufferedInputStream(new ByteArrayInputStream(buffer)));
 
                     if (channel.equals(Channel.CHANNEL_1))                         
                             compteur = 0;
@@ -570,9 +814,9 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
                     }                
                 }
                 iterateur.nextLine();
-                indiceLine++;                
-                if (indiceLine % 50 == 0)
-                    processImageProgress((float)(100.0/getHeight(imageIndex) * (indiceLine+1)) 
+                row++;                
+                if (row % 50 == 0)
+                    processImageProgress((float)(100.0/getHeight(imageIndex) * (row+1)) 
                                     / Math.min(bandeSrc.length, bandeDst.length));
                 base += SIZE_DATA;
             }
@@ -590,9 +834,11 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
      */
     public BufferedImage read(final int imageIndex, final Channel channel) throws IOException
     {
-        final int[] bandeSrc       = {getBand(channel)};        
+        final int[] bandeSrc = {getBand(channel)},
+                    bandeTgt = {0};
         final ImageReadParam param = new ImageReadParam();
         param.setSourceBands(bandeSrc);                                                           
+        param.setDestinationBands(bandeTgt);                                                           
         BufferedImage image = new BufferedImage(NB_PIXEL_LINE,
                                                 getHeight(imageIndex), 
                                                 BufferedImage.TYPE_USHORT_GRAY);        
@@ -618,33 +864,33 @@ public final class ImageReaderN1BKLM extends ImageReaderN1B
         final Field fieldEarthLocalization = getData().get(Format.DATA_EARTH_LOCATION),
                                  fieldTime = getData().get(Format.DATA_TIME),              
                                  fieldAltitude = getData().get(Format.DATA_KLM_SPACECRAFT_ALTITUDE);        
-        final byte[] bufferMemoire = new byte[(getData().get(Format.DATA_EARTH_LOCATION)).size];                                
+        final byte[] buffer = new byte[(getData().get(Format.DATA_EARTH_LOCATION)).size];                                
         
-        for (int indiceLine=0 ; indiceLine<getHeight(imageIndex) ; indiceLine++) 
+        for (int row=0 ; row<getHeight(imageIndex) ; row++) 
         {                                  
             // Extraction de la date d'acquisition de l'enregistrement.
-            grid.setTime(indiceLine, extractDateFromData(fieldTime, base));
+            grid.setTime(row, extractDateFromData(fieldTime, base));
 
             // Extraction de l'altitude du satellite.
-            grid.setAltitude(indiceLine, (float)(fieldAltitude.getUnsignedShort(input, base)/1E1));                                    
+            grid.setAltitude(row, (float)(fieldAltitude.getUnsignedShort(input, base)/1E1));                                    
             
             input.seek(base + fieldEarthLocalization.offset);
-            input.readFully(bufferMemoire);            
+            input.readFully(buffer);            
             input.seek(base);
-            bis = new DataInputStream((new BufferedInputStream(new ByteArrayInputStream(bufferMemoire))));
-                    
+            bis = new DataInputStream((new BufferedInputStream(new ByteArrayInputStream(buffer))));
+
             // extraction des points de localisations Latitude, longitude 
             // Format : 2 bytes Lat + 2 bytes Long par point.
             for (int i=0 ; i<ImageReaderN1B.NB_CONTROL_POINT_LINE ; i++) 
             {                
                 final double latitude  = (double)(bis.readInt())/1E4;
                 final double longitude = (double)(bis.readInt())/1E4;                
-                grid.setLocalizationPoint(i, indiceLine, longitude, latitude);                
+                grid.setLocalizationPoint(i, row, longitude, latitude);                
             }                                         
             base += SIZE_DATA;
         }          
         
-        grid.removeSingularities();//ies();       
+        grid.removeSingularities();
         assert grid.isMonotonic(false);        
         return grid;                
     }  
