@@ -34,20 +34,28 @@ package net.seagis.gc;
 // Input/output
 import java.io.File;
 import java.io.IOException;
+
+// Images
+import java.awt.image.RenderedImage;
+
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+import javax.imageio.ImageIO;
 import javax.imageio.IIOException;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
 
 
 /**
  * Support for creation of grid coverages from persistent formats as well
  * as exporting a grid coverage to a persistent formats.
- *
- * NOTE: This class is not yet implemented.
+ * <br><br>
+ * This class is implemented only with the JDK 1.4 version. On the JDK 1.3
+ * version, all methods throws an {@link UnsupportedOperationException}.
  *
  * @version 1.00
  * @author OpenGIS (www.opengis.org)
  * @author Martin Desruisseaux
  */
-abstract class GridCoverageExchange
+public class GridCoverageExchange
 {
     /**
      * Default constructor.
@@ -68,23 +76,32 @@ abstract class GridCoverageExchange
      * @throws IOException if an error occurs during reading.
      * @throws IIOException if a grid coverage can't be create from the specified name.
      */
-    public abstract GridCoverage createFromName(final String name) throws IOException;
+    public GridCoverage createFromName(final String name) throws IOException
+    {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        return null;
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        throw new UnsupportedOperationException("JDK 1.4 required!");
+//----- END OF JDK 1.3 FALLBACK -------
+    }
 
     /**
      * Export a grid coverage to a persistent file format.
+     * The file format types are implementation specific.
+     * Sample file formats include:
+     * <ul>
+     *   <li>"GeoTIFF"  - GeoTIFF                         (<em>not yet implemented</em>)</li>
+     *   <li>"PIX"      - PCI Geomatics PIX               (<em>not yet implemented</em>)</li>
+     *   <li>"HDF-EOS"  - NASA HDF-EOS                    (<em>not yet implemented</em>)</li>
+     *   <li>"NITF"     - National Image Transfer Format  (<em>not yet implemented</em>)</li>
+     *   <li>"STDS-DEM" - Standard Transfer Data Standard (<em>not yet implemented</em>)</li>
+     *   <li>"PNG"      - Portable Network Graphics</li>
+     *   <li>"JPEG"     - Joint Photographic Experts Group</li>
+     *   <li>Any other format supported by the <cite>Java Image I/O</cite> API.</li>
+     * </ul>
      *
      * @param gridCoverage Source grid coverage.
      * @param fileFormat String which indicates exported file format.
-     *        The file format types are implementation specific.
-     *        Sample file formats include:
-     *        <ul>
-     *          <li>"GeoTIFF"  - GeoTIFF</li>
-     *          <li>"PIX"      - PCI Geomatics PIX</li>
-     *          <li>"HDF-EOS"  - NASA HDF-EOS</li>
-     *          <li>"NITF"     - National Image Transfer Format</li>
-     *          <li>"STDS-DEM" - Standard Transfer Data Standard</li>
-     *        </ul>
-     *
      * @param fileName File name to store grid coverage. This file name can be any
      *        valid file name within the underlying operating system of the server.
      *
@@ -92,5 +109,12 @@ abstract class GridCoverageExchange
      * @throws IIOException if the file format is not compatiable with the grid
      *         coverage.
      */
-    public abstract void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException;
+    public void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException
+    {
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+        ImageIO.write(gridCoverage.getRenderedImage(false), fileFormat, fileName);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+        throw new UnsupportedOperationException("JDK 1.4 required!");
+//----- END OF JDK 1.3 FALLBACK -------
+    }
 }
