@@ -26,9 +26,12 @@ package net.seas.opengis.cs;
 import javax.units.Unit;
 import net.seas.opengis.pt.Envelope;
 
+// Miscellaneous
+import net.seas.util.XClass;
+
 
 /**
- * Base interface for all coordinate systems.
+ * Base class for all coordinate systems.
  * A coordinate system is a mathematical space, where the elements of
  * the space are called positions.  Each position is described by a list
  * of numbers.  The length of the list corresponds to the dimension of
@@ -52,13 +55,18 @@ import net.seas.opengis.pt.Envelope;
  *
  * @see org.opengis.cs.CS_CoordinateSystem
  */
-public abstract class CoordinateSystem extends NamedObject
+public abstract class CoordinateSystem extends Info
 {
     /**
      * Construct a coordinate system.
      */
     protected CoordinateSystem()
     {}
+
+    /**
+     * Returns <code>true</code> if this coordinate system is cartesian.
+     */
+    public abstract boolean isCartesian();
 
     /**
      * Dimension of the coordinate system.
@@ -74,8 +82,8 @@ public abstract class CoordinateSystem extends NamedObject
     public abstract AxisInfo getAxis(int dimension);
 
     /**
-     * Gets units for dimension within coordinate system.
-     * Each dimension in the coordinate system has corresponding units.
+     * Gets units for dimension within coordinate system. Each
+     * dimension in the coordinate system has corresponding units.
      *
      * @param dimension Zero based index of axis.
      */
@@ -92,4 +100,31 @@ public abstract class CoordinateSystem extends NamedObject
      * of the Earth.
      */
     public abstract Envelope getDefaultEnvelope();
+
+    /**
+     * Compares the specified object with
+     * this coordinate system for equality.
+     */
+    public boolean equals(final Object object)
+    {return (object instanceof CoordinateSystem) && equals((CoordinateSystem)object);}
+
+    /**
+     * Compares the specified object with
+     * this coordinate system for equality.
+     */
+    final boolean equals(final CoordinateSystem that)
+    {
+        if (super.equals(that) && isCartesian()==that.isCartesian())
+        {
+            final int dimension = getDimension();
+            if (dimension==that.getDimension() && XClass.equals(this.getDefaultEnvelope(), that.getDefaultEnvelope()))
+            {
+                for (int i=0; i<dimension; i++)
+                    if (!(XClass.equals(this.getAxis (i), that.getAxis (i)) &&
+                          XClass.equals(this.getUnits(i), that.getUnits(i)))) return false;
+                return true;
+            }
+        }
+        return false;
+    }
 }
