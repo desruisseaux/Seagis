@@ -179,11 +179,11 @@ final class StereographicProjection extends PlanarProjection
             default:
             {
                  // Should not happen.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 throw new AssertionError(mode);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ---
                 throw new Error(String.valueOf(mode));
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK -------*/
             }
 
             case ELLIPSOIDAL_NORTH:
@@ -252,11 +252,11 @@ final class StereographicProjection extends PlanarProjection
             default:
             {
                 // Should not happen.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 throw new AssertionError(mode);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ---
                 throw new Error(String.valueOf(mode));
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK -------*/
             }
             case ELLIPSOIDAL_NORTH:
             {
@@ -364,11 +364,11 @@ choice: switch (mode)
             default:
             {
                 // Should not happen.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 throw new AssertionError(mode);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ---
                 throw new Error(String.valueOf(mode));
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK -------*/
             }
             case SPHERICAL_NORTH:
             {

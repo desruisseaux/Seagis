@@ -300,9 +300,9 @@ public class Ellipsoid extends Info
         final double y  = 0.5*(y1+y2);
         final double dx = Math.toRadians(Math.abs(x2-x1) % 360);
         double rho = Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert Math.abs(rho) < 1.0000001 : rho;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
         if (rho>+1) rho=+1; // Catch rounding error.
         if (rho<-1) rho=-1; // Catch rounging error.
         return Math.acos(rho)/XMath.hypot(Math.sin(y)/getSemiMajorAxis(), Math.cos(y)/getSemiMinorAxis());

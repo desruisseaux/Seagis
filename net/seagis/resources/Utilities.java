@@ -34,11 +34,11 @@ import java.util.Arrays;
 import java.util.ArrayList;
 
 // Logging
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
 
 /**
@@ -148,7 +148,7 @@ public final class Utilities
      */
     public static void unexpectedException(final String paquet, final String classe, final String method, final Throwable error)
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         final StringBuffer buffer = new StringBuffer(getShortClassName(error));
         final String message = error.getLocalizedMessage();
         if (message!=null)
@@ -161,8 +161,8 @@ public final class Utilities
         record.setSourceMethodName(method);
         record.setThrown          (error);
         Logger.getLogger(paquet).log(record);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         error.printStackTrace();
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
     }
 }

@@ -390,9 +390,9 @@ public class Category implements Serializable
         if (index>=0 && index<=0x3FFFFF)
         {
             final float value = Float.intBitsToFloat(0x7FC00000 + index);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert Float.isNaN(value);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             return value;
         }
         else throw new IndexOutOfBoundsException(String.valueOf(index));

@@ -278,10 +278,10 @@ public class MathTransformFactory
          */
         if (areInverse(tr1, tr2) || areInverse(tr2, tr1))
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert tr1.getDimSource()==tr2.getDimTarget();
             assert tr1.getDimTarget()==tr2.getDimSource();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
             return createIdentityTransform(tr1.getDimSource());
         }
         /*

@@ -132,9 +132,9 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
      */
     public CoordinatePoint transform(final CoordinatePoint ptSrc, CoordinatePoint ptDst) throws TransformException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        point. This optimization is done in ConcatenedTransformDirect.
@@ -146,9 +146,9 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
      */
     public void transform(final double[] srcPts, final int srcOff, final double[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        buffer. This optimization is done in ConcatenedTransformDirect.
@@ -162,9 +162,9 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
      */
     public void transform(final float[] srcPts, final int srcOff, final float[] dstPts, final int dstOff, final int numPts) throws TransformException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
         //        buffer. This optimization is done in ConcatenedTransformDirect.
@@ -178,9 +178,9 @@ class ConcatenedTransform extends AbstractMathTransform implements Serializable
      */
     public synchronized final MathTransform inverse() throws NoninvertibleTransformException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isValid();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         if (inverse==null)
         {
             inverse = provider.createConcatenatedTransform(transform2.inverse(), transform1.inverse());

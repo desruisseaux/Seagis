@@ -37,7 +37,7 @@ import net.seagis.cs.AxisOrientation;
 // Matrix and transforms
 import javax.vecmath.GMatrix;
 import org.opengis.pt.PT_Matrix;             // For JavaDoc
-//import javax.media.j3d.Transform3D;          // For JavaDoc
+import javax.media.j3d.Transform3D;          // For JavaDoc
 import javax.media.jai.PerspectiveTransform; // For JavaDoc
 import java.awt.geom.AffineTransform;
 
@@ -150,9 +150,9 @@ public class Matrix extends GMatrix
             transform.getShearY(), transform.getScaleY(), transform.getTranslateY(),
                                 0,                     0,                         1
         });
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isAffine();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
     }
 
     /**
@@ -237,9 +237,9 @@ public class Matrix extends GMatrix
             }
         }
         setElement(dimension, dimension, 1);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isAffine();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
     }
 
     /**
@@ -278,9 +278,9 @@ public class Matrix extends GMatrix
             matrix.setElement(i, dimension, translate);
         }
         matrix.setElement(dimension, dimension, 1);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert matrix.isAffine();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return matrix;
     }
 
@@ -353,9 +353,9 @@ public class Matrix extends GMatrix
             for (int i=0; i<numCol; i++)
                 if (getElement(j,i) != (i==j ? 1 : 0))
                     return false;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isAffine();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return true;
     }
 

@@ -34,10 +34,10 @@ import java.io.FilenameFilter;
 import javax.swing.filechooser.FileFilter;
 
 // Regular expression
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
 
 
 /**
@@ -60,9 +60,9 @@ public class DefaultFileFilter extends FileFilter implements java.io.FileFilter,
     /**
      * The pattern to matchs to filenames.
      */
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
     private final Pattern pattern;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
 
     /**
      * Construct a file filter for the specified pattern.
@@ -101,9 +101,9 @@ public class DefaultFileFilter extends FileFilter implements java.io.FileFilter,
             }
             buffer.append(c);
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
         this.pattern = Pattern.compile(buffer.toString());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
     }
 
     /**
@@ -124,11 +124,11 @@ public class DefaultFileFilter extends FileFilter implements java.io.FileFilter,
     {
         if (file!=null)
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
             return pattern.matcher(file.getName()).matches();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
             return true;
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         }
         return false;
     }
@@ -145,11 +145,11 @@ public class DefaultFileFilter extends FileFilter implements java.io.FileFilter,
     {
         if (name!=null)
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
             return pattern.matcher(name).matches();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
             return true;
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         }
         return false;
     }

@@ -38,10 +38,10 @@ import java.io.IOException;
 // Images
 import java.awt.image.RenderedImage;
 
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
 import javax.imageio.ImageIO;
 import javax.imageio.IIOException;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
 // Resources
 import java.util.Locale;
@@ -89,11 +89,11 @@ public class GridCoverageExchange
      */
     public GridCoverage createFromName(final String name) throws IOException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//------ BEGIN JDK 1.4 DEPENDENCIES ----
         throw new IIOException(Resources.getResources(locale).getString(ResourceKeys.ERROR_NO_IMAGE_READER));
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         throw new UnsupportedOperationException("JDK 1.4 required!");
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
     }
 
     /**
@@ -122,12 +122,12 @@ public class GridCoverageExchange
      */
     public void exportTo(final GridCoverage gridCoverage, final String fileFormat, final File fileName) throws IOException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//------ BEGIN JDK 1.4 DEPENDENCIES ----
         // TODO: Temporary implementation. More works are needed here...
         ImageIO.write(gridCoverage.getRenderedImage(false), fileFormat, fileName);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         throw new UnsupportedOperationException("JDK 1.4 required!");
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
     }
 
     /**

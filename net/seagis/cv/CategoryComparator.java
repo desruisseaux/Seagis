@@ -89,9 +89,9 @@ abstract class CategoryComparator implements Comparator
     {
         final double v1 = getLower((Category)o1);
         final double v2 = getLower((Category)o2);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         final int cmp=Double.compare(v1, v2);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ---
         final int cmp;
              if (v1  < v2) cmp = -1;
         else if (v1  > v2) cmp = +1;
@@ -104,7 +104,7 @@ abstract class CategoryComparator implements Comparator
             else if (bits1 > bits2) cmp = +1; // (0.0, -0.0) or (NaN, !NaN)
             else cmp = 0;
         }
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK -------*/
         if (cmp==0)
         {
             // Special test for NaN
@@ -130,9 +130,9 @@ abstract class CategoryComparator implements Comparator
     {
         categories = (Category[]) categories.clone();
         Arrays.sort(categories, this);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert isSorted(categories);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return categories;
     }
 

@@ -487,9 +487,9 @@ public abstract class AbstractMathTransform implements MathTransform
         catch (SingularMatrixException exception)
         {
             NoninvertibleTransformException e = new NoninvertibleTransformException(Resources.format(ResourceKeys.ERROR_NONINVERTIBLE_TRANSFORM));
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
     }

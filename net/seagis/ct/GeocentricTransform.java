@@ -300,11 +300,11 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
                 dstPts[dstOff++] = height;
             }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             // If assertion are enabled, then transform the
             // result and compare it with the input array.
             assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             srcOff += step;
             dstOff += step;
         }
@@ -365,11 +365,11 @@ class GeocentricTransform extends AbstractMathTransform implements Serializable
                 else                          height = z / sin_p1 + rn*(e2 - 1.0);
                 dstPts[dstOff++] = (float) height;
             }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             // If assertion are enabled, then transform the
             // result and compare it with the input array.
             assert !hasHeight || checkTransform(new double[] {x,y,z, dstPts[dstOff-3], dstPts[dstOff-2], dstPts[dstOff-1]});
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             srcOff += step;
             dstOff += step;
         }

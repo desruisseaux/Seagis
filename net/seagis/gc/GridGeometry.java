@@ -261,9 +261,9 @@ public class GridGeometry implements Dimensioned, Serializable
         catch (NoninvertibleTransformException exception)
         {
             IllegalArgumentException e = new IllegalArgumentException(); // TODO
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         else return null;
@@ -340,9 +340,9 @@ public class GridGeometry implements Dimensioned, Serializable
         catch (TransformException exception)
         {
             final PointOutsideCoverageException e=new PointOutsideCoverageException(point);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         else throw new IllegalStateException(); // TODO

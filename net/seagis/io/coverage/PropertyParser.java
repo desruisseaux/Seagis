@@ -81,18 +81,18 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.LinkedHashMap;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 import java.util.NoSuchElementException;
 import javax.media.jai.util.CaselessStringKey;
 
 // Logging
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogRecord;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
 // Miscellaneous
 import javax.units.Unit;
@@ -402,11 +402,11 @@ public class PropertyParser
         {
             return;
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
         if (value instanceof CharSequence)
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         if (value instanceof String)
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         {
             final String text = value.toString().trim();
             if (text.length()==0) return;
@@ -414,11 +414,11 @@ public class PropertyParser
         }
         if (properties==null)
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
             properties = new LinkedHashMap();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
             properties = new HashMap();
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         }
         final CaselessStringKey caselessKey = (key!=null) ? new CaselessStringKey(key) : null;
         final String oldValue = (String) properties.get(caselessKey);
@@ -623,14 +623,14 @@ public class PropertyParser
             {
                 emittedWarning = true;
                 final String message = '"'+text+"\" ellipsoid not yet implemented. Default to WGS 1984.";
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 final LogRecord record = new LogRecord(Level.WARNING, message);
                 record.setSourceMethodName(source);
                 record.setSourceClassName("PropertyParser");
                 Logger.getLogger("net.seagis.gcs").log(record);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
                 System.err.println(message);
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
             }
         }
     }
@@ -769,9 +769,9 @@ public class PropertyParser
         catch (TransformException exception)
         {
             NoSuchElementException e = new NoSuchElementException(Resources.getResources(locale).getString(ResourceKeys.ERROR_CANT_TRANSFORM_ENVELOPE));
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
     }

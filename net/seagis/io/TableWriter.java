@@ -709,9 +709,9 @@ public class TableWriter extends FilterWriter
             {
                 nextColumn(fill);
             }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert buffer.length()==0;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             cells.add(!Character.isSpaceChar(fill) ? new Cell(null, alignment, fill) : null);
             column=0;
             row++;
@@ -733,9 +733,9 @@ public class TableWriter extends FilterWriter
             if (buffer.length()!=0)
             {
                 nextLine();
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert buffer.length()==0;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             }
             flushTo(out);
             row=column=0;
@@ -849,9 +849,9 @@ public class TableWriter extends FilterWriter
                      */
                     if (currentCount==0)
                     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                         assert textLength==0;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                         final int verticalBorder;
                         if      (cellIndex==0)           verticalBorder = -1;
                         else if (cellIndex>=cellCount-1) verticalBorder = +1;
@@ -877,9 +877,9 @@ public class TableWriter extends FilterWriter
                         default:
                         {
                             // Should not happen.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                             throw new AssertionError(cell.alignment);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                         }
                         case ALIGN_LEFT:
                         {
@@ -960,9 +960,9 @@ public class TableWriter extends FilterWriter
             {
                 // Should not happen
                 final IllegalStateException error = new IllegalStateException(exception.getLocalizedMessage());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 error.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 throw error;
             }
             return writer.toString();

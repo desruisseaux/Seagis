@@ -103,9 +103,9 @@ public class LineWriter extends FilterWriter
      */
     private void writeEOL() throws IOException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert count==0;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         // Do NOT call super.write(String).
         out.write(lineSeparator);
     }
@@ -131,9 +131,9 @@ public class LineWriter extends FilterWriter
      */
     private void flushBuffer() throws IOException
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert bufferBlank();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         if (count!=0)
         {
             out.write(buffer, 0, count);
@@ -150,9 +150,9 @@ public class LineWriter extends FilterWriter
         while (upper!=lower)
         {
             final char c=cbuf[upper-1];
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert (c!='\r' && c!='\n');
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             if (Character.isSpaceChar(c))
             {
                 upper--;
@@ -162,9 +162,9 @@ public class LineWriter extends FilterWriter
             out.write(cbuf, lower, upper-lower);
             break;
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert bufferBlank();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         count=0;
     }
 
@@ -177,9 +177,9 @@ public class LineWriter extends FilterWriter
         while (upper!=lower)
         {
             final char c=str.charAt(upper-1);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert (c!='\r' && c!='\n');
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             if (Character.isSpaceChar(c))
             {
                 upper--;
@@ -189,9 +189,9 @@ public class LineWriter extends FilterWriter
             out.write(str, lower, upper-lower);
             break;
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert bufferBlank();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         count=0;
     }
 
@@ -208,9 +208,9 @@ public class LineWriter extends FilterWriter
             {
                 case '\r':
                 {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                     assert bufferBlank();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                     count=0; // Discard whitespaces
                     writeEOL();
                     skipCR=true;
@@ -220,9 +220,9 @@ public class LineWriter extends FilterWriter
                 {
                     if (!skipCR)
                     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                         assert bufferBlank();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                         count=0; // Discard whitespaces
                         writeEOL();
                     }
@@ -398,9 +398,9 @@ public class LineWriter extends FilterWriter
             }
             while (--length>=0)
                 buffer[count++] = string.charAt(offset++);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert count==newCount;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         }
     }
 }

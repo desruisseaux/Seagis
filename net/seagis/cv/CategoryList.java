@@ -262,10 +262,10 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
                                                        new Double(check.minimum), new Double(check.maximum)));
             }
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert CategoryComparator.BY_INDEX .isSorted(byIndex );
         assert CategoryComparator.BY_VALUES.isSorted(byValues);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
     }
 
     /**
@@ -399,33 +399,33 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
     {
         if (geophysicsValues)
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert CategoryComparator.BY_VALUES.isSorted(byValues);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             int max = byValues.length;
             if (max!=0)
             {
                 while (--max!=0 && Double.isNaN(byValues[max].maximum));
                 final double minimum = byValues[0  ].minimum;
                 final double maximum = byValues[max].maximum;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert (minimum <= maximum);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 return new Range(Double.class, new Double(minimum), true, new Double(maximum), false);
             }
         }
         else
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert CategoryComparator.BY_INDEX.isSorted(byIndex);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             if (byIndex.length!=0)
             {
                 final int lower = byIndex[0].lower;
                 final int upper = byIndex[byIndex.length-1].upper;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert (lower < upper);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 return new Range(Integer.class, new Integer(lower), true, new Integer(upper), false);
             }
         }
@@ -539,9 +539,9 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
             if ((i>=0 || (i=~i-1)>=0) && i<byIndex.length)
             {
                 category=byIndex[i];
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert (this.index[i] == category.lower);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 if (!(index>=category.lower && index<category.upper))
                 {
                     return null;
@@ -608,9 +608,9 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
                 else
                 {
                     category = byValues[i];
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                     assert (value >= category.minimum);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                     // We found the probable category.  If value is outside
                     // any category's range (including this one), it may be
                     // closer to the next category than the current one...
@@ -620,9 +620,9 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
                         // assert: if 'upper.minimum' was smaller than 'value',
                         //         it should has been found by 'binarySearch'.
                         //         We use '!' in order to accept NaN values.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                         assert !(upper.minimum <= value);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                         if (upper.minimum-value <= value-category.maximum)
                         {
                             category = upper;
@@ -633,9 +633,9 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
         }
         // assert: after converting geophysics value to sample
         //         value, it should stay in the same category.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert (category==null || category==getDecoder(category.toIndex(value), category)) : category;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return category;
     }
 
@@ -803,9 +803,9 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
                  * Calcule le nombre de couleurs de la palette
                  * en cherchant l'index le plus élevé des thèmes.
                  */
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert CategoryComparator.BY_INDEX.isSorted(byIndex);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 final int mapSize = Math.round(byIndex[byIndex.length-1].upper);
                 final int[]  ARGB = new int[mapSize];
                 /*
@@ -861,11 +861,11 @@ public class CategoryList /*extends AbstractList<Category>*/ implements Serializ
                 Utilities.equals(this.unit,    that.unit   ) &&
                    Arrays.equals(this.byIndex, that.byIndex))
             {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert Arrays.equals(this.byValues, that.byValues) &&
                        Arrays.equals(this.index,    that.index   ) &&
                        Arrays.equals(this.values,   that.values  );
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 return true;
             }
         }

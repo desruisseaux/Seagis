@@ -140,20 +140,20 @@ final class NumericImage extends ImageAdapter
                     x++;
                 }
                 while (!iterator.nextPixelDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert (x == destRect.x + destRect.width) : x;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 y++;
             }
             while (!iterator.nextLineDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert (y == destRect.y + destRect.height) : y;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             band++;
         }
         while (!iterator.nextBandDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert (band == categories.length) : band;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
     }
 }

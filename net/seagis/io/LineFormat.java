@@ -346,9 +346,9 @@ public class LineFormat
             error = exception;
         }
         ParseException exception = new ParseException(Resources.format(ResourceKeys.ERROR_UNPARSABLE_NUMBER_$1, data[index]), limits[index]);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//------ BEGIN JDK 1.4 DEPENDENCIES ----
         if (error!=null) exception.initCause(error);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
         throw exception;
     }
 

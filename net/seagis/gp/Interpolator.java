@@ -215,9 +215,9 @@ final class Interpolator extends GridCoverage
         catch (NoninvertibleTransformException exception)
         {
             final IllegalArgumentException e = new IllegalArgumentException();
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
 
@@ -293,9 +293,9 @@ final class Interpolator extends GridCoverage
         catch (TransformException exception)
         {
             PointOutsideCoverageException e = new PointOutsideCoverageException(coord);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         throw new PointOutsideCoverageException(coord);
@@ -331,9 +331,9 @@ final class Interpolator extends GridCoverage
         catch (TransformException exception)
         {
             PointOutsideCoverageException e = new PointOutsideCoverageException(coord);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         throw new PointOutsideCoverageException(coord);
@@ -369,9 +369,9 @@ final class Interpolator extends GridCoverage
         catch (TransformException exception)
         {
             PointOutsideCoverageException e = new PointOutsideCoverageException(coord);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         throw new PointOutsideCoverageException(coord);
@@ -436,14 +436,14 @@ final class Interpolator extends GridCoverage
                     row[i++] = iter.getSample(band);
                 }
                 while (!iter.nextPixelDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert i==row.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             }
             while (!iter.nextLineDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert j==samples.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             final int xfrac = (int) ((x-x0) * (1 << interpolation.getSubsampleBitsH()));
             final int yfrac = (int) ((y-y0) * (1 << interpolation.getSubsampleBitsV()));
             dest[band] = interpolation.interpolate(samples, xfrac, yfrac);
@@ -510,14 +510,14 @@ final class Interpolator extends GridCoverage
                     row[i++] = iter.getSampleFloat(band);
                 }
                 while (!iter.nextPixelDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert i==row.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             }
             while (!iter.nextLineDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert j==samples.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             float dx = (float)(x-x0); if (dx==1) dx=ONE_EPSILON;
             float dy = (float)(y-y0); if (dy==1) dy=ONE_EPSILON;
             final float value=interpolation.interpolate(samples, dx, dy);
@@ -597,14 +597,14 @@ final class Interpolator extends GridCoverage
                     row[i++] = iter.getSampleDouble(band);
                 }
                 while (!iter.nextPixelDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert i==row.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             }
             while (!iter.nextLineDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert j==samples.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             float dx = (float)(x-x0); if (dx==1) dx=ONE_EPSILON;
             float dy = (float)(y-y0); if (dy==1) dy=ONE_EPSILON;
             final double value=interpolation.interpolate(samples, dx, dy);

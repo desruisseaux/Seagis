@@ -566,22 +566,22 @@ public abstract class Coverage extends PropertySourceImpl implements Dimensioned
                         x++;
                     }
                     while (!iterator.nextPixelDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                     assert (x == dstRect.x + dstRect.width);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                     y++;
                 }
                 while (!iterator.nextLineDone());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 assert (y == dstRect.y + dstRect.height);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             }
             catch (NoninvertibleTransformException exception)
             {
                 final IllegalArgumentException e = new IllegalArgumentException("RenderContext");
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 throw e;
             }
             return image;

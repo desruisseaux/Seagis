@@ -192,9 +192,9 @@ public final class Naming
         {
             names[count++] = it.next().toString();
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert count == names.length;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return names;
     }
 }

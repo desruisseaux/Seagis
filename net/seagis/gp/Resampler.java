@@ -192,9 +192,9 @@ final class Resampler extends GridCoverage
         while (sourceCoverage instanceof Resampler)
         {
             final GridCoverage[] sources = sourceCoverage.getSources();
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             if (sources.length!=1) throw new AssertionError(sources.length);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             sourceCoverage = sources[0];
         }
         /*
@@ -331,11 +331,11 @@ final class Resampler extends GridCoverage
         hints.add(Images.getRenderingHints(targetImage));
         targetImage.setRenderingHints(hints);
 
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert sourceCoverage.getCoordinateSystem().equivalents(transformation.getSourceCS());
         assert targetCoverage.getCoordinateSystem().equivalents(transformation.getTargetCS());
         assert targetGridGeometry!=null || targetImage.getBounds().equals(sourceImage.getBounds());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
         return targetCoverage;
     }

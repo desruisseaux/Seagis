@@ -255,7 +255,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      * @return <code>true</code> if the two points are close enough.
      * @throws TransformException if a transformation failed.
      */
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
     private boolean checkTransform(Point2D point, final Point2D target, final boolean inverse)
     {
         if (!(point instanceof CheckPoint)) try
@@ -292,7 +292,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
         }
         return true;
     }
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
 
 
 
@@ -345,9 +345,9 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
             throw new TransformException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
         }
         ptDst = transform(Math.toRadians(x), Math.toRadians(y), ptDst);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert checkTransform(ptDst, (ptSrc!=ptDst) ? ptSrc : new Point2D.Double(x,y), true);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return ptDst;
     }
 
@@ -527,9 +527,9 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
         {
             throw new TransformException(Resources.format(ResourceKeys.ERROR_LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert checkTransform(ptDst, (ptSrc!=ptDst) ? ptSrc : new Point2D.Double(x0, y0), false);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         return ptDst;
     }
 

@@ -207,9 +207,9 @@ public class CoordinateTransformationFactory
             catch (TransformException exception)
             {
                 final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                 e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                 throw e;
             }
         }
@@ -265,9 +265,9 @@ public class CoordinateTransformationFactory
             final CoordinateSystem tailSourceCS = source.getTailCS();
             final int dimHeadCS = headSourceCS.getDimension();
             final int dimSource = source.getDimension();
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert (dimHeadCS < dimSource);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             CoordinateTransformation step2;
             int lower, upper;
             try
@@ -293,9 +293,9 @@ public class CoordinateTransformationFactory
                 catch (CannotCreateTransformException ignore)
                 {
                     CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
                     e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
                     throw e;
                 }
             }
@@ -407,9 +407,9 @@ public class CoordinateTransformationFactory
         catch (TransformException exception)
         {
             CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         /*
@@ -475,11 +475,11 @@ public class CoordinateTransformationFactory
         final ProjectedCoordinateSystem stepProjCS = normalize(targetCS);
         final GeographicCoordinateSystem stepGeoCS = stepProjCS.getGeographicCoordinateSystem();
         final Projection                projection = stepProjCS.getProjection();
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert normalize(stepProjCS) == stepProjCS;
         assert normalize(stepGeoCS, projection) == stepGeoCS;
         assert projection.equals(targetCS.getProjection());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
         final MathTransform    mapProjection = factory.createParameterizedTransform(projection);
         final CoordinateTransformation step1 = createTransformationStep(sourceCS, stepGeoCS);
@@ -509,9 +509,9 @@ public class CoordinateTransformationFactory
         catch (NoninvertibleTransformException exception)
         {
             final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
     }
@@ -568,9 +568,9 @@ public class CoordinateTransformationFactory
         catch (SingularMatrixException exception)
         {
             final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
         throw new CannotCreateTransformException(Resources.format(ResourceKeys.BURSA_WOLF_PARAMETERS_REQUIRED));
@@ -890,21 +890,21 @@ public class CoordinateTransformationFactory
         catch (RuntimeException exception)
         {
             final CannotCreateTransformException e = new CannotCreateTransformException(sourceCS, targetCS);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert !Arrays.equals(sourceAxis, targetAxis) || matrix.isIdentity();
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
         // Convert units (Optimized case where the conversion
         // can be applied right into the AffineTransform).
         final int dimension = matrix.getNumRow()-1;
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert dimension == matrix.getNumCol()-1;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
         for (int i=0; i<dimension; i++)
         {
             // TODO: check if units conversion is really linear.
@@ -1026,9 +1026,9 @@ public class CoordinateTransformationFactory
         final Projection                      projection = cs.getProjection();
         final GeographicCoordinateSystem           geoCS = cs.getGeographicCoordinateSystem();
         final GeographicCoordinateSystem normalizedGeoCS = normalize(geoCS, projection);
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         assert normalize(normalizedGeoCS, projection) == normalizedGeoCS;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
 
         if (hasStandardAxis(cs, Unit.METRE) && normalizedGeoCS==geoCS)
         {

@@ -193,11 +193,11 @@ public abstract class Operation implements Serializable
         {
             return (Interpolation) type;
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES -----
         else if (type instanceof CharSequence)
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         else if (type instanceof String)
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         {
             final String name=type.toString();
             for (int i=0; i<INTERPOLATION_NAMES.length; i++)

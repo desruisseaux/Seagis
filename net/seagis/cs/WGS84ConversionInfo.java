@@ -146,9 +146,9 @@ public class WGS84ConversionInfo implements Cloneable, Serializable
         {
             // Should not happen, since we are cloneable.
             final InternalError error = new InternalError(exception.getMessage());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             error.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw error;
         }
     }

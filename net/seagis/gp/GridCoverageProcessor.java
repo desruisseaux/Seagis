@@ -56,10 +56,10 @@ import javax.media.jai.util.CaselessStringKey;
 import java.io.Writer;
 import java.io.IOException;
 
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
 // Logging
 import java.util.logging.Logger;
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
 
 // Miscellaneous
 import java.util.Arrays;
@@ -88,11 +88,11 @@ public class GridCoverageProcessor
     static
     {
         final long targetCapacity = 0x4000000; // 64 Mo.
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         if (Runtime.getRuntime().maxMemory() > 2*targetCapacity)
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ----
         if (true)
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK --------*/
         {
             final TileCache cache = JAI.getDefaultInstance().getTileCache();
             if (cache.getMemoryCapacity() < targetCapacity)
@@ -100,9 +100,9 @@ public class GridCoverageProcessor
                 cache.setMemoryCapacity(targetCapacity);
             }
         }
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         Logger.getLogger("net.seagis.gcs").config("Java Advanced Imaging: "+JAI.getBuildVersion());
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ----
     }
 
     /**
@@ -168,9 +168,9 @@ public class GridCoverageProcessor
         final CaselessStringKey name = new CaselessStringKey(operation.getName());
         if (!operations.containsKey(name))
         {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             assert !operations.containsValue(operation);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             operations.put(name, operation);
         }
         else throw new IllegalStateException(Resources.format(ResourceKeys.ERROR_OPERATION_ALREADY_BOUND_$1, operation.getName()));

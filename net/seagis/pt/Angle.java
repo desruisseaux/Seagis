@@ -119,9 +119,9 @@ public class Angle implements Comparable, Serializable
         catch (ParseException exception)
         {
             NumberFormatException e=new NumberFormatException(exception.getLocalizedMessage());
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
             e.initCause(exception);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+//----- END OF JDK 1.4 DEPENDENCIES ---
             throw e;
         }
     }
@@ -167,9 +167,9 @@ public class Angle implements Comparable, Serializable
      */
     public int compareTo(final Object that)
     {
-/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+//----- BEGIN JDK 1.4 DEPENDENCIES ----
         return Double.compare(this.theta, ((Angle)that).theta);
-------- END OF JDK 1.4 DEPENDENCIES ---*/
+/*----- END OF JDK 1.4 DEPENDENCIES ---
         final double d1 = this.theta;
         final double d2 = ((Angle)that).theta;
         if (d1  < d2) return -1;
@@ -180,7 +180,7 @@ public class Angle implements Comparable, Serializable
         if (bits1 < bits2) return -1; // (-0.0, 0.0) or (!NaN, NaN)
         if (bits1 > bits2) return +1; // (0.0, -0.0) or (NaN, !NaN)
         return 0;
-//----- END OF JDK 1.3 FALLBACK -------
+------- END OF JDK 1.3 FALLBACK -------*/
     }
 
     /**
