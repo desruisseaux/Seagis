@@ -26,9 +26,11 @@ package net.seas.opengis.ct;
 import javax.units.Unit;
 import java.util.Locale;
 import java.awt.geom.Point2D;
+import java.util.NoSuchElementException;
+
+import net.seas.util.XArray;
 import net.seas.resources.Resources;
 import net.seas.opengis.cs.Ellipsoid;
-import java.util.NoSuchElementException;
 
 
 /**
@@ -81,12 +83,20 @@ public class MathTransformFactory
      */
     private final MathTransform.Registration[] REGISTERED = new MathTransform.Registration[]
     {
-        new         MercatorProjection.Registration(),
-        new LambertConformalProjection.Registration(),
-        new    StereographicProjection.Registration(),
-        new    StereographicProjection.Registration(true),  // Polar
-        new    StereographicProjection.Registration(false)  // Oblique
+        new           MercatorProjection.Registration(),
+        new   LambertConformalProjection.Registration(),
+        new      StereographicProjection.Registration(),      // Automatic
+        new      StereographicProjection.Registration(true),  // Polar
+        new      StereographicProjection.Registration(false), // Oblique
+        new TransverseMercatorProjection.Registration(false), // Universal
+        new TransverseMercatorProjection.Registration(true)   // Modified
     };
+
+    /**
+     * Create a default factory.
+     */
+    public MathTransformFactory()
+    {}
 
     /**
      * Creates a transform by concatenating two existing transforms.
@@ -120,34 +130,6 @@ public class MathTransformFactory
     {return null;} // TODO
 
     /**
-     * Convenience method for creating a transform from a classification name and
-     * parameters.
-     *
-     * @param classification The classification name of the transform (e.g. "Transverse_Mercator").
-     * @param ellipsoid Ellipsoid parameter. "semi_major" and "semi_minor" parameters values will
-     *                  be determined from ellipsoid's axis length and unit.
-     * @param centroid  Centre de la projection. Souvent (mais <u>pas toujours</u>),
-     *                  les coordonnées du centre seront celles qui, lorsque projetées,
-     *                  donneraient les coordonnées (0,0). Notez que les coordonnées
-     *                  qui seront retenues comme le centre de la carte ne seront pas
-     *                  nécessairement identiques à celles qui auront été spécifiées.
-     *                  Par exemple les projections transverses de Mercator placent la
-     *                  longitude centrale au centre d'une de leurs "zones". D'autres
-     *                  projections placent toujours la latitude centrale sur l'équateur.
-     * @return The parameterized transform.
-     * @throws NoSuchElementException if there is no transform for the specified classification.
-     */
-    public MathTransform createParameterizedTransform(final String classification, final Ellipsoid ellipsoid, final Point2D centroid) throws NoSuchElementException
-    {
-        final Unit axisUnit = ellipsoid.getAxisUnit();
-        return createParameterizedTransform(classification, new Parameter[]
-        {
-            new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit)),
-            new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit))
-        });
-    }
-
-    /**
      * Creates a transform from a classification name and parameters. The
      * client must ensure that all the linear parameters are expressed in
      * meters, and all the angular parameters are expressed in degrees.
@@ -164,6 +146,50 @@ public class MathTransformFactory
      */
     public MathTransform createParameterizedTransform(final String classification, final Parameter[] parameters) throws NoSuchElementException, MissingParameterException
     {return getRegistration(classification).create(parameters);}
+
+    /**
+     * Convenience method for creating a transform from a classification name,
+     * an ellipsoid and a central point.
+     *
+     * @param classification The classification name of the transform (e.g. "Transverse_Mercator").
+     * @param ellipsoid Ellipsoid parameter. "semi_major" and "semi_minor" parameters values will
+     *                  be determined from ellipsoid's axis length and unit. If null, this argument
+     *                  default to WGS 1984.
+     * @param centre    Central meridian and latitude of origin, in degrees. If null, this argument
+     *                  usualy default to 0°,0° (but the exact default values are projection-dependent).
+     *
+     * @return The parameterized transform.
+     * @throws NoSuchElementException if there is no transform for the specified classification.
+     */
+    public MathTransform createParameterizedTransform(final String classification, final Ellipsoid ellipsoid, final Point2D centre) throws NoSuchElementException
+    {
+        int n=0;
+        final Parameter[] param = new Parameter[4];
+        if (ellipsoid!=null)
+        {
+            final Unit axisUnit = ellipsoid.getAxisUnit();
+            param[n++] = new Parameter("semi_major", Unit.METRE.convert(ellipsoid.getSemiMajorAxis(), axisUnit));
+            param[n++] = new Parameter("semi_minor", Unit.METRE.convert(ellipsoid.getSemiMinorAxis(), axisUnit));
+        }
+        if (centre!=null)
+        {
+            param[n++] = new Parameter("central_meridian",   centre.getX());
+            param[n++] = new Parameter("latitude_of_origin", centre.getY());
+        }
+        return createParameterizedTransform(classification, XArray.resize(param, n));
+    }
+
+    /**
+     * Returns the classification names of every available transforms.
+     * The returned array may have a zero length, but will never be null.
+     */
+    public String[] getAvailableTransforms()
+    {
+        final String[] names = new String[REGISTERED.length];
+        for (int i=0; i<names.length; i++)
+            names[i] = REGISTERED[i].classification;
+        return names;
+    }
 
     /**
      * Returns a human readable name localized for the specified locale.

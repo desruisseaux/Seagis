@@ -47,12 +47,8 @@ abstract class CylindricalProjection extends MapProjection
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
-     *         Parameters must contain "semi_major" and "semi_minor"
-     *         values in metres.
-     * @param  centralLongitude Central longitude in <u>radians</u>.
-     * @param  centralLatitude  Central latitude in <u>radians</u>.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected CylindricalProjection(final Parameter[] parameters, final double centralLongitude, final double centralLatitude) throws MissingParameterException
-    {super(parameters, centralLongitude, centralLatitude);}
+    public CylindricalProjection(final Parameter[] parameters) throws MissingParameterException
+    {super(parameters);}
 }

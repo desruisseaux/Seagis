@@ -131,6 +131,9 @@ public abstract class CoordinateTransformation extends Info
                XClass.equals(this.getTransformType(), that.getTransformType()) &&
                XClass.equals(this.getSourceCS(),      that.getSourceCS()     ) &&
                XClass.equals(this.getTargetCS(),      that.getTargetCS()     );
-        // We do NOT check MathTransform in order to avoid cyclic check.
+               // We do NOT check MathTransform, since creating MathTransform
+               // may be a costly operation. MathTransform should be completly
+               // determined by the above parameters, i.e. if all parameters
+               // are equal, created MathTransform should be equal too.
     }
 }

@@ -92,46 +92,48 @@ abstract class MapProjection extends MathTransform
      * indique que le modèle est sphérique, c'est-à-dire que les champs {@link #a}
      * et {@link #b} ont la même valeur.
      */
-    final boolean isSpherical;
+    protected final boolean isSpherical;
 
     /**
      * Excentricité de l'ellipse. L'excentricité est 0
      * si l'ellipsoïde est sphérique, c'est-à-dire si
      * {@link #isSpherical} est <code>true</code>.
      */
-    final double e;
+    protected final double e;
 
     /**
      * Carré de l'excentricité de l'ellipse: e² = (a²-b²)/a².
      */
-    final double es;
+    protected final double es;
 
     /**
      * Longueur de l'axe majeur de la terre, en mètres.
      * Sa valeur par défaut dépend de l'éllipsoïde par
      * défaut (par exemple "WGS 1984").
      */
-    final double a;
+    protected final double a;
 
     /**
      * Longueur de l'axe mineur de la terre, en mètres.
      * Sa valeur par défaut dépend de l'éllipsoïde par
      * défaut (par exemple "WGS 1984").
      */
-    final double b;
+    protected final double b;
 
     /**
-     * Longitude centrale en <u>radians</u>.
-     * La valeur par défaut est 0, le méridien
-     * de Greenwich.
+     * Central longitude in <u>radians</u>.  Default value is 0, the Greenwich
+     * meridian. <strong>Consider this field as final</strong>. It is not final
+     * only  because {@link TransverseMercatorProjection} need to modify it at
+     * construction time.
      */
-    final double centralLongitude;
+    protected double centralLongitude;
 
     /**
-     * Latitude centrale en <u>radians</u>.
-     * La valeur par défaut est 0, l'équateur.
+     * Central latitude in <u>radians</u>. Default value is 0, the equator.
+     * <strong>Consider this field as final</strong>. It is not final only
+     * because some class need to modify it at construction time.
      */
-    final double centralLatitude;
+    protected double centralLatitude;
 
     /**
      * The inverse of this map projection.
@@ -143,18 +145,21 @@ abstract class MapProjection extends MathTransform
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
-     *         Parameters must contain "semi_major" and "semi_minor"
-     *         values in metres.
-     * @param  centralLongitude Central longitude in <u>radians</u>.
-     * @param  centralLatitude  Central latitude in <u>radians</u>.
+     *         The following parameter are recognized:
+     *         <ul>
+     *           <li>"semi_major" (mandatory)</li>
+     *           <li>"semi_minor" (mandatory)</li>
+     *           <li>"central_meridian" (optional, default to 0°)</li>
+     *           <li>"latitude_of_origin" (optional, default to 0°)</li>
+     *         </ul>
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected MapProjection(final Parameter[] parameters, final double centralLongitude, final double centralLatitude) throws MissingParameterException
+    public MapProjection(final Parameter[] parameters) throws MissingParameterException
     {
-        this.a = Parameter.getValue(parameters, "semi_major");
-        this.b = Parameter.getValue(parameters, "semi_minor");
-        this.centralLongitude = centralLongitude;
-        this.centralLatitude  = centralLatitude;
+        this.a                =                    Parameter.getValue(parameters, "semi_major");
+        this.b                =                    Parameter.getValue(parameters, "semi_minor");
+        this.centralLongitude = longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true);
+        this.centralLatitude  =  latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true);
         this.isSpherical      = (a==b);
         this.es = 1.0 - (b*b)/(a*a);
         this.e  = Math.sqrt(es);

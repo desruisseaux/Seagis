@@ -89,8 +89,6 @@ final class LambertConformalProjection extends ConicProjection
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
-     *         Parameters must contain "semi_major" and "semi_minor"
-     *         values in metres.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
     public LambertConformalProjection(final Parameter[] parameters) throws MissingParameterException
@@ -98,8 +96,7 @@ final class LambertConformalProjection extends ConicProjection
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
-        super(parameters, longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true),
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), true));
+        super(parameters);
         final double defaultLatitude =       Parameter.getValue(parameters, "latitude_of_origin", 0);
         final double phi1= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel1", defaultLatitude), true);
         final double phi2= latitudeToRadians(Parameter.getValue(parameters, "standard_parallel2", defaultLatitude), true);

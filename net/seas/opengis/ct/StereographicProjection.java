@@ -57,37 +57,40 @@ final class StereographicProjection extends PlanarProjection
      *******************************************************/
     static final class Registration extends MathTransform.Registration
     {
-        /** Default latitude: 90 for polar, 0 for oblique. */
-        private final double latitude;
+        /** <code>true</code> for polar stereographic. */
+        private final boolean polar, auto;
 
         /** Construct a default object. */
         public Registration()
         {
             super("Stereographic", Clé.STEREOGRAPHIC);
-            this.latitude = 90;
+            polar = true;
+            auto  = true;
         }
 
         /** Construct an object for polar or oblique stereographic. */
         public Registration(final boolean polar)
         {
             super(polar ? "Polar_Stereographic" : "Oblique_Stereographic", Clé.STEREOGRAPHIC);
-            this.latitude = polar ? 90 : 0;
+            this.polar = polar;
+            this.auto  = false;
         }
 
         /** Create a new map projection. */
         public MathTransform create(final Parameter[] parameters)
-        {return new StereographicProjection(parameters);}
+        {return new StereographicProjection(parameters, polar, auto);}
 
         /** Returns the default parameters. */
         public Parameter[] getDefaultParameters()
         {
+            final double defaultLatitude = polar ? 90 : 0;
             return new Parameter[]
             {
                 new Parameter("semi_major", 6378137.0),
                 new Parameter("semi_minor", 6356752.3142451794975639665996337),
                 new Parameter("latitude_of_origin",   0),
-                new Parameter("central_meridian",    latitude),
-                new Parameter("latitude_true_scale", latitude)
+                new Parameter("central_meridian",    defaultLatitude),
+                new Parameter("latitude_true_scale", defaultLatitude)
             };
         }
     }
@@ -132,25 +135,33 @@ final class StereographicProjection extends PlanarProjection
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
-     *         Parameters must contain "semi_major" and "semi_minor"
-     *         values in metres.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
-    protected StereographicProjection(final Parameter[] parameters) throws MissingParameterException
+    public StereographicProjection(final Parameter[] parameters) throws MissingParameterException
+    {this(parameters, true, true);}
+
+    /**
+     * Construct a new map projection from the suplied parameters.
+     *
+     * @param  parameters The parameter values in standard units.
+     * @param  polar <code>true</code> for polar projection.
+     * @param  auto  <code>true</code> if projection (polar vs oblique)
+     *               can be selected automatically.
+     * @throws MissingParameterException if a mandatory parameter is missing.
+     */
+    private StereographicProjection(final Parameter[] parameters, final boolean polar, final boolean auto) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
-        super(parameters, longitudeToRadians(Parameter.getValue(parameters, "central_meridian",    0), true),
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 90), true));
-        final double latitudeTrueScale = Math.abs(
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale",
-                                             Parameter.getValue(parameters, "latitude_of_origin", 90)), true));
+        super(parameters);
+        final double defaultLatitude = Parameter.getValue(parameters, "latitude_of_origin", polar ? 90 : 0);
+        final double latitudeTrueScale = Math.abs(latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale", defaultLatitude), true));
 
         //////////////////////////
         //  Compute constants   //
         //////////////////////////
-        if (Math.abs(Math.abs(centralLatitude) - (Math.PI/2)) < EPS)
+        if (auto ? (Math.abs(Math.abs(centralLatitude)-(Math.PI/2)) < EPS) : polar)
         {
             if (centralLatitude<0) mode = (isSpherical) ? SPHERICAL_SOUTH : ELLIPSOIDAL_SOUTH;
             else                   mode = (isSpherical) ? SPHERICAL_NORTH : ELLIPSOIDAL_NORTH;

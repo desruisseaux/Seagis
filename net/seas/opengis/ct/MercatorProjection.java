@@ -92,8 +92,6 @@ final class MercatorProjection extends CylindricalProjection
      * Construct a new map projection from the suplied parameters.
      *
      * @param  parameters The parameter values in standard units.
-     *         Parameters must contain "semi_major" and "semi_minor"
-     *         values in metres.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
     public MercatorProjection(final Parameter[] parameters) throws MissingParameterException
@@ -101,11 +99,10 @@ final class MercatorProjection extends CylindricalProjection
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
-        super(parameters, longitudeToRadians(Parameter.getValue(parameters, "central_meridian",   0), true),
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_of_origin", 0), false));
-        final double latitudeTrueScale = Math.abs(
-                           latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale",
-                                             Parameter.getValue(parameters, "latitude_of_origin", 0)), false));
+        super(parameters);
+        final double latitudeOfOrigine = Parameter.getValue(parameters, "latitude_of_origin", 0);
+        final double latitudeTrueScale = Math.abs(latitudeToRadians(Parameter.getValue(parameters, "latitude_true_scale", latitudeOfOrigine), false));
+        centralLatitude = latitudeToRadians(latitudeOfOrigine, false); // Overwrite default value.
 
         //////////////////////////
         //  Compute constants   //
