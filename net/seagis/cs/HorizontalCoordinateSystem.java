@@ -37,7 +37,6 @@ import org.opengis.cs.CS_HorizontalCoordinateSystem;
 
 // Miscellaneous
 import java.util.Map;
-import javax.units.Unit;
 import java.rmi.RemoteException;
 
 // Resources

@@ -43,7 +43,6 @@ import net.seagis.cs.Ellipsoid;
 import net.seagis.cs.Projection;
 
 // Miscellaneous
-import javax.units.Unit;
 import java.util.Locale;
 import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;

@@ -699,12 +699,12 @@ public class Adapters
         if (unit instanceof CS_LinearUnit)
         {
             final double metersPerUnit = ((CS_LinearUnit)unit).getMetersPerUnit();
-            if (metersPerUnit==1) return Unit.METRE; // TODO
+            return Unit.METRE.scale(metersPerUnit);
         }
         if (unit instanceof CS_AngularUnit)
         {
             final double radiansPerUnit = ((CS_AngularUnit)unit).getRadiansPerUnit();
-            if (radiansPerUnit==Math.PI/180) return Unit.DEGREE; // TODO
+            return Unit.RADIAN.scale(radiansPerUnit);
         }
         throw new UnsupportedOperationException("Only meters and degrees are currently implemented");
     }

@@ -36,7 +36,6 @@ import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
 // Miscellaneous
-import javax.units.Unit;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
