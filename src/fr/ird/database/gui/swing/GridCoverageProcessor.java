@@ -25,12 +25,14 @@
  */
 package fr.ird.database.gui.swing;
 
-// JAI
+// J2SE et JAI
+import java.awt.RenderingHints;
 import javax.media.jai.ParameterList;
 
 // Geotools
 import org.geotools.gp.Operation;
 import org.geotools.gc.GridCoverage;
+import org.geotools.gp.OperationNotFoundException;
 
 // Seagis
 import fr.ird.database.coverage.sql.CoverageDataBase;
@@ -70,22 +72,40 @@ final class GridCoverageProcessor extends org.geotools.gp.GridCoverageProcessor 
      */
     private GridCoverageProcessor() {
         super(CoverageDataBase.getDefaultGridCoverageProcessor(), null);
+        addOperation(new Concatenated(getOperation("Interpolate")));
+        addOperation(new Concatenated(getOperation("GradientMagnitude")));
     }
 
     /**
-     * Applique une opération.
+     * Opération déléguant son travail à une autre opération, mais après avoir appliqué
+     * l'opération &quot;NodataFilter&quot;.
+     *
+     * @version $Id$
+     * @author Martin Desruisseaux
      */
-    public GridCoverage doOperation(final Operation     operation,
-                                    final ParameterList parameters)
-    {
-        final String prefix = NODATA_FILTER + '-';
-        String name = operation.getName();
-        if (name.startsWith(prefix)) {
-            GridCoverage coverage = (GridCoverage) parameters.getObjectParameter("Source");
-            coverage = doOperation(NODATA_FILTER, coverage);
-            parameters.setParameter("Source", coverage);
-            name = name.substring(prefix.length());
+    private static final class Concatenated extends Operation {
+        /**
+         * L'opération qui effectuera le travail.
+         */
+        private final Operation operation;
+
+        /**
+         * Construit une opération qui envelopera l'opération spécifiée.
+         */
+        public Concatenated(final Operation operation) {
+            super(NODATA_FILTER + '-' + operation.getName(), operation.getParameterListDescriptor());
+            this.operation = operation;
         }
-        return super.doOperation(operation, parameters);
+
+        /**
+         * Effectue l'opération.
+         */
+        protected GridCoverage doOperation(final ParameterList parameters, final RenderingHints hints) {
+            final org.geotools.gp.GridCoverageProcessor processor = getGridCoverageProcessor(hints);
+            GridCoverage coverage = (GridCoverage) parameters.getObjectParameter("Source");
+            coverage = processor.doOperation(NODATA_FILTER, coverage);
+            parameters.setParameter("Source", coverage);
+            return processor.doOperation(operation, parameters);
+        }
     }
 }

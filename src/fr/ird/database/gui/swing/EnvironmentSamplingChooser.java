@@ -68,8 +68,8 @@ import fr.ird.resources.seagis.Resources;
  * Interface graphique pour lancer l'exécution de {@link EnvironmentTableFiller}.
  * Cette interface présente trois colonnes dans lesquelles l'utilisateur peut sélectionner
  * les séries temporelles, les décalages spatio-temporels et une opération à appliquer sur
- * les données.  Une case à cocher, &quot;Autoriser les interpolations&quot;, activera les
- * opérations suivantes:
+ * les données.  Des cases à cocher, &quot;Autoriser un filtrage des données manquantes&quot;
+ * et &quot;Autoriser les interpolations&quot;, activeront les opérations suivantes:
  *
  * <ul>
  *   <li>Remplissage de quelques données manquantes avec l'opération &quot;NodataFilter&quot;.</li>
@@ -99,6 +99,11 @@ public class EnvironmentSamplingChooser extends JPanel {
      * Liste des positions spatio-temporelles relatives à utiliser.
      */
     private final JList positions;
+
+    /**
+     * Indique si le filtrage des données manquantes est permis.
+     */
+    private final JCheckBox nodataFilterAllowed;
 
     /**
      * Indique si les interpolations spatio-temporelles sont permises.
@@ -157,6 +162,7 @@ public class EnvironmentSamplingChooser extends JPanel {
         kernels     = new GradientKernelEditor();
 
         final Resources resources = Resources.getResources(getDefaultLocale());
+        nodataFilterAllowed  = new JCheckBox("Autoriser un filtrage de données manquantes", true);
         interpolationAllowed = new JCheckBox("Autoriser les interpollations", true);
         series     .setToolTipText("Paramètres environnementaux à utiliser");
         operation  .setToolTipText("Opération à appliquer sur les images");
@@ -183,8 +189,9 @@ public class EnvironmentSamplingChooser extends JPanel {
             c.gridx=2;                                panel.add(new JLabel("Colonne: "), c);
             c.gridx=1; c.weightx=1; c.insets.right=6; panel.add(operation, c);
             c.gridx=3; c.weightx=0.5;                 panel.add(column, c);
-            c.gridy=2; c.insets.top=0; c.insets.bottom=3;
-            c.gridx=1; c.weightx=1; c.gridwidth=3;    panel.add(interpolationAllowed, c);
+            c.gridy=2; c.insets.top=0;
+            c.gridx=1; c.weightx=1; c.gridwidth=3;    panel.add(nodataFilterAllowed,  c);
+            c.gridy=3; c.insets.bottom=3;             panel.add(interpolationAllowed, c);
             tabs.addTab("Séries", panel);
         }
         /////////////////////////////////////////////////////////////
@@ -261,14 +268,15 @@ public class EnvironmentSamplingChooser extends JPanel {
             logging.show(owner);
 
             final String                column = this.column.getText();
-            final boolean          interpolate = interpolationAllowed.isSelected();
+            final boolean         nodataFilter = nodataFilterAllowed.isSelected();
             final OperationEntry     operation = (OperationEntry) this.operation.getSelectedItem();
             final Map<String,Object> arguments = new HashMap<String,Object>();
             arguments.put("mask1", kernels.getHorizontalEditor().getKernel());
             arguments.put("mask2", kernels.getVerticalEditor().getKernel());
-            GridCoverageProcessor.initialize();
-
-            filler.setInterpolationAllowed(interpolate);
+            if (nodataFilter) {
+                GridCoverageProcessor.initialize();
+            }
+            filler.setInterpolationAllowed(interpolationAllowed.isSelected());
             filler.getSeries().retainAll(series.getSelectedElements());
             filler.getRelativePositions().retainAll(Arrays.asList(positions.getSelectedValues()));
             filler.getOperations().clear();
@@ -276,7 +284,7 @@ public class EnvironmentSamplingChooser extends JPanel {
                 /** Retourne le nom de l'opération à appliquer. */
                 public String getProcessorOperation() {
                     String name = super.getProcessorOperation();
-                    if (!interpolate) {
+                    if (!nodataFilter) {
                         return name;
                     }
                     if (name==null || (name=name.trim()).length()==0) {
