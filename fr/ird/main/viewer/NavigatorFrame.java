@@ -37,9 +37,11 @@ import java.awt.Container;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
-import fr.ird.awt.CoordinateChooser;
-import fr.ird.awt.ImageTableModel;
 import fr.ird.awt.StatusBar;
+import fr.ird.awt.ImageTableModel;
+import fr.ird.awt.CoordinateChooser;
+import net.seas.awt.progress.Progress;
+import net.seas.awt.progress.WindowProgress;
 
 // Main framework
 import fr.ird.main.Task;
@@ -117,9 +119,12 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *         Cette boîte de dialogue sera ensuite transformée et retenue afin de
      *         permettre à l'utilisateur de modifier ces coordonnées. Cet argument
      *         peut être nul si aucune boîte de dialogue n'a été construite.
+     * @param  owner La composante parente (pour affichage des progrès).
      * @throws SQLException Si l'accès à la base de données a échoué.
      */
-    public NavigatorFrame(final DataBase database, final CoordinateChooser chooser) throws SQLException
+    public NavigatorFrame(final DataBase         database,
+                          final CoordinateChooser chooser,
+                          final JComponent          owner) throws SQLException
     {
         super(Resources.format(ResourceKeys.IMAGES_LIST));
         final SeriesEntry[] series;
@@ -144,7 +149,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         final ImageMosaicPanel mosaic = new ImageMosaicPanel(table, statusBar, readers, ctrl);
         tabs.addTab(Resources.format(ResourceKeys.MOSAIC), /*icon, */ mosaic);
 
-        addSeries(database, series);
+        addSeries(database, series, owner);
         setFrameIcon(getIcon("org/javalobby/icons/20x20/Sheet.gif"));
     }
 
@@ -269,47 +274,63 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
      *
      * @param  database Bases de données.
      * @param  series Séries à ajouter.
+     * @param  owner La composante parente (pour affichage des progrès).
      * @throws SQLException si l'interrogation de la base de données a échoué.
      */
-    private void addSeries(final DataBase database, final SeriesEntry[] series) throws SQLException
+    private void addSeries(final DataBase database,
+                           final SeriesEntry[] series,
+                           final JComponent owner) throws SQLException
     {
-  loop: for (int j=0; j<series.length; j++)
+        final WindowProgress progress = new WindowProgress(owner);
+        progress.setTitle(Resources.format(ResourceKeys.LOOKING_INTO_DATABASE));
+        progress.started();
+
+        try
         {
-            final SeriesEntry série=series[j];
-            final JTabbedPane tabs=this.tabs;
-            final Component[] cmps=tabs.getComponents();
-            for (int i=cmps.length; --i>=0;)
+loop:       for (int j=0; j<series.length; j++)
             {
-                final Component c=cmps[i];
-                if (c instanceof ImageTablePanel)
-                    if (série.equals(((ImageTablePanel) c).getSeries()))
-                        continue loop;
-            }
-            final String           name   = série.getName();
-            final ImageMosaicPanel mosaic = getMosaicPanel();
-            final ImageTablePanel  panel;
-            final ImageTableModel  model;
-            synchronized (table)
-            {
-                table.setSeries(série);
-                if (mosaic!=null)
+                final SeriesEntry série=series[j];
+                final JTabbedPane tabs=this.tabs;
+                final Component[] cmps=tabs.getComponents();
+                for (int i=cmps.length; --i>=0;)
                 {
-                    model = new ImageTableModel(série);
-                    model.setEntries(mosaic.addSeries(table));
+                    final Component c=cmps[i];
+                    if (c instanceof ImageTablePanel)
+                        if (série.equals(((ImageTablePanel) c).getSeries()))
+                            continue loop;
                 }
-                else
+                final String           name   = série.getName();
+                final ImageMosaicPanel mosaic = getMosaicPanel();
+                final ImageTablePanel  panel;
+                final ImageTableModel  model;
+                progress.setDescription(name);
+                synchronized (table)
                 {
-                    model = new ImageTableModel(table);
+                    table.setSeries(série);
+                    if (mosaic!=null)
+                    {
+                        model = new ImageTableModel(série);
+                        model.setEntries(mosaic.addSeries(table));
+                    }
+                    else
+                    {
+                        model = new ImageTableModel(table);
+                    }
                 }
+                // Do not invokes following code inside the
+                // synchronized block: it cause deadlock.
+                panel = createPanel(model, database);
+                EventQueue.invokeLater(new Runnable()
+                {
+                    public void run()
+                    {tabs.addTab(name, panel);}
+                });
             }
-            // Do not invokes following code inside the
-            // synchronized block: it cause deadlock.
-            panel = createPanel(model, database);
-            EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {tabs.addTab(name, panel);}
-            });
+        }
+        finally
+        {
+            progress.complete();
+            progress.dispose();
         }
     }
 
@@ -440,7 +461,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
                     task=new Task(resources.getString(ResourceKeys.ADD_SERIES))
                     {
                         protected void run() throws SQLException
-                        {addSeries(database, series);}
+                        {addSeries(database, series, NavigatorFrame.this);}
                     };
                 }
                 break;
@@ -642,7 +663,7 @@ public final class NavigatorFrame extends InternalFrame implements ChangeListene
         protected void run() throws SQLException
         {
             final DataBase    database = getDataBase();
-            final NavigatorFrame frame = new NavigatorFrame(database, null);
+            final NavigatorFrame frame = new NavigatorFrame(database, null, null);
             for (int i=0; i<models.length; i++)
             {
                 final ImageTableModel model = models[i];

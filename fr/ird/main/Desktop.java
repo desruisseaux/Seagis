@@ -542,7 +542,7 @@ final class Desktop extends JDesktopPane implements PropertyChangeListener
                         if (chooser.showDialog(Desktop.this, resources.format(ResourceKeys.NEW_IMAGES_SERIES)))
                         {
                             setWaitCursor(true);
-                            final NavigatorFrame frame = new NavigatorFrame(database, chooser);
+                            final NavigatorFrame frame = new NavigatorFrame(database, chooser, Desktop.this);
                             addFrame(frame);
                             frame.resetDividerLocation(); // Work around a regression bug in JDK 1.4...
                         }
