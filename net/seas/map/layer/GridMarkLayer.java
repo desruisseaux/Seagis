@@ -262,8 +262,8 @@ public abstract class GridMarkLayer extends MarkLayer
      */
     public synchronized void setAutoDecimation(final int spaceX, final int spaceY)
     {
-        if (spaceX < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_NUMBER_$1, new Integer(spaceX)));
-        if (spaceY < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_NUMBER_$1, new Integer(spaceY)));
+        if (spaceX < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2, "spaceX", new Integer(spaceX)));
+        if (spaceY < 0) throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2, "spaceY", new Integer(spaceY)));
         if (spaceX!=this.spaceX || spaceY!=this.spaceY)
         {
             this.spaceX  = spaceX;

@@ -66,6 +66,11 @@ public final class VectorLayerControl extends LayerControl
     private final ImageTable table;
 
     /**
+     * Bandes des composantes U et V des courants.
+     */
+    private final int bandU, bandV;
+
+    /**
      * Composante qui permet à l'utilisateur
      * de configurer cette couche.
      */
@@ -73,18 +78,24 @@ public final class VectorLayerControl extends LayerControl
 
     /**
      * Construit une couche des courants.
+     *
+     * @param table Table des images contenant les données vectorielles.
+     * @param bandU Bande de la composante U des courants.
+     * @param bandV Bande de la composante V des courants.
      */
-    public VectorLayerControl(final VectorTable table)
+    public VectorLayerControl(final ImageTable table, final int bandU, final int bandV)
     {
         super(false);
-        this.table=table;
+        this.table = table;
+        this.bandU = bandU;
+        this.bandV = bandV;
     }
 
     /**
      * Retourne le nom de cette couche.
      */
     public String getName()
-    {return table.getName();}
+    {return table.getSeries().getName();}
 
     /**
      * Configure une couche en fonction de cet objet <code>LayerControl</code>.
@@ -103,7 +114,7 @@ public final class VectorLayerControl extends LayerControl
      * @throws SQLException si les accès à la base de données ont échoués.
      * @throws IOException si une erreur d'entré/sortie est survenue.
      */
-    public Layer configLayer(final Layer layer, ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
+    public Layer configLayer(Layer layer, ImageEntry entry, final EventListenerList listeners) throws SQLException, IOException
     {
         if (!table.getSeries().equals(entry.getSeries()))
         {
@@ -112,21 +123,33 @@ public final class VectorLayerControl extends LayerControl
             if (entry==null) return null;
         }
         final GridCoverage coverage = entry.getGridCoverage(listeners);
-        final VectorLayer field = new VectorLayer(coverage);
-        if (controler!=null)
+        final VectorLayer vectors;
+        if (layer instanceof VectorLayer)
         {
-            field.setColor(controler.getColor());
-            final int decimation = controler.getDecimation();
-            if (decimation!=0)
+            vectors = (VectorLayer) layer;
+            vectors.setData(coverage, bandU, bandV);
+        }
+        else
+        {
+            layer = vectors = new VectorLayer(coverage, bandU, bandV);
+        }
+        synchronized(this)
+        {
+            if (controler!=null)
             {
-                field.setDecimation(decimation, decimation);
-            }
-            else
-            {
-                field.setAutoDecimation(16,16);
+                vectors.setColor(controler.getColor());
+                final int decimation = controler.getDecimation();
+                if (decimation!=0)
+                {
+                    vectors.setDecimation(decimation, decimation);
+                }
+                else
+                {
+                    vectors.setAutoDecimation(16,16);
+                }
             }
         }
-        return field;
+        return vectors;
     }
 
     /**
@@ -148,10 +171,10 @@ public final class VectorLayerControl extends LayerControl
                 controler.setShape(new Arrow2D(-24, -20, 48, 40));
                 controler.setColor(new Color(0, 153, 255, 128));
             }
-            final RemoteImage sample = null; // TODO: ImageTable.getSample(series);
-            if (sample!=null)
+            if (false) // TODO
             {
-                controler.setBackground(sample.getImage());
+                final RenderedImage sample = null;
+                controler.setBackground(sample);
             }
             oldColor      = controler.getColor();
             oldDecimation = controler.getDecimation();

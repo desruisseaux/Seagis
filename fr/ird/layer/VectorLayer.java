@@ -155,7 +155,7 @@ public class VectorLayer extends GridMarkLayer
     public VectorLayer(final GridCoverage coverage, final int bandU, final int bandV)
     {
         super(coverage.getCoordinateSystem());
-        setImages(coverage, bandU, bandV);
+        setData(coverage, bandU, bandV);
     }
 
     /**
@@ -165,7 +165,7 @@ public class VectorLayer extends GridMarkLayer
      * @param  bandU Bande de la composante U des vecteurs.
      * @param  bandV Bande de la composante V des vecteurs.
      */
-    public synchronized void setImages(final GridCoverage coverage, final int bandU, final int bandV)
+    public synchronized void setData(final GridCoverage coverage, final int bandU, final int bandV)
     {
         final CoordinateSystem cs = OpenGIS.getCoordinateSystem2D(coverage.getCoordinateSystem());
         if (!cs.equivalents(getCoordinateSystem()))
@@ -193,6 +193,7 @@ public class VectorLayer extends GridMarkLayer
         gref.translate(-data.getMinX(), -data.getMinY());
         // La translation de -min(x,y) est pour faire commencer les indices à (0,0).
         setGrid(size, gref);
+        setPreferredArea(coverage.getEnvelope().getSubEnvelope(0,2).toRectangle2D());
     }
 
     /**

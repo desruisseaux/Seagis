@@ -611,14 +611,12 @@ public abstract class ZoomPane extends JComponent
     private final Color magnifierBorder=new Color(102,102,153);
 
     /**
-     * Construit un panneau qui pourra effectuer des zooms. Ce constructeur affectera
-     * automatiquement des touches du clavier aux différentes actions effectuant ces
-     * zooms.
+     * Construct a <code>ZoomPane</code>.
      *
-     * @param  type Types de zooms permis. Cet argument doit être une combinaison des constantes
+     * @param  type Allowed zoom type. It can be a bitwise combinaison of the following constants:
      *         {@link #SCALE_X}, {@link #SCALE_Y}, {@link #TRANSLATE_X}, {@link #TRANSLATE_Y},
-     *         {@link #ROTATE}, {@link #RESET} et {@link #DEFAULT_ZOOM}.
-     * @throws IllegalArgumentException si l'argument <code>type</code> est invalide.
+     *         {@link #ROTATE}, {@link #RESET} and {@link #DEFAULT_ZOOM}.
+     * @throws IllegalArgumentException If <code>type</code> is invalid.
      */
     public ZoomPane(final int type) throws IllegalArgumentException
     {
@@ -764,14 +762,17 @@ public abstract class ZoomPane extends JComponent
     {fillPanel = fill;}
 
     /**
-     * Retourne les coordonnées logiques de toute la région couverte par le contenu de
-     * <code>ZoomPane</code>. Si cet objet <code>ZoomPane</code> sert par exemple à
-     * afficher une carte ou une image satellitaire, alors le rectangle retourné devrait
-     * contenir les coordonnées des limites de la carte, en mètres si une projection
-     * cartographique a été définie ou un degrés de latitudes/longitudes sinon.
+     * Returns a bounding box that contains the logical coordinates of all
+     * data that may be displayed in this <code>ZoomPane</code>. For example
+     * if this <code>ZoomPane</code> will display a geographic map, then
+     * this method should returns the map's bounds in degrees of latitude
+     * and longitude. This bounding box is completly independent of any
+     * current zoom setting and will changes only if the content changes.
      *
-     * @return Les coordonnées logiques de l'ensemble de la région,
-     *         ou <code>null</code> si ces coordonnées sont inconnues.
+     * @return A bounding box for the logical coordinates of every content
+     *         that is going to be drawn on this <code>ZoomPane</code>. If
+     *         this bounding box is unknow, then this method can returns
+     *         <code>null</code> (but this is not recommanded).
      */
     public abstract Rectangle2D getArea();
 
@@ -2029,9 +2030,9 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Dessine une loupe qui fait un agrandissement sur une portion de la composante. L'argument
-     * <code>graphics</code> transmis est une copie d'un objet {@link Graphics2D},  de sorte que
-     * l'on peut y appliquer des transformations à notre guise sans impact sur les autres composantes.
+     * Paints the magnifier. This method is invoked after
+     * {@link #paintComponent(Graphics2D)} if a magnifier
+     * is visible.
      */
     protected void paintMagnifier(final Graphics2D graphics)
     {
@@ -2056,25 +2057,25 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Dessine cette composante. Les classes dérivées doivent redéfinir cette méthode pour dessiner
-     * le contenu de <code>ZoomPane</code>. L'argument <code>graphics</code> transmis est une copie
-     * d'un objet {@link Graphics2D}, de sorte que d'éventuelles modifications à cet objet n'affecteront
-     * pas les autres composantes.
+     * Paints this component. Subclass must override this method in order to drawn
+     * the <code>ZoomPane</code> content. For must implementations, the first line
+     * in this method will be <code>graphics.transform({@link #zoom})</code>.
+     * Subclasses don't need to restore <code>graphics</code> to its initial state
+     * once finished, since this method is invoked with a defensive copy of
+     * {@link Graphics2D}.
      */
     protected abstract void paintComponent(final Graphics2D graphics);
 
     /**
-     * Imprime cette composante. L'argument <code>graphics</code> transmis est une copie
-     * d'un objet {@link Graphics2D}, de sorte que d'éventuelles modifications à cet objet
-     * n'affecteront pas les autres composantes. L'implémentation par défaut ne fait
-     * qu'appeler {@link #paintComponent(Graphics2D)}.
+     * Prints this component. The default implementation
+     * invokes {@link #paintComponent(Graphics2D)}.
      */
     protected void printComponent(final Graphics2D graphics)
     {paintComponent(graphics);}
 
     /**
-     * Dessine cette composante. Les classes dérivées doivent redéfinir
-     * {@link #paintComponent(Graphics2D)} plutôt que cette méthode.
+     * Paints this component. Do not override this method.
+     * Override {@link #paintComponent(Graphics2D)} instead.
      */
     protected final void paintComponent(final Graphics graphics)
     {
@@ -2096,8 +2097,8 @@ public abstract class ZoomPane extends JComponent
     }
 
     /**
-     * Imprime cette composante. Les classes dérivées doivent redéfinir
-     * {@link #printComponent(Graphics2D)} plutôt que cette méthode.
+     * Prints this component. Do not override this method.
+     * Override {@link #printComponent(Graphics2D)} instead.
      */
     protected final void printComponent(final Graphics graphics)
     {

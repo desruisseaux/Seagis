@@ -209,7 +209,7 @@ public class AngleSpinnerModel extends AbstractSpinnerModel implements Serializa
     {
         if (!(value instanceof Angle))
         {
-            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$1, value));
+            throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_BAD_ARGUMENT_$2, "value", value));
         }
         if (!Utilities.equals(value, this.value))
         {
