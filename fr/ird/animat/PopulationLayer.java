@@ -43,6 +43,7 @@ import java.util.HashMap;
 
 // Composantes cartographiques
 import fr.ird.awt.geom.Arrow2D;
+import fr.ird.map.RepaintManager;
 import fr.ird.map.layer.MarkLayer;
 import fr.ird.map.RenderingContext;
 
@@ -115,16 +116,16 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     private final Map<Species,Species.Icon> icons = new HashMap<Species,Species.Icon>();
 
     /**
-     * L'afficheur parent.
+     * L'objet à utiliser pour synchroniser les retraçaces.
      */
-    private final Viewer viewer;
+    private final RepaintManager manager;
 
     /**
      * Construit une couche pour la population spécifiée.
      */
-    public PopulationLayer(final Population population, final Viewer viewer)
+    public PopulationLayer(final Population population, final RepaintManager manager)
     {
-        this.viewer = viewer;
+        this.manager = manager;
         refresh(population);
         population.addPopulationChangeListener(this);
     }
@@ -278,20 +279,23 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
             graphics.setColor(Color.black);
             for (int i=0; i<animals.length; i++)
             {
-                final Animal animal = animals[i];
-                for (int j=1; --j>=0;) // TODO
+                final ParameterValue[] values = animals[i].getObservations();
+                if (values != null)
                 {
-                    final ParameterValue param = animal.getObservation(j);
-                    if (param != null)
+                    for (int j=0; j<values.length; j++)
                     {
-                        Point2D location = param.getLocation();
-                        if (location != null)
+                        final ParameterValue param = values[j];
+                        if (param != null)
                         {
-                            location = zoom.transform(location, location);
-                            final int x = (int) Math.round(location.getX());
-                            final int y = (int) Math.round(location.getY());
-                            graphics.drawLine(x-MARK_RADIUS, y, x+MARK_RADIUS, y);
-                            graphics.drawLine(x, y-MARK_RADIUS, x, y+MARK_RADIUS);
+                            Point2D location = param.getLocation();
+                            if (location != null)
+                            {
+                                location = zoom.transform(location, location);
+                                final int x = (int) Math.round(location.getX());
+                                final int y = (int) Math.round(location.getY());
+                                graphics.drawLine(x-MARK_RADIUS, y, x+MARK_RADIUS, y);
+                                graphics.drawLine(x, y-MARK_RADIUS, x, y+MARK_RADIUS);
+                            }
                         }
                     }
                 }
@@ -320,6 +324,6 @@ final class PopulationLayer extends MarkLayer implements PopulationChangeListene
     public void populationChanged(final PopulationChangeEvent event)
     {
         refresh(event.getSource());
-        viewer.repaint(this);
+        manager.repaint(this);
     }
 }

@@ -26,8 +26,9 @@
 package fr.ird.animat.seas;
 
 // Divers
-import java.awt.Shape;
+import java.util.Map;
 import java.util.Date;
+import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
 
@@ -39,6 +40,8 @@ import org.geotools.resources.XDimension2D;
 import fr.ird.sql.image.Coverage3D;
 import fr.ird.sql.image.ImageTable;
 import fr.ird.sql.image.ImageDataBase;
+import fr.ird.sql.image.SeriesTable;
+import fr.ird.sql.image.SeriesEntry;
 
 // Animats
 import fr.ird.animat.Animal;
@@ -63,6 +66,15 @@ import fr.ird.operator.coverage.MaximumEvaluator;
 final class Environment implements fr.ird.animat.Environment
 {
     /**
+     * Liste des séries, opérations et évaluateurs à utiliser.
+     */
+    private static final Parameter[] parameters =
+    {
+        new Parameter("SST (synthèse)", null,                "Maximum"),
+        new Parameter("SST (synthèse)", "GradientMagnitude", "Maximum")
+    };
+
+    /**
      * Liste des objets intéressés à être informés
      * des changements apportés à cet environnement.
      */
@@ -74,14 +86,20 @@ final class Environment implements fr.ird.animat.Environment
     private final EnvironmentChangeEvent event = new EnvironmentChangeEvent(this);
 
     /**
-     * Couvertures à utiliser pour chaque paramètres.
-     */
-    private final Coverage3D coverage;
-
-    /**
      * Date courante des images.
      */
     private final Date time = new Date();
+
+    /**
+     * Nombre de paramètres pris en compte. Ce nombre prend en compte
+     * le nombre de bandes pour chaque objet {@link Coverage3D}.
+     */
+    private final int parameterCount;
+
+    /**
+     * Couvertures à utiliser pour chaque paramètres.
+     */
+    private final Coverage3D[] coverages;
 
     /**
      * Object à utiliser pour évaluer les positions
@@ -107,12 +125,39 @@ final class Environment implements fr.ird.animat.Environment
      * @throws SQLException si une erreur est survenue
      *         lors de l'accès à la base de données.
      */
-    public Environment(final ImageDataBase database, final double resolution) throws SQLException
+    public Environment(final ImageDataBase database,
+                       final Date         startTime,
+                       final double resolution)
+        throws SQLException
     {
-        final ImageTable table = database.getImageTable();
-        table.setPreferredResolution(new XDimension2D.Double(resolution, resolution));
-        coverage = new Coverage3D(table);
-        table.close();
+        ImageTable  images = null;
+        SeriesTable series = null;
+        int parameterCount = 0;
+        coverages = new Coverage3D[parameters.length];
+        for (int i=0; i<parameters.length; i++)
+        {
+            final Parameter parameter = parameters[i];
+            if (images == null)
+            {
+                series = database.getSeriesTable();
+                images = database.getImageTable(series.getSeries(parameter.series));
+                images.setPreferredResolution(new XDimension2D.Double(resolution, resolution));
+                images.setTimeRange(startTime, new Date());
+            }
+            else
+            {
+                images.setSeries(series.getSeries(parameter.series));
+            }
+            images.setOperation(parameter.operation);
+            coverages[i] = new Coverage3D(images);
+            parameterCount += coverages[i].getNumSampleDimensions();
+        }
+        if (images != null)
+        {
+            images.close();
+            series.close();
+        }
+        this.parameterCount = parameterCount;
     }
 
     /**
@@ -141,7 +186,7 @@ final class Environment implements fr.ird.animat.Environment
      */
     public int getParameterCount()
     {
-        return 1;
+        return parameterCount;
     }
 
     /**
@@ -150,9 +195,22 @@ final class Environment implements fr.ird.animat.Environment
      * @param  parameter Index du paramètre dont on veut l'image.
      * @return L'image courange, ou <code>null</code> s'il n'y en a pas.
      */
-    public GridCoverage getGridCoverage(final int parameter)
+    public GridCoverage getGridCoverage(int parameter)
     {
-        return coverage.getGridCoverage2D(time);
+        if (parameter >= 0)
+        {
+            for (int i=0; i<parameterCount; i++)
+            {
+                final Coverage3D coverage = coverages[i];
+                final int bandCount = coverage.getNumSampleDimensions();
+                if (parameter < bandCount)
+                {
+                    return coverage.getGridCoverage2D(time);
+                }
+                parameter -= bandCount;
+            }
+        }
+        throw new IndexOutOfBoundsException();
     }
 
     /**
@@ -166,13 +224,25 @@ final class Environment implements fr.ird.animat.Environment
      */
     public ParameterValue[] getParameters(final Animal animal)
     {
-        final GridCoverage gc = coverage.getGridCoverage2D(time);
-        if (gc!=null)
+        int index = 0;
+        final ParameterValue[] values = new ParameterValue[parameterCount];
+        for (int i=0; i<coverages.length; i++)
         {
-            final Shape area = animal.getPerceptionArea(condition);
-            return evaluator.evaluate(gc, area);
+            final GridCoverage gc = coverages[i].getGridCoverage2D(time);
+            if (gc != null)
+            {
+                final Shape area = animal.getPerceptionArea(condition);
+                final ParameterValue[] toCopy = evaluator.evaluate(gc, area);
+                System.arraycopy(toCopy, 0, values, index, toCopy.length);
+                index += toCopy.length;
+            }
+            else
+            {
+                index += coverages[i].getNumSampleDimensions();
+            }
         }
-        return null;
+        assert index == values.length;
+        return values;
     }
 
     /**

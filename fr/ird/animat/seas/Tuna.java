@@ -92,7 +92,7 @@ final class Tuna extends MobileObject implements Animal
     /**
      * Nombre de paramètres.
      */
-    private static final int paramCount = 1;
+    private static final int paramCount = 2;
 
     /**
      * Espèce à laquelle appartient cet animal.
@@ -150,31 +150,30 @@ final class Tuna extends MobileObject implements Animal
     }
 
     /**
-     * Retourne une observation de l'animal.
+     * Retourne les observations de l'animal.
      *
-     * @param  index L'index du paramètre, de 0 jusqu'à
-     *         <code>{@link #getNumParameters()}-1</code>.
-     * @return L'observation de l'animal, ou <code>null</code>
+     * @return Les observations de l'animal, ou <code>null</code>
      *         si aucune observation n'a encore été faite à la
      *         position actuelle de l'animal.
      */
-    public ParameterValue getObservation(final int index)
+    public ParameterValue[] getObservations()
     {
-        if (index<0 || index>=paramCount)
-        {
-            throw new IndexOutOfBoundsException("Not a valid parameter index: "+index);
-        }
         int pos = getObservationCount();
         if (pos!=0 && pos==getPointCount())
         {
             pos = (pos-1) * (paramCount*RECORD_LENGTH);
-            pos += index*RECORD_LENGTH;
-            final float x = parameters[pos + LONGITUDE];
-            final float y = parameters[pos +  LATITUDE];
-            final float z = parameters[pos +     VALUE];
-            final ParameterValue.Float param = new ParameterValue.Float("param #1"); // TODO
-            param.setValue(z,x,y);
-            return param;
+            final ParameterValue[] values = new ParameterValue[paramCount];
+            for (int i=0; i<paramCount; i++)
+            {
+                final float x = parameters[pos + LONGITUDE];
+                final float y = parameters[pos +  LATITUDE];
+                final float z = parameters[pos +     VALUE];
+                final ParameterValue.Float param = new ParameterValue.Float("param #1"); // TODO
+                param.setValue(z,x,y);
+                values[i] = param;
+                pos += RECORD_LENGTH;
+            }
+            return values;
         }
         return null;
     }
@@ -223,13 +222,17 @@ final class Tuna extends MobileObject implements Animal
      */
     public void move()
     {
-        final ParameterValue param = getObservation(0);
-        if (param!=null)
+        final ParameterValue[] values = getObservations();
+        if (values != null)
         {
-            final Point2D location = param.getLocation();
-            if (location != null)
+            final ParameterValue param = values[0];
+            if (param!=null)
             {
-                moveToward(5*1852, location);
+                final Point2D location = param.getLocation();
+                if (location != null)
+                {
+                    moveToward(5*1852, location);
+                }
             }
         }
     }

@@ -80,15 +80,13 @@ public interface Animal
     public Shape getPerceptionArea(final double condition);
 
     /**
-     * Retourne une observation de l'animal.
+     * Retourne les observations de l'animal.
      *
-     * @param  index L'index du paramètre, de 0 jusqu'à
-     *         <code>{@link #getNumParameters()}-1</code>.
-     * @return L'observation de l'animal, ou <code>null</code>
+     * @return Les observations de l'animal, ou <code>null</code>
      *         si aucune observation n'a encore été faite à la
      *         position actuelle de l'animal.
      */
-    public ParameterValue getObservation(final int index);
+    public ParameterValue[] getObservations();
 
     /**
      * Observe l'environnement de l'animal. Cette méthode doit être appelée

@@ -72,12 +72,12 @@ final class Dynamic implements Runnable
     /**
      * Pas de temps pour le modèle.
      */
-    private long timeStep = 24*60*60*1000L;
+    private final long timeStep;
 
     /**
      * Pause a effectuer entre deux pas de temps virtuels.
      */
-    private long pause = 500;
+    private final long pause;
 
     /**
      * Liste des bases de données à fermer.
@@ -118,41 +118,22 @@ final class Dynamic implements Runnable
      * @throws SQLException si une connexion avec une des base de données
      *         a échouée.
      */
-    public Dynamic(final double resolution) throws SQLException
+    public Dynamic(final double resolution,
+                   final Date   time,
+                   final long   timeStep,
+                   final long   pause) throws SQLException
     {
-        this(new ImageDataBase(), new FisheryDataBase(), resolution, true);
-    }
-
-    /**
-     * Construit une dynamique avec les bases de données spécifiées.
-     *
-     * @throws SQLException si une connexion avec une des base de données
-     *         a échouée.
-     */
-    private Dynamic(final ImageDataBase   images,
-                    final FisheryDataBase fisheries,
-                    final double          resolution,
-                    final boolean         close) throws SQLException
-    {
+        final ImageDataBase   images    = new ImageDataBase();
+        final FisheryDataBase fisheries = new FisheryDataBase();
         this.catchs      = fisheries.getCatchTable(SPECIES);
-        this.environment = new Environment(images, resolution);
-        toClose = close ? new DataBase[] {images, fisheries} : null;
-    }
+        this.environment = new Environment(images, time, resolution);
+        this.toClose     = new DataBase[] {images, fisheries};
+        this.timeStep    = timeStep;
+        this.pause       = pause;
 
-    /**
-     * Initialise le modèle à la date spécifiée. Des thons
-     * seront ajoutées pour chaque espèces à chaque position
-     * de pêches.
-     */
-    public synchronized void init(final Date time,
-                                  final long timeStep,
-                                  final long pause) throws SQLException
-    {
         environment.setTime(time);
         catchs.setTimeRange(time, new Date(time.getTime()+TIME_RANGE));
         population.addTunas(catchs.getEntries());
-        this.timeStep = timeStep;
-        this.pause    = pause;
     }
 
     /**

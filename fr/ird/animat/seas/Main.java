@@ -110,8 +110,7 @@ public final class Main extends Console
             /////////////////////////////////////////////////
             ////    Construit la dynamique du modèle     ////
             /////////////////////////////////////////////////
-            dynamic = new Dynamic(resolution);
-            dynamic.init(startTime, timeStep, pause);
+            dynamic = new Dynamic(resolution, startTime, timeStep, pause);
         }
         catch (Exception exception)
         {
@@ -169,5 +168,6 @@ public final class Main extends Console
         final Main main = new Main(args);
         main.show();
         main.dynamic.run();
+        Thread.currentThread().setPriority(Thread.NORM_PRIORITY-1);
     }
 }

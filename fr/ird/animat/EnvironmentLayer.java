@@ -30,6 +30,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 
 // Cartes
+import fr.ird.map.RepaintManager;
 import fr.ird.map.layer.GridCoverageLayer;
 
 // Geotools dependencies
@@ -71,9 +72,9 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     private int parameter = 0;
 
     /**
-     * L'afficheur parent.
+     * L'objet à utiliser pour synchroniser les retraçaces.
      */
-    private final Viewer viewer;
+    private final RepaintManager manager;
 
     /**
      * <code>true</code> si on se trouve à l'intérieur de la méthode {@link #environmentChanged}.
@@ -83,10 +84,10 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
     /**
      * Construit une couche pour l'environnement spécifié.
      */
-    public EnvironmentLayer(final Environment environment, final Viewer viewer)
+    public EnvironmentLayer(final Environment environment, final RepaintManager manager)
     {
         super(GeographicCoordinateSystem.WGS84);
-        this.viewer = viewer;
+        this.manager = manager;
         environment.addEnvironmentChangeListener(this);
         setCoverage(environment.getGridCoverage(parameter));
     }
@@ -106,7 +107,7 @@ final class EnvironmentLayer extends GridCoverageLayer implements EnvironmentCha
         {
             processingEvent = false;
         }
-        viewer.repaint(this);
+        manager.repaint(this);
     }
 
     /**
