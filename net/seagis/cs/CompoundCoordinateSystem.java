@@ -75,8 +75,9 @@ public class CompoundCoordinateSystem extends CoordinateSystem
      * system is {@link GeographicCoordinateSystem#WGS84} and the tail
      * coordinate system is {@link VerticalCoordinateSystem#ELLIPSOIDAL}.
      */
-    public static final CompoundCoordinateSystem WGS84 = new CompoundCoordinateSystem("WGS84",
-                      GeographicCoordinateSystem.WGS84, VerticalCoordinateSystem.ELLIPSOIDAL);
+    public static final CompoundCoordinateSystem WGS84 = (CompoundCoordinateSystem) pool.intern(
+                        new CompoundCoordinateSystem("WGS84", GeographicCoordinateSystem.WGS84,
+                                                        VerticalCoordinateSystem.ELLIPSOIDAL));
 
     /**
      * First sub-coordinate system.

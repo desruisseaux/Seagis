@@ -63,7 +63,8 @@ public class PrimeMeridian extends Info
     /**
      * The Greenwich meridian, with angular measures in degrees.
      */
-    public static final PrimeMeridian GREENWICH = new PrimeMeridian("Greenwich", Unit.DEGREE, 0);
+    public static final PrimeMeridian GREENWICH = (PrimeMeridian) pool.intern(
+                        new PrimeMeridian("Greenwich", Unit.DEGREE, 0));
 
     /**
      * The angular units.

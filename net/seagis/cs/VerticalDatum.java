@@ -62,7 +62,8 @@ public class VerticalDatum extends Datum
      * are measured along the normal to the ellipsoid used in the definition
      * of horizontal datum.
      */
-    public static final VerticalDatum ELLIPSOIDAL = new VerticalDatum("Ellipsoidal", DatumType.ELLIPSOIDAL);
+    public static final VerticalDatum ELLIPSOIDAL = (VerticalDatum) pool.intern(
+                        new VerticalDatum("Ellipsoidal", DatumType.ELLIPSOIDAL));
 
     /**
      * Creates a vertical datum from an enumerated type value.

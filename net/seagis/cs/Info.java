@@ -53,9 +53,11 @@ import java.lang.ref.WeakReference;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteObject;
+import java.io.ObjectStreamException;
 
 // Resources
 import net.seagis.resources.Utilities;
+import net.seagis.resources.WeakHashSet;
 import net.seagis.resources.css.Resources;
 import net.seagis.resources.css.ResourceKeys;
 
@@ -93,6 +95,13 @@ public class Info implements Serializable
      * Serial number for interoperability with different versions.
      */
     private static final long serialVersionUID = -771181600202966524L;
+
+    /**
+     * Set of weak references to existing coordinate systems.
+     * This set is used in order to return pre-existing object
+     * instead of creating new one.
+     */
+    static final WeakHashSet pool=new WeakHashSet();
 
     /**
      * The non-localized object name.
@@ -324,41 +333,6 @@ public class Info implements Serializable
     }
 
     /**
-     * Returns an OpenGIS interface for this info.
-     * The returned object is suitable for RMI use.
-     *
-     * Note: The returned type is a generic {@link Object} in order
-     *       to avoid too early class loading of OpenGIS interface.
-     */
-    Object toOpenGIS(final Object adapters)
-    {return new Export(adapters);}
-
-    /**
-     * Returns an OpenGIS interface for this info.
-     * This method first look in the cache. If no
-     * interface was previously cached, then this
-     * method create a new adapter  and cache the
-     * result.
-     *
-     * @param adapters The originating {@link Adapters}.
-     */
-    final synchronized Object cachedOpenGIS(final Object adapters)
-    {
-        if (proxy!=null)
-        {
-            if (proxy instanceof Reference)
-            {
-                final Object ref = ((Reference) proxy).get();
-                if (ref!=null) return ref;
-            }
-            else return proxy;
-        }
-        final Object opengis = toOpenGIS(adapters);
-        proxy = new WeakReference(opengis);
-        return opengis;
-    }
-
-    /**
      * Make sure an argument is non-null. This is a
      * convenience method for subclasses constructors.
      *
@@ -420,6 +394,55 @@ public class Info implements Serializable
     {
         if (!Unit.DEGREE.canConvert(unit))
             throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_NON_ANGULAR_UNIT_$1, unit));
+    }
+
+    /**
+     * Returns a reference to an unique instance of this <code>Info</code>.
+     * This method is automatically invoked during deserialization.
+     *
+     * NOTE ABOUT ACCESS-MODIFIER:      This method can't be private,
+     * because it would prevent it from being invoked from subclasses
+     * in this package (e.g. {@link CoordinateSystem}).   This method
+     * <em>will not</em> be invoked for classes outside this package,
+     * unless we give it <code>protected</code> access.   TODO: Would
+     * it be a good idea?
+     */
+    Object readResolve() throws ObjectStreamException
+    {return pool.intern(this);}
+
+    /**
+     * Returns an OpenGIS interface for this info.
+     * The returned object is suitable for RMI use.
+     *
+     * Note: The returned type is a generic {@link Object} in order
+     *       to avoid too early class loading of OpenGIS interface.
+     */
+    Object toOpenGIS(final Object adapters)
+    {return new Export(adapters);}
+
+    /**
+     * Returns an OpenGIS interface for this info.
+     * This method first look in the cache. If no
+     * interface was previously cached, then this
+     * method create a new adapter  and cache the
+     * result.
+     *
+     * @param adapters The originating {@link Adapters}.
+     */
+    final synchronized Object cachedOpenGIS(final Object adapters)
+    {
+        if (proxy!=null)
+        {
+            if (proxy instanceof Reference)
+            {
+                final Object ref = ((Reference) proxy).get();
+                if (ref!=null) return ref;
+            }
+            else return proxy;
+        }
+        final Object opengis = toOpenGIS(adapters);
+        proxy = new WeakReference(opengis);
+        return opengis;
     }
 
 

@@ -84,7 +84,8 @@ public class GeographicCoordinateSystem extends HorizontalCoordinateSystem
      * with longitude values increasing north and latitude values increasing east.
      * Angular units are degrees and prime meridian is Greenwich.
      */
-    public static final GeographicCoordinateSystem WGS84 = new GeographicCoordinateSystem("WGS84", HorizontalDatum.WGS84);
+    public static final GeographicCoordinateSystem WGS84 = (GeographicCoordinateSystem) pool.intern(
+                        new GeographicCoordinateSystem("WGS84", HorizontalDatum.WGS84));
 
     /**
      * The angular unit.

@@ -102,13 +102,19 @@ public class CoordinateSystemFactory
      * This set is used in order to return pre-existing object
      * instead of creating new one.
      */
-    private final WeakHashSet pool=new WeakHashSet();
+    private final WeakHashSet pool;
+
+    /**
+     * Construct a new factory with the specified pool.
+     */
+    private CoordinateSystemFactory(final WeakHashSet pool)
+    {this.pool = pool;}
 
     /**
      * Default constructor.
      */
     protected CoordinateSystemFactory()
-    {}
+    {this(new WeakHashSet());}
 
     /**
      * Returns the default coordinate system factory.
@@ -117,7 +123,7 @@ public class CoordinateSystemFactory
     {
         if (DEFAULT==null)
         {
-            DEFAULT = new CoordinateSystemFactory();
+            DEFAULT = new CoordinateSystemFactory(Info.pool);
         }
         return DEFAULT;
     }

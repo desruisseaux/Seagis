@@ -63,7 +63,8 @@ public class HorizontalDatum extends Datum
     /**
      * The default WGS 1984 datum.
      */
-    public static final HorizontalDatum WGS84 = new HorizontalDatum("WGS84", DatumType.GEOCENTRIC, Ellipsoid.WGS84, null);
+    public static final HorizontalDatum WGS84 = (HorizontalDatum) pool.intern(
+                        new HorizontalDatum("WGS84", DatumType.GEOCENTRIC, Ellipsoid.WGS84, null));
 
     /**
      * The ellipsoid for this datum.

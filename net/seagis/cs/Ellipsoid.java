@@ -72,7 +72,8 @@ public class Ellipsoid extends Info
      * WGS 1984 ellipsoid. This ellipsoid is used in GPS system
      * and is the default for most <code>net.seagis</code> packages.
      */
-    public static final Ellipsoid WGS84 = createFlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE);
+    public static final Ellipsoid WGS84 = (Ellipsoid) pool.intern(
+                        createFlattenedSphere("WGS84", 6378137.0, 298.257223563, Unit.METRE));
 
     /**
      * The equatorial radius.
@@ -287,11 +288,11 @@ public class Ellipsoid extends Info
     public double orthodromicDistance(double x1, double y1, double x2, double y2)
     {
         /*
-         * Le calcul de la distance orthodromique sur une surface ellipsoîdale est complexe,
-         * sujetes à des erreurs d'arrondissements et sans solution à proximité des pôles.
-         * Nous utiliseront plutôt un calcul basée sur une forme sphérique de la terre. Un
+         * Le calcul de la distance orthodromique sur une surface ellipsoïdale est complexe,
+         * sujet à des erreurs d'arrondissements et sans solution à proximité des pôles.
+         * Nous utilisont plutôt un calcul basé sur une forme sphérique de la terre. Un
          * programme en Fortran calculant les distances orthodromiques sur une surface
-         * ellipsoîdale peut être téléchargé à partir du site de NOAA:
+         * ellipsoïdale peut être téléchargé à partir du site de NOAA:
          *
          *            ftp://ftp.ngs.noaa.gov/pub/pcsoft/for_inv.3d/source/
          */

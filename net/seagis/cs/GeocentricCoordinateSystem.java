@@ -91,8 +91,9 @@ public class GeocentricCoordinateSystem extends CoordinateSystem
      * The <var>Y</var> axis points East.
      * The <var>Z</var> axis points North.
      */
-    public static final GeocentricCoordinateSystem DEFAULT = new GeocentricCoordinateSystem("WGS84",
-                          Unit.METRE, HorizontalDatum.WGS84, PrimeMeridian.GREENWICH, DEFAULT_AXIS);
+    public static final GeocentricCoordinateSystem DEFAULT = (GeocentricCoordinateSystem) pool.intern(
+                        new GeocentricCoordinateSystem("WGS84", Unit.METRE, HorizontalDatum.WGS84,
+                                                                PrimeMeridian.GREENWICH, DEFAULT_AXIS));
 
     /**
      * The linear unit.

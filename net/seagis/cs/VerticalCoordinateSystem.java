@@ -69,7 +69,8 @@ public class VerticalCoordinateSystem extends CoordinateSystem
      * Ellipsoidal heights are measured along the normal to the
      * ellipsoid used in the definition of horizontal datum.
      */
-    public static final VerticalCoordinateSystem ELLIPSOIDAL = new VerticalCoordinateSystem("Ellipsoidal", VerticalDatum.ELLIPSOIDAL);
+    public static final VerticalCoordinateSystem ELLIPSOIDAL = (VerticalCoordinateSystem) pool.intern(
+                        new VerticalCoordinateSystem("Ellipsoidal", VerticalDatum.ELLIPSOIDAL));
 
     /**
      * The vertical datum.

@@ -58,7 +58,8 @@ public class TemporalDatum extends Datum
      * UTC is based on an atomic clock, while GMT is
      * based on astronomical observations.
      */
-    public static final TemporalDatum UTC = new TemporalDatum("UTC", DatumType.UTC);
+    public static final TemporalDatum UTC = (TemporalDatum) pool.intern(
+                        new TemporalDatum("UTC", DatumType.UTC));
 
     /**
      * Creates a temporal datum from an enumerated type value.
