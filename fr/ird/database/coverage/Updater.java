@@ -9,6 +9,9 @@ import java.awt.image.RenderedImage;
 import java.awt.geom.Rectangle2D;
 import javax.imageio.ImageIO;
 import java.sql.SQLException;
+import com.sun.media.imageioimpl.plugins.raw.RawImageReader;
+import com.sun.media.imageio.stream.RawImageInputStream;
+import javax.imageio.spi.*;
 
 // SEAGIS.
 //import fr.ird.resources.Utilities;
@@ -43,7 +46,27 @@ public class Updater {
      */
     public Updater() throws SQLException {
         dataBase = new CoverageDataBase();            
-    }    
+
+        reOrderWriters();
+    }
+
+    
+    //////////////////////////////////////////////////////////////////////////////////////
+    /////////////                                                          ///////////////    
+    /////////////                           PRIVATE                        ///////////////
+    /////////////                                                          ///////////////    
+    //////////////////////////////////////////////////////////////////////////////////////
+    /** 
+     * Tries to reorder Image Readers in The IIORegistry. 
+     */
+    private void reOrderWriters() { 
+        final IIORegistry registry = IIORegistry.getDefaultInstance();        
+        final Object GoodWriter = registry.getServiceProviderByClass(com.sun.imageio.plugins.png.PNGImageWriterSpi.class),
+                     BadWriter  = registry.getServiceProviderByClass(com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);                 
+        
+        if((GoodWriter != null) && (BadWriter != null))  
+            registry.setOrdering(ImageWriterSpi.class, GoodWriter, BadWriter);            
+    }        
     
     /**
      * Insert a new image to database.
