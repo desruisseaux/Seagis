@@ -34,11 +34,11 @@ import java.sql.DriverManager;
 import fr.ird.sql.DataBase;
 
 // Modèles (table et arborescence)
-import net.seas.awt.tree.Trees;
+import fr.ird.awt.tree.Trees;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.table.TableCellRenderer;
-import net.seas.awt.tree.DefaultMutableTreeNode;
+import fr.ird.awt.tree.DefaultMutableTreeNode;
 import fr.ird.awt.ImageTableModel;
 
 // Interface utilisateur
@@ -55,9 +55,9 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.Iterator;
 import java.awt.Rectangle;
-import net.seas.util.Console;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.util.Console;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**

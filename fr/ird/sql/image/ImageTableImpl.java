@@ -79,9 +79,9 @@ import java.util.logging.LogRecord;
 
 // Divers
 import java.io.File;
-import net.seas.plot.RangeSet;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.awt.RangeSet;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.Range;
 

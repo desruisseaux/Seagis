@@ -61,17 +61,17 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 
 // Arborescence
-import net.seas.awt.tree.MutableTreeNode;
-import net.seas.awt.tree.DefaultMutableTreeNode;
+import fr.ird.awt.tree.MutableTreeNode;
+import fr.ird.awt.tree.DefaultMutableTreeNode;
 
 // Divers
 import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
-import net.seas.util.XArray;
+import fr.ird.util.XArray;
 import javax.media.jai.util.Range;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**

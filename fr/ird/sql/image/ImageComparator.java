@@ -246,7 +246,7 @@ public class ImageComparator implements Comparator<ImageEntry>
         }
         catch (TransformException exception)
         {
-            Utilities.unexpectedException("net.seas.image.sql", "ImageComparator", "evaluator", exception);
+            Utilities.unexpectedException("fr.ird.image.sql", "ImageComparator", "evaluator", exception);
             return null;
         }
     }

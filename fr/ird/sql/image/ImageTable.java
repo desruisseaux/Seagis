@@ -43,7 +43,7 @@ import java.awt.geom.Dimension2D;
 // Divers
 import java.util.List;
 import fr.ird.sql.Table;
-import net.seas.plot.RangeSet;
+import fr.ird.awt.RangeSet;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 

@@ -27,8 +27,8 @@ package fr.ird.sql.image;
 
 // Divers
 import java.sql.SQLException;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**

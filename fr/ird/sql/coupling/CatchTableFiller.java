@@ -37,9 +37,9 @@ import fr.ird.sql.fishery.FisheryDataBase;
 // Input/output
 import java.io.File;
 import java.io.IOException;
-import net.seas.map.Isoline;
-import net.seas.map.io.GEBCOReader;
-import net.seas.map.io.IsolineReader;
+import fr.ird.map.Isoline;
+import fr.ird.map.io.GEBCOReader;
+import fr.ird.map.io.IsolineReader;
 
 // Miscellaneous
 import java.util.List;

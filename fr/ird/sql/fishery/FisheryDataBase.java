@@ -47,8 +47,8 @@ import java.util.LinkedHashSet;
 
 // Divers
 import fr.ird.animat.Species;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**

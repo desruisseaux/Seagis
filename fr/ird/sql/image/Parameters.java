@@ -57,8 +57,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
 
 // Divers
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 import javax.media.jai.ParameterList;
 import java.util.logging.LogRecord;
 import java.util.logging.Level;

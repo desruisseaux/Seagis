@@ -53,7 +53,7 @@ abstract class Table implements fr.ird.sql.Table
     static final Logger logger = Logger.getLogger("fr.ird.sql");
     static
     {
-        net.seas.util.InterlineFormatter.init(logger);
+        fr.ird.util.InterlineFormatter.init(logger);
     }
 
     /**

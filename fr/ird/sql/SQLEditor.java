@@ -59,8 +59,8 @@ import org.geotools.resources.SwingUtilities;
 // Divers
 import java.util.List;
 import java.util.ArrayList;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**

@@ -39,8 +39,8 @@ import java.io.File;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.prefs.Preferences;
-import fr.ird.resources.Resources;
-import net.seas.util.WeakHashSet;
+import fr.ird.resources.gui.Resources;
+import fr.ird.util.WeakHashSet;
 import org.geotools.resources.Utilities;
 
 
@@ -109,7 +109,7 @@ abstract class Table implements fr.ird.sql.Table
     static final Logger logger = Logger.getLogger("fr.ird.sql");
     static
     {
-        net.seas.util.InterlineFormatter.init(logger);
+        fr.ird.util.InterlineFormatter.init(logger);
     }
 
     /**

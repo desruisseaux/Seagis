@@ -71,7 +71,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Dimension2D;
 
 // Références faibles
-import net.seas.util.WeakHashSet;
+import fr.ird.util.WeakHashSet;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
@@ -80,7 +80,7 @@ import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.Collections;
-import fr.ird.resources.Resources;
+import fr.ird.resources.gui.Resources;
 import javax.media.jai.util.Range;
 import javax.media.jai.ParameterList;
 import javax.media.jai.util.CaselessStringKey;

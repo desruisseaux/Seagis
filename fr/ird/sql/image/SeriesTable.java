@@ -29,7 +29,7 @@ package fr.ird.sql.image;
 import fr.ird.sql.Table;
 import java.sql.SQLException;
 import javax.swing.tree.TreeModel;
-import net.seas.awt.tree.TreeNode;
+import fr.ird.awt.tree.TreeNode;
 import java.util.List;
 
 

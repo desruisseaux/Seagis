@@ -34,9 +34,9 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 // Arborescence
-import net.seas.awt.tree.TreeNode;
-import net.seas.awt.tree.MutableTreeNode;
-import net.seas.awt.tree.DefaultMutableTreeNode;
+import fr.ird.awt.tree.TreeNode;
+import fr.ird.awt.tree.MutableTreeNode;
+import fr.ird.awt.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 
@@ -49,8 +49,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.io.Serializable;
 import org.geotools.cv.CategoryList;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**
@@ -472,7 +472,7 @@ final class SeriesTableImpl extends Table implements SeriesTable
      * </pre></blockquote>
      *
      * Des objets <code>ImageSeries.Reference</code> sont contenus dans l'arborescence construite par
-     * {@link SeriesTable#getTree} et peuvent être obtenus par des appels à {@link net.seas.awt.tree.TreeNode#getUserObject}.
+     * {@link SeriesTable#getTree} et peuvent être obtenus par des appels à {@link fr.ird.awt.tree.TreeNode#getUserObject}.
      * La façon préférée d'obtenir des objets de cette classe est par la méthode {@link ImageDataBase#getReference(int)}.
      *
      * @version 1.0

@@ -56,8 +56,8 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.media.jai.util.Range;
-import fr.ird.resources.Resources;
-import fr.ird.resources.ResourceKeys;
+import fr.ird.resources.gui.Resources;
+import fr.ird.resources.gui.ResourceKeys;
 
 
 /**
