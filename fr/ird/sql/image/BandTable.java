@@ -55,14 +55,14 @@ final class BandTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des bandes.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par
-     * les constantes [@link #NAME}, [@link #UPPER} et compagnie.
+     * les constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] ID      */ "ID, "      +
-                                /*[02] BAND    */ "band, "    +
+                                /*[02] BAND    */ "[band], "  +
                                 /*[04] UNITS   */ "units\n"   +
         
-                    "FROM "+BANDS+" WHERE format=? ORDER BY band";
+                    "FROM "+BANDS+" WHERE format=? ORDER BY [band]";
                     // "Note: "band" semble être un opérateur pour Access. En utilisant le nom
                     //        complet (c'est-à-dire en spécifiant la table), ça rêgle le problème.
 

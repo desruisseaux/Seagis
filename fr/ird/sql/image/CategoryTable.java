@@ -71,7 +71,7 @@ final class CategoryTable extends Table {
     /**
      * Requête SQL utilisée par cette classe pour obtenir la table des catégories.
      * L'ordre des colonnes est essentiel. Ces colonnes sont référencées par les
-     * constantes [@link #NAME}, [@link #UPPER} et compagnie.
+     * constantes {@link #NAME}, {@link #UPPER} et compagnie.
      */
     static final String SQL_SELECT=
                     "SELECT "+  /*[01] NAME    */ "name, "    +
@@ -82,7 +82,7 @@ final class CategoryTable extends Table {
                                 /*[06] LOG     */ "log, "     +
                                 /*[07] COLORS  */ "colors\n"  +
         
-                    "FROM "+CATEGORIES+" WHERE band=? ORDER BY lower";
+                    "FROM "+CATEGORIES+" WHERE [band]=? ORDER BY lower";
                     // "Note: "band" semble être un opérateur pour Access. En utilisant le nom
                     //        complet (c'est-à-dire en spécifiant la table), ça rêgle le problème.
 

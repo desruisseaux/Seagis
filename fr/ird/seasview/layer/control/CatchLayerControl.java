@@ -65,8 +65,7 @@ import fr.ird.resources.ResourceKeys;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public final class CatchLayerControl extends LayerControl
-{
+public final class CatchLayerControl extends LayerControl {
     /**
      * Connexion vers la base des données de pêches. Cette connexion
      * n'est utilisée que pour construire {@link SpeciesChooser} la
@@ -75,9 +74,11 @@ public final class CatchLayerControl extends LayerControl
     private final FisheryDataBase database;
 
     /**
-     * Connexion vers la table des données de pêches.
+     * Connexion vers la table des données de pêches. Cette
+     * connexion ne sera construite que la première fois où
+     * elle sera nécessaire.
      */
-    private final CatchTable catchTable;
+    private CatchTable catchTable;
 
     /**
      * Paneau de configuration qui permet de sélectionner des espèces
@@ -99,18 +100,17 @@ public final class CatchLayerControl extends LayerControl
      * @param  database Connexion vers la base de données des pêches.
      * @throws SQLException si l'interrogation de la base de données a échouée.
      */
-    public CatchLayerControl(final FisheryDataBase database) throws SQLException
-    {
+    public CatchLayerControl(final FisheryDataBase database) throws SQLException {
         super(false);
         this.database = database;
-        catchTable = database.getCatchTable();
     }
 
     /**
      * Retourne le nom de cette couche.
      */
-    public String getName()
-    {return Resources.format(ResourceKeys.CATCHS);}
+    public String getName() {
+        return Resources.format(ResourceKeys.CATCHS);
+    }
 
     /**
      * Configure des couches en fonction de cet objet <code>LayerControl</code>.
@@ -125,21 +125,23 @@ public final class CatchLayerControl extends LayerControl
      *         exemple parce qu'aucune espèce n'a été sélectionnée).
      * @throws SQLException si les accès à la base de données ont échoués.
      */
-    public synchronized Layer[] configLayers(final Layer[] layers, final ImageEntry entry, final EventListenerList listeners) throws SQLException
+    public synchronized Layer[] configLayers(final Layer[] layers,
+                                             final ImageEntry entry,
+                                             final EventListenerList listeners)
+        throws SQLException
     {
         final CatchLayer layer;
-        if (layers!=null && layers.length==1 && layers[0] instanceof CatchLayer)
-        {
+        if (layers!=null && layers.length==1 && layers[0] instanceof CatchLayer) {
             layer = (CatchLayer) layers[0];
             layer.setTimeRange(entry.getTimeRange());
-        }
-        else
-        {
+        } else {
+            if (catchTable == null) {
+                catchTable = database.getCatchTable();
+            }
             catchTable.setTimeRange(entry.getTimeRange());
             layer = new CatchLayer(catchTable);
         }
-        if (controler!=null)
-        {
+        if (controler != null) {
             layer.defineIcons(controler.getIcons());
         }
         layer.setMarkType(markType);
@@ -149,56 +151,50 @@ public final class CatchLayerControl extends LayerControl
     /**
      * Fait apparaître un paneau de configuration pour cette couche.
      */
-    protected void showControler(final JComponent owner)
-    {
-        try
-        {
-            synchronized(this)
-            {
-                if (controler==null)
-                {
-                    controler=new SpeciesChooser(database);
+    protected void showControler(final JComponent owner) {
+        try {
+            synchronized(this) {
+                if (controler == null) {
+                    controler = new SpeciesChooser(database);
                 }
             }
-            if (controler.showDialog(owner))
-            {
-                synchronized(this)
-                {
-                    final Species.Icon[]    icons = controler.getSelectedIcons();
+            if (controler.showDialog(owner)) {
+                synchronized(this) {
+                    if (catchTable == null) {
+                        catchTable = database.getCatchTable();
+                    }
+                    final Species.Icon[] icons = controler.getSelectedIcons();
                     final Set<Species> oldSpecies = catchTable.getSpecies();
-                    final Set<Species> tmpSpecies = new LinkedHashSet<Species>(2*icons.length);
                     final Set<Species> newSpecies;  // Will be set later
-                    final int         oldMarkType = markType;
-                    final int         newMarkType = controler.isCatchAmountSelected() ?
-                                                             CatchLayer.CATCH_AMOUNTS :
-                                                             CatchLayer.GEAR_COVERAGES;
-                    for (int i=0; i<icons.length; i++)
-                    {
-                        tmpSpecies.add(icons[i].getSpecies());
+                    final Set<Species> tmpSpecies;
+                    final int oldMarkType = markType;
+                    final int newMarkType;
+                    if (controler.isCatchAmountSelected()) {
+                        newMarkType = CatchLayer.CATCH_AMOUNTS;
+                        tmpSpecies = new LinkedHashSet<Species>(2*icons.length);
+                        for (int i=0; i<icons.length; i++) {
+                            tmpSpecies.add(icons[i].getSpecies());
+                        }
+                    } else {
+                        newMarkType = CatchLayer.GEAR_COVERAGES;
+                        tmpSpecies = database.getSpecies();
                     }
                     catchTable.setSpecies(tmpSpecies);
                     newSpecies = catchTable.getSpecies(); // Get a more compact and immutable view.
                     this.markType = newMarkType;
-                    fireStateChanged(new Edit()
-                    {
-                        protected void edit(final boolean redo)
-                        {
-                            try
-                            {
+                    fireStateChanged(new Edit() {
+                        protected void edit(final boolean redo) {
+                            try {
                                 catchTable.setSpecies(redo ? newSpecies  : oldSpecies);
                                 markType =            redo ? newMarkType : oldMarkType;
-                            }
-                            catch (SQLException exception)
-                            {
+                            } catch (SQLException exception) {
                                 ExceptionMonitor.show(owner, exception);
                             }
                         }
                     });
                 }
             }
-        }
-        catch (SQLException exception)
-        {
+        } catch (SQLException exception) {
             ExceptionMonitor.show(owner, exception);
         }
     }
@@ -208,9 +204,11 @@ public final class CatchLayerControl extends LayerControl
      *
      * @throws SQLException si l'accès à la base de données a échoué.
      */
-    public synchronized void dispose() throws SQLException
-    {
-        catchTable.close();
-        // Don't close 'database', since we don't own it.
+    public synchronized void dispose() throws SQLException {
+        if (catchTable != null) {
+            catchTable.close();
+            catchTable = null;
+            // Don't close 'database', since we don't own it.
+        }
     }
 }

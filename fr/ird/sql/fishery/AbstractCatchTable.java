@@ -202,17 +202,21 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
             final StringBuffer buffer = new StringBuffer(query.substring(0, index));
             boolean additional = false;
             buffer.append('(');
-            for (int i=0; i<columns.length; i++) {
-                final String name = columns[i];
-                if (name != null) {
-                    if (additional) {
-                        buffer.append('+');
+            if (columns.length != 0) {
+                for (int i=0; i<columns.length; i++) {
+                    final String name = columns[i];
+                    if (name != null) {
+                        if (additional) {
+                            buffer.append('+');
+                        }
+                        buffer.append('[');
+                        buffer.append(name);
+                        buffer.append(']');
+                        additional = true;
                     }
-                    buffer.append('[');
-                    buffer.append(name);
-                    buffer.append(']');
-                    additional = true;
                 }
+            } else {
+                buffer.append('0');
             }
             buffer.append(')');
             buffer.append(query.substring(index+total.length()));
@@ -238,13 +242,15 @@ abstract class AbstractCatchTable extends Table implements CatchTable {
      */
     public final synchronized void setSpecies(final Set<Species> newSpecies) throws SQLException {
         if (!species.equals(newSpecies)) {
-            final Rectangle2D area = getGeographicArea();
-            final Range  timeRange = getTimeRange();
+            final Rectangle2D      area = getGeographicArea();
+            final Range       timeRange = getTimeRange();
+            final Range      catchRange = getCatchRange();
             final Connection connection = statement.getConnection();
             statement.close();
             statement = null; // Au cas où l'instruction suivante échourait.
             statement = connection.prepareStatement(completeQuery(sqlSelect, newSpecies));
             this.species = new SpeciesSet(newSpecies);
+            setCatchRange(catchRange);
             setTimeRange(timeRange);
             setGeographicArea(area);
         }
