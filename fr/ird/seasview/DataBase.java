@@ -198,7 +198,7 @@ public final class DataBase {
      * Returns a thread group that may be used
      * for reading images as a background process.
      */
-    public ThreadGroup getThreadGroup() {
+    public ThreadGroup getThreadGroup() throws RemoteException {
         return readers;
     }
 
@@ -226,13 +226,11 @@ public final class DataBase {
                 // Creation et initialisation du contexte.
 		final Properties properties = new Properties();
 		properties.put(javax.naming.Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.rmi.registry.RegistryContextFactory");
-		properties.put(javax.naming.Context.PROVIDER_URL, "rmi://localhost:3233");
-
-                javax.naming.Context ctx = new javax.naming.InitialContext((java.util.Hashtable)properties);
-               
-                images = (CoverageDataBase) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("CoverageDatabase"), CoverageDataBase.class);               
+		//properties.put(javax.naming.Context.PROVIDER_URL, "rmi://beatrice:3233");
+                javax.naming.Context ctx = new javax.naming.InitialContext((java.util.Hashtable)properties);               
+                images = (CoverageDataBase) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("rmi://beatrice:1099/CoverageDatabase"), CoverageDataBase.class);               
                 //images = (CoverageDataBase)registry.lookup("CoverageDatabase");                            
-                System.out.println("1");
+                /*System.out.println("1");
                 System.out.println(images.getGeographicArea());
                 System.out.println("1.1");
                 images.getCoverageTable();
@@ -241,7 +239,7 @@ public final class DataBase {
                 System.out.println("3");
                 while (it.hasNext()) {
                     System.out.println("->>" + it.next());
-                }
+                }*/
                 // images = new fr.ird.database.coverage.sql.CoverageDataBase();
                 
             }
@@ -272,9 +270,15 @@ public final class DataBase {
     protected synchronized SampleDataBase getSampleDataBase() throws RemoteException {
        if (fisheries == null) {
            try {
-               fisheries = (SampleDataBase)registry.lookup("SampleDatabase");                                                       
+		final Properties properties = new Properties();
+		properties.put(javax.naming.Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.rmi.registry.RegistryContextFactory");
+		//properties.put(javax.naming.Context.PROVIDER_URL, "rmi://beatrice:3233");
+                javax.naming.Context ctx = new javax.naming.InitialContext((java.util.Hashtable)properties);               
+                fisheries = (SampleDataBase) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("rmi://beatrice:1099/SampleDatabase"), SampleDataBase.class);               
+
+                //fisheries = (SampleDataBase)registry.lookup("rmi://beatrice:1099/SampleDatabase");                                                       
                // fisheries = new fr.ird.database.sample.sql.SampleDataBase();
-            } catch (java.rmi.NotBoundException e) {
+            } catch (javax.naming.NamingException e) {
                 throw new CatalogException(e);
             }
         }

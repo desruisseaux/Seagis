@@ -192,7 +192,7 @@ public class CoverageUpdater extends JFrame implements ChangeListener, ListSelec
     /** 
      * Constructor. 
      */
-    public CoverageUpdater() throws SQLException {
+    public CoverageUpdater() throws java.rmi.RemoteException {
         initComponents();
         
         // Création de la fenetre de progression des tâches.

@@ -124,7 +124,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
     /**
      * Construit un générateur de carte de potentiel par défaut.
      */
-    public PotentialImageGenerator() throws SQLException {
+    public PotentialImageGenerator() throws java.rmi.RemoteException {
         super();
     }
 
@@ -170,7 +170,7 @@ public final class PotentialImageGenerator extends ParameterCoverage3D {
      * @throws SQLException si une connexion à la base de données a échouée.
      * @throws IOException si l'image ne peut pas être enregistrée.
      */
-    public static void main(final String[] args) throws SQLException, IOException {
+    public static void main(final String[] args) throws java.rmi.RemoteException, IOException {
         // HACK: Pour vérifier le décodeur d'image PNG.
         ImageUtilities.allowNativeCodec("png", false, false);
         ImageUtilities.allowNativeCodec("png", true , false);
