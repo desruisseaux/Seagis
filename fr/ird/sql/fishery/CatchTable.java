@@ -51,8 +51,7 @@ import org.geotools.cs.CoordinateSystem;
  * @version $Id$
  * @author Martin Desruisseaux
  */
-public interface CatchTable extends Table
-{
+public interface CatchTable extends Table {
     /**
      * Retourne l'ensemble des espèces comprises dans la requête de cette table.
      *

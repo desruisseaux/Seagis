@@ -51,7 +51,7 @@ final class CatchTableStep extends Table {
     /**
      * Requête SQL pour obtenir la table des captures.
      */
-    private static final String SQL_SELECT = "SELECT * FROM [?]";
+    private static final String SQL_SELECT = "SELECT * FROM [?] ORDER BY ID";
 
     /**
      * Nom de la table utilisée dans la requête.

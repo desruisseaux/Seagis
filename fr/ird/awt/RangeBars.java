@@ -115,6 +115,11 @@ import org.geotools.resources.ClassChanger;
  */
 public class RangeBars extends ZoomPane {
     /**
+     * Small value for floating point comparaison.
+     */
+    private static final double EPS = 1E-12;
+
+    /**
      * Constant for the horizontal orientation.
      * Labels and bars are both horizontal.
      */
@@ -150,7 +155,7 @@ public class RangeBars extends ZoomPane {
      * type <code>long[]</code>. Les données de ces tableaux seront organisées
      * par paires de valeurs, de la forme (<i>début</i>,<i>fin</i>).
      */
-    private final Map<String,RangeSet> ranges=new LinkedHashMap<String,RangeSet>();
+    private final Map<String,RangeSet> ranges = new LinkedHashMap<String,RangeSet>();
 
     /**
      * Axe des <var>x</var> servant à écrire les valeurs des plages. Les
@@ -1414,9 +1419,10 @@ public class RangeBars extends ZoomPane {
          * Shear and rotation are not allowed. Scale is allowed only
          * along the main axis direction.
          */
-        if (!(change.getShearX()==0 && change.getShearY()==0 &&
-              horizontal ? (change.getScaleY()==1 && change.getTranslateY()==0) :
-                           (change.getScaleX()==1 && change.getTranslateX()==0)))
+        if (!(Math.abs(change.getShearX()  )<=EPS &&
+              Math.abs(change.getShearY()  )<=EPS && horizontal ?
+             (Math.abs(change.getScaleY()-1)<=EPS && Math.abs(change.getTranslateY())<=EPS) :
+             (Math.abs(change.getScaleX()-1)<=EPS && Math.abs(change.getTranslateX())<=EPS)))
         {
             throw new UnsupportedOperationException("Unexpected transform");
         }

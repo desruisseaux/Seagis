@@ -494,9 +494,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
          * The CREATE statement is logged for information.
          */
         if (true) {
-            final StringBuffer buffer = new StringBuffer("CREATE TABLE ");
+            final StringBuffer buffer = new StringBuffer("CREATE TABLE \"");
             buffer.append(tableName);
-            buffer.append("(\"");
+            buffer.append("\"(\"");
             for (int i=0; i<columnCount; i++) {
                 if (i!=0) {
                     buffer.append(", \"");
@@ -535,8 +535,9 @@ final class EnvironmentTableImpl extends Table implements EnvironmentTable {
                            ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             creator.execute(sqlCreate);
             buffer.setLength(0);
-            buffer.append("SELECT * FROM ");
+            buffer.append("SELECT * FROM \"");
             buffer.append(tableName);
+            buffer.append('"');
             dest = creator.executeQuery(buffer.toString());
             if (true) {
                 // Log the SQL statement.
