@@ -100,6 +100,7 @@ public abstract class MathTransformProvider
      * <code>"semi_minor"</code>,
      * <code>"central_meridian"</code>,
      * <code>"latitude_of_origin"</code>,
+     * <code>"scale_factor"</code>,
      * <code>"false_easting"</code> and
      * <code>"false_northing"</code> parameters.
      */
@@ -109,6 +110,7 @@ public abstract class MathTransformProvider
         "semi_minor",          Double.class, ParameterListDescriptor.NO_PARAMETER_DEFAULT, POSITIVE_RANGE,
         "central_meridian",    Double.class, ZERO,                                         LONGITUDE_RANGE,
         "latitude_of_origin",  Double.class, ZERO,                                         LATITUDE_RANGE,
+        "scale_factor",        Double.class, new Double(1),                                POSITIVE_RANGE,
         "false_easting",       Double.class, ZERO,                                         null,
         "false_northing",      Double.class, ZERO,                                         null
     });
@@ -188,8 +190,9 @@ public abstract class MathTransformProvider
 
     /**
      * Adds or changes a parameter to this math transform provider. If this <code>MathTransformProvider</code>
-     * has been constructed with {@link #DEFAULT_PROJECTION_DESCRIPTOR} as argument, then default values
-     * are already provided for "semi_major", "semi_minor", "central_meridian" and "latitude_of_origin".
+     * has been constructed with {@link #DEFAULT_PROJECTION_DESCRIPTOR} as argument, then default values are
+     * already provided for "semi_major", "semi_minor", "central_meridian", "latitude_of_origin", "scale_factor",
+     * "false_easting" and "false_northing".
      * Subclasses may call this method in their constructor for adding or changing parameters.
      *
      * @param parameter    The parameter name.
@@ -234,7 +237,7 @@ public abstract class MathTransformProvider
      * @throws IllegalStateException If {@link #getParameterList}
      *         has already been invoked prior to this call.
      */
-    private synchronized void put(String parameter, final Class type, Object defaultValue, final Range range) throws IllegalStateException
+    private void put(String parameter, final Class type, Object defaultValue, final Range range) throws IllegalStateException
     {
         if (properties==null)
         {
@@ -266,6 +269,25 @@ public abstract class MathTransformProvider
         properties[end+1] = type;
         properties[end+2] = defaultValue;
         properties[end+3] = range;
+    }
+
+    /**
+     * Remove a parameter from this math transform provider.
+     *
+     * @param  parameter The parameter name to remove.
+     * @throws IllegalStateException If {@link #getParameterList}
+     *         has already been invoked prior to this call.
+     */
+    protected final void remove(final String parameter) throws IllegalStateException
+    {
+        if (properties==null)
+        {
+            // Construction is finished.
+            throw new IllegalStateException();
+        }
+        for (int i=properties.length; (i-=RECORD_LENGTH)!=0;)
+            if (parameter.equalsIgnoreCase(properties[i].toString()))
+                properties = XArray.remove(properties, i, RECORD_LENGTH);
     }
 
     /**

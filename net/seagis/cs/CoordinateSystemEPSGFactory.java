@@ -39,6 +39,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.Blob;
 
 // Logging
 //----- BEGIN JDK 1.4 DEPENDENCIES ----
@@ -48,8 +49,10 @@ import java.util.logging.LogRecord;
 //----- END OF JDK 1.4 DEPENDENCIES ---
 
 // Miscellaneous
-import javax.units.Unit;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import javax.units.Unit;
 
 // Resources
 import net.seagis.resources.css.Resources;
@@ -73,6 +76,11 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
      * Will be constructed only when first requested.
      */
     private static CoordinateSystemAuthorityFactory DEFAULT;
+
+    /**
+     * Unit of arc-second.
+     */
+    private static final Unit ARC_SECOND = Unit.DEGREE.scale(1.0/3600);
 
     /**
      * The connection to the EPSG database.
@@ -230,7 +238,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
      *
      * @param  result The result set to fetch value from.
      * @param  columnIndex The column index (1-based).
-     * @return The string at the specified column.
+     * @return The double at the specified column.
      * @throws SQLException if a SQL error occured,
      *         or if a null value was found.
      */
@@ -243,6 +251,51 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                                    result.getMetaData().getColumnName(columnIndex)));
         }
         return value;
+    }
+
+    /**
+     * Gets the value from the specified {@link ResultSet}.
+     * The value is required to be non-null. A null value
+     * (i.e. blank) will throw an exception.
+     *
+     * @param  result The result set to fetch value from.
+     * @param  columnIndex The column index (1-based).
+     * @return The integer at the specified column.
+     * @throws SQLException if a SQL error occured,
+     *         or if a null value was found.
+     */
+    private static int getInt(final ResultSet result, final int columnIndex) throws SQLException
+    {
+        final int value = result.getInt(columnIndex);
+        if (result.wasNull())
+        {
+            throw new SQLException(Resources.format(ResourceKeys.ERROR_NULL_VALUE_$1,
+                                   result.getMetaData().getColumnName(columnIndex)));
+        }
+        return value;
+    }
+
+    /**
+     * Make sure that an object construct from the database
+     * is not duplicated.
+     *
+     * @param  newValue The newly constructed object.
+     * @param  oldValue The object previously constructed,
+     *         or <code>null</code> if none.
+     * @param  The EPSG code (for formatting error message).
+     * @throws BackingStoreException if a duplication has been detected.
+     */
+    private Object ensureSingleton(final Object newValue, final Object oldValue, final String code) throws BackingStoreException
+    {
+        if (oldValue == null)
+        {
+            return newValue;
+        }
+        if (oldValue.equals(newValue))
+        {
+            return oldValue;
+        }
+        throw new BackingStoreException(Resources.format(ResourceKeys.ERROR_DUPLICATED_VALUES_$1, code));
     }
 
     /**
@@ -268,7 +321,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                                                + " from Ellipsoid"
                                                + " where ELLIPSOID_CODE = ?");
             stmt.setString(1, code);
-            ResultSet result = stmt.executeQuery();
+            final ResultSet result = stmt.executeQuery();
             /*
              * If the supplied code exists in the database, then we
              * should find only one record.   However, we will do a
@@ -300,7 +353,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                     else
                     {
                         // We only have semiMinorAxis defined -> it's OK
-/* TEMPORARY */         System.err.println("Using method : createEllipsoid");
+/* TEMPORARY */         System.err.println("Ellipsoid : Using method createEllipsoid.");
                         ellipsoid = factory.createEllipsoid(name, semiMajorAxis, semiMinorAxis, unit);
                     }
                 }
@@ -314,22 +367,14 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                         Logger.getLogger("net.seagis.css").warning(Resources.format(ResourceKeys.WARNING_AMBIGUOUS_ELLIPSOID));
 //----- END OF JDK 1.4 DEPENDENCIES ---
                     }
-/* TEMPORARY */     System.err.println("Using method : createFlattenedSphere");
+/* TEMPORARY */     System.err.println("Ellipsoid : Using method createFlattenedSphere.");
                     ellipsoid = factory.createFlattenedSphere(name, semiMajorAxis, inverseFlattening, unit);
                 }
                 /*
                  * Now that we have built an ellipsoid, compare
                  * it with the previous one (if any).
                  */
-                if (returnValue!=null)
-                {
-                    if (!returnValue.equals(ellipsoid))
-                    {
-                        result.close();
-                        throw new BackingStoreException(Resources.format(ResourceKeys.ERROR_DUPLICATED_VALUES_$1, code));
-                    }
-                }
-                else returnValue = ellipsoid;
+                returnValue = (Ellipsoid) ensureSingleton(ellipsoid, returnValue, code);
             }
             result.close();
             stmt.close();
@@ -366,7 +411,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                                                + " from Unit_of_Measure"
                                                + " where UOM_CODE = ?");
             stmt.setString(1, code);
-            ResultSet result = stmt.executeQuery();
+            final ResultSet result = stmt.executeQuery();
             /*
              * If the supplied code exists in the database, then we
              * should find only one record.   However, we will do a
@@ -383,16 +428,17 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                  */
                 if (b==0 && c==0)
                 {
-                    /// Je sais pas quoi faire donc en attendant...
-                    throw new UnsupportedOperationException("both factors (B & C) are NULL.\n"
-                                                            + "That's OK, it's possible... but I don't know"
-                                                            + " what to do...");
+                    // TODO : unités qui utilisent des formules plus complexes.
+                    //        Exemple: DDMMSS (ou DD=degrés, MM=minutes, SS=secondes).
+                    result.close();
+                    throw new UnsupportedOperationException("Non standard unit not yet implemented");
                 }
                 if (b==0 || c==0)
                 {
-                    throw new BackingStoreException(code);
+                    result.close();
+                    throw new BackingStoreException(Resources.format(ResourceKeys.ERROR_NULL_VALUE_$1,
+                                                    result.getMetaData().getColumnName(b==0 ? 2 : 3)));
                 }
-
                 Unit unit;
                 if (type.equalsIgnoreCase("length"))
                 {
@@ -408,7 +454,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                 {
                     // TODO : TYPE scale ???? !!!!
                     result.close();
-                    throw new UnsupportedOperationException("Type scale not implemented in createUnit");
+                    throw new UnsupportedOperationException("Type scale not yet implemented");
                 }
                 else
                 {
@@ -420,15 +466,7 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                  * compare it with the previous one (if any).
                  */
                 unit = unit.scale(b/c);
-                if (returnValue!=null)
-                {
-                    if (!returnValue.equals(unit))
-                    {
-                        result.close();
-                        throw new BackingStoreException(Resources.format(ResourceKeys.ERROR_DUPLICATED_VALUES_$1, code));
-                    }
-                }
-                else returnValue = unit;
+                returnValue = (Unit) ensureSingleton(unit, returnValue, code);
             }
             result.close();
             stmt.close();
@@ -455,44 +493,48 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
      */
     public PrimeMeridian createPrimeMeridian(final String code) throws BackingStoreException
     {
+        PrimeMeridian returnValue = null;
         try
         {
-            PreparedStatement stmt = connection.prepareStatement("select PRIME_MERIDIAN_NAME,"
-                                                                 + " GREENWICH_LONGITUDE,"
-                                                                 + " UOM_CODE"
-                                                                 + " from Prime_Meridian"
-                                                                 + " where PRIME_MERIDIAN_CODE = ?");
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select PRIME_MERIDIAN_NAME,"
+                                               + " GREENWICH_LONGITUDE,"
+                                               + " UOM_CODE"
+                                               + " from Prime_Meridian"
+                                               + " where PRIME_MERIDIAN_CODE = ?");
             stmt.setString(1, code);
-            ResultSet result = stmt.executeQuery();
-
-            if (!result.next())
+            final ResultSet result = stmt.executeQuery();
+            /*
+             * If the supplied code exists in the database, then we
+             * should find only one record.   However, we will do a
+             * paranoiac check and verify if there is more records.
+             */
+            while (result.next())
             {
-                throw new NoSuchAuthorityCodeException(code);
+                final String name      = getString(result, 1);
+                final double longitude = getDouble(result, 2);
+                final String unit_code = getString(result, 3);
+                final Unit unit        = createUnit(unit_code);
+                final PrimeMeridian primeMeridian = factory.createPrimeMeridian(name, unit, longitude);
+                returnValue = (PrimeMeridian) ensureSingleton(primeMeridian, returnValue, code);
             }
-
-            String name      = getString(result, 1);
-            double longitude = getDouble(result, 2);
-            String unit_code = getString(result, 3);
-
             result.close();
             stmt.close();
-
-            Unit unit = createUnit(unit_code);
-
-            return factory.createPrimeMeridian(name, unit, longitude);
         }
-        catch (SQLException e)
+        catch (SQLException exception)
         {
-            // TODO : On renvoit quoi ???
-            NoSuchAuthorityCodeException exc = new NoSuchAuthorityCodeException(code);
-            exc.initCause(e);
-            throw exc;
+            throw new BackingStoreException(code, exception);
         }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
     }
 
     /**
-     * Returns a datum which type from a code.
-     * This could be a vertical, horizontal or local datum.
+     * Returns a datum from a code. This method may
+     * returns a vertical, horizontal or local datum.
      *
      * @param  code Value allocated by authority.
      * @return The datum object.
@@ -502,55 +544,477 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
      */
     private Datum createDatum(final String code) throws BackingStoreException
     {
+        Datum returnValue = null;
         try
         {
-            PreparedStatement stmt = connection.prepareStatement("select DATUM_NAME,"
-                                                                 + " DATUM_TYPE,"
-                                                                 + " ELLIPSOID_CODE"
-                                                                 + " from Datum"
-                                                                 + " where DATUM_CODE = ?");
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select DATUM_NAME,"
+                                               + " DATUM_TYPE,"
+                                               + " ELLIPSOID_CODE"
+                                               + " from Datum"
+                                               + " where DATUM_CODE = ?");
             stmt.setString(1, code);
             ResultSet result = stmt.executeQuery();
+            /*
+             * If the supplied code exists in the database, then we
+             * should find only one record.   However, we will do a
+             * paranoiac check and verify if there is more records.
+             */
+            while (result.next())
+            {
+                final String name = getString(result, 1);
+                final String type = getString(result, 2).trim(); // On recupere le type.
+                final Datum datum;
 
-            if (!result.next())
-            {
-                throw new NoSuchAuthorityCodeException(code);
+                // Et on determine le type de Datum a créer.
+                if (type.equalsIgnoreCase("vertical"))
+                {
+                    final DatumType.Vertical dtype = DatumType.Vertical.ELLIPSOIDAL; // TODO
+                    datum = factory.createVerticalDatum(name, dtype);
+                }
+                else if (type.equalsIgnoreCase("geodetic"))
+                {
+                    final Ellipsoid         ellipsoid = createEllipsoid(getString(result, 3));
+                    final WGS84ConversionInfo[] infos = createWGS84ConversionInfo(code);
+                    final WGS84ConversionInfo mainInf = (infos.length!=0) ? infos[0] : null;
+                    final DatumType.Horizontal  dtype = DatumType.Horizontal.GEOCENTRIC; // TODO
+                    // on utilise la premiere info seulement pour le moment.
+ /*TEMPORAIRE */    System.err.println("Number of Conversion informations retrieved : " + infos.length);
+ /*TEMPORAIRE */    System.err.println("HorizontalDatum :  Using WGS84 informations.");
+                    datum = factory.createHorizontalDatum(name, dtype, ellipsoid, mainInf);
+                }
+                else if (type.equalsIgnoreCase("engineering"))
+                {
+                    // TODO ???
+                    //return factory.createLocalDatum(name, new DatumType.Local("bidon",0,0));
+                    result.close();
+                    throw new UnsupportedOperationException("DatumType.Local constant not found.");
+                }
+                else // Problème de consistance du type...
+                {
+                    result.close();
+                    throw new BackingStoreException(Resources.format(ResourceKeys.ERROR_UNKNOW_TYPE_$1, type));
+                }
+                returnValue = (Datum) ensureSingleton(datum, returnValue, code);
             }
-
-            String name = getString(result, 1);
-            // On recupere le type.
-            String type = getString(result, 2);
-            type = type.trim();
-
-            // Et on determine lengthtype de Datum a créer.
-            if (type.equalsIgnoreCase("vertical"))
-            {
-                return factory.createVerticalDatum(name, DatumType.Vertical.ELLIPSOIDAL);
-            }
-            else if (type.equalsIgnoreCase("geodetic"))
-            {
-                String ellipsoid_code = getString(result, 3);
-                // TODO : remplacer par l'autre createHorizontalDatum (WGS84);
-                return factory.createHorizontalDatum(name, createEllipsoid(ellipsoid_code));
-            }
-            else if (type.equalsIgnoreCase("engineering"))
-            {
-                // TODO ???
-                //return factory.createLocalDatum(name, new DatumType.Local("bidon",0,0));
-                throw new UnsupportedOperationException("DatumType.Local constant not found.");
-            }
-            else // Problème de consistance du type...
-            {
-                throw new NoSuchAuthorityCodeException(code + " is not a known datum type.");
-            }
+            result.close();
+            stmt.close();
         }
-        catch(SQLException e)
+        catch (SQLException exception)
         {
-            // TODO : On renvoit quoi ???
-            NoSuchAuthorityCodeException exc = new NoSuchAuthorityCodeException(code);
-            exc.initCause(e);
-            throw exc;
+            throw new BackingStoreException(code, exception);
         }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Returns the differents WGS84 Conversion Informations
+     * for a {@link HorizontalDatum}. If the specified datum
+     * has no WGS84 conversion informations, then this method
+     * will returns either an empty array.
+     *
+     * @param  code the EPSG code of the {@link HorizontalDatum}.
+     * @return an array of {@link WGS84ConversionInfo}, which may
+     *         be empty.
+     */
+    private WGS84ConversionInfo[] createWGS84ConversionInfo(final String code) throws BackingStoreException
+    {
+        final List list = new ArrayList();
+        try
+        {
+            /* TODO : recuperer la liste des codes des paramètres pour chacune
+            des operations en utilisant la future fonction getParameter.
+            Cette requete sera donc modifiée et devrait etre plus simple a lire.
+            Squelette : On recupere les différentes Operations. A partir de la
+            on peut recuperer les différentes listes de paramètres et valeurs.
+            on crée donc alors l'objet renvoyé.
+
+            final PreparedStatement stmt = connection.prepareStatement("SELECT co.COORD_OP_CODE,"
+                                                                       + " area.AREA_OF_USE"
+                                                                       + " FROM Coordinate_Operation AS co,"
+                                                                       + " Coordinate_Reference_System AS crs,"
+                                                                       + " Area AS area"
+                                                                       + " WHERE crs.DATUM_CODE=?"
+                                                                       + " AND co.SOURCE_CRS_CODE=crs.COORD_REF_SYS_CODE"
+                                                                       + " AND co.TARGET_CRS_CODE=4326"
+                                                                       + " AND area.AREA_CODE=co.AREA_OF_USE_CODE"
+                                                                       + " ORDER BY co.COORD_OP_CODE");
+             Ensuite on recupere la liste des parametres :
+             Parameter [] liste = getParameter(code_COORD_OP_CODE);
+
+             Puis pour chaque code on crée un WGSConversionInfo que l'on initialise avec
+             les parametres correspondant obtenus par getParameter.
+
+             */
+            final PreparedStatement stmt = connection.prepareStatement("SELECT area.AREA_OF_USE,"
+                                                                       + " co.COORD_OP_METHOD_CODE,"
+                                                                       + " co.COORD_OP_CODE,"
+                                                                       + " dx.PARAMETER_VALUE,"
+                                                                       + " dy.PARAMETER_VALUE,"
+                                                                       + " dz.PARAMETER_VALUE,"
+                                                                       + " dx.UOM_CODE,"
+                                                                       + " dy.UOM_CODE,"
+                                                                       + " dz.UOM_CODE"
+                                                                       + " FROM Coordinate_Operation_Parameter_Value AS dx,"
+                                                                       + " Coordinate_Operation_Parameter_Value AS dy,"
+                                                                       + " Coordinate_Operation_Parameter_Value AS dz,"
+                                                                       + " Coordinate_Operation AS co,"
+                                                                       + " Coordinate_Reference_System AS crs,"
+                                                                       + " Area AS area"
+                                                                       + " WHERE crs.DATUM_CODE=?"
+                                                                       + " AND co.SOURCE_CRS_CODE=crs.COORD_REF_SYS_CODE"
+                                                                       + " AND co.TARGET_CRS_CODE=4326"
+                                                                       + " AND dx.COORD_OP_CODE=co.COORD_OP_CODE"
+                                                                       + " AND dy.COORD_OP_CODE=co.COORD_OP_CODE"
+                                                                       + " AND dz.COORD_OP_CODE=co.COORD_OP_CODE"
+                                                                       + " AND area.AREA_CODE=co.AREA_OF_USE_CODE"
+                                                                       + " AND dx.PARAMETER_CODE=8605"
+                                                                       + " AND dy.PARAMETER_CODE=8606"
+                                                                       + " AND dz.PARAMETER_CODE=8607"
+                                                                       + " ORDER BY co.COORD_OP_CODE");
+
+            /* This query is used when we have also access to ex, ey, ez and ppm as they are defined
+             in WGS84ConversionInfo */
+            final PreparedStatement stmt2 = connection.prepareStatement("SELECT ex.PARAMETER_VALUE,"
+                                                                       + " ey.PARAMETER_VALUE,"
+                                                                       + " ez.PARAMETER_VALUE,"
+                                                                       + " ppm.PARAMETER_VALUE,"
+                                                                       + " ex.UOM_CODE,"
+                                                                       + " ey.UOM_CODE,"
+                                                                       + " ez.UOM_CODE"
+                                                                       + " FROM Coordinate_Operation_Parameter_Value AS ex,"
+                                                                       + " Coordinate_Operation_Parameter_Value AS ey,"
+                                                                       + " Coordinate_Operation_Parameter_Value AS ez,"
+                                                                       + " Coordinate_Operation_Parameter_Value AS ppm"
+                                                                       + " WHERE ex.COORD_OP_CODE=?"
+                                                                       + " AND ey.COORD_OP_CODE=ex.COORD_OP_CODE"
+                                                                       + " AND ez.COORD_OP_CODE=ex.COORD_OP_CODE"
+                                                                       + " AND ppm.COORD_OP_CODE=ex.COORD_OP_CODE"
+                                                                       + " AND ex.PARAMETER_CODE=8608"
+                                                                       + " AND ey.PARAMETER_CODE=8609"
+                                                                       + " AND ez.PARAMETER_CODE=8610"
+                                                                       + " AND ppm.PARAMETER_CODE=8611");
+
+            stmt.setString(1, code);
+            ResultSet result = stmt.executeQuery();
+            while (result.next())
+            {
+                final WGS84ConversionInfo info = new WGS84ConversionInfo();
+
+                // First we get the description of the area of use
+                info.areaOfUse = result.getString(1);
+
+                /* Then we get the coordinates. For each one we convert the unit in meter */
+                info.dx = Unit.METRE.convert(getDouble(result, 4), createUnit(getString(result, 7)));
+                info.dy = Unit.METRE.convert(getDouble(result, 5), createUnit(getString(result, 8)));
+                info.dz = Unit.METRE.convert(getDouble(result, 6), createUnit(getString(result, 9)));
+
+                if (getString(result, 2).equals("9606"))
+                {
+                    // Here we know that the database provides four more informations
+                    // for WGS84 conversion : ex, ey, ez and ppm
+                    stmt2.setString(1, getString(result, 3));
+                    ResultSet result2 = stmt2.executeQuery();
+
+                    if(result2.next())
+                    { // ATTENTION A LA CONVERSION !!!
+                        info.ex  = ARC_SECOND.convert(getDouble(result2, 1), createUnit(getString(result2, 5)));
+                        info.ey  = ARC_SECOND.convert(getDouble(result2, 2), createUnit(getString(result2, 6)));
+                        info.ez  = ARC_SECOND.convert(getDouble(result2, 3), createUnit(getString(result2, 7)));
+                        info.ppm = getDouble(result2, 4); // This one is in parts per million, no conversion needed
+                    }
+                    result2.close();
+                    stmt2.close();
+                }
+
+                list.add(info);
+                //System.err.println(info); /* temporaire */
+            }
+            result.close();
+            stmt.close();
+        }
+        catch (SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        return (WGS84ConversionInfo[]) list.toArray(new WGS84ConversionInfo[list.size()]);
+    }
+
+    /**
+     * Returns a coordinate system from a code.
+     *
+     * @param  code Value allocated by authority.
+     * @return The coordinate system object.
+     * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
+     * @throws BackingStoreException if some other kind of failure occured in the backing
+     *         store. This exception usually have {@link SQLException} as its cause.
+     */
+    public CoordinateSystem createCoordinateSystem(String code) throws BackingStoreException
+    {
+        CoordinateSystem returnValue = null;
+        /* first we retrieve the type of CoordinateSystem */
+        final String type = getCoordinateSystemType(code);
+
+        /* if this is a Compound we have an external method because it is
+         * different from vertical and geographic */
+        if (type.equalsIgnoreCase("compound"))
+        {
+            return createCompoundCoordinateSystem(code);
+        }
+        try
+        {
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select DIMENSION,"
+                                               + " cs.COORD_SYS_CODE,"
+                                               + " COORD_REF_SYS_NAME,"
+                                               + " crs.DATUM_CODE,"
+                                               + " PRIME_MERIDIAN_CODE"
+                                               + " from Coordinate_Reference_System AS crs,"
+                                               + " Coordinate_System AS cs,"
+                                               + " Datum as datum"
+                                               + " where COORD_REF_SYS_CODE = ?"
+                                               + " and cs.COORD_SYS_CODE=crs.COORD_SYS_CODE"
+                                               + " and datum.DATUM_CODE=crs.DATUM_CODE");
+            stmt.setString(1, code);
+            final ResultSet result = stmt.executeQuery();
+            /*
+             * If the supplied code exists in the database, then we
+             * should find only one record.   However, we will do a
+             * paranoiac check and verify if there is more records.
+             */
+            while (result.next())
+            {
+                CoordinateSystem coordSys = null;
+                String coordSysCode = getString(result, 2);
+                /* we get the information for the axis */
+                final AxisInfo[] axisInfos = getAxisInfo(getString(result, 2), getInt(result, 1));
+
+                /* Then we construct the CoordinateSystem */
+                if (type.equalsIgnoreCase("vertical"))
+                {
+                    coordSys = factory.createVerticalCoordinateSystem(getString(result, 3), (VerticalDatum) createDatum(getString(result, 4)), getUnit(coordSysCode), axisInfos[0]);
+                }
+                else if (type.equalsIgnoreCase("geographic 2D"))
+                {
+                    coordSys = factory.createGeographicCoordinateSystem(getString(result, 3), getUnit(coordSysCode), (HorizontalDatum) createDatum(getString(result, 4)), createPrimeMeridian(getString(result, 5)), axisInfos[0], axisInfos[1]);
+                }
+                else if (type.equalsIgnoreCase("projected"))
+                {
+                    // creer la Projection
+                    // creer le systeme de coordonnées
+                    coordSys = null;
+                }
+                returnValue = (CoordinateSystem) ensureSingleton(coordSys, returnValue, code);
+            }
+            result.close();
+            stmt.close();
+        }
+        catch (SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Return the type of a CoordinateReferenceSystem.
+     *
+     * @param the EPSG code of the system.
+     * @retrun the string that give the type of the system.
+     */
+    private String getCoordinateSystemType(final String code) throws BackingStoreException
+    {
+        String returnValue = null;
+        try
+        {
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select COORD_REF_SYS_KIND"
+                                               + " from Coordinate_Reference_System"
+                                               + " where COORD_REF_SYS_CODE = ?");
+            stmt.setString(1, code);
+            final ResultSet result = stmt.executeQuery();
+            while (result.next())
+            {
+                final String type = getString(result, 1).trim();
+                returnValue = (String) ensureSingleton(type, returnValue, code);
+            }
+        }
+        catch(SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Create a compound CoordinateSystem from the EPSG code.
+     *
+     * @param code the EPSG code for the CS.
+     * @return the compound CS which value was given.
+     */
+    private CompoundCoordinateSystem createCompoundCoordinateSystem(final String code) throws BackingStoreException
+    {
+        CompoundCoordinateSystem returnValue = null;
+        try
+        {
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select COORD_REF_SYS_NAME,"
+                                               + " COORD_REF_SYS_KIND,"
+                                               + " CMPD_HORIZCRS_CODE,"
+                                               + " CMPD_VERTCRS_CODE"
+                                               + " from Coordinate_Reference_System"
+                                               + " where COORD_REF_SYS_CODE = ?");
+            stmt.setString(1, code);
+            final ResultSet result = stmt.executeQuery();
+            while (result.next())
+            {
+                /* just to be very sure because we have already check that in createCoordSys */
+                if (!getString(result, 2).equalsIgnoreCase("compound"))
+                {
+                    throw new NoSuchAuthorityCodeException(code);
+                }
+                final String                 name = getString(result, 1);
+                final CoordinateSystem        cs1 = createCoordinateSystem(getString(result, 3));
+                final CoordinateSystem        cs2 = createCoordinateSystem(getString(result, 4));
+                final CompoundCoordinateSystem cs = factory.createCompoundCoordinateSystem(name, cs1, cs2);
+                returnValue = (CompoundCoordinateSystem) ensureSingleton(cs, returnValue, code);
+            }
+            result.close();
+            stmt.close();
+        }
+        catch (SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Returns the {@link AxisInfo}s from an
+     * EPSG code for a {@link CoordinateSystem}.
+     *
+     * @param  code the EPSG code.
+     * @param  dimension of the coordinate system, which is also the
+     *         size of the returned Array.
+     * @return an array of AxisInfo.
+     */
+    private AxisInfo[] getAxisInfo(final String code, final int dimension) throws BackingStoreException
+    {
+        final AxisInfo[] axis = new AxisInfo[dimension];
+        try
+        {
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select COORD_AXIS_NAME,"
+                                               + " COORD_AXIS_ORIENTATION"
+                                               + " from Coordinate_Axis AS ca,"
+                                               + " Coordinate_Axis_Name AS can"
+                                               + " where COORD_SYS_CODE = ?"
+                                               + " and ca.COORD_AXIS_NAME_CODE=can.COORD_AXIS_NAME_CODE"
+                                               // Attention au nom de la table le '_' est propre a MySQL qui
+                                               // refuse ORDER comme nom de colonne !!!
+                                               + " order by _ORDER");
+            stmt.setString(1, code);
+            final ResultSet result = stmt.executeQuery();
+            int i = 0;
+            while (result.next())
+            {
+                final String          name = getString(result, 1);
+                final AxisOrientation enum = getAxisOrientation(getString(result, 2));
+                axis[i++] = new AxisInfo(name, enum);
+            }
+            result.close();
+            stmt.close();
+            if (i!=axis.length)
+            {
+                throw new BackingStoreException(); // TODO: supply a message.
+            }
+        }
+        catch (SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        return axis;
+    }
+
+    /**
+     * Returns the {@link AxisOrientation} from on EPSG orientation name.
+     */
+    private static AxisOrientation getAxisOrientation(final String name) throws BackingStoreException
+    {
+        if (name.equalsIgnoreCase("north"))
+        {
+            return AxisOrientation.NORTH;
+        }
+        if (name.equalsIgnoreCase("south"))
+        {
+            return AxisOrientation.SOUTH;
+        }
+        if (name.equalsIgnoreCase("east"))
+        {
+            return AxisOrientation.EAST;
+        }
+        if (name.equalsIgnoreCase("west"))
+        {
+            return AxisOrientation.WEST;
+        }
+        if (name.equalsIgnoreCase("up"))
+        {
+            return AxisOrientation.UP;
+        }
+        if (name.equalsIgnoreCase("down"))
+        {
+            return AxisOrientation.DOWN;
+        }
+        throw new BackingStoreException("AxisOrientation \"" + name + "\" is not implemented.");
+    }
+
+    /**
+     *  Returns the Unit for 1D and 2D CoordinateSystem
+     */
+    private Unit getUnit(String code) throws BackingStoreException
+    {
+        Unit returnValue = null;
+        try
+        {
+            final PreparedStatement stmt;
+            stmt = connection.prepareStatement("select UOM_CODE"
+                                               + " from Coordinate_Axis AS ca"
+                                               + " where COORD_SYS_CODE = ?");
+            stmt.setString(1, code);
+            final ResultSet result = stmt.executeQuery();
+            while (result.next())
+            {
+                final Unit unit = createUnit(getString(result, 1));
+                returnValue = (Unit) ensureSingleton(unit, returnValue, code);
+            }
+            result.close();
+            stmt.close();
+        }
+        catch (SQLException exception)
+        {
+            throw new BackingStoreException(code, exception);
+        }
+        if (returnValue==null)
+        {
+             throw new NoSuchAuthorityCodeException(code);
+        }
+        return returnValue;
     }
 
     /**
@@ -565,6 +1029,92 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
         connection.close();
     }
 
+    /**
+     * Returns the parameter list for an operation method code.
+     */
+    private Parameter[] getParameter(String op_code) throws BackingStoreException
+    {
+        // TODO : return a list of Parameter for an operation code.
+        // the parameter must be sort by order...
+        return null;
+    }
+
+    /**
+     */
+    private static class Parameter
+    {
+        /**
+         * The EPSG code for this Parameter
+         */
+        private String code;
+
+        /**
+         * The name of the parameter.
+         */
+        private String name;
+
+        /**
+         * The value of the parameter.
+         */
+        private double value;
+
+        /**
+         * The Unit for this parameter.
+         */
+        private Unit unit;
+
+        /**
+         * Main class constructor.
+         */
+        private Parameter(final String code, final String name, final double value, final Unit unit)
+        {
+            this.code = code;
+            this.name = name;
+            this.value = value;
+            this.unit = unit;
+        }
+
+        public String getCode()
+        {
+            return code;
+        }
+
+        public void setCode(final String code)
+        {
+            this.code = code;
+        }
+
+        public String getName()
+        {
+            return name;
+        }
+
+        public void setName(final String name)
+        {
+            this.name = name;
+        }
+
+        public double getValue()
+        {
+            return value;
+        }
+
+        public void setValue(final double value)
+        {
+            this.value = value;
+        }
+
+        public Unit getUnit()
+        {
+            return unit;
+        }
+
+        public void setUnit(final Unit unit)
+        {
+            this.unit = unit;
+        }
+    }
+
     public static void main(String [] args)
     {
         CoordinateSystemEPSGFactory test = null;
@@ -575,39 +1125,63 @@ public class CoordinateSystemEPSGFactory extends CoordinateSystemAuthorityFactor
                                                    "jdbc:mysql://localhost/EPSG?user=root",
                                                    "org.gjt.mm.mysql.Driver");
 
-            System.out.println("\nTest VerticalDatum 1 : code = 5100, ca existe");
-            System.out.println(test.createDatum("5100"));
+            //System.out.println("\n\n<------- Test VerticalDatum 1 : code = 5100, ca existe -------->\n");
+            //System.out.println(test.createDatum("5100"));
 
-            //System.out.println("\nTest VerticalDatum 2 : code = 6124, pb : datum non vertical");
+            //System.out.println("\n\n<------- Test VerticalDatum 2 : code = 6124, pb : datum non vertical -------->\n");
             //System.out.println(test.createVerticalDatum("6124"));
 
-            System.out.println("\nTest HorizontalDatum 1 : code = 6124, ca existe");
-            System.out.println(test.createDatum("6124"));
+            //System.out.println("\n\n<------- Test HorizontalDatum 1 : code = 6201, ca existe -------->\n");
+            //System.out.println(test.createDatum("6201"));
 
-            System.out.println("\nTest LocalDatum 1 : code = 9301, ca existe");
-            System.out.println(test.createDatum("9301"));
+            //System.out.println("\n\n<------- Test HorizontalDatum 2 : code = 6301, ca existe -------->\n");
+            //System.out.println(test.createDatum("6301"));
 
-            //System.out.println("\nTest Ellipsoid 1 : code = 17001, ca existe pas...");
+            //System.out.println("\n\n<------- Test HorizontalDatum 3 : code = 6289, ca existe -------->\n");
+            //System.out.println(test.createDatum("6289"));
+
+            //System.out.println("\n\n<------- Test HorizontalDatum 4 : code = 6257, ca existe -------->\n");
+            //System.out.println(test.createDatum("6257"));
+
+            //System.out.println("\n\n<------- Test LocalDatum 1 : code = 9301, ca existe -------->\n");
+            //System.out.println(test.createDatum("9301"));
+
+            //System.out.println("\n\n<------- Test Ellipsoid 1 : code = 17001, ca existe pas... -------->\n");
             //test.createEllipsoid("17001");
 
-            System.out.println("\nTest Ellipsoid 2 : code = 7002, ca existe methode inverse");
-            System.out.println(test.createEllipsoid("7002"));
+            //System.out.println("\n\n<------- Test Ellipsoid 2 : code = 7002, ca existe methode inverse -------->\n");
+            //System.out.println(test.createEllipsoid("7002"));
 
-            System.out.println("\nTest Ellipsoid 3 : code = 7008, ca existe methode minor");
-            System.out.println(test.createEllipsoid("7008"));
+            //System.out.println("\n\n<------- Test Ellipsoid 3 : code = 7008, ca existe methode minor -------->\n");
+            //System.out.println(test.createEllipsoid("7008"));
 
-            //marche pas a cause du facteur de l'unité != 1
-            //System.out.println("\nTest Ellipsoid 3 : code = 7007, ca existe methode minor");
+            //facteur de l'unité != 1
+            //System.out.println("\n\n<------- Test Ellipsoid 4 : code = 7007, ca existe methode minor -------->\n");
             //System.out.println(test.createEllipsoid("7007"));
 
-            System.out.println("\nTest Ellipsoid 4 : code = 7004, ca existe");
-            System.out.println(test.createEllipsoid("7004"));
+            //System.out.println("\n\n<------- Test Ellipsoid 5 : code = 7004, ca existe -------->\n");
+            //System.out.println(test.createEllipsoid("7004"));
 
-            //System.out.println("\nTest primeMeridian 1 : code = 8901, ca existe");
+            //System.out.println("\n\n<------- Test primeMeridian 1 : code = 8901, ca existe -------->\n");
             //test.createPrimeMeridian("8901");
 
-            //System.out.println("\nTest primeMeridian 2 : code = 28901, ca existe pas...");
+            //System.out.println("\n\n<------- Test primeMeridian 2 : code = 28901, ca existe pas... -------->\n");
             //test.createPrimeMeridian("28901");
+
+            System.out.println("\n\n<------- Test verticalCoordinateSystem 1 : code = 5710 -------->\n");
+            System.out.println(test.createCoordinateSystem("5710"));
+
+            System.out.println("\n\n<------- Test GeographicCoordinateSystem 1 : code = 4807 -------->\n");
+            System.out.println(test.createCoordinateSystem("4807"));
+
+            System.out.println("\n\n<------- Test GeographicCoordinateSystem 2 : code = 4803 pb unité... -------->\n");
+            System.out.println(test.createCoordinateSystem("4803"));
+
+            System.out.println("\n\n<------- Test CompoundCoordinateSystem 1 : code = 7402 -------->\n");
+            System.out.println(test.createCoordinateSystem("7402"));
+
+            //System.out.println("\n\n<------- Test CompoundCoordinateSystem 2 : code = 7409 -------->\n");
+            //System.out.println(test.createCoordinateSystem("7409"));
 
             test.close();
         }

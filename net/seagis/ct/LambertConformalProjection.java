@@ -69,8 +69,12 @@ final class LambertConformalProjection extends ConicProjection
     private final double phi1, phi2;
 
     /**
-     * Variables internes
-     * pour les calculs.
+     * The semi-major axis length time the scale factor.
+     */
+    private final double a;
+
+    /**
+     * Internal variables for computation.
      */
     private final double n,F,rho0;
 
@@ -92,6 +96,7 @@ final class LambertConformalProjection extends ConicProjection
         //////////////////////////
         //  Compute constants   //
         //////////////////////////
+        this.a = semiMajor * scaleFactor;
         if (Math.abs(phi1 + phi2) < EPS)
         {
             throw new IllegalArgumentException(Resources.format(ResourceKeys.ERROR_ANTIPODE_LATITUDES_$2,
@@ -168,8 +173,8 @@ final class LambertConformalProjection extends ConicProjection
             rho *= F;
         }
         x = n * (x-centralMeridian);
-        y = a * (rho0 - rho * Math.cos(x));
-        x = a * (rho * Math.sin(x));
+        y = a * (rho0 - rho * Math.cos(x)) + falseNorthing;
+        x = a * (       rho * Math.sin(x)) + falseEasting;
 
         if (ptDst!=null)
         {
@@ -185,8 +190,8 @@ final class LambertConformalProjection extends ConicProjection
      */
     protected Point2D inverseTransform(double x, double y, final Point2D ptDst) throws TransformException
     {
-        x /= a;
-        y  = rho0 - y/a;
+        x =        (x-falseEasting)/a;
+        y = rho0 - (y-falseNorthing)/a;
         double rho = Math.sqrt(x*x + y*y);
         if (rho > EPS)
         {
@@ -246,8 +251,7 @@ final class LambertConformalProjection extends ConicProjection
     }
 
     /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
+     * Complete the WKT for this map projection.
      */
     void toString(final StringBuffer buffer)
     {
@@ -270,6 +274,7 @@ final class LambertConformalProjection extends ConicProjection
         public Provider()
         {
             super("Lambert_Conformal_Conic_2SP", ResourceKeys.LAMBERT_CONFORMAL_PROJECTION);
+            remove("scale_factor");
             put("standard_parallel1", 30.0, LATITUDE_RANGE);
             put("standard_parallel2", 45.0, LATITUDE_RANGE);
         }

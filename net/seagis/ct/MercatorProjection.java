@@ -68,7 +68,7 @@ final class MercatorProjection extends CylindricalProjection
 {
     /**
      * Global scale factor. Value <code>ak0</code>
-     * is equals to <code>{@link #a}*k0</code>.
+     * is equals to <code>{@link #semiMajor}*k0</code>.
      */
     private final double ak0;
 
@@ -92,11 +92,11 @@ final class MercatorProjection extends CylindricalProjection
         //////////////////////////
         if (isSpherical)
         {
-            ak0 = a*Math.cos(latitudeTrueScale);
+            ak0 = scaleFactor * semiMajor*Math.cos(latitudeTrueScale);
         }
         else
         {
-            ak0 = a*msfn(Math.sin(latitudeTrueScale), Math.cos(latitudeTrueScale));
+            ak0 = scaleFactor * semiMajor*msfn(Math.sin(latitudeTrueScale), Math.cos(latitudeTrueScale));
         }
     }
 
@@ -125,6 +125,8 @@ final class MercatorProjection extends CylindricalProjection
         {
             y = -ak0*Math.log(tsfn(y, Math.sin(y)));
         }
+        x += falseEasting;
+        y += falseNorthing;
         if (ptDst!=null)
         {
             ptDst.setLocation(x,y);
@@ -139,8 +141,8 @@ final class MercatorProjection extends CylindricalProjection
      */
     protected Point2D inverseTransform(double x, double y, final Point2D ptDst) throws TransformException
     {
-        x = x/ak0 + centralMeridian;
-        y = Math.exp(-y/ak0);
+        x = (x-falseEasting)/ak0 + centralMeridian;
+        y = Math.exp(-(y-falseNorthing)/ak0);
         if (isSpherical)
         {
             y = (Math.PI/2) - 2.0*Math.atan(y);

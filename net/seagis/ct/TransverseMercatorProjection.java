@@ -47,13 +47,13 @@ import net.seagis.resources.css.ResourceKeys;
 
 
 /**
- * Projections de Mercator tranverses Universelle et Modifiée. Il s'agit de la projection
- * Mercator cylindrique, mais dans lequel le cylindre a subit une rotation de 90°. Au lieu
- * d'être tangeant à l'équateur (ou à une autre latitude standard), le cylindre de la
- * projection tranverse est tangeant à un méridien central. Les déformation deviennent
- * de plus en plus importantes à mesure que l'on s'éloigne du méridien central. Cette
- * projection est appropriée pour les régions qui s'étendent d'avantage dans le sens
- * nord-sud que dans le sens est-ouest.
+ * Universal (UTM) and Modified (MTM) Transverses Mercator projections. This
+ * is a cylindrical projection, in which the cylinder has been rotated 90°.
+ * Instead of being tangent to the equator (or to an other standard latitude),
+ * it is tangent to a central meridian. Deformation are more important as we
+ * are going futher from the central meridian. The Transverse Mercator
+ * projection is appropriate for region wich have a greater extent north-south
+ * than east-west.
  *
  * Référence: John P. Snyder (Map Projections - A Working Manual,
  *            U.S. Geological Survey Professional Paper 1395, 1987)
@@ -114,140 +114,115 @@ final class TransverseMercatorProjection extends CylindricalProjection
     private static final double EPS10=1e-10, EPS11=1e-11;
 
     /**
-     * Constantes nécessaires aux projections.
+     * Constant needed for projection.
+     * Setup at construction time.
      */
     private final double en0,en1,en2,en3,en4;
 
     /**
      * Global scale factor. Value <code>ak0</code>
-     * is equals to <code>{@link #a}*k0</code>.
+     * is equals to <code>{@link #semiMajor}*k0</code>.
      */
     private final double ak0;
 
     /**
-     * Variante de l'eccentricité, calculée par
-     * <code>e'² = (a²-b²)/b² = es/(1-es)</code>.
+     * A derived quantity of excentricity, computed
+     * by <code>e'² = (a²-b²)/b² = es/(1-es)</code>
+     * where <var>a</var> is the semi-major axis length
+     * and <var>b</bar> is the semi-minor axis length.
      */
     private final double esp;
 
     /**
-     * Décalage qui dépendra de la zone choisit.
-     */
-    private final double x0;
-
-    /**
-     * Numéro de la zone, de 1 à 60 pour les projections
-     * UTM ou de 1 à 120 pour les projections MTM.
-     */
-    private final int zone;
-
-    /*
-     * Symbolic name for this projection (UTM or MTM).
-     */
-    private final String name;
-
-    /**
-     * Resource key for localized name.
-     */
-    private final int key;
-
-    /**
      * Construct a new map projection from the suplied parameters.
-     * Projection will default to Universal Transverse Mercator (UTM).
      *
      * @param  parameters The parameter values in standard units.
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
     protected TransverseMercatorProjection(final Projection parameters) throws MissingParameterException
-    {this(parameters, false);} // Default to UTM.
-
-    /**
-     * Construct a new map projection from the suplied parameters.
-     *
-     * @param  parameters The parameter values in standard units.
-     * @param  modified <code>true</code> for MTM, <code>false</code> for UTM.
-     * @throws MissingParameterException if a mandatory parameter is missing.
-     */
-    protected TransverseMercatorProjection(final Projection parameters, final boolean modified) throws MissingParameterException
     {
         //////////////////////////
         //   Fetch parameters   //
         //////////////////////////
         super(parameters);
-        /*
-         * Longitude au centre de la zone 1, en degrés.
-         * Les longitudes sont mesurées par rapport au méridien de
-         * Greenwich, avec les longitudes positives à l'est et les
-         * longitudes négatives à l'ouest.
-         */
-        final double centralLongitudeZone1;
-        /*
-         * Nombre de degrés de longitude dans une zone. Une valeur positive
-         * signifie que les zones sont mesurées d'ouest en est, tandis qu'une valeur
-         * négative signifie au contraire que les zones sont mesurées d'est en ouest.
-         */
-        final double zoneWidth;
-        /*
-         * Nombre de zones pour l'ensemble de la planète.
-         */
-        final int zoneCount;
 
         //////////////////////////
         //  Compute constants   //
         //////////////////////////
-        if (modified)
-        {
-            key                   = ResourceKeys.MTM_PROJECTION;
-            name                  = "MTM";
-            centralLongitudeZone1 = -52.5; // 52°30'W
-            zoneWidth             = -3;    // 3° from East to West
-            zoneCount             = 120;   // ==360/3
-            x0                    = 304800.0;
-            ak0                   = a*0.9999;
-        }
-        else
-        {
-            key                   = ResourceKeys.UTM_PROJECTION;
-            name                  = "UTM";
-            centralLongitudeZone1 = -177;  // 177°W
-            zoneWidth             = +6;    // 6° from West to East
-            zoneCount             = 60;    // ==360/6
-            x0                    = 500000.0;
-            ak0                   = a*0.9996;
-        }
+        this.ak0 = semiMajor*scaleFactor;
 
         double t;
-        esp = (a*a) / (b*b) - 1.0;
+        esp = (semiMajor*semiMajor) / (semiMinor*semiMinor) - 1.0;
         en0 = C00 - es * (C02 + es * (C04 + es * (C06 + es * C08)));
         en1 = es * (C22 - es * (C04 + es * (C06 + es * C08)));
         en2 = (t = es * es) * (C44 - es * (C46 + es * C48));
         en3 = (t *= es) * (C66 - es * C68);
         en4 = t * es * C88;
-
-        //////////////////////////
-        //  Compute zone code   //
-        //   [1..120] for MTM   //
-        //   [1.. 60] for UTM   //
-        //////////////////////////
-        t  = centralLongitudeZone1 - 0.5*zoneWidth; // Longitude du début de la 1ère zone.
-        t  = Math.toDegrees(centralMeridian) - t;   // Nombre de degrés de longitudes entre la longitude centrale et la longitude 1.
-        t  = Math.floor(t/zoneWidth + EPS);         // Nombre de zones entre la longitudes centrale et la longitude 1.
-        t -= zoneCount*Math.floor(t/zoneCount);     // Si négatif, ramène dans l'intervale 0 à (zoneCount-1).
-        zone = ((int) t)+1;
-
-        /////////////////////////////////
-        //  Compute central longitude  //
-        /////////////////////////////////
-        t  = centralLongitudeZone1 + (zone-1)*zoneWidth;
-        t -= 360*Math.floor((t+180)/360); // Bring back into [-180..+180] range.
-        centralMeridian = Math.toRadians(t);
     }
 
     /**
      * Returns a human readable name localized for the specified locale.
      */
     public String getName(final Locale locale)
-    {return Resources.getResources(locale).getString(key);}
+    {return Resources.getResources(locale).getString(ResourceKeys.TRANSVERSE_MERCATOR_PROJECTION);}
+
+    /**
+     * Convenience method computing the zone code from the central meridian.
+     * Information about zones convention must be specified in argument. Two
+     * widely set of arguments are of Universal Transverse Mercator (UTM) and
+     * Modified Transverse Mercator (MTM) projections:<br>
+     * <br>
+     *
+     * UTM projection (zones numbered from 1 to 60):<br>
+     * <br>
+     *        <code>getZone(-177, 6);</code><br>
+     * <br>
+     * MTM projection (zones numbered from 1 to 120):<br>
+     * <br>
+     *        <code>getZone(-52.5, -3);</code><br>
+     *
+     * @param  centralLongitudeZone1 Longitude in the middle of zone 1, in degrees
+     *         relative to Greenwich. Positive longitudes are toward east, and negative
+     *         longitudes toward west.
+     * @param  zoneWidth Number of degrees of longitudes in one zone. A positive value
+     *         means that zones are numbered from west to east (i.e. in the direction of
+     *         positive longitudes). A negative value means that zones are numbered from
+     *         east to west.
+     * @return The zone number. First zone is numbered 1.
+     */
+    public int getZone(final double centralLongitudeZone1, final double zoneWidth)
+    {
+        final double zoneCount = Math.abs(360/zoneWidth);
+        double t;
+        t  = centralLongitudeZone1 - 0.5*zoneWidth; // Longitude du début de la 1ère zone.
+        t  = Math.toDegrees(centralMeridian) - t;   // Nombre de degrés de longitudes entre la longitude centrale et la longitude 1.
+        t  = Math.floor(t/zoneWidth + EPS);         // Nombre de zones entre la longitudes centrale et la longitude 1.
+        t -= zoneCount*Math.floor(t/zoneCount);     // Si négatif, ramène dans l'intervale 0 à (zoneCount-1).
+        return ((int) t)+1;
+    }
+
+    /**
+     * Convencience method returns the meridian in the middle of
+     * current zone. This meridian is typically the central meridian.
+     * This method may be invoked to make sure that the central meridian
+     * is correctly set.
+     *
+     * @param  centralLongitudeZone1 Longitude in the middle of zone 1, in degrees
+     *         relative to Greenwich. Positive longitudes are toward east, and negative
+     *         longitudes toward west.
+     * @param  zoneWidth Number of degrees of longitudes in one zone. A positive value
+     *         means that zones are numbered from west to east (i.e. in the direction of
+     *         positive longitudes). A negative value means that zones are numbered from
+     *         east to west.
+     * @return The central meridian.
+     */
+    public double getCentralMedirian(final double centralLongitudeZone1, final double zoneWidth)
+    {
+        double t;
+        t  = centralLongitudeZone1 + (getZone(centralLongitudeZone1, zoneWidth)-1)*zoneWidth;
+        t -= 360*Math.floor((t+180)/360); // Bring back into [-180..+180] range.
+        return t;
+    }
 
     /**
      * Calcule la distance méridionale sur un
@@ -286,7 +261,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
                 throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
             }
             double yy = cosphi * Math.cos(x) / Math.sqrt(1.0-b*b);
-            x = 0.5*ak0 * Math.log((1.0+b)/(1.0-b)) + x0; /* 8-1 */
+            x = 0.5*ak0 * Math.log((1.0+b)/(1.0-b)); /* 8-1 */
             if ((b=Math.abs(yy)) >= 1.0)
             {
                 if ((b-1.0) > EPS10)
@@ -294,12 +269,18 @@ final class TransverseMercatorProjection extends CylindricalProjection
                     throw new TransformException(Resources.format(ResourceKeys.ERROR_VALUE_TEND_TOWARD_INFINITY));
                 }
                 else
+                {
                     yy = 0.0;
+                }
             }
             else
+            {
                 yy = Math.acos(yy);
+            }
             if (y<0)
+            {
                 yy = -yy;
+            }
             y = ak0 * yy;
         }
         else
@@ -321,8 +302,10 @@ final class TransverseMercatorProjection extends CylindricalProjection
 
             x = ak0*al*(FC1 + FC3 * als*(1.0 - t + n +
                       FC5 * als * (5.0 + t*(t - 18.0) + n*(14.0 - 58.0*t) +
-                      FC7 * als * (61.0+ t*(t*(179.0 - t) - 479.0 ))))) + x0;
+                      FC7 * als * (61.0+ t*(t*(179.0 - t) - 479.0 )))));
         }
+        x += falseEasting;
+        y += falseNorthing;
         if (ptDst!=null)
         {
             ptDst.setLocation(x,y);
@@ -337,10 +320,12 @@ final class TransverseMercatorProjection extends CylindricalProjection
      */
     protected Point2D inverseTransform(double x, double y, final Point2D ptDst) throws TransformException
     {
+        x -= falseEasting;
+        y -= falseNorthing;
         if (isSpherical)
         {
             // Spherical model.
-            double t = Math.exp((x-x0)/ak0);
+            double t = Math.exp(x/ak0);
             double d = 0.5 * (t-1/t);
             t = Math.cos(y/ak0);
             double phi = Math.asin(Math.sqrt((1.0-t*t)/(1.0+d*d)));
@@ -377,7 +362,7 @@ final class TransverseMercatorProjection extends CylindricalProjection
                 double t = Math.abs(cosphi)>EPS10 ? sinphi/cosphi : 0.0;
                 double n = esp * cosphi*cosphi;
                 double con = 1.0 - es * sinphi*sinphi;
-                double d = (x-x0)*Math.sqrt(con)/ak0;
+                double d = x*Math.sqrt(con)/ak0;
                 con *= t;
                 t *= t;
                 double ds = d*d;
@@ -401,15 +386,6 @@ final class TransverseMercatorProjection extends CylindricalProjection
     }
 
     /**
-     * Returns a hash value for this projection.
-     */
-    public int hashCode()
-    {
-        final long code = Double.doubleToLongBits(x0);
-        return ((int)code ^ (int)(code >>> 32)) + 37*super.hashCode();
-    }
-
-    /**
      * Compares the specified object with
      * this map projection for equality.
      */
@@ -419,20 +395,9 @@ final class TransverseMercatorProjection extends CylindricalProjection
         if (super.equals(object))
         {
             final TransverseMercatorProjection that = (TransverseMercatorProjection) object;
-            return Double.doubleToLongBits(this. x0) == Double.doubleToLongBits(that. x0) &&
-                   Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
+            return Double.doubleToLongBits(this.ak0) == Double.doubleToLongBits(that.ak0);
         }
         return false;
-    }
-
-    /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
-     */
-    void toString(final StringBuffer buffer)
-    {
-        super.toString(buffer);
-        addParameter(buffer, "zone", zone);
     }
 
     /**
@@ -444,28 +409,31 @@ final class TransverseMercatorProjection extends CylindricalProjection
     static final class Provider extends MapProjection.Provider
     {
         /**
-         * <code>true</code> for Modified Mercator Projection (MTM), or
-         * <code>false</code> for Universal Mercator Projection (UTM).
-         */
-        private final boolean modified;
-
-        /**
          * Construct a new registration.
          *
-         * @param modified <code>true</code> for Modified Mercator Projection (MTM),
-         *       or <code>false</code> for Universal Mercator Projection (UTM).
+         * @param modified <code>true</code> for defaulting to Modified Mercator
+         *        Projection (MTM), or <code>false</code> for defaulting to
+         *        Universal Mercator Projection (UTM).
          */
         public Provider(final boolean modified)
         {
-            super(modified ? "Modified_Transverse_Mercator" : "Transverse_Mercator",
-                  modified ? ResourceKeys.MTM_PROJECTION    : ResourceKeys.UTM_PROJECTION);
-            this.modified = modified;
+            super("Transverse_Mercator", ResourceKeys.TRANSVERSE_MERCATOR_PROJECTION);
+            if (modified)
+            {
+                put("false_easting", 304800.0, null);
+                put("scale_factor",  0.9999,   POSITIVE_RANGE);
+            }
+            else
+            {
+                put("false_easting", 500000.0, null);
+                put("scale_factor",  0.9996,   POSITIVE_RANGE);
+            }
         }
 
         /**
          * Create a new map projection.
          */
         protected Object create(final Projection parameters)
-        {return new TransverseMercatorProjection(parameters, modified);}
+        {return new TransverseMercatorProjection(parameters);}
     }
 }

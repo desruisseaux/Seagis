@@ -90,7 +90,7 @@ final class StereographicProjection extends PlanarProjection
      * Global scale factor. Value <code>ak0</code>
      * is equals to <code>{@link #a}*k0</code>.
      */
-    private final double k0, ak0;
+    private final double a, k0, ak0;
 
     /**
      * Facteurs utilisés lors des projections
@@ -134,6 +134,7 @@ final class StereographicProjection extends PlanarProjection
         //////////////////////////
         //  Compute constants   //
         //////////////////////////
+        this.a = semiMajor * scaleFactor;
         if (auto ? (Math.abs(Math.abs(centralLatitude)-(Math.PI/2)) < EPS) : polar)
         {
             if (centralLatitude<0) {centralLatitude = -(Math.PI/2); mode = (isSpherical) ? SPHERICAL_SOUTH : ELLIPSOIDAL_SOUTH;}
@@ -342,6 +343,8 @@ final class StereographicProjection extends PlanarProjection
                 break;
             }
         }
+        x += falseEasting;
+        y += falseNorthing;
         if (ptDst!=null)
         {
             ptDst.setLocation(x,y);
@@ -356,8 +359,8 @@ final class StereographicProjection extends PlanarProjection
      */
     protected Point2D inverseTransform(double x, double y, final Point2D ptDst) throws TransformException
     {
-        x /= a;
-        y /= a;
+        x = (x-falseEasting)/a;
+        y = (y-falseNorthing)/a;
         final double rho = Math.sqrt(x*x + y*y);
 choice: switch (mode)
         {

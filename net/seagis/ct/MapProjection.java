@@ -44,7 +44,10 @@ import java.awt.geom.Point2D;
 
 // Miscellaneous
 import java.util.Locale;
+import java.util.Arrays;
+import java.util.Collection;
 import javax.media.jai.ParameterList;
+import javax.media.jai.ParameterListDescriptor;
 
 // Resources
 import net.seagis.resources.Geometry;
@@ -67,21 +70,21 @@ import net.seagis.resources.css.ResourceKeys;
 abstract class MapProjection extends AbstractMathTransform implements MathTransform2D
 {
     /**
-     * Erreur maximale (en mètres) tolérées lorsque l'on fait une
-     * transformation directe suivit d'une transformation inverse
-     * (ou vis-versa). Si les "assertions" sont activées et qu'une
-     * erreur supérieure est détectée, une exception
-     * {@link AssertionError} sera lancée.
+     * Maximal error (in metres) tolerated in assertion, in enabled. When
+     * assertions are enabled, every direct projection is followed by an
+     * inverse projection, and the result is compared to the original
+     * coordinate. If a distance greater than <code>MAX_ERROR</code> is
+     * found, then an {@link AssertionError} will be thrown.
      */
     private static final double MAX_ERROR = 1;
 
     /**
-     * Marge de tolérance pour les comparaisons de nombre réels.
+     * Maximum difference allowed when comparing real numbers.
      */
     static final double EPS=1.0E-6;
 
     /**
-     * Marge de tolérance pour les calculs itératifs.
+     * Difference allowed in iterative computations.
      */
     static final double TOL=1E-10;
 
@@ -92,45 +95,45 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
     private final String classification;
 
     /**
-     * Indique si le modèle terrestre est sphérique. La valeur <code>true</code>
-     * indique que le modèle est sphérique, c'est-à-dire que les champs {@link #a}
-     * et {@link #b} ont la même valeur.
+     * The parameter list descriptor.
+     */
+    private final ParameterListDescriptor descriptor;
+
+    /**
+     * Tells if the ellipsoid in spherical. Value <code>true</code> means
+     * that fields {@link #semiMajor} and {@link #semiMinor} must have the
+     * same value.
      */
     protected final boolean isSpherical;
 
     /**
-     * Excentricité de l'ellipse. L'excentricité est 0
-     * si l'ellipsoïde est sphérique, c'est-à-dire si
-     * {@link #isSpherical} est <code>true</code>.
+     * Ellipsoid excentricity. Value 0 means that the ellipsoid is
+     * spherical, i.e. {@link #isSpherical} is <code>true</code>.
      */
     protected final double e;
 
     /**
-     * Carré de l'excentricité de l'ellipse: e² = (a²-b²)/a².
+     * The square of excentricity: e² = (a²-b²)/a² where
+     * <var>a</var> is the semi-major axis length and
+     * <var>b</var> is the semi-minor axis length.
      */
     protected final double es;
 
     /**
-     * Longueur de l'axe majeur de la terre, en mètres.
-     * Sa valeur par défaut dépend de l'éllipsoïde par
-     * défaut (par exemple "WGS 1984").
+     * Length of semi-major axis, in metres.
      */
-    protected final double a;
+    protected final double semiMajor;
 
     /**
-     * Longueur de l'axe mineur de la terre, en mètres.
-     * Sa valeur par défaut dépend de l'éllipsoïde par
-     * défaut (par exemple "WGS 1984").
+     * Length of semi-minor axis, in metres.
      */
-    protected final double b;
+    protected final double semiMinor;
 
     /**
      * Central longitude in <u>radians</u>.  Default value is 0, the Greenwich
-     * meridian. <strong>Consider this field as final</strong>. It is not final
-     * only  because {@link TransverseMercatorProjection} need to modify it at
-     * construction time.
+     * meridian.
      */
-    protected double centralMeridian;
+    protected final double centralMeridian;
 
     /**
      * Central latitude in <u>radians</u>. Default value is 0, the equator.
@@ -138,6 +141,21 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      * because some class need to modify it at construction time.
      */
     protected double centralLatitude;
+
+    /**
+     * The scale factor.
+     */
+    protected final double scaleFactor;
+
+    /**
+     * False easting, in metres. Default value is 0.
+     */
+    protected final double falseEasting;
+
+    /**
+     * False northing, in metres. Default value is 0.
+     */
+    protected final double falseNorthing;
 
     /**
      * The inverse of this map projection.
@@ -151,30 +169,30 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      * @param  parameters The parameter values in standard units.
      *         The following parameter are recognized:
      *         <ul>
-     *           <li>"semi_major"   (default to WGS 1984)</li>
-     *           <li>"semi_minor"   (default to WGS 1984)</li>
+     *           <li>"semi_major" (mandatory: no default)</li>
+     *           <li>"semi_minor" (mandatory: no default)</li>
      *           <li>"central_meridian"   (default to 0°)</li>
      *           <li>"latitude_of_origin" (default to 0°)</li>
+     *           <li>"scale_factor"       (default to 1 )</li>
+     *           <li>"false_easting"      (default to 0 )</li>
+     *           <li>"false_northing"     (default to 0 )</li>
      *         </ul>
      * @throws MissingParameterException if a mandatory parameter is missing.
      */
     protected MapProjection(final Projection parameters) throws MissingParameterException
     {
+        this.descriptor      =                    parameters.getParameters().getParameterListDescriptor();
         this.classification  =                    parameters.getClassName();
-        this.a               =                    parameters.getValue("semi_major");
-        this.b               =                    parameters.getValue("semi_minor");
+        this.semiMajor       =                    parameters.getValue("semi_major");
+        this.semiMinor       =                    parameters.getValue("semi_minor");
         this.centralMeridian = longitudeToRadians(parameters.getValue("central_meridian",   0), true);
         this.centralLatitude =  latitudeToRadians(parameters.getValue("latitude_of_origin", 0), true);
-        this.isSpherical     = (a==b);
-        this.es = 1.0 - (b*b)/(a*a);
+        this.scaleFactor     =                    parameters.getValue("scale_factor",       1);
+        this.falseEasting    =                    parameters.getValue("false_easting",      0);
+        this.falseNorthing   =                    parameters.getValue("false_northing",     0);
+        this.isSpherical     = (semiMajor==semiMinor);
+        this.es = 1.0 - (semiMinor*semiMinor)/(semiMajor*semiMajor);
         this.e  = Math.sqrt(es);
-
-        final double dx = parameters.getValue("false_easting");
-        final double dy = parameters.getValue("false_northing");
-        if (!(dx==0 && dy==0))
-        {
-            throw new UnsupportedOperationException("False easting/northing not yet implemented");
-        }
     }
 
     /**
@@ -271,7 +289,7 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
                 double rho = Math.sin(y1)*Math.sin(y2) + Math.cos(y1)*Math.cos(y2)*Math.cos(dx);
                 if (rho>+1) {assert rho<=+(1+EPS) : rho; rho=+1;}
                 if (rho<-1) {assert rho>=-(1+EPS) : rho; rho=-1;}
-                distance = Math.acos(rho)*a;
+                distance = Math.acos(rho)*semiMajor;
                 // Computed orthodromic distance (spherical model) in metres.
             }
             else
@@ -714,8 +732,8 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
      */
     public int hashCode()
     {
-        long code =      Double.doubleToLongBits(a);
-        code = code*37 + Double.doubleToLongBits(b);
+        long code =      Double.doubleToLongBits(semiMajor);
+        code = code*37 + Double.doubleToLongBits(semiMinor);
         code = code*37 + Double.doubleToLongBits(centralMeridian);
         code = code*37 + Double.doubleToLongBits(centralLatitude);
         return (int) code ^ (int) (code >>> 32);
@@ -732,10 +750,13 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
         if (super.equals(object))
         {
             final MapProjection that = (MapProjection) object;
-            return Double.doubleToLongBits(this.a)               == Double.doubleToLongBits(that.a) &&
-                   Double.doubleToLongBits(this.b)               == Double.doubleToLongBits(that.b) &&
+            return Double.doubleToLongBits(this.semiMajor)       == Double.doubleToLongBits(that.semiMajor)       &&
+                   Double.doubleToLongBits(this.semiMinor)       == Double.doubleToLongBits(that.semiMinor)       &&
                    Double.doubleToLongBits(this.centralMeridian) == Double.doubleToLongBits(that.centralMeridian) &&
-                   Double.doubleToLongBits(this.centralLatitude) == Double.doubleToLongBits(that.centralLatitude);
+                   Double.doubleToLongBits(this.centralLatitude) == Double.doubleToLongBits(that.centralLatitude) &&
+                   Double.doubleToLongBits(this.scaleFactor)     == Double.doubleToLongBits(that.scaleFactor)     &&
+                   Double.doubleToLongBits(this.falseEasting)    == Double.doubleToLongBits(that.falseEasting)    &&
+                   Double.doubleToLongBits(this.falseNorthing)   == Double.doubleToLongBits(that.falseNorthing);
         }
         return false;
     }
@@ -754,15 +775,29 @@ abstract class MapProjection extends AbstractMathTransform implements MathTransf
     }
 
     /**
-     * Implémentation de la partie entre crochets
-     * de la chaîne retournée par {@link #toString()}.
+     * Complete the WKT for this map projection.
      */
     void toString(final StringBuffer buffer)
     {
-        addParameter(buffer, "semi_major",         a);
-        addParameter(buffer, "semi_minor",         b);
-        addParameter(buffer, "central_meridian",   Math.toDegrees(centralMeridian));
-        addParameter(buffer, "latitude_of_origin", Math.toDegrees(centralLatitude));
+        final Collection names = Arrays.asList(descriptor.getParamNames());
+        addParameter(names, buffer, "semi_major",         semiMajor);
+        addParameter(names, buffer, "semi_minor",         semiMinor);
+        addParameter(names, buffer, "central_meridian",   Math.toDegrees(centralMeridian));
+        addParameter(names, buffer, "latitude_of_origin", Math.toDegrees(centralLatitude));
+        addParameter(names, buffer, "scale_factor",       scaleFactor);
+        addParameter(names, buffer, "false_easting",      falseEasting);
+        addParameter(names, buffer, "false_northing",     falseNorthing);
+    }
+
+    /**
+     * Add the <code>", PARAMETER["<name>", <value>]"</code> string
+     * to the specified string buffer. This is a convenience method
+     * for constructing WKT for "PARAM_MT".
+     */
+    private static void addParameter(final Collection names, final StringBuffer buffer, final String key, final double value)
+    {
+        if (names.contains(key))
+            addParameter(buffer, key, value);
     }
 
     /**

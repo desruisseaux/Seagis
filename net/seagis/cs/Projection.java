@@ -259,17 +259,27 @@ public class Projection extends Info
      * @throws MissingParameterException if <code>required</code> is <code>true</code>
      *         and parameter <code>name</code> is not found.
      */
-    private static double getValue(final ParameterList parameters, final String name, final double defaultValue, final boolean required) throws MissingParameterException
+    private static double getValue(final ParameterList parameters, String name, final double defaultValue, final boolean required) throws MissingParameterException
     {
+        name = name.trim();
         RuntimeException cause=null;
         if (parameters!=null)
         {
-            final Object value;
             try
             {
-                value = parameters.getObjectParameter(name.trim());
+                final Object value = parameters.getObjectParameter(name);
                 if (value instanceof Number)
+                {
+                    // Do not require an instance of Double.
                     return ((Number) value).doubleValue();
+                }
+                else
+                {
+                    // May require an instance of Double. Will
+                    // probably throw ClassCastException since
+                    // the last try didn't worked.
+                    return parameters.getDoubleParameter(name);
+                }
             }
             catch (IllegalArgumentException exception)
             {
