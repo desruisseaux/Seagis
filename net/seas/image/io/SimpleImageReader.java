@@ -31,16 +31,19 @@ import java.net.URLConnection;
 import java.net.URL;
 
 // Images
+import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.DataBuffer;
 import java.awt.image.ColorModel;
 import java.awt.image.SampleModel;
 import java.awt.image.BandedSampleModel;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.spi.ImageReaderSpi;
+import java.awt.image.ComponentColorModel;
+import javax.media.jai.ComponentSampleModelJAI;
 import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
 
 // Collections
 import java.util.List;
@@ -50,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 // Miscellaneous
+import javax.media.jai.util.Range;
 import net.seas.resources.Resources;
 
 
@@ -71,43 +75,20 @@ import net.seas.resources.Resources;
  * @version 1.0
  * @author Martin Desruisseaux
  *
+ * @see RawBinaryImageReader
  * @see TextRecordImageReader
- * @see MatrixImageReader
+ * @see TextMatrixImageReader
  */
 public abstract class SimpleImageReader extends ImageReader
 {
     /**
-     * Type des images les plus proches du format de l'image. Ce type
-     * devrait être une des constantes {@link DataBuffer#TYPE_FLOAT},
-     * {@link DataBuffer#TYPE_DOUBLE} ou {@link DataBuffer#TYPE_INT}.
-     */
-    private final int rawImageType;
-
-    /**
-     * Construct a new image reader storing pixels
-     * as {@link DataBuffer#TYPE_FLOAT}.
+     * Construct a new image reader.
      *
      * @param provider the {@link ImageReaderSpi} that is
      *                 invoking this constructor, or null.
      */
     protected SimpleImageReader(final ImageReaderSpi provider)
-    {this(provider, DataBuffer.TYPE_FLOAT);}
-
-    /**
-     * Construct a new image reader storing pixels
-     * in buffer of the specified type.
-     *
-     * @param provider the {@link ImageReaderSpi} that is
-     *                 invoking this constructor, or null.
-     * @param rawImageType The buffer type. It should be a constant from
-     *        {@link DataBuffer}. Common types are {@link DataBuffer#TYPE_INT},
-     *        {@link DataBuffer#TYPE_FLOAT} and {@link DataBuffer#TYPE_DOUBLE}.
-     */
-    protected SimpleImageReader(final ImageReaderSpi provider, final int rawImageType)
-    {
-        super(provider);
-        this.rawImageType = rawImageType;
-    }
+    {super(provider);}
 
     /**
      * Vérifie si l'index de l'image est dans la plage des valeurs
@@ -118,11 +99,28 @@ public abstract class SimpleImageReader extends ImageReader
      * @throws IndexOutOfBoundsException si l'index spécifié n'est pas valide.
      * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
      */
-    final void checkImageIndex(final int imageIndex) throws IndexOutOfBoundsException, IOException
+    final void checkImageIndex(final int imageIndex) throws IOException, IndexOutOfBoundsException
     {
         final int numImages = getNumImages(false);
         if (imageIndex<minIndex || (imageIndex>=numImages && numImages>=0))
             throw new IndexOutOfBoundsException(String.valueOf(imageIndex));
+    }
+
+    /**
+     * Vérifie si l'index de la bande est dans la plage des valeurs
+     * autorisées. L'index maximal autorisé est obtenu en appelant
+     * {@link #getNumBands}. L'index de l'image sera aussi vérifié.
+     *
+     * @param  imageIndex Index de l'image dont on veut vérifier la validité.
+     * @param  bandIndex  Index de la bande dont on veut vérifier la validité.
+     * @throws IndexOutOfBoundsException si l'index spécifié n'est pas valide.
+     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
+     */
+    final void checkBandIndex(final int imageIndex, final int bandIndex) throws IOException, IndexOutOfBoundsException
+    {
+        // Call 'getNumBands' first in order to call 'checkImageIndex'.
+        if (bandIndex>=getNumBands(imageIndex) || bandIndex<0)
+            throw new IndexOutOfBoundsException(String.valueOf(bandIndex));
     }
 
     /**
@@ -157,84 +155,6 @@ public abstract class SimpleImageReader extends ImageReader
     }
 
     /**
-     * Retourne la valeur minimale mémorisée dans une bande de l'image.
-     *
-     * @param  imageIndex Index de l'image dont on veut connaître la valeur minimale.
-     * @param  band Bande pour laquelle on veut la valeur minimale. Les numéros de
-     *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
-     *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
-     * @return Valeur minimale trouvée dans l'image et la bande spécifiée.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
-     */
-    public abstract double getMinimum(final int imageIndex, final int band) throws IOException;
-
-    /**
-     * Retourne la valeur maximale mémorisée dans une bande de l'image.
-     *
-     * @param  imageIndex Index de l'image dont on veut connaître la valeur maximale.
-     * @param  band Bande pour laquelle on veut la valeur maximale. Les numéros de
-     *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
-     *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
-     * @return Valeur maximale trouvée dans l'image et la bande spécifiée.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
-     */
-    public abstract double getMaximum(final int imageIndex, final int band) throws IOException;
-
-    /**
-     * Retourne le format le plus près du format interne de l'image. L'implémentation par
-     * défaut spécifie un format ({@link BandedSampleModel}) qui mémorise chaque canal de
-     * l'image dans un tableau séparé.
-     *
-     * @param  imageIndex Index de l'image.
-     * @return Type de l'image (ne sera jamais <code>null</code>).
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
-     */
-    public ImageTypeSpecifier getRawImageType(final int imageIndex) throws IOException
-    {
-        final int numBands = getNumBands(imageIndex);
-        final int[] bankIndices = new int[numBands];
-        final int[] bandOffsets = new int[numBands];
-        for (int i=numBands; --i>=0;) bankIndices[i]=i;
-
-        ColorSpace space = null;
-        double   minimum = Double.NaN;
-        double   maximum = Double.NaN;
-        for (int band=0; band<numBands; band++)
-        {
-            minimum = getMinimum(imageIndex, band);
-            maximum = getMaximum(imageIndex, band);
-            if (minimum < maximum)
-            {
-                space = new ScaledColorSpace((float)minimum, (float)maximum);
-                break;
-            }
-        }
-        if (space==null) space=ColorSpace.getInstance(ColorSpace.CS_GRAY);
-        return ImageTypeSpecifier.createBanded(space, bankIndices, bandOffsets, rawImageType, false, false);
-    }
-
-    /**
-     * Retourne quelques types d'images qui pourront contenir les données.
-     * Le premier objet retourné sera celui qui convient le mieux pour un
-     * affichage à l'écran.
-     *
-     * @param  imageIndex Index de l'image dont on veut les types.
-     * @return Itérateur balayant les types de l'image.
-     * @throws IndexOutOfBoundsException si <code>imageIndex</code> est invalide.
-     * @throws IllegalStateException si aucune source n'a été spécifiée avec {@link #setInput}.
-     * @throws IIOException si l'opération a échoué pour une autre raison.
-     */
-    public Iterator getImageTypes(final int imageIndex) throws IOException
-    {return Collections.singleton(getRawImageType(imageIndex)).iterator();}
-
-    /**
-     * Returns a default <code>ImageReadParam</code>
-     * object appropriate for this format.
-     */
-    public SimpleImageReadParam getDefaultReadParam()
-    {return new SimpleImageReadParam();}
-
-    /**
      * Retourne les méta-données associées à une image en particulier. Etant donné
      * que les fichiers de données brutes ne contiennent généralement pas de
      * méta-données, l'implémentation par défaut retourne toujours <code>null</code>.
@@ -256,6 +176,113 @@ public abstract class SimpleImageReader extends ImageReader
      */
     public IIOMetadata getStreamMetadata() throws IOException
     {return null;}
+
+    /**
+     * Returns a collection of {@link ImageTypeSpecifier} containing possible image
+     * types to which the given image may be decoded. The default implementation
+     * returns a singleton containing {@link #getRawImageType}.
+     *
+     * @param  imageIndex The index of the image to be retrieved.
+     * @return A set of suggested image types for decoding the current given image.
+     * @throws IOException If an error occurs reading the format information from the input source.
+     */
+    public Iterator getImageTypes(final int imageIndex) throws IOException
+    {return Collections.singleton(getRawImageType(imageIndex)).iterator();}
+
+    /**
+     * Returns an image type specifier indicating the {@link SampleModel} and {@link ColorModel}
+     * which most closely represents the "raw" internal format of the image. The default
+     * implementation returns an image type specifier for a {@link BandedSampleModel} of
+     * data type {@link #getRawDataType}.
+     *
+     * @param  imageIndex The index of the image to be queried.
+     * @return The image type (never <code>null</code>).
+     * @throws IOException If an error occurs reading the format information from the input source.
+     */
+    public ImageTypeSpecifier getRawImageType(final int imageIndex) throws IOException
+    {
+        final int dataType = getRawDataType(imageIndex);
+        final int numBands = getNumBands(imageIndex);
+        final int[] bankIndices = new int[numBands];
+        final int[] bandOffsets = new int[numBands];
+        for (int i=numBands; --i>=0;) bankIndices[i]=i;
+        final ColorSpace colorSpace = getColorSpace(imageIndex, 0);
+        
+        if (true)
+        {
+            /*
+             * Note: We should use ImageTypeSpecifier.createBanded(...) instead.
+             *       Unfortunatly, there is two problems with 'createBanded(...)':
+             *
+             *    1) As of JDK 1.4-beta2, 'createBanded' don't accept TYPE_FLOAT and TYPE_DOUBLE.
+             *       See source code for 'ImageTypeSpecifier.createComponentCM(...)'.
+             *    2) As of JAI 1.1, operators don't accept Java2D's DataBufferFloat and
+             *       DataBufferDouble. They require JAI's DataBuffer instead.
+             */
+            final ColorModel cm = new ComponentColorModel(colorSpace, null, false, false, Transparency.OPAQUE, dataType);
+            return new ImageTypeSpecifier(cm, new ComponentSampleModelJAI(dataType, 1, 1, 1, 1, bankIndices, bandOffsets));
+        }
+        return ImageTypeSpecifier.createBanded(colorSpace, bankIndices, bandOffsets, dataType, false, false);
+    }
+
+    /**
+     * Returns the data type which most closely represents the "raw"
+     * internal data of the image. It should be a constant from
+     * {@link DataBuffer}. Common types are {@link DataBuffer#TYPE_INT},
+     * {@link DataBuffer#TYPE_FLOAT} and {@link DataBuffer#TYPE_DOUBLE}.
+     * The default implementation returns <code>TYPE_FLOAT</code>.
+     *
+     * @param  imageIndex The index of the image to be queried.
+     * @return The data type (<code>TYPE_FLOAT</code> by default).
+     * @throws IOException If an error occurs reading the format information from the input source.
+     */
+    public int getRawDataType(final int imageIndex) throws IOException
+    {
+        checkImageIndex(imageIndex);
+        return DataBuffer.TYPE_FLOAT;
+    }
+
+    /**
+     * Returns the expected range of values for a band. Implementation
+     * may read image data, or just returns some raisonable range.
+     *
+     * @param  imageIndex The image index.
+     * @param  bandIndex The band index. Valid index goes from <code>0</code> inclusive
+     *         to <code>getNumBands(imageIndex)</code> exclusive. Index are independent
+     *         of any {@link ImageReadParam#setSourceBands} setting.
+     * @return The expected range of values, or <code>null</code> if unknow.
+     * @throws IOException If an error occurs reading the data information from the input source.
+     */
+    public abstract Range getExpectedRange(final int imageIndex, final int bandIndex) throws IOException;
+
+    /**
+     * Returns a default color space. Default implementation returns a
+     * grayscale color space scaled to fit {@link #getExpectedRange}.
+     *
+     * @param  imageIndex The image index.
+     * @param  bandIndex  The band index.
+     * @return A default color space scaled to fit data.
+     * @throws IOException if an input operation failed.
+     */
+    protected ColorSpace getColorSpace(final int imageIndex, final int bandIndex) throws IOException
+    {
+        final Range range = getExpectedRange(imageIndex, bandIndex);
+        if (range!=null && Number.class.isAssignableFrom(range.getElementClass()))
+        {
+            final Number minimum = (Number) range.getMinValue();
+            final Number maximum = (Number) range.getMaxValue();
+            if (minimum!=null && maximum!=null)
+            {
+                final float minValue = minimum.floatValue();
+                final float maxValue = maximum.floatValue();
+                if (minValue<maxValue && !Float.isInfinite(minValue) && !Float.isInfinite(maxValue))
+                {
+                    return new ScaledColorSpace(minValue, maxValue);
+                }
+            }
+        }
+        return ColorSpace.getInstance(ColorSpace.CS_GRAY);
+    }
 
     /**
      * Retourne la longueur (en nombre d'octets) des données à lire, ou <code>-1</code> si cette longueur

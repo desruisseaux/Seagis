@@ -60,6 +60,7 @@ import java.util.Locale;
 import net.seas.util.XMath;
 import net.seas.util.XArray;
 import net.seas.resources.Resources;
+import javax.media.jai.util.Range;
 import java.util.logging.Logger;
 
 
@@ -270,41 +271,6 @@ public class TextRecordImageReader extends TextImageReader
     }
 
     /**
-     * Retourne la valeur représentant les données manquantes, ou {@link Double#NaN}
-     * s'il n'y en a pas. Cette valeur s'appliquera à toutes les colonnes du fichier
-     * sauf les colonnes des <var>x</var> et des <var>y</var>.  L'implémentation par
-     * défaut retourne la valeur qui avait été spécifiée dans l'objet {@link Spi} qui
-     * a créé ce décodeur. Les classes dérivées peuvent redéfinir cette méthode pour
-     * déterminer cette valeur d'une façon plus élaborée.
-     *
-     * @param  imageIndex Index de l'image à lire.
-     * @throws IOException si l'opération nécessitait une lecture du fichier (par exemple
-     *         des informations inscrites dans un en-tête) et que cette lecture a échouée.
-     */
-    public double getPadValue(final int imageIndex) throws IOException
-    {return (originatingProvider instanceof Spi) ? ((Spi)originatingProvider).padValue : Double.NaN;}
-
-    /**
-     * Retourne l'objet à utiliser pour lire chaque ligne d'une image. L'implémentation par
-     * défaut construit un nouveal objet {@link LineFormat} en utilisant les conventions
-     * locales spécifiées par {@link Spi#locale}. Les classes dérivées peuvent redéfinir
-     * cette méthode pour construire un objet {@link LineFormat} d'une façon plus élaborée.
-     *
-     * @param  imageIndex Index de l'image à lire.
-     * @throws IOException si l'opération nécessitait une lecture du fichier (par exemple
-     *         des informations inscrites dans un en-tête) et que cette lecture a échouée.
-     */
-    public LineFormat getLineFormat(final int imageIndex) throws IOException
-    {
-        if (originatingProvider instanceof Spi)
-        {
-            final Locale locale = ((Spi)originatingProvider).locale;
-            if (locale!=null) return new LineFormat(locale);
-        }
-        return new LineFormat();
-    }
-
-    /**
      * Spécifie le flot à utiliser en entré. Ce flot peut être un objet des objets suivants (en ordre de préférence):
      * {@link java.io.File}, {@link java.net.URL} ou {@link java.io.BufferedReader}. Les flots de type
      * {@link java.io.Reader}, {@link java.io.InputStream} et {@link javax.imageio.stream.ImageInputStream}
@@ -326,21 +292,21 @@ public class TextRecordImageReader extends TextImageReader
     {return getRecords(imageIndex).getColumnCount() - (getColumnX(imageIndex)==getColumnY(imageIndex) ? 1 : 2);}
 
     /**
-     * Retourne la largeur de l'image à l'index spécifié.
+     * Returns the width in pixels of the given image within the input source.
      *
-     * @param  imageIndex Index de l'image dont on veut la largeur.
-     * @return Largeur de l'image.
-     * @throws IOException si la lecture de l'image a échoué.
+     * @param  imageIndex the index of the image to be queried.
+     * @return Image width.
+     * @throws IOException If an error occurs reading the width information from the input source.
      */
     public int getWidth(final int imageIndex) throws IOException
     {return getRecords(imageIndex).getPointCount(getColumnX(imageIndex), EPS);}
 
     /**
-     * Retourne la hauteur de l'image à l'index spécifié.
+     * Returns the height in pixels of the given image within the input source.
      *
-     * @param  imageIndex Index de l'image dont on veut la hauteur.
-     * @return Hauteur de l'image.
-     * @throws IOException si la lecture de l'image a échoué.
+     * @param  imageIndex the index of the image to be queried.
+     * @return Image height.
+     * @throws IOException If an error occurs reading the height information from the input source.
      */
     public int getHeight(final int imageIndex) throws IOException
     {return getRecords(imageIndex).getPointCount(getColumnY(imageIndex), EPS);}
@@ -399,30 +365,21 @@ public class TextRecordImageReader extends TextImageReader
     }
 
     /**
-     * Retourne la valeur minimale mémorisée dans une bande de l'image.
+     * Retourne la valeur minimale et maximale mémorisée dans une bande de l'image.
      *
-     * @param  imageIndex Index de l'image dont on veut connaître la valeur minimale.
+     * @param  imageIndex Index de l'image dont on veut connaître la plage de valeurs.
      * @param  band Bande pour laquelle on veut la valeur minimale. Les numéros de
      *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
      *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
-     * @return Valeur minimale trouvée dans l'image et la bande spécifiée.
+     * @return Plage de valeurs trouvée dans l'image et la bande spécifiée.
      * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
      */
-    public double getMinimum(final int imageIndex, final int band) throws IOException
-    {return getRecords(imageIndex).getMinimum(getColumn(imageIndex, band));}
-
-    /**
-     * Retourne la valeur maximale mémorisée dans une bande de l'image.
-     *
-     * @param  imageIndex Index de l'image dont on veut connaître la valeur maximale.
-     * @param  band Bande pour laquelle on veut la valeur maximale. Les numéros de
-     *         bandes commencent à 0  et sont indépendents des valeurs qui peuvent
-     *         avoir été spécifiées à {@link ImageReadParam#setSourceBands}.
-     * @return Valeur maximale trouvée dans l'image et la bande spécifiée.
-     * @throws IOException si l'opération a échouée à cause d'une erreur d'entrés/sorties.
-     */
-    public double getMaximum(final int imageIndex, final int band) throws IOException
-    {return getRecords(imageIndex).getMaximum(getColumn(imageIndex, band));}
+    public Range getExpectedRange(final int imageIndex, final int band) throws IOException
+    {
+        final int         column = getColumn(imageIndex, band);
+        final RecordList records = getRecords(imageIndex);
+        return new Range(Double.class, new Double(records.getMinimum(column)), new Double(records.getMaximum(column)));
+    }
 
     /**
      * Convertit une ligne en valeurs numériques. Cette méthode est appelée automatiquement
@@ -591,64 +548,25 @@ public class TextRecordImageReader extends TextImageReader
      */
     public BufferedImage read(final int imageIndex, final ImageReadParam param) throws IOException
     {
+        final int            xColumn = getColumnX(imageIndex);
+        final int            yColumn = getColumnY(imageIndex);
+        final RecordList     records = getRecords(imageIndex);
+        final int              width = records.getPointCount(xColumn, EPS);
+        final int             height = records.getPointCount(yColumn, EPS);
+        final int        numSrcBands = records.getColumnCount() - (xColumn==yColumn ? 1 : 2);
+        final BufferedImage    image = getDestination(param, getImageTypes(imageIndex), width, height);
+        final int        numDstBands = image.getSampleModel().getNumBands();
+        checkReadParamBandSettings(param, numSrcBands, numDstBands);
         /*
-         * Obtient quelques informations de base
-         * sur l'image qui sera à décoder.
+         * Extract user's parameters
          */
-        final int        xColumn = getColumnX(imageIndex);
-        final int        yColumn = getColumnY(imageIndex);
-        final RecordList records = getRecords(imageIndex);
-        final int          width = records.getPointCount(xColumn, EPS);
-        final int         height = records.getPointCount(yColumn, EPS);
-        final int       numBands = records.getColumnCount() - (xColumn==yColumn ? 1 : 2);
-        /*
-         * Obtient les coordonnées en pixels de la région à décoder.  Le rectangle retourné sera
-         * toujours compris à l'intérieur des limites de l'image. Il tient compte des paramètres
-         * spécifiés par l'utilisateur tel que le décalage initial du "subsampling".
-         */
-        final Rectangle sourceRegion=getSourceRegion(param, width, height);
-        /*
-         * Obtient l'image dans laquelle écrire les données. Cette image pourrait avoir
-         * été spécifiée explicitement par l'utilisateur. Dans ce cas, il faudra veiller
-         * à nettoyer la région de destination avant d'écrire dedans (au cas où elle
-         * contiendrait les restes d'une image plus ancienne).
-         */
-        final BufferedImage image=getDestination(param, getImageTypes(imageIndex), width, height);
-        /*
-         * Vérifie si les bandes demandées par l'utilisateur sont compatibles avec le
-         * nombre de bandes présentes dans le fichier et présentes dans l'image de destination.
-         */
-        checkReadParamBandSettings(param, numBands, image.getSampleModel().getNumBands());
-        /*
-         * Maintenant que l'on sait que les paramètres sont valides,
-         * obtient l'objet {@link WritableRaster} dans lequel écrire.
-         */
-        final WritableRaster raster=image.getRaster();
-        /*
-         * Calcule quelques constantes qui serviront au décodage.
-         */
-        final double      xmin = records.getMinimum(xColumn);
-        final double      ymin = records.getMinimum(yColumn);
-        final double      xmax = records.getMaximum(xColumn);
-        final double      ymax = records.getMaximum(yColumn);
-        final double    scaleX = (width -1)/(xmax-xmin);
-        final double    scaleY = (height-1)/(ymax-ymin);
-        final int   sourceXMin = sourceRegion.x;
-        final int   sourceYMin = sourceRegion.y;
-        final int   sourceXMax = sourceRegion.width  + sourceXMin;
-        final int   sourceYMax = sourceRegion.height + sourceYMin;
-        final int  rasterWidth = raster.getWidth();
-        final int rasterHeigth = raster.getHeight();
-        final int  columnCount = records.getColumnCount();
-        final int    dataCount = records.getDataCount();
-        final float[]     data = records.getData();
-        /*
-         * Obtient les paramètres spécifiés par l'utilisateur.  Si aucun
-         * paramètre n'a été défini, alors des valeurs par défaut seront
-         * utilisées comme paramètres.
-         */
-        final int[] sourceBands;
-        final int[] destBands;
+        final Rectangle sourceRegion = getSourceRegion(param, width, height);
+        final int         sourceXMin = sourceRegion.x;
+        final int         sourceYMin = sourceRegion.y;
+        final int         sourceXMax = sourceRegion.width  + sourceXMin;
+        final int         sourceYMax = sourceRegion.height + sourceYMin;
+        final int[]      sourceBands;
+        final int[]        destBands;
         final int sourceXSubsampling;
         final int sourceYSubsampling;
         final int subsamplingXOffset;
@@ -663,7 +581,7 @@ public class TextRecordImageReader extends TextImageReader
             sourceXSubsampling = param.getSourceXSubsampling();
             sourceYSubsampling = param.getSourceYSubsampling();
             subsamplingXOffset = param.getSubsamplingXOffset();
-            subsamplingYOffset = param.getSubsamplingXOffset();
+            subsamplingYOffset = param.getSubsamplingYOffset();
             destinationXOffset = offset.x;
             destinationYOffset = offset.y;
         }
@@ -678,6 +596,21 @@ public class TextRecordImageReader extends TextImageReader
             destinationXOffset = 0;
             destinationYOffset = 0;
         }
+        /*
+         * Initialize...
+         */
+        final WritableRaster  raster = image.getRaster();
+        final int        rasterWidth = raster.getWidth();
+        final int       rasterHeigth = raster.getHeight();
+        final int        columnCount = records.getColumnCount();
+        final int          dataCount = records.getDataCount();
+        final float[]           data = records.getData();
+        final double            xmin = records.getMinimum(xColumn);
+        final double            ymin = records.getMinimum(yColumn);
+        final double            xmax = records.getMaximum(xColumn);
+        final double            ymax = records.getMaximum(yColumn);
+        final double          scaleX = (width -1)/(xmax-xmin);
+        final double          scaleY = (height-1)/(ymax-ymin);
         /*
          * Procède à la création de l'image. Si l'image a été spécifiée explicitement par
          * l'utilisateur, alors il faut d'abord effacer toute la région dans laquelle on
@@ -717,7 +650,7 @@ public class TextRecordImageReader extends TextImageReader
                     y = y/sourceYSubsampling + (destinationYOffset-sourceYMin);
                     if (x<rasterWidth && y<rasterHeigth)
                     {
-                        for (int j=(sourceBands!=null) ? sourceBands.length : numBands; --j>=0;)
+                        for (int j=(sourceBands!=null) ? sourceBands.length : numSrcBands; --j>=0;)
                         {
                             // TODO
                         }
@@ -833,31 +766,6 @@ public class TextRecordImageReader extends TextImageReader
          * @see TextRecordImageReader#parseLine
          */
         final int yColumn;
-
-        /**
-         * Valeur par défaut représentant les données manquantes, ou
-         * {@link Double#NaN} s'il n'y en a pas.  Lors de la lecture
-         * d'une image, toutes les occurences de cette valeur seront
-         * remplacées par {@link Double#NaN} dans toutes les colonnes
-         * sauf les colonnes des <var>x</var> et des <var>y</var>.
-         *
-         * @see TextRecordImageReader#getPadValue
-         * @see TextRecordImageReader#parseLine
-         */
-        protected double padValue = Double.NaN;
-
-        /**
-         * Conventions locales à utiliser pour lire les nombres.  Par exemple
-         * la valeur {@link Locale#US} signifie que les nombres seront écrits
-         * en utilisant le point comme séparateur décimal (entre autres
-         * conventions). La valeur <code>null</code> signifie qu'il faudra
-         * utiliser les conventions locales par défaut au moment ou une image
-         * sera lue.
-         *
-         * @see TextRecordImageReader#getLineFormat
-         * @see TextRecordImageReader#parseLine
-         */
-        protected Locale locale;
 
         /**
          * Construit un descripteur. Ce constructeur suppose que les <var>x</var>

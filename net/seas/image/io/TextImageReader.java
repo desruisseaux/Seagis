@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
+import net.seas.text.LineFormat;
 
 // Network
 import java.net.URL;
@@ -41,6 +42,7 @@ import java.net.URLConnection;
 // Miscellaneous
 import java.util.Locale;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.awt.image.DataBuffer;
 import javax.imageio.spi.ImageReaderSpi;
 import net.seas.awt.ExceptionMonitor;
@@ -57,7 +59,7 @@ import net.seas.resources.Resources;
  * {@link URL}, {@link Reader}, {@link InputStream} and {@link ImageInputStream}.
  * The {@link Spi} provider automatically advises those input types. The above
  * cited <code>Spi</code> provided also provides a convenient way to control the
- * character encoding, with its {@link Spi#charset charset} field. Developer can
+ * character encoding, with the {@link Spi#charset charset} field. Developer can
  * gain yet more control on character encoding by overriding the {@link #getCharset}
  * method.
  *
@@ -67,32 +69,58 @@ import net.seas.resources.Resources;
 public abstract class TextImageReader extends SimpleImageReader
 {
     /**
+     * Type des images les plus proches du format de l'image. Ce type
+     * devrait être une des constantes {@link DataBuffer#TYPE_FLOAT},
+     * {@link DataBuffer#TYPE_DOUBLE} ou {@link DataBuffer#TYPE_INT}.
+     */
+    private final int rawImageType;
+
+    /**
      * Flot à utiliser pour lire les données. Ce flot sera construit à
      * partir de {@link #input} la première fois qu'il sera demandé.
      */
     private BufferedReader reader;
 
     /**
-     * Construit un décodeur d'images
-     * de type {@link DataBuffer#TYPE_FLOAT}.
+     * Construct a new image reader storing pixels
+     * as {@link DataBuffer#TYPE_FLOAT}.
      *
-     * @param provider Le fournisseur
-     *        qui a construit ce décodeur.
+     * @param provider the {@link ImageReaderSpi} that is
+     *                 invoking this constructor, or null.
      */
     protected TextImageReader(final ImageReaderSpi provider)
-    {super(provider);}
+    {this(provider, DataBuffer.TYPE_FLOAT);}
 
     /**
-     * Construit un décodeur d'images.
+     * Construct a new image reader storing pixels
+     * in buffer of the specified type.
      *
-     * @param provider Le fournisseur qui a construit ce décodeur.
-     * @param rawImageType Type par défaut des images. Ce type devrait
-     *        être une des constantes de {@link DataBuffer}, notamment
-     *        {@link DataBuffer#TYPE_INT}, {@link DataBuffer#TYPE_FLOAT}
-     *        ou {@link DataBuffer#TYPE_DOUBLE}.
+     * @param provider the {@link ImageReaderSpi} that is
+     *                 invoking this constructor, or null.
+     * @param rawImageType The buffer type. It should be a constant from
+     *        {@link DataBuffer}. Common types are {@link DataBuffer#TYPE_INT},
+     *        {@link DataBuffer#TYPE_FLOAT} and {@link DataBuffer#TYPE_DOUBLE}.
      */
     protected TextImageReader(final ImageReaderSpi provider, final int rawImageType)
-    {super(provider, rawImageType);}
+    {
+        super(provider);
+        this.rawImageType = rawImageType;
+    }
+
+    /**
+     * Returns the data type which most closely represents the "raw"
+     * internal data of the image. Default implementation returns the
+     * <code>rawImageType</code> argument provided at construction time.
+     *
+     * @param  imageIndex The index of the image to be queried.
+     * @return The data type (<code>TYPE_FLOAT</code> by default).
+     * @throws IOException If an error occurs reading the format information from the input source.
+     */
+    public int getRawDataType(final int imageIndex) throws IOException
+    {
+        checkImageIndex(imageIndex);
+        return rawImageType;
+    }
 
     /**
      * Retourne l'encodage des caractères qui seront à lire. L'implémentation
@@ -110,6 +138,41 @@ public abstract class TextImageReader extends SimpleImageReader
      */
     public Charset getCharset(final InputStream input) throws IOException
     {return (originatingProvider instanceof Spi) ? ((Spi)originatingProvider).charset : null;}
+
+    /**
+     * Retourne l'objet à utiliser pour lire chaque ligne d'une image. L'implémentation par
+     * défaut construit un nouvel objet {@link LineFormat} en utilisant les conventions
+     * locales spécifiées par {@link Spi#locale}. Les classes dérivées peuvent redéfinir
+     * cette méthode pour construire un objet {@link LineFormat} d'une façon plus élaborée.
+     *
+     * @param  imageIndex Index de l'image à lire.
+     * @throws IOException si l'opération nécessitait une lecture du fichier (par exemple
+     *         des informations inscrites dans un en-tête) et que cette lecture a échouée.
+     */
+    public LineFormat getLineFormat(final int imageIndex) throws IOException
+    {
+        if (originatingProvider instanceof Spi)
+        {
+            final Locale locale = ((Spi)originatingProvider).locale;
+            if (locale!=null) return new LineFormat(locale);
+        }
+        return new LineFormat();
+    }
+
+    /**
+     * Retourne la valeur représentant les données manquantes, ou {@link Double#NaN}
+     * s'il n'y en a pas. Cette valeur s'appliquera à toutes les colonnes du fichier
+     * sauf les colonnes des <var>x</var> et des <var>y</var>.  L'implémentation par
+     * défaut retourne la valeur qui avait été spécifiée dans l'objet {@link Spi} qui
+     * a créé ce décodeur. Les classes dérivées peuvent redéfinir cette méthode pour
+     * déterminer cette valeur d'une façon plus élaborée.
+     *
+     * @param  imageIndex Index de l'image à lire.
+     * @throws IOException si l'opération nécessitait une lecture du fichier (par exemple
+     *         des informations inscrites dans un en-tête) et que cette lecture a échouée.
+     */
+    public double getPadValue(final int imageIndex) throws IOException
+    {return (originatingProvider instanceof Spi) ? ((Spi)originatingProvider).padValue : Double.NaN;}
 
     /**
      * Retourne l'entré {@link #input} sous forme d'objet {@link BufferedReader}. Si possible,
@@ -302,6 +365,31 @@ public abstract class TextImageReader extends SimpleImageReader
         protected Charset charset;
 
         /**
+         * Conventions locales à utiliser pour lire les nombres.  Par exemple
+         * la valeur {@link Locale#US} signifie que les nombres seront écrits
+         * en utilisant le point comme séparateur décimal (entre autres
+         * conventions). La valeur <code>null</code> signifie qu'il faudra
+         * utiliser les conventions locales par défaut au moment ou une image
+         * sera lue.
+         *
+         * @see TextImageReader#getLineFormat
+         * @see TextRecordImageReader#parseLine
+         */
+        protected Locale locale;
+
+        /**
+         * Valeur par défaut représentant les données manquantes, ou
+         * {@link Double#NaN} s'il n'y en a pas.  Lors de la lecture
+         * d'une image, toutes les occurences de cette valeur seront
+         * remplacées par {@link Double#NaN} dans toutes les colonnes
+         * sauf les colonnes des <var>x</var> et des <var>y</var>.
+         *
+         * @see TextImageReader#getPadValue
+         * @see TextRecordImageReader#parseLine
+         */
+        protected double padValue = Double.NaN;
+
+        /**
          * Construct a new SPI for {@link TextImageReader}. This
          * constructor initialize the following fields to default
          * values:
@@ -314,7 +402,8 @@ public abstract class TextImageReader extends SimpleImageReader
          *       An array of length 1 containing the <code>mime</code> argument.
          *
          *   <li>File suffixes ({@link #suffixes}):
-         *       "<code>.txt</code>", "<code>.asc</code>" et "<code>.dat</code>".</li>
+         *       "<code>.txt</code>", "<code>.asc</code>" et "<code>.dat</code>"
+         *       (uppercase and lowercase).</li>
          *
          *   <li>Input types ({@link #inputTypes}):
          *       {@link File}, {@link URL}, {@link Reader}, {@link InputStream} et {@link ImageInputStream}.</li>
@@ -476,7 +565,8 @@ public abstract class TextImageReader extends SimpleImageReader
         /**
          * Vérifie si la ligne spécifiée peut être décodée. Cette méthode est appelée
          * automatiquement par {@link #canDecodeInput(Object,int)} avec en argument une
-         * des premières lignes trouvées dans la source.
+         * des premières lignes trouvées dans la source. L'implémentation par défaut
+         * vérifie si la ligne contient au moins un nombre décimal.
          *
          * @param  line Une des premières lignes du flot à lire.
          * @return {@link Boolean#TRUE} si la ligne peut être décodée, {@link Boolean#FALSE}
@@ -484,6 +574,21 @@ public abstract class TextImageReader extends SimpleImageReader
          *         encore. Dans ce dernier cas, cette méthode sera appelée une nouvelle fois
          *         avec la ligne suivante en argument.
          */
-        protected abstract Boolean canDecodeLine(final String line);
+        protected Boolean canDecodeLine(final String line)
+        {
+            if (line.trim().length()!=0) try
+            {
+                final LineFormat reader = (locale!=null) ? new LineFormat(locale) : new LineFormat();
+                if (reader.setLine(line) >= 1)
+                {
+                    return Boolean.TRUE;
+                }
+            }
+            catch (ParseException exception)
+            {
+                return Boolean.FALSE;
+            }
+            return null;
+        }
     }
 }

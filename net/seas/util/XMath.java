@@ -42,9 +42,10 @@ import java.lang.Math;
 public final class XMath
 {
     /**
-     * Logarithme naturel de 10.
+     * Natural logarithm of 10.
+     * Approximatively equals to 2.302585.
      */
-    private static final double LN10=2.302585092994;
+    public static final double LN10=2.3025850929940456840179914546844;
     
     /**
      * Table de puissance de 10. Elle sera utilisé
