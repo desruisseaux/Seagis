@@ -276,19 +276,25 @@ public abstract class MathTransformProvider
     {return (nameKey>=0) ? Resources.getResources(locale).getString(nameKey) : getClassName();}
 
     /**
-     * Returns a newly created parameter list. The set of parameter
-     * depend of the transform this provider is for. Parameters may
-     * have default values and a range of validity.
+     * Returns the parameter list descriptor.
      */
-    public synchronized ParameterList getParameterList()
+    final synchronized ParameterListDescriptor getParameterListDescriptor()
     {
         if (descriptor==null)
         {
             descriptor = getDescriptor(properties);
             properties = null; // No longer needed.
         }
-        return new ParameterListImpl(descriptor);
+        return descriptor;
     }
+
+    /**
+     * Returns a newly created parameter list. The set of parameter
+     * depend of the transform this provider is for. Parameters may
+     * have default values and a range of validity.
+     */
+    public ParameterList getParameterList()
+    {return new ParameterListImpl(getParameterListDescriptor());}
 
     /**
      * Returns a transform for the specified parameters.

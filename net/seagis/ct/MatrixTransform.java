@@ -37,6 +37,7 @@ import java.io.Serializable;
 import net.seagis.pt.Matrix;
 import net.seagis.pt.CoordinatePoint;
 import javax.media.jai.ParameterList;
+//import javax.vecmath.SingularMatrixException;
 
 // Resources
 import net.seagis.resources.Utilities;
@@ -127,6 +128,28 @@ final class MatrixTransform extends AbstractMathTransform implements Serializabl
      */
     public boolean isIdentity()
     {return matrix.isIdentity();}
+
+    /**
+     * Creates the inverse transform of this object.
+     */
+    public MathTransform inverse() throws NoninvertibleTransformException
+    {
+        if (isIdentity()) return this;
+        final MatrixTransform inverse = new MatrixTransform(matrix);
+        try
+        {
+            inverse.matrix.invert();
+        }
+        catch (RuntimeException exception)
+        {
+            NoninvertibleTransformException e = new NoninvertibleTransformException(exception.getLocalizedMessage());
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
+        return inverse;
+    }
 
     /**
      * Returns a hash value for this transform.

@@ -50,6 +50,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.IllegalPathStateException;
+//import javax.vecmath.SingularMatrixException;
 
 // Resources
 import java.util.Locale;
@@ -460,6 +461,28 @@ public abstract class AbstractMathTransform implements MathTransform
     {return new MathTransformExport(adapters, this);}
 
     /**
+     * Invert the specified matrix in place. If the matrix can't be inverted
+     * because of a {@link RuntimeException}, then the exception is
+     * wrapped into a {@link NoninvertibleTransformException}.
+     */
+    private static Matrix invert(final Matrix matrix) throws NoninvertibleTransformException
+    {
+        try
+        {
+            matrix.invert();
+            return matrix;
+        }
+        catch (RuntimeException exception)
+        {
+            NoninvertibleTransformException e = new NoninvertibleTransformException(exception.getLocalizedMessage());
+/*----- BEGIN JDK 1.4 DEPENDENCIES ----
+            e.initCause(exception);
+------- END OF JDK 1.4 DEPENDENCIES ---*/
+            throw e;
+        }
+    }
+
+    /**
      * Default implementation for inverse math transform.
      * This inner class is the inverse of the enclosing
      * math transform.
@@ -497,10 +520,7 @@ public abstract class AbstractMathTransform implements MathTransform
          * the enclosing math transform.
          */
         public Matrix derivative(final Point2D point) throws TransformException
-        {
-            // TODO: implement Matrix.inverse();
-            throw new UnsupportedOperationException("Matrix inversion not yet implemented");
-        }
+        {return invert(AbstractMathTransform.this.derivative(point));}
 
         /**
          * Gets the derivative of this transform at a point. The default
@@ -508,10 +528,7 @@ public abstract class AbstractMathTransform implements MathTransform
          * the enclosing math transform.
          */
         public Matrix derivative(final CoordinatePoint point) throws TransformException
-        {
-            // TODO: implement Matrix.inverse();
-            throw new UnsupportedOperationException("Matrix inversion not yet implemented");
-        }
+        {return invert(AbstractMathTransform.this.derivative(point));}
 
         /**
          * Returns the inverse of this math transform, which is the enclosing math transform.
