@@ -26,8 +26,10 @@
 package fr.ird.seasview.layer;
 
 // Map components
-import org.geotools.renderer.j2d.RenderedMarks;
 import org.geotools.ct.TransformException;
+import org.geotools.renderer.j2d.MarkIterator;
+import org.geotools.renderer.j2d.RenderedMarks;
+import org.geotools.renderer.j2d.GeoMouseEvent;
 
 // Data bases
 import java.sql.SQLException;
@@ -41,7 +43,6 @@ import java.util.Set;
 import java.util.List;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Collection;
 
 // Geometry
@@ -371,109 +372,10 @@ public class CatchLayer extends RenderedMarks {
     }
 
     /**
-     * Returns <code>true</code> if a catch is to be displayed.
+     * Returns an iterator for iterating through catch marks.
      */
-    public boolean isVisible(final int index) {
-        switch (markType) {
-            case CATCH_AMOUNTS : // fall through
-            case POSITIONS_ONLY: return super.isVisible(index);
-            case GEAR_COVERAGES: return !(hasShape && useFill[index]);
-            default: throw new IllegalStateException();
-        }
-    }
-
-    /**
-     * Returns a catch "amplitude". If catchs are to be displayed as
-     * a plot of the catch amount by species, then this method returns
-     * a number proportional to the square root of catch amount. This
-     * ensure that a plot with twice the catchs will appears as a circle
-     * with twice the superficy.
-     */
-    public double getAmplitude(final int index) {
-        switch (markType) {
-            case GEAR_COVERAGES: // fall through
-            case POSITIONS_ONLY: return super.getAmplitude(index);
-            case CATCH_AMOUNTS : return Math.sqrt(catchs.get(index).getCatch());
-            default: throw new IllegalStateException();
-        }
-    }
-
-    /**
-     * Returns a coordinates for a catch. If the catch cover a wide area (for
-     * example a longline), the returned coordinate may be some middle point.
-     */
-    public Point2D getPosition(final int index) {
-        return catchs.get(index).getCoordinate();
-    }
-
-    /**
-     * Returns the geographic extent for a catch, if there is one. If may be for example
-     * a {@link Line2D} object where (x1,y1) and (x2,y2) are equal to starting and ending
-     * points (in geographic coordinate) for a longline. If there is no known geographic
-     * extent for the specified catch, or if the geographic extent is not to be displayed,
-     * then this method returns <code>null</code>.
-     */
-    public Shape getGeographicShape(int index) {
-        switch (markType) {
-            case CATCH_AMOUNTS : // fall through
-            case POSITIONS_ONLY: return super.getGeographicShape(index);
-            case GEAR_COVERAGES: return catchs.get(index).getShape();
-            default: throw new IllegalStateException();
-        }
-    }
-
-    /**
-     * Returns a shape model for the mark, or <code>null</code> if there
-     * is none. The shape use pixels coordinates and is centered at (0,0).
-     *
-     * @param  index The catch index.
-     * @return A model for the mark. For efficienty raisons, this method
-     *         may reuse and modify a previously returned mark model. You
-     *         must copy the returned shape if you want to protect it from
-     *         changes.
-     */
-    public Shape getMarkShape(final int index) {
-        switch (markType) {
-            case GEAR_COVERAGES: // fall through
-            case POSITIONS_ONLY: return super.getMarkShape(index);
-            case CATCH_AMOUNTS: {
-                final CatchEntry   capture = catchs.get(index);
-                final Set<Species> species = capture.getSpecies();
-                final int            count = species.size();
-                switch (count) {
-                    case 0: return null;
-                    case 1: return circle;
-                }
-                /*
-                 * At this stage, we know that we have to draw a plot
-                 * of catch amount for at least two species.   Create
-                 * necessary objects if they were not already created.
-                 */
-                if (circle == null) {
-                    circle = new Ellipse2D.Float(-0.5f*DEFAULT_WIDTH, -0.5f*DEFAULT_WIDTH, DEFAULT_WIDTH, DEFAULT_WIDTH);
-                    arc    = new Arc2D.Float(circle.getBounds2D(), 0, 360, Arc2D.PIE);
-                    path   = new GeneralPath();
-                }
-                final double scale = 360.0/capture.getCatch();
-                if (!(scale>0 && scale<Double.POSITIVE_INFINITY)) {
-                    return null;
-                }
-                double angleStart = 0;
-                path.reset();
-                /*
-                 * Construct the pie.
-                 */
-                for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
-                    final double angleExtent = scale * capture.getCatch(it.next());
-                    arc.setAngleStart (angleStart );
-                    arc.setAngleExtent(angleExtent);
-                    angleStart += angleExtent;
-                    path.append(arc, false);
-                }
-                return path;
-            }
-            default: throw new IllegalStateException();
-        }
+    public MarkIterator getMarkIterator() {
+        return new Iterator();
     }
 
     /**
@@ -483,7 +385,9 @@ public class CatchLayer extends RenderedMarks {
      * @param shape    The shape to draw, in pixel coordinates.
      * @param index    The index of the catch to draw.
      */
-    protected void paint(final Graphics2D graphics, final Shape shape, final int index) {
+    protected void paint(final Graphics2D graphics, final Shape shape, final MarkIterator iterator)
+    {
+        final int index = ((Iterator)iterator).index;
         switch (markType) {
             case POSITIONS_ONLY: // fall through
             case GEAR_COVERAGES: {
@@ -504,7 +408,7 @@ public class CatchLayer extends RenderedMarks {
                     graphics.fill(shape);
                 } else {
                     final ShapeBroker broker=new ShapeBroker(shape);
-                    for (final Iterator<Species> it=species.iterator(); it.hasNext();) {
+                    for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
                         graphics.setColor(getIcon(it.next()).getColor());
                         graphics.fill(broker);
                         if (broker.finished()) {
@@ -565,24 +469,167 @@ public class CatchLayer extends RenderedMarks {
     }
 
     /**
-     * Returns a string representation for the catch at the specified index.
-     * This string will be displayed as a tool tip when the mouse cursor is
-     * over the catch.
+     * An iterator for iterating through catch data.
      */
-    protected String getToolTipText(final int index) {
-        if (format == null) {
-            format = NumberFormat.getNumberInstance();
-            buffer = new StringBuffer();
-            dummy  = new FieldPosition(0);
+    private final class Iterator extends MarkIterator {
+        /**
+         * The upper limit (exclusive) for {@link #index}.
+         */
+        private final int count;
+
+        /**
+         * The index of current mark.
+         */
+        int index = -1;
+
+        /**
+         * Construct an iterator.
+         */
+        public Iterator() {
+            count = getCount();
         }
-        buffer.setLength(0);
-        final CatchEntry c=catchs.get(index);
-        format.format(c.getCatch(), buffer, dummy);
-        final Unit unit = c.getUnit();
-        if (unit != null) {
-            buffer.append(' ');
-            buffer.append(unit);
+        
+        /**
+         * Moves the iterator to the specified index.
+         */
+        public void seek(final int n) {
+            index = n;
         }
-        return buffer.toString();
+        
+        /**
+         * Moves the iterator a relative number of marks.
+         */
+        public boolean next() {
+            index++;
+            return index < count;
+        }
+
+        /**
+         * Returns <code>true</code> if a catch is to be displayed.
+         */
+        public boolean visible() {
+            switch (markType) {
+                case CATCH_AMOUNTS : // fall through
+                case POSITIONS_ONLY: return super.visible();
+                case GEAR_COVERAGES: return !(hasShape && useFill[index]);
+                default: throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * Returns a catch "amplitude". If catchs are to be displayed as
+         * a plot of the catch amount by species, then this method returns
+         * a number proportional to the square root of catch amount. This
+         * ensure that a plot with twice the catchs will appears as a circle
+         * with twice the superficy.
+         */
+        public double amplitude() {
+            switch (markType) {
+                case GEAR_COVERAGES: // fall through
+                case POSITIONS_ONLY: return super.amplitude();
+                case CATCH_AMOUNTS : return Math.sqrt(catchs.get(index).getCatch());
+                default: throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * Returns a coordinates for a catch. If the catch cover a wide area (for
+         * example a longline), the returned coordinate may be some middle point.
+         */
+        public Point2D position() {
+            return catchs.get(index).getCoordinate();
+        }
+
+        /**
+         * Returns the geographic extent for a catch, if there is one. If may be for example
+         * a {@link Line2D} object where (x1,y1) and (x2,y2) are equal to starting and ending
+         * points (in geographic coordinate) for a longline. If there is no known geographic
+         * extent for the specified catch, or if the geographic extent is not to be displayed,
+         * then this method returns <code>null</code>.
+         */
+        public Shape geographicArea() {
+            switch (markType) {
+                case CATCH_AMOUNTS : // fall through
+                case POSITIONS_ONLY: return super.geographicArea();
+                case GEAR_COVERAGES: return catchs.get(index).getShape();
+                default: throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * Returns a shape model for the mark, or <code>null</code> if there
+         * is none. The shape use pixels coordinates and is centered at (0,0).
+         *
+         * @param  index The catch index.
+         * @return A model for the mark. For efficienty raisons, this method
+         *         may reuse and modify a previously returned mark model. You
+         *         must copy the returned shape if you want to protect it from
+         *         changes.
+         */
+        public Shape markShape() {
+            switch (markType) {
+                case GEAR_COVERAGES: // fall through
+                case POSITIONS_ONLY: return super.markShape();
+                case CATCH_AMOUNTS: {
+                    final CatchEntry   capture = catchs.get(index);
+                    final Set<Species> species = capture.getSpecies();
+                    final int            count = species.size();
+                    switch (count) {
+                        case 0: return null;
+                        case 1: return circle;
+                    }
+                    /*
+                     * At this stage, we know that we have to draw a plot
+                     * of catch amount for at least two species.   Create
+                     * necessary objects if they were not already created.
+                     */
+                    if (circle == null) {
+                        circle = new Ellipse2D.Float(-0.5f*DEFAULT_WIDTH, -0.5f*DEFAULT_WIDTH, DEFAULT_WIDTH, DEFAULT_WIDTH);
+                        arc    = new Arc2D.Float(circle.getBounds2D(), 0, 360, Arc2D.PIE);
+                        path   = new GeneralPath();
+                    }
+                    final double scale = 360.0/capture.getCatch();
+                    if (!(scale>0 && scale<Double.POSITIVE_INFINITY)) {
+                        return null;
+                    }
+                    double angleStart = 0;
+                    path.reset();
+                    /*
+                     * Construct the pie.
+                     */
+                    for (final java.util.Iterator<Species> it=species.iterator(); it.hasNext();) {
+                        final double angleExtent = scale * capture.getCatch(it.next());
+                        arc.setAngleStart (angleStart );
+                        arc.setAngleExtent(angleExtent);
+                        angleStart += angleExtent;
+                        path.append(arc, false);
+                    }
+                    return path;
+                }
+                default: throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * Returns a string representation for the catch at the specified index.
+         * This string will be displayed as a tool tip when the mouse cursor is
+         * over the catch.
+         */
+        protected String getToolTipText(final GeoMouseEvent event) {
+            if (format == null) {
+                format = NumberFormat.getNumberInstance();
+                buffer = new StringBuffer();
+                dummy  = new FieldPosition(0);
+            }
+            buffer.setLength(0);
+            final CatchEntry c=catchs.get(index);
+            format.format(c.getCatch(), buffer, dummy);
+            final Unit unit = c.getUnit();
+            if (unit != null) {
+                buffer.append(' ');
+                buffer.append(unit);
+            }
+            return buffer.toString();
+        }
     }
 }

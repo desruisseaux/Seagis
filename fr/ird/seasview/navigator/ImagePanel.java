@@ -71,11 +71,17 @@ abstract class ImagePanel extends JSplitPane implements ComponentListener, Chang
     protected final MosaicCanvas mosaic;
 
     /**
-     * Liste d'éléments {@link LayerControl} qui
-     * représentent les couches que l'utilisateur
+     * Liste d'éléments {@link LayerControl} qui représentent les couches que l'utilisateur
      * peut choisir et configurer.
      */
     protected final LayerControl[] layers;
+
+    /**
+     * Nombre maximal d'images pour afficher l'échelle dans chacune d'elle. Si le nombre
+     * d'images est élevé, il n'y aura pas la place de reproduire l'échelle de la carte
+     * dans chacune d'elle. La valeur 0 désactive complètement l'affichage de l'échelle.
+     */
+    protected int maxImagesForMapScale = 1;
 
     /**
      * Objet à utiliser pour annuler les éditions de la table. Cet objet écoutera

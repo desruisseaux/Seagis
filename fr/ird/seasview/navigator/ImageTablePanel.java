@@ -393,7 +393,8 @@ final class ImageTablePanel extends ImagePanel {
                 panel.dispose();
             }
             mosaic.setImages(images);
-            mosaic.setScrollBarsVisible(images.length<2);
+            mosaic.setScrollBarsVisible(images.length <= 1);
+            mosaic.setMapScaleVisible(images.length <= maxImagesForMapScale);
             fireStateChanged();
         }
     }

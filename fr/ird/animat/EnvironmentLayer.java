@@ -26,7 +26,9 @@
 package fr.ird.animat;
 
 // J2SE
+import java.util.Map;
 import java.util.Date;
+import java.util.Collections;
 import java.awt.Color;
 import java.awt.Rectangle;
 
@@ -58,9 +60,10 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      * par défaut (colorée) de l'image afin de rendre les autres éléments
      * (positions des thons, trajectoire, etc.) plus facilement visibles.
      */
-    private static final Color[] COLOR_MAP = new Color[] {
-        new Color(16,32,64),
-        new Color(224,240,255)
+    private static final Map[] COLOR_MAP = new Map[] {
+        Collections.singletonMap(null, new Color[] {
+            new Color(16,   32,  64),
+            new Color(224, 240, 255)})
     };
     
     /**
@@ -144,7 +147,7 @@ final class EnvironmentLayer extends RenderedGridCoverage implements Environment
      * will remove the current grid coverage.
      */
     public void setCoverage(GridCoverage coverage) {
-        coverage = processor.doOperation("Colormap", coverage, "Colors", COLOR_MAP);
+        coverage = processor.doOperation("Recolor", coverage, "ColorMaps", COLOR_MAP);
         super.setCoverage(coverage);
     }
 

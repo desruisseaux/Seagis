@@ -476,10 +476,7 @@ final class FormatEntryImpl implements FormatEntry, Serializable {
      * Annule la lecture de l'image en appelant {@link ImageReader#abort}.
      * Cette méthode peut être appelée à partir de n'importe quel thread.
      *
-     * @param source Objet qui appelle cette méthode. Cette information est
-     *        utilisée pour vérifier si  l'appelant  est le propriétaire de
-     *        l'image en cours de lecture.    Si ce n'est pas le cas, alors
-     *        cette méthode <code>abort</code> ne fera rien.
+     * @param source Objet qui appelle cette méthode.
      */
     final void abort(final ImageEntry source) {
         assert !Thread.holdsLock(this); // The thread must *not* hold the lock.

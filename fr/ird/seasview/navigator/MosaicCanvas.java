@@ -599,6 +599,21 @@ final class MosaicCanvas extends JPanel {
     }
 
     /**
+     * Indique si l'échelle des cartes doit être visible.
+     */
+    public void setMapScaleVisible(final boolean visible) {
+        synchronized (getTreeLock()) {
+            final int count = getComponentCount();
+            for (int i=0; i<count; i++) {
+                final Component c = getComponent(i);
+                if (c instanceof ImageCanvas) {
+                    ((ImageCanvas) c).setMapScaleVisible(visible);
+                }
+            }
+        }
+    }
+
+    /**
      * Indique si les barres de défilements des images doivent être
      * visibles ou pas. Par défaut, les barres de défilements ne sont
      * pas visibles.

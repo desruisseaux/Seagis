@@ -25,18 +25,6 @@
  */
 package fr.ird.seasview.navigator;
 
-// Geotools dependencies
-import org.geotools.gc.GridCoverage;
-
-// Databases
-import fr.ird.sql.image.ImageEntry;
-
-// Map components
-import org.geotools.renderer.j2d.RenderedLayer;
-import org.geotools.gui.swing.MapPane;
-import org.geotools.renderer.j2d.RenderedGridCoverage;
-import fr.ird.seasview.layer.control.LayerControl;
-
 // Geometry and graphics
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -51,19 +39,12 @@ import javax.swing.JComponent;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 
-// Main framework
-import fr.ird.seasview.Task;
-import fr.ird.seasview.DataBase;
-import fr.ird.seasview.InternalFrame;
-
 // Events and progress
 import java.awt.EventQueue;
 import javax.imageio.ImageReader;
 import javax.imageio.event.IIOReadWarningListener;
 import javax.imageio.event.IIOReadProgressListener;
 import javax.swing.event.EventListenerList;
-import fr.ird.awt.event.ImageChangeListener;
-import fr.ird.awt.event.ImageChangeEvent;
 
 // Miscellaneous
 import java.util.Date;
@@ -74,11 +55,24 @@ import java.text.FieldPosition;
 import javax.media.jai.util.Range;
 
 // Geotools dependencies
-import org.geotools.gui.swing.StatusBar;
+import org.geotools.gc.GridCoverage;
 import org.geotools.resources.Utilities;
 import org.geotools.renderer.j2d.Renderer;
 import org.geotools.renderer.j2d.RenderedLayer;
+import org.geotools.renderer.j2d.RenderedMapScale;
+import org.geotools.renderer.j2d.RenderedGridCoverage;
 import org.geotools.gui.swing.ExceptionMonitor;
+import org.geotools.gui.swing.StatusBar;
+import org.geotools.gui.swing.MapPane;
+
+// Main framework
+import fr.ird.seasview.Task;
+import fr.ird.seasview.DataBase;
+import fr.ird.seasview.InternalFrame;
+import fr.ird.seasview.layer.control.LayerControl;
+import fr.ird.awt.event.ImageChangeListener;
+import fr.ird.awt.event.ImageChangeEvent;
+import fr.ird.sql.image.ImageEntry;
 
 // Resources
 import fr.ird.util.XArray;
@@ -152,6 +146,11 @@ final class ImageCanvas extends JPanel {
     private ImageEntry source;
 
     /**
+     * <code>true</code> si l'échelle de la carte doit être affichée.
+     */
+    private boolean mapScaleVisible;
+
+    /**
      * Construit un panneau initialement vide.  Le contenu
      * de ce panneau pourra être spécifié par des appels à
      * la méthode {@link #setImage}.
@@ -210,6 +209,16 @@ final class ImageCanvas extends JPanel {
             title.setText(buffer.toString());
         } else {
             title.setText(UNTITLED);
+        }
+    }
+
+    /**
+     * Indique si l'échelle doit être visible ou pas.
+     */
+    public void setMapScaleVisible(final boolean visible) {
+        if (mapScaleVisible != visible) {
+            mapScaleVisible = visible;
+            repaint();
         }
     }
 
@@ -309,6 +318,9 @@ final class ImageCanvas extends JPanel {
                 if (visualLayers != null) {
                     for (int i=0; i<visualLayers.length; i++) {
                         mapPanel.getRenderer().addLayer((RenderedLayer) visualLayers[i]);
+                    }
+                    if (mapScaleVisible) {
+                        mapPanel.getRenderer().addLayer(new RenderedMapScale());
                     }
                     if (visibleArea != null) {
                         mapPanel.setVisibleArea(visibleArea);
