@@ -21,39 +21,34 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package fr.ird.sql.coupling;
+package fr.ird.operator.coverage;
 
 // Miscellaneous
 import java.awt.Shape;
 import org.geotools.gc.GridCoverage;
-import org.geotools.ct.TransformException;
 
 
 /**
  * Fonction à évaluer sur une surface à 2 dimensions. Cette fonction est
  * appliquée sur une région géographique d'une image {@link GridCoverage}.
- * Par exemple la fonction {@link #MAIN} calcule la moyenne des valeurs de
- * pixels trouvées à l'intérieur de la région géographique spécifiée.
+ * Par exemple la fonction {@link AverageEvaluator} calcule la moyenne des
+ * valeurs de pixels trouvées à l'intérieur de la région géographique
+ * spécifiée.
  *
  * @version 1.0
  * @author Martin Desruisseaux
  */
-public interface AreaEvaluator
+public interface Evaluator
 {
     /**
-     * Une fonction calculant la valeur moyenne des
-     * pixels se trouvant dans la région géographique.
-     */
-    public static final AreaEvaluator MAIN = new AreaAverage();
-
-    /**
-     * Evalue la fonction pour une zone géographique de la couverture spécifiée.
+     * Evalue la fonction dans une région géographique spécifiée.
      * Cette fonction est évaluée pour chaque bande de la couverture (ou image).
      *
-     * @param coverage La couverture sur laquelle appliquer la fonction.
-     * @param area La région géographique sur laquelle évaluer la fonction.
-     *        Les coordonnées de cette région doivent être exprimées selon
-     *        le système de coordonnées de <code>coverage</code>.
+     * @param  coverage La couverture sur laquelle appliquer la fonction.
+     * @param  area La région géographique dans laquelle évaluer la fonction.
+     *         Les coordonnées de cette région doivent être exprimées selon
+     *         le système de coordonnées de <code>coverage</code>.
+     * @return La valeur de cette fonction pour chaque bande de l'image.
      */
-    public abstract double[] evaluate(final GridCoverage coverage, final Shape area) throws TransformException;
+    public abstract ParameterValue[] evaluate(final GridCoverage coverage, final Shape area);
 }

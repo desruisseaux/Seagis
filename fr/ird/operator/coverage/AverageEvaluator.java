@@ -21,7 +21,7 @@
  *             Institut Maurice-Lamontagne
  *             mailto:osl@osl.gc.ca
  */
-package fr.ird.sql.coupling;
+package fr.ird.operator.coverage;
 
 // Geotools dependencies
 import org.geotools.gc.GridCoverage;
@@ -35,7 +35,6 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 
 // Java Advanced Imaging et divers
 import java.awt.image.RenderedImage;
@@ -50,52 +49,13 @@ import javax.media.jai.iterator.RectIterFactory;
  * @version 1.0
  * @author Martin Desruisseaux
  */
-class AreaAverage implements AreaEvaluator
+public class AverageEvaluator extends AbstractEvaluator implements Evaluator
 {
     /**
      * Construit un évaluateur par défaut.
      */
-    public AreaAverage()
+    public AverageEvaluator()
     {}
-
-    /**
-     * Transform a geographic bounding box into a grid bounding box.
-     * The resulting bounding box will be clipped to image's bounding
-     * box.
-     *
-     * @param areaBounds The geographic bounding box.
-     * @param transform The grid to coordinate system transform. The inverse
-     *        transform will be used for transforming <code>areaBounds</code>.
-     * @param data The rendered image for which the bounding box is computed.
-     */
-    final Rectangle getBounds(final Rectangle2D areaBounds, final AffineTransform transform, final RenderedImage data)
-    {
-        // 'Rectangle' performs the correct rounding.
-        Rectangle bounds = new Rectangle();
-        try
-        {
-            bounds = (Rectangle)XAffineTransform.inverseTransform(transform, areaBounds, bounds);
-            int xmin = data.getMinX();
-            int ymin = data.getMinY();
-            int xmax = data.getWidth()  + xmin;
-            int ymax = data.getHeight() + ymin;
-            int t;
-            if ((t =bounds.x     ) > xmin) xmin = t;
-            if ((t+=bounds.width ) < xmax) xmax = t;
-            if ((t =bounds.y     ) > ymin) ymin = t;
-            if ((t+=bounds.height) < ymax) ymax = t;
-            bounds.x      = xmin;
-            bounds.y      = ymin;
-            bounds.width  = xmax-xmin;
-            bounds.height = ymax-ymin;
-        }
-        catch (NoninvertibleTransformException exception)
-        {
-            Utilities.unexpectedException("fr.ird.sql", "AreaEvaluator", "evaluate", exception);
-            // Returns an empty bounds.
-        }
-        return bounds;
-    }
 
     /**
      * Evalue la fonction pour une zone géographique de la couverture spécifiée.
@@ -106,10 +66,10 @@ class AreaAverage implements AreaEvaluator
      *        Les coordonnées de cette région doivent être exprimées selon
      *        le système de coordonnées de <code>coverage</code>.
      */
-    public double[] evaluate(final GridCoverage coverage, final Shape area)
+    public ParameterValue[] evaluate(final GridCoverage coverage, final Shape area)
     {
         final RenderedImage        data = coverage.getRenderedImage(true);
-        final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem();
+        final AffineTransform transform = (AffineTransform) coverage.getGridGeometry().getGridToCoordinateSystem2D();
         final Point2D.Double coordinate = new Point2D.Double();
         final Rectangle2D    areaBounds = area.getBounds2D();
         final Rectangle          bounds = getBounds(areaBounds, transform, data);
@@ -147,10 +107,11 @@ class AreaAverage implements AreaEvaluator
                 iterator.nextLine();
             }
         }
-        for (int i=0; i<sum.length; i++)
+        final ParameterValue[] result = new ParameterValue[sum.length];
+        for (int i=0; i<result.length; i++)
         {
-            sum[i] /= count[i];
+            result[i] = new ParameterValue(sum[i] / count[i]);
         }
-        return sum;
+        return result;
     }
 }
